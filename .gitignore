@@ -137,3 +137,6 @@ xcuserdata
 DerivedData
 *.xcuserstate
 .gradle
+
+# jupiter notebook temp data
+.ipynb_checkpoints
