@@ -141,4 +141,5 @@ DerivedData
 # jupiter notebook temp data
 .ipynb_checkpoints
 
+# keystore file
 com.malcoriel
