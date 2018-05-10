@@ -10,5 +10,8 @@
     "eslint-plugin-react": "^7.4.0",
     "eslint-plugin-react-native": "^3.1.0",
     "flow-bin": "^0.57.3"
+  },
+  "scripts": {
+    "full-install": "node full-install.js"
   }
 }
