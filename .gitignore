@@ -148,3 +148,4 @@ com.malcoriel
 /algo
 
 *.exe
+/rustfun/hello-wasm/target/
