@@ -5,6 +5,7 @@ pub struct Planet {
     pub id: u64,
     pub x: f64,
     pub y: f64,
+    pub rotation: f64,
     pub radius: f64,
 }
 
@@ -13,7 +14,7 @@ pub struct Ship {
     pub id: u64,
     pub x: f64,
     pub y: f64,
-    pub rot: f64,
+    pub rotation: f64,
     pub radius: f64,
 }
 
