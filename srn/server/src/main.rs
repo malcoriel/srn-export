@@ -15,6 +15,10 @@ use crate::game::{GameState, Planet, Ship};
 mod game;
 mod vec2;
 
+use rocket::http::Method;
+use rocket_cors::{AllowedHeaders, AllowedOrigins};
+use std::error::Error;
+
 #[get("/state")]
 fn state() -> Json<GameState> {
     Json(GameState {
@@ -57,6 +61,21 @@ fn state() -> Json<GameState> {
     })
 }
 
-fn main() {
-    rocket::ignite().mount("/", routes![state]).launch();
+fn main() -> Result<(), Box<dyn Error>> {
+    let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000"]);
+
+    // You can also deserialize this
+    let cors = rocket_cors::CorsOptions {
+        allowed_origins,
+        allowed_methods: vec![Method::Get].into_iter().map(From::from).collect(),
+        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept"]),
+        allow_credentials: true,
+        ..Default::default()
+    }
+    .to_cors()?;
+    rocket::ignite()
+        .attach(cors)
+        .mount("/api", routes![state])
+        .launch();
+    Ok(())
 }
