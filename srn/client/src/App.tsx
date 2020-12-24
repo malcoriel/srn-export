@@ -1,17 +1,14 @@
-import React, { Component, ReactNode, ReactNodeArray } from 'react';
+import React, { Component } from 'react';
 import {
-  Text,
-  Stage,
-  Layer,
-  Rect,
-  Circle,
-  Shape,
-  Transformer,
-  KonvaNodeComponent,
   Arrow,
+  Circle,
+  Group,
+  Layer,
   Line,
+  RegularPolygon,
+  Stage,
+  Text,
 } from 'react-konva';
-import Konva from 'konva';
 import useSWR, { SWRConfig } from 'swr';
 import 'reset-css';
 import './index.css';
@@ -25,6 +22,9 @@ const max_x = 50;
 const max_y = 50;
 const min_x = -50;
 const min_y = -50;
+
+const radToDeg = (x: number) => (x * 180) / Math.PI;
+const degToRad = (x: number) => (x * Math.PI) / 180;
 
 const DebugState = () => {
   const { data: state } = useSWR('http://localhost:8000/api/state');
@@ -58,7 +58,7 @@ type Vec2f64 = {
 
 type GameObject = WithId &
   Vec2f64 & {
-    rot: number;
+    rotation: number;
     radius: number;
   };
 
@@ -83,25 +83,54 @@ const antiScale = {
   scaleY: 1 / scaleConfig.scaleY,
 };
 
+const ShipShape: React.FC<Ship> = (shipProps) => (
+  <Group key={shipProps.id} rotation={radToDeg(shipProps.rotation)}>
+    <RegularPolygon
+      x={shipProps.x}
+      y={shipProps.y - 0.5}
+      sides={3}
+      scaleX={0.8}
+      radius={shipProps.radius}
+      fill="blue"
+      stroke="black"
+      strokeWidth={0.05}
+      lineJoin="bevel"
+    />
+    <RegularPolygon
+      x={shipProps.x}
+      y={shipProps.y + 0.5}
+      sides={3}
+      radius={shipProps.radius}
+      fill="blue"
+      stroke="black"
+      strokeWidth={0.05}
+      lineJoin="bevel"
+    />
+  </Group>
+);
+
+const PlanetShape: React.FC<Planet> = (p) => (
+  <Circle
+    key={p.id}
+    x={p.x}
+    y={p.y}
+    radius={p.radius}
+    fill="red"
+    border={0.1}
+    opacity={0.5}
+    shadowBlur={5}
+  />
+);
+
 const PlanetsLayer = () => {
   const { data: state } = useSWR<GameState>('http://localhost:8000/api/state');
   if (!state) return null;
   const { planets } = state;
   return (
     <Layer>
-      {planets.map((p) => {
-        return (
-          <Circle
-            x={p.x}
-            y={p.y}
-            radius={p.radius}
-            fill="red"
-            border={0.1}
-            opacity={0.5}
-            shadowBlur={5}
-          />
-        );
-      })}
+      {planets.map((p) => (
+        <PlanetShape key={p.id} {...p} />
+      ))}
     </Layer>
   );
 };
@@ -111,7 +140,13 @@ const ShipsLayer = () => {
   if (!state) return null;
   const { ships } = state;
 
-  return <Layer></Layer>;
+  return (
+    <Layer>
+      {ships.map((s) => {
+        return <ShipShape key={s.id} {...s} />;
+      })}
+    </Layer>
+  );
 };
 
 const CoordLayer = () => {
@@ -161,16 +196,16 @@ const CoordLayer = () => {
         strokeWidth={0.5}
       />
       {numberPoints.map((p) => (
-        <Text text={`${p}`} x={p} y={1} {...antiScale} />
+        <Text key={p} text={`${p}`} x={p} y={1} {...antiScale} />
       ))}
       {numberPoints.map((p) => (
-        <Text text={`${p}`} x={1} y={p} {...antiScale} />
+        <Text key={p} text={`${p}`} x={1} y={p} {...antiScale} />
       ))}
       {numberPoints.map((p) => (
-        <Text text={`-${p}`} x={1} y={-p} {...antiScale} />
+        <Text key={p} text={`-${p}`} x={1} y={-p} {...antiScale} />
       ))}
       {numberPoints.map((p) => (
-        <Text text={`-${p}`} x={-p} y={1} {...antiScale} />
+        <Text key={p} text={`-${p}`} x={-p} y={1} {...antiScale} />
       ))}
     </Layer>
   );
