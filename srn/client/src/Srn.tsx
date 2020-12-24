@@ -18,30 +18,57 @@ import { ShipsLayer } from './ShipsLayer';
 import { useHotkeys } from 'react-hotkeys-hook';
 
 const shiftShip = (ship: Ship): void => {
-  ship.x += 1;
+  if (ship) {
+    ship.x += 1;
+  }
+};
+
+const updateServerState = (state: GameState) => {
+  if (state) {
+    let content = JSON.stringify(state);
+    return fetch(stateUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Length': `${content.length}`,
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors',
+      redirect: 'follow',
+      body: content,
+    });
+  }
 };
 
 const ShipControls = () => {
-  let myShip: Ship;
-  let state: GameState;
-  useHotkeys('w', () => {
-    shiftShip(myShip);
-    mutate(stateUrl, state, false);
-  });
+  const { data: state } = useSWR<GameState>(stateUrl);
 
-  const { data } = useSWR<GameState>(stateUrl);
-  if (!data) return null;
-  state = data;
-  const myPlayer = state.players[0];
-  if (!myPlayer) return null;
+  useHotkeys(
+    'w',
+    () => {
+      (async function () {
+        console.log('hotkey');
+        if (!state) {
+          console.log('no state');
+          return;
+        }
+        let myShip: Ship;
+        const myPlayer = state.players[0];
+        if (!myPlayer) return null;
 
-  const foundShip = state.ships.find((ship) => ship.id === myPlayer.ship_id);
-  if (!foundShip) return null;
-  myShip = foundShip;
+        const foundShip = state.ships.find(
+          (ship) => ship.id === myPlayer.ship_id
+        );
+        if (!foundShip) return null;
+        myShip = foundShip;
 
-  useHotkeys('a', () => {});
-  useHotkeys('s', () => {});
-  useHotkeys('d', () => {});
+        shiftShip(myShip);
+        await updateServerState(state);
+        mutate(stateUrl, state, true);
+      })();
+    },
+    [state]
+  );
+
   return null;
 };
 

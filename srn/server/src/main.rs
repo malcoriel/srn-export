@@ -6,7 +6,7 @@ extern crate serde_derive;
 #[cfg(feature = "serde_derive")]
 #[doc(hidden)]
 pub use serde_derive::*;
-
+use std::sync::RwLock;
 #[macro_use]
 extern crate rocket;
 use rocket_contrib::json::Json;
@@ -19,9 +19,10 @@ use rocket::http::Method;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
 use std::error::Error;
 
-#[get("/state")]
-fn state() -> Json<GameState> {
-    Json(GameState {
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref STATE: RwLock<GameState> = RwLock::new(GameState {
         tick: 0,
         planets: vec![
             Planet {
@@ -70,7 +71,19 @@ fn state() -> Json<GameState> {
             },
         ],
         players: vec![Player { id: 1, ship_id: 4 }],
-    })
+    });
+}
+
+#[get("/state")]
+fn get_state() -> Json<GameState> {
+    Json(STATE.read().unwrap().clone())
+}
+
+#[post("/state", data = "<state>")]
+fn post_state(state: Json<GameState>) -> () {
+    let mut mut_state = STATE.write().unwrap();
+    mut_state.ships = state.ships.clone();
+    mut_state.tick = mut_state.tick + 1;
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -79,15 +92,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     // You can also deserialize this
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
-        allowed_methods: vec![Method::Get].into_iter().map(From::from).collect(),
-        allowed_headers: AllowedHeaders::some(&["Authorization", "Accept"]),
+        allowed_methods: vec![Method::Get, Method::Post, Method::Options]
+            .into_iter()
+            .map(From::from)
+            .collect(),
+        allowed_headers: AllowedHeaders::some(&[
+            "Authorization",
+            "Accept",
+            "Content-Type",
+            "Content-Length",
+        ]),
         allow_credentials: true,
         ..Default::default()
     }
     .to_cors()?;
     rocket::ignite()
         .attach(cors)
-        .mount("/api", routes![state])
+        .mount("/api", routes![get_state, post_state])
         .launch();
     Ok(())
 }
