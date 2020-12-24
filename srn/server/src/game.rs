@@ -19,7 +19,15 @@ pub struct Ship {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Player {
+    pub id: u64,
+    pub ship_id: u64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState {
     pub planets: Vec<Planet>,
     pub ships: Vec<Ship>,
+    pub players: Vec<Player>,
+    pub tick: u32,
 }

@@ -1,11 +1,11 @@
 import useSWR from 'swr';
-import { GameState } from './common';
+import { GameState, stateUrl } from './common';
 import { Layer } from 'react-konva';
 import { PlanetShape } from './PlanetShape';
 import React from 'react';
 
 export const PlanetsLayer = () => {
-  const { data: state } = useSWR<GameState>('http://localhost:8000/api/state');
+  const { data: state } = useSWR<GameState>(stateUrl);
   if (!state) return null;
   const { planets } = state;
   return (

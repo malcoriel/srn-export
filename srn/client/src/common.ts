@@ -10,6 +10,8 @@ export const min_y = -50;
 export const radToDeg = (x: number) => (x * 180) / Math.PI;
 export const degToRad = (x: number) => (x * Math.PI) / 180;
 
+export const stateUrl = 'http://localhost:8000/api/state';
+
 export type WithId = {
   id: number;
 };
@@ -29,9 +31,15 @@ export type Planet = GameObject;
 
 export type Ship = GameObject;
 
+export type Player = WithId & {
+  ship_id: number;
+};
+
 export type GameState = {
   planets: Planet[];
   ships: Ship[];
+  players: Player[];
+  tick: number;
 };
 
 export const scaleConfig = {

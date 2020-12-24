@@ -11,7 +11,7 @@ pub use serde_derive::*;
 extern crate rocket;
 use rocket_contrib::json::Json;
 
-use crate::game::{GameState, Planet, Ship};
+use crate::game::{GameState, Planet, Player, Ship};
 mod game;
 mod vec2;
 
@@ -22,6 +22,7 @@ use std::error::Error;
 #[get("/state")]
 fn state() -> Json<GameState> {
     Json(GameState {
+        tick: 0,
         planets: vec![
             Planet {
                 id: 1,
@@ -68,6 +69,7 @@ fn state() -> Json<GameState> {
                 radius: 1.0,
             },
         ],
+        players: vec![Player { id: 1, ship_id: 4 }],
     })
 }
 
