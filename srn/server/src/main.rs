@@ -1,4 +1,3 @@
-#![feature(proc_macro_hygiene, decl_macro)]
 #[cfg(feature = "serde_derive")]
 #[allow(unused_imports)]
 #[macro_use]
@@ -12,13 +11,11 @@ extern crate rocket;
 use rocket_contrib::json::Json;
 use std::thread;
 
-#[macro_use]
-extern crate enum_derive;
-#[macro_use]
-extern crate custom_derive;
+extern crate rocket_cors;
 
 use crate::game::{GameState, Planet, Player, Ship};
 mod game;
+#[allow(dead_code)]
 mod vec2;
 
 use mpsc::{channel, Receiver, Sender};
@@ -121,35 +118,31 @@ unsafe fn get_dispatcher_sender() -> Sender<String> {
 }
 
 extern crate websocket;
-
+use num_traits::FromPrimitive;
 use std::time::Duration;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 
-custom_derive! {
-    #[derive(EnumFromStr)]
-    enum OpCode {
-        Unknown,
-        Sync,
-        Mutate,
-}
+#[macro_use]
+extern crate num_derive;
+
+#[derive(FromPrimitive, ToPrimitive)]
+enum OpCode {
+    Unknown = 0,
+    Sync = 1,
+    Mutate = 2,
 }
 
 type WSRequest =
     WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
 
 fn websocket_server() {
-    let server = Server::bind("127.0.0.1:2794").unwrap();
+    let addr = "127.0.0.1:2794";
+    let server = Server::bind(addr).unwrap();
+    println!("WS server has launched on {}", addr);
 
     for request in server.filter_map(Result::ok) {
         thread::spawn(|| handle_request(request));
-    }
-}
-
-fn qqq(msg: String) {
-    let parts = msg.split("_%_").collect::<Vec<&str>>();
-    if parts.len() != 2 {
-        eprintln!("Corrupt message (not 2 parts) {}", msg);
     }
 }
 
@@ -196,30 +189,33 @@ fn handle_request(request: WSRequest) {
                     sender.send_message(&message).unwrap();
                 }
                 OwnedMessage::Text(msg) => {
-                    let parts: Vec<&str> = msg.split("_%_").collect::<Vec<&str>>();
+                    let parts = msg.split("_%_").collect::<Vec<&str>>();
                     if parts.len() != 2 {
                         eprintln!("Corrupt message (not 2 parts) {}", msg);
                     }
-                    let x = parts.iter();
-                    let first = x.take(1).unwrap();
-                    match first.parse::<OpCode>() {
-                        Ok(op_code) => match op_code {
-                            OpCode::Sync => {
-                                let state = STATE.read().unwrap().clone();
-                                broadcast_state(state)
+                    let first = parts.iter().nth(0).unwrap();
+                    let second = parts.iter().nth(1).unwrap();
+
+                    match first.parse::<u32>() {
+                        Ok(number) => match FromPrimitive::from_u32(number) {
+                            Some(op_code) => match op_code {
+                                OpCode::Sync => {
+                                    let state = STATE.read().unwrap().clone();
+                                    broadcast_state(state)
+                                }
+                                OpCode::Mutate => {
+                                    serde_json::from_str::<GameState>(second)
+                                        .ok()
+                                        .map(|s| mutate_state(s));
+                                }
+                                _ => {}
+                            },
+                            None => {
+                                eprintln!("Invalid opcode {}", first);
                             }
-                            OpCode::Mutate => {
-                                parts
-                                    .iter()
-                                    .nth(1)
-                                    .map(|v: &&str| serde_json::from_str::<GameState>(v))
-                                    .map(|r: Result<GameState, serde_json::Error>| r.ok())
-                                    .map(|s: Option<GameState>| s.map(|s| mutate_state(s)));
-                            }
-                            _ => {}
                         },
-                        _ => {
-                            eprintln!("Invalid opcode {}", parts[0]);
+                        Err(e) => {
+                            eprintln!("Invalid opcode {} {}", first, e);
                         }
                     }
                 }
@@ -234,7 +230,8 @@ fn handle_request(request: WSRequest) {
     }
 }
 
-fn main() {
+#[launch]
+fn rocket() -> rocket::Rocket {
     unsafe {
         let (tx, rx) = channel::<String>();
         DISPATCHER_SENDER = Some(Mutex::new(tx));
@@ -279,5 +276,4 @@ fn main() {
     rocket::ignite()
         .attach(cors)
         .mount("/api", routes![get_state, post_state, options_state])
-        .launch();
 }

@@ -7,15 +7,13 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-custom_derive = "0.1.7"
-enum_derive = "0.1.7"
-futures = "0.1"
+num-traits = "0.2"
+num-derive = "0.3"
 lazy_static = "1.4.0"
-rocket = "0.4.6"
-rocket_contrib = "0.4.6"
-rocket_cors = "0.5.2"
+rocket = { git = "https://github.com/SergioBenitez/Rocket", version = "0.5.0-dev"}
+rocket_contrib = { git = "https://github.com/SergioBenitez/Rocket", version = "0.5.0-dev" }
+rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master" }
 serde = "1.0.118"
 serde_derive = "1.0.118"
 serde_json = "1.0.60"
-tokio = "0.1"
 websocket = "0.26.2"
