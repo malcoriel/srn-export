@@ -1,8 +1,7 @@
-import useSWR from 'swr';
 import React from 'react';
+import { GameState } from './common';
 
-export const DebugState = () => {
-  const { data: state } = useSWR('http://localhost:8000/api/state');
+export const DebugState: React.FC<{ state: GameState }> = ({ state }) => {
   return (
     <div
       style={{

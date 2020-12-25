@@ -3,14 +3,7 @@ import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
 import { DebugState } from './DebugState';
-import {
-  GameState,
-  height_px,
-  scaleConfig,
-  Ship,
-  stateUrl,
-  width_px,
-} from './common';
+import { height_px, scaleConfig, width_px } from './common';
 import { CoordLayer } from './CoordLayer';
 import { PlanetsLayer } from './PlanetsLayer';
 import { ShipsLayer } from './ShipsLayer';
@@ -40,7 +33,7 @@ class Srn extends React.Component<{}> {
             <ShipControls mutate={this.NS.mutate} state={this.NS.state} />
           </Stage>
         </div>
-        <DebugState />
+        <DebugState state={this.NS.state} />
       </>
     );
   }
