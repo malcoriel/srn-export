@@ -5,6 +5,6 @@ workers = 8
 keep_alive = 5
 read_timeout = 5
 write_timeout = 5
-log = "critical"
+log_level = "critical"
 limits = { forms = 32768 }
 secret_key = "SiKyMvjeqLSVdAIUfGNE2xBsDP/cVekDuhTScWA6RO4="

@@ -10,7 +10,7 @@ use std::sync::{mpsc, Arc, Mutex, RwLock};
 extern crate rocket;
 use rocket_contrib::json::Json;
 use std::thread;
-
+use uuid::*;
 extern crate rocket_cors;
 
 use crate::game::{GameState, Planet, Player, Ship};
@@ -26,7 +26,8 @@ use lazy_static::lazy_static;
 use websocket::{Message, OwnedMessage};
 
 lazy_static! {
-    static ref CLIENT_SENDERS: Arc<Mutex<Vec<Sender<String>>>> = Arc::new(Mutex::new(vec![]));
+    static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<String>)>>> =
+        Arc::new(Mutex::new(vec![]));
 }
 
 static mut DISPATCHER_SENDER: Option<Mutex<Sender<String>>> = None;
@@ -156,7 +157,8 @@ fn handle_request(request: WSRequest) {
 
     let ip = client.peer_addr().unwrap();
 
-    println!("Connection from {}", ip);
+    let client_id = Uuid::new_v4();
+    println!("Connection from {}, id={}", ip, client_id);
 
     {
         let state = STATE.read().unwrap().clone();
@@ -165,13 +167,13 @@ fn handle_request(request: WSRequest) {
     }
 
     let (client_tx, client_rx) = mpsc::channel();
-    CLIENT_SENDERS.lock().unwrap().push(client_tx);
+    CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
 
     let (mut receiver, mut sender) = client.split().unwrap();
     let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
     thread::spawn(move || {
         for message in receiver.incoming_messages() {
-            message_tx.send(message.unwrap()).unwrap();
+            message.map(|m| message_tx.send(m)).ok();
         }
     });
 
@@ -181,7 +183,10 @@ fn handle_request(request: WSRequest) {
                 OwnedMessage::Close(_) => {
                     let message = Message::close();
                     sender.send_message(&message).unwrap();
-                    println!("Client {} disconnected", ip);
+                    let mut senders = CLIENT_SENDERS.lock().unwrap();
+                    let index = senders.iter().position(|s| s.0 == client_id);
+                    index.map(|index| senders.remove(index));
+                    println!("Client {} id {} disconnected", ip, client_id);
                     return;
                 }
                 OwnedMessage::Ping(msg) => {
@@ -246,17 +251,16 @@ fn rocket() -> rocket::Rocket {
             let unwrapped = DISPATCHER_RECEIVER.as_mut().unwrap().lock().unwrap();
             while let Ok(msg) = unwrapped.recv() {
                 for sender in client_senders.lock().unwrap().iter() {
-                    sender.send(msg.clone()).unwrap();
+                    sender.1.send(msg.clone()).ok();
                 }
             }
             thread::sleep(Duration::from_millis(10))
         });
     });
-    let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000"]);
 
     // You can also deserialize this
     let cors = rocket_cors::CorsOptions {
-        allowed_origins,
+        allowed_origins: AllowedOrigins::some_exact(&["http://localhost:3000"]),
         allowed_methods: vec![Method::Get, Method::Post, Method::Options]
             .into_iter()
             .map(From::from)
@@ -267,6 +271,7 @@ fn rocket() -> rocket::Rocket {
             "Content-Type",
             "Content-Length",
         ]),
+
         allow_credentials: true,
         ..Default::default()
     }
