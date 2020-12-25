@@ -1,6 +1,17 @@
 import EventEmitter from 'events';
 import { GameState } from './common';
 
+enum OpCode {
+  Unknown,
+  Sync,
+  Mutate,
+}
+
+interface Cmd {
+  code: OpCode;
+  value: any;
+}
+
 export default class NetState extends EventEmitter {
   private socket!: WebSocket;
   state!: GameState;
@@ -13,7 +24,7 @@ export default class NetState extends EventEmitter {
 
   forceSync = () => {
     console.log('forcing sync');
-    this.send('sync');
+    this.send({ code: OpCode.Sync, value: null });
   };
 
   connect() {
@@ -35,9 +46,9 @@ export default class NetState extends EventEmitter {
     }
   }
 
-  send(value: string) {
+  private send(cmd: Cmd) {
     if (this.socket) {
-      this.socket.send(value);
+      this.socket.send(`${cmd.code}_%_${JSON.stringify(cmd.value)}`);
     } else {
       console.warn('socket is closed');
     }
@@ -45,6 +56,7 @@ export default class NetState extends EventEmitter {
 
   mutate = (newState: GameState) => {
     this.state = newState;
+    this.send({ code: OpCode.Mutate, value: newState });
     this.emit('change', this.state);
   };
 }

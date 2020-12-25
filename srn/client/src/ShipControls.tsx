@@ -3,22 +3,6 @@ import { GameState, Ship, stateUrl } from './common';
 import { useHotkeys } from 'react-hotkeys-hook';
 import _ from 'lodash/fp';
 
-const updateServerState = (state: GameState) => {
-  if (state) {
-    let content = JSON.stringify(state);
-    return fetch(stateUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Length': `${content.length}`,
-        'Content-Type': 'application/json',
-      },
-      mode: 'cors',
-      redirect: 'follow',
-      body: content,
-    });
-  }
-};
-
 const moveUp = (myShip: Ship) => {
   myShip.y -= 1;
   return myShip;
@@ -56,7 +40,6 @@ export const ShipControls: React.FC<{
     if (!myShip) return null;
     changer(myShip);
     mutate(state);
-    await updateServerState(state);
   }
 
   const controls = {

@@ -12,6 +12,11 @@ extern crate rocket;
 use rocket_contrib::json::Json;
 use std::thread;
 
+#[macro_use]
+extern crate enum_derive;
+#[macro_use]
+extern crate custom_derive;
+
 use crate::game::{GameState, Planet, Player, Ship};
 mod game;
 mod vec2;
@@ -93,6 +98,10 @@ fn options_state() {}
 
 #[post("/state", data = "<state>")]
 fn post_state(state: Json<GameState>) {
+    mutate_state(state.into_inner());
+}
+
+fn mutate_state(state: GameState) {
     let mut mut_state = STATE.write().unwrap();
     mut_state.ships = state.ships.clone();
     mut_state.tick = mut_state.tick + 1;
@@ -114,70 +123,114 @@ unsafe fn get_dispatcher_sender() -> Sender<String> {
 extern crate websocket;
 
 use std::time::Duration;
+use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
+
+custom_derive! {
+    #[derive(EnumFromStr)]
+    enum OpCode {
+        Unknown,
+        Sync,
+        Mutate,
+}
+}
+
+type WSRequest =
+    WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
 
 fn websocket_server() {
     let server = Server::bind("127.0.0.1:2794").unwrap();
 
     for request in server.filter_map(Result::ok) {
-        thread::spawn(|| {
-            if !request.protocols().contains(&"rust-websocket".to_string()) {
-                request.reject().unwrap();
-                return;
-            }
+        thread::spawn(|| handle_request(request));
+    }
+}
 
-            let mut client = request.use_protocol("rust-websocket").accept().unwrap();
+fn qqq(msg: String) {
+    let parts = msg.split("_%_").collect::<Vec<&str>>();
+    if parts.len() != 2 {
+        eprintln!("Corrupt message (not 2 parts) {}", msg);
+    }
+}
 
-            let ip = client.peer_addr().unwrap();
+fn handle_request(request: WSRequest) {
+    if !request.protocols().contains(&"rust-websocket".to_string()) {
+        request.reject().unwrap();
+        return;
+    }
 
-            println!("Connection from {}", ip);
+    let mut client = request.use_protocol("rust-websocket").accept().unwrap();
 
-            {
-                let state = STATE.read().unwrap().clone();
-                let message: Message = Message::text(serde_json::to_string(&state).unwrap());
-                client.send_message(&message).unwrap();
-            }
+    let ip = client.peer_addr().unwrap();
 
-            let (client_tx, client_rx) = mpsc::channel();
-            CLIENT_SENDERS.lock().unwrap().push(client_tx);
+    println!("Connection from {}", ip);
 
-            let (mut receiver, mut sender) = client.split().unwrap();
-            let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
-            thread::spawn(move || {
-                for message in receiver.incoming_messages() {
-                    message_tx.send(message.unwrap()).unwrap();
+    {
+        let state = STATE.read().unwrap().clone();
+        let message: Message = Message::text(serde_json::to_string(&state).unwrap());
+        client.send_message(&message).unwrap();
+    }
+
+    let (client_tx, client_rx) = mpsc::channel();
+    CLIENT_SENDERS.lock().unwrap().push(client_tx);
+
+    let (mut receiver, mut sender) = client.split().unwrap();
+    let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
+    thread::spawn(move || {
+        for message in receiver.incoming_messages() {
+            message_tx.send(message.unwrap()).unwrap();
+        }
+    });
+
+    loop {
+        if let Ok(message) = message_rx.try_recv() {
+            match message {
+                OwnedMessage::Close(_) => {
+                    let message = Message::close();
+                    sender.send_message(&message).unwrap();
+                    println!("Client {} disconnected", ip);
+                    return;
                 }
-            });
-
-            loop {
-                if let Ok(message) = message_rx.try_recv() {
-                    match message {
-                        OwnedMessage::Close(_) => {
-                            let message = Message::close();
-                            sender.send_message(&message).unwrap();
-                            println!("Client {} disconnected", ip);
-                            return;
-                        }
-                        OwnedMessage::Ping(msg) => {
-                            let message = Message::pong(msg);
-                            sender.send_message(&message).unwrap();
-                        }
-                        OwnedMessage::Text(msg) => {
-                            if msg == "sync" {
+                OwnedMessage::Ping(msg) => {
+                    let message = Message::pong(msg);
+                    sender.send_message(&message).unwrap();
+                }
+                OwnedMessage::Text(msg) => {
+                    let parts: Vec<&str> = msg.split("_%_").collect::<Vec<&str>>();
+                    if parts.len() != 2 {
+                        eprintln!("Corrupt message (not 2 parts) {}", msg);
+                    }
+                    let x = parts.iter();
+                    let first = x.take(1).unwrap();
+                    match first.parse::<OpCode>() {
+                        Ok(op_code) => match op_code {
+                            OpCode::Sync => {
                                 let state = STATE.read().unwrap().clone();
                                 broadcast_state(state)
                             }
+                            OpCode::Mutate => {
+                                parts
+                                    .iter()
+                                    .nth(1)
+                                    .map(|v: &&str| serde_json::from_str::<GameState>(v))
+                                    .map(|r: Result<GameState, serde_json::Error>| r.ok())
+                                    .map(|s: Option<GameState>| s.map(|s| mutate_state(s)));
+                            }
+                            _ => {}
+                        },
+                        _ => {
+                            eprintln!("Invalid opcode {}", parts[0]);
                         }
-                        _ => {}
                     }
                 }
-                if let Ok(message) = client_rx.try_recv() {
-                    let message: Message = Message::text(message);
-                    sender.send_message(&message).unwrap();
-                }
-                thread::sleep(Duration::from_millis(10));
+                _ => {}
             }
-        });
+        }
+        if let Ok(message) = client_rx.try_recv() {
+            let message: Message = Message::text(message);
+            sender.send_message(&message).unwrap();
+        }
+        thread::sleep(Duration::from_millis(10));
     }
 }
 
