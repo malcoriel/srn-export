@@ -28,6 +28,7 @@ export type GameObject = WithId &
   };
 
 export type Planet = GameObject;
+export type Star = GameObject;
 
 export type Ship = GameObject;
 
@@ -42,6 +43,7 @@ export type GameState = {
   players: Player[];
   tick: number;
   my_id: string;
+  star: Star;
 };
 
 export const scaleConfig = {

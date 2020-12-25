@@ -5,7 +5,7 @@ import './index.css';
 import { DebugStateLayer } from './DebugStateLayer';
 import { height_px, scaleConfig, width_px } from './common';
 import { CoordLayer } from './CoordLayer';
-import { PlanetsLayer } from './PlanetsLayer';
+import { BodiesLayer } from './BodiesLayer';
 import { ShipsLayer } from './ShipsLayer';
 import NetState from './NetState';
 import { ShipControls } from './ShipControls';
@@ -52,7 +52,7 @@ class Srn extends React.Component<
         <div style={{ padding: 5 }}>
           {this.state.ready && (
             <Stage width={width_px} height={height_px} {...scaleConfig}>
-              <PlanetsLayer state={this.NS.state} />
+              <BodiesLayer state={this.NS.state} />
               <ShipsLayer state={this.NS.state} />
               <CoordLayer />
               <CanvasHudLayer

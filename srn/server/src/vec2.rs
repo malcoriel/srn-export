@@ -129,6 +129,17 @@ impl Vec2f64 {
             y: self.y * other.y,
         }
     }
+
+    pub fn scalar_mul(&self, coeff: f64) -> Vec2f64 {
+        Vec2f64 {
+            x: self.x * coeff,
+            y: self.y * coeff,
+        }
+    }
+
+    pub fn euclidean_distance(&self, other: &Vec2f64) -> f64 {
+        ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()
+    }
 }
 
 pub fn approx_eq(a: f64, b: f64) -> bool {
@@ -160,4 +171,24 @@ pub fn deg_to_rad(d: f64) -> f64 {
 
 pub fn angle_deg(a: Vec2f64, b: Vec2f64) -> f64 {
     rad_to_deg(angle_rad(a, b))
+}
+
+// x goes right, y goes down
+pub fn rotate(v: Vec2f64, angle: f64) -> Vec2f64 {
+    let x = v.x;
+    let y = v.y;
+    // eprintln!(
+    //     "x {} y {} sin {} cos {} angle {}",
+    //     x,
+    //     y,
+    //     angle.sin(),
+    //     angle.cos(),
+    //     angle * 180.0 / PI,
+    // );
+    let x_new = ((x) * angle.cos()) - ((-y) * angle.sin());
+    let cmp1 = (-y) * angle.cos();
+    let cmp2 = (x) * angle.sin();
+    let y_new = cmp1 - cmp2;
+    // eprintln!("cmp1 {} cmp2 {}", cmp1, cmp2);
+    return Vec2f64 { x: x_new, y: y_new };
 }

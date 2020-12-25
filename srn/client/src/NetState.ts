@@ -13,7 +13,7 @@ interface Cmd {
   value: any;
 }
 
-const FORCE_SYNC_INTERVAL = 10000;
+const FORCE_SYNC_INTERVAL = 1000;
 const RECONNECT_INTERVAL = 1000;
 
 export default class NetState extends EventEmitter {
@@ -23,12 +23,21 @@ export default class NetState extends EventEmitter {
   public preferredName = 'player';
   constructor() {
     super();
-    this.state = { planets: [], players: [], ships: [], tick: -1, my_id: '' };
+    this.state = {
+      planets: [],
+      players: [],
+      ships: [],
+      tick: -1,
+      my_id: '',
+      // @ts-ignore
+      star: null,
+    };
     setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
   }
 
   forceSync = () => {
     if (!this.connecting) {
+      this.state.tick = -1;
       this.send({ code: OpCode.Sync, value: null });
     }
   };
@@ -65,10 +74,6 @@ export default class NetState extends EventEmitter {
       const parsed = JSON.parse(data);
       if (parsed.tick > this.state.tick) {
         this.state = parsed;
-        console.log(
-          'got name',
-          parsed.players.map((p: Player) => p.name)
-        );
         this.emit('change', this.state);
       }
     } catch (e) {

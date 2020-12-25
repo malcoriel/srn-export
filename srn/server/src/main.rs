@@ -13,10 +13,11 @@ use std::thread;
 use uuid::*;
 extern crate rocket_cors;
 
-use crate::game::{GameState, Planet, Player, Ship};
+use crate::game::{GameState, Planet, Player, Ship, Star};
 mod game;
 #[allow(dead_code)]
 mod vec2;
+mod vec2_test;
 
 use mpsc::{channel, Receiver, Sender};
 use rocket::http::Method;
@@ -52,42 +53,61 @@ fn new_id() -> Uuid {
     Uuid::new_v4()
 }
 lazy_static! {
-    static ref STATE: RwLock<GameState> = RwLock::new(GameState {
-        my_id: new_id(),
-        tick: 0,
-        planets: vec![
-            Planet {
-                id: new_id(),
-                x: 0.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 1.0,
-            },
-            Planet {
-                id: new_id(),
-                x: 10.0,
-                y: 10.0,
-                rotation: 0.0,
-                radius: 3.0,
-            },
-            Planet {
-                id: new_id(),
-                x: 5.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 0.5,
-            },
-            Planet {
-                id: new_id(),
-                x: 0.0,
-                y: 5.0,
-                rotation: 0.0,
-                radius: 0.5,
-            },
-        ],
-        ships: vec![],
-        players: vec![],
-    });
+    static ref STATE: RwLock<GameState> = {
+        let star_id = new_id();
+        let star = Star {
+            id: star_id.clone(),
+            x: 0.0,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 10.0,
+        };
+        RwLock::new(GameState {
+            my_id: new_id(),
+            tick: 0,
+            star,
+            planets: vec![
+                Planet {
+                    id: new_id(),
+                    x: 15.0,
+                    y: 0.0,
+                    rotation: 0.0,
+                    radius: 0.5,
+                    orbit_speed: 0.3,
+                    anchor_id: star_id.clone(),
+                },
+                Planet {
+                    id: new_id(),
+                    x: 19.0,
+                    y: 0.0,
+                    rotation: 0.0,
+                    radius: 1.0,
+                    orbit_speed: 0.3,
+                    anchor_id: star_id.clone(),
+                },
+                Planet {
+                    id: new_id(),
+                    x: 40.0,
+                    y: 0.0,
+                    rotation: 0.0,
+                    radius: 0.5,
+                    orbit_speed: 0.8,
+                    anchor_id: star_id.clone(),
+                },
+                Planet {
+                    id: new_id(),
+                    x: 30.0,
+                    y: 0.0,
+                    rotation: 0.0,
+                    radius: 3.0,
+                    orbit_speed: 0.2,
+                    anchor_id: star_id.clone(),
+                },
+            ],
+            ships: vec![],
+            players: vec![],
+        })
+    };
 }
 
 #[get("/state")]
@@ -122,7 +142,10 @@ unsafe fn get_dispatcher_sender() -> Sender<ClientMessage> {
 }
 
 extern crate websocket;
+use crate::vec2::{angle_rad, rotate, Vec2f64};
+use chrono::Local;
 use num_traits::FromPrimitive;
+use std::f64::consts::PI;
 use std::time::Duration;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
@@ -269,7 +292,6 @@ fn change_player_name(conn_id: &Uuid, new_name: &&str) {
             });
     }
     {
-        println!("broadcasting");
         broadcast_state(STATE.read().unwrap().clone());
     }
 }
@@ -331,17 +353,20 @@ fn rocket() -> rocket::Rocket {
     std::thread::spawn(|| {
         websocket_server();
     });
+
     std::thread::spawn(|| {
-        let client_senders = CLIENT_SENDERS.clone();
-        thread::spawn(move || unsafe {
-            let unwrapped = DISPATCHER_RECEIVER.as_mut().unwrap().lock().unwrap();
-            while let Ok(msg) = unwrapped.recv() {
-                for sender in client_senders.lock().unwrap().iter() {
-                    sender.1.send(msg.clone()).ok();
-                }
+        physics_thread();
+    });
+    let client_senders = CLIENT_SENDERS.clone();
+    thread::spawn(move || unsafe {
+        let unwrapped = DISPATCHER_RECEIVER.as_mut().unwrap().lock().unwrap();
+        while let Ok(msg) = unwrapped.recv() {
+            for sender in client_senders.lock().unwrap().iter() {
+                sender.1.send(msg.clone()).ok();
             }
             thread::sleep(Duration::from_millis(10))
-        });
+        }
+        thread::sleep(Duration::from_millis(10))
     });
 
     // You can also deserialize this
@@ -367,4 +392,60 @@ fn rocket() -> rocket::Rocket {
     rocket::ignite()
         .attach(cors)
         .mount("/api", routes![get_state, post_state, options_state])
+}
+
+const DEBUG_PHYSICS: bool = false;
+
+fn physics_thread() {
+    let mut last = Local::now();
+    loop {
+        thread::sleep(Duration::from_millis(1000));
+        let mut state = STATE.write().unwrap();
+        let now = Local::now();
+        let elapsed = now - last;
+        last = now;
+        state.planets = update_planets(&state.planets, elapsed.num_microseconds().unwrap());
+    }
+}
+
+fn update_planets(planets: &Vec<Planet>, elapsed_micro: i64) -> Vec<Planet> {
+    planets
+        .iter()
+        .map(|p| {
+            if DEBUG_PHYSICS {
+                println!("p {} elapsed {}", p.id, elapsed_micro);
+            }
+            let mut p = p.clone();
+            let current_pos = Vec2f64 { x: p.x, y: p.y };
+            if DEBUG_PHYSICS {
+                println!("old {}", current_pos);
+            }
+
+            let orbit_length = current_pos.euclidean_distance(&Vec2f64 { x: 0.0, y: 0.0 });
+            let base_vec = Vec2f64 {
+                x: orbit_length,
+                y: 0.0,
+            };
+            let mut current_angle = angle_rad(base_vec.clone(), current_pos);
+            if current_pos.y > 0.0 {
+                current_angle = 2.0 * PI - current_angle;
+            }
+            let angle_diff = p.orbit_speed * (elapsed_micro as f64) / 1000.0 / 1000.0;
+            if DEBUG_PHYSICS {
+                println!("current angle: {}", current_angle);
+                println!("angle diff: {}", angle_diff);
+            }
+            let new_angle = (current_angle + angle_diff) % (2.0 * PI);
+            if DEBUG_PHYSICS {
+                println!("new_angle: {}", new_angle);
+            }
+            let new_vec = rotate(base_vec.clone(), new_angle);
+            p.x = new_vec.x;
+            p.y = new_vec.y;
+            if DEBUG_PHYSICS {
+                println!("new {}", new_vec);
+            }
+            return p;
+        })
+        .collect::<Vec<Planet>>()
 }
