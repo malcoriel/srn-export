@@ -88,6 +88,9 @@ fn get_state() -> Json<GameState> {
     Json(STATE.read().unwrap().clone())
 }
 
+#[options("/state")]
+fn options_state() {}
+
 #[post("/state", data = "<state>")]
 fn post_state(state: Json<GameState>) {
     let mut mut_state = STATE.write().unwrap();
@@ -222,6 +225,6 @@ fn main() {
 
     rocket::ignite()
         .attach(cors)
-        .mount("/api", routes![get_state, post_state])
+        .mount("/api", routes![get_state, post_state, options_state])
         .launch();
 }
