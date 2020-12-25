@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState, Ship, stateUrl } from './common';
+import { GameState, Ship } from './common';
 import { useHotkeys } from 'react-hotkeys-hook';
 import _ from 'lodash/fp';
 
@@ -26,7 +26,7 @@ export const ShipControls: React.FC<{
 }> = ({ state, mutate }) => {
   const findMyShip = () => {
     let myShip: Ship;
-    const myPlayer = state.players[0];
+    const myPlayer = state.players.find((player) => player.id === state.my_id);
     if (!myPlayer) return null;
 
     const foundShip = state.ships.find((ship) => ship.id === myPlayer.ship_id);

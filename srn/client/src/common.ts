@@ -13,7 +13,7 @@ export const degToRad = (x: number) => (x * Math.PI) / 180;
 export const stateUrl = 'http://localhost:8000/api/state';
 
 export type WithId = {
-  id: number;
+  id: string;
 };
 
 export type Vec2f64 = {
@@ -32,7 +32,7 @@ export type Planet = GameObject;
 export type Ship = GameObject;
 
 export type Player = WithId & {
-  ship_id: number;
+  ship_id?: string;
 };
 
 export type GameState = {
@@ -40,6 +40,7 @@ export type GameState = {
   ships: Ship[];
   players: Player[];
   tick: number;
+  my_id: string;
 };
 
 export const scaleConfig = {

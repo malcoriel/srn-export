@@ -1,7 +1,8 @@
 import React from 'react';
 import { GameState } from './common';
+import ReactJson from 'react-json-view';
 
-export const DebugState: React.FC<{ state: GameState }> = ({ state }) => {
+export const DebugStateLayer: React.FC<{ state: GameState }> = ({ state }) => {
   return (
     <div
       style={{
@@ -12,11 +13,13 @@ export const DebugState: React.FC<{ state: GameState }> = ({ state }) => {
         bottom: 5,
         width: 300,
         height: 300,
-        opacity: 0.5,
+        opacity: 0.9,
+        backgroundColor: 'white',
+        zIndex: 1,
         border: 'solid gray 0.5px',
       }}
     >
-      {JSON.stringify(state, null, 2)}
+      <ReactJson src={state} />
     </div>
   );
 };

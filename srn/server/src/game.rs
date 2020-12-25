@@ -1,8 +1,9 @@
 use serde_derive::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Planet {
-    pub id: u64,
+    pub id: Uuid,
     pub x: f64,
     pub y: f64,
     pub rotation: f64,
@@ -11,7 +12,7 @@ pub struct Planet {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ship {
-    pub id: u64,
+    pub id: Uuid,
     pub x: f64,
     pub y: f64,
     pub rotation: f64,
@@ -20,12 +21,13 @@ pub struct Ship {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Player {
-    pub id: u64,
-    pub ship_id: u64,
+    pub id: Uuid,
+    pub ship_id: Option<Uuid>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState {
+    pub my_id: Uuid,
     pub planets: Vec<Planet>,
     pub ships: Vec<Ship>,
     pub players: Vec<Player>,

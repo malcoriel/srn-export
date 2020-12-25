@@ -2,7 +2,7 @@ import React from 'react';
 import { Layer, Stage, Text } from 'react-konva';
 import 'reset-css';
 import './index.css';
-import { DebugState } from './DebugState';
+import { DebugStateLayer } from './DebugStateLayer';
 import {
   antiOffset,
   antiScale,
@@ -54,7 +54,7 @@ class Srn extends React.Component<{}> {
             <ShipControls mutate={this.NS.mutate} state={this.NS.state} />
           </Stage>
         </div>
-        <DebugState state={this.NS.state} />
+        <DebugStateLayer state={this.NS.state} />
       </>
     );
   }

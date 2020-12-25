@@ -21,7 +21,7 @@ export default class NetState extends EventEmitter {
   public connecting = true;
   constructor() {
     super();
-    this.state = { planets: [], players: [], ships: [], tick: -1 };
+    this.state = { planets: [], players: [], ships: [], tick: -1, my_id: '' };
     setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
   }
 
