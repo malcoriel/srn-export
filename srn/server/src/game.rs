@@ -23,6 +23,7 @@ pub struct Ship {
 pub struct Player {
     pub id: Uuid,
     pub ship_id: Option<Uuid>,
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

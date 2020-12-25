@@ -1,33 +1,26 @@
 import React from 'react';
-import { Layer, Stage, Text } from 'react-konva';
+import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
 import { DebugStateLayer } from './DebugStateLayer';
-import {
-  antiOffset,
-  antiScale,
-  GameState,
-  height_px,
-  scaleConfig,
-  width_px,
-} from './common';
+import { height_px, scaleConfig, width_px } from './common';
 import { CoordLayer } from './CoordLayer';
 import { PlanetsLayer } from './PlanetsLayer';
 import { ShipsLayer } from './ShipsLayer';
 import NetState from './NetState';
 import { ShipControls } from './ShipControls';
+import { CanvasHudLayer, HtmlHudLayer } from './CanvasHudLayer';
 
-const HudLayer: React.FC<{ state: GameState; connecting: boolean }> = ({
-  connecting,
-}) => {
-  return (
-    <Layer {...antiScale} {...antiOffset}>
-      {connecting && <Text x={10} y={10} text="Connecting..." />}
-    </Layer>
-  );
-};
+import {
+  adjectives,
+  animals,
+  uniqueNamesGenerator,
+} from 'unique-names-generator';
 
-class Srn extends React.Component<{}> {
+class Srn extends React.Component<
+  {},
+  { preferredName: string; ready: boolean }
+> {
   private NS: NetState;
   constructor(props: {}) {
     super(props);
@@ -38,22 +31,50 @@ class Srn extends React.Component<{}> {
     NS.on('network', () => {
       this.forceUpdate();
     });
-    NS.connect();
     this.NS = NS;
+    this.state = {
+      ready: false,
+      preferredName: uniqueNamesGenerator({
+        dictionaries: [adjectives, animals],
+        separator: '-',
+      }).toUpperCase(),
+    };
+  }
+
+  start() {
+    this.NS.preferredName = this.state.preferredName;
+    this.NS.connect();
   }
 
   render() {
     return (
       <>
         <div style={{ padding: 5 }}>
-          <Stage width={width_px} height={height_px} {...scaleConfig}>
-            <PlanetsLayer state={this.NS.state} />
-            <ShipsLayer state={this.NS.state} />
-            <CoordLayer />
-            <HudLayer state={this.NS.state} connecting={this.NS.connecting} />
-            <ShipControls mutate={this.NS.mutate} state={this.NS.state} />
-          </Stage>
+          {this.state.ready && (
+            <Stage width={width_px} height={height_px} {...scaleConfig}>
+              <PlanetsLayer state={this.NS.state} />
+              <ShipsLayer state={this.NS.state} />
+              <CoordLayer />
+              <CanvasHudLayer
+                state={this.NS.state}
+                connecting={this.NS.connecting}
+              />
+              <ShipControls mutate={this.NS.mutate} state={this.NS.state} />
+            </Stage>
+          )}
         </div>
+        {!this.state.ready && (
+          <HtmlHudLayer
+            onPreferredNameChange={(name) =>
+              this.setState({ preferredName: name })
+            }
+            onGo={() => {
+              this.setState({ ready: true });
+              this.start();
+            }}
+            preferredName={this.state.preferredName}
+          />
+        )}
         <DebugStateLayer state={this.NS.state} />
       </>
     );

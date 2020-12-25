@@ -130,11 +130,12 @@ use websocket::sync::Server;
 #[macro_use]
 extern crate num_derive;
 
-#[derive(FromPrimitive, ToPrimitive)]
+#[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
 enum OpCode {
     Unknown = 0,
     Sync = 1,
     Mutate = 2,
+    Name = 3,
 }
 
 type WSRequest =
@@ -225,7 +226,10 @@ fn handle_request(request: WSRequest) {
                                         .ok()
                                         .map(|s| mutate_state(s));
                                 }
-                                _ => {}
+                                OpCode::Name => {
+                                    change_player_name(&client_id, second);
+                                }
+                                OpCode::Unknown => {}
                             },
                             None => {
                                 eprintln!("Invalid opcode {}", first);
@@ -252,12 +256,31 @@ fn handle_request(request: WSRequest) {
     }
 }
 
+fn change_player_name(conn_id: &Uuid, new_name: &&str) {
+    {
+        let mut state = STATE.write().unwrap();
+        state.tick += 1;
+        state
+            .players
+            .iter_mut()
+            .find(|p| p.id == *conn_id)
+            .map(|p| {
+                p.name = new_name.to_string();
+            });
+    }
+    {
+        println!("broadcasting");
+        broadcast_state(STATE.read().unwrap().clone());
+    }
+}
+
 fn make_new_player(conn_id: &Uuid) {
     {
         let mut state = STATE.write().unwrap();
         state.players.push(Player {
             id: conn_id.clone(),
             ship_id: None,
+            name: conn_id.to_string(),
         });
     }
     spawn_ship(conn_id);

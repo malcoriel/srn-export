@@ -5,6 +5,7 @@ enum OpCode {
   Unknown,
   Sync,
   Mutate,
+  Name,
 }
 
 interface Cmd {
@@ -19,6 +20,7 @@ export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
   state!: GameState;
   public connecting = true;
+  public preferredName = 'player';
   constructor() {
     super();
     this.state = { planets: [], players: [], ships: [], tick: -1, my_id: '' };
@@ -47,6 +49,7 @@ export default class NetState extends EventEmitter {
     };
     this.socket.onopen = () => {
       this.connecting = false;
+      this.send({ code: OpCode.Name, value: this.preferredName });
     };
     this.socket.onerror = () => {
       console.warn('socket error');
@@ -71,7 +74,20 @@ export default class NetState extends EventEmitter {
 
   private send(cmd: Cmd) {
     if (this.socket && !this.connecting) {
-      this.socket.send(`${cmd.code}_%_${JSON.stringify(cmd.value)}`);
+      switch (cmd.code) {
+        case OpCode.Sync: {
+          this.socket.send(`${cmd.code}_%_`);
+          break;
+        }
+        case OpCode.Mutate: {
+          this.socket.send(`${cmd.code}_%_${JSON.stringify(cmd.value)}`);
+          break;
+        }
+        case OpCode.Name: {
+          this.socket.send(`${cmd.code}_%_${cmd.value}`);
+          break;
+        }
+      }
     } else {
     }
   }
@@ -80,5 +96,9 @@ export default class NetState extends EventEmitter {
     this.state = newState;
     this.send({ code: OpCode.Mutate, value: newState });
     this.emit('change', this.state);
+  };
+
+  onPreferredNameChange = (newName: string) => {
+    this.preferredName = newName;
   };
 }

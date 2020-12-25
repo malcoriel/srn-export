@@ -33,6 +33,7 @@ export type Ship = GameObject;
 
 export type Player = WithId & {
   ship_id?: string;
+  name: string;
 };
 
 export type GameState = {
