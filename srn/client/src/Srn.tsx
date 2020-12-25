@@ -16,6 +16,7 @@ import { CoordLayer } from './CoordLayer';
 import { PlanetsLayer } from './PlanetsLayer';
 import { ShipsLayer } from './ShipsLayer';
 import { useHotkeys } from 'react-hotkeys-hook';
+import NetState from './NetState';
 
 const shiftShip = (ship: Ship): void => {
   if (ship) {
@@ -77,7 +78,7 @@ class Srn extends Component {
     return (
       <SWRConfig
         value={{
-          refreshInterval: 1000,
+          refreshInterval: 10000,
           fetcher: (url, init) => fetch(url, init).then((res) => res.json()),
         }}
       >
@@ -96,5 +97,10 @@ class Srn extends Component {
     );
   }
 }
+
+const NS = new NetState();
+NS.connect();
+// @ts-ignore
+window.send = NS.send.bind(NS);
 
 export default Srn;
