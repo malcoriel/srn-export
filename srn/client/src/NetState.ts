@@ -7,20 +7,20 @@ export default class NetState extends EventEmitter {
   constructor() {
     super();
     this.state = { planets: [], players: [], ships: [], tick: -1 };
+    // @ts-ignore
+    window.forceSync = this.forceSync;
   }
 
-  // forceSync() {
-  //   console.log('forcing sync');
-  //   this.send('sync');
-  // }
+  forceSync = () => {
+    console.log('forcing sync');
+    this.send('sync');
+  };
 
   connect() {
     this.socket = new WebSocket('ws://127.0.0.1:2794', 'rust-websocket');
     this.socket.onmessage = (event) => {
-      console.log('message', event.data);
       this.handleMessage(event.data);
     };
-    // this.socket.onopen = () => this.forceSync();
   }
 
   private handleMessage(data: string) {

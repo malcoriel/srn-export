@@ -99,7 +99,6 @@ fn post_state(state: Json<GameState>) {
 fn broadcast_state(state: GameState) {
     unsafe {
         let sender = get_dispatcher_sender();
-        println!("broadcasting");
         let serialized = serde_json::to_string(&state).unwrap();
         sender.send(serialized).unwrap();
     }
@@ -111,6 +110,7 @@ unsafe fn get_dispatcher_sender() -> Sender<String> {
 
 extern crate websocket;
 
+use std::time::Duration;
 use websocket::sync::Server;
 
 fn websocket_server() {
@@ -135,44 +135,44 @@ fn websocket_server() {
                 client.send_message(&message).unwrap();
             }
 
-            unsafe {
-                let dispatcher = get_dispatcher_sender();
+            let (client_tx, client_rx) = mpsc::channel();
+            CLIENT_SENDERS.lock().unwrap().push(client_tx);
 
-                let (client_tx, client_rx) = mpsc::channel();
-                CLIENT_SENDERS.lock().unwrap().push(client_tx);
+            let (mut receiver, mut sender) = client.split().unwrap();
+            let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
+            thread::spawn(move || {
+                for message in receiver.incoming_messages() {
+                    message_tx.send(message.unwrap()).unwrap();
+                }
+            });
 
-                let (mut receiver, mut sender) = client.split().unwrap();
-                let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
-                thread::spawn(move || {
-                    for message in receiver.incoming_messages() {
-                        message_tx.send(message.unwrap()).unwrap();
-                    }
-                });
-
-                loop {
-                    if let Ok(message) = message_rx.try_recv() {
-                        match message {
-                            OwnedMessage::Close(_) => {
-                                let message = Message::close();
-                                sender.send_message(&message).unwrap();
-                                println!("Client {} disconnected", ip);
-                                return;
-                            }
-                            OwnedMessage::Ping(msg) => {
-                                let message = Message::pong(msg);
-                                sender.send_message(&message).unwrap();
-                            }
-                            OwnedMessage::Text(txt) => {
-                                dispatcher.send(txt).unwrap();
-                            }
-                            _ => {}
+            loop {
+                if let Ok(message) = message_rx.try_recv() {
+                    match message {
+                        OwnedMessage::Close(_) => {
+                            let message = Message::close();
+                            sender.send_message(&message).unwrap();
+                            println!("Client {} disconnected", ip);
+                            return;
                         }
-                    }
-                    if let Ok(message) = client_rx.try_recv() {
-                        let message: Message = Message::text(message);
-                        sender.send_message(&message).unwrap();
+                        OwnedMessage::Ping(msg) => {
+                            let message = Message::pong(msg);
+                            sender.send_message(&message).unwrap();
+                        }
+                        OwnedMessage::Text(msg) => {
+                            if msg == "sync" {
+                                let state = STATE.read().unwrap().clone();
+                                broadcast_state(state)
+                            }
+                        }
+                        _ => {}
                     }
                 }
+                if let Ok(message) = client_rx.try_recv() {
+                    let message: Message = Message::text(message);
+                    sender.send_message(&message).unwrap();
+                }
+                thread::sleep(Duration::from_millis(10));
             }
         });
     }
@@ -196,6 +196,7 @@ fn main() {
                     sender.send(msg.clone()).unwrap();
                 }
             }
+            thread::sleep(Duration::from_millis(10))
         });
     });
     let allowed_origins = AllowedOrigins::some_exact(&["http://localhost:3000"]);

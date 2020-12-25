@@ -5,7 +5,6 @@ import React from 'react';
 
 export const ShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
   if (!state) return null;
-  console.log('ships layer');
   const { ships } = state;
 
   return (

@@ -5,5 +5,5 @@ workers = 8
 keep_alive = 5
 read_timeout = 5
 write_timeout = 5
-log = "normal"
+log = "critical"
 limits = { forms = 32768 }
