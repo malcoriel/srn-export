@@ -6,7 +6,7 @@ extern crate serde_derive;
 #[cfg(feature = "serde_derive")]
 #[doc(hidden)]
 pub use serde_derive::*;
-use std::sync::{mpsc, Arc, Mutex, MutexGuard, RwLock};
+use std::sync::{mpsc, Arc, Mutex, RwLock};
 #[macro_use]
 extern crate rocket;
 use rocket_contrib::json::Json;
@@ -19,7 +19,6 @@ mod vec2;
 use mpsc::{channel, Receiver, Sender};
 use rocket::http::Method;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
-use std::error::Error;
 
 use lazy_static::lazy_static;
 use websocket::{Message, OwnedMessage};
@@ -112,7 +111,6 @@ unsafe fn get_dispatcher_sender() -> Sender<String> {
 
 extern crate websocket;
 
-use websocket::client::sync::Writer;
 use websocket::sync::Server;
 
 fn websocket_server() {
@@ -131,8 +129,11 @@ fn websocket_server() {
 
             println!("Connection from {}", ip);
 
-            let message: Message = Message::text("{message:\"connected\"}".to_string());
-            client.send_message(&message).unwrap();
+            {
+                let state = STATE.read().unwrap().clone();
+                let message: Message = Message::text(serde_json::to_string(&state).unwrap());
+                client.send_message(&message).unwrap();
+            }
 
             unsafe {
                 let dispatcher = get_dispatcher_sender();

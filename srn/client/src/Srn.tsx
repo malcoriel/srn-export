@@ -1,4 +1,4 @@
-import React, { Component, useEffect } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import { Stage } from 'react-konva';
 import useSWR, { SWRConfig, mutate } from 'swr';
 import 'reset-css';
@@ -40,9 +40,10 @@ const updateServerState = (state: GameState) => {
   }
 };
 
-const ShipControls = () => {
-  const { data: state } = useSWR<GameState>(stateUrl);
-
+const ShipControls: React.FC<{
+  state: GameState;
+  mutate: (gs: GameState) => void;
+}> = ({ state, mutate }) => {
   useHotkeys(
     'w',
     () => {
@@ -64,7 +65,7 @@ const ShipControls = () => {
 
         shiftShip(myShip);
         await updateServerState(state);
-        mutate(stateUrl, state, true);
+        mutate(state);
       })();
     },
     [state]
@@ -73,34 +74,34 @@ const ShipControls = () => {
   return null;
 };
 
-class Srn extends Component {
+class Srn extends React.Component<{}> {
+  private NS: NetState;
+  constructor(props: {}) {
+    super(props);
+    const NS = new NetState();
+    NS.on('change', () => {
+      console.log('changed!');
+      this.forceUpdate();
+    });
+    NS.connect();
+    this.NS = NS;
+  }
+
   render() {
     return (
-      <SWRConfig
-        value={{
-          refreshInterval: 10000,
-          fetcher: (url, init) => fetch(url, init).then((res) => res.json()),
-        }}
-      >
-        <>
-          <div style={{ padding: 5 }}>
-            <Stage width={width_px} height={height_px} {...scaleConfig}>
-              <PlanetsLayer />
-              <ShipsLayer />
-              <CoordLayer />
-              <ShipControls />
-            </Stage>
-          </div>
-          <DebugState />
-        </>
-      </SWRConfig>
+      <>
+        <div style={{ padding: 5 }}>
+          <Stage width={width_px} height={height_px} {...scaleConfig}>
+            <PlanetsLayer state={this.NS.state} />
+            <ShipsLayer state={this.NS.state} />
+            <CoordLayer />
+            <ShipControls mutate={this.NS.mutate} state={this.NS.state} />
+          </Stage>
+        </div>
+        <DebugState />
+      </>
     );
   }
 }
-
-const NS = new NetState();
-NS.connect();
-// @ts-ignore
-window.send = NS.send.bind(NS);
 
 export default Srn;

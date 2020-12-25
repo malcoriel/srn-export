@@ -1,12 +1,9 @@
-import useSWR from 'swr';
-import { GameState, stateUrl } from './common';
+import { GameState } from './common';
 import { Layer } from 'react-konva';
 import { ShipShape } from './ShipShape';
 import React from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
 
-export const ShipsLayer = () => {
-  const { data: state } = useSWR<GameState>(stateUrl);
+export const ShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
   if (!state) return null;
   console.log('ships layer');
   const { ships } = state;
