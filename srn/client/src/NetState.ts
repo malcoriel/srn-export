@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { GameState } from './common';
+import { GameState, Player } from './common';
 
 enum OpCode {
   Unknown,
@@ -65,6 +65,10 @@ export default class NetState extends EventEmitter {
       const parsed = JSON.parse(data);
       if (parsed.tick > this.state.tick) {
         this.state = parsed;
+        console.log(
+          'got name',
+          parsed.players.map((p: Player) => p.name)
+        );
         this.emit('change', this.state);
       }
     } catch (e) {
