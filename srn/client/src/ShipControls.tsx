@@ -63,8 +63,11 @@ export const ShipControls: React.FC<{
     w: moveUp,
     'w+a': _.compose(moveUp, moveLeft),
     s: moveDown,
+    's+a': _.compose(moveDown, moveLeft),
     a: moveLeft,
+    's+d': _.compose(moveDown, moveRight),
     d: moveRight,
+    'w+d': _.compose(moveUp, moveRight),
   };
 
   for (const [key, fn] of Object.entries(controls)) {
