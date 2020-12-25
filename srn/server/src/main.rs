@@ -198,6 +198,7 @@ fn handle_request(request: WSRequest) {
                     index.map(|index| senders.remove(index));
                     remove_player(&client_id);
                     println!("Client {} id {} disconnected", ip, client_id);
+                    broadcast_state(STATE.read().unwrap().clone());
                     return;
                 }
                 OwnedMessage::Ping(msg) => {
@@ -263,23 +264,21 @@ fn make_new_player(conn_id: &Uuid) {
 }
 
 fn remove_player(conn_id: &Uuid) {
-    {
-        let mut state = STATE.write().unwrap();
-        state
-            .players
-            .iter()
-            .position(|p| p.id == *conn_id)
-            .map(|i| {
-                let player = state.players.remove(i);
-                player.ship_id.map(|player_ship_id| {
-                    state
-                        .ships
-                        .iter()
-                        .position(|s| s.id == player_ship_id)
-                        .map(|i| state.ships.remove(i))
-                })
-            });
-    }
+    let mut state = STATE.write().unwrap();
+    state
+        .players
+        .iter()
+        .position(|p| p.id == *conn_id)
+        .map(|i| {
+            let player = state.players.remove(i);
+            player.ship_id.map(|player_ship_id| {
+                state
+                    .ships
+                    .iter()
+                    .position(|s| s.id == player_ship_id)
+                    .map(|i| state.ships.remove(i))
+            })
+        });
 }
 
 fn spawn_ship(player_id: &Uuid) {
