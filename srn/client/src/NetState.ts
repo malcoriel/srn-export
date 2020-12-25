@@ -12,27 +12,50 @@ interface Cmd {
   value: any;
 }
 
+const FORCE_SYNC_INTERVAL = 10000;
+const RECONNECT_INTERVAL = 1000;
+
 export default class NetState extends EventEmitter {
-  private socket!: WebSocket;
+  private socket: WebSocket | null = null;
   state!: GameState;
+  public connecting = true;
   constructor() {
     super();
     this.state = { planets: [], players: [], ships: [], tick: -1 };
-    // @ts-ignore
-    window.forceSync = this.forceSync;
+    setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
   }
 
   forceSync = () => {
-    console.log('forcing sync');
-    this.send({ code: OpCode.Sync, value: null });
+    if (!this.connecting) {
+      this.send({ code: OpCode.Sync, value: null });
+    }
   };
 
-  connect() {
+  connect = () => {
     this.socket = new WebSocket('ws://127.0.0.1:2794', 'rust-websocket');
     this.socket.onmessage = (event) => {
       this.handleMessage(event.data);
     };
-  }
+    this.socket.onclose = () => {
+      this.emit('network');
+      this.socket = null;
+      this.state.tick = -1;
+      setTimeout(() => {
+        this.connecting = true;
+        this.connect();
+      }, RECONNECT_INTERVAL);
+    };
+    this.socket.onopen = () => {
+      this.connecting = false;
+    };
+    this.socket.onerror = () => {
+      console.warn('socket error');
+      this.emit('network');
+      if (this.socket) {
+        this.socket.close();
+      }
+    };
+  };
 
   private handleMessage(data: string) {
     try {
@@ -47,10 +70,9 @@ export default class NetState extends EventEmitter {
   }
 
   private send(cmd: Cmd) {
-    if (this.socket) {
+    if (this.socket && !this.connecting) {
       this.socket.send(`${cmd.code}_%_${JSON.stringify(cmd.value)}`);
     } else {
-      console.warn('socket is closed');
     }
   }
 

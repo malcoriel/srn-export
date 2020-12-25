@@ -53,3 +53,8 @@ export const antiScale = {
   scaleX: 1 / scaleConfig.scaleX,
   scaleY: 1 / scaleConfig.scaleY,
 };
+
+export const antiOffset = {
+  offsetX: -scaleConfig.offsetX / antiScale.scaleX,
+  offsetY: -scaleConfig.offsetY / antiScale.scaleY,
+};
