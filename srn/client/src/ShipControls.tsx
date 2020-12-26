@@ -20,28 +20,12 @@ const moveRight = (myShip: Ship) => {
   return myShip;
 };
 
+export type ShipChanger = (s: Ship) => Ship;
+export type ShipChangerCallback = (changer: ShipChanger) => void;
 export const ShipControls: React.FC<{
   state: GameState;
-  mutate: (gs: GameState) => void;
-}> = ({ state, mutate }) => {
-  const findMyShip = () => {
-    let myShip: Ship;
-    const myPlayer = state.players.find((player) => player.id === state.my_id);
-    if (!myPlayer) return null;
-
-    const foundShip = state.ships.find((ship) => ship.id === myPlayer.ship_id);
-    if (!foundShip) return null;
-    myShip = foundShip;
-    return myShip;
-  };
-
-  async function changeState(changer: (s: Ship) => void) {
-    let myShip = findMyShip();
-    if (!myShip) return null;
-    changer(myShip);
-    mutate(state);
-  }
-
+  mutate_ship: ShipChangerCallback;
+}> = ({ state, mutate_ship }) => {
   const controls = {
     w: moveUp,
     'w+a': _.compose(moveUp, moveLeft),
@@ -58,7 +42,7 @@ export const ShipControls: React.FC<{
       key,
       () => {
         (async () => {
-          await changeState(fn);
+          await mutate_ship(fn);
         })();
       },
       [state]

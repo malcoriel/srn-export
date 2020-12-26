@@ -82,7 +82,10 @@ class Srn extends React.Component<
                 state={this.NS.state}
                 connecting={this.NS.connecting}
               />
-              <ShipControls mutate={this.NS.mutate} state={this.NS.state} />
+              <ShipControls
+                mutate_ship={this.NS.mutate_ship}
+                state={this.NS.state}
+              />
             </Stage>
           )}
         </div>

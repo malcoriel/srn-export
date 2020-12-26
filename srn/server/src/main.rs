@@ -131,6 +131,80 @@ fn mutate_state(state: GameState) {
     broadcast_state(mut_state.clone());
 }
 
+use serde_derive::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ClientErr {
+    message: String,
+}
+
+fn mutate_owned_ship_wrapped(client_id: Uuid, new_ship: Ship) {
+    let res = mutate_owned_ship(client_id, new_ship);
+    if res.is_err() {
+        eprintln!("error mutating owned ship {}", res.err().unwrap().message);
+        // TODO send targeted message to client that his request was denied
+    }
+}
+
+fn mutate_owned_ship(client_id: Uuid, new_ship: Ship) -> Result<Ship, ClientErr> {
+    let updated_ship: Ship;
+    let old_ship_index;
+    {
+        let state = STATE.read().unwrap();
+        let player = state.players.iter().find(|p| p.id == client_id);
+        match player {
+            None => {
+                return Err(ClientErr {
+                    message: String::from("No player found"),
+                })
+            }
+            Some(player) => {
+                if player.ship_id.is_some() {
+                    if new_ship.id != player.ship_id.unwrap() {
+                        return Err(ClientErr {
+                            message: String::from(format!("Wrong ship id {}", new_ship.id)),
+                        });
+                    }
+                } else {
+                    return Err(ClientErr {
+                        message: String::from("No current ship"),
+                    });
+                }
+            }
+        }
+        let old_ship = state
+            .ships
+            .iter()
+            .position(|s| s.id == player.unwrap().ship_id.unwrap());
+        if old_ship.is_none() {
+            return Err(ClientErr {
+                message: String::from("No old instance of ship"),
+            });
+        }
+        old_ship_index = old_ship.clone();
+        let old_ship = state.ships[old_ship.unwrap()].clone();
+        let ok = validate_ship_move(&old_ship, &new_ship);
+        if !ok {
+            updated_ship = old_ship;
+        } else {
+            updated_ship = new_ship;
+        }
+    }
+    {
+        let mut mut_state = STATE.write().unwrap();
+        mut_state.ships.remove(old_ship_index.unwrap());
+        mut_state.tick = mut_state.tick + 1;
+        mut_state.ships.push(updated_ship.clone());
+        // broadcast_state(mut_state.clone());
+        return Ok(updated_ship);
+    }
+}
+
+fn validate_ship_move(_old: &Ship, _new: &Ship) -> bool {
+    // some anti-cheat needed
+    return true;
+}
+
 fn broadcast_state(state: GameState) {
     unsafe {
         let sender = get_dispatcher_sender();
@@ -156,7 +230,7 @@ extern crate num_derive;
 enum OpCode {
     Unknown = 0,
     Sync = 1,
-    Mutate = 2,
+    MutateMyShip = 2,
     Name = 3,
 }
 
@@ -258,10 +332,10 @@ fn handle_request(request: WSRequest) {
                                     let state = STATE.read().unwrap().clone();
                                     broadcast_state(state)
                                 }
-                                OpCode::Mutate => {
-                                    serde_json::from_str::<GameState>(second)
+                                OpCode::MutateMyShip => {
+                                    serde_json::from_str::<Ship>(second)
                                         .ok()
-                                        .map(|s| mutate_state(s));
+                                        .map(|s| mutate_owned_ship_wrapped(client_id, s));
                                 }
                                 OpCode::Name => {
                                     change_player_name(&client_id, second);

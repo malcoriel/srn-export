@@ -1,10 +1,11 @@
 import EventEmitter from 'events';
-import { GameState } from './common';
+import { GameState, Ship } from './common';
+import { ShipChanger } from './ShipControls';
 
 enum OpCode {
   Unknown,
   Sync,
-  Mutate,
+  MutateMyShip,
   Name,
 }
 
@@ -15,6 +16,20 @@ interface Cmd {
 
 const FORCE_SYNC_INTERVAL = 1000;
 const RECONNECT_INTERVAL = 1000;
+
+const findMyPlayer = (state: GameState) =>
+  state.players.find((player) => player.id === state.my_id);
+
+export const findMyShipIndex = (state: GameState): number | null => {
+  const myPlayer = findMyPlayer(state);
+  if (!myPlayer) return null;
+
+  const foundShipIndex = state.ships.findIndex(
+    (ship) => ship.id === myPlayer.ship_id
+  );
+  if (foundShipIndex == -1) return null;
+  return foundShipIndex;
+};
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -93,7 +108,7 @@ export default class NetState extends EventEmitter {
           this.socket.send(`${cmd.code}_%_`);
           break;
         }
-        case OpCode.Mutate: {
+        case OpCode.MutateMyShip: {
           this.socket.send(`${cmd.code}_%_${JSON.stringify(cmd.value)}`);
           break;
         }
@@ -105,10 +120,14 @@ export default class NetState extends EventEmitter {
     }
   }
 
-  mutate = (newState: GameState) => {
-    this.state = newState;
-    this.send({ code: OpCode.Mutate, value: newState });
+  mutate_ship = (changer: ShipChanger) => {
+    const myShipIndex = findMyShipIndex(this.state);
+    if (myShipIndex === -1 || myShipIndex === null) return;
+    const myShip = this.state.ships.splice(myShipIndex, 1)[0];
+    const newShip = changer(myShip);
+    this.state.ships.push(myShip);
     this.emit('change', this.state);
+    this.send({ code: OpCode.MutateMyShip, value: newShip });
   };
 
   onPreferredNameChange = (newName: string) => {
