@@ -35,12 +35,16 @@ lazy_static! {
 #[derive(Debug, Clone)]
 enum ClientMessage {
     StateChange(GameState),
+    StateChangeExclusive(GameState, Uuid),
 }
 
 impl ClientMessage {
     pub fn serialize(&self) -> String {
         match self {
             ClientMessage::StateChange(state) => {
+                serde_json::to_string::<GameState>(&state).unwrap()
+            }
+            ClientMessage::StateChangeExclusive(state, _unused) => {
                 serde_json::to_string::<GameState>(&state).unwrap()
             }
         }
@@ -195,7 +199,7 @@ fn mutate_owned_ship(client_id: Uuid, new_ship: Ship) -> Result<Ship, ClientErr>
         mut_state.ships.remove(old_ship_index.unwrap());
         mut_state.tick = mut_state.tick + 1;
         mut_state.ships.push(updated_ship.clone());
-        // broadcast_state(mut_state.clone());
+        multicast_state_excluding(mut_state.clone(), client_id);
         return Ok(updated_ship);
     }
 }
@@ -209,6 +213,15 @@ fn broadcast_state(state: GameState) {
     unsafe {
         let sender = get_dispatcher_sender();
         sender.send(ClientMessage::StateChange(state)).unwrap();
+    }
+}
+
+fn multicast_state_excluding(state: GameState, client_id: Uuid) {
+    unsafe {
+        let sender = get_dispatcher_sender();
+        sender
+            .send(ClientMessage::StateChangeExclusive(state, client_id))
+            .unwrap();
     }
 }
 
@@ -356,15 +369,26 @@ fn handle_request(request: WSRequest) {
         }
         if let Ok(message) = client_rx.try_recv() {
             let message = match message {
-                ClientMessage::StateChange(state) => {
-                    ClientMessage::StateChange(patch_state_for_player(state, client_id))
+                ClientMessage::StateChange(state) => Some(ClientMessage::StateChange(
+                    patch_state_for_player(state, client_id),
+                )),
+                ClientMessage::StateChangeExclusive(state, exclude_client_id) => {
+                    if client_id != exclude_client_id {
+                        Some(ClientMessage::StateChange(patch_state_for_player(
+                            state, client_id,
+                        )))
+                    } else {
+                        None
+                    }
                 }
             };
-            let message = Message::text(message.serialize());
-            sender
-                .send_message(&message)
-                .map_err(|e| eprintln!("Err receiving {}", e))
-                .ok();
+            if let Some(message) = message {
+                let message = Message::text(message.serialize());
+                sender
+                    .send_message(&message)
+                    .map_err(|e| eprintln!("Err receiving {}", e))
+                    .ok();
+            }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
