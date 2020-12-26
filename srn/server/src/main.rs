@@ -74,7 +74,7 @@ lazy_static! {
                     y: 0.0,
                     rotation: 0.0,
                     radius: 0.5,
-                    orbit_speed: 0.3,
+                    orbit_speed: 0.03,
                     anchor_id: star_id.clone(),
                 },
                 Planet {
@@ -83,7 +83,7 @@ lazy_static! {
                     y: 0.0,
                     rotation: 0.0,
                     radius: 1.0,
-                    orbit_speed: 0.3,
+                    orbit_speed: 0.04,
                     anchor_id: star_id.clone(),
                 },
                 Planet {
@@ -92,7 +92,7 @@ lazy_static! {
                     y: 0.0,
                     rotation: 0.0,
                     radius: 0.5,
-                    orbit_speed: 0.8,
+                    orbit_speed: 0.08,
                     anchor_id: star_id.clone(),
                 },
                 Planet {
@@ -101,7 +101,7 @@ lazy_static! {
                     y: 0.0,
                     rotation: 0.0,
                     radius: 3.0,
-                    orbit_speed: 0.2,
+                    orbit_speed: 0.01,
                     anchor_id: star_id.clone(),
                 },
             ],
