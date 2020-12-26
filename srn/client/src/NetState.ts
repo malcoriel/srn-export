@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
-import { GameState, Player } from './common';
+import { GameState } from './common';
+import { decoupledLockedTime } from './Times';
 
 enum OpCode {
   Unknown,
@@ -13,14 +14,16 @@ interface Cmd {
   value: any;
 }
 
-const FORCE_SYNC_INTERVAL = 1000;
+const FORCE_SYNC_INTERVAL = 10000;
 const RECONNECT_INTERVAL = 1000;
+const LOCAL_SIM_TIME_STEP = 50;
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
   state!: GameState;
   public connecting = true;
   public preferredName = 'player';
+  private time!: decoupledLockedTime;
   constructor() {
     super();
     this.state = {
@@ -59,6 +62,7 @@ export default class NetState extends EventEmitter {
     this.socket.onopen = () => {
       this.connecting = false;
       this.send({ code: OpCode.Name, value: this.preferredName });
+      this.initLocalSim();
     };
     this.socket.onerror = () => {
       console.warn('socket error');
@@ -110,4 +114,20 @@ export default class NetState extends EventEmitter {
   onPreferredNameChange = (newName: string) => {
     this.preferredName = newName;
   };
+
+  private async initLocalSim() {
+    const { update } = await import('../../world/pkg');
+    this.time = new decoupledLockedTime(LOCAL_SIM_TIME_STEP);
+    this.time.setInterval(
+      (elapsedMs) => {
+        this.state = JSON.parse(
+          update(JSON.stringify(this.state), BigInt(elapsedMs * 1000))
+        );
+        this.emit('change');
+      },
+      (elapsedMs) => {
+        // TODO
+      }
+    );
+  }
 }

@@ -1,0 +1,10 @@
+{
+  "name": "srn",
+  "version": "0.1.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "wasm-pack": "pushd world; wasm-pack build || exit 1; popd;"
+  }
+}
