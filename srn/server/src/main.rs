@@ -164,7 +164,7 @@ type WSRequest =
     WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
 
 fn websocket_server() {
-    let addr = "127.0.0.1:2794";
+    let addr = "0.0.0.0:2794";
     let server = Server::bind(addr).unwrap();
     println!("WS server has launched on {}", addr);
 
@@ -274,7 +274,7 @@ fn handle_request(request: WSRequest) {
             let message = Message::text(message.serialize());
             sender.send_message(&message).unwrap();
         }
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(100));
     }
 }
 
@@ -363,9 +363,9 @@ fn rocket() -> rocket::Rocket {
             for sender in client_senders.lock().unwrap().iter() {
                 sender.1.send(msg.clone()).ok();
             }
-            thread::sleep(Duration::from_millis(10))
+            thread::sleep(Duration::from_millis(100))
         }
-        thread::sleep(Duration::from_millis(10))
+        thread::sleep(Duration::from_millis(100))
     });
 
     // You can also deserialize this
