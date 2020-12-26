@@ -19,7 +19,7 @@ import {
 import { Measure, Perf, statsHeap, StatsPanel } from './Perf';
 import { BasicTime, decoupledLockedTime } from './Times';
 
-const LOCAL_SIM_TIME_STEP = 1000 / 50;
+const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 
