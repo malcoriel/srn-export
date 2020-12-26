@@ -1,5 +1,6 @@
-class BasicTime {
+export abstract class BasicTime {
   constructor(public timeStep: number) {}
+  abstract setInterval(physics: timedFn, render: timedFn): void;
 }
 
 type voidFn = () => void;

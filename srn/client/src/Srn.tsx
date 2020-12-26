@@ -16,14 +16,22 @@ import {
   animals,
   uniqueNamesGenerator,
 } from 'unique-names-generator';
+import { Measure, Perf, statsHeap, StatsPanel } from './Perf';
+import { BasicTime, decoupledLockedTime } from './Times';
+
+const LOCAL_SIM_TIME_STEP = 1000 / 50;
+
+statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 
 class Srn extends React.Component<
   {},
   { preferredName: string; ready: boolean }
 > {
   private NS: NetState;
+  private time: BasicTime;
   constructor(props: {}) {
     super(props);
+    this.time = new decoupledLockedTime(LOCAL_SIM_TIME_STEP);
     const NS = new NetState();
     NS.on('change', () => {
       this.forceUpdate();
@@ -44,6 +52,21 @@ class Srn extends React.Component<
   start() {
     this.NS.preferredName = this.state.preferredName;
     this.NS.connect();
+    Perf.start();
+    this.time.setInterval(
+      (elapsedMs) => {
+        Perf.markEvent(Measure.PhysicsFrameEvent);
+        Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
+          this.NS.updateLocalState(elapsedMs);
+        });
+      },
+      (elapsedMs) => {
+        Perf.markEvent(Measure.RenderFrameEvent);
+        Perf.usingMeasure(Measure.RenderFrameTime, () => {
+          this.NS.emit('change');
+        });
+      }
+    );
   }
 
   render() {
@@ -76,6 +99,7 @@ class Srn extends React.Component<
           />
         )}
         <DebugStateLayer state={this.NS.state} />
+        <StatsPanel />
       </>
     );
   }

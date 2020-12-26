@@ -1,0 +1,37 @@
+.stats {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 300px;
+  padding: 10px 10px 0 10px;
+  border: solid gray 0.5px;
+  background: white;
+  opacity: 0.9
+}
+
+.stats .header {
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+}
+
+.stats .row:last-of-type {
+  border-bottom: none;
+}
+
+.stats .row {
+  padding-top: 10px;
+  height: 30px;
+}
+
+.stats .row {
+  border-bottom: solid #ddd 1px;
+}
+
+.stats .row .name {
+  width: 50px;
+  overflow: hidden;
+}
+
+.stats .row .value {
+  float: right;
+}

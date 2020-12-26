@@ -9,13 +9,13 @@ export const DebugStateLayer: React.FC<{ state: GameState }> = ({ state }) => {
         position: 'absolute',
         overflowX: 'hidden',
         overflowY: 'auto',
-        left: 5,
+        right: 5,
         bottom: 5,
-        width: 300,
-        height: 300,
+        width: 320,
+        height: 500,
         opacity: 0.9,
         backgroundColor: 'white',
-        zIndex: 1,
+        zIndex: 0,
         border: 'solid gray 0.5px',
       }}
     >
