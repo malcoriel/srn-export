@@ -46,19 +46,33 @@ pub fn dumb(inp: u32) -> u32 {
     inp + 1
 }
 
+use serde_derive::Serialize;
+#[derive(Serialize)]
+struct ErrJson {
+    message: String,
+}
+
 #[wasm_bindgen]
 pub fn update(serialized_state: &str, elapsed_micro: i64) -> String {
     let default = String::from("");
-    serde_json::from_str::<game::GameState>(serialized_state)
-        .ok()
-        .map(|mut state| {
-            state.planets = world::update_planets(&state.planets, elapsed_micro);
-            state
+    let result = serde_json::from_str::<game::GameState>(serialized_state);
+
+    match result {
+        Ok(_) => result
+            .ok()
+            .map(|mut state| {
+                state.planets = world::update_planets(&state.planets, elapsed_micro);
+                state
+            })
+            .map(|state| {
+                serde_json::to_string(&state)
+                    .ok()
+                    .unwrap_or(default.clone())
+            })
+            .unwrap_or(default),
+        Err(reason) => serde_json::to_string(&ErrJson {
+            message: reason.to_string(),
         })
-        .map(|state| {
-            serde_json::to_string(&state)
-                .ok()
-                .unwrap_or(default.clone())
-        })
-        .unwrap_or(default)
+        .unwrap_or(default),
+    }
 }

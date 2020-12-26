@@ -30,7 +30,7 @@ export default class NetState extends EventEmitter {
       planets: [],
       players: [],
       ships: [],
-      tick: -1,
+      tick: 0,
       my_id: '',
       // @ts-ignore
       star: null,
@@ -40,7 +40,7 @@ export default class NetState extends EventEmitter {
 
   forceSync = () => {
     if (!this.connecting) {
-      this.state.tick = -1;
+      this.state.tick = 0;
       this.send({ code: OpCode.Sync, value: null });
     }
   };
@@ -53,7 +53,7 @@ export default class NetState extends EventEmitter {
     this.socket.onclose = () => {
       this.emit('network');
       this.socket = null;
-      this.state.tick = -1;
+      this.state.tick = 0;
       setTimeout(() => {
         this.connecting = true;
         this.connect();
@@ -101,7 +101,6 @@ export default class NetState extends EventEmitter {
           break;
         }
       }
-    } else {
     }
   }
 
@@ -126,7 +125,12 @@ export default class NetState extends EventEmitter {
           BigInt(elapsedMs * 1000)
         );
         if (updated) {
-          this.state = JSON.parse(updated);
+          let result = JSON.parse(updated);
+          if (!result.message) {
+            this.state = result;
+          } else {
+            console.warn(result.message);
+          }
         }
       },
       (elapsedMs) => {
