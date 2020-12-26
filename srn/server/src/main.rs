@@ -178,7 +178,7 @@ fn patch_state_for_player(mut state: GameState, player_id: Uuid) -> GameState {
     state
 }
 
-const DEFAULT_SLEEP: u64 = 100;
+const DEFAULT_SLEEP_MS: u64 = 10;
 
 fn handle_request(request: WSRequest) {
     if !request.protocols().contains(&"rust-websocket".to_string()) {
@@ -207,14 +207,10 @@ fn handle_request(request: WSRequest) {
     let (mut receiver, mut sender) = client.split().unwrap();
     let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
     thread::spawn(move || loop {
-        {
-            let senders = CLIENT_SENDERS.lock().unwrap();
-            let index = senders.iter().position(|s| s.0 == client_id);
-            if index.is_none() {
-                // client disconnected
-                break;
-            }
+        if is_disconnected(client_id) {
+            break;
         }
+
         let message = receiver.recv_message();
         match message {
             Ok(m) => {
@@ -222,10 +218,14 @@ fn handle_request(request: WSRequest) {
             }
             Err(e) => eprintln!("err receiving ws {}", e),
         }
-        thread::sleep(Duration::from_millis(DEFAULT_SLEEP));
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     });
 
     loop {
+        if is_disconnected(client_id) {
+            break;
+        }
+
         if let Ok(message) = message_rx.try_recv() {
             match message {
                 OwnedMessage::Close(_) => {
@@ -292,8 +292,18 @@ fn handle_request(request: WSRequest) {
                 .map_err(|e| eprintln!("Err receiving {}", e))
                 .ok();
         }
-        thread::sleep(Duration::from_millis(DEFAULT_SLEEP));
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
+}
+
+fn is_disconnected(client_id: Uuid) -> bool {
+    let senders = CLIENT_SENDERS.lock().unwrap();
+    let index = senders.iter().position(|s| s.0 == client_id);
+    if index.is_none() {
+        // client disconnected
+        return true;
+    }
+    return false;
 }
 
 fn change_player_name(conn_id: &Uuid, new_name: &&str) {
@@ -384,9 +394,9 @@ fn rocket() -> rocket::Rocket {
                     eprintln!("err sending {}", e);
                 }
             }
-            thread::sleep(Duration::from_millis(DEFAULT_SLEEP))
+            thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
         }
-        thread::sleep(Duration::from_millis(DEFAULT_SLEEP))
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
     });
 
     // You can also deserialize this
