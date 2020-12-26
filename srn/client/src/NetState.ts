@@ -116,17 +116,21 @@ export default class NetState extends EventEmitter {
   };
 
   private async initLocalSim() {
-    const { update } = await import('../../world/pkg');
+    const { update, set_panic_hook } = await import('../../world/pkg');
+    set_panic_hook();
     this.time = new decoupledLockedTime(LOCAL_SIM_TIME_STEP);
     this.time.setInterval(
       (elapsedMs) => {
-        this.state = JSON.parse(
-          update(JSON.stringify(this.state), BigInt(elapsedMs * 1000))
+        let updated = update(
+          JSON.stringify(this.state),
+          BigInt(elapsedMs * 1000)
         );
-        this.emit('change');
+        if (updated) {
+          this.state = JSON.parse(updated);
+        }
       },
       (elapsedMs) => {
-        // TODO
+        this.emit('change');
       }
     );
   }
