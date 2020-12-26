@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { Group, RegularPolygon, Text } from 'react-konva';
 import { antiScale, radToDeg, Ship } from './common';
 

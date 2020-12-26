@@ -61,7 +61,7 @@ pub fn update(serialized_state: &str, elapsed_micro: i64) -> String {
         Ok(_) => result
             .ok()
             .map(|mut state| {
-                state.planets = world::update_planets(&state.planets, elapsed_micro);
+                state.planets = world::update_planets(&state.planets, &state.star, elapsed_micro);
                 state
             })
             .map(|state| {

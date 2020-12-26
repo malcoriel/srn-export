@@ -140,6 +140,10 @@ impl Vec2f64 {
     pub fn euclidean_distance(&self, other: &Vec2f64) -> f64 {
         ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()
     }
+
+    pub fn euclidean_len(&self) -> f64 {
+        return self.euclidean_distance(&Vec2f64 { x: 0.0, y: 0.0 });
+    }
 }
 
 pub fn approx_eq(a: f64, b: f64) -> bool {
@@ -173,7 +177,11 @@ pub fn angle_deg(a: Vec2f64, b: Vec2f64) -> f64 {
     rad_to_deg(angle_rad(a, b))
 }
 
-// x goes right, y goes down
+pub trait AsVec2f64 {
+    fn as_vec(&self) -> Vec2f64;
+}
+
+// x goes right, y goes down, but angle goes from +x to -y
 pub fn rotate(v: Vec2f64, angle: f64) -> Vec2f64 {
     let x = v.x;
     let y = v.y;

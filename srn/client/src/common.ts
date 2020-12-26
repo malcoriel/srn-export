@@ -16,6 +16,10 @@ export type WithId = {
   id: string;
 };
 
+export type WithName = {
+  name: string;
+};
+
 export type Vec2f64 = {
   x: number;
   y: number;
@@ -27,8 +31,8 @@ export type GameObject = WithId &
     radius: number;
   };
 
-export type Planet = GameObject;
-export type Star = GameObject;
+export type Planet = GameObject & WithName;
+export type Star = GameObject & WithName;
 
 export type Ship = GameObject;
 

@@ -19,6 +19,7 @@ mod game;
 mod vec2;
 mod vec2_test;
 mod world;
+mod world_test;
 
 use mpsc::{channel, Receiver, Sender};
 use rocket::http::Method;
@@ -62,56 +63,98 @@ lazy_static! {
         let star_id = new_id();
         let star = Star {
             id: star_id.clone(),
+            name: "Zinides".to_string(),
             x: 0.0,
             y: 0.0,
             rotation: 0.0,
             radius: 10.0,
         };
-        RwLock::new(GameState {
+
+        let small_id = new_id();
+
+        let small_planet = Planet {
+            id: small_id,
+            name: "Dabayama".to_string(),
+            x: 19.0,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 1.0,
+            orbit_speed: 0.1,
+            anchor_id: star_id.clone(),
+            anchor_tier: 1,
+        };
+
+        let sat1 = Planet {
+            id: new_id(),
+            name: "D1".to_string(),
+            x: 21.9,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 0.3,
+            orbit_speed: 0.3,
+            anchor_id: small_id.clone(),
+            anchor_tier: 2,
+        };
+
+        let sat2 = Planet {
+            id: new_id(),
+            name: "D2".to_string(),
+            x: 20.7,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 0.5,
+            orbit_speed: 0.5,
+            anchor_id: small_id.clone(),
+            anchor_tier: 2,
+        };
+
+        let state = GameState {
             my_id: new_id(),
             tick: 0,
             star,
             planets: vec![
                 Planet {
                     id: new_id(),
+                    name: "Robrapus".to_string(),
                     x: 15.0,
                     y: 0.0,
                     rotation: 0.0,
                     radius: 0.5,
                     orbit_speed: 0.03,
                     anchor_id: star_id.clone(),
+                    anchor_tier: 1,
                 },
+                small_planet,
+                sat1,
+                sat2,
                 Planet {
                     id: new_id(),
-                    x: 19.0,
-                    y: 0.0,
-                    rotation: 0.0,
-                    radius: 1.0,
-                    orbit_speed: 0.04,
-                    anchor_id: star_id.clone(),
-                },
-                Planet {
-                    id: new_id(),
+                    name: "Eustea".to_string(),
                     x: 40.0,
                     y: 0.0,
                     rotation: 0.0,
                     radius: 0.5,
                     orbit_speed: 0.08,
                     anchor_id: star_id.clone(),
+                    anchor_tier: 1,
                 },
                 Planet {
                     id: new_id(),
+                    name: "Sunov".to_string(),
                     x: 30.0,
                     y: 0.0,
                     rotation: 0.0,
                     radius: 3.0,
                     orbit_speed: 0.01,
                     anchor_id: star_id.clone(),
+                    anchor_tier: 1,
                 },
             ],
             ships: vec![],
             players: vec![],
-        })
+        };
+        eprintln!("{}", serde_json::to_string_pretty(&state,).ok().unwrap());
+        RwLock::new(state)
     };
 }
 
@@ -532,6 +575,10 @@ fn physics_thread() {
         let now = Local::now();
         let elapsed = now - last;
         last = now;
-        state.planets = world::update_planets(&state.planets, elapsed.num_microseconds().unwrap());
+        state.planets = world::update_planets(
+            &state.planets,
+            &state.star,
+            elapsed.num_microseconds().unwrap(),
+        );
     }
 }
