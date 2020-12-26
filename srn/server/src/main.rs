@@ -204,10 +204,23 @@ fn handle_request(request: WSRequest) {
 
     let (mut receiver, mut sender) = client.split().unwrap();
     let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
-    thread::spawn(move || {
-        for message in receiver.incoming_messages() {
-            message.map(|m| message_tx.send(m)).ok();
+    thread::spawn(move || loop {
+        {
+            let senders = CLIENT_SENDERS.lock().unwrap();
+            let index = senders.iter().position(|s| s.0 == client_id);
+            if index.is_none() {
+                // client disconnected
+                break;
+            }
         }
+        let message = receiver.recv_message();
+        match message {
+            Ok(m) => {
+                message_tx.send(m).ok();
+            }
+            Err(e) => eprintln!("err receiving ws {}", e),
+        }
+        thread::sleep(Duration::from_millis(100));
     });
 
     loop {
@@ -272,7 +285,10 @@ fn handle_request(request: WSRequest) {
                 }
             };
             let message = Message::text(message.serialize());
-            sender.send_message(&message).unwrap();
+            sender
+                .send_message(&message)
+                .map_err(|e| eprintln!("Err receiving {}", e))
+                .ok();
         }
         thread::sleep(Duration::from_millis(100));
     }
@@ -361,7 +377,10 @@ fn rocket() -> rocket::Rocket {
         let unwrapped = DISPATCHER_RECEIVER.as_mut().unwrap().lock().unwrap();
         while let Ok(msg) = unwrapped.recv() {
             for sender in client_senders.lock().unwrap().iter() {
-                sender.1.send(msg.clone()).ok();
+                let send = sender.1.send(msg.clone());
+                if let Err(e) = send {
+                    eprintln!("err sending {}", e);
+                }
             }
             thread::sleep(Duration::from_millis(100))
         }
