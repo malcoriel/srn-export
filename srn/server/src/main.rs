@@ -178,6 +178,8 @@ fn patch_state_for_player(mut state: GameState, player_id: Uuid) -> GameState {
     state
 }
 
+const DEFAULT_SLEEP: u64 = 100;
+
 fn handle_request(request: WSRequest) {
     if !request.protocols().contains(&"rust-websocket".to_string()) {
         request.reject().unwrap();
@@ -220,7 +222,7 @@ fn handle_request(request: WSRequest) {
             }
             Err(e) => eprintln!("err receiving ws {}", e),
         }
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP));
     });
 
     loop {
@@ -290,7 +292,7 @@ fn handle_request(request: WSRequest) {
                 .map_err(|e| eprintln!("Err receiving {}", e))
                 .ok();
         }
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP));
     }
 }
 
@@ -382,9 +384,9 @@ fn rocket() -> rocket::Rocket {
                     eprintln!("err sending {}", e);
                 }
             }
-            thread::sleep(Duration::from_millis(100))
+            thread::sleep(Duration::from_millis(DEFAULT_SLEEP))
         }
-        thread::sleep(Duration::from_millis(100))
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP))
     });
 
     // You can also deserialize this
