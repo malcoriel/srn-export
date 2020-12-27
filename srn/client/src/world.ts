@@ -62,7 +62,13 @@ export type Player = WithId & {
   money: number;
 };
 
+export type Leaderboard = {
+  rating: [Player, number][];
+  winner: string;
+};
+
 export type GameState = {
+  leaderboard?: Leaderboard;
   planets: Planet[];
   ships: Ship[];
   players: Player[];
@@ -70,7 +76,7 @@ export type GameState = {
   my_id: string;
   star: Star;
   paused: boolean;
-  seconds_remaining: number;
+  milliseconds_remaining: number;
 };
 
 export const scaleConfig = {

@@ -36,7 +36,6 @@ export const GameHTMLHudLayer: React.FC<{
       questData.reward = `${quest.reward} cr.`;
     }
   }
-
   return (
     <div
       style={{
@@ -50,10 +49,11 @@ export const GameHTMLHudLayer: React.FC<{
       }}
     >
       {connecting && <span>Connecting...</span>}
-      {state.seconds_remaining ? (
+      {state.milliseconds_remaining > 0 ? (
         <span>
           <span>
-            Time before the game ends: {state.seconds_remaining} seconds. &nbsp;
+            Time before the game ends:{' '}
+            {Math.floor(state.milliseconds_remaining / 1000)} seconds. &nbsp;
           </span>
         </span>
       ) : null}

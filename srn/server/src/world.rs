@@ -331,7 +331,7 @@ pub struct GameState {
     pub ships: Vec<Ship>,
     pub players: Vec<Player>,
     pub tick: u32,
-    pub seconds_remaining: u32,
+    pub milliseconds_remaining: i32,
     pub paused: bool,
     pub leaderboard: Option<Leaderboard>,
 }
@@ -390,7 +390,7 @@ pub fn seed_state() -> GameState {
     };
 
     let mut state = GameState {
-        seconds_remaining: 20,
+        milliseconds_remaining: 20 * 1000,
         paused: false,
         my_id: crate::new_id(),
         tick: 0,
@@ -446,13 +446,13 @@ pub fn seed_state() -> GameState {
 }
 
 pub fn update(mut state: GameState, elapsed: i64) -> GameState {
-    if state.seconds_remaining == 0 {
+    if state.milliseconds_remaining <= 0 {
         state.paused = true;
         state.leaderboard = make_leaderboard(&state.players);
     }
 
     if !state.paused {
-        state.seconds_remaining -= 1;
+        state.milliseconds_remaining -= elapsed as i32 / 1000;
         state.planets = update_planets(&state.planets, &state.star, elapsed);
         state.players = update_quests(&state.players, &state.ships, &state.planets);
     }
