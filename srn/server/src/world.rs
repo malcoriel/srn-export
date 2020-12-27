@@ -189,6 +189,7 @@ pub fn update_quests(
                 }
                 if quest.state == QuestState::Delivered {
                     player.money += quest.reward;
+                    player.quest = None;
                 }
             } else {
                 if let Some(ship) = ships_by_id.get(&p.ship_id.unwrap_or(Default::default())) {

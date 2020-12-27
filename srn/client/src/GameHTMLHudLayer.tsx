@@ -23,7 +23,11 @@ export const GameHTMLHudLayer: React.FC<{
       questData = {};
       questData.from = {
         name: fromPlanet.name,
-        color: quest.state === QuestState.Picked ? 'green' : 'white',
+        color:
+          quest.state === QuestState.Picked ||
+          quest.state === QuestState.Delivered
+            ? 'green'
+            : 'white',
       };
       questData.to = {
         name: toPlanet.name,
@@ -46,8 +50,15 @@ export const GameHTMLHudLayer: React.FC<{
       }}
     >
       {connecting && <span>Connecting...</span>}
+      {myPlayer && (
+        <span>
+          <span>Current money: {myPlayer.money} cr.</span>
+          <span>&nbsp;</span>
+        </span>
+      )}
       {questData && (
         <span>
+          <span>Current quest:</span>
           <span style={{ color: questData.from.color }}>
             {questData.from.name}
           </span>
