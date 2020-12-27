@@ -1,6 +1,6 @@
 import React from 'react';
 import { Group, RegularPolygon, Text } from 'react-konva';
-import { antiScale, radToDeg, Ship } from './common';
+import { antiScale, radToDeg, Ship } from './world';
 
 export const ShipShape: React.FC<Ship & { name: string }> = (shipProps) => {
   return (

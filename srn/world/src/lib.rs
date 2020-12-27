@@ -31,8 +31,6 @@ extern "C" {
 pub fn greet() {
     alert("Hello, world!");
 }
-#[path = "../../server/src/game.rs"]
-mod game;
 #[path = "../../server/src/world.rs"]
 mod world;
 
@@ -47,6 +45,7 @@ pub fn dumb(inp: u32) -> u32 {
 }
 
 use serde_derive::Serialize;
+
 #[derive(Serialize)]
 struct ErrJson {
     message: String,
@@ -55,7 +54,7 @@ struct ErrJson {
 #[wasm_bindgen]
 pub fn update(serialized_state: &str, elapsed_micro: i64) -> String {
     let default = String::from("");
-    let result = serde_json::from_str::<game::GameState>(serialized_state);
+    let result = serde_json::from_str::<world::GameState>(serialized_state);
 
     match result {
         Ok(_) => result

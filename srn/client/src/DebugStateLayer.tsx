@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState } from './common';
+import { GameState } from './world';
 import ReactJson from 'react-json-view';
 
 export const DebugStateLayer: React.FC<{ state: GameState }> = ({ state }) => {

@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod world_test {
-    use crate::game::{GameState, Planet, Star};
-    use crate::world::update_planets;
+    use crate::world::{update_planets, GameState, Planet, Star};
     use std::f64::consts::PI;
     use uuid::Uuid;
 
@@ -19,6 +18,7 @@ mod world_test {
             orbit_speed: 1.0,
             anchor_id: star_id,
             anchor_tier: 1,
+            color: "".to_string(),
         };
         let sat = Planet {
             id: Uuid::new_v4(),
@@ -30,6 +30,7 @@ mod world_test {
             orbit_speed: 0.5,
             anchor_id: planet_id,
             anchor_tier: 2,
+            color: "".to_string(),
         };
         let state = GameState {
             my_id: Default::default(),
@@ -40,6 +41,7 @@ mod world_test {
                 y: 0.0,
                 radius: 0.0,
                 rotation: 0.0,
+                color: "".to_string(),
             },
             planets: vec![planet, sat],
             ships: vec![],

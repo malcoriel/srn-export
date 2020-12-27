@@ -1,4 +1,4 @@
-import { GameState, height_units, min_x, min_y, width_units } from './common';
+import { GameState, height_units, min_x, min_y, width_units } from './world';
 import { Group, Layer, Rect } from 'react-konva';
 import { PlanetShape } from './PlanetShape';
 import React from 'react';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState, Ship } from './common';
+import { GameState, Ship } from './world';
 import { useHotkeys } from 'react-hotkeys-hook';
 import _ from 'lodash/fp';
 

@@ -1,4 +1,4 @@
-import { GameState } from './common';
+import { GameState } from './world';
 import { Layer } from 'react-konva';
 import { ShipShape } from './ShipShape';
 import React from 'react';

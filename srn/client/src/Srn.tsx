@@ -3,7 +3,7 @@ import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
 import { DebugStateLayer } from './DebugStateLayer';
-import { height_px, scaleConfig, width_px } from './common';
+import { height_px, scaleConfig, width_px } from './world';
 import { CoordLayer } from './CoordLayer';
 import { BodiesLayer } from './BodiesLayer';
 import { ShipsLayer } from './ShipsLayer';

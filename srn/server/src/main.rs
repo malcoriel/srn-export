@@ -12,9 +12,17 @@ use rocket_contrib::json::Json;
 use std::thread;
 use uuid::*;
 extern crate rocket_cors;
+extern crate websocket;
+use chrono::Local;
+use num_traits::FromPrimitive;
+use std::time::Duration;
+use websocket::server::upgrade::WsUpgrade;
+use websocket::sync::Server;
+use world::{GameState, Planet, Player, Ship, Star};
 
-use crate::game::{GameState, Planet, Player, Ship, Star};
-mod game;
+#[macro_use]
+extern crate num_derive;
+
 #[allow(dead_code)]
 mod vec2;
 mod vec2_test;
@@ -63,7 +71,7 @@ lazy_static! {
     static ref STATE: RwLock<GameState> = {
         let star_id = new_id();
         let star = Star {
-            color: "yellow".to_string(),
+            color: "#f08537".to_string(),
             id: star_id.clone(),
             name: "Zinides".to_string(),
             x: 0.0,
@@ -280,16 +288,6 @@ fn multicast_state_excluding(state: GameState, client_id: Uuid) {
 unsafe fn get_dispatcher_sender() -> Sender<ClientMessage> {
     DISPATCHER_SENDER.as_ref().unwrap().lock().unwrap().clone()
 }
-
-extern crate websocket;
-use chrono::Local;
-use num_traits::FromPrimitive;
-use std::time::Duration;
-use websocket::server::upgrade::WsUpgrade;
-use websocket::sync::Server;
-
-#[macro_use]
-extern crate num_derive;
 
 #[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
 enum OpCode {

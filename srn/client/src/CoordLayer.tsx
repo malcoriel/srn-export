@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Arrow, Layer, Line, Text } from 'react-konva';
-import { antiScale, max_x, max_y, min_x, min_y } from './common';
+import { antiScale, max_x, max_y, min_x, min_y } from './world';
 import React from 'react';
 
 export const CoordLayer = () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { antiScale, Planet, scaleConfig } from './common';
+import { antiScale, Planet, scaleConfig } from './world';
 import { Circle, Group, Text } from 'react-konva';
 
 export const PlanetShape: React.FC<Planet> = (p) => {
@@ -18,9 +18,8 @@ export const PlanetShape: React.FC<Planet> = (p) => {
         key={p.id}
         radius={p.radius}
         fill={p.color}
-        border={0.1}
-        opacity={0.5}
-        shadowBlur={5}
+        stroke="gray"
+        strokeWidth={0.05}
       />
     </Group>
   );

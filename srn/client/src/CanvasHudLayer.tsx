@@ -1,5 +1,5 @@
 import React from 'react';
-import { antiOffset, antiScale, GameState } from './common';
+import { antiOffset, antiScale, GameState } from './world';
 import { Layer, Text } from 'react-konva';
 
 export const CanvasHudLayer: React.FC<{

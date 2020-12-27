@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { GameState, Ship } from './common';
+import { GameState, Ship } from './world';
 import { ShipChanger } from './ShipControls';
 
 enum OpCode {
