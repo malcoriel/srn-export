@@ -489,21 +489,6 @@ fn physics_thread() {
         let now = Local::now();
         let elapsed = now - last;
         last = now;
-
-        // state = world::update(state, elapsed);
-
-        cont.state.planets = world::update_planets(
-            &cont.state.planets,
-            &cont.state.star,
-            elapsed.num_microseconds().unwrap(),
-        );
-        cont.state.players =
-            world::update_quests(&cont.state.players, &cont.state.ships, &cont.state.planets);
-        if cont.state.seconds_remaining == 0 {
-            cont.state.paused = true;
-            cont.state.leaderboard = world::make_leaderboard(&cont.state.players);
-        } else {
-            cont.state.seconds_remaining -= 1;
-        }
+        cont.state = world::update(cont.state.clone(), elapsed.num_microseconds().unwrap());
     }
 }

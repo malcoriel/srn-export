@@ -444,3 +444,15 @@ pub fn seed_state() -> GameState {
     state.planets = update_planets(&state.planets, &state.star, SEED_TIME);
     state
 }
+
+pub(crate) fn update(mut state: GameState, elapsed: i64) -> GameState {
+    state.planets = update_planets(&state.planets, &state.star, elapsed);
+    state.players = update_quests(&state.players, &state.ships, &state.planets);
+    if state.seconds_remaining == 0 {
+        state.paused = true;
+        state.leaderboard = make_leaderboard(&state.players);
+    } else {
+        state.seconds_remaining -= 1;
+    }
+    state
+}
