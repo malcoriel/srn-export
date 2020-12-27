@@ -41,10 +41,6 @@ lazy_static! {
         Arc::new(Mutex::new(vec![]));
 }
 
-struct StateContainer {
-    state: GameState,
-}
-
 #[derive(Debug, Clone)]
 enum ClientMessage {
     StateChange(GameState),
@@ -67,32 +63,36 @@ impl ClientMessage {
 static mut DISPATCHER_SENDER: Option<Mutex<Sender<ClientMessage>>> = None;
 static mut DISPATCHER_RECEIVER: Option<Mutex<Receiver<ClientMessage>>> = None;
 
+struct StateContainer {
+    state: GameState,
+}
+
 lazy_static! {
-    static ref STATE: RwLock<GameState> = {
+    static ref STATE: RwLock<StateContainer> = {
         let state = world::seed_state();
-        RwLock::new(state)
+        RwLock::new(StateContainer { state })
     };
 }
 
 #[get("/state")]
 fn get_state() -> Json<GameState> {
-    Json(STATE.read().unwrap().clone())
+    Json(STATE.read().unwrap().state.clone())
 }
 
 #[options("/state")]
 fn options_state() {}
 
-#[post("/state", data = "<state>")]
-fn post_state(state: Json<GameState>) {
-    mutate_state(state.into_inner());
-}
-
-fn mutate_state(state: GameState) {
-    let mut mut_state = STATE.write().unwrap();
-    mut_state.ships = state.ships.clone();
-    mut_state.tick = mut_state.tick + 1;
-    broadcast_state(mut_state.clone());
-}
+// #[post("/state", data = "<state>")]
+// fn post_state(state: Json<GameState>) {
+//     mutate_state(state.into_inner());
+// }
+//
+// fn mutate_state(state: GameState) {
+//     let mut mut_state = STATE.write().unwrap();
+//     mut_state.ships = state.ships.clone();
+//     mut_state.tick = mut_state.tick + 1;
+//     broadcast_state(mut_state.clone());
+// }
 
 use serde_derive::{Deserialize, Serialize};
 
@@ -113,7 +113,7 @@ fn mutate_owned_ship(client_id: Uuid, new_ship: Ship) -> Result<Ship, ClientErr>
     let updated_ship: Ship;
     let old_ship_index;
     {
-        let state = STATE.read().unwrap();
+        let state = STATE.read().unwrap().state.clone();
         let player = state.players.iter().find(|p| p.id == client_id);
         match player {
             None => {
@@ -154,11 +154,11 @@ fn mutate_owned_ship(client_id: Uuid, new_ship: Ship) -> Result<Ship, ClientErr>
         }
     }
     {
-        let mut mut_state = STATE.write().unwrap();
-        mut_state.ships.remove(old_ship_index.unwrap());
-        mut_state.tick = mut_state.tick + 1;
-        mut_state.ships.push(updated_ship.clone());
-        multicast_state_excluding(mut_state.clone(), client_id);
+        let mut cont = STATE.write().unwrap();
+        cont.state.ships.remove(old_ship_index.unwrap());
+        cont.state.tick = cont.state.tick + 1;
+        cont.state.ships.push(updated_ship.clone());
+        multicast_state_excluding(cont.state.clone(), client_id);
         return Ok(updated_ship);
     }
 }
@@ -231,7 +231,7 @@ fn handle_request(request: WSRequest) {
 
     make_new_player(&client_id);
     {
-        let mut state = STATE.read().unwrap().clone();
+        let mut state = STATE.read().unwrap().state.clone();
         state = patch_state_for_player(state, client_id);
         let message: Message = Message::text(serde_json::to_string(&state).unwrap());
         client.send_message(&message).unwrap();
@@ -272,7 +272,7 @@ fn handle_request(request: WSRequest) {
                     index.map(|index| senders.remove(index));
                     remove_player(&client_id);
                     println!("Client {} id {} disconnected", ip, client_id);
-                    broadcast_state(STATE.read().unwrap().clone());
+                    broadcast_state(STATE.read().unwrap().state.clone());
                     return;
                 }
                 OwnedMessage::Ping(msg) => {
@@ -291,7 +291,7 @@ fn handle_request(request: WSRequest) {
                         Ok(number) => match FromPrimitive::from_u32(number) {
                             Some(op_code) => match op_code {
                                 OpCode::Sync => {
-                                    let state = STATE.read().unwrap().clone();
+                                    let state = STATE.read().unwrap().state.clone();
                                     broadcast_state(state)
                                 }
                                 OpCode::MutateMyShip => {
@@ -355,9 +355,9 @@ fn is_disconnected(client_id: Uuid) -> bool {
 
 fn change_player_name(conn_id: &Uuid, new_name: &&str) {
     {
-        let mut state = STATE.write().unwrap();
-        state.tick += 1;
-        state
+        let mut cont = STATE.write().unwrap();
+        cont.state.tick += 1;
+        cont.state
             .players
             .iter_mut()
             .find(|p| p.id == *conn_id)
@@ -366,14 +366,14 @@ fn change_player_name(conn_id: &Uuid, new_name: &&str) {
             });
     }
     {
-        broadcast_state(STATE.read().unwrap().clone());
+        broadcast_state(STATE.read().unwrap().state.clone());
     }
 }
 
 fn make_new_player(conn_id: &Uuid) {
     {
-        let mut state = STATE.write().unwrap();
-        state.players.push(Player {
+        let mut cont = STATE.write().unwrap();
+        cont.state.players.push(Player {
             id: conn_id.clone(),
             ship_id: None,
             name: conn_id.to_string(),
@@ -385,19 +385,19 @@ fn make_new_player(conn_id: &Uuid) {
 }
 
 fn remove_player(conn_id: &Uuid) {
-    let mut state = STATE.write().unwrap();
-    state
+    let mut cont = STATE.write().unwrap();
+    cont.state
         .players
         .iter()
         .position(|p| p.id == *conn_id)
         .map(|i| {
-            let player = state.players.remove(i);
+            let player = cont.state.players.remove(i);
             player.ship_id.map(|player_ship_id| {
-                state
+                cont.state
                     .ships
                     .iter()
                     .position(|s| s.id == player_ship_id)
-                    .map(|i| state.ships.remove(i))
+                    .map(|i| cont.state.ships.remove(i))
             })
         });
 }
@@ -407,7 +407,7 @@ pub fn new_id() -> Uuid {
 }
 
 fn spawn_ship(player_id: &Uuid) {
-    let mut state = STATE.write().unwrap();
+    let mut cont = STATE.write().unwrap();
     let ship = Ship {
         id: new_id(),
         color: "blue".to_string(),
@@ -417,12 +417,12 @@ fn spawn_ship(player_id: &Uuid) {
         radius: 1.0,
         docked_at: None,
     };
-    state
+    cont.state
         .players
         .iter_mut()
         .find(|p| p.id == *player_id)
         .map(|p| p.ship_id = Some(ship.id));
-    state.ships.push(ship);
+    cont.state.ships.push(ship);
 }
 
 #[launch]
@@ -476,7 +476,7 @@ fn rocket() -> rocket::Rocket {
 
     rocket::ignite()
         .attach(cors)
-        .mount("/api", routes![get_state, post_state, options_state])
+        .mount("/api", routes![get_state, options_state]) // post_state
 }
 
 const DEBUG_PHYSICS: bool = false;
@@ -485,24 +485,25 @@ fn physics_thread() {
     let mut last = Local::now();
     loop {
         thread::sleep(Duration::from_millis(1000));
-        let mut state = STATE.write().unwrap();
+        let mut cont = STATE.write().unwrap();
         let now = Local::now();
         let elapsed = now - last;
         last = now;
 
         // state = world::update(state, elapsed);
 
-        state.planets = world::update_planets(
-            &state.planets,
-            &state.star,
+        cont.state.planets = world::update_planets(
+            &cont.state.planets,
+            &cont.state.star,
             elapsed.num_microseconds().unwrap(),
         );
-        state.players = world::update_quests(&state.players, &state.ships, &state.planets);
-        if state.seconds_remaining == 0 {
-            state.paused = true;
-            state.leaderboard = world::make_leaderboard(&state.players);
+        cont.state.players =
+            world::update_quests(&cont.state.players, &cont.state.ships, &cont.state.planets);
+        if cont.state.seconds_remaining == 0 {
+            cont.state.paused = true;
+            cont.state.leaderboard = world::make_leaderboard(&cont.state.players);
         } else {
-            state.seconds_remaining -= 1;
+            cont.state.seconds_remaining -= 1;
         }
     }
 }
