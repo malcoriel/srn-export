@@ -3,7 +3,7 @@ import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
 import { DebugStateLayer } from './DebugStateLayer';
-import { height_px, Leaderboard, scaleConfig, width_px } from './world';
+import { height_px, scaleConfig, width_px } from './world';
 import { CoordLayer } from './CoordLayer';
 import { BodiesLayer } from './BodiesLayer';
 import { ShipsLayer } from './ShipsLayer';
@@ -19,41 +19,11 @@ import {
 import { Measure, Perf, statsHeap, StatsPanel } from './Perf';
 import { BasicTime, decoupledLockedTime } from './Times';
 import { StartHudLayer } from './StartHudLayer';
+import { LeaderboardLayer } from './LeaderboardLayer';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
-
-const LeaderboardLayer: React.FC<{ leaderboard: Leaderboard }> = ({
-  leaderboard,
-}) => (
-  <div
-    style={{
-      position: 'absolute',
-      top: 5,
-      left: 5,
-      color: 'white',
-      backgroundColor: 'gray',
-      width: width_px,
-      height: height_px,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}
-  >
-    <div>
-      <div>Winner: {leaderboard.winner}</div>
-      <div>
-        <span>Scores:</span>
-        {leaderboard.rating.map(([p, s]) => (
-          <div>
-            {p.name} - {s}
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
 
 class Srn extends React.Component<
   {},
@@ -134,7 +104,10 @@ class Srn extends React.Component<
           />
         )}
         {this.NS.state.leaderboard && (
-          <LeaderboardLayer leaderboard={this.NS.state.leaderboard} />
+          <LeaderboardLayer
+            leaderboard={this.NS.state.leaderboard}
+            milliseconds_remaining={this.NS.state.milliseconds_remaining}
+          />
         )}
         <DebugStateLayer state={this.NS.state} />
         <StatsPanel />

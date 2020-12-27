@@ -60,7 +60,7 @@ export default class NetState extends EventEmitter {
   };
 
   connect = () => {
-    this.socket = new WebSocket('ws://127.0.0.1:2794', 'rust-websocket');
+    this.socket = new WebSocket('ws://192.168.0.10:2794', 'rust-websocket');
     this.socket.onmessage = (event) => {
       this.handleMessage(event.data);
     };

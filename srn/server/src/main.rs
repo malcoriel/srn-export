@@ -69,7 +69,7 @@ struct StateContainer {
 
 lazy_static! {
     static ref STATE: RwLock<StateContainer> = {
-        let state = world::seed_state();
+        let state = world::seed_state(true);
         RwLock::new(StateContainer { state })
     };
 }
@@ -408,21 +408,7 @@ pub fn new_id() -> Uuid {
 
 fn spawn_ship(player_id: &Uuid) {
     let mut cont = STATE.write().unwrap();
-    let ship = Ship {
-        id: new_id(),
-        color: "blue".to_string(),
-        x: 0.0,
-        y: 0.0,
-        rotation: 0.0,
-        radius: 1.0,
-        docked_at: None,
-    };
-    cont.state
-        .players
-        .iter_mut()
-        .find(|p| p.id == *player_id)
-        .map(|p| p.ship_id = Some(ship.id));
-    cont.state.ships.push(ship);
+    world::spawn_ship(&mut cont.state, player_id);
 }
 
 #[launch]
@@ -489,6 +475,10 @@ fn physics_thread() {
         let now = Local::now();
         let elapsed = now - last;
         last = now;
-        cont.state = world::update(cont.state.clone(), elapsed.num_microseconds().unwrap());
+        cont.state = world::update(
+            cont.state.clone(),
+            elapsed.num_microseconds().unwrap(),
+            false,
+        );
     }
 }

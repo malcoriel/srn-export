@@ -15,7 +15,6 @@ pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
         .into_iter()
         .sorted_by(|a, b| Ord::cmp(&b.money, &a.money))
         .map(|p| (p.clone(), get_player_score(p)))
-        .rev()
         .collect::<Vec<_>>();
     let winner: String = rating
         .iter()
@@ -336,7 +335,7 @@ pub struct GameState {
     pub leaderboard: Option<Leaderboard>,
 }
 
-pub fn seed_state() -> GameState {
+pub fn seed_state(debug: bool) -> GameState {
     let star_id = crate::new_id();
     let star = Star {
         color: "#f08537".to_string(),
@@ -358,7 +357,20 @@ pub fn seed_state() -> GameState {
         y: 0.0,
         rotation: 0.0,
         radius: 2.0,
-        orbit_speed: 0.1,
+        orbit_speed: 0.2,
+        anchor_id: star_id.clone(),
+        anchor_tier: 1,
+    };
+
+    let big_planet = Planet {
+        color: "orange".to_string(),
+        id: crate::new_id(),
+        name: "Sunov".to_string(),
+        x: 30.0,
+        y: 0.0,
+        rotation: 0.0,
+        radius: 3.0,
+        orbit_speed: 0.05,
         anchor_id: star_id.clone(),
         anchor_tier: 1,
     };
@@ -367,12 +379,12 @@ pub fn seed_state() -> GameState {
         color: "gray".to_string(),
         id: crate::new_id(),
         name: "D1".to_string(),
-        x: 23.9,
+        x: 35.9,
         y: 0.0,
         rotation: 0.0,
-        radius: 1.0,
+        radius: 1.5,
         orbit_speed: 0.3,
-        anchor_id: small_id.clone(),
+        anchor_id: big_planet.id.clone(),
         anchor_tier: 2,
     };
 
@@ -380,17 +392,18 @@ pub fn seed_state() -> GameState {
         color: "gray".to_string(),
         id: crate::new_id(),
         name: "D2".to_string(),
-        x: 22.7,
+        // TODO having it as 23.7 makes client panic in deserialization, wtf?
+        x: 21.7,
         y: 0.0,
         rotation: 0.0,
-        radius: 0.7,
+        radius: 1.2,
         orbit_speed: 0.5,
-        anchor_id: small_id.clone(),
+        anchor_id: big_planet.id.clone(),
         anchor_tier: 2,
     };
 
     let mut state = GameState {
-        milliseconds_remaining: 20 * 1000,
+        milliseconds_remaining: 60 * 3 * 1000,
         paused: false,
         my_id: crate::new_id(),
         tick: 0,
@@ -404,7 +417,7 @@ pub fn seed_state() -> GameState {
                 y: 0.0,
                 rotation: 0.0,
                 radius: 1.5,
-                orbit_speed: 0.03,
+                orbit_speed: 0.05,
                 anchor_id: star_id.clone(),
                 anchor_tier: 1,
             },
@@ -419,42 +432,85 @@ pub fn seed_state() -> GameState {
                 y: 0.0,
                 rotation: 0.0,
                 radius: 2.0,
-                orbit_speed: 0.08,
+                orbit_speed: 0.1,
                 anchor_id: star_id.clone(),
                 anchor_tier: 1,
             },
-            Planet {
-                color: "orange".to_string(),
-                id: crate::new_id(),
-                name: "Sunov".to_string(),
-                x: 30.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 3.0,
-                orbit_speed: 0.05,
-                anchor_id: star_id.clone(),
-                anchor_tier: 1,
-            },
+            big_planet,
         ],
         ships: vec![],
         players: vec![],
         leaderboard: None,
     };
-    eprintln!("{}", serde_json::to_string_pretty(&state).ok().unwrap());
+    if debug {
+        eprintln!("{}", serde_json::to_string_pretty(&state).ok().unwrap());
+    }
     state.planets = update_planets(&state.planets, &state.star, SEED_TIME);
     state
 }
 
-pub fn update(mut state: GameState, elapsed: i64) -> GameState {
-    if state.milliseconds_remaining <= 0 {
-        state.paused = true;
-        state.leaderboard = make_leaderboard(&state.players);
+pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
+    if !client {
+        state.milliseconds_remaining -= elapsed as i32 / 1000;
     }
 
-    if !state.paused {
-        state.milliseconds_remaining -= elapsed as i32 / 1000;
-        state.planets = update_planets(&state.planets, &state.star, elapsed);
-        state.players = update_quests(&state.players, &state.ships, &state.planets);
+    if state.paused {
+        if state.milliseconds_remaining <= 0 {
+            eprintln!("resetting game");
+            let players = state
+                .players
+                .clone()
+                .into_iter()
+                .map(|mut p| {
+                    p.quest = None;
+                    p.money = 0;
+                    p
+                })
+                .collect::<Vec<_>>();
+            let tick = state.tick.clone();
+            state = seed_state(false);
+            state.players = players.clone();
+            state.tick = tick + 1;
+            for player in players.iter() {
+                spawn_ship(&mut state, &player.id);
+            }
+        } else {
+            // eprintln!("waiting for reset");
+        }
+    } else {
+        if state.milliseconds_remaining <= 0 {
+            eprintln!("game end");
+            state.paused = true;
+            if !client {
+                state.leaderboard = make_leaderboard(&state.players);
+            }
+            state.milliseconds_remaining = 10 * 1000;
+        } else {
+            // eprintln!("playing");
+            state.planets = update_planets(&state.planets, &state.star, elapsed);
+            if !client {
+                state.players = update_quests(&state.players, &state.ships, &state.planets);
+            }
+        }
     }
+
     state
+}
+
+pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
+    let ship = Ship {
+        id: crate::new_id(),
+        color: "blue".to_string(),
+        x: 0.0,
+        y: 0.0,
+        rotation: 0.0,
+        radius: 1.0,
+        docked_at: None,
+    };
+    state
+        .players
+        .iter_mut()
+        .find(|p| p.id == *player_id)
+        .map(|p| p.ship_id = Some(ship.id));
+    state.ships.push(ship);
 }

@@ -1,7 +1,7 @@
 import Vector, { IVector } from './Vector';
 
-export const width_px = 800;
-export const height_px = 800;
+export const width_px = 700;
+export const height_px = 700;
 export const width_units = 100;
 export const height_units = 100;
 export const max_x = 50;
@@ -80,8 +80,8 @@ export type GameState = {
 };
 
 export const scaleConfig = {
-  scaleX: 8,
-  scaleY: 8,
+  scaleX: 7,
+  scaleY: 7,
   offsetX: -50,
   offsetY: -50,
 };
