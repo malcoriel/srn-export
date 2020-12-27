@@ -89,7 +89,7 @@ lazy_static! {
             x: 19.0,
             y: 0.0,
             rotation: 0.0,
-            radius: 1.0,
+            radius: 2.0,
             orbit_speed: 0.1,
             anchor_id: star_id.clone(),
             anchor_tier: 1,
@@ -99,10 +99,10 @@ lazy_static! {
             color: "gray".to_string(),
             id: new_id(),
             name: "D1".to_string(),
-            x: 21.9,
+            x: 23.9,
             y: 0.0,
             rotation: 0.0,
-            radius: 0.3,
+            radius: 1.0,
             orbit_speed: 0.3,
             anchor_id: small_id.clone(),
             anchor_tier: 2,
@@ -112,10 +112,10 @@ lazy_static! {
             color: "gray".to_string(),
             id: new_id(),
             name: "D2".to_string(),
-            x: 20.7,
+            x: 22.7,
             y: 0.0,
             rotation: 0.0,
-            radius: 0.5,
+            radius: 0.7,
             orbit_speed: 0.5,
             anchor_id: small_id.clone(),
             anchor_tier: 2,
@@ -478,6 +478,8 @@ fn make_new_player(conn_id: &Uuid) {
             id: conn_id.clone(),
             ship_id: None,
             name: conn_id.to_string(),
+            quest: None,
+            money: 0,
         });
     }
     spawn_ship(conn_id);
@@ -589,5 +591,6 @@ fn physics_thread() {
             &state.star,
             elapsed.num_microseconds().unwrap(),
         );
+        state.players = world::update_quests(&state.players, &state.ships, &state.planets)
     }
 }

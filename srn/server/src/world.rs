@@ -1,6 +1,8 @@
 use crate::vec2::{angle_rad, rotate, AsVec2f64, Precision, Vec2f64};
 use crate::DEBUG_PHYSICS;
+use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
+use std::borrow::{Borrow, BorrowMut};
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use uuid::Uuid;
@@ -150,6 +152,75 @@ pub fn update_planets(planets: &Vec<Planet>, star: &Star, elapsed_micro: i64) ->
     planets
 }
 
+pub fn update_quests(
+    players: &Vec<Player>,
+    ships: &Vec<Ship>,
+    planets: &Vec<Planet>,
+) -> Vec<Player> {
+    let ships_by_id = {
+        let mut by_id = HashMap::new();
+        for s in ships.iter() {
+            by_id.entry(s.id).or_insert(s);
+        }
+        by_id
+    };
+
+    players
+        .into_iter()
+        .map(|p| {
+            let mut player = p.clone();
+            if let Some(quest) = &p.quest {
+                if let Some(ship) = ships_by_id.get(&p.ship_id.unwrap_or(Default::default())) {
+                    if let Some(docked_at) = ship.docked_at {
+                        if quest.state == QuestState::Started {
+                            if docked_at == quest.from_id {
+                                let mut quest = player.borrow().quest.clone().unwrap();
+                                quest.state = QuestState::Picked;
+                                player.borrow_mut().quest = Some(quest);
+                            }
+                        } else if quest.state == QuestState::Picked {
+                            if docked_at == quest.to_id {
+                                let mut quest = player.borrow().quest.clone().unwrap();
+                                quest.state = QuestState::Delivered;
+                                player.borrow_mut().quest = Some(quest);
+                            }
+                        }
+                    }
+                }
+                if quest.state == QuestState::Delivered {
+                    player.money += quest.reward;
+                }
+            } else {
+                if let Some(ship) = ships_by_id.get(&p.ship_id.unwrap_or(Default::default())) {
+                    player.quest = generate_random_quest(planets, ship.docked_at);
+                }
+            }
+            player
+        })
+        .collect::<Vec<_>>()
+}
+
+fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Option<Quest> {
+    let mut rng: ThreadRng = rand::thread_rng();
+    let pickup = planets
+        .into_iter()
+        .filter(|p| p.id != docked_at.unwrap_or(Default::default()))
+        .collect::<Vec<_>>();
+    let from = &pickup[rng.gen_range(0, pickup.len())];
+    let delivery = planets
+        .into_iter()
+        .filter(|p| p.id != from.id)
+        .collect::<Vec<_>>();
+    let to = &delivery[rng.gen_range(0, delivery.len())];
+    let reward = rng.gen_range(500, 1001);
+    return Some(Quest {
+        from_id: from.id,
+        to_id: to.id,
+        state: QuestState::Started,
+        reward,
+    });
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Planet {
     pub id: Uuid,
@@ -194,12 +265,35 @@ pub struct Ship {
     pub color: String,
     pub docked_at: Option<Uuid>,
 }
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum QuestState {
+    Unknown = 0,
+    Started = 1,
+    Picked = 2,
+    Delivered = 3,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Quest {
+    pub from_id: Uuid,
+    pub to_id: Uuid,
+    pub state: QuestState,
+    pub reward: i32,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Player {
     pub id: Uuid,
     pub ship_id: Option<Uuid>,
     pub name: String,
+    pub quest: Option<Quest>,
+    pub money: i32,
+}
+
+impl Player {
+    pub fn set_quest(&mut self, q: Option<Quest>) {
+        self.quest = q;
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
