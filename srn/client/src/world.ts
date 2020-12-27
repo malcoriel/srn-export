@@ -40,9 +40,26 @@ export type Ship = GameObject &
     docked_at?: string;
   };
 
+export type Quest = {
+  from_id: string;
+  to_id: string;
+  reward: number;
+  state: QuestState;
+};
+
+export enum QuestState {
+  Unknown = 'Unknown',
+  Started = 'Started',
+  Picked = 'Picked',
+  Delivered = 'Delivered',
+}
+
 export type Player = WithId & {
   ship_id?: string;
   name: string;
+  quest?: Quest;
+  state: QuestState;
+  money: number;
 };
 
 export type GameState = {

@@ -9,7 +9,7 @@ import { BodiesLayer } from './BodiesLayer';
 import { ShipsLayer } from './ShipsLayer';
 import NetState from './NetState';
 import { ShipControls } from './ShipControls';
-import { CanvasHudLayer, HtmlHudLayer } from './CanvasHudLayer';
+import { GameHTMLHudLayer } from './GameHTMLHudLayer';
 
 import {
   adjectives,
@@ -18,6 +18,7 @@ import {
 } from 'unique-names-generator';
 import { Measure, Perf, statsHeap, StatsPanel } from './Perf';
 import { BasicTime, decoupledLockedTime } from './Times';
+import { StartHudLayer } from './StartHudLayer';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
@@ -72,25 +73,25 @@ class Srn extends React.Component<
   render() {
     return (
       <>
-        <div style={{ padding: 5 }}>
+        <div style={{ padding: 5, position: 'relative' }}>
           {this.state.ready && (
             <Stage width={width_px} height={height_px} {...scaleConfig}>
               <BodiesLayer state={this.NS.state} />
               <ShipsLayer state={this.NS.state} />
               <CoordLayer />
-              <CanvasHudLayer
-                state={this.NS.state}
-                connecting={this.NS.connecting}
-              />
               <ShipControls
                 mutate_ship={this.NS.mutate_ship}
                 state={this.NS.state}
               />
             </Stage>
           )}
+          <GameHTMLHudLayer
+            state={this.NS.state}
+            connecting={this.NS.connecting}
+          />
         </div>
         {!this.state.ready && (
-          <HtmlHudLayer
+          <StartHudLayer
             onPreferredNameChange={(name) =>
               this.setState({ preferredName: name })
             }

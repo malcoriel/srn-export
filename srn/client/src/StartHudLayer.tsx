@@ -1,19 +1,6 @@
 import React from 'react';
-import { antiOffset, antiScale, GameState } from './world';
-import { Layer, Text } from 'react-konva';
 
-export const CanvasHudLayer: React.FC<{
-  state: GameState;
-  connecting: boolean;
-}> = ({ connecting }) => {
-  return (
-    <Layer {...antiScale} {...antiOffset}>
-      {connecting && <Text fill="white" x={10} y={10} text="Connecting..." />}
-    </Layer>
-  );
-};
-
-export const HtmlHudLayer: React.FC<{
+export const StartHudLayer: React.FC<{
   preferredName: string;
   onPreferredNameChange: (n: string) => void;
   onGo: () => void;

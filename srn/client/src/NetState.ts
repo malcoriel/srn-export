@@ -16,7 +16,7 @@ interface Cmd {
 const FORCE_SYNC_INTERVAL = 1000;
 const RECONNECT_INTERVAL = 1000;
 
-const findMyPlayer = (state: GameState) =>
+export const findMyPlayer = (state: GameState) =>
   state.players.find((player) => player.id === state.my_id);
 
 export const findMyShipIndex = (state: GameState): number | null => {
