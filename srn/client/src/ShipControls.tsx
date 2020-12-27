@@ -16,6 +16,7 @@ export const ShipControls: React.FC<{
     's+d': ShipAction.Move(Direction.DownRight),
     d: ShipAction.Move(Direction.Right),
     'w+d': ShipAction.Move(Direction.UpRight),
+    space: ShipAction.Dock(),
   };
 
   for (const [key, fn] of Object.entries(controls)) {

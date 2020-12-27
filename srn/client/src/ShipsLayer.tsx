@@ -6,17 +6,29 @@ import _ from 'lodash';
 
 export const ShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
   if (!state) return null;
-  const { ships, players } = state;
+  const { ships, players, planets } = state;
 
-  const byShipId = _.keyBy(players, 'ship_id');
+  const playersByShipId = _.keyBy(players, 'ship_id');
+  const planetsById = _.keyBy(planets, 'id');
 
   return (
     <Layer>
       {ships.map((s) => {
-        let { name: player_name = 'player' } = byShipId[s.id] || {
+        let { name: player_name = 'player' } = playersByShipId[s.id] || {
           name: 'player',
         };
-        return <ShipShape key={s.id} {...s} name={player_name} />;
+        let shipPos = {
+          x: s.x,
+          y: s.y,
+        };
+        if (s.docked_at) {
+          let dockPlanet = planetsById[s.docked_at];
+          if (dockPlanet) {
+            shipPos.x = dockPlanet.x;
+            shipPos.y = dockPlanet.y;
+          }
+        }
+        return <ShipShape key={s.id} {...s} name={player_name} {...shipPos} />;
       })}
     </Layer>
   );

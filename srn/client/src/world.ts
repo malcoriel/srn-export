@@ -1,3 +1,5 @@
+import Vector, { IVector } from './Vector';
+
 export const width_px = 800;
 export const height_px = 800;
 export const width_units = 100;
@@ -24,13 +26,8 @@ export type WithColor = {
   color: string;
 };
 
-export type Vec2f64 = {
-  x: number;
-  y: number;
-};
-
 export type GameObject = WithId &
-  Vec2f64 & {
+  IVector & {
     rotation: number;
     radius: number;
   };
@@ -38,7 +35,10 @@ export type GameObject = WithId &
 export type Planet = GameObject & WithName & WithColor;
 export type Star = GameObject & WithName & WithColor;
 
-export type Ship = GameObject & WithColor;
+export type Ship = GameObject &
+  WithColor & {
+    docked_at?: string;
+  };
 
 export type Player = WithId & {
   ship_id?: string;
@@ -102,6 +102,18 @@ export const applyShipAction = (
 ) => {
   switch (sa.type) {
     case ShipActionType.Dock: {
+      const shipV = Vector.fromIVector(myShip);
+      if (myShip.docked_at) {
+        myShip.docked_at = undefined;
+      } else {
+        for (const planet of state.planets) {
+          const planetV = Vector.fromIVector(planet);
+          if (planetV.euDistTo(shipV) < planet.radius) {
+            myShip.docked_at = planet.id;
+            break;
+          }
+        }
+      }
       break;
     }
     case ShipActionType.Move: {

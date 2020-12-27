@@ -169,6 +169,7 @@ pub struct Ship {
     pub rotation: f64,
     pub radius: f64,
     pub color: String,
+    pub docked_at: Option<Uuid>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
