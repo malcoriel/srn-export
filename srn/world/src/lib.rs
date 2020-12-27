@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 #![allow(warnings)]
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
@@ -19,10 +20,15 @@ use wasm_bindgen::prelude::*;
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
+extern crate uuid;
 #[wasm_bindgen]
 extern "C" {
     fn alert(s: &str);
+}
+
+pub fn new_id() -> Uuid {
+    // TODO use JS rand generation, Uuid v4 apparently cannot work in wasm
+    Default::default()
 }
 
 #[wasm_bindgen]
@@ -43,6 +49,7 @@ pub fn dumb(inp: u32) -> u32 {
 }
 
 use serde_derive::Serialize;
+use uuid::Uuid;
 
 #[derive(Serialize)]
 struct ErrJson {

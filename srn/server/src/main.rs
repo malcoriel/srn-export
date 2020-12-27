@@ -1,5 +1,5 @@
-#[cfg(feature = "serde_derive")]
-#[allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_imports)]
 #[macro_use]
 extern crate serde_derive;
 #[cfg(feature = "serde_derive")]
@@ -10,7 +10,6 @@ use std::sync::{mpsc, Arc, Mutex, RwLock};
 extern crate rocket;
 use rocket_contrib::json::Json;
 use std::thread;
-use uuid::*;
 extern crate rocket_cors;
 extern crate websocket;
 use chrono::Local;
@@ -18,7 +17,7 @@ use num_traits::FromPrimitive;
 use std::time::Duration;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
-use world::{GameState, Planet, Player, Ship, Star};
+use world::{GameState, Player, Ship};
 
 #[macro_use]
 extern crate num_derive;
@@ -32,6 +31,7 @@ mod world_test;
 use mpsc::{channel, Receiver, Sender};
 use rocket::http::Method;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
+use uuid::*;
 
 use lazy_static::lazy_static;
 use websocket::{Message, OwnedMessage};
@@ -39,6 +39,10 @@ use websocket::{Message, OwnedMessage};
 lazy_static! {
     static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ClientMessage>)>>> =
         Arc::new(Mutex::new(vec![]));
+}
+
+struct StateContainer {
+    state: GameState,
 }
 
 #[derive(Debug, Clone)]
@@ -62,115 +66,10 @@ impl ClientMessage {
 
 static mut DISPATCHER_SENDER: Option<Mutex<Sender<ClientMessage>>> = None;
 static mut DISPATCHER_RECEIVER: Option<Mutex<Receiver<ClientMessage>>> = None;
-static SEED_TIME: i64 = 9321 * 1000 * 1000;
 
-fn new_id() -> Uuid {
-    Uuid::new_v4()
-}
 lazy_static! {
     static ref STATE: RwLock<GameState> = {
-        let star_id = new_id();
-        let star = Star {
-            color: "#f08537".to_string(),
-            id: star_id.clone(),
-            name: "Zinides".to_string(),
-            x: 0.0,
-            y: 0.0,
-            rotation: 0.0,
-            radius: 10.0,
-        };
-
-        let small_id = new_id();
-
-        let small_planet = Planet {
-            id: small_id,
-            color: "blue".to_string(),
-            name: "Dabayama".to_string(),
-            x: 19.0,
-            y: 0.0,
-            rotation: 0.0,
-            radius: 2.0,
-            orbit_speed: 0.1,
-            anchor_id: star_id.clone(),
-            anchor_tier: 1,
-        };
-
-        let sat1 = Planet {
-            color: "gray".to_string(),
-            id: new_id(),
-            name: "D1".to_string(),
-            x: 23.9,
-            y: 0.0,
-            rotation: 0.0,
-            radius: 1.0,
-            orbit_speed: 0.3,
-            anchor_id: small_id.clone(),
-            anchor_tier: 2,
-        };
-
-        let sat2 = Planet {
-            color: "gray".to_string(),
-            id: new_id(),
-            name: "D2".to_string(),
-            x: 22.7,
-            y: 0.0,
-            rotation: 0.0,
-            radius: 0.7,
-            orbit_speed: 0.5,
-            anchor_id: small_id.clone(),
-            anchor_tier: 2,
-        };
-
-        let mut state = GameState {
-            my_id: new_id(),
-            tick: 0,
-            star,
-            planets: vec![
-                Planet {
-                    color: "orange".to_string(),
-                    id: new_id(),
-                    name: "Robrapus".to_string(),
-                    x: 15.0,
-                    y: 0.0,
-                    rotation: 0.0,
-                    radius: 1.5,
-                    orbit_speed: 0.03,
-                    anchor_id: star_id.clone(),
-                    anchor_tier: 1,
-                },
-                small_planet,
-                sat1,
-                sat2,
-                Planet {
-                    color: "greenyellow".to_string(),
-                    id: new_id(),
-                    name: "Eustea".to_string(),
-                    x: 40.0,
-                    y: 0.0,
-                    rotation: 0.0,
-                    radius: 2.0,
-                    orbit_speed: 0.08,
-                    anchor_id: star_id.clone(),
-                    anchor_tier: 1,
-                },
-                Planet {
-                    color: "orange".to_string(),
-                    id: new_id(),
-                    name: "Sunov".to_string(),
-                    x: 30.0,
-                    y: 0.0,
-                    rotation: 0.0,
-                    radius: 3.0,
-                    orbit_speed: 0.05,
-                    anchor_id: star_id.clone(),
-                    anchor_tier: 1,
-                },
-            ],
-            ships: vec![],
-            players: vec![],
-        };
-        eprintln!("{}", serde_json::to_string_pretty(&state,).ok().unwrap());
-        state.planets = world::update_planets(&state.planets, &state.star, SEED_TIME);
+        let state = world::seed_state();
         RwLock::new(state)
     };
 }
@@ -503,6 +402,10 @@ fn remove_player(conn_id: &Uuid) {
         });
 }
 
+pub fn new_id() -> Uuid {
+    Uuid::new_v4()
+}
+
 fn spawn_ship(player_id: &Uuid) {
     let mut state = STATE.write().unwrap();
     let ship = Ship {
@@ -586,11 +489,20 @@ fn physics_thread() {
         let now = Local::now();
         let elapsed = now - last;
         last = now;
+
+        // state = world::update(state, elapsed);
+
         state.planets = world::update_planets(
             &state.planets,
             &state.star,
             elapsed.num_microseconds().unwrap(),
         );
-        state.players = world::update_quests(&state.players, &state.ships, &state.planets)
+        state.players = world::update_quests(&state.players, &state.ships, &state.planets);
+        if state.seconds_remaining == 0 {
+            state.paused = true;
+            state.leaderboard = world::make_leaderboard(&state.players);
+        } else {
+            state.seconds_remaining -= 1;
+        }
     }
 }

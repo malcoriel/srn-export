@@ -6,15 +6,30 @@ use std::borrow::{Borrow, BorrowMut};
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use uuid::Uuid;
+static SEED_TIME: i64 = 9321 * 1000 * 1000;
+use itertools::Itertools;
+use uuid::*;
+
+pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
+    let rating = all_players
+        .into_iter()
+        .sorted_by(|a, b| Ord::cmp(&b.money, &a.money))
+        .map(|p| (p.clone(), get_player_score(p)))
+        .rev()
+        .collect::<Vec<_>>();
+    let winner: String = rating
+        .iter()
+        .nth(0)
+        .map_or("Nobody".to_string(), |p| p.0.name.clone());
+    Some(Leaderboard { rating, winner })
+}
+
+fn get_player_score(p: &Player) -> u32 {
+    p.money as u32
+}
 
 pub fn update_ships_on_planets(planets: &Vec<Planet>, ships: &Vec<Ship>) -> Vec<Ship> {
-    let by_id = {
-        let mut by_id = HashMap::new();
-        for p in planets.iter() {
-            by_id.entry(p.id).or_insert(p);
-        }
-        by_id
-    };
+    let by_id = index_planets_by_id(planets);
     ships
         .into_iter()
         .map(|s| {
@@ -29,27 +44,32 @@ pub fn update_ships_on_planets(planets: &Vec<Planet>, ships: &Vec<Ship>) -> Vec<
         .collect::<Vec<_>>()
 }
 
+fn index_planets_by_id(planets: &Vec<Planet>) -> HashMap<Uuid, &Planet> {
+    let mut by_id = HashMap::new();
+    for p in planets.iter() {
+        by_id.entry(p.id).or_insert(p);
+    }
+    by_id
+}
+
 pub fn update_planets(planets: &Vec<Planet>, star: &Star, elapsed_micro: i64) -> Vec<Planet> {
-    let planet_star = Planet {
-        color: Default::default(),
-        name: star.name.clone(),
-        id: star.id,
-        x: star.x,
-        y: star.y,
-        rotation: star.rotation,
-        radius: star.radius,
-        orbit_speed: 0.0,
-        anchor_id: Default::default(),
-        anchor_tier: 0,
-    };
-    let by_id = {
-        let mut by_id = HashMap::new();
-        for p in planets.iter() {
-            by_id.entry(p.id).or_insert(p);
-        }
-        by_id.insert(star.id, &planet_star);
-        by_id
-    };
+    let planets_with_star = planets
+        .clone()
+        .into_iter()
+        .chain(vec![Planet {
+            color: Default::default(),
+            name: star.name.clone(),
+            id: star.id,
+            x: star.x,
+            y: star.y,
+            rotation: star.rotation,
+            radius: star.radius,
+            orbit_speed: 0.0,
+            anchor_id: Default::default(),
+            anchor_tier: 0,
+        }])
+        .collect::<Vec<_>>();
+    let by_id = index_planets_by_id(&planets_with_star);
     let mut anchors = {
         let mut anchors = HashMap::new();
         for p in planets.into_iter() {
@@ -298,6 +318,12 @@ impl Player {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Leaderboard {
+    pub rating: Vec<(Player, u32)>,
+    pub winner: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState {
     pub my_id: Uuid,
     pub star: Star,
@@ -305,4 +331,116 @@ pub struct GameState {
     pub ships: Vec<Ship>,
     pub players: Vec<Player>,
     pub tick: u32,
+    pub seconds_remaining: u32,
+    pub paused: bool,
+    pub leaderboard: Option<Leaderboard>,
+}
+
+pub fn seed_state() -> GameState {
+    let star_id = crate::new_id();
+    let star = Star {
+        color: "#f08537".to_string(),
+        id: star_id.clone(),
+        name: "Zinides".to_string(),
+        x: 0.0,
+        y: 0.0,
+        rotation: 0.0,
+        radius: 10.0,
+    };
+
+    let small_id = crate::new_id();
+
+    let small_planet = Planet {
+        id: small_id,
+        color: "blue".to_string(),
+        name: "Dabayama".to_string(),
+        x: 19.0,
+        y: 0.0,
+        rotation: 0.0,
+        radius: 2.0,
+        orbit_speed: 0.1,
+        anchor_id: star_id.clone(),
+        anchor_tier: 1,
+    };
+
+    let sat1 = Planet {
+        color: "gray".to_string(),
+        id: crate::new_id(),
+        name: "D1".to_string(),
+        x: 23.9,
+        y: 0.0,
+        rotation: 0.0,
+        radius: 1.0,
+        orbit_speed: 0.3,
+        anchor_id: small_id.clone(),
+        anchor_tier: 2,
+    };
+
+    let sat2 = Planet {
+        color: "gray".to_string(),
+        id: crate::new_id(),
+        name: "D2".to_string(),
+        x: 22.7,
+        y: 0.0,
+        rotation: 0.0,
+        radius: 0.7,
+        orbit_speed: 0.5,
+        anchor_id: small_id.clone(),
+        anchor_tier: 2,
+    };
+
+    let mut state = GameState {
+        seconds_remaining: 60,
+        paused: false,
+        my_id: crate::new_id(),
+        tick: 0,
+        star,
+        planets: vec![
+            Planet {
+                color: "orange".to_string(),
+                id: crate::new_id(),
+                name: "Robrapus".to_string(),
+                x: 15.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 1.5,
+                orbit_speed: 0.03,
+                anchor_id: star_id.clone(),
+                anchor_tier: 1,
+            },
+            small_planet,
+            sat1,
+            sat2,
+            Planet {
+                color: "greenyellow".to_string(),
+                id: crate::new_id(),
+                name: "Eustea".to_string(),
+                x: 40.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 2.0,
+                orbit_speed: 0.08,
+                anchor_id: star_id.clone(),
+                anchor_tier: 1,
+            },
+            Planet {
+                color: "orange".to_string(),
+                id: crate::new_id(),
+                name: "Sunov".to_string(),
+                x: 30.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 3.0,
+                orbit_speed: 0.05,
+                anchor_id: star_id.clone(),
+                anchor_tier: 1,
+            },
+        ],
+        ships: vec![],
+        players: vec![],
+        leaderboard: None,
+    };
+    eprintln!("{}", serde_json::to_string_pretty(&state).ok().unwrap());
+    state.planets = update_planets(&state.planets, &state.star, SEED_TIME);
+    state
 }

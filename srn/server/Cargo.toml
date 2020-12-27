@@ -24,3 +24,4 @@ websocket = "0.26.2"
 uuid = {version = "0.8.1", features = ["serde", "v4"]}
 chrono = "0.4.19"
 rand = {version = "0.6.5", features = ["wasm-bindgen"]}
+itertools = "0.10.0"
