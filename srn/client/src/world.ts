@@ -70,3 +70,76 @@ export const antiOffset = {
   offsetX: -scaleConfig.offsetX / antiScale.scaleX,
   offsetY: -scaleConfig.offsetY / antiScale.scaleY,
 };
+
+enum ShipActionType {
+  Unknown,
+  Move,
+  Dock,
+}
+
+export enum Direction {
+  Up,
+  UpRight,
+  Right,
+  DownRight,
+  Down,
+  DownLeft,
+  Left,
+  UpLeft,
+}
+
+export class ShipAction {
+  constructor(public type: ShipActionType, public data?: any) {}
+  public static Move = (dir: Direction) =>
+    new ShipAction(ShipActionType.Move, dir);
+  public static Dock = () => new ShipAction(ShipActionType.Dock);
+}
+
+export const applyShipAction = (
+  myShip: Ship,
+  sa: ShipAction,
+  state: GameState
+) => {
+  switch (sa.type) {
+    case ShipActionType.Dock: {
+      break;
+    }
+    case ShipActionType.Move: {
+      switch (sa.data as Direction) {
+        case Direction.Up:
+          myShip.y -= 1;
+          break;
+        case Direction.UpRight:
+          myShip.x += 1;
+          myShip.y -= 1;
+          break;
+        case Direction.Right:
+          myShip.x += 1;
+          break;
+        case Direction.DownRight:
+          myShip.y += 1;
+          myShip.x += 1;
+          break;
+        case Direction.Down:
+          myShip.y += 1;
+          break;
+        case Direction.DownLeft:
+          myShip.y += 1;
+          myShip.x -= 1;
+          break;
+        case Direction.Left:
+          myShip.x -= 1;
+          break;
+        case Direction.UpLeft:
+          myShip.y -= 1;
+          myShip.x -= 1;
+          break;
+      }
+      break;
+    }
+    default:
+      // intentional pass-through
+      break;
+  }
+  return myShip;
+};

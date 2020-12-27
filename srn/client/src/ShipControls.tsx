@@ -1,40 +1,21 @@
 import React from 'react';
-import { GameState, Ship } from './world';
+import { Direction, GameState, ShipAction } from './world';
 import { useHotkeys } from 'react-hotkeys-hook';
-import _ from 'lodash/fp';
 
-const moveUp = (myShip: Ship) => {
-  myShip.y -= 1;
-  return myShip;
-};
-const moveDown = (myShip: Ship) => {
-  myShip.y += 1;
-  return myShip;
-};
-const moveLeft = (myShip: Ship) => {
-  myShip.x -= 1;
-  return myShip;
-};
-const moveRight = (myShip: Ship) => {
-  myShip.x += 1;
-  return myShip;
-};
-
-export type ShipChanger = (s: Ship) => Ship;
-export type ShipChangerCallback = (changer: ShipChanger) => void;
+export type ShipChangerCallback = (sa: ShipAction) => void;
 export const ShipControls: React.FC<{
   state: GameState;
   mutate_ship: ShipChangerCallback;
 }> = ({ state, mutate_ship }) => {
   const controls = {
-    w: moveUp,
-    'w+a': _.compose(moveUp, moveLeft),
-    s: moveDown,
-    's+a': _.compose(moveDown, moveLeft),
-    a: moveLeft,
-    's+d': _.compose(moveDown, moveRight),
-    d: moveRight,
-    'w+d': _.compose(moveUp, moveRight),
+    w: ShipAction.Move(Direction.Up),
+    'w+a': ShipAction.Move(Direction.UpLeft),
+    s: ShipAction.Move(Direction.Down),
+    's+a': ShipAction.Move(Direction.DownLeft),
+    a: ShipAction.Move(Direction.Left),
+    's+d': ShipAction.Move(Direction.DownRight),
+    d: ShipAction.Move(Direction.Right),
+    'w+d': ShipAction.Move(Direction.UpRight),
   };
 
   for (const [key, fn] of Object.entries(controls)) {

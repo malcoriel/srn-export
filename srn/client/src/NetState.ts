@@ -1,6 +1,5 @@
 import EventEmitter from 'events';
-import { GameState, Ship } from './world';
-import { ShipChanger } from './ShipControls';
+import { applyShipAction, GameState, Ship, ShipAction } from './world';
 
 enum OpCode {
   Unknown,
@@ -120,11 +119,11 @@ export default class NetState extends EventEmitter {
     }
   }
 
-  mutate_ship = (changer: ShipChanger) => {
+  mutate_ship = (cmd: ShipAction) => {
     const myShipIndex = findMyShipIndex(this.state);
     if (myShipIndex === -1 || myShipIndex === null) return;
     const myShip = this.state.ships.splice(myShipIndex, 1)[0];
-    const newShip = changer(myShip);
+    const newShip = applyShipAction(myShip, cmd, this.state);
     this.state.ships.push(myShip);
     this.emit('change', this.state);
     this.send({ code: OpCode.MutateMyShip, value: newShip });
