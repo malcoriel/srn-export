@@ -5,6 +5,28 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use uuid::Uuid;
 
+pub fn update_ships_on_planets(planets: &Vec<Planet>, ships: &Vec<Ship>) -> Vec<Ship> {
+    let by_id = {
+        let mut by_id = HashMap::new();
+        for p in planets.iter() {
+            by_id.entry(p.id).or_insert(p);
+        }
+        by_id
+    };
+    ships
+        .into_iter()
+        .map(|s| {
+            let mut ship = s.clone();
+            if let Some(docked_at) = ship.docked_at {
+                let planet = by_id.get(&docked_at).unwrap();
+                ship.x = planet.x;
+                ship.y = planet.y;
+            }
+            ship
+        })
+        .collect::<Vec<_>>()
+}
+
 pub fn update_planets(planets: &Vec<Planet>, star: &Star, elapsed_micro: i64) -> Vec<Planet> {
     let planet_star = Planet {
         color: Default::default(),
@@ -124,6 +146,7 @@ pub fn update_planets(planets: &Vec<Planet>, star: &Star, elapsed_micro: i64) ->
             })
             .collect::<Vec<Planet>>();
     }
+
     planets
 }
 

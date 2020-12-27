@@ -1,6 +1,4 @@
 #![allow(warnings)]
-mod utils;
-
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 pub fn set_panic_hook() {
@@ -61,6 +59,7 @@ pub fn update(serialized_state: &str, elapsed_micro: i64) -> String {
             .ok()
             .map(|mut state| {
                 state.planets = world::update_planets(&state.planets, &state.star, elapsed_micro);
+                state.ships = world::update_ships_on_planets(&state.planets, &state.ships);
                 state
             })
             .map(|state| {

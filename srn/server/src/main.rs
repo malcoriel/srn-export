@@ -133,7 +133,7 @@ lazy_static! {
                     x: 15.0,
                     y: 0.0,
                     rotation: 0.0,
-                    radius: 0.5,
+                    radius: 1.5,
                     orbit_speed: 0.03,
                     anchor_id: star_id.clone(),
                     anchor_tier: 1,
@@ -148,7 +148,7 @@ lazy_static! {
                     x: 40.0,
                     y: 0.0,
                     rotation: 0.0,
-                    radius: 0.5,
+                    radius: 2.0,
                     orbit_speed: 0.08,
                     anchor_id: star_id.clone(),
                     anchor_tier: 1,
@@ -161,7 +161,7 @@ lazy_static! {
                     y: 0.0,
                     rotation: 0.0,
                     radius: 3.0,
-                    orbit_speed: 0.01,
+                    orbit_speed: 0.05,
                     anchor_id: star_id.clone(),
                     anchor_tier: 1,
                 },
@@ -510,6 +510,7 @@ fn spawn_ship(player_id: &Uuid) {
         y: 0.0,
         rotation: 0.0,
         radius: 1.0,
+        docked_at: None,
     };
     state
         .players
