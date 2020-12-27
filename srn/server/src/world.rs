@@ -390,7 +390,7 @@ pub fn seed_state() -> GameState {
     };
 
     let mut state = GameState {
-        seconds_remaining: 60,
+        seconds_remaining: 20,
         paused: false,
         my_id: crate::new_id(),
         tick: 0,
@@ -445,14 +445,16 @@ pub fn seed_state() -> GameState {
     state
 }
 
-pub(crate) fn update(mut state: GameState, elapsed: i64) -> GameState {
-    state.planets = update_planets(&state.planets, &state.star, elapsed);
-    state.players = update_quests(&state.players, &state.ships, &state.planets);
+pub fn update(mut state: GameState, elapsed: i64) -> GameState {
     if state.seconds_remaining == 0 {
         state.paused = true;
         state.leaderboard = make_leaderboard(&state.players);
-    } else {
+    }
+
+    if !state.paused {
         state.seconds_remaining -= 1;
+        state.planets = update_planets(&state.planets, &state.star, elapsed);
+        state.players = update_quests(&state.players, &state.ships, &state.planets);
     }
     state
 }

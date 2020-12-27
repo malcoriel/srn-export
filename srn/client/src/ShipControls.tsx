@@ -24,7 +24,9 @@ export const ShipControls: React.FC<{
       key,
       () => {
         (async () => {
-          await mutate_ship(fn);
+          if (!state.paused) {
+            await mutate_ship(fn);
+          }
         })();
       },
       [state]

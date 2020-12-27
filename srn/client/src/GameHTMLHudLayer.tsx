@@ -50,12 +50,14 @@ export const GameHTMLHudLayer: React.FC<{
       }}
     >
       {connecting && <span>Connecting...</span>}
-      {myPlayer && (
+      {state.seconds_remaining ? (
         <span>
-          <span>Current money: {myPlayer.money} cr.</span>
-          <span>&nbsp;</span>
+          <span>
+            Time before the game ends: {state.seconds_remaining} seconds. &nbsp;
+          </span>
         </span>
-      )}
+      ) : null}
+      {myPlayer && <span>Current money: {myPlayer.money} cr.&nbsp;</span>}
       {questData && (
         <span>
           <span>Current quest:</span>
