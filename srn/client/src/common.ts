@@ -20,6 +20,10 @@ export type WithName = {
   name: string;
 };
 
+export type WithColor = {
+  color: string;
+};
+
 export type Vec2f64 = {
   x: number;
   y: number;
@@ -31,10 +35,10 @@ export type GameObject = WithId &
     radius: number;
   };
 
-export type Planet = GameObject & WithName;
-export type Star = GameObject & WithName;
+export type Planet = GameObject & WithName & WithColor;
+export type Star = GameObject & WithName & WithColor;
 
-export type Ship = GameObject;
+export type Ship = GameObject & WithColor;
 
 export type Player = WithId & {
   ship_id?: string;

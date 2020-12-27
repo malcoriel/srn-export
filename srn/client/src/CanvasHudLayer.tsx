@@ -8,7 +8,7 @@ export const CanvasHudLayer: React.FC<{
 }> = ({ connecting }) => {
   return (
     <Layer {...antiScale} {...antiOffset}>
-      {connecting && <Text x={10} y={10} text="Connecting..." />}
+      {connecting && <Text fill="white" x={10} y={10} text="Connecting..." />}
     </Layer>
   );
 };

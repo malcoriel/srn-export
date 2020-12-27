@@ -9,6 +9,7 @@ export const ShipShape: React.FC<Ship & { name: string }> = (shipProps) => {
         {...antiScale}
         text={shipProps.name}
         align="center"
+        fill="white"
         offsetY={30}
         width={200}
         offsetX={100}
@@ -20,8 +21,8 @@ export const ShipShape: React.FC<Ship & { name: string }> = (shipProps) => {
           sides={3}
           scaleX={0.8}
           radius={shipProps.radius}
-          fill="blue"
-          stroke="black"
+          fill={shipProps.color}
+          stroke={shipProps.color}
           strokeWidth={0.05}
           lineJoin="bevel"
         />
@@ -30,8 +31,8 @@ export const ShipShape: React.FC<Ship & { name: string }> = (shipProps) => {
           y={0.5}
           sides={3}
           radius={shipProps.radius}
-          fill="blue"
-          stroke="black"
+          fill={shipProps.color}
+          stroke={shipProps.color}
           strokeWidth={0.05}
           lineJoin="bevel"
         />

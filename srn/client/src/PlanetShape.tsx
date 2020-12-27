@@ -1,6 +1,6 @@
 import React from 'react';
-import { antiScale, Planet, radToDeg, scaleConfig } from './common';
-import { Circle, Group, RegularPolygon, Text } from 'react-konva';
+import { antiScale, Planet, scaleConfig } from './common';
+import { Circle, Group, Text } from 'react-konva';
 
 export const PlanetShape: React.FC<Planet> = (p) => {
   return (
@@ -8,6 +8,7 @@ export const PlanetShape: React.FC<Planet> = (p) => {
       <Text
         {...antiScale}
         text={p.name}
+        fill="white"
         align="center"
         offsetY={scaleConfig.scaleX * p.radius + 20}
         width={200}
@@ -16,7 +17,7 @@ export const PlanetShape: React.FC<Planet> = (p) => {
       <Circle
         key={p.id}
         radius={p.radius}
-        fill="red"
+        fill={p.color}
         border={0.1}
         opacity={0.5}
         shadowBlur={5}

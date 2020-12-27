@@ -62,6 +62,7 @@ lazy_static! {
     static ref STATE: RwLock<GameState> = {
         let star_id = new_id();
         let star = Star {
+            color: "yellow".to_string(),
             id: star_id.clone(),
             name: "Zinides".to_string(),
             x: 0.0,
@@ -74,6 +75,7 @@ lazy_static! {
 
         let small_planet = Planet {
             id: small_id,
+            color: "blue".to_string(),
             name: "Dabayama".to_string(),
             x: 19.0,
             y: 0.0,
@@ -85,6 +87,7 @@ lazy_static! {
         };
 
         let sat1 = Planet {
+            color: "gray".to_string(),
             id: new_id(),
             name: "D1".to_string(),
             x: 21.9,
@@ -97,6 +100,7 @@ lazy_static! {
         };
 
         let sat2 = Planet {
+            color: "gray".to_string(),
             id: new_id(),
             name: "D2".to_string(),
             x: 20.7,
@@ -114,6 +118,7 @@ lazy_static! {
             star,
             planets: vec![
                 Planet {
+                    color: "orange".to_string(),
                     id: new_id(),
                     name: "Robrapus".to_string(),
                     x: 15.0,
@@ -128,6 +133,7 @@ lazy_static! {
                 sat1,
                 sat2,
                 Planet {
+                    color: "greenyellow".to_string(),
                     id: new_id(),
                     name: "Eustea".to_string(),
                     x: 40.0,
@@ -139,6 +145,7 @@ lazy_static! {
                     anchor_tier: 1,
                 },
                 Planet {
+                    color: "orange".to_string(),
                     id: new_id(),
                     name: "Sunov".to_string(),
                     x: 30.0,
@@ -498,6 +505,7 @@ fn spawn_ship(player_id: &Uuid) {
     let mut state = STATE.write().unwrap();
     let ship = Ship {
         id: new_id(),
+        color: "blue".to_string(),
         x: 0.0,
         y: 0.0,
         rotation: 0.0,

@@ -13,6 +13,7 @@ pub struct Planet {
     pub orbit_speed: f64,
     pub anchor_id: Uuid,
     pub anchor_tier: u32,
+    pub color: String,
 }
 
 impl AsVec2f64 for Planet {
@@ -32,6 +33,7 @@ pub struct Star {
     pub y: f64,
     pub radius: f64,
     pub rotation: f64,
+    pub color: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -41,6 +43,7 @@ pub struct Ship {
     pub y: f64,
     pub rotation: f64,
     pub radius: f64,
+    pub color: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -6,6 +6,7 @@ use std::f64::consts::PI;
 
 pub fn update_planets(planets: &Vec<Planet>, star: &Star, elapsed_micro: i64) -> Vec<Planet> {
     let planet_star = Planet {
+        color: Default::default(),
         name: star.name.clone(),
         id: star.id,
         x: star.x,
