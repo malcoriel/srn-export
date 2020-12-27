@@ -54,6 +54,7 @@ impl ClientMessage {
 
 static mut DISPATCHER_SENDER: Option<Mutex<Sender<ClientMessage>>> = None;
 static mut DISPATCHER_RECEIVER: Option<Mutex<Receiver<ClientMessage>>> = None;
+static SEED_TIME: i64 = 9321 * 1000 * 1000;
 
 fn new_id() -> Uuid {
     Uuid::new_v4()
@@ -112,7 +113,7 @@ lazy_static! {
             anchor_tier: 2,
         };
 
-        let state = GameState {
+        let mut state = GameState {
             my_id: new_id(),
             tick: 0,
             star,
@@ -161,6 +162,7 @@ lazy_static! {
             players: vec![],
         };
         eprintln!("{}", serde_json::to_string_pretty(&state,).ok().unwrap());
+        state.planets = world::update_planets(&state.planets, &state.star, SEED_TIME);
         RwLock::new(state)
     };
 }
