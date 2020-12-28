@@ -130,9 +130,11 @@ export const applyShipAction = (
   myShip: Ship,
   sa: ShipAction,
   state: GameState,
-  elapsedMs: number
+  elapsedMs: number,
+  ping: number
 ) => {
   const moveByTime = (SHIP_SPEED * elapsedMs) / 1000;
+  // const stateConsideringPing =
   const moveByTimeDiagonal = (moveByTime * Math.sqrt(2)) / 2;
   switch (sa.type) {
     case ShipActionType.Dock: {

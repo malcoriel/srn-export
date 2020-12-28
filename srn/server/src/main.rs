@@ -267,7 +267,7 @@ fn handle_request(request: WSRequest) {
                 message_tx.send(m).ok();
             }
             Err(e) => {
-                eprintln!("err receiving ws {}", e);
+                eprintln!("err {} receiving ws {}", client_id, e);
                 increment_client_errors(client_id);
             }
         }
@@ -365,7 +365,7 @@ fn handle_request(request: WSRequest) {
                 sender
                     .send_message(&message)
                     .map_err(|e| {
-                        eprintln!("Err receiving {}", e);
+                        eprintln!("Err {} receiving {}", client_id, e);
                         increment_client_errors(client_id)
                     })
                     .ok();

@@ -45,6 +45,29 @@ export const findMyShip = (state: GameState): Ship | null => {
   return null;
 };
 
+function simulateStateUpdate(
+  updaterFn: (serialized_state: string, elapsed_micro: BigInt) => string,
+  inState: GameState,
+  elapsedMs: number
+): GameState | undefined {
+  let result;
+  try {
+    let updated = updaterFn(JSON.stringify(inState), BigInt(elapsedMs * 1000));
+    if (updated) {
+      result = JSON.parse(updated);
+      if (result.message) {
+        console.warn(result.message);
+        result = undefined;
+      }
+    } else {
+      console.warn('no result from local update');
+    }
+  } catch (e) {
+    console.warn('error updating state locally', e);
+  }
+  return result;
+}
+
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
   state!: GameState;
@@ -138,12 +161,7 @@ export default class NetState extends EventEmitter {
         myUpdatedShip.docked_at = myOldShip.docked_at;
       }
       // 3. fix my movement rollback by allowing update
-      if (
-        myOldShip &&
-        myUpdatedShip &&
-        !myOldShip.docked_at &&
-        !myUpdatedShip.docked_at
-      ) {
+      if (myOldShip && myUpdatedShip) {
         myUpdatedShip.x = myOldShip.x;
         myUpdatedShip.y = myOldShip.y;
       }
@@ -182,7 +200,7 @@ export default class NetState extends EventEmitter {
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.ships.splice(myShipIndex, 1)[0];
     for (const cmd of cmds) {
-      myShip = applyShipAction(myShip, cmd, this.state, elapsedMs);
+      myShip = applyShipAction(myShip, cmd, this.state, elapsedMs, this.ping);
     }
     this.state.ships.push(myShip);
   };
@@ -207,20 +225,14 @@ export default class NetState extends EventEmitter {
     if (actions[ShipActionType.Dock]) {
       this.updateShipOnServer();
     }
-    let updated = this.localSimUpdate(
-      JSON.stringify(this.state),
-      BigInt(elapsedMs * 1000)
-    );
-    if (updated) {
-      let result = JSON.parse(updated);
-      if (!result.message) {
-        //console.log({ local: this.state.ticks });
-        this.state = result;
-      } else {
-        console.warn(result.message);
-      }
-    } else {
-      console.warn('no result from local update');
+    let result;
+
+    const updaterFn = this.localSimUpdate;
+    const inState = this.state;
+
+    result = simulateStateUpdate(updaterFn, inState, elapsedMs);
+    if (result) {
+      this.state = result;
     }
   };
 
