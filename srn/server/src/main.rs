@@ -397,6 +397,7 @@ fn disconnect_if_bad(client_id: Uuid) -> bool {
             .ok()
             .unwrap()
     {
+        eprintln!("Resetting errors, old {:?}", errors);
         last_check.time = now;
         *errors = HashMap::new();
     }

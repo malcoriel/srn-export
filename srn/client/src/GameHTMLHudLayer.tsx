@@ -13,7 +13,8 @@ export const GameHTMLHudLayer: React.FC<{
   state: GameState;
   connecting: boolean;
   ping: number;
-}> = ({ connecting, state, ping }) => {
+  maxPing?: number;
+}> = ({ connecting, state, ping, maxPing }) => {
   const myPlayer = findMyPlayer(state);
   let questData: any;
   if (myPlayer && myPlayer.quest) {
@@ -50,7 +51,12 @@ export const GameHTMLHudLayer: React.FC<{
       }}
     >
       {connecting && <span>Connecting...&nbsp;</span>}
-      {!connecting && <span>Ping: {ping}&nbsp;</span>}
+      {!connecting && (
+        <span>
+          Ping: {ping}
+          {maxPing && <span>&nbsp;({maxPing} max)</span>}.&nbsp;
+        </span>
+      )}
       {state.milliseconds_remaining > 0 ? (
         <span>
           <span>

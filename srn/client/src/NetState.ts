@@ -25,6 +25,7 @@ interface Cmd {
 const FORCE_SYNC_INTERVAL = 1000;
 const SHIP_UPDATE_INTERVAL = 200;
 const RECONNECT_INTERVAL = 1000;
+const MAX_PING_LIFE = 10000;
 
 export const findMyPlayer = (state: GameState) =>
   state.players.find((player) => player.id === state.my_id);
@@ -51,10 +52,9 @@ export default class NetState extends EventEmitter {
   state!: GameState;
   public connecting = true;
   public preferredName = 'player';
-  private localSimUpdate:
-    | ((serialized_state: string, elapsed_micro: BigInt) => string)
-    | undefined;
   public ping: number;
+  public maxPing?: number;
+  public maxPingTick?: number;
   public client_start_moment?: number;
   public initial_ping?: number;
   private forceSyncStart?: number;
@@ -122,6 +122,8 @@ export default class NetState extends EventEmitter {
         this.forceSyncStart
       ) {
         this.ping = Math.floor((performance.now() - this.forceSyncStart) / 2);
+        this.handleMaxPing(parsed);
+
         this.forceSyncTag = undefined;
         this.forceSyncStart = undefined;
       }
@@ -148,6 +150,24 @@ export default class NetState extends EventEmitter {
     }
   }
 
+  private handleMaxPing(parsed: GameState) {
+    // This method is fairly dumb since it reset max ping
+    // Instead, it could use a sliding window of pings over last X seconds
+    if (
+      this.maxPingTick !== undefined &&
+      this.maxPingTick + MAX_PING_LIFE < parsed.ticks
+    ) {
+      this.maxPingTick = undefined;
+    }
+    if (this.maxPing !== undefined && this.ping > this.maxPing) {
+      this.maxPingTick = parsed.ticks;
+      this.maxPing = this.ping;
+    }
+    if (this.maxPingTick == undefined) {
+      this.maxPing = this.ping;
+    }
+  }
+
   private send(cmd: Cmd) {
     if (this.socket && !this.connecting) {
       switch (cmd.code) {
@@ -171,11 +191,11 @@ export default class NetState extends EventEmitter {
     }
   }
 
-  private mutate_ship = (cmds: ShipAction[], elapsedMs: number) => {
+  private mutate_ship = (commands: ShipAction[], elapsedMs: number) => {
     const myShipIndex = findMyShipIndex(this.state);
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.ships.splice(myShipIndex, 1)[0];
-    for (const cmd of cmds) {
+    for (const cmd of commands) {
       myShip = applyShipAction(myShip, cmd, this.state, elapsedMs, this.ping);
     }
     this.state.ships.push(myShip);
@@ -193,7 +213,6 @@ export default class NetState extends EventEmitter {
     }
     let result;
 
-    const updaterFn = this.localSimUpdate;
     const inState = this.state;
 
     result = simulateStateUpdate(inState, elapsedMs);

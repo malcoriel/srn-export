@@ -134,7 +134,7 @@ export const applyShipAction = (
   ping: number
 ) => {
   const moveByTime = (SHIP_SPEED * elapsedMs) / 1000;
-  // const stateConsideringPing =
+  const stateConsideringPing = simulateStateUpdate(state, ping) || state;
   const moveByTimeDiagonal = (moveByTime * Math.sqrt(2)) / 2;
   switch (sa.type) {
     case ShipActionType.Dock: {
@@ -142,7 +142,7 @@ export const applyShipAction = (
       if (myShip.docked_at) {
         myShip.docked_at = undefined;
       } else {
-        for (const planet of state.planets) {
+        for (const planet of stateConsideringPing.planets) {
           const planetV = Vector.fromIVector(planet);
           if (planetV.euDistTo(shipV) < planet.radius) {
             myShip.docked_at = planet.id;

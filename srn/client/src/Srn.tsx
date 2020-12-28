@@ -86,6 +86,7 @@ class Srn extends React.Component<
           <GameHTMLHudLayer
             state={this.NS.state}
             ping={this.NS.ping}
+            maxPing={this.NS.maxPing}
             connecting={this.NS.connecting}
           />
         </div>
