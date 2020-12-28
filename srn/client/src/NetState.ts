@@ -5,6 +5,7 @@ import {
   Ship,
   ShipAction,
   ShipActionType,
+  simulateStateUpdate,
 } from './world';
 import * as uuid from 'uuid';
 import { actionsActive } from './ShipControls';
@@ -44,29 +45,6 @@ export const findMyShip = (state: GameState): Ship | null => {
   if (index != -1 && index !== null) return state.ships[index];
   return null;
 };
-
-function simulateStateUpdate(
-  updaterFn: (serialized_state: string, elapsed_micro: BigInt) => string,
-  inState: GameState,
-  elapsedMs: number
-): GameState | undefined {
-  let result;
-  try {
-    let updated = updaterFn(JSON.stringify(inState), BigInt(elapsedMs * 1000));
-    if (updated) {
-      result = JSON.parse(updated);
-      if (result.message) {
-        console.warn(result.message);
-        result = undefined;
-      }
-    } else {
-      console.warn('no result from local update');
-    }
-  } catch (e) {
-    console.warn('error updating state locally', e);
-  }
-  return result;
-}
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -124,8 +102,6 @@ export default class NetState extends EventEmitter {
     this.socket.onopen = () => {
       this.connecting = false;
       this.send({ code: OpCode.Name, value: this.preferredName });
-      // noinspection JSIgnoredPromiseFromCall
-      this.initLocalSim();
     };
     this.socket.onerror = () => {
       console.warn('socket error');
@@ -209,17 +185,7 @@ export default class NetState extends EventEmitter {
     this.preferredName = newName;
   };
 
-  private async initLocalSim() {
-    const { update, set_panic_hook } = await import('../../world/pkg');
-    set_panic_hook();
-    this.localSimUpdate = update;
-  }
-
   updateLocalState = (elapsedMs: number) => {
-    if (!this.localSimUpdate) {
-      return;
-    }
-
     let actions = Object.values(actionsActive).filter((a) => !!a);
     this.mutate_ship(actions as ShipAction[], elapsedMs);
     if (actions[ShipActionType.Dock]) {
@@ -230,7 +196,7 @@ export default class NetState extends EventEmitter {
     const updaterFn = this.localSimUpdate;
     const inState = this.state;
 
-    result = simulateStateUpdate(updaterFn, inState, elapsedMs);
+    result = simulateStateUpdate(inState, elapsedMs);
     if (result) {
       this.state = result;
     }

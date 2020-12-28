@@ -192,3 +192,41 @@ export const applyShipAction = (
   }
   return myShip;
 };
+
+let updaterFn:
+  | ((serialized_state: string, elapsed_micro: BigInt) => string)
+  | undefined = undefined;
+(async function () {
+  const { update, set_panic_hook } = await import('../../world/pkg');
+  updaterFn = update;
+  set_panic_hook();
+})();
+
+export const simulateStateUpdate = (
+  inState: GameState,
+  elapsedMs: number
+): GameState | undefined => {
+  let result;
+  try {
+    if (updaterFn) {
+      let updated = updaterFn(
+        JSON.stringify(inState),
+        BigInt(elapsedMs * 1000)
+      );
+      if (updated) {
+        result = JSON.parse(updated);
+        if (result.message) {
+          console.warn(result.message);
+          result = undefined;
+        }
+      } else {
+        console.warn('no result from local update');
+      }
+    } else {
+      console.warn('world updater not yet initialized');
+    }
+  } catch (e) {
+    console.warn('error updating state locally', e);
+  }
+  return result;
+};
