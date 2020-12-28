@@ -375,7 +375,8 @@ fn handle_request(request: WSRequest) {
     }
 }
 
-const MAX_ERRORS_PER_SECOND: u32 = 5;
+const MAX_ERRORS: u32 = 10;
+const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 
 fn force_disconnect_client(client_id: &Uuid) {
     eprintln!("force disconnecting client: {}", client_id);
@@ -391,18 +392,16 @@ fn disconnect_if_bad(client_id: Uuid) -> bool {
     let mut errors = CLIENT_ERRORS.lock().unwrap();
     let mut last_check = CLIENT_ERRORS_LAST_CHECK.lock().unwrap();
     let now = Utc::now();
-    let diff = last_check.time - now;
-    if diff
-        > chrono::Duration::from_std(Duration::from_secs(1))
-            .ok()
-            .unwrap()
-    {
-        eprintln!("Resetting errors, old {:?}", errors);
+    let diff = (last_check.time - now).num_milliseconds().abs();
+    if diff > MAX_ERRORS_SAMPLE_INTERVAL {
+        if errors.values().any(|e| *e > 0) {
+            eprintln!("Resetting errors, old {:?}", errors);
+        }
         last_check.time = now;
         *errors = HashMap::new();
     }
     let entry = errors.entry(client_id).or_insert(0);
-    if *entry > MAX_ERRORS_PER_SECOND {
+    if *entry > MAX_ERRORS {
         force_disconnect_client(&client_id);
         return true;
     }
