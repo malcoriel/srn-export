@@ -113,6 +113,8 @@ export default class NetState extends EventEmitter {
       }
 
       this.state = parsed;
+      // compensate for ping since the state we got is already outdated by that value
+      this.updateLocalState(this.ping);
       this.emit('change', this.state);
     } catch (e) {
       console.warn('error handling message', e);
