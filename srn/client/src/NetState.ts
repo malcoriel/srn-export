@@ -127,20 +127,25 @@ export default class NetState extends EventEmitter {
         this.forceSyncStart = undefined;
       }
 
-      const myShip = findMyShip(this.state);
+      const myOldShip = findMyShip(this.state);
       this.state = parsed;
       // compensate for ping since the state we got is already outdated by that value
       // 1. primarily work on planets - something that is adjusted deterministically
       this.updateLocalState(this.ping);
       // 2. fix docking/undocking rollback - this is a particular case of movement rollback
       const myUpdatedShip = findMyShip(this.state);
-      if (myShip && myUpdatedShip) {
-        myUpdatedShip.docked_at = myShip.docked_at;
+      if (myOldShip && myUpdatedShip) {
+        myUpdatedShip.docked_at = myOldShip.docked_at;
       }
-      // 3. fix my movement by allowing update
-      if (myShip && myUpdatedShip) {
-        myUpdatedShip.x = myShip.x;
-        myUpdatedShip.y = myShip.y;
+      // 3. fix my movement rollback by allowing update
+      if (
+        myOldShip &&
+        myUpdatedShip &&
+        !myOldShip.docked_at &&
+        !myUpdatedShip.docked_at
+      ) {
+        myUpdatedShip.x = myOldShip.x;
+        myUpdatedShip.y = myOldShip.y;
       }
 
       this.emit('change', this.state);
