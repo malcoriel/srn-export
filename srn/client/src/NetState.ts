@@ -1,6 +1,12 @@
 import EventEmitter from 'events';
-import { applyShipAction, GameState, ShipAction } from './world';
-import uuid from 'uuid';
+import {
+  applyShipAction,
+  GameState,
+  ShipAction,
+  ShipActionType,
+} from './world';
+import * as uuid from 'uuid';
+import { actionsActive } from './ShipControls';
 
 enum OpCode {
   Unknown,
@@ -15,6 +21,7 @@ interface Cmd {
 }
 
 const FORCE_SYNC_INTERVAL = 1000;
+const SHIP_UPDATE_INTERVAL = 200;
 const RECONNECT_INTERVAL = 1000;
 
 export const findMyPlayer = (state: GameState) =>
@@ -57,6 +64,7 @@ export default class NetState extends EventEmitter {
     };
     this.ping = 0;
     setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
+    setInterval(this.updateShipOnServer, SHIP_UPDATE_INTERVAL);
   }
 
   forceSync = () => {
@@ -144,14 +152,14 @@ export default class NetState extends EventEmitter {
     }
   }
 
-  mutate_ship = (cmd: ShipAction) => {
+  private mutate_ship = (cmds: ShipAction[], elapsedMs: number) => {
     const myShipIndex = findMyShipIndex(this.state);
     if (myShipIndex === -1 || myShipIndex === null) return;
-    const myShip = this.state.ships.splice(myShipIndex, 1)[0];
-    const newShip = applyShipAction(myShip, cmd, this.state);
+    let myShip = this.state.ships.splice(myShipIndex, 1)[0];
+    for (const cmd of cmds) {
+      myShip = applyShipAction(myShip, cmd, this.state, elapsedMs);
+    }
     this.state.ships.push(myShip);
-    this.emit('change', this.state);
-    this.send({ code: OpCode.MutateMyShip, value: newShip });
   };
 
   onPreferredNameChange = (newName: string) => {
@@ -164,9 +172,15 @@ export default class NetState extends EventEmitter {
     this.localSimUpdate = update;
   }
 
-  updateLocalState(elapsedMs: number) {
+  updateLocalState = (elapsedMs: number) => {
     if (!this.localSimUpdate) {
       return;
+    }
+
+    let actions = Object.values(actionsActive).filter((a) => !!a);
+    this.mutate_ship(actions as ShipAction[], elapsedMs);
+    if (actions[ShipActionType.Dock]) {
+      this.updateShipOnServer();
     }
     let updated = this.localSimUpdate(
       JSON.stringify(this.state),
@@ -183,5 +197,15 @@ export default class NetState extends EventEmitter {
     } else {
       console.warn('no result from local update');
     }
-  }
+  };
+
+  private updateShipOnServer = () => {
+    if (this.state && !this.state.paused) {
+      let myShipIndex = findMyShipIndex(this.state);
+      if (myShipIndex !== -1 && myShipIndex !== null) {
+        const myShip = this.state.ships[myShipIndex];
+        this.send({ code: OpCode.MutateMyShip, value: myShip });
+      }
+    }
+  };
 }

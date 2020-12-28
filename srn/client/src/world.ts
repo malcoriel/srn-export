@@ -9,6 +9,8 @@ export const max_y = 50;
 export const min_x = -50;
 export const min_y = -50;
 
+export const SHIP_SPEED = 10.0;
+
 export const radToDeg = (x: number) => (x * 180) / Math.PI;
 export const degToRad = (x: number) => (x * Math.PI) / 180;
 
@@ -68,7 +70,7 @@ export type Leaderboard = {
 };
 
 export type GameState = {
-  tag: string,
+  tag: string;
   leaderboard?: Leaderboard;
   planets: Planet[];
   ships: Ship[];
@@ -99,13 +101,14 @@ export const antiOffset = {
   offsetY: -scaleConfig.offsetY / antiScale.scaleY,
 };
 
-enum ShipActionType {
+export enum ShipActionType {
   Unknown,
   Move,
   Dock,
 }
 
 export enum Direction {
+  Unknown,
   Up,
   UpRight,
   Right,
@@ -126,8 +129,11 @@ export class ShipAction {
 export const applyShipAction = (
   myShip: Ship,
   sa: ShipAction,
-  state: GameState
+  state: GameState,
+  elapsedMs: number
 ) => {
+  const moveByTime = (SHIP_SPEED * elapsedMs) / 1000;
+  const moveByTimeDiagonal = (moveByTime * Math.sqrt(2)) / 2;
   switch (sa.type) {
     case ShipActionType.Dock: {
       const shipV = Vector.fromIVector(myShip);
@@ -144,35 +150,36 @@ export const applyShipAction = (
       }
       break;
     }
+
     case ShipActionType.Move: {
       switch (sa.data as Direction) {
         case Direction.Up:
-          myShip.y -= 1;
+          myShip.y -= moveByTime;
           break;
         case Direction.UpRight:
-          myShip.x += 1;
-          myShip.y -= 1;
+          myShip.x += moveByTimeDiagonal;
+          myShip.y -= moveByTimeDiagonal;
           break;
         case Direction.Right:
-          myShip.x += 1;
+          myShip.x += moveByTime;
           break;
         case Direction.DownRight:
-          myShip.y += 1;
-          myShip.x += 1;
+          myShip.y += moveByTimeDiagonal;
+          myShip.x += moveByTimeDiagonal;
           break;
         case Direction.Down:
-          myShip.y += 1;
+          myShip.y += moveByTime;
           break;
         case Direction.DownLeft:
-          myShip.y += 1;
-          myShip.x -= 1;
+          myShip.y += moveByTimeDiagonal;
+          myShip.x -= moveByTimeDiagonal;
           break;
         case Direction.Left:
-          myShip.x -= 1;
+          myShip.x -= moveByTime;
           break;
         case Direction.UpLeft:
-          myShip.y -= 1;
-          myShip.x -= 1;
+          myShip.y -= moveByTimeDiagonal;
+          myShip.x -= moveByTimeDiagonal;
           break;
       }
       break;

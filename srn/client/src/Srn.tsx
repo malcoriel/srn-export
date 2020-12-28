@@ -80,10 +80,7 @@ class Srn extends React.Component<
               <BodiesLayer state={this.NS.state} />
               <ShipsLayer state={this.NS.state} />
               <CoordLayer />
-              <ShipControls
-                mutate_ship={this.NS.mutate_ship}
-                state={this.NS.state}
-              />
+              <ShipControls />
             </Stage>
           )}
           <GameHTMLHudLayer

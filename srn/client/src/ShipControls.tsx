@@ -1,37 +1,75 @@
-import React from 'react';
-import { Direction, GameState, ShipAction } from './world';
-import { useHotkeys } from 'react-hotkeys-hook';
+import React, { useEffect } from 'react';
+import { Direction, ShipAction, ShipActionType } from './world';
 
 export type ShipChangerCallback = (sa: ShipAction) => void;
-export const ShipControls: React.FC<{
-  state: GameState;
-  mutate_ship: ShipChangerCallback;
-}> = ({ state, mutate_ship }) => {
-  const controls = {
-    w: ShipAction.Move(Direction.Up),
-    'w+a': ShipAction.Move(Direction.UpLeft),
-    s: ShipAction.Move(Direction.Down),
-    's+a': ShipAction.Move(Direction.DownLeft),
-    a: ShipAction.Move(Direction.Left),
-    's+d': ShipAction.Move(Direction.DownRight),
-    d: ShipAction.Move(Direction.Right),
-    'w+d': ShipAction.Move(Direction.UpRight),
-    space: ShipAction.Dock(),
-  };
 
-  for (const [key, fn] of Object.entries(controls)) {
-    useHotkeys(
-      key,
-      () => {
-        (async () => {
-          if (!state.paused) {
-            await mutate_ship(fn);
-          }
-        })();
-      },
-      [state]
-    );
-  }
+const makeMoveAction = (
+  activeKeys: Record<string, boolean>
+): ShipAction | undefined => {
+  const up = activeKeys['KeyW'];
+  const left = activeKeys['KeyA'];
+  const down = activeKeys['KeyS'];
+  const right = activeKeys['KeyD'];
 
+  let p = '';
+  p += up ? 'W' : '_';
+  p += left ? 'A' : '_';
+  p += down ? 'S' : '_';
+  p += right ? 'D' : '_';
+
+  let nextDir;
+  if (p === 'W___') nextDir = Direction.Up;
+  else if (p === '_A__') nextDir = Direction.Left;
+  else if (p === '__S_') nextDir = Direction.Down;
+  else if (p === '___D') nextDir = Direction.Right;
+  else if (p === 'WA__') nextDir = Direction.UpLeft;
+  else if (p === 'W__D') nextDir = Direction.UpRight;
+  else if (p === '_AS_') nextDir = Direction.DownLeft;
+  else if (p === '__SD') nextDir = Direction.DownRight;
+  else nextDir = undefined;
+
+  return nextDir ? ShipAction.Move(nextDir) : undefined;
+};
+
+const refreshActiveActions = () => {
+  actionsActive[ShipActionType.Move] = makeMoveAction(keysActive);
+  actionsActive[ShipActionType.Dock] = keysActive['Space']
+    ? ShipAction.Dock()
+    : undefined;
+};
+
+const keydownHandler = (keyDownEvent: KeyboardEvent) => {
+  keysActive[keyDownEvent.code] = true;
+  refreshActiveActions();
+};
+
+const keyUpHandler = (keyDownEvent: KeyboardEvent) => {
+  keysActive[keyDownEvent.code] = false;
+  refreshActiveActions();
+};
+
+const keysActive: Record<string, boolean> = {};
+
+export const actionsActive: Record<string, ShipAction | undefined> = {
+  [ShipActionType.Move]: undefined,
+  [ShipActionType.Dock]: undefined,
+};
+
+let mounted = false;
+
+export const ShipControls: React.FC = () => {
+  useEffect(() => {
+    if (!mounted) {
+      document.addEventListener('keydown', keydownHandler);
+      document.addEventListener('keyup', keyUpHandler);
+    }
+    mounted = true;
+    return () => {
+      if (mounted) {
+        document.removeEventListener('keydown', keydownHandler);
+        document.removeEventListener('keyup', keyUpHandler);
+      }
+    };
+  }, []);
   return null;
 };
