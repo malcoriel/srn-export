@@ -151,7 +151,7 @@ export default class NetState extends EventEmitter {
   }
 
   private handleMaxPing(parsed: GameState) {
-    // This method is fairly dumb since it reset max ping
+    // This method is fairly dumb since it resets max ping
     // Instead, it could use a sliding window of pings over last X seconds
     if (
       this.maxPingTick !== undefined &&
