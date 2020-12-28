@@ -34,11 +34,25 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins};
 use uuid::*;
 
 use lazy_static::lazy_static;
+use std::collections::HashMap;
 use websocket::{Message, OwnedMessage};
 
 lazy_static! {
     static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ClientMessage>)>>> =
         Arc::new(Mutex::new(vec![]));
+}
+
+struct LastCheck {
+    time: DateTime<Utc>,
+}
+
+lazy_static! {
+    static ref CLIENT_ERRORS_LAST_CHECK: Arc<Mutex<LastCheck>> =
+        Arc::new(Mutex::new(LastCheck { time: Utc::now() }));
+}
+
+lazy_static! {
+    static ref CLIENT_ERRORS: Arc<Mutex<HashMap<Uuid, u32>>> = Arc::new(Mutex::new(HashMap::new()));
 }
 
 #[derive(Debug, Clone)]
@@ -252,13 +266,20 @@ fn handle_request(request: WSRequest) {
             Ok(m) => {
                 message_tx.send(m).ok();
             }
-            Err(e) => eprintln!("err receiving ws {}", e),
+            Err(e) => {
+                eprintln!("err receiving ws {}", e);
+                increment_client_errors(client_id);
+            }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     });
 
     loop {
         if is_disconnected(client_id) {
+            break;
+        }
+
+        if disconnect_if_bad(client_id) {
             break;
         }
 
@@ -343,12 +364,54 @@ fn handle_request(request: WSRequest) {
                 let message = Message::text(message.serialize());
                 sender
                     .send_message(&message)
-                    .map_err(|e| eprintln!("Err receiving {}", e))
+                    .map_err(|e| {
+                        eprintln!("Err receiving {}", e);
+                        increment_client_errors(client_id)
+                    })
                     .ok();
             }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
+}
+
+const MAX_ERRORS_PER_SECOND: u32 = 5;
+
+fn force_disconnect_client(client_id: &Uuid) {
+    eprintln!("force disconnecting client: {}", client_id);
+    let mut senders = CLIENT_SENDERS.lock().unwrap();
+    let bad_sender_index = senders.iter().position(|c| c.0 == *client_id);
+    if let Some(index) = bad_sender_index {
+        senders.remove(index);
+    }
+    remove_player(&client_id);
+}
+
+fn disconnect_if_bad(client_id: Uuid) -> bool {
+    let mut errors = CLIENT_ERRORS.lock().unwrap();
+    let mut last_check = CLIENT_ERRORS_LAST_CHECK.lock().unwrap();
+    let now = Utc::now();
+    let diff = last_check.time - now;
+    if diff
+        > chrono::Duration::from_std(Duration::from_secs(1))
+            .ok()
+            .unwrap()
+    {
+        last_check.time = now;
+        *errors = HashMap::new();
+    }
+    let entry = errors.entry(client_id).or_insert(0);
+    if *entry > MAX_ERRORS_PER_SECOND {
+        force_disconnect_client(&client_id);
+        return true;
+    }
+    return false;
+}
+
+fn increment_client_errors(client_id: Uuid) {
+    let mut errors = CLIENT_ERRORS.lock().unwrap();
+    let entry = errors.entry(client_id).or_insert(0);
+    *entry += 1;
 }
 
 fn is_disconnected(client_id: Uuid) -> bool {
@@ -441,6 +504,7 @@ fn rocket() -> rocket::Rocket {
                 let send = sender.1.send(msg.clone());
                 if let Err(e) = send {
                     eprintln!("err sending {}", e);
+                    increment_client_errors(sender.0);
                 }
             }
             thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
