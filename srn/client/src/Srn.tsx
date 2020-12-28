@@ -17,7 +17,7 @@ import {
   uniqueNamesGenerator,
 } from 'unique-names-generator';
 import { Measure, Perf, statsHeap, StatsPanel } from './Perf';
-import { BasicTime, decoupledLockedTime } from './Times';
+import { BasicTime, vsyncedDecoupledTime as Time } from './Times';
 import { StartHudLayer } from './StartHudLayer';
 import { LeaderboardLayer } from './LeaderboardLayer';
 
@@ -33,7 +33,7 @@ class Srn extends React.Component<
   private time: BasicTime;
   constructor(props: {}) {
     super(props);
-    this.time = new decoupledLockedTime(LOCAL_SIM_TIME_STEP);
+    this.time = new Time(LOCAL_SIM_TIME_STEP);
     const NS = new NetState();
     NS.on('change', () => {
       this.forceUpdate();
@@ -62,7 +62,7 @@ class Srn extends React.Component<
           this.NS.updateLocalState(elapsedMs);
         });
       },
-      (elapsedMs) => {
+      () => {
         Perf.markEvent(Measure.RenderFrameEvent);
         Perf.usingMeasure(Measure.RenderFrameTime, () => {
           this.NS.emit('change');
@@ -88,6 +88,7 @@ class Srn extends React.Component<
           )}
           <GameHTMLHudLayer
             state={this.NS.state}
+            ping={this.NS.ping}
             connecting={this.NS.connecting}
           />
         </div>

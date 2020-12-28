@@ -325,6 +325,7 @@ pub struct Leaderboard {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState {
+    pub tag: Option<String>,
     pub my_id: Uuid,
     pub start_time_ticks: u64,
     pub star: Star,
@@ -406,6 +407,7 @@ pub fn seed_state(debug: bool) -> GameState {
 
     let now = Utc::now().timestamp_millis() as u64;
     let mut state = GameState {
+        tag: None,
         milliseconds_remaining: 60 * 3 * 1000,
         paused: false,
         my_id: crate::new_id(),

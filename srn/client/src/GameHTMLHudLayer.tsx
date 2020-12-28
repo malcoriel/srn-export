@@ -12,7 +12,8 @@ export const findPlanet = (
 export const GameHTMLHudLayer: React.FC<{
   state: GameState;
   connecting: boolean;
-}> = ({ connecting, state }) => {
+  ping: number;
+}> = ({ connecting, state, ping }) => {
   const myPlayer = findMyPlayer(state);
   let questData: any;
   if (myPlayer && myPlayer.quest) {
@@ -48,7 +49,8 @@ export const GameHTMLHudLayer: React.FC<{
         width: 'calc(100%-10px)',
       }}
     >
-      {connecting && <span>Connecting...</span>}
+      {connecting && <span>Connecting...&nbsp;</span>}
+      {!connecting && <span>Ping: {ping}&nbsp;</span>}
       {state.milliseconds_remaining > 0 ? (
         <span>
           <span>

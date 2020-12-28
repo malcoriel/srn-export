@@ -68,6 +68,7 @@ export type Leaderboard = {
 };
 
 export type GameState = {
+  tag: string,
   leaderboard?: Leaderboard;
   planets: Planet[];
   ships: Ship[];

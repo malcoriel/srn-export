@@ -23,7 +23,7 @@ export class variableDeltaTime extends BasicTime {
     let lastCheck = performance.now();
     startBreakableTimer(() => {
       const currentTime = performance.now();
-      const frameTime = currentTime - lastCheck;
+      const frameTime = Math.floor(currentTime - lastCheck);
       physics(frameTime);
       render(frameTime);
       lastCheck = currentTime;
@@ -38,7 +38,7 @@ export class semiFixedDeltaTime extends BasicTime {
       const currentTime = performance.now();
       let frameTime = currentTime - lastCheck;
       while (frameTime > 0.0) {
-        const deltaTime = Math.min(frameTime, this.timeStep);
+        const deltaTime = Math.floor(Math.min(frameTime, this.timeStep));
         physics(deltaTime);
         render(deltaTime);
         frameTime -= deltaTime;
@@ -63,7 +63,7 @@ export class clampedSemiFixedDeltaTime extends BasicTime {
       const currentTime = performance.now();
       let frameTime = currentTime - lastCheck;
       while (frameTime > 0.0) {
-        const deltaTime = Math.min(frameTime, this.timeStep);
+        const deltaTime = Math.floor(Math.min(frameTime, this.timeStep));
         if (this.count < clampTime / this.timeStep) {
           physics(deltaTime);
           render(deltaTime);

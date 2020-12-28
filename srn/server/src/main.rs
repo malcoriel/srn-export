@@ -291,7 +291,8 @@ fn handle_request(request: WSRequest) {
                         Ok(number) => match FromPrimitive::from_u32(number) {
                             Some(op_code) => match op_code {
                                 OpCode::Sync => {
-                                    let state = STATE.read().unwrap().state.clone();
+                                    let mut state = STATE.read().unwrap().state.clone();
+                                    state.tag = Some(second.to_string());
                                     broadcast_state(state)
                                 }
                                 OpCode::MutateMyShip => {
@@ -470,7 +471,7 @@ const DEBUG_PHYSICS: bool = false;
 fn physics_thread() {
     let mut last = Local::now();
     loop {
-        thread::sleep(Duration::from_millis(1000));
+        thread::sleep(Duration::from_millis(10));
         let mut cont = STATE.write().unwrap();
         let now = Local::now();
         let elapsed = now - last;
