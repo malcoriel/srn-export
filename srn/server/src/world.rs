@@ -499,6 +499,7 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
         } else {
             // eprintln!("playing");
             state.planets = update_planets(&state.planets, &state.star, elapsed);
+            state.ships = update_ships_on_planets(&state.planets, &state.ships);
             if !client {
                 state.players = update_quests(&state.players, &state.ships, &state.planets);
             }
