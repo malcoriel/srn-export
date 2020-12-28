@@ -2,6 +2,7 @@ import EventEmitter from 'events';
 import {
   applyShipAction,
   GameState,
+  Ship,
   ShipAction,
   ShipActionType,
 } from './world';
@@ -36,6 +37,12 @@ export const findMyShipIndex = (state: GameState): number | null => {
   );
   if (foundShipIndex == -1) return null;
   return foundShipIndex;
+};
+
+export const findMyShip = (state: GameState): Ship | null => {
+  const index = findMyShipIndex(state);
+  if (index != -1 && index !== null) return state.ships[index];
+  return null;
 };
 
 export default class NetState extends EventEmitter {
@@ -120,9 +127,18 @@ export default class NetState extends EventEmitter {
         this.forceSyncStart = undefined;
       }
 
+      const myShip = findMyShip(this.state);
       this.state = parsed;
       // compensate for ping since the state we got is already outdated by that value
+      // 1. primarily work on planets - something that is adjusted deterministically
       this.updateLocalState(this.ping);
+      // 2. fix docking/undocking rollback - this is a particular case of movement rollback
+      const myUpdatedShip = findMyShip(this.state);
+      if (myShip && myUpdatedShip) {
+        myUpdatedShip.docked_at = myShip.docked_at;
+      }
+      // 3. fix movement rollback by extrapolating
+
       this.emit('change', this.state);
     } catch (e) {
       console.warn('error handling message', e);
