@@ -286,11 +286,17 @@ fn handle_request(request: WSRequest) {
                     }
                     let first = parts.iter().nth(0).unwrap();
                     let second = parts.iter().nth(1).unwrap();
+                    let third = parts.iter().nth(2);
 
                     match first.parse::<u32>() {
                         Ok(number) => match FromPrimitive::from_u32(number) {
                             Some(op_code) => match op_code {
                                 OpCode::Sync => {
+                                    if third.is_some() {
+                                        thread::sleep(Duration::from_millis(
+                                            third.unwrap().parse::<u64>().unwrap(),
+                                        ))
+                                    }
                                     let mut state = STATE.read().unwrap().state.clone();
                                     state.tag = Some(second.to_string());
                                     broadcast_state(state)

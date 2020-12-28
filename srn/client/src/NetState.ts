@@ -64,7 +64,8 @@ export default class NetState extends EventEmitter {
       let tag = uuid.v4();
       this.forceSyncTag = tag;
       this.forceSyncStart = performance.now();
-      this.send({ code: OpCode.Sync, value: tag });
+      const forcedDelay = 200;
+      this.send({ code: OpCode.Sync, value: { tag, forcedDelay } });
     }
   };
 
@@ -122,7 +123,11 @@ export default class NetState extends EventEmitter {
     if (this.socket && !this.connecting) {
       switch (cmd.code) {
         case OpCode.Sync: {
-          this.socket.send(`${cmd.code}_%_${cmd.value}`);
+          let syncMsg = `${cmd.code}_%_${cmd.value.tag}`;
+          if (cmd.value.forcedDelay) {
+            syncMsg += `_%_${cmd.value.forcedDelay}`;
+          }
+          this.socket.send(syncMsg);
           break;
         }
         case OpCode.MutateMyShip: {
