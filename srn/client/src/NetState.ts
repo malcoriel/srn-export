@@ -137,7 +137,11 @@ export default class NetState extends EventEmitter {
       if (myShip && myUpdatedShip) {
         myUpdatedShip.docked_at = myShip.docked_at;
       }
-      // 3. fix movement rollback by extrapolating
+      // 3. fix my movement by allowing update
+      if (myShip && myUpdatedShip) {
+        myUpdatedShip.x = myShip.x;
+        myUpdatedShip.y = myShip.y;
+      }
 
       this.emit('change', this.state);
     } catch (e) {
