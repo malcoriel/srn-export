@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use uuid::Uuid;
 static SEED_TIME: i64 = 9321 * 1000 * 1000;
+use chrono::Utc;
 use itertools::Itertools;
 use uuid::*;
 
@@ -325,14 +326,15 @@ pub struct Leaderboard {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState {
     pub my_id: Uuid,
+    pub start_time_ticks: u64,
     pub star: Star,
     pub planets: Vec<Planet>,
     pub ships: Vec<Ship>,
     pub players: Vec<Player>,
-    pub tick: u32,
     pub milliseconds_remaining: i32,
     pub paused: bool,
     pub leaderboard: Option<Leaderboard>,
+    pub ticks: u32,
 }
 
 pub fn seed_state(debug: bool) -> GameState {
@@ -402,11 +404,12 @@ pub fn seed_state(debug: bool) -> GameState {
         anchor_tier: 2,
     };
 
+    let now = Utc::now().timestamp_millis() as u64;
     let mut state = GameState {
         milliseconds_remaining: 60 * 3 * 1000,
         paused: false,
         my_id: crate::new_id(),
-        tick: 0,
+        ticks: 0,
         star,
         planets: vec![
             Planet {
@@ -441,15 +444,23 @@ pub fn seed_state(debug: bool) -> GameState {
         ships: vec![],
         players: vec![],
         leaderboard: None,
+        start_time_ticks: now,
     };
+    state.planets = update_planets(&state.planets, &state.star, SEED_TIME);
     if debug {
         eprintln!("{}", serde_json::to_string_pretty(&state).ok().unwrap());
     }
-    state.planets = update_planets(&state.planets, &state.star, SEED_TIME);
     state
 }
 
+pub fn force_update_to_now(state: &mut GameState) {
+    let now = Utc::now().timestamp_millis() as u64;
+    state.ticks = (now - state.start_time_ticks) as u32;
+}
+
 pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
+    state.ticks += elapsed as u32 / 1000;
+
     if !client {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
     }
@@ -467,10 +478,8 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
                     p
                 })
                 .collect::<Vec<_>>();
-            let tick = state.tick.clone();
             state = seed_state(false);
             state.players = players.clone();
-            state.tick = tick + 1;
             for player in players.iter() {
                 spawn_ship(&mut state, &player.id);
             }

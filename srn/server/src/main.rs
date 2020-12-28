@@ -12,7 +12,7 @@ use rocket_contrib::json::Json;
 use std::thread;
 extern crate rocket_cors;
 extern crate websocket;
-use chrono::Local;
+use chrono::{DateTime, Local, Utc};
 use num_traits::FromPrimitive;
 use std::time::Duration;
 use websocket::server::upgrade::WsUpgrade;
@@ -156,7 +156,7 @@ fn mutate_owned_ship(client_id: Uuid, new_ship: Ship) -> Result<Ship, ClientErr>
     {
         let mut cont = STATE.write().unwrap();
         cont.state.ships.remove(old_ship_index.unwrap());
-        cont.state.tick = cont.state.tick + 1;
+        world::force_update_to_now(&mut cont.state);
         cont.state.ships.push(updated_ship.clone());
         multicast_state_excluding(cont.state.clone(), client_id);
         return Ok(updated_ship);
@@ -356,7 +356,7 @@ fn is_disconnected(client_id: Uuid) -> bool {
 fn change_player_name(conn_id: &Uuid, new_name: &&str) {
     {
         let mut cont = STATE.write().unwrap();
-        cont.state.tick += 1;
+        world::force_update_to_now(&mut cont.state);
         cont.state
             .players
             .iter_mut()
@@ -475,10 +475,6 @@ fn physics_thread() {
         let now = Local::now();
         let elapsed = now - last;
         last = now;
-        cont.state = world::update(
-            cont.state.clone(),
-            elapsed.num_microseconds().unwrap(),
-            false,
-        );
+        cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
     }
 }

@@ -72,7 +72,9 @@ export type GameState = {
   planets: Planet[];
   ships: Ship[];
   players: Player[];
-  tick: number;
+  // technically bigint but serialization doesn't know yet
+  start_time_ticks: number;
+  ticks: number;
   my_id: string;
   star: Star;
   paused: boolean;

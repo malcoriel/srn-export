@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod world_test {
-    use crate::world::{update_planets, GameState, Planet, Star};
+    use crate::world::{seed_state, update_planets, GameState, Planet, Star};
     use std::f64::consts::PI;
     use uuid::Uuid;
 
@@ -22,7 +22,7 @@ mod world_test {
         };
         let sat = Planet {
             id: Uuid::new_v4(),
-            name: "sattelite".to_string(),
+            name: "satellite".to_string(),
             x: 6.0,
             y: 0.0,
             rotation: 0.0,
@@ -47,6 +47,9 @@ mod world_test {
             ships: vec![],
             players: vec![],
             tick: 0,
+            milliseconds_remaining: 0,
+            paused: false,
+            leaderboard: None,
         };
         let eps = 0.2;
         let new_planets = update_planets(
@@ -86,5 +89,18 @@ mod world_test {
         assert!((planet.y + coord).abs() < eps);
         assert!((sat.x - sat_x).abs() < eps);
         assert!((sat.y - sat_y).abs() < eps);
+    }
+
+    #[test]
+    pub fn can_precisely_alter_state() {
+        let mut state = seed_state(true);
+        state.planets = update_planets(&state.planets, &state.star, 1321);
+        eprintln!("first");
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&state.planets[0])
+                .ok()
+                .unwrap()
+        );
     }
 }
