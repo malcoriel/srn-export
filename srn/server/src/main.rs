@@ -281,42 +281,43 @@ fn handle_request(request: WSRequest) {
                 }
                 OwnedMessage::Text(msg) => {
                     let parts = msg.split("_%_").collect::<Vec<&str>>();
-                    if parts.len() != 2 {
-                        eprintln!("Corrupt message (not 2 parts) {}", msg);
-                    }
-                    let first = parts.iter().nth(0).unwrap();
-                    let second = parts.iter().nth(1).unwrap();
-                    let third = parts.iter().nth(2);
+                    if parts.len() < 2 || parts.len() > 3 {
+                        eprintln!("Corrupt message (not 2-3 parts) {}", msg);
+                    } else {
+                        let first = parts.iter().nth(0).unwrap();
+                        let second = parts.iter().nth(1).unwrap();
+                        let third = parts.iter().nth(2);
 
-                    match first.parse::<u32>() {
-                        Ok(number) => match FromPrimitive::from_u32(number) {
-                            Some(op_code) => match op_code {
-                                OpCode::Sync => {
-                                    if third.is_some() {
-                                        thread::sleep(Duration::from_millis(
-                                            third.unwrap().parse::<u64>().unwrap(),
-                                        ))
+                        match first.parse::<u32>() {
+                            Ok(number) => match FromPrimitive::from_u32(number) {
+                                Some(op_code) => match op_code {
+                                    OpCode::Sync => {
+                                        if third.is_some() {
+                                            thread::sleep(Duration::from_millis(
+                                                third.unwrap().parse::<u64>().unwrap(),
+                                            ))
+                                        }
+                                        let mut state = STATE.read().unwrap().state.clone();
+                                        state.tag = Some(second.to_string());
+                                        broadcast_state(state)
                                     }
-                                    let mut state = STATE.read().unwrap().state.clone();
-                                    state.tag = Some(second.to_string());
-                                    broadcast_state(state)
+                                    OpCode::MutateMyShip => {
+                                        serde_json::from_str::<Ship>(second)
+                                            .ok()
+                                            .map(|s| mutate_owned_ship_wrapped(client_id, s));
+                                    }
+                                    OpCode::Name => {
+                                        change_player_name(&client_id, second);
+                                    }
+                                    OpCode::Unknown => {}
+                                },
+                                None => {
+                                    eprintln!("Invalid opcode {}", first);
                                 }
-                                OpCode::MutateMyShip => {
-                                    serde_json::from_str::<Ship>(second)
-                                        .ok()
-                                        .map(|s| mutate_owned_ship_wrapped(client_id, s));
-                                }
-                                OpCode::Name => {
-                                    change_player_name(&client_id, second);
-                                }
-                                OpCode::Unknown => {}
                             },
-                            None => {
-                                eprintln!("Invalid opcode {}", first);
+                            Err(e) => {
+                                eprintln!("Invalid opcode {} {}", first, e);
                             }
-                        },
-                        Err(e) => {
-                            eprintln!("Invalid opcode {} {}", first, e);
                         }
                     }
                 }
