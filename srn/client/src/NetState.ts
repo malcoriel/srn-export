@@ -196,7 +196,13 @@ export default class NetState extends EventEmitter {
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.ships.splice(myShipIndex, 1)[0];
     for (const cmd of commands) {
-      myShip = applyShipAction(myShip, cmd, this.state, elapsedMs, this.ping);
+      myShip = applyShipAction(
+        myShip,
+        cmd,
+        this.state,
+        elapsedMs,
+        this.maxPing || this.ping
+      );
     }
     this.state.ships.push(myShip);
   };

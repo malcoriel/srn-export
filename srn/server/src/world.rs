@@ -35,9 +35,10 @@ pub fn update_ships_on_planets(planets: &Vec<Planet>, ships: &Vec<Ship>) -> Vec<
         .map(|s| {
             let mut ship = s.clone();
             if let Some(docked_at) = ship.docked_at {
-                let planet = by_id.get(&docked_at).unwrap();
-                ship.x = planet.x;
-                ship.y = planet.y;
+                by_id.get(&docked_at).map(|p| {
+                    ship.x = p.x;
+                    ship.y = p.y;
+                });
             }
             ship
         })
