@@ -49,6 +49,7 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
       {planets.map((p) => (
         <ThreePlanetShape key={p.id} {...p} />
       ))}
+      <ThreePlanetShape key={star.id} {...star} />
     </mesh>
   );
 };
@@ -58,7 +59,8 @@ export const ThreeLayer: React.FC<{ state: GameState }> = ({ state }) => (
     orthographic
     camera={{
       position: new Vector3(0, 100, 0),
-      zoom: 7.5,
+      zoom: 7,
+      far: 200,
     }}
     style={{
       position: 'absolute',
@@ -70,13 +72,19 @@ export const ThreeLayer: React.FC<{ state: GameState }> = ({ state }) => (
   >
     <Suspense fallback={<mesh />}>
       <ambientLight />
+      <gridHelper args={[100, 10]} />
       <pointLight position={[0, 50, 0]} />
-      <Sphere position={[0, 0, 0]} scale={[10, 10, 10]} />
-      <Sphere
-        position={[100, 0, 0]}
-        scale={[10, 10, 10]}
-        rotation={[90, 0, 1]}
-      />
+      {/*<Sphere position={[0, 0, 0]} scale={[10, 10, 10]} />*/}
+      {/*<Sphere*/}
+      {/*  position={[10, 0, 0]}*/}
+      {/*  scale={[10, 10, 10]}*/}
+      {/*  rotation={[90, 0, 1]}*/}
+      {/*/>*/}
+      {/*<Sphere*/}
+      {/*  position={[20, 0, 0]}*/}
+      {/*  scale={[10, 10, 10]}*/}
+      {/*  rotation={[90, 0, 1]}*/}
+      {/*/>*/}
       <ThreeBodiesLayer state={state} />
     </Suspense>
     {/* blue is third coord (z?) */}
