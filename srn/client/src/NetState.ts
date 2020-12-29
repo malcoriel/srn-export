@@ -83,7 +83,7 @@ export default class NetState extends EventEmitter {
       let tag = uuid.v4();
       this.forceSyncTag = tag;
       this.forceSyncStart = performance.now();
-      const forcedDelay = 200;
+      const forcedDelay = 0;
       this.send({ code: OpCode.Sync, value: { tag, forcedDelay } });
     }
   };
