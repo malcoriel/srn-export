@@ -2,7 +2,9 @@ import React, { Suspense, useRef, useState } from 'react';
 import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
 import { Mesh, TextureLoader } from 'three';
 
-export const Sphere: React.FC<MeshProps & { color?: string }> = (props) => {
+export const Sphere: React.FC<
+  MeshProps & { color?: string; star?: boolean }
+> = (props) => {
   // This reference will give us direct access to the mesh
   const mesh = useRef<Mesh>();
   const space01map = useLoader(TextureLoader, 'resources/space01.jpg');

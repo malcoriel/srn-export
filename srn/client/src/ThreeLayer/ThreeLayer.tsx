@@ -1,17 +1,6 @@
 import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
-import {
-  antiScale,
-  GameState,
-  height_px,
-  height_units,
-  min_x,
-  min_y,
-  Planet,
-  scaleConfig,
-  width_px,
-  width_units,
-} from '../world';
+import { GameState, height_px, Planet, width_px } from '../world';
 import React, { Suspense } from 'react';
 import { Sphere } from './Sphere';
 import _ from 'lodash';
@@ -23,21 +12,16 @@ const posToThreePos = (x: number, y: number): [number, number, number] => [
   y,
 ];
 
-export const ThreePlanetShape: React.FC<Planet> = (p) => {
+export const ThreePlanetShape: React.FC<Planet & { star?: boolean }> = (p) => {
   const scale = _.times(3, () => p.radius) as [number, number, number];
   return (
-    <group position={posToThreePos(p.x, p.y)}>
-      {/*<Text*/}
-      {/*  {...antiScale}*/}
-      {/*  text={p.name}*/}
-      {/*  fill="white"*/}
-      {/*  align="center"*/}
-      {/*  offsetY={scaleConfig.scaleX * p.radius + 20}*/}
-      {/*  width={200}*/}
-      {/*  offsetX={100}*/}
-      {/*/>*/}
-      <Sphere key={p.id} scale={scale} color={p.color} />
-    </group>
+    <Sphere
+      position={posToThreePos(p.x, p.y)}
+      key={p.id}
+      scale={scale}
+      color={p.color}
+      star={p.star}
+    />
   );
 };
 
@@ -49,7 +33,7 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
       {planets.map((p) => (
         <ThreePlanetShape key={p.id} {...p} />
       ))}
-      {star && <ThreePlanetShape key={star.id} {...star} />}
+      {star && <ThreePlanetShape star={true} key={star.id} {...star} />}
     </mesh>
   );
 };
