@@ -10,7 +10,7 @@ export const BodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
     <Layer>
       <Rect
         width={width_units}
-        fill="black"
+        fill="transparent"
         height={height_units}
         x={min_x}
         y={min_y}

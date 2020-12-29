@@ -13,7 +13,7 @@ export const ShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
 
   return (
     <Layer>
-      {ships.map((s) => {
+      {ships.map((s, i) => {
         let { name: player_name = 'player' } = playersByShipId[s.id] || {
           name: 'player',
         };
@@ -28,7 +28,9 @@ export const ShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
             shipPos.y = dockPlanet.y;
           }
         }
-        return <ShipShape key={s.id} {...s} name={player_name} {...shipPos} />;
+        return (
+          <ShipShape key={s.id + i} {...s} name={player_name} {...shipPos} />
+        );
       })}
     </Layer>
   );

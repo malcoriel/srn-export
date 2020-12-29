@@ -279,10 +279,6 @@ fn handle_request(request: WSRequest) {
             break;
         }
 
-        if disconnect_if_bad(client_id) {
-            break;
-        }
-
         if let Ok(message) = message_rx.try_recv() {
             match message {
                 OwnedMessage::Close(_) => {
@@ -510,6 +506,19 @@ fn rocket() -> rocket::Rocket {
             thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
+    });
+
+    thread::spawn(|| {
+        let client_errors = CLIENT_ERRORS.lock().unwrap();
+        let clients = client_errors
+            .clone()
+            .keys()
+            .map(|k| k.clone())
+            .collect::<Vec<_>>();
+        std::mem::drop(client_errors);
+        for client_id in clients {
+            disconnect_if_bad(client_id);
+        }
     });
 
     // You can also deserialize this
