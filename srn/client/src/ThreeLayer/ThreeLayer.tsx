@@ -17,7 +17,6 @@ export const ThreeLayer = () => (
       left: 5,
       backgroundColor: 'transparent',
       width: width_px,
-      zIndex: -1,
       height: height_px,
     }}
   >

@@ -94,6 +94,7 @@ class Srn extends React.Component<
             height: height_px + 5,
           }}
         >
+          {this.state.ready && <ThreeLayer />}
           {this.state.ready && (
             <Stage width={width_px} height={height_px} {...scaleConfig}>
               <BodiesLayer state={this.NS.state} />
@@ -102,7 +103,6 @@ class Srn extends React.Component<
               <ShipControls />
             </Stage>
           )}
-          {this.state.ready && <ThreeLayer />}
           <GameHTMLHudLayer
             state={this.NS.state}
             ping={this.NS.ping}
