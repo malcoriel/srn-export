@@ -18,7 +18,6 @@ export const BodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
       {planets.map((p) => (
         <PlanetShape key={p.id} {...p} />
       ))}
-      {star && <PlanetShape key={star.id} {...star} />}
     </Layer>
   );
 };

@@ -8,8 +8,8 @@ export const LeaderboardLayer: React.FC<{
   <div
     style={{
       position: 'absolute',
-      top: 5,
-      left: 5,
+      top: 10,
+      left: 10,
       color: 'white',
       backgroundColor: 'gray',
       width: width_px,

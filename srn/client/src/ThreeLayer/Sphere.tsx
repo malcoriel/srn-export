@@ -2,31 +2,20 @@ import React, { Suspense, useRef, useState } from 'react';
 import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
 import { Mesh, TextureLoader } from 'three';
 
-export const Sphere: React.FC<MeshProps> = (props) => {
+export const Sphere: React.FC<MeshProps & { color?: string }> = (props) => {
   // This reference will give us direct access to the mesh
   const mesh = useRef<Mesh>();
   const space01map = useLoader(TextureLoader, 'resources/space01.jpg');
-  const [hovered, setHover] = useState(false);
-  const [active, setActive] = useState(false);
+  const color = props.color || 'white';
 
   useFrame(() => {
-    if (mesh.current) mesh.current.rotation.z = mesh.current.rotation.z += 0.01;
+    if (mesh.current) mesh.current.rotation.y = mesh.current.rotation.y += 0.02;
   });
 
   return (
-    <mesh
-      {...props}
-      ref={mesh}
-      scale={[50, 50, 50]}
-      onClick={(event: any) => setActive(!active)}
-      onPointerOver={(event: any) => setHover(true)}
-      onPointerOut={(event: any) => setHover(false)}
-    >
+    <mesh {...props} ref={mesh} rotation={[Math.PI / 2, Math.PI, 0]}>
       <icosahedronBufferGeometry args={[1, 5]} />
-      <meshStandardMaterial
-        color={hovered ? 'hotpink' : 'orange'}
-        map={space01map}
-      />
+      <meshStandardMaterial color={color} map={space01map} />
     </mesh>
   );
 };
