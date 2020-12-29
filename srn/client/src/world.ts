@@ -79,7 +79,7 @@ export type GameState = {
   start_time_ticks: number;
   ticks: number;
   my_id: string;
-  star: Star;
+  star?: Star;
   paused: boolean;
   milliseconds_remaining: number;
 };

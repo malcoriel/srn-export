@@ -59,7 +59,7 @@ export const ThreeLayer: React.FC<{ state: GameState }> = ({ state }) => (
     orthographic
     camera={{
       position: new Vector3(0, 100, 0),
-      zoom: 7,
+      zoom: 7, // that's some stupid magic - I don't know why specifying this zoom leads to 1:1 px mapping
       far: 200,
     }}
     style={{

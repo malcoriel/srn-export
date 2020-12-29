@@ -1,9 +1,12 @@
 import { GameState, height_units, min_x, min_y, width_units } from './world';
-import { Group, Layer, Rect } from 'react-konva';
+import { Layer, Rect } from 'react-konva';
 import { PlanetShape } from './PlanetShape';
 import React from 'react';
 
-export const BodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
+export const BodiesLayer: React.FC<{
+  state: GameState;
+  enableBodies: boolean;
+}> = ({ state, enableBodies }) => {
   if (!state) return null;
   const { planets, star } = state;
   return (
@@ -16,8 +19,9 @@ export const BodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
         y={min_y}
       />
       {planets.map((p) => (
-        <PlanetShape key={p.id} {...p} />
+        <PlanetShape key={p.id} {...p} drawBody={enableBodies} />
       ))}
+      {star && <PlanetShape {...star} drawBody={enableBodies} />}
     </Layer>
   );
 };

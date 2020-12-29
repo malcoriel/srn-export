@@ -89,7 +89,7 @@ class Srn extends React.Component<
           {this.state.ready && <ThreeLayer state={this.NS.state} />}
           {this.state.ready && (
             <Stage width={width_px} height={height_px} {...scaleConfig}>
-              {/*<BodiesLayer state={this.NS.state} />*/}
+              <BodiesLayer state={this.NS.state} enableBodies={false} />
               <ShipsLayer state={this.NS.state} />
               <CoordLayer />
             </Stage>
