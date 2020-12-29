@@ -228,7 +228,7 @@ fn patch_state_for_player(mut state: GameState, player_id: Uuid) -> GameState {
     state
 }
 
-const DEFAULT_SLEEP_MS: u64 = 10;
+const DEFAULT_SLEEP_MS: u64 = 1;
 
 fn handle_request(request: WSRequest) {
     if !request.protocols().contains(&"rust-websocket".to_string()) {

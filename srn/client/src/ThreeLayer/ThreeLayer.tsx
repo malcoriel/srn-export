@@ -49,7 +49,7 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
       {planets.map((p) => (
         <ThreePlanetShape key={p.id} {...p} />
       ))}
-      <ThreePlanetShape key={star.id} {...star} />
+      {star && <ThreePlanetShape key={star.id} {...star} />}
     </mesh>
   );
 };
