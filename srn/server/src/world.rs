@@ -53,13 +53,26 @@ fn index_planets_by_id(planets: &Vec<Planet>) -> HashMap<Uuid, &Planet> {
     by_id
 }
 
-pub fn update_planets(planets: &Vec<Planet>, star: &Star, elapsed_micro: i64) -> Vec<Planet> {
+pub fn update_planets(
+    planets: &Vec<Planet>,
+    star: &Option<Star>,
+    elapsed_micro: i64,
+) -> Vec<Planet> {
+    let star = star.clone().unwrap_or(Star {
+        x: 0.0,
+        y: 0.0,
+        radius: 0.0,
+        rotation: 0.0,
+        id: crate::new_id(),
+        name: "".to_string(),
+        color: "".to_string(),
+    });
     let planets_with_star = planets
         .clone()
         .into_iter()
         .chain(vec![Planet {
             color: Default::default(),
-            name: star.name.clone(),
+            name: star.name,
             id: star.id,
             x: star.x,
             y: star.y,
@@ -329,7 +342,7 @@ pub struct GameState {
     pub tag: Option<String>,
     pub my_id: Uuid,
     pub start_time_ticks: u64,
-    pub star: Star,
+    pub star: Option<Star>,
     pub planets: Vec<Planet>,
     pub ships: Vec<Ship>,
     pub players: Vec<Player>,
@@ -413,7 +426,7 @@ pub fn seed_state(debug: bool) -> GameState {
         paused: false,
         my_id: crate::new_id(),
         ticks: 0,
-        star,
+        star: Some(star),
         planets: vec![
             Planet {
                 color: "orange".to_string(),

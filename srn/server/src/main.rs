@@ -286,7 +286,7 @@ fn handle_request(request: WSRequest) {
             match message {
                 OwnedMessage::Close(_) => {
                     let message = Message::close();
-                    sender.send_message(&message).unwrap();
+                    sender.send_message(&message).ok();
                     let mut senders = CLIENT_SENDERS.lock().unwrap();
                     let index = senders.iter().position(|s| s.0 == client_id);
                     index.map(|index| senders.remove(index));
@@ -366,7 +366,8 @@ fn handle_request(request: WSRequest) {
                         .send_message(&message)
                         .map_err(|e| {
                             eprintln!("Err {} receiving {}", client_id, e);
-                            increment_client_errors(client_id)
+                            increment_client_errors(client_id);
+                            disconnect_if_bad(client_id);
                         })
                         .ok();
                 }
@@ -377,7 +378,7 @@ fn handle_request(request: WSRequest) {
 }
 
 const MAX_ERRORS: u32 = 10;
-const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 50000;
+const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 
 fn force_disconnect_client(client_id: &Uuid) {
     eprintln!("force disconnecting client: {}", client_id);
@@ -504,8 +505,9 @@ fn rocket() -> rocket::Rocket {
             for sender in client_senders.lock().unwrap().iter() {
                 let send = sender.1.send(msg.clone());
                 if let Err(e) = send {
-                    eprintln!("err sending {}", e);
+                    eprintln!("err {} sending {}", sender.0, e);
                     increment_client_errors(sender.0);
+                    disconnect_if_bad(sender.0);
                 }
             }
             thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))

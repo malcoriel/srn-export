@@ -1,7 +1,6 @@
 import React, { Suspense, useRef, useState } from 'react';
 import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
 import { Mesh, TextureLoader } from 'three';
-import { Cube } from '../Srn';
 
 export const Sphere: React.FC<MeshProps> = (props) => {
   // This reference will give us direct access to the mesh
@@ -29,12 +28,5 @@ export const Sphere: React.FC<MeshProps> = (props) => {
         map={space01map}
       />
     </mesh>
-  );
-};
-export const TexturedSphere = (props: any) => {
-  return (
-    <Suspense fallback={<Cube />}>
-      <Sphere {...props} />
-    </Suspense>
   );
 };

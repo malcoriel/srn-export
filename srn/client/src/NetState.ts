@@ -69,6 +69,9 @@ export default class NetState extends EventEmitter {
       my_id: uuid.v4(),
       // @ts-ignore
       star: null,
+      start_time_ticks: 0,
+      milliseconds_remaining: 0,
+      paused: false,
     };
     this.ping = 0;
     setInterval(this.forceSync, FORCE_SYNC_INTERVAL);

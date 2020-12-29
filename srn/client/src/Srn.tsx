@@ -10,7 +10,6 @@ import { ShipsLayer } from './ShipsLayer';
 import NetState from './NetState';
 import { ShipControls } from './ShipControls';
 import { GameHTMLHudLayer } from './GameHTMLHudLayer';
-import { MeshProps } from 'react-three-fiber';
 
 import {
   adjectives,
@@ -26,14 +25,6 @@ import { ThreeLayer } from './ThreeLayer/ThreeLayer';
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
-
-export const Cube: React.FC<MeshProps> = (props) => {
-  return (
-    <mesh {...props} scale={[50, 50, 50]}>
-      <boxBufferGeometry args={[1, 1, 1]} />
-    </mesh>
-  );
-};
 
 class Srn extends React.Component<
   {},

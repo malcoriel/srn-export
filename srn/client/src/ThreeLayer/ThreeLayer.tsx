@@ -1,8 +1,8 @@
 import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { height_px, width_px } from '../world';
-import { TexturedSphere } from './Sphere';
-import React from 'react';
+import React, { Suspense } from 'react';
+import { Sphere } from './Sphere';
 
 export const ThreeLayer = () => (
   <Canvas
@@ -19,13 +19,15 @@ export const ThreeLayer = () => (
       height: height_px,
     }}
   >
+    <Suspense fallback={<mesh />}>
+      <ambientLight />
+      <pointLight position={[10, 10, 10]} />
+      <Sphere position={[0, 0, 0]} />
+      <Sphere position={[100, 0, 0]} />
+      <axesHelper args={[100]} position={[0, 0, 0]} />
+    </Suspense>
     {/* blue is third coord (z?) */}
     {/* green is second  coord (y?) */}
     {/* red is first  coord (x?) */}
-    <ambientLight />
-    <pointLight position={[10, 10, 10]} />
-    <TexturedSphere position={[0, 0, 0]} />
-    <TexturedSphere position={[100, 0, 0]} />
-    <axesHelper args={[100]} position={[0, 0, 0]} />
   </Canvas>
 );
