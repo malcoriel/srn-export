@@ -10,6 +10,9 @@ import { ShipsLayer } from './ShipsLayer';
 import NetState from './NetState';
 import { ShipControls } from './ShipControls';
 import { GameHTMLHudLayer } from './GameHTMLHudLayer';
+import { useRef, useState } from 'react';
+import { Canvas, MeshProps, useFrame, useLoader } from 'react-three-fiber';
+import { Mesh, Vector3, TextureLoader } from 'three';
 
 import {
   adjectives,
@@ -24,6 +27,37 @@ import { LeaderboardLayer } from './LeaderboardLayer';
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
+
+const Sphere: React.FC<MeshProps> = (props) => {
+  // This reference will give us direct access to the mesh
+  const mesh = useRef<Mesh>();
+  const space01map = useLoader(TextureLoader, 'resources/space01.jpg');
+  console.log(space01map);
+  // Set up state for the hovered and active state
+  const [hovered, setHover] = useState(false);
+  const [active, setActive] = useState(false);
+
+  useFrame(() => {
+    if (mesh.current) mesh.current.rotation.z = mesh.current.rotation.z += 0.01;
+  });
+
+  return (
+    <mesh
+      {...props}
+      ref={mesh}
+      scale={[50, 50, 50]}
+      onClick={(event: any) => setActive(!active)}
+      onPointerOver={(event: any) => setHover(true)}
+      onPointerOut={(event: any) => setHover(false)}
+    >
+      <icosahedronBufferGeometry args={[1, 5]} />
+      <meshStandardMaterial
+        color={hovered ? 'hotpink' : 'orange'}
+        map={space01map}
+      />
+    </mesh>
+  );
+};
 
 class Srn extends React.Component<
   {},
@@ -43,12 +77,13 @@ class Srn extends React.Component<
     });
     this.NS = NS;
     this.state = {
-      ready: false,
+      ready: true,
       preferredName: uniqueNamesGenerator({
         dictionaries: [adjectives, animals],
         separator: '-',
       }).toUpperCase(),
     };
+    this.start();
   }
 
   start() {
@@ -83,6 +118,38 @@ class Srn extends React.Component<
               <ShipControls />
             </Stage>
           )}
+          {this.state.ready && (
+            <Canvas
+              orthographic
+              camera={{
+                position: new Vector3(0, 100, 0),
+                // rotation: [
+                //   -Math.PI / 4,
+                //   Math.atan(-1 / Math.sqrt(2)),
+                //   0,
+                //   'YXZ',
+                // ],
+              }}
+              style={{
+                position: 'absolute',
+                top: 5,
+                left: width_px + 5,
+                backgroundColor: 'gray',
+                width: width_px,
+                height: height_px,
+              }}
+            >
+              <ambientLight />
+              <pointLight position={[10, 10, 10]} />
+              {/*<Box position={[0, 0, 0]} />*/}
+              <Sphere position={[0, 0, 0]} />
+              <Sphere position={[100, 0, 0]} />
+              <axesHelper args={[100]} position={[0, 0, 0]} />
+            </Canvas>
+          )}
+          {/* blue is third coord (z?) */}
+          {/* green is second  coord (y?) */}
+          {/* red is first  coord (x?) */}
           <GameHTMLHudLayer
             state={this.NS.state}
             ping={this.NS.ping}
