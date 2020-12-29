@@ -66,7 +66,7 @@ export default class NetState extends EventEmitter {
       players: [],
       ships: [],
       ticks: 0,
-      my_id: '',
+      my_id: uuid.v4(),
       // @ts-ignore
       star: null,
     };

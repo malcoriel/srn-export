@@ -88,10 +88,11 @@ class Srn extends React.Component<
         <div
           style={{
             padding: 5,
+            margin: 5,
             position: 'relative',
             backgroundColor: 'black',
-            width: width_px + 5,
-            height: height_px + 5,
+            width: width_px,
+            height: height_px,
           }}
         >
           {this.state.ready && <ThreeLayer />}

@@ -3,7 +3,6 @@ import { Vector3 } from 'three';
 import { height_px, width_px } from '../world';
 import { TexturedSphere } from './Sphere';
 import React from 'react';
-import { GameHTMLHudLayer } from '../GameHTMLHudLayer';
 
 export const ThreeLayer = () => (
   <Canvas

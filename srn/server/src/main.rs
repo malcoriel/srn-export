@@ -278,6 +278,9 @@ fn handle_request(request: WSRequest) {
         if is_disconnected(client_id) {
             break;
         }
+        if disconnect_if_bad(client_id) {
+            break;
+        }
 
         if let Ok(message) = message_rx.try_recv() {
             match message {
@@ -342,29 +345,31 @@ fn handle_request(request: WSRequest) {
             }
         }
         if let Ok(message) = client_rx.try_recv() {
-            let message = match message {
-                ClientMessage::StateChange(state) => Some(ClientMessage::StateChange(
-                    patch_state_for_player(state, client_id),
-                )),
-                ClientMessage::StateChangeExclusive(state, exclude_client_id) => {
-                    if client_id != exclude_client_id {
-                        Some(ClientMessage::StateChange(patch_state_for_player(
-                            state, client_id,
-                        )))
-                    } else {
-                        None
+            if !is_disconnected(client_id) {
+                let message = match message {
+                    ClientMessage::StateChange(state) => Some(ClientMessage::StateChange(
+                        patch_state_for_player(state, client_id),
+                    )),
+                    ClientMessage::StateChangeExclusive(state, exclude_client_id) => {
+                        if client_id != exclude_client_id {
+                            Some(ClientMessage::StateChange(patch_state_for_player(
+                                state, client_id,
+                            )))
+                        } else {
+                            None
+                        }
                     }
+                };
+                if let Some(message) = message {
+                    let message = Message::text(message.serialize());
+                    sender
+                        .send_message(&message)
+                        .map_err(|e| {
+                            eprintln!("Err {} receiving {}", client_id, e);
+                            increment_client_errors(client_id)
+                        })
+                        .ok();
                 }
-            };
-            if let Some(message) = message {
-                let message = Message::text(message.serialize());
-                sender
-                    .send_message(&message)
-                    .map_err(|e| {
-                        eprintln!("Err {} receiving {}", client_id, e);
-                        increment_client_errors(client_id)
-                    })
-                    .ok();
             }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
@@ -372,7 +377,7 @@ fn handle_request(request: WSRequest) {
 }
 
 const MAX_ERRORS: u32 = 10;
-const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
+const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 50000;
 
 fn force_disconnect_client(client_id: &Uuid) {
     eprintln!("force disconnecting client: {}", client_id);
@@ -519,6 +524,7 @@ fn rocket() -> rocket::Rocket {
         for client_id in clients {
             disconnect_if_bad(client_id);
         }
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     });
 
     // You can also deserialize this
