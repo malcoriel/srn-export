@@ -355,7 +355,7 @@ pub struct GameState {
 pub fn seed_state(debug: bool) -> GameState {
     let star_id = crate::new_id();
     let star = Star {
-        color: "#f08537".to_string(),
+        color: "#ff1b00".to_string(),
         id: star_id.clone(),
         name: "Zinides".to_string(),
         x: 0.0,

@@ -8,7 +8,7 @@ const noiseMaterial = new CellularNoiseMaterial();
 noiseMaterial.isAnimate = true;
 noiseMaterial.grid = 75;
 noiseMaterial.divisionScaleX = 2;
-noiseMaterial.speed = 2;
+noiseMaterial.speed = 3;
 
 export const Sphere: React.FC<
   MeshProps & { color?: string; star?: boolean }
