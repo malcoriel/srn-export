@@ -34,6 +34,7 @@ export const ShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
           <ShipS
             key={s.id + i}
             position={posToThreePos(s.x, s.y)}
+            name={player_name}
             scale={scale}
             color={s.color}
           />
