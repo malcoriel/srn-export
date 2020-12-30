@@ -37,7 +37,7 @@ class Srn extends React.Component<
     this.time = new Time(LOCAL_SIM_TIME_STEP);
     const NS = new NetState();
     NS.on('change', () => {
-      this.forceUpdate();
+      // this.forceUpdate();
     });
     NS.on('network', () => {
       this.forceUpdate();

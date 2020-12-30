@@ -1,9 +1,9 @@
 import { Texture, Vector2, Vector3 } from 'three';
 
-// delete viewMatrix, cameraPosition, texture
+// delete viewMatrix, cameraPosition
 
 export let vertexShader = `
-    /**
+/**
 * Example Vertex Shader
 * Sets the position of the vertex by setting gl_Position
 */
@@ -12,11 +12,22 @@ export let vertexShader = `
 precision highp float;
 precision highp int;
 
+// Default THREE.js uniforms available to both fragment and vertex shader
+uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat3 normalMatrix;
+
 // Default uniforms provided by ShaderFrog.
+uniform vec3 cameraPosition;
 uniform float time;
 
 // Default attributes provided by THREE.js. Attributes are only available in the
 // vertex shader. You can pass them to the fragment shader using varyings
+attribute vec3 position;
+attribute vec3 normal;
+attribute vec2 uv;
 attribute vec2 uv2;
 
 // Examples of variables passed from vertex to fragment shader
@@ -27,16 +38,16 @@ varying vec2 vUv2;
 
 void main() {
 
-  // To pass variables to the fragment shader, you assign them here in the
-  // main function. Traditionally you name the varying with vAttributeName
-  vNormal = normal;
-  vUv = uv;
-  vUv2 = uv2;
-  vPosition = position;
+    // To pass variables to the fragment shader, you assign them here in the
+    // main function. Traditionally you name the varying with vAttributeName
+    vNormal = normal;
+    vUv = uv;
+    vUv2 = uv2;
+    vPosition = position;
 
-  // This sets the position of the vertex in 3d space. The correct math is
-  // provided below to take into account camera and object data.
-  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    // This sets the position of the vertex in 3d space. The correct math is
+    // provided below to take into account camera and object data.
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 }
     `;
@@ -49,10 +60,13 @@ precision highp int;
 uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
 uniform mat3 normalMatrix;
 
 // Default uniforms provided by ShaderFrog.
+uniform vec3 cameraPosition;
 uniform float time;
+uniform float fixedTime;
 
 // A uniform unique to this shader. You can modify it to the using the form
 // below the shader preview. Any uniform you add is automatically given a form
@@ -74,6 +88,10 @@ uniform sampler2D iChannel1;          // input channel. XX = 2D/Cube
 uniform float srcRadius;
 uniform float fCenter;
 uniform vec2 shift;
+
+vec4 texture2(sampler2D sampler, vec2 coord){
+    return texture2D(sampler,  coord);
+}
 
 float snoise(vec3 uv, float res)// by trisomie21
 {
@@ -103,15 +121,15 @@ float freqs[4];
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     fragCoord += shift;
-freqs[0] = texture( iChannel1, vec2( 0.01, 0.25 ) ).x;
-freqs[1] = texture( iChannel1, vec2( 0.07, 0.25 ) ).x;
-freqs[2] = texture( iChannel1, vec2( 0.15, 0.25 ) ).x;
-freqs[3] = texture( iChannel1, vec2( 0.30, 0.25 ) ).x;
+freqs[0] = texture2( iChannel1, vec2( 0.01, 0.25 ) ).x;
+freqs[1] = texture2( iChannel1, vec2( 0.07, 0.25 ) ).x;
+freqs[2] = texture2( iChannel1, vec2( 0.15, 0.25 ) ).x;
+freqs[3] = texture2( iChannel1, vec2( 0.30, 0.25 ) ).x;
 
     float brightness= freqs[1] * 0.25 + freqs[2] * 0.25;
     vec3 orange= color * 1.1;
 vec3 orangeRed= color / 2.0;
-float time= time * 0.1;
+float time= time * 0.04;
 
 
     float radiusB = 0.24 * srcRadius;
@@ -171,11 +189,13 @@ corona*= pow( dist * invRadius, 24.0 );
  newUv.x = sp.x*fbase;
   newUv.y = sp.y*fbase;
 newUv += vec2( time, 0.0 );
+// starSphere = vec3(newUv, 0);
 
-vec3 texSample = texture( iChannel0, newUv ).rgb;
+vec3 texSample = texture2( iChannel0, newUv ).rgb;
 float uOff= ( texSample.g * brightness * 4.5 + time );
-vec2 starUV= newUv + vec2( uOff, 0.0 );
-starSphere= texture( iChannel0, starUV ).rgb;
+//starSphere = vec3(uOff, 0.0, 0.0);
+ vec2 starUV= newUv + vec2( uOff, 0.0 );
+ starSphere= texture2( iChannel0, starUV ).rgb;
 }
 
 float starGlow= min( max( 1.0 - dist * ( 1.0 - brightness ), 0.0 ), 1.0 );
@@ -190,6 +210,7 @@ fragColor.rgb   += corona * orange;
 fragColor.rgb   += starGlow * orangeRed;
 fragColor.a= 1.0;
 // fragColor.rgba = vec4(vNormal * 0.5 + 0.5, 1);
+// fragColor.rgb = vec3(time / 800.0);
 }
 
 void main() {
