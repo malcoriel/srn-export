@@ -18,8 +18,8 @@ export const Sphere: React.FC<
   const mesh = useRef<Mesh>();
   const space01map = useLoader(TextureLoader, 'resources/space01.jpg');
   const checkersMap = useLoader(TextureLoader, 'resources/checkers.jpg');
-  const lavaTile = useLoader(TextureLoader, 'resources/lavatile-1.jpg');
-  const explosionTile = useLoader(TextureLoader, 'resources/explosion.png');
+  const lavaTile = useLoader(TextureLoader, 'resources/lavatile.jpg');
+  const grassTile = useLoader(TextureLoader, 'resources/bowling_grass.jpg');
 
   const color = props.color || 'white';
 
@@ -37,7 +37,7 @@ export const Sphere: React.FC<
 
   const patchedUniforms = _.clone(uniforms);
   patchedUniforms.iChannel0.value = lavaTile;
-  // patchedUniforms.iChannel1.value = explosionTile;
+  patchedUniforms.iChannel1.value = grassTile;
   patchedUniforms.color.value = new Vector3(180 / 255, 149 / 255, 139 / 255);
   patchedUniforms.shift.value = new Vector2(
     camera.position.x * unitsToPixels,
