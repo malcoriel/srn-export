@@ -365,6 +365,10 @@ module.exports = function (webpackEnv) {
                 name: 'static/media/[name].[hash:8].[ext]',
               },
             },
+            {
+              test: /\.txt$/i,
+              use: 'raw-loader',
+            },
             // "url" loader works like "file" loader except that it embeds assets
             // smaller than specified limit in bytes as data URLs to avoid requests.
             // A missing `test` is equivalent to a match.
@@ -536,6 +540,7 @@ module.exports = function (webpackEnv) {
                 /\.(js|mjs|jsx|ts|tsx)$/,
                 /\.html$/,
                 /\.json$/,
+                /\.txt$/,
                 /\.wasm$/,
               ],
               options: {
