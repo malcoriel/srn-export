@@ -14,11 +14,12 @@ import { findMyShip } from '../NetState';
 import { ShipS } from './ShipS';
 import { ShipsLayer } from './ShipsLayer';
 
-// x -> x, y -> z to keep the axes orientation corresponding to the physics
+// x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
+// xy is visible plane, z towards camera
 export const posToThreePos = (
   x: number,
   y: number
-): [number, number, number] => [x, 0, y];
+): [number, number, number] => [x, -y, 0];
 
 export const ThreePlanetShape: React.FC<Planet & { star?: boolean }> = (p) => {
   const scale = _.times(3, () => p.radius) as [number, number, number];
@@ -46,6 +47,8 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
   );
 };
 
+const CAMERA_HEIGHT = 50;
+
 const CameraMover: React.FC<{ state: GameState }> = ({ state }) => {
   const myShip = findMyShip(state);
   const {
@@ -53,8 +56,7 @@ const CameraMover: React.FC<{ state: GameState }> = ({ state }) => {
   } = useThree();
 
   if (myShip) {
-    camera.position.set(myShip.x, 100, myShip.y);
-    // camera.lookAt(new Vector3(0, 0, 0));
+    camera.position.set(myShip.x, -myShip.y, CAMERA_HEIGHT);
   }
   return null;
 };
@@ -64,8 +66,9 @@ export const ThreeLayer: React.FC<{ state: GameState }> = ({ state }) => {
     <Canvas
       orthographic
       camera={{
-        position: new Vector3(0, 100, 0),
+        position: new Vector3(0, 0, CAMERA_HEIGHT),
         zoom: unitsToPixels,
+        far: 1000,
       }}
       style={{
         position: 'absolute',
@@ -76,13 +79,14 @@ export const ThreeLayer: React.FC<{ state: GameState }> = ({ state }) => {
       }}
     >
       <Suspense fallback={<mesh />}>
+        <axesHelper position={posToThreePos(15, 15)} args={[20]} />
         <CameraMover state={state} />
         <ambientLight />
-        <gridHelper args={[100, 10]} />
-        <pointLight position={[0, 50, 0]} />
-        <ThreeBodiesLayer state={state} />
-        <ShipsLayer state={state} />
-        {/*<Sphere position={[0, -0.5, 0]} scale={[1, 1, 1]} />w*/}
+        <gridHelper args={[100, 10]} rotation={[Math.PI / 2, 0, 0]} />
+        <pointLight position={[0, 0, CAMERA_HEIGHT]} />
+        {/*<ThreeBodiesLayer state={state} />*/}
+        {/*<ShipsLayer state={state} />*/}
+        <Sphere position={[0, 0, 0]} scale={[10, 10, 10]} star />
       </Suspense>
       {/* blue is third coord (z?) */}
       {/* green is second  coord (y?) */}
