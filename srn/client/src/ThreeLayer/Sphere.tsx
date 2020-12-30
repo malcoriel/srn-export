@@ -1,9 +1,10 @@
 import React, { useRef } from 'react';
-import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
-import { Mesh, ShaderMaterial, TextureLoader, Vector3 } from 'three';
+import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
+import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
 import { CellularNoiseMaterial } from 'threejs-shader-materials';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import _ from 'lodash';
+import { unitsToPixels } from '../world';
 
 const noiseMaterial = new CellularNoiseMaterial();
 noiseMaterial.isAnimate = true;
@@ -22,6 +23,8 @@ export const Sphere: React.FC<
 
   const color = props.color || 'white';
 
+  const { camera } = useThree();
+
   useFrame(() => {
     if (mesh.current) {
       if (props.star) {
@@ -36,6 +39,10 @@ export const Sphere: React.FC<
   patchedUniforms.iChannel0.value = lavaTile;
   // patchedUniforms.iChannel1.value = explosionTile;
   patchedUniforms.color.value = new Vector3(180 / 255, 149 / 255, 139 / 255);
+  patchedUniforms.shift.value = new Vector2(
+    -camera.position.x * unitsToPixels,
+    -camera.position.y * unitsToPixels
+  );
 
   let rotation: [number, number, number] = [0, 0, 0];
   return (

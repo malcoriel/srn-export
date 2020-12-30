@@ -1,4 +1,4 @@
-import { Texture, Vector3 } from 'three';
+import { Texture, Vector2, Vector3 } from 'three';
 
 // delete viewMatrix, cameraPosition, texture
 
@@ -73,6 +73,7 @@ uniform sampler2D iChannel0;          // input channel. XX = 2D/Cube
 uniform sampler2D iChannel1;          // input channel. XX = 2D/Cube
 uniform float srcRadius;
 uniform float fCenter;
+uniform vec2 shift;
 
 float snoise(vec3 uv, float res)// by trisomie21
 {
@@ -101,7 +102,7 @@ float freqs[4];
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
-
+fragCoord -= shift;
 freqs[0] = texture( iChannel1, vec2( 0.01, 0.25 ) ).x;
 freqs[1] = texture( iChannel1, vec2( 0.07, 0.25 ) ).x;
 freqs[2] = texture( iChannel1, vec2( 0.15, 0.25 ) ).x;
@@ -211,6 +212,10 @@ export type Vector3UniformValue = {
   value: Vector3 | null;
 };
 
+export type Vector2UniformValue = {
+  value: Vector2 | null;
+};
+
 export let uniforms: {
   iChannel0: TextureUniformValue;
   time: FloatUniformValue;
@@ -219,6 +224,7 @@ export let uniforms: {
   srcRadius: FloatUniformValue;
   fCenter: FloatUniformValue;
   color: Vector3UniformValue;
+  shift: Vector2UniformValue;
 } = {
   iChannel0: { value: null },
   time: { value: 0 },
@@ -227,4 +233,5 @@ export let uniforms: {
   iChannel1: { value: null },
   iResolution: { value: new Vector3(700, 700, 0) },
   color: { value: new Vector3(0, 0, 0) },
+  shift: { value: new Vector2(0, 0) },
 };
