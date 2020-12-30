@@ -1,8 +1,7 @@
 import React, { useRef } from 'react';
 import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
-import { Mesh, ShaderMaterial, TextureLoader } from 'three';
+import { Mesh, ShaderMaterial, TextureLoader, Vector3 } from 'three';
 import { CellularNoiseMaterial } from 'threejs-shader-materials';
-import { Material } from 'three/src/materials/Material';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import _ from 'lodash';
 
@@ -22,20 +21,6 @@ export const Sphere: React.FC<
 
   const color = props.color || 'white';
 
-  let starMaterial: Material | undefined;
-  // if (props.star) {
-  //   starMaterial = new ShaderMaterial({
-  //     uniforms: uniforms,
-  //     fragmentShader: fragmentShader,
-  //     vertexShader: vertexShader,
-  //   });
-  // } else {
-  //   starMaterial = new MeshBasicMaterial({
-  //     color,
-  //     map: space01map,
-  //   });
-  // }
-
   useFrame(() => {
     if (mesh.current) {
       mesh.current.rotation.y = mesh.current.rotation.y += 0.02;
@@ -48,9 +33,13 @@ export const Sphere: React.FC<
   const patchedUniforms = _.clone(uniforms);
   patchedUniforms.iChannel0.value = lavaTile;
   patchedUniforms.iChannel1.value = explosionTile;
+  patchedUniforms.color.value = new Vector3(180 / 255, 149 / 255, 139 / 255);
 
+  let rotation: [number, number, number] = props.star
+    ? [0, 0, 0]
+    : [Math.PI / 2, Math.PI, 0];
   return (
-    <mesh {...props} ref={mesh} rotation={[Math.PI / 2, Math.PI, 0]}>
+    <mesh {...props} ref={mesh} rotation={rotation}>
       <icosahedronBufferGeometry args={[1, 5]} />
       {props.star ? (
         <shaderMaterial
