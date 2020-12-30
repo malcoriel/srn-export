@@ -527,8 +527,8 @@ pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
     let ship = Ship {
         id: crate::new_id(),
         color: "blue".to_string(),
-        x: 0.0,
-        y: 0.0,
+        x: 10.0,
+        y: 10.0,
         rotation: 0.0,
         radius: 1.0,
         docked_at: None,
