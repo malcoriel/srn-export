@@ -2,7 +2,7 @@ import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { GameState, height_px, Planet, width_px } from '../world';
 import React, { Suspense } from 'react';
-import { ShaderTest, Sphere } from './Sphere';
+import { Sphere } from './Sphere';
 import _ from 'lodash';
 
 // x -> x, y -> z to keep the axes orientation corresponding to the physics
@@ -60,7 +60,6 @@ export const ThreeLayer: React.FC<{ state: GameState }> = ({ state }) => (
       <pointLight position={[0, 50, 0]} />
       <ThreeBodiesLayer state={state} />
       {/*<Sphere position={[0, -0.5, 0]} scale={[1, 1, 1]} />w*/}
-      <ShaderTest position={[0, 0, 0]} />
     </Suspense>
     {/* blue is third coord (z?) */}
     {/* green is second  coord (y?) */}

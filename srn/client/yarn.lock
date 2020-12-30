@@ -4815,7 +4815,7 @@ etag@~1.8.1:
   resolved "https://registry.yarnpkg.com/etag/-/etag-1.8.1.tgz#41ae2eeb65efa62268aebfea83ac7d79299b0887"
   integrity sha1-Qa4u62XvpiJorr/qg6x9eSmbCIc=
 
-eventemitter3@^4.0.0:
+eventemitter3@^4.0.0, eventemitter3@^4.0.4:
   version "4.0.7"
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
   integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
@@ -9102,6 +9102,12 @@ querystringify@^2.1.1:
   resolved "https://registry.yarnpkg.com/querystringify/-/querystringify-2.2.0.tgz#3345941b4153cb9d082d8eee4cda2016a9aef7f6"
   integrity sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==
 
+"raf-ticker@https://github.com/MasatoMakino/raf-ticker.git":
+  version "0.2.2"
+  resolved "https://github.com/MasatoMakino/raf-ticker.git#05bdf401497ccafff44c500971dacca8d171dca6"
+  dependencies:
+    eventemitter3 "^4.0.4"
+
 raf@^3.4.1:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/raf/-/raf-3.4.1.tgz#0742e99a4a6552f445d73e3ee0328af0ff1ede39"
@@ -10689,6 +10695,12 @@ three@^0.124.0:
   version "0.124.0"
   resolved "https://registry.yarnpkg.com/three/-/three-0.124.0.tgz#14ab1a26ba6c56e51190e1b55695cd3c1e69ea55"
   integrity sha512-ROXp1Ly7YyF+jC910DQyAWj++Qlw2lQv0qwYLNQwdDbjk4bsOXAfGO92wYTMPNei1GMJUmCxSxc3MjGBTS09Rg==
+
+"threejs-shader-materials@https://github.com/MasatoMakino/threejs-shader-materials.git":
+  version "0.2.1"
+  resolved "https://github.com/MasatoMakino/threejs-shader-materials.git#280d7940fce9ab82b42a1c47ccf7b879a937fc23"
+  dependencies:
+    raf-ticker "https://github.com/MasatoMakino/raf-ticker.git"
 
 throat@^5.0.0:
   version "5.0.0"
