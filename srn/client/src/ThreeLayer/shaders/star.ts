@@ -41,7 +41,7 @@ void main() {
 }
     `;
 export let fragmentShader = `
-        // Set the precision for data types used in this shader
+// Set the precision for data types used in this shader
 precision highp float;
 precision highp int;
 
@@ -102,14 +102,14 @@ float freqs[4];
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
-fragCoord -= shift;
+    fragCoord += shift;
 freqs[0] = texture( iChannel1, vec2( 0.01, 0.25 ) ).x;
 freqs[1] = texture( iChannel1, vec2( 0.07, 0.25 ) ).x;
 freqs[2] = texture( iChannel1, vec2( 0.15, 0.25 ) ).x;
 freqs[3] = texture( iChannel1, vec2( 0.30, 0.25 ) ).x;
 
     float brightness= freqs[1] * 0.25 + freqs[2] * 0.25;
-    vec3 orange= color;
+    vec3 orange= color * 1.1;
 vec3 orangeRed= color / 2.0;
 float time= time * 0.1;
 
@@ -131,7 +131,7 @@ vec2 uv= fragCoord.xy / iResolution.xy;
 vec2 center_offset = uv - srcCenter;
 center_offset.x *= aspect;
 
-float fade= pow( length( 2.0 * center_offset ), 0.5 );
+float fade= pow( length( 1.9 * center_offset ), 0.55 );
 float fVal1= 1.0 - fade;
 float fVal2= 1.0 - fade;
 
@@ -189,6 +189,7 @@ fragColor.rgb   += corona * orange;
 // emitted light
 fragColor.rgb   += starGlow * orangeRed;
 fragColor.a= 1.0;
+// fragColor.rgba = vec4(vNormal * 0.5 + 0.5, 1);
 }
 
 void main() {
@@ -228,7 +229,7 @@ export let uniforms: {
 } = {
   iChannel0: { value: null },
   time: { value: 0 },
-  srcRadius: { value: 0.2 },
+  srcRadius: { value: 0.32 },
   fCenter: { value: 0.5 },
   iChannel1: { value: null },
   iResolution: { value: new Vector3(700, 700, 0) },

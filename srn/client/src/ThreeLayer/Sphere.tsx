@@ -40,8 +40,8 @@ export const Sphere: React.FC<
   // patchedUniforms.iChannel1.value = explosionTile;
   patchedUniforms.color.value = new Vector3(180 / 255, 149 / 255, 139 / 255);
   patchedUniforms.shift.value = new Vector2(
-    -camera.position.x * unitsToPixels,
-    -camera.position.y * unitsToPixels
+    camera.position.x * unitsToPixels,
+    camera.position.y * unitsToPixels
   );
 
   let rotation: [number, number, number] = [0, 0, 0];
