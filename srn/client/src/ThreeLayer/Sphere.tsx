@@ -4,11 +4,22 @@ import { Color, Mesh, MeshBasicMaterial, TextureLoader } from 'three';
 import { CellularNoiseMaterial } from 'threejs-shader-materials';
 import { Material } from 'three/src/materials/Material';
 
+const generalPurposeVertexShader = `
+varying vec2 vUv;
+void main()
+{
+    vUv = uv;
+
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0 );
+    gl_Position = projectionMatrix * mvPosition;
+}
+`;
 const noiseMaterial = new CellularNoiseMaterial();
 noiseMaterial.isAnimate = true;
 noiseMaterial.grid = 20;
 noiseMaterial.divisionScaleX = 2;
 noiseMaterial.speed = 2;
+
 export const Sphere: React.FC<
   MeshProps & { color?: string; star?: boolean }
 > = (props) => {
@@ -26,10 +37,10 @@ export const Sphere: React.FC<
     noiseMaterial.color = new Color(color);
     starMaterial = noiseMaterial;
   } else {
-    // starMaterial = new MeshBasicMaterial({
-    //   color,
-    //   map: space01map,
-    // });
+    starMaterial = new MeshBasicMaterial({
+      color,
+      map: space01map,
+    });
   }
 
   return (
@@ -40,7 +51,6 @@ export const Sphere: React.FC<
       material={starMaterial}
     >
       <icosahedronBufferGeometry args={[1, 5]} />
-      <meshBasicMaterial color={color} map={space01map} />
     </mesh>
   );
 };
