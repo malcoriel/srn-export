@@ -18,8 +18,9 @@ import { IVector } from '../utils/Vector';
 // xy is visible plane, z towards camera
 export const posToThreePos = (
   x: number,
-  y: number
-): [number, number, number] => [x, -y, 0];
+  y: number,
+  z?: number
+): [number, number, number] => [x, -y, z || 0];
 
 export const ThreePlanetShape: React.FC<Planet & { star?: boolean }> = (p) => {
   const scale = _.times(3, () => p.radius) as [number, number, number];
