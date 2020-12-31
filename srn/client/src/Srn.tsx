@@ -19,7 +19,6 @@ import { BasicTime, vsyncedDecoupledTime as Time } from './utils/Times';
 import { StartHudLayer } from './HtmlLayers/StartHudLayer';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
-import { IVector } from './utils/Vector';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
@@ -92,21 +91,12 @@ class Srn extends React.Component<
               {...scaleConfig}
               style={{ pointerEvents: 'none' }}
             >
-              <NamesLayer
-                state={NetState.get().state}
-                visualState={NetState.get().visualState}
-              />
+              <NamesLayer />
               <CoordLayer />
             </Stage>
           )}
           <ShipControls />
-          <GameHTMLHudLayer
-            style={{ pointerEvents: 'none' }}
-            state={NetState.get().state}
-            ping={NetState.get().ping}
-            maxPing={NetState.get().maxPing}
-            connecting={NetState.get().connecting}
-          />
+          <GameHTMLHudLayer />
         </div>
         {!this.state.ready && (
           <StartHudLayer
@@ -120,13 +110,8 @@ class Srn extends React.Component<
             preferredName={this.state.preferredName}
           />
         )}
-        {NetState.get().state.leaderboard && (
-          <LeaderboardLayer
-            leaderboard={NetState.get().state.leaderboard}
-            milliseconds_remaining={NetState.get().state.milliseconds_remaining}
-          />
-        )}
-        <DebugStateLayer state={NetState.get().state} />
+        <LeaderboardLayer />
+        <DebugStateLayer />
         <StatsPanel />
       </>
     );

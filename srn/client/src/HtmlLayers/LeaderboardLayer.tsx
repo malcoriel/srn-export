@@ -1,10 +1,9 @@
 import React from 'react';
-import { height_px, Leaderboard, width_px } from '../world';
+import { height_px, width_px } from '../world';
+import NetState from '../NetState';
 
-export const LeaderboardLayer: React.FC<{
-  leaderboard?: Leaderboard;
-  milliseconds_remaining: number;
-}> = ({ leaderboard, milliseconds_remaining }) => {
+export const LeaderboardLayer: React.FC = () => {
+  const { leaderboard, milliseconds_remaining } = NetState.get().state;
   if (!leaderboard) {
     return null;
   }

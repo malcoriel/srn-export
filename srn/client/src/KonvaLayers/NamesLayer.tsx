@@ -1,6 +1,6 @@
 import React from 'react';
 import { antiScale, GameState, scaleConfig } from '../world';
-import { VisualState } from '../NetState';
+import NetState from '../NetState';
 import { Layer, Text } from 'react-konva';
 import Vector, { IVector } from '../utils/Vector';
 import _ from 'lodash';
@@ -47,10 +47,8 @@ function extractNamePositions(
   return res;
 }
 
-export const NamesLayer: React.FC<{
-  state: GameState;
-  visualState: VisualState;
-}> = ({ state, visualState }) => {
+export const NamesLayer: React.FC = () => {
+  const { state, visualState } = NetState.get();
   const names = extractNamePositions(state, visualState.cameraPosition);
   return (
     <Layer>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameState, Planet, QuestState } from '../world';
-import { findMyPlayer } from '../NetState';
+import NetState, { findMyPlayer } from '../NetState';
 
 export const findPlanet = (
   state: GameState,
@@ -9,13 +9,8 @@ export const findPlanet = (
   return state.planets.find((p) => p.id === id);
 };
 
-export const GameHTMLHudLayer: React.FC<{
-  state: GameState;
-  connecting: boolean;
-  ping: number;
-  maxPing?: number;
-  style?: any;
-}> = ({ connecting, state, ping, maxPing, style }) => {
+export const GameHTMLHudLayer: React.FC = () => {
+  const { connecting, state, ping, maxPing } = NetState.get();
   const myPlayer = findMyPlayer(state);
   let questData: any;
   if (myPlayer && myPlayer.quest) {
@@ -49,7 +44,7 @@ export const GameHTMLHudLayer: React.FC<{
         padding: 10,
         height: '100%',
         width: 'calc(100%-10px)',
-        ...style,
+        pointerEvents: 'none',
       }}
     >
       {connecting && <span>Connecting...&nbsp;</span>}

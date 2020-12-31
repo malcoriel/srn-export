@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { GameState } from '../world';
 import ReactJson from 'react-json-view';
 import { useHotkeys } from 'react-hotkeys-hook';
+import NetState from '../NetState';
 
-export const DebugStateLayer: React.FC<{ state: GameState }> = ({ state }) => {
+export const DebugStateLayer: React.FC = () => {
+  const { state } = NetState.get();
   const [shown, setShown] = useState(false);
   useHotkeys(
     'shift+d',
