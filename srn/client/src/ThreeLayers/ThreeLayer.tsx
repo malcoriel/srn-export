@@ -18,7 +18,9 @@ export const posToThreePos = (
 export const CAMERA_HEIGHT = 50;
 
 export const ThreeLayer: React.FC = () => {
-  const { state } = NetState.get();
+  const ns = NetState.get();
+  if (!ns) return null;
+  const { state } = ns;
   return (
     <Canvas
       orthographic

@@ -15,11 +15,12 @@ import {
   uniqueNamesGenerator,
 } from 'unique-names-generator';
 import { Measure, Perf, statsHeap, StatsPanel } from './HtmlLayers/Perf';
-import { BasicTime, vsyncedDecoupledTime as Time } from './utils/Times';
+import { vsyncedDecoupledTime } from './utils/Times';
 import { StartHudLayer } from './HtmlLayers/StartHudLayer';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
+import * as uuid from 'uuid';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
@@ -29,17 +30,12 @@ class Srn extends React.Component<
   {},
   { preferredName: string; ready: boolean }
 > {
-  private time: BasicTime;
+  private time: vsyncedDecoupledTime;
+  private readonly id: string;
   constructor(props: {}) {
     super(props);
-    this.time = new Time(LOCAL_SIM_TIME_STEP);
-
-    NetState.get().on('change', () => {
-      this.forceUpdate();
-    });
-    NetState.get().on('network', () => {
-      this.forceUpdate();
-    });
+    this.id = uuid.v4();
+    this.time = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
     this.state = {
       ready: true,
       preferredName: uniqueNamesGenerator({
@@ -47,31 +43,54 @@ class Srn extends React.Component<
         separator: '-',
       }).toUpperCase(),
     };
+  }
+
+  componentDidMount() {
+    NetState.make();
+    const ns = NetState.get();
+    if (!ns) return;
+
+    ns.on('change', () => {
+      this.forceUpdate();
+    });
+    ns.on('network', () => {
+      this.forceUpdate();
+    });
     this.start();
   }
 
-  componentDidUnmount() {
-    console.log('destroying');
-    NetState.get().disconnect();
-    this.time.clearIntervals();
+  componentWillUnmount() {
+    const ns = NetState.get();
+    if (!ns) return;
+
+    this.time.clearAnimation();
     Perf.stop();
+    ns.disconnect();
   }
 
   start() {
-    NetState.get().preferredName = this.state.preferredName;
-    NetState.get().connect();
+    const ns = NetState.get();
+    if (!ns) return;
+
+    ns.preferredName = this.state.preferredName;
+    ns.connect();
     Perf.start();
     this.time.setInterval(
       (elapsedMs) => {
         Perf.markEvent(Measure.PhysicsFrameEvent);
         Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
-          NetState.get().updateLocalState(elapsedMs);
+          const ns = NetState.get();
+          if (!ns) return;
+          ns.updateLocalState(elapsedMs);
         });
       },
       () => {
         Perf.markEvent(Measure.RenderFrameEvent);
         Perf.usingMeasure(Measure.RenderFrameTime, () => {
-          NetState.get().emit('change');
+          const ns = NetState.get();
+          if (!ns) return;
+
+          ns.emit('change');
         });
       }
     );

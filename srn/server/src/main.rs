@@ -119,7 +119,8 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, new_ship: Ship) {
     let res = mutate_owned_ship(client_id, new_ship);
     if res.is_err() {
         eprintln!("error mutating owned ship {}", res.err().unwrap().message);
-        // TODO send targeted message to client that his request was denied
+        increment_client_errors(client_id);
+        disconnect_if_bad(client_id);
     }
 }
 
@@ -381,10 +382,10 @@ const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 
 fn force_disconnect_client(client_id: &Uuid) {
-    eprintln!("force disconnecting client: {}", client_id);
     let mut senders = CLIENT_SENDERS.lock().unwrap();
     let bad_sender_index = senders.iter().position(|c| c.0 == *client_id);
     if let Some(index) = bad_sender_index {
+        eprintln!("force disconnecting client: {}", client_id);
         senders.remove(index);
     }
     remove_player(&client_id);

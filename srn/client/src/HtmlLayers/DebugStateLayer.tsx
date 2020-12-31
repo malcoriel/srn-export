@@ -4,7 +4,9 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import NetState from '../NetState';
 
 export const DebugStateLayer: React.FC = () => {
-  const { state } = NetState.get();
+  const ns = NetState.get();
+  if (!ns) return null;
+  const { state } = ns;
   const [shown, setShown] = useState(false);
   useHotkeys(
     'shift+d',

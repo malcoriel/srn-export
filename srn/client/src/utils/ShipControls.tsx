@@ -61,23 +61,16 @@ const singleUseActions = [ShipActionType.Navigate];
 export const resetActions = () => {
   for (const key of singleUseActions) {
     actionsActive[key] = undefined;
-  }
+  } // qqwwee
 };
-
-let mounted = false;
 
 export const ShipControls: React.FC = () => {
   useEffect(() => {
-    if (!mounted) {
-      document.addEventListener('keydown', keydownHandler);
-      document.addEventListener('keyup', keyUpHandler);
-    }
-    mounted = true;
+    document.addEventListener('keydown', keydownHandler);
+    document.addEventListener('keyup', keyUpHandler);
     return () => {
-      if (mounted) {
-        document.removeEventListener('keydown', keydownHandler);
-        document.removeEventListener('keyup', keyUpHandler);
-      }
+      document.removeEventListener('keydown', keydownHandler);
+      document.removeEventListener('keyup', keyUpHandler);
     };
   }, []);
   return null;

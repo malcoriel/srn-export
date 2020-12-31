@@ -55,6 +55,8 @@ export type VisualState = {
   };
 };
 
+const DEBUG_CREATION = false;
+
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
   state!: GameState;
@@ -69,17 +71,29 @@ export default class NetState extends EventEmitter {
   private forceSyncTag?: string;
   public visualState: VisualState;
 
-  private static instance: NetState;
-  private readonly forceSyncInterval: Timeout;
-  private readonly updateOnServerInterval: Timeout;
+  private static instance?: NetState;
+  private readonly forceSyncInterval?: Timeout;
+  private readonly updateOnServerInterval?: Timeout;
   private reconnectTimeout?: Timeout;
-  public static get() {
-    if (!NetState.instance) NetState.instance = new NetState();
+  private readonly id: string;
+  private disconnecting: boolean = false;
+  public static make() {
+    NetState.instance = new NetState(false);
+  }
+  public static get(): NetState | undefined {
+    // if (!NetState.instance) {
+    //   NetState.instance = new NetState(false);
+    // }
     return NetState.instance;
   }
 
-  constructor() {
+  constructor(public mock: boolean) {
     super();
+    this.id = uuid.v4();
+    if (!mock) {
+      let newVar = DEBUG_CREATION ? `at ${new Error().stack}` : '';
+      console.log(`created NS ${this.id} ${newVar}`);
+    }
     this.state = {
       planets: [],
       players: [],
@@ -99,11 +113,13 @@ export default class NetState extends EventEmitter {
         y: 0,
       },
     };
-    this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
-    this.updateOnServerInterval = setInterval(
-      this.updateShipOnServer,
-      SHIP_UPDATE_INTERVAL
-    );
+    if (!mock) {
+      this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
+      this.updateOnServerInterval = setInterval(
+        this.updateShipOnServer,
+        SHIP_UPDATE_INTERVAL
+      );
+    }
   }
 
   forceSync = () => {
@@ -117,20 +133,35 @@ export default class NetState extends EventEmitter {
   };
 
   disconnect = () => {
+    this.disconnecting = true;
+    console.log(`disconnecting NS ${this.id}`);
     if (this.socket) {
       this.socket.close();
     }
-    clearInterval(this.forceSyncInterval);
-    clearInterval(this.updateOnServerInterval);
-    if (this.reconnectTimeout) clearInterval(this.reconnectTimeout);
+    if (this.forceSyncInterval) {
+      clearInterval(this.forceSyncInterval);
+    }
+    if (this.updateOnServerInterval) {
+      clearInterval(this.updateOnServerInterval);
+    }
+    if (this.reconnectTimeout) {
+      clearInterval(this.reconnectTimeout);
+    }
+    NetState.instance = undefined;
   };
   connect = () => {
+    if (this.disconnecting || this.mock) {
+      return;
+    }
+    console.log(`connecting NS ${this.id}`);
     this.socket = new WebSocket('ws://192.168.0.10:2794', 'rust-websocket');
     this.socket.onmessage = (event) => {
       this.handleMessage(event.data);
     };
     this.socket.onclose = () => {
-      this.emit('network');
+      if (!this.disconnecting) {
+        this.emit('network');
+      }
       this.socket = null;
       this.state.ticks = 0;
       this.reconnectTimeout = setTimeout(() => {
@@ -144,7 +175,9 @@ export default class NetState extends EventEmitter {
     };
     this.socket.onerror = () => {
       console.warn('socket error');
-      this.emit('network');
+      if (!this.disconnecting) {
+        this.emit('network');
+      }
       if (this.socket) {
         this.socket.close();
       }
@@ -183,7 +216,9 @@ export default class NetState extends EventEmitter {
         myUpdatedShip.y = myOldShip.y;
       }
 
-      this.emit('change', this.state);
+      if (!this.disconnecting) {
+        this.emit('change', this.state);
+      }
     } catch (e) {
       console.warn('error handling message', e);
     }

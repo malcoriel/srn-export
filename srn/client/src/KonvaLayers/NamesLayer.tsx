@@ -48,7 +48,9 @@ function extractNamePositions(
 }
 
 export const NamesLayer: React.FC = () => {
-  const { state, visualState } = NetState.get();
+  const ns = NetState.get();
+  if (!ns) return null;
+  const { state, visualState } = ns;
   const names = extractNamePositions(state, visualState.cameraPosition);
   return (
     <Layer>

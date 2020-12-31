@@ -10,7 +10,9 @@ export const findPlanet = (
 };
 
 export const GameHTMLHudLayer: React.FC = () => {
-  const { connecting, state, ping, maxPing } = NetState.get();
+  const ns = NetState.get();
+  if (!ns) return null;
+  const { connecting, state, ping, maxPing } = ns;
   const myPlayer = findMyPlayer(state);
   let questData: any;
   if (myPlayer && myPlayer.quest) {

@@ -205,9 +205,9 @@ export class decoupledLockedClampedTime extends BasicTime {
   }
 }
 
-// registerInterval not implemented!!! cleanup won't work with this time
 export class vsyncedDecoupledTime extends BasicTime {
   private accumulator = 0;
+  private requestId?: number;
   // smoother performance and lighter CPU load, but FPS occasional drops heavily due to GC
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
@@ -229,14 +229,21 @@ export class vsyncedDecoupledTime extends BasicTime {
     const framedWork = () => {
       try {
         timerWork();
-        requestAnimationFrame(framedWork);
+        this.requestId = requestAnimationFrame(framedWork);
       } catch (e) {
         console.log('BREAK!');
         throw e;
       }
     };
-    requestAnimationFrame(framedWork);
+    this.requestId = requestAnimationFrame(framedWork);
   }
+
+  clearAnimation = () => {
+    super.clearIntervals();
+    if (this.requestId) {
+      cancelAnimationFrame(this.requestId);
+    }
+  };
 }
 
 export class vsyncedDecoupledLockedTime extends BasicTime {
@@ -283,12 +290,12 @@ export class vsyncedDecoupledLockedTime extends BasicTime {
     this.requestId = requestAnimationFrame(framedWork);
   }
 
-  clearIntervals() {
+  clearAnimation = () => {
     super.clearIntervals();
     if (this.requestId) {
       cancelAnimationFrame(this.requestId);
     }
-  }
+  };
 }
 
 // TODO? clamping or scheduling of physics to avoid spiral of death when performance is not enough

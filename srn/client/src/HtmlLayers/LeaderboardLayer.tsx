@@ -3,7 +3,9 @@ import { height_px, width_px } from '../world';
 import NetState from '../NetState';
 
 export const LeaderboardLayer: React.FC = () => {
-  const { leaderboard, milliseconds_remaining } = NetState.get().state;
+  const ns = NetState.get();
+  if (!ns) return null;
+  const { leaderboard, milliseconds_remaining } = ns.state;
   if (!leaderboard) {
     return null;
   }
