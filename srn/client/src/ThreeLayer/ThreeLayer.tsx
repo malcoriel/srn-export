@@ -12,6 +12,7 @@ import { Sphere } from './Sphere';
 import _ from 'lodash';
 import { findMyShip } from '../NetState';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
+import { IVector } from '../Vector';
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera
@@ -48,19 +49,27 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
 
 const CAMERA_HEIGHT = 50;
 
-const CameraMover: React.FC<{ state: GameState }> = ({ state }) => {
+const CameraMover: React.FC<{
+  state: GameState;
+  onChangeCamera: (position: IVector) => void;
+}> = ({ state, onChangeCamera }) => {
   const myShip = findMyShip(state);
   const {
     camera, // Default camera
   } = useThree();
 
   if (myShip) {
-    camera.position.set(myShip.x, -myShip.y, CAMERA_HEIGHT);
+    const pos = { x: myShip.x, y: myShip.y };
+    camera.position.set(pos.x, -pos.y, CAMERA_HEIGHT);
+    onChangeCamera(pos);
   }
   return null;
 };
 
-export const ThreeLayer: React.FC<{ state: GameState }> = ({ state }) => {
+export const ThreeLayer: React.FC<{
+  state: GameState;
+  onChangeCamera: (camera: IVector) => void;
+}> = ({ state, onChangeCamera }) => {
   return (
     <Canvas
       orthographic
@@ -79,7 +88,7 @@ export const ThreeLayer: React.FC<{ state: GameState }> = ({ state }) => {
     >
       <Suspense fallback={<mesh />}>
         <axesHelper position={posToThreePos(15, 15)} args={[20]} />
-        <CameraMover state={state} />
+        <CameraMover state={state} onChangeCamera={onChangeCamera} />
         <ambientLight />
         <gridHelper args={[100, 10]} rotation={[Math.PI / 2, 0, 0]} />
         <pointLight position={[0, 0, CAMERA_HEIGHT]} />

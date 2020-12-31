@@ -3,10 +3,9 @@ import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
 import { DebugStateLayer } from './DebugStateLayer';
-import { height_px, scaleConfig, width_px } from './world';
+import { GameState, height_px, scaleConfig, width_px } from './world';
 import { CoordLayer } from './CoordLayer';
 import { BodiesLayer } from './BodiesLayer';
-import { ShipsLayer } from './ShipsLayer';
 import NetState from './NetState';
 import { ShipControls } from './ShipControls';
 import { GameHTMLHudLayer } from './GameHTMLHudLayer';
@@ -21,6 +20,8 @@ import { BasicTime, vsyncedDecoupledTime as Time } from './Times';
 import { StartHudLayer } from './StartHudLayer';
 import { LeaderboardLayer } from './LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayer/ThreeLayer';
+import { IVector } from './Vector';
+import { NamesLayer } from './NamesLayer';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
@@ -73,6 +74,10 @@ class Srn extends React.Component<
     );
   }
 
+  onChangeCamera = (position: IVector) => {
+    this.NS.visualState.cameraPosition = position;
+  };
+
   render() {
     return (
       <>
@@ -86,10 +91,18 @@ class Srn extends React.Component<
             height: height_px,
           }}
         >
-          {this.state.ready && <ThreeLayer state={this.NS.state} />}
+          {this.state.ready && (
+            <ThreeLayer
+              state={this.NS.state}
+              onChangeCamera={this.onChangeCamera}
+            />
+          )}
           {this.state.ready && (
             <Stage width={width_px} height={height_px} {...scaleConfig}>
-              <BodiesLayer state={this.NS.state} enableBodies={false} />
+              <NamesLayer
+                state={this.NS.state}
+                visualState={this.NS.visualState}
+              />
               <CoordLayer />
             </Stage>
           )}

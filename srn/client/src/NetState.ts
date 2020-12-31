@@ -47,6 +47,13 @@ export const findMyShip = (state: GameState): Ship | null => {
   return null;
 };
 
+export type VisualState = {
+  cameraPosition: {
+    x: number;
+    y: number;
+  };
+};
+
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
   state!: GameState;
@@ -59,6 +66,7 @@ export default class NetState extends EventEmitter {
   public initial_ping?: number;
   private forceSyncStart?: number;
   private forceSyncTag?: string;
+  public visualState: VisualState;
   constructor() {
     super();
     this.state = {
@@ -74,6 +82,12 @@ export default class NetState extends EventEmitter {
       paused: false,
     };
     this.ping = 0;
+    this.visualState = {
+      cameraPosition: {
+        x: 0,
+        y: 0,
+      },
+    };
     setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
     setInterval(this.updateShipOnServer, SHIP_UPDATE_INTERVAL);
   }
