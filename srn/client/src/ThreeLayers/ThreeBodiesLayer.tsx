@@ -11,6 +11,7 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
     <group>
       {planets.map((p) => (
         <ThreePlanetShape
+          onClick={(event: any) => console.log(event)}
           position={posToThreePos(p.x, p.y)}
           key={p.id}
           scale={_.times(3, () => p.radius) as [number, number, number]}

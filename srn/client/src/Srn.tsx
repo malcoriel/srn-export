@@ -30,19 +30,17 @@ class Srn extends React.Component<
   {},
   { preferredName: string; ready: boolean }
 > {
-  private NS: NetState;
   private time: BasicTime;
   constructor(props: {}) {
     super(props);
     this.time = new Time(LOCAL_SIM_TIME_STEP);
-    const NS = new NetState();
-    NS.on('change', () => {
+
+    NetState.get().on('change', () => {
       this.forceUpdate();
     });
-    NS.on('network', () => {
+    NetState.get().on('network', () => {
       this.forceUpdate();
     });
-    this.NS = NS;
     this.state = {
       ready: true,
       preferredName: uniqueNamesGenerator({
@@ -54,27 +52,27 @@ class Srn extends React.Component<
   }
 
   start() {
-    this.NS.preferredName = this.state.preferredName;
-    this.NS.connect();
+    NetState.get().preferredName = this.state.preferredName;
+    NetState.get().connect();
     Perf.start();
     this.time.setInterval(
       (elapsedMs) => {
         Perf.markEvent(Measure.PhysicsFrameEvent);
         Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
-          this.NS.updateLocalState(elapsedMs);
+          NetState.get().updateLocalState(elapsedMs);
         });
       },
       () => {
         Perf.markEvent(Measure.RenderFrameEvent);
         Perf.usingMeasure(Measure.RenderFrameTime, () => {
-          this.NS.emit('change');
+          NetState.get().emit('change');
         });
       }
     );
   }
 
   onChangeCamera = (position: IVector) => {
-    this.NS.visualState.cameraPosition = position;
+    NetState.get().visualState.cameraPosition = position;
   };
 
   render() {
@@ -92,25 +90,31 @@ class Srn extends React.Component<
         >
           {this.state.ready && (
             <ThreeLayer
-              state={this.NS.state}
+              state={NetState.get().state}
               onChangeCamera={this.onChangeCamera}
             />
           )}
           {this.state.ready && (
-            <Stage width={width_px} height={height_px} {...scaleConfig}>
+            <Stage
+              width={width_px}
+              height={height_px}
+              {...scaleConfig}
+              style={{ pointerEvents: 'none' }}
+            >
               <NamesLayer
-                state={this.NS.state}
-                visualState={this.NS.visualState}
+                state={NetState.get().state}
+                visualState={NetState.get().visualState}
               />
               <CoordLayer />
             </Stage>
           )}
           <ShipControls />
           <GameHTMLHudLayer
-            state={this.NS.state}
-            ping={this.NS.ping}
-            maxPing={this.NS.maxPing}
-            connecting={this.NS.connecting}
+            style={{ pointerEvents: 'none' }}
+            state={NetState.get().state}
+            ping={NetState.get().ping}
+            maxPing={NetState.get().maxPing}
+            connecting={NetState.get().connecting}
           />
         </div>
         {!this.state.ready && (
@@ -125,13 +129,13 @@ class Srn extends React.Component<
             preferredName={this.state.preferredName}
           />
         )}
-        {this.NS.state.leaderboard && (
+        {NetState.get().state.leaderboard && (
           <LeaderboardLayer
-            leaderboard={this.NS.state.leaderboard}
-            milliseconds_remaining={this.NS.state.milliseconds_remaining}
+            leaderboard={NetState.get().state.leaderboard}
+            milliseconds_remaining={NetState.get().state.milliseconds_remaining}
           />
         )}
-        <DebugStateLayer state={this.NS.state} />
+        <DebugStateLayer state={NetState.get().state} />
         <StatsPanel />
       </>
     );

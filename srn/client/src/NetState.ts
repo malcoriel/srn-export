@@ -67,6 +67,13 @@ export default class NetState extends EventEmitter {
   private forceSyncStart?: number;
   private forceSyncTag?: string;
   public visualState: VisualState;
+
+  private static instance: NetState;
+  public static get() {
+    if (!NetState.instance) NetState.instance = new NetState();
+    return NetState.instance;
+  }
+
   constructor() {
     super();
     this.state = {

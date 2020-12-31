@@ -14,7 +14,8 @@ export const GameHTMLHudLayer: React.FC<{
   connecting: boolean;
   ping: number;
   maxPing?: number;
-}> = ({ connecting, state, ping, maxPing }) => {
+  style?: any;
+}> = ({ connecting, state, ping, maxPing, style }) => {
   const myPlayer = findMyPlayer(state);
   let questData: any;
   if (myPlayer && myPlayer.quest) {
@@ -48,6 +49,7 @@ export const GameHTMLHudLayer: React.FC<{
         padding: 10,
         height: '100%',
         width: 'calc(100%-10px)',
+        ...style,
       }}
     >
       {connecting && <span>Connecting...&nbsp;</span>}
