@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Direction, ShipAction, ShipActionType } from './world';
+import { Direction, ShipAction, ShipActionType } from '../world';
 
 export type ShipChangerCallback = (sa: ShipAction) => void;
 

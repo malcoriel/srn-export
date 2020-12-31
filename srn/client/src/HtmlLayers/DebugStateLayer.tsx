@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GameState } from './world';
+import { GameState } from '../world';
 import ReactJson from 'react-json-view';
 import { useHotkeys } from 'react-hotkeys-hook';
 

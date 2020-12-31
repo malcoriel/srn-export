@@ -1,5 +1,5 @@
 import React from 'react';
-import { height_px, Leaderboard, width_px } from './world';
+import { height_px, Leaderboard, width_px } from '../world';
 
 export const LeaderboardLayer: React.FC<{
   leaderboard: Leaderboard;

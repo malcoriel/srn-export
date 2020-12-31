@@ -1,6 +1,6 @@
 import React from 'react';
-import { GameState, Planet, QuestState } from './world';
-import { findMyPlayer } from './NetState';
+import { GameState, Planet, QuestState } from '../world';
+import { findMyPlayer } from '../NetState';
 
 export const findPlanet = (
   state: GameState,

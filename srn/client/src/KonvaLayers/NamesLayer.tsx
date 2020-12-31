@@ -1,8 +1,8 @@
 import React from 'react';
-import { antiScale, GameState, scaleConfig } from './world';
-import { VisualState } from './NetState';
+import { antiScale, GameState, scaleConfig } from '../world';
+import { VisualState } from '../NetState';
 import { Layer, Text } from 'react-konva';
-import Vector, { IVector } from './Vector';
+import Vector, { IVector } from '../utils/Vector';
 import _ from 'lodash';
 
 function extractNamePositions(

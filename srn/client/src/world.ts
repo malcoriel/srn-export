@@ -1,4 +1,4 @@
-import Vector, { IVector } from './Vector';
+import Vector, { IVector } from './utils/Vector';
 
 export const width_px = 700;
 export const height_px = 700;

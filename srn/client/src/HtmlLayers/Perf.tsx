@@ -1,7 +1,7 @@
 import Q from 'q';
 import { mean } from 'simple-statistics';
 import _ from 'lodash';
-import { variableDeltaTime as Time } from './Times';
+import { variableDeltaTime as Time } from '../utils/Times';
 
 export const statsHeap: Record<string, number> = {
   timeStep: 0,

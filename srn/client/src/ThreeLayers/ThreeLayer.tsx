@@ -12,7 +12,7 @@ import { Sphere } from './Sphere';
 import _ from 'lodash';
 import { findMyShip } from '../NetState';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
-import { IVector } from '../Vector';
+import { IVector } from '../utils/Vector';
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera

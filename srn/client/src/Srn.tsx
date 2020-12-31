@@ -2,26 +2,25 @@ import React from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
-import { DebugStateLayer } from './DebugStateLayer';
-import { GameState, height_px, scaleConfig, width_px } from './world';
-import { CoordLayer } from './CoordLayer';
-import { BodiesLayer } from './BodiesLayer';
+import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
+import { height_px, scaleConfig, width_px } from './world';
+import { CoordLayer } from './KonvaLayers/CoordLayer';
 import NetState from './NetState';
-import { ShipControls } from './ShipControls';
-import { GameHTMLHudLayer } from './GameHTMLHudLayer';
+import { ShipControls } from './utils/ShipControls';
+import { GameHTMLHudLayer } from './HtmlLayers/GameHTMLHudLayer';
 
 import {
   adjectives,
   animals,
   uniqueNamesGenerator,
 } from 'unique-names-generator';
-import { Measure, Perf, statsHeap, StatsPanel } from './Perf';
-import { BasicTime, vsyncedDecoupledTime as Time } from './Times';
-import { StartHudLayer } from './StartHudLayer';
-import { LeaderboardLayer } from './LeaderboardLayer';
-import { ThreeLayer } from './ThreeLayer/ThreeLayer';
-import { IVector } from './Vector';
-import { NamesLayer } from './NamesLayer';
+import { Measure, Perf, statsHeap, StatsPanel } from './HtmlLayers/Perf';
+import { BasicTime, vsyncedDecoupledTime as Time } from './utils/Times';
+import { StartHudLayer } from './HtmlLayers/StartHudLayer';
+import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
+import { ThreeLayer } from './ThreeLayers/ThreeLayer';
+import { IVector } from './utils/Vector';
+import { NamesLayer } from './KonvaLayers/NamesLayer';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
