@@ -299,6 +299,8 @@ pub struct Ship {
     pub radius: f64,
     pub color: String,
     pub docked_at: Option<Uuid>,
+    pub navigate_target: Option<Vec2f64>,
+    pub dock_target: Option<Uuid>,
 }
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum QuestState {
@@ -532,6 +534,8 @@ pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
         rotation: 0.0,
         radius: 1.0,
         docked_at: None,
+        navigate_target: None,
+        dock_target: None,
     };
     state
         .players

@@ -53,6 +53,15 @@ const keysActive: Record<string, boolean> = {};
 export const actionsActive: Record<string, ShipAction | undefined> = {
   [ShipActionType.Move]: undefined,
   [ShipActionType.Dock]: undefined,
+  [ShipActionType.Navigate]: undefined,
+};
+
+const singleUseActions = [ShipActionType.Navigate];
+
+export const resetActions = () => {
+  for (const key of singleUseActions) {
+    actionsActive[key] = undefined;
+  }
 };
 
 let mounted = false;

@@ -8,7 +8,7 @@ import {
   simulateStateUpdate,
 } from './world';
 import * as uuid from 'uuid';
-import { actionsActive } from './utils/ShipControls';
+import { actionsActive, resetActions } from './utils/ShipControls';
 
 enum OpCode {
   Unknown,
@@ -241,6 +241,7 @@ export default class NetState extends EventEmitter {
     if (actions[ShipActionType.Dock]) {
       this.updateShipOnServer();
     }
+    resetActions();
     let result;
 
     const inState = this.state;

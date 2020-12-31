@@ -109,6 +109,7 @@ export enum ShipActionType {
   Unknown,
   Move,
   Dock,
+  Navigate,
 }
 
 export enum Direction {
@@ -128,6 +129,8 @@ export class ShipAction {
   public static Move = (dir: Direction) =>
     new ShipAction(ShipActionType.Move, dir);
   public static Dock = () => new ShipAction(ShipActionType.Dock);
+  public static Navigate = (to: IVector) =>
+    new ShipAction(ShipActionType.Navigate, to);
 }
 
 const directionToRotation = {
@@ -204,8 +207,14 @@ export const applyShipAction = (
       myShip.rotation = directionToRotation[direction];
       break;
     }
+    case ShipActionType.Navigate: {
+      let navigate_target = sa.data as IVector;
+      // myShip.navigate_target = {x: navigate_target.x, y: navigate_target.y};
+      // shipActions.
+      break;
+    }
     default:
-      // intentional pass-through
+      console.warn('unknown action', sa);
       break;
   }
   return myShip;
