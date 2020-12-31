@@ -516,6 +516,7 @@ fn rocket() -> rocket::Rocket {
     });
 
     thread::spawn(|| {
+        // cleanup thread - kick broken players, remove ships
         let client_errors = CLIENT_ERRORS.lock().unwrap();
         let clients = client_errors
             .clone()
@@ -526,6 +527,24 @@ fn rocket() -> rocket::Rocket {
         for client_id in clients {
             disconnect_if_bad(client_id);
         }
+
+        let mut cont = STATE.write().unwrap();
+        let existing_player_ships = cont
+            .state
+            .players
+            .iter()
+            .map(|p| p.ship_id.clone())
+            .filter(|s| s.is_some())
+            .map(|s| s.unwrap())
+            .collect::<Vec<_>>();
+        cont.state.ships = cont
+            .state
+            .ships
+            .clone()
+            .into_iter()
+            .filter(|s| existing_player_ships.contains(&s.id))
+            .collect::<Vec<_>>();
+
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     });
 
