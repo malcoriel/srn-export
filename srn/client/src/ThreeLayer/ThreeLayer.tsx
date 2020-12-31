@@ -11,8 +11,6 @@ import React, { Suspense } from 'react';
 import { Sphere } from './Sphere';
 import _ from 'lodash';
 import { findMyShip } from '../NetState';
-import { ShipS } from './ShipS';
-import { ShipsLayer } from './ShipsLayer';
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera
@@ -84,9 +82,9 @@ export const ThreeLayer: React.FC<{ state: GameState }> = ({ state }) => {
         <ambientLight />
         <gridHelper args={[100, 10]} rotation={[Math.PI / 2, 0, 0]} />
         <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-        {/*<ThreeBodiesLayer state={state} />*/}
+        <ThreeBodiesLayer state={state} />
         {/*<ShipsLayer state={state} />*/}
-        <Sphere position={[0, 0, 0]} scale={[10, 10, 10]} star />
+        {/*<Sphere position={[0, 0, 0]} scale={[10, 10, 10]} star />*/}
       </Suspense>
       {/* blue is third coord (z?) */}
       {/* green is second  coord (y?) */}

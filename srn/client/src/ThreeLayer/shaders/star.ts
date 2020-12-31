@@ -150,7 +150,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 \t// corona
 \tfragColor.rgb   += corona * orange;
 \t// emitted light
-\tfragColor.rgb   += starGlow * orangeRed;
+\t// fragColor.rgb   += starGlow * orangeRed;
 \tfragColor.a\t\t= 1.0;
 \t// fragColor.rgba = vec4(vNormal * 0.5 + 0.5, 1);
 }
@@ -191,7 +191,7 @@ export let uniforms: {
 } = {
   iChannel0: { value: null },
   time: { value: 0 },
-  srcRadius: { value: 0.32 },
+  srcRadius: { value: 0.25 },
   fCenter: { value: 0.5 },
   iChannel1: { value: null },
   iResolution: { value: new Vector3(700, 700, 0) },

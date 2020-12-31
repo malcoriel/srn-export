@@ -61,7 +61,6 @@ export const Sphere: React.FC<
   const patchedUniforms = _.clone(uniforms);
   patchedUniforms.iChannel0.value = lavaTile;
   patchedUniforms.iChannel1.value = grassTile;
-  patchedUniforms.time.value = 1;
   patchedUniforms.color.value = new Vector3(180 / 255, 149 / 255, 139 / 255);
   patchedUniforms.shift.value = new Vector2(
     camera.position.x * unitsToPixels,
