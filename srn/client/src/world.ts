@@ -2,7 +2,9 @@ import Vector, { IVector } from './utils/Vector';
 
 export const width_px = 700;
 export const height_px = 700;
+// noinspection JSUnusedGlobalSymbols
 export const width_units = 100;
+// noinspection JSUnusedGlobalSymbols
 export const height_units = 100;
 export const max_x = 50;
 export const max_y = 50;
@@ -128,6 +130,18 @@ export class ShipAction {
   public static Dock = () => new ShipAction(ShipActionType.Dock);
 }
 
+const directionToRotation = {
+  [Direction.Unknown]: 0,
+  [Direction.Up]: 0,
+  [Direction.UpRight]: Math.PI / 4,
+  [Direction.Right]: Math.PI / 2,
+  [Direction.UpLeft]: -Math.PI / 4,
+  [Direction.Left]: -Math.PI / 2,
+  [Direction.DownLeft]: -Math.PI * 0.75,
+  [Direction.Down]: Math.PI,
+  [Direction.DownRight]: Math.PI * 0.75,
+};
+
 export const applyShipAction = (
   myShip: Ship,
   sa: ShipAction,
@@ -156,7 +170,8 @@ export const applyShipAction = (
     }
 
     case ShipActionType.Move: {
-      switch (sa.data as Direction) {
+      let direction = sa.data as Direction;
+      switch (direction) {
         case Direction.Up:
           myShip.y -= moveByTime;
           break;
@@ -186,6 +201,7 @@ export const applyShipAction = (
           myShip.x -= moveByTimeDiagonal;
           break;
       }
+      myShip.rotation = directionToRotation[direction];
       break;
     }
     default:

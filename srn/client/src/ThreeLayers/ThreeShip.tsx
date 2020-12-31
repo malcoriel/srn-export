@@ -15,7 +15,7 @@ export const ThreeShip: React.FC<any> = (props) => {
       position={props.position}
       ref={mesh}
       scale={[0.3, 0.4, 0.5]}
-      rotation={[Math.PI, 0, 0]}
+      rotation={[Math.PI, 0, props.rotation]}
       geometry={shipModel}
     >
       <meshBasicMaterial color={color} />
