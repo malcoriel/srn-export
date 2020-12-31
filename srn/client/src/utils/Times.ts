@@ -1,12 +1,26 @@
+type Timeout = ReturnType<typeof setTimeout>;
+
 export abstract class BasicTime {
-  constructor(public timeStep: number) {}
+  protected intervals: Timeout[];
+  constructor(public timeStep: number) {
+    this.intervals = [];
+  }
   abstract setInterval(physics: timedFn, render: timedFn): void;
+  // noinspection JSUnusedGlobalSymbols
+  registerInterval(interval: Timeout) {
+    this.intervals.push(interval);
+  }
+  clearIntervals() {
+    for (const int of this.intervals) {
+      clearInterval(int);
+    }
+  }
 }
 
 type voidFn = () => void;
 type timedFn = (elapsed: number) => void;
 
-const startBreakableTimer = (callback: voidFn, step: number) => {
+const startBreakableTimer = (callback: voidFn, step: number): Timeout => {
   const timer = setInterval(() => {
     try {
       callback();
@@ -16,21 +30,24 @@ const startBreakableTimer = (callback: voidFn, step: number) => {
       throw e;
     }
   }, step);
+  return timer;
 };
 
 export class variableDeltaTime extends BasicTime {
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
-    startBreakableTimer(() => {
+    const int = startBreakableTimer(() => {
       const currentTime = performance.now();
       const frameTime = Math.floor(currentTime - lastCheck);
       physics(frameTime);
       render(frameTime);
       lastCheck = currentTime;
     }, this.timeStep);
+    this.registerInterval(int);
   }
 }
 
+// registerInterval not implemented!!! cleanup won't work with this time
 export class semiFixedDeltaTime extends BasicTime {
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
@@ -48,6 +65,7 @@ export class semiFixedDeltaTime extends BasicTime {
   }
 }
 
+// registerInterval not implemented!!! cleanup won't work with this time
 export class clampedSemiFixedDeltaTime extends BasicTime {
   private count: number = 0;
   setInterval(physics: timedFn, render: timedFn) {
@@ -76,6 +94,7 @@ export class clampedSemiFixedDeltaTime extends BasicTime {
   }
 }
 
+// registerInterval not implemented!!! cleanup won't work with this time
 export class decoupledTime extends BasicTime {
   private accumulator = 0;
   private count = 0;
@@ -101,6 +120,7 @@ export class decoupledTime extends BasicTime {
   }
 }
 
+// registerInterval not implemented!!! cleanup won't work with this time
 export class decoupledLockedTime extends BasicTime {
   private lock = false;
   private accumulator = 0;
@@ -137,6 +157,7 @@ export class decoupledLockedTime extends BasicTime {
   }
 }
 
+// registerInterval not implemented!!! cleanup won't work with this time
 export class decoupledLockedClampedTime extends BasicTime {
   private lock = false;
   private accumulator = 0;
@@ -184,6 +205,7 @@ export class decoupledLockedClampedTime extends BasicTime {
   }
 }
 
+// registerInterval not implemented!!! cleanup won't work with this time
 export class vsyncedDecoupledTime extends BasicTime {
   private accumulator = 0;
   // smoother performance and lighter CPU load, but FPS occasional drops heavily due to GC
@@ -220,6 +242,7 @@ export class vsyncedDecoupledTime extends BasicTime {
 export class vsyncedDecoupledLockedTime extends BasicTime {
   private lock = false;
   private accumulator = 0;
+  private requestId?: number;
   // smoother performance and lighter CPU load, but FPS occasional drops heavily due to GC
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
@@ -251,13 +274,20 @@ export class vsyncedDecoupledLockedTime extends BasicTime {
     const framedWork = () => {
       try {
         timerWork();
-        requestAnimationFrame(framedWork);
+        this.requestId = requestAnimationFrame(framedWork);
       } catch (e) {
         console.log('BREAK!');
         throw e;
       }
     };
-    requestAnimationFrame(framedWork);
+    this.requestId = requestAnimationFrame(framedWork);
+  }
+
+  clearIntervals() {
+    super.clearIntervals();
+    if (this.requestId) {
+      cancelAnimationFrame(this.requestId);
+    }
   }
 }
 

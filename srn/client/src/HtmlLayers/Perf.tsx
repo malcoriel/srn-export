@@ -42,16 +42,25 @@ const flushInterval = 1000;
 let lastFlushTime: number;
 let accumulatedTime = 0;
 
+const time = new Time(flushInterval);
+let frameRequest: number | undefined;
+// qqq
 const Perf = {
   start: () => {
-    const time = new Time(flushInterval);
     time.setInterval(Perf.flushBuffer, () => {});
-    requestAnimationFrame(Perf.startRealFPSMeter);
+    frameRequest = requestAnimationFrame(Perf.startRealFPSMeter);
+  },
+
+  stop: () => {
+    time.clearIntervals();
+    if (frameRequest) {
+      cancelAnimationFrame(frameRequest);
+    }
   },
 
   startRealFPSMeter: () => {
     Perf.markEvent(Measure.RealFrameEvent);
-    requestAnimationFrame(Perf.startRealFPSMeter);
+    frameRequest = requestAnimationFrame(Perf.startRealFPSMeter);
   },
 
   measureFPSStat: function (

@@ -50,6 +50,13 @@ class Srn extends React.Component<
     this.start();
   }
 
+  componentDidUnmount() {
+    console.log('destroying');
+    NetState.get().disconnect();
+    this.time.clearIntervals();
+    Perf.stop();
+  }
+
   start() {
     NetState.get().preferredName = this.state.preferredName;
     NetState.get().connect();

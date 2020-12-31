@@ -9,6 +9,7 @@ import {
 } from './world';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
+type Timeout = ReturnType<typeof setTimeout>;
 
 enum OpCode {
   Unknown,
@@ -69,6 +70,9 @@ export default class NetState extends EventEmitter {
   public visualState: VisualState;
 
   private static instance: NetState;
+  private readonly forceSyncInterval: Timeout;
+  private readonly updateOnServerInterval: Timeout;
+  private reconnectTimeout?: Timeout;
   public static get() {
     if (!NetState.instance) NetState.instance = new NetState();
     return NetState.instance;
@@ -95,8 +99,11 @@ export default class NetState extends EventEmitter {
         y: 0,
       },
     };
-    setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
-    setInterval(this.updateShipOnServer, SHIP_UPDATE_INTERVAL);
+    this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
+    this.updateOnServerInterval = setInterval(
+      this.updateShipOnServer,
+      SHIP_UPDATE_INTERVAL
+    );
   }
 
   forceSync = () => {
@@ -109,6 +116,14 @@ export default class NetState extends EventEmitter {
     }
   };
 
+  disconnect = () => {
+    if (this.socket) {
+      this.socket.close();
+    }
+    clearInterval(this.forceSyncInterval);
+    clearInterval(this.updateOnServerInterval);
+    if (this.reconnectTimeout) clearInterval(this.reconnectTimeout);
+  };
   connect = () => {
     this.socket = new WebSocket('ws://192.168.0.10:2794', 'rust-websocket');
     this.socket.onmessage = (event) => {
@@ -118,7 +133,7 @@ export default class NetState extends EventEmitter {
       this.emit('network');
       this.socket = null;
       this.state.ticks = 0;
-      setTimeout(() => {
+      this.reconnectTimeout = setTimeout(() => {
         this.connecting = true;
         this.connect();
       }, RECONNECT_INTERVAL);
