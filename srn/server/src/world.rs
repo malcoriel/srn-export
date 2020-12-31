@@ -525,6 +525,16 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     state
 }
 
+pub fn add_player(state: &mut GameState, player_id: &Uuid) {
+    state.players.push(Player {
+        id: player_id.clone(),
+        ship_id: None,
+        name: player_id.to_string(),
+        quest: None,
+        money: 0,
+    })
+}
+
 pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
     let ship = Ship {
         id: crate::new_id(),
@@ -543,4 +553,8 @@ pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
         .find(|p| p.id == *player_id)
         .map(|p| p.ship_id = Some(ship.id));
     state.ships.push(ship);
+}
+
+pub fn update_ships_navigation(ships: &Vec<Ship>, elapsed_micro: i64) -> Vec<Ship> {
+    ships.clone()
 }

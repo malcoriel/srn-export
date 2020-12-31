@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod world_test {
-    use crate::world::{seed_state, update_planets, GameState, Planet, Star};
+    use crate::vec2::Vec2f64;
+    use crate::world::{
+        add_player, seed_state, spawn_ship, update_planets, update_ships_navigation, GameState,
+        Planet, Star,
+    };
     use std::f64::consts::PI;
     use uuid::Uuid;
 
@@ -33,8 +37,10 @@ mod world_test {
             color: "".to_string(),
         };
         let state = GameState {
+            tag: None,
             my_id: Default::default(),
-            star: Star {
+            start_time_ticks: 0,
+            star: Some(Star {
                 id: star_id,
                 name: "star".to_string(),
                 x: 0.0,
@@ -42,14 +48,14 @@ mod world_test {
                 radius: 0.0,
                 rotation: 0.0,
                 color: "".to_string(),
-            },
+            }),
             planets: vec![planet, sat],
             ships: vec![],
             players: vec![],
-            tick: 0,
             milliseconds_remaining: 0,
             paused: false,
             leaderboard: None,
+            ticks: 0,
         };
         let eps = 0.2;
         let new_planets = update_planets(
@@ -102,5 +108,20 @@ mod world_test {
                 .ok()
                 .unwrap()
         );
+    }
+
+    #[test]
+    pub fn can_navigate_ships() {
+        let mut state = seed_state(true);
+        let player_id = crate::new_id();
+        add_player(&mut state, &player_id);
+        spawn_ship(&mut state, &player_id);
+        let mut ship = &mut state.ships[0];
+        ship.navigate_target = Some(Vec2f64 { x: 10.0, y: 10.0 });
+        state.ships = update_ships_navigation(&state.ships, 1000);
+        let ship = &state.ships[0];
+        let eps = 0.1;
+        assert!((ship.x - 9.0).abs() < eps);
+        assert!((ship.y - 9.0).abs() < eps);
     }
 }

@@ -44,6 +44,8 @@ export type Star = GameObject & WithName & WithColor;
 export type Ship = GameObject &
   WithColor & {
     docked_at?: string;
+    navigate_target?: IVector;
+    dock_target?: string;
   };
 
 export type Quest = {
@@ -209,8 +211,7 @@ export const applyShipAction = (
     }
     case ShipActionType.Navigate: {
       let navigate_target = sa.data as IVector;
-      // myShip.navigate_target = {x: navigate_target.x, y: navigate_target.y};
-      // shipActions.
+      myShip.navigate_target = { x: navigate_target.x, y: navigate_target.y };
       break;
     }
     default:

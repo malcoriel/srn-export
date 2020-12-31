@@ -447,13 +447,7 @@ fn change_player_name(conn_id: &Uuid, new_name: &&str) {
 fn make_new_player(conn_id: &Uuid) {
     {
         let mut cont = STATE.write().unwrap();
-        cont.state.players.push(Player {
-            id: conn_id.clone(),
-            ship_id: None,
-            name: conn_id.to_string(),
-            quest: None,
-            money: 0,
-        });
+        world::add_player(&mut cont.state, conn_id);
     }
     spawn_ship(conn_id);
 }
