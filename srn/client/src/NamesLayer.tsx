@@ -3,6 +3,7 @@ import { antiScale, GameState, scaleConfig } from './world';
 import { VisualState } from './NetState';
 import { Layer, Text } from 'react-konva';
 import Vector, { IVector } from './Vector';
+import _ from 'lodash';
 
 function extractNamePositions(
   state: GameState,
@@ -18,10 +19,30 @@ function extractNamePositions(
     let planetProps: [string, string, IVector, number] = [
       planet.id,
       planet.name,
-      shiftPos({ x: planet.x, y: planet.y }),
+      shiftPos(planet),
       planet.radius,
     ];
     res.push(planetProps);
+  }
+
+  const shipsById = _.keyBy(state.ships, 'id');
+
+  for (const player of state.players) {
+    if (!player.ship_id) {
+      continue;
+    }
+    let ship = shipsById[player.ship_id];
+    if (!ship) {
+      console.warn(`player ${player.id} ship ${player.ship_id} not found`);
+      continue;
+    }
+    let shipProps: [string, string, IVector, number] = [
+      ship.id,
+      player.name,
+      shiftPos(ship),
+      ship.radius,
+    ];
+    res.push(shipProps);
   }
   return res;
 }
