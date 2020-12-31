@@ -1,23 +1,11 @@
 import React, { useRef } from 'react';
 import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
-import {
-  Mesh,
-  ShaderMaterial,
-  TextureLoader,
-  Vector2,
-  Vector3,
-  Texture,
-} from 'three';
+import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
 import * as THREE from 'three';
 import { CellularNoiseMaterial } from 'threejs-shader-materials';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import _ from 'lodash';
 import { unitsToPixels } from '../world';
-import {
-  RGBAFormat,
-  RGBFormat,
-  LinearMipMapLinearFilter,
-} from 'three/src/constants';
 
 const noiseMaterial = new CellularNoiseMaterial();
 noiseMaterial.isAnimate = true;
@@ -37,7 +25,6 @@ export const Sphere: React.FC<
 > = (props) => {
   const mesh = useRef<Mesh>();
   const space01map = useLoader(TextureLoader, 'resources/space01.jpg');
-  const checkersMap = useLoader(TextureLoader, 'resources/checkers.jpg');
   const lavaTile = useRepeatWrappedTextureLoader('resources/lavatile.png');
   const grassTile = useRepeatWrappedTextureLoader(
     'resources/bowling_grass.jpg'

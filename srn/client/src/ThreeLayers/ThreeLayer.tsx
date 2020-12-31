@@ -1,18 +1,11 @@
-import { Canvas, useThree } from 'react-three-fiber';
+import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
-import {
-  GameState,
-  height_px,
-  Planet,
-  unitsToPixels,
-  width_px,
-} from '../world';
+import { GameState, height_px, unitsToPixels, width_px } from '../world';
 import React, { Suspense } from 'react';
-import { Sphere } from './Sphere';
-import _ from 'lodash';
-import { findMyShip } from '../NetState';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import { IVector } from '../utils/Vector';
+import { CameraMover } from './CameraMover';
+import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera
@@ -22,50 +15,7 @@ export const posToThreePos = (
   z?: number
 ): [number, number, number] => [x, -y, z || 0];
 
-export const ThreePlanetShape: React.FC<Planet & { star?: boolean }> = (p) => {
-  const scale = _.times(3, () => p.radius) as [number, number, number];
-  return (
-    <Sphere
-      position={posToThreePos(p.x, p.y)}
-      key={p.id}
-      scale={scale}
-      color={p.color}
-      star={p.star}
-    />
-  );
-};
-
-export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
-  if (!state) return null;
-  const { planets, star } = state;
-  return (
-    <group>
-      {planets.map((p) => (
-        <ThreePlanetShape key={p.id} {...p} />
-      ))}
-      {star && <ThreePlanetShape star={true} key={star.id} {...star} />}
-    </group>
-  );
-};
-
-const CAMERA_HEIGHT = 50;
-
-const CameraMover: React.FC<{
-  state: GameState;
-  onChangeCamera: (position: IVector) => void;
-}> = ({ state, onChangeCamera }) => {
-  const myShip = findMyShip(state);
-  const {
-    camera, // Default camera
-  } = useThree();
-
-  if (myShip) {
-    const pos = { x: myShip.x, y: myShip.y };
-    camera.position.set(pos.x, -pos.y, CAMERA_HEIGHT);
-    onChangeCamera(pos);
-  }
-  return null;
-};
+export const CAMERA_HEIGHT = 50;
 
 export const ThreeLayer: React.FC<{
   state: GameState;
