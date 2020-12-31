@@ -3,9 +3,9 @@ import { Vector3 } from 'three';
 import { GameState, height_px, unitsToPixels, width_px } from '../world';
 import React, { Suspense } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
-import { IVector } from '../utils/Vector';
 import { CameraMover } from './CameraMover';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
+import NetState from '../NetState';
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera
@@ -17,10 +17,8 @@ export const posToThreePos = (
 
 export const CAMERA_HEIGHT = 50;
 
-export const ThreeLayer: React.FC<{
-  state: GameState;
-  onChangeCamera: (camera: IVector) => void;
-}> = ({ state, onChangeCamera }) => {
+export const ThreeLayer: React.FC = () => {
+  const { state } = NetState.get();
   return (
     <Canvas
       orthographic
@@ -39,7 +37,7 @@ export const ThreeLayer: React.FC<{
     >
       <Suspense fallback={<mesh />}>
         <axesHelper position={posToThreePos(15, 15)} args={[20]} />
-        <CameraMover state={state} onChangeCamera={onChangeCamera} />
+        <CameraMover />
         <ambientLight />
         <gridHelper args={[100, 10]} rotation={[Math.PI / 2, 0, 0]} />
         <pointLight position={[0, 0, CAMERA_HEIGHT]} />

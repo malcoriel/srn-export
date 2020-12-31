@@ -71,10 +71,6 @@ class Srn extends React.Component<
     );
   }
 
-  onChangeCamera = (position: IVector) => {
-    NetState.get().visualState.cameraPosition = position;
-  };
-
   render() {
     return (
       <>
@@ -88,12 +84,7 @@ class Srn extends React.Component<
             height: height_px,
           }}
         >
-          {this.state.ready && (
-            <ThreeLayer
-              state={NetState.get().state}
-              onChangeCamera={this.onChangeCamera}
-            />
-          )}
+          {this.state.ready && <ThreeLayer />}
           {this.state.ready && (
             <Stage
               width={width_px}
