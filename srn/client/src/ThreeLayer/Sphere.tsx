@@ -25,16 +25,23 @@ noiseMaterial.grid = 75;
 noiseMaterial.divisionScaleX = 2;
 noiseMaterial.speed = 3;
 
+export const useRepeatWrappedTextureLoader = (path: string) => {
+  const texture = useLoader(TextureLoader, path);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+};
+
 export const Sphere: React.FC<
   MeshProps & { color?: string; star?: boolean }
 > = (props) => {
   const mesh = useRef<Mesh>();
   const space01map = useLoader(TextureLoader, 'resources/space01.jpg');
   const checkersMap = useLoader(TextureLoader, 'resources/checkers.jpg');
-  const lavaNotLoaded = useLoader(TextureLoader, 'resources/lavatile.png');
-  const lavaTile = document.getElementById('lavatile');
-  console.log(lavaTile);
-  const grassTile = useLoader(TextureLoader, 'resources/bowling_grass.jpg');
+  const lavaTile = useRepeatWrappedTextureLoader('resources/lavatile.png');
+  const grassTile = useRepeatWrappedTextureLoader(
+    'resources/bowling_grass.jpg'
+  );
 
   const color = props.color || 'white';
 
@@ -45,7 +52,6 @@ export const Sphere: React.FC<
       if (props.star) {
         let material = mesh.current.material as ShaderMaterial;
         material.uniforms.time.value += 0.008;
-        // material.uniforms.time.value = (material.uniforms.time.value % 6) + 1;
       } else {
         mesh.current.rotation.y = mesh.current.rotation.y += 0.02;
       }
@@ -53,26 +59,14 @@ export const Sphere: React.FC<
   });
 
   const patchedUniforms = _.clone(uniforms);
-  let texture = new Texture(
-    lavaTile as HTMLImageElement,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    undefined
-  );
-  texture.format = RGBFormat;
-  texture.needsUpdate = true;
-  texture.minFilter = LinearMipMapLinearFilter;
-  patchedUniforms.iChannel0.value = texture;
+  patchedUniforms.iChannel0.value = lavaTile;
   patchedUniforms.iChannel1.value = grassTile;
   patchedUniforms.time.value = 1;
   patchedUniforms.color.value = new Vector3(180 / 255, 149 / 255, 139 / 255);
-  // patchedUniforms.shift.value = new Vector2(
-  //   camera.position.x * unitsToPixels,
-  //   camera.position.y * unitsToPixels
-  // );
+  patchedUniforms.shift.value = new Vector2(
+    camera.position.x * unitsToPixels,
+    camera.position.y * unitsToPixels
+  );
 
   let rotation: [number, number, number] = [0, 0, 0];
   return (
@@ -85,7 +79,7 @@ export const Sphere: React.FC<
           uniforms={uniforms}
         />
       ) : (
-        <meshBasicMaterial color={color} map={checkersMap} />
+        <meshBasicMaterial color={color} map={space01map} />
       )}
     </mesh>
   );
