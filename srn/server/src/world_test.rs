@@ -2,8 +2,8 @@
 mod world_test {
     use crate::vec2::Vec2f64;
     use crate::world::{
-        add_player, seed_state, spawn_ship, update_planets, update_ships_navigation, GameState,
-        Planet, Star,
+        add_player, seed_state, spawn_ship, update, update_planets, update_ships_navigation,
+        GameState, Planet, Star,
     };
     use std::f64::consts::PI;
     use uuid::Uuid;
@@ -112,16 +112,28 @@ mod world_test {
 
     #[test]
     pub fn can_navigate_ships() {
-        let mut state = seed_state(true);
-        let player_id = crate::new_id();
-        add_player(&mut state, &player_id);
-        spawn_ship(&mut state, &player_id);
-        let mut ship = &mut state.ships[0];
-        ship.navigate_target = Some(Vec2f64 { x: 10.0, y: 10.0 });
-        state.ships = update_ships_navigation(&state.ships, 1000);
-        let ship = &state.ships[0];
-        let eps = 0.1;
-        assert!((ship.x - 9.0).abs() < eps);
-        assert!((ship.y - 9.0).abs() < eps);
+        let both_client_and_server = vec![false, true];
+        for is_client in both_client_and_server.into_iter() {
+            let mut state = seed_state(true);
+            let player_id = crate::new_id();
+            add_player(&mut state, &player_id);
+            spawn_ship(&mut state, &player_id);
+            let mut ship = &mut state.ships[0];
+            let dist = 3.0;
+            ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
+            state = update(state, 1000 * 1000, is_client);
+            let ship = &state.ships[0];
+            let eps = 0.1;
+            let expected_pos = 2.0f64.sqrt() / 2.0 * dist;
+            eprintln!("{} vs {}", ship.x, expected_pos);
+            assert!((ship.x - expected_pos).abs() < eps);
+            assert!((ship.y - expected_pos).abs() < eps);
+            assert!(ship.navigate_target.is_some());
+            state = update(state, 3 * 1000 * 1000, is_client);
+            let ship = &state.ships[0];
+            assert!((ship.x - dist).abs() < eps);
+            assert!((ship.y - dist).abs() < eps);
+            assert!(ship.navigate_target.is_none());
+        }
     }
 }

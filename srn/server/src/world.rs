@@ -6,10 +6,12 @@ use std::borrow::{Borrow, BorrowMut};
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use uuid::Uuid;
-static SEED_TIME: i64 = 9321 * 1000 * 1000;
+const SEED_TIME: i64 = 9321 * 1000 * 1000;
 use chrono::Utc;
 use itertools::Itertools;
 use uuid::*;
+
+const SHIP_SPEED: f64 = 3.0;
 
 pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
     let rating = all_players
@@ -302,6 +304,14 @@ pub struct Ship {
     pub navigate_target: Option<Vec2f64>,
     pub dock_target: Option<Uuid>,
 }
+
+impl Ship {
+    pub fn set_from(&mut self, pos: &Vec2f64) {
+        self.x = pos.x;
+        self.y = pos.y;
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum QuestState {
     Unknown = 0,
@@ -516,6 +526,7 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
             // eprintln!("playing");
             state.planets = update_planets(&state.planets, &state.star, elapsed);
             state.ships = update_ships_on_planets(&state.planets, &state.ships);
+            state.ships = update_ships_navigation(&state.ships, elapsed);
             if !client {
                 state.players = update_quests(&state.players, &state.ships, &state.planets);
             }
@@ -556,5 +567,34 @@ pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
 }
 
 pub fn update_ships_navigation(ships: &Vec<Ship>, elapsed_micro: i64) -> Vec<Ship> {
-    ships.clone()
+    let mut res = vec![];
+    for mut ship in ships.clone() {
+        if let Some(target) = ship.navigate_target {
+            if !ship.docked_at.is_some() {
+                let ship_pos = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                };
+                let dist = target.euclidean_distance(&ship_pos);
+                let max_shift = SHIP_SPEED * elapsed_micro as f64 / 1000.0 / 1000.0;
+                if dist > 0.0 {
+                    if dist > max_shift {
+                        let dir = target.subtract(&ship_pos).normalize();
+                        let shift = dir.scalar_mul(SHIP_SPEED);
+                        let new_pos = ship_pos.add(&shift);
+                        ship.set_from(&new_pos);
+                    } else {
+                        ship.set_from(&target);
+                        ship.navigate_target = None;
+                    }
+                } else {
+                    ship.navigate_target = None;
+                }
+            } else {
+                ship.navigate_target = None;
+            }
+        }
+        res.push(ship);
+    }
+    res
 }

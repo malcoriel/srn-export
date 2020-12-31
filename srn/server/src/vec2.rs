@@ -2,26 +2,6 @@ use serde_derive::{Deserialize, Serialize};
 use std::f64::consts::PI;
 use std::fmt::{Debug, Display, Formatter, Result};
 
-pub trait IVec2<T> {
-    fn x(self) -> T;
-    fn y(self) -> T;
-}
-
-pub struct Vec2<T> {
-    pub x: T,
-    pub y: T,
-}
-
-impl<T> IVec2<T> for Vec2<T> {
-    fn x(self) -> T {
-        self.x
-    }
-
-    fn y(self) -> T {
-        self.y
-    }
-}
-
 #[derive(Clone, Eq, Hash, Copy)]
 pub struct Vec2i32 {
     pub x: i32,
@@ -135,6 +115,14 @@ impl Vec2f64 {
         Vec2f64 {
             x: self.x * coeff,
             y: self.y * coeff,
+        }
+    }
+
+    pub fn normalize(&self) -> Vec2f64 {
+        let len = self.euclidean_len();
+        Vec2f64 {
+            x: self.x / len,
+            y: self.y / len,
         }
     }
 

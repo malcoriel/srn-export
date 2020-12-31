@@ -297,6 +297,12 @@ export default class NetState extends EventEmitter {
     const inState = this.state;
 
     result = simulateStateUpdate(inState, elapsedMs);
+    // let targets = this.state.ships
+    //   .map((s) => s.navigate_target)
+    //   .filter((n) => !!n);
+    // if (targets.length > 0) {
+    //   console.log('ships navigate', targets);
+    // }
     if (result) {
       this.state = result;
     }
@@ -307,7 +313,7 @@ export default class NetState extends EventEmitter {
       let myShipIndex = findMyShipIndex(this.state);
       if (myShipIndex !== -1 && myShipIndex !== null) {
         const myShip = this.state.ships[myShipIndex];
-        this.send({ code: OpCode.MutateMyShip, value: myShip });
+        //this.send({ code: OpCode.MutateMyShip, value: myShip });
       }
     }
   };

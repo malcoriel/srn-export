@@ -6,6 +6,7 @@ import { ThreeShipsLayer } from './ThreeShipsLayer';
 import { CameraMover } from './CameraMover';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState from '../NetState';
+import Vector from '../utils/Vector';
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera
@@ -14,6 +15,19 @@ export const posToThreePos = (
   y: number,
   z?: number
 ): [number, number, number] => [x, -y, z || 0];
+
+export const threePosToVector = (x: number, y: number, z: number): Vector =>
+  new Vector(x, -y);
+
+export const threeVectorToVector = ({
+  x,
+  y,
+  z,
+}: {
+  x: number;
+  y: number;
+  z: number;
+}): Vector => new Vector(x, -y);
 
 export const CAMERA_HEIGHT = 50;
 

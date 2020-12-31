@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
-import { Mesh, ShaderMaterial, TextureLoader } from 'three';
+import { Mesh, TextureLoader } from 'three';
 import * as THREE from 'three';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {

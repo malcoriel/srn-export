@@ -13,7 +13,7 @@ export const min_y = -50;
 
 export const unitsToPixels = 7;
 
-export const SHIP_SPEED = 10.0;
+export const SHIP_SPEED = 3.0;
 
 export const radToDeg = (x: number) => (x * 180) / Math.PI;
 export const degToRad = (x: number) => (x * Math.PI) / 180;
@@ -235,6 +235,7 @@ export const simulateStateUpdate = (
   elapsedMs: number
 ): GameState | undefined => {
   let result;
+  console.log('elapsed ms', elapsedMs);
   try {
     if (updaterFn) {
       let updated = updaterFn(
