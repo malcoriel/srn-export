@@ -1,11 +1,11 @@
 import { GameState } from '../world';
-import { ShipS } from './ShipS';
+import { ThreeShip } from './ThreeShip';
 import React from 'react';
 import _ from 'lodash';
 import { Ship } from '../world';
 import { posToThreePos } from './ThreeLayer';
 
-export const ShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
+export const ThreeShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
   if (!state) return null;
   const { ships, players, planets } = state;
 
@@ -31,7 +31,7 @@ export const ShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
         }
         const scale = _.times(3, () => s.radius) as [number, number, number];
         return (
-          <ShipS
+          <ThreeShip
             key={s.id + i}
             position={posToThreePos(s.x, s.y)}
             name={player_name}
