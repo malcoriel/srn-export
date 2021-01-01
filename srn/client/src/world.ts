@@ -101,6 +101,7 @@ export const scaleConfig = {
 export const antiScale = {
   scaleX: 1 / scaleConfig.scaleX,
   scaleY: 1 / scaleConfig.scaleY,
+  line: 1 / Math.max(scaleConfig.scaleX, scaleConfig.scaleY),
 };
 
 export const antiOffset = {

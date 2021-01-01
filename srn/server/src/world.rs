@@ -613,6 +613,7 @@ pub fn update_ships_navigation(
                     ship.rotation = -ship.rotation;
                 }
                 if dist > 0.0 {
+                    ship.trajectory = build_trajectory_to_point(ship_pos, &target);
                     if dist > max_shift {
                         let new_pos = move_ship(&target, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
@@ -629,8 +630,8 @@ pub fn update_ships_navigation(
                         x: ship.x,
                         y: ship.y,
                     };
-                    ship.trajectory = build_trajectory(ship_pos, planet, &planets_by_id);
-                    if let Some(first) = ship.trajectory.get(0) {
+                    ship.trajectory = build_trajectory_to_planet(ship_pos, planet, &planets_by_id);
+                    if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
                         ship.rotation = angle_rad(dir, Vec2f64 { x: 0.0, y: -1.0 });
                         if dir.x < 0.0 {
@@ -662,8 +663,12 @@ fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
 const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
 const TRAJECTORY_MAX_ITER: i32 = 10;
 
-// TODO for some weird reason, it works for ahcnor_tier=2 too, however I do not support it here!
-fn build_trajectory(from: Vec2f64, to: &Planet, by_id: &HashMap<Uuid, &Planet>) -> Vec<Vec2f64> {
+// TODO for some weird reason, it works for anchor_tier=2 too, however I do not support it here!
+fn build_trajectory_to_planet(
+    from: Vec2f64,
+    to: &Planet,
+    by_id: &HashMap<Uuid, &Planet>,
+) -> Vec<Vec2f64> {
     // let start = Utc::now();
     let mut anchors = build_anchors_from_planets(&vec![to.clone()], by_id);
     let mut shifts = HashMap::new();
@@ -672,28 +677,17 @@ fn build_trajectory(from: Vec2f64, to: &Planet, by_id: &HashMap<Uuid, &Planet>) 
     let mut current_from = from.clone();
     let mut result = vec![];
     let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * SHIP_SPEED;
-    // eprintln!(
-    //     "from {} to {}",
-    //     from,
-    //     Vec2f64 {
-    //         x: current_target.x,
-    //         y: current_target.y
-    //     }
-    // );
     loop {
         let target_pos = Vec2f64 {
             x: current_target.x,
             y: current_target.y,
         };
         let distance = target_pos.euclidean_distance(&current_from);
-        // eprintln!("dist {}", distance);
         let should_break = counter >= TRAJECTORY_MAX_ITER || distance < max_shift;
         if should_break {
             break;
         }
-        // eprintln!("max shift {}", max_shift);
         current_from = move_ship(&target_pos, &current_from, max_shift);
-        // eprintln!("after move {}", current_from);
         current_target = simulate_planet_movement(
             TRAJECTORY_STEP_MICRO,
             &mut anchors,
@@ -704,6 +698,28 @@ fn build_trajectory(from: Vec2f64, to: &Planet, by_id: &HashMap<Uuid, &Planet>) 
         result.push(current_from);
         counter += 1;
     }
-    // eprintln!("traj {}", (Utc::now() - start).num_microseconds().unwrap());
+    result
+}
+
+fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64) -> Vec<Vec2f64> {
+    let mut counter = 0;
+    let current_target = to.clone();
+    let mut current_from = from.clone();
+    let mut result = vec![];
+    let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * SHIP_SPEED;
+    loop {
+        let target_pos = Vec2f64 {
+            x: current_target.x,
+            y: current_target.y,
+        };
+        let distance = target_pos.euclidean_distance(&current_from);
+        let should_break = counter >= TRAJECTORY_MAX_ITER || distance < max_shift;
+        if should_break {
+            break;
+        }
+        current_from = move_ship(&target_pos, &current_from, max_shift);
+        result.push(current_from);
+        counter += 1;
+    }
     result
 }

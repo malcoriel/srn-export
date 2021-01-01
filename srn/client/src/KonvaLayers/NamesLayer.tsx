@@ -4,6 +4,7 @@ import NetState from '../NetState';
 import { Layer, Text } from 'react-konva';
 import Vector, { IVector } from '../utils/Vector';
 import _ from 'lodash';
+import { babyBlue } from '../utils/palette';
 
 function extractNamePositions(
   state: GameState,
@@ -60,7 +61,7 @@ export const NamesLayer: React.FC = () => {
             key={id}
             text={name}
             position={position}
-            fill="white"
+            fill={babyBlue}
             align="center"
             offsetY={scaleConfig.scaleX * radius + 20}
             width={200}
