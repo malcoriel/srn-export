@@ -46,6 +46,7 @@ export type Ship = GameObject &
     docked_at?: string;
     navigate_target?: IVector;
     dock_target?: string;
+    trajectory: IVector[];
   };
 
 export type Quest = {
@@ -112,6 +113,7 @@ export enum ShipActionType {
   Move,
   Dock,
   Navigate,
+  DockNavigate,
 }
 
 export enum Direction {
@@ -133,6 +135,8 @@ export class ShipAction {
   public static Dock = () => new ShipAction(ShipActionType.Dock);
   public static Navigate = (to: IVector) =>
     new ShipAction(ShipActionType.Navigate, to);
+  public static DockNavigate = (to: string) =>
+    new ShipAction(ShipActionType.DockNavigate, to);
 }
 
 const directionToRotation = {
@@ -212,6 +216,11 @@ export const applyShipAction = (
     case ShipActionType.Navigate: {
       let navigate_target = sa.data as IVector;
       myShip.navigate_target = { x: navigate_target.x, y: navigate_target.y };
+      break;
+    }
+    case ShipActionType.DockNavigate: {
+      let dock_target = sa.data as string;
+      myShip.dock_target = sa.data;
       break;
     }
     default:

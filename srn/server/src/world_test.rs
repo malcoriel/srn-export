@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod world_test {
+    use crate::new_id;
     use crate::vec2::Vec2f64;
     use crate::world::{
         add_player, seed_state, spawn_ship, update, update_planets, update_ships_navigation,
@@ -91,7 +92,7 @@ mod world_test {
     }
 
     #[test]
-    pub fn can_navigate_ships() {
+    pub fn can_navigate_ships_to_points() {
         let eps = 0.1;
         let dist = 10.0;
 
@@ -140,7 +141,7 @@ mod world_test {
             state = update(state, 1 * 1000, is_client);
             let ship = &mut state.ships[0];
             let expected = PI * 0.75;
-            eprintln!("rotation {} vs {}", ship.rotation, expected);
+            //eprintln!("rotation {} vs {}", ship.rotation, expected);
             assert!((ship.rotation - expected).abs() < eps);
 
             let mut ship = &mut state.ships[0];
@@ -148,7 +149,7 @@ mod world_test {
             state = update(state, 1 * 1000, is_client);
             let ship = &mut state.ships[0];
             let expected = PI * 0.25;
-            eprintln!("rotation {} vs -{}", ship.rotation, expected);
+            //eprintln!("rotation {} vs -{}", ship.rotation, expected);
             assert!((ship.rotation + expected).abs() < eps);
 
             let mut ship = &mut state.ships[0];
@@ -156,8 +157,61 @@ mod world_test {
             state = update(state, 1 * 1000, is_client);
             let ship = &mut state.ships[0];
             let expected = PI * 0.75;
-            eprintln!("rotation {} vs -{}", ship.rotation, expected);
+            //eprintln!("rotation {} vs -{}", ship.rotation, expected);
             assert!((ship.rotation + expected).abs() < eps)
+        }
+    }
+
+    #[test]
+    pub fn can_navigate_ships_to_docking() {
+        let eps = 0.1;
+        let dist = 50.0;
+
+        let both_client_and_server = vec![false]; // true
+        for is_client in both_client_and_server.into_iter() {
+            let mut state = seed_state(false);
+            let player_id = crate::new_id();
+            add_player(&mut state, &player_id);
+            spawn_ship(&mut state, &player_id);
+            let star = state.star.clone().unwrap();
+            let planet_id = new_id();
+            state.planets = vec![
+                Planet {
+                    id: planet_id,
+                    name: "".to_string(),
+                    x: dist,
+                    y: 0.0,
+                    rotation: 0.0,
+                    radius: 3.0,
+                    orbit_speed: PI / 20.0,
+                    anchor_id: star.id.clone(),
+                    anchor_tier: 1,
+                    color: "".to_string(),
+                },
+                Planet {
+                    id: new_id(),
+                    name: "".to_string(),
+                    x: -dist,
+                    y: 0.0,
+                    rotation: 0.0,
+                    radius: 3.0,
+                    orbit_speed: PI / 20.0,
+                    anchor_id: star.id.clone(),
+                    anchor_tier: 1,
+                    color: "".to_string(),
+                },
+            ];
+            let mut ship = &mut state.ships[0];
+            ship.dock_target = Some(planet_id);
+
+            state = update(state, 10 * 1000 * 1000, is_client);
+            let planet = &state.planets[0];
+            let ship = &state.ships[0];
+            assert!((planet.x - 0.0).abs() < eps);
+            assert!((planet.y + 50.0).abs() < eps);
+            eprintln!("result: ship {}/{}, {:?}", ship.x, ship.y, ship.trajectory);
+            assert!((ship.x - 0.0).abs() < eps);
+            assert!((ship.y + 50.0).abs() < eps);
         }
     }
 }

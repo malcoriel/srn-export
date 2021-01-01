@@ -69,12 +69,30 @@ pub fn update_planets(
         name: "".to_string(),
         color: "".to_string(),
     });
+    let planets_with_star = make_planets_with_star(planets, &star);
+    let by_id = index_planets_by_id(&planets_with_star);
+    let mut anchors = build_anchors_from_planets(planets, &by_id);
+
+    let mut planets = planets.clone();
+    let mut shifts = HashMap::new();
+
+    for tier in 1..3 {
+        planets = planets
+            .iter()
+            .map(|p| simulate_planet_movement(elapsed_micro, &mut anchors, &mut shifts, tier, p))
+            .collect::<Vec<Planet>>();
+    }
+
+    planets
+}
+
+fn make_planets_with_star(planets: &Vec<Planet>, star: &Star) -> Vec<Planet> {
     let planets_with_star = planets
         .clone()
         .into_iter()
         .chain(vec![Planet {
             color: Default::default(),
-            name: star.name,
+            name: star.name.clone(),
             id: star.id,
             x: star.x,
             y: star.y,
@@ -85,107 +103,107 @@ pub fn update_planets(
             anchor_tier: 0,
         }])
         .collect::<Vec<_>>();
-    let by_id = index_planets_by_id(&planets_with_star);
-    let mut anchors = {
-        let mut anchors = HashMap::new();
-        for p in planets.into_iter() {
-            anchors
-                .entry(p.anchor_id)
-                .or_insert((*by_id.get(&p.anchor_id).unwrap()).clone());
-        }
+    planets_with_star
+}
+
+fn build_anchors_from_planets(
+    planets: &Vec<Planet>,
+    by_id: &HashMap<Uuid, &Planet>,
+) -> HashMap<Uuid, Planet> {
+    let mut anchors = HashMap::new();
+    for p in planets.into_iter() {
         anchors
-    };
+            .entry(p.anchor_id)
+            .or_insert((*by_id.get(&p.anchor_id).unwrap()).clone());
+    }
+    anchors
+}
 
-    let mut planets = planets.clone();
-    let mut shifts = HashMap::new();
+fn simulate_planet_movement(
+    elapsed_micro: i64,
+    anchors: &mut HashMap<Uuid, Planet>,
+    shifts: &mut HashMap<Uuid, Vec2f64>,
+    tier: u32,
+    p: &Planet,
+) -> Planet {
+    let mut p = p.clone();
 
-    for tier in 1..3 {
-        planets = planets
-            .iter()
-            .map(|p| {
-                let mut p = p.clone();
-
-                if p.anchor_tier != tier {
-                    if DEBUG_PHYSICS {
-                        eprintln!(
-                            "skipping {} (tier {}) for tier {}",
-                            p.name, p.anchor_tier, tier
-                        );
-                    }
-                    return p;
-                }
-
-                if DEBUG_PHYSICS {
-                    println!("p {} elapsed {}", p.id, elapsed_micro);
-                }
-                let anchor = anchors.get(&p.anchor_id).unwrap();
-
-                if DEBUG_PHYSICS {
-                    println!("anchor position {}/{}", anchor.x, anchor.y);
-                }
-
-                let anchor_shift = shifts
-                    .get(&p.anchor_id)
-                    .unwrap_or(&Vec2f64 { x: 0.0, y: 0.0 });
-
-                if DEBUG_PHYSICS {
-                    println!("anchor shift {}", anchor_shift.as_key(Precision::P2))
-                }
-
-                let current_pos_relative = Vec2f64 {
-                    x: p.x + anchor_shift.x - anchor.x,
-                    y: p.y + anchor_shift.y - anchor.y,
-                };
-
-                let old = Vec2f64 { x: p.x, y: p.y };
-                if DEBUG_PHYSICS {
-                    println!("current {}", current_pos_relative);
-                }
-
-                let orbit_length = current_pos_relative.euclidean_len();
-
-                let base_vec = Vec2f64 {
-                    x: orbit_length,
-                    y: 0.0,
-                };
-                let mut current_angle = angle_rad(base_vec.clone(), current_pos_relative);
-                if current_pos_relative.y > 0.0 {
-                    current_angle = 2.0 * PI - current_angle;
-                }
-                if DEBUG_PHYSICS {
-                    eprintln!("name {}", p.name);
-                    eprintln!("anchor {}/{}", anchor.x, anchor.y);
-                    eprintln!("base_vec {}/{}", base_vec.x, base_vec.y);
-                    eprintln!("dist {}", orbit_length);
-                }
-
-                let angle_diff = p.orbit_speed * (elapsed_micro as f64) / 1000.0 / 1000.0;
-                if DEBUG_PHYSICS {
-                    println!("current angle: {}", current_angle);
-                    println!("angle diff: {}", angle_diff);
-                }
-                let new_angle = (current_angle + angle_diff) % (2.0 * PI);
-                if DEBUG_PHYSICS {
-                    println!("new_angle: {}", new_angle);
-                }
-                let new_vec = rotate(base_vec.clone(), new_angle);
-                p.x = anchor.x + new_vec.x;
-                p.y = anchor.y + new_vec.y;
-                if DEBUG_PHYSICS {
-                    println!("new_vec {}", new_vec);
-                }
-                if DEBUG_PHYSICS {
-                    println!("new pos {}", p.as_vec());
-                }
-                anchors.remove_entry(&p.id);
-                anchors.insert(p.id, p.clone());
-                shifts.insert(p.id, p.as_vec().subtract(&old));
-                return p;
-            })
-            .collect::<Vec<Planet>>();
+    if p.anchor_tier != tier {
+        if DEBUG_PHYSICS {
+            eprintln!(
+                "skipping {} (tier {}) for tier {}",
+                p.name, p.anchor_tier, tier
+            );
+        }
+        return p;
     }
 
-    planets
+    if DEBUG_PHYSICS {
+        println!("p {} elapsed {}", p.id, elapsed_micro);
+    }
+    let anchor = anchors.get(&p.anchor_id).unwrap();
+
+    if DEBUG_PHYSICS {
+        println!("anchor position {}/{}", anchor.x, anchor.y);
+    }
+
+    let anchor_shift = shifts
+        .get(&p.anchor_id)
+        .unwrap_or(&Vec2f64 { x: 0.0, y: 0.0 });
+
+    if DEBUG_PHYSICS {
+        println!("anchor shift {}", anchor_shift.as_key(Precision::P2))
+    }
+
+    let current_pos_relative = Vec2f64 {
+        x: p.x + anchor_shift.x - anchor.x,
+        y: p.y + anchor_shift.y - anchor.y,
+    };
+
+    let old = Vec2f64 { x: p.x, y: p.y };
+    if DEBUG_PHYSICS {
+        println!("current {}", current_pos_relative);
+    }
+
+    let orbit_length = current_pos_relative.euclidean_len();
+
+    let base_vec = Vec2f64 {
+        x: orbit_length,
+        y: 0.0,
+    };
+    let mut current_angle = angle_rad(base_vec.clone(), current_pos_relative);
+    if current_pos_relative.y > 0.0 {
+        current_angle = 2.0 * PI - current_angle;
+    }
+    if DEBUG_PHYSICS {
+        eprintln!("name {}", p.name);
+        eprintln!("anchor {}/{}", anchor.x, anchor.y);
+        eprintln!("base_vec {}/{}", base_vec.x, base_vec.y);
+        eprintln!("dist {}", orbit_length);
+    }
+
+    let angle_diff = p.orbit_speed * (elapsed_micro as f64) / 1000.0 / 1000.0;
+    if DEBUG_PHYSICS {
+        println!("current angle: {}", current_angle);
+        println!("angle diff: {}", angle_diff);
+    }
+    let new_angle = (current_angle + angle_diff) % (2.0 * PI);
+    if DEBUG_PHYSICS {
+        println!("new_angle: {}", new_angle);
+    }
+    let new_vec = rotate(base_vec.clone(), new_angle);
+    p.x = anchor.x + new_vec.x;
+    p.y = anchor.y + new_vec.y;
+    if DEBUG_PHYSICS {
+        println!("new_vec {}", new_vec);
+    }
+    if DEBUG_PHYSICS {
+        println!("new pos {}", p.as_vec());
+    }
+    anchors.remove_entry(&p.id);
+    anchors.insert(p.id, p.clone());
+    shifts.insert(p.id, p.as_vec().subtract(&old));
+    return p;
 }
 
 pub fn update_quests(
@@ -303,6 +321,7 @@ pub struct Ship {
     pub docked_at: Option<Uuid>,
     pub navigate_target: Option<Vec2f64>,
     pub dock_target: Option<Uuid>,
+    pub trajectory: Vec<Vec2f64>,
 }
 
 impl Ship {
@@ -512,7 +531,6 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
                 spawn_ship(&mut state, &player.id);
             }
         } else {
-            // eprintln!("waiting for reset");
         }
     } else {
         if state.milliseconds_remaining <= 0 {
@@ -523,16 +541,19 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
             }
             state.milliseconds_remaining = 10 * 1000;
         } else {
-            // eprintln!("playing");
             state.planets = update_planets(&state.planets, &state.star, elapsed);
             state.ships = update_ships_on_planets(&state.planets, &state.ships);
-            state.ships = update_ships_navigation(&state.ships, elapsed);
+            state.ships = update_ships_navigation(
+                &state.ships,
+                &state.planets,
+                &state.star.clone().unwrap(),
+                elapsed,
+            );
             if !client {
                 state.players = update_quests(&state.players, &state.ships, &state.planets);
             }
         }
     }
-
     state
 }
 
@@ -557,6 +578,7 @@ pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
         docked_at: None,
         navigate_target: None,
         dock_target: None,
+        trajectory: vec![],
     };
     state
         .players
@@ -566,11 +588,20 @@ pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
     state.ships.push(ship);
 }
 
-pub fn update_ships_navigation(ships: &Vec<Ship>, elapsed_micro: i64) -> Vec<Ship> {
+pub fn update_ships_navigation(
+    ships: &Vec<Ship>,
+    planets: &Vec<Planet>,
+    star: &Star,
+    elapsed_micro: i64,
+) -> Vec<Ship> {
     let mut res = vec![];
+    let planets_with_star = make_planets_with_star(&planets, star);
+    let planets_by_id = index_planets_by_id(&planets_with_star);
     for mut ship in ships.clone() {
-        if let Some(target) = ship.navigate_target {
-            if !ship.docked_at.is_some() {
+        if !ship.docked_at.is_some() {
+            let max_shift = SHIP_SPEED * elapsed_micro as f64 / 1000.0 / 1000.0;
+
+            if let Some(target) = ship.navigate_target {
                 let ship_pos = Vec2f64 {
                     x: ship.x,
                     y: ship.y,
@@ -581,12 +612,9 @@ pub fn update_ships_navigation(ships: &Vec<Ship>, elapsed_micro: i64) -> Vec<Shi
                 if dir.x < 0.0 {
                     ship.rotation = -ship.rotation;
                 }
-                let max_shift = SHIP_SPEED * elapsed_micro as f64 / 1000.0 / 1000.0;
                 if dist > 0.0 {
                     if dist > max_shift {
-                        let dir = target.subtract(&ship_pos).normalize();
-                        let shift = dir.scalar_mul(max_shift);
-                        let new_pos = ship_pos.add(&shift);
+                        let new_pos = move_ship(&target, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
                     } else {
                         ship.set_from(&target);
@@ -595,6 +623,25 @@ pub fn update_ships_navigation(ships: &Vec<Ship>, elapsed_micro: i64) -> Vec<Shi
                 } else {
                     ship.navigate_target = None;
                 }
+            } else if let Some(target) = ship.dock_target {
+                if let Some(planet) = planets_by_id.get(&target).clone() {
+                    let ship_pos = Vec2f64 {
+                        x: ship.x,
+                        y: ship.y,
+                    };
+                    ship.trajectory = build_trajectory(ship_pos, planet, &planets_by_id);
+                    if let Some(first) = ship.trajectory.get(0) {
+                        let dir = first.subtract(&ship_pos);
+                        ship.rotation = angle_rad(dir, Vec2f64 { x: 0.0, y: -1.0 });
+                        if dir.x < 0.0 {
+                            ship.rotation = -ship.rotation;
+                        }
+                        ship.set_from(&move_ship(first, &ship_pos, max_shift));
+                    }
+                } else {
+                    eprintln!("Attempt to navigate to non-existent planet {}", target);
+                    ship.dock_target = None;
+                }
             } else {
                 ship.navigate_target = None;
             }
@@ -602,4 +649,60 @@ pub fn update_ships_navigation(ships: &Vec<Ship>, elapsed_micro: i64) -> Vec<Shi
         res.push(ship);
     }
     res
+}
+
+fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
+    let dir = target.subtract(&ship_pos).normalize();
+
+    let shift = dir.scalar_mul(max_shift);
+    let new_pos = ship_pos.add(&shift);
+    new_pos
+}
+
+const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
+const TRAJECTORY_MAX_ITER: i32 = 10;
+
+fn build_trajectory(from: Vec2f64, to: &Planet, by_id: &HashMap<Uuid, &Planet>) -> Vec<Vec2f64> {
+    // let start = Utc::now();
+    let mut anchors = build_anchors_from_planets(&vec![to.clone()], by_id);
+    let mut shifts = HashMap::new();
+    let mut counter = 0;
+    let mut current_target = to.clone();
+    let mut current_from = from.clone();
+    let mut result = vec![];
+    let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * SHIP_SPEED;
+    // eprintln!(
+    //     "from {} to {}",
+    //     from,
+    //     Vec2f64 {
+    //         x: current_target.x,
+    //         y: current_target.y
+    //     }
+    // );
+    loop {
+        let target_pos = Vec2f64 {
+            x: current_target.x,
+            y: current_target.y,
+        };
+        let distance = target_pos.euclidean_distance(&current_from);
+        // eprintln!("dist {}", distance);
+        let should_break = counter >= TRAJECTORY_MAX_ITER || distance < max_shift;
+        if should_break {
+            break;
+        }
+        // eprintln!("max shift {}", max_shift);
+        current_from = move_ship(&target_pos, &current_from, max_shift);
+        // eprintln!("after move {}", current_from);
+        current_target = simulate_planet_movement(
+            TRAJECTORY_STEP_MICRO,
+            &mut anchors,
+            &mut shifts,
+            current_target.anchor_tier,
+            &current_target,
+        );
+        result.push(current_from);
+        counter += 1;
+    }
+    // eprintln!("traj {}", (Utc::now() - start).num_microseconds().unwrap());
+    result
 }

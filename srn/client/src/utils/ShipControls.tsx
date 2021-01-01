@@ -54,6 +54,7 @@ export const actionsActive: Record<string, ShipAction | undefined> = {
   [ShipActionType.Move]: undefined,
   [ShipActionType.Dock]: undefined,
   [ShipActionType.Navigate]: undefined,
+  [ShipActionType.DockNavigate]: undefined,
 };
 
 const singleUseActions = [ShipActionType.Navigate];

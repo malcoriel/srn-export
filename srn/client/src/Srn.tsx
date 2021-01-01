@@ -21,6 +21,7 @@ import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
 import * as uuid from 'uuid';
+import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
@@ -118,6 +119,7 @@ class Srn extends React.Component<
               style={{ pointerEvents: 'none' }}
             >
               <NamesLayer />
+              <MyTrajectoryLayer />
               <CoordLayer />
             </Stage>
           )}

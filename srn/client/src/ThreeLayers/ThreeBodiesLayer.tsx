@@ -1,9 +1,12 @@
 import React from 'react';
-import { GameState } from '../world';
+import { GameState, ShipAction, ShipActionType } from '../world';
 import _ from 'lodash';
 import { ThreeStar } from './ThreeStar';
 import { posToThreePos, threeVectorToVector } from './ThreeLayer';
 import { ThreePlanetShape } from './ThreePlanetShape';
+import { MouseEvent } from 'react-three-fiber';
+import { actionsActive } from '../utils/ShipControls';
+import Vector from '../utils/Vector';
 
 export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
   const { planets, star } = state;
@@ -11,6 +14,12 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
     <group>
       {planets.map((p) => (
         <ThreePlanetShape
+          onClick={(evt: MouseEvent) => {
+            evt.stopPropagation();
+            actionsActive[
+              ShipActionType.DockNavigate
+            ] = ShipAction.DockNavigate(p.id);
+          }}
           position={posToThreePos(p.x, p.y)}
           key={p.id}
           scale={_.times(3, () => p.radius) as [number, number, number]}
