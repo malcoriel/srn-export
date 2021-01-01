@@ -235,7 +235,6 @@ export const simulateStateUpdate = (
   elapsedMs: number
 ): GameState | undefined => {
   let result;
-  console.log('elapsed ms', elapsedMs);
   try {
     if (updaterFn) {
       let updated = updaterFn(

@@ -14,6 +14,7 @@ import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState from '../NetState';
 import Vector from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
+import { BackgroundPlane } from './BackgroundPlane';
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera
@@ -23,9 +24,10 @@ export const posToThreePos = (
   z?: number
 ): [number, number, number] => [x, -y, z || 0];
 
-export const threePosToVector = (x: number, y: number, z: number): Vector =>
+export const threePosToVector = (x: number, y: number, _z: number): Vector =>
   new Vector(x, -y);
 
+// noinspection JSUnusedLocalSymbols
 export const threeVectorToVector = ({
   x,
   y,
@@ -67,6 +69,8 @@ export const ThreeLayer: React.FC = () => {
             );
           }}
         >
+          {/*background plane serves to be a click helper, as otherwise three will not register clicks (through empty space)*/}
+          <BackgroundPlane />
           <axesHelper position={posToThreePos(15, 15)} args={[20]} />
           <CameraMover />
           <ambientLight />
