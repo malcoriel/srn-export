@@ -662,6 +662,7 @@ fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
 const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
 const TRAJECTORY_MAX_ITER: i32 = 10;
 
+// TODO for some weird reason, it works for ahcnor_tier=2 too, however I do not support it here!
 fn build_trajectory(from: Vec2f64, to: &Planet, by_id: &HashMap<Uuid, &Planet>) -> Vec<Vec2f64> {
     // let start = Utc::now();
     let mut anchors = build_anchors_from_planets(&vec![to.clone()], by_id);

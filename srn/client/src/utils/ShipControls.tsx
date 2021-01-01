@@ -57,12 +57,16 @@ export const actionsActive: Record<string, ShipAction | undefined> = {
   [ShipActionType.DockNavigate]: undefined,
 };
 
-const singleUseActions = [ShipActionType.Navigate];
+const singleUseActions = [
+  ShipActionType.Navigate,
+  ShipActionType.DockNavigate,
+  ShipActionType.Dock,
+];
 
 export const resetActions = () => {
   for (const key of singleUseActions) {
     actionsActive[key] = undefined;
-  } // qqwwee
+  }
 };
 
 export const ShipControls: React.FC = () => {

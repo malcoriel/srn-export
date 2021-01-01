@@ -179,6 +179,9 @@ export const applyShipAction = (
     }
 
     case ShipActionType.Move: {
+      myShip.dock_target = undefined;
+      myShip.navigate_target = undefined;
+      myShip.trajectory = [];
       let direction = sa.data as Direction;
       switch (direction) {
         case Direction.Up:
@@ -219,8 +222,7 @@ export const applyShipAction = (
       break;
     }
     case ShipActionType.DockNavigate: {
-      let dock_target = sa.data as string;
-      myShip.dock_target = sa.data;
+      myShip.dock_target = sa.data as string;
       break;
     }
     default:
