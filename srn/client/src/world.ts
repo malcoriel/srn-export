@@ -3,13 +3,13 @@ import Vector, { IVector } from './utils/Vector';
 export const width_px = 700;
 export const height_px = 700;
 // noinspection JSUnusedGlobalSymbols
-export const width_units = 100;
+export const width_units = 1000;
 // noinspection JSUnusedGlobalSymbols
-export const height_units = 100;
-export const max_x = 50;
-export const max_y = 50;
-export const min_x = -50;
-export const min_y = -50;
+export const height_units = 1000;
+export const max_x = 500;
+export const max_y = 500;
+export const min_x = -500;
+export const min_y = -500;
 
 export const unitsToPixels = 7;
 

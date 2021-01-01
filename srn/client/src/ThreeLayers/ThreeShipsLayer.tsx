@@ -33,7 +33,7 @@ export const ThreeShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
         return (
           <ThreeShip
             key={s.id + i}
-            position={posToThreePos(s.x, s.y, 40)}
+            position={posToThreePos(s.x, s.y, 60)}
             rotation={s.rotation}
             name={player_name}
             scale={scale}

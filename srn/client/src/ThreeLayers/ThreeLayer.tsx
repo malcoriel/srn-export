@@ -2,6 +2,8 @@ import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import {
   height_px,
+  max_x,
+  min_x,
   ShipAction,
   ShipActionType,
   unitsToPixels,
@@ -38,7 +40,7 @@ export const threeVectorToVector = ({
   z: number;
 }): Vector => new Vector(x, -y);
 
-export const CAMERA_HEIGHT = 50;
+export const CAMERA_HEIGHT = 100;
 
 export const ThreeLayer: React.FC = () => {
   const ns = NetState.get();
@@ -78,7 +80,10 @@ export const ThreeLayer: React.FC = () => {
           <axesHelper position={posToThreePos(15, 15)} args={[20]} />
           <CameraMover />
           <ambientLight />
-          <gridHelper args={[100, 10]} rotation={[Math.PI / 2, 0, 0]} />
+          <gridHelper
+            args={[max_x - min_x, (max_x - min_x) / 10]}
+            rotation={[Math.PI / 2, 0, 0]}
+          />
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <ThreeBodiesLayer state={state} />
           <ThreeShipsLayer state={state} />

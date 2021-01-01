@@ -4,7 +4,7 @@ import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
 import * as THREE from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import _ from 'lodash';
-import { unitsToPixels } from '../world';
+import { height_px, unitsToPixels, width_px } from '../world';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -13,7 +13,9 @@ export const useRepeatWrappedTextureLoader = (path: string) => {
   return texture;
 };
 
-export const ThreeStar: React.FC<MeshProps & { color?: string }> = (props) => {
+export const ThreeStar: React.FC<
+  MeshProps & { color?: string; scale: [number, number, number] }
+> = (props) => {
   const mesh = useRef<Mesh>();
   const lavaTile = useRepeatWrappedTextureLoader('resources/lavatile.png');
   const grassTile = useRepeatWrappedTextureLoader(
@@ -39,6 +41,14 @@ export const ThreeStar: React.FC<MeshProps & { color?: string }> = (props) => {
     camera.position.x * unitsToPixels,
     camera.position.y * unitsToPixels
   );
+  // 10 -> 0.25
+  // 20 -> 0.5
+  patchedUniforms.srcRadius.value = (props.scale[0] / 10) * 0.25;
+  // patchedUniforms.iResolution.value = new Vector3(
+  //   width_px / 10,
+  //   height_px / 10,
+  //   0
+  // );
 
   let rotation: [number, number, number] = [0, 0, 0];
   return (
