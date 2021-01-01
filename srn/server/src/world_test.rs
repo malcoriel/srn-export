@@ -94,7 +94,7 @@ mod world_test {
     #[test]
     pub fn can_navigate_ships_to_points() {
         let eps = 0.1;
-        let dist = 10.0;
+        let dist = 20.0;
 
         let both_client_and_server = vec![false, true];
         for is_client in both_client_and_server.into_iter() {
@@ -219,8 +219,8 @@ mod world_test {
             state = iterate_state(state, 10000 * 1000, 500, is_client);
             let planet = &state.planets[0];
             let ship = &state.ships[0];
-            eprintln!("result: ship {}/{}, {:?}", ship.x, ship.y, ship.trajectory);
-            eprintln!("result: planet {}/{}", planet.x, planet.y);
+            // eprintln!("result: ship {}/{}, {:?}", ship.x, ship.y, ship.trajectory);
+            // eprintln!("result: planet {}/{}", planet.x, planet.y);
 
             assert!((planet.x - 0.0).abs() < eps);
             assert!((planet.y + 50.0).abs() < eps);

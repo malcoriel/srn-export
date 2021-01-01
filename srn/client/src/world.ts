@@ -13,7 +13,7 @@ export const min_y = -500;
 
 export const unitsToPixels = 7;
 
-export const SHIP_SPEED = 10.0;
+export const SHIP_SPEED = 20.0;
 
 export const radToDeg = (x: number) => (x * 180) / Math.PI;
 export const degToRad = (x: number) => (x * Math.PI) / 180;

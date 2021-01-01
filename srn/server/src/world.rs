@@ -11,7 +11,7 @@ use chrono::Utc;
 use itertools::Itertools;
 use uuid::*;
 
-const SHIP_SPEED: f64 = 10.0;
+const SHIP_SPEED: f64 = 20.0;
 
 pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
     let rating = all_players
@@ -430,7 +430,7 @@ pub fn seed_state(debug: bool) -> GameState {
         x: 35.9 * 5.0,
         y: 0.0,
         rotation: 0.0,
-        radius: 7.5,
+        radius: 2.0,
         orbit_speed: 0.3 / 5.0,
         anchor_id: big_planet.id.clone(),
         anchor_tier: 2,
@@ -444,7 +444,7 @@ pub fn seed_state(debug: bool) -> GameState {
         x: 21.7 * 5.0,
         y: 0.0,
         rotation: 0.0,
-        radius: 6.0,
+        radius: 4.0,
         orbit_speed: 0.5 / 5.0,
         anchor_id: big_planet.id.clone(),
         anchor_tier: 2,
@@ -478,7 +478,7 @@ pub fn seed_state(debug: bool) -> GameState {
                 color: "greenyellow".to_string(),
                 id: crate::new_id(),
                 name: "Eustea".to_string(),
-                x: 40.0 * 5.0,
+                x: 40.0 * 8.0,
                 y: 0.0,
                 rotation: 0.0,
                 radius: 10.0,
