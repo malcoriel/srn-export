@@ -209,7 +209,7 @@ export default class NetState extends EventEmitter {
       // 2.2 fix navigation rollback
       const myUpdatedShip = findMyShip(this.state);
       if (myOldShip && myUpdatedShip) {
-        myUpdatedShip.docked_at = myOldShip.docked_at;
+        // myUpdatedShip.docked_at = myOldShip.docked_at;
         //myUpdatedShip.navigate_target = myOldShip.navigate_target;
       }
       // 3. fix my movement rollback by allowing update

@@ -630,6 +630,10 @@ pub fn update_ships_navigation(
                         x: ship.x,
                         y: ship.y,
                     };
+                    let planet_pos = Vec2f64 {
+                        x: planet.x,
+                        y: planet.y,
+                    };
                     ship.trajectory = build_trajectory_to_planet(ship_pos, planet, &planets_by_id);
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
@@ -637,7 +641,13 @@ pub fn update_ships_navigation(
                         if dir.x < 0.0 {
                             ship.rotation = -ship.rotation;
                         }
-                        ship.set_from(&move_ship(first, &ship_pos, max_shift));
+                        let new_pos = move_ship(first, &ship_pos, max_shift);
+                        ship.set_from(&new_pos);
+                        if new_pos.euclidean_distance(&planet_pos) < planet.radius {
+                            ship.docked_at = Some(planet.id);
+                            ship.dock_target = None;
+                            ship.trajectory = vec![];
+                        }
                     }
                 } else {
                     eprintln!("Attempt to navigate to non-existent planet {}", target);
