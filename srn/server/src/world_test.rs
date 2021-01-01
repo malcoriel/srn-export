@@ -216,7 +216,7 @@ mod world_test {
             let mut ship = &mut state.ships[0];
             ship.dock_target = Some(planet_id);
 
-            state = iterate_state(state, 10000 * 1000, 1000, is_client);
+            state = iterate_state(state, 10000 * 1000, 500, is_client);
             let planet = &state.planets[0];
             let ship = &state.ships[0];
             eprintln!("result: ship {}/{}, {:?}", ship.x, ship.y, ship.trajectory);
@@ -224,8 +224,8 @@ mod world_test {
 
             assert!((planet.x - 0.0).abs() < eps);
             assert!((planet.y + 50.0).abs() < eps);
-            assert!((ship.x - 0.0).abs() < eps);
-            assert!((ship.y + 50.0).abs() < eps);
+            assert!((ship.x - 0.0).abs() < planet.radius);
+            assert!((ship.y + 50.0).abs() < planet.radius);
         }
     }
 }
