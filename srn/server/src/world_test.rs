@@ -162,6 +162,18 @@ mod world_test {
         }
     }
 
+    pub fn iterate_state(mut state: GameState, time: i64, step: i64, client: bool) -> GameState {
+        let mut elapsed = 0;
+        loop {
+            if elapsed >= time {
+                break;
+            }
+            elapsed += step;
+            state = update(state, step, client);
+        }
+        state
+    }
+
     #[test]
     pub fn can_navigate_ships_to_docking() {
         let eps = 0.1;
@@ -204,12 +216,14 @@ mod world_test {
             let mut ship = &mut state.ships[0];
             ship.dock_target = Some(planet_id);
 
-            state = update(state, 10 * 1000 * 1000, is_client);
+            state = iterate_state(state, 10000 * 1000, 1000, is_client);
             let planet = &state.planets[0];
             let ship = &state.ships[0];
+            eprintln!("result: ship {}/{}, {:?}", ship.x, ship.y, ship.trajectory);
+            eprintln!("result: planet {}/{}", planet.x, planet.y);
+
             assert!((planet.x - 0.0).abs() < eps);
             assert!((planet.y + 50.0).abs() < eps);
-            eprintln!("result: ship {}/{}, {:?}", ship.x, ship.y, ship.trajectory);
             assert!((ship.x - 0.0).abs() < eps);
             assert!((ship.y + 50.0).abs() < eps);
         }
