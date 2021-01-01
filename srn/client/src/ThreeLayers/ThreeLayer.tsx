@@ -60,6 +60,9 @@ export const ThreeLayer: React.FC = () => {
         height: height_px,
       }}
     >
+      {/* red is first  coord (x) */}
+      {/* green is second  coord (y) */}
+      {/* blue is third coord (z) */}
       <Suspense fallback={<mesh />}>
         <group
           onClick={(evt: MouseEvent) => {
@@ -69,7 +72,8 @@ export const ThreeLayer: React.FC = () => {
             );
           }}
         >
-          {/*background plane serves to be a click helper, as otherwise three will not register clicks (through empty space)*/}
+          {/*background plane serves to be a click helper, as otherwise
+          three will not register clicks (through empty space)*/}
           <BackgroundPlane />
           <axesHelper position={posToThreePos(15, 15)} args={[20]} />
           <CameraMover />
@@ -78,12 +82,8 @@ export const ThreeLayer: React.FC = () => {
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <ThreeBodiesLayer state={state} />
           <ThreeShipsLayer state={state} />
-          {/*<Sphere position={[0, 0, 0]} scale={[10, 10, 10]} star />*/}
         </group>
       </Suspense>
-      {/* blue is third coord (z?) */}
-      {/* green is second  coord (y?) */}
-      {/* red is first  coord (x?) */}
     </Canvas>
   );
 };
