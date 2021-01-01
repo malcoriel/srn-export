@@ -11,7 +11,7 @@ use chrono::Utc;
 use itertools::Itertools;
 use uuid::*;
 
-const SHIP_SPEED: f64 = 3.0;
+const SHIP_SPEED: f64 = 10.0;
 
 pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
     let rating = all_players
@@ -580,9 +580,10 @@ pub fn update_ships_navigation(ships: &Vec<Ship>, elapsed_micro: i64) -> Vec<Shi
                 if dist > 0.0 {
                     if dist > max_shift {
                         let dir = target.subtract(&ship_pos).normalize();
-                        let shift = dir.scalar_mul(SHIP_SPEED);
+                        let shift = dir.scalar_mul(max_shift);
                         let new_pos = ship_pos.add(&shift);
                         ship.set_from(&new_pos);
+                        eprintln!("{} -> {}", elapsed_micro, shift);
                     } else {
                         ship.set_from(&target);
                         ship.navigate_target = None;

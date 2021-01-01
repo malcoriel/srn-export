@@ -112,6 +112,9 @@ mod world_test {
 
     #[test]
     pub fn can_navigate_ships() {
+        let eps = 0.1;
+        let dist = 10.0;
+
         let both_client_and_server = vec![false, true];
         for is_client in both_client_and_server.into_iter() {
             let mut state = seed_state(true);
@@ -119,16 +122,22 @@ mod world_test {
             add_player(&mut state, &player_id);
             spawn_ship(&mut state, &player_id);
             let mut ship = &mut state.ships[0];
-            let dist = 3.0;
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
+
+            state = update(state, 1 * 1000, is_client);
+            let ship = &state.ships[0];
+            eprintln!("small {} vs 0 eps {}", ship.x, eps);
+            assert!((ship.x).abs() < eps);
+            assert!((ship.y).abs() < eps);
+            assert!(ship.navigate_target.is_some());
+
             state = update(state, 1000 * 1000, is_client);
             let ship = &state.ships[0];
-            let eps = 0.1;
             let expected_pos = 2.0f64.sqrt() / 2.0 * dist;
-            eprintln!("{} vs {}", ship.x, expected_pos);
             assert!((ship.x - expected_pos).abs() < eps);
             assert!((ship.y - expected_pos).abs() < eps);
             assert!(ship.navigate_target.is_some());
+
             state = update(state, 3 * 1000 * 1000, is_client);
             let ship = &state.ships[0];
             assert!((ship.x - dist).abs() < eps);

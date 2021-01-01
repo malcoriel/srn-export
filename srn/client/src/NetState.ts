@@ -313,7 +313,7 @@ export default class NetState extends EventEmitter {
       let myShipIndex = findMyShipIndex(this.state);
       if (myShipIndex !== -1 && myShipIndex !== null) {
         const myShip = this.state.ships[myShipIndex];
-        //this.send({ code: OpCode.MutateMyShip, value: myShip });
+        this.send({ code: OpCode.MutateMyShip, value: myShip });
       }
     }
   };
