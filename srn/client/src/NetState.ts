@@ -205,10 +205,12 @@ export default class NetState extends EventEmitter {
       // compensate for ping since the state we got is already outdated by that value
       // 1. primarily work on planets - something that is adjusted deterministically
       this.updateLocalState(this.ping);
-      // 2. fix docking/undocking rollback - this is a particular case of movement rollback
+      // 2.1 fix docking/undocking rollback - this is a particular case of movement rollback
+      // 2.2 fix navigation rollback
       const myUpdatedShip = findMyShip(this.state);
       if (myOldShip && myUpdatedShip) {
         myUpdatedShip.docked_at = myOldShip.docked_at;
+        myUpdatedShip.navigate_target = myOldShip.navigate_target;
       }
       // 3. fix my movement rollback by allowing update
       if (myOldShip && myUpdatedShip) {

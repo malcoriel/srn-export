@@ -1,12 +1,19 @@
-import { Canvas } from 'react-three-fiber';
+import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
-import { GameState, height_px, unitsToPixels, width_px } from '../world';
+import {
+  height_px,
+  ShipAction,
+  ShipActionType,
+  unitsToPixels,
+  width_px,
+} from '../world';
 import React, { Suspense } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import { CameraMover } from './CameraMover';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState from '../NetState';
 import Vector from '../utils/Vector';
+import { actionsActive } from '../utils/ShipControls';
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera
@@ -52,14 +59,23 @@ export const ThreeLayer: React.FC = () => {
       }}
     >
       <Suspense fallback={<mesh />}>
-        <axesHelper position={posToThreePos(15, 15)} args={[20]} />
-        <CameraMover />
-        <ambientLight />
-        <gridHelper args={[100, 10]} rotation={[Math.PI / 2, 0, 0]} />
-        <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-        <ThreeBodiesLayer state={state} />
-        <ThreeShipsLayer state={state} />
-        {/*<Sphere position={[0, 0, 0]} scale={[10, 10, 10]} star />*/}
+        <group
+          onClick={(evt: MouseEvent) => {
+            const pos = threeVectorToVector(evt.point);
+            actionsActive[ShipActionType.Navigate] = ShipAction.Navigate(
+              Vector.fromIVector(pos)
+            );
+          }}
+        >
+          <axesHelper position={posToThreePos(15, 15)} args={[20]} />
+          <CameraMover />
+          <ambientLight />
+          <gridHelper args={[100, 10]} rotation={[Math.PI / 2, 0, 0]} />
+          <pointLight position={[0, 0, CAMERA_HEIGHT]} />
+          <ThreeBodiesLayer state={state} />
+          <ThreeShipsLayer state={state} />
+          {/*<Sphere position={[0, 0, 0]} scale={[10, 10, 10]} star />*/}
+        </group>
       </Suspense>
       {/* blue is third coord (z?) */}
       {/* green is second  coord (y?) */}
