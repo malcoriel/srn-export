@@ -217,11 +217,14 @@ export const applyShipAction = (
       break;
     }
     case ShipActionType.Navigate: {
+      myShip.dock_target = undefined;
+      myShip.trajectory = [];
       let navigate_target = sa.data as IVector;
       myShip.navigate_target = { x: navigate_target.x, y: navigate_target.y };
       break;
     }
     case ShipActionType.DockNavigate: {
+      myShip.navigate_target = undefined;
       myShip.dock_target = sa.data as string;
       break;
     }
