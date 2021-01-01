@@ -66,14 +66,10 @@ mod world_test {
 
         let planet = &new_planets[0];
         let sat = &new_planets[1];
-        eprintln!("planet {}/{}", planet.x, planet.y);
-        eprintln!("sat {}/{}", sat.x, sat.y);
         assert!((planet.x - 0.0).abs() < eps);
         assert!((planet.y + 5.0).abs() < eps);
         assert!((sat.x - 2.0f64.sqrt() / 2.0).abs() < eps);
         assert!((sat.y + (5.0 + 2.0f64.sqrt() / 2.0)).abs() < eps);
-
-        eprintln!("---------");
 
         let coord = 2.0f64.sqrt() * 5.0 / 2.0;
         let sin_pi_8 = (PI / 8.0).sin();
@@ -88,26 +84,10 @@ mod world_test {
         );
         let planet = &new_planets[0];
         let sat = &new_planets[1];
-        eprintln!("planet {}/{}", planet.x, planet.y);
-        eprintln!("sat {}/{}", sat.x, sat.y);
-
         assert!((planet.x - coord).abs() < eps);
         assert!((planet.y + coord).abs() < eps);
         assert!((sat.x - sat_x).abs() < eps);
         assert!((sat.y - sat_y).abs() < eps);
-    }
-
-    #[test]
-    pub fn can_precisely_alter_state() {
-        let mut state = seed_state(true);
-        state.planets = update_planets(&state.planets, &state.star, 1321);
-        eprintln!("first");
-        eprintln!(
-            "{}",
-            serde_json::to_string_pretty(&state.planets[0])
-                .ok()
-                .unwrap()
-        );
     }
 
     #[test]
@@ -117,7 +97,7 @@ mod world_test {
 
         let both_client_and_server = vec![false, true];
         for is_client in both_client_and_server.into_iter() {
-            let mut state = seed_state(true);
+            let mut state = seed_state(false);
             let player_id = crate::new_id();
             add_player(&mut state, &player_id);
             spawn_ship(&mut state, &player_id);
@@ -126,7 +106,6 @@ mod world_test {
 
             state = update(state, 1 * 1000, is_client);
             let ship = &state.ships[0];
-            eprintln!("small {} vs 0 eps {}", ship.x, eps);
             assert!((ship.x).abs() < eps);
             assert!((ship.y).abs() < eps);
             assert!(ship.navigate_target.is_some());
@@ -143,6 +122,42 @@ mod world_test {
             assert!((ship.x - dist).abs() < eps);
             assert!((ship.y - dist).abs() < eps);
             assert!(ship.navigate_target.is_none());
+        }
+    }
+
+    #[test]
+    pub fn can_rotate_while_navigating() {
+        let eps = 0.01;
+        let dist = 10.0;
+
+        for is_client in vec![false, true].into_iter() {
+            let mut state = seed_state(false);
+            let player_id = crate::new_id();
+            add_player(&mut state, &player_id);
+            spawn_ship(&mut state, &player_id);
+            let mut ship = &mut state.ships[0];
+            ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
+            state = update(state, 1 * 1000, is_client);
+            let ship = &mut state.ships[0];
+            let expected = PI * 0.75;
+            eprintln!("rotation {} vs {}", ship.rotation, expected);
+            assert!((ship.rotation - expected).abs() < eps);
+
+            let mut ship = &mut state.ships[0];
+            ship.navigate_target = Some(Vec2f64 { x: -dist, y: -dist });
+            state = update(state, 1 * 1000, is_client);
+            let ship = &mut state.ships[0];
+            let expected = PI * 0.25;
+            eprintln!("rotation {} vs -{}", ship.rotation, expected);
+            assert!((ship.rotation + expected).abs() < eps);
+
+            let mut ship = &mut state.ships[0];
+            ship.navigate_target = Some(Vec2f64 { x: -dist, y: dist });
+            state = update(state, 1 * 1000, is_client);
+            let ship = &mut state.ships[0];
+            let expected = PI * 0.75;
+            eprintln!("rotation {} vs -{}", ship.rotation, expected);
+            assert!((ship.rotation + expected).abs() < eps)
         }
     }
 }

@@ -576,6 +576,12 @@ pub fn update_ships_navigation(ships: &Vec<Ship>, elapsed_micro: i64) -> Vec<Shi
                     y: ship.y,
                 };
                 let dist = target.euclidean_distance(&ship_pos);
+                let dir = target.subtract(&ship_pos);
+                eprintln!("dir {}", dir);
+                ship.rotation = angle_rad(dir, Vec2f64 { x: 0.0, y: -1.0 });
+                if dir.x < 0.0 {
+                    ship.rotation = -ship.rotation;
+                }
                 let max_shift = SHIP_SPEED * elapsed_micro as f64 / 1000.0 / 1000.0;
                 if dist > 0.0 {
                     if dist > max_shift {
@@ -583,7 +589,6 @@ pub fn update_ships_navigation(ships: &Vec<Ship>, elapsed_micro: i64) -> Vec<Shi
                         let shift = dir.scalar_mul(max_shift);
                         let new_pos = ship_pos.add(&shift);
                         ship.set_from(&new_pos);
-                        eprintln!("{} -> {}", elapsed_micro, shift);
                     } else {
                         ship.set_from(&target);
                         ship.navigate_target = None;
