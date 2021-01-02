@@ -26,7 +26,7 @@ export const MyTrajectoryLayer: React.FC = () => {
       {myShip.trajectory.map((position, i) => {
         return (
           <Circle
-            radius={0.1}
+            radius={0.2}
             key={i}
             text={name}
             position={Vector.fromIVector(position).subtract(cameraShift)}

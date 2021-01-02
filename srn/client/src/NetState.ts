@@ -49,6 +49,7 @@ export const findMyShip = (state: GameState): Ship | null => {
 };
 
 export type VisualState = {
+  boundCameraMovement: boolean;
   cameraPosition: {
     x: number;
     y: number;
@@ -108,6 +109,7 @@ export default class NetState extends EventEmitter {
     };
     this.ping = 0;
     this.visualState = {
+      boundCameraMovement: true,
       cameraPosition: {
         x: 0,
         y: 0,
@@ -290,8 +292,11 @@ export default class NetState extends EventEmitter {
   updateLocalState = (elapsedMs: number) => {
     let actions = Object.values(actionsActive).filter((a) => !!a);
     this.mutate_ship(actions as ShipAction[], elapsedMs);
-    if (actions[ShipActionType.Dock]) {
+    if (actionsActive[ShipActionType.Dock]) {
       this.updateShipOnServer();
+    }
+    if (actionsActive[ShipActionType.Move]) {
+      this.visualState.boundCameraMovement = true;
     }
     resetActions();
     let result;

@@ -6,7 +6,6 @@ import { posToThreePos, threeVectorToVector } from './ThreeLayer';
 import { ThreePlanetShape } from './ThreePlanetShape';
 import { MouseEvent } from 'react-three-fiber';
 import { actionsActive } from '../utils/ShipControls';
-import Vector from '../utils/Vector';
 
 export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
   const { planets, star } = state;

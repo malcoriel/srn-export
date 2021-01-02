@@ -1,13 +1,7 @@
 import React from 'react';
 import NetState from '../NetState';
 import { Layer, Rect } from 'react-konva';
-import {
-  antiScale,
-  height_units,
-  view_size,
-  width_px,
-  width_units,
-} from '../world';
+import { height_units, width_px, width_units } from '../world';
 import { blue, gray } from '../utils/palette';
 import Vector from '../utils/Vector';
 export const minimap_size = width_px * 0.3;
@@ -29,13 +23,23 @@ export const MinimapLayer = () => {
       <Rect
         width={minimap_viewport_size}
         height={minimap_viewport_size}
-        strokeWidth={2}
+        strokeWidth={10}
         stroke={blue}
         fill={gray}
         opacity={0.8}
         draggable
-        onDragMove={(evt) => {
-          let currentPositionUv = evt.target.position();
+        onDragMove={(dragEvent) => {
+          const mouseEvent = dragEvent.evt as any;
+          let currentPosition = new Vector(
+            mouseEvent.layerX,
+            mouseEvent.layerY
+          );
+          visualState.boundCameraMovement = false;
+          let currentPositionUV = new Vector(
+            currentPosition.x / minimap_size - 0.5 + minimap_scale / 2,
+            currentPosition.y / minimap_size - 0.5 + minimap_scale / 2
+          );
+          visualState.cameraPosition = currentPositionUV.scale(width_units);
         }}
         position={cameraPositionUV.scale(minimap_size)}
       />
