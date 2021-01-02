@@ -3,7 +3,7 @@ import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
 import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
-import { size, scaleConfig } from './world';
+import { scaleConfig, size } from './world';
 import { CoordLayer } from './KonvaLayers/CoordLayer';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
@@ -22,42 +22,14 @@ import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
 import * as uuid from 'uuid';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
-import {
-  get_minimap_size_x,
-  get_minimap_size_y,
-  MinimapLayer,
-} from './KonvaLayers/MinimapLayer';
-import { blue } from './utils/palette';
-import { useToggleHotkey } from './utils/useToggleHotkey';
 import { HelpLayer } from './HtmlLayers/HelpLayer';
 import './HtmlLayers/Panel.scss';
+import { MinimapLayerWrapper } from './KonvaLayers/MinimapLayerWrapper';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
 
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
-
-const MinimapLayerWrapper = () => {
-  const shown = useToggleHotkey('shift+m', true);
-  if (!shown) return null;
-
-  return (
-    <Stage
-      width={get_minimap_size_x()}
-      height={get_minimap_size_y()}
-      style={{
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        zIndex: 10,
-        border: `solid ${blue} 1px`,
-        borderRadius: 5,
-      }}
-    >
-      <MinimapLayer />
-    </Stage>
-  );
-};
 
 class Srn extends React.Component<
   {},

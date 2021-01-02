@@ -2,8 +2,14 @@ import _ from 'lodash';
 import { Arrow, Layer, Line, Text } from 'react-konva';
 import { antiScale, max_x, max_y, min_x, min_y } from '../world';
 import React from 'react';
+import { useToggleHotkey } from '../utils/useToggleHotkey';
+
+export const useShowCoordinates = () =>
+  useToggleHotkey('shift+g', false, 'show coordinate helpers');
 
 export const CoordLayer = () => {
+  const shown = useShowCoordinates();
+  if (!shown) return null;
   const numberPoints = _.times(4, (i) => 10 + i * 10);
   return (
     <Layer>

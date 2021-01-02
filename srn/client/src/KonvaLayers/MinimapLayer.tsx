@@ -12,8 +12,6 @@ import {
 import { gray, yellow } from '../utils/palette';
 import Vector, { IVector, VectorF } from '../utils/Vector';
 import _ from 'lodash';
-import { useHotkeys } from 'react-hotkeys-hook';
-import { useToggleHotkey } from '../utils/useToggleHotkey';
 
 export const minimap_proportion = 0.3;
 export const inv_minimap_proportion = 1 / minimap_proportion;
