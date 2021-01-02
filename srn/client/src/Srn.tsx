@@ -28,11 +28,34 @@ import {
   MinimapLayer,
 } from './KonvaLayers/MinimapLayer';
 import { blue } from './utils/palette';
+import { useToggleHotkey } from './utils/useToggleHotkey';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
 
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
+
+const MinimapLayerWrapper = () => {
+  const shown = useToggleHotkey('shift+m', true);
+  if (!shown) return null;
+
+  return (
+    <Stage
+      width={get_minimap_size_x()}
+      height={get_minimap_size_y()}
+      style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        zIndex: 10,
+        border: `solid ${blue} 1px`,
+        borderRadius: 5,
+      }}
+    >
+      <MinimapLayer />
+    </Stage>
+  );
+};
 
 class Srn extends React.Component<
   {},
@@ -128,22 +151,7 @@ class Srn extends React.Component<
             height: size.height_px,
           }}
         >
-          {this.state.ready && (
-            <Stage
-              width={get_minimap_size_x()}
-              height={get_minimap_size_y()}
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                zIndex: 10,
-                border: `solid ${blue} 1px`,
-                borderRadius: 5,
-              }}
-            >
-              <MinimapLayer />
-            </Stage>
-          )}
+          {this.state.ready && <MinimapLayerWrapper />}
           {this.state.ready && <ThreeLayer />}
           {this.state.ready && (
             <Stage

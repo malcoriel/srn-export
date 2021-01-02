@@ -2,6 +2,9 @@ import Q from 'q';
 import { mean } from 'simple-statistics';
 import _ from 'lodash';
 import { variableDeltaTime as Time } from '../utils/Times';
+import React, { useEffect, useState } from 'react';
+import './StatsPanel.css';
+import { useToggleHotkey } from '../utils/useToggleHotkey';
 
 export const statsHeap: Record<string, number> = {
   timeStep: 0,
@@ -183,20 +186,21 @@ const Perf = {
   },
 };
 
-import React, { useEffect, useState } from 'react';
-import './StatsPanel.css';
-
 const formatNumber = (x: any) => {
   return Number(x).toFixed(3);
 };
 
 const STATS_REFRESH_TIME = 1000;
 let StatsPanel = () => {
+  const shown = useToggleHotkey('shift+f', false);
   const [force, setForce] = useState(0);
   useEffect(() => {
     let timer = setInterval(() => setForce(force + 1), STATS_REFRESH_TIME);
     return () => clearInterval(timer);
   }, [setForce, force]);
+
+  if (!shown) return null;
+
   return (
     <div className="stats">
       <div className="header">Debug info:</div>

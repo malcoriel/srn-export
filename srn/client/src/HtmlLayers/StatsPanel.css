@@ -1,12 +1,15 @@
 .stats {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  bottom: 0px;
+  right: 0px;
   width: 300px;
   padding: 10px 10px 0 10px;
-  border: solid gray 0.5px;
-  background: white;
-  opacity: 0.9
+  border: solid blue 0.5px;
+  background: #555;
+  opacity: 0.5;
+  color: white;
+  border-radius: 5px;
+  z-index: 10;
 }
 
 .stats .header {
