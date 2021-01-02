@@ -1,7 +1,7 @@
 import React from 'react';
 import NetState, { findMyShip } from '../NetState';
 import { useThree } from 'react-three-fiber';
-import { height_units, unitsToPixels, width_units } from '../world';
+import { height_units, unitsToPixels_min, width_units } from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
 
 export const BoundCameraMover: React.FC = () => {
@@ -27,7 +27,7 @@ export const BoundCameraMover: React.FC = () => {
   return null;
 };
 export const CAMERA_HEIGHT = 100;
-export const CAMERA_DEFAULT_ZOOM = unitsToPixels;
+export const CAMERA_DEFAULT_ZOOM = unitsToPixels_min;
 export const CAMERA_MAX_ZOOM = 2.0;
 export const CAMERA_MIN_ZOOM = 0.5;
 export const CAMERA_ZOOM_CHANGE_SPEED = 1 / 1000;

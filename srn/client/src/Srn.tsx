@@ -23,11 +23,11 @@ import { NamesLayer } from './KonvaLayers/NamesLayer';
 import * as uuid from 'uuid';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
 import {
-  minimap_scale,
-  minimap_size,
+  minimap_size_x,
+  minimap_size_y,
   MinimapLayer,
 } from './KonvaLayers/MinimapLayer';
-import { blue, gray } from './utils/palette';
+import { blue } from './utils/palette';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
@@ -118,8 +118,8 @@ class Srn extends React.Component<
         >
           {this.state.ready && (
             <Stage
-              width={minimap_size}
-              height={minimap_size}
+              width={minimap_size_x}
+              height={minimap_size_y}
               style={{
                 position: 'absolute',
                 top: 0,

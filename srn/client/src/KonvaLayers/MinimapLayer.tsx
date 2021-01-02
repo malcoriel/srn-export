@@ -1,12 +1,13 @@
 import color from 'color';
 import React, { useState } from 'react';
 import NetState from '../NetState';
-import { Arc, Circle, Group, Layer, Line, Rect } from 'react-konva';
+import { Arc, Circle, Group, Layer, Rect } from 'react-konva';
 import {
-  degToRad,
+  height_px,
   height_units,
-  Planet,
   radToDeg,
+  unitsToPixels_min,
+  width_height_px_min,
   width_px,
   width_units,
 } from '../world';
@@ -15,18 +16,21 @@ import Vector, { IVector, VectorF } from '../utils/Vector';
 import _ from 'lodash';
 
 export const minimap_proportion = 0.3;
-export const minimap_size = width_px * minimap_proportion;
+export const inv_minimap_proportion = 1 / minimap_proportion;
+export const minimap_size_x = width_height_px_min * minimap_proportion;
+export const minimap_size_y = width_height_px_min * minimap_proportion;
 export const minimap_scale = 0.1;
 
 export const minimap_shift = 0.005;
 
 const posToMinimapPos = (pos: IVector) =>
   new Vector(
-    (pos.x / width_units + 0.5) * minimap_size,
-    (pos.y / height_units + 0.5) * minimap_size
+    (pos.x / width_units + 0.5) * minimap_size_x,
+    (pos.y / height_units + 0.5) * minimap_size_y
   );
 
-const radiusToMinimapRadius = (val: number) => val * minimap_scale * 2;
+const radiusToMinimapRadius = (val: number) =>
+  val * unitsToPixels_min * minimap_proportion * minimap_scale;
 
 const trailWidth = 0.5;
 const baseOpacity = 0.6;
@@ -40,7 +44,10 @@ export const MinimapLayer = () => {
   const { state, visualState } = ns;
   let { cameraPosition } = visualState;
   let zoomProp = 1 / (visualState.zoomShift || 1.0);
-  const minimap_viewport_size = minimap_size * minimap_scale * zoomProp;
+  const minimap_viewport_size_x =
+    width_px * minimap_proportion * minimap_scale * zoomProp;
+  const minimap_viewport_size_y =
+    height_px * minimap_proportion * minimap_scale * zoomProp;
   let cameraPositionUV = Vector.fromIVector({
     x: cameraPosition.x / width_units + 0.5 - (minimap_scale * zoomProp) / 2,
     y: cameraPosition.y / height_units + 0.5 - (minimap_scale * zoomProp) / 2,
@@ -52,8 +59,8 @@ export const MinimapLayer = () => {
     let currentPosition = new Vector(mouseEvent.layerX, mouseEvent.layerY);
     visualState.boundCameraMovement = false;
     let currentPositionUV = new Vector(
-      currentPosition.x / minimap_size - 0.5,
-      currentPosition.y / minimap_size - 0.5
+      currentPosition.x / minimap_size_x - 0.5,
+      currentPosition.y / minimap_size_y - 0.5
     );
     setDragPosition(currentPositionUV);
     visualState.cameraPosition = currentPositionUV.scale(width_units);
@@ -61,8 +68,8 @@ export const MinimapLayer = () => {
   return (
     <Layer>
       <Rect
-        width={minimap_size}
-        height={minimap_size}
+        width={minimap_size_x}
+        height={minimap_size_y}
         fill={gray}
         opacity={baseOpacity}
         onMouseDown={moveCamera}
@@ -92,8 +99,8 @@ export const MinimapLayer = () => {
 
           const arcCommonProps = {
             angle: totalArc / arcCount,
-            innerRadius: orbitDist + p.radius / 16 - trailWidth / 0.5,
-            outerRadius: orbitDist + p.radius / 16 + trailWidth / 0.5,
+            innerRadius: orbitDist - trailWidth / 0.5,
+            outerRadius: orbitDist + trailWidth / 0.5,
             fill: p.color,
             strokeWidth: 1,
             position: posToMinimapPos(anchorPos),
@@ -134,14 +141,14 @@ export const MinimapLayer = () => {
         })}
       <Rect
         // zIndex={2}
-        width={minimap_viewport_size}
-        height={minimap_viewport_size}
+        width={minimap_viewport_size_x}
+        height={minimap_viewport_size_y}
         fill={color(yellow).alpha(0.2).string()}
         stroke="white"
         strokeWidth={1}
         draggable
         onDragMove={moveCamera}
-        position={cameraPositionUV.scale(minimap_size)}
+        position={cameraPositionUV.scaleXY(minimap_size_x, minimap_size_y)}
       />
     </Layer>
   );

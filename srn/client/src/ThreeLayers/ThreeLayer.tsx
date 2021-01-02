@@ -6,7 +6,6 @@ import {
   min_x,
   ShipAction,
   ShipActionType,
-  unitsToPixels,
   width_px,
 } from '../world';
 import React, { Suspense } from 'react';

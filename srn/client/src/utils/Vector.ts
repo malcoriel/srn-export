@@ -137,6 +137,10 @@ export default class Vector implements IVector {
     return new Vector(this.x * number, this.y * number);
   }
 
+  scaleXY(xScale: number, yScale: number) {
+    return new Vector(this.x * xScale, this.y * yScale);
+  }
+
   // noinspection JSUnusedGlobalSymbols
   isCloseToAny(targets: Vector[], minDist: number) {
     for (const t of targets) {
