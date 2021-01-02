@@ -62,6 +62,7 @@ export const NamesLayer: React.FC = () => {
   return (
     <Layer>
       {names.map(([id, name, position, radius]) => {
+        let textWidth = 300;
         return (
           <Text
             key={id}
@@ -69,9 +70,11 @@ export const NamesLayer: React.FC = () => {
             position={position}
             fill={babyBlue}
             align="center"
-            offsetY={(scaleConfig.scaleX / zoomProp) * radius + 20}
-            width={200}
-            offsetX={100}
+            offsetY={
+              (scaleConfig.scaleY / zoomProp) * radius - scaleConfig.offsetY / 2
+            }
+            width={textWidth}
+            offsetX={textWidth / 2}
             {...antiScale}
           />
         );

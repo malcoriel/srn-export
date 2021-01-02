@@ -1,7 +1,7 @@
 import Vector, { IVector } from './utils/Vector';
 
-export const width_px = 800;
-export const height_px = 600;
+export const width_px = 500;
+export const height_px = 500;
 export const width_height_px_min = Math.min(width_px, height_px);
 
 // noinspection JSUnusedGlobalSymbols
@@ -102,21 +102,16 @@ export type GameState = {
 };
 
 export const scaleConfig = {
-  scaleX: unitsToPixels_x,
-  scaleY: unitsToPixels_y,
-  offsetX: -50,
-  offsetY: -50,
+  scaleX: unitsToPixels_min,
+  scaleY: unitsToPixels_min,
+  offsetX: ((-units_on_screen / 2) * unitsToPixels_x) / unitsToPixels_min,
+  offsetY: ((-units_on_screen / 2) * unitsToPixels_y) / unitsToPixels_min,
 };
 
 export const antiScale = {
   scaleX: 1 / scaleConfig.scaleX,
   scaleY: 1 / scaleConfig.scaleY,
   line: 1 / Math.max(scaleConfig.scaleX, scaleConfig.scaleY),
-};
-
-export const antiOffset = {
-  offsetX: -scaleConfig.offsetX / antiScale.scaleX,
-  offsetY: -scaleConfig.offsetY / antiScale.scaleY,
 };
 
 export enum ShipActionType {
