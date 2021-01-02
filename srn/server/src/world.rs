@@ -388,7 +388,7 @@ const ORB_SPEED_MULT: f64 = 1.0;
 pub fn seed_state(debug: bool) -> GameState {
     let star_id = crate::new_id();
     let star = Star {
-        color: "#B4958B".to_string(),
+        color: "rgb(200, 150, 65)".to_string(),
         id: star_id.clone(),
         name: "Zinides".to_string(),
         x: 0.0,
