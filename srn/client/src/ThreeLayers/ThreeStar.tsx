@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import Color from 'color';
 import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
 import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
 import * as THREE from 'three';
@@ -33,7 +34,7 @@ export const ThreeStar: React.FC<
     'resources/bowling_grass.jpg'
   );
 
-  const color = props.color || 'white';
+  const color = Color(props.color || 'white');
 
   const { camera } = useThree();
 
@@ -47,7 +48,11 @@ export const ThreeStar: React.FC<
   const patchedUniforms = _.clone(uniforms);
   patchedUniforms.iChannel0.value = lavaTile;
   patchedUniforms.iChannel1.value = grassTile;
-  patchedUniforms.color.value = new Vector3(180 / 255, 149 / 255, 139 / 255);
+  patchedUniforms.color.value = new Vector3(
+    color.red() / 255,
+    color.green() / 255,
+    color.blue() / 255
+  );
   patchedUniforms.shift.value = new Vector2(
     (camera.position.x * unitsToPixels_min()) / zoomProp,
     (camera.position.y * unitsToPixels_min()) / zoomProp
