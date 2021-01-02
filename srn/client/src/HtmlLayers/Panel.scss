@@ -15,6 +15,16 @@
   right: 0;
 }
 
+.game-panel {
+  bottom: 0;
+  left: 0;
+}
+
+.status-panel {
+  top: 0;
+  right: 0;
+}
+
 .small-help {
   position: absolute;
   bottom: 10px;
@@ -35,6 +45,28 @@
 
   .line {
     line-height: 20px;
+    margin-bottom: 10px;
+  }
+}
+
+.leaderboard-panel {
+  .scores {
+    .header {
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+    .line {
+      line-height: 20px;
+      margin-bottom: 10px;
+    }
+    .my-score {
+      color: #b4f8c8;
+    }
+  }
+
+  .countdown {
+    line-height: 20px;
+    color: #fbe7c6;
     margin-bottom: 10px;
   }
 }

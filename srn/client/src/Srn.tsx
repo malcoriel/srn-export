@@ -25,6 +25,7 @@ import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
 import { HelpLayer } from './HtmlLayers/HelpLayer';
 import './HtmlLayers/Panel.scss';
 import { MinimapLayerWrapper } from './KonvaLayers/MinimapLayerWrapper';
+import { InGameLeaderBoardPanel } from './HtmlLayers/InGameLeaderboardPanel';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
@@ -142,6 +143,7 @@ class Srn extends React.Component<
 
           <ShipControls />
           <GameHTMLHudLayer />
+          <InGameLeaderBoardPanel />
           <HelpLayer />
         </div>
         {!this.state.ready && (
@@ -156,7 +158,6 @@ class Srn extends React.Component<
             preferredName={this.state.preferredName}
           />
         )}
-        <LeaderboardLayer />
         <DebugStateLayer />
         <StatsPanel />
       </>

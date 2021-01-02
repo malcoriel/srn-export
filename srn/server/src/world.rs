@@ -535,12 +535,12 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
         } else {
         }
     } else {
+        if !client {
+            state.leaderboard = make_leaderboard(&state.players);
+        }
         if state.milliseconds_remaining <= 0 {
             eprintln!("game end");
             state.paused = true;
-            if !client {
-                state.leaderboard = make_leaderboard(&state.players);
-            }
             state.milliseconds_remaining = 10 * 1000;
         } else {
             state.planets = update_planets(&state.planets, &state.star, elapsed);
