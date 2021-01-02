@@ -34,7 +34,9 @@ export const MinimapLayer = () => {
         fill={gray}
         opacity={0.8}
         draggable
-        dragMove={console.log}
+        onDragMove={(evt) => {
+          let currentPositionUv = evt.target.position();
+        }}
         position={cameraPositionUV.scale(minimap_size)}
       />
     </Layer>

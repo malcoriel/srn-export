@@ -11,7 +11,7 @@ import {
 } from '../world';
 import React, { Suspense } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
-import { CameraMover } from './CameraMover';
+import { CameraReceiver, ShipPositionToCameraSyncer } from './CameraMover';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState from '../NetState';
 import Vector from '../utils/Vector';
@@ -78,7 +78,8 @@ export const ThreeLayer: React.FC = () => {
           three will not register clicks (through empty space)*/}
           <BackgroundPlane />
           <axesHelper position={posToThreePos(15, 15)} args={[20]} />
-          <CameraMover />
+          <CameraReceiver />
+          <ShipPositionToCameraSyncer />
           <ambientLight />
           <gridHelper
             args={[max_x - min_x, (max_x - min_x) / 10]}
