@@ -28,10 +28,6 @@ const posToMinimapPos = (pos: IVector) =>
 
 const radiusToMinimapRadius = (val: number) => val * minimap_scale * 2;
 
-function orbitDistance(p: Planet) {
-  return 10.0;
-}
-
 const trailWidth = 0.5;
 const baseOpacity = 0.6;
 const innerOpacity = 0.3;
@@ -69,13 +65,13 @@ export const MinimapLayer = () => {
         height={minimap_size}
         fill={gray}
         opacity={baseOpacity}
-        onClick={moveCamera}
+        onMouseDown={moveCamera}
         //zIndex={1}
       />
       {state.star && (
         <Circle
           opacity={innerOpacity}
-          onClick={moveCamera}
+          onMouseDown={moveCamera}
           radius={radiusToMinimapRadius(state.star.radius)}
           fill={state.star.color}
           position={posToMinimapPos(state.star)}
@@ -109,7 +105,7 @@ export const MinimapLayer = () => {
                   opacity={innerOpacity}
                   radius={radiusToMinimapRadius(p.radius)}
                   fill={p.color}
-                  onClick={moveCamera}
+                  onMouseDown={moveCamera}
                 />
               </Group>
               {p.anchor_tier === 1 && (
@@ -117,7 +113,7 @@ export const MinimapLayer = () => {
                   {_.times(arcCount, (i) => {
                     return (
                       <Arc
-                        onClick={moveCamera}
+                        onMouseDown={moveCamera}
                         key={i}
                         {...arcCommonProps}
                         rotation={

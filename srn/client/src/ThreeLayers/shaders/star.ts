@@ -1,4 +1,5 @@
 import { Texture, Vector2, Vector3 } from 'three';
+import { height_px, width_px } from '../../world';
 
 // delete viewMatrix, cameraPosition
 
@@ -194,7 +195,7 @@ export let uniforms: {
   srcRadius: { value: 0.25 },
   fCenter: { value: 0.5 },
   iChannel1: { value: null },
-  iResolution: { value: new Vector3(700, 700, 0) },
+  iResolution: { value: new Vector3(width_px, height_px, 0) },
   color: { value: new Vector3(0, 0, 0) },
   shift: { value: new Vector2(0, 0) },
 };

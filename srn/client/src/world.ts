@@ -1,7 +1,7 @@
 import Vector, { IVector } from './utils/Vector';
 
-export const width_px = 700;
-export const height_px = 700;
+export const width_px = 600;
+export const height_px = 600;
 
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
@@ -13,7 +13,7 @@ export const min_x = -500;
 export const min_y = -500;
 export const view_size = 100;
 
-export const unitsToPixels = 7;
+export const unitsToPixels = width_px / view_size;
 
 export const SHIP_SPEED = 20.0;
 
@@ -99,8 +99,8 @@ export type GameState = {
 };
 
 export const scaleConfig = {
-  scaleX: 7,
-  scaleY: 7,
+  scaleX: unitsToPixels,
+  scaleY: unitsToPixels,
   offsetX: -50,
   offsetY: -50,
 };
