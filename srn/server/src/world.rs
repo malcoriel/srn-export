@@ -752,3 +752,13 @@ fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64) -> Vec<Vec2f64> {
     }
     result
 }
+
+pub fn find_my_ship<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Option<&'a Ship> {
+    let player = state.players.iter().find(|p| p.id == *player_id);
+    if let Some(player) = player {
+        if let Some(ship_id) = player.ship_id {
+            return state.ships.iter().find(|ship| ship.id == ship_id);
+        }
+    }
+    return None;
+}

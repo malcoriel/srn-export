@@ -34,7 +34,6 @@ function extractNamePositions(
     }
     let ship = shipsById[player.ship_id];
     if (!ship) {
-      console.warn(`player ${player.id} ship ${player.ship_id} not found`);
       continue;
     }
     let shipProps: [string, string, IVector, number] = [

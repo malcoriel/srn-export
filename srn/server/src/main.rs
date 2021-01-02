@@ -2,40 +2,43 @@
 #![allow(unused_imports)]
 #[macro_use]
 extern crate serde_derive;
+
+use mpsc::{channel, Receiver, Sender};
+use std::collections::HashMap;
+use std::sync::{mpsc, Arc, Mutex, RwLock};
+use std::thread;
+use std::time::Duration;
+
+use chrono::{DateTime, Local, Utc};
+use lazy_static::lazy_static;
+use num_traits::FromPrimitive;
+use rocket::http::Method;
+use rocket_contrib::json::Json;
+use rocket_cors::{AllowedHeaders, AllowedOrigins};
 #[cfg(feature = "serde_derive")]
 #[doc(hidden)]
 pub use serde_derive::*;
-use std::sync::{mpsc, Arc, Mutex, RwLock};
-#[macro_use]
-extern crate rocket;
-use rocket_contrib::json::Json;
-use std::thread;
-extern crate rocket_cors;
-extern crate websocket;
-use chrono::{DateTime, Local, Utc};
-use num_traits::FromPrimitive;
-use std::time::Duration;
+use serde_derive::{Deserialize, Serialize};
+use uuid::*;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
+use websocket::{Message, OwnedMessage};
+
 use world::{GameState, Player, Ship};
 
 #[macro_use]
+extern crate rocket;
+extern crate rocket_cors;
+extern crate websocket;
+#[macro_use]
 extern crate num_derive;
 
+mod bots;
 #[allow(dead_code)]
 mod vec2;
 mod vec2_test;
 mod world;
 mod world_test;
-
-use mpsc::{channel, Receiver, Sender};
-use rocket::http::Method;
-use rocket_cors::{AllowedHeaders, AllowedOrigins};
-use uuid::*;
-
-use lazy_static::lazy_static;
-use std::collections::HashMap;
-use websocket::{Message, OwnedMessage};
 
 lazy_static! {
     static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ClientMessage>)>>> =
@@ -108,8 +111,6 @@ fn options_state() {}
 //     broadcast_state(mut_state.clone());
 // }
 
-use serde_derive::{Deserialize, Serialize};
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ClientErr {
     message: String,
@@ -127,55 +128,52 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, new_ship: Ship) {
 fn mutate_owned_ship(client_id: Uuid, new_ship: Ship) -> Result<Ship, ClientErr> {
     let updated_ship: Ship;
     let old_ship_index;
-    {
-        let state = STATE.read().unwrap().state.clone();
-        let player = state.players.iter().find(|p| p.id == client_id);
-        match player {
-            None => {
-                return Err(ClientErr {
-                    message: String::from("No player found"),
-                })
-            }
-            Some(player) => {
-                if player.ship_id.is_some() {
-                    if new_ship.id != player.ship_id.unwrap() {
-                        return Err(ClientErr {
-                            message: String::from(format!("Wrong ship id {}", new_ship.id)),
-                        });
-                    }
-                } else {
+    let mut cont = STATE.write().unwrap();
+    let state_clone = cont.state.clone();
+
+    let player = state_clone.players.iter().find(|p| p.id == client_id);
+    match player {
+        None => {
+            return Err(ClientErr {
+                message: String::from("No player found"),
+            })
+        }
+        Some(player) => {
+            if player.ship_id.is_some() {
+                if new_ship.id != player.ship_id.unwrap() {
                     return Err(ClientErr {
-                        message: String::from("No current ship"),
+                        message: String::from(format!("Wrong ship id {}", new_ship.id)),
                     });
                 }
+            } else {
+                return Err(ClientErr {
+                    message: String::from("No current ship"),
+                });
             }
         }
-        let old_ship = state
-            .ships
-            .iter()
-            .position(|s| s.id == player.unwrap().ship_id.unwrap());
-        if old_ship.is_none() {
-            return Err(ClientErr {
-                message: String::from("No old instance of ship"),
-            });
-        }
-        old_ship_index = old_ship.clone();
-        let old_ship = state.ships[old_ship.unwrap()].clone();
-        let ok = validate_ship_move(&old_ship, &new_ship);
-        if !ok {
-            updated_ship = old_ship;
-        } else {
-            updated_ship = new_ship;
-        }
     }
-    {
-        let mut cont = STATE.write().unwrap();
-        cont.state.ships.remove(old_ship_index.unwrap());
-        world::force_update_to_now(&mut cont.state);
-        cont.state.ships.push(updated_ship.clone());
-        multicast_state_excluding(cont.state.clone(), client_id);
-        return Ok(updated_ship);
+    let old_ship = state_clone
+        .ships
+        .iter()
+        .position(|s| s.id == player.unwrap().ship_id.unwrap());
+    if old_ship.is_none() {
+        return Err(ClientErr {
+            message: String::from("No old instance of ship"),
+        });
     }
+    old_ship_index = old_ship.clone();
+    let old_ship = state_clone.ships[old_ship.unwrap()].clone();
+    let ok = validate_ship_move(&old_ship, &new_ship);
+    if !ok {
+        updated_ship = old_ship;
+    } else {
+        updated_ship = new_ship;
+    }
+    cont.state.ships.remove(old_ship_index.unwrap());
+    world::force_update_to_now(&mut cont.state);
+    cont.state.ships.push(updated_ship.clone());
+    multicast_state_excluding(cont.state.clone(), client_id);
+    return Ok(updated_ship);
 }
 
 fn validate_ship_move(_old: &Ship, _new: &Ship) -> bool {
@@ -493,57 +491,13 @@ fn rocket() -> rocket::Rocket {
     std::thread::spawn(|| {
         physics_thread();
     });
+    std::thread::spawn(|| {
+        bot_thread();
+    });
     let client_senders = CLIENT_SENDERS.clone();
-    thread::spawn(move || unsafe {
-        let unwrapped = DISPATCHER_RECEIVER.as_mut().unwrap().lock().unwrap();
-        while let Ok(msg) = unwrapped.recv() {
-            for sender in client_senders.lock().unwrap().iter() {
-                let send = sender.1.send(msg.clone());
-                if let Err(e) = send {
-                    eprintln!("err {} sending {}", sender.0, e);
-                    increment_client_errors(sender.0);
-                    disconnect_if_bad(sender.0);
-                }
-            }
-            thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
-        }
-        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
-    });
+    thread::spawn(move || unsafe { dispatcher_thread(client_senders) });
 
-    thread::spawn(|| {
-        loop {
-            // cleanup thread - kick broken players, remove ships
-            let client_errors = CLIENT_ERRORS.lock().unwrap();
-            let clients = client_errors
-                .clone()
-                .keys()
-                .map(|k| k.clone())
-                .collect::<Vec<_>>();
-            std::mem::drop(client_errors);
-            for client_id in clients {
-                disconnect_if_bad(client_id);
-            }
-
-            let mut cont = STATE.write().unwrap();
-            let existing_player_ships = cont
-                .state
-                .players
-                .iter()
-                .map(|p| p.ship_id.clone())
-                .filter(|s| s.is_some())
-                .map(|s| s.unwrap())
-                .collect::<Vec<_>>();
-            cont.state.ships = cont
-                .state
-                .ships
-                .clone()
-                .into_iter()
-                .filter(|s| existing_player_ships.contains(&s.id))
-                .collect::<Vec<_>>();
-
-            thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
-        }
-    });
+    thread::spawn(|| cleanup_thread());
 
     // You can also deserialize this
     let cors = rocket_cors::CorsOptions {
@@ -570,6 +524,57 @@ fn rocket() -> rocket::Rocket {
         .mount("/api", routes![get_state, options_state]) // post_state
 }
 
+unsafe fn dispatcher_thread(client_senders: Arc<Mutex<Vec<(Uuid, Sender<ClientMessage>)>>>) {
+    let unwrapped = DISPATCHER_RECEIVER.as_mut().unwrap().lock().unwrap();
+    while let Ok(msg) = unwrapped.recv() {
+        for sender in client_senders.lock().unwrap().iter() {
+            let send = sender.1.send(msg.clone());
+            if let Err(e) = send {
+                eprintln!("err {} sending {}", sender.0, e);
+                increment_client_errors(sender.0);
+                disconnect_if_bad(sender.0);
+            }
+        }
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
+    }
+    thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
+}
+
+fn cleanup_thread() {
+    loop {
+        // cleanup thread - kick broken players, remove ships
+        let client_errors = CLIENT_ERRORS.lock().unwrap();
+        let clients = client_errors
+            .clone()
+            .keys()
+            .map(|k| k.clone())
+            .collect::<Vec<_>>();
+        std::mem::drop(client_errors);
+        for client_id in clients {
+            disconnect_if_bad(client_id);
+        }
+
+        let mut cont = STATE.write().unwrap();
+        let existing_player_ships = cont
+            .state
+            .players
+            .iter()
+            .map(|p| p.ship_id.clone())
+            .filter(|s| s.is_some())
+            .map(|s| s.unwrap())
+            .collect::<Vec<_>>();
+        cont.state.ships = cont
+            .state
+            .ships
+            .clone()
+            .into_iter()
+            .filter(|s| existing_player_ships.contains(&s.id))
+            .collect::<Vec<_>>();
+
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
+    }
+}
+
 const DEBUG_PHYSICS: bool = false;
 
 fn physics_thread() {
@@ -581,5 +586,44 @@ fn physics_thread() {
         let elapsed = now - last;
         last = now;
         cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
+    }
+}
+
+use bots::Bot;
+lazy_static! {
+    static ref BOTS: Arc<Mutex<HashMap<Uuid, Bot>>> = Arc::new(Mutex::new(HashMap::new()));
+}
+
+const BOT_SLEEP_MS: u64 = 200;
+
+fn add_bot(bot: Bot) -> Uuid {
+    let mut bots = BOTS.lock().unwrap();
+    let id = bot.id.clone();
+    bots.insert(id.clone(), bot);
+    let mut cont = STATE.write().unwrap();
+    world::add_player(&mut cont.state, &id);
+    world::spawn_ship(&mut cont.state, &id);
+    id
+}
+
+fn bot_thread() {
+    add_bot(Bot::new());
+    loop {
+        let mut ship_updates: HashMap<Uuid, Ship> = HashMap::new();
+        let mut bots = BOTS.lock().unwrap();
+        let extracted_state = STATE.write().unwrap().state.clone();
+        {
+            for (bot_id, bot) in bots.clone().iter() {
+                let (bot, ship) = bot.clone().act(extracted_state.clone());
+                bots.insert(bot_id.clone(), bot);
+                if let Some(ship) = ship {
+                    ship_updates.insert(bot_id.clone(), ship);
+                }
+            }
+        }
+        for (bot_id, ship) in ship_updates.into_iter() {
+            mutate_owned_ship_wrapped(bot_id, ship);
+        }
+        thread::sleep(Duration::from_millis(BOT_SLEEP_MS));
     }
 }
