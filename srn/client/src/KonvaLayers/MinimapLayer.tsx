@@ -17,7 +17,7 @@ import _ from 'lodash';
 export const minimap_proportion = 0.3;
 export const minimap_size = width_px * minimap_proportion;
 export const minimap_scale = 0.1;
-export const minimap_viewport_size = minimap_size * minimap_scale;
+
 export const minimap_shift = 0.005;
 
 const posToMinimapPos = (pos: IVector) =>
@@ -43,9 +43,11 @@ export const MinimapLayer = () => {
   if (!ns) return null;
   const { state, visualState } = ns;
   let { cameraPosition } = visualState;
+  let zoomProp = 1 / (visualState.zoomShift || 1.0);
+  const minimap_viewport_size = minimap_size * minimap_scale * zoomProp;
   let cameraPositionUV = Vector.fromIVector({
-    x: cameraPosition.x / width_units + 0.5 - minimap_scale / 2,
-    y: cameraPosition.y / height_units + 0.5 - minimap_scale / 2,
+    x: cameraPosition.x / width_units + 0.5 - (minimap_scale * zoomProp) / 2,
+    y: cameraPosition.y / height_units + 0.5 - (minimap_scale * zoomProp) / 2,
   });
   // for some mystic reason, having setDragPosition forces synchronization
   const [, setDragPosition] = useState(cameraPositionUV);
@@ -80,7 +82,7 @@ export const MinimapLayer = () => {
         />
       )}
       {state.planets &&
-        state.planets.map((p) => {
+        state.planets.map((p, i) => {
           let anchorPos = state.star
             ? Vector.fromIVector(state.star)
             : VectorF(0, 0);
@@ -101,11 +103,10 @@ export const MinimapLayer = () => {
             position: posToMinimapPos(anchorPos),
           };
           return (
-            <Group>
+            <Group key={p.id ? p.id : i}>
               <Group position={posToMinimapPos(p)}>
                 <Circle
                   opacity={innerOpacity}
-                  key={p.id}
                   radius={radiusToMinimapRadius(p.radius)}
                   fill={p.color}
                   onClick={moveCamera}
@@ -139,7 +140,7 @@ export const MinimapLayer = () => {
         // zIndex={2}
         width={minimap_viewport_size}
         height={minimap_viewport_size}
-        fill={color(yellow).alpha(0.5).string()}
+        fill={color(yellow).alpha(0.2).string()}
         stroke="white"
         strokeWidth={1}
         draggable

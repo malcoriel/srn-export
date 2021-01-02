@@ -11,7 +11,13 @@ import {
 } from '../world';
 import React, { Suspense } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
-import { ExternalCameraControl, BoundCameraMover } from './CameraMover';
+import {
+  ExternalCameraControl,
+  BoundCameraMover,
+  CameraZoomer,
+  CAMERA_HEIGHT,
+  CAMERA_DEFAULT_ZOOM,
+} from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState from '../NetState';
 import Vector from '../utils/Vector';
@@ -40,8 +46,6 @@ export const threeVectorToVector = ({
   z: number;
 }): Vector => new Vector(x, -y);
 
-export const CAMERA_HEIGHT = 100;
-
 export const ThreeLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -51,7 +55,7 @@ export const ThreeLayer: React.FC = () => {
       orthographic
       camera={{
         position: new Vector3(0, 0, CAMERA_HEIGHT),
-        zoom: unitsToPixels,
+        zoom: CAMERA_DEFAULT_ZOOM,
         far: 1000,
       }}
       style={{
@@ -79,6 +83,7 @@ export const ThreeLayer: React.FC = () => {
           <BackgroundPlane />
           <axesHelper position={posToThreePos(15, 15)} args={[20]} />
           <ExternalCameraControl />
+          <CameraZoomer />
           <BoundCameraMover />
           <ambientLight />
           <gridHelper

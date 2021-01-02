@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import _ from 'lodash';
 import { height_px, unitsToPixels, width_px } from '../world';
+import NetState from '../NetState';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -16,6 +17,11 @@ export const useRepeatWrappedTextureLoader = (path: string) => {
 export const ThreeStar: React.FC<
   MeshProps & { color?: string; scale: [number, number, number] }
 > = (props) => {
+  const ns = NetState.get();
+  if (!ns) return null;
+  const { visualState } = ns;
+  let zoomProp = 1 / (visualState.zoomShift || 1.0);
+
   const mesh = useRef<Mesh>();
   const lavaTile = useRepeatWrappedTextureLoader('resources/lavatile.png');
   const grassTile = useRepeatWrappedTextureLoader(
@@ -38,12 +44,12 @@ export const ThreeStar: React.FC<
   patchedUniforms.iChannel1.value = grassTile;
   patchedUniforms.color.value = new Vector3(180 / 255, 149 / 255, 139 / 255);
   patchedUniforms.shift.value = new Vector2(
-    camera.position.x * unitsToPixels,
-    camera.position.y * unitsToPixels
+    (camera.position.x * unitsToPixels) / zoomProp,
+    (camera.position.y * unitsToPixels) / zoomProp
   );
   // 10 -> 0.25
   // 20 -> 0.5
-  patchedUniforms.srcRadius.value = (props.scale[0] / 10) * 0.25;
+  patchedUniforms.srcRadius.value = ((props.scale[0] / 10) * 0.25) / zoomProp;
   // patchedUniforms.iResolution.value = new Vector3(
   //   width_px / 10,
   //   height_px / 10,
