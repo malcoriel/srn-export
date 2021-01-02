@@ -10,6 +10,7 @@ export const max_x = 500;
 export const max_y = 500;
 export const min_x = -500;
 export const min_y = -500;
+export const view_size = 100;
 
 export const unitsToPixels = 7;
 

@@ -453,7 +453,7 @@ pub fn seed_state(debug: bool) -> GameState {
     let now = Utc::now().timestamp_millis() as u64;
     let mut state = GameState {
         tag: None,
-        milliseconds_remaining: 60 * 1000,
+        milliseconds_remaining: 60 * 60 * 1000,
         paused: false,
         my_id: crate::new_id(),
         ticks: 0,
