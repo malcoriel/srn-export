@@ -1,7 +1,7 @@
 import Vector, { IVector } from './utils/Vector';
 
-export const width_px = 500;
-export const height_px = 500;
+export const width_px = 800;
+export const height_px = 600;
 export const width_height_px_min = Math.min(width_px, height_px);
 
 // noinspection JSUnusedGlobalSymbols
