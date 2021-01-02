@@ -192,7 +192,7 @@ const formatNumber = (x: any) => {
 
 const STATS_REFRESH_TIME = 1000;
 let StatsPanel = () => {
-  const shown = useToggleHotkey('shift+f', false);
+  const shown = useToggleHotkey('shift+f', false, 'show FPS & stats');
   const [force, setForce] = useState(0);
   useEffect(() => {
     let timer = setInterval(() => setForce(force + 1), STATS_REFRESH_TIME);
@@ -202,7 +202,7 @@ let StatsPanel = () => {
   if (!shown) return null;
 
   return (
-    <div className="stats">
+    <div className="stats panel aux-panel">
       <div className="header">Debug info:</div>
       <div className="row">
         <span className="name">Time step:</span>

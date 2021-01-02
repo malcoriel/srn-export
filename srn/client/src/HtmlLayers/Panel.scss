@@ -1,0 +1,40 @@
+.panel {
+  position: absolute;
+  z-index: 10;
+  width: 300px;
+  padding: 10px;
+  opacity: 0.5;
+  color: white;
+  background-color: #555;
+  border-radius: 5px;
+  border: solid blue 1px;
+}
+
+.aux-panel {
+  bottom: 0;
+  right: 0;
+}
+
+.small-help {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  color: white;
+  opacity: 1;
+  z-index: 100;
+}
+
+.help {
+  opacity: 1;
+  z-index: 100;
+
+  .header {
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+
+  .line {
+    line-height: 20px;
+    margin-bottom: 10px;
+  }
+}

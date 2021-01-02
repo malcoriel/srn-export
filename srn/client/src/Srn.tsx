@@ -29,6 +29,8 @@ import {
 } from './KonvaLayers/MinimapLayer';
 import { blue } from './utils/palette';
 import { useToggleHotkey } from './utils/useToggleHotkey';
+import { HelpLayer } from './HtmlLayers/HelpLayer';
+import './HtmlLayers/Panel.scss';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
@@ -168,6 +170,7 @@ class Srn extends React.Component<
 
           <ShipControls />
           <GameHTMLHudLayer />
+          <HelpLayer />
         </div>
         {!this.state.ready && (
           <StartHudLayer

@@ -60,6 +60,7 @@ export const CameraZoomer: React.FC = () => {
   const { visualState } = ns;
   useHotkeys('c', () => {
     visualState.zoomShift = 1.0;
+    visualState.boundCameraMovement = true;
   });
   return (
     <group
