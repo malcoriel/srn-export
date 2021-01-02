@@ -116,7 +116,6 @@ export default class NetState extends EventEmitter {
         x: 0,
         y: 0,
       },
-      zoomShift: 2.0,
     };
     if (!mock) {
       this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);

@@ -44,7 +44,10 @@ export const ExternalCameraControl: React.FC = () => {
     );
   }
   if (visualState.zoomShift) {
-    camera.zoom = visualState.zoomShift * CAMERA_DEFAULT_ZOOM;
+    let oldZoom = camera.zoom;
+    let newZoom = visualState.zoomShift * CAMERA_DEFAULT_ZOOM;
+    camera.zoom = newZoom;
+    if (oldZoom !== newZoom) camera.updateProjectionMatrix();
   }
 
   return null;
@@ -59,7 +62,17 @@ export const CameraZoomer: React.FC = () => {
     <group
       onWheel={(evt: any) => {
         const delta = evt.deltaY;
-        console.log({ delta });
+        visualState.zoomShift = visualState.zoomShift || 1.0;
+        let deltaZoom = delta * CAMERA_ZOOM_CHANGE_SPEED;
+        visualState.zoomShift -= deltaZoom;
+        visualState.zoomShift = Math.min(
+          visualState.zoomShift,
+          CAMERA_MAX_ZOOM
+        );
+        visualState.zoomShift = Math.max(
+          visualState.zoomShift,
+          CAMERA_MIN_ZOOM
+        );
       }}
     >
       <mesh position={[0, 0, -20]}>
