@@ -44,8 +44,8 @@ export const ThreeStar: React.FC<
   patchedUniforms.iChannel1.value = grassTile;
   patchedUniforms.color.value = new Vector3(180 / 255, 149 / 255, 139 / 255);
   patchedUniforms.shift.value = new Vector2(
-    (camera.position.x * unitsToPixels_min) / zoomProp,
-    (camera.position.y * unitsToPixels_min) / zoomProp
+    (camera.position.x * unitsToPixels_min()) / zoomProp,
+    (camera.position.y * unitsToPixels_min()) / zoomProp
   );
   // 10 -> 0.25
   // 20 -> 0.5

@@ -1,13 +1,6 @@
 import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
-import {
-  height_px,
-  max_x,
-  min_x,
-  ShipAction,
-  ShipActionType,
-  width_px,
-} from '../world';
+import { max_x, min_x, ShipAction, ShipActionType, size } from '../world';
 import React, { Suspense } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
@@ -54,15 +47,13 @@ export const ThreeLayer: React.FC = () => {
       orthographic
       camera={{
         position: new Vector3(0, 0, CAMERA_HEIGHT),
-        zoom: CAMERA_DEFAULT_ZOOM,
+        zoom: CAMERA_DEFAULT_ZOOM(),
         far: 1000,
       }}
       style={{
         position: 'absolute',
-        top: 5,
-        left: 5,
-        width: width_px,
-        height: height_px,
+        width: size.width_px,
+        height: size.height_px,
       }}
     >
       {/* red is first  coord (x) */}

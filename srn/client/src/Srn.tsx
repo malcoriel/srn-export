@@ -3,9 +3,9 @@ import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
 import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
-import { height_px, scaleConfig, width_px } from './world';
+import { size, scaleConfig } from './world';
 import { CoordLayer } from './KonvaLayers/CoordLayer';
-import NetState from './NetState';
+import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { GameHTMLHudLayer } from './HtmlLayers/GameHTMLHudLayer';
 
@@ -23,13 +23,14 @@ import { NamesLayer } from './KonvaLayers/NamesLayer';
 import * as uuid from 'uuid';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
 import {
-  minimap_size_x,
-  minimap_size_y,
+  get_minimap_size_x,
+  get_minimap_size_y,
   MinimapLayer,
 } from './KonvaLayers/MinimapLayer';
 import { blue } from './utils/palette';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
+const MONITOR_SIZE_INTERVAL = 1000;
 
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 
@@ -39,6 +40,7 @@ class Srn extends React.Component<
 > {
   private time: vsyncedDecoupledTime;
   private readonly id: string;
+  private monitorSizeInterval?: Timeout;
   constructor(props: {}) {
     super(props);
     this.id = uuid.v4();
@@ -64,12 +66,24 @@ class Srn extends React.Component<
       this.forceUpdate();
     });
     this.start();
+    this.monitorSizeInterval = setInterval(
+      this.updateSize,
+      MONITOR_SIZE_INTERVAL
+    );
   }
+
+  updateSize = () => {
+    size.width_px = window.innerWidth;
+    size.height_px = window.innerHeight;
+  };
 
   componentWillUnmount() {
     const ns = NetState.get();
     if (!ns) return;
 
+    if (this.monitorSizeInterval) {
+      clearInterval(this.monitorSizeInterval);
+    }
     this.time.clearAnimation();
     Perf.stop();
     ns.disconnect();
@@ -108,18 +122,16 @@ class Srn extends React.Component<
       <>
         <div
           style={{
-            padding: 5,
-            margin: 5,
             position: 'relative',
             backgroundColor: 'black',
-            width: width_px,
-            height: height_px,
+            width: size.width_px,
+            height: size.height_px,
           }}
         >
           {this.state.ready && (
             <Stage
-              width={minimap_size_x}
-              height={minimap_size_y}
+              width={get_minimap_size_x()}
+              height={get_minimap_size_y()}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -135,9 +147,9 @@ class Srn extends React.Component<
           {this.state.ready && <ThreeLayer />}
           {this.state.ready && (
             <Stage
-              width={width_px}
-              height={height_px}
-              {...scaleConfig}
+              width={size.width_px}
+              height={size.height_px}
+              {...scaleConfig()}
               style={{ pointerEvents: 'none' }}
             >
               <NamesLayer />

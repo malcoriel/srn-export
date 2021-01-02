@@ -50,16 +50,30 @@ export const CoordLayer = () => {
         strokeWidth={0.5}
       />
       {numberPoints.map((p) => (
-        <Text fill="white" key={p} text={`${p}`} x={p} y={1} {...antiScale} />
+        <Text fill="white" key={p} text={`${p}`} x={p} y={1} {...antiScale()} />
       ))}
       {numberPoints.map((p) => (
-        <Text fill="white" key={p} text={`${p}`} x={1} y={p} {...antiScale} />
+        <Text fill="white" key={p} text={`${p}`} x={1} y={p} {...antiScale()} />
       ))}
       {numberPoints.map((p) => (
-        <Text fill="white" key={p} text={`-${p}`} x={1} y={-p} {...antiScale} />
+        <Text
+          fill="white"
+          key={p}
+          text={`-${p}`}
+          x={1}
+          y={-p}
+          {...antiScale()}
+        />
       ))}
       {numberPoints.map((p) => (
-        <Text fill="white" key={p} text={`-${p}`} x={-p} y={1} {...antiScale} />
+        <Text
+          fill="white"
+          key={p}
+          text={`-${p}`}
+          x={-p}
+          y={1}
+          {...antiScale()}
+        />
       ))}
     </Layer>
   );

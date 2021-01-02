@@ -1,8 +1,10 @@
 import Vector, { IVector } from './utils/Vector';
 
-export const width_px = 800;
-export const height_px = 600;
-export const width_height_px_min = Math.min(width_px, height_px);
+export const size = {
+  width_px: window.innerWidth,
+  height_px: window.innerHeight,
+  getMinSize: () => Math.min(size.width_px, size.height_px),
+};
 
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
@@ -14,9 +16,10 @@ export const min_x = -max_x;
 export const min_y = -max_y;
 const units_on_screen = 100;
 
-export const unitsToPixels_x = width_px / units_on_screen;
-export const unitsToPixels_y = height_px / units_on_screen;
-export const unitsToPixels_min = Math.min(unitsToPixels_x, unitsToPixels_y);
+export const unitsToPixels_x = () => size.width_px / units_on_screen;
+export const unitsToPixels_y = () => size.height_px / units_on_screen;
+export const unitsToPixels_min = () =>
+  Math.min(unitsToPixels_x(), unitsToPixels_y());
 
 export const SHIP_SPEED = 20.0;
 
@@ -101,17 +104,20 @@ export type GameState = {
   milliseconds_remaining: number;
 };
 
-export const scaleConfig = {
-  scaleX: unitsToPixels_min,
-  scaleY: unitsToPixels_min,
-  offsetX: ((-units_on_screen / 2) * unitsToPixels_x) / unitsToPixels_min,
-  offsetY: ((-units_on_screen / 2) * unitsToPixels_y) / unitsToPixels_min,
-};
+export const scaleConfig = () => ({
+  scaleX: unitsToPixels_min(),
+  scaleY: unitsToPixels_min(),
+  offsetX: ((-units_on_screen / 2) * unitsToPixels_x()) / unitsToPixels_min(),
+  offsetY: ((-units_on_screen / 2) * unitsToPixels_y()) / unitsToPixels_min(),
+});
 
-export const antiScale = {
-  scaleX: 1 / scaleConfig.scaleX,
-  scaleY: 1 / scaleConfig.scaleY,
-  line: 1 / Math.max(scaleConfig.scaleX, scaleConfig.scaleY),
+export const antiScale = () => {
+  let scaleConfigV = scaleConfig();
+  return {
+    scaleX: 1 / scaleConfigV.scaleX,
+    scaleY: 1 / scaleConfigV.scaleY,
+    line: 1 / Math.max(scaleConfigV.scaleX, scaleConfigV.scaleY),
+  };
 };
 
 export enum ShipActionType {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { height_px, width_px } from '../world';
+import { size } from '../world';
 import NetState from '../NetState';
 
 export const LeaderboardLayer: React.FC = () => {
@@ -13,12 +13,10 @@ export const LeaderboardLayer: React.FC = () => {
     <div
       style={{
         position: 'absolute',
-        top: 10,
-        left: 10,
         color: 'white',
         backgroundColor: 'gray',
-        width: width_px,
-        height: height_px,
+        width: size.width_px,
+        height: size.height_px,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',

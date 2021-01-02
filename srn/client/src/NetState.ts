@@ -9,7 +9,7 @@ import {
 } from './world';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
-type Timeout = ReturnType<typeof setTimeout>;
+export type Timeout = ReturnType<typeof setTimeout>;
 
 enum OpCode {
   Unknown,

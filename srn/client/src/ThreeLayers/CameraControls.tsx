@@ -27,7 +27,7 @@ export const BoundCameraMover: React.FC = () => {
   return null;
 };
 export const CAMERA_HEIGHT = 100;
-export const CAMERA_DEFAULT_ZOOM = unitsToPixels_min;
+export const CAMERA_DEFAULT_ZOOM = () => unitsToPixels_min();
 export const CAMERA_MAX_ZOOM = 2.0;
 export const CAMERA_MIN_ZOOM = 0.5;
 export const CAMERA_ZOOM_CHANGE_SPEED = 1 / 1000;
@@ -46,7 +46,7 @@ export const ExternalCameraControl: React.FC = () => {
   }
   if (visualState.zoomShift) {
     let oldZoom = camera.zoom;
-    let newZoom = visualState.zoomShift * CAMERA_DEFAULT_ZOOM;
+    let newZoom = visualState.zoomShift * CAMERA_DEFAULT_ZOOM();
     camera.zoom = newZoom;
     if (oldZoom !== newZoom) camera.updateProjectionMatrix();
   }

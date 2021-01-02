@@ -60,7 +60,7 @@ export const MyTrajectoryLayer: React.FC = () => {
             )
             .scale(1 / zoomProp)}
           stroke={babyBlue}
-          strokeWidth={1.01 * antiScale.line}
+          strokeWidth={1.01 * antiScale().line}
           dashEnabled
           dash={[0.5]}
         />

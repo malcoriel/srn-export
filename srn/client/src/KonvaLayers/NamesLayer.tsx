@@ -71,11 +71,12 @@ export const NamesLayer: React.FC = () => {
             fill={babyBlue}
             align="center"
             offsetY={
-              (scaleConfig.scaleY / zoomProp) * radius - scaleConfig.offsetY / 2
+              (scaleConfig().scaleY / zoomProp) * radius -
+              scaleConfig().offsetY / 2
             }
             width={textWidth}
             offsetX={textWidth / 2}
-            {...antiScale}
+            {...antiScale()}
           />
         );
       })}
