@@ -5,7 +5,12 @@ import * as THREE from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import _ from 'lodash';
 import NetState from '../NetState';
-import { unitsToPixels_min, unitsToPixels_x, unitsToPixels_y } from '../world';
+import {
+  size,
+  unitsToPixels_min,
+  unitsToPixels_x,
+  unitsToPixels_y,
+} from '../world';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -46,6 +51,11 @@ export const ThreeStar: React.FC<
   patchedUniforms.shift.value = new Vector2(
     (camera.position.x * unitsToPixels_min()) / zoomProp,
     (camera.position.y * unitsToPixels_min()) / zoomProp
+  );
+  patchedUniforms.iResolution.value = new Vector3(
+    size.width_px,
+    size.height_px,
+    0
   );
   // 10 -> 0.25
   // 20 -> 0.5
