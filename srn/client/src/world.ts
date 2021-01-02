@@ -2,6 +2,7 @@ import Vector, { IVector } from './utils/Vector';
 
 export const width_px = 700;
 export const height_px = 700;
+
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
 // noinspection JSUnusedGlobalSymbols

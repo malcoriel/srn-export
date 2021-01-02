@@ -22,7 +22,12 @@ import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
 import * as uuid from 'uuid';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
-import { MinimapLayer } from './KonvaLayers/MinimapLayer';
+import {
+  minimap_scale,
+  minimap_size,
+  MinimapLayer,
+} from './KonvaLayers/MinimapLayer';
+import { blue, gray } from './utils/palette';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 
@@ -111,6 +116,24 @@ class Srn extends React.Component<
             height: height_px,
           }}
         >
+          {this.state.ready && (
+            <Stage
+              width={minimap_size}
+              height={minimap_size}
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                zIndex: 10,
+                backgroundColor: gray,
+                border: `solid ${blue} 1px`,
+                borderRadius: 5,
+                opacity: 0.5,
+              }}
+            >
+              <MinimapLayer />
+            </Stage>
+          )}
           {this.state.ready && <ThreeLayer />}
           {this.state.ready && (
             <Stage
@@ -122,9 +145,9 @@ class Srn extends React.Component<
               <NamesLayer />
               <MyTrajectoryLayer />
               <CoordLayer />
-              <MinimapLayer />
             </Stage>
           )}
+
           <ShipControls />
           <GameHTMLHudLayer />
         </div>
