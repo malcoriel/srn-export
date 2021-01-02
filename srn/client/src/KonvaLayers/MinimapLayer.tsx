@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import NetState from '../NetState';
-import { Layer, Rect } from 'react-konva';
+import { Layer, Rect, Text } from 'react-konva';
 import { height_units, width_px, width_units } from '../world';
-import { blue, gray } from '../utils/palette';
-import Vector from '../utils/Vector';
+import { blue, gray, yellow } from '../utils/palette';
+import Vector, { VectorF } from '../utils/Vector';
 export const minimap_size = width_px * 0.3;
 export const minimap_scale = 0.1;
 export const minimap_viewport_size = minimap_size * minimap_scale;
@@ -17,16 +17,16 @@ export const MinimapLayer = () => {
   let cameraPositionUV = Vector.fromIVector({
     x: cameraPosition.x / width_units + 0.5 - minimap_scale / 2,
     y: cameraPosition.y / height_units + 0.5 - minimap_scale / 2,
-  }); //.add(new Vector(minimap_size / 2, minimap_size / 2));
+  });
+  // for some mystic reason, having setDragPosition forces synchronization
+  const [dragPosition, setDragPosition] = useState(cameraPositionUV);
   return (
     <Layer>
       <Rect
         width={minimap_viewport_size}
         height={minimap_viewport_size}
-        strokeWidth={10}
-        stroke={blue}
-        fill={gray}
-        opacity={0.8}
+        fill={yellow}
+        opacity={0.6}
         draggable
         onDragMove={(dragEvent) => {
           const mouseEvent = dragEvent.evt as any;
@@ -36,9 +36,10 @@ export const MinimapLayer = () => {
           );
           visualState.boundCameraMovement = false;
           let currentPositionUV = new Vector(
-            currentPosition.x / minimap_size - 0.5 + minimap_scale / 2,
-            currentPosition.y / minimap_size - 0.5 + minimap_scale / 2
+            currentPosition.x / minimap_size - 0.5,
+            currentPosition.y / minimap_size - 0.5
           );
+          setDragPosition(currentPositionUV);
           visualState.cameraPosition = currentPositionUV.scale(width_units);
         }}
         position={cameraPositionUV.scale(minimap_size)}
