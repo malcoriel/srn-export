@@ -152,7 +152,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 \tfragColor.rgb   += corona * orange;
 \t// emitted light
 \t// fragColor.rgb   += starGlow * orangeRed;
-\tfragColor.a\t\t= 1.0;
+\tfloat d = abs(length(abs(fragColor.rgb)));
+\tfragColor.a = smoothstep(0.1, 0.7, d);
 \t// fragColor.rgba = vec4(vNormal * 0.5 + 0.5, 1);
 }
 

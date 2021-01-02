@@ -76,6 +76,7 @@ export const ThreeStar: React.FC<
     <mesh {...props} ref={mesh} rotation={rotation}>
       <icosahedronBufferGeometry args={[1, 5]} />
       <rawShaderMaterial
+        transparent={true}
         fragmentShader={fragmentShader}
         vertexShader={vertexShader}
         uniforms={uniforms}
