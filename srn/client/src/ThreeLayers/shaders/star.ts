@@ -106,9 +106,11 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 \t\tfVal2 += ( 0.5 / power ) * snoise( coord + vec3( 0.0, -time, time * 0.2 ), ( power * ( 25.0 ) * ( newTime2 + 1.0 ) ) );
 \t}
 \t
-\tfloat corona\t\t= pow( fVal1 * max( 1.1 - fade, 0.0 ), radiusC ) * 50.0;
-\tcorona\t\t\t\t+= pow( fVal2 * max( 1.1 - fade, 0.0 ), radiusC ) * 50.0;
-\tcorona\t\t\t\t*= 1.2 - newTime1;
+\tfloat coronaBaseBright = 1.15;
+\t
+\tfloat corona\t\t= pow( fVal1 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
+\tcorona\t\t\t\t+= pow( fVal2 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
+\tcorona\t\t\t\t*= coronaBaseBright - newTime1;
 \tvec3 sphereNormal \t= vec3( 0.0, 0.0, 1.0 );
 \tvec3 dir \t\t\t= vec3( 0.0 );
 \tvec3 center\t\t\t= vec3( 0.5, 0.5, 1.0 );
@@ -127,7 +129,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
   \t
   \t
     if( dist < radius ){
-\t\tcorona\t\t\t*= pow( dist * invRadius, 24.0 );
+\t\tcorona\t\t\t*= 0.0;
   \t\tvec2 newUv;
   \t\tnewUv.x = sp.x*fbase;
   \t\tnewUv.y = sp.y*fbase;
@@ -135,8 +137,6 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 \t\tnewUv += vec2( time, 0.0 );
 \t\t
 \t\tvec3 texSample \t= texture2( iChannel0, newUv ).rgb;
-
- \t\t
 \t\t
 \t\tfloat uOff\t\t= ( texSample.g * brightness * 4.5 + time );
 \t\tvec2 starUV\t\t= newUv + vec2( uOff, 0.0 );
