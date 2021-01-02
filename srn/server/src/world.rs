@@ -383,7 +383,7 @@ pub struct GameState {
     pub ticks: u32,
 }
 
-const ORB_SPEED_MULT: f64 = 10.0;
+const ORB_SPEED_MULT: f64 = 1.0;
 
 pub fn seed_state(debug: bool) -> GameState {
     let star_id = crate::new_id();

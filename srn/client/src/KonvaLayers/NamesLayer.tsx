@@ -8,13 +8,14 @@ import { babyBlue } from '../utils/palette';
 
 function extractNamePositions(
   state: GameState,
-  cameraPosition: IVector
+  cameraPosition: IVector,
+  zoomProp: number
 ): Array<[string, string, IVector, number]> {
   const res = [];
   const cameraShift = Vector.fromIVector(cameraPosition);
   const shiftPos = (objPos: IVector) => {
     const pos = Vector.fromIVector(objPos);
-    return pos.subtract(cameraShift);
+    return pos.subtract(cameraShift).scale(1 / zoomProp);
   };
   for (const planet of state.planets) {
     let planetProps: [string, string, IVector, number] = [
@@ -51,7 +52,13 @@ export const NamesLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state, visualState } = ns;
-  const names = extractNamePositions(state, visualState.cameraPosition);
+  let zoomProp = 1 / (visualState.zoomShift || 1.0);
+
+  const names = extractNamePositions(
+    state,
+    visualState.cameraPosition,
+    zoomProp
+  );
   return (
     <Layer>
       {names.map(([id, name, position, radius]) => {
@@ -62,7 +69,7 @@ export const NamesLayer: React.FC = () => {
             position={position}
             fill={babyBlue}
             align="center"
-            offsetY={scaleConfig.scaleX * radius + 20}
+            offsetY={(scaleConfig.scaleX / zoomProp) * radius + 20}
             width={200}
             offsetX={100}
             {...antiScale}

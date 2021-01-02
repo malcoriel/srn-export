@@ -12,6 +12,7 @@ export const MyTrajectoryLayer: React.FC = () => {
   const { state, visualState } = ns;
   const myShip = findMyShip(state);
   if (!myShip) return null;
+  let zoomProp = 1 / (visualState.zoomShift || 1.0);
 
   let planetsById = _.keyBy(state.planets, 'id');
   let pointTarget = myShip.navigate_target;
@@ -29,22 +30,26 @@ export const MyTrajectoryLayer: React.FC = () => {
             radius={0.2}
             key={i}
             text={name}
-            position={Vector.fromIVector(position).subtract(cameraShift)}
+            position={Vector.fromIVector(position)
+              .subtract(cameraShift)
+              .scale(1 / zoomProp)}
             fill={babyBlue}
           />
         );
       })}
       {pointTarget && (
         <Circle
-          position={Vector.fromIVector(pointTarget).subtract(cameraShift)}
+          position={Vector.fromIVector(pointTarget)
+            .subtract(cameraShift)
+            .scale(1 / zoomProp)}
           radius={0.5}
           fill={babyBlue}
         />
       )}
       {planetTarget && (
         <Rect
-          width={(planetTarget.radius + wrapOffset) * 2}
-          height={(planetTarget.radius + wrapOffset) * 2}
+          width={(planetTarget.radius / zoomProp + wrapOffset) * 2}
+          height={(planetTarget.radius / zoomProp + wrapOffset) * 2}
           position={Vector.fromIVector(planetTarget)
             .subtract(cameraShift)
             .subtract(
@@ -52,7 +57,8 @@ export const MyTrajectoryLayer: React.FC = () => {
                 planetTarget.radius + wrapOffset,
                 planetTarget.radius + wrapOffset
               )
-            )}
+            )
+            .scale(1 / zoomProp)}
           stroke={babyBlue}
           strokeWidth={1.01 * antiScale.line}
           dashEnabled

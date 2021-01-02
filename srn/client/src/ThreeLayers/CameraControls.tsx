@@ -2,6 +2,7 @@ import React from 'react';
 import NetState, { findMyShip } from '../NetState';
 import { useThree } from 'react-three-fiber';
 import { height_units, unitsToPixels, width_units } from '../world';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 export const BoundCameraMover: React.FC = () => {
   const ns = NetState.get();
@@ -57,7 +58,9 @@ export const CameraZoomer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
   const { visualState } = ns;
-  const { camera } = useThree();
+  useHotkeys('c', () => {
+    visualState.zoomShift = 1.0;
+  });
   return (
     <group
       onWheel={(evt: any) => {
