@@ -125,10 +125,8 @@ class Srn extends React.Component<
                 top: 0,
                 right: 0,
                 zIndex: 10,
-                backgroundColor: gray,
                 border: `solid ${blue} 1px`,
                 borderRadius: 5,
-                opacity: 0.5,
               }}
             >
               <MinimapLayer />

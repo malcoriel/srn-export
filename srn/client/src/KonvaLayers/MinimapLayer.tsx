@@ -1,3 +1,4 @@
+import color from 'color';
 import React, { useState } from 'react';
 import NetState from '../NetState';
 import { Arc, Circle, Group, Layer, Line, Rect } from 'react-konva';
@@ -9,7 +10,7 @@ import {
   width_px,
   width_units,
 } from '../world';
-import { yellow } from '../utils/palette';
+import { gray, yellow } from '../utils/palette';
 import Vector, { IVector, VectorF } from '../utils/Vector';
 import _ from 'lodash';
 
@@ -32,6 +33,10 @@ function orbitDistance(p: Planet) {
 }
 
 const trailWidth = 0.5;
+const baseOpacity = 0.6;
+const innerOpacity = 0.3;
+const totalArc = 45;
+const arcCount = 9;
 
 export const MinimapLayer = () => {
   const ns = NetState.get();
@@ -44,10 +49,31 @@ export const MinimapLayer = () => {
   });
   // for some mystic reason, having setDragPosition forces synchronization
   const [, setDragPosition] = useState(cameraPositionUV);
+  let moveCamera = (dragEvent: any) => {
+    const mouseEvent = dragEvent.evt as any;
+    let currentPosition = new Vector(mouseEvent.layerX, mouseEvent.layerY);
+    visualState.boundCameraMovement = false;
+    let currentPositionUV = new Vector(
+      currentPosition.x / minimap_size - 0.5,
+      currentPosition.y / minimap_size - 0.5
+    );
+    setDragPosition(currentPositionUV);
+    visualState.cameraPosition = currentPositionUV.scale(width_units);
+  };
   return (
     <Layer>
+      <Rect
+        width={minimap_size}
+        height={minimap_size}
+        fill={gray}
+        opacity={baseOpacity}
+        onClick={moveCamera}
+        //zIndex={1}
+      />
       {state.star && (
         <Circle
+          opacity={innerOpacity}
+          onClick={moveCamera}
           radius={radiusToMinimapRadius(state.star.radius)}
           fill={state.star.color}
           position={posToMinimapPos(state.star)}
@@ -65,9 +91,9 @@ export const MinimapLayer = () => {
           let b = p.radius;
           let a = pPos.euDistTo(anchorPos);
           let beta = Math.acos((2 * a * a - b * b) / (2 * a * a));
-          // console.log({ id: p.id, beta: radToDeg(beta), radius: b });
+
           const arcCommonProps = {
-            angle: 15,
+            angle: totalArc / arcCount,
             innerRadius: orbitDist + p.radius / 16 - trailWidth / 0.5,
             outerRadius: orbitDist + p.radius / 16 + trailWidth / 0.5,
             fill: p.color,
@@ -78,50 +104,46 @@ export const MinimapLayer = () => {
             <Group>
               <Group position={posToMinimapPos(p)}>
                 <Circle
+                  opacity={innerOpacity}
                   key={p.id}
                   radius={radiusToMinimapRadius(p.radius)}
                   fill={p.color}
+                  onClick={moveCamera}
                 />
               </Group>
               {p.anchor_tier === 1 && (
                 <Group>
-                  {_.times(3, (i) => (
-                    <Arc
-                      key={i}
-                      {...arcCommonProps}
-                      rotation={
-                        (pPos.y < 0 ? -rotationDeg : rotationDeg) +
-                        radToDeg(beta) +
-                        i * 15
-                      }
-                      opacity={0.3 - i * 0.1}
-                    />
-                  ))}
+                  {_.times(arcCount, (i) => {
+                    return (
+                      <Arc
+                        onClick={moveCamera}
+                        key={i}
+                        {...arcCommonProps}
+                        rotation={
+                          (pPos.y < 0 ? -rotationDeg : rotationDeg) +
+                          radToDeg(beta) +
+                          (i * totalArc) / arcCount
+                        }
+                        opacity={
+                          innerOpacity - i * (1 / arcCount) * innerOpacity
+                        }
+                      />
+                    );
+                  })}
                 </Group>
               )}
             </Group>
           );
         })}
       <Rect
+        // zIndex={2}
         width={minimap_viewport_size}
         height={minimap_viewport_size}
-        fill={yellow}
-        opacity={0.3}
+        fill={color(yellow).alpha(0.5).string()}
+        stroke="white"
+        strokeWidth={1}
         draggable
-        onDragMove={(dragEvent) => {
-          const mouseEvent = dragEvent.evt as any;
-          let currentPosition = new Vector(
-            mouseEvent.layerX,
-            mouseEvent.layerY
-          );
-          visualState.boundCameraMovement = false;
-          let currentPositionUV = new Vector(
-            currentPosition.x / minimap_size - 0.5,
-            currentPosition.y / minimap_size - 0.5
-          );
-          setDragPosition(currentPositionUV);
-          visualState.cameraPosition = currentPositionUV.scale(width_units);
-        }}
+        onDragMove={moveCamera}
         position={cameraPositionUV.scale(minimap_size)}
       />
     </Layer>
