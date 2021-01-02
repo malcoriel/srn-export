@@ -383,6 +383,8 @@ pub struct GameState {
     pub ticks: u32,
 }
 
+const ORB_SPEED_MULT: f64 = 10.0;
+
 pub fn seed_state(debug: bool) -> GameState {
     let star_id = crate::new_id();
     let star = Star {
@@ -405,7 +407,7 @@ pub fn seed_state(debug: bool) -> GameState {
         y: 0.0,
         rotation: 0.0,
         radius: 10.0,
-        orbit_speed: 0.2 / 5.0,
+        orbit_speed: 0.2 / 5.0 * ORB_SPEED_MULT,
         anchor_id: star_id.clone(),
         anchor_tier: 1,
     };
@@ -418,7 +420,7 @@ pub fn seed_state(debug: bool) -> GameState {
         y: 0.0,
         rotation: 0.0,
         radius: 15.0,
-        orbit_speed: 0.05 / 5.0,
+        orbit_speed: 0.05 / 5.0 * ORB_SPEED_MULT,
         anchor_id: star_id.clone(),
         anchor_tier: 1,
     };
@@ -431,7 +433,7 @@ pub fn seed_state(debug: bool) -> GameState {
         y: 0.0,
         rotation: 0.0,
         radius: 2.0,
-        orbit_speed: 0.3 / 5.0,
+        orbit_speed: 0.3 / 5.0 * ORB_SPEED_MULT,
         anchor_id: big_planet.id.clone(),
         anchor_tier: 2,
     };
@@ -445,7 +447,7 @@ pub fn seed_state(debug: bool) -> GameState {
         y: 0.0,
         rotation: 0.0,
         radius: 4.0,
-        orbit_speed: 0.5 / 5.0,
+        orbit_speed: 0.5 / 5.0 * ORB_SPEED_MULT,
         anchor_id: big_planet.id.clone(),
         anchor_tier: 2,
     };
@@ -467,7 +469,7 @@ pub fn seed_state(debug: bool) -> GameState {
                 y: 0.0,
                 rotation: 0.0,
                 radius: 7.5,
-                orbit_speed: 0.05 / 5.0,
+                orbit_speed: 0.05 / 5.0 * ORB_SPEED_MULT,
                 anchor_id: star_id.clone(),
                 anchor_tier: 1,
             },
@@ -481,8 +483,8 @@ pub fn seed_state(debug: bool) -> GameState {
                 x: 40.0 * 8.0,
                 y: 0.0,
                 rotation: 0.0,
-                radius: 10.0,
-                orbit_speed: 0.1 / 5.0,
+                radius: 50.0,
+                orbit_speed: 0.1 / 5.0 * ORB_SPEED_MULT,
                 anchor_id: star_id.clone(),
                 anchor_tier: 1,
             },

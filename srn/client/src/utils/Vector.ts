@@ -116,6 +116,15 @@ export default class Vector implements IVector {
     return VectorF(xRotated, yRotated);
   }
 
+  scalarMultiply(b: Vector) {
+    let a = this;
+    return a.x * b.x + a.y * b.y;
+  }
+
+  angleRad(b: Vector): number {
+    return Math.acos(this.scalarMultiply(b) / this.length() / b.length());
+  }
+
   // noinspection JSUnusedGlobalSymbols
   leftDownLess(right: Vector) {
     if (this.y < right.y) {
@@ -166,4 +175,11 @@ export function VectorFK(key: string) {
 export type Rect = {
   width: number;
   height: number;
+};
+
+const radToDeg = (r: number): number => {
+  return (r * 180) / Math.PI;
+};
+const degToRad = (r: number): number => {
+  return (r / 180) * Math.PI;
 };

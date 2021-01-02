@@ -40,7 +40,12 @@ export type GameObject = WithId &
     radius: number;
   };
 
-export type Planet = GameObject & WithName & WithColor;
+export type Planet = GameObject &
+  WithName &
+  WithColor & {
+    anchor_tier: number;
+    anchor_id: string;
+  };
 export type Star = GameObject & WithName & WithColor;
 
 export type Ship = GameObject &
