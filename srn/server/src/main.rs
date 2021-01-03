@@ -34,6 +34,7 @@ extern crate websocket;
 extern crate num_derive;
 
 mod bots;
+mod random_stuff;
 #[allow(dead_code)]
 mod vec2;
 mod vec2_test;

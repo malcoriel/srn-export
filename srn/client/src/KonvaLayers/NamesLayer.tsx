@@ -2,7 +2,7 @@ import React from 'react';
 import { antiScale, GameState, scaleConfig } from '../world';
 import NetState from '../NetState';
 import { Layer, Text } from 'react-konva';
-import Vector, { IVector } from '../utils/Vector';
+import Vector, { IVector, VectorF } from '../utils/Vector';
 import _ from 'lodash';
 import { babyBlue } from '../utils/palette';
 
@@ -13,9 +13,12 @@ function extractNamePositions(
 ): Array<[string, string, IVector, number]> {
   const res = [];
   const cameraShift = Vector.fromIVector(cameraPosition);
-  const shiftPos = (objPos: IVector) => {
+  const shiftPos = (objPos: IVector, offsetY = 0) => {
     const pos = Vector.fromIVector(objPos);
-    return pos.subtract(cameraShift).scale(1 / zoomProp);
+    return pos
+      .subtract(cameraShift)
+      .add(VectorF(0, offsetY))
+      .scale(1 / zoomProp);
   };
   for (const planet of state.planets) {
     let planetProps: [string, string, IVector, number] = [
@@ -25,6 +28,16 @@ function extractNamePositions(
       planet.radius,
     ];
     res.push(planetProps);
+  }
+
+  if (state.star) {
+    let items: [string, string, IVector, number] = [
+      state.star.id,
+      state.star.name,
+      shiftPos(state.star, 15),
+      state.star.radius,
+    ];
+    res.push(items);
   }
 
   const shipsById = _.keyBy(state.ships, 'id');
@@ -37,10 +50,11 @@ function extractNamePositions(
     if (!ship) {
       continue;
     }
+    let starNamePos = shiftPos(ship);
     let shipProps: [string, string, IVector, number] = [
       ship.id,
       player.name,
-      shiftPos(ship),
+      starNamePos,
       ship.radius,
     ];
     res.push(shipProps);

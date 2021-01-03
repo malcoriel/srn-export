@@ -41,6 +41,9 @@ mod world;
 #[path = "../../server/src/vec2.rs"]
 mod vec2;
 
+#[path = "../../server/src/random_stuff.rs"]
+mod random_stuff;
+
 pub const DEBUG_PHYSICS: bool = false;
 
 #[wasm_bindgen]

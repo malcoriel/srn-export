@@ -1,12 +1,17 @@
 use crate::vec2::{angle_rad, rotate, AsVec2f64, Precision, Vec2f64};
-use crate::DEBUG_PHYSICS;
+use crate::{new_id, DEBUG_PHYSICS};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use std::borrow::{Borrow, BorrowMut};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 use uuid::Uuid;
-const SEED_TIME: i64 = 9321 * 1000 * 1000;
+const SEED_TIME: i64 = 0; // 9321 * 1000 * 1000;
+use crate::random_stuff::{
+    gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
+    gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit,
+    gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
+};
 use chrono::Utc;
 use itertools::Itertools;
 use uuid::*;
@@ -256,6 +261,7 @@ pub fn update_quests(
 }
 
 fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Option<Quest> {
+    return None;
     let mut rng: ThreadRng = rand::thread_rng();
     let pickup = planets
         .into_iter()
@@ -390,67 +396,59 @@ pub fn seed_state(debug: bool) -> GameState {
     let star = Star {
         color: "rgb(200, 150, 65)".to_string(),
         id: star_id.clone(),
-        name: "Zinides".to_string(),
+        name: gen_star_name().to_string(),
         x: 0.0,
         y: 0.0,
         rotation: 0.0,
-        radius: 50.0,
+        radius: gen_star_radius(),
     };
 
-    let small_id = crate::new_id();
+    let mut planets = vec![];
 
-    let small_planet = Planet {
-        id: small_id,
-        color: "blue".to_string(),
-        name: "Dabayama".to_string(),
-        x: 19.0 * 5.0,
-        y: 0.0,
-        rotation: 0.0,
-        radius: 10.0,
-        orbit_speed: 0.2 / 5.0 * ORB_SPEED_MULT,
-        anchor_id: star_id.clone(),
-        anchor_tier: 1,
-    };
-
-    let big_planet = Planet {
-        color: "orange".to_string(),
-        id: crate::new_id(),
-        name: "Sunov".to_string(),
-        x: 30.0 * 5.0,
-        y: 0.0,
-        rotation: 0.0,
-        radius: 15.0,
-        orbit_speed: 0.05 / 5.0 * ORB_SPEED_MULT,
-        anchor_id: star_id.clone(),
-        anchor_tier: 1,
-    };
-
-    let sat1 = Planet {
-        color: "gray".to_string(),
-        id: crate::new_id(),
-        name: "D1".to_string(),
-        x: 35.9 * 5.0,
-        y: 0.0,
-        rotation: 0.0,
-        radius: 2.0,
-        orbit_speed: 0.3 / 5.0 * ORB_SPEED_MULT,
-        anchor_id: big_planet.id.clone(),
-        anchor_tier: 2,
-    };
-
-    let sat2 = Planet {
-        color: "gray".to_string(),
-        id: crate::new_id(),
-        name: "D2".to_string(),
-        // TODO having it as 23.7 makes client panic in deserialization, wtf?
-        x: 21.7 * 5.0,
-        y: 0.0,
-        rotation: 0.0,
-        radius: 4.0,
-        orbit_speed: 0.5 / 5.0 * ORB_SPEED_MULT,
-        anchor_id: big_planet.id.clone(),
-        anchor_tier: 2,
-    };
+    let mut current_x = star.radius;
+    let mut used_planet_names = HashSet::new();
+    for i in 0..gen_planet_count() {
+        let planet_id = new_id();
+        let name = gen_planet_name().to_string();
+        if used_planet_names.contains(&name) {
+            continue;
+        }
+        used_planet_names.insert(name.clone());
+        current_x += gen_planet_gap();
+        // planets.push(Planet {
+        //     id: planet_id,
+        //     name,
+        //     x: current_x,
+        //     y: 0.0,
+        //     rotation: 0.0,
+        //     radius: gen_planet_radius(),
+        //     orbit_speed: gen_planet_orbit_speed() * ORB_SPEED_MULT / i as f64,
+        //     anchor_id: star.id.clone(),
+        //     anchor_tier: 1,
+        //     color: gen_color().to_string(),
+        // });
+        // let mut current_sat_x = current_x;
+        // for j in 0..gen_sat_count() {
+        //     let name = gen_sat_name().to_string();
+        //     if used_planet_names.contains(&name) {
+        //         continue;
+        //     }
+        //     used_planet_names.insert(name.clone());
+        //     current_sat_x += gen_sat_gap();
+        //     planets.push(Planet {
+        //         id: new_id(),
+        //         name,
+        //         x: current_sat_x,
+        //         y: 0.0,
+        //         rotation: 0.0,
+        //         radius: gen_sat_radius(),
+        //         orbit_speed: gen_sat_orbit_speed() * ORB_SPEED_MULT / j as f64,
+        //         anchor_id: planet_id,
+        //         anchor_tier: 0,
+        //         color: gen_color().to_string(),
+        //     })
+        // }
+    }
 
     let now = Utc::now().timestamp_millis() as u64;
     let mut state = GameState {
@@ -460,36 +458,7 @@ pub fn seed_state(debug: bool) -> GameState {
         my_id: crate::new_id(),
         ticks: 0,
         star: Some(star),
-        planets: vec![
-            Planet {
-                color: "orange".to_string(),
-                id: crate::new_id(),
-                name: "Robrapus".to_string(),
-                x: 15.0 * 5.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 7.5,
-                orbit_speed: 0.05 / 5.0 * ORB_SPEED_MULT,
-                anchor_id: star_id.clone(),
-                anchor_tier: 1,
-            },
-            small_planet,
-            sat1,
-            sat2,
-            Planet {
-                color: "greenyellow".to_string(),
-                id: crate::new_id(),
-                name: "Eustea".to_string(),
-                x: 40.0 * 8.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 50.0,
-                orbit_speed: 0.1 / 5.0 * ORB_SPEED_MULT,
-                anchor_id: star_id.clone(),
-                anchor_tier: 1,
-            },
-            big_planet,
-        ],
+        planets,
         ships: vec![],
         players: vec![],
         leaderboard: None,
