@@ -47,6 +47,19 @@ export const QuestPanel = () => {
       description={'show active quest'}
       position={PanelPosition.BottomLeft}
       button
+      minimized={
+        questData && (
+          <div className="quest-minimized">
+            <span className="elem" onClick={() => focus(questData!.fromPlanet)}>
+              {questData.fromPlanet.name}
+            </span>
+            <span> ➔ </span>
+            <span className="elem" onClick={() => focus(questData!.toPlanet)}>
+              {questData.toPlanet.name}
+            </span>
+          </div>
+        )
+      }
     >
       <div className="quest-panel">
         <div className="header">

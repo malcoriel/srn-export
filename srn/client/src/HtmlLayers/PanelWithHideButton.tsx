@@ -23,22 +23,35 @@ export const PanelWithHideButton: React.FC<{
   position: PanelPosition.BottomRight | PanelPosition.BottomLeft;
   minimized?: ReactNode;
   button?: boolean;
+  extraWide?: boolean;
 }> = ({
-  button,
+  button = true,
   hotkey,
   defaultValue,
   position,
   description,
   children,
   minimized,
+  extraWide,
 }) => {
   const [shown, setShown] = useToggleHotkey(hotkey, defaultValue, description);
-  if (!shown) return <>{minimized}</> || null;
+  if (!shown)
+    return (
+      (
+        <div className="panel-minimized" onClick={() => setShown(true)}>
+          {minimized}
+        </div>
+      ) || null
+    );
   return (
-    <div className={`panel ${posToClassName[position]} close`}>
+    <div
+      className={`panel ${posToClassName[position]} close ${
+        extraWide ? 'extra-wide' : ''
+      }`}
+    >
       {button && (
         <div className="hide-button" onClick={() => setShown(false)}>
-          <span className="arrow">←</span>
+          <span className="arrow"> ➔ </span>
         </div>
       )}
       {children}
