@@ -266,11 +266,7 @@ pub fn update_quests(
 
 fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Option<Quest> {
     let mut rng: ThreadRng = rand::thread_rng();
-    let pickup = planets
-        .into_iter()
-        .filter(|p| p.id != docked_at.unwrap_or(Default::default()))
-        .collect::<Vec<_>>();
-    let from = &pickup[rng.gen_range(0, pickup.len())];
+    let from = get_random_planet(planets, docked_at, &mut rng);
     let delivery = planets
         .into_iter()
         .filter(|p| p.id != from.id)
@@ -283,6 +279,19 @@ fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Opti
         state: QuestState::Started,
         reward,
     });
+}
+
+fn get_random_planet<'a>(
+    planets: &'a Vec<Planet>,
+    docked_at: Option<Uuid>,
+    rng: &mut ThreadRng,
+) -> &'a Planet {
+    let pickup = planets
+        .into_iter()
+        .filter(|p| p.id != docked_at.unwrap_or(Default::default()))
+        .collect::<Vec<_>>();
+    let from = &pickup[rng.gen_range(0, pickup.len())];
+    from
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -458,7 +467,7 @@ pub fn seed_state(debug: bool) -> GameState {
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
         tag: None,
-        milliseconds_remaining: 30 * 1000,
+        milliseconds_remaining: 3 * 60 * 1000,
         paused: false,
         my_id: crate::new_id(),
         ticks: 0,
@@ -572,11 +581,13 @@ pub fn add_player(state: &mut GameState, player_id: &Uuid, is_bot: bool, name: O
 }
 
 pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
+    let mut rng: ThreadRng = rand::thread_rng();
+    let start = get_random_planet(&state.planets, None, &mut rng);
     let ship = Ship {
         id: crate::new_id(),
-        color: "blue".to_string(),
-        x: 0.0,
-        y: 0.0,
+        color: gen_color().to_string(),
+        x: start.x.clone(),
+        y: start.y.clone(),
         rotation: 0.0,
         radius: 1.0,
         docked_at: None,
