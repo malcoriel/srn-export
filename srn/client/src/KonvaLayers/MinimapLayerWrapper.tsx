@@ -9,7 +9,7 @@ import { blue } from '../utils/palette';
 import React from 'react';
 
 export const MinimapLayerWrapper = () => {
-  const shown = useToggleHotkey('shift+m', true, 'show minimap');
+  const [shown, setShown] = useToggleHotkey('shift+m', true, 'show minimap');
   if (!shown) return null;
 
   return (

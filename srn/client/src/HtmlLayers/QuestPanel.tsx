@@ -2,7 +2,7 @@ import React from 'react';
 import NetState, { findMyPlayer } from '../NetState';
 import { Planet, Quest, QuestState } from '../world';
 import { findPlanet } from './GameHTMLHudLayer';
-import { useToggleHotkey } from '../utils/useToggleHotkey';
+import { PanelPosition, PanelWithHideButton } from './PanelWithHideButton';
 
 export const QuestPanel = () => {
   const ns = NetState.get();
@@ -40,29 +40,34 @@ export const QuestPanel = () => {
     visualState.boundCameraMovement = false;
   };
 
-  const show = useToggleHotkey('shift+q', true, 'show quest');
-  if (!show) return null;
-
   return (
-    <div className="panel game-panel quest-panel">
-      <div className="header">
-        Active quest: <span className="description">Cargo delivery</span>
-        <span> - {questData.reward} cr. reward</span>
-      </div>
-      <div className="stages">
-        <div className={`line ${fromDone ? 'done' : ''}`}>
-          1. Pick up the cargo at{' '}
-          <span className="elem" onClick={() => focus(questData!.fromPlanet)}>
-            {questData.fromPlanet.name}
-          </span>
+    <PanelWithHideButton
+      defaultValue={true}
+      hotkey={'shift+q'}
+      description={'show active quest'}
+      position={PanelPosition.BottomLeft}
+      button
+    >
+      <div className="quest-panel">
+        <div className="header">
+          Active quest: <span className="description">Cargo delivery</span>
+          <span> - {questData.reward} cr. reward</span>
         </div>
-        <div className={`line ${toDone ? 'done' : ''}`}>
-          2. Drop the cargo at{' '}
-          <span className="elem" onClick={() => focus(questData!.toPlanet)}>
-            {questData.toPlanet.name}
-          </span>
+        <div className="stages">
+          <div className={`line ${fromDone ? 'done' : ''}`}>
+            1. Pick up the cargo at{' '}
+            <span className="elem" onClick={() => focus(questData!.fromPlanet)}>
+              {questData.fromPlanet.name}
+            </span>
+          </div>
+          <div className={`line ${toDone ? 'done' : ''}`}>
+            2. Drop the cargo at{' '}
+            <span className="elem" onClick={() => focus(questData!.toPlanet)}>
+              {questData.toPlanet.name}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+    </PanelWithHideButton>
   );
 };

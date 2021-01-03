@@ -7,7 +7,7 @@ export const useToggleHotkey = (
   hotkey: string,
   defaultValue: boolean,
   description?: string
-) => {
+): [boolean, (val: boolean) => void] => {
   if (description) hotkeyRegistry[hotkey] = description;
   const [shown, setShown] = useState(defaultValue);
   useHotkeys(
@@ -17,5 +17,5 @@ export const useToggleHotkey = (
     },
     [shown, setShown]
   );
-  return shown;
+  return [shown, setShown];
 };

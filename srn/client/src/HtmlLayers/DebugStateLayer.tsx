@@ -8,7 +8,7 @@ export const DebugStateLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state } = ns;
-  const shown = useToggleHotkey(
+  const [shown, setShown] = useToggleHotkey(
     'ctrl+shift+d',
     false,
     'show state (huge FPS drop!)'

@@ -1,4 +1,4 @@
-import { Canvas, MouseEvent, useThree } from 'react-three-fiber';
+import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { max_x, min_x, ShipAction, ShipActionType, size } from '../world';
 import React, { Suspense } from 'react';
@@ -43,7 +43,8 @@ export const ThreeLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state } = ns;
-  const showCoords = useShowCoordinates();
+  const [shown, setShown] = useShowCoordinates();
+  const showCoords = shown;
 
   return (
     <Canvas

@@ -2,7 +2,6 @@
   z-index: 10;
   width: 300px;
   padding: 10px;
-  opacity: 0.5;
   color: white;
   background-color: #555;
   border-radius: 5px;
@@ -148,5 +147,43 @@
   .done {
     color: #b4f8c8 !important;
     text-decoration: line-through;
+  }
+}
+
+$hideButtonSize: 20px;
+.panel {
+  .hide-button {
+
+    display: block;
+    width: 0;
+    height: 0;
+    border: $hideButtonSize solid transparent;
+    border-left: $hideButtonSize solid blue;
+
+    position: absolute;
+    cursor: pointer;
+
+    .arrow {
+      position: absolute;
+      font-size: 14px;
+
+      top: -6px;
+      left: -18px;
+    }
+  }
+}
+.aux-panel {
+  .hide-button {
+    transform: rotate(225deg);
+    top: -$hideButtonSize;
+    left: -$hideButtonSize;
+  }
+}
+
+.game-panel {
+  .hide-button {
+    transform: rotate(-45deg);
+    top: -$hideButtonSize;
+    right: -$hideButtonSize;
   }
 }
