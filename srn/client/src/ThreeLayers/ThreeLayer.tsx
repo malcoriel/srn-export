@@ -1,4 +1,4 @@
-import { Canvas, MouseEvent } from 'react-three-fiber';
+import { Canvas, MouseEvent, useThree } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { max_x, min_x, ShipAction, ShipActionType, size } from '../world';
 import React, { Suspense } from 'react';

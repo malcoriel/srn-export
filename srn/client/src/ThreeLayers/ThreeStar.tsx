@@ -64,7 +64,7 @@ export const ThreeStar: React.FC<
   );
   // 10 -> 0.25
   // 20 -> 0.5
-  patchedUniforms.srcRadius.value = ((props.scale[0] / 10) * 0.2) / zoomProp;
+  patchedUniforms.srcRadius.value = ((props.scale[0] / 10) * 0.18) / zoomProp;
   // patchedUniforms.iResolution.value = new Vector3(
   //   width_px / 10,
   //   height_px / 10,

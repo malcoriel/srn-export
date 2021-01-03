@@ -81,6 +81,7 @@ export const CameraZoomer: React.FC = () => {
     >
       <mesh position={[0, 0, -20]}>
         <planeBufferGeometry args={[width_units, height_units]} />
+        <meshBasicMaterial transparent={true} color="green" />
       </mesh>
     </group>
   );

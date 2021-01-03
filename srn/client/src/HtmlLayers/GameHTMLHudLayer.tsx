@@ -56,15 +56,6 @@ export const GameHTMLHudLayer: React.FC = () => {
           {maxPing && <span>&nbsp;({maxPing} max)</span>}.&nbsp;
         </span>
       )}
-      {state.milliseconds_remaining > 0 ? (
-        <span>
-          <span>
-            Time before the game ends:{' '}
-            {Math.floor(state.milliseconds_remaining / 1000)} seconds. &nbsp;
-          </span>
-        </span>
-      ) : null}
-      {myPlayer && <span>Current money: {myPlayer.money} cr.&nbsp;</span>}
       {questData && (
         <span>
           <span>Current quest:</span>
