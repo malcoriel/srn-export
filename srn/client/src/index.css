@@ -4,3 +4,7 @@
   overflow: hidden;
   background: black;
 }
+
+.react-jinke-music-player-main {
+  display: none;
+}

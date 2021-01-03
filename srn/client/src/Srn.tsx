@@ -27,11 +27,55 @@ import './HtmlLayers/Panel.scss';
 import { MinimapLayerWrapper } from './KonvaLayers/MinimapLayerWrapper';
 import { InGameLeaderBoardPanel } from './HtmlLayers/InGameLeaderboardPanel';
 import { QuestPanel } from './HtmlLayers/QuestPanel';
+import ReactJkMusicPlayer from 'react-jinke-music-player';
+import 'react-jinke-music-player/assets/index.css';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
 
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
+
+let bgmTracks = [
+  {
+    name: 'c2',
+    musicSrc: 'resources/bgm/c2.mp3',
+    singer: 'aiva',
+  },
+  {
+    name: 'c3',
+    musicSrc: 'resources/bgm/c3.mp3',
+    singer: 'aiva',
+  },
+  {
+    name: 'c4',
+    musicSrc: 'resources/bgm/c4.mp3',
+    singer: 'aiva',
+  },
+  {
+    name: 'c5',
+    musicSrc: 'resources/bgm/c5.mp3',
+    singer: 'aiva',
+  },
+  {
+    name: 'c6',
+    musicSrc: 'resources/bgm/c6.mp3',
+    singer: 'aiva',
+  },
+];
+let defaultPlayIndex =
+  parseInt(String(Math.random() * bgmTracks.length), 10) % bgmTracks.length;
+
+function MusicControls() {
+  return (
+    <ReactJkMusicPlayer
+      toggleMode={false}
+      showMiniProcessBar
+      defaultPlayMode="shufflePlay"
+      defaultPlayIndex={defaultPlayIndex}
+      audioLists={bgmTracks}
+    />
+  );
+}
 
 class Srn extends React.Component<
   {},
@@ -141,13 +185,13 @@ class Srn extends React.Component<
               <CoordLayer />
             </Stage>
           )}
-
           <ShipControls />
           <GameHTMLHudLayer />
           <InGameLeaderBoardPanel />
           <HelpLayer />
           <LeaderboardLayer />
           <QuestPanel />
+          <MusicControls />
         </div>
         {!this.state.ready && (
           <StartHudLayer
