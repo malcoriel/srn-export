@@ -6,11 +6,11 @@ use std::borrow::{Borrow, BorrowMut};
 use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 use uuid::Uuid;
-const SEED_TIME: i64 = 0; // 9321 * 1000 * 1000;
+const SEED_TIME: i64 = 9321 * 1000 * 1000;
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
-    gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit,
-    gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
+    gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
+    gen_sat_radius, gen_star_name, gen_star_radius,
 };
 use chrono::Utc;
 use itertools::Itertools;
@@ -261,7 +261,6 @@ pub fn update_quests(
 }
 
 fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Option<Quest> {
-    return None;
     let mut rng: ThreadRng = rand::thread_rng();
     let pickup = planets
         .into_iter()
@@ -415,43 +414,44 @@ pub fn seed_state(debug: bool) -> GameState {
         }
         used_planet_names.insert(name.clone());
         current_x += gen_planet_gap();
-        // planets.push(Planet {
-        //     id: planet_id,
-        //     name,
-        //     x: current_x,
-        //     y: 0.0,
-        //     rotation: 0.0,
-        //     radius: gen_planet_radius(),
-        //     orbit_speed: gen_planet_orbit_speed() * ORB_SPEED_MULT / i as f64,
-        //     anchor_id: star.id.clone(),
-        //     anchor_tier: 1,
-        //     color: gen_color().to_string(),
-        // });
-        // let mut current_sat_x = current_x;
-        // for j in 0..gen_sat_count() {
-        //     let name = gen_sat_name().to_string();
-        //     if used_planet_names.contains(&name) {
-        //         continue;
-        //     }
-        //     used_planet_names.insert(name.clone());
-        //     current_sat_x += gen_sat_gap();
-        //     planets.push(Planet {
-        //         id: new_id(),
-        //         name,
-        //         x: current_sat_x,
-        //         y: 0.0,
-        //         rotation: 0.0,
-        //         radius: gen_sat_radius(),
-        //         orbit_speed: gen_sat_orbit_speed() * ORB_SPEED_MULT / j as f64,
-        //         anchor_id: planet_id,
-        //         anchor_tier: 0,
-        //         color: gen_color().to_string(),
-        //     })
-        // }
+        let planet = Planet {
+            id: planet_id,
+            name,
+            x: current_x.clone(),
+            y: 0.0,
+            rotation: 0.0,
+            radius: gen_planet_radius(),
+            orbit_speed: gen_planet_orbit_speed() * ORB_SPEED_MULT / (i + 1) as f64,
+            anchor_id: star.id.clone(),
+            anchor_tier: 1,
+            color: gen_color().to_string(),
+        };
+        let mut current_sat_x = current_x + planet.radius + 10.0;
+        for j in 0..gen_sat_count(planet.radius) {
+            let name = gen_sat_name().to_string();
+            if used_planet_names.contains(&name) {
+                continue;
+            }
+            used_planet_names.insert(name.clone());
+            current_sat_x += gen_sat_gap();
+            planets.push(Planet {
+                id: new_id(),
+                name,
+                x: current_sat_x,
+                y: 0.0,
+                rotation: 0.0,
+                radius: gen_sat_radius(),
+                orbit_speed: gen_sat_orbit_speed() * ORB_SPEED_MULT / (j + 1) as f64,
+                anchor_id: planet_id,
+                anchor_tier: 2,
+                color: gen_color().to_string(),
+            })
+        }
+        planets.push(planet);
     }
 
     let now = Utc::now().timestamp_millis() as u64;
-    let mut state = GameState {
+    let state = GameState {
         tag: None,
         milliseconds_remaining: 60 * 60 * 1000,
         paused: false,
@@ -464,11 +464,33 @@ pub fn seed_state(debug: bool) -> GameState {
         leaderboard: None,
         start_time_ticks: now,
     };
+    let mut state = validate_state(state);
     state.planets = update_planets(&state.planets, &state.star, SEED_TIME);
+    let state = validate_state(state);
     if debug {
         eprintln!("{}", serde_json::to_string_pretty(&state).ok().unwrap());
     }
     state
+}
+
+fn validate_state(mut in_state: GameState) -> GameState {
+    in_state.planets = in_state
+        .planets
+        .into_iter()
+        .filter(|p| {
+            let check = p.x.is_finite()
+                && !p.x.is_nan()
+                && p.y.is_finite()
+                && !p.y.is_nan()
+                && p.rotation.is_finite()
+                && !p.rotation.is_nan();
+            if !check {
+                eprintln!("Validate state: removed planet {:?})", p);
+            }
+            return check;
+        })
+        .collect::<Vec<_>>();
+    in_state
 }
 
 pub fn force_update_to_now(state: &mut GameState) {

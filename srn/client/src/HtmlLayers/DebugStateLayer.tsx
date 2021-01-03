@@ -16,7 +16,7 @@ export const DebugStateLayer: React.FC = () => {
   if (!shown) return null;
 
   return shown ? (
-    <div className="panel aux-panel">
+    <div className="panel aux-panel debug-state">
       <ReactJson src={state} />
     </div>
   ) : null;

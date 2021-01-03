@@ -43,7 +43,7 @@ const COLORS: [&str; 32] = [
 ];
 
 const PLANET_NAMES: [&str; 32] = [
-    "Scarol", "Dailla", "Tapella", "Agland", "Ceonine", "Depes", "Mazsea ", "Brova", "Legcan",
+    "Scarol", "Dailla", "Tapella", "Agland", "Ceonine", "Depes", "Mazsea", "Brova", "Legcan",
     "Tolopa", "Intum", "Bettose", "Harutlis", "Intfiner", "Arudros", "Whimox", "Wonuria",
     "Wimnicus", "Grenfar", "Lenis", "Kerenna", "Furtate", "Vhilnea", "Sangre", "Polyku", "Mois",
     "Takcon", "Dekma", "Khalassa", "Taruk", "Synocon", "Valyti",
@@ -110,9 +110,15 @@ pub fn gen_planet_count() -> u32 {
     return rng.gen_range(4, 8);
 }
 
-pub fn gen_sat_count() -> u32 {
+pub fn gen_sat_count(planet_radius: f64) -> u32 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(0, 2);
+    if planet_radius < 15.0 {
+        return rng.gen_range(0, 2);
+    }
+    if planet_radius < 20.0 {
+        return rng.gen_range(1, 4);
+    }
+    return rng.gen_range(3, 7);
 }
 
 pub fn gen_star_radius() -> f64 {
@@ -122,17 +128,17 @@ pub fn gen_star_radius() -> f64 {
 
 pub fn gen_planet_gap() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(10.0, 15.0);
+    return rng.gen_range(60.0, 100.0);
 }
 
 pub fn gen_planet_orbit_speed() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(0.05, 0.15);
+    return rng.gen_range(5.0, 55.0) / 500.0;
 }
 
 pub fn gen_sat_orbit_speed() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(0.05, 0.15);
+    return rng.gen_range(5.0, 55.0) / 250.0;
 }
 
 pub fn gen_planet_radius() -> f64 {
@@ -142,15 +148,10 @@ pub fn gen_planet_radius() -> f64 {
 
 pub fn gen_sat_radius() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(1.0, 2.0);
-}
-
-pub fn gen_sat_orbit() -> f64 {
-    let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(2.0, 4.0);
+    return rng.gen_range(2.0, 3.0);
 }
 
 pub fn gen_sat_gap() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(1.0, 3.0);
+    return rng.gen_range(8.0, 12.0);
 }
