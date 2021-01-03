@@ -7,7 +7,6 @@ import { babyBlue, yellow } from '../utils/palette';
 import { antiScale, Planet, QuestState, Ship } from '../world';
 import { findPlanet } from '../HtmlLayers/GameHTMLHudLayer';
 
-const CLOSEST_TRAJECTORY_DIST = 5.0;
 const MAX_ITER = 100;
 const TRAJECTORY_STEP = 10.0;
 
@@ -21,7 +20,7 @@ const buildTrajectory = (questTarget: Planet, myShip: Ship): Vector[] => {
   let dir = dir1.normalize().scale(TRAJECTORY_STEP);
   while (
     Vector.fromIVector(current).euDistTo(Vector.fromIVector(questTarget)) >
-    CLOSEST_TRAJECTORY_DIST
+    TRAJECTORY_STEP
   ) {
     current = current.add(dir);
     res.push(current);
