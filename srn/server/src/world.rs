@@ -487,7 +487,7 @@ pub fn seed_state(debug: bool) -> GameState {
     state
 }
 
-const MAX_ORBIT: f64 = 350.0;
+const MAX_ORBIT: f64 = 400.0;
 
 fn validate_state(mut in_state: GameState) -> GameState {
     in_state.planets = in_state
