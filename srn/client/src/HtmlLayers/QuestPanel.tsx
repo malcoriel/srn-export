@@ -2,10 +2,12 @@ import React from 'react';
 import NetState, { findMyPlayer } from '../NetState';
 import { Planet, Quest, QuestState } from '../world';
 import { findPlanet } from './GameHTMLHudLayer';
+import { useToggleHotkey } from '../utils/useToggleHotkey';
 
 export const QuestPanel = () => {
   const ns = NetState.get();
   if (!ns) return null;
+
   const { state, visualState } = ns;
   const myPlayer = findMyPlayer(state);
   let questData:
@@ -37,6 +39,10 @@ export const QuestPanel = () => {
     visualState.cameraPosition = { x: p.x, y: p.y };
     visualState.boundCameraMovement = false;
   };
+
+  const show = useToggleHotkey('shift+q', true, 'show quest');
+  if (!show) return null;
+
   return (
     <div className="panel game-panel quest-panel">
       <div className="header">

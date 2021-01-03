@@ -6,7 +6,7 @@ export const InGameLeaderBoardPanel = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  const shown = useToggleHotkey('shift+l', true, 'show leaderboard');
+  const shown = useToggleHotkey('shift+l', false, 'show leaderboard');
   if (!shown) return null;
 
   const { leaderboard, milliseconds_remaining, my_id } = ns.state;
