@@ -26,6 +26,7 @@ import { HelpLayer } from './HtmlLayers/HelpLayer';
 import './HtmlLayers/Panel.scss';
 import { MinimapLayerWrapper } from './KonvaLayers/MinimapLayerWrapper';
 import { InGameLeaderBoardPanel } from './HtmlLayers/InGameLeaderboardPanel';
+import { QuestPanel } from './HtmlLayers/QuestPanel';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
@@ -146,6 +147,7 @@ class Srn extends React.Component<
           <InGameLeaderBoardPanel />
           <HelpLayer />
           <LeaderboardLayer />
+          <QuestPanel />
         </div>
         {!this.state.ready && (
           <StartHudLayer

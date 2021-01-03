@@ -13,29 +13,6 @@ export const GameHTMLHudLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
   const { connecting, state, ping, maxPing } = ns;
-  const myPlayer = findMyPlayer(state);
-  let questData: any;
-  if (myPlayer && myPlayer.quest) {
-    const quest = myPlayer.quest;
-    const fromPlanet = findPlanet(state, quest.from_id);
-    const toPlanet = findPlanet(state, quest.to_id);
-    if (fromPlanet && toPlanet) {
-      questData = {};
-      questData.from = {
-        name: fromPlanet.name,
-        color:
-          quest.state === QuestState.Picked ||
-          quest.state === QuestState.Delivered
-            ? 'green'
-            : 'white',
-      };
-      questData.to = {
-        name: toPlanet.name,
-        color: quest.state === QuestState.Delivered ? 'green' : 'white',
-      };
-      questData.reward = `${quest.reward} cr.`;
-    }
-  }
   return (
     <div
       style={{
@@ -56,17 +33,14 @@ export const GameHTMLHudLayer: React.FC = () => {
           {maxPing && <span>&nbsp;({maxPing} max)</span>}.&nbsp;
         </span>
       )}
-      {questData && (
+      {state.milliseconds_remaining > 0 ? (
         <span>
-          <span>Current quest:</span>
-          <span style={{ color: questData.from.color }}>
-            {questData.from.name}
+          <span>
+            Time before the game ends:{' '}
+            {Math.floor(state.milliseconds_remaining / 1000)} seconds. &nbsp;
           </span>
-          <span> -&gt; </span>
-          <span style={{ color: questData.to.color }}>{questData.to.name}</span>
-          <span>&nbsp;({questData.reward})</span>
         </span>
-      )}
+      ) : null}
     </div>
   );
 };

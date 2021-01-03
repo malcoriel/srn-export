@@ -16,7 +16,7 @@ export const BackgroundPlane = () => {
 
   return (
     <mesh position={[0, 0, -10]} ref={mesh}>
-      <planeBufferGeometry args={[width_units, height_units]} />
+      <planeBufferGeometry args={[width_units * 1.5, height_units * 1.5]} />
       <meshBasicMaterial color="black" />
       <rawShaderMaterial
         fragmentShader={fragmentShader}
