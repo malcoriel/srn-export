@@ -36,10 +36,10 @@ const STAR_NAMES: [&str; 32] = [
 ];
 
 const COLORS: [&str; 32] = [
-    "#2D572C", "#1E213D", "#DE4C8A", "#3E3B32", "#35682D", "#316650", "#9D9101", "#E1CC4F",
-    "#2A6478", "#705335", "#C51D34", "#4D5645", "#382C1E", "#1C542D", "#8D948D", "#4E3B31",
-    "#474B4E", "#57A639", "#A03472", "#C7B446", "#1D334A", "#5B3A29", "#008F39", "#1D1E33",
-    "#F54021", "#924E7D", "#D7D7D7", "#231A24", "#31372B", "#D7D7D7", "#025669", "#1E2460",
+    "#AD57AC", "#AE213D", "#DE4C8A", "#AE3BA2", "#A568AD", "#A166A0", "#9D91A1", "#E1CCAF",
+    "#AA6478", "#7053A5", "#C5BDA4", "#4D56A5", "#382CAE", "#AC54AD", "#8D948D", "#AE3BA1",
+    "#A7BBAE", "#57A6A9", "#A0B472", "#C7B4A6", "#1D334A", "#5BBAA9", "#008FA9", "#ADBEA3",
+    "#F5B0A1", "#924E7D", "#D7D7D7", "#A31AA4", "#31372B", "#D7D7D7", "#025669", "#AE2460",
 ];
 
 const PLANET_NAMES: [&str; 32] = [
@@ -107,18 +107,18 @@ pub fn gen_color() -> &'static str {
 
 pub fn gen_planet_count() -> u32 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(4, 8);
+    return rng.gen_range(5, 8);
 }
 
 pub fn gen_sat_count(planet_radius: f64) -> u32 {
     let mut rng: ThreadRng = rand::thread_rng();
-    if planet_radius < 15.0 {
+    if planet_radius < 10.0 {
         return rng.gen_range(0, 2);
     }
-    if planet_radius < 20.0 {
-        return rng.gen_range(1, 4);
+    if planet_radius < 15.0 {
+        return rng.gen_range(1, 3);
     }
-    return rng.gen_range(3, 7);
+    return rng.gen_range(2, 5);
 }
 
 pub fn gen_star_radius() -> f64 {
@@ -128,22 +128,22 @@ pub fn gen_star_radius() -> f64 {
 
 pub fn gen_planet_gap() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(60.0, 100.0);
+    return rng.gen_range(60.0, 80.0);
 }
 
 pub fn gen_planet_orbit_speed() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(5.0, 55.0) / 500.0;
+    return rng.gen_range(5.0, 55.0) / 750.0;
 }
 
 pub fn gen_sat_orbit_speed() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(5.0, 55.0) / 250.0;
+    return rng.gen_range(20.0, 30.0) / 250.0;
 }
 
 pub fn gen_planet_radius() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(10.0, 25.0);
+    return rng.gen_range(8.0, 20.0);
 }
 
 pub fn gen_sat_radius() -> f64 {

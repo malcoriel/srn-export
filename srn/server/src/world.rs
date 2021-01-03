@@ -473,17 +473,22 @@ pub fn seed_state(debug: bool) -> GameState {
     state
 }
 
+const MAX_ORBIT: f64 = 350.0;
+
 fn validate_state(mut in_state: GameState) -> GameState {
     in_state.planets = in_state
         .planets
         .into_iter()
         .filter(|p| {
+            let p_pos = Vec2f64 { x: p.x, y: p.y };
             let check = p.x.is_finite()
                 && !p.x.is_nan()
                 && p.y.is_finite()
                 && !p.y.is_nan()
                 && p.rotation.is_finite()
-                && !p.rotation.is_nan();
+                && !p.rotation.is_nan()
+                && p_pos.euclidean_len() < MAX_ORBIT;
+
             if !check {
                 eprintln!("Validate state: removed planet {:?})", p);
             }

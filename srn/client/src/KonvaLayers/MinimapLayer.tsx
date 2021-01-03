@@ -33,6 +33,7 @@ const radiusToMinimapRadius = (val: number) =>
 const trailWidth = 0.5;
 const baseOpacity = 0.6;
 const innerOpacity = 0.3;
+const planetOpacity = 0.9;
 const totalArc = 45;
 const arcCount = 9;
 
@@ -75,7 +76,7 @@ export const MinimapLayer = () => {
       />
       {state.star && (
         <Circle
-          opacity={innerOpacity}
+          opacity={planetOpacity}
           onMouseDown={moveCamera}
           radius={radiusToMinimapRadius(state.star.radius)}
           fill={state.star.color}
@@ -107,7 +108,7 @@ export const MinimapLayer = () => {
             <Group key={p.id ? p.id : i}>
               <Group position={posToMinimapPos(p)}>
                 <Circle
-                  opacity={innerOpacity}
+                  opacity={planetOpacity}
                   radius={radiusToMinimapRadius(p.radius)}
                   fill={p.color}
                   onMouseDown={moveCamera}
