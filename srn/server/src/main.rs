@@ -42,7 +42,7 @@ mod world;
 mod world_test;
 
 lazy_static! {
-    static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ClientMessage>)>>> =
+    static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ServerToClientMessage>)>>> =
         Arc::new(Mutex::new(vec![]));
 }
 
@@ -63,33 +63,42 @@ struct TagConfirm {
     tag: String,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+struct ShipsWrapper {
+    ships: Vec<Ship>,
+}
+
 #[derive(Debug, Clone)]
-enum ClientMessage {
+enum ServerToClientMessage {
     StateChange(GameState),
     StateChangeExclusive(GameState, Uuid),
     TagConfirm(TagConfirm, Uuid),
+    MulticastPartialShipUpdate(ShipsWrapper, Uuid),
 }
 
-impl ClientMessage {
+impl ServerToClientMessage {
     pub fn serialize(&self) -> String {
         let (code, serialized) = match self {
-            ClientMessage::StateChange(state) => {
+            ServerToClientMessage::StateChange(state) => {
                 (1, serde_json::to_string::<GameState>(&state).unwrap())
             }
-            ClientMessage::StateChangeExclusive(state, _unused) => {
+            ServerToClientMessage::StateChangeExclusive(state, _unused) => {
                 (2, serde_json::to_string::<GameState>(&state).unwrap())
             }
-            ClientMessage::TagConfirm(tag_confirm, _unused) => (
+            ServerToClientMessage::TagConfirm(tag_confirm, _unused) => (
                 3,
                 serde_json::to_string::<TagConfirm>(&tag_confirm).unwrap(),
             ),
+            ServerToClientMessage::MulticastPartialShipUpdate(ships, _unused) => {
+                (4, serde_json::to_string::<ShipsWrapper>(&ships).unwrap())
+            }
         };
         format!("{}_%_{}", code, serialized)
     }
 }
 
-static mut DISPATCHER_SENDER: Option<Mutex<Sender<ClientMessage>>> = None;
-static mut DISPATCHER_RECEIVER: Option<Mutex<Receiver<ClientMessage>>> = None;
+static mut DISPATCHER_SENDER: Option<Mutex<Sender<ServerToClientMessage>>> = None;
+static mut DISPATCHER_RECEIVER: Option<Mutex<Receiver<ServerToClientMessage>>> = None;
 
 struct StateContainer {
     state: GameState,
@@ -187,7 +196,7 @@ fn mutate_owned_ship(
     cont.state.ships.remove(old_ship_index.unwrap());
     world::force_update_to_now(&mut cont.state);
     cont.state.ships.push(updated_ship.clone());
-    multicast_state_excluding(cont.state.clone(), client_id);
+    multicast_ships_update_excluding(cont.state.ships.clone(), client_id);
     if let Some(tag) = tag {
         send_tag_confirm(tag, client_id);
     }
@@ -202,15 +211,20 @@ fn validate_ship_move(_old: &Ship, _new: &Ship) -> bool {
 fn broadcast_state(state: GameState) {
     unsafe {
         let sender = get_dispatcher_sender();
-        sender.send(ClientMessage::StateChange(state)).unwrap();
+        sender
+            .send(ServerToClientMessage::StateChange(state))
+            .unwrap();
     }
 }
 
-fn multicast_state_excluding(state: GameState, client_id: Uuid) {
+fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Uuid) {
     unsafe {
         let sender = get_dispatcher_sender();
         sender
-            .send(ClientMessage::StateChangeExclusive(state, client_id))
+            .send(ServerToClientMessage::MulticastPartialShipUpdate(
+                ShipsWrapper { ships },
+                client_id,
+            ))
             .unwrap();
     }
 }
@@ -219,12 +233,15 @@ fn send_tag_confirm(tag: String, client_id: Uuid) {
     unsafe {
         let sender = get_dispatcher_sender();
         sender
-            .send(ClientMessage::TagConfirm(TagConfirm { tag }, client_id))
+            .send(ServerToClientMessage::TagConfirm(
+                TagConfirm { tag },
+                client_id,
+            ))
             .unwrap();
     }
 }
 
-unsafe fn get_dispatcher_sender() -> Sender<ClientMessage> {
+unsafe fn get_dispatcher_sender() -> Sender<ServerToClientMessage> {
     DISPATCHER_SENDER.as_ref().unwrap().lock().unwrap().clone()
 }
 
@@ -277,7 +294,7 @@ fn handle_request(request: WSRequest) {
         client.send_message(&message).unwrap();
     }
 
-    let (client_tx, client_rx) = mpsc::channel::<ClientMessage>();
+    let (client_tx, client_rx) = mpsc::channel::<ServerToClientMessage>();
     CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
 
     let (mut receiver, mut sender) = client.split().unwrap();
@@ -377,21 +394,37 @@ fn handle_request(request: WSRequest) {
         if let Ok(message) = client_rx.try_recv() {
             if !is_disconnected(client_id) {
                 let message = match message {
-                    ClientMessage::StateChange(state) => Some(ClientMessage::StateChange(
-                        patch_state_for_player(state, client_id),
-                    )),
-                    ClientMessage::StateChangeExclusive(state, exclude_client_id) => {
+                    ServerToClientMessage::StateChange(state) => {
+                        Some(ServerToClientMessage::StateChange(patch_state_for_player(
+                            state, client_id,
+                        )))
+                    }
+                    ServerToClientMessage::StateChangeExclusive(state, exclude_client_id) => {
                         if client_id != exclude_client_id {
-                            Some(ClientMessage::StateChange(patch_state_for_player(
-                                state, client_id,
-                            )))
+                            Some(ServerToClientMessage::StateChangeExclusive(
+                                patch_state_for_player(state, client_id),
+                                exclude_client_id,
+                            ))
                         } else {
                             None
                         }
                     }
-                    ClientMessage::TagConfirm(tag_confirm, target_client_id) => {
+                    ServerToClientMessage::TagConfirm(tag_confirm, target_client_id) => {
                         if client_id == target_client_id {
-                            Some(ClientMessage::TagConfirm(tag_confirm, target_client_id))
+                            Some(ServerToClientMessage::TagConfirm(
+                                tag_confirm,
+                                target_client_id,
+                            ))
+                        } else {
+                            None
+                        }
+                    }
+                    ServerToClientMessage::MulticastPartialShipUpdate(ships, exclude_client_id) => {
+                        if client_id != exclude_client_id {
+                            Some(ServerToClientMessage::MulticastPartialShipUpdate(
+                                ships,
+                                exclude_client_id,
+                            ))
                         } else {
                             None
                         }
@@ -518,7 +551,7 @@ fn spawn_ship(player_id: &Uuid) {
 #[launch]
 fn rocket() -> rocket::Rocket {
     unsafe {
-        let (tx, rx) = channel::<ClientMessage>();
+        let (tx, rx) = channel::<ServerToClientMessage>();
         DISPATCHER_SENDER = Some(Mutex::new(tx));
         DISPATCHER_RECEIVER = Some(Mutex::new(rx));
     }
@@ -562,7 +595,9 @@ fn rocket() -> rocket::Rocket {
         .mount("/api", routes![get_state, options_state]) // post_state
 }
 
-unsafe fn dispatcher_thread(client_senders: Arc<Mutex<Vec<(Uuid, Sender<ClientMessage>)>>>) {
+unsafe fn dispatcher_thread(
+    client_senders: Arc<Mutex<Vec<(Uuid, Sender<ServerToClientMessage>)>>>,
+) {
     let unwrapped = DISPATCHER_RECEIVER.as_mut().unwrap().lock().unwrap();
     while let Ok(msg) = unwrapped.recv() {
         for sender in client_senders.lock().unwrap().iter() {

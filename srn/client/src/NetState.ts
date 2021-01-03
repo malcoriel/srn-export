@@ -63,9 +63,10 @@ const DEBUG_CREATION = false;
 
 export enum ServerToClientMessageCode {
   Unknown,
-  Sync,
+  FullSync,
   SyncExclusive,
   TagConfirm = 3,
+  MulticastPartialShipsUpdate = 4,
 }
 
 const MAX_PENDING_TICKS = 2000;
@@ -204,7 +205,7 @@ export default class NetState extends EventEmitter {
 
       let messageCode = Number(messageCodeStr);
       if (
-        messageCode === ServerToClientMessageCode.Sync ||
+        messageCode === ServerToClientMessageCode.FullSync ||
         messageCode === ServerToClientMessageCode.SyncExclusive
       ) {
         const parsed = JSON.parse(data);
@@ -262,6 +263,25 @@ export default class NetState extends EventEmitter {
         this.pendingActions = this.pendingActions.filter(
           ([tag]) => tag !== confirmedTag
         );
+      } else if (
+        messageCode === ServerToClientMessageCode.MulticastPartialShipsUpdate
+      ) {
+        // 1. it is always about other ships, since server always excludes the updater from the update recipients
+        // so to avoid juggling actions above and so on, just skip my own ship update
+        // 2. it is also mostly an optimization to avoid sending the whole state because of other's actions
+        // 3. it can be further optimized by only sending the changed ship
+        // 4. without it, manual movement updates not so often (only via full syncs), so this leads to very bad look
+        let ships = JSON.parse(data).ships;
+        const myOldShip = findMyShip(this.state);
+        this.state.ships = ships;
+        if (myOldShip) {
+          this.state.ships = this.state.ships.map((s) => {
+            if (s.id == myOldShip.id) {
+              return myOldShip;
+            }
+            return s;
+          });
+        }
       }
     } catch (e) {
       console.warn('error handling message', e);
