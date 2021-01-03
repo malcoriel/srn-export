@@ -32,6 +32,7 @@ export const QuestPanel = () => {
     <div className="panel game-panel quest-panel">
       <div className="header">
         Active quest: <span className="description">Cargo delivery</span>
+        <span> - {questData.reward} cr. reward</span>
       </div>
       <div className="stages">
         <div className={`line ${fromDone ? 'done' : ''}`}>
