@@ -150,6 +150,10 @@ export default class Vector implements IVector {
     }
     return false;
   }
+
+  normalize() {
+    return this.scale(1 / this.length());
+  }
 }
 
 const memory = new Map();
