@@ -453,7 +453,7 @@ pub fn seed_state(debug: bool) -> GameState {
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
         tag: None,
-        milliseconds_remaining: 60 * 60 * 1000,
+        milliseconds_remaining: 60 * 1000,
         paused: false,
         my_id: crate::new_id(),
         ticks: 0,
@@ -555,11 +555,11 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     state
 }
 
-pub fn add_player(state: &mut GameState, player_id: &Uuid) {
+pub fn add_player(state: &mut GameState, player_id: &Uuid, name: Option<String>) {
     state.players.push(Player {
         id: player_id.clone(),
         ship_id: None,
-        name: player_id.to_string(),
+        name: name.unwrap_or(player_id.to_string()),
         quest: None,
         money: 0,
     })

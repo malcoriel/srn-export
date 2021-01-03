@@ -446,7 +446,7 @@ fn change_player_name(conn_id: &Uuid, new_name: &&str) {
 fn make_new_player(conn_id: &Uuid) {
     {
         let mut cont = STATE.write().unwrap();
-        world::add_player(&mut cont.state, conn_id);
+        world::add_player(&mut cont.state, conn_id, None);
     }
     spawn_ship(conn_id);
 }
@@ -590,6 +590,7 @@ fn physics_thread() {
     }
 }
 
+use crate::random_stuff::gen_bot_name;
 use bots::Bot;
 lazy_static! {
     static ref BOTS: Arc<Mutex<HashMap<Uuid, Bot>>> = Arc::new(Mutex::new(HashMap::new()));
@@ -602,12 +603,15 @@ fn add_bot(bot: Bot) -> Uuid {
     let id = bot.id.clone();
     bots.insert(id.clone(), bot);
     let mut cont = STATE.write().unwrap();
-    world::add_player(&mut cont.state, &id);
+    world::add_player(&mut cont.state, &id, Some(gen_bot_name()));
     world::spawn_ship(&mut cont.state, &id);
     id
 }
 
 fn bot_thread() {
+    add_bot(Bot::new());
+    add_bot(Bot::new());
+    add_bot(Bot::new());
     add_bot(Bot::new());
     loop {
         let mut ship_updates: HashMap<Uuid, Ship> = HashMap::new();

@@ -84,6 +84,13 @@ const SAT_NAMES: [&str; 32] = [
     "Hëna",
 ];
 
+const BOT_NAMES: [&str; 32] = [
+    "Brobot", "Tin", "Gigabit", "Scrap", "Eyax", "Ohtron", "Ash", "Cyl", "Clank", "Sterling",
+    "Efttron", "Ibud", "Buttons", "Plex", "Scythe", "Oqotron", "Usp", "Rust", "Spudnik", "Brobot",
+    "Micro", "Izp", "ipsroid", "Bult", "Otis", "Earl", "Spencer", "Ifen", "Af", "Jin", "Plexi",
+    "Aqroid",
+];
+
 pub fn rand_32() -> usize {
     let mut rng: ThreadRng = rand::thread_rng();
     return rng.gen_range(0, 31);
@@ -103,6 +110,10 @@ pub fn gen_sat_name() -> &'static str {
 
 pub fn gen_color() -> &'static str {
     COLORS[rand_32()]
+}
+
+pub fn gen_bot_name() -> String {
+    format!("{} (bot)", BOT_NAMES[rand_32()].to_string())
 }
 
 pub fn gen_planet_count() -> u32 {
