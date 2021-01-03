@@ -7,34 +7,23 @@ export const LeaderboardLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  const { leaderboard, milliseconds_remaining } = ns.state;
-  if (!leaderboard) {
+  const { leaderboard, milliseconds_remaining, paused } = ns.state;
+  if (!leaderboard || !paused) {
     return null;
   }
   return (
-    <div
-      style={{
-        position: 'absolute',
-        color: 'white',
-        backgroundColor: 'gray',
-        width: size.width_px,
-        height: size.height_px,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
+    <div className="panel central-panel  final-leaderboard">
       <div>
-        <div>Winner: {leaderboard.winner}</div>
-        <div>
-          <span>Scores:</span>
-          {leaderboard.rating.map(([p, s]) => (
-            <div key={p.id}>
-              {p.name} - {s}
-            </div>
-          ))}
+        <div className="winner">Winner: {leaderboard.winner}</div>
+        <div className="scores">Scores:</div>
+        {leaderboard.rating.map(([p, s], i) => (
+          <div className="line" key={p.id}>
+            {i + 1}. {p.name} - {s}
+          </div>
+        ))}
+        <div className="countdown">
+          New game in {Math.floor(milliseconds_remaining / 1000)}
         </div>
-        <div>New game in {Math.floor(milliseconds_remaining / 1000)}</div>
       </div>
     </div>
   );

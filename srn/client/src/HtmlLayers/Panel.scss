@@ -1,5 +1,4 @@
-.panel {
-  position: absolute;
+.panel-base {
   z-index: 10;
   width: 300px;
   padding: 10px;
@@ -8,6 +7,17 @@
   background-color: #555;
   border-radius: 5px;
   border: solid blue 1px;
+}
+
+.panel {
+  @extend .panel-base;
+  position: absolute;
+}
+
+.main-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .aux-panel {
@@ -75,4 +85,34 @@
   height: 500px;
   overflow: auto;
   opacity: 0.9
+}
+
+.final-leaderboard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.9;
+  padding: 50px;
+
+  .winner {
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+
+  .scores {
+    font-size: 24px;
+    margin-bottom: 16px;
+
+  }
+
+  .line {
+    line-height: 20px;
+    margin-bottom: 10px;
+  }
+
+  .countdown {
+    line-height: 20px;
+    color: #fbe7c6;
+    margin-bottom: 10px;
+  }
 }

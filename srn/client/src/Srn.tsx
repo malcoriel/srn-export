@@ -119,9 +119,9 @@ class Srn extends React.Component<
     return (
       <>
         <div
+          className="main-container"
           style={{
             position: 'relative',
-            backgroundColor: 'black',
             width: size.width_px,
             height: size.height_px,
           }}
@@ -145,6 +145,7 @@ class Srn extends React.Component<
           <GameHTMLHudLayer />
           <InGameLeaderBoardPanel />
           <HelpLayer />
+          <LeaderboardLayer />
         </div>
         {!this.state.ready && (
           <StartHudLayer
