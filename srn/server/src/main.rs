@@ -243,7 +243,7 @@ fn handle_request(request: WSRequest) {
     let client_id = Uuid::new_v4();
     println!("Connection from {}, id={}", ip, client_id);
 
-    make_new_player(&client_id);
+    make_new_human_player(&client_id);
     {
         let mut state = STATE.read().unwrap().state.clone();
         state = patch_state_for_player(state, client_id);
@@ -443,10 +443,10 @@ fn change_player_name(conn_id: &Uuid, new_name: &&str) {
     }
 }
 
-fn make_new_player(conn_id: &Uuid) {
+fn make_new_human_player(conn_id: &Uuid) {
     {
         let mut cont = STATE.write().unwrap();
-        world::add_player(&mut cont.state, conn_id, None);
+        world::add_player(&mut cont.state, conn_id, false, None);
     }
     spawn_ship(conn_id);
 }
@@ -603,7 +603,7 @@ fn add_bot(bot: Bot) -> Uuid {
     let id = bot.id.clone();
     bots.insert(id.clone(), bot);
     let mut cont = STATE.write().unwrap();
-    world::add_player(&mut cont.state, &id, Some(gen_bot_name()));
+    world::add_player(&mut cont.state, &id, true, Some(gen_bot_name()));
     world::spawn_ship(&mut cont.state, &id);
     id
 }

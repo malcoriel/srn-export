@@ -247,7 +247,11 @@ pub fn update_quests(
                     }
                 }
                 if quest.state == QuestState::Delivered {
-                    player.money += quest.reward;
+                    if player.is_bot {
+                        player.money += quest.reward / 2;
+                    } else {
+                        player.money += quest.reward;
+                    }
                     player.quest = None;
                 }
             } else {
@@ -355,6 +359,7 @@ pub struct Quest {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Player {
     pub id: Uuid,
+    pub is_bot: bool,
     pub ship_id: Option<Uuid>,
     pub name: String,
     pub quest: Option<Quest>,
@@ -555,9 +560,10 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     state
 }
 
-pub fn add_player(state: &mut GameState, player_id: &Uuid, name: Option<String>) {
+pub fn add_player(state: &mut GameState, player_id: &Uuid, is_bot: bool, name: Option<String>) {
     state.players.push(Player {
         id: player_id.clone(),
+        is_bot,
         ship_id: None,
         name: name.unwrap_or(player_id.to_string()),
         quest: None,

@@ -52,36 +52,36 @@ const PLANET_NAMES: [&str; 32] = [
 const SAT_NAMES: [&str; 32] = [
     "Cox K-054",
     "Culpeper L-1",
-    "Hahn",
+    "Hahn Q-3",
     "Lovelace X-11",
-    "Maa",
-    "Shuixing",
+    "Maa F-1",
+    "Shuixing A-5",
     "Dünya Z-49",
     "Päike RV-65",
     "Nakaya V-2",
-    "Celsius B-0",
+    "Celsius B-01",
     "Konrad KUY-4",
     "Qurra WI-39",
     "Uranus K-551",
     "Prhasbadi S-9",
-    "Lune",
+    "Lune J-2",
     "Wenus GI-843",
     "Neptunus O-97",
-    "Leo",
-    "Angel",
-    "Jean U-5",
+    "Leo S-7",
+    "Angel W-1",
+    "Jean U-52",
     "Shintaro",
     "Jupiters UY-1",
     "Ierde O-84",
     "Vênus W-3",
-    "Hirase",
+    "Hirase N-5",
     "de Coulomb BO-9",
     "Einstein A-87",
-    "Mercur",
+    "Mercur P-2",
     "Guru LE-1",
-    "Utarid A-9",
-    "Sonn",
-    "Hëna",
+    "Utarid A-93",
+    "Sonn E-2",
+    "Hëna A-9",
 ];
 
 const BOT_NAMES: [&str; 32] = [
@@ -149,7 +149,7 @@ pub fn gen_planet_orbit_speed() -> f64 {
 
 pub fn gen_sat_orbit_speed() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(20.0, 30.0) / 250.0;
+    return rng.gen_range(20.0, 30.0) / 100.0;
 }
 
 pub fn gen_planet_radius() -> f64 {
