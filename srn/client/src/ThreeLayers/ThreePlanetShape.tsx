@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
 import { Mesh, TextureLoader } from 'three';
 import * as THREE from 'three';
+import Color from 'color';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -16,7 +17,7 @@ export const ThreePlanetShape: React.FC<MeshProps & { color?: string }> = (
   const mesh = useRef<Mesh>();
   const space01map = useLoader(TextureLoader, 'resources/space01.jpg');
 
-  const color = props.color || 'white';
+  const color = Color(props.color).lighten(1.0).hex() || 'white';
 
   useFrame(() => {
     if (mesh.current) {
