@@ -21,6 +21,7 @@ enum OpCode {
 interface Cmd {
   code: OpCode;
   value: any;
+  tag?: string;
 }
 
 const FORCE_SYNC_INTERVAL = 1000;
@@ -59,6 +60,15 @@ export type VisualState = {
 };
 
 const DEBUG_CREATION = false;
+
+export enum ServerToClientMessageCode {
+  Unknown,
+  Sync,
+  SyncExclusive,
+  TagConfirm = 3,
+}
+
+const MAX_PENDING_TICKS = 2000;
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -120,7 +130,7 @@ export default class NetState extends EventEmitter {
     if (!mock) {
       this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
       this.updateOnServerInterval = setInterval(
-        this.updateShipOnServer,
+        () => this.updateShipOnServer(uuid.v4()),
         SHIP_UPDATE_INTERVAL
       );
     }
@@ -188,42 +198,70 @@ export default class NetState extends EventEmitter {
     };
   };
 
-  private handleMessage(data: string) {
+  private handleMessage(rawData: string) {
     try {
-      const parsed = JSON.parse(data);
+      const [messageCodeStr, data] = rawData.split('_%_');
 
+      let messageCode = Number(messageCodeStr);
       if (
-        parsed.tag &&
-        parsed.tag === this.forceSyncTag &&
-        this.forceSyncStart
+        messageCode === ServerToClientMessageCode.Sync ||
+        messageCode === ServerToClientMessageCode.SyncExclusive
       ) {
-        this.ping = Math.floor((performance.now() - this.forceSyncStart) / 2);
-        this.handleMaxPing(parsed);
+        const parsed = JSON.parse(data);
+        if (
+          parsed.tag &&
+          parsed.tag === this.forceSyncTag &&
+          this.forceSyncStart
+        ) {
+          this.ping = Math.floor((performance.now() - this.forceSyncStart) / 2);
+          this.handleMaxPing(parsed);
 
-        this.forceSyncTag = undefined;
-        this.forceSyncStart = undefined;
-      }
+          this.forceSyncTag = undefined;
+          this.forceSyncStart = undefined;
+        }
 
-      const myOldShip = findMyShip(this.state);
-      this.state = parsed;
-      // compensate for ping since the state we got is already outdated by that value
-      // 1. primarily work on planets - something that is adjusted deterministically
-      this.updateLocalState(this.ping);
-      // 2.1 fix docking/undocking rollback - this is a particular case of movement rollback
-      // 2.2 fix navigation rollback
-      const myUpdatedShip = findMyShip(this.state);
-      if (myOldShip && myUpdatedShip) {
-        // myUpdatedShip.docked_at = myOldShip.docked_at;
-        //myUpdatedShip.navigate_target = myOldShip.navigate_target;
-      }
-      // 3. fix my movement rollback by allowing update
-      if (myOldShip && myUpdatedShip) {
-        myUpdatedShip.x = myOldShip.x;
-        myUpdatedShip.y = myOldShip.y;
-      }
+        const myOldShip = findMyShip(this.state);
+        this.state = parsed;
+        // compensate for ping since the state we got is already outdated by that value
+        // 1. primarily work on planets - something that is adjusted deterministically
+        this.updateLocalState(this.ping);
+        const myUpdatedShip = findMyShip(this.state);
+        // 2. fix my movement rollback by allowing update
+        if (myOldShip && myUpdatedShip) {
+          myUpdatedShip.x = myOldShip.x;
+          myUpdatedShip.y = myOldShip.y;
+        }
 
-      if (!this.disconnecting) {
-        this.emit('change', this.state);
+        let toDrop = new Set();
+        for (const [tag, actions, ticks] of this.pendingActions) {
+          let age = Math.abs(ticks - this.state.ticks);
+          if (age > MAX_PENDING_TICKS) {
+            console.warn(
+              `dropping pending action ${tag} with age ${age}>${MAX_PENDING_TICKS}`
+            );
+            toDrop.add(tag);
+          } else {
+            // console.log(
+            //   `re-applying pending actions ${tag} with types ${actions.map(
+            //     (a) => a.type
+            //   )}`
+            // );
+            this.mutate_ship(actions, this.ping);
+          }
+        }
+        this.pendingActions = this.pendingActions.filter(
+          ([tag]) => !toDrop.has(tag)
+        );
+
+        if (!this.disconnecting) {
+          this.emit('change', this.state);
+        }
+      } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
+        let confirmedTag = JSON.parse(data).tag;
+
+        this.pendingActions = this.pendingActions.filter(
+          ([tag]) => tag !== confirmedTag
+        );
       }
     } catch (e) {
       console.warn('error handling message', e);
@@ -252,6 +290,7 @@ export default class NetState extends EventEmitter {
     if (this.socket && !this.connecting) {
       switch (cmd.code) {
         case OpCode.Sync: {
+          // TODO use cmd.tag instead of value tag for force-syncs
           let syncMsg = `${cmd.code}_%_${cmd.value.tag}`;
           if (cmd.value.forcedDelay) {
             syncMsg += `_%_${cmd.value.forcedDelay}`;
@@ -260,7 +299,9 @@ export default class NetState extends EventEmitter {
           break;
         }
         case OpCode.MutateMyShip: {
-          this.socket.send(`${cmd.code}_%_${JSON.stringify(cmd.value)}`);
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
           break;
         }
         case OpCode.Name: {
@@ -270,6 +311,9 @@ export default class NetState extends EventEmitter {
       }
     }
   }
+
+  // [tag, action, ticks], the order is the order of appearance
+  private pendingActions: [string, ShipAction[], number][] = [];
 
   private mutate_ship = (commands: ShipAction[], elapsedMs: number) => {
     const myShipIndex = findMyShipIndex(this.state);
@@ -294,8 +338,18 @@ export default class NetState extends EventEmitter {
   updateLocalState = (elapsedMs: number) => {
     let actions = Object.values(actionsActive).filter((a) => !!a);
     this.mutate_ship(actions as ShipAction[], elapsedMs);
-    if (actionsActive[ShipActionType.Dock]) {
-      this.updateShipOnServer();
+    let dockAction = actionsActive[ShipActionType.Dock];
+    let navigateAction = actionsActive[ShipActionType.Navigate];
+    let dockNavigateAction = actionsActive[ShipActionType.DockNavigate];
+    if (dockAction || navigateAction || dockNavigateAction) {
+      let tag = uuid.v4();
+      const nonNullActions = [
+        dockAction,
+        navigateAction,
+        dockNavigateAction,
+      ].filter((a) => !!a) as ShipAction[];
+      this.pendingActions.push([tag, nonNullActions, this.state.ticks]);
+      this.updateShipOnServer(tag);
     }
     if (actionsActive[ShipActionType.Move]) {
       this.visualState.boundCameraMovement = true;
@@ -317,12 +371,12 @@ export default class NetState extends EventEmitter {
     }
   };
 
-  private updateShipOnServer = () => {
+  private updateShipOnServer = (tag: string) => {
     if (this.state && !this.state.paused) {
       let myShipIndex = findMyShipIndex(this.state);
       if (myShipIndex !== -1 && myShipIndex !== null) {
         const myShip = this.state.ships[myShipIndex];
-        this.send({ code: OpCode.MutateMyShip, value: myShip });
+        this.send({ code: OpCode.MutateMyShip, value: myShip, tag });
       }
     }
   };

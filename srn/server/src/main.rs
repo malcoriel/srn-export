@@ -58,23 +58,33 @@ lazy_static! {
 lazy_static! {
     static ref CLIENT_ERRORS: Arc<Mutex<HashMap<Uuid, u32>>> = Arc::new(Mutex::new(HashMap::new()));
 }
+#[derive(Deserialize, Serialize, Debug, Clone)]
+struct TagConfirm {
+    tag: String,
+}
 
 #[derive(Debug, Clone)]
 enum ClientMessage {
     StateChange(GameState),
     StateChangeExclusive(GameState, Uuid),
+    TagConfirm(TagConfirm, Uuid),
 }
 
 impl ClientMessage {
     pub fn serialize(&self) -> String {
-        match self {
+        let (code, serialized) = match self {
             ClientMessage::StateChange(state) => {
-                serde_json::to_string::<GameState>(&state).unwrap()
+                (1, serde_json::to_string::<GameState>(&state).unwrap())
             }
             ClientMessage::StateChangeExclusive(state, _unused) => {
-                serde_json::to_string::<GameState>(&state).unwrap()
+                (2, serde_json::to_string::<GameState>(&state).unwrap())
             }
-        }
+            ClientMessage::TagConfirm(tag_confirm, _unused) => (
+                3,
+                serde_json::to_string::<TagConfirm>(&tag_confirm).unwrap(),
+            ),
+        };
+        format!("{}_%_{}", code, serialized)
     }
 }
 
@@ -117,8 +127,8 @@ struct ClientErr {
     message: String,
 }
 
-fn mutate_owned_ship_wrapped(client_id: Uuid, new_ship: Ship) {
-    let res = mutate_owned_ship(client_id, new_ship);
+fn mutate_owned_ship_wrapped(client_id: Uuid, new_ship: Ship, tag: Option<String>) {
+    let res = mutate_owned_ship(client_id, new_ship, tag);
     if res.is_err() {
         eprintln!("error mutating owned ship {}", res.err().unwrap().message);
         increment_client_errors(client_id);
@@ -126,7 +136,11 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, new_ship: Ship) {
     }
 }
 
-fn mutate_owned_ship(client_id: Uuid, new_ship: Ship) -> Result<Ship, ClientErr> {
+fn mutate_owned_ship(
+    client_id: Uuid,
+    new_ship: Ship,
+    tag: Option<String>,
+) -> Result<Ship, ClientErr> {
     let updated_ship: Ship;
     let old_ship_index;
     let mut cont = STATE.write().unwrap();
@@ -174,6 +188,9 @@ fn mutate_owned_ship(client_id: Uuid, new_ship: Ship) -> Result<Ship, ClientErr>
     world::force_update_to_now(&mut cont.state);
     cont.state.ships.push(updated_ship.clone());
     multicast_state_excluding(cont.state.clone(), client_id);
+    if let Some(tag) = tag {
+        send_tag_confirm(tag, client_id);
+    }
     return Ok(updated_ship);
 }
 
@@ -194,6 +211,15 @@ fn multicast_state_excluding(state: GameState, client_id: Uuid) {
         let sender = get_dispatcher_sender();
         sender
             .send(ClientMessage::StateChangeExclusive(state, client_id))
+            .unwrap();
+    }
+}
+
+fn send_tag_confirm(tag: String, client_id: Uuid) {
+    unsafe {
+        let sender = get_dispatcher_sender();
+        sender
+            .send(ClientMessage::TagConfirm(TagConfirm { tag }, client_id))
             .unwrap();
     }
 }
@@ -322,9 +348,13 @@ fn handle_request(request: WSRequest) {
                                         broadcast_state(state)
                                     }
                                     OpCode::MutateMyShip => {
-                                        serde_json::from_str::<Ship>(second)
-                                            .ok()
-                                            .map(|s| mutate_owned_ship_wrapped(client_id, s));
+                                        serde_json::from_str::<Ship>(second).ok().map(|s| {
+                                            mutate_owned_ship_wrapped(
+                                                client_id,
+                                                s,
+                                                third.map(|s| s.to_string()),
+                                            )
+                                        });
                                     }
                                     OpCode::Name => {
                                         change_player_name(&client_id, second);
@@ -355,6 +385,13 @@ fn handle_request(request: WSRequest) {
                             Some(ClientMessage::StateChange(patch_state_for_player(
                                 state, client_id,
                             )))
+                        } else {
+                            None
+                        }
+                    }
+                    ClientMessage::TagConfirm(tag_confirm, target_client_id) => {
+                        if client_id == target_client_id {
+                            Some(ClientMessage::TagConfirm(tag_confirm, target_client_id))
                         } else {
                             None
                         }
@@ -627,7 +664,7 @@ fn bot_thread() {
             }
         }
         for (bot_id, ship) in ship_updates.into_iter() {
-            mutate_owned_ship_wrapped(bot_id, ship);
+            mutate_owned_ship_wrapped(bot_id, ship, None);
         }
         thread::sleep(Duration::from_millis(BOT_SLEEP_MS));
     }

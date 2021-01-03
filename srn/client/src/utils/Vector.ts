@@ -39,6 +39,17 @@ export default class Vector implements IVector {
     return other.x === this.x && other.y === this.y;
   }
 
+  static equals(
+    that: IVector | null | undefined,
+    other: IVector | null | undefined
+  ) {
+    if (!other && !that) return true;
+    if (!other && that) return false;
+    if (other && !that) return false;
+
+    return other!.x === that!.x && other!.y === that!.y;
+  }
+
   length() {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
