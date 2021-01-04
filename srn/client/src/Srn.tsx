@@ -193,7 +193,7 @@ class Srn extends React.Component<
           <LeaderboardLayer />
           <QuestPanel />
           <MusicControls />
-          <DialoguePanel />
+          {/*<DialoguePanel />*/}
         </div>
         {!this.state.ready && (
           <StartHudLayer
