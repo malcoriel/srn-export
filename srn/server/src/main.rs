@@ -35,6 +35,7 @@ extern crate num_derive;
 
 mod bots;
 mod dialogue;
+mod dialogue_test;
 mod random_stuff;
 #[allow(dead_code)]
 mod vec2;
@@ -123,7 +124,7 @@ struct StateContainer {
 
 lazy_static! {
     static ref STATE: RwLock<StateContainer> = {
-        let state = world::seed_state(true);
+        let state = world::seed_state(true, true);
         RwLock::new(StateContainer { state })
     };
 }

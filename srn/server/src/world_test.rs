@@ -99,7 +99,7 @@ mod world_test {
 
         let both_client_and_server = vec![false, true];
         for is_client in both_client_and_server.into_iter() {
-            let mut state = seed_state(false);
+            let mut state = seed_state(false, false);
             let player_id = crate::new_id();
             add_player(&mut state, &player_id, false, None);
             spawn_ship(&mut state, &player_id, Some(Vec2f64::zero()));
@@ -134,7 +134,7 @@ mod world_test {
         let dist = 10.0;
 
         for is_client in vec![false, true].into_iter() {
-            let mut state = seed_state(false);
+            let mut state = seed_state(false, false);
             let player_id = crate::new_id();
             add_player(&mut state, &player_id, false, None);
             spawn_ship(&mut state, &player_id, Some(Vec2f64::zero()));
@@ -183,7 +183,7 @@ mod world_test {
 
         let both_client_and_server = vec![false]; // true
         for is_client in both_client_and_server.into_iter() {
-            let mut state = seed_state(false);
+            let mut state = seed_state(false, false);
             let player_id = crate::new_id();
             add_player(&mut state, &player_id, false, None);
             spawn_ship(&mut state, &player_id, Some(Vec2f64::zero()));

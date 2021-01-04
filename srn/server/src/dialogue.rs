@@ -37,8 +37,8 @@ pub struct Dialogue {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueUpdate {
-    dialogue_id: DialogueId,
-    option_id: OptionId,
+    pub dialogue_id: DialogueId,
+    pub option_id: OptionId,
 }
 
 pub type DialogueStates = HashMap<PlayerId, HashMap<DialogueId, Box<Option<StateId>>>>;
@@ -46,7 +46,7 @@ pub type DialogueId = Uuid;
 pub type StateId = Uuid;
 pub type OptionId = Uuid;
 pub struct DialogueScript {
-    pub transitions: HashMap<(StateId, OptionId), StateId>,
+    pub transitions: HashMap<(StateId, OptionId), Option<StateId>>,
     pub prompts: HashMap<StateId, String>,
     pub options: HashMap<StateId, Vec<(OptionId, String)>>,
 }
@@ -135,7 +135,7 @@ fn apply_dialogue_option(
         if let Some(current_state) = current_state {
             let next_state = script.transitions.get(&(current_state, update.option_id));
             if let Some(next_state) = next_state {
-                return Box::new(Some(next_state.clone()));
+                return Box::new(next_state.clone());
             } else {
                 return Box::new(None);
             }

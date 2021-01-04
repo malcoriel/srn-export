@@ -406,7 +406,7 @@ pub struct GameState {
 
 const ORB_SPEED_MULT: f64 = 1.0;
 
-pub fn seed_state(debug: bool) -> GameState {
+pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
     let star_id = crate::new_id();
     let star = Star {
         color: "rgb(200, 150, 65)".to_string(),
@@ -481,9 +481,14 @@ pub fn seed_state(debug: bool) -> GameState {
         start_time_ticks: now,
         dialogue: None,
     };
-    let mut state = validate_state(state);
-    state.planets = update_planets(&state.planets, &state.star, SEED_TIME);
-    let state = validate_state(state);
+    let state = if seed_and_validate {
+        let mut state = validate_state(state);
+        state.planets = update_planets(&state.planets, &state.star, SEED_TIME);
+        let state = validate_state(state);
+        state
+    } else {
+        state
+    };
     if debug {
         eprintln!("{}", serde_json::to_string_pretty(&state).ok().unwrap());
     }
@@ -540,7 +545,7 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
                     p
                 })
                 .collect::<Vec<_>>();
-            state = seed_state(false);
+            state = seed_state(false, true);
             state.players = players.clone();
             for player in players.iter() {
                 spawn_ship(&mut state, &player.id, None);
