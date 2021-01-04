@@ -57,6 +57,7 @@ mod world_test {
             paused: false,
             leaderboard: None,
             ticks: 0,
+            dialogue: None,
         };
         let eps = 0.2;
         let new_planets = update_planets(
@@ -100,13 +101,14 @@ mod world_test {
         for is_client in both_client_and_server.into_iter() {
             let mut state = seed_state(false);
             let player_id = crate::new_id();
-            add_player(&mut state, &player_id);
-            spawn_ship(&mut state, &player_id);
+            add_player(&mut state, &player_id, false, None);
+            spawn_ship(&mut state, &player_id, Some(Vec2f64::zero()));
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
 
             state = update(state, 1 * 1000, is_client);
             let ship = &state.ships[0];
+            eprintln!("No change ship {}/{}", ship.x, ship.y);
             assert!((ship.x).abs() < eps);
             assert!((ship.y).abs() < eps);
             assert!(ship.navigate_target.is_some());
@@ -134,8 +136,8 @@ mod world_test {
         for is_client in vec![false, true].into_iter() {
             let mut state = seed_state(false);
             let player_id = crate::new_id();
-            add_player(&mut state, &player_id);
-            spawn_ship(&mut state, &player_id);
+            add_player(&mut state, &player_id, false, None);
+            spawn_ship(&mut state, &player_id, Some(Vec2f64::zero()));
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
             state = update(state, 1 * 1000, is_client);
@@ -183,8 +185,8 @@ mod world_test {
         for is_client in both_client_and_server.into_iter() {
             let mut state = seed_state(false);
             let player_id = crate::new_id();
-            add_player(&mut state, &player_id);
-            spawn_ship(&mut state, &player_id);
+            add_player(&mut state, &player_id, false, None);
+            spawn_ship(&mut state, &player_id, Some(Vec2f64::zero()));
             let star = state.star.clone().unwrap();
             let planet_id = new_id();
             state.planets = vec![

@@ -44,6 +44,9 @@ mod vec2;
 #[path = "../../server/src/random_stuff.rs"]
 mod random_stuff;
 
+#[path = "../../server/src/dialogue.rs"]
+mod dialogue;
+
 pub const DEBUG_PHYSICS: bool = false;
 
 #[wasm_bindgen]

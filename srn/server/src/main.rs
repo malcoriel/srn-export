@@ -3,14 +3,10 @@
 #[macro_use]
 extern crate serde_derive;
 
-use mpsc::{channel, Receiver, Sender};
-use std::collections::HashMap;
-use std::sync::{mpsc, Arc, Mutex, RwLock};
-use std::thread;
-use std::time::Duration;
-
 use chrono::{DateTime, Local, Utc};
+use dialogue::{DialogueStates, DialogueTable};
 use lazy_static::lazy_static;
+use mpsc::{channel, Receiver, Sender};
 use num_traits::FromPrimitive;
 use rocket::http::Method;
 use rocket_contrib::json::Json;
@@ -19,6 +15,10 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins};
 #[doc(hidden)]
 pub use serde_derive::*;
 use serde_derive::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{mpsc, Arc, Mutex, RwLock};
+use std::thread;
+use std::time::Duration;
 use uuid::*;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
@@ -34,6 +34,7 @@ extern crate websocket;
 extern crate num_derive;
 
 mod bots;
+mod dialogue;
 mod random_stuff;
 #[allow(dead_code)]
 mod vec2;
@@ -68,12 +69,24 @@ struct ShipsWrapper {
     ships: Vec<Ship>,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+struct Wrapper<T> {
+    value: T,
+}
+
+impl<T> Wrapper<T> {
+    pub fn new(value: T) -> Self {
+        Wrapper { value }
+    }
+}
+
 #[derive(Debug, Clone)]
 enum ServerToClientMessage {
     StateChange(GameState),
     StateChangeExclusive(GameState, Uuid),
     TagConfirm(TagConfirm, Uuid),
     MulticastPartialShipUpdate(ShipsWrapper, Uuid),
+    DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid),
 }
 
 impl ServerToClientMessage {
@@ -90,8 +103,12 @@ impl ServerToClientMessage {
                 serde_json::to_string::<TagConfirm>(&tag_confirm).unwrap(),
             ),
             ServerToClientMessage::MulticastPartialShipUpdate(ships, _unused) => {
-                (4, serde_json::to_string::<ShipsWrapper>(&ships).unwrap())
+                (4, serde_json::to_string::<ShipsWrapper>(ships).unwrap())
             }
+            ServerToClientMessage::DialogueStateChange(dialogue, _unused) => (
+                5,
+                serde_json::to_string::<Wrapper<Option<Dialogue>>>(dialogue).unwrap(),
+            ),
         };
         format!("{}_%_{}", code, serialized)
     }
@@ -217,6 +234,18 @@ fn broadcast_state(state: GameState) {
     }
 }
 
+fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>) {
+    unsafe {
+        let sender = get_dispatcher_sender();
+        sender
+            .send(ServerToClientMessage::DialogueStateChange(
+                Wrapper::new(dialogue_state),
+                client_id,
+            ))
+            .unwrap();
+    }
+}
+
 fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Uuid) {
     unsafe {
         let sender = get_dispatcher_sender();
@@ -246,11 +275,12 @@ unsafe fn get_dispatcher_sender() -> Sender<ServerToClientMessage> {
 }
 
 #[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
-enum OpCode {
+enum ClientOpCode {
     Unknown = 0,
     Sync = 1,
     MutateMyShip = 2,
     Name = 3,
+    DialogueOption = 4,
 }
 
 type WSRequest =
@@ -354,7 +384,7 @@ fn handle_request(request: WSRequest) {
                         match first.parse::<u32>() {
                             Ok(number) => match FromPrimitive::from_u32(number) {
                                 Some(op_code) => match op_code {
-                                    OpCode::Sync => {
+                                    ClientOpCode::Sync => {
                                         if third.is_some() {
                                             thread::sleep(Duration::from_millis(
                                                 third.unwrap().parse::<u64>().unwrap(),
@@ -364,7 +394,7 @@ fn handle_request(request: WSRequest) {
                                         state.tag = Some(second.to_string());
                                         broadcast_state(state)
                                     }
-                                    OpCode::MutateMyShip => {
+                                    ClientOpCode::MutateMyShip => {
                                         serde_json::from_str::<Ship>(second).ok().map(|s| {
                                             mutate_owned_ship_wrapped(
                                                 client_id,
@@ -373,10 +403,19 @@ fn handle_request(request: WSRequest) {
                                             )
                                         });
                                     }
-                                    OpCode::Name => {
+                                    ClientOpCode::Name => {
                                         change_player_name(&client_id, second);
                                     }
-                                    OpCode::Unknown => {}
+                                    ClientOpCode::DialogueOption => {
+                                        handle_dialogue_option(
+                                            &client_id,
+                                            serde_json::from_str::<DialogueUpdate>(second)
+                                                .ok()
+                                                .unwrap(),
+                                            third.map(|s| s.to_string()),
+                                        );
+                                    }
+                                    ClientOpCode::Unknown => {}
                                 },
                                 None => {
                                     eprintln!("Invalid opcode {}", first);
@@ -424,6 +463,16 @@ fn handle_request(request: WSRequest) {
                             Some(ServerToClientMessage::MulticastPartialShipUpdate(
                                 ships,
                                 exclude_client_id,
+                            ))
+                        } else {
+                            None
+                        }
+                    }
+                    ServerToClientMessage::DialogueStateChange(dialogue, target_client_id) => {
+                        if client_id == target_client_id {
+                            Some(ServerToClientMessage::DialogueStateChange(
+                                dialogue,
+                                target_client_id,
                             ))
                         } else {
                             None
@@ -513,6 +562,32 @@ fn change_player_name(conn_id: &Uuid, new_name: &&str) {
     }
 }
 
+lazy_static! {
+    static ref DIALOGUE_TABLE: Arc<Mutex<Box<DialogueTable>>> =
+        Arc::new(Mutex::new(Box::new(HashMap::new())));
+}
+
+fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
+    let global_state_change;
+
+    let mut cont = STATE.write().unwrap();
+    let mut dialogue_cont = DIALOGUES.lock().unwrap();
+    let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
+    world::force_update_to_now(&mut cont.state);
+    let (new_dialogue_state, state_changed) = world::execute_dialog_option(
+        client_id,
+        &mut cont.state,
+        dialogue_update,
+        &mut *dialogue_cont,
+        &*dialogue_table,
+    );
+    unicast_dialogue_state(client_id.clone(), new_dialogue_state);
+    global_state_change = state_changed;
+    if global_state_change {
+        broadcast_state(STATE.read().unwrap().state.clone());
+    }
+}
+
 fn make_new_human_player(conn_id: &Uuid) {
     {
         let mut cont = STATE.write().unwrap();
@@ -545,7 +620,7 @@ pub fn new_id() -> Uuid {
 
 fn spawn_ship(player_id: &Uuid) {
     let mut cont = STATE.write().unwrap();
-    world::spawn_ship(&mut cont.state, player_id);
+    world::spawn_ship(&mut cont.state, player_id, None);
 }
 
 #[launch]
@@ -662,10 +737,16 @@ fn physics_thread() {
     }
 }
 
+use crate::dialogue::{Dialogue, DialogueUpdate};
 use crate::random_stuff::gen_bot_name;
 use bots::Bot;
 lazy_static! {
     static ref BOTS: Arc<Mutex<HashMap<Uuid, Bot>>> = Arc::new(Mutex::new(HashMap::new()));
+}
+
+lazy_static! {
+    static ref DIALOGUES: Arc<Mutex<Box<DialogueStates>>> =
+        Arc::new(Mutex::new(Box::new(HashMap::new())));
 }
 
 const BOT_SLEEP_MS: u64 = 200;
@@ -676,7 +757,7 @@ fn add_bot(bot: Bot) -> Uuid {
     bots.insert(id.clone(), bot);
     let mut cont = STATE.write().unwrap();
     world::add_player(&mut cont.state, &id, true, Some(gen_bot_name()));
-    world::spawn_ship(&mut cont.state, &id);
+    world::spawn_ship(&mut cont.state, &id, None);
     id
 }
 

@@ -89,6 +89,33 @@ export type Leaderboard = {
   winner: string;
 };
 
+export enum DialogueSubstitutionType {
+  Unknown,
+  PlanetName,
+  CharacterName,
+}
+
+export type DialogueSubstitution = {
+  s_type: DialogueSubstitutionType;
+  text: string;
+  color: string;
+};
+
+export type DialogueElem = {
+  text: string;
+  id: string;
+  substitution: DialogueSubstitution[];
+};
+
+export type Dialogue = {
+  id: string;
+  options: DialogueElem[];
+  prompt: DialogueElem;
+  planet?: Planet;
+  left_character_url: string;
+  right_character_url: string;
+};
+
 export type GameState = {
   tag: string;
   leaderboard?: Leaderboard;
@@ -102,6 +129,7 @@ export type GameState = {
   star?: Star;
   paused: boolean;
   milliseconds_remaining: number;
+  dialogue?: Dialogue;
 };
 
 export const scaleConfig = () => ({

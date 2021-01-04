@@ -1,5 +1,5 @@
 use crate::vec2::{angle_rad, rotate, AsVec2f64, Precision, Vec2f64};
-use crate::{new_id, DEBUG_PHYSICS};
+use crate::{dialogue, new_id, DEBUG_PHYSICS};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use std::borrow::{Borrow, BorrowMut};
@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 use uuid::Uuid;
 const SEED_TIME: i64 = 9321 * 1000 * 1000;
+use crate::dialogue::{Dialogue, DialogueStates, DialogueTable, DialogueUpdate};
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
     gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
@@ -400,6 +401,7 @@ pub struct GameState {
     pub paused: bool,
     pub leaderboard: Option<Leaderboard>,
     pub ticks: u32,
+    pub dialogue: Option<Dialogue>,
 }
 
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -477,6 +479,7 @@ pub fn seed_state(debug: bool) -> GameState {
         players: vec![],
         leaderboard: None,
         start_time_ticks: now,
+        dialogue: None,
     };
     let mut state = validate_state(state);
     state.planets = update_planets(&state.planets, &state.star, SEED_TIME);
@@ -540,7 +543,7 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
             state = seed_state(false);
             state.players = players.clone();
             for player in players.iter() {
-                spawn_ship(&mut state, &player.id);
+                spawn_ship(&mut state, &player.id, None);
             }
         } else {
         }
@@ -580,14 +583,22 @@ pub fn add_player(state: &mut GameState, player_id: &Uuid, is_bot: bool, name: O
     })
 }
 
-pub fn spawn_ship(state: &mut GameState, player_id: &Uuid) {
+pub fn spawn_ship(state: &mut GameState, player_id: &Uuid, at: Option<Vec2f64>) {
     let mut rng: ThreadRng = rand::thread_rng();
     let start = get_random_planet(&state.planets, None, &mut rng);
     let ship = Ship {
         id: crate::new_id(),
         color: gen_color().to_string(),
-        x: start.x.clone(),
-        y: start.y.clone(),
+        x: if at.is_some() {
+            at.unwrap().x
+        } else {
+            start.x.clone()
+        },
+        y: if at.is_some() {
+            at.unwrap().y
+        } else {
+            start.y.clone()
+        },
         rotation: 0.0,
         radius: 1.0,
         docked_at: None,
@@ -781,3 +792,15 @@ pub fn find_my_ship<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Option
 pub fn find_my_player<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Option<&'a Player> {
     state.players.iter().find(|p| p.id == *player_id)
 }
+
+pub fn execute_dialog_option(
+    client_id: &Uuid,
+    state: &mut GameState,
+    dialogue_update: DialogueUpdate,
+    states: &mut DialogueStates,
+    dialogue_table: &DialogueTable,
+) -> (Option<Dialogue>, bool) {
+    dialogue::execute_dialog_option(client_id, state, dialogue_update, states, dialogue_table)
+}
+
+pub type PlayerId = Uuid;

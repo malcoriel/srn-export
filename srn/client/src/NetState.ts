@@ -11,15 +11,16 @@ import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
 export type Timeout = ReturnType<typeof setTimeout>;
 
-enum OpCode {
+enum ClientOpCode {
   Unknown,
   Sync,
   MutateMyShip,
   Name,
+  DialogueOption,
 }
 
 interface Cmd {
-  code: OpCode;
+  code: ClientOpCode;
   value: any;
   tag?: string;
 }
@@ -67,6 +68,7 @@ export enum ServerToClientMessageCode {
   SyncExclusive,
   TagConfirm = 3,
   MulticastPartialShipsUpdate = 4,
+  UnicastDialogueStateChange = 5,
 }
 
 const MAX_PENDING_TICKS = 2000;
@@ -143,7 +145,7 @@ export default class NetState extends EventEmitter {
       this.forceSyncTag = tag;
       this.forceSyncStart = performance.now();
       const forcedDelay = 0;
-      this.send({ code: OpCode.Sync, value: { tag, forcedDelay } });
+      this.send({ code: ClientOpCode.Sync, value: { tag, forcedDelay } });
     }
   };
 
@@ -191,7 +193,7 @@ export default class NetState extends EventEmitter {
     };
     this.socket.onopen = () => {
       this.connecting = false;
-      this.send({ code: OpCode.Name, value: this.preferredName });
+      this.send({ code: ClientOpCode.Name, value: this.preferredName });
     };
     this.socket.onerror = () => {
       console.warn('socket error');
@@ -314,7 +316,7 @@ export default class NetState extends EventEmitter {
   private send(cmd: Cmd) {
     if (this.socket && !this.connecting) {
       switch (cmd.code) {
-        case OpCode.Sync: {
+        case ClientOpCode.Sync: {
           // TODO use cmd.tag instead of value tag for force-syncs
           let syncMsg = `${cmd.code}_%_${cmd.value.tag}`;
           if (cmd.value.forcedDelay) {
@@ -323,13 +325,13 @@ export default class NetState extends EventEmitter {
           this.socket.send(syncMsg);
           break;
         }
-        case OpCode.MutateMyShip: {
+        case ClientOpCode.MutateMyShip: {
           this.socket.send(
             `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
           );
           break;
         }
-        case OpCode.Name: {
+        case ClientOpCode.Name: {
           this.socket.send(`${cmd.code}_%_${cmd.value}`);
           break;
         }
@@ -401,8 +403,13 @@ export default class NetState extends EventEmitter {
       let myShipIndex = findMyShipIndex(this.state);
       if (myShipIndex !== -1 && myShipIndex !== null) {
         const myShip = this.state.ships[myShipIndex];
-        this.send({ code: OpCode.MutateMyShip, value: myShip, tag });
+        this.send({ code: ClientOpCode.MutateMyShip, value: myShip, tag });
       }
     }
   };
+
+  public sendDialogueOption(id: string) {
+    let tag = uuid.v4();
+    this.send({ code: ClientOpCode.DialogueOption, value: id, tag });
+  }
 }

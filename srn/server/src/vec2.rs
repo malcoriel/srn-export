@@ -68,6 +68,10 @@ impl Vec2f64 {
             Precision::P8 => String::from(format!("{:.8}/{:.8}", self.x, self.y)),
         }
     }
+
+    pub fn zero() -> Vec2f64 {
+        Vec2f64 { x: 0.0, y: 0.0 }
+    }
 }
 
 impl Debug for Vec2f64 {
