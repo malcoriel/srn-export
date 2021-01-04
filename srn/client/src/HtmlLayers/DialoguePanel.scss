@@ -1,0 +1,54 @@
+.dialogue {
+  position: absolute;
+  width: 600px;
+  padding: 0;
+  height: 600px;
+
+  .top-part {
+    display: flex;
+    height: 200px;
+  }
+
+  .top-part * {
+    border-right: solid blue 1px;
+    border-bottom: solid blue 1px;
+    flex: 1 0;
+    height: 100%;
+  }
+
+  .top-part *:last-child {
+    border-right: none;
+  }
+
+  .left-character {
+
+  }
+
+  .right-character {
+
+  }
+
+  .scene {
+
+  }
+
+  .prompt {
+    line-height: 24px;
+    font-size: 20px;
+    padding: 20px;
+  }
+
+  .options {
+    padding: 20px;
+  }
+
+  .line {
+    line-height: 20px;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  .line:last-child {
+    margin-bottom: 0;
+  }
+}

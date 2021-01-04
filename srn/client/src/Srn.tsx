@@ -29,6 +29,7 @@ import { InGameLeaderBoardPanel } from './HtmlLayers/InGameLeaderboardPanel';
 import { QuestPanel } from './HtmlLayers/QuestPanel';
 import ReactJkMusicPlayer from 'react-jinke-music-player';
 import 'react-jinke-music-player/assets/index.css';
+import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
@@ -192,6 +193,7 @@ class Srn extends React.Component<
           <LeaderboardLayer />
           <QuestPanel />
           <MusicControls />
+          <DialoguePanel />
         </div>
         {!this.state.ready && (
           <StartHudLayer
