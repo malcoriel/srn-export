@@ -667,22 +667,25 @@ lazy_static! {
 
 fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
     let global_state_change;
-
-    let mut cont = STATE.write().unwrap();
-    let mut dialogue_cont = DIALOGUES_STATES.lock().unwrap();
-    let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
-    world::force_update_to_now(&mut cont.state);
-    let (new_dialogue_state, state_changed) = world::execute_dialog_option(
-        client_id,
-        &mut cont.state,
-        dialogue_update,
-        &mut *dialogue_cont,
-        &*dialogue_table,
-    );
-    unicast_dialogue_state(client_id.clone(), new_dialogue_state);
-    global_state_change = state_changed;
-    if global_state_change {
-        broadcast_state(STATE.read().unwrap().state.clone());
+    {
+        let mut cont = STATE.write().unwrap();
+        let mut dialogue_cont = DIALOGUES_STATES.lock().unwrap();
+        let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
+        world::force_update_to_now(&mut cont.state);
+        let (new_dialogue_state, state_changed) = world::execute_dialog_option(
+            client_id,
+            &mut cont.state,
+            dialogue_update,
+            &mut *dialogue_cont,
+            &*dialogue_table,
+        );
+        unicast_dialogue_state(client_id.clone(), new_dialogue_state);
+        global_state_change = state_changed;
+    }
+    {
+        if global_state_change {
+            broadcast_state(STATE.read().unwrap().state.clone());
+        }
     }
 }
 

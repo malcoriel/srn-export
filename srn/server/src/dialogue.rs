@@ -1,5 +1,5 @@
 use crate::new_id;
-use crate::world::{find_my_ship, find_my_ship_mut, GameState, Planet, PlayerId};
+use crate::world::{find_my_ship, find_my_ship_mut, find_planet, GameState, Planet, PlayerId};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::slice::Iter;
@@ -66,6 +66,7 @@ pub struct DialogueScript {
     pub prompts: HashMap<StateId, String>,
     pub options: HashMap<StateId, Vec<(OptionId, String)>>,
     pub initial_state: StateId,
+    pub is_planetary: bool,
 }
 
 impl DialogueScript {
@@ -75,6 +76,7 @@ impl DialogueScript {
             prompts: Default::default(),
             options: Default::default(),
             initial_state: Default::default(),
+            is_planetary: false,
         }
     }
 }
@@ -91,16 +93,23 @@ pub fn execute_dialog_option(
 ) -> (Option<Dialogue>, bool) {
     if let Some(all_dialogues) = dialogue_states.get_mut(client_id) {
         if let Some(dialogue_state) = all_dialogues.1.get_mut(&update.dialogue_id) {
-            *dialogue_state = apply_dialogue_option(
+            let (new_state, side_effect) = apply_dialogue_option(
                 dialogue_state.clone(),
                 &update,
                 dialogue_table,
                 state,
                 &client_id,
             );
+            *dialogue_state = new_state;
             return (
-                build_dialogue_from_state(&update.dialogue_id, dialogue_state, dialogue_table),
-                false,
+                build_dialogue_from_state(
+                    &update.dialogue_id,
+                    dialogue_state,
+                    dialogue_table,
+                    client_id,
+                    state,
+                ),
+                side_effect,
             );
         } else {
             return (None, false);
@@ -114,6 +123,8 @@ pub fn build_dialogue_from_state(
     dialogue_id: &DialogueId,
     current_state: &Box<Option<StateId>>,
     dialogue_table: &DialogueTable,
+    player_id: &PlayerId,
+    game_state: &GameState,
 ) -> Option<Dialogue> {
     let script = dialogue_table.get(dialogue_id);
     if let Some(script) = script {
@@ -137,7 +148,15 @@ pub fn build_dialogue_from_state(
                     id: Default::default(),
                     substitution: vec![],
                 },
-                planet: None,
+                planet: if script.is_planetary {
+                    let my_ship = find_my_ship(game_state, player_id);
+                    my_ship
+                        .and_then(|s| s.docked_at)
+                        .and_then(|p| find_planet(game_state, &p))
+                        .and_then(|p| Some(p.clone()))
+                } else {
+                    None
+                },
                 left_character_url: "LEFT_URL".to_string(),
                 right_character_url: "RIGHT_URL".to_string(),
             };
@@ -153,7 +172,7 @@ fn apply_dialogue_option(
     dialogue_table: &DialogueTable,
     state: &mut GameState,
     player_id: &PlayerId,
-) -> Box<Option<StateId>> {
+) -> (Box<Option<StateId>>, bool) {
     eprintln!("apply start");
 
     let current_state = *current_state;
@@ -164,16 +183,16 @@ fn apply_dialogue_option(
             let next_state = script.transitions.get(&(current_state, update.option_id));
             eprintln!("apply next state {:?}", next_state);
             if let Some(next_state) = next_state {
-                apply_side_effect(state, next_state.1.clone(), player_id);
-                Box::new(next_state.0.clone())
+                let side_effect = apply_side_effect(state, next_state.1.clone(), player_id);
+                (Box::new(next_state.0.clone()), side_effect)
             } else {
-                Box::new(None)
+                (Box::new(None), false)
             }
         } else {
-            Box::new(None)
+            (Box::new(None), false)
         }
     } else {
-        Box::new(None)
+        (Box::new(None), false)
     };
 }
 
@@ -181,18 +200,18 @@ fn apply_side_effect(
     state: &mut GameState,
     side_effect: DialogOptionSideEffect,
     player_id: &PlayerId,
-) {
-    eprintln!("side effect {:?}", side_effect);
+) -> bool {
     match side_effect {
         DialogOptionSideEffect::Nothing => {}
         DialogOptionSideEffect::Undock => {
             let my_ship = find_my_ship_mut(state, player_id);
             if let Some(my_ship) = my_ship {
-                eprintln!("undocking");
                 my_ship.docked_at = None;
+                return true;
             }
         }
     }
+    return false;
 }
 
 /*
@@ -224,6 +243,7 @@ pub fn gen_basic_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, DialogueScript
         prompts: Default::default(),
         options: Default::default(),
         initial_state: Default::default(),
+        is_planetary: true,
     };
     script.initial_state = first_state_id;
     script

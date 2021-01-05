@@ -552,6 +552,7 @@ pub fn try_trigger_dialogues(
                         &mut res,
                         player,
                         player_d_states,
+                        state,
                     );
                 } else {
                     let existing_state = player_d_states.get(&parsed_planet_d).unwrap();
@@ -563,6 +564,7 @@ pub fn try_trigger_dialogues(
                             &mut res,
                             player,
                             player_d_states,
+                            state,
                         );
                     }
                 }
@@ -582,12 +584,13 @@ fn trigger_dialogue(
     res: &mut Vec<(Uuid, Option<Dialogue>)>,
     player: &Player,
     player_d_states: &mut HashMap<Uuid, Box<Option<Uuid>>>,
+    game_state: &GameState,
 ) {
     let key = parsed_planet_d;
     let value = Box::new(Some(planet_d_script.initial_state));
     res.push((
         player.id,
-        build_dialogue_from_state(&parsed_planet_d, &value, d_table),
+        build_dialogue_from_state(&parsed_planet_d, &value, d_table, &player.id, game_state),
     ));
     player_d_states.insert(key.clone(), value);
 }
@@ -860,6 +863,10 @@ pub fn find_my_ship<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Option
         }
     }
     return None;
+}
+
+pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<&'a Planet> {
+    return state.planets.iter().find(|p| p.id == *planet_id);
 }
 
 pub fn find_my_ship_mut<'a, 'b>(
