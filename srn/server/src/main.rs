@@ -739,7 +739,7 @@ fn rocket() -> rocket::Rocket {
 
     {
         let mut d_table = DIALOGUE_TABLE.lock().unwrap();
-        let script = dialogue::gen_basic_script();
+        let script = dialogue::gen_basic_planet_script();
         (*d_table).insert(Uuid::parse_str(D_ID).ok().unwrap(), script.6);
     }
 

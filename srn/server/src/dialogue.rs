@@ -214,29 +214,13 @@ fn apply_side_effect(
     return false;
 }
 
-/*
-
-first state id 4cd176df-8c41-4068-a3fb-6bbd07a3835d
-second state id 1eea4960-b6b0-4d8c-b028-9dcee555090d
-go next option 06ba8b72-8b0e-4b03-a703-dee4afe8dd1f
-*/
-pub fn gen_basic_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, DialogueScript) {
+pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, DialogueScript) {
     let dialogue_id = new_id();
-    let first_state_id = new_id();
-    eprintln!("first state id {}", first_state_id);
-    let second_state_id = new_id();
-    eprintln!("second state id {}", second_state_id);
-    let go_next_id = new_id();
-    eprintln!("go next option {}", go_next_id);
-    let go_back_id = new_id();
-    let exit_id = new_id();
-
-    /*
-    1 -> next --------------> 2      -> back -> 1
-     |                          |
-     |                          |
-     | -> exit -> null          | -> exit -> null
-    */
+    let arrival = new_id();
+    let market = new_id();
+    let go_market = new_id();
+    let go_back = new_id();
+    let go_exit = new_id();
 
     let mut script = DialogueScript {
         transitions: Default::default(),
@@ -245,50 +229,48 @@ pub fn gen_basic_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, DialogueScript
         initial_state: Default::default(),
         is_planetary: true,
     };
-    script.initial_state = first_state_id;
+    script.initial_state = arrival;
     script
         .prompts
-        .insert(first_state_id, "first_state_prompt".to_string());
+        .insert(arrival, "You have landed on the {} {}. The space port is buzzing with activity, but there's nothing of interest here for you.".to_string());
     script
         .prompts
-        .insert(second_state_id, "second_state_prompt".to_string());
+        .insert(market, "You come to the marketplace, but suddenly realize that you forgot your wallet on the ship! So there is nothing here for you. Maybe there will be something in the future?".to_string());
     script.transitions.insert(
-        (first_state_id, go_next_id),
-        (Some(second_state_id), DialogOptionSideEffect::Nothing),
+        (arrival, go_market),
+        (Some(market), DialogOptionSideEffect::Nothing),
     );
     script.transitions.insert(
-        (second_state_id, go_back_id),
-        (Some(first_state_id), DialogOptionSideEffect::Nothing),
+        (market, go_back),
+        (Some(arrival), DialogOptionSideEffect::Nothing),
     );
-    script.transitions.insert(
-        (first_state_id, exit_id),
-        (None, DialogOptionSideEffect::Undock),
-    );
-    script.transitions.insert(
-        (second_state_id, exit_id),
-        (None, DialogOptionSideEffect::Undock),
-    );
+    script
+        .transitions
+        .insert((arrival, go_exit), (None, DialogOptionSideEffect::Undock));
+    script
+        .transitions
+        .insert((market, go_exit), (None, DialogOptionSideEffect::Undock));
     script.options.insert(
-        first_state_id,
+        arrival,
         vec![
-            (go_next_id, "go next option".to_string()),
-            (exit_id, "exit".to_string()),
+            (go_market, "Go to the marketplace".to_string()),
+            (go_exit, "Undock and fly away".to_string()),
         ],
     );
     script.options.insert(
-        second_state_id,
+        market,
         vec![
-            (go_back_id, "go back option".to_string()),
-            (exit_id, "exit".to_string()),
+            (go_back, "Go back to the space port".to_string()),
+            (go_exit, "Undock and fly away".to_string()),
         ],
     );
     (
         dialogue_id,
-        first_state_id,
-        second_state_id,
-        go_next_id,
-        go_back_id,
-        exit_id,
+        arrival,
+        market,
+        go_market,
+        go_back,
+        go_exit,
         script,
     )
 }

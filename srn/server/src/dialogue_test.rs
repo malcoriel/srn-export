@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod world_test {
     use crate::dialogue::{
-        execute_dialog_option, gen_basic_script, DialogueScript, DialogueStates, DialogueTable,
-        DialogueUpdate,
+        execute_dialog_option, gen_basic_planet_script, DialogueScript, DialogueStates,
+        DialogueTable, DialogueUpdate,
     };
     use crate::world;
     use crate::world::GameState;
@@ -14,7 +14,7 @@ mod world_test {
     fn can_move_between_valid_states() {
         let player_id = Uuid::new_v4();
         let (dialogue_id, first_state_id, second_state_id, go_next_id, go_back_id, exit_id, script) =
-            gen_basic_script();
+            gen_basic_planet_script();
 
         let mut d_table: DialogueTable = HashMap::new();
         d_table.insert(dialogue_id, script);
