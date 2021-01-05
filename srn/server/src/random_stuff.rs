@@ -166,3 +166,8 @@ pub fn gen_sat_gap() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
     return rng.gen_range(8.0, 12.0);
 }
+
+pub fn gen_random_photo_id() -> i32 {
+    let mut rng: ThreadRng = rand::thread_rng();
+    return rng.gen_range(1, 10);
+}

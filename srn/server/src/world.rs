@@ -13,8 +13,8 @@ use crate::dialogue::{
 };
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
-    gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
-    gen_sat_radius, gen_star_name, gen_star_radius,
+    gen_planet_radius, gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name,
+    gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
 };
 use chrono::Utc;
 use itertools::Itertools;
@@ -377,6 +377,7 @@ pub struct Player {
     pub name: String,
     pub quest: Option<Quest>,
     pub money: i32,
+    pub photo_id: i32,
 }
 
 impl Player {
@@ -650,15 +651,24 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     state
 }
 
-pub fn add_player(state: &mut GameState, player_id: &Uuid, is_bot: bool, name: Option<String>) {
+pub fn add_player(
+    state: &mut GameState,
+    player_id: &Uuid,
+    is_bot: bool,
+    name: Option<String>,
+    d_states: &mut Box<DialogueStates>,
+) {
     state.players.push(Player {
         id: player_id.clone(),
         is_bot,
         ship_id: None,
         name: name.unwrap_or(player_id.to_string()),
         quest: None,
+        photo_id: gen_random_photo_id(),
         money: 0,
-    })
+    });
+    let player_states = HashMap::new();
+    d_states.insert(*player_id, (None, player_states));
 }
 
 pub fn spawn_ship(state: &mut GameState, player_id: &Uuid, at: Option<Vec2f64>) {

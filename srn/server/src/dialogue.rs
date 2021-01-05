@@ -1,5 +1,7 @@
 use crate::new_id;
-use crate::world::{find_my_ship, find_my_ship_mut, find_planet, GameState, Planet, PlayerId};
+use crate::world::{
+    find_my_player, find_my_ship, find_my_ship_mut, find_planet, GameState, Planet, PlayerId,
+};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::slice::Iter;
@@ -157,8 +159,13 @@ pub fn build_dialogue_from_state(
                 } else {
                     None
                 },
-                left_character_url: "LEFT_URL".to_string(),
-                right_character_url: "RIGHT_URL".to_string(),
+                left_character_url: format!("resources/chars/{}", {
+                    let player = find_my_player(game_state, player_id);
+                    player.map_or("question.png".to_string(), |p| {
+                        format!("{}.jpg", p.photo_id)
+                    })
+                }),
+                right_character_url: format!("resources/chars/question.png"),
             };
             return Some(result);
         }
@@ -235,7 +242,7 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         .insert(arrival, "You have landed on the {} {}. The space port is buzzing with activity, but there's nothing of interest here for you.".to_string());
     script
         .prompts
-        .insert(market, "You come to the marketplace, but suddenly realize that you forgot your wallet on the ship! So there is nothing here for you. Maybe there will be something in the future?".to_string());
+        .insert(market, "You come to the marketplace on {}, but suddenly realize that you forgot your wallet on the ship! So there is nothing here for you. Maybe there will be something in the future?".to_string());
     script.transitions.insert(
         (arrival, go_market),
         (Some(market), DialogOptionSideEffect::Nothing),

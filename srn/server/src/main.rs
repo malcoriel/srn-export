@@ -692,10 +692,8 @@ fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _ta
 fn make_new_human_player(conn_id: &Uuid) {
     {
         let mut cont = STATE.write().unwrap();
-        world::add_player(&mut cont.state, conn_id, false, None);
         let mut d_states = DIALOGUES_STATES.lock().unwrap();
-        let player_states = HashMap::new();
-        (*d_states).insert(*conn_id, (None, player_states));
+        world::add_player(&mut cont.state, conn_id, false, None, &mut *d_states);
     }
     spawn_ship(conn_id);
 }
@@ -877,7 +875,14 @@ fn add_bot(bot: Bot) -> Uuid {
     let id = bot.id.clone();
     bots.insert(id.clone(), bot);
     let mut cont = STATE.write().unwrap();
-    world::add_player(&mut cont.state, &id, true, Some(gen_bot_name()));
+    let mut d_states = DIALOGUES_STATES.lock().unwrap();
+    world::add_player(
+        &mut cont.state,
+        &id,
+        true,
+        Some(gen_bot_name()),
+        &mut *d_states,
+    );
     world::spawn_ship(&mut cont.state, &id, None);
     id
 }
