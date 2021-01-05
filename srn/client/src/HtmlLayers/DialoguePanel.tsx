@@ -11,9 +11,10 @@ import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import NetState from '../NetState';
 import _ from 'lodash';
 import { DialogueElem } from '../world';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
-  <div className="dialogue-option">{dialogue.text}</div>
+  <span className="dialogue-option">{dialogue.text}</span>
 );
 
 export const DialoguePanel: React.FC = () => {
@@ -21,6 +22,21 @@ export const DialoguePanel: React.FC = () => {
   if (!ns) return null;
 
   const { dialogue } = ns;
+
+  const tryDoOption = (i: number) => () => {
+    console.log(`try do ${i}`);
+    if (!dialogue) return;
+    const options = dialogue.options;
+    if (!options) return;
+    console.log(`doing option ${i} ${options[i].id} ${options[i].text}`);
+    if (options[i]) {
+      ns.sendDialogueOption(dialogue.id, options[i].id);
+    }
+  };
+
+  for (const i of _.times(9)) {
+    useHotkeys(String(i + 1), tryDoOption(i), [tryDoOption, dialogue]);
+  }
 
   if (!dialogue) return null;
 
@@ -73,6 +89,9 @@ export const DialoguePanel: React.FC = () => {
             <DialogueElemView key={option.id} {...option} />
           </div>
         ))}
+      </div>
+      <div className="hint">
+        Hint: you can use numbers row (1-9) on the keyboard to select options
       </div>
     </div>
   );

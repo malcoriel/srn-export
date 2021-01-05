@@ -47,9 +47,22 @@ border-width: 3px;
     line-height: 20px;
     font-size: 18px;
     margin-bottom: 10px;
+
+  }
+
+  .line .dialogue-option {
+    text-decoration: underline;
+    cursor: pointer;
   }
 
   .line:last-child {
     margin-bottom: 0;
+  }
+
+  .hint {
+    position: absolute;
+    bottom: 10px;
+    left: 20px;
+    font-size: 14px;
   }
 }
