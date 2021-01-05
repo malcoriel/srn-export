@@ -302,7 +302,6 @@ export default class NetState extends EventEmitter {
       } else if (
         messageCode === ServerToClientMessageCode.UnicastDialogueStateChange
       ) {
-        console.log(`dialogue got`, data);
         this.dialogue = JSON.parse(data).value;
       }
     } catch (e) {

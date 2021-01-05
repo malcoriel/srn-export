@@ -59,7 +59,9 @@ const substituteText = (
   subs: DialogueSubstitution[]
 ): ReactNode[] => {
   const parts = text.split(/s_\w+/);
-  const substitutions = subs.map((s) => enrichSub(s));
+  const substitutions = subs.map((s, i) => {
+    return <span key={i}>{enrichSub(s)}</span>;
+  });
   return _.flatMap(_.zip(parts, substitutions), (elem, i) => (
     <span key={i}>{elem}</span>
   ));
@@ -136,6 +138,7 @@ export const DialoguePanel: React.FC = () => {
       <div className="options">
         {dialogue.options.map((option, i) => (
           <div
+            key={i}
             className="line"
             onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
           >

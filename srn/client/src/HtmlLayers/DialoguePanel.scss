@@ -3,7 +3,7 @@
   width: 600px;
   padding: 0;
   height: 600px;
-border-width: 3px;
+  border-width: 3px;
 
   .top-part {
     display: flex;
@@ -64,5 +64,15 @@ border-width: 3px;
     bottom: 10px;
     left: 20px;
     font-size: 14px;
+  }
+
+  .sub-planet {
+    color: #fbe7c6;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .sub-generic {
+    color: #b4f8c8;
   }
 }
