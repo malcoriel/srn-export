@@ -1,4 +1,5 @@
-use crate::world::{GameState, Planet, PlayerId};
+use crate::new_id;
+use crate::world::{find_my_ship, find_my_ship_mut, GameState, Planet, PlayerId};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::slice::Iter;
@@ -27,28 +28,44 @@ pub struct DialogueElem {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Dialogue {
-    id: Uuid,
-    options: Vec<DialogueElem>,
-    prompt: DialogueElem,
-    planet: Option<Planet>,
-    left_character_url: String,
-    right_character_url: String,
+    pub id: Uuid,
+    pub options: Vec<DialogueElem>,
+    pub prompt: DialogueElem,
+    pub planet: Option<Planet>,
+    pub left_character_url: String,
+    pub right_character_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueUpdate {
-    pub dialogue_id: DialogueId,
-    pub option_id: OptionId,
+    pub dialogue_id: Uuid,
+    pub option_id: Uuid,
 }
 
-pub type DialogueStates = HashMap<PlayerId, HashMap<DialogueId, Box<Option<StateId>>>>;
+// player -> (activeDialogue?, dialogue -> state?)
+pub type DialogueStates = HashMap<
+    PlayerId,
+    (
+        Option<DialogueId>,
+        HashMap<DialogueId, Box<Option<StateId>>>,
+    ),
+>;
 pub type DialogueId = Uuid;
 pub type StateId = Uuid;
 pub type OptionId = Uuid;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum DialogOptionSideEffect {
+    Nothing,
+    Undock,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueScript {
-    pub transitions: HashMap<(StateId, OptionId), Option<StateId>>,
+    pub transitions: HashMap<(StateId, OptionId), (Option<StateId>, DialogOptionSideEffect)>,
     pub prompts: HashMap<StateId, String>,
     pub options: HashMap<StateId, Vec<(OptionId, String)>>,
+    pub initial_state: StateId,
 }
 
 impl DialogueScript {
@@ -57,6 +74,7 @@ impl DialogueScript {
             transitions: Default::default(),
             prompts: Default::default(),
             options: Default::default(),
+            initial_state: Default::default(),
         }
     }
 }
@@ -66,15 +84,20 @@ pub type DialogueTable = HashMap<DialogueId, DialogueScript>;
 pub fn execute_dialog_option(
     client_id: &Uuid,
     // for state mutation due to dialogue, e.g. updating quest. you need to return the second return arg
-    _state: &mut GameState,
+    state: &mut GameState,
     update: DialogueUpdate,
     dialogue_states: &mut DialogueStates,
     dialogue_table: &DialogueTable,
 ) -> (Option<Dialogue>, bool) {
     if let Some(all_dialogues) = dialogue_states.get_mut(client_id) {
-        if let Some(dialogue_state) = all_dialogues.get_mut(&update.dialogue_id) {
-            *dialogue_state =
-                apply_dialogue_option(dialogue_state.clone(), &update, dialogue_table);
+        if let Some(dialogue_state) = all_dialogues.1.get_mut(&update.dialogue_id) {
+            *dialogue_state = apply_dialogue_option(
+                dialogue_state.clone(),
+                &update,
+                dialogue_table,
+                state,
+                &client_id,
+            );
             return (
                 build_dialogue_from_state(&update.dialogue_id, dialogue_state, dialogue_table),
                 false,
@@ -87,9 +110,9 @@ pub fn execute_dialog_option(
     }
 }
 
-fn build_dialogue_from_state(
+pub fn build_dialogue_from_state(
     dialogue_id: &DialogueId,
-    current_state: &mut Box<Option<StateId>>,
+    current_state: &Box<Option<StateId>>,
     dialogue_table: &DialogueTable,
 ) -> Option<Dialogue> {
     let script = dialogue_table.get(dialogue_id);
@@ -128,21 +151,124 @@ fn apply_dialogue_option(
     current_state: Box<Option<StateId>>,
     update: &DialogueUpdate,
     dialogue_table: &DialogueTable,
+    state: &mut GameState,
+    player_id: &PlayerId,
 ) -> Box<Option<StateId>> {
+    eprintln!("apply start");
+
     let current_state = *current_state;
     let script = dialogue_table.get(&update.dialogue_id);
-    if let Some(script) = script {
+    return if let Some(script) = script {
         if let Some(current_state) = current_state {
+            eprintln!("apply current_state update {:?}", (current_state, update));
             let next_state = script.transitions.get(&(current_state, update.option_id));
+            eprintln!("apply next state {:?}", next_state);
             if let Some(next_state) = next_state {
-                return Box::new(next_state.clone());
+                apply_side_effect(state, next_state.1.clone(), player_id);
+                Box::new(next_state.0.clone())
             } else {
-                return Box::new(None);
+                Box::new(None)
             }
         } else {
-            return Box::new(None);
+            Box::new(None)
         }
     } else {
-        return Box::new(None);
+        Box::new(None)
+    };
+}
+
+fn apply_side_effect(
+    state: &mut GameState,
+    side_effect: DialogOptionSideEffect,
+    player_id: &PlayerId,
+) {
+    eprintln!("side effect {:?}", side_effect);
+    match side_effect {
+        DialogOptionSideEffect::Nothing => {}
+        DialogOptionSideEffect::Undock => {
+            let my_ship = find_my_ship_mut(state, player_id);
+            if let Some(my_ship) = my_ship {
+                eprintln!("undocking");
+                my_ship.docked_at = None;
+            }
+        }
     }
+}
+
+/*
+
+first state id 4cd176df-8c41-4068-a3fb-6bbd07a3835d
+second state id 1eea4960-b6b0-4d8c-b028-9dcee555090d
+go next option 06ba8b72-8b0e-4b03-a703-dee4afe8dd1f
+*/
+pub fn gen_basic_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, DialogueScript) {
+    let dialogue_id = new_id();
+    let first_state_id = new_id();
+    eprintln!("first state id {}", first_state_id);
+    let second_state_id = new_id();
+    eprintln!("second state id {}", second_state_id);
+    let go_next_id = new_id();
+    eprintln!("go next option {}", go_next_id);
+    let go_back_id = new_id();
+    let exit_id = new_id();
+
+    /*
+    1 -> next --------------> 2      -> back -> 1
+     |                          |
+     |                          |
+     | -> exit -> null          | -> exit -> null
+    */
+
+    let mut script = DialogueScript {
+        transitions: Default::default(),
+        prompts: Default::default(),
+        options: Default::default(),
+        initial_state: Default::default(),
+    };
+    script.initial_state = first_state_id;
+    script
+        .prompts
+        .insert(first_state_id, "first_state_prompt".to_string());
+    script
+        .prompts
+        .insert(second_state_id, "second_state_prompt".to_string());
+    script.transitions.insert(
+        (first_state_id, go_next_id),
+        (Some(second_state_id), DialogOptionSideEffect::Nothing),
+    );
+    script.transitions.insert(
+        (second_state_id, go_back_id),
+        (Some(first_state_id), DialogOptionSideEffect::Nothing),
+    );
+    script.transitions.insert(
+        (first_state_id, exit_id),
+        (None, DialogOptionSideEffect::Undock),
+    );
+    script.transitions.insert(
+        (second_state_id, exit_id),
+        (None, DialogOptionSideEffect::Undock),
+    );
+    script.options.insert(
+        first_state_id,
+        vec![
+            (go_next_id, "go next option".to_string()),
+            (exit_id, "exit".to_string()),
+        ],
+    );
+    script.options.insert(
+        second_state_id,
+        vec![
+            (go_back_id, "go back option".to_string()),
+            (exit_id, "exit".to_string()),
+        ],
+    );
+    (
+        dialogue_id,
+        first_state_id,
+        second_state_id,
+        go_next_id,
+        go_back_id,
+        exit_id,
+        script,
+    )
 }

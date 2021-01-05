@@ -408,6 +408,7 @@ fn handle_request(request: WSRequest) {
                                         change_player_name(&client_id, second);
                                     }
                                     ClientOpCode::DialogueOption => {
+                                        eprintln!("second {}", second);
                                         handle_dialogue_option(
                                             &client_id,
                                             serde_json::from_str::<DialogueUpdate>(second)
@@ -572,7 +573,7 @@ fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _ta
     let global_state_change;
 
     let mut cont = STATE.write().unwrap();
-    let mut dialogue_cont = DIALOGUES.lock().unwrap();
+    let mut dialogue_cont = DIALOGUES_STATES.lock().unwrap();
     let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
     world::force_update_to_now(&mut cont.state);
     let (new_dialogue_state, state_changed) = world::execute_dialog_option(
@@ -593,6 +594,9 @@ fn make_new_human_player(conn_id: &Uuid) {
     {
         let mut cont = STATE.write().unwrap();
         world::add_player(&mut cont.state, conn_id, false, None);
+        let mut d_states = DIALOGUES_STATES.lock().unwrap();
+        let mut player_states = HashMap::new();
+        (*d_states).insert(*conn_id, (None, player_states));
     }
     spawn_ship(conn_id);
 }
@@ -624,6 +628,8 @@ fn spawn_ship(player_id: &Uuid) {
     world::spawn_ship(&mut cont.state, player_id, None);
 }
 
+static d_id: &str = "2484332e-3668-4754-a7ac-d5fbf8707145";
+
 #[launch]
 fn rocket() -> rocket::Rocket {
     unsafe {
@@ -631,6 +637,13 @@ fn rocket() -> rocket::Rocket {
         DISPATCHER_SENDER = Some(Mutex::new(tx));
         DISPATCHER_RECEIVER = Some(Mutex::new(rx));
     }
+
+    {
+        let mut d_table = DIALOGUE_TABLE.lock().unwrap();
+        let script = dialogue::gen_basic_script();
+        (*d_table).insert(Uuid::parse_str(d_id).ok().unwrap(), script.6);
+    }
+
     std::thread::spawn(|| {
         websocket_server();
     });
@@ -735,6 +748,17 @@ fn physics_thread() {
         let elapsed = now - last;
         last = now;
         cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
+
+        let mut d_states = DIALOGUES_STATES.lock().unwrap();
+        let d_table = DIALOGUE_TABLE.lock().unwrap();
+        let clients_to_notify = world::try_trigger_dialogues(&cont.state, &mut d_states, &d_table);
+        for (client_id, dialogue) in clients_to_notify {
+            eprintln!(
+                "sending server-side init for dialogue {} to client {}",
+                dialogue.id, client_id
+            );
+            unicast_dialogue_state(client_id, Some(dialogue));
+        }
     }
 }
 
@@ -746,7 +770,7 @@ lazy_static! {
 }
 
 lazy_static! {
-    static ref DIALOGUES: Arc<Mutex<Box<DialogueStates>>> =
+    static ref DIALOGUES_STATES: Arc<Mutex<Box<DialogueStates>>> =
         Arc::new(Mutex::new(Box::new(HashMap::new())));
 }
 
@@ -763,10 +787,10 @@ fn add_bot(bot: Bot) -> Uuid {
 }
 
 fn bot_thread() {
-    add_bot(Bot::new());
-    add_bot(Bot::new());
-    add_bot(Bot::new());
-    add_bot(Bot::new());
+    // add_bot(Bot::new());
+    // add_bot(Bot::new());
+    // add_bot(Bot::new());
+    // add_bot(Bot::new());
     loop {
         let mut ship_updates: HashMap<Uuid, Ship> = HashMap::new();
         let mut bots = BOTS.lock().unwrap();

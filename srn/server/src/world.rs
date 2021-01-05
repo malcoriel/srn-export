@@ -7,7 +7,10 @@ use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 use uuid::Uuid;
 const SEED_TIME: i64 = 9321 * 1000 * 1000;
-use crate::dialogue::{Dialogue, DialogueStates, DialogueTable, DialogueUpdate};
+use crate::dialogue::{
+    build_dialogue_from_state, Dialogue, DialogueScript, DialogueStates, DialogueTable,
+    DialogueUpdate,
+};
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
     gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
@@ -401,7 +404,6 @@ pub struct GameState {
     pub paused: bool,
     pub leaderboard: Option<Leaderboard>,
     pub ticks: u32,
-    pub dialogue: Option<Dialogue>,
 }
 
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -479,7 +481,6 @@ pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
         players: vec![],
         leaderboard: None,
         start_time_ticks: now,
-        dialogue: None,
     };
     let state = if seed_and_validate {
         let mut state = validate_state(state);
@@ -523,6 +524,72 @@ fn validate_state(mut in_state: GameState) -> GameState {
 pub fn force_update_to_now(state: &mut GameState) {
     let now = Utc::now().timestamp_millis() as u64;
     state.ticks = (now - state.start_time_ticks) as u32;
+}
+
+pub fn try_trigger_dialogues(
+    state: &GameState,
+    d_states: &mut DialogueStates,
+    d_table: &DialogueTable,
+) -> Vec<(PlayerId, Dialogue)> {
+    let parsed_planet_d = Uuid::parse_str("2484332e-3668-4754-a7ac-d5fbf8707145")
+        .ok()
+        .unwrap();
+    let planet_d_script = d_table.get(&parsed_planet_d).unwrap();
+    let mut res = vec![];
+    for player in state.players.iter() {
+        let (_current_player_dialogue, player_d_states) =
+            d_states.entry(player.id).or_insert((None, HashMap::new()));
+
+        // eprintln!("player {} d_states {:?}", player.id, player_d_states);
+        let ship = find_my_ship(state, &player.id);
+        if let Some(ship) = ship {
+            if let Some(_docked_at) = ship.docked_at {
+                if !player_d_states.contains_key(&parsed_planet_d) {
+                    trigger_dialogue(
+                        d_table,
+                        &parsed_planet_d,
+                        planet_d_script,
+                        &mut res,
+                        player,
+                        player_d_states,
+                    );
+                } else {
+                    let existing_state = player_d_states.get(&parsed_planet_d).unwrap();
+                    if existing_state.is_none() {
+                        trigger_dialogue(
+                            d_table,
+                            &parsed_planet_d,
+                            planet_d_script,
+                            &mut res,
+                            player,
+                            player_d_states,
+                        );
+                    }
+                }
+            }
+        }
+    }
+    res.into_iter()
+        .filter(|(p, od)| od.is_some())
+        .map(|(p, od)| (p, od.unwrap()))
+        .collect::<Vec<_>>()
+}
+
+fn trigger_dialogue(
+    d_table: &HashMap<Uuid, DialogueScript>,
+    parsed_planet_d: &Uuid,
+    planet_d_script: &DialogueScript,
+    res: &mut Vec<(Uuid, Option<Dialogue>)>,
+    player: &Player,
+    player_d_states: &mut HashMap<Uuid, Box<Option<Uuid>>>,
+) {
+    let key = parsed_planet_d;
+    let value = Box::new(Some(planet_d_script.initial_state));
+    res.push((
+        player.id,
+        build_dialogue_from_state(&parsed_planet_d, &value, d_table),
+    ));
+    player_d_states.insert(key.clone(), value);
 }
 
 pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
@@ -675,6 +742,7 @@ pub fn update_ships_navigation(
                         let new_pos = move_ship(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
                         if new_pos.euclidean_distance(&planet_pos) < planet.radius {
+                            eprintln!("force docking due to navigation");
                             ship.docked_at = Some(planet.id);
                             ship.dock_target = None;
                             ship.trajectory = vec![];
@@ -789,6 +857,22 @@ pub fn find_my_ship<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Option
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
             return state.ships.iter().find(|ship| ship.id == ship_id);
+        }
+    }
+    return None;
+}
+
+pub fn find_my_ship_mut<'a, 'b>(
+    state: &'a mut GameState,
+    player_id: &'b Uuid,
+) -> Option<&'a mut Ship> {
+    let player = find_my_player(state, player_id);
+    if let Some(player) = player {
+        if let Some(ship_id) = player.ship_id {
+            let index = state.ships.iter().position(|ship| ship.id == ship_id);
+            if let Some(index) = index {
+                return Some(&mut state.ships[index]);
+            }
         }
     }
     return None;

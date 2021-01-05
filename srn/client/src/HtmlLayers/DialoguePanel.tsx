@@ -20,9 +20,7 @@ export const DialoguePanel: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  const {
-    state: { dialogue },
-  } = ns;
+  const { dialogue } = ns;
 
   if (!dialogue) return null;
 
@@ -69,7 +67,7 @@ export const DialoguePanel: React.FC = () => {
         {dialogue.options.map((option, i) => (
           <div
             className="line"
-            onClick={() => ns.sendDialogueOption(option.id)}
+            onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
           >
             {i + 1}.&nbsp;
             <DialogueElemView key={option.id} {...option} />

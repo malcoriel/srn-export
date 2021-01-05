@@ -1,6 +1,7 @@
 import EventEmitter from 'events';
 import {
   applyShipAction,
+  Dialogue,
   GameState,
   Ship,
   ShipAction,
@@ -9,6 +10,7 @@ import {
 } from './world';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
+
 export type Timeout = ReturnType<typeof setTimeout>;
 
 enum ClientOpCode {
@@ -76,6 +78,7 @@ const MAX_PENDING_TICKS = 2000;
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
   state!: GameState;
+  dialogue?: Dialogue;
   public connecting = true;
   public preferredName = 'player';
   public ping: number;
@@ -289,6 +292,11 @@ export default class NetState extends EventEmitter {
             return s;
           });
         }
+      } else if (
+        messageCode === ServerToClientMessageCode.UnicastDialogueStateChange
+      ) {
+        console.log(`dialogue got`, data);
+        this.dialogue = JSON.parse(data).value;
       }
     } catch (e) {
       console.warn('error handling message', e);
@@ -333,6 +341,12 @@ export default class NetState extends EventEmitter {
         }
         case ClientOpCode.Name: {
           this.socket.send(`${cmd.code}_%_${cmd.value}`);
+          break;
+        }
+        case ClientOpCode.DialogueOption: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
           break;
         }
       }
@@ -408,8 +422,12 @@ export default class NetState extends EventEmitter {
     }
   };
 
-  public sendDialogueOption(id: string) {
+  public sendDialogueOption(dialogueId: string, optionId: string) {
     let tag = uuid.v4();
-    this.send({ code: ClientOpCode.DialogueOption, value: id, tag });
+    this.send({
+      code: ClientOpCode.DialogueOption,
+      value: { dialogue_id: dialogueId, option_id: optionId },
+      tag,
+    });
   }
 }

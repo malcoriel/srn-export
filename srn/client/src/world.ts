@@ -129,7 +129,6 @@ export type GameState = {
   star?: Star;
   paused: boolean;
   milliseconds_remaining: number;
-  dialogue?: Dialogue;
 };
 
 export const scaleConfig = () => ({
