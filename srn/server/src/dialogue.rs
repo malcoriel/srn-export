@@ -12,13 +12,14 @@ enum DialogueSubstitutionType {
     Unknown,
     PlanetName,
     CharacterName,
+    Generic,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueSubstitution {
     s_type: DialogueSubstitutionType,
+    id: Uuid,
     text: String,
-    color: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -133,32 +134,33 @@ pub fn build_dialogue_from_state(
         if let Some(state) = **current_state {
             let prompt = script.prompts.get(&state).unwrap();
             let options = script.options.get(&state).unwrap();
+            let current_planet = if script.is_planetary {
+                let my_ship = find_my_ship(game_state, player_id);
+                my_ship
+                    .and_then(|s| s.docked_at)
+                    .and_then(|p| find_planet(game_state, &p))
+                    .and_then(|p| Some(p.clone()))
+            } else {
+                None
+            };
             let result = Dialogue {
                 id: dialogue_id.clone(),
                 options: options
                     .clone()
                     .into_iter()
                     .map(|(id, text)| DialogueElem {
+                        substitution: substitute_text(&text, &current_planet),
                         text,
                         id,
-                        substitution: vec![],
                     })
                     .collect::<Vec<_>>(),
                 prompt: DialogueElem {
                     text: prompt.clone(),
                     // prompt id does not matter since it cannot be selected as action
                     id: Default::default(),
-                    substitution: vec![],
+                    substitution: substitute_text(&prompt, &current_planet),
                 },
-                planet: if script.is_planetary {
-                    let my_ship = find_my_ship(game_state, player_id);
-                    my_ship
-                        .and_then(|s| s.docked_at)
-                        .and_then(|p| find_planet(game_state, &p))
-                        .and_then(|p| Some(p.clone()))
-                } else {
-                    None
-                },
+                planet: current_planet,
                 left_character_url: format!("resources/chars/{}", {
                     let player = find_my_player(game_state, player_id);
                     player.map_or("question.png".to_string(), |p| {
@@ -173,6 +175,44 @@ pub fn build_dialogue_from_state(
     return None;
 }
 
+use regex::Regex;
+
+fn substitute_text(text: &String, current_planet: &Option<Planet>) -> Vec<DialogueSubstitution> {
+    let mut res = vec![];
+    let re = Regex::new(r"s_\w+").unwrap();
+    for cap in re.captures_iter(text.as_str()) {
+        if cap[0] == *"s_current_planet" {
+            if let Some(current_planet) = current_planet {
+                res.push(DialogueSubstitution {
+                    s_type: DialogueSubstitutionType::PlanetName,
+                    id: current_planet.id,
+                    text: current_planet.name.clone(),
+                })
+            } else {
+                eprintln!("s_current_planet used without current planet");
+            }
+        } else if cap[0] == *"s_current_planet_body_type" {
+            if let Some(current_planet) = current_planet {
+                res.push(DialogueSubstitution {
+                    s_type: DialogueSubstitutionType::Generic,
+                    id: current_planet.id,
+                    text: (if current_planet.anchor_tier == 1 {
+                        "planet"
+                    } else {
+                        "moon"
+                    })
+                    .to_string(),
+                });
+            } else {
+                eprintln!("s_current_planet used without current planet");
+            }
+        } else {
+            eprintln!("Unknown substitution {}", cap[0].to_string());
+        }
+    }
+    res
+}
+
 fn apply_dialogue_option(
     current_state: Box<Option<StateId>>,
     update: &DialogueUpdate,
@@ -180,15 +220,15 @@ fn apply_dialogue_option(
     state: &mut GameState,
     player_id: &PlayerId,
 ) -> (Box<Option<StateId>>, bool) {
-    eprintln!("apply start");
+    // eprintln!("apply start");
 
     let current_state = *current_state;
     let script = dialogue_table.get(&update.dialogue_id);
     return if let Some(script) = script {
         if let Some(current_state) = current_state {
-            eprintln!("apply current_state update {:?}", (current_state, update));
+            // eprintln!("apply current_state update {:?}", (current_state, update));
             let next_state = script.transitions.get(&(current_state, update.option_id));
-            eprintln!("apply next state {:?}", next_state);
+            // eprintln!("apply next state {:?}", next_state);
             if let Some(next_state) = next_state {
                 let side_effect = apply_side_effect(state, next_state.1.clone(), player_id);
                 (Box::new(next_state.0.clone()), side_effect)
@@ -239,10 +279,10 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
     script.initial_state = arrival;
     script
         .prompts
-        .insert(arrival, "You have landed on the {} {}. The space port is buzzing with activity, but there's nothing of interest here for you.".to_string());
+        .insert(arrival, "You have landed on the s_current_planet_body_type s_current_planet. The space port is buzzing with activity, but there's nothing of interest here for you.".to_string());
     script
         .prompts
-        .insert(market, "You come to the marketplace on {}, but suddenly realize that you forgot your wallet on the ship! So there is nothing here for you. Maybe there will be something in the future?".to_string());
+        .insert(market, "You come to the marketplace on s_current_planet, but suddenly realize that you forgot your wallet on the ship! So there is nothing here for you. Maybe there will be something in the future?".to_string());
     script.transitions.insert(
         (arrival, go_market),
         (Some(market), DialogOptionSideEffect::Nothing),

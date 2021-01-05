@@ -90,15 +90,16 @@ export type Leaderboard = {
 };
 
 export enum DialogueSubstitutionType {
-  Unknown,
-  PlanetName,
-  CharacterName,
+  Unknown = 'Unkwnown',
+  PlanetName = 'PlanetName',
+  CharacterName = 'CharacterName',
+  Generic = 'Generic',
 }
 
 export type DialogueSubstitution = {
   s_type: DialogueSubstitutionType;
   text: string;
-  color: string;
+  id: string;
 };
 
 export type DialogueElem = {

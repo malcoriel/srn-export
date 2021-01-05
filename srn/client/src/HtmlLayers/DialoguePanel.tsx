@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { ReactNode, useRef, useState } from 'react';
 import './DialoguePanel.scss';
 
 import { Canvas, useFrame } from 'react-three-fiber';
@@ -10,11 +10,65 @@ import {
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import NetState from '../NetState';
 import _ from 'lodash';
-import { DialogueElem } from '../world';
+import {
+  DialogueElem,
+  DialogueSubstitution,
+  DialogueSubstitutionType,
+  Planet,
+} from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { findPlanet } from './GameHTMLHudLayer';
+
+const enrichSub = (s: DialogueSubstitution): ReactNode => {
+  const ns = NetState.get();
+  if (!ns) return null;
+
+  const { state, visualState } = ns;
+
+  const focus = (p: Planet) => {
+    visualState.cameraPosition = { x: p.x, y: p.y };
+    visualState.boundCameraMovement = false;
+  };
+
+  switch (s.s_type) {
+    case DialogueSubstitutionType.PlanetName:
+      let planet = findPlanet(ns.state, s.id);
+      if (!planet) {
+        console.warn(`substitution planet not found by id ${s.id}`);
+        return <span className="sub-planet">{s.text}</span>;
+      }
+      return (
+        <span className="sub-planet found" onClick={() => focus(planet!)}>
+          {s.text}
+        </span>
+      );
+    case DialogueSubstitutionType.CharacterName:
+      return <span className="sub-character">{s.text}</span>;
+    case DialogueSubstitutionType.Generic:
+      return <span className="sub-generic">{s.text}</span>;
+    case DialogueSubstitutionType.Unknown:
+    default: {
+      console.warn(`Unknown substitution ${s.s_type} text ${s.text}`);
+      return <span>{s.text}</span>;
+    }
+  }
+};
+
+const substituteText = (
+  text: string,
+  subs: DialogueSubstitution[]
+): ReactNode[] => {
+  const parts = text.split(/s_\w+/);
+  const substitutions = subs.map((s) => enrichSub(s));
+  return _.flatMap(_.zip(parts, substitutions), (elem, i) => (
+    <span key={i}>{elem}</span>
+  ));
+};
 
 const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
-  <span className="dialogue-option">{dialogue.text}</span>
+  <span className="dialogue-option">
+    {substituteText(dialogue.text, dialogue.substitution)}
+  </span>
 );
 
 export const DialoguePanel: React.FC = () => {
