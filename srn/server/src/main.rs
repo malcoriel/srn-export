@@ -205,7 +205,13 @@ fn mutate_owned_ship(
     }
     old_ship_index = old_ship.clone();
     let old_ship = state_clone.ships[old_ship.unwrap()].clone();
-    let ok = validate_ship_move(&old_ship, &new_ship);
+    let ok = validate_ship_move(
+        &old_ship,
+        &Vec2f64 {
+            x: new_ship.x,
+            y: new_ship.y,
+        },
+    );
     if !ok {
         updated_ship = old_ship;
     } else {
@@ -221,7 +227,88 @@ fn mutate_owned_ship(
     return Ok(updated_ship);
 }
 
-fn validate_ship_move(_old: &Ship, _new: &Ship) -> bool {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ManualMoveUpdate {
+    pub position: Vec2f64,
+    pub rotation: f64,
+    pub navigate_target: Option<Vec2f64>,
+    pub dock_target: Option<Uuid>,
+    pub trajectory: Vec<Vec2f64>,
+}
+
+fn mutate_owned_ship_pos_wrapped(
+    client_id: Uuid,
+    move_update: ManualMoveUpdate,
+    tag: Option<String>,
+) {
+    let res = mutate_owned_ship_pos(client_id, move_update, tag);
+    if res.is_err() {
+        eprintln!("error mutating owned ship {}", res.err().unwrap().message);
+        increment_client_errors(client_id);
+        disconnect_if_bad(client_id);
+    }
+}
+
+fn mutate_owned_ship_pos(
+    client_id: Uuid,
+    move_update: ManualMoveUpdate,
+    tag: Option<String>,
+) -> Result<Ship, ClientErr> {
+    let mut updated_ship: Ship;
+    let old_ship_index;
+    let mut cont = STATE.write().unwrap();
+    world::force_update_to_now(&mut cont.state);
+
+    let state_clone = cont.state.clone();
+    let player = state_clone.players.iter().find(|p| p.id == client_id);
+    match player {
+        None => {
+            return Err(ClientErr {
+                message: String::from("No player found"),
+            })
+        }
+        Some(player) => {
+            if !(player.ship_id.is_some()) {
+                return Err(ClientErr {
+                    message: String::from("No current ship"),
+                });
+            }
+        }
+    }
+
+    let old_ship = state_clone
+        .ships
+        .iter()
+        .position(|s| s.id == player.unwrap().ship_id.unwrap());
+    if old_ship.is_none() {
+        return Err(ClientErr {
+            message: String::from("No old instance of ship"),
+        });
+    }
+    old_ship_index = old_ship.clone();
+    let old_ship = state_clone.ships[old_ship.unwrap()].clone();
+    let ok = validate_ship_move(&old_ship, &move_update.position);
+    if !ok {
+        updated_ship = old_ship;
+    } else {
+        updated_ship = old_ship.clone();
+        updated_ship.x = move_update.position.x;
+        updated_ship.y = move_update.position.y;
+        updated_ship.rotation = move_update.rotation;
+        updated_ship.navigate_target = move_update.navigate_target;
+        updated_ship.dock_target = move_update.dock_target;
+        updated_ship.trajectory = move_update.trajectory;
+    }
+    cont.state.ships.remove(old_ship_index.unwrap());
+    cont.state.ships.push(updated_ship.clone());
+    multicast_ships_update_excluding(cont.state.ships.clone(), client_id);
+    if let Some(tag) = tag {
+        send_tag_confirm(tag, client_id);
+    }
+    return Ok(updated_ship);
+}
+
+fn validate_ship_move(_old: &Ship, _new: &Vec2f64) -> bool {
     // some anti-cheat needed
     return true;
 }
@@ -409,7 +496,6 @@ fn handle_request(request: WSRequest) {
                                         change_player_name(&client_id, second);
                                     }
                                     ClientOpCode::DialogueOption => {
-                                        eprintln!("second {}", second);
                                         handle_dialogue_option(
                                             &client_id,
                                             serde_json::from_str::<DialogueUpdate>(second)
@@ -419,17 +505,19 @@ fn handle_request(request: WSRequest) {
                                         );
                                     }
                                     ClientOpCode::Unknown => {}
-                                    ClientOpCode::ManualMove => {}
+                                    ClientOpCode::ManualMove => {
+                                        serde_json::from_str::<ManualMoveUpdate>(second).ok().map(
+                                            |s| {
+                                                mutate_owned_ship_pos_wrapped(
+                                                    client_id,
+                                                    s,
+                                                    third.map(|s| s.to_string()),
+                                                )
+                                            },
+                                        );
+                                    }
                                 },
-                                None => {
-                                    serde_json::from_str::<Vec2f64>(second).ok().map(|s| {
-                                        mutate_owned_ship_wrapped(
-                                            client_id,
-                                            s,
-                                            third.map(|s| s.to_string()),
-                                        )
-                                    });
-                                }
+                                None => {}
                             },
                             Err(e) => {
                                 eprintln!("Invalid opcode {} {}", first, e);
@@ -603,7 +691,7 @@ fn make_new_human_player(conn_id: &Uuid) {
         let mut cont = STATE.write().unwrap();
         world::add_player(&mut cont.state, conn_id, false, None);
         let mut d_states = DIALOGUES_STATES.lock().unwrap();
-        let mut player_states = HashMap::new();
+        let player_states = HashMap::new();
         (*d_states).insert(*conn_id, (None, player_states));
     }
     spawn_ship(conn_id);
@@ -636,7 +724,7 @@ fn spawn_ship(player_id: &Uuid) {
     world::spawn_ship(&mut cont.state, player_id, None);
 }
 
-static d_id: &str = "2484332e-3668-4754-a7ac-d5fbf8707145";
+static D_ID: &str = "2484332e-3668-4754-a7ac-d5fbf8707145";
 
 #[launch]
 fn rocket() -> rocket::Rocket {
@@ -649,7 +737,7 @@ fn rocket() -> rocket::Rocket {
     {
         let mut d_table = DIALOGUE_TABLE.lock().unwrap();
         let script = dialogue::gen_basic_script();
-        (*d_table).insert(Uuid::parse_str(d_id).ok().unwrap(), script.6);
+        (*d_table).insert(Uuid::parse_str(D_ID).ok().unwrap(), script.6);
     }
 
     std::thread::spawn(|| {

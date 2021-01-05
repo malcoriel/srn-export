@@ -102,6 +102,7 @@ export default class NetState extends EventEmitter {
   private reconnectTimeout?: Timeout;
   private readonly id: string;
   private disconnecting: boolean = false;
+  private lastShipPos?: Vector;
   public static make() {
     NetState.instance = new NetState(false);
   }
@@ -142,7 +143,7 @@ export default class NetState extends EventEmitter {
     if (!mock) {
       this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
       this.updateOnServerInterval = setInterval(
-        () => this.updateShipOnServer(uuid.v4()),
+        () => this.updateShipOnServerManualMove(uuid.v4()),
         MANUAL_MOVE_SHIP_UPDATE_INTERVAL
       );
     }
@@ -355,6 +356,12 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
+        case ClientOpCode.ManualMove: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
       }
     }
   }
@@ -433,11 +440,21 @@ export default class NetState extends EventEmitter {
       let myShipIndex = findMyShipIndex(this.state);
       if (myShipIndex !== -1 && myShipIndex !== null) {
         const myShip = this.state.ships[myShipIndex];
-        this.send({
-          code: ClientOpCode.ManualMove,
-          value: Vector.fromIVector(myShip),
-          tag,
-        });
+        let currentShipPos = Vector.fromIVector(myShip);
+        if (!Vector.equals(this.lastShipPos, currentShipPos)) {
+          this.send({
+            code: ClientOpCode.ManualMove,
+            value: {
+              position: currentShipPos,
+              rotation: myShip.rotation,
+              navigate_target: myShip.navigate_target,
+              dock_target: myShip.dock_target,
+              trajectory: myShip.trajectory,
+            },
+            tag,
+          });
+        }
+        this.lastShipPos = currentShipPos;
       }
     }
   };

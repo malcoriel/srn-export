@@ -570,7 +570,7 @@ pub fn try_trigger_dialogues(
         }
     }
     res.into_iter()
-        .filter(|(p, od)| od.is_some())
+        .filter(|(_, od)| od.is_some())
         .map(|(p, od)| (p, od.unwrap()))
         .collect::<Vec<_>>()
 }
