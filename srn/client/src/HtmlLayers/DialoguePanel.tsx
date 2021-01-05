@@ -24,56 +24,58 @@ export const DialoguePanel: React.FC = () => {
 
   if (!dialogue) return null;
 
-  return (
-    <div className="dialogue panel-base">
-      <div className="top-part">
-        <div className="left-character">
-          <img src={dialogue.left_character_url} alt="left-character-image" />
-        </div>
-        <div className="scene">
-          <Canvas
-            style={{ width: 200, height: 200, backgroundColor: 'black' }}
-            orthographic
-            camera={{
-              position: new Vector3(0, 0, CAMERA_HEIGHT),
-              zoom: CAMERA_DEFAULT_ZOOM() * 0.5,
-            }}
-          >
-            <ambientLight />
-            <pointLight position={[10, 10, 10]} />
-            {dialogue.planet && (
-              <ThreePlanetShape
-                key={dialogue.planet.id}
-                scale={
-                  _.times(3, () => dialogue.planet!.radius) as [
-                    number,
-                    number,
-                    number
-                  ]
-                }
-                color={dialogue.planet.color}
-              />
-            )}
-          </Canvas>
-        </div>
-        <div className="right-character">
-          <img src={dialogue.right_character_url} alt="right-character-image" />
-        </div>
-      </div>
-      <div className="prompt">
-        <DialogueElemView {...dialogue.prompt} />
-      </div>
-      <div className="options">
-        {dialogue.options.map((option, i) => (
-          <div
-            className="line"
-            onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
-          >
-            {i + 1}.&nbsp;
-            <DialogueElemView key={option.id} {...option} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return null;
+
+  // return (
+  //   <div className="dialogue panel-base">
+  //     <div className="top-part">
+  //       <div className="left-character">
+  //         <img src={dialogue.left_character_url} alt="left-character-image" />
+  //       </div>
+  //       <div className="scene">
+  //         <Canvas
+  //           style={{ width: 200, height: 200, backgroundColor: 'black' }}
+  //           orthographic
+  //           camera={{
+  //             position: new Vector3(0, 0, CAMERA_HEIGHT),
+  //             zoom: CAMERA_DEFAULT_ZOOM() * 0.5,
+  //           }}
+  //         >
+  //           <ambientLight />
+  //           <pointLight position={[10, 10, 10]} />
+  //           {dialogue.planet && (
+  //             <ThreePlanetShape
+  //               key={dialogue.planet.id}
+  //               scale={
+  //                 _.times(3, () => dialogue.planet!.radius) as [
+  //                   number,
+  //                   number,
+  //                   number
+  //                 ]
+  //               }
+  //               color={dialogue.planet.color}
+  //             />
+  //           )}
+  //         </Canvas>
+  //       </div>
+  //       <div className="right-character">
+  //         <img src={dialogue.right_character_url} alt="right-character-image" />
+  //       </div>
+  //     </div>
+  //     <div className="prompt">
+  //       <DialogueElemView {...dialogue.prompt} />
+  //     </div>
+  //     <div className="options">
+  //       {dialogue.options.map((option, i) => (
+  //         <div
+  //           className="line"
+  //           onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
+  //         >
+  //           {i + 1}.&nbsp;
+  //           <DialogueElemView key={option.id} {...option} />
+  //         </div>
+  //       ))}
+  //     </div>
+  //   </div>
+  // );
 };

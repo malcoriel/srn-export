@@ -10,6 +10,7 @@ import {
 } from './world';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
+import Vector from './utils/Vector';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -19,6 +20,11 @@ enum ClientOpCode {
   MutateMyShip,
   Name,
   DialogueOption,
+  ManualMove,
+  Dock,
+  Navigate,
+  Undock,
+  DockNavigate,
 }
 
 interface Cmd {
@@ -28,7 +34,7 @@ interface Cmd {
 }
 
 const FORCE_SYNC_INTERVAL = 1000;
-const SHIP_UPDATE_INTERVAL = 200;
+const MANUAL_MOVE_SHIP_UPDATE_INTERVAL = 200;
 const RECONNECT_INTERVAL = 1000;
 const MAX_PING_LIFE = 10000;
 
@@ -137,7 +143,7 @@ export default class NetState extends EventEmitter {
       this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
       this.updateOnServerInterval = setInterval(
         () => this.updateShipOnServer(uuid.v4()),
-        SHIP_UPDATE_INTERVAL
+        MANUAL_MOVE_SHIP_UPDATE_INTERVAL
       );
     }
   }
@@ -418,6 +424,20 @@ export default class NetState extends EventEmitter {
       if (myShipIndex !== -1 && myShipIndex !== null) {
         const myShip = this.state.ships[myShipIndex];
         this.send({ code: ClientOpCode.MutateMyShip, value: myShip, tag });
+      }
+    }
+  };
+
+  private updateShipOnServerManualMove = (tag: string) => {
+    if (this.state && !this.state.paused) {
+      let myShipIndex = findMyShipIndex(this.state);
+      if (myShipIndex !== -1 && myShipIndex !== null) {
+        const myShip = this.state.ships[myShipIndex];
+        this.send({
+          code: ClientOpCode.ManualMove,
+          value: Vector.fromIVector(myShip),
+          tag,
+        });
       }
     }
   };

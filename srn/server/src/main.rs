@@ -282,6 +282,7 @@ enum ClientOpCode {
     MutateMyShip = 2,
     Name = 3,
     DialogueOption = 4,
+    ManualMove = 5,
 }
 
 type WSRequest =
@@ -418,9 +419,16 @@ fn handle_request(request: WSRequest) {
                                         );
                                     }
                                     ClientOpCode::Unknown => {}
+                                    ClientOpCode::ManualMove => {}
                                 },
                                 None => {
-                                    eprintln!("Invalid opcode {}", first);
+                                    serde_json::from_str::<Vec2f64>(second).ok().map(|s| {
+                                        mutate_owned_ship_wrapped(
+                                            client_id,
+                                            s,
+                                            third.map(|s| s.to_string()),
+                                        )
+                                    });
                                 }
                             },
                             Err(e) => {
@@ -764,6 +772,7 @@ fn physics_thread() {
 
 use crate::dialogue::{Dialogue, DialogueUpdate};
 use crate::random_stuff::gen_bot_name;
+use crate::vec2::Vec2f64;
 use bots::Bot;
 lazy_static! {
     static ref BOTS: Arc<Mutex<HashMap<Uuid, Bot>>> = Arc::new(Mutex::new(HashMap::new()));
