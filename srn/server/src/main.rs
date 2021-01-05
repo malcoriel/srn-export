@@ -852,11 +852,7 @@ fn physics_thread() {
         let d_table = DIALOGUE_TABLE.lock().unwrap();
         let clients_to_notify = world::try_trigger_dialogues(&cont.state, &mut d_states, &d_table);
         for (client_id, dialogue) in clients_to_notify {
-            eprintln!(
-                "sending server-side init for dialogue {} to client {}",
-                dialogue.id, client_id
-            );
-            unicast_dialogue_state(client_id, Some(dialogue));
+            unicast_dialogue_state(client_id, dialogue);
         }
     }
 }

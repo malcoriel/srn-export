@@ -530,7 +530,7 @@ pub fn try_trigger_dialogues(
     state: &GameState,
     d_states: &mut DialogueStates,
     d_table: &DialogueTable,
-) -> Vec<(PlayerId, Dialogue)> {
+) -> Vec<(PlayerId, Option<Dialogue>)> {
     let parsed_planet_d = Uuid::parse_str("2484332e-3668-4754-a7ac-d5fbf8707145")
         .ok()
         .unwrap();
@@ -568,13 +568,16 @@ pub fn try_trigger_dialogues(
                         );
                     }
                 }
+            } else {
+                // TODO reset all planetary dialogues, not just this one
+                if player_d_states.contains_key(&parsed_planet_d) {
+                    player_d_states.remove(&parsed_planet_d);
+                    res.push((player.id, None))
+                }
             }
         }
     }
-    res.into_iter()
-        .filter(|(_, od)| od.is_some())
-        .map(|(p, od)| (p, od.unwrap()))
-        .collect::<Vec<_>>()
+    res.into_iter().map(|(p, od)| (p, od)).collect::<Vec<_>>()
 }
 
 fn trigger_dialogue(
