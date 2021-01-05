@@ -414,12 +414,6 @@ export default class NetState extends EventEmitter {
     const inState = this.state;
 
     result = simulateStateUpdate(inState, elapsedMs);
-    // let targets = this.state.ships
-    //   .map((s) => s.navigate_target)
-    //   .filter((n) => !!n);
-    // if (targets.length > 0) {
-    //   console.log('ships navigate', targets);
-    // }
     if (result) {
       this.state = result;
     }
