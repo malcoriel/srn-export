@@ -902,6 +902,21 @@ pub fn find_my_player<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Opti
     state.players.iter().find(|p| p.id == *player_id)
 }
 
+pub fn find_my_player_mut<'a, 'b>(
+    state: &'a mut GameState,
+    player_id: &'b Uuid,
+) -> Option<&'a mut Player> {
+    let index = state
+        .players
+        .iter()
+        .position(|player| player.id == *player_id);
+    if let Some(index) = index {
+        let val: Option<&mut Player> = Some(&mut state.players[index]);
+        return val;
+    }
+    return None;
+}
+
 pub fn execute_dialog_option(
     client_id: &Uuid,
     state: &mut GameState,

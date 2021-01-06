@@ -1,6 +1,7 @@
 use crate::new_id;
 use crate::world::{
-    find_my_player, find_my_ship, find_my_ship_mut, find_planet, GameState, Planet, PlayerId,
+    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, GameState,
+    Planet, PlayerId, QuestState,
 };
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -61,10 +62,13 @@ pub type OptionId = Uuid;
 pub enum DialogOptionSideEffect {
     Nothing,
     Undock,
+    QuestCargoPickup,
+    QuestCargoDropOff,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueScript {
+    pub id: Uuid,
     pub transitions: HashMap<(StateId, OptionId), (Option<StateId>, DialogOptionSideEffect)>,
     pub prompts: HashMap<StateId, String>,
     pub options: HashMap<StateId, Vec<(OptionId, String)>>,
@@ -75,6 +79,7 @@ pub struct DialogueScript {
 impl DialogueScript {
     pub fn new() -> Self {
         DialogueScript {
+            id: Default::default(),
             transitions: Default::default(),
             prompts: Default::default(),
             options: Default::default(),
@@ -176,6 +181,7 @@ pub fn build_dialogue_from_state(
 }
 
 use regex::Regex;
+use std::borrow::BorrowMut;
 
 fn substitute_text(text: &String, current_planet: &Option<Planet>) -> Vec<DialogueSubstitution> {
     let mut res = vec![];
@@ -257,6 +263,26 @@ fn apply_side_effect(
                 return true;
             }
         }
+        DialogOptionSideEffect::QuestCargoPickup => {
+            if let Some(mut my_player) = find_my_player_mut(state, player_id) {
+                if let Some(mut quest) = my_player.quest.borrow_mut() {
+                    quest.state = QuestState::Picked;
+                }
+            }
+        }
+        DialogOptionSideEffect::QuestCargoDropOff => {
+            if let Some(mut my_player) = find_my_player_mut(state, player_id) {
+                if let Some(mut quest) = my_player.quest.borrow_mut() {
+                    quest.state = QuestState::Delivered;
+                    if my_player.is_bot {
+                        my_player.money += quest.reward / 2;
+                    } else {
+                        my_player.money += quest.reward;
+                    }
+                    my_player.quest = None;
+                }
+            }
+        }
     }
     return false;
 }
@@ -270,6 +296,7 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
     let go_exit = new_id();
 
     let mut script = DialogueScript {
+        id: dialogue_id,
         transitions: Default::default(),
         prompts: Default::default(),
         options: Default::default(),
@@ -320,4 +347,130 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         go_exit,
         script,
     )
+}
+
+pub fn gen_scripts() -> Vec<DialogueScript> {
+    let mut res = vec![];
+    let basic_planet = gen_basic_planet_script();
+    res.push(basic_planet.6);
+    res.push(gen_quest_pickup_planet_script());
+    res.push(gen_quest_dropoff_planet_script());
+    res
+}
+
+fn gen_quest_dropoff_planet_script() -> DialogueScript {
+    let dialogue_id = new_id();
+    let arrival = new_id();
+    let dropped_off = new_id();
+    let go_drop_off = new_id();
+    let go_exit_no_drop_off = new_id();
+    let go_exit_dropped_off = new_id();
+
+    let mut script = DialogueScript {
+        id: dialogue_id,
+        transitions: Default::default(),
+        prompts: Default::default(),
+        options: Default::default(),
+        initial_state: Default::default(),
+        is_planetary: true,
+    };
+    script.initial_state = arrival;
+
+    script
+        .prompts
+        .insert(arrival, "You have landed on the s_current_planet_body_type s_current_planet. Here you must deliver the crate you are carrying to somebody.".to_string());
+    script.options.insert(
+        arrival,
+        vec![
+            (
+                go_drop_off,
+                "Find the person that you have to give the cargo to".to_string(),
+            ),
+            (go_exit_no_drop_off, "Undock and fly away".to_string()),
+        ],
+    );
+    script.transitions.insert(
+        (arrival, go_drop_off),
+        (Some(dropped_off), DialogOptionSideEffect::QuestCargoDropOff),
+    );
+    script.transitions.insert(
+        (arrival, go_exit_no_drop_off),
+        (None, DialogOptionSideEffect::Undock),
+    );
+
+    script
+        .prompts
+        .insert(dropped_off, "You found a businessman that thanks you, grabs the crate and hands you off some credits as a reward. He refuses to comment what was in the cargo, though.".to_string());
+    script.options.insert(
+        dropped_off,
+        vec![(
+            go_exit_dropped_off,
+            "Collect your reward and fly away.".to_string(),
+        )],
+    );
+    script.transitions.insert(
+        (dropped_off, go_exit_dropped_off),
+        (None, DialogOptionSideEffect::Undock),
+    );
+
+    script
+}
+
+fn gen_quest_pickup_planet_script() -> DialogueScript {
+    let dialogue_id = new_id();
+    let arrival = new_id();
+    let picked_up = new_id();
+    let go_exit_no_cargo = new_id();
+    let go_exit_with_cargo = new_id();
+    let go_pickup = new_id();
+
+    let mut script = DialogueScript {
+        id: dialogue_id,
+        transitions: Default::default(),
+        prompts: Default::default(),
+        options: Default::default(),
+        initial_state: Default::default(),
+        is_planetary: true,
+    };
+    script.initial_state = arrival;
+    script
+        .prompts
+        .insert(arrival, "You have landed on the s_current_planet_body_type s_current_planet. Here you must pick up the cargo to deliver to s_cargo_destination_planet.".to_string());
+    script
+        .prompts
+        .insert(
+            picked_up,
+            "You find a shady man who calls himself s_random_name. He quickly hands you a suspiciously-looking sealed crate with \"do not open\" written on it, and promptly leaves. You deliver it to your ship without asking questions".to_string()
+        );
+    script.transitions.insert(
+        (arrival, go_pickup),
+        (Some(picked_up), DialogOptionSideEffect::QuestCargoPickup),
+    );
+    script.transitions.insert(
+        (arrival, go_exit_no_cargo),
+        (None, DialogOptionSideEffect::Undock),
+    );
+    script.options.insert(
+        arrival,
+        vec![
+            (
+                go_pickup,
+                "Find the person that has to give you the cargo".to_string(),
+            ),
+            (go_exit_no_cargo, "Undock and fly away".to_string()),
+        ],
+    );
+
+    script.transitions.insert(
+        (picked_up, go_exit_with_cargo),
+        (None, DialogOptionSideEffect::Undock),
+    );
+    script.options.insert(
+        picked_up,
+        vec![(
+            go_exit_with_cargo,
+            "Undock and go to the next stop with the suspicious crate.".to_string(),
+        )],
+    );
+    script
 }

@@ -737,8 +737,10 @@ fn rocket() -> rocket::Rocket {
 
     {
         let mut d_table = DIALOGUE_TABLE.lock().unwrap();
-        let script = dialogue::gen_basic_planet_script();
-        (*d_table).insert(Uuid::parse_str(D_ID).ok().unwrap(), script.6);
+        let scripts: Vec<(DialogueId, DialogueScript)> = dialogue::gen_scripts();
+        for script in scripts {
+            (*d_table).insert(script.0, script.1);
+        }
     }
 
     std::thread::spawn(|| {
@@ -855,7 +857,7 @@ fn physics_thread() {
     }
 }
 
-use crate::dialogue::{Dialogue, DialogueUpdate};
+use crate::dialogue::{Dialogue, DialogueId, DialogueScript, DialogueUpdate};
 use crate::random_stuff::gen_bot_name;
 use crate::vec2::Vec2f64;
 use bots::Bot;
