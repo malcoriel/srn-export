@@ -73,6 +73,7 @@ pub struct DialogueScript {
     pub is_planetary: bool,
     pub priority: u32,
     pub is_default: bool,
+    pub name: String,
 }
 
 impl DialogueScript {
@@ -80,13 +81,34 @@ impl DialogueScript {
         &self,
         game_state: &GameState,
         player: &Player,
-        d_state: Option<&DialogueState>,
+        _d_state: Option<&DialogueState>,
     ) -> bool {
-        if self.is_default {
-            return true;
-        }
-        if let Some(quest) = player.quest.as_ref() {
-            return quest.dialogue_id == self.id;
+        if self.is_planetary {
+            if let Some(current_planet_id) = find_current_planet(&player, game_state).map(|p| p.id)
+            {
+                if self.is_default {
+                    return true;
+                }
+
+                if let Some(quest) = player.quest.as_ref() {
+                    let is_quest_current_dialogue =
+                        quest.dialogue_id.as_ref().map_or(false, |d| *d == self.id);
+                    let is_planet_current = {
+                        let res = if quest.state == QuestState::Started {
+                            quest.from_id == current_planet_id
+                        } else if quest.state == QuestState::Picked {
+                            quest.to_id == current_planet_id
+                        } else {
+                            false
+                        };
+                        eprintln!("{} {}", is_quest_current_dialogue, res);
+
+                        res
+                    };
+
+                    return is_quest_current_dialogue && is_planet_current;
+                }
+            }
         }
         return false;
     }
@@ -100,8 +122,18 @@ impl DialogueScript {
             is_planetary: false,
             is_default: false,
             priority: 0,
+            name: "no name".to_string(),
         }
     }
+}
+
+fn find_current_planet<'a, 'b>(
+    player: &'a Player,
+    game_state: &'b GameState,
+) -> Option<&'b Planet> {
+    let ship = find_my_ship(game_state, &player.id);
+    ship.and_then(|s| s.docked_at)
+        .and_then(|id| find_planet(game_state, &id))
 }
 
 pub struct DialogueTable {
@@ -149,8 +181,10 @@ impl DialogueTable {
             .sorted_by(|d1, d2| d1.priority.cmp(&d2.priority))
             .rev()
         {
+            eprintln!("checking {}", script.name);
             if script.check_player(state, player, player_d_states.get(&script.id)) {
                 d_script = Some(script);
+                eprintln!("catch!");
                 break;
             }
         }
@@ -409,6 +443,7 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         is_planetary: true,
         priority: 0,
         is_default: true,
+        name: "basic_planet".to_string(),
     };
     script.initial_state = arrival;
     script
@@ -482,6 +517,7 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         is_planetary: true,
         priority: 1,
         is_default: false,
+        name: "cargo_delivery_dropoff".to_string(),
     };
     script.initial_state = arrival;
 
@@ -535,6 +571,7 @@ fn gen_quest_pickup_planet_script() -> DialogueScript {
 
     let mut script = DialogueScript {
         id: dialogue_id,
+        name: "cargo_delivery_pickup".to_string(),
         transitions: Default::default(),
         prompts: Default::default(),
         options: Default::default(),

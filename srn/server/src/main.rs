@@ -843,17 +843,23 @@ fn physics_thread() {
     loop {
         thread::sleep(Duration::from_millis(10));
         let mut cont = STATE.write().unwrap();
+        let d_table = DIALOGUE_TABLE.lock().unwrap();
+
         let now = Local::now();
         let elapsed = now - last;
         last = now;
-        cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
+        cont.state = world::update(
+            cont.state.clone(),
+            elapsed.num_milliseconds() * 1000,
+            false,
+            &*d_table,
+        );
 
-        let mut d_states = DIALOGUES_STATES.lock().unwrap();
-        let d_table = DIALOGUE_TABLE.lock().unwrap();
-        let clients_to_notify = world::try_trigger_dialogues(&cont.state, &mut d_states, &d_table);
-        for (client_id, dialogue) in clients_to_notify {
-            unicast_dialogue_state(client_id, dialogue);
-        }
+        // let mut d_states = DIALOGUES_STATES.lock().unwrap();
+        // let clients_to_notify = world::try_trigger_dialogues(&cont.state, &mut d_states, &d_table);
+        // for (client_id, dialogue) in clients_to_notify {
+        //     unicast_dialogue_state(client_id, dialogue);
+        // }
     }
 }
 

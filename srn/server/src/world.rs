@@ -219,6 +219,7 @@ pub fn update_quests(
     players: &Vec<Player>,
     ships: &Vec<Ship>,
     planets: &Vec<Planet>,
+    d_table: &DialogueTable,
 ) -> Vec<Player> {
     let ships_by_id = {
         let mut by_id = HashMap::new();
@@ -260,7 +261,7 @@ pub fn update_quests(
                 }
             } else {
                 if let Some(ship) = ships_by_id.get(&p.ship_id.unwrap_or(Default::default())) {
-                    player.quest = generate_random_quest(planets, ship.docked_at);
+                    player.quest = generate_random_quest(planets, ship.docked_at, d_table);
                 }
             }
             player
@@ -268,7 +269,11 @@ pub fn update_quests(
         .collect::<Vec<_>>()
 }
 
-fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Option<Quest> {
+fn generate_random_quest(
+    planets: &Vec<Planet>,
+    docked_at: Option<Uuid>,
+    d_table: &DialogueTable,
+) -> Option<Quest> {
     let mut rng: ThreadRng = rand::thread_rng();
     let from = get_random_planet(planets, docked_at, &mut rng);
     let delivery = planets
@@ -282,8 +287,16 @@ fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Opti
         to_id: to.id,
         state: QuestState::Started,
         reward,
-        dialogue_id: Default::default(),
+        dialogue_id: find_start_dialogue(d_table),
     });
+}
+
+fn find_start_dialogue(d_table: &DialogueTable) -> Option<Uuid> {
+    return d_table
+        .scripts
+        .values()
+        .find(|s| s.name == "cargo_delivery_pickup".to_string())
+        .map(|s| s.id);
 }
 
 fn get_random_planet<'a>(
@@ -368,7 +381,7 @@ pub struct Quest {
     pub to_id: Uuid,
     pub state: QuestState,
     pub reward: i32,
-    pub dialogue_id: Uuid,
+    pub dialogue_id: Option<Uuid>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -542,7 +555,12 @@ pub fn try_trigger_dialogues(
     res.into_iter().map(|(p, od)| (p, od)).collect::<Vec<_>>()
 }
 
-pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
+pub fn update(
+    mut state: GameState,
+    elapsed: i64,
+    client: bool,
+    d_table: &DialogueTable,
+) -> GameState {
     state.ticks += elapsed as u32 / 1000;
 
     if !client {
@@ -587,7 +605,8 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
                 elapsed,
             );
             if !client {
-                state.players = update_quests(&state.players, &state.ships, &state.planets);
+                state.players =
+                    update_quests(&state.players, &state.ships, &state.planets, d_table);
             }
         }
     }
