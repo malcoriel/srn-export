@@ -1,7 +1,7 @@
 use crate::new_id;
 use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, GameState,
-    Planet, PlayerId, QuestState,
+    Planet, Player, PlayerId, QuestState,
 };
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -46,14 +46,11 @@ pub struct DialogueUpdate {
     pub option_id: Uuid,
 }
 
+pub type DialogueState = Box<Option<StateId>>;
+
 // player -> (activeDialogue?, dialogue -> state?)
-pub type DialogueStates = HashMap<
-    PlayerId,
-    (
-        Option<DialogueId>,
-        HashMap<DialogueId, Box<Option<StateId>>>,
-    ),
->;
+pub type DialogueStates =
+    HashMap<PlayerId, (Option<DialogueId>, HashMap<DialogueId, DialogueState>)>;
 pub type DialogueId = Uuid;
 pub type StateId = Uuid;
 pub type OptionId = Uuid;
@@ -74,9 +71,18 @@ pub struct DialogueScript {
     pub options: HashMap<StateId, Vec<(OptionId, String)>>,
     pub initial_state: StateId,
     pub is_planetary: bool,
+    pub priority: u32,
 }
 
 impl DialogueScript {
+    pub fn check_player(
+        &self,
+        game_state: &GameState,
+        player: &Player,
+        d_state: Option<&DialogueState>,
+    ) -> bool {
+        return true;
+    }
     pub fn new() -> Self {
         DialogueScript {
             id: Default::default(),
@@ -85,11 +91,100 @@ impl DialogueScript {
             options: Default::default(),
             initial_state: Default::default(),
             is_planetary: false,
+            priority: 0,
         }
     }
 }
 
-pub type DialogueTable = HashMap<DialogueId, DialogueScript>;
+pub struct DialogueTable {
+    pub scripts: HashMap<DialogueId, DialogueScript>,
+}
+
+impl DialogueTable {
+    pub fn new() -> DialogueTable {
+        return DialogueTable {
+            scripts: Default::default(),
+        };
+    }
+    pub fn trigger_dialogue(
+        &self,
+        d_id: &Uuid,
+        script: &DialogueScript,
+        res: &mut Vec<(Uuid, Option<Dialogue>)>,
+        player: &Player,
+        player_d_states: &mut HashMap<Uuid, Box<Option<Uuid>>>,
+        game_state: &GameState,
+    ) {
+        let key = d_id;
+        let value = Box::new(Some(script.initial_state));
+        res.push((
+            player.id,
+            build_dialogue_from_state(&d_id, &value, self, &player.id, game_state),
+        ));
+        player_d_states.insert(key.clone(), value);
+    }
+
+    pub fn try_trigger(
+        &self,
+        state: &GameState,
+        d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
+        mut res: &mut Vec<(Uuid, Option<Dialogue>)>,
+        player: &Player,
+    ) {
+        let (_current_player_dialogue, player_d_states) =
+            d_states.entry(player.id).or_insert((None, HashMap::new()));
+
+        let mut d_script: Option<&DialogueScript> = None;
+        for script in self
+            .scripts
+            .values()
+            .sorted_by(|d1, d2| d1.priority.cmp(&d2.priority))
+            .rev()
+        {
+            if script.check_player(state, player, player_d_states.get(&script.id)) {
+                d_script = Some(script);
+                break;
+            }
+        }
+        if d_script.is_none() {
+            return;
+        }
+        let d_script = d_script.unwrap();
+        let d_id = d_script.id;
+        let ship = find_my_ship(state, &player.id);
+        if let Some(ship) = ship {
+            if let Some(_docked_at) = ship.docked_at {
+                if !player_d_states.contains_key(&d_id) {
+                    self.trigger_dialogue(
+                        &d_id,
+                        d_script,
+                        &mut res,
+                        player,
+                        player_d_states,
+                        state,
+                    );
+                } else {
+                    let existing_state = player_d_states.get(&d_id).unwrap();
+                    if existing_state.is_none() {
+                        self.trigger_dialogue(
+                            &d_id,
+                            d_script,
+                            &mut res,
+                            player,
+                            player_d_states,
+                            state,
+                        );
+                    }
+                }
+            } else {
+                if player_d_states.contains_key(&d_id) {
+                    player_d_states.remove(&d_id);
+                    res.push((player.id, None))
+                }
+            }
+        }
+    }
+}
 
 pub fn execute_dialog_option(
     client_id: &Uuid,
@@ -134,7 +229,7 @@ pub fn build_dialogue_from_state(
     player_id: &PlayerId,
     game_state: &GameState,
 ) -> Option<Dialogue> {
-    let script = dialogue_table.get(dialogue_id);
+    let script = dialogue_table.scripts.get(dialogue_id);
     if let Some(script) = script {
         if let Some(state) = **current_state {
             let prompt = script.prompts.get(&state).unwrap();
@@ -180,6 +275,7 @@ pub fn build_dialogue_from_state(
     return None;
 }
 
+use itertools::Itertools;
 use regex::Regex;
 use std::borrow::BorrowMut;
 
@@ -229,7 +325,7 @@ fn apply_dialogue_option(
     // eprintln!("apply start");
 
     let current_state = *current_state;
-    let script = dialogue_table.get(&update.dialogue_id);
+    let script = dialogue_table.scripts.get(&update.dialogue_id);
     return if let Some(script) = script {
         if let Some(current_state) = current_state {
             // eprintln!("apply current_state update {:?}", (current_state, update));
@@ -264,15 +360,16 @@ fn apply_side_effect(
             }
         }
         DialogOptionSideEffect::QuestCargoPickup => {
-            if let Some(mut my_player) = find_my_player_mut(state, player_id) {
-                if let Some(mut quest) = my_player.quest.borrow_mut() {
+            if let Some(my_player) = find_my_player_mut(state, player_id) {
+                let quest = my_player.quest.as_mut();
+                if let Some(mut quest) = quest {
                     quest.state = QuestState::Picked;
                 }
             }
         }
         DialogOptionSideEffect::QuestCargoDropOff => {
             if let Some(mut my_player) = find_my_player_mut(state, player_id) {
-                if let Some(mut quest) = my_player.quest.borrow_mut() {
+                if let Some(mut quest) = my_player.quest.as_mut() {
                     quest.state = QuestState::Delivered;
                     if my_player.is_bot {
                         my_player.money += quest.reward / 2;
@@ -302,6 +399,7 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         options: Default::default(),
         initial_state: Default::default(),
         is_planetary: true,
+        priority: 1,
     };
     script.initial_state = arrival;
     script
@@ -373,6 +471,7 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         options: Default::default(),
         initial_state: Default::default(),
         is_planetary: true,
+        priority: 0,
     };
     script.initial_state = arrival;
 
@@ -431,6 +530,7 @@ fn gen_quest_pickup_planet_script() -> DialogueScript {
         options: Default::default(),
         initial_state: Default::default(),
         is_planetary: true,
+        priority: 0,
     };
     script.initial_state = arrival;
     script

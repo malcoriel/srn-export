@@ -662,7 +662,7 @@ fn change_player_name(conn_id: &Uuid, new_name: &&str) {
 
 lazy_static! {
     static ref DIALOGUE_TABLE: Arc<Mutex<Box<DialogueTable>>> =
-        Arc::new(Mutex::new(Box::new(HashMap::new())));
+        Arc::new(Mutex::new(Box::new(DialogueTable::new())));
 }
 
 fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
@@ -737,9 +737,9 @@ fn rocket() -> rocket::Rocket {
 
     {
         let mut d_table = DIALOGUE_TABLE.lock().unwrap();
-        let scripts: Vec<(DialogueId, DialogueScript)> = dialogue::gen_scripts();
+        let scripts: Vec<DialogueScript> = dialogue::gen_scripts();
         for script in scripts {
-            (*d_table).insert(script.0, script.1);
+            d_table.scripts.insert(script.id, script);
         }
     }
 

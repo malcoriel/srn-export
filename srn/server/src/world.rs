@@ -532,71 +532,12 @@ pub fn try_trigger_dialogues(
     d_states: &mut DialogueStates,
     d_table: &DialogueTable,
 ) -> Vec<(PlayerId, Option<Dialogue>)> {
-    let parsed_planet_d = Uuid::parse_str("2484332e-3668-4754-a7ac-d5fbf8707145")
-        .ok()
-        .unwrap();
-    let planet_d_script = d_table.get(&parsed_planet_d).unwrap();
     let mut res = vec![];
-    for player in state.players.iter() {
-        let (_current_player_dialogue, player_d_states) =
-            d_states.entry(player.id).or_insert((None, HashMap::new()));
 
-        // eprintln!("player {} d_states {:?}", player.id, player_d_states);
-        let ship = find_my_ship(state, &player.id);
-        if let Some(ship) = ship {
-            if let Some(_docked_at) = ship.docked_at {
-                if !player_d_states.contains_key(&parsed_planet_d) {
-                    trigger_dialogue(
-                        d_table,
-                        &parsed_planet_d,
-                        planet_d_script,
-                        &mut res,
-                        player,
-                        player_d_states,
-                        state,
-                    );
-                } else {
-                    let existing_state = player_d_states.get(&parsed_planet_d).unwrap();
-                    if existing_state.is_none() {
-                        trigger_dialogue(
-                            d_table,
-                            &parsed_planet_d,
-                            planet_d_script,
-                            &mut res,
-                            player,
-                            player_d_states,
-                            state,
-                        );
-                    }
-                }
-            } else {
-                // TODO reset all planetary dialogues, not just this one
-                if player_d_states.contains_key(&parsed_planet_d) {
-                    player_d_states.remove(&parsed_planet_d);
-                    res.push((player.id, None))
-                }
-            }
-        }
+    for player in state.players.iter() {
+        d_table.try_trigger(state, d_states, &mut res, &player);
     }
     res.into_iter().map(|(p, od)| (p, od)).collect::<Vec<_>>()
-}
-
-fn trigger_dialogue(
-    d_table: &HashMap<Uuid, DialogueScript>,
-    parsed_planet_d: &Uuid,
-    planet_d_script: &DialogueScript,
-    res: &mut Vec<(Uuid, Option<Dialogue>)>,
-    player: &Player,
-    player_d_states: &mut HashMap<Uuid, Box<Option<Uuid>>>,
-    game_state: &GameState,
-) {
-    let key = parsed_planet_d;
-    let value = Box::new(Some(planet_d_script.initial_state));
-    res.push((
-        player.id,
-        build_dialogue_from_state(&parsed_planet_d, &value, d_table, &player.id, game_state),
-    ));
-    player_d_states.insert(key.clone(), value);
 }
 
 pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
@@ -758,7 +699,6 @@ pub fn update_ships_navigation(
                         let new_pos = move_ship(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
                         if new_pos.euclidean_distance(&planet_pos) < planet.radius {
-                            eprintln!("force docking due to navigation");
                             ship.docked_at = Some(planet.id);
                             ship.dock_target = None;
                             ship.trajectory = vec![];
