@@ -901,3 +901,138 @@ pub fn execute_dialog_option(
 }
 
 pub type PlayerId = Uuid;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ManualMoveUpdate {
+    pub position: Vec2f64,
+    pub rotation: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ShipActionRust {
+    Unknown,
+    Move(ManualMoveUpdate),
+    Dock,
+    Navigate(Vec2f64),
+    DockNavigate(Uuid),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ShipActionType {
+    Unknown = 0,
+    Move = 1,
+    Dock = 2,
+    Navigate = 3,
+    DockNavigate = 4,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ShipAction {
+    s_type: ShipActionType,
+    data: String,
+}
+
+fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
+    match action_raw.s_type {
+        ShipActionType::Unknown => ShipActionRust::Unknown,
+        ShipActionType::Move => serde_json::from_str::<ManualMoveUpdate>(action_raw.data.as_str())
+            .ok()
+            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Move(v)),
+        ShipActionType::Dock => ShipActionRust::Dock,
+        ShipActionType::Navigate => serde_json::from_str::<Vec2f64>(action_raw.data.as_str())
+            .ok()
+            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Navigate(v)),
+        ShipActionType::DockNavigate => serde_json::from_str::<Uuid>(action_raw.data.as_str())
+            .ok()
+            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::DockNavigate(v)),
+    }
+}
+
+pub fn merge_ship_update(
+    old_ship: &Ship,
+    ship_action: ShipAction,
+    state: &GameState,
+) -> Option<Ship> {
+    let ship_action: ShipActionRust = parse_ship_action(ship_action);
+
+    match ship_action {
+        ShipActionRust::Unknown => {
+            eprintln!("Unknown ship action");
+            None
+        }
+        ShipActionRust::Move(v) => {
+            let mut ship = old_ship.clone();
+            ship.x = v.position.x;
+            ship.y = v.position.y;
+            ship.rotation = v.rotation;
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            ship.trajectory = vec![];
+            Some(ship)
+        }
+        ShipActionRust::Dock => {
+            let mut ship = old_ship.clone();
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            if ship.docked_at.is_some() {
+                ship.docked_at = None;
+            } else {
+                let ship_pos = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                };
+                for planet in state.planets.iter() {
+                    let pos = Vec2f64 {
+                        x: planet.x,
+                        y: planet.y,
+                    };
+                    if pos.euclidean_distance(&ship_pos) < planet.radius {
+                        ship.docked_at = Some(planet.id);
+                        ship.x = planet.x;
+                        ship.y = planet.y;
+                        ship.navigate_target = None;
+                        ship.dock_target = None;
+                        ship.trajectory = vec![];
+                        break;
+                    }
+                }
+            }
+            Some(ship)
+        }
+        ShipActionRust::Navigate(v) => {
+            let mut ship = old_ship.clone();
+            let ship_pos = Vec2f64 {
+                x: ship.x,
+                y: ship.y,
+            };
+
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            ship.docked_at = None;
+            ship.navigate_target = Some(v);
+            ship.trajectory = build_trajectory_to_point(ship_pos, &v);
+            Some(ship)
+        }
+        ShipActionRust::DockNavigate(t) => {
+            let mut ship = old_ship.clone();
+            if let Some(planet) = find_planet(state, &t) {
+                let ship_pos = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                };
+                let planet_pos = Vec2f64 {
+                    x: planet.x,
+                    y: planet.y,
+                };
+                ship.navigate_target = None;
+                ship.dock_target = None;
+                ship.docked_at = None;
+                ship.dock_target = Some(t);
+                ship.trajectory = build_trajectory_to_point(ship_pos, &planet_pos);
+                Some(ship)
+            } else {
+                None
+            }
+        }
+    }
+}
