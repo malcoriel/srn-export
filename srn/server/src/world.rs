@@ -282,6 +282,7 @@ fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Opti
         to_id: to.id,
         state: QuestState::Started,
         reward,
+        dialogue_id: Default::default(),
     });
 }
 
@@ -367,6 +368,7 @@ pub struct Quest {
     pub to_id: Uuid,
     pub state: QuestState,
     pub reward: i32,
+    pub dialogue_id: Uuid,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

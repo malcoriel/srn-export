@@ -72,6 +72,7 @@ pub struct DialogueScript {
     pub initial_state: StateId,
     pub is_planetary: bool,
     pub priority: u32,
+    pub is_default: bool,
 }
 
 impl DialogueScript {
@@ -81,7 +82,13 @@ impl DialogueScript {
         player: &Player,
         d_state: Option<&DialogueState>,
     ) -> bool {
-        return true;
+        if self.is_default {
+            return true;
+        }
+        if let Some(quest) = player.quest.as_ref() {
+            return quest.dialogue_id == self.id;
+        }
+        return false;
     }
     pub fn new() -> Self {
         DialogueScript {
@@ -91,6 +98,7 @@ impl DialogueScript {
             options: Default::default(),
             initial_state: Default::default(),
             is_planetary: false,
+            is_default: false,
             priority: 0,
         }
     }
@@ -399,7 +407,8 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         options: Default::default(),
         initial_state: Default::default(),
         is_planetary: true,
-        priority: 1,
+        priority: 0,
+        is_default: true,
     };
     script.initial_state = arrival;
     script
@@ -471,7 +480,8 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         options: Default::default(),
         initial_state: Default::default(),
         is_planetary: true,
-        priority: 0,
+        priority: 1,
+        is_default: false,
     };
     script.initial_state = arrival;
 
@@ -530,7 +540,8 @@ fn gen_quest_pickup_planet_script() -> DialogueScript {
         options: Default::default(),
         initial_state: Default::default(),
         is_planetary: true,
-        priority: 0,
+        priority: 1,
+        is_default: false,
     };
     script.initial_state = arrival;
     script
