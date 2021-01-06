@@ -154,8 +154,8 @@ struct ClientErr {
     message: String,
 }
 
-fn mutate_owned_ship_wrapped(client_id: Uuid, new_ship: Ship, tag: Option<String>) {
-    let res = mutate_owned_ship(client_id, new_ship, tag);
+fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
+    let res = mutate_owned_ship(client_id, mutate_cmd, tag);
     if res.is_err() {
         eprintln!("error mutating owned ship {}", res.err().unwrap().message);
         increment_client_errors(client_id);
@@ -165,152 +165,145 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, new_ship: Ship, tag: Option<String
 
 fn mutate_owned_ship(
     client_id: Uuid,
-    new_ship: Ship,
+    mutate_cmd: ShipAction,
     tag: Option<String>,
 ) -> Result<Ship, ClientErr> {
-    let updated_ship: Ship;
-    let old_ship_index;
+    let ship_action: ShipActionRust = parse_ship_action(mutate_cmd);
+    eprintln!("action {:?}", ship_action);
     let mut cont = STATE.write().unwrap();
-    let state_clone = cont.state.clone();
-
-    let player = state_clone.players.iter().find(|p| p.id == client_id);
-    match player {
-        None => {
-            return Err(ClientErr {
-                message: String::from("No player found"),
-            })
-        }
-        Some(player) => {
-            if player.ship_id.is_some() {
-                if new_ship.id != player.ship_id.unwrap() {
-                    return Err(ClientErr {
-                        message: String::from(format!("Wrong ship id {}", new_ship.id)),
-                    });
-                }
-            } else {
-                return Err(ClientErr {
-                    message: String::from("No current ship"),
-                });
-            }
-        }
-    }
-    let old_ship = state_clone
-        .ships
-        .iter()
-        .position(|s| s.id == player.unwrap().ship_id.unwrap());
-    if old_ship.is_none() {
+    let old_ship_index = world::find_my_ship_index(&cont.state, &client_id);
+    if old_ship_index.is_none() {
         return Err(ClientErr {
             message: String::from("No old instance of ship"),
         });
     }
-    old_ship_index = old_ship.clone();
-    let old_ship = state_clone.ships[old_ship.unwrap()].clone();
-    let ok = validate_ship_move(
-        &old_ship,
-        &Vec2f64 {
-            x: new_ship.x,
-            y: new_ship.y,
-        },
+    let updated_ship = merge_ship_update(
+        &cont.state.ships[old_ship_index.clone().unwrap()],
+        ship_action,
+        &cont.state,
     );
-    if !ok {
-        updated_ship = old_ship;
-    } else {
-        updated_ship = new_ship;
-    }
-    cont.state.ships.remove(old_ship_index.unwrap());
     world::force_update_to_now(&mut cont.state);
-    cont.state.ships.push(updated_ship.clone());
-    multicast_ships_update_excluding(cont.state.ships.clone(), client_id);
-    if let Some(tag) = tag {
-        send_tag_confirm(tag, client_id);
+    if let Some(updated_ship) = updated_ship {
+        cont.state.ships.remove(old_ship_index.unwrap());
+        cont.state.ships.push(updated_ship.clone());
+        multicast_ships_update_excluding(cont.state.ships.clone(), client_id);
+        if let Some(tag) = tag {
+            send_tag_confirm(tag, client_id);
+        }
+        return Ok(updated_ship);
     }
-    return Ok(updated_ship);
+    return Err(ClientErr {
+        message: String::from("Ship update was invalid"),
+    });
+}
+
+fn merge_ship_update(
+    old_ship: &Ship,
+    ship_action: ShipActionRust,
+    state: &GameState,
+) -> Option<Ship> {
+    match ship_action {
+        ShipActionRust::Unknown => {
+            eprintln!("Unknown ship action");
+            None
+        }
+        ShipActionRust::Move(v) => {
+            let mut ship = old_ship.clone();
+            ship.x = v.position.x;
+            ship.y = v.position.y;
+            ship.rotation = v.rotation;
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            ship.trajectory = vec![];
+            Some(ship)
+        }
+        ShipActionRust::Dock => {
+            let mut ship = old_ship.clone();
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            if ship.docked_at.is_some() {
+                ship.docked_at = None;
+            } else {
+                let ship_pos = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                };
+                for planet in state.planets.iter() {
+                    let pos = Vec2f64 {
+                        x: planet.x,
+                        y: planet.y,
+                    };
+                    if pos.euclidean_distance(&ship_pos) < planet.radius {
+                        ship.docked_at = Some(planet.id);
+                        ship.x = planet.x;
+                        ship.y = planet.y;
+                        ship.navigate_target = None;
+                        ship.dock_target = None;
+                        ship.trajectory = vec![];
+                        break;
+                    }
+                }
+            }
+            Some(ship)
+        }
+        ShipActionRust::Navigate(v) => {
+            let mut ship = old_ship.clone();
+            let ship_pos = Vec2f64 {
+                x: ship.x,
+                y: ship.y,
+            };
+
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            ship.docked_at = None;
+            ship.navigate_target = Some(v);
+            ship.trajectory = world::build_trajectory_to_point(ship_pos, &v);
+            Some(ship)
+        }
+        ShipActionRust::DockNavigate(t) => {
+            let mut ship = old_ship.clone();
+            if let Some(planet) = find_planet(state, &t) {
+                let ship_pos = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                };
+                let planet_pos = Vec2f64 {
+                    x: planet.x,
+                    y: planet.y,
+                };
+                ship.navigate_target = None;
+                ship.dock_target = None;
+                ship.docked_at = None;
+                ship.dock_target = Some(t);
+                ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos);
+                Some(ship)
+            } else {
+                None
+            }
+        }
+    }
+}
+
+fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
+    match action_raw.s_type {
+        ShipActionType::Unknown => ShipActionRust::Unknown,
+        ShipActionType::Move => serde_json::from_str::<ManualMoveUpdate>(action_raw.data.as_str())
+            .ok()
+            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Move(v)),
+        ShipActionType::Dock => ShipActionRust::Dock,
+        ShipActionType::Navigate => serde_json::from_str::<Vec2f64>(action_raw.data.as_str())
+            .ok()
+            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Navigate(v)),
+        ShipActionType::DockNavigate => serde_json::from_str::<Uuid>(action_raw.data.as_str())
+            .ok()
+            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::DockNavigate(v)),
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ManualMoveUpdate {
     pub position: Vec2f64,
     pub rotation: f64,
-    pub navigate_target: Option<Vec2f64>,
-    pub dock_target: Option<Uuid>,
-    pub trajectory: Vec<Vec2f64>,
-}
-
-fn mutate_owned_ship_pos_wrapped(
-    client_id: Uuid,
-    move_update: ManualMoveUpdate,
-    tag: Option<String>,
-) {
-    let res = mutate_owned_ship_pos(client_id, move_update, tag);
-    if res.is_err() {
-        eprintln!("error mutating owned ship {}", res.err().unwrap().message);
-        increment_client_errors(client_id);
-        disconnect_if_bad(client_id);
-    }
-}
-
-fn mutate_owned_ship_pos(
-    client_id: Uuid,
-    move_update: ManualMoveUpdate,
-    tag: Option<String>,
-) -> Result<Ship, ClientErr> {
-    let mut updated_ship: Ship;
-    let old_ship_index;
-    let mut cont = STATE.write().unwrap();
-    world::force_update_to_now(&mut cont.state);
-
-    let state_clone = cont.state.clone();
-    let player = state_clone.players.iter().find(|p| p.id == client_id);
-    match player {
-        None => {
-            return Err(ClientErr {
-                message: String::from("No player found"),
-            })
-        }
-        Some(player) => {
-            if !(player.ship_id.is_some()) {
-                return Err(ClientErr {
-                    message: String::from("No current ship"),
-                });
-            }
-        }
-    }
-
-    let old_ship = state_clone
-        .ships
-        .iter()
-        .position(|s| s.id == player.unwrap().ship_id.unwrap());
-    if old_ship.is_none() {
-        return Err(ClientErr {
-            message: String::from("No old instance of ship"),
-        });
-    }
-    old_ship_index = old_ship.clone();
-    let old_ship = state_clone.ships[old_ship.unwrap()].clone();
-    let ok = validate_ship_move(&old_ship, &move_update.position);
-    if !ok {
-        updated_ship = old_ship;
-    } else {
-        updated_ship = old_ship.clone();
-        updated_ship.x = move_update.position.x;
-        updated_ship.y = move_update.position.y;
-        updated_ship.rotation = move_update.rotation;
-        updated_ship.navigate_target = move_update.navigate_target;
-        updated_ship.dock_target = move_update.dock_target;
-        updated_ship.trajectory = move_update.trajectory;
-    }
-    cont.state.ships.remove(old_ship_index.unwrap());
-    cont.state.ships.push(updated_ship.clone());
-    multicast_ships_update_excluding(cont.state.ships.clone(), client_id);
-    if let Some(tag) = tag {
-        send_tag_confirm(tag, client_id);
-    }
-    return Ok(updated_ship);
-}
-
-fn validate_ship_move(_old: &Ship, _new: &Vec2f64) -> bool {
-    // some anti-cheat needed
-    return true;
 }
 
 fn broadcast_state(state: GameState) {
@@ -369,7 +362,30 @@ enum ClientOpCode {
     MutateMyShip = 2,
     Name = 3,
     DialogueOption = 4,
-    ManualMove = 5,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+enum ShipActionType {
+    Unknown = 0,
+    Move = 1,
+    Dock = 2,
+    Navigate = 3,
+    DockNavigate = 4,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+enum ShipActionRust {
+    Unknown,
+    Move(ManualMoveUpdate),
+    Dock,
+    Navigate(Vec2f64),
+    DockNavigate(Uuid),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ShipAction {
+    s_type: ShipActionType,
+    data: String,
 }
 
 type WSRequest =
@@ -484,13 +500,20 @@ fn handle_request(request: WSRequest) {
                                         broadcast_state(state)
                                     }
                                     ClientOpCode::MutateMyShip => {
-                                        serde_json::from_str::<Ship>(second).ok().map(|s| {
-                                            mutate_owned_ship_wrapped(
+                                        let parsed = serde_json::from_str::<ShipAction>(second);
+                                        match parsed {
+                                            Ok(res) => mutate_owned_ship_wrapped(
                                                 client_id,
-                                                s,
+                                                res,
                                                 third.map(|s| s.to_string()),
-                                            )
-                                        });
+                                            ),
+                                            Err(err) => {
+                                                eprintln!(
+                                                    "couldn't parse ship action {}, err {}",
+                                                    second, err
+                                                );
+                                            }
+                                        }
                                     }
                                     ClientOpCode::Name => {
                                         change_player_name(&client_id, second);
@@ -505,17 +528,6 @@ fn handle_request(request: WSRequest) {
                                         );
                                     }
                                     ClientOpCode::Unknown => {}
-                                    ClientOpCode::ManualMove => {
-                                        serde_json::from_str::<ManualMoveUpdate>(second).ok().map(
-                                            |s| {
-                                                mutate_owned_ship_pos_wrapped(
-                                                    client_id,
-                                                    s,
-                                                    third.map(|s| s.to_string()),
-                                                )
-                                            },
-                                        );
-                                    }
                                 },
                                 None => {}
                             },
@@ -852,7 +864,7 @@ fn physics_thread() {
             cont.state.clone(),
             elapsed.num_milliseconds() * 1000,
             false,
-            &*d_table,
+            Some(&*d_table),
         );
 
         // let mut d_states = DIALOGUES_STATES.lock().unwrap();
@@ -866,6 +878,7 @@ fn physics_thread() {
 use crate::dialogue::{Dialogue, DialogueId, DialogueScript, DialogueUpdate};
 use crate::random_stuff::gen_bot_name;
 use crate::vec2::Vec2f64;
+use crate::world::{find_my_ship, find_planet};
 use bots::Bot;
 lazy_static! {
     static ref BOTS: Arc<Mutex<HashMap<Uuid, Bot>>> = Arc::new(Mutex::new(HashMap::new()));
@@ -914,7 +927,8 @@ fn bot_thread() {
             }
         }
         for (bot_id, ship) in ship_updates.into_iter() {
-            mutate_owned_ship_wrapped(bot_id, ship, None);
+            // TODO make compatible with ship actions
+            // mutate_owned_ship_wrapped(bot_id, ship, None);
         }
         thread::sleep(Duration::from_millis(BOT_SLEEP_MS));
     }

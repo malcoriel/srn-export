@@ -90,7 +90,7 @@ export type Leaderboard = {
 };
 
 export enum DialogueSubstitutionType {
-  Unknown = 'Unkwnown',
+  Unknown = 'Unknown',
   PlanetName = 'PlanetName',
   CharacterName = 'CharacterName',
   Generic = 'Generic',
@@ -149,11 +149,11 @@ export const antiScale = () => {
 };
 
 export enum ShipActionType {
-  Unknown,
-  Move,
-  Dock,
-  Navigate,
-  DockNavigate,
+  Unknown = 'Unknown',
+  Move = 'Move',
+  Dock = 'Dock',
+  Navigate = 'Navigate',
+  DockNavigate = 'DockNavigate',
 }
 
 export enum Direction {
@@ -169,14 +169,20 @@ export enum Direction {
 }
 
 export class ShipAction {
-  constructor(public type: ShipActionType, public data?: any) {}
+  constructor(public s_type: ShipActionType, public data?: any) {}
   public static Move = (dir: Direction) =>
     new ShipAction(ShipActionType.Move, dir);
-  public static Dock = () => new ShipAction(ShipActionType.Dock);
+  public static Dock = () => new ShipAction(ShipActionType.Dock, '');
   public static Navigate = (to: IVector) =>
     new ShipAction(ShipActionType.Navigate, to);
   public static DockNavigate = (to: string) =>
     new ShipAction(ShipActionType.DockNavigate, to);
+  public serialize(): string {
+    return JSON.stringify({
+      s_type: this.s_type,
+      data: JSON.stringify(this.data),
+    });
+  }
 }
 
 const directionToRotation = {
@@ -201,7 +207,7 @@ export const applyShipAction = (
   const moveByTime = (SHIP_SPEED * elapsedMs) / 1000;
   const stateConsideringPing = simulateStateUpdate(state, ping) || state;
   const moveByTimeDiagonal = (moveByTime * Math.sqrt(2)) / 2;
-  switch (sa.type) {
+  switch (sa.s_type) {
     case ShipActionType.Dock: {
       const shipV = Vector.fromIVector(myShip);
       if (myShip.docked_at) {

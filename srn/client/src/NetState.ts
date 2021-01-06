@@ -20,11 +20,6 @@ enum ClientOpCode {
   MutateMyShip,
   Name,
   DialogueOption,
-  ManualMove,
-  Dock,
-  Navigate,
-  Undock,
-  DockNavigate,
 }
 
 interface Cmd {
@@ -330,6 +325,10 @@ export default class NetState extends EventEmitter {
   private send(cmd: Cmd) {
     if (this.socket && !this.connecting) {
       switch (cmd.code) {
+        case ClientOpCode.Unknown: {
+          console.warn(`Unknown opcode ${cmd.code}`);
+          break;
+        }
         case ClientOpCode.Sync: {
           // TODO use cmd.tag instead of value tag for force-syncs
           let syncMsg = `${cmd.code}_%_${cmd.value.tag}`;
@@ -340,9 +339,7 @@ export default class NetState extends EventEmitter {
           break;
         }
         case ClientOpCode.MutateMyShip: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
+          this.socket.send(`${cmd.code}_%_${cmd.value}_%_${cmd.tag}`);
           break;
         }
         case ClientOpCode.Name: {
@@ -355,12 +352,8 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
-        case ClientOpCode.ManualMove: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
-          break;
-        }
+        default:
+          console.warn(`Unknown opcode ${cmd.code}`);
       }
     }
   }
@@ -394,16 +387,18 @@ export default class NetState extends EventEmitter {
     let dockAction = actionsActive[ShipActionType.Dock];
     let navigateAction = actionsActive[ShipActionType.Navigate];
     let dockNavigateAction = actionsActive[ShipActionType.DockNavigate];
-    if (dockAction || navigateAction || dockNavigateAction) {
+    const nonNullActions = [
+      dockAction,
+      navigateAction,
+      dockNavigateAction,
+    ].filter((a) => !!a) as ShipAction[];
+
+    for (let action of nonNullActions) {
       let tag = uuid.v4();
-      const nonNullActions = [
-        dockAction,
-        navigateAction,
-        dockNavigateAction,
-      ].filter((a) => !!a) as ShipAction[];
-      this.pendingActions.push([tag, nonNullActions, this.state.ticks]);
-      this.updateShipOnServer(tag);
+      this.pendingActions.push([tag, [action], this.state.ticks]);
+      this.updateShipOnServer(tag, action);
     }
+
     if (actionsActive[ShipActionType.Move]) {
       this.visualState.boundCameraMovement = true;
     }
@@ -418,13 +413,13 @@ export default class NetState extends EventEmitter {
     }
   };
 
-  private updateShipOnServer = (tag: string) => {
+  private updateShipOnServer = (tag: string, action: ShipAction) => {
     if (this.state && !this.state.paused) {
-      let myShipIndex = findMyShipIndex(this.state);
-      if (myShipIndex !== -1 && myShipIndex !== null) {
-        const myShip = this.state.ships[myShipIndex];
-        this.send({ code: ClientOpCode.MutateMyShip, value: myShip, tag });
-      }
+      this.send({
+        code: ClientOpCode.MutateMyShip,
+        value: action.serialize(),
+        tag,
+      });
     }
   };
 
@@ -434,16 +429,21 @@ export default class NetState extends EventEmitter {
       if (myShipIndex !== -1 && myShipIndex !== null) {
         const myShip = this.state.ships[myShipIndex];
         let currentShipPos = Vector.fromIVector(myShip);
-        if (!Vector.equals(this.lastShipPos, currentShipPos)) {
+        if (
+          !Vector.equals(this.lastShipPos, currentShipPos) &&
+          !myShip.navigate_target &&
+          !myShip.dock_target &&
+          !myShip.docked_at
+        ) {
           this.send({
-            code: ClientOpCode.ManualMove,
-            value: {
-              position: currentShipPos,
-              rotation: myShip.rotation,
-              navigate_target: myShip.navigate_target,
-              dock_target: myShip.dock_target,
-              trajectory: myShip.trajectory,
-            },
+            code: ClientOpCode.MutateMyShip,
+            value: JSON.stringify({
+              s_type: ShipActionType.Move,
+              data: JSON.stringify({
+                position: currentShipPos,
+                rotation: myShip.rotation,
+              }),
+            }),
             tag,
           });
         }

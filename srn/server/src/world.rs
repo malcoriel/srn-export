@@ -559,7 +559,7 @@ pub fn update(
     mut state: GameState,
     elapsed: i64,
     client: bool,
-    d_table: &DialogueTable,
+    d_table: Option<&DialogueTable>,
 ) -> GameState {
     state.ticks += elapsed as u32 / 1000;
 
@@ -605,8 +605,10 @@ pub fn update(
                 elapsed,
             );
             if !client {
-                state.players =
-                    update_quests(&state.players, &state.ships, &state.planets, d_table);
+                if let Some(d_table) = d_table {
+                    state.players =
+                        update_quests(&state.players, &state.ships, &state.planets, d_table);
+                }
             }
         }
     }
@@ -806,7 +808,7 @@ fn build_trajectory_to_planet(
     result
 }
 
-fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64) -> Vec<Vec2f64> {
+pub(crate) fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64) -> Vec<Vec2f64> {
     let mut counter = 0;
     let current_target = to.clone();
     let mut current_from = from.clone();
@@ -834,6 +836,16 @@ pub fn find_my_ship<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Option
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
             return state.ships.iter().find(|ship| ship.id == ship_id);
+        }
+    }
+    return None;
+}
+
+pub fn find_my_ship_index(state: &GameState, player_id: &Uuid) -> Option<usize> {
+    let player = find_my_player(state, player_id);
+    if let Some(player) = player {
+        if let Some(ship_id) = player.ship_id {
+            return state.ships.iter().position(|ship| ship.id == ship_id);
         }
     }
     return None;
