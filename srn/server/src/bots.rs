@@ -61,6 +61,7 @@ impl Bot {
                 fire_event(GameEvent::ShipUndocked {
                     ship_id: ship.id,
                     planet_id,
+                    player_id: self.id,
                 });
             }
         }

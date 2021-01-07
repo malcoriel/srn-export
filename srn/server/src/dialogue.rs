@@ -402,6 +402,7 @@ fn apply_side_effect(
                     fire_event(GameEvent::ShipUndocked {
                         ship_id: my_ship.id,
                         planet_id,
+                        player_id: player_id.clone(),
                     });
                 }
                 return true;

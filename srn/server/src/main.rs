@@ -187,6 +187,7 @@ fn mutate_owned_ship(
         &cont.state.ships[old_ship_index.clone().unwrap()],
         mutate_cmd,
         &cont.state,
+        client_id,
     );
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(&mut cont.state, &updated_ship, client_id);
@@ -759,18 +760,12 @@ fn physics_thread() {
             false,
             Some(&*d_table),
         );
-
-        // let mut d_states = DIALOGUES_STATES.lock().unwrap();
-        // let clients_to_notify = world::try_trigger_dialogues(&cont.state, &mut d_states, &d_table);
-        // for (client_id, dialogue) in clients_to_notify {
-        //     unicast_dialogue_state(client_id, dialogue);
-        // }
     }
 }
 
 use crate::dialogue::{Dialogue, DialogueId, DialogueScript, DialogueUpdate};
 use crate::vec2::Vec2f64;
-use crate::world::{find_my_ship, find_planet, GameEvent, ShipAction};
+use crate::world::{find_my_player, find_my_ship, find_planet, GameEvent, ShipAction};
 lazy_static! {
     static ref DIALOGUES_STATES: Arc<Mutex<Box<DialogueStates>>> =
         Arc::new(Mutex::new(Box::new(HashMap::new())));
@@ -787,10 +782,36 @@ fn fire_event(ev: GameEvent) {
 fn event_thread() {
     loop {
         let receiver = &mut EVENTS.lock().unwrap().1;
-        if let Ok(event) = receiver.try_recv() {
-            eprintln!("Got event {:?}", event);
-        } else {
-            // do nothing, happens all the time
+
+        // technically, does not need to happen most of the time, only when there's a message,
+        // so I need some kind of lazy-on-first primitive here
+        let mut d_states = DIALOGUES_STATES.lock().unwrap();
+        let d_table = DIALOGUE_TABLE.lock().unwrap();
+        let mut cont = STATE.write().unwrap();
+        let read_state = cont.state.clone();
+        loop {
+            if let Ok(event) = receiver.try_recv() {
+                let player: Option<&Player> = match event {
+                    GameEvent::Unknown => None,
+                    GameEvent::ShipDocked { player_id, .. } => {
+                        find_my_player(&read_state, &player_id)
+                    }
+                    GameEvent::ShipUndocked { player_id, .. } => {
+                        find_my_player(&read_state, &player_id)
+                    }
+                };
+                let mut res = vec![];
+                eprintln!("Got event {:?}", event);
+                if let Some(player) = player {
+                    d_table.try_trigger(&mut cont.state, &mut d_states, &mut res, player);
+                    for (client_id, dialogue) in res {
+                        eprintln!("Sending a dialogue change to {}", client_id);
+                        unicast_dialogue_state(client_id, dialogue);
+                    }
+                }
+            } else {
+                break;
+            }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }

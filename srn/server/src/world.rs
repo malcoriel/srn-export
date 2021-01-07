@@ -64,6 +64,32 @@ fn index_planets_by_id(planets: &Vec<Planet>) -> HashMap<Uuid, &Planet> {
     by_id
 }
 
+fn index_players_by_id(players: &Vec<Player>) -> HashMap<Uuid, &Player> {
+    let mut by_id = HashMap::new();
+    for p in players.iter() {
+        by_id.entry(p.id).or_insert(p);
+    }
+    by_id
+}
+
+fn index_ships_by_id(ships: &Vec<Ship>) -> HashMap<Uuid, &Ship> {
+    let mut by_id = HashMap::new();
+    for p in ships.iter() {
+        by_id.entry(p.id).or_insert(p);
+    }
+    by_id
+}
+
+fn index_players_by_ship_id<'a, 'b>(players: &'b Vec<Player>) -> HashMap<Uuid, &'b Player> {
+    let mut by_id = HashMap::new();
+    for p in players.iter() {
+        if let Some(ship_id) = p.ship_id {
+            by_id.entry(ship_id).or_insert(p);
+        }
+    }
+    by_id
+}
+
 pub fn update_planets(
     planets: &Vec<Planet>,
     star: &Option<Star>,
@@ -349,8 +375,16 @@ pub struct Star {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum GameEvent {
     Unknown,
-    ShipDocked { ship_id: Uuid, planet_id: Uuid },
-    ShipUndocked { ship_id: Uuid, planet_id: Uuid },
+    ShipDocked {
+        ship_id: Uuid,
+        planet_id: Uuid,
+        player_id: Uuid,
+    },
+    ShipUndocked {
+        ship_id: Uuid,
+        planet_id: Uuid,
+        player_id: Uuid,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -549,19 +583,6 @@ pub fn force_update_to_now(state: &mut GameState) {
     state.ticks = (now - state.start_time_ticks) as u32;
 }
 
-pub fn try_trigger_dialogues(
-    state: &GameState,
-    d_states: &mut DialogueStates,
-    d_table: &DialogueTable,
-) -> Vec<(PlayerId, Option<Dialogue>)> {
-    let mut res = vec![];
-
-    for player in state.players.iter() {
-        d_table.try_trigger(state, d_states, &mut res, &player);
-    }
-    res.into_iter().map(|(p, od)| (p, od)).collect::<Vec<_>>()
-}
-
 pub fn update(
     mut state: GameState,
     elapsed: i64,
@@ -608,6 +629,7 @@ pub fn update(
             state.ships = update_ships_navigation(
                 &state.ships,
                 &state.planets,
+                &state.players,
                 &state.star.clone().unwrap(),
                 elapsed,
             );
@@ -676,13 +698,21 @@ pub fn spawn_ship(state: &mut GameState, player_id: &Uuid, at: Option<Vec2f64>) 
 pub fn update_ships_navigation(
     ships: &Vec<Ship>,
     planets: &Vec<Planet>,
+    players: &Vec<Player>,
     star: &Star,
     elapsed_micro: i64,
 ) -> Vec<Ship> {
     let mut res = vec![];
     let planets_with_star = make_planets_with_star(&planets, star);
     let planets_by_id = index_planets_by_id(&planets_with_star);
+    let players_by_ship_id = index_players_by_ship_id(players);
     for mut ship in ships.clone() {
+        let player = players_by_ship_id.get(&ship.id);
+        if player.is_none() {
+            eprintln!("Cannot update ship {} without owner", ship.id);
+            continue;
+        }
+        let player = player.unwrap();
         if !ship.docked_at.is_some() {
             let max_shift = SHIP_SPEED * elapsed_micro as f64 / 1000.0 / 1000.0;
 
@@ -732,6 +762,7 @@ pub fn update_ships_navigation(
                             fire_event(GameEvent::ShipUndocked {
                                 ship_id: ship.id,
                                 planet_id: planet.id,
+                                player_id: player.id,
                             });
                             ship.docked_at = Some(planet.id);
                             ship.dock_target = None;
@@ -965,6 +996,7 @@ pub fn apply_ship_action(
     old_ship: &Ship,
     ship_action: ShipAction,
     state: &GameState,
+    player_id: Uuid,
 ) -> Option<Ship> {
     let ship_action: ShipActionRust = parse_ship_action(ship_action);
 
@@ -993,6 +1025,7 @@ pub fn apply_ship_action(
                 fire_event(GameEvent::ShipUndocked {
                     ship_id: ship.id,
                     planet_id,
+                    player_id,
                 });
             } else {
                 let ship_pos = Vec2f64 {
@@ -1014,6 +1047,7 @@ pub fn apply_ship_action(
                         fire_event(GameEvent::ShipDocked {
                             ship_id: ship.id,
                             planet_id: planet.id,
+                            player_id,
                         });
                         break;
                     }
