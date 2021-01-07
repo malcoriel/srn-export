@@ -1,8 +1,8 @@
-use crate::new_id;
 use crate::world::{
-    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, GameState,
-    Planet, Player, PlayerId, QuestState,
+    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, GameEvent,
+    GameState, Planet, Player, PlayerId, QuestState,
 };
+use crate::{fire_event, new_id};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::slice::Iter;
@@ -398,6 +398,12 @@ fn apply_side_effect(
             let my_ship = find_my_ship_mut(state, player_id);
             if let Some(my_ship) = my_ship {
                 my_ship.docked_at = None;
+                if let Some(planet_id) = my_ship.docked_at {
+                    fire_event(GameEvent::ShipUndocked {
+                        ship_id: my_ship.id,
+                        planet_id,
+                    });
+                }
                 return true;
             }
         }

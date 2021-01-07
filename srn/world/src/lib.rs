@@ -62,6 +62,10 @@ struct ErrJson {
     message: String,
 }
 
+pub fn fire_event(ev: world::GameEvent) {
+    // no support for events on client
+}
+
 #[wasm_bindgen]
 pub fn update(serialized_state: &str, elapsed_micro: i64) -> String {
     let default = String::from("");

@@ -6,7 +6,6 @@ extern crate serde_derive;
 use chrono::{DateTime, Local, Utc};
 use dialogue::{DialogueStates, DialogueTable};
 use lazy_static::lazy_static;
-use mpsc::{channel, Receiver, Sender};
 use num_traits::FromPrimitive;
 use rocket::http::Method;
 use rocket_contrib::json::Json;
@@ -44,7 +43,7 @@ mod world;
 mod world_test;
 
 lazy_static! {
-    static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ServerToClientMessage>)>>> =
+    static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, std::sync::mpsc::Sender<ServerToClientMessage>)>>> =
         Arc::new(Mutex::new(vec![]));
 }
 
@@ -115,8 +114,9 @@ impl ServerToClientMessage {
     }
 }
 
-static mut DISPATCHER_SENDER: Option<Mutex<Sender<ServerToClientMessage>>> = None;
-static mut DISPATCHER_RECEIVER: Option<Mutex<Receiver<ServerToClientMessage>>> = None;
+static mut DISPATCHER_SENDER: Option<Mutex<std::sync::mpsc::Sender<ServerToClientMessage>>> = None;
+static mut DISPATCHER_RECEIVER: Option<Mutex<std::sync::mpsc::Receiver<ServerToClientMessage>>> =
+    None;
 
 struct StateContainer {
     state: GameState,
@@ -134,8 +134,15 @@ fn get_state() -> Json<GameState> {
     Json(STATE.read().unwrap().state.clone())
 }
 
-#[options("/state")]
-fn options_state() {}
+use crossbeam::channel::{bounded, Receiver, Sender};
+
+lazy_static! {
+    static ref EVENTS: Arc<Mutex<(Sender<GameEvent>, Receiver<GameEvent>)>> =
+        Arc::new(Mutex::new(bounded::<GameEvent>(128)));
+}
+
+// #[options("/state")]
+// fn options_state() {}
 
 // #[post("/state", data = "<state>")]
 // fn post_state(state: Json<GameState>) {
@@ -176,7 +183,7 @@ fn mutate_owned_ship(
         });
     }
     world::force_update_to_now(&mut cont.state);
-    let updated_ship = world::merge_ship_update(
+    let updated_ship = world::apply_ship_action(
         &cont.state.ships[old_ship_index.clone().unwrap()],
         mutate_cmd,
         &cont.state,
@@ -257,7 +264,7 @@ fn send_tag_confirm(tag: String, client_id: Uuid) {
     }
 }
 
-unsafe fn get_dispatcher_sender() -> Sender<ServerToClientMessage> {
+unsafe fn get_dispatcher_sender() -> std::sync::mpsc::Sender<ServerToClientMessage> {
     DISPATCHER_SENDER.as_ref().unwrap().lock().unwrap().clone()
 }
 
@@ -624,7 +631,7 @@ static D_ID: &str = "2484332e-3668-4754-a7ac-d5fbf8707145";
 #[launch]
 fn rocket() -> rocket::Rocket {
     unsafe {
-        let (tx, rx) = channel::<ServerToClientMessage>();
+        let (tx, rx) = std::sync::mpsc::channel::<ServerToClientMessage>();
         DISPATCHER_SENDER = Some(Mutex::new(tx));
         DISPATCHER_RECEIVER = Some(Mutex::new(rx));
     }
@@ -645,7 +652,11 @@ fn rocket() -> rocket::Rocket {
         physics_thread();
     });
     std::thread::spawn(|| {
-        bot_thread();
+        bots::bot_thread();
+    });
+
+    std::thread::spawn(|| {
+        event_thread();
     });
     let client_senders = CLIENT_SENDERS.clone();
     thread::spawn(move || unsafe { dispatcher_thread(client_senders) });
@@ -674,11 +685,11 @@ fn rocket() -> rocket::Rocket {
 
     rocket::ignite()
         .attach(cors)
-        .mount("/api", routes![get_state, options_state]) // post_state
+        .mount("/api", routes![get_state]) // post_state
 }
 
 unsafe fn dispatcher_thread(
-    client_senders: Arc<Mutex<Vec<(Uuid, Sender<ServerToClientMessage>)>>>,
+    client_senders: Arc<Mutex<Vec<(Uuid, std::sync::mpsc::Sender<ServerToClientMessage>)>>>,
 ) {
     let unwrapped = DISPATCHER_RECEIVER.as_mut().unwrap().lock().unwrap();
     while let Ok(msg) = unwrapped.recv() {
@@ -758,60 +769,29 @@ fn physics_thread() {
 }
 
 use crate::dialogue::{Dialogue, DialogueId, DialogueScript, DialogueUpdate};
-use crate::random_stuff::gen_bot_name;
 use crate::vec2::Vec2f64;
-use crate::world::{find_my_ship, find_planet, ShipAction};
-use bots::Bot;
-lazy_static! {
-    static ref BOTS: Arc<Mutex<HashMap<Uuid, Bot>>> = Arc::new(Mutex::new(HashMap::new()));
-}
-
+use crate::world::{find_my_ship, find_planet, GameEvent, ShipAction};
 lazy_static! {
     static ref DIALOGUES_STATES: Arc<Mutex<Box<DialogueStates>>> =
         Arc::new(Mutex::new(Box::new(HashMap::new())));
 }
 
-const BOT_SLEEP_MS: u64 = 200;
-
-fn add_bot(bot: Bot) -> Uuid {
-    let mut bots = BOTS.lock().unwrap();
-    let id = bot.id.clone();
-    bots.insert(id.clone(), bot);
-    let mut cont = STATE.write().unwrap();
-    let mut d_states = DIALOGUES_STATES.lock().unwrap();
-    world::add_player(
-        &mut cont.state,
-        &id,
-        true,
-        Some(gen_bot_name()),
-        &mut *d_states,
-    );
-    world::spawn_ship(&mut cont.state, &id, None);
-    id
+fn fire_event(ev: GameEvent) {
+    let sender = &mut EVENTS.lock().unwrap().0;
+    if let Err(e) = sender.send(ev.clone()) {
+        eprintln!("Failed to send event {:?}, err {}", ev, e);
+    } else {
+    }
 }
 
-fn bot_thread() {
-    // add_bot(Bot::new());
-    // add_bot(Bot::new());
-    // add_bot(Bot::new());
-    // add_bot(Bot::new());
+fn event_thread() {
     loop {
-        let mut ship_updates: HashMap<Uuid, Ship> = HashMap::new();
-        let mut bots = BOTS.lock().unwrap();
-        let extracted_state = STATE.write().unwrap().state.clone();
-        {
-            for (bot_id, bot) in bots.clone().iter() {
-                let (bot, ship) = bot.clone().act(extracted_state.clone());
-                bots.insert(bot_id.clone(), bot);
-                if let Some(ship) = ship {
-                    ship_updates.insert(bot_id.clone(), ship);
-                }
-            }
+        let receiver = &mut EVENTS.lock().unwrap().1;
+        if let Ok(event) = receiver.try_recv() {
+            eprintln!("Got event {:?}", event);
+        } else {
+            // do nothing, happens all the time
         }
-        for (bot_id, ship) in ship_updates.into_iter() {
-            // TODO make compatible with ship actions
-            // mutate_owned_ship_wrapped(bot_id, ship, None);
-        }
-        thread::sleep(Duration::from_millis(BOT_SLEEP_MS));
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
 }

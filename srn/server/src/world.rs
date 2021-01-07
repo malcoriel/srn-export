@@ -347,6 +347,13 @@ pub struct Star {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum GameEvent {
+    Unknown,
+    ShipDocked { ship_id: Uuid, planet_id: Uuid },
+    ShipUndocked { ship_id: Uuid, planet_id: Uuid },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Ship {
     pub id: Uuid,
     pub x: f64,
@@ -722,6 +729,10 @@ pub fn update_ships_navigation(
                         let new_pos = move_ship(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
                         if new_pos.euclidean_distance(&planet_pos) < planet.radius {
+                            fire_event(GameEvent::ShipUndocked {
+                                ship_id: ship.id,
+                                planet_id: planet.id,
+                            });
                             ship.docked_at = Some(planet.id);
                             ship.dock_target = None;
                             ship.trajectory = vec![];
@@ -948,7 +959,9 @@ fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
     }
 }
 
-pub fn merge_ship_update(
+use crate::fire_event;
+
+pub fn apply_ship_action(
     old_ship: &Ship,
     ship_action: ShipAction,
     state: &GameState,
@@ -975,7 +988,12 @@ pub fn merge_ship_update(
             ship.navigate_target = None;
             ship.dock_target = None;
             if ship.docked_at.is_some() {
+                let planet_id = ship.docked_at.unwrap();
                 ship.docked_at = None;
+                fire_event(GameEvent::ShipUndocked {
+                    ship_id: ship.id,
+                    planet_id,
+                });
             } else {
                 let ship_pos = Vec2f64 {
                     x: ship.x,
@@ -993,6 +1011,10 @@ pub fn merge_ship_update(
                         ship.navigate_target = None;
                         ship.dock_target = None;
                         ship.trajectory = vec![];
+                        fire_event(GameEvent::ShipDocked {
+                            ship_id: ship.id,
+                            planet_id: planet.id,
+                        });
                         break;
                     }
                 }

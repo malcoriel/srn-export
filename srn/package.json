@@ -5,6 +5,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "wasm-pack": "pushd world; wasm-pack build || exit 1; popd;"
+    "wasm-pack": "pushd world; wasm-pack build || exit 1; popd;",
+    "start-client": "cd client && yarn start"
   }
 }
