@@ -80,7 +80,7 @@ fn index_ships_by_id(ships: &Vec<Ship>) -> HashMap<Uuid, &Ship> {
     by_id
 }
 
-fn index_players_by_ship_id<'a, 'b>(players: &'b Vec<Player>) -> HashMap<Uuid, &'b Player> {
+fn index_players_by_ship_id(players: &Vec<Player>) -> HashMap<Uuid, &Player> {
     let mut by_id = HashMap::new();
     for p in players.iter() {
         if let Some(ship_id) = p.ship_id {
@@ -376,14 +376,14 @@ pub struct Star {
 pub enum GameEvent {
     Unknown,
     ShipDocked {
-        ship_id: Uuid,
-        planet_id: Uuid,
-        player_id: Uuid,
+        ship: Ship,
+        planet: Planet,
+        player: Player,
     },
     ShipUndocked {
-        ship_id: Uuid,
-        planet_id: Uuid,
-        player_id: Uuid,
+        ship: Ship,
+        planet: Planet,
+        player: Player,
     },
 }
 
@@ -759,14 +759,16 @@ pub fn update_ships_navigation(
                         let new_pos = move_ship(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
                         if new_pos.euclidean_distance(&planet_pos) < planet.radius {
-                            fire_event(GameEvent::ShipUndocked {
-                                ship_id: ship.id,
-                                planet_id: planet.id,
-                                player_id: player.id,
-                            });
                             ship.docked_at = Some(planet.id);
                             ship.dock_target = None;
                             ship.trajectory = vec![];
+                            let planet = planet.clone().clone();
+                            let player = player.clone().clone();
+                            fire_event(GameEvent::ShipUndocked {
+                                ship: ship.clone(),
+                                planet,
+                                player,
+                            });
                         }
                     }
                 } else {
@@ -1021,11 +1023,13 @@ pub fn apply_ship_action(
             ship.dock_target = None;
             if ship.docked_at.is_some() {
                 let planet_id = ship.docked_at.unwrap();
+                let planet = find_planet(state, &planet_id).unwrap().clone();
+                let player = find_my_player(state, &player_id).unwrap().clone();
                 ship.docked_at = None;
                 fire_event(GameEvent::ShipUndocked {
-                    ship_id: ship.id,
-                    planet_id,
-                    player_id,
+                    ship: ship.clone(),
+                    planet,
+                    player,
                 });
             } else {
                 let ship_pos = Vec2f64 {
@@ -1044,10 +1048,12 @@ pub fn apply_ship_action(
                         ship.navigate_target = None;
                         ship.dock_target = None;
                         ship.trajectory = vec![];
+                        let player = find_my_player(state, &player_id).unwrap().clone();
+
                         fire_event(GameEvent::ShipDocked {
-                            ship_id: ship.id,
-                            planet_id: planet.id,
-                            player_id,
+                            ship: ship.clone(),
+                            player,
+                            planet: planet.clone(),
                         });
                         break;
                     }

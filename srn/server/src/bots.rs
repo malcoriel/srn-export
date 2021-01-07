@@ -1,4 +1,6 @@
-use crate::world::{find_my_player, find_my_ship, GameEvent, GameState, QuestState, Ship};
+use crate::world::{
+    find_my_player, find_my_ship, find_planet, GameEvent, GameState, QuestState, Ship,
+};
 use crate::{fire_event, new_id};
 use uuid::Uuid;
 
@@ -57,11 +59,12 @@ impl Bot {
         if let Some(target) = target {
             ship.dock_target = Some(target.clone());
             if let Some(planet_id) = ship_read.docked_at {
+                let planet = find_planet(&state, &planet_id).unwrap().clone();
                 ship.docked_at = None;
                 fire_event(GameEvent::ShipUndocked {
-                    ship_id: ship.id,
-                    planet_id,
-                    player_id: self.id,
+                    ship: ship.clone(),
+                    planet,
+                    player: player.clone(),
                 });
             }
         }

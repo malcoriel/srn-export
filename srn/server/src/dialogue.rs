@@ -136,6 +136,7 @@ fn find_current_planet<'a, 'b>(
         .and_then(|id| find_planet(game_state, &id))
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueTable {
     pub scripts: HashMap<DialogueId, DialogueScript>,
 }
@@ -392,6 +393,8 @@ fn apply_side_effect(
     side_effect: DialogOptionSideEffect,
     player_id: &PlayerId,
 ) -> bool {
+    let state_read = state.clone();
+
     match side_effect {
         DialogOptionSideEffect::Nothing => {}
         DialogOptionSideEffect::Undock => {
@@ -399,10 +402,12 @@ fn apply_side_effect(
             if let Some(my_ship) = my_ship {
                 my_ship.docked_at = None;
                 if let Some(planet_id) = my_ship.docked_at {
+                    let planet = find_planet(&state_read, &planet_id).unwrap().clone();
+                    let player = find_my_player(&state_read, player_id).unwrap().clone();
                     fire_event(GameEvent::ShipUndocked {
-                        ship_id: my_ship.id,
-                        planet_id,
-                        player_id: player_id.clone(),
+                        ship: my_ship.clone(),
+                        planet,
+                        player: player.clone(),
                     });
                 }
                 return true;
