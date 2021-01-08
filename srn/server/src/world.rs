@@ -259,7 +259,6 @@ pub(crate) fn generate_random_quest(
         to_id: to.id,
         state: QuestState::Started,
         reward,
-        dialogue_id: find_start_dialogue(d_table),
     });
 }
 
@@ -368,7 +367,6 @@ pub struct Quest {
     pub to_id: Uuid,
     pub state: QuestState,
     pub reward: i32,
-    pub dialogue_id: Option<Uuid>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

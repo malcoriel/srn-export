@@ -91,22 +91,26 @@ impl DialogueScript {
                 }
 
                 if let Some(quest) = player.quest.as_ref() {
-                    let is_quest_current_dialogue =
-                        quest.dialogue_id.as_ref().map_or(false, |d| *d == self.id);
                     let is_planet_current = {
-                        let res = if quest.state == QuestState::Started {
+                        eprintln!(
+                            "quest state {:?}, current {}, from {} to {}",
+                            quest.state, current_planet_id, quest.from_id, quest.to_id
+                        );
+                        let res = if quest.state == QuestState::Started
+                            && self.name == "cargo_delivery_pickup"
+                        {
                             quest.from_id == current_planet_id
-                        } else if quest.state == QuestState::Picked {
+                        } else if quest.state == QuestState::Picked
+                            && self.name == "cargo_delivery_dropoff"
+                        {
                             quest.to_id == current_planet_id
                         } else {
                             false
                         };
-                        eprintln!("{} {}", is_quest_current_dialogue, res);
-
                         res
                     };
 
-                    return is_quest_current_dialogue && is_planet_current;
+                    return is_planet_current;
                 }
             }
         }
