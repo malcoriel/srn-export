@@ -1,6 +1,6 @@
 use crate::world::{
-    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, GameEvent,
-    GameState, Planet, Player, PlayerId, QuestState,
+    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
+    generate_random_quest, GameEvent, GameState, Planet, Player, PlayerId, QuestState,
 };
 use crate::{fire_event, new_id};
 use serde_derive::{Deserialize, Serialize};
@@ -420,7 +420,6 @@ fn apply_side_effect(
     player_id: &PlayerId,
 ) -> bool {
     let state_read = state.clone();
-
     match side_effect {
         DialogOptionSideEffect::Nothing => {}
         DialogOptionSideEffect::Undock => {
@@ -456,6 +455,7 @@ fn apply_side_effect(
                     } else {
                         my_player.money += quest.reward;
                     }
+
                     my_player.quest = None;
                 }
             }

@@ -529,7 +529,6 @@ pub fn force_update_to_now(state: &mut GameState) {
 
 pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     state.ticks += elapsed as u32 / 1000;
-
     if !client {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
     }

@@ -663,6 +663,10 @@ fn rocket() -> rocket::Rocket {
     std::thread::spawn(|| {
         event_thread();
     });
+
+    std::thread::spawn(|| {
+        quest_assign_thread();
+    });
     let client_senders = CLIENT_SENDERS.clone();
     thread::spawn(move || unsafe { dispatcher_thread(client_senders) });
 
@@ -816,4 +820,23 @@ fn try_trigger_dialogue(
     let mut cont = STATE.write().unwrap();
     let mut d_states = DIALOGUE_STATES.lock().unwrap();
     d_table.try_trigger(&mut cont.state, &mut d_states, &mut res, player);
+}
+
+const QUEST_SLEEP_MS: u64 = 100;
+fn quest_assign_thread() {
+    let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
+    loop {
+        let mut cont = STATE.write().unwrap();
+        let state_read = cont.state.clone();
+        for player in cont.state.players.iter_mut() {
+            if player.quest.is_none() {
+                let ship = find_my_ship(&state_read, &player.id);
+                if let Some(ship) = ship {
+                    player.quest =
+                        world::generate_random_quest(&state_read.planets, ship.docked_at, &d_table)
+                }
+            }
+        }
+        thread::sleep(Duration::from_millis(QUEST_SLEEP_MS));
+    }
 }
