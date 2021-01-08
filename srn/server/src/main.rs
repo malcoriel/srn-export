@@ -745,7 +745,8 @@ fn world_update_thread() {
         let now = Local::now();
         let elapsed = now - last;
         last = now;
-        cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
+        let elapsed_micro = elapsed.num_milliseconds() * 1000;
+        cont.state = world::update(cont.state.clone(), elapsed_micro, false);
 
         try_assign_quests(&mut cont.state);
 
@@ -753,7 +754,7 @@ fn world_update_thread() {
         let d_states = &mut **d_states;
         let bots = &mut *bots;
 
-        do_bot_actions(state, bots);
+        do_bot_actions(state, bots, d_states, &d_table, elapsed_micro);
 
         let receiver = &mut EVENTS.lock().unwrap().1;
 

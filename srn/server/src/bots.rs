@@ -163,44 +163,47 @@ pub fn bot_init(bots: &mut Vec<Bot>) {
     add_bot(Bot::new(), bots);
 }
 
-pub fn do_bot_actions(game_state: &mut GameState, bots: &mut Vec<Bot>) {
+pub fn do_bot_actions(
+    state: &mut GameState,
+    bots: &mut Vec<Bot>,
+    d_states: &mut DialogueStates,
+    d_table: &DialogueTable,
+    elapsed_micro: i64,
+) {
     let mut ship_updates: HashMap<Uuid, Vec<ShipAction>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
 
-    // for (bot_id, bot) in bots.clone().iter() {
-    //     let id: Uuid = *bot_id;
-    //     let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
-    //     let (bot, bot_acts) = bot.clone().act(
-    //         &cont.state,
-    //         elapsed.num_microseconds().unwrap(),
-    //         &d_table,
-    //         &bot_d_states,
-    //     );
-    //     bots.insert(bot_id.clone(), bot);
-    //
-    //     let mut acts = vec![];
-    //     let mut speaks = vec![];
-    //
-    //     for bot_act in bot_acts.into_iter() {
-    //         match bot_act {
-    //             BotAct::Speak(v) => {
-    //                 speaks.push(v);
-    //             }
-    //             BotAct::Act(v) => {
-    //                 acts.push(v);
-    //             }
-    //         }
-    //     }
-    //
-    //     if acts.len() > 0 {
-    //         ship_updates.insert(bot_id.clone(), acts);
-    //     }
-    //
-    //     if speaks.len() > 0 {
-    //         dialogue_updates.insert(bot_id.clone(), speaks);
-    //     }
-    // }
-    //
+    for orig_bot in bots.iter_mut() {
+        let id: Uuid = orig_bot.id;
+        let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
+        let (bot, bot_acts) = orig_bot
+            .clone()
+            .act(&state, elapsed_micro, &d_table, &bot_d_states);
+        *orig_bot = bot;
+
+        let mut acts = vec![];
+        let mut speaks = vec![];
+
+        for bot_act in bot_acts.into_iter() {
+            match bot_act {
+                BotAct::Speak(v) => {
+                    speaks.push(v);
+                }
+                BotAct::Act(v) => {
+                    acts.push(v);
+                }
+            }
+        }
+
+        if acts.len() > 0 {
+            ship_updates.insert(id, acts);
+        }
+
+        if speaks.len() > 0 {
+            dialogue_updates.insert(id, speaks);
+        }
+    }
+
     // for (bot_id, ship) in ship_updates.into_iter() {
     //     for act in ship {
     //         let res = mutate_owned_ship(bot_id, act.clone(), None);
@@ -215,13 +218,7 @@ pub fn do_bot_actions(game_state: &mut GameState, bots: &mut Vec<Bot>) {
     //
     // for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
     //     for act in dialogue_update {
-    //         execute_dialog_option(
-    //             &bot_id,
-    //             &mut cont.state,
-    //             act.clone(),
-    //             &mut d_states,
-    //             &d_table,
-    //         );
+    //         execute_dialog_option(&bot_id, state, act.clone(), d_states, &d_table);
     //     }
     // }
 }
