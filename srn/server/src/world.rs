@@ -1024,3 +1024,15 @@ pub fn apply_ship_action(
         }
     }
 }
+
+pub fn try_assign_quests(state: &mut GameState) {
+    let state_read = state.clone();
+    for player in state.players.iter_mut() {
+        if player.quest.is_none() {
+            let ship = find_my_ship(&state_read, &player.id);
+            if let Some(ship) = ship {
+                player.quest = generate_random_quest(&state_read.planets, ship.docked_at)
+            }
+        }
+    }
+}

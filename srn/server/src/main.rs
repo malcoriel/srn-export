@@ -15,7 +15,7 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins};
 pub use serde_derive::*;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{mpsc, Arc, Mutex, RwLock};
+use std::sync::{mpsc, Arc, Mutex, RwLock, RwLockWriteGuard};
 use std::thread;
 use std::time::Duration;
 use uuid::*;
@@ -667,9 +667,6 @@ fn rocket() -> rocket::Rocket {
         event_thread();
     });
 
-    std::thread::spawn(|| {
-        quest_assign_thread();
-    });
     let client_senders = CLIENT_SENDERS.clone();
     thread::spawn(move || unsafe { dispatcher_thread(client_senders) });
 
@@ -765,13 +762,15 @@ fn physics_thread() {
         let elapsed = now - last;
         last = now;
         cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
+        try_assign_quests(&mut cont.state);
     }
 }
 
 use crate::dialogue::{Dialogue, DialogueId, DialogueScript, DialogueUpdate};
 use crate::vec2::Vec2f64;
 use crate::world::{
-    find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, ShipAction,
+    find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent,
+    ShipAction,
 };
 lazy_static! {
     static ref DIALOGUE_STATES: Arc<Mutex<Box<DialogueStates>>> =
@@ -823,21 +822,4 @@ fn try_trigger_dialogue(
     let mut cont = STATE.write().unwrap();
     let mut d_states = DIALOGUE_STATES.lock().unwrap();
     d_table.try_trigger(&mut cont.state, &mut d_states, &mut res, player);
-}
-
-const QUEST_SLEEP_MS: u64 = 100;
-fn quest_assign_thread() {
-    loop {
-        let mut cont = STATE.write().unwrap();
-        let state_read = cont.state.clone();
-        for player in cont.state.players.iter_mut() {
-            if player.quest.is_none() {
-                let ship = find_my_ship(&state_read, &player.id);
-                if let Some(ship) = ship {
-                    player.quest = world::generate_random_quest(&state_read.planets, ship.docked_at)
-                }
-            }
-        }
-        thread::sleep(Duration::from_millis(QUEST_SLEEP_MS));
-    }
 }
