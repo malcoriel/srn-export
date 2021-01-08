@@ -804,11 +804,11 @@ fn handle_events(
                     None
                 }
                 GameEvent::ShipDocked { player, .. } => {
-                    eprintln!("docked event");
+                    // eprintln!("docked event");
                     Some(player)
                 }
                 GameEvent::ShipUndocked { player, .. } => {
-                    eprintln!("undocked event");
+                    // eprintln!("undocked event");
                     Some(player)
                 }
             };

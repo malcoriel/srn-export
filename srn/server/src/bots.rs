@@ -172,17 +172,17 @@ impl Bot {
     ) -> Option<BotAct> {
         let current_script: &DialogueScript = d_table.get_by_name(current_dialogue_name).unwrap();
         let current_d_state = bot_d_states.1.get(&current_script.id);
-        eprintln!("working on script {}, bot {}", current_script.name, self.id);
+        // eprintln!("working on script {}, bot {}", current_script.name, self.id);
         current_d_state
             .and_then(|current_d_state| {
-                if let Some(state_id) = *current_d_state.clone() {
-                    eprintln!("current state {}", current_script.get_name(&state_id));
-                }
+                // if let Some(state_id) = *current_d_state.clone() {
+                //     // eprintln!("current state {}", current_script.get_name(&state_id));
+                // }
 
                 current_script.get_next_bot_path(&*(current_d_state.clone()))
             })
             .and_then(|opt| {
-                eprintln!("chosen {}", current_script.get_name(opt));
+                // eprintln!("chosen {}", current_script.get_name(opt));
                 Some(BotAct::Speak(DialogueUpdate {
                     dialogue_id: current_script.id,
                     option_id: opt.clone(),
