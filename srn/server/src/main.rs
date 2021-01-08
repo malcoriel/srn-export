@@ -753,16 +753,48 @@ fn cleanup_thread() {
 const DEBUG_PHYSICS: bool = false;
 
 fn physics_thread() {
+    let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
     loop {
         thread::sleep(Duration::from_millis(10));
         let mut cont = STATE.write().unwrap();
+        let mut d_states = DIALOGUE_STATES.lock().unwrap();
 
         let now = Local::now();
         let elapsed = now - last;
         last = now;
         cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
         try_assign_quests(&mut cont.state);
+
+        let receiver = &mut EVENTS.lock().unwrap().1;
+
+        loop {
+            if let Ok(event) = receiver.try_recv() {
+                let mut res = vec![];
+                let player = match event {
+                    GameEvent::Unknown => None,
+                    GameEvent::ShipDocked { player, .. } => Some(player),
+                    GameEvent::ShipUndocked { player, .. } => Some(player),
+                };
+
+                if let Some(player) = player {
+                    let mut res_argument = &mut res;
+                    let player_argument = &player;
+                    let d_table_argument = &d_table;
+                    d_table_argument.try_trigger(
+                        &mut cont.state,
+                        &mut d_states,
+                        &mut res_argument,
+                        player_argument,
+                    );
+                    for (client_id, dialogue) in res {
+                        unicast_dialogue_state(client_id, dialogue);
+                    }
+                }
+            } else {
+                break;
+            }
+        }
     }
 }
 
@@ -787,39 +819,7 @@ fn fire_event(ev: GameEvent) {
 
 const EVENT_SLEEP_MS: u64 = 10;
 fn event_thread() {
-    let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     loop {
-        let receiver = &mut EVENTS.lock().unwrap().1;
-
-        loop {
-            if let Ok(event) = receiver.try_recv() {
-                let mut res = vec![];
-                let player = match event {
-                    GameEvent::Unknown => None,
-                    GameEvent::ShipDocked { player, .. } => Some(player),
-                    GameEvent::ShipUndocked { player, .. } => Some(player),
-                };
-
-                if let Some(player) = player {
-                    let mut res_argument = &mut res;
-                    let player_argument = &player;
-                    let d_table_argument = &d_table;
-                    let mut cont = STATE.write().unwrap();
-                    let mut d_states = DIALOGUE_STATES.lock().unwrap();
-                    d_table_argument.try_trigger(
-                        &mut cont.state,
-                        &mut d_states,
-                        &mut res_argument,
-                        player_argument,
-                    );
-                    for (client_id, dialogue) in res {
-                        unicast_dialogue_state(client_id, dialogue);
-                    }
-                }
-            } else {
-                break;
-            }
-        }
         thread::sleep(Duration::from_millis(EVENT_SLEEP_MS));
     }
 }
