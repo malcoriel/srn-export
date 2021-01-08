@@ -146,14 +146,15 @@ impl Bot {
             })
     }
 }
-fn add_bot(bot: Bot) -> Uuid {
-    let mut bots = BOTS.lock().unwrap();
-    let id = bot.id.clone();
-    bots.insert(id.clone(), bot);
-    let mut cont = STATE.write().unwrap();
-    world::add_player(&mut cont.state, &id, true, Some(gen_bot_name()));
-    world::spawn_ship(&mut cont.state, &id, None);
-    id
+fn add_bot(_bot: Bot) -> Uuid {
+    // let mut bots = BOTS.lock().unwrap();
+    // let id = bot.id.clone();
+    // bots.insert(id.clone(), bot);
+    // let mut cont = STATE.write().unwrap();
+    // world::add_player(&mut cont.state, &id, true, Some(gen_bot_name()));
+    // world::spawn_ship(&mut cont.state, &id, None);
+    // id
+    new_id()
 }
 
 pub fn bot_thread() {
@@ -161,78 +162,78 @@ pub fn bot_thread() {
     // add_bot(Bot::new());
     // add_bot(Bot::new());
     // add_bot(Bot::new());
-    let d_table = *crate::DIALOGUE_TABLE.lock().unwrap().clone();
-    let mut last = Local::now();
-    loop {
-        let now = Local::now();
-        let elapsed = now - last;
-        last = now;
-
-        let mut d_states = DIALOGUE_STATES.lock().unwrap();
-        let mut bots = BOTS.lock().unwrap();
-        let mut cont = STATE.write().unwrap();
-
-        let mut ship_updates: HashMap<Uuid, Vec<ShipAction>> = HashMap::new();
-        let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
-        {
-            for (bot_id, bot) in bots.clone().iter() {
-                let id: Uuid = *bot_id;
-                let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
-                let (bot, bot_acts) = bot.clone().act(
-                    &cont.state,
-                    elapsed.num_microseconds().unwrap(),
-                    &d_table,
-                    &bot_d_states,
-                );
-                bots.insert(bot_id.clone(), bot);
-
-                let mut acts = vec![];
-                let mut speaks = vec![];
-
-                for bot_act in bot_acts.into_iter() {
-                    match bot_act {
-                        BotAct::Speak(v) => {
-                            speaks.push(v);
-                        }
-                        BotAct::Act(v) => {
-                            acts.push(v);
-                        }
-                    }
-                }
-
-                if acts.len() > 0 {
-                    ship_updates.insert(bot_id.clone(), acts);
-                }
-
-                if speaks.len() > 0 {
-                    dialogue_updates.insert(bot_id.clone(), speaks);
-                }
-            }
-        }
-        for (bot_id, ship) in ship_updates.into_iter() {
-            for act in ship {
-                let res = mutate_owned_ship(bot_id, act.clone(), None);
-                if let Err(err) = res {
-                    eprintln!(
-                        "Failed to apply bot action {:?}, error {}",
-                        act, err.message
-                    );
-                }
-            }
-        }
-
-        for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
-            for act in dialogue_update {
-                execute_dialog_option(
-                    &bot_id,
-                    &mut cont.state,
-                    act.clone(),
-                    &mut d_states,
-                    &d_table,
-                );
-            }
-        }
-
-        thread::sleep(Duration::from_millis(BOT_SLEEP_MS));
-    }
+    // let d_table = *crate::DIALOGUE_TABLE.lock().unwrap().clone();
+    // let mut last = Local::now();
+    // loop {
+    //     let now = Local::now();
+    //     let elapsed = now - last;
+    //     last = now;
+    //
+    //     let mut d_states = DIALOGUE_STATES.lock().unwrap();
+    //     let mut bots = BOTS.lock().unwrap();
+    //     let mut cont = STATE.write().unwrap();
+    //
+    //     let mut ship_updates: HashMap<Uuid, Vec<ShipAction>> = HashMap::new();
+    //     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
+    //     {
+    //         for (bot_id, bot) in bots.clone().iter() {
+    //             let id: Uuid = *bot_id;
+    //             let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
+    //             let (bot, bot_acts) = bot.clone().act(
+    //                 &cont.state,
+    //                 elapsed.num_microseconds().unwrap(),
+    //                 &d_table,
+    //                 &bot_d_states,
+    //             );
+    //             bots.insert(bot_id.clone(), bot);
+    //
+    //             let mut acts = vec![];
+    //             let mut speaks = vec![];
+    //
+    //             for bot_act in bot_acts.into_iter() {
+    //                 match bot_act {
+    //                     BotAct::Speak(v) => {
+    //                         speaks.push(v);
+    //                     }
+    //                     BotAct::Act(v) => {
+    //                         acts.push(v);
+    //                     }
+    //                 }
+    //             }
+    //
+    //             if acts.len() > 0 {
+    //                 ship_updates.insert(bot_id.clone(), acts);
+    //             }
+    //
+    //             if speaks.len() > 0 {
+    //                 dialogue_updates.insert(bot_id.clone(), speaks);
+    //             }
+    //         }
+    //     }
+    //     for (bot_id, ship) in ship_updates.into_iter() {
+    //         for act in ship {
+    //             let res = mutate_owned_ship(bot_id, act.clone(), None);
+    //             if let Err(err) = res {
+    //                 eprintln!(
+    //                     "Failed to apply bot action {:?}, error {}",
+    //                     act, err.message
+    //                 );
+    //             }
+    //         }
+    //     }
+    //
+    //     for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
+    //         for act in dialogue_update {
+    //             execute_dialog_option(
+    //                 &bot_id,
+    //                 &mut cont.state,
+    //                 act.clone(),
+    //                 &mut d_states,
+    //                 &d_table,
+    //             );
+    //         }
+    //     }
+    //
+    //     thread::sleep(Duration::from_millis(BOT_SLEEP_MS));
+    // }
 }
