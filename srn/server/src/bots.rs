@@ -1,8 +1,10 @@
 use crate::world::{
-    execute_dialog_option, find_my_player, find_my_ship, find_planet, GameEvent, GameState,
-    QuestState, Ship, ShipAction, ShipActionType,
+    apply_ship_action, execute_dialog_option, find_my_player, find_my_ship, find_planet, GameEvent,
+    GameState, QuestState, Ship, ShipAction, ShipActionType,
 };
-use crate::{fire_event, mutate_owned_ship, mutate_ship_no_lock, new_id, StateContainer};
+use crate::{
+    fire_event, mutate_owned_ship, mutate_ship_no_lock, new_id, try_replace_ship, StateContainer,
+};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -246,16 +248,11 @@ pub fn do_bot_actions(
         }
     }
 
-    for (bot_id, ship) in ship_updates.into_iter() {
-        for act in ship {
-            // TODO do not broadcast, just apply update
-            // and then broadcast in the end of the main thread once
-            let res = mutate_ship_no_lock(bot_id, act.clone(), None, state);
-            if let Err(err) = res {
-                eprintln!(
-                    "Failed to apply bot action {:?}, error {}",
-                    act, err.message
-                );
+    for (bot_id, acts) in ship_updates.into_iter() {
+        for act in acts {
+            let updated_ship = apply_ship_action(act.clone(), state, bot_id);
+            if let Some(updated_ship) = updated_ship {
+                try_replace_ship(state, &updated_ship, bot_id);
             }
         }
     }

@@ -85,7 +85,7 @@ enum ServerToClientMessage {
     StateChange(GameState),
     StateChangeExclusive(GameState, Uuid),
     TagConfirm(TagConfirm, Uuid),
-    MulticastPartialShipUpdate(ShipsWrapper, Uuid),
+    MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>),
     DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid),
 }
 
@@ -193,16 +193,11 @@ fn mutate_ship_no_lock(
         });
     }
     world::force_update_to_now(state);
-    let updated_ship = world::apply_ship_action(
-        &state.ships[old_ship_index.clone().unwrap()],
-        mutate_cmd,
-        &state,
-        client_id,
-    );
+    let updated_ship = world::apply_ship_action(mutate_cmd, &state, client_id);
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {
-            multicast_ships_update_excluding(state.ships.clone(), client_id);
+            multicast_ships_update_excluding(state.ships.clone(), Some(client_id));
             if let Some(tag) = tag {
                 send_tag_confirm(tag, client_id);
             }
@@ -251,7 +246,7 @@ fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>) {
     }
 }
 
-fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Uuid) {
+fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>) {
     unsafe {
         let sender = get_dispatcher_sender();
         sender
@@ -469,7 +464,7 @@ fn handle_request(request: WSRequest) {
                         }
                     }
                     ServerToClientMessage::MulticastPartialShipUpdate(ships, exclude_client_id) => {
-                        if client_id != exclude_client_id {
+                        if exclude_client_id.is_some() && client_id != exclude_client_id.unwrap() {
                             Some(ServerToClientMessage::MulticastPartialShipUpdate(
                                 ships,
                                 exclude_client_id,
@@ -788,6 +783,8 @@ fn world_update_thread() {
             .into_iter()
             .filter(|s| existing_player_ships.contains(&s.id))
             .collect::<Vec<_>>();
+
+        multicast_ships_update_excluding(cont.state.ships.clone(), None);
     }
 }
 

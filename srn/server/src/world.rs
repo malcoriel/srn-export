@@ -921,12 +921,18 @@ fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
 use crate::fire_event;
 
 pub fn apply_ship_action(
-    old_ship: &Ship,
     ship_action: ShipAction,
     state: &GameState,
     player_id: Uuid,
 ) -> Option<Ship> {
     let ship_action: ShipActionRust = parse_ship_action(ship_action);
+    let old_ship = find_my_ship(state, &player_id);
+    if old_ship.is_none() {
+        eprintln!("No ship");
+        return None;
+    }
+
+    let old_ship = old_ship.unwrap();
 
     match ship_action {
         ShipActionRust::Unknown => {

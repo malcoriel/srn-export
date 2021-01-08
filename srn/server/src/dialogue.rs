@@ -475,7 +475,7 @@ fn apply_side_effects(
                 }
             }
             DialogOptionSideEffect::QuestCargoDropOff => {
-                if let Some(mut my_player) = find_my_player_mut(state, player_id) {
+                if let Some(my_player) = find_my_player_mut(state, player_id) {
                     if let Some(mut quest) = my_player.quest.as_mut() {
                         quest.state = QuestState::Delivered;
                     }
