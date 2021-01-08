@@ -764,13 +764,18 @@ fn physics_thread() {
         let elapsed = now - last;
         last = now;
         cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
+
         try_assign_quests(&mut cont.state);
 
         let receiver = &mut EVENTS.lock().unwrap().1;
 
+        let state = &mut cont.state;
+        let d_states = &mut **d_states;
+
+        let mut res = vec![];
+
         loop {
             if let Ok(event) = receiver.try_recv() {
-                let mut res = vec![];
                 let player = match event {
                     GameEvent::Unknown => None,
                     GameEvent::ShipDocked { player, .. } => Some(player),
@@ -782,18 +787,18 @@ fn physics_thread() {
                     let player_argument = &player;
                     let d_table_argument = &d_table;
                     d_table_argument.try_trigger(
-                        &mut cont.state,
-                        &mut d_states,
+                        state,
+                        d_states,
                         &mut res_argument,
                         player_argument,
                     );
-                    for (client_id, dialogue) in res {
-                        unicast_dialogue_state(client_id, dialogue);
-                    }
                 }
             } else {
                 break;
             }
+        }
+        for (client_id, dialogue) in res {
+            unicast_dialogue_state(client_id, dialogue);
         }
     }
 }
