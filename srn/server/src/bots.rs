@@ -157,105 +157,82 @@ fn add_bot(bot: Bot) -> Uuid {
 }
 
 pub fn bot_thread() {
-    add_bot(Bot::new());
+    //add_bot(Bot::new());
     // add_bot(Bot::new());
     // add_bot(Bot::new());
     // add_bot(Bot::new());
     let d_table = *crate::DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
     loop {
-        eprintln!("bot act");
         let now = Local::now();
         let elapsed = now - last;
         last = now;
 
-        if let Some((mut d_states, mut bots, mut state)) = bot_try_lock() {
-            let mut ship_updates: HashMap<Uuid, Vec<ShipAction>> = HashMap::new();
-            let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
-            {
-                for (bot_id, bot) in bots.clone().iter() {
-                    let id: Uuid = *bot_id;
-                    let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
-                    let (bot, bot_acts) = bot.clone().act(
-                        &state.state,
-                        elapsed.num_microseconds().unwrap(),
-                        &d_table,
-                        &bot_d_states,
-                    );
-                    bots.insert(bot_id.clone(), bot);
+        let mut d_states = DIALOGUE_STATES.lock().unwrap();
+        let mut bots = BOTS.lock().unwrap();
+        let mut cont = STATE.write().unwrap();
 
-                    let mut acts = vec![];
-                    let mut speaks = vec![];
+        let mut ship_updates: HashMap<Uuid, Vec<ShipAction>> = HashMap::new();
+        let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
+        {
+            for (bot_id, bot) in bots.clone().iter() {
+                let id: Uuid = *bot_id;
+                let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
+                let (bot, bot_acts) = bot.clone().act(
+                    &cont.state,
+                    elapsed.num_microseconds().unwrap(),
+                    &d_table,
+                    &bot_d_states,
+                );
+                bots.insert(bot_id.clone(), bot);
 
-                    for bot_act in bot_acts.into_iter() {
-                        match bot_act {
-                            BotAct::Speak(v) => {
-                                speaks.push(v);
-                            }
-                            BotAct::Act(v) => {
-                                acts.push(v);
-                            }
+                let mut acts = vec![];
+                let mut speaks = vec![];
+
+                for bot_act in bot_acts.into_iter() {
+                    match bot_act {
+                        BotAct::Speak(v) => {
+                            speaks.push(v);
+                        }
+                        BotAct::Act(v) => {
+                            acts.push(v);
                         }
                     }
+                }
 
-                    if acts.len() > 0 {
-                        ship_updates.insert(bot_id.clone(), acts);
-                    }
+                if acts.len() > 0 {
+                    ship_updates.insert(bot_id.clone(), acts);
+                }
 
-                    if speaks.len() > 0 {
-                        dialogue_updates.insert(bot_id.clone(), speaks);
-                    }
+                if speaks.len() > 0 {
+                    dialogue_updates.insert(bot_id.clone(), speaks);
                 }
             }
-            for (bot_id, ship) in ship_updates.into_iter() {
-                for act in ship {
-                    let res = mutate_owned_ship(bot_id, act.clone(), None);
-                    if let Err(err) = res {
-                        eprintln!(
-                            "Failed to apply bot action {:?}, error {}",
-                            act, err.message
-                        );
-                    }
-                }
-            }
-
-            for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
-                for act in dialogue_update {
-                    execute_dialog_option(
-                        &bot_id,
-                        &mut state.state,
-                        act.clone(),
-                        &mut d_states,
-                        &d_table,
+        }
+        for (bot_id, ship) in ship_updates.into_iter() {
+            for act in ship {
+                let res = mutate_owned_ship(bot_id, act.clone(), None);
+                if let Err(err) = res {
+                    eprintln!(
+                        "Failed to apply bot action {:?}, error {}",
+                        act, err.message
                     );
                 }
             }
         }
+
+        for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
+            for act in dialogue_update {
+                execute_dialog_option(
+                    &bot_id,
+                    &mut cont.state,
+                    act.clone(),
+                    &mut d_states,
+                    &d_table,
+                );
+            }
+        }
+
         thread::sleep(Duration::from_millis(BOT_SLEEP_MS));
     }
-}
-
-fn bot_try_lock() -> Option<(
-    MutexGuard<'static, Box<DialogueStates>>,
-    MutexGuard<'static, HashMap<Uuid, Bot>>,
-    RwLockWriteGuard<'static, StateContainer>,
-)> {
-    let mut d_states = DIALOGUE_STATES.try_lock();
-    let mut bots = BOTS.try_lock();
-    let mut state = STATE.try_write();
-    if let Ok(d_states) = d_states {
-        if let Ok(bots) = bots {
-            if let Ok(state) = state {
-                return Some((d_states, bots, state));
-            } else {
-                eprintln!("failed to lock state for bot thread");
-            }
-        } else {
-            eprintln!("failed to lock bots for bot thread");
-        }
-    } else {
-        eprintln!("failed to lock d_states for bot thread");
-    }
-
-    None
 }
