@@ -598,7 +598,17 @@ fn make_new_human_player(conn_id: &Uuid) {
         let mut d_states = DIALOGUES_STATES.lock().unwrap();
         world::add_player(&mut cont.state, conn_id, false, None, &mut *d_states);
     }
-    spawn_ship(conn_id);
+    let (ship, planets) = {
+        let mut cont = STATE.write().unwrap();
+        let ship = world::spawn_ship(&mut cont.state, conn_id, None).clone();
+        (ship, cont.state.planets.clone())
+    };
+    {
+        let mut cont = STATE.write().unwrap();
+        let d_table = DIALOGUE_TABLE.lock().unwrap();
+        let mut player = find_my_player_mut(&mut cont.state, &conn_id).unwrap();
+        player.quest = world::generate_random_quest(&planets, ship.docked_at, &d_table);
+    }
 }
 
 fn remove_player(conn_id: &Uuid) {
@@ -621,11 +631,6 @@ fn remove_player(conn_id: &Uuid) {
 
 pub fn new_id() -> Uuid {
     Uuid::new_v4()
-}
-
-fn spawn_ship(player_id: &Uuid) {
-    let mut cont = STATE.write().unwrap();
-    world::spawn_ship(&mut cont.state, player_id, None);
 }
 
 static D_ID: &str = "2484332e-3668-4754-a7ac-d5fbf8707145";
@@ -746,7 +751,6 @@ fn cleanup_thread() {
 const DEBUG_PHYSICS: bool = false;
 
 fn physics_thread() {
-    let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
     loop {
         thread::sleep(Duration::from_millis(10));
@@ -755,18 +759,15 @@ fn physics_thread() {
         let now = Local::now();
         let elapsed = now - last;
         last = now;
-        cont.state = world::update(
-            cont.state.clone(),
-            elapsed.num_milliseconds() * 1000,
-            false,
-            Some(&d_table),
-        );
+        cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
     }
 }
 
 use crate::dialogue::{Dialogue, DialogueId, DialogueScript, DialogueUpdate};
 use crate::vec2::Vec2f64;
-use crate::world::{find_my_player, find_my_ship, find_planet, GameEvent, ShipAction};
+use crate::world::{
+    find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, ShipAction,
+};
 lazy_static! {
     static ref DIALOGUES_STATES: Arc<Mutex<Box<DialogueStates>>> =
         Arc::new(Mutex::new(Box::new(HashMap::new())));

@@ -241,61 +241,7 @@ fn simulate_planet_movement(
     return p;
 }
 
-pub fn update_quests(
-    players: &Vec<Player>,
-    ships: &Vec<Ship>,
-    planets: &Vec<Planet>,
-    d_table: &DialogueTable,
-) -> Vec<Player> {
-    let ships_by_id = {
-        let mut by_id = HashMap::new();
-        for s in ships.iter() {
-            by_id.entry(s.id).or_insert(s);
-        }
-        by_id
-    };
-
-    players
-        .into_iter()
-        .map(|p| {
-            let mut player = p.clone();
-            if let Some(quest) = &p.quest {
-                if let Some(ship) = ships_by_id.get(&p.ship_id.unwrap_or(Default::default())) {
-                    if let Some(docked_at) = ship.docked_at {
-                        if quest.state == QuestState::Started {
-                            if docked_at == quest.from_id {
-                                let mut quest = player.borrow().quest.clone().unwrap();
-                                quest.state = QuestState::Picked;
-                                player.borrow_mut().quest = Some(quest);
-                            }
-                        } else if quest.state == QuestState::Picked {
-                            if docked_at == quest.to_id {
-                                let mut quest = player.borrow().quest.clone().unwrap();
-                                quest.state = QuestState::Delivered;
-                                player.borrow_mut().quest = Some(quest);
-                            }
-                        }
-                    }
-                }
-                if quest.state == QuestState::Delivered {
-                    if player.is_bot {
-                        player.money += quest.reward / 2;
-                    } else {
-                        player.money += quest.reward;
-                    }
-                    player.quest = None;
-                }
-            } else {
-                if let Some(ship) = ships_by_id.get(&p.ship_id.unwrap_or(Default::default())) {
-                    player.quest = generate_random_quest(planets, ship.docked_at, d_table);
-                }
-            }
-            player
-        })
-        .collect::<Vec<_>>()
-}
-
-fn generate_random_quest(
+pub(crate) fn generate_random_quest(
     planets: &Vec<Planet>,
     docked_at: Option<Uuid>,
     d_table: &DialogueTable,
@@ -583,12 +529,7 @@ pub fn force_update_to_now(state: &mut GameState) {
     state.ticks = (now - state.start_time_ticks) as u32;
 }
 
-pub fn update(
-    mut state: GameState,
-    elapsed: i64,
-    client: bool,
-    d_table: Option<&DialogueTable>,
-) -> GameState {
+pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     state.ticks += elapsed as u32 / 1000;
 
     if !client {
@@ -633,12 +574,6 @@ pub fn update(
                 &state.star.clone().unwrap(),
                 elapsed,
             );
-            if !client {
-                if let Some(d_table) = d_table {
-                    state.players =
-                        update_quests(&state.players, &state.ships, &state.planets, d_table);
-                }
-            }
         }
     }
     state
@@ -651,7 +586,7 @@ pub fn add_player(
     name: Option<String>,
     d_states: &mut Box<DialogueStates>,
 ) {
-    state.players.push(Player {
+    let player = Player {
         id: player_id.clone(),
         is_bot,
         ship_id: None,
@@ -659,12 +594,17 @@ pub fn add_player(
         quest: None,
         photo_id: gen_random_photo_id(),
         money: 0,
-    });
+    };
+    state.players.push(player);
     let player_states = HashMap::new();
     d_states.insert(*player_id, (None, player_states));
 }
 
-pub fn spawn_ship(state: &mut GameState, player_id: &Uuid, at: Option<Vec2f64>) {
+pub fn spawn_ship<'a, 'b>(
+    state: &'a mut GameState,
+    player_id: &'b Uuid,
+    at: Option<Vec2f64>,
+) -> &'a Ship {
     let mut rng: ThreadRng = rand::thread_rng();
     let start = get_random_planet(&state.planets, None, &mut rng);
     let ship = Ship {
@@ -693,6 +633,7 @@ pub fn spawn_ship(state: &mut GameState, player_id: &Uuid, at: Option<Vec2f64>) 
         .find(|p| p.id == *player_id)
         .map(|p| p.ship_id = Some(ship.id));
     state.ships.push(ship);
+    &state.ships[state.ships.len() - 1]
 }
 
 pub fn update_ships_navigation(
