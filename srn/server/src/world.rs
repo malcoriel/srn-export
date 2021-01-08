@@ -241,11 +241,7 @@ fn simulate_planet_movement(
     return p;
 }
 
-pub(crate) fn generate_random_quest(
-    planets: &Vec<Planet>,
-    docked_at: Option<Uuid>,
-    d_table: &DialogueTable,
-) -> Option<Quest> {
+pub fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Option<Quest> {
     let mut rng: ThreadRng = rand::thread_rng();
     let from = get_random_planet(planets, docked_at, &mut rng);
     let delivery = planets
@@ -902,8 +898,8 @@ pub enum ShipActionType {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShipAction {
-    s_type: ShipActionType,
-    data: String,
+    pub s_type: ShipActionType,
+    pub data: String,
 }
 
 fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {

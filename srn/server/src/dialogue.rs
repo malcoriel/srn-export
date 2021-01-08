@@ -237,6 +237,7 @@ pub fn execute_dialog_option(
     dialogue_states: &mut DialogueStates,
     dialogue_table: &DialogueTable,
 ) -> (Option<Dialogue>, bool) {
+    // bool means "side effect happened, state changed"
     if let Some(all_dialogues) = dialogue_states.get_mut(client_id) {
         if let Some(dialogue_state) = all_dialogues.1.get_mut(&update.dialogue_id) {
             let (new_state, side_effect) = apply_dialogue_option(

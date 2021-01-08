@@ -603,9 +603,8 @@ fn make_new_human_player(conn_id: &Uuid) {
     };
     {
         let mut cont = STATE.write().unwrap();
-        let d_table = DIALOGUE_TABLE.lock().unwrap();
         let mut player = find_my_player_mut(&mut cont.state, &conn_id).unwrap();
-        player.quest = world::generate_random_quest(&planets, ship.docked_at, &d_table);
+        player.quest = world::generate_random_quest(&planets, ship.docked_at);
     }
 }
 
@@ -824,7 +823,6 @@ fn try_trigger_dialogue(
 
 const QUEST_SLEEP_MS: u64 = 100;
 fn quest_assign_thread() {
-    let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     loop {
         let mut cont = STATE.write().unwrap();
         let state_read = cont.state.clone();
@@ -832,8 +830,7 @@ fn quest_assign_thread() {
             if player.quest.is_none() {
                 let ship = find_my_ship(&state_read, &player.id);
                 if let Some(ship) = ship {
-                    player.quest =
-                        world::generate_random_quest(&state_read.planets, ship.docked_at, &d_table)
+                    player.quest = world::generate_random_quest(&state_read.planets, ship.docked_at)
                 }
             }
         }

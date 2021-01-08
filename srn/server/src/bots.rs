@@ -1,12 +1,14 @@
 use crate::world::{
-    find_my_player, find_my_ship, find_planet, GameEvent, GameState, QuestState, Ship,
+    execute_dialog_option, find_my_player, find_my_ship, find_planet, GameEvent, GameState,
+    QuestState, Ship, ShipAction, ShipActionType,
 };
-use crate::{fire_event, new_id};
+use crate::{fire_event, mutate_owned_ship, new_id};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Bot {
     pub id: Uuid,
+    pub timer: Option<i64>,
 }
 
 use crate::random_stuff::gen_bot_name;
@@ -22,54 +24,73 @@ lazy_static! {
     static ref BOTS: Arc<Mutex<HashMap<Uuid, Bot>>> = Arc::new(Mutex::new(HashMap::new()));
 }
 
+use crate::dialogue::DialogueUpdate;
 use crate::STATE;
+use chrono::Local;
+
 const BOT_SLEEP_MS: u64 = 200;
+const BOT_QUEST_ACT_DELAY_MC: i64 = 1000 * 1000;
+
+pub enum BotAct {
+    Speak(DialogueUpdate),
+    Act(ShipAction),
+}
 
 impl Bot {
     pub fn new() -> Self {
-        Bot { id: new_id() }
+        Bot {
+            id: new_id(),
+            timer: Some(0),
+        }
     }
-    pub fn act(self, state: GameState) -> (Self, Option<Ship>) {
+    pub fn act(mut self, state: GameState, elapsed_micro: i64) -> (Self, Vec<BotAct>) {
         let player = find_my_player(&state, &self.id);
         if player.is_none() {
             eprintln!("{} no player", self.id);
-            return (self, None);
+            return (self, vec![]);
         }
         let ship = find_my_ship(&state, &self.id);
         if ship.is_none() {
             eprintln!("{} no ship", self.id);
-            return (self, None);
+            return (self, vec![]);
         }
-        let ship_read = ship.unwrap();
-        let mut ship = ship_read.clone();
         let player = player.unwrap();
+        let ship = ship.unwrap();
 
-        let target = if let Some(quest) = &player.quest {
-            if quest.state == QuestState::Started {
-                Some(quest.from_id)
+        if let Some(quest) = player.quest.clone() {
+            let action = if quest.state == QuestState::Started {
+                if ship.docked_at.map_or(false, |d| d == quest.from_id) {
+                    if self.timer.is_none() {
+                        self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                    } else {
+                        self.timer = Some(self.timer.unwrap() - elapsed_micro);
+                        if self.timer.unwrap() <= 0 {}
+                    }
+                    None
+                } else {
+                    Some(BotAct::Act(ShipAction {
+                        // this action doubles as undock
+                        s_type: ShipActionType::DockNavigate,
+                        data: format!("\"{}\"", quest.from_id),
+                    }))
+                }
             } else if quest.state == QuestState::Picked {
-                Some(quest.to_id)
+                Some(BotAct::Act(ShipAction {
+                    // this action doubles as undock
+                    s_type: ShipActionType::DockNavigate,
+                    data: format!("\"{}\"", quest.to_id),
+                }))
             } else {
                 None
+            };
+            if action.is_some() {
+                (self, vec![action.unwrap()])
+            } else {
+                (self, vec![])
             }
         } else {
-            None
-        };
-
-        if let Some(target) = target {
-            ship.dock_target = Some(target.clone());
-            if let Some(planet_id) = ship_read.docked_at {
-                let planet = find_planet(&state, &planet_id).unwrap().clone();
-                ship.docked_at = None;
-                fire_event(GameEvent::ShipUndocked {
-                    ship: ship.clone(),
-                    planet,
-                    player: player.clone(),
-                });
-            }
+            (self, vec![])
         }
-
-        (self, Some(ship))
     }
 }
 fn add_bot(bot: Bot) -> Uuid {
@@ -82,27 +103,75 @@ fn add_bot(bot: Bot) -> Uuid {
     id
 }
 
-pub(crate) fn bot_thread() {
-    // add_bot(Bot::new());
-    // add_bot(Bot::new());
-    // add_bot(Bot::new());
-    // add_bot(Bot::new());
+pub fn bot_thread() {
+    add_bot(Bot::new());
+    add_bot(Bot::new());
+    add_bot(Bot::new());
+    add_bot(Bot::new());
+    let d_table = *crate::DIALOGUE_TABLE.lock().unwrap().clone();
+    let mut last = Local::now();
     loop {
-        let mut ship_updates: HashMap<Uuid, Ship> = HashMap::new();
+        let now = Local::now();
+        let elapsed = now - last;
+        last = now;
+
+        let mut ship_updates: HashMap<Uuid, Vec<ShipAction>> = HashMap::new();
+        let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
+        let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = BOTS.lock().unwrap();
-        let extracted_state = STATE.write().unwrap().state.clone();
+        let mut extracted_state = STATE.write().unwrap().state.clone();
         {
             for (bot_id, bot) in bots.clone().iter() {
-                let (bot, ship) = bot.clone().act(extracted_state.clone());
+                let (bot, bot_acts) = bot
+                    .clone()
+                    .act(extracted_state.clone(), elapsed.num_microseconds().unwrap());
                 bots.insert(bot_id.clone(), bot);
-                if let Some(ship) = ship {
-                    ship_updates.insert(bot_id.clone(), ship);
+
+                let mut acts = vec![];
+                let mut speaks = vec![];
+
+                for bot_act in bot_acts.into_iter() {
+                    match bot_act {
+                        BotAct::Speak(v) => {
+                            speaks.push(v);
+                        }
+                        BotAct::Act(v) => {
+                            acts.push(v);
+                        }
+                    }
+                }
+
+                if acts.len() > 0 {
+                    ship_updates.insert(bot_id.clone(), acts);
+                }
+
+                if speaks.len() > 0 {
+                    dialogue_updates.insert(bot_id.clone(), speaks);
                 }
             }
         }
         for (bot_id, ship) in ship_updates.into_iter() {
-            // TODO make compatible with ship actions
-            // mutate_owned_ship_wrapped(bot_id, ship, None);
+            for act in ship {
+                let res = mutate_owned_ship(bot_id, act.clone(), None);
+                if let Err(err) = res {
+                    eprintln!(
+                        "Failed to apply bot action {:?}, error {}",
+                        act, err.message
+                    );
+                }
+            }
+        }
+
+        for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
+            for act in dialogue_update {
+                let res = execute_dialog_option(
+                    &bot_id,
+                    &mut extracted_state,
+                    act.clone(),
+                    &mut d_states,
+                    &d_table,
+                );
+            }
         }
         thread::sleep(Duration::from_millis(BOT_SLEEP_MS));
     }
