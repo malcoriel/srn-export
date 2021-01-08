@@ -92,10 +92,6 @@ impl DialogueScript {
 
                 if let Some(quest) = player.quest.as_ref() {
                     let is_planet_current = {
-                        eprintln!(
-                            "quest state {:?}, current {}, from {} to {}",
-                            quest.state, current_planet_id, quest.from_id, quest.to_id
-                        );
                         let res = if quest.state == QuestState::Started
                             && self.name == "cargo_delivery_pickup"
                         {
@@ -277,6 +273,7 @@ pub fn build_dialogue_from_state(
     game_state: &GameState,
 ) -> Option<Dialogue> {
     let script = dialogue_table.scripts.get(dialogue_id);
+    let player = find_my_player(game_state, player_id);
     if let Some(script) = script {
         if let Some(state) = **current_state {
             let prompt = script.prompts.get(&state).unwrap();
@@ -296,7 +293,7 @@ pub fn build_dialogue_from_state(
                     .clone()
                     .into_iter()
                     .map(|(id, text)| DialogueElem {
-                        substitution: substitute_text(&text, &current_planet),
+                        substitution: substitute_text(&text, &current_planet, player, game_state),
                         text,
                         id,
                     })
@@ -305,11 +302,10 @@ pub fn build_dialogue_from_state(
                     text: prompt.clone(),
                     // prompt id does not matter since it cannot be selected as action
                     id: Default::default(),
-                    substitution: substitute_text(&prompt, &current_planet),
+                    substitution: substitute_text(&prompt, &current_planet, player, game_state),
                 },
                 planet: current_planet,
                 left_character_url: format!("resources/chars/{}", {
-                    let player = find_my_player(game_state, player_id);
                     player.map_or("question.png".to_string(), |p| {
                         format!("{}.jpg", p.photo_id)
                     })
@@ -322,11 +318,17 @@ pub fn build_dialogue_from_state(
     return None;
 }
 
+use crate::random_stuff::gen_random_character_name;
 use itertools::Itertools;
 use regex::Regex;
 use std::borrow::BorrowMut;
 
-fn substitute_text(text: &String, current_planet: &Option<Planet>) -> Vec<DialogueSubstitution> {
+fn substitute_text(
+    text: &String,
+    current_planet: &Option<Planet>,
+    player: Option<&Player>,
+    game_state: &GameState,
+) -> Vec<DialogueSubstitution> {
     let mut res = vec![];
     let re = Regex::new(r"s_\w+").unwrap();
     for cap in re.captures_iter(text.as_str()) {
@@ -355,6 +357,26 @@ fn substitute_text(text: &String, current_planet: &Option<Planet>) -> Vec<Dialog
             } else {
                 eprintln!("s_current_planet used without current planet");
             }
+        } else if cap[0] == *"s_cargo_destination_planet" {
+            if let Some(cargo_destination_planet) = player
+                .and_then(|p| p.quest.clone())
+                .and_then(|q| find_planet(game_state, &q.to_id))
+            {
+                let cargo_destination_planet = cargo_destination_planet.clone();
+                res.push(DialogueSubstitution {
+                    s_type: DialogueSubstitutionType::PlanetName,
+                    id: cargo_destination_planet.id,
+                    text: cargo_destination_planet.name,
+                });
+            } else {
+                eprintln!("s_cargo_destination_planet used without destination planet!");
+            }
+        } else if cap[0] == *"s_random_name" {
+            res.push(DialogueSubstitution {
+                s_type: DialogueSubstitutionType::CharacterName,
+                id: new_id(),
+                text: gen_random_character_name().to_string(),
+            });
         } else {
             eprintln!("Unknown substitution {}", cap[0].to_string());
         }

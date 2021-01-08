@@ -91,6 +91,41 @@ const BOT_NAMES: [&str; 32] = [
     "Aqroid",
 ];
 
+const CHARACTER_NAMES: [&str; 32] = [
+    "Moad Velazquez",
+    "Kian-James Acevedo",
+    "Brizzy Warspeeder",
+    "Czia Yonson",
+    "Rehaan Jaise Dixon",
+    "Admiral Ines Chaney",
+    "Oluwatoni Melendez",
+    "James-Paul Ochoa",
+    "Korey Jefferson",
+    "Dennis Ponson",
+    "Christian Nedex",
+    "Dr Ton Broan",
+    "Vake Walkatus",
+    "Derick Robinson",
+    "Wzee Frazier",
+    "Kaylum Crushfadden",
+    "Varol Maradder",
+    "Mason Davallister",
+    "Hoshi Park",
+    "Athol Komm",
+    "Conar Graham",
+    "Han Acevedo",
+    "High Admiral Jago Yates",
+    "Quabeth Fomm",
+    "Kaeden Morris",
+    "Admiral Yerry Solson",
+    "Madaki Morales",
+    "Bhaaldeen Kedrick Spintus",
+    "Jonson Edwards",
+    "Krark Cummings",
+    "Aaron Embscraper",
+    "Lzee Hilly",
+];
+
 pub fn rand_32() -> usize {
     let mut rng: ThreadRng = rand::thread_rng();
     return rng.gen_range(0, 31);
@@ -102,6 +137,10 @@ pub fn gen_star_name() -> &'static str {
 
 pub fn gen_planet_name() -> &'static str {
     PLANET_NAMES[rand_32()]
+}
+
+pub fn gen_random_character_name() -> &'static str {
+    CHARACTER_NAMES[rand_32()]
 }
 
 pub fn gen_sat_name() -> &'static str {

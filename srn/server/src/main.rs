@@ -568,7 +568,6 @@ lazy_static! {
 }
 
 fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
-    eprintln!("handle");
     let global_state_change;
     {
         let mut cont = STATE.write().unwrap();
@@ -780,19 +779,15 @@ fn fire_event(ev: GameEvent) {
     }
 }
 
-const EVENT_SLEEP_MS: u64 = 100;
-
+const EVENT_SLEEP_MS: u64 = 10;
 fn event_thread() {
     let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     loop {
         let receiver = &mut EVENTS.lock().unwrap().1;
 
-        // technically, does not need to happen most of the time, only when there's a message,
-        // so I need some kind of lazy-on-first primitive here
         loop {
             if let Ok(event) = receiver.try_recv() {
                 let mut res = vec![];
-                eprintln!("Got event {:?}", event);
                 let player = match event {
                     GameEvent::Unknown => None,
                     GameEvent::ShipDocked { player, .. } => Some(player),
@@ -802,7 +797,6 @@ fn event_thread() {
                 if let Some(player) = player {
                     try_trigger_dialogue(&mut res, &player, &d_table);
                     for (client_id, dialogue) in res {
-                        eprintln!("Sending a dialogue change to {}", client_id);
                         unicast_dialogue_state(client_id, dialogue);
                     }
                 }
@@ -821,5 +815,5 @@ fn try_trigger_dialogue(
 ) {
     let mut cont = STATE.write().unwrap();
     let mut d_states = DIALOGUE_STATES.lock().unwrap();
-    d_table.try_trigger(&mut cont.state, &mut d_states, &mut res, player)
+    d_table.try_trigger(&mut cont.state, &mut d_states, &mut res, player);
 }
