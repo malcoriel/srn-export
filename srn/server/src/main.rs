@@ -801,7 +801,17 @@ fn event_thread() {
                 };
 
                 if let Some(player) = player {
-                    try_trigger_dialogue(&mut res, &player, &d_table);
+                    let mut res_argument = &mut res;
+                    let player_argument = &player;
+                    let d_table_argument = &d_table;
+                    let mut cont = STATE.write().unwrap();
+                    let mut d_states = DIALOGUE_STATES.lock().unwrap();
+                    d_table_argument.try_trigger(
+                        &mut cont.state,
+                        &mut d_states,
+                        &mut res_argument,
+                        player_argument,
+                    );
                     for (client_id, dialogue) in res {
                         unicast_dialogue_state(client_id, dialogue);
                     }
@@ -812,14 +822,4 @@ fn event_thread() {
         }
         thread::sleep(Duration::from_millis(EVENT_SLEEP_MS));
     }
-}
-
-fn try_trigger_dialogue(
-    mut res: &mut Vec<(Uuid, Option<Dialogue>)>,
-    player: &Player,
-    d_table: &DialogueTable,
-) {
-    let mut cont = STATE.write().unwrap();
-    let mut d_states = DIALOGUE_STATES.lock().unwrap();
-    d_table.try_trigger(&mut cont.state, &mut d_states, &mut res, player);
 }
