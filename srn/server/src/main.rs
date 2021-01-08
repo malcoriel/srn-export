@@ -176,23 +176,33 @@ fn mutate_owned_ship(
     tag: Option<String>,
 ) -> Result<Ship, ClientErr> {
     let mut cont = STATE.write().unwrap();
-    let old_ship_index = world::find_my_ship_index(&cont.state, &client_id);
+    let mut state = &mut cont.state;
+    mutate_ship_no_lock(client_id, mutate_cmd, tag, &mut state)
+}
+
+fn mutate_ship_no_lock(
+    client_id: Uuid,
+    mutate_cmd: ShipAction,
+    tag: Option<String>,
+    state: &mut GameState,
+) -> Result<Ship, ClientErr> {
+    let old_ship_index = world::find_my_ship_index(&state, &client_id);
     if old_ship_index.is_none() {
         return Err(ClientErr {
             message: String::from("No old instance of ship"),
         });
     }
-    world::force_update_to_now(&mut cont.state);
+    world::force_update_to_now(state);
     let updated_ship = world::apply_ship_action(
-        &cont.state.ships[old_ship_index.clone().unwrap()],
+        &state.ships[old_ship_index.clone().unwrap()],
         mutate_cmd,
-        &cont.state,
+        &state,
         client_id,
     );
     if let Some(updated_ship) = updated_ship {
-        let replaced = try_replace_ship(&mut cont.state, &updated_ship, client_id);
+        let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {
-            multicast_ships_update_excluding(cont.state.ships.clone(), client_id);
+            multicast_ships_update_excluding(state.ships.clone(), client_id);
             if let Some(tag) = tag {
                 send_tag_confirm(tag, client_id);
             }
@@ -202,7 +212,7 @@ fn mutate_owned_ship(
             message: String::from("Couldn't replace ship"),
         });
     }
-    world::force_update_to_now(&mut cont.state);
+    world::force_update_to_now(state);
     return Err(ClientErr {
         message: String::from("Ship update was invalid"),
     });
