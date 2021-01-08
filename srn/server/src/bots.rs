@@ -2,7 +2,7 @@ use crate::world::{
     execute_dialog_option, find_my_player, find_my_ship, find_planet, GameEvent, GameState,
     QuestState, Ship, ShipAction, ShipActionType,
 };
-use crate::{fire_event, mutate_owned_ship, new_id, StateContainer};
+use crate::{fire_event, mutate_owned_ship, mutate_ship_no_lock, new_id, StateContainer};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -132,18 +132,19 @@ impl Bot {
     ) -> Option<BotAct> {
         let current_script: &DialogueScript = d_table.get_by_name(current_dialogue_name).unwrap();
         let current_d_state = bot_d_states.1.get(&current_script.id);
-        eprintln!("triggering next dialogue action for {}", self.id);
-        current_d_state
-            .and_then(|current_d_state| {
-                current_script.get_next_bot_path(&*(current_d_state.clone()))
-            })
-            .and_then(|opt| {
-                eprintln!("chosen {:?}", opt);
-                Some(BotAct::Speak(DialogueUpdate {
-                    dialogue_id: Default::default(),
-                    option_id: opt.clone(),
-                }))
-            })
+        // eprintln!("triggering next dialogue action for {}", self.id);
+        // current_d_state
+        //     .and_then(|current_d_state| {
+        //         current_script.get_next_bot_path(&*(current_d_state.clone()))
+        //     })
+        //     .and_then(|opt| {
+        //         eprintln!("chosen {:?}", opt);
+        //         Some(BotAct::Speak(DialogueUpdate {
+        //             dialogue_id: Default::default(),
+        //             option_id: opt.clone(),
+        //         }))
+        //     })
+        None
     }
 }
 fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
@@ -158,9 +159,9 @@ fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
 
 pub fn bot_init(bots: &mut Vec<Bot>) {
     add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
 }
 
 pub fn do_bot_actions(
@@ -204,18 +205,18 @@ pub fn do_bot_actions(
         }
     }
 
-    // for (bot_id, ship) in ship_updates.into_iter() {
-    //     for act in ship {
-    //         let res = mutate_owned_ship(bot_id, act.clone(), None);
-    //         if let Err(err) = res {
-    //             eprintln!(
-    //                 "Failed to apply bot action {:?}, error {}",
-    //                 act, err.message
-    //             );
-    //         }
-    //     }
-    // }
-    //
+    for (bot_id, ship) in ship_updates.into_iter() {
+        for act in ship {
+            let res = mutate_ship_no_lock(bot_id, act.clone(), None, state);
+            if let Err(err) = res {
+                eprintln!(
+                    "Failed to apply bot action {:?}, error {}",
+                    act, err.message
+                );
+            }
+        }
+    }
+
     // for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
     //     for act in dialogue_update {
     //         execute_dialog_option(&bot_id, state, act.clone(), d_states, &d_table);
