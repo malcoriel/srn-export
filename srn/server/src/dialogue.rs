@@ -76,9 +76,13 @@ pub struct DialogueScript {
     pub is_default: bool,
     pub name: String,
     pub bot_path: HashMap<StateId, OptionId>,
+    names_db: HashMap<Uuid, String>,
 }
 
 impl DialogueScript {
+    pub fn get_name(&self, id: &Uuid) -> &String {
+        return self.names_db.get(id).unwrap();
+    }
     pub fn get_next_bot_path(&self, current_state: &Option<StateId>) -> Option<&OptionId> {
         return current_state.and_then(|cs| self.bot_path.get(&cs));
     }
@@ -132,6 +136,7 @@ impl DialogueScript {
             priority: 0,
             name: "no name".to_string(),
             bot_path: Default::default(),
+            names_db: Default::default(),
         }
     }
 }
@@ -200,10 +205,10 @@ impl DialogueTable {
             .sorted_by(|d1, d2| d1.priority.cmp(&d2.priority))
             .rev()
         {
-            eprintln!("checking {}", script.name);
+            // eprintln!("checking {}", script.name);
             if script.check_player(state, player, player_d_states.get(&script.id)) {
                 d_script = Some(script);
-                eprintln!("catch!");
+                // eprintln!("catch!");
                 break;
             }
         }
@@ -485,11 +490,7 @@ fn apply_side_effect(
 
 pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, DialogueScript) {
     let dialogue_id = new_id();
-    let arrival = new_id();
-    let market = new_id();
-    let go_market = new_id();
-    let go_back = new_id();
-    let go_exit = new_id();
+    let d_name = "basic_planet".to_string();
 
     let mut script = DialogueScript {
         id: dialogue_id,
@@ -500,9 +501,24 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         is_planetary: true,
         priority: 0,
         is_default: true,
-        name: "basic_planet".to_string(),
+        name: d_name.clone(),
         bot_path: Default::default(),
+        names_db: Default::default(),
     };
+
+    script.names_db.insert(dialogue_id, d_name);
+
+    let arrival = new_id();
+    script.names_db.insert(arrival, "arrival".to_string());
+    let market = new_id();
+    script.names_db.insert(market, "market".to_string());
+    let go_market = new_id();
+    script.names_db.insert(go_market, "go_market".to_string());
+    let go_back = new_id();
+    script.names_db.insert(go_back, "go_back".to_string());
+    let go_exit = new_id();
+    script.names_db.insert(go_exit, "go_exit".to_string());
+
     script.bot_path.insert(arrival.clone(), go_exit.clone());
     script.initial_state = arrival;
     script
@@ -561,11 +577,7 @@ pub fn gen_scripts() -> Vec<DialogueScript> {
 
 fn gen_quest_dropoff_planet_script() -> DialogueScript {
     let dialogue_id = new_id();
-    let arrival = new_id();
-    let dropped_off = new_id();
-    let go_drop_off = new_id();
-    let go_exit_no_drop_off = new_id();
-    let go_exit_dropped_off = new_id();
+    let d_name = "cargo_delivery_dropoff".to_string();
 
     let mut script = DialogueScript {
         id: dialogue_id,
@@ -576,9 +588,31 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         is_planetary: true,
         priority: 1,
         is_default: false,
-        name: "cargo_delivery_dropoff".to_string(),
+        name: d_name.clone(),
         bot_path: Default::default(),
+        names_db: Default::default(),
     };
+
+    script.names_db.insert(dialogue_id, d_name);
+    let arrival = new_id();
+    script.names_db.insert(arrival, "arrival".to_string());
+    let dropped_off = new_id();
+    script
+        .names_db
+        .insert(dropped_off, "dropped_off".to_string());
+    let go_drop_off = new_id();
+    script
+        .names_db
+        .insert(go_drop_off, "go_drop_off".to_string());
+    let go_exit_no_drop_off = new_id();
+    script
+        .names_db
+        .insert(go_exit_no_drop_off, "go_exit_no_drop_off".to_string());
+    let go_exit_dropped_off = new_id();
+    script
+        .names_db
+        .insert(go_exit_dropped_off, "go_exit_dropped_off".to_string());
+
     script.bot_path.insert(arrival.clone(), go_drop_off.clone());
     script
         .bot_path
@@ -628,15 +662,11 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
 
 fn gen_quest_pickup_planet_script() -> DialogueScript {
     let dialogue_id = new_id();
-    let arrival = new_id();
-    let picked_up = new_id();
-    let go_exit_no_cargo = new_id();
-    let go_exit_with_cargo = new_id();
-    let go_pickup = new_id();
 
+    let d_name = "cargo_delivery_pickup".to_string();
     let mut script = DialogueScript {
         id: dialogue_id,
-        name: "cargo_delivery_pickup".to_string(),
+        name: d_name.clone(),
         transitions: Default::default(),
         prompts: Default::default(),
         options: Default::default(),
@@ -645,7 +675,25 @@ fn gen_quest_pickup_planet_script() -> DialogueScript {
         priority: 1,
         is_default: false,
         bot_path: Default::default(),
+        names_db: Default::default(),
     };
+    script.names_db.insert(dialogue_id, d_name);
+
+    let arrival = new_id();
+    script.names_db.insert(arrival, "arrival".to_string());
+    let picked_up = new_id();
+    script.names_db.insert(picked_up, "picked_up".to_string());
+    let go_exit_no_cargo = new_id();
+    script
+        .names_db
+        .insert(go_exit_no_cargo, "go_exit_no_cargo".to_string());
+    let go_exit_with_cargo = new_id();
+    script
+        .names_db
+        .insert(go_exit_with_cargo, "go_exit_with_cargo".to_string());
+    let go_pickup = new_id();
+    script.names_db.insert(go_pickup, "go_pickup".to_string());
+
     script.bot_path.insert(arrival.clone(), go_pickup.clone());
     script
         .bot_path

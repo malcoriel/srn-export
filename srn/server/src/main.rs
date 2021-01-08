@@ -802,11 +802,19 @@ fn handle_events(
     loop {
         if let Ok(event) = receiver.try_recv() {
             let player = match event {
-                GameEvent::Unknown => None,
-                GameEvent::ShipDocked { player, .. } => Some(player),
-                GameEvent::ShipUndocked { player, .. } => Some(player),
+                GameEvent::Unknown => {
+                    eprintln!("unknown event");
+                    None
+                }
+                GameEvent::ShipDocked { player, .. } => {
+                    eprintln!("docked event");
+                    Some(player)
+                }
+                GameEvent::ShipUndocked { player, .. } => {
+                    eprintln!("undocked event");
+                    Some(player)
+                }
             };
-
             if let Some(player) = player {
                 let mut res_argument = &mut res;
                 let player_argument = &player;

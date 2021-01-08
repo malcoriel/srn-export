@@ -690,7 +690,7 @@ pub fn update_ships_navigation(
                             ship.trajectory = vec![];
                             let planet = planet.clone().clone();
                             let player = player.clone().clone();
-                            fire_event(GameEvent::ShipUndocked {
+                            fire_event(GameEvent::ShipDocked {
                                 ship: ship.clone(),
                                 planet,
                                 player,

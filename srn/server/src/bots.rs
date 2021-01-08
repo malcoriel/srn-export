@@ -32,7 +32,7 @@ use crate::STATE;
 use chrono::Local;
 
 const BOT_SLEEP_MS: u64 = 200;
-const BOT_QUEST_ACT_DELAY_MC: i64 = 1000 * 1000;
+const BOT_QUEST_ACT_DELAY_MC: i64 = 2 * 1000 * 1000;
 
 pub enum BotAct {
     Speak(DialogueUpdate),
@@ -66,15 +66,68 @@ impl Bot {
         let player = player.unwrap();
         let ship = ship.unwrap();
 
-        if let Some(quest) = player.quest.clone() {
-            let action = if quest.state == QuestState::Started {
-                if ship.docked_at.map_or(false, |d| d == quest.from_id) {
+        let quest = player.quest.clone();
+        if quest.is_none() {
+            return (self, vec![]);
+        }
+        let quest = quest.unwrap();
+
+        let action = if quest.state == QuestState::Started {
+            if ship.docked_at.map_or(false, |d| d == quest.from_id) {
+                if self.timer.is_none() {
+                    self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                    None
+                } else {
+                    self.timer = Some(self.timer.unwrap() - elapsed_micro);
+                    if self.timer.unwrap() <= 0 {
+                        self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                        // time to act on the dialogue
+                        self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_pickup")
+                    } else {
+                        // still waiting
+                        None
+                    }
+                }
+            } else {
+                Some(BotAct::Act(ShipAction {
+                    // this action doubles as undock
+                    s_type: ShipActionType::DockNavigate,
+                    data: format!("\"{}\"", quest.from_id),
+                }))
+            }
+        } else if quest.state == QuestState::Picked {
+            if ship.docked_at.map_or(false, |d| d == quest.to_id) {
+                if self.timer.is_none() {
+                    self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                    None
+                } else {
+                    self.timer = Some(self.timer.unwrap() - elapsed_micro);
+                    if self.timer.unwrap() <= 0 {
+                        // time to act on the dialogue
+                        self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                        self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_dropoff")
+                    } else {
+                        // still waiting
+                        None
+                    }
+                }
+            } else {
+                // prevent too early undock without finishing the dialogue
+                if !ship.docked_at.map_or(false, |d| d == quest.from_id) {
+                    Some(BotAct::Act(ShipAction {
+                        // this action doubles as undock
+                        s_type: ShipActionType::DockNavigate,
+                        data: format!("\"{}\"", quest.to_id),
+                    }))
+                } else {
+                    // finish the dialogue
                     if self.timer.is_none() {
                         self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
                         None
                     } else {
                         self.timer = Some(self.timer.unwrap() - elapsed_micro);
                         if self.timer.unwrap() <= 0 {
+                            self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
                             // time to act on the dialogue
                             self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_pickup")
                         } else {
@@ -82,43 +135,13 @@ impl Bot {
                             None
                         }
                     }
-                } else {
-                    Some(BotAct::Act(ShipAction {
-                        // this action doubles as undock
-                        s_type: ShipActionType::DockNavigate,
-                        data: format!("\"{}\"", quest.from_id),
-                    }))
                 }
-            } else if quest.state == QuestState::Picked {
-                if ship.docked_at.map_or(false, |d| d == quest.from_id) {
-                    if self.timer.is_none() {
-                        self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
-                        None
-                    } else {
-                        self.timer = Some(self.timer.unwrap() - elapsed_micro);
-                        if self.timer.unwrap() <= 0 {
-                            // time to act on the dialogue
-                            self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_dropoff")
-                        } else {
-                            // still waiting
-                            None
-                        }
-                    }
-                } else {
-                    Some(BotAct::Act(ShipAction {
-                        // this action doubles as undock
-                        s_type: ShipActionType::DockNavigate,
-                        data: format!("\"{}\"", quest.from_id),
-                    }))
-                }
-            } else {
-                None
-            };
-            if action.is_some() {
-                (self, vec![action.unwrap()])
-            } else {
-                (self, vec![])
             }
+        } else {
+            None
+        };
+        if action.is_some() {
+            (self, vec![action.unwrap()])
         } else {
             (self, vec![])
         }
@@ -132,19 +155,18 @@ impl Bot {
     ) -> Option<BotAct> {
         let current_script: &DialogueScript = d_table.get_by_name(current_dialogue_name).unwrap();
         let current_d_state = bot_d_states.1.get(&current_script.id);
-        // eprintln!("triggering next dialogue action for {}", self.id);
-        // current_d_state
-        //     .and_then(|current_d_state| {
-        //         current_script.get_next_bot_path(&*(current_d_state.clone()))
-        //     })
-        //     .and_then(|opt| {
-        //         eprintln!("chosen {:?}", opt);
-        //         Some(BotAct::Speak(DialogueUpdate {
-        //             dialogue_id: Default::default(),
-        //             option_id: opt.clone(),
-        //         }))
-        //     })
-        None
+        eprintln!("working on script {}, bot {}", current_script.name, self.id);
+        current_d_state
+            .and_then(|current_d_state| {
+                current_script.get_next_bot_path(&*(current_d_state.clone()))
+            })
+            .and_then(|opt| {
+                eprintln!("chosen {}", current_script.get_name(opt));
+                Some(BotAct::Speak(DialogueUpdate {
+                    dialogue_id: current_script.id,
+                    option_id: opt.clone(),
+                }))
+            })
     }
 }
 fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
@@ -207,6 +229,8 @@ pub fn do_bot_actions(
 
     for (bot_id, ship) in ship_updates.into_iter() {
         for act in ship {
+            // TODO do not broadcast, just apply update
+            // and then broadcast in the end of the main thread once
             let res = mutate_ship_no_lock(bot_id, act.clone(), None, state);
             if let Err(err) = res {
                 eprintln!(
@@ -217,9 +241,10 @@ pub fn do_bot_actions(
         }
     }
 
-    // for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
-    //     for act in dialogue_update {
-    //         execute_dialog_option(&bot_id, state, act.clone(), d_states, &d_table);
-    //     }
-    // }
+    for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
+        for act in dialogue_update {
+            // eprintln!("executing {:?}", act);
+            execute_dialog_option(&bot_id, state, act.clone(), d_states, &d_table);
+        }
+    }
 }
