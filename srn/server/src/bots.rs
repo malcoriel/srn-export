@@ -24,7 +24,9 @@ lazy_static! {
     static ref BOTS: Arc<Mutex<HashMap<Uuid, Bot>>> = Arc::new(Mutex::new(HashMap::new()));
 }
 
-use crate::dialogue::DialogueUpdate;
+use crate::dialogue::{
+    DialogueId, DialogueScript, DialogueStatesForPlayer, DialogueTable, DialogueUpdate,
+};
 use crate::STATE;
 use chrono::Local;
 
@@ -43,7 +45,13 @@ impl Bot {
             timer: Some(0),
         }
     }
-    pub fn act(mut self, state: GameState, elapsed_micro: i64) -> (Self, Vec<BotAct>) {
+    pub fn act(
+        mut self,
+        state: GameState,
+        elapsed_micro: i64,
+        d_table: &DialogueTable,
+        bot_d_states: &DialogueStatesForPlayer,
+    ) -> (Self, Vec<BotAct>) {
         let player = find_my_player(&state, &self.id);
         if player.is_none() {
             eprintln!("{} no player", self.id);
@@ -62,11 +70,17 @@ impl Bot {
                 if ship.docked_at.map_or(false, |d| d == quest.from_id) {
                     if self.timer.is_none() {
                         self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                        None
                     } else {
                         self.timer = Some(self.timer.unwrap() - elapsed_micro);
-                        if self.timer.unwrap() <= 0 {}
+                        if self.timer.unwrap() <= 0 {
+                            // time to act on the dialogue
+                            self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_pickup")
+                        } else {
+                            // still waiting
+                            None
+                        }
                     }
-                    None
                 } else {
                     Some(BotAct::Act(ShipAction {
                         // this action doubles as undock
@@ -75,11 +89,27 @@ impl Bot {
                     }))
                 }
             } else if quest.state == QuestState::Picked {
-                Some(BotAct::Act(ShipAction {
-                    // this action doubles as undock
-                    s_type: ShipActionType::DockNavigate,
-                    data: format!("\"{}\"", quest.to_id),
-                }))
+                if ship.docked_at.map_or(false, |d| d == quest.from_id) {
+                    if self.timer.is_none() {
+                        self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                        None
+                    } else {
+                        self.timer = Some(self.timer.unwrap() - elapsed_micro);
+                        if self.timer.unwrap() <= 0 {
+                            // time to act on the dialogue
+                            self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_dropoff")
+                        } else {
+                            // still waiting
+                            None
+                        }
+                    }
+                } else {
+                    Some(BotAct::Act(ShipAction {
+                        // this action doubles as undock
+                        s_type: ShipActionType::DockNavigate,
+                        data: format!("\"{}\"", quest.from_id),
+                    }))
+                }
             } else {
                 None
             };
@@ -91,6 +121,28 @@ impl Bot {
         } else {
             (self, vec![])
         }
+    }
+
+    fn make_dialogue_act(
+        &self,
+        d_table: &DialogueTable,
+        bot_d_states: &(Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>),
+        current_dialogue_name: &str,
+    ) -> Option<BotAct> {
+        let current_script: &DialogueScript = d_table.get_by_name(current_dialogue_name).unwrap();
+        let current_d_state = bot_d_states.1.get(&current_script.id);
+        eprintln!("triggering next dialogue action for {}", self.id);
+        current_d_state
+            .and_then(|current_d_state| {
+                current_script.get_next_bot_path(&*(current_d_state.clone()))
+            })
+            .and_then(|opt| {
+                eprintln!("chosen {:?}", opt);
+                Some(BotAct::Speak(DialogueUpdate {
+                    dialogue_id: Default::default(),
+                    option_id: opt.clone(),
+                }))
+            })
     }
 }
 fn add_bot(bot: Bot) -> Uuid {
@@ -122,9 +174,14 @@ pub fn bot_thread() {
         let mut extracted_state = STATE.write().unwrap().state.clone();
         {
             for (bot_id, bot) in bots.clone().iter() {
-                let (bot, bot_acts) = bot
-                    .clone()
-                    .act(extracted_state.clone(), elapsed.num_microseconds().unwrap());
+                let id: Uuid = *bot_id;
+                let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
+                let (bot, bot_acts) = bot.clone().act(
+                    extracted_state.clone(),
+                    elapsed.num_microseconds().unwrap(),
+                    &d_table,
+                    &bot_d_states,
+                );
                 bots.insert(bot_id.clone(), bot);
 
                 let mut acts = vec![];
@@ -164,7 +221,7 @@ pub fn bot_thread() {
 
         for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
             for act in dialogue_update {
-                let res = execute_dialog_option(
+                execute_dialog_option(
                     &bot_id,
                     &mut extracted_state,
                     act.clone(),

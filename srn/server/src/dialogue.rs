@@ -48,9 +48,10 @@ pub struct DialogueUpdate {
 
 pub type DialogueState = Box<Option<StateId>>;
 
+pub type DialogueStatesForPlayer = (Option<DialogueId>, HashMap<DialogueId, DialogueState>);
+
 // player -> (activeDialogue?, dialogue -> state?)
-pub type DialogueStates =
-    HashMap<PlayerId, (Option<DialogueId>, HashMap<DialogueId, DialogueState>)>;
+pub type DialogueStates = HashMap<PlayerId, DialogueStatesForPlayer>;
 pub type DialogueId = Uuid;
 pub type StateId = Uuid;
 pub type OptionId = Uuid;
@@ -74,6 +75,13 @@ pub struct DialogueScript {
     pub priority: u32,
     pub is_default: bool,
     pub name: String,
+    pub bot_path: HashMap<StateId, OptionId>,
+}
+
+impl DialogueScript {
+    pub fn get_next_bot_path(&self, current_state: &Option<StateId>) -> Option<&OptionId> {
+        return current_state.and_then(|cs| self.bot_path.get(&cs));
+    }
 }
 
 impl DialogueScript {
@@ -123,6 +131,7 @@ impl DialogueScript {
             is_default: false,
             priority: 0,
             name: "no name".to_string(),
+            bot_path: Default::default(),
         }
     }
 }
@@ -147,6 +156,15 @@ impl DialogueTable {
             scripts: Default::default(),
         };
     }
+    pub fn get_by_name(&self, name: &str) -> Option<&DialogueScript> {
+        for script in self.scripts.values() {
+            if script.name == name {
+                return Some(script);
+            }
+        }
+        return None;
+    }
+
     pub fn trigger_dialogue(
         &self,
         d_id: &Uuid,
@@ -483,6 +501,7 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         priority: 0,
         is_default: true,
         name: "basic_planet".to_string(),
+        bot_path: Default::default(),
     };
     script.initial_state = arrival;
     script
@@ -557,6 +576,7 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         priority: 1,
         is_default: false,
         name: "cargo_delivery_dropoff".to_string(),
+        bot_path: Default::default(),
     };
     script.initial_state = arrival;
 
@@ -618,6 +638,7 @@ fn gen_quest_pickup_planet_script() -> DialogueScript {
         is_planetary: true,
         priority: 1,
         is_default: false,
+        bot_path: Default::default(),
     };
     script.initial_state = arrival;
     script
