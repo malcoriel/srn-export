@@ -137,6 +137,21 @@ impl Bot {
                     }
                 }
             }
+        } else if quest.state == QuestState::Delivered {
+            if self.timer.is_none() {
+                self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                None
+            } else {
+                self.timer = Some(self.timer.unwrap() - elapsed_micro);
+                if self.timer.unwrap() <= 0 {
+                    self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                    // time to act on the dialogue
+                    self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_dropoff")
+                } else {
+                    // still waiting
+                    None
+                }
+            }
         } else {
             None
         };
@@ -158,6 +173,10 @@ impl Bot {
         eprintln!("working on script {}, bot {}", current_script.name, self.id);
         current_d_state
             .and_then(|current_d_state| {
+                if let Some(state_id) = *current_d_state.clone() {
+                    eprintln!("current state {}", current_script.get_name(&state_id));
+                }
+
                 current_script.get_next_bot_path(&*(current_d_state.clone()))
             })
             .and_then(|opt| {

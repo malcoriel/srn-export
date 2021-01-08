@@ -62,12 +62,13 @@ pub enum DialogOptionSideEffect {
     Undock,
     QuestCargoPickup,
     QuestCargoDropOff,
+    QuestCollectReward,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueScript {
     pub id: Uuid,
-    pub transitions: HashMap<(StateId, OptionId), (Option<StateId>, DialogOptionSideEffect)>,
+    pub transitions: HashMap<(StateId, OptionId), (Option<StateId>, Vec<DialogOptionSideEffect>)>,
     pub prompts: HashMap<StateId, String>,
     pub options: HashMap<StateId, Vec<(OptionId, String)>>,
     pub initial_state: StateId,
@@ -425,7 +426,7 @@ fn apply_dialogue_option(
             let next_state = script.transitions.get(&(current_state, update.option_id));
             // eprintln!("apply next state {:?}", next_state);
             if let Some(next_state) = next_state {
-                let side_effect = apply_side_effect(state, next_state.1.clone(), player_id);
+                let side_effect = apply_side_effects(state, next_state.1.clone(), player_id);
                 (Box::new(next_state.0.clone()), side_effect)
             } else {
                 (Box::new(None), false)
@@ -438,54 +439,67 @@ fn apply_dialogue_option(
     };
 }
 
-fn apply_side_effect(
+fn apply_side_effects(
     state: &mut GameState,
-    side_effect: DialogOptionSideEffect,
+    side_effects: Vec<DialogOptionSideEffect>,
     player_id: &PlayerId,
 ) -> bool {
     let state_read = state.clone();
-    match side_effect {
-        DialogOptionSideEffect::Nothing => {}
-        DialogOptionSideEffect::Undock => {
-            let my_ship = find_my_ship_mut(state, player_id);
-            if let Some(my_ship) = my_ship {
-                my_ship.docked_at = None;
-                if let Some(planet_id) = my_ship.docked_at {
-                    let planet = find_planet(&state_read, &planet_id).unwrap().clone();
-                    let player = find_my_player(&state_read, player_id).unwrap().clone();
-                    fire_event(GameEvent::ShipUndocked {
-                        ship: my_ship.clone(),
-                        planet,
-                        player: player.clone(),
-                    });
-                }
-                return true;
-            }
-        }
-        DialogOptionSideEffect::QuestCargoPickup => {
-            if let Some(my_player) = find_my_player_mut(state, player_id) {
-                let quest = my_player.quest.as_mut();
-                if let Some(mut quest) = quest {
-                    quest.state = QuestState::Picked;
-                }
-            }
-        }
-        DialogOptionSideEffect::QuestCargoDropOff => {
-            if let Some(mut my_player) = find_my_player_mut(state, player_id) {
-                if let Some(mut quest) = my_player.quest.as_mut() {
-                    quest.state = QuestState::Delivered;
-                    if my_player.is_bot {
-                        my_player.money += quest.reward / 2;
-                    } else {
-                        my_player.money += quest.reward;
+    let mut state_changed = false;
+    for side_effect in side_effects {
+        match side_effect {
+            DialogOptionSideEffect::Nothing => {}
+            DialogOptionSideEffect::Undock => {
+                let my_ship = find_my_ship_mut(state, player_id);
+                if let Some(my_ship) = my_ship {
+                    my_ship.docked_at = None;
+                    if let Some(planet_id) = my_ship.docked_at {
+                        let planet = find_planet(&state_read, &planet_id).unwrap().clone();
+                        let player = find_my_player(&state_read, player_id).unwrap().clone();
+                        fire_event(GameEvent::ShipUndocked {
+                            ship: my_ship.clone(),
+                            planet,
+                            player: player.clone(),
+                        });
                     }
+                    state_changed = true;
+                }
+            }
+            DialogOptionSideEffect::QuestCargoPickup => {
+                if let Some(my_player) = find_my_player_mut(state, player_id) {
+                    let quest = my_player.quest.as_mut();
+                    if let Some(mut quest) = quest {
+                        quest.state = QuestState::Picked;
+                    }
+                    state_changed = true;
+                }
+            }
+            DialogOptionSideEffect::QuestCargoDropOff => {
+                if let Some(mut my_player) = find_my_player_mut(state, player_id) {
+                    if let Some(mut quest) = my_player.quest.as_mut() {
+                        quest.state = QuestState::Delivered;
+                    }
+                    state_changed = true;
+                }
+            }
+            DialogOptionSideEffect::QuestCollectReward => {
+                if let Some(mut my_player) = find_my_player_mut(state, player_id) {
+                    if let Some(mut quest) = my_player.quest.as_mut() {
+                        quest.state = QuestState::Delivered;
+                        if my_player.is_bot {
+                            my_player.money += quest.reward / 2;
+                        } else {
+                            my_player.money += quest.reward;
+                        }
 
-                    my_player.quest = None;
+                        my_player.quest = None;
+                    }
+                    state_changed = true;
                 }
             }
         }
     }
-    return false;
+    return state_changed;
 }
 
 pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, DialogueScript) {
@@ -529,18 +543,20 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         .insert(market, "You come to the marketplace on s_current_planet, but suddenly realize that you forgot your wallet on the ship! So there is nothing here for you. Maybe there will be something in the future?".to_string());
     script.transitions.insert(
         (arrival, go_market),
-        (Some(market), DialogOptionSideEffect::Nothing),
+        (Some(market), vec![DialogOptionSideEffect::Nothing]),
     );
     script.transitions.insert(
         (market, go_back),
-        (Some(arrival), DialogOptionSideEffect::Nothing),
+        (Some(arrival), vec![DialogOptionSideEffect::Nothing]),
     );
-    script
-        .transitions
-        .insert((arrival, go_exit), (None, DialogOptionSideEffect::Undock));
-    script
-        .transitions
-        .insert((market, go_exit), (None, DialogOptionSideEffect::Undock));
+    script.transitions.insert(
+        (arrival, go_exit),
+        (None, vec![DialogOptionSideEffect::Undock]),
+    );
+    script.transitions.insert(
+        (market, go_exit),
+        (None, vec![DialogOptionSideEffect::Undock]),
+    );
     script.options.insert(
         arrival,
         vec![
@@ -635,11 +651,14 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
     );
     script.transitions.insert(
         (arrival, go_drop_off),
-        (Some(dropped_off), DialogOptionSideEffect::QuestCargoDropOff),
+        (
+            Some(dropped_off),
+            vec![DialogOptionSideEffect::QuestCargoDropOff],
+        ),
     );
     script.transitions.insert(
         (arrival, go_exit_no_drop_off),
-        (None, DialogOptionSideEffect::Undock),
+        (None, vec![DialogOptionSideEffect::Undock]),
     );
 
     script
@@ -654,7 +673,13 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
     );
     script.transitions.insert(
         (dropped_off, go_exit_dropped_off),
-        (None, DialogOptionSideEffect::Undock),
+        (
+            None,
+            vec![
+                DialogOptionSideEffect::Undock,
+                DialogOptionSideEffect::QuestCollectReward,
+            ],
+        ),
     );
 
     script
@@ -710,11 +735,14 @@ fn gen_quest_pickup_planet_script() -> DialogueScript {
         );
     script.transitions.insert(
         (arrival, go_pickup),
-        (Some(picked_up), DialogOptionSideEffect::QuestCargoPickup),
+        (
+            Some(picked_up),
+            vec![DialogOptionSideEffect::QuestCargoPickup],
+        ),
     );
     script.transitions.insert(
         (arrival, go_exit_no_cargo),
-        (None, DialogOptionSideEffect::Undock),
+        (None, vec![DialogOptionSideEffect::Undock]),
     );
     script.options.insert(
         arrival,
@@ -729,7 +757,7 @@ fn gen_quest_pickup_planet_script() -> DialogueScript {
 
     script.transitions.insert(
         (picked_up, go_exit_with_cargo),
-        (None, DialogOptionSideEffect::Undock),
+        (None, vec![DialogOptionSideEffect::Undock]),
     );
     script.options.insert(
         picked_up,
