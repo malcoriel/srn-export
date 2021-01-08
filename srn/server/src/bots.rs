@@ -202,9 +202,9 @@ fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
 
 pub fn bot_init(bots: &mut Vec<Bot>) {
     add_bot(Bot::new(), bots);
-    // add_bot(Bot::new(), bots);
-    // add_bot(Bot::new(), bots);
-    // add_bot(Bot::new(), bots);
+    add_bot(Bot::new(), bots);
+    add_bot(Bot::new(), bots);
+    add_bot(Bot::new(), bots);
 }
 
 pub fn do_bot_actions(

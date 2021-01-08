@@ -597,24 +597,20 @@ fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _ta
 }
 
 fn make_new_human_player(conn_id: &Uuid) {
-    eprintln!("make new human start");
     {
         let mut cont = STATE.write().unwrap();
         world::add_player(&mut cont.state, conn_id, false, None);
     }
-    eprintln!("second lock");
     let (ship, planets) = {
         let mut cont = STATE.write().unwrap();
         let ship = world::spawn_ship(&mut cont.state, conn_id, None).clone();
         (ship, cont.state.planets.clone())
     };
-    eprintln!("third lock");
     {
         let mut cont = STATE.write().unwrap();
         let mut player = find_my_player_mut(&mut cont.state, &conn_id).unwrap();
         player.quest = world::generate_random_quest(&planets, ship.docked_at);
     }
-    eprintln!("make new human end");
 }
 
 fn remove_player(conn_id: &Uuid) {

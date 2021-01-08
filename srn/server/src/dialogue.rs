@@ -486,12 +486,7 @@ fn apply_side_effects(
                 if let Some(mut my_player) = find_my_player_mut(state, player_id) {
                     if let Some(mut quest) = my_player.quest.as_mut() {
                         quest.state = QuestState::Delivered;
-                        if my_player.is_bot {
-                            my_player.money += quest.reward / 2;
-                        } else {
-                            my_player.money += quest.reward;
-                        }
-
+                        my_player.money += quest.reward;
                         my_player.quest = None;
                     }
                     state_changed = true;
