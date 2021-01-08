@@ -572,7 +572,7 @@ fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _ta
     let global_state_change;
     {
         let mut cont = STATE.write().unwrap();
-        let mut dialogue_cont = DIALOGUES_STATES.lock().unwrap();
+        let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
         world::force_update_to_now(&mut cont.state);
         let (new_dialogue_state, state_changed) = world::execute_dialog_option(
@@ -595,8 +595,7 @@ fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _ta
 fn make_new_human_player(conn_id: &Uuid) {
     {
         let mut cont = STATE.write().unwrap();
-        let mut d_states = DIALOGUES_STATES.lock().unwrap();
-        world::add_player(&mut cont.state, conn_id, false, None, &mut *d_states);
+        world::add_player(&mut cont.state, conn_id, false, None);
     }
     let (ship, planets) = {
         let mut cont = STATE.write().unwrap();
@@ -769,7 +768,7 @@ use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, ShipAction,
 };
 lazy_static! {
-    static ref DIALOGUES_STATES: Arc<Mutex<Box<DialogueStates>>> =
+    static ref DIALOGUE_STATES: Arc<Mutex<Box<DialogueStates>>> =
         Arc::new(Mutex::new(Box::new(HashMap::new())));
 }
 
@@ -821,6 +820,6 @@ fn try_trigger_dialogue(
     d_table: &DialogueTable,
 ) {
     let mut cont = STATE.write().unwrap();
-    let mut d_states = DIALOGUES_STATES.lock().unwrap();
+    let mut d_states = DIALOGUE_STATES.lock().unwrap();
     d_table.try_trigger(&mut cont.state, &mut d_states, &mut res, player)
 }

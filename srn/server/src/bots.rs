@@ -11,7 +11,7 @@ pub struct Bot {
 
 use crate::random_stuff::gen_bot_name;
 use crate::world;
-use crate::DIALOGUES_STATES;
+use crate::DIALOGUE_STATES;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::sync::{mpsc, Arc, Mutex, RwLock};
@@ -77,14 +77,7 @@ fn add_bot(bot: Bot) -> Uuid {
     let id = bot.id.clone();
     bots.insert(id.clone(), bot);
     let mut cont = STATE.write().unwrap();
-    let mut d_states = DIALOGUES_STATES.lock().unwrap();
-    world::add_player(
-        &mut cont.state,
-        &id,
-        true,
-        Some(gen_bot_name()),
-        &mut *d_states,
-    );
+    world::add_player(&mut cont.state, &id, true, Some(gen_bot_name()));
     world::spawn_ship(&mut cont.state, &id, None);
     id
 }

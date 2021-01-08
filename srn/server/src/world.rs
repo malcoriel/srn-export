@@ -577,13 +577,7 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     state
 }
 
-pub fn add_player(
-    state: &mut GameState,
-    player_id: &Uuid,
-    is_bot: bool,
-    name: Option<String>,
-    d_states: &mut Box<DialogueStates>,
-) {
+pub fn add_player(state: &mut GameState, player_id: &Uuid, is_bot: bool, name: Option<String>) {
     let player = Player {
         id: player_id.clone(),
         is_bot,
@@ -594,8 +588,6 @@ pub fn add_player(
         money: 0,
     };
     state.players.push(player);
-    let player_states = HashMap::new();
-    d_states.insert(*player_id, (None, player_states));
 }
 
 pub fn spawn_ship<'a, 'b>(
