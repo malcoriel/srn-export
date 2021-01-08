@@ -657,11 +657,8 @@ fn rocket() -> rocket::Rocket {
     });
 
     std::thread::spawn(|| {
-        physics_thread();
+        world_update_thread();
     });
-    // std::thread::spawn(|| {
-    //     bots::bot_thread();
-    // });
 
     std::thread::spawn(|| {
         event_thread();
@@ -672,7 +669,6 @@ fn rocket() -> rocket::Rocket {
 
     thread::spawn(|| cleanup_thread());
 
-    // You can also deserialize this
     let cors = rocket_cors::CorsOptions {
         allowed_origins: AllowedOrigins::some_exact(&["http://localhost:3000"]),
         allowed_methods: vec![Method::Get, Method::Post, Method::Options]
@@ -717,7 +713,6 @@ unsafe fn dispatcher_thread(
 
 fn cleanup_thread() {
     loop {
-        // cleanup thread - kick broken players, remove ships
         let client_errors = CLIENT_ERRORS.lock().unwrap();
         let clients = client_errors
             .clone()
@@ -728,8 +723,45 @@ fn cleanup_thread() {
         for client_id in clients {
             disconnect_if_bad(client_id);
         }
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
+    }
+}
 
+const DEBUG_PHYSICS: bool = false;
+
+fn world_update_thread() {
+    let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
+    let mut last = Local::now();
+    {
+        let mut bots = bots::BOTS.lock().unwrap();
+        bot_init(&mut *bots);
+    }
+    loop {
+        thread::sleep(Duration::from_millis(10));
         let mut cont = STATE.write().unwrap();
+        let mut d_states = DIALOGUE_STATES.lock().unwrap();
+        let mut bots = bots::BOTS.lock().unwrap();
+
+        let now = Local::now();
+        let elapsed = now - last;
+        last = now;
+        cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
+
+        try_assign_quests(&mut cont.state);
+
+        let state = &mut cont.state;
+        let d_states = &mut **d_states;
+        let bots = &mut *bots;
+
+        do_bot_actions(state, bots);
+
+        let receiver = &mut EVENTS.lock().unwrap().1;
+
+        let res = handle_events(&d_table, receiver, state, d_states);
+        for (client_id, dialogue) in res {
+            unicast_dialogue_state(client_id, dialogue);
+        }
+
         let existing_player_ships = cont
             .state
             .players
@@ -745,64 +777,39 @@ fn cleanup_thread() {
             .into_iter()
             .filter(|s| existing_player_ships.contains(&s.id))
             .collect::<Vec<_>>();
-
-        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
 }
 
-const DEBUG_PHYSICS: bool = false;
+fn handle_events(
+    d_table: &DialogueTable,
+    receiver: &mut Receiver<GameEvent>,
+    state: &mut GameState,
+    d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
+) -> Vec<(Uuid, Option<Dialogue>)> {
+    let mut res = vec![];
 
-fn physics_thread() {
-    let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
-    let mut last = Local::now();
     loop {
-        thread::sleep(Duration::from_millis(10));
-        let mut cont = STATE.write().unwrap();
-        let mut d_states = DIALOGUE_STATES.lock().unwrap();
+        if let Ok(event) = receiver.try_recv() {
+            let player = match event {
+                GameEvent::Unknown => None,
+                GameEvent::ShipDocked { player, .. } => Some(player),
+                GameEvent::ShipUndocked { player, .. } => Some(player),
+            };
 
-        let now = Local::now();
-        let elapsed = now - last;
-        last = now;
-        cont.state = world::update(cont.state.clone(), elapsed.num_milliseconds() * 1000, false);
-
-        try_assign_quests(&mut cont.state);
-
-        let receiver = &mut EVENTS.lock().unwrap().1;
-
-        let state = &mut cont.state;
-        let d_states = &mut **d_states;
-
-        let mut res = vec![];
-
-        loop {
-            if let Ok(event) = receiver.try_recv() {
-                let player = match event {
-                    GameEvent::Unknown => None,
-                    GameEvent::ShipDocked { player, .. } => Some(player),
-                    GameEvent::ShipUndocked { player, .. } => Some(player),
-                };
-
-                if let Some(player) = player {
-                    let mut res_argument = &mut res;
-                    let player_argument = &player;
-                    let d_table_argument = &d_table;
-                    d_table_argument.try_trigger(
-                        state,
-                        d_states,
-                        &mut res_argument,
-                        player_argument,
-                    );
-                }
-            } else {
-                break;
+            if let Some(player) = player {
+                let mut res_argument = &mut res;
+                let player_argument = &player;
+                let d_table_argument = &d_table;
+                d_table_argument.try_trigger(state, d_states, &mut res_argument, player_argument);
             }
-        }
-        for (client_id, dialogue) in res {
-            unicast_dialogue_state(client_id, dialogue);
+        } else {
+            break;
         }
     }
+    res
 }
 
+use crate::bots::{bot_init, do_bot_actions};
 use crate::dialogue::{Dialogue, DialogueId, DialogueScript, DialogueUpdate};
 use crate::vec2::Vec2f64;
 use crate::world::{
