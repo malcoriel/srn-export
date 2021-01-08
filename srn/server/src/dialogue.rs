@@ -503,6 +503,7 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         name: "basic_planet".to_string(),
         bot_path: Default::default(),
     };
+    script.bot_path.insert(arrival.clone(), go_exit.clone());
     script.initial_state = arrival;
     script
         .prompts
@@ -578,11 +579,16 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         name: "cargo_delivery_dropoff".to_string(),
         bot_path: Default::default(),
     };
+    script.bot_path.insert(arrival.clone(), go_drop_off.clone());
+    script
+        .bot_path
+        .insert(dropped_off.clone(), go_exit_dropped_off.clone());
+
     script.initial_state = arrival;
 
     script
         .prompts
-        .insert(arrival, "You have landed on the s_current_planet_body_type s_current_planet. Here you must deliver the crate you are carrying to somebody.".to_string());
+        .insert(arrival, "You land on the s_current_planet_body_type s_current_planet. Here you must deliver the crate you are carrying to somebody.".to_string());
     script.options.insert(
         arrival,
         vec![
@@ -604,7 +610,7 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
 
     script
         .prompts
-        .insert(dropped_off, "You found a businessman that thanks you, grabs the crate and hands you off some credits as a reward. He refuses to comment what was in the cargo, though.".to_string());
+        .insert(dropped_off, "You find a businessman that thanks you, grabs the crate and hands you off some credits as a reward. He refuses to comment what was in the cargo, though.".to_string());
     script.options.insert(
         dropped_off,
         vec![(
@@ -640,10 +646,14 @@ fn gen_quest_pickup_planet_script() -> DialogueScript {
         is_default: false,
         bot_path: Default::default(),
     };
+    script.bot_path.insert(arrival.clone(), go_pickup.clone());
+    script
+        .bot_path
+        .insert(picked_up.clone(), go_exit_with_cargo.clone());
     script.initial_state = arrival;
     script
         .prompts
-        .insert(arrival, "You have landed on the s_current_planet_body_type s_current_planet. Here you must pick up the cargo to deliver to s_cargo_destination_planet.".to_string());
+        .insert(arrival, "You land on the s_current_planet_body_type s_current_planet. Here you must pick up the cargo to deliver to s_cargo_destination_planet.".to_string());
     script
         .prompts
         .insert(
