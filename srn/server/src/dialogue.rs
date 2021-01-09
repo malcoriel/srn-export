@@ -9,6 +9,7 @@ use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use std::borrow::BorrowMut;
 use std::collections::HashMap;
+use std::fs;
 use std::slice::Iter;
 use uuid::Uuid;
 
@@ -87,18 +88,32 @@ pub struct DialogueScript {
     pub name: String,
     pub bot_path: HashMap<StateId, OptionId>,
     names_db: HashMap<Uuid, String>,
+    ids_db: HashMap<String, Uuid>,
 }
 
 impl DialogueScript {
+    pub fn new() -> Self {
+        DialogueScript {
+            id: Default::default(),
+            transitions: Default::default(),
+            prompts: Default::default(),
+            options: Default::default(),
+            initial_state: Default::default(),
+            is_planetary: false,
+            is_default: false,
+            priority: 0,
+            name: "no name".to_string(),
+            bot_path: Default::default(),
+            names_db: Default::default(),
+            ids_db: Default::default(),
+        }
+    }
     pub fn get_name(&self, id: Uuid) -> &String {
         return self.names_db.get(&id).unwrap();
     }
     pub fn get_next_bot_path(&self, current_state: &Option<StateId>) -> Option<&OptionId> {
         return current_state.and_then(|cs| self.bot_path.get(&cs));
     }
-}
-
-impl DialogueScript {
     pub fn check_player(
         &self,
         game_state: &GameState,
@@ -133,21 +148,6 @@ impl DialogueScript {
             }
         }
         return false;
-    }
-    pub fn new() -> Self {
-        DialogueScript {
-            id: Default::default(),
-            transitions: Default::default(),
-            prompts: Default::default(),
-            options: Default::default(),
-            initial_state: Default::default(),
-            is_planetary: false,
-            is_default: false,
-            priority: 0,
-            name: "no name".to_string(),
-            bot_path: Default::default(),
-            names_db: Default::default(),
-        }
     }
 }
 
@@ -503,6 +503,7 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
         name: d_name.clone(),
         bot_path: Default::default(),
         names_db: Default::default(),
+        ids_db: Default::default(),
     };
 
     script.names_db.insert(dialogue_id, d_name);
@@ -592,6 +593,7 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         name: d_name.clone(),
         bot_path: Default::default(),
         names_db: Default::default(),
+        ids_db: Default::default(),
     };
 
     script.names_db.insert(dialogue_id, d_name);
@@ -671,85 +673,76 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
 }
 
 fn gen_quest_pickup_planet_script() -> DialogueScript {
-    let dialogue_id = new_id();
+    let json = fs::read_to_string("src/dialogue_scripts/cargo_delivery_pickup.json")
+        .expect("script not found");
+    let ss = serde_json::from_str::<ShortScript>(json.as_str()).unwrap();
+    short_decrypt(ss)
+}
 
-    let d_name = "cargo_delivery_pickup".to_string();
-    let mut script = DialogueScript {
-        id: dialogue_id,
-        name: d_name.clone(),
-        transitions: Default::default(),
-        prompts: Default::default(),
-        options: Default::default(),
-        initial_state: Default::default(),
-        is_planetary: true,
-        priority: 1,
-        is_default: false,
-        bot_path: Default::default(),
-        names_db: Default::default(),
-    };
-    script.names_db.insert(dialogue_id, d_name);
+pub type ShortScriptLine = (String, String, String, Vec<DialogOptionSideEffect>);
 
-    let arrival = new_id();
-    script.names_db.insert(arrival, "arrival".to_string());
-    let picked_up = new_id();
-    script.names_db.insert(picked_up, "picked_up".to_string());
-    let go_exit_no_cargo = new_id();
-    script
-        .names_db
-        .insert(go_exit_no_cargo, "go_exit_no_cargo".to_string());
-    let go_exit_with_cargo = new_id();
-    script
-        .names_db
-        .insert(go_exit_with_cargo, "go_exit_with_cargo".to_string());
-    let go_pickup = new_id();
-    script.names_db.insert(go_pickup, "go_pickup".to_string());
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ShortScript {
+    pub name: String,
+    pub is_default: bool,
+    pub is_planetary: bool,
+    pub priority: u32,
+    pub initial_state_name: String,
+    pub table: HashMap<String, (String, Vec<ShortScriptLine>)>,
+    pub bot_path: Vec<String>,
+}
 
-    script.bot_path.insert(arrival.clone(), go_pickup.clone());
-    script
-        .bot_path
-        .insert(picked_up.clone(), go_exit_with_cargo.clone());
-    script.initial_state = arrival;
-    script
-        .prompts
-        .insert(arrival, "You land on the s_current_planet_body_type s_current_planet. Here you must pick up the cargo to deliver to s_cargo_destination_planet.".to_string());
-    script
-        .prompts
-        .insert(
-            picked_up,
-            "You find a shady man who calls himself s_random_name. He quickly hands you a suspiciously-looking sealed crate with \"do not open\" written on it, and promptly leaves. You deliver it to your ship without asking questions".to_string()
-        );
-    script.transitions.insert(
-        (arrival, go_pickup),
-        (
-            Some(picked_up),
-            vec![DialogOptionSideEffect::QuestCargoPickup],
-        ),
-    );
-    script.transitions.insert(
-        (arrival, go_exit_no_cargo),
-        (None, vec![DialogOptionSideEffect::Undock]),
-    );
-    script.options.insert(
-        arrival,
-        vec![
-            (
-                go_pickup,
-                "Find the person that has to give you the cargo".to_string(),
-            ),
-            (go_exit_no_cargo, "Undock and fly away".to_string()),
-        ],
-    );
+pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
+    let mut script = DialogueScript::new();
+    script.id = new_id();
+    script.is_default = ss.is_default;
+    script.is_planetary = ss.is_planetary;
+    script.priority = ss.priority;
 
-    script.transitions.insert(
-        (picked_up, go_exit_with_cargo),
-        (None, vec![DialogOptionSideEffect::Undock]),
-    );
-    script.options.insert(
-        picked_up,
-        vec![(
-            go_exit_with_cargo,
-            "Undock and go to the next stop with the suspicious crate.".to_string(),
-        )],
-    );
+    for (state_name, (state_prompt, options)) in ss.table.iter() {
+        let state_id = new_id();
+        if ss.initial_state_name == *state_name {
+            script.initial_state = state_id;
+        }
+        script.names_db.insert(state_id, state_name.clone());
+        script.ids_db.insert(state_name.clone(), state_id);
+        script.prompts.insert(state_id, state_prompt.clone());
+
+        for (option_name, _, _, _) in options.into_iter() {
+            let option_id = new_id();
+            script.names_db.insert(option_id, option_name.clone());
+            script.ids_db.insert(option_name.clone(), option_id);
+        }
+    }
+
+    for (state_name, (_, options)) in ss.table.into_iter() {
+        let state_id = script.ids_db.get(&state_name).unwrap().clone();
+        for (option_name, option_text, next_state_name, side_effects) in options.into_iter() {
+            let option_id = script.ids_db.get(&option_name).unwrap().clone();
+            let next_state_id = if next_state_name != "" {
+                Some(script.ids_db.get(&next_state_name).unwrap().clone())
+            } else {
+                None
+            };
+            script
+                .transitions
+                .insert((state_id, option_id), (next_state_id, side_effects));
+            let current_opts = script.options.entry(state_id).or_insert(vec![]);
+            current_opts.push((option_id, option_text));
+        }
+    }
+
+    let mut last_state_id = script.initial_state;
+    for option_name in ss.bot_path {
+        let option_id = script.ids_db.get(&option_name).unwrap().clone();
+        script.bot_path.insert(last_state_id, option_id);
+        let next_state = script
+            .transitions
+            .get(&(last_state_id, option_id))
+            .unwrap()
+            .clone();
+        last_state_id = next_state.0.unwrap_or(script.initial_state);
+    }
+    script.name = ss.name;
     script
 }
