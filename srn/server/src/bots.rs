@@ -7,15 +7,15 @@ use crate::{
 };
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Bot {
-    pub id: Uuid,
-    pub timer: Option<i64>,
-}
-
+use crate::dialogue::{
+    execute_dialog_option, DialogueId, DialogueScript, DialogueStates, DialogueStatesForPlayer,
+    DialogueTable, DialogueUpdate,
+};
 use crate::random_stuff::gen_bot_name;
 use crate::world;
 use crate::DIALOGUE_STATES;
+use crate::STATE;
+use chrono::Local;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::sync::{mpsc, Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
@@ -26,12 +26,11 @@ lazy_static! {
     pub static ref BOTS: Arc<Mutex<Vec<Bot>>> = Arc::new(Mutex::new(vec![]));
 }
 
-use crate::dialogue::{
-    execute_dialog_option, DialogueId, DialogueScript, DialogueStates, DialogueStatesForPlayer,
-    DialogueTable, DialogueUpdate,
-};
-use crate::STATE;
-use chrono::Local;
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Bot {
+    pub id: Uuid,
+    pub timer: Option<i64>,
+}
 
 const BOT_SLEEP_MS: u64 = 200;
 const BOT_QUEST_ACT_DELAY_MC: i64 = 2 * 1000 * 1000;
