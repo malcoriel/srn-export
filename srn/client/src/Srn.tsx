@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
@@ -9,6 +9,7 @@ import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { GameHTMLHudLayer } from './HtmlLayers/GameHTMLHudLayer';
 import create from 'zustand';
+import { combine } from 'zustand/middleware';
 
 import {
   adjectives,
@@ -70,24 +71,35 @@ type SrnState = {
   setPortraitIndex: (value: number) => void;
   portrait: string;
   setPortrait: (value: string) => void;
+  nextPortrait: () => void;
   trigger: number;
   forceUpdate: () => void;
 };
-const useStore = create<SrnState>((set) => ({
+
+export const useStore = create<SrnState>((set) => ({
   playing: false,
-  setPlaying: (val: boolean) => set({ playing: val }),
   menu: true,
-  setMenu: (val: boolean) => set({ menu: val }),
   preferredName: genRandomName(),
-  setPreferredName: (val: string) => set({ preferredName: val }),
   musicEnabled: true,
-  setMusicEnabled: (val: boolean) => set({ musicEnabled: val }),
   portraitIndex: 0,
-  setPortraitIndex: (val: number) => set({ portraitIndex: val }),
   portrait: '0',
-  setPortrait: (val: string) => set({ portrait: val }),
   trigger: 0,
+
+  setPreferredName: (val: string) => set({ preferredName: val }),
+  setMenu: (val: boolean) => set({ menu: val }),
+  setMusicEnabled: (val: boolean) => set({ musicEnabled: val }),
+  setPortraitIndex: (val: number) => set({ portraitIndex: val }),
+  setPortrait: (val: string) => set({ portrait: val }),
   forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
+  nextPortrait: () =>
+    set((state) => {
+      let locIndex = (state.portraitIndex + 1) % portraits.length;
+      let locPort = portraitPath(locIndex);
+      state.setPortrait(locPort);
+      state.setPortraitIndex(locIndex);
+      return {};
+    }),
+  setPlaying: (val: boolean) => set({ playing: val }),
 }));
 
 let monitorSizeInterval: Timeout | undefined;
@@ -100,20 +112,13 @@ const Srn = () => {
     preferredName,
     setPreferredName,
     musicEnabled,
-    setMusicEnabled,
+    nextPortrait,
     portraitIndex,
     setPortraitIndex,
     portrait,
     setPortrait,
     forceUpdate,
   } = useStore((state: SrnState) => ({ ...state }));
-
-  const nextPortrait = () => {
-    let locIndex = (portraitIndex + 1) % portraits.length;
-    let locPort = portraitPath(locIndex);
-    setPortrait(locPort);
-    setPortraitIndex(locIndex);
-  };
 
   const previousPortrait = () => {
     let number = portraitIndex - 1;
@@ -138,7 +143,9 @@ const Srn = () => {
   };
 
   useEffect(() => {
-    NetState.make();
+    if (!NetState.get()) {
+      NetState.make();
+    }
     const ns = NetState.get();
     if (!ns) return;
     let locIndex = randBetweenExclusiveEnd(0, portraits.length);
@@ -151,7 +158,6 @@ const Srn = () => {
     if (playing) {
       start();
     }
-    //
     return () => {
       const ns = NetState.get();
       if (!ns) return;
@@ -165,6 +171,7 @@ const Srn = () => {
   }, []);
 
   const start = () => {
+    console.log('starting');
     if (!NetState.get()) {
       NetState.make();
     }
@@ -239,21 +246,16 @@ const Srn = () => {
         {musicEnabled && <MusicControls />}
         {menu && (
           <MainMenuLayer
-            nextPortrait={nextPortrait}
             previousPortrait={previousPortrait}
             portrait={portrait}
             makeRandomName={() => {
               setPreferredName(genRandomName());
             }}
-            musicEnabled={musicEnabled}
             onPreferredNameChange={(name) => {
               setPreferredName(name);
             }}
             hide={() => setMenu(false)}
             playing={playing}
-            onSetMusic={(value: boolean) => {
-              setMusicEnabled(value);
-            }}
             onGo={() => {
               start();
             }}

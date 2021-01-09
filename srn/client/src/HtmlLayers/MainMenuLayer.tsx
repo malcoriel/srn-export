@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import './MainMenu.scss';
 import { Button } from './ui/Button';
 import { Label } from './ui/Label';
@@ -6,6 +6,7 @@ import { Input } from './ui/Input';
 import { FaAngleRight, FaDiceD20 } from 'react-icons/fa';
 import { FaAngleLeft } from 'react-icons/fa';
 import { useLocalStorage } from '../utils/useLocalStorage';
+import { useStore } from '../Srn';
 
 // to only skip menu once
 let firstTime = true;
@@ -15,11 +16,8 @@ export const MainMenuLayer: React.FC<{
   onPreferredNameChange: (n: string) => void;
   onGo: () => void;
   previousPortrait: () => void;
-  nextPortrait: () => void;
   makeRandomName: () => void;
   makeRandomPortrait: () => void;
-  onSetMusic: (val: boolean) => void;
-  musicEnabled: boolean;
   portrait: string;
   playing: boolean;
   hide: () => void;
@@ -28,17 +26,20 @@ export const MainMenuLayer: React.FC<{
   preferredName,
   onPreferredNameChange,
   onGo,
-  onSetMusic,
-  musicEnabled,
   makeRandomName,
   makeRandomPortrait,
   previousPortrait,
-  nextPortrait,
   portrait,
   playing,
   hide,
   quit,
 }) => {
+  const { musicEnabled, setMusicEnabled, nextPortrait } = useStore((state) => ({
+    musicEnabled: state.musicEnabled,
+    setMusicEnabled: state.setMusicEnabled,
+    nextPortrait: state.nextPortrait,
+  }));
+
   const [lsName, setLsName] = useLocalStorage('preferredName', preferredName);
   const [lsMusicEnabled, setLsMusicEnabled] = useLocalStorage(
     'musicEnabled',
@@ -52,7 +53,7 @@ export const MainMenuLayer: React.FC<{
       onPreferredNameChange(lsName);
     }
     if (typeof lsMusicEnabled === 'boolean' && lsMusicEnabled != musicEnabled) {
-      onSetMusic(lsMusicEnabled);
+      setMusicEnabled(lsMusicEnabled);
     }
     if (lsSkipMenu && firstTime) {
       onGo();
@@ -107,7 +108,7 @@ export const MainMenuLayer: React.FC<{
         <Button
           onClick={() => {
             setLsMusicEnabled(true);
-            onSetMusic(true);
+            setMusicEnabled(true);
           }}
           toggled={musicEnabled}
         >
@@ -116,7 +117,7 @@ export const MainMenuLayer: React.FC<{
         <Button
           onClick={() => {
             setLsMusicEnabled(false);
-            onSetMusic(false);
+            setMusicEnabled(false);
           }}
           toggled={!musicEnabled}
         >
