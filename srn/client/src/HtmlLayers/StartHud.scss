@@ -33,15 +33,37 @@
     font-size: 60px;
   }
 
-  .name-input {
-    text-align: center;
-    width: 250px;
+  .dice {
+    padding: 2px;
+    font-size: 14px;
+    border-width: 1px;
   }
+
+  .name-selector {
+    width: 250px;
+    position: relative;
+
+    .dice {
+      position: absolute;
+      right: -9px;
+      top: 4px;
+    }
+
+    .name-input {
+      text-align: center;
+      width: 250px;
+    }
+  }
+
+
 
   .portrait-selector {
     display: flex;
+
+    $imgSize: 200px;
+
     .image {
-      width: 200px;
+      width: $imgSize;
     }
 
     justify-content: center;
@@ -49,9 +71,35 @@
     width: 600px;
 
 
-    .button {
+    .next, .prev {
       margin: 0 10px;
-      width: 100px;
+      width: 20px;
+      border-width: 0;
+      transform: scaleY(2.0);
     }
+
+    .image-cont {
+      position: relative;
+      width: $imgSize;
+      height: $imgSize;
+    }
+    .dice {
+      height: 16px;
+      position: absolute;
+      bottom: 3px;
+      right: 3px;
+      background-color: black;
+    }
+    .dice:hover {
+      color: $teal;
+      background-color: $gray;
+    }
+
+  }
+
+  .play {
+      font-size: 30px;
+      width: 200px;
+      height: 60px;
   }
 }

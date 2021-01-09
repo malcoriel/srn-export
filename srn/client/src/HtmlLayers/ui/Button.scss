@@ -6,8 +6,12 @@
   padding: 10px;
   border-radius:5px;
   border: solid $teal 3px;
-  display: inline-block;
+  display: flex;
+  flex-direction:column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+
 }
 
 .button.toggled {

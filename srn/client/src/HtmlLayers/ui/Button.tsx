@@ -3,16 +3,15 @@ import './Button.scss';
 
 export const Button: React.FC<{
   onClick?: () => void;
-  text: string;
   className?: string;
   toggled?: boolean;
-}> = ({ onClick, text, className, toggled }) => {
+}> = ({ onClick, children, className, toggled }) => {
   return (
     <span
       className={`button ${className} ${toggled ? 'toggled' : ''}`}
       onClick={onClick}
     >
-      {text}
+      {children}
     </span>
   );
 };

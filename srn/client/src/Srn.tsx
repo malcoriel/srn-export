@@ -79,17 +79,17 @@ class Srn extends React.Component<
       preferredName: genRandomName(),
       musicEnabled: true,
       portraitIndex: portraitIndex,
-      portrait: this.portraitPath(portraitIndex),
+      portrait: Srn.portraitPath(portraitIndex),
     };
   }
 
   nextPortrait = () => {
     let portraitIndex = (this.state.portraitIndex + 1) % portraits.length;
-    let portrait = this.portraitPath(portraitIndex);
+    let portrait = Srn.portraitPath(portraitIndex);
     this.setState({ portraitIndex, portrait });
   };
 
-  private portraitPath(portraitIndex: number) {
+  private static portraitPath(portraitIndex: number) {
     return `resources/chars/${portraits[portraitIndex]}`;
   }
 
@@ -119,6 +119,7 @@ class Srn extends React.Component<
   updateSize = () => {
     size.width_px = window.innerWidth;
     size.height_px = window.innerHeight;
+    this.forceUpdate();
   };
 
   componentWillUnmount() {
@@ -216,6 +217,16 @@ class Srn extends React.Component<
                 this.start();
               }}
               preferredName={this.state.preferredName}
+              makeRandomPortrait={() => {
+                let portraitIndex = randBetweenExclusiveEnd(
+                  0,
+                  portraits.length
+                );
+                this.setState({
+                  portraitIndex: portraitIndex,
+                  portrait: Srn.portraitPath(portraitIndex),
+                });
+              }}
             />
           )}
         </div>
