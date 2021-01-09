@@ -11,6 +11,8 @@ import {
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
 import Vector from './utils/Vector';
+import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
+import { vsyncedDecoupledTime } from './utils/Times';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -75,6 +77,8 @@ export enum ServerToClientMessageCode {
 }
 
 const MAX_PENDING_TICKS = 2000;
+const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
+statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -108,6 +112,7 @@ export default class NetState extends EventEmitter {
     // }
     return NetState.instance;
   }
+  private time: vsyncedDecoupledTime;
 
   constructor() {
     super();
@@ -134,6 +139,7 @@ export default class NetState extends EventEmitter {
         y: 0,
       },
     };
+    this.time = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
   }
 
   forceSync = () => {
@@ -162,6 +168,8 @@ export default class NetState extends EventEmitter {
       clearInterval(this.reconnectTimeout);
     }
     NetState.instance = undefined;
+    this.time.clearAnimation();
+    Perf.stop();
   };
   connect = () => {
     if (this.disconnecting) {
@@ -213,6 +221,27 @@ export default class NetState extends EventEmitter {
         this.socket.close();
       }
     };
+
+    Perf.start();
+    this.time.setInterval(
+      (elapsedMs) => {
+        Perf.markEvent(Measure.PhysicsFrameEvent);
+        Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
+          const ns = NetState.get();
+          if (!ns) return;
+          ns.updateLocalState(elapsedMs);
+        });
+      },
+      () => {
+        Perf.markEvent(Measure.RenderFrameEvent);
+        Perf.usingMeasure(Measure.RenderFrameTime, () => {
+          const ns = NetState.get();
+          if (!ns) return;
+
+          ns.emit('change');
+        });
+      }
+    );
   };
 
   private handleMessage(rawData: string) {

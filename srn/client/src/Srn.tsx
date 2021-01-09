@@ -14,7 +14,7 @@ import {
   animals,
   uniqueNamesGenerator,
 } from 'unique-names-generator';
-import { Measure, Perf, statsHeap, StatsPanel } from './HtmlLayers/Perf';
+import { Perf, statsHeap, StatsPanel } from './HtmlLayers/Perf';
 import { vsyncedDecoupledTime } from './utils/Times';
 import { MainMenuLayer } from './HtmlLayers/MainMenuLayer';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
@@ -33,10 +33,7 @@ import { MusicControls } from './MusicControls';
 import { randBetweenExclusiveEnd } from './utils/rand';
 import { HotkeyWrapper } from './HotkeyWrapper';
 
-const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
-
-statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 
 function genRandomName() {
   return uniqueNamesGenerator({
@@ -68,13 +65,11 @@ class Srn extends React.Component<
     portrait: string;
   }
 > {
-  private time: vsyncedDecoupledTime;
   private readonly id: string;
   private monitorSizeInterval?: Timeout;
   constructor(props: {}) {
     super(props);
     this.id = uuid.v4();
-    this.time = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
     let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
     this.state = {
       playing: false,
@@ -131,7 +126,6 @@ class Srn extends React.Component<
     if (this.monitorSizeInterval) {
       clearInterval(this.monitorSizeInterval);
     }
-    this.time.clearAnimation();
     Perf.stop();
     ns.disconnect();
   }
@@ -158,34 +152,12 @@ class Srn extends React.Component<
     ns.portraitIndex = this.state.portraitIndex + 1; // portrait files are 1-based
     ns.disconnecting = false;
     ns.connect();
-    Perf.start();
-    this.time.setInterval(
-      (elapsedMs) => {
-        Perf.markEvent(Measure.PhysicsFrameEvent);
-        Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
-          const ns = NetState.get();
-          if (!ns) return;
-          ns.updateLocalState(elapsedMs);
-        });
-      },
-      () => {
-        Perf.markEvent(Measure.RenderFrameEvent);
-        Perf.usingMeasure(Measure.RenderFrameTime, () => {
-          const ns = NetState.get();
-          if (!ns) return;
-
-          ns.emit('change');
-        });
-      }
-    );
   }
 
   quit = () => {
     const ns = NetState.get();
     if (!ns) return;
     ns.disconnect();
-    this.time.clearAnimation();
-    Perf.stop();
     this.setState({ playing: false });
   };
 
