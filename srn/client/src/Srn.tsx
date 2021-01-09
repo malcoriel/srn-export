@@ -9,7 +9,6 @@ import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { GameHTMLHudLayer } from './HtmlLayers/GameHTMLHudLayer';
 import create from 'zustand';
-import { combine } from 'zustand/middleware';
 
 import {
   adjectives,
@@ -72,6 +71,7 @@ type SrnState = {
   portrait: string;
   setPortrait: (value: string) => void;
   nextPortrait: () => void;
+  prevPortrait: () => void;
   trigger: number;
   forceUpdate: () => void;
 };
@@ -91,6 +91,8 @@ export const useStore = create<SrnState>((set) => ({
   setPortraitIndex: (val: number) => set({ portraitIndex: val }),
   setPortrait: (val: string) => set({ portrait: val }),
   forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
+  setPlaying: (val: boolean) => set({ playing: val }),
+
   nextPortrait: () =>
     set((state) => {
       let locIndex = (state.portraitIndex + 1) % portraits.length;
@@ -99,7 +101,17 @@ export const useStore = create<SrnState>((set) => ({
       state.setPortraitIndex(locIndex);
       return {};
     }),
-  setPlaying: (val: boolean) => set({ playing: val }),
+
+  prevPortrait: () =>
+    set((state) => {
+      let number = state.portraitIndex - 1;
+      if (number < 0) number = portraits.length + number;
+      let locIndex = number % portraits.length;
+      let locPort = portraitPath(locIndex);
+      state.setPortrait(locPort);
+      state.setPortraitIndex(locIndex);
+      return {};
+    }),
 }));
 
 let monitorSizeInterval: Timeout | undefined;
@@ -112,23 +124,12 @@ const Srn = () => {
     preferredName,
     setPreferredName,
     musicEnabled,
-    nextPortrait,
     portraitIndex,
     setPortraitIndex,
     portrait,
     setPortrait,
     forceUpdate,
   } = useStore((state: SrnState) => ({ ...state }));
-
-  const previousPortrait = () => {
-    let number = portraitIndex - 1;
-    if (number < 0) number = portraits.length + number;
-    let locIndex = number % portraits.length;
-    let locPort = portraitPath(locIndex);
-
-    setPortrait(locPort);
-    setPortraitIndex(locIndex);
-  };
 
   const updateSize = () => {
     if (
@@ -246,7 +247,6 @@ const Srn = () => {
         {musicEnabled && <MusicControls />}
         {menu && (
           <MainMenuLayer
-            previousPortrait={previousPortrait}
             portrait={portrait}
             makeRandomName={() => {
               setPreferredName(genRandomName());

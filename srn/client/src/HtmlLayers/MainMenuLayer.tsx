@@ -15,7 +15,6 @@ export const MainMenuLayer: React.FC<{
   preferredName: string;
   onPreferredNameChange: (n: string) => void;
   onGo: () => void;
-  previousPortrait: () => void;
   makeRandomName: () => void;
   makeRandomPortrait: () => void;
   portrait: string;
@@ -28,16 +27,21 @@ export const MainMenuLayer: React.FC<{
   onGo,
   makeRandomName,
   makeRandomPortrait,
-  previousPortrait,
   portrait,
   playing,
   hide,
   quit,
 }) => {
-  const { musicEnabled, setMusicEnabled, nextPortrait } = useStore((state) => ({
+  const {
+    musicEnabled,
+    setMusicEnabled,
+    nextPortrait,
+    prevPortrait,
+  } = useStore((state) => ({
     musicEnabled: state.musicEnabled,
     setMusicEnabled: state.setMusicEnabled,
     nextPortrait: state.nextPortrait,
+    prevPortrait: state.prevPortrait,
   }));
 
   const [lsName, setLsName] = useLocalStorage('preferredName', preferredName);
@@ -88,7 +92,7 @@ export const MainMenuLayer: React.FC<{
           </div>
           <Label>And how would you look?</Label>
           <div className="portrait-selector">
-            <Button className="prev" onClick={previousPortrait}>
+            <Button className="prev" onClick={prevPortrait}>
               <FaAngleLeft />
             </Button>
             <div className="image-cont">
