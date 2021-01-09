@@ -1,6 +1,6 @@
 use crate::world::{
-    apply_ship_action, find_my_player, find_my_ship, find_planet, GameEvent, GameState, QuestState,
-    Ship, ShipAction, ShipActionType,
+    apply_ship_action, find_my_player, find_my_ship, find_planet, CargoDeliveryQuestState,
+    GameEvent, GameState, Ship, ShipAction, ShipActionType,
 };
 use crate::{
     fire_event, mutate_owned_ship, mutate_ship_no_lock, new_id, try_replace_ship, StateContainer,
@@ -73,7 +73,7 @@ impl Bot {
         }
         let quest = quest.unwrap();
 
-        let action = if quest.state == QuestState::Started {
+        let action = if quest.state == CargoDeliveryQuestState::Started {
             if ship.docked_at.map_or(false, |d| d == quest.from_id) {
                 self.talk(
                     elapsed_micro,
@@ -88,7 +88,7 @@ impl Bot {
                     data: format!("\"{}\"", quest.from_id),
                 }))
             }
-        } else if quest.state == QuestState::Picked {
+        } else if quest.state == CargoDeliveryQuestState::Picked {
             if ship.docked_at.map_or(false, |d| d == quest.to_id) {
                 self.talk(
                     elapsed_micro,
@@ -114,7 +114,7 @@ impl Bot {
                     )
                 }
             }
-        } else if quest.state == QuestState::Delivered {
+        } else if quest.state == CargoDeliveryQuestState::Delivered {
             if self.timer.is_none() {
                 self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
                 None

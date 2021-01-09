@@ -1,7 +1,7 @@
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
-    generate_random_quest, GameEvent, GameState, Planet, Player, PlayerId, QuestState,
+    generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId,
 };
 use crate::{fire_event, new_id};
 use itertools::Itertools;
@@ -120,6 +120,14 @@ impl DialogueScript {
         player: &Player,
         _d_state: Option<&DialogueState>,
     ) -> bool {
+        /*
+        Ideally, this should be remade into a trigger system like this:
+        "trigger": {
+            "event": "Dock",
+            "conditions": ["CargoDeliveryQuestState = Started", "s_cargo_destination_planet = s_current_planet"]
+        }
+        in dialogue.json
+        */
         if self.is_planetary {
             if let Some(current_planet_id) = find_current_planet(&player, game_state).map(|p| p.id)
             {
@@ -129,11 +137,11 @@ impl DialogueScript {
 
                 if let Some(quest) = player.quest.as_ref() {
                     let is_planet_current = {
-                        let res = if quest.state == QuestState::Started
+                        let res = if quest.state == CargoDeliveryQuestState::Started
                             && self.name == "cargo_delivery_pickup"
                         {
                             quest.from_id == current_planet_id
-                        } else if quest.state == QuestState::Picked
+                        } else if quest.state == CargoDeliveryQuestState::Picked
                             && self.name == "cargo_delivery_dropoff"
                         {
                             quest.to_id == current_planet_id
@@ -459,7 +467,7 @@ fn apply_side_effects(
                 if let Some(my_player) = find_my_player_mut(state, player_id) {
                     let quest = my_player.quest.as_mut();
                     if let Some(mut quest) = quest {
-                        quest.state = QuestState::Picked;
+                        quest.state = CargoDeliveryQuestState::Picked;
                     }
                     state_changed = true;
                 }
@@ -467,7 +475,7 @@ fn apply_side_effects(
             DialogOptionSideEffect::QuestCargoDropOff => {
                 if let Some(my_player) = find_my_player_mut(state, player_id) {
                     if let Some(mut quest) = my_player.quest.as_mut() {
-                        quest.state = QuestState::Delivered;
+                        quest.state = CargoDeliveryQuestState::Delivered;
                     }
                     state_changed = true;
                 }
@@ -475,7 +483,7 @@ fn apply_side_effects(
             DialogOptionSideEffect::QuestCollectReward => {
                 if let Some(mut my_player) = find_my_player_mut(state, player_id) {
                     if let Some(mut quest) = my_player.quest.as_mut() {
-                        quest.state = QuestState::Delivered;
+                        quest.state = CargoDeliveryQuestState::Delivered;
                         my_player.money += quest.reward;
                         my_player.quest = None;
                     }

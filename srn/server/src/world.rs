@@ -291,17 +291,9 @@ pub fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> 
     return Some(Quest {
         from_id: from.id,
         to_id: to.id,
-        state: QuestState::Started,
+        state: CargoDeliveryQuestState::Started,
         reward,
     });
-}
-
-fn find_start_dialogue(d_table: &DialogueTable) -> Option<Uuid> {
-    return d_table
-        .scripts
-        .values()
-        .find(|s| s.name == "cargo_delivery_pickup".to_string())
-        .map(|s| s.id);
 }
 
 fn get_random_planet<'a>(
@@ -388,7 +380,7 @@ impl Ship {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum QuestState {
+pub enum CargoDeliveryQuestState {
     Unknown = 0,
     Started = 1,
     Picked = 2,
@@ -399,7 +391,7 @@ pub enum QuestState {
 pub struct Quest {
     pub from_id: Uuid,
     pub to_id: Uuid,
-    pub state: QuestState,
+    pub state: CargoDeliveryQuestState,
     pub reward: i32,
 }
 
