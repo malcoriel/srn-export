@@ -148,14 +148,7 @@ const Srn = () => {
           </>
         )}
         {musicEnabled && <MusicControls />}
-        {menu && (
-          <MainMenuLayer
-            onGo={() => {
-              start();
-            }}
-            quit={quit}
-          />
-        )}
+        {menu && <MainMenuLayer start={start} quit={quit} />}
       </div>
     </>
   );

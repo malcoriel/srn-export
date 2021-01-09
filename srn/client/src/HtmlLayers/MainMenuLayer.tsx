@@ -12,9 +12,9 @@ import { useStore } from '../store';
 let firstTime = true;
 
 export const MainMenuLayer: React.FC<{
-  onGo: () => void;
+  start: () => void;
   quit: () => void;
-}> = ({ onGo, quit }) => {
+}> = ({ start, quit }) => {
   const {
     musicEnabled,
     setMusicEnabled,
@@ -59,7 +59,7 @@ export const MainMenuLayer: React.FC<{
       setMusicEnabled(lsMusicEnabled);
     }
     if (lsSkipMenu && firstTime) {
-      onGo();
+      start();
       firstTime = false;
     }
   }, []);
@@ -137,7 +137,7 @@ export const MainMenuLayer: React.FC<{
         </Button>
       </div>
       {!playing && (
-        <Button className="play" onClick={onGo}>
+        <Button className="play" onClick={start}>
           PLAY
         </Button>
       )}
