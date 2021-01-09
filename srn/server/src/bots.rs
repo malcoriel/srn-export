@@ -73,6 +73,14 @@ impl Bot {
         }
         let quest = quest.unwrap();
 
+        /*
+        Ideally, this should be remade into:
+        1. Bot talks with all the dialogues with the same timeout, which is displayed as
+        a diminishing progressbar for the human players (patience until next phrase/action)
+        2. Bot stops actions when he's talking in dialogue quest
+        3. Bot acts according to some kind of data-driven quest script (which may incorporate
+        current bot_path from the dialogue)
+        */
         let action = if quest.state == CargoDeliveryQuestState::Started {
             if ship.docked_at.map_or(false, |d| d == quest.from_id) {
                 self.talk(
