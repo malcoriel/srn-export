@@ -22,9 +22,8 @@ import { QuestPanel } from './HtmlLayers/QuestPanel';
 import 'react-jinke-music-player/assets/index.css';
 import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
-import { randBetweenExclusiveEnd } from './utils/rand';
 import { HotkeyWrapper } from './HotkeyWrapper';
-import { portraitPath, portraits, SrnState, useStore } from './store';
+import { SrnState, useStore } from './store';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -38,8 +37,6 @@ const Srn = () => {
     preferredName,
     musicEnabled,
     portraitIndex,
-    setPortraitIndex,
-    setPortrait,
     forceUpdate,
   } = useStore((state: SrnState) => ({ ...state }));
 
@@ -50,7 +47,6 @@ const Srn = () => {
     ) {
       size.width_px = window.innerWidth;
       size.height_px = window.innerHeight;
-      console.log('update size');
       forceUpdate();
     }
   };
@@ -61,10 +57,6 @@ const Srn = () => {
     }
     const ns = NetState.get();
     if (!ns) return;
-    let locIndex = randBetweenExclusiveEnd(0, portraits.length);
-    let locPort = portraitPath(locIndex);
-    setPortrait(locPort);
-    setPortraitIndex(locIndex);
 
     monitorSizeInterval = setInterval(updateSize, MONITOR_SIZE_INTERVAL);
 
@@ -160,11 +152,6 @@ const Srn = () => {
           <MainMenuLayer
             onGo={() => {
               start();
-            }}
-            makeRandomPortrait={() => {
-              let locIndex = randBetweenExclusiveEnd(0, portraits.length);
-              setPortraitIndex(locIndex);
-              setPortrait(portraitPath(locIndex));
             }}
             quit={quit}
           />

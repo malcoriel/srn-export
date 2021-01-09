@@ -13,9 +13,8 @@ let firstTime = true;
 
 export const MainMenuLayer: React.FC<{
   onGo: () => void;
-  makeRandomPortrait: () => void;
   quit: () => void;
-}> = ({ onGo, makeRandomPortrait, quit }) => {
+}> = ({ onGo, quit }) => {
   const {
     musicEnabled,
     setMusicEnabled,
@@ -27,6 +26,7 @@ export const MainMenuLayer: React.FC<{
     portrait,
     playing,
     setMenu,
+    makeRandomPortrait,
   } = useStore((state) => ({
     musicEnabled: state.musicEnabled,
     setMusicEnabled: state.setMusicEnabled,
@@ -38,6 +38,7 @@ export const MainMenuLayer: React.FC<{
     setMenu: state.setMenu,
     playing: state.playing,
     portrait: state.portrait,
+    makeRandomPortrait: state.makeRandomPortrait,
   }));
 
   const hide = () => setMenu(false);

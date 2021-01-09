@@ -4,6 +4,7 @@ import {
   uniqueNamesGenerator,
 } from 'unique-names-generator';
 import create from 'zustand';
+import { randBetweenExclusiveEnd } from './utils/rand';
 
 export function genRandomName() {
   return uniqueNamesGenerator({
@@ -46,14 +47,16 @@ export type SrnState = {
   prevPortrait: () => void;
   trigger: number;
   forceUpdate: () => void;
+  makeRandomPortrait: () => void;
 };
+let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
 export const useStore = create<SrnState>((set) => ({
   playing: false,
   menu: true,
   preferredName: genRandomName(),
   musicEnabled: true,
-  portraitIndex: 0,
-  portrait: '0',
+  portraitIndex: portraitIndex,
+  portrait: portraitPath(portraitIndex),
   trigger: 0,
 
   setPreferredName: (val: string) => set({ preferredName: val }),
@@ -85,4 +88,11 @@ export const useStore = create<SrnState>((set) => ({
     }),
 
   makeRandomName: () => set({ preferredName: genRandomName() }),
+  makeRandomPortrait: () =>
+    set(() => {
+      let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
+      let portrait = portraitPath(portraitIndex);
+
+      return { portraitIndex, portrait };
+    }),
 }));
