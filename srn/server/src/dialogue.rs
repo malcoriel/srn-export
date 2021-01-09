@@ -572,7 +572,7 @@ pub fn gen_scripts() -> Vec<DialogueScript> {
     let mut res = vec![];
     let basic_planet = gen_basic_planet_script();
     res.push(basic_planet.6);
-    res.push(gen_quest_pickup_planet_script());
+    res.push(read_from_resource("cargo_delivery_pickup"));
     res.push(gen_quest_dropoff_planet_script());
     res
 }
@@ -672,8 +672,8 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
     script
 }
 
-fn gen_quest_pickup_planet_script() -> DialogueScript {
-    let json = fs::read_to_string("src/dialogue_scripts/cargo_delivery_pickup.json")
+pub fn read_from_resource(file: &str) -> DialogueScript {
+    let json = fs::read_to_string(format!("src/dialogue_scripts/{}.json", file))
         .expect("script not found");
     let ss = serde_json::from_str::<ShortScript>(json.as_str()).unwrap();
     short_decrypt(ss)

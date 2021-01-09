@@ -76,20 +76,12 @@ impl Bot {
 
         let action = if quest.state == QuestState::Started {
             if ship.docked_at.map_or(false, |d| d == quest.from_id) {
-                if self.timer.is_none() {
-                    self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
-                    None
-                } else {
-                    self.timer = Some(self.timer.unwrap() - elapsed_micro);
-                    if self.timer.unwrap() <= 0 {
-                        self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
-                        // time to act on the dialogue
-                        self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_pickup")
-                    } else {
-                        // still waiting
-                        None
-                    }
-                }
+                self.talk(
+                    elapsed_micro,
+                    d_table,
+                    bot_d_states,
+                    "cargo_delivery_pickup",
+                )
             } else {
                 Some(BotAct::Act(ShipAction {
                     // this action doubles as undock
@@ -99,20 +91,12 @@ impl Bot {
             }
         } else if quest.state == QuestState::Picked {
             if ship.docked_at.map_or(false, |d| d == quest.to_id) {
-                if self.timer.is_none() {
-                    self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
-                    None
-                } else {
-                    self.timer = Some(self.timer.unwrap() - elapsed_micro);
-                    if self.timer.unwrap() <= 0 {
-                        // time to act on the dialogue
-                        self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
-                        self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_dropoff")
-                    } else {
-                        // still waiting
-                        None
-                    }
-                }
+                self.talk(
+                    elapsed_micro,
+                    d_table,
+                    bot_d_states,
+                    "cargo_delivery_dropoff",
+                )
             } else {
                 // prevent too early undock without finishing the dialogue
                 if !ship.docked_at.map_or(false, |d| d == quest.from_id) {
@@ -123,20 +107,12 @@ impl Bot {
                     }))
                 } else {
                     // finish the dialogue
-                    if self.timer.is_none() {
-                        self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
-                        None
-                    } else {
-                        self.timer = Some(self.timer.unwrap() - elapsed_micro);
-                        if self.timer.unwrap() <= 0 {
-                            self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
-                            // time to act on the dialogue
-                            self.make_dialogue_act(d_table, bot_d_states, "cargo_delivery_pickup")
-                        } else {
-                            // still waiting
-                            None
-                        }
-                    }
+                    self.talk(
+                        elapsed_micro,
+                        d_table,
+                        bot_d_states,
+                        "cargo_delivery_pickup",
+                    )
                 }
             }
         } else if quest.state == QuestState::Delivered {
@@ -161,6 +137,29 @@ impl Bot {
             (self, vec![action.unwrap()])
         } else {
             (self, vec![])
+        }
+    }
+
+    fn talk(
+        &mut self,
+        elapsed_micro: i64,
+        d_table: &DialogueTable,
+        bot_d_states: &(Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>),
+        dialogue_name: &str,
+    ) -> Option<BotAct> {
+        if self.timer.is_none() {
+            self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+            None
+        } else {
+            self.timer = Some(self.timer.unwrap() - elapsed_micro);
+            if self.timer.unwrap() <= 0 {
+                self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                // time to act on the dialogue
+                self.make_dialogue_act(d_table, bot_d_states, dialogue_name)
+            } else {
+                // still waiting
+                None
+            }
         }
     }
 
