@@ -279,12 +279,10 @@ pub fn execute_dialog_option(
                 ),
                 side_effect,
             );
-        } else {
-            return (None, false);
         }
-    } else {
-        return (None, false);
     }
+
+    return (None, false);
 }
 
 pub fn build_dialogue_from_state(
