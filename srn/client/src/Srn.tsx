@@ -31,7 +31,7 @@ import 'react-jinke-music-player/assets/index.css';
 import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
 import { randBetweenExclusiveEnd } from './utils/rand';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { HotkeyWrapper } from './HotkeyWrapper';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
@@ -56,14 +56,6 @@ const portraits = [
   '8.jpg',
   '9.jpg',
 ];
-
-const HotkeyWrapper: React.FC<{ hotkey: string; onPress: () => void }> = ({
-  hotkey,
-  onPress,
-}) => {
-  useHotkeys(hotkey, onPress);
-  return null;
-};
 
 class Srn extends React.Component<
   {},
@@ -105,8 +97,13 @@ class Srn extends React.Component<
   }
 
   previousPortrait = () => {
+    let number = this.state.portraitIndex - 1;
+    if (number < 0) number = portraits.length + number;
+    let portraitIndex = number % portraits.length;
+    let portrait = Srn.portraitPath(portraitIndex);
     this.setState({
-      portraitIndex: (this.state.portraitIndex - 1) % portraits.length,
+      portraitIndex,
+      portrait,
     });
   };
 
