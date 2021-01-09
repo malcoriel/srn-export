@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './StartHud.scss';
 import { Button } from './ui/Button';
 import { Label } from './ui/Label';
 import { Input } from './ui/Input';
 import { FaAngleRight, FaDiceD20 } from 'react-icons/fa';
 import { FaAngleLeft } from 'react-icons/fa';
+import { useLocalStorage } from '../utils/useLocalStorage';
 export const MenuHudLayer: React.FC<{
   preferredName: string;
   onPreferredNameChange: (n: string) => void;
@@ -34,7 +35,13 @@ export const MenuHudLayer: React.FC<{
   hide,
   quit,
 }) => {
-  const [about, setAbout] = useState(false);
+  const [lsName, setLsName] = useLocalStorage('preferredName', preferredName);
+  useEffect(() => {
+    if (lsName !== preferredName && lsName) {
+      // got something saved
+      onPreferredNameChange(lsName);
+    }
+  }, []);
   return (
     <div className="start-hud">
       <div className="title">Star Rangers Network</div>
@@ -45,9 +52,19 @@ export const MenuHudLayer: React.FC<{
             <Input
               className="name-input"
               value={preferredName}
-              onChange={(e) => onPreferredNameChange(e.target.value)}
+              onChange={(e) => {
+                let name = e.target.value;
+                setLsName(name);
+                onPreferredNameChange(name);
+              }}
             />
-            <Button className="dice" onClick={makeRandomName}>
+            <Button
+              className="dice"
+              onClick={() => {
+                setLsName(null);
+                makeRandomName();
+              }}
+            >
               <FaDiceD20 />
             </Button>
           </div>
