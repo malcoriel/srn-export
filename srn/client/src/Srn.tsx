@@ -8,6 +8,7 @@ import { CoordLayer } from './KonvaLayers/CoordLayer';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { GameHTMLHudLayer } from './HtmlLayers/GameHTMLHudLayer';
+import create from 'zustand';
 
 import {
   adjectives,
@@ -56,15 +57,56 @@ function portraitPath(portraitIndex: number) {
   return `resources/chars/${portraits[portraitIndex]}`;
 }
 
+type SrnState = {
+  playing: boolean;
+  setPlaying: (value: boolean) => void;
+  menu: boolean;
+  setMenu: (value: boolean) => void;
+  preferredName: string;
+  setPreferredName: (value: string) => void;
+  musicEnabled: boolean;
+  setMusicEnabled: (value: boolean) => void;
+  portraitIndex: number;
+  setPortraitIndex: (value: number) => void;
+  portrait: string;
+  setPortrait: (value: string) => void;
+  trigger: number;
+  forceUpdate: () => void;
+};
+const useStore = create<SrnState>((set) => ({
+  playing: false,
+  setPlaying: (val: boolean) => set({ playing: val }),
+  menu: true,
+  setMenu: (val: boolean) => set({ menu: val }),
+  preferredName: genRandomName(),
+  setPreferredName: (val: string) => set({ preferredName: val }),
+  musicEnabled: true,
+  setMusicEnabled: (val: boolean) => set({ musicEnabled: val }),
+  portraitIndex: 0,
+  setPortraitIndex: (val: number) => set({ portraitIndex: val }),
+  portrait: '0',
+  setPortrait: (val: string) => set({ portrait: val }),
+  trigger: 0,
+  forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
+}));
+
 let monitorSizeInterval: Timeout | undefined;
 const Srn = () => {
-  const [playing, setPlaying] = useState(false);
-  const [menu, setMenu] = useState(true);
-  const [preferredName, setPreferredName] = useState(genRandomName());
-  const [musicEnabled, setMusicEnabled] = useState(true);
-  const [portraitIndex, setPortraitIndex] = useState(0);
-  const [portrait, setPortrait] = useState('0');
-  const [, setTrigger] = useState(0);
+  const {
+    playing,
+    setPlaying,
+    menu,
+    setMenu,
+    preferredName,
+    setPreferredName,
+    musicEnabled,
+    setMusicEnabled,
+    portraitIndex,
+    setPortraitIndex,
+    portrait,
+    setPortrait,
+    forceUpdate,
+  } = useStore((state: SrnState) => ({ ...state }));
 
   const nextPortrait = () => {
     let locIndex = (portraitIndex + 1) % portraits.length;
@@ -81,10 +123,6 @@ const Srn = () => {
 
     setPortrait(locPort);
     setPortraitIndex(locIndex);
-  };
-
-  const forceUpdate = () => {
-    setTrigger((trigger) => trigger + 1);
   };
 
   const updateSize = () => {

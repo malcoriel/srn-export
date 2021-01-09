@@ -12411,3 +12411,8 @@ yargs@^15.4.1:
     which-module "^2.0.0"
     y18n "^4.0.0"
     yargs-parser "^18.1.2"
+
+zustand@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/zustand/-/zustand-3.3.0.tgz#dc029b8e0ea710a36dda05f5ca147246969a9104"
+  integrity sha512-oTOoJa70tYisd+fRmoIjZKlF21JEmGQ8oC+dJ7pf/wdS4qJPcCS/W9blzKAnyyLMrIYsIl6Mlq5cmili7mpJPw==
