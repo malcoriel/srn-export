@@ -1,5 +1,5 @@
 import React from 'react';
-import { hotkeyRegistry, useToggleHotkey } from '../utils/useToggleHotkey';
+import { hotkeyRegistry } from '../utils/useToggleHotkey';
 import { PanelPosition, PanelWithHideButton } from './PanelWithHideButton';
 
 export const HelpLayer = () => {
@@ -17,6 +17,7 @@ export const HelpLayer = () => {
     >
       <div className="help">
         <div className="header">Help (shift + h)</div>
+        <div className="line">show menu - ESC </div>
         <div className="line">
           movement - WASD or click (try clicking on planets)
         </div>
