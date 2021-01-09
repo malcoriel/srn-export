@@ -13,12 +13,13 @@
   height: 100%;
   width: 100%;
   background-color: black;
-
+  opacity: 0.8;
+  
   &>* {
     margin-top: 30px;
   }
 
-  .music-toggle {
+  .music-toggle, .autostart-toggle {
     display: flex;
     flex-direction:row;
     width: 150px;

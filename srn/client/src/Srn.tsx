@@ -16,7 +16,7 @@ import {
 } from 'unique-names-generator';
 import { Measure, Perf, statsHeap, StatsPanel } from './HtmlLayers/Perf';
 import { vsyncedDecoupledTime } from './utils/Times';
-import { MenuHudLayer } from './HtmlLayers/MenuHudLayer';
+import { MainMenuLayer } from './HtmlLayers/MainMenuLayer';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
@@ -236,7 +236,7 @@ class Srn extends React.Component<
             />
           )}
           {this.state.menu && (
-            <MenuHudLayer
+            <MainMenuLayer
               nextPortrait={this.nextPortrait}
               previousPortrait={this.previousPortrait}
               portrait={this.state.portrait}

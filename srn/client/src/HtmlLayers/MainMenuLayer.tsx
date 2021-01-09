@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import './StartHud.scss';
+import './MainMenu.scss';
 import { Button } from './ui/Button';
 import { Label } from './ui/Label';
 import { Input } from './ui/Input';
 import { FaAngleRight, FaDiceD20 } from 'react-icons/fa';
 import { FaAngleLeft } from 'react-icons/fa';
 import { useLocalStorage } from '../utils/useLocalStorage';
-export const MenuHudLayer: React.FC<{
+
+// to only skip menu once
+let firstTime = true;
+
+export const MainMenuLayer: React.FC<{
   preferredName: string;
   onPreferredNameChange: (n: string) => void;
   onGo: () => void;
@@ -36,10 +40,23 @@ export const MenuHudLayer: React.FC<{
   quit,
 }) => {
   const [lsName, setLsName] = useLocalStorage('preferredName', preferredName);
+  const [lsMusicEnabled, setLsMusicEnabled] = useLocalStorage(
+    'musicEnabled',
+    musicEnabled
+  );
+  const [lsSkipMenu, setLsSkipMenu] = useLocalStorage('skipMenu', false);
+
   useEffect(() => {
     if (lsName !== preferredName && lsName) {
       // got something saved
       onPreferredNameChange(lsName);
+    }
+    if (typeof lsMusicEnabled === 'boolean' && lsMusicEnabled != musicEnabled) {
+      onSetMusic(lsMusicEnabled);
+    }
+    if (lsSkipMenu && firstTime) {
+      onGo();
+      firstTime = false;
     }
   }, []);
   return (
@@ -87,10 +104,31 @@ export const MenuHudLayer: React.FC<{
       )}
       <Label>Music (written by AIVA)</Label>
       <div className="music-toggle">
-        <Button onClick={() => onSetMusic(true)} toggled={musicEnabled}>
+        <Button
+          onClick={() => {
+            setLsMusicEnabled(true);
+            onSetMusic(true);
+          }}
+          toggled={musicEnabled}
+        >
           ON
         </Button>
-        <Button onClick={() => onSetMusic(false)} toggled={!musicEnabled}>
+        <Button
+          onClick={() => {
+            setLsMusicEnabled(false);
+            onSetMusic(false);
+          }}
+          toggled={!musicEnabled}
+        >
+          OFF
+        </Button>
+      </div>
+      <Label>Skip this screen on startup next time</Label>
+      <div className="autostart-toggle">
+        <Button onClick={() => setLsSkipMenu(true)} toggled={lsSkipMenu}>
+          ON
+        </Button>
+        <Button onClick={() => setLsSkipMenu(false)} toggled={!lsSkipMenu}>
           OFF
         </Button>
       </div>

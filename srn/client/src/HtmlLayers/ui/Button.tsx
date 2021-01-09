@@ -4,7 +4,7 @@ import './Button.scss';
 export const Button: React.FC<{
   onClick?: () => void;
   className?: string;
-  toggled?: boolean;
+  toggled?: boolean | null;
 }> = ({ onClick, children, className, toggled }) => {
   return (
     <span
