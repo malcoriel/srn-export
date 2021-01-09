@@ -115,12 +115,6 @@ class Srn extends React.Component<
     const ns = NetState.get();
     if (!ns) return;
 
-    ns.on('change', () => {
-      this.forceUpdate();
-    });
-    ns.on('network', () => {
-      this.forceUpdate();
-    });
     this.monitorSizeInterval = setInterval(
       this.updateSize,
       MONITOR_SIZE_INTERVAL
@@ -146,11 +140,26 @@ class Srn extends React.Component<
   }
 
   start() {
+    if (!NetState.get()) {
+      NetState.make();
+    }
+
     const ns = NetState.get();
-    if (!ns) return;
+
+    if (!ns) {
+      return;
+    }
+
+    ns.on('change', () => {
+      this.forceUpdate();
+    });
+    ns.on('network', () => {
+      this.forceUpdate();
+    });
 
     ns.playerName = this.state.preferredName;
     ns.portraitIndex = this.state.portraitIndex + 1; // portrait files are 1-based
+    ns.disconnecting = false;
     ns.connect();
     Perf.start();
     this.time.setInterval(
@@ -173,6 +182,15 @@ class Srn extends React.Component<
       }
     );
   }
+
+  quit = () => {
+    const ns = NetState.get();
+    if (!ns) return;
+    ns.disconnect();
+    this.time.clearAnimation();
+    Perf.stop();
+    this.setState({ playing: false });
+  };
 
   render() {
     return (
@@ -249,6 +267,7 @@ class Srn extends React.Component<
                   portrait: Srn.portraitPath(portraitIndex),
                 });
               }}
+              quit={this.quit}
             />
           )}
         </div>

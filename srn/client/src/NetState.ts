@@ -93,14 +93,14 @@ export default class NetState extends EventEmitter {
   public visualState: VisualState;
 
   private static instance?: NetState;
-  private readonly forceSyncInterval?: Timeout;
-  private readonly updateOnServerInterval?: Timeout;
+  private forceSyncInterval?: Timeout;
+  private updateOnServerInterval?: Timeout;
   private reconnectTimeout?: Timeout;
   private readonly id: string;
-  private disconnecting: boolean = false;
+  disconnecting: boolean = false;
   private lastShipPos?: Vector;
   public static make() {
-    NetState.instance = new NetState(false);
+    NetState.instance = new NetState();
   }
   public static get(): NetState | undefined {
     // if (!NetState.instance) {
@@ -109,13 +109,11 @@ export default class NetState extends EventEmitter {
     return NetState.instance;
   }
 
-  constructor(public mock: boolean) {
+  constructor() {
     super();
     this.id = uuid.v4();
-    if (!mock) {
-      let newVar = DEBUG_CREATION ? `at ${new Error().stack}` : '';
-      console.log(`created NS ${this.id} ${newVar}`);
-    }
+    let newVar = DEBUG_CREATION ? `at ${new Error().stack}` : '';
+    console.log(`created NS ${this.id} ${newVar}`);
     this.state = {
       planets: [],
       players: [],
@@ -136,13 +134,6 @@ export default class NetState extends EventEmitter {
         y: 0,
       },
     };
-    if (!mock) {
-      this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
-      this.updateOnServerInterval = setInterval(
-        () => this.updateShipOnServerManualMove(uuid.v4()),
-        MANUAL_MOVE_SHIP_UPDATE_INTERVAL
-      );
-    }
   }
 
   forceSync = () => {
@@ -173,9 +164,17 @@ export default class NetState extends EventEmitter {
     NetState.instance = undefined;
   };
   connect = () => {
-    if (this.disconnecting || this.mock) {
+    console.log('connect');
+    if (this.disconnecting) {
       return;
     }
+    console.log('next');
+    this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
+    this.updateOnServerInterval = setInterval(
+      () => this.updateShipOnServerManualMove(uuid.v4()),
+      MANUAL_MOVE_SHIP_UPDATE_INTERVAL
+    );
+
     console.log(`connecting NS ${this.id}`);
     this.socket = new WebSocket(
       process.env.NODE_ENV === 'production'

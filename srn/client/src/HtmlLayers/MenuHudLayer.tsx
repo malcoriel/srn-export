@@ -18,6 +18,7 @@ export const MenuHudLayer: React.FC<{
   portrait: string;
   playing: boolean;
   hide: () => void;
+  quit: () => void;
 }> = ({
   preferredName,
   onPreferredNameChange,
@@ -31,6 +32,7 @@ export const MenuHudLayer: React.FC<{
   portrait,
   playing,
   hide,
+  quit,
 }) => {
   const [about, setAbout] = useState(false);
   return (
@@ -81,9 +83,14 @@ export const MenuHudLayer: React.FC<{
         </Button>
       )}
       {playing && (
-        <Button className="play" onClick={hide}>
-          BACK
-        </Button>
+        <>
+          <Button className="play" onClick={hide}>
+            BACK
+          </Button>
+          <Button className="quit" onClick={quit}>
+            QUIT
+          </Button>
+        </>
       )}
       {/*<Button text="About" onClick={() => setAbout(true)} />*/}
     </div>
