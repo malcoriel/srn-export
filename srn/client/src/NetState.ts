@@ -164,11 +164,9 @@ export default class NetState extends EventEmitter {
     NetState.instance = undefined;
   };
   connect = () => {
-    console.log('connect');
     if (this.disconnecting) {
       return;
     }
-    console.log('next');
     this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
     this.updateOnServerInterval = setInterval(
       () => this.updateShipOnServerManualMove(uuid.v4()),
