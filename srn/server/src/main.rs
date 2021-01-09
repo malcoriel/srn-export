@@ -2,8 +2,17 @@
 #![allow(unused_imports)]
 #[macro_use]
 extern crate serde_derive;
-
+use crate::bots::{bot_init, do_bot_actions};
+use crate::dialogue::{
+    execute_dialog_option, Dialogue, DialogueId, DialogueScript, DialogueUpdate,
+};
+use crate::vec2::Vec2f64;
+use crate::world::{
+    find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent,
+    ShipAction,
+};
 use chrono::{DateTime, Local, Utc};
+use crossbeam::channel::{bounded, Receiver, Sender};
 use dialogue::{DialogueStates, DialogueTable};
 use lazy_static::lazy_static;
 use num_traits::FromPrimitive;
@@ -22,7 +31,6 @@ use uuid::*;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 use websocket::{Message, OwnedMessage};
-
 use world::{GameState, Player, Ship};
 
 #[macro_use]
@@ -31,7 +39,6 @@ extern crate rocket_cors;
 extern crate websocket;
 #[macro_use]
 extern crate num_derive;
-
 mod bots;
 mod dialogue;
 mod dialogue_test;
@@ -42,23 +49,6 @@ mod vec2_test;
 mod world;
 mod world_test;
 
-lazy_static! {
-    static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, std::sync::mpsc::Sender<ServerToClientMessage>)>>> =
-        Arc::new(Mutex::new(vec![]));
-}
-
-struct LastCheck {
-    time: DateTime<Utc>,
-}
-
-lazy_static! {
-    static ref CLIENT_ERRORS_LAST_CHECK: Arc<Mutex<LastCheck>> =
-        Arc::new(Mutex::new(LastCheck { time: Utc::now() }));
-}
-
-lazy_static! {
-    static ref CLIENT_ERRORS: Arc<Mutex<HashMap<Uuid, u32>>> = Arc::new(Mutex::new(HashMap::new()));
-}
 #[derive(Deserialize, Serialize, Debug, Clone)]
 struct TagConfirm {
     tag: String,
@@ -114,12 +104,56 @@ impl ServerToClientMessage {
     }
 }
 
+struct StateContainer {
+    state: GameState,
+}
+
+struct LastCheck {
+    time: DateTime<Utc>,
+}
+type WSRequest =
+    WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ClientErr {
+    message: String,
+}
+
+#[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
+enum ClientOpCode {
+    Unknown = 0,
+    Sync = 1,
+    MutateMyShip = 2,
+    Name = 3,
+    DialogueOption = 4,
+}
+
 static mut DISPATCHER_SENDER: Option<Mutex<std::sync::mpsc::Sender<ServerToClientMessage>>> = None;
 static mut DISPATCHER_RECEIVER: Option<Mutex<std::sync::mpsc::Receiver<ServerToClientMessage>>> =
     None;
 
-struct StateContainer {
-    state: GameState,
+lazy_static! {
+    static ref DIALOGUE_STATES: Arc<Mutex<Box<DialogueStates>>> =
+        Arc::new(Mutex::new(Box::new(HashMap::new())));
+}
+
+lazy_static! {
+    static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, std::sync::mpsc::Sender<ServerToClientMessage>)>>> =
+        Arc::new(Mutex::new(vec![]));
+}
+
+lazy_static! {
+    static ref CLIENT_ERRORS_LAST_CHECK: Arc<Mutex<LastCheck>> =
+        Arc::new(Mutex::new(LastCheck { time: Utc::now() }));
+}
+
+lazy_static! {
+    static ref CLIENT_ERRORS: Arc<Mutex<HashMap<Uuid, u32>>> = Arc::new(Mutex::new(HashMap::new()));
+}
+
+lazy_static! {
+    static ref DIALOGUE_TABLE: Arc<Mutex<Box<DialogueTable>>> =
+        Arc::new(Mutex::new(Box::new(DialogueTable::new())));
 }
 
 lazy_static! {
@@ -133,8 +167,6 @@ lazy_static! {
 fn get_state() -> Json<GameState> {
     Json(STATE.read().unwrap().state.clone())
 }
-
-use crossbeam::channel::{bounded, Receiver, Sender};
 
 lazy_static! {
     static ref EVENTS: Arc<Mutex<(Sender<GameEvent>, Receiver<GameEvent>)>> =
@@ -156,10 +188,11 @@ lazy_static! {
 //     broadcast_state(mut_state.clone());
 // }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct ClientErr {
-    message: String,
-}
+const DEFAULT_SLEEP_MS: u64 = 1;
+const MAX_ERRORS: u32 = 10;
+const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
+const DEBUG_PHYSICS: bool = false;
+const EVENT_SLEEP_MS: u64 = 10;
 
 fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
     let res = mutate_owned_ship(client_id, mutate_cmd, tag);
@@ -274,18 +307,6 @@ unsafe fn get_dispatcher_sender() -> std::sync::mpsc::Sender<ServerToClientMessa
     DISPATCHER_SENDER.as_ref().unwrap().lock().unwrap().clone()
 }
 
-#[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
-enum ClientOpCode {
-    Unknown = 0,
-    Sync = 1,
-    MutateMyShip = 2,
-    Name = 3,
-    DialogueOption = 4,
-}
-
-type WSRequest =
-    WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
-
 fn websocket_server() {
     let addr = "0.0.0.0:2794";
     let server = Server::bind(addr).unwrap();
@@ -300,8 +321,6 @@ fn patch_state_for_player(mut state: GameState, player_id: Uuid) -> GameState {
     state.my_id = player_id;
     state
 }
-
-const DEFAULT_SLEEP_MS: u64 = 1;
 
 fn handle_request(request: WSRequest) {
     if !request.protocols().contains(&"rust-websocket".to_string()) {
@@ -363,7 +382,7 @@ fn handle_request(request: WSRequest) {
                     let mut senders = CLIENT_SENDERS.lock().unwrap();
                     let index = senders.iter().position(|s| s.0 == client_id);
                     index.map(|index| senders.remove(index));
-                    remove_player(&client_id);
+                    remove_player(client_id);
                     println!("Client {} id {} disconnected", ip, client_id);
                     broadcast_state(STATE.read().unwrap().state.clone());
                     return;
@@ -501,17 +520,14 @@ fn handle_request(request: WSRequest) {
     }
 }
 
-const MAX_ERRORS: u32 = 10;
-const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
-
-fn force_disconnect_client(client_id: &Uuid) {
+fn force_disconnect_client(client_id: Uuid) {
     let mut senders = CLIENT_SENDERS.lock().unwrap();
-    let bad_sender_index = senders.iter().position(|c| c.0 == *client_id);
+    let bad_sender_index = senders.iter().position(|c| c.0 == client_id);
     if let Some(index) = bad_sender_index {
         eprintln!("force disconnecting client: {}", client_id);
         senders.remove(index);
     }
-    remove_player(&client_id);
+    remove_player(client_id);
 }
 
 fn disconnect_if_bad(client_id: Uuid) -> bool {
@@ -528,7 +544,7 @@ fn disconnect_if_bad(client_id: Uuid) -> bool {
     }
     let entry = errors.entry(client_id).or_insert(0);
     if *entry > MAX_ERRORS {
-        force_disconnect_client(&client_id);
+        force_disconnect_client(client_id);
         return true;
     }
     return false;
@@ -565,11 +581,6 @@ fn change_player_name(conn_id: Uuid, new_name: &&str) {
     {
         broadcast_state(STATE.read().unwrap().state.clone());
     }
-}
-
-lazy_static! {
-    static ref DIALOGUE_TABLE: Arc<Mutex<Box<DialogueTable>>> =
-        Arc::new(Mutex::new(Box::new(DialogueTable::new())));
 }
 
 fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
@@ -613,12 +624,12 @@ fn make_new_human_player(conn_id: Uuid) {
     }
 }
 
-fn remove_player(conn_id: &Uuid) {
+fn remove_player(conn_id: Uuid) {
     let mut cont = STATE.write().unwrap();
     cont.state
         .players
         .iter()
-        .position(|p| p.id == *conn_id)
+        .position(|p| p.id == conn_id)
         .map(|i| {
             let player = cont.state.players.remove(i);
             player.ship_id.map(|player_ship_id| {
@@ -634,8 +645,6 @@ fn remove_player(conn_id: &Uuid) {
 pub fn new_id() -> Uuid {
     Uuid::new_v4()
 }
-
-static D_ID: &str = "2484332e-3668-4754-a7ac-d5fbf8707145";
 
 #[launch]
 fn rocket() -> rocket::Rocket {
@@ -659,10 +668,6 @@ fn rocket() -> rocket::Rocket {
 
     std::thread::spawn(|| {
         world_update_thread();
-    });
-
-    std::thread::spawn(|| {
-        event_thread();
     });
 
     let client_senders = CLIENT_SENDERS.clone();
@@ -727,8 +732,6 @@ fn cleanup_thread() {
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
 }
-
-const DEBUG_PHYSICS: bool = false;
 
 fn world_update_thread() {
     let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
@@ -821,31 +824,10 @@ fn handle_events(
     res
 }
 
-use crate::bots::{bot_init, do_bot_actions};
-use crate::dialogue::{
-    execute_dialog_option, Dialogue, DialogueId, DialogueScript, DialogueUpdate,
-};
-use crate::vec2::Vec2f64;
-use crate::world::{
-    find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent,
-    ShipAction,
-};
-lazy_static! {
-    static ref DIALOGUE_STATES: Arc<Mutex<Box<DialogueStates>>> =
-        Arc::new(Mutex::new(Box::new(HashMap::new())));
-}
-
 fn fire_event(ev: GameEvent) {
     let sender = &mut EVENTS.lock().unwrap().0;
     if let Err(e) = sender.send(ev.clone()) {
         eprintln!("Failed to send event {:?}, err {}", ev, e);
     } else {
-    }
-}
-
-const EVENT_SLEEP_MS: u64 = 10;
-fn event_thread() {
-    loop {
-        thread::sleep(Duration::from_millis(EVENT_SLEEP_MS));
     }
 }

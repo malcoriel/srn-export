@@ -1,9 +1,13 @@
+use crate::random_stuff::gen_random_character_name;
 use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
     generate_random_quest, GameEvent, GameState, Planet, Player, PlayerId, QuestState,
 };
 use crate::{fire_event, new_id};
+use itertools::Itertools;
+use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
+use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::slice::Iter;
 use uuid::Uuid;
@@ -46,6 +50,11 @@ pub struct DialogueUpdate {
     pub option_id: Uuid,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct DialogueTable {
+    pub scripts: HashMap<DialogueId, DialogueScript>,
+}
+
 pub type DialogueState = Box<Option<StateId>>;
 
 pub type DialogueStatesForPlayer = (Option<DialogueId>, HashMap<DialogueId, DialogueState>);
@@ -81,8 +90,8 @@ pub struct DialogueScript {
 }
 
 impl DialogueScript {
-    pub fn get_name(&self, id: &Uuid) -> &String {
-        return self.names_db.get(id).unwrap();
+    pub fn get_name(&self, id: Uuid) -> &String {
+        return self.names_db.get(&id).unwrap();
     }
     pub fn get_next_bot_path(&self, current_state: &Option<StateId>) -> Option<&OptionId> {
         return current_state.and_then(|cs| self.bot_path.get(&cs));
@@ -151,11 +160,6 @@ fn find_current_planet<'a, 'b>(
         .and_then(|id| find_planet(game_state, &id))
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DialogueTable {
-    pub scripts: HashMap<DialogueId, DialogueScript>,
-}
-
 impl DialogueTable {
     pub fn new() -> DialogueTable {
         return DialogueTable {
@@ -173,7 +177,7 @@ impl DialogueTable {
 
     pub fn trigger_dialogue(
         &self,
-        d_id: &Uuid,
+        d_id: Uuid,
         script: &DialogueScript,
         res: &mut Vec<(Uuid, Option<Dialogue>)>,
         player: &Player,
@@ -184,7 +188,7 @@ impl DialogueTable {
         let value = Box::new(Some(script.initial_state));
         res.push((
             player.id,
-            build_dialogue_from_state(&d_id, &value, self, player.id, game_state),
+            build_dialogue_from_state(d_id, &value, self, player.id, game_state),
         ));
         player_d_states.insert(key.clone(), value);
     }
@@ -222,19 +226,12 @@ impl DialogueTable {
         if let Some(ship) = ship {
             if let Some(_docked_at) = ship.docked_at {
                 if !player_d_states.contains_key(&d_id) {
-                    self.trigger_dialogue(
-                        &d_id,
-                        d_script,
-                        &mut res,
-                        player,
-                        player_d_states,
-                        state,
-                    );
+                    self.trigger_dialogue(d_id, d_script, &mut res, player, player_d_states, state);
                 } else {
                     let existing_state = player_d_states.get(&d_id).unwrap();
                     if existing_state.is_none() {
                         self.trigger_dialogue(
-                            &d_id,
+                            d_id,
                             d_script,
                             &mut res,
                             player,
@@ -274,7 +271,7 @@ pub fn execute_dialog_option(
             *dialogue_state = new_state;
             return (
                 build_dialogue_from_state(
-                    &update.dialogue_id,
+                    update.dialogue_id,
                     dialogue_state,
                     dialogue_table,
                     client_id,
@@ -291,13 +288,13 @@ pub fn execute_dialog_option(
 }
 
 pub fn build_dialogue_from_state(
-    dialogue_id: &DialogueId,
+    dialogue_id: DialogueId,
     current_state: &Box<Option<StateId>>,
     dialogue_table: &DialogueTable,
     player_id: PlayerId,
     game_state: &GameState,
 ) -> Option<Dialogue> {
-    let script = dialogue_table.scripts.get(dialogue_id);
+    let script = dialogue_table.scripts.get(&dialogue_id);
     let player = find_my_player(game_state, player_id);
     if let Some(script) = script {
         if let Some(state) = **current_state {
@@ -342,11 +339,6 @@ pub fn build_dialogue_from_state(
     }
     return None;
 }
-
-use crate::random_stuff::gen_random_character_name;
-use itertools::Itertools;
-use regex::Regex;
-use std::borrow::BorrowMut;
 
 fn substitute_text(
     text: &String,
