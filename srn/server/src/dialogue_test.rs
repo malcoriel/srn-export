@@ -16,11 +16,11 @@ mod world_test {
         let (dialogue_id, first_state_id, second_state_id, go_next_id, go_back_id, exit_id, script) =
             gen_basic_planet_script();
 
-        let mut d_table: DialogueTable = HashMap::new();
-        d_table.insert(dialogue_id, script);
+        let mut d_table: DialogueTable = DialogueTable::new();
+        d_table.scripts.insert(dialogue_id, script);
 
         let mut d_states: DialogueStates = HashMap::new();
-        d_states.insert(player_id, HashMap::new());
+        d_states.insert(player_id, (None, HashMap::new()));
         d_states
             .get_mut(&player_id)
             .unwrap()
@@ -29,7 +29,7 @@ mod world_test {
         let mut state = world::seed_state(false, false);
 
         execute_dialog_option(
-            &player_id,
+            player_id,
             &mut state,
             DialogueUpdate {
                 dialogue_id,
@@ -45,7 +45,7 @@ mod world_test {
             .unwrap()
             .clone();
         execute_dialog_option(
-            &player_id,
+            player_id,
             &mut state,
             DialogueUpdate {
                 dialogue_id,
