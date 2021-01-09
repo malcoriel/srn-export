@@ -138,7 +138,8 @@ class Srn extends React.Component<
     const ns = NetState.get();
     if (!ns) return;
 
-    ns.preferredName = this.state.preferredName;
+    ns.playerName = this.state.preferredName;
+    ns.portraitIndex = this.state.portraitIndex + 1; // portrait files are 1-based
     ns.connect();
     Perf.start();
     this.time.setInterval(

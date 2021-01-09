@@ -104,6 +104,12 @@ impl ServerToClientMessage {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct PersonalizeUpdate {
+    name: String,
+    portrait_index: i32,
+}
+
 struct StateContainer {
     state: GameState,
 }
@@ -430,7 +436,14 @@ fn handle_request(request: WSRequest) {
                                         }
                                     }
                                     ClientOpCode::Name => {
-                                        change_player_name(client_id, second);
+                                        let parsed =
+                                            serde_json::from_str::<PersonalizeUpdate>(second);
+                                        match parsed {
+                                            Ok(up) => {
+                                                personalize_player(client_id, up);
+                                            }
+                                            Err(_) => {}
+                                        }
                                     }
                                     ClientOpCode::DialogueOption => {
                                         handle_dialogue_option(
@@ -566,7 +579,7 @@ fn is_disconnected(client_id: Uuid) -> bool {
     return false;
 }
 
-fn change_player_name(conn_id: Uuid, new_name: &&str) {
+fn personalize_player(conn_id: Uuid, update: PersonalizeUpdate) {
     {
         let mut cont = STATE.write().unwrap();
         world::force_update_to_now(&mut cont.state);
@@ -575,7 +588,8 @@ fn change_player_name(conn_id: Uuid, new_name: &&str) {
             .iter_mut()
             .find(|p| p.id == conn_id)
             .map(|p| {
-                p.name = new_name.to_string();
+                p.name = update.name;
+                p.photo_id = update.portrait_index;
             });
     }
     {

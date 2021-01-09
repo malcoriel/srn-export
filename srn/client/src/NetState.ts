@@ -81,7 +81,8 @@ export default class NetState extends EventEmitter {
   state!: GameState;
   dialogue?: Dialogue;
   public connecting = true;
-  public preferredName = 'player';
+  public playerName = 'player';
+  public portraitIndex = 0;
   public ping: number;
   public maxPing?: number;
   public maxPingTick?: number;
@@ -198,7 +199,13 @@ export default class NetState extends EventEmitter {
     };
     this.socket.onopen = () => {
       this.connecting = false;
-      this.send({ code: ClientOpCode.Name, value: this.preferredName });
+      this.send({
+        code: ClientOpCode.Name,
+        value: JSON.stringify({
+          name: this.playerName,
+          portrait_index: this.portraitIndex,
+        }),
+      });
     };
     this.socket.onerror = () => {
       console.warn('socket error');
@@ -378,7 +385,7 @@ export default class NetState extends EventEmitter {
   };
 
   onPreferredNameChange = (newName: string) => {
-    this.preferredName = newName;
+    this.playerName = newName;
   };
 
   updateLocalState = (elapsedMs: number) => {
