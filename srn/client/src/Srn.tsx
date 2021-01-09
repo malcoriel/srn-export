@@ -30,6 +30,7 @@ import { QuestPanel } from './HtmlLayers/QuestPanel';
 import 'react-jinke-music-player/assets/index.css';
 import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
+import { randBetweenExclusiveEnd } from './utils/rand';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
@@ -43,9 +44,27 @@ function genRandomName() {
   }).toUpperCase();
 }
 
+const portraits = [
+  '1.jpg',
+  '2.jpg',
+  '3.jpg',
+  '4.jpg',
+  '5.jpg',
+  '6.jpg',
+  '7.jpg',
+  '8.jpg',
+  '9.jpg',
+];
+
 class Srn extends React.Component<
   {},
-  { preferredName: string; ready: boolean; musicEnabled: boolean }
+  {
+    preferredName: string;
+    ready: boolean;
+    musicEnabled: boolean;
+    portraitIndex: number;
+    portrait: string;
+  }
 > {
   private time: vsyncedDecoupledTime;
   private readonly id: string;
@@ -54,12 +73,31 @@ class Srn extends React.Component<
     super(props);
     this.id = uuid.v4();
     this.time = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
+    let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
     this.state = {
       ready: false,
       preferredName: genRandomName(),
       musicEnabled: true,
+      portraitIndex: portraitIndex,
+      portrait: this.portraitPath(portraitIndex),
     };
   }
+
+  nextPortrait = () => {
+    let portraitIndex = (this.state.portraitIndex + 1) % portraits.length;
+    let portrait = this.portraitPath(portraitIndex);
+    this.setState({ portraitIndex, portrait });
+  };
+
+  private portraitPath(portraitIndex: number) {
+    return `resources/chars/${portraits[portraitIndex]}`;
+  }
+
+  previousPortrait = () => {
+    this.setState({
+      portraitIndex: (this.state.portraitIndex - 1) % portraits.length,
+    });
+  };
 
   componentDidMount() {
     NetState.make();
@@ -160,6 +198,9 @@ class Srn extends React.Component<
           <DialoguePanel />
           {!this.state.ready && (
             <StartHudLayer
+              nextPortrait={this.nextPortrait}
+              previousPortrait={this.previousPortrait}
+              portrait={this.state.portrait}
               makeRandomName={() => {
                 this.setState({ preferredName: genRandomName() });
               }}
