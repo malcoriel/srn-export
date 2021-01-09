@@ -1,0 +1,41 @@
+@import "../utils/palette.scss";
+.start-hud {
+  font-size: 20px;
+  display: flex;
+  color: $teal;
+  align-items: center;
+  flex-direction:column;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  height: 100%;
+  width: 100%;
+  background-color: black;
+
+  & * {
+    margin-top: 30px;
+  }
+
+  .music-toggle {
+    margin-top: 0;
+    display: flex;
+    flex-direction:row;
+    width: 150px;
+    justify-content: space-around;
+
+    * {
+      flex-basis: 40px;
+    }
+  }
+
+  .title {
+    font-size: 60px;
+  }
+
+  .name-input {
+    text-align: center;
+    width: 250px;
+  }
+}

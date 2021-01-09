@@ -1,44 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
+import './StartHud.scss';
+import { Button } from './ui/Button';
+import { Label } from './ui/Label';
+import { Input } from './ui/Input';
 
 export const StartHudLayer: React.FC<{
   preferredName: string;
   onPreferredNameChange: (n: string) => void;
   onGo: () => void;
-}> = ({ preferredName, onPreferredNameChange, onGo }) => {
+  makeRandomName: () => void;
+  onSetMusic: (val: boolean) => void;
+  musicEnabled: boolean;
+}> = ({
+  preferredName,
+  onPreferredNameChange,
+  onGo,
+  onSetMusic,
+  musicEnabled,
+  makeRandomName,
+}) => {
+  const [about, setAbout] = useState(false);
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        zIndex: 1,
-        height: '100%',
-        width: '100%',
-        backgroundColor: 'black',
-        opacity: 0.5,
-      }}
-    >
-      <div style={{ color: 'white' }}>
-        <label htmlFor="name">Your name</label>
-        <input
-          type="text"
-          style={{
-            backgroundColor: 'black',
-            color: 'white',
-            opacity: 0.8,
-            marginLeft: 10,
-            marginRight: 10,
-            display: 'inline-block',
-          }}
-          id="name"
-          value={preferredName}
-          onChange={(e) => onPreferredNameChange(e.target.value)}
+    <div className="start-hud">
+      <div className="title">Star Rangers Network</div>
+      <Label text="Let's name you" />
+      <Input
+        className="name-input"
+        value={preferredName}
+        onChange={(e) => onPreferredNameChange(e.target.value)}
+      />
+      <Button text="Random" onClick={makeRandomName} />
+
+      <Label text="Music (written by AIVA)" />
+      <div className="music-toggle">
+        <Button
+          text="ON"
+          onClick={() => onSetMusic(true)}
+          toggled={musicEnabled}
         />
-        <button onClick={onGo}>GO!</button>
+        <Button
+          text="OFF"
+          onClick={() => onSetMusic(false)}
+          toggled={!musicEnabled}
+        />
       </div>
+      <Button text="Play cargo rush mode" onClick={onGo} />
+      <Button text="About" onClick={() => setAbout(true)} />
     </div>
   );
 };

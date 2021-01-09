@@ -1,0 +1,10 @@
+@import "../../utils/palette";
+
+.input {
+  background-color: black;
+  opacity: 0.8;
+  border: 2px solid $teal;
+  padding: 5px;
+  color: $teal;
+  border-radius: 5px;
+}

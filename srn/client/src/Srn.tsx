@@ -27,60 +27,25 @@ import './HtmlLayers/Panel.scss';
 import { MinimapLayerWrapper } from './KonvaLayers/MinimapLayerWrapper';
 import { InGameLeaderBoardPanel } from './HtmlLayers/InGameLeaderboardPanel';
 import { QuestPanel } from './HtmlLayers/QuestPanel';
-import ReactJkMusicPlayer from 'react-jinke-music-player';
 import 'react-jinke-music-player/assets/index.css';
 import { DialoguePanel } from './HtmlLayers/DialoguePanel';
+import { MusicControls } from './MusicControls';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
 
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 
-let bgmTracks = [
-  {
-    name: 'c2',
-    musicSrc: 'resources/bgm/c2.mp3',
-    singer: 'aiva',
-  },
-  {
-    name: 'c3',
-    musicSrc: 'resources/bgm/c3.mp3',
-    singer: 'aiva',
-  },
-  {
-    name: 'c4',
-    musicSrc: 'resources/bgm/c4.mp3',
-    singer: 'aiva',
-  },
-  {
-    name: 'c5',
-    musicSrc: 'resources/bgm/c5.mp3',
-    singer: 'aiva',
-  },
-  {
-    name: 'c6',
-    musicSrc: 'resources/bgm/c6.mp3',
-    singer: 'aiva',
-  },
-];
-let defaultPlayIndex =
-  parseInt(String(Math.random() * bgmTracks.length), 10) % bgmTracks.length;
-
-function MusicControls() {
-  return (
-    <ReactJkMusicPlayer
-      toggleMode={false}
-      showMiniProcessBar
-      defaultPlayMode="shufflePlay"
-      defaultPlayIndex={defaultPlayIndex}
-      audioLists={bgmTracks}
-    />
-  );
+function genRandomName() {
+  return uniqueNamesGenerator({
+    dictionaries: [adjectives, animals],
+    separator: '-',
+  }).toUpperCase();
 }
 
 class Srn extends React.Component<
   {},
-  { preferredName: string; ready: boolean }
+  { preferredName: string; ready: boolean; musicEnabled: boolean }
 > {
   private time: vsyncedDecoupledTime;
   private readonly id: string;
@@ -90,11 +55,9 @@ class Srn extends React.Component<
     this.id = uuid.v4();
     this.time = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
     this.state = {
-      ready: true,
-      preferredName: uniqueNamesGenerator({
-        dictionaries: [adjectives, animals],
-        separator: '-',
-      }).toUpperCase(),
+      ready: false,
+      preferredName: genRandomName(),
+      musicEnabled: true,
     };
   }
 
@@ -109,7 +72,6 @@ class Srn extends React.Component<
     ns.on('network', () => {
       this.forceUpdate();
     });
-    this.start();
     this.monitorSizeInterval = setInterval(
       this.updateSize,
       MONITOR_SIZE_INTERVAL
@@ -172,41 +134,50 @@ class Srn extends React.Component<
             height: size.height_px,
           }}
         >
-          {this.state.ready && <MinimapLayerWrapper />}
-          {this.state.ready && <ThreeLayer />}
           {this.state.ready && (
-            <Stage
-              width={size.width_px}
-              height={size.height_px}
-              {...scaleConfig()}
-              style={{ pointerEvents: 'none' }}
-            >
-              <NamesLayer />
-              <MyTrajectoryLayer />
-              <CoordLayer />
-            </Stage>
+            <>
+              <MinimapLayerWrapper />
+              <ThreeLayer />
+              <Stage
+                width={size.width_px}
+                height={size.height_px}
+                {...scaleConfig()}
+                style={{ pointerEvents: 'none' }}
+              >
+                <NamesLayer />
+                <MyTrajectoryLayer />
+                <CoordLayer />
+              </Stage>
+              <ShipControls />
+              <GameHTMLHudLayer />
+              <InGameLeaderBoardPanel />
+              <HelpLayer />
+              <LeaderboardLayer />
+              <QuestPanel />
+            </>
           )}
-          <ShipControls />
-          <GameHTMLHudLayer />
-          <InGameLeaderBoardPanel />
-          <HelpLayer />
-          <LeaderboardLayer />
-          <QuestPanel />
-          <MusicControls />
+          {this.state.musicEnabled && <MusicControls />}
           <DialoguePanel />
+          {!this.state.ready && (
+            <StartHudLayer
+              makeRandomName={() => {
+                this.setState({ preferredName: genRandomName() });
+              }}
+              musicEnabled={this.state.musicEnabled}
+              onPreferredNameChange={(name) =>
+                this.setState({ preferredName: name })
+              }
+              onSetMusic={(value) => {
+                this.setState({ musicEnabled: value });
+              }}
+              onGo={() => {
+                this.setState({ ready: true });
+                this.start();
+              }}
+              preferredName={this.state.preferredName}
+            />
+          )}
         </div>
-        {!this.state.ready && (
-          <StartHudLayer
-            onPreferredNameChange={(name) =>
-              this.setState({ preferredName: name })
-            }
-            onGo={() => {
-              this.setState({ ready: true });
-              this.start();
-            }}
-            preferredName={this.state.preferredName}
-          />
-        )}
         <DebugStateLayer />
         <StatsPanel />
       </>

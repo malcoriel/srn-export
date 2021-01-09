@@ -6,3 +6,4 @@ export const gray = '#555';
 export const tiffanyBBlue = '#a0e7e5';
 export const mint = '#b4f8c8';
 export const yellow = '#fbe7c6';
+export const teal = '#01c9fb';

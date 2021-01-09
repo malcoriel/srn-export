@@ -1,0 +1,23 @@
+@import "../../utils/palette";
+
+.button {
+  opacity: 0.8;
+  color: $teal;
+  padding: 10px;
+  border-radius:5px;
+  border: solid $teal 3px;
+  display: inline-block;
+  text-align: center;
+}
+
+.button.toggled {
+  background-color: darken($teal, 0.9);
+  color: black;
+}
+
+.button:hover {
+  opacity: 0.9;
+  background-color: darken($teal, 0.9);
+  color: black;
+  cursor: pointer;
+}

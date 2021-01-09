@@ -1,0 +1,11 @@
+@import "../../utils/palette";
+
+.label {
+  color: $teal;
+  display: inline-block;
+}
+
+.label:hover {
+  color: lighten($teal, 0.5);
+  cursor: default;
+}
