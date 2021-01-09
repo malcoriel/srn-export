@@ -1,26 +1,64 @@
+use crate::dialogue::{
+    build_dialogue_from_state, Dialogue, DialogueScript, DialogueStates, DialogueTable,
+    DialogueUpdate,
+};
+use crate::fire_event;
+use crate::random_stuff::{
+    gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
+    gen_planet_radius, gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name,
+    gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
+};
 use crate::vec2::{angle_rad, rotate, AsVec2f64, Precision, Vec2f64};
 use crate::{dialogue, new_id, DEBUG_PHYSICS};
+use chrono::Utc;
+use itertools::Itertools;
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 use uuid::Uuid;
-const SEED_TIME: i64 = 9321 * 1000 * 1000;
-use crate::dialogue::{
-    build_dialogue_from_state, Dialogue, DialogueScript, DialogueStates, DialogueTable,
-    DialogueUpdate,
-};
-use crate::random_stuff::{
-    gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
-    gen_planet_radius, gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name,
-    gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
-};
-use chrono::Utc;
-use itertools::Itertools;
 use uuid::*;
 
 const SHIP_SPEED: f64 = 20.0;
+const ORB_SPEED_MULT: f64 = 1.0;
+const SEED_TIME: i64 = 9321 * 1000 * 1000;
+const MAX_ORBIT: f64 = 400.0;
+const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
+const TRAJECTORY_MAX_ITER: i32 = 10;
+const TRAJECTORY_EPS: f64 = 0.1;
+
+pub type PlayerId = Uuid;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ManualMoveUpdate {
+    pub position: Vec2f64,
+    pub rotation: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ShipActionRust {
+    Unknown,
+    Move(ManualMoveUpdate),
+    Dock,
+    Navigate(Vec2f64),
+    DockNavigate(Uuid),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ShipActionType {
+    Unknown = 0,
+    Move = 1,
+    Dock = 2,
+    Navigate = 3,
+    DockNavigate = 4,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ShipAction {
+    pub s_type: ShipActionType,
+    pub data: String,
+}
 
 pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
     let rating = all_players
@@ -403,8 +441,6 @@ pub struct GameState {
     pub ticks: u32,
 }
 
-const ORB_SPEED_MULT: f64 = 1.0;
-
 pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
     let star_id = crate::new_id();
     let star = Star {
@@ -493,8 +529,6 @@ pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
     state
 }
 
-const MAX_ORBIT: f64 = 400.0;
-
 fn validate_state(mut in_state: GameState) -> GameState {
     in_state.planets = in_state
         .planets
@@ -545,7 +579,7 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
             state = seed_state(false, true);
             state.players = players.clone();
             for player in players.iter() {
-                spawn_ship(&mut state, &player.id, None);
+                spawn_ship(&mut state, player.id, None);
             }
         } else {
         }
@@ -572,7 +606,7 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     state
 }
 
-pub fn add_player(state: &mut GameState, player_id: &Uuid, is_bot: bool, name: Option<String>) {
+pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
     let player = Player {
         id: player_id.clone(),
         is_bot,
@@ -585,11 +619,7 @@ pub fn add_player(state: &mut GameState, player_id: &Uuid, is_bot: bool, name: O
     state.players.push(player);
 }
 
-pub fn spawn_ship<'a, 'b>(
-    state: &'a mut GameState,
-    player_id: &'b Uuid,
-    at: Option<Vec2f64>,
-) -> &'a Ship {
+pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -> &Ship {
     let mut rng: ThreadRng = rand::thread_rng();
     let start = get_random_planet(&state.planets, None, &mut rng);
     let ship = Ship {
@@ -615,7 +645,7 @@ pub fn spawn_ship<'a, 'b>(
     state
         .players
         .iter_mut()
-        .find(|p| p.id == *player_id)
+        .find(|p| p.id == player_id)
         .map(|p| p.ship_id = Some(ship.id));
     state.ships.push(ship);
     &state.ships[state.ships.len() - 1]
@@ -717,10 +747,6 @@ fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
     let new_pos = ship_pos.add(&shift);
     new_pos
 }
-
-const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
-const TRAJECTORY_MAX_ITER: i32 = 10;
-const TRAJECTORY_EPS: f64 = 0.1;
 
 // TODO for some weird reason, it works for anchor_tier=2 too, however I do not support it here!
 fn build_trajectory_to_planet(
@@ -860,48 +886,6 @@ pub fn find_my_player_mut<'a, 'b>(
     return None;
 }
 
-pub fn execute_dialog_option(
-    client_id: &Uuid,
-    state: &mut GameState,
-    dialogue_update: DialogueUpdate,
-    states: &mut DialogueStates,
-    dialogue_table: &DialogueTable,
-) -> (Option<Dialogue>, bool) {
-    dialogue::execute_dialog_option(client_id, state, dialogue_update, states, dialogue_table)
-}
-
-pub type PlayerId = Uuid;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ManualMoveUpdate {
-    pub position: Vec2f64,
-    pub rotation: f64,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum ShipActionRust {
-    Unknown,
-    Move(ManualMoveUpdate),
-    Dock,
-    Navigate(Vec2f64),
-    DockNavigate(Uuid),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ShipActionType {
-    Unknown = 0,
-    Move = 1,
-    Dock = 2,
-    Navigate = 3,
-    DockNavigate = 4,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ShipAction {
-    pub s_type: ShipActionType,
-    pub data: String,
-}
-
 fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
     match action_raw.s_type {
         ShipActionType::Unknown => ShipActionRust::Unknown,
@@ -917,8 +901,6 @@ fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
             .map_or(ShipActionRust::Unknown, |v| ShipActionRust::DockNavigate(v)),
     }
 }
-
-use crate::fire_event;
 
 pub fn apply_ship_action(
     ship_action: ShipAction,

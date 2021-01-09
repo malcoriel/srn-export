@@ -316,7 +316,7 @@ fn handle_request(request: WSRequest) {
     let client_id = Uuid::new_v4();
     println!("Connection from {}, id={}", ip, client_id);
 
-    make_new_human_player(&client_id);
+    make_new_human_player(client_id);
     {
         let mut state = STATE.read().unwrap().state.clone();
         state = patch_state_for_player(state, client_id);
@@ -579,7 +579,7 @@ fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _ta
         let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
         world::force_update_to_now(&mut cont.state);
-        let (new_dialogue_state, state_changed) = world::execute_dialog_option(
+        let (new_dialogue_state, state_changed) = execute_dialog_option(
             client_id,
             &mut cont.state,
             dialogue_update,
@@ -596,7 +596,7 @@ fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _ta
     }
 }
 
-fn make_new_human_player(conn_id: &Uuid) {
+fn make_new_human_player(conn_id: Uuid) {
     {
         let mut cont = STATE.write().unwrap();
         world::add_player(&mut cont.state, conn_id, false, None);
@@ -822,7 +822,9 @@ fn handle_events(
 }
 
 use crate::bots::{bot_init, do_bot_actions};
-use crate::dialogue::{Dialogue, DialogueId, DialogueScript, DialogueUpdate};
+use crate::dialogue::{
+    execute_dialog_option, Dialogue, DialogueId, DialogueScript, DialogueUpdate,
+};
 use crate::vec2::Vec2f64;
 use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent,

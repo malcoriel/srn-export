@@ -1,6 +1,6 @@
 use crate::world::{
-    apply_ship_action, execute_dialog_option, find_my_player, find_my_ship, find_planet, GameEvent,
-    GameState, QuestState, Ship, ShipAction, ShipActionType,
+    apply_ship_action, find_my_player, find_my_ship, find_planet, GameEvent, GameState, QuestState,
+    Ship, ShipAction, ShipActionType,
 };
 use crate::{
     fire_event, mutate_owned_ship, mutate_ship_no_lock, new_id, try_replace_ship, StateContainer,
@@ -27,8 +27,8 @@ lazy_static! {
 }
 
 use crate::dialogue::{
-    DialogueId, DialogueScript, DialogueStates, DialogueStatesForPlayer, DialogueTable,
-    DialogueUpdate,
+    execute_dialog_option, DialogueId, DialogueScript, DialogueStates, DialogueStatesForPlayer,
+    DialogueTable, DialogueUpdate,
 };
 use crate::STATE;
 use chrono::Local;
@@ -194,8 +194,8 @@ fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
     let id = bot.id.clone();
     bots.push(bot);
     let mut cont = STATE.write().unwrap();
-    world::add_player(&mut cont.state, &id, true, Some(gen_bot_name()));
-    world::spawn_ship(&mut cont.state, &id, None);
+    world::add_player(&mut cont.state, id, true, Some(gen_bot_name()));
+    world::spawn_ship(&mut cont.state, id, None);
     id
     // new_id()
 }
