@@ -8,13 +8,6 @@ import { CoordLayer } from './KonvaLayers/CoordLayer';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { GameHTMLHudLayer } from './HtmlLayers/GameHTMLHudLayer';
-import create from 'zustand';
-
-import {
-  adjectives,
-  animals,
-  uniqueNamesGenerator,
-} from 'unique-names-generator';
 import { Perf, StatsPanel } from './HtmlLayers/Perf';
 import { MainMenuLayer } from './HtmlLayers/MainMenuLayer';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
@@ -31,90 +24,11 @@ import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
 import { randBetweenExclusiveEnd } from './utils/rand';
 import { HotkeyWrapper } from './HotkeyWrapper';
+import { portraitPath, portraits, SrnState, useStore } from './store';
 
 const MONITOR_SIZE_INTERVAL = 1000;
-
-function genRandomName() {
-  return uniqueNamesGenerator({
-    dictionaries: [adjectives, animals],
-    separator: '-',
-  }).toUpperCase();
-}
-
-const portraits = [
-  '1.jpg',
-  '2.jpg',
-  '3.jpg',
-  '4.jpg',
-  '5.jpg',
-  '6.jpg',
-  '7.jpg',
-  '8.jpg',
-  '9.jpg',
-];
-
-function portraitPath(portraitIndex: number) {
-  return `resources/chars/${portraits[portraitIndex]}`;
-}
-
-type SrnState = {
-  playing: boolean;
-  setPlaying: (value: boolean) => void;
-  menu: boolean;
-  setMenu: (value: boolean) => void;
-  preferredName: string;
-  setPreferredName: (value: string) => void;
-  musicEnabled: boolean;
-  setMusicEnabled: (value: boolean) => void;
-  portraitIndex: number;
-  setPortraitIndex: (value: number) => void;
-  portrait: string;
-  setPortrait: (value: string) => void;
-  nextPortrait: () => void;
-  prevPortrait: () => void;
-  trigger: number;
-  forceUpdate: () => void;
-};
-
-export const useStore = create<SrnState>((set) => ({
-  playing: false,
-  menu: true,
-  preferredName: genRandomName(),
-  musicEnabled: true,
-  portraitIndex: 0,
-  portrait: '0',
-  trigger: 0,
-
-  setPreferredName: (val: string) => set({ preferredName: val }),
-  setMenu: (val: boolean) => set({ menu: val }),
-  setMusicEnabled: (val: boolean) => set({ musicEnabled: val }),
-  setPortraitIndex: (val: number) => set({ portraitIndex: val }),
-  setPortrait: (val: string) => set({ portrait: val }),
-  forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
-  setPlaying: (val: boolean) => set({ playing: val }),
-
-  nextPortrait: () =>
-    set((state) => {
-      let locIndex = (state.portraitIndex + 1) % portraits.length;
-      let locPort = portraitPath(locIndex);
-      state.setPortrait(locPort);
-      state.setPortraitIndex(locIndex);
-      return {};
-    }),
-
-  prevPortrait: () =>
-    set((state) => {
-      let number = state.portraitIndex - 1;
-      if (number < 0) number = portraits.length + number;
-      let locIndex = number % portraits.length;
-      let locPort = portraitPath(locIndex);
-      state.setPortrait(locPort);
-      state.setPortraitIndex(locIndex);
-      return {};
-    }),
-}));
-
 let monitorSizeInterval: Timeout | undefined;
+
 const Srn = () => {
   const {
     playing,
@@ -122,11 +36,9 @@ const Srn = () => {
     menu,
     setMenu,
     preferredName,
-    setPreferredName,
     musicEnabled,
     portraitIndex,
     setPortraitIndex,
-    portrait,
     setPortrait,
     forceUpdate,
   } = useStore((state: SrnState) => ({ ...state }));
@@ -172,7 +84,6 @@ const Srn = () => {
   }, []);
 
   const start = () => {
-    console.log('starting');
     if (!NetState.get()) {
       NetState.make();
     }
@@ -247,19 +158,9 @@ const Srn = () => {
         {musicEnabled && <MusicControls />}
         {menu && (
           <MainMenuLayer
-            portrait={portrait}
-            makeRandomName={() => {
-              setPreferredName(genRandomName());
-            }}
-            onPreferredNameChange={(name) => {
-              setPreferredName(name);
-            }}
-            hide={() => setMenu(false)}
-            playing={playing}
             onGo={() => {
               start();
             }}
-            preferredName={preferredName}
             makeRandomPortrait={() => {
               let locIndex = randBetweenExclusiveEnd(0, portraits.length);
               setPortraitIndex(locIndex);

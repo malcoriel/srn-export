@@ -6,43 +6,41 @@ import { Input } from './ui/Input';
 import { FaAngleRight, FaDiceD20 } from 'react-icons/fa';
 import { FaAngleLeft } from 'react-icons/fa';
 import { useLocalStorage } from '../utils/useLocalStorage';
-import { useStore } from '../Srn';
+import { useStore } from '../store';
 
 // to only skip menu once
 let firstTime = true;
 
 export const MainMenuLayer: React.FC<{
-  preferredName: string;
-  onPreferredNameChange: (n: string) => void;
   onGo: () => void;
-  makeRandomName: () => void;
   makeRandomPortrait: () => void;
-  portrait: string;
-  playing: boolean;
-  hide: () => void;
   quit: () => void;
-}> = ({
-  preferredName,
-  onPreferredNameChange,
-  onGo,
-  makeRandomName,
-  makeRandomPortrait,
-  portrait,
-  playing,
-  hide,
-  quit,
-}) => {
+}> = ({ onGo, makeRandomPortrait, quit }) => {
   const {
     musicEnabled,
     setMusicEnabled,
     nextPortrait,
     prevPortrait,
+    preferredName,
+    setPreferredName,
+    makeRandomName,
+    portrait,
+    playing,
+    setMenu,
   } = useStore((state) => ({
     musicEnabled: state.musicEnabled,
     setMusicEnabled: state.setMusicEnabled,
     nextPortrait: state.nextPortrait,
     prevPortrait: state.prevPortrait,
+    preferredName: state.preferredName,
+    setPreferredName: state.setPreferredName,
+    makeRandomName: state.makeRandomName,
+    setMenu: state.setMenu,
+    playing: state.playing,
+    portrait: state.portrait,
   }));
+
+  const hide = () => setMenu(false);
 
   const [lsName, setLsName] = useLocalStorage('preferredName', preferredName);
   const [lsMusicEnabled, setLsMusicEnabled] = useLocalStorage(
@@ -54,7 +52,7 @@ export const MainMenuLayer: React.FC<{
   useEffect(() => {
     if (lsName !== preferredName && lsName) {
       // got something saved
-      onPreferredNameChange(lsName);
+      setPreferredName(lsName);
     }
     if (typeof lsMusicEnabled === 'boolean' && lsMusicEnabled != musicEnabled) {
       setMusicEnabled(lsMusicEnabled);
@@ -77,7 +75,7 @@ export const MainMenuLayer: React.FC<{
               onChange={(e) => {
                 let name = e.target.value;
                 setLsName(name);
-                onPreferredNameChange(name);
+                setPreferredName(name);
               }}
             />
             <Button
