@@ -14,13 +14,11 @@ import {
   animals,
   uniqueNamesGenerator,
 } from 'unique-names-generator';
-import { Perf, statsHeap, StatsPanel } from './HtmlLayers/Perf';
-import { vsyncedDecoupledTime } from './utils/Times';
+import { Perf, StatsPanel } from './HtmlLayers/Perf';
 import { MainMenuLayer } from './HtmlLayers/MainMenuLayer';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
-import * as uuid from 'uuid';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
 import { HelpLayer } from './HtmlLayers/HelpLayer';
 import './HtmlLayers/Panel.scss';
@@ -66,7 +64,7 @@ const Srn = () => {
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [portraitIndex, setPortraitIndex] = useState(0);
   const [portrait, setPortrait] = useState('0');
-  const [trigger, setTrigger] = useState(0);
+  const [, setTrigger] = useState(0);
 
   const nextPortrait = () => {
     let locIndex = (portraitIndex + 1) % portraits.length;
@@ -111,6 +109,11 @@ const Srn = () => {
     setPortraitIndex(locIndex);
 
     monitorSizeInterval = setInterval(updateSize, MONITOR_SIZE_INTERVAL);
+
+    if (playing) {
+      start();
+    }
+    //
     return () => {
       const ns = NetState.get();
       if (!ns) return;
@@ -133,7 +136,8 @@ const Srn = () => {
     if (!ns) {
       return;
     }
-
+    setPlaying(true);
+    setMenu(false);
     ns.playerName = preferredName;
     ns.portraitIndex = portraitIndex + 1; // portrait files are 1-based
     ns.disconnecting = false;
@@ -183,18 +187,18 @@ const Srn = () => {
             <HelpLayer />
             <LeaderboardLayer />
             <QuestPanel />
+            <DialoguePanel />
+            <HotkeyWrapper
+              hotkey="esc"
+              onPress={() => {
+                setMenu(!menu);
+              }}
+            />
+            <DebugStateLayer />
+            <StatsPanel />
           </>
         )}
         {musicEnabled && <MusicControls />}
-        <DialoguePanel />
-        {playing && (
-          <HotkeyWrapper
-            hotkey="esc"
-            onPress={() => {
-              setMenu(!menu);
-            }}
-          />
-        )}
         {menu && (
           <MainMenuLayer
             nextPortrait={nextPortrait}
@@ -213,8 +217,6 @@ const Srn = () => {
               setMusicEnabled(value);
             }}
             onGo={() => {
-              setPlaying(true);
-              setMenu(false);
               start();
             }}
             preferredName={preferredName}
@@ -227,8 +229,6 @@ const Srn = () => {
           />
         )}
       </div>
-      <DebugStateLayer />
-      <StatsPanel />
     </>
   );
 };
