@@ -146,7 +146,7 @@ fn find_current_planet<'a, 'b>(
     player: &'a Player,
     game_state: &'b GameState,
 ) -> Option<&'b Planet> {
-    let ship = find_my_ship(game_state, &player.id);
+    let ship = find_my_ship(game_state, player.id);
     ship.and_then(|s| s.docked_at)
         .and_then(|id| find_planet(game_state, &id))
 }
@@ -184,7 +184,7 @@ impl DialogueTable {
         let value = Box::new(Some(script.initial_state));
         res.push((
             player.id,
-            build_dialogue_from_state(&d_id, &value, self, &player.id, game_state),
+            build_dialogue_from_state(&d_id, &value, self, player.id, game_state),
         ));
         player_d_states.insert(key.clone(), value);
     }
@@ -218,7 +218,7 @@ impl DialogueTable {
         }
         let d_script = d_script.unwrap();
         let d_id = d_script.id;
-        let ship = find_my_ship(state, &player.id);
+        let ship = find_my_ship(state, player.id);
         if let Some(ship) = ship {
             if let Some(_docked_at) = ship.docked_at {
                 if !player_d_states.contains_key(&d_id) {
@@ -254,7 +254,7 @@ impl DialogueTable {
 }
 
 pub fn execute_dialog_option(
-    client_id: &Uuid,
+    client_id: Uuid,
     // for state mutation due to dialogue, e.g. updating quest. you need to return the second return arg
     state: &mut GameState,
     update: DialogueUpdate,
@@ -262,14 +262,14 @@ pub fn execute_dialog_option(
     dialogue_table: &DialogueTable,
 ) -> (Option<Dialogue>, bool) {
     // bool means "side effect happened, state changed"
-    if let Some(all_dialogues) = dialogue_states.get_mut(client_id) {
+    if let Some(all_dialogues) = dialogue_states.get_mut(&client_id) {
         if let Some(dialogue_state) = all_dialogues.1.get_mut(&update.dialogue_id) {
             let (new_state, side_effect) = apply_dialogue_option(
                 dialogue_state.clone(),
                 &update,
                 dialogue_table,
                 state,
-                &client_id,
+                client_id,
             );
             *dialogue_state = new_state;
             return (
@@ -294,7 +294,7 @@ pub fn build_dialogue_from_state(
     dialogue_id: &DialogueId,
     current_state: &Box<Option<StateId>>,
     dialogue_table: &DialogueTable,
-    player_id: &PlayerId,
+    player_id: PlayerId,
     game_state: &GameState,
 ) -> Option<Dialogue> {
     let script = dialogue_table.scripts.get(dialogue_id);
@@ -414,7 +414,7 @@ fn apply_dialogue_option(
     update: &DialogueUpdate,
     dialogue_table: &DialogueTable,
     state: &mut GameState,
-    player_id: &PlayerId,
+    player_id: PlayerId,
 ) -> (Box<Option<StateId>>, bool) {
     // eprintln!("apply start");
 
@@ -442,7 +442,7 @@ fn apply_dialogue_option(
 fn apply_side_effects(
     state: &mut GameState,
     side_effects: Vec<DialogOptionSideEffect>,
-    player_id: &PlayerId,
+    player_id: PlayerId,
 ) -> bool {
     let state_read = state.clone();
     let mut state_changed = false;

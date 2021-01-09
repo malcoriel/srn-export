@@ -827,7 +827,7 @@ pub(crate) fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64) -> Vec<Vec2
     result
 }
 
-pub fn find_my_ship<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Option<&'a Ship> {
+pub fn find_my_ship(state: &GameState, player_id: Uuid) -> Option<&Ship> {
     let player = find_my_player(state, player_id);
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
@@ -837,7 +837,7 @@ pub fn find_my_ship<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Option
     return None;
 }
 
-pub fn find_my_ship_index(state: &GameState, player_id: &Uuid) -> Option<usize> {
+pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<usize> {
     let player = find_my_player(state, player_id);
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
@@ -851,10 +851,7 @@ pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<
     return state.planets.iter().find(|p| p.id == *planet_id);
 }
 
-pub fn find_my_ship_mut<'a, 'b>(
-    state: &'a mut GameState,
-    player_id: &'b Uuid,
-) -> Option<&'a mut Ship> {
+pub fn find_my_ship_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut Ship> {
     let player = find_my_player(state, player_id);
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
@@ -867,18 +864,15 @@ pub fn find_my_ship_mut<'a, 'b>(
     return None;
 }
 
-pub fn find_my_player<'a, 'b>(state: &'a GameState, player_id: &'b Uuid) -> Option<&'a Player> {
-    state.players.iter().find(|p| p.id == *player_id)
+pub fn find_my_player(state: &GameState, player_id: Uuid) -> Option<&Player> {
+    state.players.iter().find(|p| p.id == player_id)
 }
 
-pub fn find_my_player_mut<'a, 'b>(
-    state: &'a mut GameState,
-    player_id: &'b Uuid,
-) -> Option<&'a mut Player> {
+pub fn find_my_player_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut Player> {
     let index = state
         .players
         .iter()
-        .position(|player| player.id == *player_id);
+        .position(|player| player.id == player_id);
     if let Some(index) = index {
         let val: Option<&mut Player> = Some(&mut state.players[index]);
         return val;
@@ -908,7 +902,7 @@ pub fn apply_ship_action(
     player_id: Uuid,
 ) -> Option<Ship> {
     let ship_action: ShipActionRust = parse_ship_action(ship_action);
-    let old_ship = find_my_ship(state, &player_id);
+    let old_ship = find_my_ship(state, player_id);
     if old_ship.is_none() {
         eprintln!("No ship");
         return None;
@@ -938,7 +932,7 @@ pub fn apply_ship_action(
             if ship.docked_at.is_some() {
                 let planet_id = ship.docked_at.unwrap();
                 let planet = find_planet(state, &planet_id).unwrap().clone();
-                let player = find_my_player(state, &player_id).unwrap().clone();
+                let player = find_my_player(state, player_id).unwrap().clone();
                 ship.docked_at = None;
                 fire_event(GameEvent::ShipUndocked {
                     ship: ship.clone(),
@@ -962,7 +956,7 @@ pub fn apply_ship_action(
                         ship.navigate_target = None;
                         ship.dock_target = None;
                         ship.trajectory = vec![];
-                        let player = find_my_player(state, &player_id).unwrap().clone();
+                        let player = find_my_player(state, player_id).unwrap().clone();
 
                         fire_event(GameEvent::ShipDocked {
                             ship: ship.clone(),
@@ -1017,7 +1011,7 @@ pub fn try_assign_quests(state: &mut GameState) {
     let state_read = state.clone();
     for player in state.players.iter_mut() {
         if player.quest.is_none() {
-            let ship = find_my_ship(&state_read, &player.id);
+            let ship = find_my_ship(&state_read, player.id);
             if let Some(ship) = ship {
                 player.quest = generate_random_quest(&state_read.planets, ship.docked_at)
             }

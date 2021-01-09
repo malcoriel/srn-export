@@ -55,12 +55,12 @@ impl Bot {
         d_table: &DialogueTable,
         bot_d_states: &DialogueStatesForPlayer,
     ) -> (Self, Vec<BotAct>) {
-        let player = find_my_player(&state, &self.id);
+        let player = find_my_player(&state, self.id);
         if player.is_none() {
             eprintln!("{} no player", self.id);
             return (self, vec![]);
         }
-        let ship = find_my_ship(&state, &self.id);
+        let ship = find_my_ship(&state, self.id);
         if ship.is_none() {
             eprintln!("{} no ship", self.id);
             return (self, vec![]);
@@ -260,7 +260,7 @@ pub fn do_bot_actions(
     for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
         for act in dialogue_update {
             // eprintln!("executing {:?}", act);
-            execute_dialog_option(&bot_id, state, act.clone(), d_states, &d_table);
+            execute_dialog_option(bot_id, state, act.clone(), d_states, &d_table);
         }
     }
 }

@@ -186,7 +186,7 @@ fn mutate_ship_no_lock(
     tag: Option<String>,
     state: &mut GameState,
 ) -> Result<Ship, ClientErr> {
-    let old_ship_index = world::find_my_ship_index(&state, &client_id);
+    let old_ship_index = world::find_my_ship_index(&state, client_id);
     if old_ship_index.is_none() {
         return Err(ClientErr {
             message: String::from("No old instance of ship"),
@@ -214,7 +214,7 @@ fn mutate_ship_no_lock(
 }
 
 fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
-    let old_ship_index = world::find_my_ship_index(&state, &player_id);
+    let old_ship_index = world::find_my_ship_index(&state, player_id);
     return if let Some(old_ship_index) = old_ship_index {
         state.ships.remove(old_ship_index);
         state.ships.push(updated_ship.clone());
@@ -411,11 +411,11 @@ fn handle_request(request: WSRequest) {
                                         }
                                     }
                                     ClientOpCode::Name => {
-                                        change_player_name(&client_id, second);
+                                        change_player_name(client_id, second);
                                     }
                                     ClientOpCode::DialogueOption => {
                                         handle_dialogue_option(
-                                            &client_id,
+                                            client_id,
                                             serde_json::from_str::<DialogueUpdate>(second)
                                                 .ok()
                                                 .unwrap(),
@@ -550,14 +550,14 @@ fn is_disconnected(client_id: Uuid) -> bool {
     return false;
 }
 
-fn change_player_name(conn_id: &Uuid, new_name: &&str) {
+fn change_player_name(conn_id: Uuid, new_name: &&str) {
     {
         let mut cont = STATE.write().unwrap();
         world::force_update_to_now(&mut cont.state);
         cont.state
             .players
             .iter_mut()
-            .find(|p| p.id == *conn_id)
+            .find(|p| p.id == conn_id)
             .map(|p| {
                 p.name = new_name.to_string();
             });
@@ -572,7 +572,7 @@ lazy_static! {
         Arc::new(Mutex::new(Box::new(DialogueTable::new())));
 }
 
-fn handle_dialogue_option(client_id: &Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
+fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
     let global_state_change;
     {
         let mut cont = STATE.write().unwrap();
@@ -608,7 +608,7 @@ fn make_new_human_player(conn_id: Uuid) {
     };
     {
         let mut cont = STATE.write().unwrap();
-        let mut player = find_my_player_mut(&mut cont.state, &conn_id).unwrap();
+        let mut player = find_my_player_mut(&mut cont.state, conn_id).unwrap();
         player.quest = world::generate_random_quest(&planets, ship.docked_at);
     }
 }
