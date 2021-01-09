@@ -65,19 +65,16 @@ class Srn extends React.Component<
     portrait: string;
   }
 > {
-  private readonly id: string;
   private monitorSizeInterval?: Timeout;
   constructor(props: {}) {
     super(props);
-    this.id = uuid.v4();
-    let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
     this.state = {
       playing: false,
       menu: true,
       preferredName: genRandomName(),
       musicEnabled: true,
-      portraitIndex: portraitIndex,
-      portrait: Srn.portraitPath(portraitIndex),
+      portraitIndex: 0,
+      portrait: '0',
     };
   }
 
@@ -106,6 +103,15 @@ class Srn extends React.Component<
     NetState.make();
     const ns = NetState.get();
     if (!ns) return;
+    let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
+    let portrait = Srn.portraitPath(portraitIndex);
+    this.setState({ portraitIndex, portrait });
+    ns.on('change', () => {
+      this.forceUpdate();
+    });
+    ns.on('network', () => {
+      this.forceUpdate();
+    });
 
     this.monitorSizeInterval = setInterval(
       this.updateSize,
@@ -140,13 +146,6 @@ class Srn extends React.Component<
     if (!ns) {
       return;
     }
-
-    ns.on('change', () => {
-      this.forceUpdate();
-    });
-    ns.on('network', () => {
-      this.forceUpdate();
-    });
 
     ns.playerName = this.state.preferredName;
     ns.portraitIndex = this.state.portraitIndex + 1; // portrait files are 1-based
