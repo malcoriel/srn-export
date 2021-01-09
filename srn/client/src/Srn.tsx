@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
@@ -54,89 +54,76 @@ const portraits = [
   '9.jpg',
 ];
 
-class Srn extends React.Component<
-  {},
-  {
-    preferredName: string;
-    playing: boolean;
-    menu: boolean;
-    musicEnabled: boolean;
-    portraitIndex: number;
-    portrait: string;
-  }
-> {
-  private monitorSizeInterval?: Timeout;
-  constructor(props: {}) {
-    super(props);
-    this.state = {
-      playing: false,
-      menu: true,
-      preferredName: genRandomName(),
-      musicEnabled: true,
-      portraitIndex: 0,
-      portrait: '0',
-    };
-  }
+function portraitPath(portraitIndex: number) {
+  return `resources/chars/${portraits[portraitIndex]}`;
+}
 
-  nextPortrait = () => {
-    let portraitIndex = (this.state.portraitIndex + 1) % portraits.length;
-    let portrait = Srn.portraitPath(portraitIndex);
-    this.setState({ portraitIndex, portrait });
+let monitorSizeInterval: Timeout | undefined;
+const Srn = () => {
+  const [playing, setPlaying] = useState(false);
+  const [menu, setMenu] = useState(true);
+  const [preferredName, setPreferredName] = useState(genRandomName());
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [portraitIndex, setPortraitIndex] = useState(0);
+  const [portrait, setPortrait] = useState('0');
+  const [trigger, setTrigger] = useState(0);
+
+  const nextPortrait = () => {
+    let locIndex = (portraitIndex + 1) % portraits.length;
+    let locPort = portraitPath(locIndex);
+    setPortrait(locPort);
+    setPortraitIndex(locIndex);
   };
 
-  private static portraitPath(portraitIndex: number) {
-    return `resources/chars/${portraits[portraitIndex]}`;
-  }
-
-  previousPortrait = () => {
-    let number = this.state.portraitIndex - 1;
+  const previousPortrait = () => {
+    let number = portraitIndex - 1;
     if (number < 0) number = portraits.length + number;
-    let portraitIndex = number % portraits.length;
-    let portrait = Srn.portraitPath(portraitIndex);
-    this.setState({
-      portraitIndex,
-      portrait,
-    });
+    let locIndex = number % portraits.length;
+    let locPort = portraitPath(locIndex);
+
+    setPortrait(locPort);
+    setPortraitIndex(locIndex);
   };
 
-  componentDidMount() {
+  const forceUpdate = () => {
+    setTrigger((trigger) => trigger + 1);
+  };
+
+  const updateSize = () => {
+    if (
+      size.width_px !== window.innerWidth ||
+      size.height_px !== window.innerHeight
+    ) {
+      size.width_px = window.innerWidth;
+      size.height_px = window.innerHeight;
+      console.log('update size');
+      forceUpdate();
+    }
+  };
+
+  useEffect(() => {
     NetState.make();
     const ns = NetState.get();
     if (!ns) return;
-    let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
-    let portrait = Srn.portraitPath(portraitIndex);
-    this.setState({ portraitIndex, portrait });
-    ns.on('change', () => {
-      this.forceUpdate();
-    });
-    ns.on('network', () => {
-      this.forceUpdate();
-    });
+    let locIndex = randBetweenExclusiveEnd(0, portraits.length);
+    let locPort = portraitPath(locIndex);
+    setPortrait(locPort);
+    setPortraitIndex(locIndex);
 
-    this.monitorSizeInterval = setInterval(
-      this.updateSize,
-      MONITOR_SIZE_INTERVAL
-    );
-  }
+    monitorSizeInterval = setInterval(updateSize, MONITOR_SIZE_INTERVAL);
+    return () => {
+      const ns = NetState.get();
+      if (!ns) return;
 
-  updateSize = () => {
-    size.width_px = window.innerWidth;
-    size.height_px = window.innerHeight;
-    this.forceUpdate();
-  };
+      if (monitorSizeInterval) {
+        clearInterval(monitorSizeInterval);
+      }
+      Perf.stop();
+      ns.disconnect();
+    };
+  }, []);
 
-  componentWillUnmount() {
-    const ns = NetState.get();
-    if (!ns) return;
-
-    if (this.monitorSizeInterval) {
-      clearInterval(this.monitorSizeInterval);
-    }
-    Perf.stop();
-    ns.disconnect();
-  }
-
-  start() {
+  const start = () => {
     if (!NetState.get()) {
       NetState.make();
     }
@@ -147,103 +134,103 @@ class Srn extends React.Component<
       return;
     }
 
-    ns.playerName = this.state.preferredName;
-    ns.portraitIndex = this.state.portraitIndex + 1; // portrait files are 1-based
+    ns.playerName = preferredName;
+    ns.portraitIndex = portraitIndex + 1; // portrait files are 1-based
     ns.disconnecting = false;
+    ns.on('change', () => {
+      forceUpdate();
+    });
+    ns.on('network', () => {
+      forceUpdate();
+    });
     ns.connect();
-  }
+  };
 
-  quit = () => {
+  const quit = () => {
     const ns = NetState.get();
     if (!ns) return;
     ns.disconnect();
-    this.setState({ playing: false });
+    setPlaying(false);
   };
 
-  render() {
-    return (
-      <>
-        <div
-          className="main-container"
-          style={{
-            position: 'relative',
-            width: size.width_px,
-            height: size.height_px,
-          }}
-        >
-          {this.state.playing && (
-            <>
-              <MinimapLayerWrapper />
-              <ThreeLayer />
-              <Stage
-                width={size.width_px}
-                height={size.height_px}
-                {...scaleConfig()}
-                style={{ pointerEvents: 'none' }}
-              >
-                <NamesLayer />
-                <MyTrajectoryLayer />
-                <CoordLayer />
-              </Stage>
-              <ShipControls />
-              <GameHTMLHudLayer />
-              <InGameLeaderBoardPanel />
-              <HelpLayer />
-              <LeaderboardLayer />
-              <QuestPanel />
-            </>
-          )}
-          {this.state.musicEnabled && <MusicControls />}
-          <DialoguePanel />
-          {this.state.playing && (
-            <HotkeyWrapper
-              hotkey="esc"
-              onPress={() => {
-                this.setState({ menu: !this.state.menu });
-              }}
-            />
-          )}
-          {this.state.menu && (
-            <MainMenuLayer
-              nextPortrait={this.nextPortrait}
-              previousPortrait={this.previousPortrait}
-              portrait={this.state.portrait}
-              makeRandomName={() => {
-                this.setState({ preferredName: genRandomName() });
-              }}
-              musicEnabled={this.state.musicEnabled}
-              onPreferredNameChange={(name) =>
-                this.setState({ preferredName: name })
-              }
-              hide={() => this.setState({ menu: false })}
-              playing={this.state.playing}
-              onSetMusic={(value) => {
-                this.setState({ musicEnabled: value });
-              }}
-              onGo={() => {
-                this.setState({ playing: true, menu: false });
-                this.start();
-              }}
-              preferredName={this.state.preferredName}
-              makeRandomPortrait={() => {
-                let portraitIndex = randBetweenExclusiveEnd(
-                  0,
-                  portraits.length
-                );
-                this.setState({
-                  portraitIndex: portraitIndex,
-                  portrait: Srn.portraitPath(portraitIndex),
-                });
-              }}
-              quit={this.quit}
-            />
-          )}
-        </div>
-        <DebugStateLayer />
-        <StatsPanel />
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <div
+        className="main-container"
+        style={{
+          position: 'relative',
+          width: size.width_px,
+          height: size.height_px,
+        }}
+      >
+        {playing && (
+          <>
+            <MinimapLayerWrapper />
+            <ThreeLayer />
+            <Stage
+              width={size.width_px}
+              height={size.height_px}
+              {...scaleConfig()}
+              style={{ pointerEvents: 'none' }}
+            >
+              <NamesLayer />
+              <MyTrajectoryLayer />
+              <CoordLayer />
+            </Stage>
+            <ShipControls />
+            <GameHTMLHudLayer />
+            <InGameLeaderBoardPanel />
+            <HelpLayer />
+            <LeaderboardLayer />
+            <QuestPanel />
+          </>
+        )}
+        {musicEnabled && <MusicControls />}
+        <DialoguePanel />
+        {playing && (
+          <HotkeyWrapper
+            hotkey="esc"
+            onPress={() => {
+              setMenu(!menu);
+            }}
+          />
+        )}
+        {menu && (
+          <MainMenuLayer
+            nextPortrait={nextPortrait}
+            previousPortrait={previousPortrait}
+            portrait={portrait}
+            makeRandomName={() => {
+              setPreferredName(genRandomName());
+            }}
+            musicEnabled={musicEnabled}
+            onPreferredNameChange={(name) => {
+              setPreferredName(name);
+            }}
+            hide={() => setMenu(false)}
+            playing={playing}
+            onSetMusic={(value: boolean) => {
+              setMusicEnabled(value);
+            }}
+            onGo={() => {
+              setPlaying(true);
+              setMenu(false);
+              start();
+            }}
+            preferredName={preferredName}
+            makeRandomPortrait={() => {
+              let locIndex = randBetweenExclusiveEnd(0, portraits.length);
+              setPortraitIndex(locIndex);
+              setPortrait(portraitPath(locIndex));
+            }}
+            quit={quit}
+          />
+        )}
+      </div>
+      <DebugStateLayer />
+      <StatsPanel />
+    </>
+  );
+};
 
 export default Srn;
