@@ -16,7 +16,7 @@ import {
 } from 'unique-names-generator';
 import { Measure, Perf, statsHeap, StatsPanel } from './HtmlLayers/Perf';
 import { vsyncedDecoupledTime } from './utils/Times';
-import { StartHudLayer } from './HtmlLayers/StartHudLayer';
+import { MenuHudLayer } from './HtmlLayers/MenuHudLayer';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
@@ -31,6 +31,7 @@ import 'react-jinke-music-player/assets/index.css';
 import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
 import { randBetweenExclusiveEnd } from './utils/rand';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const MONITOR_SIZE_INTERVAL = 1000;
@@ -56,11 +57,20 @@ const portraits = [
   '9.jpg',
 ];
 
+const HotkeyWrapper: React.FC<{ hotkey: string; onPress: () => void }> = ({
+  hotkey,
+  onPress,
+}) => {
+  useHotkeys(hotkey, onPress);
+  return null;
+};
+
 class Srn extends React.Component<
   {},
   {
     preferredName: string;
-    ready: boolean;
+    playing: boolean;
+    menu: boolean;
     musicEnabled: boolean;
     portraitIndex: number;
     portrait: string;
@@ -75,7 +85,8 @@ class Srn extends React.Component<
     this.time = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
     let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
     this.state = {
-      ready: false,
+      playing: false,
+      menu: true,
       preferredName: genRandomName(),
       musicEnabled: true,
       portraitIndex: portraitIndex,
@@ -174,7 +185,7 @@ class Srn extends React.Component<
             height: size.height_px,
           }}
         >
-          {this.state.ready && (
+          {this.state.playing && (
             <>
               <MinimapLayerWrapper />
               <ThreeLayer />
@@ -198,8 +209,16 @@ class Srn extends React.Component<
           )}
           {this.state.musicEnabled && <MusicControls />}
           <DialoguePanel />
-          {!this.state.ready && (
-            <StartHudLayer
+          {this.state.playing && (
+            <HotkeyWrapper
+              hotkey="esc"
+              onPress={() => {
+                this.setState({ menu: !this.state.menu });
+              }}
+            />
+          )}
+          {this.state.menu && (
+            <MenuHudLayer
               nextPortrait={this.nextPortrait}
               previousPortrait={this.previousPortrait}
               portrait={this.state.portrait}
@@ -210,11 +229,13 @@ class Srn extends React.Component<
               onPreferredNameChange={(name) =>
                 this.setState({ preferredName: name })
               }
+              hide={() => this.setState({ menu: false })}
+              playing={this.state.playing}
               onSetMusic={(value) => {
                 this.setState({ musicEnabled: value });
               }}
               onGo={() => {
-                this.setState({ ready: true });
+                this.setState({ playing: true, menu: false });
                 this.start();
               }}
               preferredName={this.state.preferredName}
