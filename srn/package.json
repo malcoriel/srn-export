@@ -6,6 +6,12 @@
   "private": true,
   "scripts": {
     "wasm-pack": "pushd world; wasm-pack build || exit 1; popd;",
-    "start-client": "cd client && yarn start"
+    "start-client": "cd client && yarn start",
+    "up-version": "node scripts/up-version.js"
+  },
+  "dependencies": {
+    "simple-git": "^2.31.0",
+    "standard-version": "^9.1.0",
+    "yargs": "^16.2.0"
   }
 }

@@ -3,7 +3,7 @@ import './StartMenu.scss';
 import { Button } from './ui/Button';
 import { Label } from './ui/Label';
 import { Input } from './ui/Input';
-import { FaAngleRight, FaDiceD20 } from 'react-icons/fa';
+import { FaAngleRight, FaDiceD20, FaTelegram } from 'react-icons/fa';
 import { FaAngleLeft } from 'react-icons/fa';
 import { useStore } from '../store';
 import Slider from 'rc-slider';
@@ -176,6 +176,20 @@ export const StartMenu: React.FC<{
           </Button>
         </>
       )}
+      <div className="versions-status">
+        <div>Client version 0.1.0</div>
+        <div>Server version 0.1.0</div>
+        <div>Server status: online</div>
+      </div>
+      <div className="about">
+        <a href="https://t.me/joinchat/WLDnjKtHTPplQZje">
+          <FaTelegram />
+          &nbsp; news & talk
+        </a>
+        <div className="copyright">Game by Valeriy 'Malcoriel' Kuzmin</div>
+        <div className="copyright">Character images by artbreeder.com</div>
+        <div className="copyright">Music powered by aiva.ai</div>
+      </div>
       {/*<Button text="About" onClick={() => setAbout(true)} />*/}
     </div>
   );

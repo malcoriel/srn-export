@@ -107,4 +107,47 @@
   .music-volume {
     width: 250px;
   }
+
+  .about {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    color: $teal;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    & > * {
+      margin-top: 10px;
+    }
+
+    a {
+      color: $teal !important;
+      line-height: 24px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .copyright {
+      line-height: 16px;
+      font-size: 12px;
+    }
+
+
+  }
+
+  .versions-status {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+
+    font-size: 14px;
+    line-height: 20px;
+  }
 }
