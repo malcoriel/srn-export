@@ -335,7 +335,7 @@ pub fn build_dialogue_from_state(
                 planet: current_planet,
                 left_character_url: format!("resources/chars/{}", {
                     player.map_or("question.png".to_string(), |p| {
-                        format!("{}.jpg", p.photo_id)
+                        format!("{}.png", p.portrait_name)
                     })
                 }),
                 right_character_url: format!("resources/chars/question.png"),

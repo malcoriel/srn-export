@@ -35,8 +35,8 @@ const Srn = () => {
     menu,
     setMenu,
     preferredName,
+    portrait,
     musicEnabled,
-    portraitIndex,
     forceUpdate,
   } = useStore((state: SrnState) => ({ ...state }));
 
@@ -61,6 +61,7 @@ const Srn = () => {
     monitorSizeInterval = setInterval(updateSize, MONITOR_SIZE_INTERVAL);
 
     if (playing) {
+      console.log('remount start');
       start();
     }
     return () => {
@@ -85,10 +86,11 @@ const Srn = () => {
     if (!ns) {
       return;
     }
+
     setPlaying(true);
     setMenu(false);
     ns.playerName = preferredName;
-    ns.portraitIndex = portraitIndex + 1; // portrait files are 1-based
+    ns.portraitName = portrait; // portrait files are 1-based
     ns.disconnecting = false;
     ns.on('change', () => {
       forceUpdate();

@@ -107,7 +107,7 @@ impl ServerToClientMessage {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct PersonalizeUpdate {
     name: String,
-    portrait_index: i32,
+    portrait_name: String,
 }
 
 struct StateContainer {
@@ -589,7 +589,7 @@ fn personalize_player(conn_id: Uuid, update: PersonalizeUpdate) {
             .find(|p| p.id == conn_id)
             .map(|p| {
                 p.name = update.name;
-                p.photo_id = update.portrait_index;
+                p.portrait_name = update.portrait_name;
             });
     }
     {

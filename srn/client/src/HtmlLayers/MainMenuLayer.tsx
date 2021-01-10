@@ -95,7 +95,11 @@ export const MainMenuLayer: React.FC<{
               <FaAngleLeft />
             </Button>
             <div className="image-cont">
-              <img className="image" src={portrait} alt="chosen-portrait" />
+              <img
+                className="image"
+                src={`resources/chars/${portrait}.png`}
+                alt="chosen-portrait"
+              />
               <Button className="dice" onClick={makeRandomPortrait}>
                 <FaDiceD20 />
               </Button>

@@ -403,7 +403,7 @@ pub struct Player {
     pub name: String,
     pub quest: Option<Quest>,
     pub money: i32,
-    pub photo_id: i32,
+    pub portrait_name: String,
 }
 
 impl Player {
@@ -605,7 +605,7 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
         ship_id: None,
         name: name.unwrap_or(player_id.to_string()),
         quest: None,
-        photo_id: gen_random_photo_id(),
+        portrait_name: "question".to_string(),
         money: 0,
     };
     state.players.push(player);

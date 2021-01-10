@@ -2,13 +2,13 @@ import { useState } from 'react';
 
 const NAMESPACE = 'SRN-v1';
 
-const makeKey = (key: string) => `${NAMESPACE}_${key}`;
+export const makeLSKey = (key: string) => `${NAMESPACE}_${key}`;
 // https://usehooks.com/useLocalStorage/
 export const useLocalStorage = <T>(
   itemKey: string,
   initialValue: T | null
 ): [T | null, (val: T | null) => void] => {
-  const key = makeKey(itemKey);
+  const key = makeLSKey(itemKey);
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);

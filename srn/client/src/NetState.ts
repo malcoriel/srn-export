@@ -86,7 +86,7 @@ export default class NetState extends EventEmitter {
   dialogue?: Dialogue;
   public connecting = true;
   public playerName = 'player';
-  public portraitIndex = 0;
+  public portraitName = '1';
   public ping: number;
   public maxPing?: number;
   public maxPingTick?: number;
@@ -208,7 +208,7 @@ export default class NetState extends EventEmitter {
         code: ClientOpCode.Name,
         value: JSON.stringify({
           name: this.playerName,
-          portrait_index: this.portraitIndex,
+          portrait_name: this.portraitName,
         }),
       });
     };
