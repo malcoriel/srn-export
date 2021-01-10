@@ -13,6 +13,7 @@ import { actionsActive, resetActions } from './utils/ShipControls';
 import Vector from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedDecoupledTime } from './utils/Times';
+import { api } from './utils/api';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -182,12 +183,7 @@ export default class NetState extends EventEmitter {
     );
 
     console.log(`connecting NS ${this.id}`);
-    this.socket = new WebSocket(
-      process.env.NODE_ENV === 'production'
-        ? 'wss://srn.malcoriel.de/ws'
-        : 'ws://localhost:2794',
-      'rust-websocket'
-    );
+    this.socket = new WebSocket(api.getWebSocketUrl(), 'rust-websocket');
     this.socket.onmessage = (event) => {
       this.handleMessage(event.data);
     };

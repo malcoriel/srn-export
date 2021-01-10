@@ -12,4 +12,9 @@ export const api = {
       throw e;
     }
   },
+  getWebSocketUrl() {
+    return process.env.NODE_ENV === 'production'
+      ? 'wss://srn.malcoriel.de/ws'
+      : 'ws://localhost:2794';
+  },
 };

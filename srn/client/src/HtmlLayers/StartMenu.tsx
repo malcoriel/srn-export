@@ -65,11 +65,9 @@ export const StartMenu: React.FC<{
     }
   }, []);
 
-  const serverVersion = useSWR('/api/version', async (query) =>
-    api.getVersion()
-  );
+  const serverVersion = useSWR('/api/version', async () => api.getVersion());
 
-  let serverVersionFormatted = 'unknown';
+  let serverVersionFormatted;
   if (serverVersion.error) {
     serverVersionFormatted = 'server is down';
   } else if (!serverVersion.data) {
@@ -195,7 +193,6 @@ export const StartMenu: React.FC<{
       <div className="versions-status">
         <div>Client version: {versionJson.version}</div>
         <div>Server version: {serverVersionFormatted}</div>
-        <div>Server status: online</div>
       </div>
       <div className="about">
         <a href="https://t.me/joinchat/WLDnjKtHTPplQZje">
