@@ -33,7 +33,7 @@ const SV = require('standard-version');
             );
             return;
           }
-          await SV({
+          const res = await SV({
             message: 'chore($srn): release v%s',
             commitAll: true,
             tagPrefix: 'srn-v',
@@ -42,6 +42,7 @@ const SV = require('standard-version');
               changelog: true,
             },
           });
+          console.log(res);
         }
       )
       .help()
