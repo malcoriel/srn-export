@@ -1,6 +1,6 @@
 @import "../utils/palette.scss";
 
-$menuWidth: 500px;
+$menuWidth: 600px;
 
 .start-hud {
   font-size: 20px;
@@ -28,15 +28,17 @@ $menuWidth: 500px;
     justify-content: space-around;
     align-items: center;
     width: $menuWidth;
-    & > * {
-      flex: 0.8 0;
-      margin: 0 5px;
+    & > .label {
+      // a hack to deal with uneven distribution of flex
+      // I have no idea why border-box doesn't work
+      border: solid transparent 3px;
     }
-
-    //& > .button {
-    //  flex: 0.4;
-    //}
-
+    & > * {
+      flex: 1 0;
+      margin: 0 5px;
+      box-sizing: border-box;
+      padding: 10px 0;
+    }
   }
   .title {
     font-size: 60px;
@@ -76,10 +78,8 @@ $menuWidth: 500px;
     }
 
     justify-content: center;
-    margin-bottom: 40px;
     align-items: center;
     width: 600px;
-
 
     .next, .prev {
       margin: 0 10px;
@@ -123,15 +123,15 @@ $menuWidth: 500px;
   }
 
   .music-volume-label {
-    width: 130px;
+    width: 200px;
     margin-right: auto;
     margin-left: 5px;
   }
 
   .music-volume-bar-cont {
     margin-left: auto;
-    margin-right: 15px;
-    width: 320px;
+    margin-right: 2px;
+    width: 400px;
   }
 
   .music-volume-bar {
