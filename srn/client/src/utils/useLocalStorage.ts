@@ -37,8 +37,8 @@ const setLSValueImpl = <T>(key: string, valueToStore: T) => {
 // https://usehooks.com/useLocalStorage/
 export const useLocalStorage = <T>(
   itemKey: string,
-  initialValue: T | null
-): [T | null, (val: T | null) => void] => {
+  initialValue: T
+): [T, (val: T) => void] => {
   const key = makeLSKey(itemKey);
   const [storedValue, setStoredValue] = useState<T>(() => {
     return extractLSValueImpl(key, initialValue);

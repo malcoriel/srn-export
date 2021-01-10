@@ -86,7 +86,7 @@ export const StartMenu: React.FC<{
               <FaDiceD20 />
             </Button>
           </div>
-          <Label>And how would you look?</Label>
+          <Label>And how do you look?</Label>
           <div className="portrait-selector">
             <Button className="prev" onClick={prevPortrait}>
               <FaAngleLeft />
@@ -131,32 +131,36 @@ export const StartMenu: React.FC<{
           OFF
         </Button>
       </div>
-      <Label>Music volume</Label>
-      <Slider
-        min={0}
-        max={100}
-        className="music-volume"
-        handleStyle={{
-          backgroundColor: teal,
-        }}
-        trackStyle={{
-          backgroundColor: teal,
-        }}
-        railStyle={{
-          backgroundColor: teal,
-        }}
-        value={volume}
-        onChange={setVolume}
-      />
-      <Label>Skip this screen on startup next time</Label>
-      <div className="autostart-toggle">
-        <Button onClick={() => setSkipMenu(true)} toggled={skipMenu}>
-          ON
-        </Button>
-        <Button onClick={() => setSkipMenu(false)} toggled={!skipMenu}>
-          OFF
-        </Button>
-      </div>
+      {playing && (
+        <>
+          <Label>Music volume</Label>
+          <Slider
+            min={0}
+            max={100}
+            className="music-volume"
+            handleStyle={{
+              backgroundColor: teal,
+            }}
+            trackStyle={{
+              backgroundColor: teal,
+            }}
+            railStyle={{
+              backgroundColor: teal,
+            }}
+            value={volume}
+            onChange={setVolume}
+          />
+          <Label>Skip menu screen on startup next time</Label>
+          <div className="autostart-toggle">
+            <Button onClick={() => setSkipMenu(true)} toggled={skipMenu}>
+              ON
+            </Button>
+            <Button onClick={() => setSkipMenu(false)} toggled={!skipMenu}>
+              OFF
+            </Button>
+          </div>
+        </>
+      )}
       {!playing && (
         <Button className="play" onClick={start}>
           PLAY

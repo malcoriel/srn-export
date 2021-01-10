@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
+import { useLocalStorage } from '../utils/useLocalStorage';
 
 export enum PanelPosition {
   Unknown,
@@ -34,7 +35,15 @@ export const PanelWithHideButton: React.FC<{
   minimized,
   extraWide,
 }) => {
-  const [shown, setShown] = useToggleHotkey(hotkey, defaultValue, description);
+  const [lsShow, setLsShow] = useLocalStorage(`show-${hotkey}`, defaultValue);
+  const [shown, setShown] = useToggleHotkey(
+    hotkey,
+    lsShow,
+    description,
+    (val) => {
+      setLsShow(val);
+    }
+  );
   if (!shown)
     return (
       (
@@ -50,7 +59,13 @@ export const PanelWithHideButton: React.FC<{
       }`}
     >
       {button && (
-        <div className="hide-button" onClick={() => setShown(false)}>
+        <div
+          className="hide-button"
+          onClick={() => {
+            setLsShow(false);
+            setShown(false);
+          }}
+        >
           <span className="arrow"> ➔ </span>
         </div>
       )}

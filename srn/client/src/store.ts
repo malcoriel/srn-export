@@ -53,7 +53,7 @@ let lsPortrait = extractLSValue('portrait', portraitPath(portraitIndex));
 let lsPreferredName = extractLSValue('preferredName', genRandomName());
 let lsSkipMenu = extractLSValue('skipMenu', false);
 let lsMusicEnabled = extractLSValue('musicEnabled', true);
-let lsMusicVolume = extractLSValue('musicVolume', 50);
+let lsMusicVolume = extractLSValue('musicVolume', 30);
 
 export const useStore = create<SrnState>((set) => ({
   playing: false,
