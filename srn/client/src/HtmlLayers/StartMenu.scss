@@ -1,4 +1,7 @@
 @import "../utils/palette.scss";
+
+$menuWidth: 500px;
+
 .start-hud {
   font-size: 20px;
   display: flex;
@@ -22,14 +25,19 @@
   .music-toggle, .autostart-toggle {
     display: flex;
     flex-direction:row;
-    width: 150px;
     justify-content: space-around;
-
-    * {
-      flex-basis: 40px;
+    align-items: center;
+    width: $menuWidth;
+    & > * {
+      flex: 0.8 0;
+      margin: 0 5px;
     }
-  }
 
+    //& > .button {
+    //  flex: 0.4;
+    //}
+
+  }
   .title {
     font-size: 60px;
   }
@@ -68,6 +76,7 @@
     }
 
     justify-content: center;
+    margin-bottom: 40px;
     align-items: center;
     width: 600px;
 
@@ -105,7 +114,28 @@
   }
 
   .music-volume {
-    width: 250px;
+    display: flex;
+    flex-direction:row;
+    justify-content: space-around;
+    align-items: center;
+    width: $menuWidth;
+
+  }
+
+  .music-volume-label {
+    width: 130px;
+    margin-right: auto;
+    margin-left: 5px;
+  }
+
+  .music-volume-bar-cont {
+    margin-left: auto;
+    margin-right: 15px;
+    width: 320px;
+  }
+
+  .music-volume-bar {
+    width: 100%;
   }
 
   .about {

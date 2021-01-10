@@ -126,8 +126,9 @@ export const StartMenu: React.FC<{
           </div>
         </>
       )}
-      <Label>Music (written by AIVA)</Label>
       <div className="music-toggle">
+        <Label>Music</Label>
+
         <Button
           onClick={() => {
             setMusicEnabled(true);
@@ -147,25 +148,30 @@ export const StartMenu: React.FC<{
       </div>
       {playing && (
         <>
-          <Label>Music volume</Label>
-          <Slider
-            min={0}
-            max={100}
-            className="music-volume"
-            handleStyle={{
-              backgroundColor: teal,
-            }}
-            trackStyle={{
-              backgroundColor: teal,
-            }}
-            railStyle={{
-              backgroundColor: teal,
-            }}
-            value={volume}
-            onChange={setVolume}
-          />
-          <Label>Skip menu screen on startup next time</Label>
+          <div className="music-volume">
+            <Label className="music-volume-label">Music volume</Label>
+            <span className="music-volume-bar-cont">
+              <Slider
+                min={0}
+                max={100}
+                className="music-volume-bar"
+                handleStyle={{
+                  backgroundColor: teal,
+                }}
+                trackStyle={{
+                  backgroundColor: teal,
+                }}
+                railStyle={{
+                  backgroundColor: teal,
+                }}
+                value={volume}
+                onChange={setVolume}
+              />
+            </span>
+          </div>
           <div className="autostart-toggle">
+            <Label>Skip menu</Label>
+
             <Button onClick={() => setSkipMenu(true)} toggled={skipMenu}>
               ON
             </Button>
