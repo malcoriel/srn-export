@@ -8,6 +8,7 @@ import { FaAngleLeft } from 'react-icons/fa';
 import { useStore } from '../store';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
+import { teal } from '../utils/palette';
 
 // to only skip menu once
 let firstTime = true;
@@ -135,6 +136,15 @@ export const StartMenu: React.FC<{
         min={0}
         max={100}
         className="music-volume"
+        handleStyle={{
+          backgroundColor: teal,
+        }}
+        trackStyle={{
+          backgroundColor: teal,
+        }}
+        railStyle={{
+          backgroundColor: teal,
+        }}
         value={volume}
         onChange={setVolume}
       />
