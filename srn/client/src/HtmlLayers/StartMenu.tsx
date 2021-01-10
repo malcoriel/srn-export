@@ -9,6 +9,9 @@ import { useStore } from '../store';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { teal } from '../utils/palette';
+import versionJson from '../../version.json';
+import useSWR from 'swr';
+import { api } from '../utils/api';
 
 // to only skip menu once
 let firstTime = true;
@@ -61,6 +64,19 @@ export const StartMenu: React.FC<{
       firstTime = false;
     }
   }, []);
+
+  const serverVersion = useSWR('/api/version', async (query) =>
+    api.getVersion()
+  );
+
+  let serverVersionFormatted = 'unknown';
+  if (serverVersion.error) {
+    serverVersionFormatted = 'server is down';
+  } else if (!serverVersion.data) {
+    serverVersionFormatted = 'loading...';
+  } else {
+    serverVersionFormatted = serverVersion.data;
+  }
 
   return (
     <div className="start-hud">
@@ -177,8 +193,8 @@ export const StartMenu: React.FC<{
         </>
       )}
       <div className="versions-status">
-        <div>Client version 0.1.0</div>
-        <div>Server version 0.1.0</div>
+        <div>Client version: {versionJson.version}</div>
+        <div>Server version: {serverVersionFormatted}</div>
         <div>Server status: online</div>
       </div>
       <div className="about">

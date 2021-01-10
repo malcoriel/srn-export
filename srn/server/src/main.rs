@@ -16,6 +16,7 @@ use crossbeam::channel::{bounded, Receiver, Sender};
 use dialogue::{DialogueStates, DialogueTable};
 use lazy_static::lazy_static;
 use num_traits::FromPrimitive;
+use pkg_version::*;
 use rocket::http::Method;
 use rocket_contrib::json::Json;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
@@ -32,6 +33,10 @@ use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 use websocket::{Message, OwnedMessage};
 use world::{GameState, Player, Ship};
+
+const MAJOR: u32 = pkg_version_major!();
+const MINOR: u32 = pkg_version_minor!();
+const PATCH: u32 = pkg_version_patch!();
 
 #[macro_use]
 extern crate rocket;
@@ -169,9 +174,10 @@ lazy_static! {
     };
 }
 
-#[get("/state")]
-fn get_state() -> Json<GameState> {
-    Json(STATE.read().unwrap().state.clone())
+#[get("/version")]
+fn get_version() -> Json<String> {
+    let version = format!("{}.{}.{}", MAJOR, MINOR, PATCH);
+    Json(version)
 }
 
 lazy_static! {
@@ -690,7 +696,10 @@ fn rocket() -> rocket::Rocket {
     thread::spawn(|| cleanup_thread());
 
     let cors = rocket_cors::CorsOptions {
-        allowed_origins: AllowedOrigins::some_exact(&["http://localhost:3000"]),
+        allowed_origins: AllowedOrigins::some_exact(&[
+            "http://localhost:3000",
+            "https://srn.malcoriel.de",
+        ]),
         allowed_methods: vec![Method::Get, Method::Post, Method::Options]
             .into_iter()
             .map(From::from)
@@ -710,7 +719,7 @@ fn rocket() -> rocket::Rocket {
 
     rocket::ignite()
         .attach(cors)
-        .mount("/api", routes![get_state]) // post_state
+        .mount("/api", routes![get_version]) // post_state
 }
 
 unsafe fn dispatcher_thread(
