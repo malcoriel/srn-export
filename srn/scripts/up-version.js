@@ -4,6 +4,10 @@ const SV = require('standard-version');
 
 const toml = require('@iarna/toml');
 
+const mainPackageJson = {
+  filename: 'package.json',
+  type: 'json',
+};
 const clientPackageJson = {
   filename: 'client/package.json',
   type: 'json',
@@ -67,8 +71,14 @@ const serverCargoToml = {
             skip: {
               changelog: true,
             },
-            bumpFiles: [clientPackageJson, clientVersionJson, serverCargoToml],
+            bumpFiles: [
+              mainPackageJson,
+              clientPackageJson,
+              clientVersionJson,
+              serverCargoToml,
+            ],
             packageFiles: [
+              mainPackageJson,
               clientPackageJson,
               clientVersionJson,
               serverCargoToml,
