@@ -1,7 +1,7 @@
-import React, { ReactNode, useRef, useState } from 'react';
+import React, { ReactNode } from 'react';
 import './DialoguePanel.scss';
 
-import { Canvas, useFrame } from 'react-three-fiber';
+import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import {
   CAMERA_DEFAULT_ZOOM,
@@ -18,12 +18,13 @@ import {
 } from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { findPlanet } from './GameHTMLHudLayer';
+import { makePortraitPath } from './MainMenuLayer';
 
 const enrichSub = (s: DialogueSubstitution): ReactNode => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  const { state, visualState } = ns;
+  const { visualState } = ns;
 
   const focus = (p: Planet) => {
     visualState.cameraPosition = { x: p.x, y: p.y };
@@ -100,7 +101,10 @@ export const DialoguePanel: React.FC = () => {
     <div className="dialogue panel-base">
       <div className="top-part">
         <div className="left-character">
-          <img src={dialogue.left_character_url} alt="left-character-image" />
+          <img
+            src={makePortraitPath(dialogue.left_character)}
+            alt="left-character-image"
+          />
         </div>
         <div className="scene">
           <Canvas
@@ -129,7 +133,10 @@ export const DialoguePanel: React.FC = () => {
           </Canvas>
         </div>
         <div className="right-character">
-          <img src={dialogue.right_character_url} alt="right-character-image" />
+          <img
+            src={makePortraitPath(dialogue.right_character)}
+            alt="right-character-image"
+          />
         </div>
       </div>
       <div className="prompt">

@@ -10,6 +10,8 @@ import { useStore } from '../store';
 
 // to only skip menu once
 let firstTime = true;
+export const makePortraitPath = (portrait: string) =>
+  `resources/chars/${portrait}.png`;
 
 export const MainMenuLayer: React.FC<{
   start: () => void;
@@ -63,6 +65,7 @@ export const MainMenuLayer: React.FC<{
       firstTime = false;
     }
   }, []);
+
   return (
     <div className="start-hud">
       <div className="title">Star Rangers Network</div>
@@ -97,7 +100,7 @@ export const MainMenuLayer: React.FC<{
             <div className="image-cont">
               <img
                 className="image"
-                src={`resources/chars/${portrait}.png`}
+                src={makePortraitPath(portrait)}
                 alt="chosen-portrait"
               />
               <Button className="dice" onClick={makeRandomPortrait}>

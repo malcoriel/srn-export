@@ -113,8 +113,8 @@ export type Dialogue = {
   options: DialogueElem[];
   prompt: DialogueElem;
   planet?: Planet;
-  left_character_url: string;
-  right_character_url: string;
+  left_character: string;
+  right_character: string;
 };
 
 export type GameState = {

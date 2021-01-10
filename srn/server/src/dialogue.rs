@@ -41,8 +41,8 @@ pub struct Dialogue {
     pub options: Vec<DialogueElem>,
     pub prompt: DialogueElem,
     pub planet: Option<Planet>,
-    pub left_character_url: String,
-    pub right_character_url: String,
+    pub left_character: String,
+    pub right_character: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -333,12 +333,12 @@ pub fn build_dialogue_from_state(
                     substitution: substitute_text(&prompt, &current_planet, player, game_state),
                 },
                 planet: current_planet,
-                left_character_url: format!("resources/chars/{}", {
+                left_character: format!("{}", {
                     player.map_or("question.png".to_string(), |p| {
-                        format!("{}.png", p.portrait_name)
+                        format!("{}", p.portrait_name)
                     })
                 }),
-                right_character_url: format!("resources/chars/question.png"),
+                right_character: "question".to_string(),
             };
             return Some(result);
         }
