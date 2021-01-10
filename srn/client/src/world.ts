@@ -51,6 +51,7 @@ export type Planet = GameObject &
   WithColor & {
     anchor_tier: number;
     anchor_id: string;
+    orbit_speed: number;
   };
 export type Star = GameObject & WithName & WithColor;
 

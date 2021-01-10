@@ -183,12 +183,14 @@ pub fn gen_planet_gap() -> f64 {
 
 pub fn gen_planet_orbit_speed() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(5.0, 55.0) / 750.0;
+    let dir = if rng.gen_bool(0.5) { -1.0 } else { 1.0 };
+    return rng.gen_range(5.0, 55.0) / 750.0 * dir;
 }
 
 pub fn gen_sat_orbit_speed() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(20.0, 30.0) / 100.0;
+    let dir = if rng.gen_bool(0.5) { -1.0 } else { 1.0 };
+    return rng.gen_range(20.0, 30.0) / 100.0 * dir;
 }
 
 pub fn gen_planet_radius() -> f64 {

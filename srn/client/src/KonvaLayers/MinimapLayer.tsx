@@ -32,7 +32,7 @@ const radiusToMinimapRadius = (val: number) =>
 
 const trailWidth = 0.5;
 const baseOpacity = 0.6;
-const innerOpacity = 0.3;
+const innerOpacity = 0.5;
 const planetOpacity = 0.9;
 const totalArc = 45;
 const arcCount = 9;
@@ -91,6 +91,12 @@ export const MinimapLayer = () => {
           let pPos = Vector.fromIVector(p);
           let orbitDist = radiusToMinimapRadius(pPos.euDistTo(anchorPos));
           let angleRad = pPos.angleRad(anchorPos.add(VectorF(1, 0)));
+          let negativeRotation = p.orbit_speed < 0;
+          let arcDirMultiplier = 1;
+          if (negativeRotation) {
+            arcDirMultiplier = -1;
+          }
+
           let rotationDeg = radToDeg(angleRad);
           let b = p.radius;
           let a = pPos.euDistTo(anchorPos);
@@ -124,11 +130,16 @@ export const MinimapLayer = () => {
                         {...arcCommonProps}
                         rotation={
                           (pPos.y < 0 ? -rotationDeg : rotationDeg) +
-                          radToDeg(beta) +
+                          (negativeRotation ? -totalArc : 0) +
+                          // shift for the planet radius
+                          // radToDeg(beta) +
+                          // shift for every arc part
                           (i * totalArc) / arcCount
                         }
                         opacity={
-                          innerOpacity - i * (1 / arcCount) * innerOpacity
+                          negativeRotation
+                            ? innerOpacity * (i * (1 / arcCount))
+                            : innerOpacity * (1 - i * (1 / arcCount))
                         }
                       />
                     );
