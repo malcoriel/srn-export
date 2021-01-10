@@ -5,8 +5,9 @@ import { Label } from './ui/Label';
 import { Input } from './ui/Input';
 import { FaAngleRight, FaDiceD20 } from 'react-icons/fa';
 import { FaAngleLeft } from 'react-icons/fa';
-import { useLocalStorage } from '../utils/useLocalStorage';
 import { useStore } from '../store';
+import Slider from 'rc-slider';
+import 'rc-slider/assets/index.css';
 
 // to only skip menu once
 let firstTime = true;
@@ -31,6 +32,8 @@ export const StartMenu: React.FC<{
     skipMenu,
     setSkipMenu,
     makeRandomPortrait,
+    volume,
+    setVolume,
   } = useStore((state) => ({
     musicEnabled: state.musicEnabled,
     setMusicEnabled: state.setMusicEnabled,
@@ -45,6 +48,8 @@ export const StartMenu: React.FC<{
     skipMenu: state.skipMenu,
     setSkipMenu: state.setSkipMenu,
     makeRandomPortrait: state.makeRandomPortrait,
+    volume: state.volume,
+    setVolume: state.setVolume,
   }));
 
   const hide = () => setMenu(false);
@@ -125,6 +130,14 @@ export const StartMenu: React.FC<{
           OFF
         </Button>
       </div>
+      <Label>Music volume</Label>
+      <Slider
+        min={0}
+        max={100}
+        className="music-volume"
+        value={volume}
+        onChange={setVolume}
+      />
       <Label>Skip this screen on startup next time</Label>
       <div className="autostart-toggle">
         <Button onClick={() => setSkipMenu(true)} toggled={skipMenu}>

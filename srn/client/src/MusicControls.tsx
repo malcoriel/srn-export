@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ReactJkMusicPlayer from 'react-jinke-music-player';
+import { useStore } from './store';
 let bgmTracks = [
   {
     name: 'c2',
@@ -30,14 +31,25 @@ let bgmTracks = [
 
 export const MusicControls = () => {
   const [index, setIndex] = useState(0);
+  const ref = useRef(null);
   useEffect(() => {
     let defaultPlayIndex =
       parseInt(String(Math.random() * bgmTracks.length), 10) % bgmTracks.length;
     setIndex(defaultPlayIndex);
   }, [index, setIndex]);
+  const volume = useStore((state) => state.volume);
+
+  useEffect(() => {
+    if (ref && ref.current) {
+      // @ts-ignore
+      let audio = ref.current.getEnhanceAudio();
+      audio.volume = volume / 100;
+    }
+  }, [volume]);
   return (
     <ReactJkMusicPlayer
-      defaultVolume={0.3}
+      ref={ref}
+      defaultVolume={volume / 100}
       toggleMode={false}
       showMiniProcessBar
       defaultPlayMode="shufflePlay"

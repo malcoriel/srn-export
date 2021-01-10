@@ -44,6 +44,8 @@ export type SrnState = {
   trigger: number;
   forceUpdate: () => void;
   makeRandomPortrait: () => void;
+  volume: number;
+  setVolume: (val: number) => void;
 };
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
@@ -51,6 +53,7 @@ let lsPortrait = extractLSValue('portrait', portraitPath(portraitIndex));
 let lsPreferredName = extractLSValue('preferredName', genRandomName());
 let lsSkipMenu = extractLSValue('skipMenu', false);
 let lsMusicEnabled = extractLSValue('musicEnabled', true);
+let lsMusicVolume = extractLSValue('musicVolume', 50);
 
 export const useStore = create<SrnState>((set) => ({
   playing: false,
@@ -60,11 +63,17 @@ export const useStore = create<SrnState>((set) => ({
   musicEnabled: lsMusicEnabled,
   portrait: lsPortrait,
   trigger: 0,
+  volume: lsMusicVolume,
 
   setPreferredName: (val: string) =>
     set(() => {
       setLSValue('preferredName', val);
       return { preferredName: val };
+    }),
+  setVolume: (val: number) =>
+    set(() => {
+      setLSValue('musicVolume', val);
+      return { volume: val };
     }),
   setMenu: (val: boolean) => set({ menu: val }),
   setSkipMenu: (val: boolean) =>
@@ -104,7 +113,7 @@ export const useStore = create<SrnState>((set) => ({
     }),
 
   makeRandomName: () =>
-    set((state) => {
+    set(() => {
       deleteLSValue('preferredName');
       return {
         preferredName: genRandomName(),
