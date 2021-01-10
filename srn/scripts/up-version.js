@@ -43,13 +43,6 @@ const fs = require('fs-extra');
               changelog: true,
             },
           });
-          const pkg = require('../package.json');
-          await fs.writeJSON('../client/version.json', {
-            version: pkg.version,
-          });
-          await fs.writeJSON('../server/version.json', {
-            version: pkg.version,
-          });
         }
       )
       .help()
