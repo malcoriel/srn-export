@@ -18,7 +18,7 @@ import {
 } from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { findPlanet } from './GameHTMLHudLayer';
-import { makePortraitPath } from './MainMenuLayer';
+import { makePortraitPath } from './StartMenu';
 
 const enrichSub = (s: DialogueSubstitution): ReactNode => {
   const ns = NetState.get();

@@ -5,6 +5,11 @@ import {
 } from 'unique-names-generator';
 import create from 'zustand';
 import { randBetweenExclusiveEnd } from './utils/rand';
+import {
+  deleteLSValue,
+  extractLSValue,
+  setLSValue,
+} from './utils/useLocalStorage';
 
 export function genRandomName() {
   return uniqueNamesGenerator({
@@ -23,6 +28,8 @@ export type SrnState = {
   playing: boolean;
   setPlaying: (value: boolean) => void;
   menu: boolean;
+  skipMenu: boolean;
+  setSkipMenu: (value: boolean) => void;
   setMenu: (value: boolean) => void;
   preferredName: string;
   setPreferredName: (value: string) => void;
@@ -30,6 +37,7 @@ export type SrnState = {
   musicEnabled: boolean;
   setMusicEnabled: (value: boolean) => void;
   portrait: string;
+
   setPortrait: (value: string) => void;
   nextPortrait: () => void;
   prevPortrait: () => void;
@@ -37,18 +45,38 @@ export type SrnState = {
   forceUpdate: () => void;
   makeRandomPortrait: () => void;
 };
+
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
+let lsPortrait = extractLSValue('portrait', portraitPath(portraitIndex));
+let lsPreferredName = extractLSValue('preferredName', genRandomName());
+let lsSkipMenu = extractLSValue('skipMenu', false);
+let lsMusicEnabled = extractLSValue('musicEnabled', true);
+
 export const useStore = create<SrnState>((set) => ({
   playing: false,
   menu: true,
-  preferredName: genRandomName(),
-  musicEnabled: true,
-  portrait: portraitPath(portraitIndex),
+  skipMenu: lsSkipMenu,
+  preferredName: lsPreferredName,
+  musicEnabled: lsMusicEnabled,
+  portrait: lsPortrait,
   trigger: 0,
 
-  setPreferredName: (val: string) => set({ preferredName: val }),
+  setPreferredName: (val: string) =>
+    set(() => {
+      setLSValue('preferredName', val);
+      return { preferredName: val };
+    }),
   setMenu: (val: boolean) => set({ menu: val }),
-  setMusicEnabled: (val: boolean) => set({ musicEnabled: val }),
+  setSkipMenu: (val: boolean) =>
+    set(() => {
+      setLSValue('skipMenu', val);
+      return { skipMenu: val };
+    }),
+  setMusicEnabled: (val: boolean) =>
+    set(() => {
+      setLSValue('musicEnabled', val);
+      return { musicEnabled: val };
+    }),
   setPortrait: (val: string) => set({ portrait: val }),
   forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
   setPlaying: (val: boolean) => set({ playing: val }),
@@ -58,6 +86,7 @@ export const useStore = create<SrnState>((set) => ({
       let locIndex = (portraitIndex + 1) % portraits.length;
       let locPort = portraitPath(locIndex);
       state.setPortrait(locPort);
+      setLSValue('portrait', locPort);
       portraitIndex = locIndex;
       return {};
     }),
@@ -68,17 +97,24 @@ export const useStore = create<SrnState>((set) => ({
       if (number < 0) number = portraits.length + number;
       let locIndex = number % portraits.length;
       let locPort = portraitPath(locIndex);
+      setLSValue('portrait', locPort);
       state.setPortrait(locPort);
       portraitIndex = locIndex;
       return {};
     }),
 
-  makeRandomName: () => set({ preferredName: genRandomName() }),
+  makeRandomName: () =>
+    set((state) => {
+      deleteLSValue('preferredName');
+      return {
+        preferredName: genRandomName(),
+      };
+    }),
   makeRandomPortrait: () =>
     set(() => {
       let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
       let portrait = portraitPath(portraitIndex);
-
+      deleteLSValue('portrait');
       return { portraitIndex, portrait };
     }),
 }));

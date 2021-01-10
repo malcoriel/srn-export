@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import './MainMenu.scss';
+import './StartMenu.scss';
 import { Button } from './ui/Button';
 import { Label } from './ui/Label';
 import { Input } from './ui/Input';
@@ -13,7 +13,7 @@ let firstTime = true;
 export const makePortraitPath = (portrait: string) =>
   `resources/chars/${portrait}.png`;
 
-export const MainMenuLayer: React.FC<{
+export const StartMenu: React.FC<{
   start: () => void;
   quit: () => void;
 }> = ({ start, quit }) => {
@@ -28,6 +28,8 @@ export const MainMenuLayer: React.FC<{
     portrait,
     playing,
     setMenu,
+    skipMenu,
+    setSkipMenu,
     makeRandomPortrait,
   } = useStore((state) => ({
     musicEnabled: state.musicEnabled,
@@ -40,27 +42,15 @@ export const MainMenuLayer: React.FC<{
     setMenu: state.setMenu,
     playing: state.playing,
     portrait: state.portrait,
+    skipMenu: state.skipMenu,
+    setSkipMenu: state.setSkipMenu,
     makeRandomPortrait: state.makeRandomPortrait,
   }));
 
   const hide = () => setMenu(false);
 
-  const [lsName, setLsName] = useLocalStorage('preferredName', preferredName);
-  const [lsMusicEnabled, setLsMusicEnabled] = useLocalStorage(
-    'musicEnabled',
-    musicEnabled
-  );
-  const [lsSkipMenu, setLsSkipMenu] = useLocalStorage('skipMenu', false);
-
   useEffect(() => {
-    if (lsName !== preferredName && lsName) {
-      // got something saved
-      setPreferredName(lsName);
-    }
-    if (typeof lsMusicEnabled === 'boolean' && lsMusicEnabled != musicEnabled) {
-      setMusicEnabled(lsMusicEnabled);
-    }
-    if (lsSkipMenu && firstTime) {
+    if (skipMenu && firstTime) {
       start();
       firstTime = false;
     }
@@ -78,14 +68,12 @@ export const MainMenuLayer: React.FC<{
               value={preferredName}
               onChange={(e) => {
                 let name = e.target.value;
-                setLsName(name);
                 setPreferredName(name);
               }}
             />
             <Button
               className="dice"
               onClick={() => {
-                setLsName(null);
                 makeRandomName();
               }}
             >
@@ -107,7 +95,12 @@ export const MainMenuLayer: React.FC<{
                 <FaDiceD20 />
               </Button>
             </div>
-            <Button className="next" onClick={nextPortrait}>
+            <Button
+              className="next"
+              onClick={() => {
+                nextPortrait();
+              }}
+            >
               <FaAngleRight />
             </Button>
           </div>
@@ -117,7 +110,6 @@ export const MainMenuLayer: React.FC<{
       <div className="music-toggle">
         <Button
           onClick={() => {
-            setLsMusicEnabled(true);
             setMusicEnabled(true);
           }}
           toggled={musicEnabled}
@@ -126,7 +118,6 @@ export const MainMenuLayer: React.FC<{
         </Button>
         <Button
           onClick={() => {
-            setLsMusicEnabled(false);
             setMusicEnabled(false);
           }}
           toggled={!musicEnabled}
@@ -136,10 +127,10 @@ export const MainMenuLayer: React.FC<{
       </div>
       <Label>Skip this screen on startup next time</Label>
       <div className="autostart-toggle">
-        <Button onClick={() => setLsSkipMenu(true)} toggled={lsSkipMenu}>
+        <Button onClick={() => setSkipMenu(true)} toggled={skipMenu}>
           ON
         </Button>
-        <Button onClick={() => setLsSkipMenu(false)} toggled={!lsSkipMenu}>
+        <Button onClick={() => setSkipMenu(false)} toggled={!skipMenu}>
           OFF
         </Button>
       </div>

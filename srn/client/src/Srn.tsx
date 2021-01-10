@@ -9,7 +9,7 @@ import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { GameHTMLHudLayer } from './HtmlLayers/GameHTMLHudLayer';
 import { Perf, StatsPanel } from './HtmlLayers/Perf';
-import { MainMenuLayer } from './HtmlLayers/MainMenuLayer';
+import { StartMenu } from './HtmlLayers/StartMenu';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
@@ -150,7 +150,7 @@ const Srn = () => {
           </>
         )}
         {musicEnabled && <MusicControls />}
-        {menu && <MainMenuLayer start={start} quit={quit} />}
+        {menu && <StartMenu start={start} quit={quit} />}
       </div>
     </>
   );
