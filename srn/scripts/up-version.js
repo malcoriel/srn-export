@@ -1,7 +1,32 @@
 const simpleGit = require('simple-git/promise');
 const yargs = require('yargs');
 const SV = require('standard-version');
-const fs = require('fs-extra');
+
+const toml = require('@iarna/toml');
+
+const clientPackageJson = {
+  filename: 'client/package.json',
+  type: 'json',
+};
+
+const clientVersionJson = {
+  filename: 'client/version.json',
+  type: 'json',
+};
+
+const serverCargoToml = {
+  filename: 'server/Cargo.toml',
+  updater: {
+    readVersion(contents) {
+      return toml.parse(contents).package.version;
+    },
+    writeVersion(contents, version) {
+      const cargo = toml.parse(contents);
+      cargo.package.version = version;
+      return toml.stringify(cargo);
+    },
+  },
+};
 
 (async () => {
   try {
@@ -42,6 +67,12 @@ const fs = require('fs-extra');
             skip: {
               changelog: true,
             },
+            bumpFiles: [clientPackageJson, clientVersionJson, serverCargoToml],
+            packageFiles: [
+              clientPackageJson,
+              clientVersionJson,
+              serverCargoToml,
+            ],
           });
         }
       )
