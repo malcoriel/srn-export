@@ -1,6 +1,7 @@
 const simpleGit = require('simple-git/promise');
 const yargs = require('yargs');
 const SV = require('standard-version');
+const fs = require('fs-extra');
 
 (async () => {
   try {
@@ -33,7 +34,7 @@ const SV = require('standard-version');
             );
             return;
           }
-          const res = await SV({
+          await SV({
             message: 'chore($srn): release v%s',
             commitAll: true,
             tagPrefix: 'srn-v',
@@ -42,7 +43,13 @@ const SV = require('standard-version');
               changelog: true,
             },
           });
-          console.log(res);
+          const pkg = require('../package.json');
+          await fs.writeJSON('../client/version.json', {
+            version: pkg.version,
+          });
+          await fs.writeJSON('../server/version.json', {
+            version: pkg.version,
+          });
         }
       )
       .help()

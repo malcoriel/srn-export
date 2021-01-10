@@ -10,6 +10,9 @@
     "up-version": "node scripts/up-version.js"
   },
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
+    "@types/fs-extra": "^9.0.6",
+    "fs-extra": "^9.0.1",
     "simple-git": "^2.31.0",
     "standard-version": "^9.1.0",
     "yargs": "^16.2.0"
