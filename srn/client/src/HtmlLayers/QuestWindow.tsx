@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import './QuestWindow.scss';
 import { StyledRect } from './ui/StyledRect';
 import NetState, { findMyPlayer } from '../NetState';
@@ -6,6 +6,8 @@ import { Planet, Quest, QuestState } from '../world';
 import { findPlanet } from './GameHTMLHudLayer';
 import { useStore, WindowState } from '../store';
 import _ from 'lodash';
+import { Button } from './ui/Button';
+import { CgClose } from 'react-icons/all';
 
 export const Window: React.FC<{
   storeKey: string;
@@ -37,11 +39,18 @@ export const Window: React.FC<{
   const state = storeParts[key] as WindowState;
   const minimize = () => storeParts[setKey](WindowState.Minimized);
   const hide = () => storeParts[setKey](WindowState.Hidden);
-  const show = () => storeParts[setKey](WindowState.Shown);
 
   const isShown = state === WindowState.Shown;
   const isMinimized = state === WindowState.Minimized;
 
+  const windowButtons = (
+    <div className="ui-window-controls" style={{ height: thickness }}>
+      {minimized && <Button onClick={minimize}>_</Button>}
+      <Button onClick={hide}>
+        <CgClose />
+      </Button>
+    </div>
+  );
   return (
     <div className="ui-window">
       {isShown && (
@@ -53,12 +62,18 @@ export const Window: React.FC<{
             thickness={thickness}
             contentClassName={contentClassName}
           >
+            {windowButtons}
             {children}
           </StyledRect>
         </div>
       )}
 
-      {isMinimized && <div className="ui-window-minimized">{minimized}</div>}
+      {isMinimized && (
+        <div className="ui-window-minimized">
+          {windowButtons}
+          {minimized}
+        </div>
+      )}
     </div>
   );
 };
