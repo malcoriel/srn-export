@@ -1,0 +1,103 @@
+.styled-rect {
+  position: relative;
+
+  .content {
+    padding: 10px;
+  }
+
+  .horizontal {
+    position: absolute;
+    background-repeat: repeat-x;
+  }
+
+  .top {
+    top: 0;
+  }
+
+  .bottom {
+    bottom: 0;
+    transform: rotate(180deg);
+  }
+
+  .left {
+    left: 0;
+  }
+
+  .right {
+    right: 0;
+    transform: rotate(180deg);
+  }
+
+  .vertical {
+    position: absolute;
+    background-repeat: repeat-y;
+  }
+
+  .corner {
+    position: absolute;
+  }
+
+  .top-left {
+    top: 0;
+    left: 0;
+    transform: rotate(-90deg);
+  }
+
+  .top-right {
+    top: 0;
+    right: 0;
+  }
+
+  .bottom-right {
+    bottom: 0;
+    right: 0;
+    transform: rotate(90deg);
+  }
+
+  .bottom-left {
+    bottom: 0;
+    left: 0;
+    transform: rotate(180deg);
+  }
+
+  &.complex {
+    .horizontal {
+      background-image: url("../../../public/resources/borders/complex-h.png");
+    }
+    .vertical {
+      background-image: url("../../../public/resources/borders/complex-v.png");
+    }
+
+    .corner {
+      background-image: url("../../../public/resources/borders/corner-1.png");
+    }
+  }
+
+  &.thin {
+    .horizontal {
+      background-image: url("../../../public/resources/borders/thin-h.png");
+    }
+    .vertical {
+      background-image: url("../../../public/resources/borders/thin-v.png");
+    }
+
+    .corner {
+      background-image: url("../../../public/resources/borders/corner-1.png");
+    }
+  }
+
+  &.thick {
+    .horizontal {
+      background-image: url("../../../public/resources/borders/thick-h.png");
+    }
+    .vertical {
+      background-image: url("../../../public/resources/borders/thick-v.png");
+    }
+
+    .corner {
+      background-image: url("../../../public/resources/borders/corner-2.png");
+    }
+  }
+
+}
+
