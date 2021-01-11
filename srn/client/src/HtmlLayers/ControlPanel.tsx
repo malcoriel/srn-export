@@ -15,6 +15,7 @@ const BUTTON_COUNT = 4;
 export function ControlPanel() {
   let THICKNESS = 9;
   const setMenu = useStore((state) => state.setMenu);
+  const toggleQuestWindow = useStore((state) => state.toggleQuestWindow);
   return (
     <div className="control-panel">
       <StyledRect
@@ -36,7 +37,7 @@ export function ControlPanel() {
         <Button>
           <FaQuestion />
         </Button>
-        <Button>
+        <Button onClick={toggleQuestWindow}>
           <FaBullseye />
         </Button>
         <Button>

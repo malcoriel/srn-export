@@ -1,3 +1,4 @@
+@import "../utils/palette.scss";
 .quest-window {
   position: absolute;
   top: 50%;
@@ -9,5 +10,41 @@
     position: relative;
     left: -50%;
     top: -50%;
+    opacity: 0.9;
+    background-color: black;
+
+    display: flex;
+    flex-direction: column;
+    color: white;
+
+    .header {
+      font-size: 24px;
+      line-height: 30px;
+      margin-bottom: 16px;
+    }
+    .description {
+      color: $babyBlue;
+    }
+
+    .line {
+      line-height: 20px;
+      margin-bottom: 10px;
+      opacity: 1.0;
+    }
+
+    .stages {
+
+    }
+
+    .elem {
+      color: $yellow;
+      text-decoration:underline;
+      cursor: pointer;
+    }
+
+    .done {
+      color: $mint !important;
+      text-decoration: line-through;
+    }
   }
 }

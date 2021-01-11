@@ -120,37 +120,8 @@
 }
 
 
-.quest-panel {
-  opacity: 1.0;
-  .header {
-    font-size: 24px;
-    line-height: 30px;
-    margin-bottom: 16px;
-  }
-  .description {
-    color: #7ec8e3;
-  }
+.quest-window {
 
-  .line {
-    line-height: 20px;
-    margin-bottom: 10px;
-    opacity: 1.0;
-  }
-
-  .stages {
-
-  }
-
-  .elem {
-    color: #fbe7c6;
-    text-decoration:underline;
-    cursor: pointer;
-  }
-
-  .done {
-    color: #b4f8c8 !important;
-    text-decoration: line-through;
-  }
 }
 
 $hideButtonSize: 20px;

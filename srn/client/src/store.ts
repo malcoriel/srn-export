@@ -24,6 +24,12 @@ export function portraitPath(portraitIndex: number) {
   return portraits[portraitIndex];
 }
 
+export enum WindowState {
+  Hidden,
+  Shown,
+  Minimized,
+}
+
 export type SrnState = {
   playing: boolean;
   setPlaying: (value: boolean) => void;
@@ -46,6 +52,10 @@ export type SrnState = {
   makeRandomPortrait: () => void;
   volume: number;
   setVolume: (val: number) => void;
+
+  questWindow: WindowState;
+  setQuestWindow: (val: WindowState) => void;
+  toggleQuestWindow: () => void;
 };
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
@@ -54,6 +64,23 @@ let lsPreferredName = extractLSValue('preferredName', genRandomName());
 let lsSkipMenu = extractLSValue('skipMenu', false);
 let lsMusicEnabled = extractLSValue('musicEnabled', true);
 let lsMusicVolume = extractLSValue('musicVolume', 30);
+
+function toggleWindowState(old: WindowState, hasMinimized: boolean = false) {
+  if (hasMinimized) {
+    if (old === WindowState.Shown) {
+      return WindowState.Minimized;
+    }
+    if (old === WindowState.Minimized) {
+      return WindowState.Hidden;
+    }
+    return WindowState.Shown;
+  }
+
+  if (old === WindowState.Shown) {
+    return WindowState.Hidden;
+  }
+  return WindowState.Shown;
+}
 
 export const useStore = create<SrnState>((set) => ({
   playing: false,
@@ -64,6 +91,7 @@ export const useStore = create<SrnState>((set) => ({
   portrait: lsPortrait,
   trigger: 0,
   volume: lsMusicVolume,
+  questWindow: WindowState.Hidden,
 
   setPreferredName: (val: string) =>
     set(() => {
@@ -74,6 +102,13 @@ export const useStore = create<SrnState>((set) => ({
     set(() => {
       setLSValue('musicVolume', val);
       return { volume: val };
+    }),
+  setQuestWindow: (val: WindowState) => set({ questWindow: val }),
+  toggleQuestWindow: () =>
+    set((state) => {
+      const old = state.questWindow;
+
+      return { questWindow: toggleWindowState(old) };
     }),
   setMenu: (val: boolean) => set({ menu: val }),
   setSkipMenu: (val: boolean) =>
