@@ -18,13 +18,13 @@ import { HelpLayer } from './HtmlLayers/HelpLayer';
 import './HtmlLayers/Panel.scss';
 import { MinimapLayerWrapper } from './KonvaLayers/MinimapLayerWrapper';
 import { InGameLeaderBoardPanel } from './HtmlLayers/InGameLeaderboardPanel';
-import { QuestPanel } from './HtmlLayers/QuestPanel';
 import 'react-jinke-music-player/assets/index.css';
 import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
 import { HotkeyWrapper } from './HotkeyWrapper';
 import { SrnState, useStore } from './store';
 import { ControlPanel } from './HtmlLayers/ControlPanel';
+import { QuestWindow } from './HtmlLayers/QuestWindow';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -138,8 +138,8 @@ const Srn = () => {
             <InGameLeaderBoardPanel />
             <HelpLayer />
             <LeaderboardLayer />
-            <QuestPanel />
             <DialoguePanel />
+            <QuestWindow />
             <HotkeyWrapper
               hotkey="esc"
               onPress={() => {

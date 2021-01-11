@@ -26,8 +26,12 @@ export function ControlPanel() {
         noLeft
         noBottom
       >
-        <Button>
-          <CgMenuBoxed onClick={() => setMenu(true)} />
+        <Button
+          onClick={() => {
+            setMenu(true);
+          }}
+        >
+          <CgMenuBoxed />
         </Button>
         <Button>
           <FaQuestion />
