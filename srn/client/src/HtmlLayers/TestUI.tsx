@@ -5,15 +5,26 @@ const StyledRect: React.FC<{
   width: number;
   height: number;
   thickness: number;
+  line?: string;
+  halfThick?: boolean;
   children: React.ReactNode;
   contentClassName?: string;
-}> = ({ width, height, contentClassName, thickness, children }) => {
+}> = ({
+  width,
+  height,
+  halfThick,
+  contentClassName,
+  thickness,
+  line,
+  children,
+}) => {
+  let thicknessCoeff = halfThick ? 0.5 : 1.0;
   let bgSizeHorizontal = `${thickness * 10}px ${thickness}px`;
   let bgSizeVertical = `${thickness}px ${thickness * 10}px`;
   let bgSizeCorner = `${thickness}px ${thickness}px`;
   return (
     <div
-      className="styled-rect"
+      className="styled-rect thick"
       style={{
         width,
         height,
@@ -24,7 +35,7 @@ const StyledRect: React.FC<{
         className="horizontal top"
         style={{
           width,
-          height: thickness,
+          height: thickness * thicknessCoeff,
           backgroundSize: bgSizeHorizontal,
         }}
       />
@@ -32,7 +43,7 @@ const StyledRect: React.FC<{
         className="vertical left"
         style={{
           height,
-          width: thickness,
+          width: thickness * thicknessCoeff,
           backgroundSize: bgSizeVertical,
         }}
       />
@@ -40,7 +51,7 @@ const StyledRect: React.FC<{
         className="horizontal bottom"
         style={{
           width,
-          height: thickness,
+          height: thickness * thicknessCoeff,
           backgroundSize: bgSizeHorizontal,
         }}
       />
@@ -48,7 +59,7 @@ const StyledRect: React.FC<{
         className="vertical right"
         style={{
           height,
-          width: thickness,
+          width: thickness * thicknessCoeff,
           backgroundSize: bgSizeVertical,
         }}
       />

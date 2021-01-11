@@ -17,7 +17,6 @@
 
     .horizontal {
       position: absolute;
-      background-image: url("../../public/resources/borders/complex.png");
       background-repeat: repeat-x;
     }
 
@@ -41,13 +40,11 @@
 
     .vertical {
       position: absolute;
-      background-image: url("../../public/resources/borders/complex-v.png");
       background-repeat: repeat-y;
     }
 
     .corner {
       position: absolute;
-      background-image: url("../../public/resources/borders/corner-c.png");
     }
 
     .top-left {
@@ -73,4 +70,44 @@
       transform: rotate(180deg);
     }
   }
+
+  .complex {
+    .horizontal {
+      background-image: url("../../public/resources/borders/complex.png");
+    }
+    .vertical {
+      background-image: url("../../public/resources/borders/complex-v.png");
+    }
+
+    .corner {
+      background-image: url("../../public/resources/borders/corner-c.png");
+    }
+  }
+
+  .thin {
+    .horizontal {
+      background-image: url("../../public/resources/borders/thin-h.png");
+    }
+    .vertical {
+      background-image: url("../../public/resources/borders/thin-v.png");
+    }
+
+    .corner {
+      background-image: url("../../public/resources/borders/corner-c.png");
+    }
+  }
+
+  .thick {
+    .horizontal {
+      background-image: url("../../public/resources/borders/thick-h.png");
+    }
+    .vertical {
+      background-image: url("../../public/resources/borders/thick-v.png");
+    }
+
+    .corner {
+      background-image: url("../../public/resources/borders/corner-2.png");
+    }
+  }
 }
+

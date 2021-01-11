@@ -212,7 +212,7 @@ export const StartMenu: React.FC<{
       </div>
       {/*<Button text="About" onClick={() => setAbout(true)} />*/}
 
-      {/*<TestUI />*/}
+      <TestUI />
     </div>
   );
 };
