@@ -8,7 +8,7 @@ export const Button: React.FC<{
 }> = ({ onClick, children, className, toggled }) => {
   return (
     <span
-      className={`button ${className} ${toggled ? 'toggled' : ''}`}
+      className={`ui-button ${className} ${toggled ? 'toggled' : ''}`}
       onClick={onClick}
     >
       {children}

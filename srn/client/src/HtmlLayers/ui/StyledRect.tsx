@@ -13,6 +13,7 @@ export const StyledRect: React.FC<{
   noBottom?: boolean;
   noRight?: boolean;
   noLeft?: boolean;
+  className?: string;
 }> = ({
   width,
   height,
@@ -25,18 +26,22 @@ export const StyledRect: React.FC<{
   noBottom,
   noRight,
   noLeft,
+  className,
 }) => {
   let thicknessCoeff = halfThick ? 0.5 : 1.0;
   let bgSizeHorizontal = `${thickness * 10}px ${thickness}px`;
   let bgSizeVertical = `${thickness}px ${thickness * 10}px`;
   let bgSizeCorner = `${thickness}px ${thickness}px`;
+  let padding = `${noTop ? 0 : thickness}px ${noRight ? 0 : thickness}px ${
+    noBottom ? 0 : thickness
+  }px ${noLeft ? 0 : thickness}px `;
   return (
     <div
-      className={`styled-rect ${line}`}
+      className={`styled-rect ${line} ${className}`}
       style={{
         width,
         height,
-        padding: thickness,
+        padding,
       }}
     >
       {!noTop && (
@@ -119,16 +124,7 @@ export const StyledRect: React.FC<{
           }}
         />
       )}
-      <div
-        className={`content ${contentClassName}`}
-        style={{
-          width: thickness,
-          height: thickness,
-          backgroundSize: bgSizeCorner,
-        }}
-      >
-        {children}
-      </div>
+      <div className={`content ${contentClassName}`}>{children}</div>
     </div>
   );
 };

@@ -24,6 +24,7 @@ import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
 import { HotkeyWrapper } from './HotkeyWrapper';
 import { SrnState, useStore } from './store';
+import { ControlPanel } from './HtmlLayers/ControlPanel';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -147,6 +148,7 @@ const Srn = () => {
             />
             <DebugStateLayer />
             <StatsPanel />
+            <ControlPanel />
           </>
         )}
         {musicEnabled && <MusicControls />}

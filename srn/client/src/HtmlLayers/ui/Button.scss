@@ -1,6 +1,6 @@
 @import "../../utils/palette";
 
-.button {
+.ui-button  {
   opacity: 0.8;
   color: $teal;
   padding: 10px;
@@ -14,12 +14,12 @@
 
 }
 
-.button.toggled {
+.ui-button.toggled {
   background-color: darken($teal, 0.9);
   color: black;
 }
 
-.button:hover {
+.ui-button:hover {
   opacity: 0.9;
   background-color: darken($teal, 0.9);
   color: black;
