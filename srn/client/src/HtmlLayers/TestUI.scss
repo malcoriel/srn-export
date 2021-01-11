@@ -1,0 +1,76 @@
+@import "../utils/palette.scss";
+
+.test-ui {
+  background-color: black;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  .styled-rect {
+    position: relative;
+
+    .content {
+      padding: 10px;
+    }
+
+    .horizontal {
+      position: absolute;
+      background-image: url("../../public/resources/borders/complex.png");
+      background-repeat: repeat-x;
+    }
+
+    .top {
+      top: 0;
+    }
+
+    .bottom {
+      bottom: 0;
+      transform: rotate(180deg);
+    }
+
+    .left {
+      left: 0;
+    }
+
+    .right {
+      right: 0;
+      transform: rotate(180deg);
+    }
+
+    .vertical {
+      position: absolute;
+      background-image: url("../../public/resources/borders/complex-v.png");
+      background-repeat: repeat-y;
+    }
+
+    .corner {
+      position: absolute;
+      background-image: url("../../public/resources/borders/corner-c.png");
+    }
+
+    .top-left {
+      top: 0;
+      left: 0;
+      transform: rotate(-90deg);
+    }
+
+    .top-right {
+      top: 0;
+      right: 0;
+    }
+
+    .bottom-right {
+      bottom: 0;
+      right: 0;
+      transform: rotate(90deg);
+    }
+
+    .bottom-left {
+      bottom: 0;
+      left: 0;
+      transform: rotate(180deg);
+    }
+  }
+}
