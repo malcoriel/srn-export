@@ -1,0 +1,13 @@
+@import "./ControlPanel";
+@import "../utils/palette";
+
+.minimized-windows {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  position: absolute;
+  color: $teal;
+  width: 250px;
+  left: 0;
+  bottom: $controlPanelHeight;
+}

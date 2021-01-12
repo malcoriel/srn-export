@@ -25,6 +25,7 @@ import { HotkeyWrapper } from './HotkeyWrapper';
 import { SrnState, useStore } from './store';
 import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
+import { MinimizedWindows } from './HtmlLayers/MinimizedWindows';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -35,6 +36,7 @@ const Srn = () => {
     setPlaying,
     menu,
     setMenu,
+    toggleMenu,
     preferredName,
     portrait,
     musicEnabled,
@@ -143,12 +145,13 @@ const Srn = () => {
             <HotkeyWrapper
               hotkey="esc"
               onPress={() => {
-                setMenu(!menu);
+                toggleMenu();
               }}
             />
             <DebugStateLayer />
             <StatsPanel />
             <ControlPanel />
+            <MinimizedWindows />
           </>
         )}
         {musicEnabled && <MusicControls />}

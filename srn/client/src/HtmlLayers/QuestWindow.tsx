@@ -1,82 +1,9 @@
 import React from 'react';
 import './QuestWindow.scss';
-import { StyledRect } from './ui/StyledRect';
 import NetState, { findMyPlayer } from '../NetState';
 import { Planet, Quest, QuestState } from '../world';
 import { findPlanet } from './GameHTMLHudLayer';
-import { useStore, WindowState } from '../store';
-import _ from 'lodash';
-import { Button } from './ui/Button';
-import { CgClose } from 'react-icons/all';
-
-export const Window: React.FC<{
-  storeKey: string;
-  minimized?: React.ReactNode;
-  width: number;
-  height: number;
-  thickness: number;
-  line: 'complex' | 'thick' | 'thin';
-  halfThick?: boolean;
-  contentClassName?: string;
-  className?: string;
-}> = ({
-  storeKey,
-  children,
-  width,
-  height,
-  thickness,
-  line,
-  minimized,
-  className,
-  contentClassName,
-}) => {
-  const key = storeKey;
-  const setKey = `set${_.upperFirst(key)}`;
-  const storeParts = useStore((state) => ({
-    [key]: (state as Record<string, any>)[key],
-    [setKey]: (state as Record<string, any>)[setKey],
-  }));
-  const state = storeParts[key] as WindowState;
-  const minimize = () => storeParts[setKey](WindowState.Minimized);
-  const hide = () => storeParts[setKey](WindowState.Hidden);
-
-  const isShown = state === WindowState.Shown;
-  const isMinimized = state === WindowState.Minimized;
-
-  const windowButtons = (
-    <div className="ui-window-controls" style={{ height: thickness }}>
-      {minimized && <Button onClick={minimize}>_</Button>}
-      <Button onClick={hide}>
-        <CgClose />
-      </Button>
-    </div>
-  );
-  return (
-    <div className="ui-window">
-      {isShown && (
-        <div className={`ui-window-shown ${className}`}>
-          <StyledRect
-            width={width}
-            height={height}
-            line={line}
-            thickness={thickness}
-            contentClassName={contentClassName}
-          >
-            {windowButtons}
-            {children}
-          </StyledRect>
-        </div>
-      )}
-
-      {isMinimized && (
-        <div className="ui-window-minimized">
-          {windowButtons}
-          {minimized}
-        </div>
-      )}
-    </div>
-  );
-};
+import { Window } from './ui/Window';
 
 export const QuestWindow = () => {
   const ns = NetState.get();
@@ -122,6 +49,19 @@ export const QuestWindow = () => {
       height={200}
       line="thick"
       thickness={10}
+      minimized={
+        questData && (
+          <div className="quest-minimized">
+            <span className="elem" onClick={() => focus(questData!.fromPlanet)}>
+              {questData.fromPlanet.name}
+            </span>
+            <span> ➔ </span>
+            <span className="elem" onClick={() => focus(questData!.toPlanet)}>
+              {questData.toPlanet.name}
+            </span>
+          </div>
+        )
+      }
     >
       <div className="header">
         Active quest: <span className="description">Cargo delivery</span>

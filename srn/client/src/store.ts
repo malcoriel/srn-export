@@ -37,6 +37,7 @@ export type SrnState = {
   skipMenu: boolean;
   setSkipMenu: (value: boolean) => void;
   setMenu: (value: boolean) => void;
+  toggleMenu: () => void;
   preferredName: string;
   setPreferredName: (value: string) => void;
   makeRandomName: () => void;
@@ -91,7 +92,7 @@ export const useStore = create<SrnState>((set) => ({
   portrait: lsPortrait,
   trigger: 0,
   volume: lsMusicVolume,
-  questWindow: WindowState.Hidden,
+  questWindow: WindowState.Minimized,
 
   setPreferredName: (val: string) =>
     set(() => {
@@ -111,6 +112,7 @@ export const useStore = create<SrnState>((set) => ({
       return { questWindow: toggleWindowState(old) };
     }),
   setMenu: (val: boolean) => set({ menu: val }),
+  toggleMenu: () => set((state) => ({ menu: !state.menu })),
   setSkipMenu: (val: boolean) =>
     set(() => {
       setLSValue('skipMenu', val);
