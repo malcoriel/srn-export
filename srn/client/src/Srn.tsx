@@ -7,7 +7,7 @@ import { scaleConfig, size } from './world';
 import { CoordLayer } from './KonvaLayers/CoordLayer';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
-import { GameHTMLHudLayer } from './HtmlLayers/GameHTMLHudLayer';
+import { NetworkStatus } from './HtmlLayers/NetworkStatus';
 import { Perf, StatsPanel } from './HtmlLayers/Perf';
 import { StartMenu } from './HtmlLayers/StartMenu';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
@@ -41,7 +41,17 @@ const Srn = () => {
     portrait,
     musicEnabled,
     forceUpdate,
-  } = useStore((state: SrnState) => ({ ...state }));
+  } = useStore((state: SrnState) => ({
+    playing: state.playing,
+    setPlaying: state.setPlaying,
+    menu: state.menu,
+    setMenu: state.setMenu,
+    toggleMenu: state.toggleMenu,
+    preferredName: state.preferredName,
+    portrait: state.portrait,
+    musicEnabled: state.musicEnabled,
+    forceUpdate: state.forceUpdate,
+  }));
 
   const updateSize = () => {
     if (
@@ -98,9 +108,9 @@ const Srn = () => {
     ns.on('change', () => {
       forceUpdate();
     });
-    ns.on('network', () => {
-      forceUpdate();
-    });
+    // ns.on('network', () => {
+    //   forceUpdate();
+    // });
     ns.connect();
   };
 
@@ -136,7 +146,7 @@ const Srn = () => {
               <CoordLayer />
             </Stage>
             <ShipControls />
-            <GameHTMLHudLayer />
+            <NetworkStatus />
             <InGameLeaderBoardPanel />
             <HelpLayer />
             <LeaderboardLayer />

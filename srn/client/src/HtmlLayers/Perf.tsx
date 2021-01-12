@@ -186,7 +186,7 @@ const Perf = {
   },
 };
 
-const formatNumber = (x: any) => {
+export const formatNumber = (x: any) => {
   return Number(x).toFixed(3);
 };
 

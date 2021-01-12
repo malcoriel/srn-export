@@ -1,0 +1,33 @@
+@import "../utils/palette";
+.network-status {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: $teal;
+
+}
+
+.network-status-content {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  justify-content: flex-start;
+}
+
+.ping {
+  display: flex;
+  align-items: center;
+  width: 80px;
+  justify-self: flex-end;
+  justify-content: flex-end;
+  // border: solid red 1px;
+}
+
+.fps {
+  display: flex;
+  align-items: center;
+  width: 40px;
+}
+
+
+

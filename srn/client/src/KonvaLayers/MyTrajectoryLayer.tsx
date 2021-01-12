@@ -5,7 +5,7 @@ import Vector from '../utils/Vector';
 import _ from 'lodash';
 import { babyBlue, yellow } from '../utils/palette';
 import { antiScale, Planet, QuestState, Ship } from '../world';
-import { findPlanet } from '../HtmlLayers/GameHTMLHudLayer';
+import { findPlanet } from '../HtmlLayers/NetworkStatus';
 
 const MAX_ITER = 100;
 const TRAJECTORY_STEP = 10.0;

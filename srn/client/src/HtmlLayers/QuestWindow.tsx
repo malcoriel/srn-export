@@ -2,7 +2,7 @@ import React from 'react';
 import './QuestWindow.scss';
 import NetState, { findMyPlayer } from '../NetState';
 import { Planet, Quest, QuestState } from '../world';
-import { findPlanet } from './GameHTMLHudLayer';
+import { findPlanet } from './NetworkStatus';
 import { Window } from './ui/Window';
 
 export const QuestWindow = () => {
