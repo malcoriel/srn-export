@@ -32,7 +32,7 @@ interface Cmd {
   tag?: string;
 }
 
-const FORCE_SYNC_INTERVAL = 2000;
+const FORCE_SYNC_INTERVAL = 1000;
 const MANUAL_MOVE_SHIP_UPDATE_INTERVAL = 200;
 const RECONNECT_INTERVAL = 1000;
 const MAX_PING_LIFE = 10000;

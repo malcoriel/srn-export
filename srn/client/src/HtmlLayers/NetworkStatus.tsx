@@ -39,7 +39,7 @@ export const NetworkStatus: React.FC = () => {
       height={30}
       width={200}
     >
-      <span className="fps">
+      <span className="fps" title="fps">
         {fps ? (
           <>
             <RiFilmFill />
@@ -49,14 +49,17 @@ export const NetworkStatus: React.FC = () => {
           </>
         ) : null}
       </span>
-      {delay ? <span>D={delay}ms</span> : null}
+      <span title="desync between client and server">D={delay}ms</span>
       {connecting && <span>Connecting...&nbsp;</span>}
       {!connecting && (
         <span className="ping">
           {ping ? (
             <>
-              <FaWaveSquare /> &nbsp;{ping}
-              {maxPing ? <span>/{maxPing}</span> : null}
+              <FaWaveSquare /> &nbsp;
+              <span title="current ping (half trip sync time)">{ping}</span>
+              {maxPing ? (
+                <span title="max ping (half trip sync time)">/{maxPing}</span>
+              ) : null}
             </>
           ) : null}
         </span>
