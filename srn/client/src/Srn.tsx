@@ -147,7 +147,6 @@ const Srn = () => {
             </Stage>
             <ShipControls />
             <NetworkStatus />
-            <HelpWindow />
             <LeaderboardLayer />
             <DialoguePanel />
             <QuestWindow />
@@ -161,6 +160,7 @@ const Srn = () => {
             <StatsPanel />
             <ControlPanel />
             <WindowContainers />
+            <HelpWindow />
           </>
         )}
         {musicEnabled && <MusicControls />}

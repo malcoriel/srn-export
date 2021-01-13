@@ -205,6 +205,7 @@ const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const DEBUG_PHYSICS: bool = false;
 const EVENT_SLEEP_MS: u64 = 10;
+const MAIN_THREAD_SLEEP_MS: u64 = 15;
 
 fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
     let res = mutate_owned_ship(client_id, mutate_cmd, tag);
@@ -764,7 +765,7 @@ fn main_thread() {
         bot_init(&mut *bots);
     }
     loop {
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(MAIN_THREAD_SLEEP_MS));
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = bots::BOTS.lock().unwrap();
