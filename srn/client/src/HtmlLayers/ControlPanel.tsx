@@ -19,6 +19,9 @@ export function ControlPanel() {
   const setMenu = useStore((state) => state.setMenu);
   const toggleQuestWindow = useStore((state) => state.toggleQuestWindow);
   const toggleHelpWindow = useStore((state) => state.toggleHelpWindow);
+  const toggleLeaderboardWindow = useStore(
+    (state) => state.toggleLeaderboardWindow
+  );
   return (
     <div className="control-panel">
       <StyledRect
@@ -43,7 +46,7 @@ export function ControlPanel() {
         <Button onClick={toggleQuestWindow}>
           <FaBullseye />
         </Button>
-        <Button>
+        <Button onClick={toggleLeaderboardWindow}>
           <AiOutlineSolution />
         </Button>
       </StyledRect>

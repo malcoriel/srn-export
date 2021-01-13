@@ -10,7 +10,7 @@ import { ShipControls } from './utils/ShipControls';
 import { NetworkStatus } from './HtmlLayers/NetworkStatus';
 import { Measure, Perf, StatsPanel } from './HtmlLayers/Perf';
 import { StartMenu } from './HtmlLayers/StartMenu';
-import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
+import { LeaderboardWindow } from './HtmlLayers/LeaderboardWindow';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
@@ -147,7 +147,7 @@ const Srn = () => {
             </Stage>
             <ShipControls />
             <NetworkStatus />
-            <LeaderboardLayer />
+            <LeaderboardWindow />
             <DialoguePanel />
             <QuestWindow />
             <HotkeyWrapper

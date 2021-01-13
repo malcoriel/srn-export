@@ -60,6 +60,9 @@ export type SrnState = {
   toggleHelpWindow: () => void;
   helpWindow: WindowState;
   setHelpWindow: (val: WindowState) => void;
+  leaderboardWindow: WindowState;
+  setLeaderboardWindow: (val: WindowState) => void;
+  toggleLeaderboardWindow: () => void;
 };
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
@@ -97,6 +100,7 @@ export const useStore = create<SrnState>((set) => ({
   volume: lsMusicVolume,
   questWindow: WindowState.Minimized,
   helpWindow: WindowState.Hidden,
+  leaderboardWindow: WindowState.Hidden,
 
   setPreferredName: (val: string) =>
     set(() => {
@@ -110,17 +114,18 @@ export const useStore = create<SrnState>((set) => ({
     }),
   setQuestWindow: (val: WindowState) => set({ questWindow: val }),
   setHelpWindow: (val: WindowState) => set({ helpWindow: val }),
+  setLeaderboardWindow: (val: WindowState) => set({ leaderboardWindow: val }),
   toggleQuestWindow: () =>
     set((state) => {
-      const old = state.questWindow;
-
-      return { questWindow: toggleWindowState(old) };
+      return { questWindow: toggleWindowState(state.questWindow) };
     }),
   toggleHelpWindow: () =>
     set((state) => {
-      const old = state.helpWindow;
-
-      return { helpWindow: toggleWindowState(old) };
+      return { helpWindow: toggleWindowState(state.helpWindow) };
+    }),
+  toggleLeaderboardWindow: () =>
+    set((state) => {
+      return { leaderboardWindow: toggleWindowState(state.leaderboardWindow) };
     }),
   setMenu: (val: boolean) => set({ menu: val }),
   toggleMenu: () => set((state) => ({ menu: !state.menu })),
