@@ -687,7 +687,7 @@ fn rocket() -> rocket::Rocket {
     });
 
     std::thread::spawn(|| {
-        world_update_thread();
+        main_thread();
     });
 
     let client_senders = CLIENT_SENDERS.clone();
@@ -756,7 +756,7 @@ fn cleanup_thread() {
     }
 }
 
-fn world_update_thread() {
+fn main_thread() {
     let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
     {
@@ -764,7 +764,7 @@ fn world_update_thread() {
         bot_init(&mut *bots);
     }
     loop {
-        thread::sleep(Duration::from_millis(1));
+        thread::sleep(Duration::from_millis(10));
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = bots::BOTS.lock().unwrap();

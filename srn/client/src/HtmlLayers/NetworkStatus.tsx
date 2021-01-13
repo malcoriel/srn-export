@@ -26,7 +26,7 @@ export const NetworkStatus: React.FC = () => {
       forceUpdateNetworkStatus((i) => !i);
     });
   }, [ns.id]);
-  const { connecting, ping, maxPing } = ns;
+  const { connecting, ping, maxPing, delay } = ns;
   const fps = statsHeap[Stat.RealFPS];
   return (
     <StyledRect
@@ -37,7 +37,7 @@ export const NetworkStatus: React.FC = () => {
       className="network-status"
       contentClassName="network-status-content"
       height={30}
-      width={140}
+      width={200}
     >
       <span className="fps">
         {fps ? (
@@ -49,6 +49,7 @@ export const NetworkStatus: React.FC = () => {
           </>
         ) : null}
       </span>
+      {delay ? <span>D={delay}ms</span> : null}
       {connecting && <span>Connecting...&nbsp;</span>}
       {!connecting && (
         <span className="ping">

@@ -298,6 +298,45 @@ export class vsyncedDecoupledLockedTime extends BasicTime {
   };
 }
 
+export class vsyncedCoupledTime extends BasicTime {
+  private accumulator = 0;
+  private requestId?: number;
+  // smoother performance and lighter CPU load, but FPS occasional drops heavily due to GC
+  // time step is completely ignored
+  setInterval(physics: timedFn, render: timedFn) {
+    let lastCheck = performance.now();
+    this.accumulator = 0;
+
+    const timerWork = () => {
+      const currentTime = performance.now();
+      const frameTime = currentTime - lastCheck;
+      lastCheck = currentTime;
+
+      this.accumulator += frameTime;
+
+      render(frameTime);
+      physics(frameTime);
+    };
+    const framedWork = () => {
+      try {
+        timerWork();
+        this.requestId = requestAnimationFrame(framedWork);
+      } catch (e) {
+        console.log('BREAK!');
+        throw e;
+      }
+    };
+    this.requestId = requestAnimationFrame(framedWork);
+  }
+
+  clearAnimation = () => {
+    super.clearIntervals();
+    if (this.requestId) {
+      cancelAnimationFrame(this.requestId);
+    }
+  };
+}
+
 // TODO? clamping or scheduling of physics to avoid spiral of death when performance is not enough
 // TODO? decoupled interpolated time when physics becomes too slow
 // see final touch of https://gafferongames.com/post/fix_your_timestep/

@@ -12,7 +12,7 @@ import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
 import Vector from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
-import { vsyncedDecoupledTime } from './utils/Times';
+import { vsyncedCoupledTime, vsyncedDecoupledTime } from './utils/Times';
 import { api } from './utils/api';
 import { useEffect, useState } from 'react';
 
@@ -32,7 +32,7 @@ interface Cmd {
   tag?: string;
 }
 
-const FORCE_SYNC_INTERVAL = 1000;
+const FORCE_SYNC_INTERVAL = 2000;
 const MANUAL_MOVE_SHIP_UPDATE_INTERVAL = 200;
 const RECONNECT_INTERVAL = 1000;
 const MAX_PING_LIFE = 10000;
@@ -79,6 +79,7 @@ export enum ServerToClientMessageCode {
 }
 
 const MAX_PENDING_TICKS = 2000;
+// it's completely ignore in actual render, since vsynced time is used
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
@@ -107,6 +108,7 @@ export default class NetState extends EventEmitter {
   disconnecting: boolean = false;
   private lastShipPos?: Vector;
   private slowTime: vsyncedDecoupledTime;
+  public delay: number;
   public static make() {
     NetState.instance = new NetState();
   }
@@ -116,7 +118,7 @@ export default class NetState extends EventEmitter {
     // }
     return NetState.instance;
   }
-  private time: vsyncedDecoupledTime;
+  private time: vsyncedCoupledTime;
 
   constructor() {
     super();
@@ -136,6 +138,7 @@ export default class NetState extends EventEmitter {
       paused: false,
     };
     this.ping = 0;
+    this.delay = 0;
     this.visualState = {
       boundCameraMovement: true,
       cameraPosition: {
@@ -143,7 +146,7 @@ export default class NetState extends EventEmitter {
         y: 0,
       },
     };
-    this.time = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
+    this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
     this.slowTime = new vsyncedDecoupledTime(SLOW_TIME_STEP);
   }
 
@@ -230,7 +233,7 @@ export default class NetState extends EventEmitter {
         Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
           const ns = NetState.get();
           if (!ns) return;
-          ns.updateLocalState(elapsedMs);
+          ns.updateLocalState(Math.floor((elapsedMs * 1000) / 1000));
         });
       },
       () => {
@@ -264,6 +267,8 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.SyncExclusive
       ) {
         const parsed = JSON.parse(data);
+        let delay = parsed.ticks - this.state.ticks;
+        this.delay = delay;
         if (
           parsed.tag &&
           parsed.tag === this.forceSyncTag &&
