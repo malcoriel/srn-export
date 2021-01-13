@@ -100,7 +100,7 @@ export const useStore = create<SrnState>((set) => ({
   volume: lsMusicVolume,
   questWindow: WindowState.Minimized,
   helpWindow: WindowState.Hidden,
-  leaderboardWindow: WindowState.Hidden,
+  leaderboardWindow: WindowState.Minimized,
 
   setPreferredName: (val: string) =>
     set(() => {

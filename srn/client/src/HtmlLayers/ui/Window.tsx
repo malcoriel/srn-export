@@ -46,11 +46,11 @@ export const Window: React.FC<{
       className="ui-window-controls"
       style={{ height: isShown ? thickness + 2 : undefined }}
     >
-      {!isMinimized && minimized && (
+      {!isMinimized && minimized ? (
         <Button onClick={minimize}>
           <AiFillCaretDown />
         </Button>
-      )}
+      ) : null}
       {isMinimized && (
         <Button onClick={maximize}>
           <AiFillCaretUp />

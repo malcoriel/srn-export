@@ -556,7 +556,7 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     }
 
     if state.paused {
-        if state.milliseconds_remaining <= 0 {
+        if state.milliseconds_remaining <= 500 {
             eprintln!("resetting game");
             let players = state
                 .players
