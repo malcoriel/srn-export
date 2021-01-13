@@ -70,18 +70,18 @@ export const NetworkStatus: React.FC = () => {
         <FitText className="desync-text">&nbsp;{desync}ms</FitText>
       </span>
       {!connecting && (
-        <span className="ping">
+        <span className="ping" title="ping (half trip sync time)">
           {ping ? (
             <>
               &nbsp;
               <FaWaveSquare />
               &nbsp;
-              <span title="current ping (half trip sync time)">
-                <FitText>{ping}</FitText>
+              <span title="current">
+                <FitText className="ping-text">{ping}</FitText>
               </span>
               {maxPing ? (
-                <span title="max ping (half trip sync time)">
-                  <FitText>/{maxPing}</FitText>
+                <span title="max">
+                  <FitText className="ping-text">/{maxPing}</FitText>
                 </span>
               ) : null}
             </>
