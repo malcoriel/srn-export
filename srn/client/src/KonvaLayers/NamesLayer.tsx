@@ -1,6 +1,6 @@
 import React from 'react';
 import { antiScale, GameState, scaleConfig } from '../world';
-import NetState from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import { Layer, Text } from 'react-konva';
 import Vector, { IVector, VectorF } from '../utils/Vector';
 import _ from 'lodash';
@@ -62,9 +62,12 @@ function extractNamePositions(
   return res;
 }
 
-export const NamesLayer: React.FC = () => {
+export const NamesLayer: React.FC = React.memo(() => {
   const ns = NetState.get();
   if (!ns) return null;
+
+  useNSForceChange(true);
+
   const { state, visualState } = ns;
   let zoomProp = 1 / (visualState.zoomShift || 1.0);
 
@@ -96,4 +99,4 @@ export const NamesLayer: React.FC = () => {
       })}
     </Layer>
   );
-};
+});

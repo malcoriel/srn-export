@@ -1,12 +1,13 @@
 import React from 'react';
 import { size } from '../world';
-import NetState from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 
 export const LeaderboardLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
+  useNSForceChange();
   const { leaderboard, milliseconds_remaining, paused } = ns.state;
   if (!leaderboard || !paused) {
     return null;

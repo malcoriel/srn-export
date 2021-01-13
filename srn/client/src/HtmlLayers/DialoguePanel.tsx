@@ -8,7 +8,7 @@ import {
   CAMERA_HEIGHT,
 } from '../ThreeLayers/CameraControls';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
-import NetState from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import _ from 'lodash';
 import {
   DialogueElem,
@@ -78,6 +78,7 @@ export const DialoguePanel: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
+  useNSForceChange();
   const { dialogue } = ns;
 
   const tryDoOption = (i: number) => () => {

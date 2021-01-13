@@ -1,6 +1,6 @@
 import React from 'react';
 import './QuestWindow.scss';
-import NetState, { findMyPlayer } from '../NetState';
+import NetState, { findMyPlayer, useNSForceChange } from '../NetState';
 import { Planet, Quest, QuestState } from '../world';
 import { findPlanet } from './NetworkStatus';
 import { Window } from './ui/Window';
@@ -8,6 +8,8 @@ import { Window } from './ui/Window';
 export const QuestWindow = () => {
   const ns = NetState.get();
   if (!ns) return null;
+
+  useNSForceChange();
 
   const { state, visualState } = ns;
   const myPlayer = findMyPlayer(state);

@@ -14,6 +14,7 @@ import Vector from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedDecoupledTime } from './utils/Times';
 import { api } from './utils/api';
+import { useEffect, useState } from 'react';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -503,3 +504,13 @@ export default class NetState extends EventEmitter {
     });
   }
 }
+export const useNSForceChange = (fast = false) => {
+  const [, forceChange] = useState(false);
+  const ns = NetState.get();
+  if (!ns) return null;
+  useEffect(() => {
+    ns.on(fast ? 'change' : 'slowchange', () => {
+      forceChange((flip) => !flip);
+    });
+  }, [ns.id]);
+};

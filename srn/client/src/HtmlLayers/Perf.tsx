@@ -16,6 +16,7 @@ const buffers: Record<Measure, number[]> = {
   RealFrameEvent: [],
   RenderFrameEvent: [],
   RenderFrameTime: [],
+  RootComponentRender: [],
 };
 
 export enum Measure {
@@ -24,6 +25,7 @@ export enum Measure {
   PhysicsFrameEvent = 'PhysicsFrameEvent',
   RenderFrameEvent = 'RenderFrameEvent',
   RealFrameEvent = 'RealFrameEvent',
+  RootComponentRender = 'RootComponentRender',
 }
 
 export enum Stat {
@@ -194,7 +196,7 @@ const STATS_REFRESH_TIME = 1000;
 let StatsPanel = () => {
   const [shown, setShown] = useToggleHotkey(
     'shift+f',
-    false,
+    true,
     'show FPS & stats'
   );
   const [force, setForce] = useState(0);
@@ -209,8 +211,10 @@ let StatsPanel = () => {
     <div className="stats panel aux-panel">
       <div className="header">Debug info:</div>
       <div className="row">
-        <span className="name">Time step:</span>
-        <span className="value">{formatNumber(statsHeap.timeStep)}ms</span>
+        <span className="name">Root renders:</span>
+        <span className="value">
+          {buffers[Measure.RootComponentRender].length}
+        </span>
       </div>
       <div className="row">
         <span className="name">Avg physics frame time:</span>

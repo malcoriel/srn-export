@@ -8,7 +8,7 @@ import { CoordLayer } from './KonvaLayers/CoordLayer';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { NetworkStatus } from './HtmlLayers/NetworkStatus';
-import { Perf, StatsPanel } from './HtmlLayers/Perf';
+import { Measure, Perf, StatsPanel } from './HtmlLayers/Perf';
 import { StartMenu } from './HtmlLayers/StartMenu';
 import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
@@ -31,6 +31,7 @@ const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
 
 const Srn = () => {
+  Perf.markEvent(Measure.RootComponentRender);
   const {
     playing,
     setPlaying,
@@ -55,6 +56,7 @@ const Srn = () => {
     }),
     shallow
   );
+  useStore((state) => state.trigger);
 
   const updateSize = () => {
     if (
@@ -147,7 +149,6 @@ const Srn = () => {
             </Stage>
             <ShipControls />
             <NetworkStatus />
-            <InGameLeaderBoardPanel />
             <HelpLayer />
             <LeaderboardLayer />
             <DialoguePanel />

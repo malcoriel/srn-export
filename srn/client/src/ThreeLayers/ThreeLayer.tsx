@@ -1,7 +1,7 @@
 import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { max_x, min_x, ShipAction, ShipActionType, size } from '../world';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
   ExternalCameraControl,
@@ -11,7 +11,7 @@ import {
   CAMERA_DEFAULT_ZOOM,
 } from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
-import NetState from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import Vector from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
 import { BackgroundPlane } from './BackgroundPlane';
@@ -43,8 +43,10 @@ export const ThreeLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state } = ns;
-  const [shown, setShown] = useShowCoordinates();
+  const [shown] = useShowCoordinates();
   const showCoords = shown;
+
+  useNSForceChange(true);
 
   return (
     <Canvas

@@ -1,5 +1,9 @@
 import React from 'react';
-import NetState, { findMyPlayer, findMyShip } from '../NetState';
+import NetState, {
+  findMyPlayer,
+  findMyShip,
+  useNSForceChange,
+} from '../NetState';
 import { Circle, Layer, Rect } from 'react-konva';
 import Vector from '../utils/Vector';
 import _ from 'lodash';
@@ -34,6 +38,8 @@ const buildTrajectory = (questTarget: Planet, myShip: Ship): Vector[] => {
 export const MyTrajectoryLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
+
+  useNSForceChange(true);
   const { state, visualState } = ns;
   const myShip = findMyShip(state);
   if (!myShip) return null;
