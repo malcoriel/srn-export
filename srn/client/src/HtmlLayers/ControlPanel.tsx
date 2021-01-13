@@ -18,6 +18,7 @@ export function ControlPanel() {
   let THICKNESS = 9;
   const setMenu = useStore((state) => state.setMenu);
   const toggleQuestWindow = useStore((state) => state.toggleQuestWindow);
+  const toggleHelpWindow = useStore((state) => state.toggleHelpWindow);
   return (
     <div className="control-panel">
       <StyledRect
@@ -36,7 +37,7 @@ export function ControlPanel() {
         >
           <CgScreen />
         </Button>
-        <Button>
+        <Button onClick={toggleHelpWindow}>
           <FaQuestion />
         </Button>
         <Button onClick={toggleQuestWindow}>

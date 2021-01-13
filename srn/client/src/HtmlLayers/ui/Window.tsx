@@ -61,6 +61,8 @@ export const Window: React.FC<{
       </Button>
     </div>
   );
+  let minimizedMountPoint = document.getElementById('minimized-windows');
+  if (!minimizedMountPoint) return null;
   return (
     <div className="ui-window">
       {isShown && (
@@ -84,7 +86,7 @@ export const Window: React.FC<{
             {minimized}
             {windowButtons}
           </div>,
-          document.getElementById('minimized-windows')!
+          minimizedMountPoint
         )}
     </div>
   );

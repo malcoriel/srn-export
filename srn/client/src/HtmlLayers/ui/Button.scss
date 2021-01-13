@@ -11,7 +11,6 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-
 }
 
 .ui-button.toggled {
@@ -24,4 +23,9 @@
   background-color: darken($teal, 0.9);
   color: black;
   cursor: pointer;
+}
+
+.ui-button:active {
+  transform: scale(0.98);
+
 }

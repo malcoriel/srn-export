@@ -57,6 +57,9 @@ export type SrnState = {
   questWindow: WindowState;
   setQuestWindow: (val: WindowState) => void;
   toggleQuestWindow: () => void;
+  toggleHelpWindow: () => void;
+  helpWindow: WindowState;
+  setHelpWindow: (val: WindowState) => void;
 };
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
@@ -93,6 +96,7 @@ export const useStore = create<SrnState>((set) => ({
   trigger: 0,
   volume: lsMusicVolume,
   questWindow: WindowState.Minimized,
+  helpWindow: WindowState.Hidden,
 
   setPreferredName: (val: string) =>
     set(() => {
@@ -105,11 +109,18 @@ export const useStore = create<SrnState>((set) => ({
       return { volume: val };
     }),
   setQuestWindow: (val: WindowState) => set({ questWindow: val }),
+  setHelpWindow: (val: WindowState) => set({ helpWindow: val }),
   toggleQuestWindow: () =>
     set((state) => {
       const old = state.questWindow;
 
       return { questWindow: toggleWindowState(old) };
+    }),
+  toggleHelpWindow: () =>
+    set((state) => {
+      const old = state.helpWindow;
+
+      return { helpWindow: toggleWindowState(old) };
     }),
   setMenu: (val: boolean) => set({ menu: val }),
   toggleMenu: () => set((state) => ({ menu: !state.menu })),

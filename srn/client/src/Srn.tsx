@@ -14,10 +14,9 @@ import { LeaderboardLayer } from './HtmlLayers/LeaderboardLayer';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { NamesLayer } from './KonvaLayers/NamesLayer';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
-import { HelpLayer } from './HtmlLayers/HelpLayer';
+import { HelpWindow } from './HtmlLayers/HelpWindow';
 import './HtmlLayers/Panel.scss';
 import { MinimapLayerWrapper } from './KonvaLayers/MinimapLayerWrapper';
-import { InGameLeaderBoardPanel } from './HtmlLayers/InGameLeaderboardPanel';
 import 'react-jinke-music-player/assets/index.css';
 import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
@@ -148,7 +147,7 @@ const Srn = () => {
             </Stage>
             <ShipControls />
             <NetworkStatus />
-            <HelpLayer />
+            <HelpWindow />
             <LeaderboardLayer />
             <DialoguePanel />
             <QuestWindow />

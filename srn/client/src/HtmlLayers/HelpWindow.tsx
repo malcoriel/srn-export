@@ -1,21 +1,19 @@
 import React from 'react';
 import { hotkeyRegistry } from '../utils/useToggleHotkey';
-import { PanelPosition, PanelWithHideButton } from './PanelWithHideButton';
+import { Window } from './ui/Window';
+import './HelpWindow.scss';
 
-export const HelpLayer = () => {
+export const HelpWindow = () => {
   return (
-    <PanelWithHideButton
-      position={PanelPosition.BottomRight}
-      minimized={
-        <div className="small-help">
-          <div className="line">shift + h for help</div>
-        </div>
-      }
-      defaultValue={true}
-      hotkey="shift+h"
-      button={true}
+    <Window
+      height={500}
+      width={300}
+      line="thick"
+      thickness={10}
+      storeKey="helpWindow"
+      className="help-window"
     >
-      <div className="help">
+      <div>
         <div className="header">Help (shift + h)</div>
         <div className="line">show menu - ESC </div>
         <div className="line">
@@ -32,6 +30,6 @@ export const HelpLayer = () => {
           </div>
         ))}
       </div>
-    </PanelWithHideButton>
+    </Window>
   );
 };
