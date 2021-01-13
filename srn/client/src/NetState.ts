@@ -144,7 +144,7 @@ export default class NetState extends EventEmitter {
       },
     };
     this.time = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
-    this.slowTime = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
+    this.slowTime = new vsyncedDecoupledTime(SLOW_TIME_STEP);
   }
 
   forceSync = () => {
