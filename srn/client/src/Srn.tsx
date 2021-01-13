@@ -81,6 +81,8 @@ const Srn = () => {
     if (playing) {
       console.log('remount start');
       start();
+      // this will force re-subscription to useNSForceChange
+      forceUpdate();
     }
     return () => {
       const ns = NetState.get();
@@ -110,9 +112,6 @@ const Srn = () => {
     ns.playerName = preferredName;
     ns.portraitName = portrait; // portrait files are 1-based
     ns.disconnecting = false;
-    // ns.on('change', () => {
-    //   forceUpdate();
-    // });
     ns.connect();
   };
 

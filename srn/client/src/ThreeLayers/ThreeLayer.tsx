@@ -46,7 +46,7 @@ export const ThreeLayer: React.FC = () => {
   const [shown] = useShowCoordinates();
   const showCoords = shown;
 
-  useNSForceChange(true);
+  useNSForceChange('ThreeLayer', true);
 
   return (
     <Canvas

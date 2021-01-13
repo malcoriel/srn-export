@@ -3,7 +3,7 @@ import { GameState, Planet } from '../world';
 import NetState from '../NetState';
 import { StyledRect } from './ui/StyledRect';
 import './NetworkStatus.scss';
-import { FaWaveSquare, RiFilmFill } from 'react-icons/all';
+import { FaWaveSquare, GiSplitArrows, RiFilmFill } from 'react-icons/all';
 import { Stat, statsHeap } from './Perf';
 
 export const findPlanet = (
@@ -26,7 +26,7 @@ export const NetworkStatus: React.FC = () => {
       forceUpdateNetworkStatus((i) => !i);
     });
   }, [ns.id]);
-  const { connecting, ping, maxPing, delay } = ns;
+  const { connecting, ping, maxPing, desync } = ns;
   const fps = statsHeap[Stat.RealFPS];
   return (
     <StyledRect
@@ -49,7 +49,10 @@ export const NetworkStatus: React.FC = () => {
           </>
         ) : null}
       </span>
-      <span title="desync between client and server">D={delay}ms</span>
+      <span className="desync" title="desync between client and server">
+        <GiSplitArrows />
+        &nbsp;{desync}ms
+      </span>
       {connecting && <span>Connecting...&nbsp;</span>}
       {!connecting && (
         <span className="ping">

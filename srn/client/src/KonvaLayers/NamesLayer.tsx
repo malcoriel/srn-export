@@ -66,7 +66,7 @@ export const NamesLayer: React.FC = React.memo(() => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange(true);
+  useNSForceChange('NamesLayer', true);
 
   const { state, visualState } = ns;
   let zoomProp = 1 / (visualState.zoomShift || 1.0);

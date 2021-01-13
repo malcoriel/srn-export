@@ -9,7 +9,7 @@ export const DebugStateLayer: React.FC = () => {
   if (!ns) return null;
   const { state } = ns;
 
-  useNSForceChange();
+  useNSForceChange('DebugStateLayer');
 
   return (
     <PanelWithHideButton

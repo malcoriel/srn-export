@@ -108,7 +108,7 @@ export default class NetState extends EventEmitter {
   disconnecting: boolean = false;
   private lastShipPos?: Vector;
   private slowTime: vsyncedDecoupledTime;
-  public delay: number;
+  public desync: number;
   public static make() {
     NetState.instance = new NetState();
   }
@@ -138,7 +138,7 @@ export default class NetState extends EventEmitter {
       paused: false,
     };
     this.ping = 0;
-    this.delay = 0;
+    this.desync = 0;
     this.visualState = {
       boundCameraMovement: true,
       cameraPosition: {
@@ -267,7 +267,7 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.SyncExclusive
       ) {
         const parsed = JSON.parse(data);
-        this.delay = parsed.ticks - this.state.ticks;
+        this.desync = parsed.ticks - this.state.ticks;
         if (
           parsed.tag &&
           parsed.tag === this.forceSyncTag &&
@@ -508,7 +508,7 @@ export default class NetState extends EventEmitter {
     });
   }
 }
-export const useNSForceChange = (fast = false) => {
+export const useNSForceChange = (name: string, fast = false) => {
   const [, forceChange] = useState(false);
   const ns = NetState.get();
   if (!ns) return null;

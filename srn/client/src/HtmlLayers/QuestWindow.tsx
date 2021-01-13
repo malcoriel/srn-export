@@ -9,7 +9,7 @@ export const QuestWindow = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange();
+  useNSForceChange('QuestWindow');
 
   const { state, visualState } = ns;
   const myPlayer = findMyPlayer(state);

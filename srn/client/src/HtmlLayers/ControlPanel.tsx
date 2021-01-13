@@ -5,8 +5,10 @@ import { Button } from './ui/Button';
 import {
   AiOutlineSolution,
   CgMenuBoxed,
+  CgScreen,
   FaBullseye,
   FaQuestion,
+  HiDesktopComputer,
 } from 'react-icons/all';
 import { useStore } from '../store';
 
@@ -32,7 +34,7 @@ export function ControlPanel() {
             setMenu(true);
           }}
         >
-          <CgMenuBoxed />
+          <CgScreen />
         </Button>
         <Button>
           <FaQuestion />

@@ -39,7 +39,7 @@ export const MyTrajectoryLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange(true);
+  useNSForceChange('MyTrajectoryLayer', true);
   const { state, visualState } = ns;
   const myShip = findMyShip(state);
   if (!myShip) return null;

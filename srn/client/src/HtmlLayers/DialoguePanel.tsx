@@ -78,7 +78,7 @@ export const DialoguePanel: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange();
+  useNSForceChange('DialoguePanel');
   const { dialogue } = ns;
 
   const tryDoOption = (i: number) => () => {

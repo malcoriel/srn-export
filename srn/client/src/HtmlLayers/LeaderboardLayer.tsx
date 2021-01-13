@@ -7,7 +7,7 @@ export const LeaderboardLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange();
+  useNSForceChange('LeaderboardLayer');
   const { leaderboard, milliseconds_remaining, paused } = ns.state;
   if (!leaderboard || !paused) {
     return null;
