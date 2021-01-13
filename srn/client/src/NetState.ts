@@ -267,8 +267,7 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.SyncExclusive
       ) {
         const parsed = JSON.parse(data);
-        let delay = parsed.ticks - this.state.ticks;
-        this.delay = delay;
+        this.delay = parsed.ticks - this.state.ticks;
         if (
           parsed.tag &&
           parsed.tag === this.forceSyncTag &&
