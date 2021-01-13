@@ -764,7 +764,7 @@ fn world_update_thread() {
         bot_init(&mut *bots);
     }
     loop {
-        thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(1));
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = bots::BOTS.lock().unwrap();
