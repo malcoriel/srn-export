@@ -79,6 +79,7 @@ export enum ServerToClientMessageCode {
 
 const MAX_PENDING_TICKS = 2000;
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
+const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 
 export default class NetState extends EventEmitter {
@@ -101,9 +102,10 @@ export default class NetState extends EventEmitter {
   private forceSyncInterval?: Timeout;
   private updateOnServerInterval?: Timeout;
   private reconnectTimeout?: Timeout;
-  private readonly id: string;
+  readonly id: string;
   disconnecting: boolean = false;
   private lastShipPos?: Vector;
+  private slowTime: vsyncedDecoupledTime;
   public static make() {
     NetState.instance = new NetState();
   }
@@ -141,6 +143,7 @@ export default class NetState extends EventEmitter {
       },
     };
     this.time = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
+    this.slowTime = new vsyncedDecoupledTime(LOCAL_SIM_TIME_STEP);
   }
 
   forceSync = () => {
@@ -170,6 +173,7 @@ export default class NetState extends EventEmitter {
     }
     NetState.instance = undefined;
     this.time.clearAnimation();
+    this.slowTime.clearAnimation();
     Perf.stop();
   };
   connect = () => {
@@ -237,6 +241,15 @@ export default class NetState extends EventEmitter {
           ns.emit('change');
         });
       }
+    );
+    this.slowTime.setInterval(
+      () => {
+        const ns = NetState.get();
+        if (!ns) return;
+
+        ns.emit('slowchange');
+      },
+      () => {}
     );
   };
 

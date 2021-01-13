@@ -105,10 +105,7 @@ const Srn = () => {
     ns.playerName = preferredName;
     ns.portraitName = portrait; // portrait files are 1-based
     ns.disconnecting = false;
-    ns.on('change', () => {
-      forceUpdate();
-    });
-    // ns.on('network', () => {
+    // ns.on('change', () => {
     //   forceUpdate();
     // });
     ns.connect();

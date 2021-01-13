@@ -16,14 +16,16 @@ export const findPlanet = (
 export const NetworkStatus: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
-  const [, forceUpdate] = useState(0);
+  const [, forceUpdateNetworkStatus] = useState(0);
 
   useEffect(() => {
     ns.on('network', () => {
-      console.log('update');
-      forceUpdate((i) => i + 1);
+      forceUpdateNetworkStatus((i) => i + 1);
     });
-  }, []);
+    ns.on('slowchange', () => {
+      forceUpdateNetworkStatus((i) => i + 1);
+    });
+  }, [ns.id]);
   const { connecting, ping, maxPing } = ns;
   const fps = statsHeap[Stat.RealFPS];
   return (

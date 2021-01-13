@@ -1,5 +1,5 @@
 import color from 'color';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import NetState from '../NetState';
 import { Arc, Circle, Group, Layer, Rect } from 'react-konva';
 import {
@@ -40,6 +40,14 @@ const arcCount = 9;
 export const MinimapLayer = () => {
   const ns = NetState.get();
   if (!ns) return null;
+
+  const [, forceUpdateMinimap] = useState(0);
+  useEffect(() => {
+    ns.on('slowchange', () => {
+      forceUpdateMinimap((i) => i + 1);
+    });
+  }, [ns.id]);
+
   const { state, visualState } = ns;
   let { cameraPosition } = visualState;
   let zoomProp = 1 / (visualState.zoomShift || 1.0);
