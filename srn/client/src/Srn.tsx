@@ -26,7 +26,7 @@ import { SrnState, useStore } from './store';
 import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
 import { MinimizedWindows } from './HtmlLayers/MinimizedWindows';
-
+import shallow from 'zustand/shallow';
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
 
@@ -41,17 +41,20 @@ const Srn = () => {
     portrait,
     musicEnabled,
     forceUpdate,
-  } = useStore((state: SrnState) => ({
-    playing: state.playing,
-    setPlaying: state.setPlaying,
-    menu: state.menu,
-    setMenu: state.setMenu,
-    toggleMenu: state.toggleMenu,
-    preferredName: state.preferredName,
-    portrait: state.portrait,
-    musicEnabled: state.musicEnabled,
-    forceUpdate: state.forceUpdate,
-  }));
+  } = useStore(
+    (state: SrnState) => ({
+      playing: state.playing,
+      setPlaying: state.setPlaying,
+      menu: state.menu,
+      setMenu: state.setMenu,
+      toggleMenu: state.toggleMenu,
+      preferredName: state.preferredName,
+      portrait: state.portrait,
+      musicEnabled: state.musicEnabled,
+      forceUpdate: state.forceUpdate,
+    }),
+    shallow
+  );
 
   const updateSize = () => {
     if (
