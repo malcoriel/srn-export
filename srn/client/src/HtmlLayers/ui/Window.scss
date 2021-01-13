@@ -1,14 +1,9 @@
 @import "../../utils/palette.scss";
 
 .ui-window {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  pointer-events: auto;
 
   > * {
-    position: relative;
-    left: -50%;
-    top: -50%;
     opacity: 0.9;
     background-color: black;
     display: flex;

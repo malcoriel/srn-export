@@ -6,7 +6,7 @@ import './HelpWindow.scss';
 export const HelpWindow = () => {
   return (
     <Window
-      height={500}
+      height={300}
       width={300}
       line="thick"
       thickness={10}

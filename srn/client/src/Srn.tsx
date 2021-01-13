@@ -24,7 +24,7 @@ import { HotkeyWrapper } from './HotkeyWrapper';
 import { SrnState, useStore } from './store';
 import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
-import { MinimizedWindows } from './HtmlLayers/MinimizedWindows';
+import { WindowContainers } from './HtmlLayers/WindowContainers';
 import shallow from 'zustand/shallow';
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -160,7 +160,7 @@ const Srn = () => {
             <DebugStateLayer />
             <StatsPanel />
             <ControlPanel />
-            <MinimizedWindows />
+            <WindowContainers />
           </>
         )}
         {musicEnabled && <MusicControls />}

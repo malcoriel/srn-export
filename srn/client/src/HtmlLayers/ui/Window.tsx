@@ -44,9 +44,9 @@ export const Window: React.FC<{
   const windowButtons = (
     <div
       className="ui-window-controls"
-      style={{ height: isShown ? thickness : undefined }}
+      style={{ height: isShown ? thickness + 2 : undefined }}
     >
-      {!isMinimized && (
+      {!isMinimized && minimized && (
         <Button onClick={minimize}>
           <AiFillCaretDown />
         </Button>
@@ -62,24 +62,30 @@ export const Window: React.FC<{
     </div>
   );
   let minimizedMountPoint = document.getElementById('minimized-windows');
-  if (!minimizedMountPoint) return null;
+  let shownWindowsMountPoint = document.getElementById('shown-windows');
+  if (!minimizedMountPoint || !shownWindowsMountPoint) return null;
   return (
-    <div className="ui-window">
-      {isShown && (
-        <div className={`ui-window-shown ${className}`}>
-          <StyledRect
-            width={width}
-            height={height}
-            line={line}
-            thickness={thickness}
-            contentClassName={contentClassName}
-          >
-            {windowButtons}
-            {children}
-          </StyledRect>
-        </div>
-      )}
-
+    <>
+      {!isMinimized &&
+        ReactDOM.createPortal(
+          <div className={`ui-window ${className}`}>
+            {isShown && (
+              <div className={`ui-window-shown `}>
+                <StyledRect
+                  width={width}
+                  height={height}
+                  line={line}
+                  thickness={thickness}
+                  contentClassName={contentClassName}
+                >
+                  {windowButtons}
+                  {children}
+                </StyledRect>
+              </div>
+            )}
+          </div>,
+          shownWindowsMountPoint
+        )}
       {isMinimized &&
         ReactDOM.createPortal(
           <div className="ui-window-minimized">
@@ -88,6 +94,6 @@ export const Window: React.FC<{
           </div>,
           minimizedMountPoint
         )}
-    </div>
+    </>
   );
 };
