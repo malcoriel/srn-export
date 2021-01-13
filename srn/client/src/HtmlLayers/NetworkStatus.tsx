@@ -5,6 +5,19 @@ import { StyledRect } from './ui/StyledRect';
 import './NetworkStatus.scss';
 import { FaWaveSquare, GiSplitArrows, RiFilmFill } from 'react-icons/all';
 import { Stat, statsHeap } from './Perf';
+import useFitText from 'use-fit-text';
+
+export const FitText: React.FC<{ className?: string }> = ({
+  children,
+  className,
+}) => {
+  const { fontSize, ref } = useFitText();
+  return (
+    <span className={className} ref={ref} style={{ fontSize }}>
+      {children}
+    </span>
+  );
+};
 
 export const findPlanet = (
   state: GameState,
@@ -28,6 +41,7 @@ export const NetworkStatus: React.FC = () => {
   }, [ns.id]);
   const { connecting, ping, maxPing, desync } = ns;
   const fps = statsHeap[Stat.RealFPS];
+
   return (
     <StyledRect
       thickness={8}
@@ -37,34 +51,43 @@ export const NetworkStatus: React.FC = () => {
       className="network-status"
       contentClassName="network-status-content"
       height={30}
-      width={200}
+      width={240}
     >
-      <span className="fps" title="fps">
+      <span className="fps" title="frames per second">
         {fps ? (
           <>
             <RiFilmFill />
-            &nbsp;
-            {fps}
-            &nbsp;
+            <FitText className="fps-text">
+              &nbsp;
+              {fps}
+              fps
+            </FitText>
           </>
         ) : null}
       </span>
       <span className="desync" title="desync between client and server">
         <GiSplitArrows />
-        &nbsp;{desync}ms
+        <FitText className="desync-text">&nbsp;{desync}ms</FitText>
       </span>
-      {connecting && <span>Connecting...&nbsp;</span>}
       {!connecting && (
         <span className="ping">
           {ping ? (
             <>
-              <FaWaveSquare /> &nbsp;
-              <span title="current ping (half trip sync time)">{ping}</span>
+              &nbsp;
+              <FaWaveSquare />
+              &nbsp;
+              <span title="current ping (half trip sync time)">
+                <FitText>{ping}</FitText>
+              </span>
               {maxPing ? (
-                <span title="max ping (half trip sync time)">/{maxPing}</span>
+                <span title="max ping (half trip sync time)">
+                  <FitText>/{maxPing}</FitText>
+                </span>
               ) : null}
             </>
-          ) : null}
+          ) : (
+            <FitText className="connecting">Connecting...&nbsp;</FitText>
+          )}
         </span>
       )}
     </StyledRect>
