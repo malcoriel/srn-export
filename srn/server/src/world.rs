@@ -604,8 +604,12 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
 }
 
 const SHIP_REGEN_PER_SEC: f64 = 5.0;
-const STAR_DAMAGE_PER_SEC: f64 = 50.0;
-const STAR_DAMAGE_PER_SEC_NEAR: f64 = 10.0;
+const STAR_INSIDE_DAMAGE_PER_SEC: f64 = 50.0;
+const STAR_DAMAGE_PER_SEC_NEAR: f64 = 6.0; // ???
+const STAR_DAMAGE_PER_SEC_FAR: f64 = 3.0;
+const STAR_INSIDE_RADIUS: f64 = 0.5;
+const STAR_CLOSE_RADIUS: f64 = 0.68;
+const STAR_FAR_RADIUS: f64 = 1.1;
 pub fn update_ship_hp_effects(
     star: &Option<Star>,
     ships: &Vec<Ship>,
@@ -622,27 +626,30 @@ pub fn update_ship_hp_effects(
                 x: ship.x,
                 y: ship.y,
             };
+
             let dist_to_star = ship_pos.euclidean_distance(&star_center);
-            let star_damage = if dist_to_star < star.radius {
-                STAR_DAMAGE_PER_SEC
+            let rr = dist_to_star / star.radius;
+
+            let star_damage = if rr < STAR_INSIDE_RADIUS {
+                STAR_INSIDE_DAMAGE_PER_SEC
+            } else if rr < STAR_CLOSE_RADIUS {
+                STAR_DAMAGE_PER_SEC_NEAR
+            } else if rr < STAR_FAR_RADIUS {
+                STAR_DAMAGE_PER_SEC_FAR
             } else {
-                if dist_to_star > star.radius * 1.5 {
-                    0.0
-                } else {
-                    ((0.3 - (dist_to_star / star.radius - 1.0)) * STAR_DAMAGE_PER_SEC_NEAR).floor()
-                }
+                0.0
             };
             //eprintln!("star_damage {}", star_damage);
             let star_damage = star_damage * elapsed_micro as f64 / 1000.0 / 1000.0;
             ship.hp = 0.0f64.max(ship.hp - star_damage);
+
+            if star_damage <= 0.0 {
+                let regen = SHIP_REGEN_PER_SEC * elapsed_micro as f64 / 1000.0 / 1000.0;
+                //eprintln!("regen {}", regen);
+                ship.hp = ship.max_hp.min(ship.hp + regen);
+            }
         }
     }
-    for mut ship in ships.iter_mut() {
-        let regen = SHIP_REGEN_PER_SEC * elapsed_micro as f64 / 1000.0 / 1000.0;
-        //eprintln!("regen {}", regen);
-        ship.hp = ship.max_hp.min(ship.hp + regen);
-    }
-    //eprintln!("hps: {:?}", ships.iter().map(|s| s.hp).collect::<Vec<_>>());
     ships
 }
 
