@@ -363,6 +363,8 @@ pub struct Ship {
     pub id: Uuid,
     pub x: f64,
     pub y: f64,
+    pub hp: f64,
+    pub max_hp: f64,
     pub rotation: f64,
     pub radius: f64,
     pub color: String,
@@ -593,9 +595,55 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
                 &state.star.clone().unwrap(),
                 elapsed,
             );
+            if !client {
+                state.ships = update_ship_hp_effects(&state.star, &state.ships, elapsed);
+            }
         }
     }
     state
+}
+
+const SHIP_REGEN_PER_SEC: f64 = 5.0;
+const STAR_DAMAGE_PER_SEC: f64 = 50.0;
+const STAR_DAMAGE_PER_SEC_NEAR: f64 = 10.0;
+pub fn update_ship_hp_effects(
+    star: &Option<Star>,
+    ships: &Vec<Ship>,
+    elapsed_micro: i64,
+) -> Vec<Ship> {
+    let mut ships = ships.clone();
+    if let Some(star) = star {
+        let star_center = Vec2f64 {
+            x: star.x,
+            y: star.y,
+        };
+        for mut ship in ships.iter_mut() {
+            let ship_pos = Vec2f64 {
+                x: ship.x,
+                y: ship.y,
+            };
+            let dist_to_star = ship_pos.euclidean_distance(&star_center);
+            let star_damage = if dist_to_star < star.radius {
+                STAR_DAMAGE_PER_SEC
+            } else {
+                if dist_to_star > star.radius * 1.5 {
+                    0.0
+                } else {
+                    ((0.3 - (dist_to_star / star.radius - 1.0)) * STAR_DAMAGE_PER_SEC_NEAR).floor()
+                }
+            };
+            //eprintln!("star_damage {}", star_damage);
+            let star_damage = star_damage * elapsed_micro as f64 / 1000.0 / 1000.0;
+            ship.hp = 0.0f64.max(ship.hp - star_damage);
+        }
+    }
+    for mut ship in ships.iter_mut() {
+        let regen = SHIP_REGEN_PER_SEC * elapsed_micro as f64 / 1000.0 / 1000.0;
+        //eprintln!("regen {}", regen);
+        ship.hp = ship.max_hp.min(ship.hp + regen);
+    }
+    //eprintln!("hps: {:?}", ships.iter().map(|s| s.hp).collect::<Vec<_>>());
+    ships
 }
 
 pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
@@ -627,6 +675,8 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
         } else {
             start.y.clone()
         },
+        hp: 100.0,
+        max_hp: 100.0,
         rotation: 0.0,
         radius: 1.0,
         docked_at: None,

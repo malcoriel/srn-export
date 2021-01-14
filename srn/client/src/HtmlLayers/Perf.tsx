@@ -196,7 +196,7 @@ const STATS_REFRESH_TIME = 1000;
 let StatsPanel = () => {
   const [shown, setShown] = useToggleHotkey(
     'shift+f',
-    true,
+    false,
     'show FPS & stats'
   );
   const [force, setForce] = useState(0);

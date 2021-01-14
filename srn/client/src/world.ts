@@ -61,6 +61,8 @@ export type Ship = GameObject &
     navigate_target?: IVector;
     dock_target?: string;
     trajectory: IVector[];
+    hp: number;
+    max_hp: number;
   };
 
 export type Quest = {
