@@ -12,7 +12,6 @@ import { teal } from '../utils/palette';
 import versionJson from '../../version.json';
 import useSWR from 'swr';
 import { api } from '../utils/api';
-import { TestUI } from './TestUI';
 
 // to only skip menu once
 let firstTime = true;

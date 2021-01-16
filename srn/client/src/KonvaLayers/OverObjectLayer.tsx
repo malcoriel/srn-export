@@ -100,7 +100,7 @@ const extractEffectsPositions = (
     let namePos = shiftPos(ship);
 
     res.push(
-      ...ship.hp_effects.map((e, i) => {
+      ...ship.hp_effects.map((e) => {
         let age = Math.abs(state.ticks - e.tick);
         let opacity =
           age > EFFECT_VISUAL_DURATION_MS

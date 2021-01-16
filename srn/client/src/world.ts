@@ -92,6 +92,7 @@ export type Player = WithId & {
   quest?: Quest;
   state: QuestState;
   money: number;
+  portrait_name: string;
 };
 
 export type Leaderboard = {

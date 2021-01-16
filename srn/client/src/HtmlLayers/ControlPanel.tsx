@@ -4,17 +4,20 @@ import { StyledRect } from './ui/StyledRect';
 import { Button } from './ui/Button';
 import {
   AiOutlineSolution,
-  CgMenuBoxed,
   CgScreen,
   FaBullseye,
   FaQuestion,
-  HiDesktopComputer,
 } from 'react-icons/all';
 import { useStore } from '../store';
-import NetState, { findMyShip, useNSForceChange } from '../NetState';
+import NetState, {
+  findMyPlayer,
+  findMyShip,
+  useNSForceChange,
+} from '../NetState';
+import { makePortraitPath } from './StartMenu';
 
 const BUTTON_SIZE = 50;
-const BUTTON_COUNT = 4;
+const BUTTON_COUNT = 5;
 const THICKNESS = 9;
 
 export function ControlPanel() {
@@ -29,7 +32,8 @@ export function ControlPanel() {
     (state) => state.toggleLeaderboardWindow
   );
 
-  let myShip = findMyShip(ns.state);
+  const myShip = findMyShip(ns.state);
+  const myPlayer = findMyPlayer(ns.state);
 
   return (
     <div className="control-panel">
@@ -42,6 +46,15 @@ export function ControlPanel() {
         noLeft
         noBottom
       >
+        <Button>
+          <img
+            className="portrait"
+            src={makePortraitPath(
+              myPlayer ? myPlayer.portrait_name : 'question'
+            )}
+            alt="p"
+          />
+        </Button>
         <Button
           onClick={() => {
             setMenu(true);
@@ -73,7 +86,10 @@ export function ControlPanel() {
           <div className="text">
             {Math.floor(myShip.hp)}/{Math.floor(myShip.max_hp)}
           </div>
-          <div className="filler" />
+          <div
+            className="filler"
+            style={{ width: `${(myShip.hp / myShip.max_hp) * 100}%` }}
+          />
         </StyledRect>
       )}
     </div>
