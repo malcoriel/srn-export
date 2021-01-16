@@ -3,7 +3,7 @@ mod world_test {
     use crate::new_id;
     use crate::vec2::Vec2f64;
     use crate::world::{
-        add_player, seed_state, spawn_ship, update, update_planets, update_ships_navigation,
+        add_player, seed_state, spawn_ship, update_world, update_planets, update_ships_navigation,
         GameState, Planet, Star,
     };
     use std::f64::consts::PI;
@@ -106,21 +106,21 @@ mod world_test {
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
 
-            state = update(state, 1 * 1000, is_client);
+            state = update_world(state, 1 * 1000, is_client);
             let ship = &state.ships[0];
             eprintln!("No change ship {}/{}", ship.x, ship.y);
             assert!((ship.x).abs() < eps);
             assert!((ship.y).abs() < eps);
             assert!(ship.navigate_target.is_some());
 
-            state = update(state, 1000 * 1000, is_client);
+            state = update_world(state, 1000 * 1000, is_client);
             let ship = &state.ships[0];
             let expected_pos = 2.0f64.sqrt() / 2.0 * dist;
             assert!((ship.x - expected_pos).abs() < eps);
             assert!((ship.y - expected_pos).abs() < eps);
             assert!(ship.navigate_target.is_some());
 
-            state = update(state, 3 * 1000 * 1000, is_client);
+            state = update_world(state, 3 * 1000 * 1000, is_client);
             let ship = &state.ships[0];
             assert!((ship.x - dist).abs() < eps);
             assert!((ship.y - dist).abs() < eps);
@@ -140,7 +140,7 @@ mod world_test {
             spawn_ship(&mut state, &player_id, Some(Vec2f64::zero()));
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
-            state = update(state, 1 * 1000, is_client);
+            state = update_world(state, 1 * 1000, is_client);
             let ship = &mut state.ships[0];
             let expected = PI * 0.75;
             //eprintln!("rotation {} vs {}", ship.rotation, expected);
@@ -148,7 +148,7 @@ mod world_test {
 
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: -dist, y: -dist });
-            state = update(state, 1 * 1000, is_client);
+            state = update_world(state, 1 * 1000, is_client);
             let ship = &mut state.ships[0];
             let expected = PI * 0.25;
             //eprintln!("rotation {} vs -{}", ship.rotation, expected);
@@ -156,7 +156,7 @@ mod world_test {
 
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: -dist, y: dist });
-            state = update(state, 1 * 1000, is_client);
+            state = update_world(state, 1 * 1000, is_client);
             let ship = &mut state.ships[0];
             let expected = PI * 0.75;
             //eprintln!("rotation {} vs -{}", ship.rotation, expected);
@@ -171,7 +171,7 @@ mod world_test {
                 break;
             }
             elapsed += step;
-            state = update(state, step, client);
+            state = update_world(state, step, client);
         }
         state
     }

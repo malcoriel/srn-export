@@ -774,7 +774,7 @@ fn main_thread() {
         let elapsed = now - last;
         last = now;
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
-        cont.state = world::update(cont.state.clone(), elapsed_micro, false);
+        cont.state = world::update_world(cont.state.clone(), elapsed_micro, false);
 
         try_assign_quests(&mut cont.state);
 

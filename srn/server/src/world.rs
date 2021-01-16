@@ -135,6 +135,16 @@ fn index_players_by_ship_id(players: &Vec<Player>) -> HashMap<Uuid, &Player> {
     by_id
 }
 
+fn index_players_by_ship_id_mut(players: &mut Vec<Player>) -> HashMap<Uuid, &mut Player> {
+    let mut by_id = HashMap::new();
+    for p in players.iter_mut() {
+        if let Some(ship_id) = p.ship_id {
+            by_id.entry(ship_id).or_insert(p);
+        }
+    }
+    by_id
+}
+
 pub fn update_planets(
     planets: &Vec<Planet>,
     star: &Option<Star>,
@@ -416,6 +426,7 @@ pub struct Player {
     pub quest: Option<Quest>,
     pub money: i32,
     pub portrait_name: String,
+    pub respawn_ms_left: i32,
 }
 
 impl Player {
@@ -561,7 +572,7 @@ pub fn force_update_to_now(state: &mut GameState) {
     state.ticks = (now - state.start_time_ticks) as u32;
 }
 
-pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
+pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameState {
     state.ticks += elapsed as u32 / 1000;
     if !client {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
@@ -606,8 +617,36 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
                 elapsed,
             );
             if !client {
-                state.ships =
-                    update_ship_hp_effects(&state.star, &state.ships, elapsed, state.ticks);
+                state.ships = update_ship_hp_effects(
+                    &state.star,
+                    &state.ships,
+                    &mut state.players,
+                    elapsed,
+                    state.ticks,
+                );
+
+                for mut player in state.players.iter_mut() {
+                    if player.respawn_ms_left > 0 {
+                        let red = (elapsed / 1000) as i32;
+                        eprintln!(
+                            "reducing respawn left {} by {}",
+                            player.respawn_ms_left, red
+                        );
+                        player.respawn_ms_left -= red;
+                    }
+                }
+
+                let players_to_spawn = state
+                    .players
+                    .iter()
+                    .filter(|p| p.respawn_ms_left <= 0 && p.ship_id.is_none())
+                    .map(|p| p.id)
+                    .collect::<Vec<_>>();
+
+                for pid in players_to_spawn {
+                    eprintln!("Respawning {}", pid);
+                    spawn_ship(&mut state, pid, None);
+                }
             }
         }
     }
@@ -624,9 +663,11 @@ const STAR_FAR_RADIUS: f64 = 1.1;
 const MAX_HP_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
+const PLAYER_RESPAWN_TIME_MS: i32 = 10 * 1000;
 pub fn update_ship_hp_effects(
     star: &Option<Star>,
     ships: &Vec<Ship>,
+    players: &mut Vec<Player>,
     elapsed_micro: i64,
     current_tick: u32,
 ) -> Vec<Ship> {
@@ -693,7 +734,24 @@ pub fn update_ship_hp_effects(
                 .collect::<Vec<_>>()
         }
     }
+
+    let mut players_by_ship_id = index_players_by_ship_id_mut(players);
     ships
+        .iter()
+        .filter_map(|s| {
+            if s.hp > 0.0 {
+                Some(s.clone())
+            } else {
+                let player_opt = players_by_ship_id.get_mut(&s.id);
+                if player_opt.is_some() {
+                    let player_mut = player_opt.unwrap();
+                    player_mut.ship_id = None;
+                    player_mut.respawn_ms_left = PLAYER_RESPAWN_TIME_MS;
+                }
+                None
+            }
+        })
+        .collect::<Vec<_>>()
 }
 
 pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
@@ -705,6 +763,7 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
         quest: None,
         portrait_name: "question".to_string(),
         money: 0,
+        respawn_ms_left: 0,
     };
     state.players.push(player);
 }

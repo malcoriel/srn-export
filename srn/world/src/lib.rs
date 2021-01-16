@@ -74,7 +74,7 @@ pub fn update(serialized_state: &str, elapsed_micro: i64) -> String {
     match result {
         Ok(_) => result
             .ok()
-            .map(|mut state| world::update(state, elapsed_micro, true))
+            .map(|mut state| world::update_world(state, elapsed_micro, true))
             .map(|state| {
                 serde_json::to_string(&state)
                     .ok()
