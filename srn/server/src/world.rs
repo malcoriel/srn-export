@@ -60,6 +60,13 @@ pub struct ShipAction {
     pub data: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct HpEffect {
+    pub hp: i32,
+    pub id: Uuid,
+    pub tick: u32,
+}
+
 pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
     let rating = all_players
         .into_iter()
@@ -364,7 +371,10 @@ pub struct Ship {
     pub x: f64,
     pub y: f64,
     pub hp: f64,
+    pub hp_effects: Vec<HpEffect>,
     pub max_hp: f64,
+    pub acc_periodic_dmg: f64,
+    pub acc_periodic_heal: f64,
     pub rotation: f64,
     pub radius: f64,
     pub color: String,
@@ -596,7 +606,8 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
                 elapsed,
             );
             if !client {
-                state.ships = update_ship_hp_effects(&state.star, &state.ships, elapsed);
+                state.ships =
+                    update_ship_hp_effects(&state.star, &state.ships, elapsed, state.ticks);
             }
         }
     }
@@ -605,15 +616,19 @@ pub fn update(mut state: GameState, elapsed: i64, client: bool) -> GameState {
 
 const SHIP_REGEN_PER_SEC: f64 = 5.0;
 const STAR_INSIDE_DAMAGE_PER_SEC: f64 = 50.0;
-const STAR_DAMAGE_PER_SEC_NEAR: f64 = 6.0; // ???
-const STAR_DAMAGE_PER_SEC_FAR: f64 = 3.0;
+const STAR_DAMAGE_PER_SEC_NEAR: f64 = 25.0;
+const STAR_DAMAGE_PER_SEC_FAR: f64 = 7.5;
 const STAR_INSIDE_RADIUS: f64 = 0.5;
 const STAR_CLOSE_RADIUS: f64 = 0.68;
 const STAR_FAR_RADIUS: f64 = 1.1;
+const MAX_HP_EFF_LIFE_MS: i32 = 10 * 1000;
+const DMG_EFFECT_MIN: f64 = 5.0;
+const HEAL_EFFECT_MIN: f64 = 5.0;
 pub fn update_ship_hp_effects(
     star: &Option<Star>,
     ships: &Vec<Ship>,
     elapsed_micro: i64,
+    current_tick: u32,
 ) -> Vec<Ship> {
     let mut ships = ships.clone();
     if let Some(star) = star {
@@ -641,13 +656,41 @@ pub fn update_ship_hp_effects(
             };
             //eprintln!("star_damage {}", star_damage);
             let star_damage = star_damage * elapsed_micro as f64 / 1000.0 / 1000.0;
-            ship.hp = 0.0f64.max(ship.hp - star_damage);
+            ship.acc_periodic_dmg += star_damage;
 
-            if star_damage <= 0.0 {
-                let regen = SHIP_REGEN_PER_SEC * elapsed_micro as f64 / 1000.0 / 1000.0;
-                //eprintln!("regen {}", regen);
-                ship.hp = ship.max_hp.min(ship.hp + regen);
+            if ship.acc_periodic_dmg >= DMG_EFFECT_MIN {
+                let dmg_done = ship.acc_periodic_dmg.floor() as i32;
+                ship.acc_periodic_dmg = 0.0;
+                ship.hp = (ship.hp - dmg_done as f64).max(0.0);
+                ship.hp_effects.push(HpEffect {
+                    id: new_id(),
+                    hp: -dmg_done,
+                    tick: current_tick,
+                });
             }
+
+            if star_damage <= 0.0 && ship.hp < ship.max_hp {
+                let regen = SHIP_REGEN_PER_SEC * elapsed_micro as f64 / 1000.0 / 1000.0;
+                ship.acc_periodic_heal += regen;
+            }
+
+            if ship.acc_periodic_heal >= HEAL_EFFECT_MIN {
+                let heal = ship.acc_periodic_heal.floor() as i32;
+                ship.acc_periodic_heal = 0.0;
+                ship.hp = ship.max_hp.min(ship.hp + heal as f64);
+                ship.hp_effects.push(HpEffect {
+                    id: new_id(),
+                    hp: heal as i32,
+                    tick: current_tick,
+                });
+            }
+
+            ship.hp_effects = ship
+                .hp_effects
+                .iter()
+                .filter(|e| (e.tick as i32 - current_tick as i32).abs() < MAX_HP_EFF_LIFE_MS)
+                .map(|e| e.clone())
+                .collect::<Vec<_>>()
         }
     }
     ships
@@ -683,7 +726,10 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
             start.y.clone()
         },
         hp: 100.0,
+        hp_effects: vec![],
         max_hp: 100.0,
+        acc_periodic_dmg: 0.0,
+        acc_periodic_heal: 0.0,
         rotation: 0.0,
         radius: 1.0,
         docked_at: None,

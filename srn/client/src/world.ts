@@ -55,6 +55,12 @@ export type Planet = GameObject &
   };
 export type Star = GameObject & WithName & WithColor;
 
+export type HpEffect = {
+  hp: number;
+  id: string;
+  tick: number;
+};
+
 export type Ship = GameObject &
   WithColor & {
     docked_at?: string;
@@ -63,6 +69,7 @@ export type Ship = GameObject &
     trajectory: IVector[];
     hp: number;
     max_hp: number;
+    hp_effects: HpEffect[];
   };
 
 export type Quest = {

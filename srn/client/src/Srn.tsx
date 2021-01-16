@@ -12,7 +12,7 @@ import { Measure, Perf, StatsPanel } from './HtmlLayers/Perf';
 import { StartMenu } from './HtmlLayers/StartMenu';
 import { LeaderboardWindow } from './HtmlLayers/LeaderboardWindow';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
-import { NamesLayer } from './KonvaLayers/NamesLayer';
+import { OverObjectLayer } from './KonvaLayers/OverObjectLayer';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
 import { HelpWindow } from './HtmlLayers/HelpWindow';
 import './HtmlLayers/Panel.scss';
@@ -143,7 +143,7 @@ const Srn = () => {
               {...scaleConfig()}
               style={{ pointerEvents: 'none' }}
             >
-              <NamesLayer />
+              <OverObjectLayer />
               <MyTrajectoryLayer />
               <CoordLayer />
             </Stage>
