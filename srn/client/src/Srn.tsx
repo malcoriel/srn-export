@@ -16,7 +16,7 @@ import { OverObjectLayer } from './KonvaLayers/OverObjectLayer';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
 import { HelpWindow } from './HtmlLayers/HelpWindow';
 import './HtmlLayers/Panel.scss';
-import { MinimapLayerWrapper } from './KonvaLayers/MinimapLayerWrapper';
+import { MinimapLayer } from './KonvaLayers/MinimapLayer';
 import 'react-jinke-music-player/assets/index.css';
 import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
@@ -135,7 +135,7 @@ const Srn = () => {
       >
         {playing && (
           <>
-            <MinimapLayerWrapper />
+            <MinimapLayer />
             <ThreeLayer />
             <Stage
               width={size.width_px}
