@@ -61,7 +61,6 @@ impl Bot {
         }
         let ship = find_my_ship(&state, self.id);
         if ship.is_none() {
-            eprintln!("{} no ship", self.id);
             return (self, vec![]);
         }
         let player = player.unwrap();

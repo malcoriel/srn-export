@@ -627,12 +627,7 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
 
                 for mut player in state.players.iter_mut() {
                     if player.respawn_ms_left > 0 {
-                        let red = (elapsed / 1000) as i32;
-                        eprintln!(
-                            "reducing respawn left {} by {}",
-                            player.respawn_ms_left, red
-                        );
-                        player.respawn_ms_left -= red;
+                        player.respawn_ms_left -= (elapsed / 1000) as i32;
                     }
                 }
 
