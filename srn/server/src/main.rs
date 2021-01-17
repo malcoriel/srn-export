@@ -865,20 +865,11 @@ fn handle_events(
     loop {
         if let Ok(event) = receiver.try_recv() {
             let player = match event.clone() {
-                GameEvent::Unknown => {
-                    eprintln!("unknown event");
-                    None
-                }
-                GameEvent::ShipDocked { player, .. } => {
-                    // eprintln!("docked event");
-                    Some(player)
-                }
-                GameEvent::ShipUndocked { player, .. } => {
-                    // eprintln!("undocked event");
-                    Some(player)
-                }
+                GameEvent::ShipDocked { player, .. } => Some(player),
+                GameEvent::ShipUndocked { player, .. } => Some(player),
                 GameEvent::ShipSpawned { player, .. } => Some(player),
                 GameEvent::ShipDied { player, .. } => Some(player),
+                _ => None,
             };
             if let Some(player) = player {
                 let mut res_argument = &mut res;
@@ -891,6 +882,12 @@ fn handle_events(
                     send_event(event.clone(), XCast::Unicast(player.id));
                 }
                 GameEvent::ShipDied { .. } => {
+                    send_event(event.clone(), XCast::Broadcast);
+                }
+                GameEvent::GameEnded { .. } => {
+                    send_event(event.clone(), XCast::Broadcast);
+                }
+                GameEvent::GameStarted { .. } => {
                     send_event(event.clone(), XCast::Broadcast);
                 }
                 _ => {}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import NetState, { findMyPlayer, useNSForceChange } from '../NetState';
 import { Window } from './ui/Window';
 import './LeaderboardWindow.scss';
@@ -8,17 +8,19 @@ export const LeaderboardWindow: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange('LeaderboardWindow');
   const setLeaderboardWindow = useStore((state) => state.setLeaderboardWindow);
-  const leaderboardWindow = useStore((state) => state.leaderboardWindow);
+  useEffect(() => {
+    ns.on('gameEvent', (ev: any) => {
+      if (ev === 'GameEnded') {
+        setLeaderboardWindow(WindowState.Shown);
+      }
+    });
+  }, [ns.id]);
+  useNSForceChange('LeaderboardWindow');
 
   const { leaderboard, milliseconds_remaining, paused, my_id } = ns.state;
   if (!leaderboard) {
     return null;
-  }
-
-  if (ns.state.paused && leaderboardWindow !== WindowState.Shown) {
-    setLeaderboardWindow(WindowState.Shown);
   }
 
   const place = leaderboard.rating.findIndex(([p]) => p.id == my_id) + 1;

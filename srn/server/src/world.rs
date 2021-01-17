@@ -381,6 +381,8 @@ pub enum GameEvent {
         ship: Ship,
         player: Player,
     },
+    GameEnded,
+    GameStarted,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -527,7 +529,7 @@ pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
         tag: None,
-        milliseconds_remaining: 3 * 60 * 1000,
+        milliseconds_remaining: 10 * 1000,
         paused: false,
         my_id: crate::new_id(),
         ticks: 0,
@@ -604,6 +606,7 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
             for player in players.iter() {
                 spawn_ship(&mut state, player.id, None);
             }
+            fire_event(GameEvent::GameStarted);
         } else {
         }
     } else {
@@ -614,6 +617,7 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
             eprintln!("game end");
             state.paused = true;
             state.milliseconds_remaining = 10 * 1000;
+            fire_event(GameEvent::GameEnded);
         } else {
             state.planets = update_planets(&state.planets, &state.star, elapsed);
             state.ships = update_ships_on_planets(&state.planets, &state.ships);
