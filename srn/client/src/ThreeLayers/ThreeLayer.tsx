@@ -16,6 +16,7 @@ import Vector from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
 import { BackgroundPlane } from './BackgroundPlane';
 import { useShowCoordinates } from '../KonvaLayers/CoordLayer';
+import { ThreeRock } from './ThreeRock';
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera

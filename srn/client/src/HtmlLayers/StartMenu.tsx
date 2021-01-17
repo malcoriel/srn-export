@@ -65,16 +65,16 @@ export const StartMenu: React.FC<{
     }
   }, []);
 
-  const serverVersion = useSWR('/api/version', async () => api.getVersion());
+  // const serverVersion = useSWR('/api/version', async () => api.getVersion());
 
-  let serverVersionFormatted;
-  if (serverVersion.error) {
-    serverVersionFormatted = 'server is down';
-  } else if (!serverVersion.data) {
-    serverVersionFormatted = 'loading...';
-  } else {
-    serverVersionFormatted = serverVersion.data;
-  }
+  let serverVersionFormatted = 'unknown';
+  // if (serverVersion.error) {
+  //   serverVersionFormatted = 'server is down';
+  // } else if (!serverVersion.data) {
+  //   serverVersionFormatted = 'loading...';
+  // } else {
+  //   serverVersionFormatted = serverVersion.data;
+  // }
 
   return (
     <div className="start-hud">
