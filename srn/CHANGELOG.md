@@ -1,3 +1,10 @@
+# Version 0.3.1
+## New
+* Ships can die and respawn
+
+## Fixes
+* Better leaderboard showing at the end of the game
+
 # Version 0.3.0
 ## New
 * Awesome window system with custom borders!
