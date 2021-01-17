@@ -2,20 +2,19 @@ import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import './TestUI.scss';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { Button } from './ui/Button';
-import { Canvas, MouseEvent, useThree } from 'react-three-fiber';
+import { Canvas, useThree } from 'react-three-fiber';
 import { Vector3 } from 'three/src/math/Vector3';
 import { extend } from 'react-three-fiber';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import * as THREE from 'three';
 import {
   Color,
   Geometry,
   Mesh,
   MeshBasicMaterial,
   Scene,
+  SphereBufferGeometry,
   SphereGeometry,
 } from 'three';
-import _ from 'lodash';
 extend({ OrbitControls });
 import { CSG } from 'three-csg-ts';
 import Prando from 'prando';
@@ -38,60 +37,67 @@ const SceneHook = ({ setScene }: { setScene: any }) => {
 export const TestUI: React.FC<{}> = () => {
   const [seed, setSeed] = useState('qqq');
   const [shown] = useToggleHotkey('ctrl+shift+t', true);
-  const [scene, setScene] = useState(null);
-  const meshRef = useRef();
+  const [scene, setScene] = useState(null as Scene | null);
+  const [sceneMesh, setSceneMesh] = useState(null as Mesh | null);
   const gen = () => {
-    // @ts-ignore
     let sc = scene as Scene;
-    if (meshRef.current && scene) {
+    console.log(sceneMesh);
+    if (sceneMesh && scene) {
       const prng = new Prando(seed);
-      // @ts-ignore
-      let baseMesh: Mesh = meshRef.current;
-      sc.getObjectById(baseMesh.id)!.remove();
+      let baseMesh: Mesh = sceneMesh;
+      baseMesh.updateMatrix();
+
       for (let i = 0; i < 10; i++) {
-        console.log('start');
-        console.log(sc.children.length);
-        baseMesh.updateMatrix();
         const baseCsg = CSG.fromMesh(baseMesh);
-        console.log('from mesh', sc.children.length);
-        const impactMesh = new Mesh(new SphereGeometry(10, 6, 6));
-        console.log('new mesh', sc.children.length);
+        let meshBasicMaterial = new MeshBasicMaterial();
+        meshBasicMaterial.color = new Color('green');
+        const impactMesh = new Mesh(
+          new SphereGeometry(10, 6, 6),
+          meshBasicMaterial
+        );
         let x = prng.next(-20, 21);
         let y = prng.next(-20, 21);
         let z = prng.next(-20, 21);
         impactMesh.position.add(new Vector3(x, y, z));
         impactMesh.updateMatrix();
+        //sc.add(impactMesh);
         const csg = CSG.fromMesh(impactMesh);
-        console.log('from mesh 2', sc.children.length);
         const result = baseCsg.subtract(csg);
         const formed = CSG.toMesh(result, baseMesh.matrix);
-        let objectById = sc.getObjectById(impactMesh.id);
-        if (objectById) objectById.remove();
-        console.log('remove 1', sc.children.length);
-        // @ts-ignore
-        formed.material.wireframe = true;
-        let objectById2 = sc.getObjectById(baseMesh.id);
-        if (objectById2) {
-          console.log('removed');
-          objectById2.remove();
-        }
-        console.log('remove 2', sc.children.length);
-        sc.add(formed);
-        console.log('add', sc.children.length);
-        baseMesh = formed;
-        console.log('end');
+        baseMesh.geometry = formed.geometry;
+        baseMesh.updateMatrix();
       }
 
       const modifer = new SimplifyModifier();
-      const simplified = modifer.modify(
-        baseMesh.geometry,
-        // @ts-ignore
-        baseMesh.geometry.vertices.length * 0.95
-      );
+      baseMesh.updateMatrix();
+      let count = 10000;
+      const simplified = modifer.modify(baseMesh.geometry, count);
       let meshBasicMaterial = new MeshBasicMaterial();
-      meshBasicMaterial.wireframe = true;
-      // sc.add(new Mesh(simplified, meshBasicMaterial));
-      console.log(sc);
+      meshBasicMaterial.wireframe = false;
+      meshBasicMaterial.color = new Color('green');
+      let mesh = new Mesh(
+        new Geometry().fromBufferGeometry(simplified),
+        meshBasicMaterial
+      );
+      mesh.updateMatrix();
+      sc.remove(baseMesh);
+      sc.add(mesh);
+      setSceneMesh(mesh);
+    }
+  };
+
+  const reset = () => {
+    let sc = scene as Scene;
+    if (scene) {
+      if (sceneMesh) {
+        sc.remove(sceneMesh);
+      }
+      let material = new MeshBasicMaterial();
+      material.color = new Color('pink');
+      material.wireframe = true;
+      let mesh = new Mesh(new SphereBufferGeometry(20), material);
+      sc.add(mesh);
+      setSceneMesh(mesh);
     }
   };
 
@@ -116,15 +122,6 @@ export const TestUI: React.FC<{}> = () => {
           <SceneHook setScene={setScene} />
           <ambientLight />
           <axesHelper args={[100]} />
-          <mesh ref={meshRef}>
-            <sphereBufferGeometry args={[20]} />
-            <meshToonMaterial
-              opacity={1}
-              color="pink"
-              wireframe={true}
-              alphaTest={0}
-            />
-          </mesh>
           {/*<Extrusion*/}
           {/*  start={[25, 25]}*/}
           {/*  paths={[*/}
@@ -148,7 +145,7 @@ export const TestUI: React.FC<{}> = () => {
           onChange={(e) => setSeed(e.target.value)}
         />
         <Button onClick={gen}>Gen</Button>
-        {/*<Button>Reset</Button>*/}
+        <Button onClick={reset}>Reset</Button>
         {/*<Button>Undo</Button>*/}
         {/*<Button>Redo</Button>*/}
         {/*<Button onClick={addPart}>Add part X-</Button>*/}
