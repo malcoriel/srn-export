@@ -13,6 +13,8 @@ export const LeaderboardWindow: React.FC = () => {
     ns.on('gameEvent', (ev: any) => {
       if (ev === 'GameEnded') {
         setLeaderboardWindow(WindowState.Shown);
+      } else if (ev === 'GameStarted') {
+        setLeaderboardWindow(WindowState.Minimized);
       }
     });
   }, [ns.id]);
