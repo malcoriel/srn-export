@@ -96,26 +96,23 @@ impl ServerToClientMessage {
     pub fn serialize(&self) -> String {
         let (code, serialized) = match self {
             ServerToClientMessage::StateChange(state) => {
-                (1, serde_json::to_string::<GameState>(&state).unwrap())
+                (1, serde_json::to_string(&state).unwrap())
             }
             ServerToClientMessage::StateChangeExclusive(state, _unused) => {
-                (2, serde_json::to_string::<GameState>(&state).unwrap())
+                (2, serde_json::to_string(&state).unwrap())
             }
-            ServerToClientMessage::TagConfirm(tag_confirm, _unused) => (
-                3,
-                serde_json::to_string::<TagConfirm>(&tag_confirm).unwrap(),
-            ),
+            ServerToClientMessage::TagConfirm(tag_confirm, _unused) => {
+                (3, serde_json::to_string(&tag_confirm).unwrap())
+            }
             ServerToClientMessage::MulticastPartialShipUpdate(ships, _unused) => {
-                (4, serde_json::to_string::<ShipsWrapper>(ships).unwrap())
+                (4, serde_json::to_string(ships).unwrap())
             }
-            ServerToClientMessage::DialogueStateChange(dialogue, _unused) => (
-                5,
-                serde_json::to_string::<Wrapper<Option<Dialogue>>>(dialogue).unwrap(),
-            ),
-            ServerToClientMessage::XCastGameEvent(event, _) => (
-                6,
-                serde_json::to_string::<Wrapper<GameEvent>>(event).unwrap(),
-            ),
+            ServerToClientMessage::DialogueStateChange(dialogue, _unused) => {
+                (5, serde_json::to_string(dialogue).unwrap())
+            }
+            ServerToClientMessage::XCastGameEvent(event, _) => {
+                (6, serde_json::to_string(event).unwrap())
+            }
         };
         format!("{}_%_{}", code, serialized)
     }
