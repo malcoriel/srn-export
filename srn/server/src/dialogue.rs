@@ -1,17 +1,20 @@
+use std::borrow::BorrowMut;
+use std::collections::HashMap;
+use std::fs;
+use std::slice::Iter;
+
+use itertools::Itertools;
+use regex::Regex;
+use serde_derive::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::events::fire_event;
+use crate::new_id;
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
     generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId,
 };
-use crate::{fire_event, new_id};
-use itertools::Itertools;
-use regex::Regex;
-use serde_derive::{Deserialize, Serialize};
-use std::borrow::BorrowMut;
-use std::collections::HashMap;
-use std::fs;
-use std::slice::Iter;
-use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 enum DialogueSubstitutionType {

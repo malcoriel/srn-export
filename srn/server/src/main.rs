@@ -53,6 +53,7 @@ mod bots;
 mod cast;
 mod dialogue;
 mod dialogue_test;
+mod events;
 mod random_stuff;
 #[allow(dead_code)]
 mod vec2;
@@ -763,7 +764,7 @@ fn main_thread() {
 
         let receiver = &mut EVENTS.lock().unwrap().1;
 
-        let res = handle_events(&d_table, receiver, state, d_states);
+        let res = events::handle_events(&d_table, receiver, state, d_states);
         for (client_id, dialogue) in res {
             unicast_dialogue_state(client_id, dialogue);
         }
@@ -788,7 +789,7 @@ fn main_thread() {
     }
 }
 
-fn send_event(ev: GameEvent, x_cast: XCast) {
+pub fn send_event(ev: GameEvent, x_cast: XCast) {
     unsafe {
         let sender = get_dispatcher_sender();
         sender
@@ -797,58 +798,5 @@ fn send_event(ev: GameEvent, x_cast: XCast) {
                 x_cast,
             ))
             .unwrap();
-    }
-}
-
-fn handle_events(
-    d_table: &DialogueTable,
-    receiver: &mut Receiver<GameEvent>,
-    state: &mut GameState,
-    d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
-) -> Vec<(Uuid, Option<Dialogue>)> {
-    let mut res = vec![];
-
-    loop {
-        if let Ok(event) = receiver.try_recv() {
-            let player = match event.clone() {
-                GameEvent::ShipDocked { player, .. } => Some(player),
-                GameEvent::ShipUndocked { player, .. } => Some(player),
-                GameEvent::ShipSpawned { player, .. } => Some(player),
-                GameEvent::ShipDied { player, .. } => Some(player),
-                _ => None,
-            };
-            if let Some(player) = player {
-                let mut res_argument = &mut res;
-                let player_argument = &player;
-                let d_table_argument = &d_table;
-                d_table_argument.try_trigger(state, d_states, &mut res_argument, player_argument);
-            }
-            match event.clone() {
-                GameEvent::ShipSpawned { player, .. } => {
-                    send_event(event.clone(), XCast::Unicast(player.id));
-                }
-                GameEvent::ShipDied { .. } => {
-                    send_event(event.clone(), XCast::Broadcast);
-                }
-                GameEvent::GameEnded { .. } => {
-                    send_event(event.clone(), XCast::Broadcast);
-                }
-                GameEvent::GameStarted { .. } => {
-                    send_event(event.clone(), XCast::Broadcast);
-                }
-                _ => {}
-            }
-        } else {
-            break;
-        }
-    }
-    res
-}
-
-fn fire_event(ev: GameEvent) {
-    let sender = &mut EVENTS.lock().unwrap().0;
-    if let Err(e) = sender.send(ev.clone()) {
-        eprintln!("Failed to send event {:?}, err {}", ev, e);
-    } else {
     }
 }

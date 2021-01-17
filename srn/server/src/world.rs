@@ -2,7 +2,7 @@ use crate::dialogue::{
     build_dialogue_from_state, Dialogue, DialogueScript, DialogueStates, DialogueTable,
     DialogueUpdate,
 };
-use crate::fire_event;
+use crate::events::fire_event;
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
     gen_planet_radius, gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name,
