@@ -2,18 +2,14 @@
 #![allow(unused_imports)]
 #[macro_use]
 extern crate serde_derive;
-use crate::bots::{bot_init, do_bot_actions};
-use crate::dialogue::{
-    execute_dialog_option, Dialogue, DialogueId, DialogueScript, DialogueUpdate,
-};
-use crate::vec2::Vec2f64;
-use crate::world::{
-    find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent,
-    ShipAction,
-};
+
+use std::collections::HashMap;
+use std::sync::{mpsc, Arc, Mutex, RwLock, RwLockWriteGuard};
+use std::thread;
+use std::time::Duration;
+
 use chrono::{DateTime, Local, Utc};
 use crossbeam::channel::{bounded, Receiver, Sender};
-use dialogue::{DialogueStates, DialogueTable};
 use lazy_static::lazy_static;
 use num_traits::FromPrimitive;
 use pkg_version::*;
@@ -24,15 +20,24 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins};
 #[doc(hidden)]
 pub use serde_derive::*;
 use serde_derive::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::{mpsc, Arc, Mutex, RwLock, RwLockWriteGuard};
-use std::thread;
-use std::time::Duration;
 use uuid::*;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 use websocket::{Message, OwnedMessage};
+
+use cast::XCast;
+use dialogue::{DialogueStates, DialogueTable};
 use world::{GameState, Player, Ship};
+
+use crate::bots::{bot_init, do_bot_actions};
+use crate::dialogue::{
+    execute_dialog_option, Dialogue, DialogueId, DialogueScript, DialogueUpdate,
+};
+use crate::vec2::Vec2f64;
+use crate::world::{
+    find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent,
+    ShipAction,
+};
 
 const MAJOR: u32 = pkg_version_major!();
 const MINOR: u32 = pkg_version_minor!();
@@ -45,6 +50,7 @@ extern crate websocket;
 #[macro_use]
 extern crate num_derive;
 mod bots;
+mod cast;
 mod dialogue;
 mod dialogue_test;
 mod random_stuff;
@@ -55,17 +61,17 @@ mod world;
 mod world_test;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-struct TagConfirm {
+pub struct TagConfirm {
     tag: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-struct ShipsWrapper {
+pub struct ShipsWrapper {
     ships: Vec<Ship>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-struct Wrapper<T> {
+pub struct Wrapper<T> {
     value: T,
 }
 
@@ -76,14 +82,7 @@ impl<T> Wrapper<T> {
 }
 
 #[derive(Debug, Clone)]
-enum XCast {
-    Broadcast,
-    MulticastExcl(Uuid),
-    Unicast(Uuid),
-}
-
-#[derive(Debug, Clone)]
-enum ServerToClientMessage {
+pub enum ServerToClientMessage {
     StateChange(GameState),
     StateChangeExclusive(GameState, Uuid),
     TagConfirm(TagConfirm, Uuid),
@@ -488,78 +487,25 @@ fn handle_request(request: WSRequest) {
         }
         if let Ok(message) = client_rx.try_recv() {
             if !is_disconnected(client_id) {
-                let message = match message {
+                let should_send: bool = cast::check_message_casting(client_id, &message);
+                let patched_message: ServerToClientMessage = match message.clone() {
+                    ServerToClientMessage::StateChangeExclusive(state, id) => {
+                        ServerToClientMessage::StateChangeExclusive(
+                            patch_state_for_player(state, client_id),
+                            id,
+                        )
+                    }
                     ServerToClientMessage::StateChange(state) => {
-                        Some(ServerToClientMessage::StateChange(patch_state_for_player(
-                            state, client_id,
-                        )))
+                        ServerToClientMessage::StateChange(patch_state_for_player(state, client_id))
                     }
-                    ServerToClientMessage::StateChangeExclusive(state, exclude_client_id) => {
-                        if client_id != exclude_client_id {
-                            Some(ServerToClientMessage::StateChangeExclusive(
-                                patch_state_for_player(state, client_id),
-                                exclude_client_id,
-                            ))
-                        } else {
-                            None
-                        }
-                    }
-                    ServerToClientMessage::TagConfirm(tag_confirm, target_client_id) => {
-                        if client_id == target_client_id {
-                            Some(ServerToClientMessage::TagConfirm(
-                                tag_confirm,
-                                target_client_id,
-                            ))
-                        } else {
-                            None
-                        }
-                    }
-                    ServerToClientMessage::MulticastPartialShipUpdate(ships, exclude_client_id) => {
-                        if exclude_client_id.is_some() && client_id != exclude_client_id.unwrap() {
-                            Some(ServerToClientMessage::MulticastPartialShipUpdate(
-                                ships,
-                                exclude_client_id,
-                            ))
-                        } else {
-                            None
-                        }
-                    }
-                    ServerToClientMessage::DialogueStateChange(dialogue, target_client_id) => {
-                        if client_id == target_client_id {
-                            Some(ServerToClientMessage::DialogueStateChange(
-                                dialogue,
-                                target_client_id,
-                            ))
-                        } else {
-                            None
-                        }
-                    }
-                    ServerToClientMessage::XCastGameEvent(event, x_cast) => match x_cast {
-                        XCast::Broadcast => {
-                            Some(ServerToClientMessage::XCastGameEvent(event, x_cast))
-                        }
-                        XCast::MulticastExcl(exclude) => {
-                            if client_id != exclude {
-                                Some(ServerToClientMessage::XCastGameEvent(event, x_cast))
-                            } else {
-                                None
-                            }
-                        }
-                        XCast::Unicast(target) => {
-                            if client_id == target {
-                                Some(ServerToClientMessage::XCastGameEvent(event, x_cast))
-                            } else {
-                                None
-                            }
-                        }
-                    },
+                    m => m,
                 };
-                if let Some(message) = message {
-                    let message = Message::text(message.serialize());
+                if should_send {
+                    let message = Message::text(patched_message.serialize());
                     sender
                         .send_message(&message)
                         .map_err(|e| {
-                            eprintln!("Err {} receiving {}", client_id, e);
+                            eprintln!("Err {} sending {}", client_id, e);
                             increment_client_errors(client_id);
                             disconnect_if_bad(client_id);
                         })
