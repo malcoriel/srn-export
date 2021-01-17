@@ -76,6 +76,7 @@ export enum ServerToClientMessageCode {
   TagConfirm = 3,
   MulticastPartialShipsUpdate = 4,
   UnicastDialogueStateChange = 5,
+  XCastGameEvent = 6,
 }
 
 const MAX_PENDING_TICKS = 2000;
@@ -345,6 +346,11 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.UnicastDialogueStateChange
       ) {
         this.dialogue = JSON.parse(data).value;
+      } else if (
+        messageCode === ServerToClientMessageCode.XCastGameEvent
+      ) {
+        const event = JSON.parse(data).value;
+        this.emit("gameEvent", event);
       }
     } catch (e) {
       console.warn('error handling message', e);

@@ -373,6 +373,14 @@ pub enum GameEvent {
         planet: Planet,
         player: Player,
     },
+    ShipSpawned {
+        ship: Ship,
+        player: Player,
+    },
+    ShipDied {
+        ship: Ship,
+        player: Player,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -625,27 +633,31 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
                     state.ticks,
                 );
 
-                for mut player in state.players.iter_mut() {
-                    if player.respawn_ms_left > 0 {
-                        player.respawn_ms_left -= (elapsed / 1000) as i32;
-                    }
-                }
-
-                let players_to_spawn = state
-                    .players
-                    .iter()
-                    .filter(|p| p.respawn_ms_left <= 0 && p.ship_id.is_none())
-                    .map(|p| p.id)
-                    .collect::<Vec<_>>();
-
-                for pid in players_to_spawn {
-                    eprintln!("Respawning {}", pid);
-                    spawn_ship(&mut state, pid, None);
-                }
+                respawn_dead_ships(&mut state, elapsed)
             }
         }
     }
     state
+}
+
+fn respawn_dead_ships(mut state: &mut GameState, elapsed: i64) {
+    for mut player in state.players.iter_mut() {
+        if player.respawn_ms_left > 0 {
+            player.respawn_ms_left -= (elapsed / 1000) as i32;
+        }
+    }
+
+    let players_to_spawn = state
+        .players
+        .iter()
+        .filter(|p| p.respawn_ms_left <= 0 && p.ship_id.is_none())
+        .map(|p| p.id)
+        .collect::<Vec<_>>();
+
+    for pid in players_to_spawn {
+        eprintln!("Respawning {}", pid);
+        spawn_ship(&mut state, pid, None);
+    }
 }
 
 const SHIP_REGEN_PER_SEC: f64 = 5.0;
@@ -742,6 +754,10 @@ pub fn update_ship_hp_effects(
                     let player_mut = player_opt.unwrap();
                     player_mut.ship_id = None;
                     player_mut.respawn_ms_left = PLAYER_RESPAWN_TIME_MS;
+                    fire_event(GameEvent::ShipDied {
+                        ship: s.clone(),
+                        player: player_mut.clone(),
+                    })
                 }
                 None
             }
@@ -795,7 +811,13 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
         .players
         .iter_mut()
         .find(|p| p.id == player_id)
-        .map(|p| p.ship_id = Some(ship.id));
+        .map(|p| {
+            p.ship_id = Some(ship.id);
+            fire_event(GameEvent::ShipSpawned {
+                ship: ship.clone(),
+                player: p.clone(),
+            });
+        });
     state.ships.push(ship);
     &state.ships[state.ships.len() - 1]
 }

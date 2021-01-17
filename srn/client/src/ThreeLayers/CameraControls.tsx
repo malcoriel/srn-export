@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import NetState, { findMyShip } from '../NetState';
 import { useThree } from 'react-three-fiber';
-import { height_units, unitsToPixels_min, width_units } from '../world';
+import { height_units, Ship, unitsToPixels_min, width_units } from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
 
 export const BoundCameraMover: React.FC = () => {
@@ -10,9 +10,10 @@ export const BoundCameraMover: React.FC = () => {
 
   const { state, visualState } = ns;
 
-  if (visualState.boundCameraMovement) {
-    const myShip = findMyShip(state);
-    const { camera } = useThree();
+  const { camera } = useThree();
+
+  const forceMoveCameraToShip = (shipOverride?: Ship) => {
+    const myShip = shipOverride || findMyShip(state);
     if (myShip) {
       visualState.cameraPosition = { x: myShip.x, y: myShip.y };
     }
@@ -22,6 +23,18 @@ export const BoundCameraMover: React.FC = () => {
       -visualState.cameraPosition.y,
       CAMERA_HEIGHT
     );
+  };
+
+  useEffect(() => {
+    ns.on('gameEvent', (ev: any) => {
+      if (ev.ShipSpawned && ev.ShipSpawned.player.id === ns.state.my_id) {
+        forceMoveCameraToShip(ev.ShipSpawned.ship);
+      }
+    });
+  }, [ns.id]);
+
+  if (visualState.boundCameraMovement) {
+    forceMoveCameraToShip();
   }
 
   return null;

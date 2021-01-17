@@ -76,12 +76,20 @@ impl<T> Wrapper<T> {
 }
 
 #[derive(Debug, Clone)]
+enum XCast {
+    Broadcast,
+    MulticastExcl(Uuid),
+    Unicast(Uuid),
+}
+
+#[derive(Debug, Clone)]
 enum ServerToClientMessage {
     StateChange(GameState),
     StateChangeExclusive(GameState, Uuid),
     TagConfirm(TagConfirm, Uuid),
     MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>),
     DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid),
+    XCastGameEvent(Wrapper<GameEvent>, XCast),
 }
 
 impl ServerToClientMessage {
@@ -103,6 +111,10 @@ impl ServerToClientMessage {
             ServerToClientMessage::DialogueStateChange(dialogue, _unused) => (
                 5,
                 serde_json::to_string::<Wrapper<Option<Dialogue>>>(dialogue).unwrap(),
+            ),
+            ServerToClientMessage::XCastGameEvent(event, _) => (
+                6,
+                serde_json::to_string::<Wrapper<GameEvent>>(event).unwrap(),
             ),
         };
         format!("{}_%_{}", code, serialized)
@@ -522,6 +534,25 @@ fn handle_request(request: WSRequest) {
                             None
                         }
                     }
+                    ServerToClientMessage::XCastGameEvent(event, x_cast) => match x_cast {
+                        XCast::Broadcast => {
+                            Some(ServerToClientMessage::XCastGameEvent(event, x_cast))
+                        }
+                        XCast::MulticastExcl(exclude) => {
+                            if client_id != exclude {
+                                Some(ServerToClientMessage::XCastGameEvent(event, x_cast))
+                            } else {
+                                None
+                            }
+                        }
+                        XCast::Unicast(target) => {
+                            if client_id == target {
+                                Some(ServerToClientMessage::XCastGameEvent(event, x_cast))
+                            } else {
+                                None
+                            }
+                        }
+                    },
                 };
                 if let Some(message) = message {
                     let message = Message::text(message.serialize());
@@ -811,6 +842,18 @@ fn main_thread() {
     }
 }
 
+fn send_event(ev: GameEvent, x_cast: XCast) {
+    unsafe {
+        let sender = get_dispatcher_sender();
+        sender
+            .send(ServerToClientMessage::XCastGameEvent(
+                Wrapper::new(ev),
+                x_cast,
+            ))
+            .unwrap();
+    }
+}
+
 fn handle_events(
     d_table: &DialogueTable,
     receiver: &mut Receiver<GameEvent>,
@@ -821,7 +864,7 @@ fn handle_events(
 
     loop {
         if let Ok(event) = receiver.try_recv() {
-            let player = match event {
+            let player = match event.clone() {
                 GameEvent::Unknown => {
                     eprintln!("unknown event");
                     None
@@ -834,12 +877,23 @@ fn handle_events(
                     // eprintln!("undocked event");
                     Some(player)
                 }
+                GameEvent::ShipSpawned { player, .. } => Some(player),
+                GameEvent::ShipDied { player, .. } => Some(player),
             };
             if let Some(player) = player {
                 let mut res_argument = &mut res;
                 let player_argument = &player;
                 let d_table_argument = &d_table;
                 d_table_argument.try_trigger(state, d_states, &mut res_argument, player_argument);
+            }
+            match event.clone() {
+                GameEvent::ShipSpawned { player, .. } => {
+                    send_event(event.clone(), XCast::Unicast(player.id));
+                }
+                GameEvent::ShipDied { .. } => {
+                    send_event(event.clone(), XCast::Broadcast);
+                }
+                _ => {}
             }
         } else {
             break;
