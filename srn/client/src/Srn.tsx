@@ -27,6 +27,7 @@ import { QuestWindow } from './HtmlLayers/QuestWindow';
 import { WindowContainers } from './HtmlLayers/WindowContainers';
 import shallow from 'zustand/shallow';
 import { OverheadPanel } from './HtmlLayers/OverheadPanel';
+import { TestUI } from './HtmlLayers/TestUI';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -166,6 +167,7 @@ const Srn = () => {
             <HelpWindow />
           </>
         )}
+        {!playing && <TestUI />}
         {musicEnabled && <MusicControls />}
         {menu && <StartMenu start={start} quit={quit} />}
       </div>
