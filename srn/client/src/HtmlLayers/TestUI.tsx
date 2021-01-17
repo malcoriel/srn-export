@@ -7,10 +7,13 @@ import { Vector3 } from 'three/src/math/Vector3';
 import { extend } from 'react-three-fiber';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
+  BufferGeometry,
   Color,
   Geometry,
+  IcosahedronBufferGeometry,
   Mesh,
   MeshBasicMaterial,
+  MeshNormalMaterial,
   Scene,
   SphereBufferGeometry,
   SphereGeometry,
@@ -19,11 +22,15 @@ extend({ OrbitControls });
 import { CSG } from 'three-csg-ts';
 import Prando from 'prando';
 import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier';
+import { Input } from './ui/Input';
+import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils';
 
 const OrbitControlsWrapper = () => {
   const { camera } = useThree();
-  // @ts-ignore
-  return <orbitControls args={[camera, document.querySelector('.test-ui')]} />;
+  return (
+    // @ts-ignore
+    <orbitControls args={[camera, document.querySelector('.test-ui canvas')]} />
+  );
 };
 
 const SceneHook = ({ setScene }: { setScene: any }) => {
@@ -41,45 +48,80 @@ export const TestUI: React.FC<{}> = () => {
   const [sceneMesh, setSceneMesh] = useState(null as Mesh | null);
   const gen = () => {
     let sc = scene as Scene;
-    console.log(sceneMesh);
     if (sceneMesh && scene) {
       const prng = new Prando(seed);
       let baseMesh: Mesh = sceneMesh;
       baseMesh.updateMatrix();
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 15; i++) {
+        console.log(`iter ${i + 1}`);
         const baseCsg = CSG.fromMesh(baseMesh);
-        let meshBasicMaterial = new MeshBasicMaterial();
-        meshBasicMaterial.color = new Color('green');
         const impactMesh = new Mesh(
-          new SphereGeometry(10, 6, 6),
-          meshBasicMaterial
+          new IcosahedronBufferGeometry(prng.next(3, 6), 2)
         );
-        let x = prng.next(-20, 21);
-        let y = prng.next(-20, 21);
-        let z = prng.next(-20, 21);
+        const MAX_OUT = 21.5;
+        const MIN_IN = 19.5;
+
+        const theta = prng.next(0, Math.PI * 2);
+        const v = prng.next(0, 1);
+        const phi = Math.acos(2 * v - 1);
+        const r = prng.next(MIN_IN, MAX_OUT);
+        const x = r * Math.sin(phi) * Math.cos(theta);
+        const y = r * Math.sin(phi) * Math.sin(theta);
+        const z = r * Math.cos(phi);
+
         impactMesh.position.add(new Vector3(x, y, z));
         impactMesh.updateMatrix();
-        //sc.add(impactMesh);
+        // sc.add(impactMesh);
         const csg = CSG.fromMesh(impactMesh);
         const result = baseCsg.subtract(csg);
         const formed = CSG.toMesh(result, baseMesh.matrix);
         baseMesh.geometry = formed.geometry;
         baseMesh.updateMatrix();
-      }
 
-      const modifer = new SimplifyModifier();
+        // @ts-ignore
+        // baseMesh.geometry = new BufferGeometry().fromGeometry(
+        //   baseMesh.geometry
+        // );
+
+        // const count = 10;
+        // const modifer = new SimplifyModifier();
+        // console.log(`simplifying ${count} iterations...`);
+        // baseMesh.geometry = modifer.modify(baseMesh.geometry, count);
+        // baseMesh.geometry = new Geometry().fromBufferGeometry(
+        //   baseMesh.geometry
+        // );
+        //
+        // baseMesh.geometry.computeVertexNormals();
+        console.log('vertices', formed.geometry.vertices.length);
+      }
       baseMesh.updateMatrix();
-      let count = 10000;
-      const simplified = modifer.modify(baseMesh.geometry, count);
-      let meshBasicMaterial = new MeshBasicMaterial();
-      meshBasicMaterial.wireframe = false;
-      meshBasicMaterial.color = new Color('green');
-      let mesh = new Mesh(
-        new Geometry().fromBufferGeometry(simplified),
-        meshBasicMaterial
-      );
+
+      // @ts-ignore
+      baseMesh.geometry = new BufferGeometry().fromGeometry(baseMesh.geometry);
+      let count = 500;
+      const modifer = new SimplifyModifier();
+      console.log(`simplifying ${count} iterations...`);
+      baseMesh.geometry = modifer.modify(baseMesh.geometry, count);
+      baseMesh.geometry = new Geometry().fromBufferGeometry(baseMesh.geometry);
+
+      console.log('after simplifying', baseMesh.geometry.vertices.length);
+
+      // let tolerance = 0.01;
+      // console.log(`merging vertices with tolerance ${tolerance}...`);
+      // baseMesh.geometry = BufferGeometryUtils.mergeVertices(
+      //   new BufferGeometry().fromGeometry(baseMesh.geometry),
+      //   tolerance
+      // );
+      // baseMesh.geometry = new Geometry().fromBufferGeometry(baseMesh.geometry);
+
+      let material = new MeshNormalMaterial();
+      material.flatShading = false;
+      console.log('done', baseMesh.geometry.vertices.length);
+
+      let mesh = new Mesh(baseMesh.geometry, material);
       mesh.updateMatrix();
+      mesh.geometry.computeVertexNormals();
       sc.remove(baseMesh);
       sc.add(mesh);
       setSceneMesh(mesh);
@@ -95,11 +137,15 @@ export const TestUI: React.FC<{}> = () => {
       let material = new MeshBasicMaterial();
       material.color = new Color('pink');
       material.wireframe = true;
-      let mesh = new Mesh(new SphereBufferGeometry(20), material);
+      let mesh = new Mesh(new IcosahedronBufferGeometry(20, 3), material);
       sc.add(mesh);
       setSceneMesh(mesh);
     }
   };
+
+  useEffect(() => {
+    reset();
+  }, [scene]);
 
   return shown ? (
     <div className="test-ui">
@@ -139,11 +185,7 @@ export const TestUI: React.FC<{}> = () => {
       <div
         style={{ position: 'absolute', height: '100%', right: 0, width: '20%' }}
       >
-        <input
-          type="text"
-          value={seed}
-          onChange={(e) => setSeed(e.target.value)}
-        />
+        <Input value={seed} onChange={(e) => setSeed(e.target.value)} />
         <Button onClick={gen}>Gen</Button>
         <Button onClick={reset}>Reset</Button>
         {/*<Button>Undo</Button>*/}
