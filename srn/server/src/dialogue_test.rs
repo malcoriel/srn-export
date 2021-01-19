@@ -24,6 +24,7 @@ mod world_test {
         d_states
             .get_mut(&player_id)
             .unwrap()
+            .1
             .insert(dialogue_id, Box::new(Some(first_state_id)));
 
         let mut state = world::seed_state(false, false);
@@ -41,6 +42,7 @@ mod world_test {
         let new_d_state = *d_states
             .get(&player_id)
             .unwrap()
+            .1
             .get(&dialogue_id)
             .unwrap()
             .clone();
@@ -57,6 +59,7 @@ mod world_test {
         let new_d_state = *d_states
             .get(&player_id)
             .unwrap()
+            .1
             .get(&dialogue_id)
             .unwrap()
             .clone();
