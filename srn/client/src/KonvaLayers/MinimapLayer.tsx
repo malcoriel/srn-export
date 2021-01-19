@@ -1,6 +1,6 @@
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { Arc, Circle, Group, Layer, Rect, Stage } from 'react-konva';
-import { blue, gray, teal, yellow } from '../utils/palette';
+import { blue, dirtyGray, gray, teal, yellow } from '../utils/palette';
 import color from 'color';
 
 import React, { useState } from 'react';
@@ -170,6 +170,17 @@ export const MinimapLayer = React.memo(() => {
               </Group>
             );
           })}
+        {state.asteroid_belts.map((b) => (
+          <Arc
+            key={b.id}
+            angle={360}
+            innerRadius={radiusToMinimapRadius(b.radius - b.width / 2)}
+            outerRadius={radiusToMinimapRadius(b.radius + b.width / 2)}
+            fill={dirtyGray}
+            opacity={0.4}
+            position={posToMinimapPos(VectorF(0, 0))}
+          />
+        ))}
         <Rect
           // zIndex={2}
           width={minimap_viewport_size_x}

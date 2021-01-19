@@ -9,3 +9,4 @@ export const yellow = '#fbe7c6';
 export const teal = '#06f9e6';
 export const crimson = '#e32636';
 export const darkGreen = '#03c03c';
+export const dirtyGray = '#60593c';
