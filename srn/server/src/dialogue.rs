@@ -8,7 +8,7 @@ use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::events::fire_event;
+use crate::fire_event;
 use crate::new_id;
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{

@@ -2,7 +2,7 @@ use crate::dialogue::{
     build_dialogue_from_state, Dialogue, DialogueScript, DialogueStates, DialogueTable,
     DialogueUpdate,
 };
-use crate::events::fire_event;
+use crate::fire_event;
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
     gen_planet_radius, gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name,
@@ -340,6 +340,18 @@ pub struct Planet {
     pub color: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Asteroid {
+    pub id: Uuid,
+    pub x: f64,
+    pub y: f64,
+    pub rotation: f64,
+    pub radius: f64,
+    pub orbit_speed: f64,
+    pub anchor_id: Uuid,
+    pub anchor_tier: u32,
+}
+
 impl AsVec2f64 for Planet {
     fn as_vec(&self) -> Vec2f64 {
         Vec2f64 {
@@ -458,6 +470,7 @@ pub struct GameState {
     pub start_time_ticks: u64,
     pub star: Option<Star>,
     pub planets: Vec<Planet>,
+    pub asteroids: Vec<Asteroid>,
     pub ships: Vec<Ship>,
     pub players: Vec<Player>,
     pub milliseconds_remaining: i32,
@@ -535,6 +548,7 @@ pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
         ticks: 0,
         star: Some(star),
         planets,
+        asteroids: vec![],
         ships: vec![],
         players: vec![],
         leaderboard: None,

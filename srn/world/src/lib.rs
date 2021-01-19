@@ -49,11 +49,6 @@ mod dialogue;
 
 pub const DEBUG_PHYSICS: bool = false;
 
-#[wasm_bindgen]
-pub fn dumb(inp: u32) -> u32 {
-    inp + 1
-}
-
 use serde_derive::Serialize;
 use uuid::Uuid;
 

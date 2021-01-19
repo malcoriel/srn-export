@@ -128,12 +128,15 @@ export type Dialogue = {
   right_character: string;
 };
 
+export type Asteroid = GameObject & {};
+
 export type GameState = {
   tag: string;
   leaderboard?: Leaderboard;
   planets: Planet[];
   ships: Ship[];
   players: Player[];
+  asteroids: Asteroid[];
   // technically bigint but serialization doesn't know yet
   start_time_ticks: number;
   ticks: number;

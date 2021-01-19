@@ -797,3 +797,7 @@ pub fn send_event(ev: GameEvent, x_cast: XCast) {
             .unwrap();
     }
 }
+
+pub fn fire_event(ev: GameEvent) {
+    events::fire_event(ev);
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useFrame, useLoader } from 'react-three-fiber';
+import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
 import {
   ClampToEdgeWrapping,
   Color,
@@ -11,7 +11,7 @@ import {
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { Vector3 } from 'three/src/math/Vector3';
 
-export const ThreeRock: React.FC<{ position: Vector3 }> = (props) => {
+export const ThreeRock: React.FC<MeshProps> = (props) => {
   const container = useRef<Mesh>();
   const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/r1.gltf');
   // const asteroidMap = useLoader(TextureLoader, 'resources/asteroid.jpg');

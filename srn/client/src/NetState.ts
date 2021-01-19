@@ -129,6 +129,7 @@ export default class NetState extends EventEmitter {
     this.state = {
       planets: [],
       players: [],
+      asteroids: [],
       ships: [],
       ticks: 0,
       my_id: uuid.v4(),
@@ -346,11 +347,9 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.UnicastDialogueStateChange
       ) {
         this.dialogue = JSON.parse(data).value;
-      } else if (
-        messageCode === ServerToClientMessageCode.XCastGameEvent
-      ) {
+      } else if (messageCode === ServerToClientMessageCode.XCastGameEvent) {
         const event = JSON.parse(data).value;
-        this.emit("gameEvent", event);
+        this.emit('gameEvent', event);
       }
     } catch (e) {
       console.warn('error handling message', e);

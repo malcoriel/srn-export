@@ -160,6 +160,11 @@ pub fn gen_planet_count() -> u32 {
     return rng.gen_range(5, 8);
 }
 
+pub fn gen_asteroid_radius() -> f64 {
+    let mut rng: ThreadRng = rand::thread_rng();
+    return rng.gen_range(0.5, 2.0);
+}
+
 pub fn gen_sat_count(planet_radius: f64) -> u32 {
     let mut rng: ThreadRng = rand::thread_rng();
     if planet_radius < 10.0 {

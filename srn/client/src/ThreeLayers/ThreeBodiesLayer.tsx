@@ -1,14 +1,15 @@
 import React from 'react';
-import { GameState, ShipAction, ShipActionType } from '../world';
+import { Asteroid, GameState, ShipAction, ShipActionType } from '../world';
 import _ from 'lodash';
 import { ThreeStar } from './ThreeStar';
 import { posToThreePos, threeVectorToVector } from './ThreeLayer';
 import { ThreePlanetShape } from './ThreePlanetShape';
 import { MouseEvent } from 'react-three-fiber';
 import { actionsActive } from '../utils/ShipControls';
+import { ThreeRock } from './ThreeRock';
 
 export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
-  const { planets, star } = state;
+  const { planets, star, asteroids } = state;
   return (
     <group>
       {planets.map((p) => (
@@ -32,6 +33,13 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
           color={star.color}
         />
       )}
+      {asteroids.map((a: Asteroid) => (
+        <ThreeRock
+          key={a.id}
+          position={posToThreePos(a.x, a.y)}
+          scale={_.times(3, () => a.radius) as [number, number, number]}
+        />
+      ))}
     </group>
   );
 };
