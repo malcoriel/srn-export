@@ -1,10 +1,18 @@
 import { useToggleHotkey } from '../utils/useToggleHotkey';
-import { Arc, Circle, Group, Layer, Rect, Stage } from 'react-konva';
-import { blue, dirtyGray, gray, teal, yellow } from '../utils/palette';
+import { Arc, Circle, Group, Layer, Rect, Stage, Star } from 'react-konva';
+import {
+  crimson,
+  darkGreen,
+  dirtyGray,
+  gray,
+  mint,
+  teal,
+  yellow,
+} from '../utils/palette';
 import color from 'color';
 
 import React, { useState } from 'react';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import {
   height_units,
   radToDeg,
@@ -72,6 +80,7 @@ export const MinimapLayer = React.memo(() => {
     setDragPosition(currentPositionUV);
     visualState.cameraPosition = currentPositionUV.scale(width_units);
   };
+  const myShip = findMyShip(state);
   return (
     <Stage
       width={get_minimap_size_x()}
@@ -181,6 +190,23 @@ export const MinimapLayer = React.memo(() => {
             position={posToMinimapPos(VectorF(0, 0))}
           />
         ))}
+        {state.ships.map((s) => {
+          const pos = posToMinimapPos(s);
+          const isMy = myShip && s.id === myShip.id;
+          return (
+            <Star
+              x={pos.x}
+              y={pos.y}
+              innerRadius={radiusToMinimapRadius(s.radius * 8)}
+              outerRadius={radiusToMinimapRadius(s.radius + 15)}
+              fill={isMy ? crimson : mint}
+              stroke="black"
+              strokeWidth={0.5}
+              numPoints={5}
+              opacity={0.8}
+            />
+          );
+        })}
         <Rect
           // zIndex={2}
           width={minimap_viewport_size_x}
