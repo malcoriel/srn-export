@@ -179,9 +179,11 @@ pub fn build_anchors_from_bodies(
 ) -> HashMap<Uuid, Box<dyn IBody>> {
     let mut anchors = HashMap::new();
     for p in bodies.into_iter() {
-        anchors
-            .entry(p.get_anchor_id())
-            .or_insert((*by_id.get(&p.get_anchor_id()).unwrap()).clone());
+        let anchor_id = p.get_anchor_id();
+        let anchor_body = by_id.get(&anchor_id);
+        if let Some(anchor) = anchor_body {
+            anchors.entry(anchor_id).or_insert((*anchor).clone());
+        }
     }
     anchors
 }
