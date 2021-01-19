@@ -206,6 +206,21 @@ pub struct Asteroid {
     pub anchor_tier: u32,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AsteroidBelt {
+    pub id: Uuid,
+    pub x: f64,
+    pub y: f64,
+    pub rotation: f64,
+    pub radius: f64,
+    pub width: f64,
+    pub count: u32,
+    pub orbit_speed: f64,
+    pub anchor_id: Uuid,
+    pub anchor_tier: u32,
+    pub scale_mod: f64,
+}
+
 impl AsVec2f64 for Planet {
     fn as_vec(&self) -> Vec2f64 {
         Vec2f64 {
@@ -325,6 +340,7 @@ pub struct GameState {
     pub star: Option<Star>,
     pub planets: Vec<Planet>,
     pub asteroids: Vec<Asteroid>,
+    pub asteroid_belts: Vec<AsteroidBelt>,
     pub ships: Vec<Ship>,
     pub players: Vec<Player>,
     pub milliseconds_remaining: i32,
@@ -394,6 +410,7 @@ pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
     }
 
     let now = Utc::now().timestamp_millis() as u64;
+    let star_id = star.id;
     let state = GameState {
         tag: None,
         milliseconds_remaining: 3 * 60 * 1000,
@@ -407,6 +424,47 @@ pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
         players: vec![],
         leaderboard: None,
         start_time_ticks: now,
+        asteroid_belts: vec![
+            AsteroidBelt {
+                id: new_id(),
+                x: 0.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 200.0,
+                width: 10.0,
+                count: 200,
+                orbit_speed: 0.006,
+                anchor_id: star_id,
+                anchor_tier: 0,
+                scale_mod: 1.0,
+            },
+            AsteroidBelt {
+                id: new_id(),
+                x: 0.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 198.0,
+                width: 2.0,
+                count: 100,
+                orbit_speed: 0.004,
+                anchor_id: star_id,
+                anchor_tier: 0,
+                scale_mod: 2.0,
+            },
+            AsteroidBelt {
+                id: new_id(),
+                x: 0.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 201.0,
+                width: 20.0,
+                count: 400,
+                orbit_speed: 0.008,
+                anchor_id: star_id,
+                anchor_tier: 0,
+                scale_mod: 0.5,
+            },
+        ],
     };
     let state = if seed_and_validate {
         let mut state = validate_state(state);
@@ -510,6 +568,9 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
             state.planets = planet_movement::update_planets(&state.planets, &state.star, elapsed);
             state.asteroids =
                 planet_movement::update_asteroids(&state.asteroids, &state.star, elapsed);
+            for mut belt in state.asteroid_belts.iter_mut() {
+                belt.rotation += belt.orbit_speed / 1000.0 / 1000.0 * elapsed as f64;
+            }
             state.ships = update_ships_on_planets(&state.planets, &state.ships);
             state.ships = update_ships_navigation(
                 &state.ships,

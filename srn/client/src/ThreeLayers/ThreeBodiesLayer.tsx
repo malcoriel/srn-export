@@ -10,7 +10,7 @@ import { ThreeRock } from './ThreeRock';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
 
 export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
-  const { planets, star, asteroids } = state;
+  const { planets, star, asteroids, asteroid_belts } = state;
   return (
     <group>
       {planets.map((p) => (
@@ -34,7 +34,18 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
           color={star.color}
         />
       )}
-      <ThreeAsteroidBelt count={100} radius={100} />
+      {asteroid_belts.map((b) => (
+        <ThreeAsteroidBelt
+          key={b.id}
+          count={b.count}
+          radius={b.radius}
+          position={posToThreePos(b.x, b.y)}
+          width={b.width}
+          rotation={[0, 0, b.rotation]}
+          gid={b.id}
+          scale_mod={b.scale_mod}
+        />
+      ))}
       {/*{asteroids.map((a: Asteroid) => (*/}
       {/*  <ThreeRock*/}
       {/*    key={a.id}*/}

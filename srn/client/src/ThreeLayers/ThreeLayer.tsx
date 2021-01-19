@@ -1,7 +1,7 @@
 import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { max_x, min_x, ShipAction, ShipActionType, size } from '../world';
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
   ExternalCameraControl,
@@ -16,15 +16,16 @@ import Vector from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
 import { BackgroundPlane } from './BackgroundPlane';
 import { useShowCoordinates } from '../KonvaLayers/CoordLayer';
-import { ThreeRock } from './ThreeRock';
+
+export type Vector3Arr = [number, number, number];
 
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera
-export const posToThreePos = (
-  x: number,
-  y: number,
-  z?: number
-): [number, number, number] => [x, -y, z || 0];
+export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
+  x,
+  -y,
+  z || 0,
+];
 
 export const threePosToVector = (x: number, y: number, _z: number): Vector =>
   new Vector(x, -y);

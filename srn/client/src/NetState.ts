@@ -130,6 +130,7 @@ export default class NetState extends EventEmitter {
       planets: [],
       players: [],
       asteroids: [],
+      asteroid_belts: [],
       ships: [],
       ticks: 0,
       my_id: uuid.v4(),
