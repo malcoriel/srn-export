@@ -692,26 +692,6 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
     &state.ships[state.ships.len() - 1]
 }
 
-pub fn make_planets_with_star(planets: &Vec<Planet>, star: &Star) -> Vec<Planet> {
-    let planets_with_star = planets
-        .clone()
-        .into_iter()
-        .chain(vec![Planet {
-            color: Default::default(),
-            name: star.name.clone(),
-            id: star.id,
-            x: star.x,
-            y: star.y,
-            rotation: star.rotation,
-            radius: star.radius,
-            orbit_speed: 0.0,
-            anchor_id: Default::default(),
-            anchor_tier: 0,
-        }])
-        .collect::<Vec<_>>();
-    planets_with_star
-}
-
 pub fn update_ships_navigation(
     ships: &Vec<Ship>,
     planets: &Vec<Planet>,
@@ -864,19 +844,6 @@ fn build_trajectory_to_planet(
         })
         .collect::<Vec<_>>();
     result
-}
-
-pub fn build_anchors_from_planets(
-    planets: &Vec<Planet>,
-    by_id: &HashMap<Uuid, &Planet>,
-) -> HashMap<Uuid, Planet> {
-    let mut anchors = HashMap::new();
-    for p in planets.into_iter() {
-        anchors
-            .entry(p.anchor_id)
-            .or_insert((*by_id.get(&p.anchor_id).unwrap()).clone());
-    }
-    anchors
 }
 
 pub fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64) -> Vec<Vec2f64> {

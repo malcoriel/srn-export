@@ -214,7 +214,6 @@ const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const DEBUG_PHYSICS: bool = false;
-const EVENT_SLEEP_MS: u64 = 10;
 const MAIN_THREAD_SLEEP_MS: u64 = 15;
 
 fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
