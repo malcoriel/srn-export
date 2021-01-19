@@ -14,11 +14,13 @@ pub trait IBody: Clone {
     fn get_anchor_id(&self) -> Uuid;
     fn get_x(&self) -> f64;
     fn get_y(&self) -> f64;
+    fn get_radius(&self) -> f64;
     fn get_orbit_speed(&self) -> f64;
     fn set_x(&mut self, val: f64);
     fn set_y(&mut self, val: f64);
     fn get_anchor_tier(&self) -> u32;
     fn get_name(&self) -> String;
+    fn get_color(&self) -> String;
     fn as_vec(&self) -> Vec2f64;
 }
 
@@ -39,6 +41,10 @@ impl IBody for Planet {
         self.y
     }
 
+    fn get_radius(&self) -> f64 {
+        self.radius
+    }
+
     fn get_orbit_speed(&self) -> f64 {
         self.orbit_speed
     }
@@ -57,6 +63,10 @@ impl IBody for Planet {
 
     fn get_name(&self) -> String {
         self.name.clone()
+    }
+
+    fn get_color(&self) -> String {
+        self.color.clone()
     }
 
     fn as_vec(&self) -> Vec2f64 {
@@ -80,6 +90,10 @@ impl IBody for Star {
         self.y
     }
 
+    fn get_radius(&self) -> f64 {
+        self.radius
+    }
+
     fn get_orbit_speed(&self) -> f64 {
         0.0
     }
@@ -100,6 +114,10 @@ impl IBody for Star {
         self.name.clone()
     }
 
+    fn get_color(&self) -> String {
+        self.color.clone()
+    }
+
     fn as_vec(&self) -> Vec2f64 {
         Vec2f64 {
             x: self.x,
@@ -110,7 +128,18 @@ impl IBody for Star {
 
 impl From<Box<dyn IBody>> for Planet {
     fn from(val: Box<dyn IBody>) -> Self {
-        unimplemented!()
+        Planet {
+            id: val.get_id(),
+            name: val.get_name(),
+            x: val.get_x(),
+            y: val.get_y(),
+            rotation: 0.0,
+            radius: val.get_radius(),
+            orbit_speed: val.get_orbit_speed(),
+            anchor_id: val.get_anchor_id(),
+            anchor_tier: val.get_anchor_tier(),
+            color: val.get_color(),
+        }
     }
 }
 
