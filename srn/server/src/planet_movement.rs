@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::world::{index_planets_by_id, Planet, Star};
+use crate::world::{index_planets_by_id, Asteroid, Planet, Star};
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
 use objekt_clonable::*;
@@ -22,6 +22,59 @@ pub trait IBody: Clone {
     fn get_name(&self) -> String;
     fn get_color(&self) -> String;
     fn as_vec(&self) -> Vec2f64;
+}
+
+impl IBody for Asteroid {
+    fn get_id(&self) -> Uuid {
+        self.id
+    }
+
+    fn get_anchor_id(&self) -> Uuid {
+        self.anchor_id
+    }
+
+    fn get_x(&self) -> f64 {
+        self.x
+    }
+
+    fn get_y(&self) -> f64 {
+        self.y
+    }
+
+    fn get_radius(&self) -> f64 {
+        self.radius
+    }
+
+    fn get_orbit_speed(&self) -> f64 {
+        self.orbit_speed
+    }
+
+    fn set_x(&mut self, val: f64) {
+        self.x = val;
+    }
+
+    fn set_y(&mut self, val: f64) {
+        self.y = val;
+    }
+
+    fn get_anchor_tier(&self) -> u32 {
+        self.anchor_tier
+    }
+
+    fn get_name(&self) -> String {
+        format!("asteroid {}", self.id)
+    }
+
+    fn get_color(&self) -> String {
+        "".to_string()
+    }
+
+    fn as_vec(&self) -> Vec2f64 {
+        Vec2f64 {
+            x: self.x,
+            y: self.y,
+        }
+    }
 }
 
 impl IBody for Planet {
@@ -143,12 +196,27 @@ impl From<Box<dyn IBody>> for Planet {
     }
 }
 
+impl From<Box<dyn IBody>> for Asteroid {
+    fn from(val: Box<dyn IBody>) -> Self {
+        Asteroid {
+            id: val.get_id(),
+            x: val.get_x(),
+            y: val.get_y(),
+            rotation: 0.0,
+            radius: val.get_radius(),
+            orbit_speed: val.get_orbit_speed(),
+            anchor_id: val.get_anchor_id(),
+            anchor_tier: val.get_anchor_tier(),
+        }
+    }
+}
+
 pub fn update_planets(
     planets: &Vec<Planet>,
     star: &Option<Star>,
     elapsed_micro: i64,
 ) -> Vec<Planet> {
-    let bodies: Vec<Box<dyn IBody>> = make_bodies(planets, star);
+    let bodies: Vec<Box<dyn IBody>> = make_bodies_from_planets(planets, star);
     let by_id = index_bodies_by_id(bodies.clone());
     let mut anchors = build_anchors_from_bodies(bodies, &by_id);
 
@@ -171,6 +239,34 @@ pub fn update_planets(
     }
 
     planets
+}
+
+pub fn update_asteroids(
+    asteroids: &Vec<Asteroid>,
+    star: &Option<Star>,
+    elapsed_micro: i64,
+) -> Vec<Asteroid> {
+    let bodies: Vec<Box<dyn IBody>> = make_bodies_from_asteroids(asteroids, star);
+    let by_id = index_bodies_by_id(bodies.clone());
+    let mut anchors = build_anchors_from_bodies(bodies, &by_id);
+
+    let mut new_asteroids = asteroids.clone();
+    let mut shifts = HashMap::new();
+
+    new_asteroids = new_asteroids
+        .iter()
+        .map(|p| {
+            Asteroid::from(simulate_planet_movement(
+                elapsed_micro,
+                &mut anchors,
+                &mut shifts,
+                1,
+                Box::new(p.clone()),
+            ))
+        })
+        .collect::<Vec<Asteroid>>();
+
+    new_asteroids
 }
 
 pub fn build_anchors_from_bodies(
@@ -196,11 +292,24 @@ pub fn index_bodies_by_id(bodies: Vec<Box<dyn IBody>>) -> HashMap<Uuid, Box<dyn 
     by_id
 }
 
-pub fn make_bodies(planets: &Vec<Planet>, star: &Option<Star>) -> Vec<Box<dyn IBody>> {
+pub fn make_bodies_from_planets(planets: &Vec<Planet>, star: &Option<Star>) -> Vec<Box<dyn IBody>> {
     let mut res: Vec<Box<dyn IBody>> = vec![];
     for planet in planets {
-        let p = planet.clone();
-        res.push(Box::new(p));
+        res.push(Box::new(planet.clone()));
+    }
+    if let Some(star) = star {
+        res.push(Box::new(star.clone()));
+    }
+    res
+}
+
+pub fn make_bodies_from_asteroids(
+    asteroids: &Vec<Asteroid>,
+    star: &Option<Star>,
+) -> Vec<Box<dyn IBody>> {
+    let mut res: Vec<Box<dyn IBody>> = vec![];
+    for ast in asteroids {
+        res.push(Box::new(ast.clone()));
     }
     if let Some(star) = star {
         res.push(Box::new(star.clone()));

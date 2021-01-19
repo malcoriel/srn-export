@@ -162,7 +162,14 @@ pub fn gen_planet_count() -> u32 {
 
 pub fn gen_asteroid_radius() -> f64 {
     let mut rng: ThreadRng = rand::thread_rng();
-    return rng.gen_range(0.5, 2.0);
+    return rng.gen_range(0.2, 0.8);
+}
+
+pub fn gen_asteroid_shift() -> (f64, f64) {
+    let mut rng: ThreadRng = rand::thread_rng();
+    let min = 3.0;
+    let max = 5.0;
+    return (rng.gen_range(min, max), rng.gen_range(min, max));
 }
 
 pub fn gen_sat_count(planet_radius: f64) -> u32 {

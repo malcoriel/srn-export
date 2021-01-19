@@ -13,11 +13,11 @@ use crate::dialogue::{
     build_dialogue_from_state, Dialogue, DialogueScript, DialogueStates, DialogueTable,
     DialogueUpdate,
 };
-use crate::planet_movement::{index_bodies_by_id, make_bodies, IBody};
+use crate::planet_movement::{index_bodies_by_id, make_bodies_from_planets, IBody};
 use crate::random_stuff::{
-    gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
-    gen_planet_radius, gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name,
-    gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
+    gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_planet_count, gen_planet_gap,
+    gen_planet_name, gen_planet_orbit_speed, gen_planet_radius, gen_random_photo_id, gen_sat_count,
+    gen_sat_gap, gen_sat_name, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
 };
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{dialogue, new_id, DEBUG_PHYSICS};
@@ -30,6 +30,8 @@ const MAX_ORBIT: f64 = 400.0;
 const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
 const TRAJECTORY_MAX_ITER: i32 = 10;
 const TRAJECTORY_EPS: f64 = 0.1;
+const ASTEROID_COUNT: u32 = 200;
+const ASTEROID_BELT_RANGE: f64 = 100.0;
 
 pub type PlayerId = Uuid;
 
@@ -398,9 +400,9 @@ pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
         paused: false,
         my_id: crate::new_id(),
         ticks: 0,
+        asteroids: seed_asteroids(&star),
         star: Some(star),
         planets,
-        asteroids: vec![],
         ships: vec![],
         players: vec![],
         leaderboard: None,
@@ -414,10 +416,30 @@ pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
     } else {
         state
     };
-    if debug {
-        eprintln!("{}", serde_json::to_string_pretty(&state).ok().unwrap());
-    }
     state
+}
+
+fn seed_asteroids(star: &Star) -> Vec<Asteroid> {
+    let mut res = vec![];
+    let mut cur_angle: f64 = 0.0;
+    let angle_step = PI * 2.0 / ASTEROID_COUNT as f64;
+    for _i in 0..ASTEROID_COUNT {
+        let x: f64 = cur_angle.cos() * ASTEROID_BELT_RANGE;
+        let y: f64 = cur_angle.sin() * ASTEROID_BELT_RANGE;
+        let shift = gen_asteroid_shift();
+        res.push(Asteroid {
+            id: new_id(),
+            x: x + shift.0,
+            y: y + shift.1,
+            rotation: 0.0,
+            radius: gen_asteroid_radius(),
+            orbit_speed: 0.05,
+            anchor_id: star.id,
+            anchor_tier: 1,
+        });
+        cur_angle += angle_step;
+    }
+    res
 }
 
 fn validate_state(mut in_state: GameState) -> GameState {
@@ -486,6 +508,8 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
             fire_event(GameEvent::GameEnded);
         } else {
             state.planets = planet_movement::update_planets(&state.planets, &state.star, elapsed);
+            state.asteroids =
+                planet_movement::update_asteroids(&state.asteroids, &state.star, elapsed);
             state.ships = update_ships_on_planets(&state.planets, &state.ships);
             state.ships = update_ships_navigation(
                 &state.ships,
@@ -700,7 +724,7 @@ pub fn update_ships_navigation(
     elapsed_micro: i64,
 ) -> Vec<Ship> {
     let mut res = vec![];
-    let planets_with_star = make_bodies(&planets, star);
+    let planets_with_star = make_bodies_from_planets(&planets, star);
     let planets_by_id = index_bodies_by_id(planets_with_star);
     let players_by_ship_id = index_players_by_ship_id(players);
     for mut ship in ships.clone() {

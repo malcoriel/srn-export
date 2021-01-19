@@ -1,17 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
-import {
-  ClampToEdgeWrapping,
-  Color,
-  Mesh,
-  MeshBasicMaterial,
-  RepeatWrapping,
-  TextureLoader,
-} from 'three';
+import { Mesh } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { Vector3 } from 'three/src/math/Vector3';
+const model_fix_coeff = 1 / 40;
 
-export const ThreeRock: React.FC<MeshProps> = (props) => {
+type VectorArr = [number, number, number];
+export const ThreeRock: React.FC<MeshProps & { scale: VectorArr }> = (
+  props
+) => {
   const container = useRef<Mesh>();
   const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/r1.gltf');
   // const asteroidMap = useLoader(TextureLoader, 'resources/asteroid.jpg');
@@ -29,7 +25,11 @@ export const ThreeRock: React.FC<MeshProps> = (props) => {
     <mesh
       ref={container}
       position={props.position}
-      scale={[1 / 20, 1 / 20, 1 / 20]}
+      scale={
+        props.scale
+          ? (props.scale.map((s: number) => s * model_fix_coeff) as VectorArr)
+          : [model_fix_coeff, model_fix_coeff, model_fix_coeff]
+      }
       geometry={rockMesh.geometry}
     >
       <meshBasicMaterial color="gray" />
