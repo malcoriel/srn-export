@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::vec2::{angle_rad, rotate, AsVec2f64, Precision, Vec2f64};
+use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::world::{index_planets_by_id, Planet, Star};
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
@@ -265,7 +265,7 @@ pub fn simulate_planet_movement(
         x: orbit_length,
         y: 0.0,
     };
-    let mut current_angle = angle_rad(base_vec.clone(), current_pos_relative);
+    let mut current_angle = base_vec.angle_rad(&current_pos_relative);
     if current_pos_relative.y > 0.0 {
         current_angle = 2.0 * PI - current_angle;
     }
@@ -285,7 +285,7 @@ pub fn simulate_planet_movement(
     if DEBUG_PHYSICS {
         println!("new_angle: {}", new_angle);
     }
-    let new_vec = rotate(base_vec.clone(), new_angle);
+    let new_vec = base_vec.rotate(new_angle);
     p.set_x(anchor.get_x() + new_vec.x);
     p.set_y(anchor.get_y() + new_vec.y);
     if DEBUG_PHYSICS {

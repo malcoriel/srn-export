@@ -137,28 +137,41 @@ impl Vec2f64 {
     pub fn euclidean_len(&self) -> f64 {
         return self.euclidean_distance(&Vec2f64 { x: 0.0, y: 0.0 });
     }
-}
 
+    pub fn are_parallel(&self, b: &Vec2f64) -> bool {
+        return (self.x * b.y - self.y * b.x).abs() < EPS;
+    }
+
+    pub fn scalar_multiply(&self, b: &Vec2f64) -> f64 {
+        self.x * b.x + self.y * b.y
+    }
+
+    pub fn len(a: Vec2f64) -> f64 {
+        (a.x * a.x + a.y * a.y).sqrt()
+    }
+
+    pub fn angle_rad(&self, b: &Vec2f64) -> f64 {
+        (self.scalar_multiply(b) / self.euclidean_len() / b.euclidean_len()).acos()
+    }
+
+    pub fn angle_deg(&self, b: &Vec2f64) -> f64 {
+        rad_to_deg(self.angle_rad(b))
+    }
+
+    // x goes right, y goes down, but angle goes from +x to -y
+    pub fn rotate(&self, angle: f64) -> Vec2f64 {
+        let x = self.x;
+        let y = self.y;
+        let x_new = ((x) * angle.cos()) - ((-y) * angle.sin());
+        let cmp1 = (-y) * angle.cos();
+        let cmp2 = (x) * angle.sin();
+        let y_new = cmp1 - cmp2;
+        return Vec2f64 { x: x_new, y: y_new };
+    }
+}
 pub fn approx_eq(a: f64, b: f64) -> bool {
     return (a - b).abs() < EPS;
 }
-
-pub fn are_parallel(a: Vec2f64, b: Vec2f64) -> bool {
-    return (a.x * b.y - a.y * b.x).abs() < EPS;
-}
-
-pub fn scalar_multiply(a: Vec2f64, b: Vec2f64) -> f64 {
-    a.x * b.x + a.y * b.y
-}
-
-pub fn len(a: Vec2f64) -> f64 {
-    (a.x * a.x + a.y * a.y).sqrt()
-}
-
-pub fn angle_rad(a: Vec2f64, b: Vec2f64) -> f64 {
-    (scalar_multiply(a, b) / len(a) / len(b)).acos()
-}
-
 pub fn rad_to_deg(r: f64) -> f64 {
     r * 180f64 / PI
 }
@@ -166,30 +179,6 @@ pub fn deg_to_rad(d: f64) -> f64 {
     d / 180f64 * PI
 }
 
-pub fn angle_deg(a: Vec2f64, b: Vec2f64) -> f64 {
-    rad_to_deg(angle_rad(a, b))
-}
-
 pub trait AsVec2f64 {
     fn as_vec(&self) -> Vec2f64;
-}
-
-// x goes right, y goes down, but angle goes from +x to -y
-pub fn rotate(v: Vec2f64, angle: f64) -> Vec2f64 {
-    let x = v.x;
-    let y = v.y;
-    // eprintln!(
-    //     "x {} y {} sin {} cos {} angle {}",
-    //     x,
-    //     y,
-    //     angle.sin(),
-    //     angle.cos(),
-    //     angle * 180.0 / PI,
-    // );
-    let x_new = ((x) * angle.cos()) - ((-y) * angle.sin());
-    let cmp1 = (-y) * angle.cos();
-    let cmp2 = (x) * angle.sin();
-    let y_new = cmp1 - cmp2;
-    // eprintln!("cmp1 {} cmp2 {}", cmp1, cmp2);
-    return Vec2f64 { x: x_new, y: y_new };
 }

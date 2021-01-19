@@ -36,7 +36,7 @@ itertools = "0.10.0"
 chrono = "0.4.19"
 regex = "1.4.2"
 crossbeam = "0.8.0"
-
+objekt-clonable = "0.2.2"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"

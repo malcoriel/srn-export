@@ -19,7 +19,7 @@ use crate::random_stuff::{
     gen_planet_radius, gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name,
     gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::vec2::{angle_rad, rotate, AsVec2f64, Precision, Vec2f64};
+use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{dialogue, new_id, DEBUG_PHYSICS};
 use crate::{fire_event, planet_movement};
 
@@ -720,7 +720,7 @@ pub fn update_ships_navigation(
                 };
                 let dist = target.euclidean_distance(&ship_pos);
                 let dir = target.subtract(&ship_pos);
-                ship.rotation = angle_rad(dir, Vec2f64 { x: 0.0, y: -1.0 });
+                ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
                 if dir.x < 0.0 {
                     ship.rotation = -ship.rotation;
                 }
@@ -750,7 +750,7 @@ pub fn update_ships_navigation(
                     ship.trajectory = build_trajectory_to_planet(ship_pos, &planet, &planets_by_id);
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
-                        ship.rotation = angle_rad(dir, Vec2f64 { x: 0.0, y: -1.0 });
+                        ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
                         if dir.x < 0.0 {
                             ship.rotation = -ship.rotation;
                         }
