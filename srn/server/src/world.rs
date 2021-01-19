@@ -333,7 +333,7 @@ pub struct GameState {
     pub ticks: u32,
 }
 
-pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
+pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
     let star_id = crate::new_id();
     let star = Star {
         color: "rgb(200, 150, 65)".to_string(),
@@ -400,7 +400,7 @@ pub fn seed_state(debug: bool, seed_and_validate: bool) -> GameState {
         paused: false,
         my_id: crate::new_id(),
         ticks: 0,
-        asteroids: seed_asteroids(&star),
+        asteroids: vec![], //seed_asteroids(&star),
         star: Some(star),
         planets,
         ships: vec![],

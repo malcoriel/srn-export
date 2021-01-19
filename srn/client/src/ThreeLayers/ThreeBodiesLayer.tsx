@@ -7,6 +7,7 @@ import { ThreePlanetShape } from './ThreePlanetShape';
 import { MouseEvent } from 'react-three-fiber';
 import { actionsActive } from '../utils/ShipControls';
 import { ThreeRock } from './ThreeRock';
+import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
 
 export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
   const { planets, star, asteroids } = state;
@@ -33,13 +34,14 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
           color={star.color}
         />
       )}
-      {asteroids.map((a: Asteroid) => (
-        <ThreeRock
-          key={a.id}
-          position={posToThreePos(a.x, a.y)}
-          scale={_.times(3, () => a.radius) as [number, number, number]}
-        />
-      ))}
+      <ThreeAsteroidBelt count={100} radius={100} />
+      {/*{asteroids.map((a: Asteroid) => (*/}
+      {/*  <ThreeRock*/}
+      {/*    key={a.id}*/}
+      {/*    position={posToThreePos(a.x, a.y)}*/}
+      {/*    scale={_.times(3, () => a.radius) as [number, number, number]}*/}
+      {/*  />*/}
+      {/*))}*/}
     </group>
   );
 };
