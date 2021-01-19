@@ -54,6 +54,7 @@ mod cast;
 mod dialogue;
 mod dialogue_test;
 mod events;
+mod planet_movement;
 mod random_stuff;
 #[allow(dead_code)]
 mod vec2;

@@ -1,13 +1,16 @@
 #[cfg(test)]
 mod world_test {
+    use std::f64::consts::PI;
+
+    use uuid::Uuid;
+
     use crate::new_id;
+    use crate::planet_movement::update_planets;
     use crate::vec2::Vec2f64;
     use crate::world::{
-        add_player, seed_state, spawn_ship, update_world, update_planets, update_ships_navigation,
-        GameState, Planet, Star,
+        add_player, seed_state, spawn_ship, update_ships_navigation, update_world, GameState,
+        Planet, Star,
     };
-    use std::f64::consts::PI;
-    use uuid::Uuid;
 
     #[test]
     fn can_rotate_planets() {

@@ -38,6 +38,9 @@ pub fn greet() {
 #[path = "../../server/src/world.rs"]
 mod world;
 
+#[path = "../../server/src/planet_movement.rs"]
+mod planet_movement;
+
 #[path = "../../server/src/vec2.rs"]
 mod vec2;
 
