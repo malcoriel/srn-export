@@ -1,31 +1,127 @@
 use std::collections::HashMap;
 
 use crate::vec2::{angle_rad, rotate, AsVec2f64, Precision, Vec2f64};
-use crate::world;
-use crate::world::{
-    build_anchors_from_planets, index_planets_by_id, make_planets_with_star, Planet, Star,
-};
+use crate::world::{index_planets_by_id, Planet, Star};
 use crate::DEBUG_PHYSICS;
+use crate::{vec2, world};
+use objekt_clonable::*;
 use std::f64::consts::PI;
 use uuid::Uuid;
+
+#[clonable]
+pub trait IBody: Clone {
+    fn get_id(&self) -> Uuid;
+    fn get_anchor_id(&self) -> Uuid;
+    fn get_x(&self) -> f64;
+    fn get_y(&self) -> f64;
+    fn get_orbit_speed(&self) -> f64;
+    fn set_x(&mut self, val: f64);
+    fn set_y(&mut self, val: f64);
+    fn get_anchor_tier(&self) -> u32;
+    fn get_name(&self) -> String;
+    fn as_vec(&self) -> Vec2f64;
+}
+
+impl IBody for Planet {
+    fn get_id(&self) -> Uuid {
+        self.id
+    }
+
+    fn get_anchor_id(&self) -> Uuid {
+        self.anchor_id
+    }
+
+    fn get_x(&self) -> f64 {
+        self.x
+    }
+
+    fn get_y(&self) -> f64 {
+        self.y
+    }
+
+    fn get_orbit_speed(&self) -> f64 {
+        self.orbit_speed
+    }
+
+    fn set_x(&mut self, val: f64) {
+        self.x = val
+    }
+
+    fn set_y(&mut self, val: f64) {
+        self.y = val
+    }
+
+    fn get_anchor_tier(&self) -> u32 {
+        self.anchor_tier
+    }
+
+    fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn as_vec(&self) -> Vec2f64 {
+        vec2::AsVec2f64::as_vec(self)
+    }
+}
+impl IBody for Star {
+    fn get_id(&self) -> Uuid {
+        self.id
+    }
+
+    fn get_anchor_id(&self) -> Uuid {
+        Default::default()
+    }
+
+    fn get_x(&self) -> f64 {
+        self.x
+    }
+
+    fn get_y(&self) -> f64 {
+        self.y
+    }
+
+    fn get_orbit_speed(&self) -> f64 {
+        0.0
+    }
+
+    fn set_x(&mut self, val: f64) {
+        self.x = val
+    }
+
+    fn set_y(&mut self, val: f64) {
+        self.y = val
+    }
+
+    fn get_anchor_tier(&self) -> u32 {
+        0
+    }
+
+    fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn as_vec(&self) -> Vec2f64 {
+        Vec2f64 {
+            x: self.x,
+            y: self.y,
+        }
+    }
+}
+
+impl From<Box<dyn IBody>> for Planet {
+    fn from(val: Box<dyn IBody>) -> Self {
+        unimplemented!()
+    }
+}
 
 pub fn update_planets(
     planets: &Vec<Planet>,
     star: &Option<Star>,
     elapsed_micro: i64,
 ) -> Vec<Planet> {
-    let star = star.clone().unwrap_or(Star {
-        x: 0.0,
-        y: 0.0,
-        radius: 0.0,
-        rotation: 0.0,
-        id: crate::new_id(),
-        name: "".to_string(),
-        color: "".to_string(),
-    });
-    let planets_with_star = make_planets_with_star(planets, &star);
-    let by_id = index_planets_by_id(&planets_with_star);
-    let mut anchors = build_anchors_from_planets(planets, &by_id);
+    let bodies: Vec<Box<dyn IBody>> = make_bodies(planets, star);
+    let by_id = index_bodies_by_id(bodies.clone());
+    let mut anchors = build_anchors_from_bodies(bodies, &by_id);
 
     let mut planets = planets.clone();
     let mut shifts = HashMap::new();
@@ -33,43 +129,86 @@ pub fn update_planets(
     for tier in 1..3 {
         planets = planets
             .iter()
-            .map(|p| simulate_planet_movement(elapsed_micro, &mut anchors, &mut shifts, tier, p))
+            .map(|p| {
+                Planet::from(simulate_planet_movement(
+                    elapsed_micro,
+                    &mut anchors,
+                    &mut shifts,
+                    tier,
+                    Box::new(p.clone()),
+                ))
+            })
             .collect::<Vec<Planet>>();
     }
 
     planets
 }
 
+pub fn build_anchors_from_bodies(
+    bodies: Vec<Box<dyn IBody>>,
+    by_id: &HashMap<Uuid, Box<dyn IBody>>,
+) -> HashMap<Uuid, Box<dyn IBody>> {
+    let mut anchors = HashMap::new();
+    for p in bodies.into_iter() {
+        anchors
+            .entry(p.get_anchor_id())
+            .or_insert((*by_id.get(&p.get_anchor_id()).unwrap()).clone());
+    }
+    anchors
+}
+
+pub fn index_bodies_by_id(bodies: Vec<Box<dyn IBody>>) -> HashMap<Uuid, Box<dyn IBody>> {
+    let mut by_id = HashMap::new();
+    for p in bodies {
+        by_id.entry(p.get_id()).or_insert(p);
+    }
+    by_id
+}
+
+pub fn make_bodies(planets: &Vec<Planet>, star: &Option<Star>) -> Vec<Box<dyn IBody>> {
+    let mut res: Vec<Box<dyn IBody>> = vec![];
+    for planet in planets {
+        let p = planet.clone();
+        res.push(Box::new(p));
+    }
+    if let Some(star) = star {
+        res.push(Box::new(star.clone()));
+    }
+    res
+}
+
 pub fn simulate_planet_movement(
     elapsed_micro: i64,
-    anchors: &mut HashMap<Uuid, Planet>,
+    anchors: &mut HashMap<Uuid, Box<dyn IBody>>,
     shifts: &mut HashMap<Uuid, Vec2f64>,
     tier: u32,
-    p: &Planet,
-) -> Planet {
+    p: Box<dyn IBody>,
+) -> Box<dyn IBody> {
     let mut p = p.clone();
 
-    if p.anchor_tier != tier {
+    if p.get_anchor_tier() != tier {
         if DEBUG_PHYSICS {
             eprintln!(
                 "skipping {} (tier {}) for tier {}",
-                p.name, p.anchor_tier, tier
+                p.get_name(),
+                p.get_anchor_tier(),
+                tier
             );
         }
         return p;
     }
 
     if DEBUG_PHYSICS {
-        println!("p {} elapsed {}", p.id, elapsed_micro);
+        println!("p {} elapsed {}", p.get_id(), elapsed_micro);
     }
-    let anchor = anchors.get(&p.anchor_id).unwrap();
+    let anchor = anchors.get(&p.get_anchor_id()).unwrap();
 
     if DEBUG_PHYSICS {
-        println!("anchor position {}/{}", anchor.x, anchor.y);
+        println!("anchor position {}/{}", anchor.get_x(), anchor.get_y());
     }
 
     let anchor_shift = shifts
-        .get(&p.anchor_id)
+        .get(&p.get_anchor_id())
         .unwrap_or(&Vec2f64 { x: 0.0, y: 0.0 });
 
     if DEBUG_PHYSICS {
@@ -77,11 +216,14 @@ pub fn simulate_planet_movement(
     }
 
     let current_pos_relative = Vec2f64 {
-        x: p.x + anchor_shift.x - anchor.x,
-        y: p.y + anchor_shift.y - anchor.y,
+        x: p.get_x() + anchor_shift.x - anchor.get_x(),
+        y: p.get_y() + anchor_shift.y - anchor.get_y(),
     };
 
-    let old = Vec2f64 { x: p.x, y: p.y };
+    let old = Vec2f64 {
+        x: p.get_x(),
+        y: p.get_y(),
+    };
     if DEBUG_PHYSICS {
         println!("current {}", current_pos_relative);
     }
@@ -97,13 +239,13 @@ pub fn simulate_planet_movement(
         current_angle = 2.0 * PI - current_angle;
     }
     if DEBUG_PHYSICS {
-        eprintln!("name {}", p.name);
-        eprintln!("anchor {}/{}", anchor.x, anchor.y);
+        eprintln!("name {}", p.get_name());
+        eprintln!("anchor {}/{}", anchor.get_x(), anchor.get_y());
         eprintln!("base_vec {}/{}", base_vec.x, base_vec.y);
         eprintln!("dist {}", orbit_length);
     }
 
-    let angle_diff = p.orbit_speed * (elapsed_micro as f64) / 1000.0 / 1000.0;
+    let angle_diff = p.get_orbit_speed() * (elapsed_micro as f64) / 1000.0 / 1000.0;
     if DEBUG_PHYSICS {
         println!("current angle: {}", current_angle);
         println!("angle diff: {}", angle_diff);
@@ -113,16 +255,16 @@ pub fn simulate_planet_movement(
         println!("new_angle: {}", new_angle);
     }
     let new_vec = rotate(base_vec.clone(), new_angle);
-    p.x = anchor.x + new_vec.x;
-    p.y = anchor.y + new_vec.y;
+    p.set_x(anchor.get_x() + new_vec.x);
+    p.set_y(anchor.get_y() + new_vec.y);
     if DEBUG_PHYSICS {
         println!("new_vec {}", new_vec);
     }
     if DEBUG_PHYSICS {
         println!("new pos {}", p.as_vec());
     }
-    anchors.remove_entry(&p.id);
-    anchors.insert(p.id, p.clone());
-    shifts.insert(p.id, p.as_vec().subtract(&old));
+    anchors.remove_entry(&p.get_id());
+    anchors.insert(p.get_id(), p.clone());
+    shifts.insert(p.get_id(), p.as_vec().subtract(&old));
     return p;
 }

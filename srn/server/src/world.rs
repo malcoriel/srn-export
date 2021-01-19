@@ -13,6 +13,7 @@ use crate::dialogue::{
     build_dialogue_from_state, Dialogue, DialogueScript, DialogueStates, DialogueTable,
     DialogueUpdate,
 };
+use crate::planet_movement::{index_bodies_by_id, make_bodies, IBody};
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_gap, gen_planet_name, gen_planet_orbit_speed,
     gen_planet_radius, gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name,
@@ -490,7 +491,7 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
                 &state.ships,
                 &state.planets,
                 &state.players,
-                &state.star.clone().unwrap(),
+                &state.star,
                 elapsed,
             );
             if !client {
@@ -715,12 +716,12 @@ pub fn update_ships_navigation(
     ships: &Vec<Ship>,
     planets: &Vec<Planet>,
     players: &Vec<Player>,
-    star: &Star,
+    star: &Option<Star>,
     elapsed_micro: i64,
 ) -> Vec<Ship> {
     let mut res = vec![];
-    let planets_with_star = make_planets_with_star(&planets, star);
-    let planets_by_id = index_planets_by_id(&planets_with_star);
+    let planets_with_star = make_bodies(&planets, star);
+    let planets_by_id = index_bodies_by_id(planets_with_star);
     let players_by_ship_id = index_players_by_ship_id(players);
     for mut ship in ships.clone() {
         let player = players_by_ship_id.get(&ship.id);
@@ -756,7 +757,8 @@ pub fn update_ships_navigation(
                     ship.navigate_target = None;
                 }
             } else if let Some(target) = ship.dock_target {
-                if let Some(planet) = planets_by_id.get(&target).clone() {
+                if let Some(planet) = planets_by_id.get(&target) {
+                    let planet = Planet::from(planet.clone());
                     let ship_pos = Vec2f64 {
                         x: ship.x,
                         y: ship.y,
@@ -765,7 +767,7 @@ pub fn update_ships_navigation(
                         x: planet.x,
                         y: planet.y,
                     };
-                    ship.trajectory = build_trajectory_to_planet(ship_pos, planet, &planets_by_id);
+                    ship.trajectory = build_trajectory_to_planet(ship_pos, &planet, &planets_by_id);
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
                         ship.rotation = angle_rad(dir, Vec2f64 { x: 0.0, y: -1.0 });
@@ -812,10 +814,10 @@ fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
 fn build_trajectory_to_planet(
     from: Vec2f64,
     to: &Planet,
-    by_id: &HashMap<Uuid, &Planet>,
+    by_id: &HashMap<Uuid, Box<dyn IBody>>,
 ) -> Vec<Vec2f64> {
     // let start = Utc::now();
-    let mut anchors = build_anchors_from_planets(&vec![to.clone()], by_id);
+    let mut anchors = planet_movement::build_anchors_from_bodies(vec![Box::new(to.clone())], by_id);
     let mut shifts = HashMap::new();
     let mut counter = 0;
     let mut current_target = to.clone();
@@ -834,13 +836,13 @@ fn build_trajectory_to_planet(
             break;
         }
         current_from = move_ship(&current_target_pos, &current_from, max_shift);
-        current_target = planet_movement::simulate_planet_movement(
+        current_target = Planet::from(planet_movement::simulate_planet_movement(
             TRAJECTORY_STEP_MICRO,
             &mut anchors,
             &mut shifts,
             current_target.anchor_tier,
-            &current_target,
-        );
+            Box::new(current_target.clone()),
+        ));
         result.push(current_from);
         counter += 1;
     }
