@@ -539,25 +539,27 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
     }
 
     if state.paused {
-        if state.milliseconds_remaining <= 500 {
-            eprintln!("resetting game");
-            let players = state
-                .players
-                .clone()
-                .into_iter()
-                .map(|mut p| {
-                    p.quest = None;
-                    p.money = 0;
-                    p
-                })
-                .collect::<Vec<_>>();
-            state = seed_state(false, true);
-            state.players = players.clone();
-            for player in players.iter() {
-                spawn_ship(&mut state, player.id, None);
+        if !client {
+            if state.milliseconds_remaining <= 500 {
+                eprintln!("resetting game");
+                let players = state
+                    .players
+                    .clone()
+                    .into_iter()
+                    .map(|mut p| {
+                        p.quest = None;
+                        p.money = 0;
+                        p
+                    })
+                    .collect::<Vec<_>>();
+                state = seed_state(false, true);
+                state.players = players.clone();
+                for player in players.iter() {
+                    spawn_ship(&mut state, player.id, None);
+                }
+                fire_event(GameEvent::GameStarted);
+            } else {
             }
-            fire_event(GameEvent::GameStarted);
-        } else {
         }
     } else {
         if !client {

@@ -154,7 +154,7 @@ export default class NetState extends EventEmitter {
       star: null,
       start_time_ticks: 0,
       milliseconds_remaining: 0,
-      paused: false,
+      paused: true,
     };
   }
 
@@ -251,6 +251,7 @@ export default class NetState extends EventEmitter {
     };
     this.socket.onopen = () => {
       this.connecting = false;
+      this.visualState.boundCameraMovement = true;
       this.send({
         code: ClientOpCode.Name,
         value: JSON.stringify({
@@ -456,6 +457,10 @@ export default class NetState extends EventEmitter {
   };
 
   updateLocalState = (elapsedMs: number) => {
+    if (this.state.paused) {
+      resetActions();
+      return;
+    }
     let actions = Object.values(actionsActive).filter((a) => !!a);
     this.mutate_ship(actions as ShipAction[], elapsedMs);
     let dockAction = actionsActive[ShipActionType.Dock];
@@ -479,9 +484,7 @@ export default class NetState extends EventEmitter {
     resetActions();
     let result;
 
-    const inState = this.state;
-
-    result = updateWorld(inState, elapsedMs);
+    result = updateWorld(this.state, elapsedMs);
     if (result) {
       this.state = result;
     }
