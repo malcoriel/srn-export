@@ -127,6 +127,21 @@ export default class NetState extends EventEmitter {
     this.id = uuid.v4();
     let newVar = DEBUG_CREATION ? `at ${new Error().stack}` : '';
     console.log(`created NS ${this.id} ${newVar}`);
+    this.resetState();
+    this.ping = 0;
+    this.desync = 0;
+    this.visualState = {
+      boundCameraMovement: true,
+      cameraPosition: {
+        x: 0,
+        y: 0,
+      },
+    };
+    this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
+    this.slowTime = new vsyncedDecoupledTime(SLOW_TIME_STEP);
+  }
+
+  private resetState() {
     this.state = {
       planets: [],
       players: [],
@@ -141,17 +156,6 @@ export default class NetState extends EventEmitter {
       milliseconds_remaining: 0,
       paused: false,
     };
-    this.ping = 0;
-    this.desync = 0;
-    this.visualState = {
-      boundCameraMovement: true,
-      cameraPosition: {
-        x: 0,
-        y: 0,
-      },
-    };
-    this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
-    this.slowTime = new vsyncedDecoupledTime(SLOW_TIME_STEP);
   }
 
   forceSync = () => {
@@ -257,6 +261,7 @@ export default class NetState extends EventEmitter {
     };
     this.socket.onerror = () => {
       console.warn('socket error');
+      this.resetState();
       if (!this.disconnecting) {
         this.emit('network');
       }
