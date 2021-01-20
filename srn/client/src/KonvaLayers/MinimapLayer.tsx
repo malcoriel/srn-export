@@ -148,6 +148,8 @@ export const MinimapLayer = React.memo(() => {
                     opacity={planetOpacity}
                     radius={radiusToMinimapRadius(p.radius)}
                     fill={p.color}
+                    stroke={mint}
+                    strokeWidth={0.5}
                     onMouseDown={moveCamera}
                   />
                 </Group>
