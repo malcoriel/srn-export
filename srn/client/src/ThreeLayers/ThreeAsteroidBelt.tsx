@@ -1,12 +1,13 @@
 import React, { useMemo, useRef } from 'react';
 import { MeshProps, useLoader } from 'react-three-fiber';
-import { Mesh, BufferGeometry, Matrix4 } from 'three';
+import { Mesh, BufferGeometry, Matrix4, Quaternion, Euler } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils';
 import { posToThreePos, Vector3Arr } from './ThreeLayer';
 import Prando from 'prando';
-const model_fix_coeff = 1 / 40;
-const anti_model_fix_coeff = 40;
+import { Vector3 } from 'three/src/math/Vector3';
+const model_fix_coeff = 1;
+const anti_model_fix_coeff = 1;
 
 export const ThreeAsteroidBelt: React.FC<{
   count: number;
@@ -18,7 +19,8 @@ export const ThreeAsteroidBelt: React.FC<{
   gid: string;
 }> = ({ count, radius, position, scale_mod, rotation, gid, width }) => {
   const container = useRef<Mesh>();
-  const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/r1.gltf');
+  const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/asteroid.glb');
+
   // const asteroidMap = useLoader(TextureLoader, 'resources/asteroid.jpg');
   const rockMesh = gltf.scene.children[2] as Mesh;
 
@@ -37,10 +39,18 @@ export const ThreeAsteroidBelt: React.FC<{
       y += offsetY * anti_model_fix_coeff;
       let scale = prng.next(0.1, 0.5);
       current.scale(scale, scale, scale);
-
-      current.applyMatrix4(
-        new Matrix4().makeTranslation(...posToThreePos(x, y))
+      let matrix = new Matrix4().compose(
+        new Vector3(...posToThreePos(x, y)),
+        new Quaternion().setFromEuler(
+          new Euler(
+            prng.next(0, Math.PI / 2),
+            prng.next(0, Math.PI / 2),
+            prng.next(0, Math.PI / 2)
+          )
+        ),
+        new Vector3(1, 1, 1)
       );
+      current.applyMatrix4(matrix);
       geometryList.push(current);
       currentAngle += angleStep;
     }
@@ -54,8 +64,7 @@ export const ThreeAsteroidBelt: React.FC<{
       scale={[model_fix_coeff, model_fix_coeff, model_fix_coeff]}
       rotation={rotation}
       geometry={mergedGeometry}
-    >
-      <meshBasicMaterial color="#60593c" />
-    </mesh>
+      material={rockMesh.material}
+    ></mesh>
   );
 };

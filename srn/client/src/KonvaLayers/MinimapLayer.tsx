@@ -108,7 +108,7 @@ export const MinimapLayer = React.memo(() => {
           <Circle
             opacity={planetOpacity}
             onMouseDown={moveCamera}
-            radius={radiusToMinimapRadius(state.star.radius)}
+            radius={radiusToMinimapRadius(state.star.radius) * 0.6}
             fill={state.star.color}
             position={posToMinimapPos(state.star)}
           />

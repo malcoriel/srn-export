@@ -9,10 +9,8 @@ export const ThreeRock: React.FC<MeshProps & { scale: VectorArr }> = (
   props
 ) => {
   const container = useRef<Mesh>();
-  const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/r1.gltf');
-  // const asteroidMap = useLoader(TextureLoader, 'resources/asteroid.jpg');
+  const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/asteroid.glb');
   const rockMesh = gltf.scene.children[2] as Mesh;
-  // asteroidMap.wrapS = asteroidMap.wrapT = ClampToEdgeWrapping;
   useFrame(() => {
     if (container.current) {
       container.current.rotation.x += 0.01;
@@ -31,8 +29,7 @@ export const ThreeRock: React.FC<MeshProps & { scale: VectorArr }> = (
           : [model_fix_coeff, model_fix_coeff, model_fix_coeff]
       }
       geometry={rockMesh.geometry}
-    >
-      <meshBasicMaterial color="gray" />
-    </mesh>
+      material={rockMesh.material}
+    />
   );
 };
