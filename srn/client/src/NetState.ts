@@ -7,6 +7,7 @@ import {
   ShipAction,
   ShipActionType,
   updateWorld,
+  validateState,
 } from './world';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
@@ -163,7 +164,7 @@ export default class NetState extends EventEmitter {
     }
   };
 
-  disconnect = () => {
+  disconnectAndDestroy = () => {
     this.disconnecting = true;
     console.log(`disconnecting NS ${this.id}`);
     if (this.socket) {
@@ -178,21 +179,56 @@ export default class NetState extends EventEmitter {
     if (this.reconnectTimeout) {
       clearInterval(this.reconnectTimeout);
     }
-    NetState.instance = undefined;
     this.time.clearAnimation();
     this.slowTime.clearAnimation();
+    NetState.instance = undefined;
     Perf.stop();
   };
-  connect = () => {
-    if (this.disconnecting) {
-      return;
-    }
+
+  init = () => {
+    console.log(`initializing NS ${this.id}`);
     this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
     this.updateOnServerInterval = setInterval(
       () => this.updateShipOnServerManualMove(uuid.v4()),
       MANUAL_MOVE_SHIP_UPDATE_INTERVAL
     );
+    this.connecting = true;
+    Perf.start();
+    this.time.setInterval(
+      (elapsedMs) => {
+        Perf.markEvent(Measure.PhysicsFrameEvent);
+        Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
+          const ns = NetState.get();
+          if (!ns) return;
+          ns.updateLocalState(Math.floor((elapsedMs * 1000) / 1000));
+        });
+      },
+      () => {
+        Perf.markEvent(Measure.RenderFrameEvent);
+        Perf.usingMeasure(Measure.RenderFrameTime, () => {
+          const ns = NetState.get();
+          if (!ns) return;
 
+          ns.emit('change');
+        });
+      }
+    );
+    this.slowTime.setInterval(
+      () => {
+        const ns = NetState.get();
+        if (!ns) return;
+
+        ns.emit('slowchange');
+      },
+      () => {}
+    );
+    this.connect();
+  };
+
+  connect = () => {
+    if (this.disconnecting) {
+      return;
+    }
     console.log(`connecting NS ${this.id}`);
     this.socket = new WebSocket(api.getWebSocketUrl(), 'rust-websocket');
     this.socket.onmessage = (event) => {
@@ -228,36 +264,6 @@ export default class NetState extends EventEmitter {
         this.socket.close();
       }
     };
-
-    Perf.start();
-    this.time.setInterval(
-      (elapsedMs) => {
-        Perf.markEvent(Measure.PhysicsFrameEvent);
-        Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
-          const ns = NetState.get();
-          if (!ns) return;
-          ns.updateLocalState(Math.floor((elapsedMs * 1000) / 1000));
-        });
-      },
-      () => {
-        Perf.markEvent(Measure.RenderFrameEvent);
-        Perf.usingMeasure(Measure.RenderFrameTime, () => {
-          const ns = NetState.get();
-          if (!ns) return;
-
-          ns.emit('change');
-        });
-      }
-    );
-    this.slowTime.setInterval(
-      () => {
-        const ns = NetState.get();
-        if (!ns) return;
-
-        ns.emit('slowchange');
-      },
-      () => {}
-    );
   };
 
   private handleMessage(rawData: string) {
@@ -270,6 +276,9 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.SyncExclusive
       ) {
         const parsed = JSON.parse(data);
+        if (!validateState(parsed)) {
+          console.warn('FullSync or SyncExclusive got invalid state');
+        }
         this.desync = parsed.ticks - this.state.ticks;
         if (
           parsed.tag &&
@@ -336,6 +345,10 @@ export default class NetState extends EventEmitter {
         let ships = JSON.parse(data).ships;
         const myOldShip = findMyShip(this.state);
         this.state.ships = ships;
+        if (!validateState(this.state)) {
+          console.warn('MulticastPartialShipsUpdate got invalid state');
+        }
+
         if (myOldShip) {
           this.state.ships = this.state.ships.map((s) => {
             if (s.id == myOldShip.id) {
@@ -428,6 +441,9 @@ export default class NetState extends EventEmitter {
       );
     }
     this.state.ships.push(myShip);
+    if (!validateState(this.state)) {
+      console.warn('mutate ship caused invalid state');
+    }
   };
 
   onPreferredNameChange = (newName: string) => {

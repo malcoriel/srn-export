@@ -1,4 +1,5 @@
 import Vector, { IVector } from './utils/Vector';
+import { findMyShip } from './NetState';
 
 export const size = {
   width_px: window.innerWidth,
@@ -280,7 +281,14 @@ export const applyShipAction = (
           myShip.x -= moveByTimeDiagonal;
           break;
       }
-      myShip.rotation = directionToRotation[direction];
+      let directionToRotationElement = directionToRotation[direction];
+      if (typeof directionToRotationElement !== 'number') {
+        console.error(
+          'move produced invalid rotation',
+          directionToRotationElement
+        );
+      }
+      myShip.rotation = directionToRotationElement;
       break;
     }
     case ShipActionType.Navigate: {
@@ -329,9 +337,10 @@ const exposeJsonParseError = (
       '\n',
       lines[lineNumber - 2] || '',
       '\n',
+      'here ----> ',
+
       lines[lineNumber - 1] || '',
       '\n',
-      'here ----> ',
       lines[lineNumber],
       '\n',
       lines[lineNumber + 1] || '',
@@ -373,6 +382,7 @@ const doWasmCall = <R>(fnName: string, ...args: any[]): R | undefined => {
       `wasm function ${fnName} produced an error with message:\n`,
       result.message
     );
+    console.warn(new Error());
     exposeJsonParseError(serializedInState, result.message);
 
     return undefined;

@@ -102,7 +102,7 @@ pub fn update_world(serialized_state: &str, elapsed_micro: i64) -> String {
             })
             .unwrap_or(default),
         Err(reason) => serde_json::to_string(&ErrJson {
-            message: reason.to_string(),
+            message: format!("err deserializing {}", reason.to_string()),
         })
         .unwrap_or(default),
     }

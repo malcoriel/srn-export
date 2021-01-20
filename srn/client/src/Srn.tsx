@@ -94,7 +94,7 @@ const Srn = () => {
         clearInterval(monitorSizeInterval);
       }
       Perf.stop();
-      ns.disconnect();
+      ns.disconnectAndDestroy();
     };
   }, []);
 
@@ -114,13 +114,13 @@ const Srn = () => {
     ns.playerName = preferredName;
     ns.portraitName = portrait; // portrait files are 1-based
     ns.disconnecting = false;
-    ns.connect();
+    ns.init();
   };
 
   const quit = () => {
     const ns = NetState.get();
     if (!ns) return;
-    ns.disconnect();
+    ns.disconnectAndDestroy();
     setPlaying(false);
   };
 
