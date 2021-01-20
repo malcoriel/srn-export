@@ -1,3 +1,9 @@
+# Version 0.3.2
+## New
+* Asteroid belts!
+* New system generation algorithm to include them.
+* Ships are now visible on the minimap.
+
 # Version 0.3.1
 ## New
 * Ships can die and respawn
