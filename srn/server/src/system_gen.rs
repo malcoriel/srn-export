@@ -1,7 +1,8 @@
 use crate::new_id;
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count,
-    gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius, PLANET_NAMES, SAT_NAMES,
+    gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius, PLANET_NAMES,
+    SAT_NAMES,
 };
 use crate::world::{AsteroidBelt, GameState, Planet, Star};
 use chrono::Utc;
@@ -90,7 +91,7 @@ pub fn system_gen(_seed: String) -> GameState {
         prng: prng.clone(),
     };
 
-    let mut _sat_name_pool = PoolRandomPicker {
+    let mut sat_name_pool = PoolRandomPicker {
         options: Vec::from(SAT_NAMES),
         prng: prng.clone(),
     };
@@ -105,18 +106,39 @@ pub fn system_gen(_seed: String) -> GameState {
                     let planet_id = new_id();
                     let name = planet_name_pool.get().to_string();
 
-                    planets.push(Planet {
+                    let planet_radius = gen_planet_radius();
+                    let planet_center_x = current_x + width / 2.0;
+                    let planet = Planet {
                         id: planet_id,
                         name,
-                        x: current_x + width / 2.0,
+                        x: planet_center_x,
                         y: 0.0,
                         rotation: 0.0,
-                        radius: gen_planet_radius(),
+                        radius: planet_radius,
                         orbit_speed: gen_planet_orbit_speed() / (index + 1) as f64,
                         anchor_id: star.id.clone(),
                         anchor_tier: 1,
                         color: gen_color().to_string(),
-                    })
+                    };
+                    planets.push(planet);
+
+                    let mut current_sat_x = planet_center_x + planet_radius + 10.0;
+                    for j in 0..gen_sat_count(planet_radius) {
+                        let name = sat_name_pool.get().to_string();
+                        current_sat_x += gen_sat_gap();
+                        planets.push(Planet {
+                            id: new_id(),
+                            name,
+                            x: current_sat_x,
+                            y: 0.0,
+                            rotation: 0.0,
+                            radius: gen_sat_radius(),
+                            orbit_speed: gen_sat_orbit_speed() / (j + 1) as f64,
+                            anchor_id: planet_id,
+                            anchor_tier: 2,
+                            color: gen_color().to_string(),
+                        })
+                    }
                 } else {
                     let middle = current_x + width / 2.0;
                     asteroid_belts.push(AsteroidBelt {
