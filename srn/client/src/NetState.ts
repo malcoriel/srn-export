@@ -6,7 +6,7 @@ import {
   Ship,
   ShipAction,
   ShipActionType,
-  simulateStateUpdate,
+  updateWorld,
 } from './world';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
@@ -460,7 +460,7 @@ export default class NetState extends EventEmitter {
 
     const inState = this.state;
 
-    result = simulateStateUpdate(inState, elapsedMs);
+    result = updateWorld(inState, elapsedMs);
     if (result) {
       this.state = result;
     }

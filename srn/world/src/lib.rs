@@ -50,6 +50,9 @@ mod random_stuff;
 #[path = "../../server/src/dialogue.rs"]
 mod dialogue;
 
+#[path = "../../server/src/system_gen.rs"]
+mod system_gen;
+
 pub const DEBUG_PHYSICS: bool = false;
 
 use serde_derive::Serialize;
@@ -65,7 +68,26 @@ pub fn fire_event(ev: world::GameEvent) {
 }
 
 #[wasm_bindgen]
-pub fn update(serialized_state: &str, elapsed_micro: i64) -> String {
+pub fn parse_state(serialized_state: &str) -> String {
+    if !(cfg!(debug_assertions)) {
+        return serialized_state.to_string();
+    }
+
+    let default = String::from("");
+    let result = serde_json::from_str::<world::GameState>(serialized_state);
+    return match result {
+        Ok(state) => serde_json::to_string(&state)
+            .ok()
+            .unwrap_or(default.clone()),
+        Err(reason) => serde_json::to_string(&ErrJson {
+            message: reason.to_string(),
+        })
+        .unwrap_or(default),
+    };
+}
+
+#[wasm_bindgen]
+pub fn update_world(serialized_state: &str, elapsed_micro: i64) -> String {
     let default = String::from("");
     let result = serde_json::from_str::<world::GameState>(serialized_state);
 

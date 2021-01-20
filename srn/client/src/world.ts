@@ -226,7 +226,7 @@ export const applyShipAction = (
   ping: number
 ) => {
   const moveByTime = (SHIP_SPEED * elapsedMs) / 1000;
-  const stateConsideringPing = simulateStateUpdate(state, ping) || state;
+  const stateConsideringPing = updateWorld(state, ping) || state;
   const moveByTimeDiagonal = (moveByTime * Math.sqrt(2)) / 2;
   switch (sa.s_type) {
     case ShipActionType.Dock: {
@@ -304,40 +304,97 @@ export const applyShipAction = (
   return myShip;
 };
 
-let updaterFn:
-  | ((serialized_state: string, elapsed_micro: BigInt) => string)
-  | undefined = undefined;
+let wasmFunctions: any = {};
+
 (async function () {
-  const { update, set_panic_hook } = await import('../../world/pkg');
-  updaterFn = update;
-  set_panic_hook();
+  wasmFunctions = await import('../../world/pkg');
+  wasmFunctions.set_panic_hook();
 })();
 
-export const simulateStateUpdate = (
+const exposeJsonParseError = (
+  serializedState: string,
+  resultMessage: string
+) => {
+  let match = resultMessage.match(/at line (\d+) column (\d+)/);
+
+  if (match) {
+    const lines = serializedState.split('\n');
+    const lineNumber = Number(match[1]);
+
+    const inState = JSON.parse(serializedState) as GameState;
+    console.log(inState.ships.filter((s: Ship) => !s.rotation));
+
+    console.log(
+      lines[lineNumber - 3] || '',
+      '\n',
+      lines[lineNumber - 2] || '',
+      '\n',
+      lines[lineNumber - 1] || '',
+      '\n',
+      'here ----> ',
+      lines[lineNumber],
+      '\n',
+      lines[lineNumber + 1] || '',
+      '\n',
+      lines[lineNumber + 2] || '',
+      '\n',
+      lines[lineNumber + 3] || '',
+      '\n'
+    );
+  }
+};
+
+const doWasmCall = <R>(fnName: string, ...args: any[]): R | undefined => {
+  const fn = wasmFunctions[fnName];
+  if (!fn) {
+    console.warn(`wasm function ${fnName} is not yet initialized`);
+    return undefined;
+  }
+  if (fn.length !== args.length) {
+    console.warn(
+      `wasm function ${fnName} length ${fn.length} does not equal args length ${args.length}`
+    );
+    return undefined;
+  }
+  let res = fn(...args);
+  if (!res) {
+    console.warn(`wasm function ${fnName} returned nothing`);
+    return undefined;
+  }
+  let result;
+  try {
+    result = JSON.parse(res);
+  } catch (e) {
+    console.warn(`wasm function ${fnName} produced an invalid json`);
+  }
+  if (result.message) {
+    let serializedInState = args[0];
+    console.warn(
+      `wasm function ${fnName} produced an error with message:\n`,
+      result.message
+    );
+    exposeJsonParseError(serializedInState, result.message);
+
+    return undefined;
+  }
+  return result;
+};
+export const updateWorld = (
   inState: GameState,
   elapsedMs: number
 ): GameState | undefined => {
-  let result;
-  try {
-    if (updaterFn) {
-      let updated = updaterFn(
-        JSON.stringify(inState),
-        BigInt(elapsedMs * 1000)
-      );
-      if (updated) {
-        result = JSON.parse(updated);
-        if (result.message) {
-          console.warn(result.message);
-          result = undefined;
-        }
-      } else {
-        console.warn('no result from local update');
-      }
-    } else {
-      console.warn('world updater not yet initialized');
-    }
-  } catch (e) {
-    console.warn('error updating state locally', e);
-  }
-  return result;
+  return doWasmCall<GameState>(
+    'update_world',
+    JSON.stringify(inState, null, 2),
+    BigInt(elapsedMs * 1000)
+  );
+};
+
+const parseState = (inState: GameState): GameState | undefined => {
+  return doWasmCall<GameState>('parse_state', JSON.stringify(inState, null, 2));
+};
+
+export const validateState = (inState: GameState): boolean => {
+  const parsed = parseState(inState);
+  return !!parsed;
 };

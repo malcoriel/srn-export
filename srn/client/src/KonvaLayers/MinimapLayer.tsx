@@ -106,6 +106,7 @@ export const MinimapLayer = React.memo(() => {
         />
         {state.star && (
           <Circle
+            key={state.star.id}
             opacity={planetOpacity}
             onMouseDown={moveCamera}
             radius={radiusToMinimapRadius(state.star.radius) * 0.6}
@@ -195,6 +196,7 @@ export const MinimapLayer = React.memo(() => {
           const isMy = myShip && s.id === myShip.id;
           return (
             <Star
+              key={s.id}
               x={pos.x}
               y={pos.y}
               innerRadius={radiusToMinimapRadius(s.radius * 8)}
