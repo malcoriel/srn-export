@@ -19,6 +19,7 @@ use crate::random_stuff::{
     gen_planet_name, gen_planet_orbit_speed, gen_planet_radius, gen_random_photo_id, gen_sat_count,
     gen_sat_gap, gen_sat_name, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
 };
+use crate::system_gen::system_gen;
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{dialogue, new_id, DEBUG_PHYSICS};
 use crate::{fire_event, planet_movement};
@@ -26,7 +27,7 @@ use crate::{fire_event, planet_movement};
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
 const SEED_TIME: i64 = 9321 * 1000 * 1000;
-const MAX_ORBIT: f64 = 400.0;
+const MAX_ORBIT: f64 = 450.0;
 const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
 const TRAJECTORY_MAX_ITER: i32 = 10;
 const TRAJECTORY_EPS: f64 = 0.1;
@@ -350,122 +351,125 @@ pub struct GameState {
 }
 
 pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
-    let star_id = crate::new_id();
-    let star = Star {
-        color: "rgb(200, 150, 65)".to_string(),
-        id: star_id.clone(),
-        name: gen_star_name().to_string(),
-        x: 0.0,
-        y: 0.0,
-        rotation: 0.0,
-        radius: gen_star_radius(),
-    };
+    // let star_id = crate::new_id();
+    // let star = Star {
+    //     color: "rgb(200, 150, 65)".to_string(),
+    //     id: star_id.clone(),
+    //     name: gen_star_name().to_string(),
+    //     x: 0.0,
+    //     y: 0.0,
+    //     rotation: 0.0,
+    //     radius: gen_star_radius(),
+    // };
+    //
+    // let mut planets = vec![];
+    //
+    // let mut current_x = star.radius;
+    // let mut used_planet_names = HashSet::new();
+    // for i in 0..gen_planet_count() {
+    //     let planet_id = new_id();
+    //     let name = gen_planet_name().to_string();
+    //     if used_planet_names.contains(&name) {
+    //         continue;
+    //     }
+    //     used_planet_names.insert(name.clone());
+    //     current_x += gen_planet_gap();
+    //     let planet = Planet {
+    //         id: planet_id,
+    //         name,
+    //         x: current_x.clone(),
+    //         y: 0.0,
+    //         rotation: 0.0,
+    //         radius: gen_planet_radius(),
+    //         orbit_speed: gen_planet_orbit_speed() * ORB_SPEED_MULT / (i + 1) as f64,
+    //         anchor_id: star.id.clone(),
+    //         anchor_tier: 1,
+    //         color: gen_color().to_string(),
+    //     };
+    //     let mut current_sat_x = current_x + planet.radius + 10.0;
+    //     for j in 0..gen_sat_count(planet.radius) {
+    //         let name = gen_sat_name().to_string();
+    //         if used_planet_names.contains(&name) {
+    //             continue;
+    //         }
+    //         used_planet_names.insert(name.clone());
+    //         current_sat_x += gen_sat_gap();
+    //         planets.push(Planet {
+    //             id: new_id(),
+    //             name,
+    //             x: current_sat_x,
+    //             y: 0.0,
+    //             rotation: 0.0,
+    //             radius: gen_sat_radius(),
+    //             orbit_speed: gen_sat_orbit_speed() * ORB_SPEED_MULT / (j + 1) as f64,
+    //             anchor_id: planet_id,
+    //             anchor_tier: 2,
+    //             color: gen_color().to_string(),
+    //         })
+    //     }
+    //     planets.push(planet);
+    // }
+    //
+    // let now = Utc::now().timestamp_millis() as u64;
+    // let star_id = star.id;
+    // let state = GameState {
+    //     tag: None,
+    //     milliseconds_remaining: 3 * 60 * 1000,
+    //     paused: false,
+    //     my_id: crate::new_id(),
+    //     ticks: 0,
+    //     asteroids: vec![], //seed_asteroids(&star),
+    //     star: Some(star),
+    //     planets,
+    //     ships: vec![],
+    //     players: vec![],
+    //     leaderboard: None,
+    //     start_time_ticks: now,
+    //     asteroid_belts: vec![
+    //         AsteroidBelt {
+    //             id: new_id(),
+    //             x: 0.0,
+    //             y: 0.0,
+    //             rotation: 0.0,
+    //             radius: 200.0,
+    //             width: 10.0,
+    //             count: 200,
+    //             orbit_speed: 0.006,
+    //             anchor_id: star_id,
+    //             anchor_tier: 0,
+    //             scale_mod: 1.0,
+    //         },
+    //         AsteroidBelt {
+    //             id: new_id(),
+    //             x: 0.0,
+    //             y: 0.0,
+    //             rotation: 0.0,
+    //             radius: 198.0,
+    //             width: 2.0,
+    //             count: 100,
+    //             orbit_speed: 0.004,
+    //             anchor_id: star_id,
+    //             anchor_tier: 0,
+    //             scale_mod: 2.0,
+    //         },
+    //         AsteroidBelt {
+    //             id: new_id(),
+    //             x: 0.0,
+    //             y: 0.0,
+    //             rotation: 0.0,
+    //             radius: 201.0,
+    //             width: 20.0,
+    //             count: 400,
+    //             orbit_speed: 0.008,
+    //             anchor_id: star_id,
+    //             anchor_tier: 0,
+    //             scale_mod: 0.5,
+    //         },
+    //     ],
+    // };
 
-    let mut planets = vec![];
+    let state = system_gen("qqq".to_string());
 
-    let mut current_x = star.radius;
-    let mut used_planet_names = HashSet::new();
-    for i in 0..gen_planet_count() {
-        let planet_id = new_id();
-        let name = gen_planet_name().to_string();
-        if used_planet_names.contains(&name) {
-            continue;
-        }
-        used_planet_names.insert(name.clone());
-        current_x += gen_planet_gap();
-        let planet = Planet {
-            id: planet_id,
-            name,
-            x: current_x.clone(),
-            y: 0.0,
-            rotation: 0.0,
-            radius: gen_planet_radius(),
-            orbit_speed: gen_planet_orbit_speed() * ORB_SPEED_MULT / (i + 1) as f64,
-            anchor_id: star.id.clone(),
-            anchor_tier: 1,
-            color: gen_color().to_string(),
-        };
-        let mut current_sat_x = current_x + planet.radius + 10.0;
-        for j in 0..gen_sat_count(planet.radius) {
-            let name = gen_sat_name().to_string();
-            if used_planet_names.contains(&name) {
-                continue;
-            }
-            used_planet_names.insert(name.clone());
-            current_sat_x += gen_sat_gap();
-            planets.push(Planet {
-                id: new_id(),
-                name,
-                x: current_sat_x,
-                y: 0.0,
-                rotation: 0.0,
-                radius: gen_sat_radius(),
-                orbit_speed: gen_sat_orbit_speed() * ORB_SPEED_MULT / (j + 1) as f64,
-                anchor_id: planet_id,
-                anchor_tier: 2,
-                color: gen_color().to_string(),
-            })
-        }
-        planets.push(planet);
-    }
-
-    let now = Utc::now().timestamp_millis() as u64;
-    let star_id = star.id;
-    let state = GameState {
-        tag: None,
-        milliseconds_remaining: 3 * 60 * 1000,
-        paused: false,
-        my_id: crate::new_id(),
-        ticks: 0,
-        asteroids: vec![], //seed_asteroids(&star),
-        star: Some(star),
-        planets,
-        ships: vec![],
-        players: vec![],
-        leaderboard: None,
-        start_time_ticks: now,
-        asteroid_belts: vec![
-            AsteroidBelt {
-                id: new_id(),
-                x: 0.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 200.0,
-                width: 10.0,
-                count: 200,
-                orbit_speed: 0.006,
-                anchor_id: star_id,
-                anchor_tier: 0,
-                scale_mod: 1.0,
-            },
-            AsteroidBelt {
-                id: new_id(),
-                x: 0.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 198.0,
-                width: 2.0,
-                count: 100,
-                orbit_speed: 0.004,
-                anchor_id: star_id,
-                anchor_tier: 0,
-                scale_mod: 2.0,
-            },
-            AsteroidBelt {
-                id: new_id(),
-                x: 0.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 201.0,
-                width: 20.0,
-                count: 400,
-                orbit_speed: 0.008,
-                anchor_id: star_id,
-                anchor_tier: 0,
-                scale_mod: 0.5,
-            },
-        ],
-    };
     let state = if seed_and_validate {
         let mut state = validate_state(state);
         state.planets = planet_movement::update_planets(&state.planets, &state.star, SEED_TIME);

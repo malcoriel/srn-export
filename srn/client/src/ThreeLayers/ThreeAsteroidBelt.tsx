@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { MeshProps, useLoader } from 'react-three-fiber';
+import { useLoader } from 'react-three-fiber';
 import { Mesh, BufferGeometry, Matrix4, Quaternion, Euler } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils';
@@ -65,6 +65,6 @@ export const ThreeAsteroidBelt: React.FC<{
       rotation={rotation}
       geometry={mergedGeometry}
       material={rockMesh.material}
-    ></mesh>
+    />
   );
 };

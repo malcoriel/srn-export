@@ -1,6 +1,6 @@
 use rand::prelude::*;
 
-const STAR_NAMES: [&str; 32] = [
+pub const STAR_NAMES: [&str; 32] = [
     "Ithoins",
     "Ovlet",
     "Vreek",
@@ -35,21 +35,21 @@ const STAR_NAMES: [&str; 32] = [
     "Srea",
 ];
 
-const COLORS: [&str; 32] = [
+pub const COLORS: [&str; 32] = [
     "#0D57AC", "#AE213D", "#DE4C0A", "#05680D", "#01A6A0", "#9D91A1", "#AA6478", "#4D56A5",
     "#382CAE", "#AC54AD", "#8D948D", "#A0B472", "#C7B4A6", "#1D334A", "#5BBAA9", "#008FA9",
     "#ADBEA3", "#F5B0A1", "#A1A70B", "#025669", "#AE2460", "#955802", "#9c46b8", "#de019b",
     "#dc890c", "#f68923", "#f4a261", "#e76f51", "#849324", "#fd151b", "#d8a47f", "#ef8354",
 ];
 
-const PLANET_NAMES: [&str; 32] = [
+pub const PLANET_NAMES: [&str; 32] = [
     "Scarol", "Dailla", "Tapella", "Agland", "Ceonine", "Depes", "Mazsea", "Brova", "Legcan",
     "Tolopa", "Intum", "Bettose", "Harutlis", "Intfiner", "Arudros", "Whimox", "Wonuria",
     "Wimnicus", "Grenfar", "Lenis", "Kerenna", "Furtate", "Vhilnea", "Sangre", "Polyku", "Mois",
     "Takcon", "Dekma", "Khalassa", "Taruk", "Synocon", "Valyti",
 ];
 
-const SAT_NAMES: [&str; 32] = [
+pub const SAT_NAMES: [&str; 32] = [
     "Cox K-054",
     "Culpeper L-1",
     "Hahn Q-3",
@@ -84,14 +84,14 @@ const SAT_NAMES: [&str; 32] = [
     "Hëna A-9",
 ];
 
-const BOT_NAMES: [&str; 32] = [
+pub const BOT_NAMES: [&str; 32] = [
     "Brobot", "Tin", "Gigabit", "Scrap", "Eyax", "Ohtron", "Ash", "Cyl", "Clank", "Sterling",
     "Efttron", "Ibud", "Buttons", "Plex", "Scythe", "Oqotron", "Usp", "Rust", "Spudnik", "Brobot",
     "Micro", "Izp", "ipsroid", "Bult", "Otis", "Earl", "Spencer", "Ifen", "Af", "Jin", "Plexi",
     "Aqroid",
 ];
 
-const CHARACTER_NAMES: [&str; 32] = [
+pub const CHARACTER_NAMES: [&str; 32] = [
     "Moad Velazquez",
     "Kian-James Acevedo",
     "Brizzy Warspeeder",
