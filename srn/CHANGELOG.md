@@ -1,3 +1,12 @@
+# Version 0.3.3
+## New
+* Planet outlines on the minimap for the better visibility.
+
+## Fixes
+* Dockerization, restarts in case of a crash.
+* Reconnection issues fixed.
+* Client CPU leaks fixed.
+
 # Version 0.3.2
 ## New
 * Asteroid belts!
