@@ -36,16 +36,22 @@ let doBuildServer = async () => {
     await fs.remove(`server/target/x86_64-unknown-linux-musl`);
 
     console.log('building the binary...');
+    await spawnWatched(`docker rm -f rust-builder || true`);
     await spawnWatched(
       `cd server && \
-          docker run --rm -it -v "$(pwd)":/home/rust/src \
+          docker run --name="rust-builder" -it -v "$(pwd)":/home/rust/src \
           -v cargo-git:/home/rust/.cargo/git \
           -v cargo-registry:/home/rust/.cargo/registry \
           -v target:/home/rust/src/target \
           ekidd/rust-musl-builder \
-          sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target && \
-          cargo build --release`
+          /bin/bash -c "sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target; cargo build --release;"\
+          `
     );
+    await fs.mkdirp('server/target/x86_64-unknown-linux-musl/release');
+    await spawnWatched(
+      `docker cp rust-builder:/home/rust/src/target/x86_64-unknown-linux-musl/release/ ./server/target/x86_64-unknown-linux-musl/`
+    );
+    await spawnWatched(`docker rm -f rust-builder > dev/null || true`);
 
     console.log('packing into docker...');
     const { fullImageName, builtImagePath } = makePaths(version, gitVersion);

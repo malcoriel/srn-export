@@ -56,12 +56,12 @@ mod dialogue_test;
 mod events;
 mod planet_movement;
 mod random_stuff;
+mod system_gen;
 #[allow(dead_code)]
 mod vec2;
 mod vec2_test;
 mod world;
 mod world_test;
-mod system_gen;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TagConfirm {
