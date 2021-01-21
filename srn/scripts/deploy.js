@@ -51,7 +51,7 @@ let doBuildServer = async () => {
     await spawnWatched(
       `docker cp rust-builder:/home/rust/src/target/x86_64-unknown-linux-musl/release/ ./server/target/x86_64-unknown-linux-musl/`
     );
-    await spawnWatched(`docker rm -f rust-builder > dev/null || true`);
+    await spawnWatched(`docker rm -f rust-builder > /dev/null || true`);
 
     console.log('packing into docker...');
     const { fullImageName, builtImagePath } = makePaths(version, gitVersion);
@@ -103,11 +103,9 @@ let doRemoteImportServer = async () => {
 
     console.log('importing and re-tagging the image...');
     let sshBase = `ssh -p ${sshPort} ${sshHost}`;
+    await spawnWatched(`${sshBase} docker load -i ${remoteImagePath}`);
     await spawnWatched(
-      `${sshBase} docker import ${remoteImagePath} ${fullImageName}`
-    );
-    await spawnWatched(
-      `${sshBase} docker tag ${fullImageName} ${latestImageName}`
+      `${sshBase} docker tag ${latestImageName} ${fullImageName} `
     );
   } catch (e) {
     console.error(e);
@@ -124,9 +122,9 @@ let doRemoteRestartServer = async () => {
 
     let sshBase = `ssh -p ${sshPort} ${sshHost}`;
     // kill existing image
-    await spawnWatched(`${sshBase} docker kill ${containerName} || true`);
+    await spawnWatched(`${sshBase} docker rm -f ${containerName} || true`);
     await spawnWatched(
-      `${sshBase} docker run -P --restart=always --name=${containerName} ${latestImageName}`
+      `${sshBase} docker run -d -p 2794:2794 -p 8000:8000 --restart=always --name=${containerName} ${latestImageName}`
     );
   } catch (e) {
     console.error(e);

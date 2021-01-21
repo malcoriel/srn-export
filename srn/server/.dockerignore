@@ -1,2 +1,4 @@
 target/debug
 docker-image
+target/x86_64-unknown-linux-musl/release/build
+target/x86_64-unknown-linux-musl/release/deps
