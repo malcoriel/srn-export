@@ -145,6 +145,7 @@ export default class NetState extends EventEmitter {
     this.state = {
       planets: [],
       players: [],
+      minerals: [],
       asteroids: [],
       asteroid_belts: [],
       ships: [],

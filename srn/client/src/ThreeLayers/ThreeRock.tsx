@@ -2,12 +2,12 @@ import React, { useRef } from 'react';
 import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
 import { Mesh } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-const model_fix_coeff = 1 / 40;
 
-type VectorArr = [number, number, number];
-export const ThreeRock: React.FC<MeshProps & { scale: VectorArr }> = (
-  props
-) => {
+const model_fix_coeff = 1 / 5;
+
+export const ThreeRock: React.FC<
+  MeshProps & { radius: number; color: string }
+> = (props) => {
   const container = useRef<Mesh>();
   const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/asteroid.glb');
   const rockMesh = gltf.scene.children[2] as Mesh;
@@ -19,17 +19,20 @@ export const ThreeRock: React.FC<MeshProps & { scale: VectorArr }> = (
     }
   });
 
+  // @ts-ignore
+  // rockMesh.material.color = props.color;
   return (
     <mesh
       ref={container}
       position={props.position}
-      scale={
-        props.scale
-          ? (props.scale.map((s: number) => s * model_fix_coeff) as VectorArr)
-          : [model_fix_coeff, model_fix_coeff, model_fix_coeff]
-      }
+      scale={[
+        props.radius * model_fix_coeff,
+        props.radius * model_fix_coeff,
+        props.radius * model_fix_coeff,
+      ]}
       geometry={rockMesh.geometry}
-      material={rockMesh.material}
-    />
+    >
+      <meshBasicMaterial color={props.color} />
+    </mesh>
   );
 };

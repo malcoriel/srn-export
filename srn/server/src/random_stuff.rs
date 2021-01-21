@@ -224,3 +224,16 @@ pub fn gen_random_photo_id() -> i32 {
     let mut rng: ThreadRng = rand::thread_rng();
     return rng.gen_range(1, 10);
 }
+
+// radius, value, color
+pub fn gen_mineral_props() -> (f64, u32, String) {
+    let mut rng: ThreadRng = rand::thread_rng();
+    let chance = rng.gen_range(0.0, 1.0);
+    return if chance < 0.5 {
+        (2.0, 100, "#b87333".to_string())
+    } else if chance < 0.85 {
+        (1.5, 200, "#c0c0c0".to_string())
+    } else {
+        (1.0, 300, "#ffd700".to_string())
+    };
+}

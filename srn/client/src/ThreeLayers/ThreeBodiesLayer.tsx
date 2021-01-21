@@ -1,16 +1,16 @@
 import React from 'react';
-import { Asteroid, GameState, ShipAction, ShipActionType } from '../world';
+import { GameState, ShipAction, ShipActionType } from '../world';
 import _ from 'lodash';
 import { ThreeStar } from './ThreeStar';
-import { posToThreePos, threeVectorToVector } from './ThreeLayer';
+import { posToThreePos } from './ThreeLayer';
 import { ThreePlanetShape } from './ThreePlanetShape';
 import { MouseEvent } from 'react-three-fiber';
 import { actionsActive } from '../utils/ShipControls';
-import { ThreeRock } from './ThreeRock';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
+import { ThreeRock } from './ThreeRock';
 
 export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
-  const { planets, star, asteroids, asteroid_belts } = state;
+  const { planets, star, asteroids, minerals, asteroid_belts } = state;
   return (
     <group>
       {planets.map((p) => (
@@ -44,6 +44,14 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
           rotation={[0, 0, b.rotation]}
           gid={b.id}
           scale_mod={b.scale_mod}
+        />
+      ))}
+      {minerals.map((m) => (
+        <ThreeRock
+          key={m.id}
+          radius={m.radius}
+          position={posToThreePos(m.x, m.y)}
+          color={m.color}
         />
       ))}
       {/*{asteroids.map((a: Asteroid) => (*/}

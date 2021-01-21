@@ -137,12 +137,18 @@ export type AsteroidBelt = GameObject & {
 };
 export type Asteroid = GameObject & {};
 
+export type NatSpawnMineral = GameObject &
+  WithColor & {
+    value: number;
+  };
+
 export type GameState = {
   tag: string;
   leaderboard?: Leaderboard;
   planets: Planet[];
   ships: Ship[];
   players: Player[];
+  minerals: NatSpawnMineral[];
   asteroids: Asteroid[];
   asteroid_belts: AsteroidBelt[];
   // technically bigint but serialization doesn't know yet

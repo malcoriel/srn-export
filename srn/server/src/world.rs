@@ -15,9 +15,10 @@ use crate::dialogue::{
 };
 use crate::planet_movement::{index_bodies_by_id, make_bodies_from_planets, IBody};
 use crate::random_stuff::{
-    gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_planet_count, gen_planet_gap,
-    gen_planet_name, gen_planet_orbit_speed, gen_planet_radius, gen_random_photo_id, gen_sat_count,
-    gen_sat_gap, gen_sat_name, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius,
+    gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
+    gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
+    gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
+    gen_sat_radius, gen_star_name, gen_star_radius,
 };
 use crate::system_gen::system_gen;
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
@@ -334,6 +335,16 @@ pub struct Leaderboard {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NatSpawnMineral {
+    pub x: f64,
+    pub y: f64,
+    pub id: Uuid,
+    pub radius: f64,
+    pub value: u32,
+    pub color: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState {
     pub tag: Option<String>,
     pub my_id: Uuid,
@@ -341,6 +352,7 @@ pub struct GameState {
     pub star: Option<Star>,
     pub planets: Vec<Planet>,
     pub asteroids: Vec<Asteroid>,
+    pub minerals: Vec<NatSpawnMineral>,
     pub asteroid_belts: Vec<AsteroidBelt>,
     pub ships: Vec<Ship>,
     pub players: Vec<Player>,
@@ -593,12 +605,60 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
                     elapsed,
                     state.ticks,
                 );
+                state.minerals = update_state_minerals(&state.minerals, &state.asteroid_belts);
 
                 respawn_dead_ships(&mut state, elapsed)
             }
         }
     }
     state
+}
+
+const MAX_NAT_SPAWN_MINERALS: u32 = 10;
+
+fn update_state_minerals(
+    existing: &Vec<NatSpawnMineral>,
+    belts: &Vec<AsteroidBelt>,
+) -> Vec<NatSpawnMineral> {
+    let mut res = existing.clone();
+    if belts.len() > 0 {
+        loop {
+            if res.len() as u32 >= MAX_NAT_SPAWN_MINERALS {
+                break;
+            }
+            res.push(seed_mineral(belts));
+        }
+    }
+    res
+}
+
+fn seed_mineral(belts: &Vec<AsteroidBelt>) -> NatSpawnMineral {
+    let mut rng = thread_rng();
+
+    let picked = rng.gen_range(0, belts.len());
+    let belt = &belts[picked];
+    let pos_in_belt = gen_pos_in_belt(belt);
+    let mineral_props = gen_mineral_props();
+    NatSpawnMineral {
+        x: pos_in_belt.x,
+        y: pos_in_belt.y,
+        id: new_id(),
+        radius: mineral_props.0,
+        value: mineral_props.1,
+        color: mineral_props.2,
+    }
+}
+
+fn gen_pos_in_belt(belt: &AsteroidBelt) -> Vec2f64 {
+    let mut rng = thread_rng();
+    let range = rng.gen_range(
+        belt.radius - belt.width / 2.0,
+        belt.radius + belt.width / 2.0,
+    );
+    let angle_rad = rng.gen_range(0.0, PI * 2.0);
+    let x = angle_rad.cos() * range;
+    let y = angle_rad.sin() * range;
+    Vec2f64 { x, y }
 }
 
 fn respawn_dead_ships(mut state: &mut GameState, elapsed: i64) {

@@ -180,7 +180,7 @@ let doRemoteRestartClient = async () => {
     let sshBase = `ssh -p ${sshPort} ${sshHost}`;
     // kill existing image
     await spawnWatched(
-      `${sshBase} docker rm -f ${serverContainerName} || true`
+      `${sshBase} docker rm -f ${clientContainerName} || true`
     );
     await spawnWatched(
       `${sshBase} docker run -d -p 3000:3000 --restart=always --name=${clientContainerName} ${latestClientImageName}`

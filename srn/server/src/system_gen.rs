@@ -203,6 +203,7 @@ pub fn system_gen(_seed: String) -> GameState {
         leaderboard: None,
         start_time_ticks: now,
         asteroid_belts,
+        minerals: vec![],
     };
     state
 }
