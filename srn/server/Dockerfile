@@ -1,10 +1,10 @@
-FROM liuchong/rustup:stable
-RUN apt-get update && apt-get install coz-profiler -y
-RUN apt-get install valgrind -y
-RUN apt-get install python3 graphviz -y
-RUN cargo install cargo-profiler
+FROM alpine
 WORKDIR /root
-COPY . .
+COPY resources resources
+COPY Cargo.toml Cargo.toml
+COPY Rocket.toml Rocket.toml
+COPY src src
+COPY target/x86_64-unknown-linux-musl target/x86_64-unknown-linux-musl
 EXPOSE 2794
 EXPOSE 8000
-CMD /bin/bash
+CMD ["./target/x86_64-unknown-linux-musl/release/srn-server"]

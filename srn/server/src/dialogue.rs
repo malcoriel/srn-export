@@ -684,7 +684,8 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
 }
 
 pub fn read_from_resource(file: &str) -> DialogueScript {
-    let json = fs::read_to_string(format!("src/dialogue_scripts/{}.json", file))
+    panic!("cwd is {:?}", std::env::current_dir().ok().unwrap());
+    let json = fs::read_to_string(format!("resources/dialogue_scripts/{}.json", file))
         .expect("script not found");
     let ss = serde_json::from_str::<ShortScript>(json.as_str()).unwrap();
     short_decrypt(ss)
