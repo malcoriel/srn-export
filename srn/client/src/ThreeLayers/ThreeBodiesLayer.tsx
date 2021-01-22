@@ -48,6 +48,7 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
       ))}
       {minerals.map((m) => (
         <ThreeRock
+          gid={m.id}
           key={m.id}
           radius={m.radius}
           position={posToThreePos(m.x, m.y)}

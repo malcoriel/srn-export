@@ -1,5 +1,4 @@
 import Vector, { IVector } from './utils/Vector';
-import { findMyShip } from './NetState';
 
 export const size = {
   width_px: window.innerWidth,
@@ -67,6 +66,7 @@ export type Ship = GameObject &
     docked_at?: string;
     navigate_target?: IVector;
     dock_target?: string;
+    tractor_target?: string;
     trajectory: IVector[];
     hp: number;
     max_hp: number;
@@ -182,6 +182,7 @@ export enum ShipActionType {
   Dock = 'Dock',
   Navigate = 'Navigate',
   DockNavigate = 'DockNavigate',
+  Tractor = 'Tractor',
 }
 
 export enum Direction {
@@ -205,6 +206,8 @@ export class ShipAction {
     new ShipAction(ShipActionType.Navigate, to);
   public static DockNavigate = (to: string) =>
     new ShipAction(ShipActionType.DockNavigate, to);
+  public static Tractor = (obj_id: string) =>
+    new ShipAction(ShipActionType.Tractor, obj_id);
   public serialize(): string {
     return JSON.stringify({
       s_type: this.s_type,
@@ -223,6 +226,10 @@ const directionToRotation = {
   [Direction.DownLeft]: -Math.PI * 0.75,
   [Direction.Down]: Math.PI,
   [Direction.DownRight]: Math.PI * 0.75,
+};
+
+export const findMineral = (state: GameState, min_id: string) => {
+  return state.minerals.find((m) => m.id === min_id);
 };
 
 export const applyShipAction = (
@@ -303,6 +310,10 @@ export const applyShipAction = (
       myShip.trajectory = [];
       let navigate_target = sa.data as IVector;
       myShip.navigate_target = { x: navigate_target.x, y: navigate_target.y };
+      break;
+    }
+    case ShipActionType.Tractor: {
+      myShip.tractor_target = sa.data as string;
       break;
     }
     case ShipActionType.DockNavigate: {

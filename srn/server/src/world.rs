@@ -50,6 +50,7 @@ pub enum ShipActionRust {
     Dock,
     Navigate(Vec2f64),
     DockNavigate(Uuid),
+    Tractor(Uuid),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -59,6 +60,7 @@ pub enum ShipActionType {
     Dock = 2,
     Navigate = 3,
     DockNavigate = 4,
+    Tractor = 5,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -282,6 +284,7 @@ pub struct Ship {
     pub radius: f64,
     pub color: String,
     pub docked_at: Option<Uuid>,
+    pub tractor_target: Option<Uuid>,
     pub navigate_target: Option<Vec2f64>,
     pub dock_target: Option<Uuid>,
     pub trajectory: Vec<Vec2f64>,
@@ -824,6 +827,7 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
         rotation: 0.0,
         radius: 1.0,
         docked_at: None,
+        tractor_target: None,
         navigate_target: None,
         dock_target: None,
         trajectory: vec![],
@@ -1030,6 +1034,10 @@ pub fn find_my_ship(state: &GameState, player_id: Uuid) -> Option<&Ship> {
     return None;
 }
 
+pub fn find_mineral(state: &GameState, min_id: Uuid) -> Option<&NatSpawnMineral> {
+    return state.minerals.iter().find(|mineral| mineral.id == min_id);
+}
+
 pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<usize> {
     let player = find_my_player(state, player_id);
     if let Some(player) = player {
@@ -1086,6 +1094,9 @@ fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
         ShipActionType::DockNavigate => serde_json::from_str::<Uuid>(action_raw.data.as_str())
             .ok()
             .map_or(ShipActionRust::Unknown, |v| ShipActionRust::DockNavigate(v)),
+        ShipActionType::Tractor => serde_json::from_str::<Uuid>(action_raw.data.as_str())
+            .ok()
+            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Tractor(v)),
     }
 }
 
@@ -1192,6 +1203,15 @@ pub fn apply_ship_action(
                 ship.docked_at = None;
                 ship.dock_target = Some(t);
                 ship.trajectory = build_trajectory_to_point(ship_pos, &planet_pos);
+                Some(ship)
+            } else {
+                None
+            }
+        }
+        ShipActionRust::Tractor(t) => {
+            let mut ship = old_ship.clone();
+            if let Some(_mineral) = find_mineral(state, t) {
+                ship.tractor_target = Some(t);
                 Some(ship)
             } else {
                 None

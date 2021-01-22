@@ -12,7 +12,7 @@ import {
 } from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState, { useNSForceChange } from '../NetState';
-import Vector from '../utils/Vector';
+import Vector, { IVector } from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
 import { BackgroundPlane } from './BackgroundPlane';
 import { useShowCoordinates } from '../KonvaLayers/CoordLayer';
@@ -26,6 +26,8 @@ export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
   -y,
   z || 0,
 ];
+
+export const vecToThreePos = (v: IVector): Vector3Arr => [v.x, -v.y, 0];
 
 export const threePosToVector = (x: number, y: number, _z: number): Vector =>
   new Vector(x, -y);

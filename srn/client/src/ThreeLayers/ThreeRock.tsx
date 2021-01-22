@@ -2,11 +2,13 @@ import React, { useRef } from 'react';
 import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
 import { Mesh } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { ShipAction, ShipActionType } from '../world';
+import { actionsActive } from '../utils/ShipControls';
 
 const model_fix_coeff = 1 / 5;
 
 export const ThreeRock: React.FC<
-  MeshProps & { radius: number; color: string }
+  MeshProps & { radius: number; color: string; gid: string }
 > = (props) => {
   const container = useRef<Mesh>();
   const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/asteroid.glb');
@@ -24,6 +26,10 @@ export const ThreeRock: React.FC<
   return (
     <mesh
       ref={container}
+      onClick={(ev: any) => {
+        actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(props.gid);
+        ev.stopPropagation();
+      }}
       position={props.position}
       scale={[
         props.radius * model_fix_coeff,
