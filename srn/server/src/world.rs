@@ -353,7 +353,7 @@ pub struct NatSpawnMineral {
     pub y: f64,
     pub id: Uuid,
     pub radius: f64,
-    pub value: u32,
+    pub value: i32,
     pub color: String,
 }
 
@@ -611,7 +611,14 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
                 elapsed,
             );
             state.ships = update_ships_tractoring(&state.ships, &state.minerals);
-            state.minerals = update_tractored_minerals(&state.ships, &state.minerals, elapsed);
+            let (minerals, players_update) =
+                update_tractored_minerals(&state.ships, &state.minerals, elapsed, &state.players);
+            state.minerals = minerals;
+            for pup in players_update {
+                if let Some(p) = find_my_player_mut(&mut state, pup.0) {
+                    p.money += pup.1;
+                }
+            }
 
             if !client {
                 state.ships = update_ship_hp_effects(
@@ -644,33 +651,48 @@ fn update_ships_tractoring(ships: &Vec<Ship>, minerals: &Vec<NatSpawnMineral>) -
 }
 
 const TRACTOR_SPEED_PER_SEC: f64 = 2.5;
+const TRACTOR_PICKUP_DIST: f64 = 1.0;
 
 fn update_tractored_minerals(
     ships: &Vec<Ship>,
     minerals: &Vec<NatSpawnMineral>,
     elapsed: i64,
-) -> Vec<NatSpawnMineral> {
+    players: &Vec<Player>,
+) -> (Vec<NatSpawnMineral>, Vec<(PlayerId, i32)>) {
     let ship_by_tractor = index_ships_by_tractor_target(ships);
-    minerals
+    let players_by_ship_id = index_players_by_ship_id(players);
+    let mut players_update = vec![];
+    let minerals = minerals
         .iter()
         .map(|m| {
             let mut m = m.clone();
-            if let Some(ship) = ship_by_tractor.get(&m.id) {
+            return if let Some(ship) = ship_by_tractor.get(&m.id) {
                 let min_pos = Vec2f64 { x: m.x, y: m.y };
                 let dir = Vec2f64 {
                     x: ship.x,
                     y: ship.y,
                 }
                 .subtract(&min_pos);
-                let scaled =
-                    dir.scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
-                let new_pos = min_pos.add(&scaled);
-                m.x = new_pos.x;
-                m.y = new_pos.y;
-            }
-            m
+                if dir.euclidean_len() < TRACTOR_PICKUP_DIST {
+                    if let Some(p) = players_by_ship_id.get(&ship.id) {
+                        players_update.push((p.id, m.value))
+                    }
+                    None
+                } else {
+                    let scaled =
+                        dir.scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
+                    let new_pos = min_pos.add(&scaled);
+                    m.x = new_pos.x;
+                    m.y = new_pos.y;
+                    Some(m)
+                }
+            } else {
+                Some(m)
+            };
         })
-        .collect::<Vec<_>>()
+        .filter_map(|m| m)
+        .collect::<Vec<_>>();
+    (minerals, players_update)
 }
 
 const MAX_NAT_SPAWN_MINERALS: u32 = 10;

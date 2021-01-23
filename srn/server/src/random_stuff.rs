@@ -226,7 +226,7 @@ pub fn gen_random_photo_id() -> i32 {
 }
 
 // radius, value, color
-pub fn gen_mineral_props() -> (f64, u32, String) {
+pub fn gen_mineral_props() -> (f64, i32, String) {
     let mut rng: ThreadRng = rand::thread_rng();
     let chance = rng.gen_range(0.0, 1.0);
     return if chance < 0.5 {
