@@ -55,12 +55,14 @@ export const actionsActive: Record<string, ShipAction | undefined> = {
   [ShipActionType.Dock]: undefined,
   [ShipActionType.Navigate]: undefined,
   [ShipActionType.DockNavigate]: undefined,
+  [ShipActionType.Tractor]: undefined,
 };
 
 const singleUseActions = [
   ShipActionType.Navigate,
   ShipActionType.DockNavigate,
   ShipActionType.Dock,
+  ShipActionType.Tractor,
 ];
 
 export const resetActions = () => {

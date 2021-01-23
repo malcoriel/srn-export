@@ -467,10 +467,12 @@ export default class NetState extends EventEmitter {
     let dockAction = actionsActive[ShipActionType.Dock];
     let navigateAction = actionsActive[ShipActionType.Navigate];
     let dockNavigateAction = actionsActive[ShipActionType.DockNavigate];
+    let tractorAction = actionsActive[ShipActionType.Tractor];
     const nonNullActions = [
       dockAction,
       navigateAction,
       dockNavigateAction,
+      tractorAction,
     ].filter((a) => !!a) as ShipAction[];
 
     for (let action of nonNullActions) {

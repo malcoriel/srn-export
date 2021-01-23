@@ -313,7 +313,15 @@ export const applyShipAction = (
       break;
     }
     case ShipActionType.Tractor: {
-      myShip.tractor_target = sa.data as string;
+      let mineralId = sa.data as string;
+      let mineral = findMineral(state, mineralId);
+      if (
+        mineral &&
+        Vector.fromIVector(myShip).euDistTo(Vector.fromIVector(mineral)) <= 30
+      ) {
+        myShip.tractor_target = mineralId;
+      }
+
       break;
     }
     case ShipActionType.DockNavigate: {

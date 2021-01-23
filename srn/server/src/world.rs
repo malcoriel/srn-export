@@ -134,6 +134,16 @@ fn index_ships_by_id(ships: &Vec<Ship>) -> HashMap<Uuid, &Ship> {
     by_id
 }
 
+fn index_ships_by_tractor_target(ships: &Vec<Ship>) -> HashMap<Uuid, &Ship> {
+    let mut by_target = HashMap::new();
+    for p in ships.iter() {
+        if let Some(tt) = p.tractor_target {
+            by_target.entry(tt).or_insert(p);
+        }
+    }
+    by_target
+}
+
 fn index_players_by_ship_id(players: &Vec<Player>) -> HashMap<Uuid, &Player> {
     let mut by_id = HashMap::new();
     for p in players.iter() {
@@ -600,6 +610,9 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
                 &state.star,
                 elapsed,
             );
+            state.ships = update_ships_tractoring(&state.ships, &state.minerals);
+            state.minerals = update_tractored_minerals(&state.ships, &state.minerals, elapsed);
+
             if !client {
                 state.ships = update_ship_hp_effects(
                     &state.star,
@@ -615,6 +628,49 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
         }
     }
     state
+}
+
+fn update_ships_tractoring(ships: &Vec<Ship>, minerals: &Vec<NatSpawnMineral>) -> Vec<Ship> {
+    ships
+        .iter()
+        .map(|s| {
+            let mut s = s.clone();
+            if let Some(target) = s.tractor_target {
+                update_ship_tractor(target, &mut s, minerals);
+            }
+            s
+        })
+        .collect::<Vec<_>>()
+}
+
+const TRACTOR_SPEED_PER_SEC: f64 = 2.5;
+
+fn update_tractored_minerals(
+    ships: &Vec<Ship>,
+    minerals: &Vec<NatSpawnMineral>,
+    elapsed: i64,
+) -> Vec<NatSpawnMineral> {
+    let ship_by_tractor = index_ships_by_tractor_target(ships);
+    minerals
+        .iter()
+        .map(|m| {
+            let mut m = m.clone();
+            if let Some(ship) = ship_by_tractor.get(&m.id) {
+                let min_pos = Vec2f64 { x: m.x, y: m.y };
+                let dir = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                }
+                .subtract(&min_pos);
+                let scaled =
+                    dir.scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
+                let new_pos = min_pos.add(&scaled);
+                m.x = new_pos.x;
+                m.y = new_pos.y;
+            }
+            m
+        })
+        .collect::<Vec<_>>()
 }
 
 const MAX_NAT_SPAWN_MINERALS: u32 = 10;
@@ -1038,6 +1094,10 @@ pub fn find_mineral(state: &GameState, min_id: Uuid) -> Option<&NatSpawnMineral>
     return state.minerals.iter().find(|mineral| mineral.id == min_id);
 }
 
+pub fn find_mineral_m(minerals: &Vec<NatSpawnMineral>, min_id: Uuid) -> Option<&NatSpawnMineral> {
+    return minerals.iter().find(|mineral| mineral.id == min_id);
+}
+
 pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<usize> {
     let player = find_my_player(state, player_id);
     if let Some(player) = player {
@@ -1099,6 +1159,8 @@ fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
             .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Tractor(v)),
     }
 }
+
+const MAX_TRACTOR_DIST: f64 = 30.0;
 
 pub fn apply_ship_action(
     ship_action: ShipAction,
@@ -1210,13 +1272,29 @@ pub fn apply_ship_action(
         }
         ShipActionRust::Tractor(t) => {
             let mut ship = old_ship.clone();
-            if let Some(_mineral) = find_mineral(state, t) {
-                ship.tractor_target = Some(t);
-                Some(ship)
-            } else {
-                None
-            }
+            update_ship_tractor(t, &mut ship, &state.minerals);
+            Some(ship)
         }
+    }
+}
+
+fn update_ship_tractor(t: Uuid, ship: &mut Ship, vec1: &Vec<NatSpawnMineral>) {
+    if let Some(mineral) = find_mineral_m(&vec1, t) {
+        let dist = Vec2f64 {
+            x: ship.x,
+            y: ship.y,
+        }
+        .euclidean_distance(&Vec2f64 {
+            x: mineral.x,
+            y: mineral.y,
+        });
+        if dist <= MAX_TRACTOR_DIST {
+            ship.tractor_target = Some(t);
+        } else {
+            ship.tractor_target = None;
+        }
+    } else {
+        ship.tractor_target = None;
     }
 }
 
