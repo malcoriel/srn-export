@@ -3,8 +3,8 @@ import { useFrame, useLoader } from 'react-three-fiber';
 import { Mesh, Geometry, ShaderMaterial } from 'three';
 import * as THREE from 'three';
 import Vector, { VectorF } from '../utils/Vector';
-import { posToThreePos, vecToThreePos } from './ThreeLayer';
-import * as electric from './shaders/electric';
+import { posToThreePos, Vector3Arr, vecToThreePos } from './ThreeLayer';
+import * as jellyfish from './shaders/jellyfish';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -14,6 +14,8 @@ type ThreeShipProps = {
   color: string;
   rotation: number;
 };
+
+const BEAM_WIDTH = 0.3;
 
 export const ThreeShip: React.FC<ThreeShipProps> = ({
   tractorTargetPosition,
@@ -34,14 +36,23 @@ export const ThreeShip: React.FC<ThreeShipProps> = ({
       length: vector.length(),
       rotation: vector.x < 0 ? angle : -angle,
       position: vecToThreePos(vector.scale(0.5)),
+      patchedUniforms: {
+        ...jellyfish.uniforms,
+      },
     };
   }, [tractorTargetPosition, position]);
+
+  // const tractorBeamParams = {
+  //   length: 10,
+  //   rotation: 0,
+  //   position: [5, 5, 0] as Vector3Arr,
+  // };
 
   useFrame(() => {
     if (tractorRef.current) {
       let material = tractorRef.current.material as ShaderMaterial;
       if (material && material.uniforms) {
-        material.uniforms.time.value += 0.002;
+        material.uniforms.time.value += 0.004;
       }
     }
   });
@@ -57,15 +68,20 @@ export const ThreeShip: React.FC<ThreeShipProps> = ({
       >
         <meshBasicMaterial color={color} />
       </mesh>
-      {true && (
+      {tractorBeamParams && (
         <mesh
           ref={tractorRef}
-          position={[0, 0, 20]}
-          // position={tractorBeamParams.position}
-          // rotation={[0, 0, -tractorBeamParams.rotation]}
+          position={tractorBeamParams.position}
+          rotation={[0, 0, -tractorBeamParams.rotation]}
         >
-          <cylinderBufferGeometry args={[3, 3, 20, 4]} />
-          <rawShaderMaterial transparent={true} {...electric} />
+          <cylinderBufferGeometry
+            args={[BEAM_WIDTH, BEAM_WIDTH, tractorBeamParams.length, 4]}
+          />
+          <rawShaderMaterial
+            transparent={true}
+            {...jellyfish}
+            // uniforms={tractorBeamParams.patchedUniforms}
+          />
         </mesh>
       )}
     </group>

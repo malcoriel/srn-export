@@ -1,3 +1,12 @@
+import Color from 'color';
+
+type Color3Arr = [number, number, number];
+export const normalize3 = (c: string): Color3Arr => {
+  return new Color(c)
+    .rgb()
+    .array()
+    .map((v) => v / 255) as Color3Arr;
+};
 export const babyBlue = '#7ec8e3';
 export const blue = '#0000ff';
 export const navyBlue = '#000c66';
