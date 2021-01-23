@@ -134,11 +134,12 @@ fn index_ships_by_id(ships: &Vec<Ship>) -> HashMap<Uuid, &Ship> {
     by_id
 }
 
-fn index_ships_by_tractor_target(ships: &Vec<Ship>) -> HashMap<Uuid, &Ship> {
+fn index_ships_by_tractor_target(ships: &Vec<Ship>) -> HashMap<Uuid, Vec<&Ship>> {
     let mut by_target = HashMap::new();
     for p in ships.iter() {
         if let Some(tt) = p.tractor_target {
-            by_target.entry(tt).or_insert(p);
+            let entry = by_target.entry(tt).or_insert(vec![]);
+            entry.push(p);
         }
     }
     by_target
@@ -650,7 +651,7 @@ fn update_ships_tractoring(ships: &Vec<Ship>, minerals: &Vec<NatSpawnMineral>) -
         .collect::<Vec<_>>()
 }
 
-const TRACTOR_SPEED_PER_SEC: f64 = 2.5;
+const TRACTOR_SPEED_PER_SEC: f64 = 10.0;
 const TRACTOR_PICKUP_DIST: f64 = 1.0;
 
 fn update_tractored_minerals(
@@ -666,24 +667,31 @@ fn update_tractored_minerals(
         .iter()
         .map(|m| {
             let mut m = m.clone();
-            return if let Some(ship) = ship_by_tractor.get(&m.id) {
+            return if let Some(ships) = ship_by_tractor.get(&m.id) {
                 let min_pos = Vec2f64 { x: m.x, y: m.y };
-                let dir = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                }
-                .subtract(&min_pos);
-                if dir.euclidean_len() < TRACTOR_PICKUP_DIST {
-                    if let Some(p) = players_by_ship_id.get(&ship.id) {
-                        players_update.push((p.id, m.value))
+                let mut is_consumed = false;
+                for ship in ships {
+                    let dist = Vec2f64 {
+                        x: ship.x,
+                        y: ship.y,
                     }
+                    .subtract(&min_pos);
+                    let dir = dist.normalize();
+                    if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
+                        if let Some(p) = players_by_ship_id.get(&ship.id) {
+                            players_update.push((p.id, m.value))
+                        }
+                        is_consumed = true;
+                    } else {
+                        let scaled = dir
+                            .scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
+                        m.x += scaled.x;
+                        m.y += scaled.y;
+                    }
+                }
+                if is_consumed {
                     None
                 } else {
-                    let scaled =
-                        dir.scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
-                    let new_pos = min_pos.add(&scaled);
-                    m.x = new_pos.x;
-                    m.y = new_pos.y;
                     Some(m)
                 }
             } else {
