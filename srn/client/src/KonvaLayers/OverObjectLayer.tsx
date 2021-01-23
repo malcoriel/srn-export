@@ -1,5 +1,12 @@
 import React from 'react';
-import { antiScale, GameState, scaleConfig } from '../world';
+import {
+  antiScale,
+  GameState,
+  height_units,
+  scaleConfig,
+  unitsToPixels_min,
+  width_units,
+} from '../world';
 import NetState, { useNSForceChange } from '../NetState';
 import { Layer, Text } from 'react-konva';
 import Vector, { IVector, VectorF } from '../utils/Vector';
@@ -7,7 +14,7 @@ import _ from 'lodash';
 import { babyBlue, crimson, darkGreen } from '../utils/palette';
 import Prando from 'prando';
 
-const calcShiftPos = (cameraPosition: IVector, zoomProp: number) => {
+export const calcShiftPos = (cameraPosition: IVector, zoomProp: number) => {
   const cameraShift = Vector.fromIVector(cameraPosition);
   return (objPos: IVector, offsetY = 0) => {
     const pos = Vector.fromIVector(objPos);
@@ -15,6 +22,21 @@ const calcShiftPos = (cameraPosition: IVector, zoomProp: number) => {
       .subtract(cameraShift)
       .add(VectorF(0, offsetY))
       .scale(1 / zoomProp);
+  };
+};
+
+export const halfWidthHeight = new Vector(width_units / 2, height_units / 2);
+
+export const calcScreenPosToRealPos = (
+  cameraPosition: IVector,
+  zoomProp: number
+) => {
+  const cameraShift = Vector.fromIVector(cameraPosition);
+  return (screenPos: IVector, offsetY = 0) => {
+    return Vector.fromIVector(screenPos)
+      .subtract(halfWidthHeight)
+      .add(cameraShift.scale(unitsToPixels_min()))
+      .subtract(VectorF(0, offsetY));
   };
 };
 

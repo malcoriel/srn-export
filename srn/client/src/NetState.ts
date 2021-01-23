@@ -60,6 +60,7 @@ export const findMyShip = (state: GameState): Ship | null => {
 
 export type VisualState = {
   boundCameraMovement: boolean;
+  // real coordinates of the camera in the world
   cameraPosition: {
     x: number;
     y: number;
