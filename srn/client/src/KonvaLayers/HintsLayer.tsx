@@ -2,13 +2,10 @@ import NetState, { useNSForceChange } from '../NetState';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Circle, Layer } from 'react-konva';
 import Vector, { IVector, VectorF } from '../utils/Vector';
-import {
-  calcScreenPosToRealPos,
-  calcShiftPos,
-  halfWidthHeight,
-} from './OverObjectLayer';
+import { calcShiftPos, halfWidthHeight } from './OverObjectLayer';
 import { antiScale, NatSpawnMineral } from '../world';
 import Color from 'color';
+import { calcScreenPosToRealPos } from '../coord';
 
 const MINERAL_OUTLINE_BOOST = 10.0;
 let hintFillColor = new Color('pink').alpha(0.2).string();
