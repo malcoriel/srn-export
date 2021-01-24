@@ -308,7 +308,8 @@ export default class NetState extends EventEmitter {
         // 1. primarily work on planets - something that is adjusted deterministically
         this.updateLocalState(this.ping);
         const myUpdatedShip = findMyShip(this.state);
-        // // 2. fix my movement rollback by allowing update
+        // 2. fix my movement rollback by allowing update. However, too much desync
+        // is dangerous, so cap it.
         if (
           myOldShip &&
           myUpdatedShip &&
@@ -318,6 +319,10 @@ export default class NetState extends EventEmitter {
         ) {
           myUpdatedShip.x = myOldShip.x;
           myUpdatedShip.y = myOldShip.y;
+        }
+        // 3. Erase server-side trajectory to remove annoying small glitched view
+        if (myUpdatedShip && myOldShip) {
+          myUpdatedShip.trajectory = myOldShip.trajectory;
         }
 
         let toDrop = new Set();
