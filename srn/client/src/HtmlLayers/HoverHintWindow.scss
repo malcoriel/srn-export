@@ -1,0 +1,28 @@
+.hover-hint-window {
+  position: absolute;
+  z-index:100;
+  top: 100px;
+  color: white;
+  background-color: rgba(0,0,0, 0.8);
+  left: 100px;
+  font-size: 12px;
+  line-height: 14px;
+
+  .content {
+    .header {
+      font-size: 14px;
+    }
+    .rare {
+      font-weight: bold;
+      color: #ffd700;
+    }
+    .uncommon {
+      font-weight: bold;
+      color: #c0c0c0;
+    }
+    .common {
+      font-weight: bold;
+      color: #b87333;
+    }
+  }
+}

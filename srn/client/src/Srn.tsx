@@ -27,6 +27,7 @@ import { WindowContainers } from './HtmlLayers/WindowContainers';
 import shallow from 'zustand/shallow';
 import { OverheadPanel } from './HtmlLayers/OverheadPanel';
 import { TestUI } from './HtmlLayers/TestUI';
+import { HoverHintWindow } from './HtmlLayers/HoverHintWindow';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -162,6 +163,7 @@ const Srn = () => {
             <WindowContainers />
             <OverheadPanel />
             <HelpWindow />
+            <HoverHintWindow />
           </>
         )}
         {!playing && <TestUI />}
