@@ -63,6 +63,8 @@ export type SrnState = {
   leaderboardWindow: WindowState;
   setLeaderboardWindow: (val: WindowState) => void;
   toggleLeaderboardWindow: () => void;
+  hintedObjectId?: string;
+  setHintedObjectId: (val?: string) => void;
 };
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
@@ -101,6 +103,9 @@ export const useStore = create<SrnState>((set) => ({
   questWindow: WindowState.Minimized,
   helpWindow: WindowState.Hidden,
   leaderboardWindow: WindowState.Minimized,
+  hintedObjectId: undefined,
+
+  setHintedObjectId: (val?: string) => set({ hintedObjectId: val }),
 
   setPreferredName: (val: string) =>
     set(() => {

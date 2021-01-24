@@ -1,28 +1,27 @@
-import React from 'react';
+import Color from 'color';
+import React, { useMemo } from 'react';
 import {
+  findMineral,
   GameState,
   unitsToPixels_min,
   viewPortSizeMeters,
   viewPortSizePixels,
 } from '../world';
 import NetState, { useNSForceChange } from '../NetState';
-import { Layer, Text } from 'react-konva';
+import { Circle, Layer, Text } from 'react-konva';
 import Vector, { IVector } from '../utils/Vector';
 import _ from 'lodash';
 import { babyBlue, crimson, darkGreen } from '../utils/palette';
 import Prando from 'prando';
 import { calcRealPosToScreenPos } from '../coord';
+import { useStore } from '../store';
 
 function extractNamePositions(
   state: GameState,
-  cameraPosition: IVector
+  cameraPosition: IVector,
+  shiftPos: (inp: IVector) => IVector
 ): Array<[string, string, IVector, number]> {
   const res = [];
-  const shiftPos = calcRealPosToScreenPos(
-    cameraPosition,
-    viewPortSizeMeters(),
-    viewPortSizePixels()
-  );
   for (const planet of state.planets) {
     let planetProps: [string, string, IVector, number] = [
       planet.id,
@@ -80,14 +79,9 @@ const VIS_EFFECT_MOVE_SPEED = 0.05;
 const extractEffectsPositions = (
   state: GameState,
   cameraPosition: IVector,
-  zoomProp: number
+  shiftPos: (p: IVector) => IVector
 ): Array<VisualHpEffect> => {
   const res: VisualHpEffect[] = [];
-  const shiftPos = calcRealPosToScreenPos(
-    cameraPosition,
-    viewPortSizeMeters(),
-    viewPortSizePixels()
-  );
   const shipsById = _.keyBy(state.ships, 'id');
 
   for (const player of state.players) {
@@ -127,25 +121,52 @@ const extractEffectsPositions = (
   return res;
 };
 
-export const OverObjectLayer: React.FC = React.memo(() => {
+const hintColor = new Color('pink').alpha(0.5).string();
+export const KonvaOverlay: React.FC = React.memo(() => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange('OverObjectLayer', true);
+  useNSForceChange('KonvaOverlay', true);
+  const hintedObjectId = useStore((state) => state.hintedObjectId);
+  const hintedMineral = hintedObjectId
+    ? findMineral(ns.state, hintedObjectId)
+    : undefined;
 
   const { state, visualState } = ns;
-  let zoomProp = 1 / (visualState.zoomShift || 1.0);
 
-  const names = extractNamePositions(state, visualState.cameraPosition);
+  const shiftPos = useMemo(
+    () =>
+      calcRealPosToScreenPos(
+        visualState.cameraPosition,
+        viewPortSizeMeters(),
+        viewPortSizePixels()
+      ),
+    [visualState.cameraPosition, viewPortSizeMeters(), viewPortSizePixels()]
+  );
+
+  const names = extractNamePositions(
+    state,
+    visualState.cameraPosition,
+    shiftPos
+  );
 
   const effects = extractEffectsPositions(
     state,
     visualState.cameraPosition,
-    zoomProp
+    shiftPos
   );
 
   return (
     <Layer>
+      {hintedMineral && (
+        <Circle
+          position={shiftPos(hintedMineral)}
+          fill={hintColor}
+          stroke="red"
+          strokeWidth={1}
+          radius={hintedMineral.radius * unitsToPixels_min()}
+        />
+      )}
       {names.map(([id, name, position, offsetY]) => {
         let textWidth = 70;
         return (

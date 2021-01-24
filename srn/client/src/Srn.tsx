@@ -11,7 +11,7 @@ import { Measure, Perf, StatsPanel } from './HtmlLayers/Perf';
 import { StartMenu } from './HtmlLayers/StartMenu';
 import { LeaderboardWindow } from './HtmlLayers/LeaderboardWindow';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
-import { OverObjectLayer } from './KonvaLayers/OverObjectLayer';
+import { KonvaOverlay } from './KonvaLayers/KonvaOverlay';
 import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
 import { HelpWindow } from './HtmlLayers/HelpWindow';
 import './HtmlLayers/Panel.scss';
@@ -27,7 +27,6 @@ import { WindowContainers } from './HtmlLayers/WindowContainers';
 import shallow from 'zustand/shallow';
 import { OverheadPanel } from './HtmlLayers/OverheadPanel';
 import { TestUI } from './HtmlLayers/TestUI';
-import { HintsLayer } from './KonvaLayers/HintsLayer';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -143,8 +142,7 @@ const Srn = () => {
               height={size.height_px}
               style={{ pointerEvents: 'none' }}
             >
-              <OverObjectLayer />
-              <HintsLayer />
+              <KonvaOverlay />
               <MyTrajectoryLayer />
             </Stage>
             <ShipControls />
