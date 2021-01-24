@@ -51,18 +51,20 @@ export const MyTrajectoryLayer: React.FC = () => {
   useNSForceChange('MyTrajectoryLayer', true);
   const { state, visualState } = ns;
   const myShip = findMyShip(state);
-  let zoomProp = 1 / (visualState.zoomShift || 1.0);
 
   const { shiftPos } = useMemo(() => {
     const shiftPos = calcRealPosToScreenPos(
       visualState.cameraPosition,
       viewPortSizeMeters(),
-      viewPortSizePixels()
+      viewPortSizePixels(),
+      visualState.zoomShift
     );
     return { shiftPos };
-  }, [visualState.cameraPosition, zoomProp, size]);
+  }, [visualState.cameraPosition, visualState.zoomShift, size]);
 
   if (!myShip) return null;
+
+  const zoomProp = visualState.zoomShift || 1.0;
 
   let planetsById = _.keyBy(state.planets, 'id');
   let pointTarget = myShip.navigate_target;
@@ -104,12 +106,20 @@ export const MyTrajectoryLayer: React.FC = () => {
       )}
       {planetTarget && (
         <Rect
-          width={(planetTarget.radius * unitsToPixels_min() + wrapOffset) * 2}
-          height={(planetTarget.radius * unitsToPixels_min() + wrapOffset) * 2}
+          width={
+            (planetTarget.radius * unitsToPixels_min() * zoomProp +
+              wrapOffset) *
+            2
+          }
+          height={
+            (planetTarget.radius * unitsToPixels_min() * zoomProp +
+              wrapOffset) *
+            2
+          }
           position={shiftPos(planetTarget).subtract(
             new Vector(
-              planetTarget.radius * unitsToPixels_min() + wrapOffset,
-              planetTarget.radius * unitsToPixels_min() + wrapOffset
+              planetTarget.radius * unitsToPixels_min() * zoomProp + wrapOffset,
+              planetTarget.radius * unitsToPixels_min() * zoomProp + wrapOffset
             )
           )}
           stroke={babyBlue}
@@ -132,7 +142,7 @@ export const MyTrajectoryLayer: React.FC = () => {
           );
         })}
       {questTarget && (
-        <Circle position={shiftPos(questTarget)} radius={8} fill={yellow} />
+        <Circle position={shiftPos(questTarget)} radius={5} fill={yellow} />
       )}
     </Layer>
   );

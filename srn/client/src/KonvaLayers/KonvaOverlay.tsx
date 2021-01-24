@@ -122,7 +122,6 @@ const extractEffectsPositions = (
   return res;
 };
 
-const hintColor = new Color('pink').alpha(0.5).string();
 export const KonvaOverlay: React.FC = React.memo(() => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -141,9 +140,15 @@ export const KonvaOverlay: React.FC = React.memo(() => {
       calcRealPosToScreenPos(
         visualState.cameraPosition,
         viewPortSizeMeters(),
-        viewPortSizePixels()
+        viewPortSizePixels(),
+        visualState.zoomShift
       ),
-    [visualState.cameraPosition, viewPortSizeMeters(), viewPortSizePixels()]
+    [
+      visualState.cameraPosition,
+      viewPortSizeMeters(),
+      viewPortSizePixels(),
+      visualState.zoomShift,
+    ]
   );
 
   const names = extractNamePositions(

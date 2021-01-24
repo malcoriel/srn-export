@@ -58,7 +58,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = ({
   });
 
   return (
-    <group position={posToThreePos(position.x, position.y)}>
+    <group position={posToThreePos(position.x, position.y, 50)}>
       <mesh
         position={[0, 0, 0]}
         ref={tractorRef}
