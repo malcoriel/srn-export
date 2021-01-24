@@ -46,10 +46,11 @@ export const MinimapLayer = React.memo(() => {
   const { state, visualState } = ns;
   let { cameraPosition } = visualState;
 
-  const [cameraPos, setCameraPos] = useState(cameraPosition);
+  // a trick to force-sync component whenever the global camera changes,
+  // as otherwise the slow updates will not match the mouse updates
+  const [, setCameraPos] = useState(cameraPosition);
 
   const {
-    screenLenToRealLen,
     screenPosToRealPos,
     realLenToScreenLen,
     realPosToScreenPos,
@@ -195,6 +196,7 @@ export const MinimapLayer = React.memo(() => {
           <Arc
             key={b.id}
             angle={360}
+            onMouseDown={moveCamera}
             innerRadius={realLenToScreenLen(b.radius - b.width / 2)}
             outerRadius={realLenToScreenLen(b.radius + b.width / 2)}
             fill={dirtyGray}
@@ -229,7 +231,7 @@ export const MinimapLayer = React.memo(() => {
           draggable
           onDragMove={moveCamera}
           onDragEnd={moveCamera}
-          position={realPosToScreenPos(cameraPos).subtract(
+          position={realPosToScreenPos(cameraPosition).subtract(
             new Vector(minimap_viewport_size_x, minimap_viewport_size_y).scale(
               0.5
             )
