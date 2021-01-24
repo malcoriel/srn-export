@@ -26,8 +26,12 @@ export const ThreeRock: React.FC<
 
   // @ts-ignore
   // rockMesh.material.color = props.color;
+  let onClick = (ev: any) => {
+    actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(props.gid);
+    ev.stopPropagation();
+  };
   return (
-    <group position={props.position}>
+    <group position={props.position} onClick={onClick}>
       <mesh
         onPointerOver={() => setHintedObjectId(props.gid)}
         onPointerOut={() => setHintedObjectId(undefined)}
@@ -37,10 +41,6 @@ export const ThreeRock: React.FC<
       </mesh>
       <mesh
         ref={container}
-        onClick={(ev: any) => {
-          actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(props.gid);
-          ev.stopPropagation();
-        }}
         scale={[
           props.radius * model_fix_coeff,
           props.radius * model_fix_coeff,

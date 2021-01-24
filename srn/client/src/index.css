@@ -16,3 +16,7 @@ input {
 .react-jinke-music-player-main {
   display: none;
 }
+
+.grabbable {
+  cursor: grab;
+}

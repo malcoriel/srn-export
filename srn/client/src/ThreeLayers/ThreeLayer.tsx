@@ -1,14 +1,21 @@
 import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
-import { max_x, min_x, ShipAction, ShipActionType, size } from '../world';
+import {
+  findMineral,
+  max_x,
+  min_x,
+  ShipAction,
+  ShipActionType,
+  size,
+} from '../world';
 import React, { Suspense } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
-  ExternalCameraControl,
   BoundCameraMover,
-  CameraZoomer,
-  CAMERA_HEIGHT,
   CAMERA_DEFAULT_ZOOM,
+  CAMERA_HEIGHT,
+  CameraZoomer,
+  ExternalCameraControl,
 } from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState, { useNSForceChange } from '../NetState';
@@ -16,6 +23,8 @@ import Vector, { IVector } from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
 import { BackgroundPlane } from './BackgroundPlane';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
+import { useStore } from '../store';
+import classnames from 'classnames';
 
 export type Vector3Arr = [number, number, number];
 
@@ -52,8 +61,14 @@ export const ThreeLayer: React.FC = () => {
 
   useNSForceChange('ThreeLayer', true);
 
+  const hintedObjectId = useStore((state) => state.hintedObjectId);
+  const hoverOnGrabbable = !!(hintedObjectId
+    ? findMineral(ns.state, hintedObjectId)
+    : undefined);
+
   return (
     <Canvas
+      className={classnames({ ['grabbable']: hoverOnGrabbable })}
       orthographic
       camera={{
         position: new Vector3(0, 0, CAMERA_HEIGHT),

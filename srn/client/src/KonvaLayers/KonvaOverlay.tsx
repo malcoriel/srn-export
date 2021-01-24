@@ -3,11 +3,12 @@ import React, { useMemo } from 'react';
 import {
   findMineral,
   GameState,
+  TRACTOR_DIST,
   unitsToPixels_min,
   viewPortSizeMeters,
   viewPortSizePixels,
 } from '../world';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { Circle, Layer, Text } from 'react-konva';
 import Vector, { IVector } from '../utils/Vector';
 import _ from 'lodash';
@@ -133,6 +134,7 @@ export const KonvaOverlay: React.FC = React.memo(() => {
     : undefined;
 
   const { state, visualState } = ns;
+  const myShip = findMyShip(state);
 
   const shiftPos = useMemo(
     () =>
@@ -159,13 +161,23 @@ export const KonvaOverlay: React.FC = React.memo(() => {
   return (
     <Layer>
       {hintedMineral && (
-        <Circle
-          position={shiftPos(hintedMineral)}
-          fill={hintColor}
-          stroke="red"
-          strokeWidth={1}
-          radius={hintedMineral.radius * unitsToPixels_min()}
-        />
+        <>
+          <Circle
+            position={shiftPos(hintedMineral)}
+            stroke={hintedMineral.color}
+            strokeWidth={1}
+            radius={hintedMineral.radius * unitsToPixels_min()}
+          />
+          {myShip && (
+            <Circle
+              radius={TRACTOR_DIST * unitsToPixels_min()}
+              stroke="gray"
+              strokeWidth={1}
+              position={shiftPos(myShip)}
+              dash={[1, 10]}
+            />
+          )}
+        </>
       )}
       {names.map(([id, name, position, offsetY]) => {
         let textWidth = 70;

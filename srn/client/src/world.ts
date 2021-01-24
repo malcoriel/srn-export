@@ -217,6 +217,8 @@ const directionToRotation = {
   [Direction.DownRight]: Math.PI * 0.75,
 };
 
+export const TRACTOR_DIST = 30;
+
 export const findMineral = (state: GameState, min_id: string) => {
   return state.minerals.find((m) => m.id === min_id);
 };
@@ -306,7 +308,8 @@ export const applyShipAction = (
       let mineral = findMineral(state, mineralId);
       if (
         mineral &&
-        Vector.fromIVector(myShip).euDistTo(Vector.fromIVector(mineral)) <= 30
+        Vector.fromIVector(myShip).euDistTo(Vector.fromIVector(mineral)) <=
+          TRACTOR_DIST
       ) {
         myShip.tractor_target = mineralId;
       }
