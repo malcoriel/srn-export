@@ -301,14 +301,9 @@ export const applyShipAction = (
       break;
     }
     case ShipActionType.Tractor: {
-      let mineralId = sa.data as string;
-      let mineral = findMineral(state, mineralId);
-      if (
-        mineral &&
-        Vector.fromIVector(myShip).euDistTo(Vector.fromIVector(mineral)) <=
-          TRACTOR_DIST
-      ) {
-        myShip.tractor_target = mineralId;
+      const newShip = applyShipActionWasm(stateConsideringPing, sa);
+      if (newShip) {
+        myShip = { ...newShip };
       }
 
       break;
