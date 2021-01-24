@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import _ from 'lodash';
 import NetState from '../NetState';
-import { size, unitsToPixels_min } from '../world';
+import { size, unitsToPixels_min } from '../coord';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);

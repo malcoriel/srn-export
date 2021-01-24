@@ -1,11 +1,12 @@
 import React from 'react';
 import './HoverHintWindow.scss';
 import { useStore } from '../store';
-import { findMineral, unitsToPixels_min } from '../world';
+import { findMineral } from '../world';
 import NetState from '../NetState';
 import { useRealToScreen } from '../coordHooks';
 import Vector from '../utils/Vector';
 import { StyledRect } from './ui/StyledRect';
+import { unitsToPixels_min } from '../coord';
 
 const WINDOW_OFFSET_PX = new Vector(10, 10);
 export const HoverHintWindow: React.FC = () => {

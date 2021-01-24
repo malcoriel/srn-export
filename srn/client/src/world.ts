@@ -1,17 +1,5 @@
 import Vector, { IVector } from './utils/Vector';
 
-export const size = {
-  width_px: window.innerWidth,
-  height_px: window.innerHeight,
-  getMinSize: () => Math.min(size.width_px, size.height_px),
-};
-
-export const viewPortSizePixels = () =>
-  new Vector(size.width_px, size.height_px);
-
-let pixels_per_unit = 10;
-export const viewPortSizeMeters = () =>
-  new Vector(size.width_px / pixels_per_unit, size.height_px / pixels_per_unit);
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
 // noinspection JSUnusedGlobalSymbols
@@ -21,44 +9,29 @@ export const max_y = height_units / 2;
 export const min_x = -max_x;
 export const min_y = -max_y;
 
-export const unitsToPixels_x = () => pixels_per_unit;
-export const unitsToPixels_y = () => pixels_per_unit;
-export const unitsToPixels_min = () =>
-  Math.min(unitsToPixels_x(), unitsToPixels_y());
-
 export const SHIP_SPEED = 20.0;
 
-export const radToDeg = (x: number) => (x * 180) / Math.PI;
-export const degToRad = (x: number) => (x * Math.PI) / 180;
-
-export const stateUrl = 'http://localhost:8000/api/state';
-
-export type WithId = {
+export type Planet = {
   id: string;
-};
-
-export type WithName = {
+  x: number;
+  y: number;
+  rotation: number;
+  radius: number;
   name: string;
+  color: string;
+  anchor_tier: number;
+  anchor_id: string;
+  orbit_speed: number;
 };
-
-export type WithColor = {
+export type Star = {
+  id: string;
+  x: number;
+  y: number;
+  rotation: number;
+  radius: number;
+  name: string;
   color: string;
 };
-
-export type GameObject = WithId &
-  IVector & {
-    rotation: number;
-    radius: number;
-  };
-
-export type Planet = GameObject &
-  WithName &
-  WithColor & {
-    anchor_tier: number;
-    anchor_id: string;
-    orbit_speed: number;
-  };
-export type Star = GameObject & WithName & WithColor;
 
 export type HpEffect = {
   hp: number;
@@ -66,17 +39,22 @@ export type HpEffect = {
   tick: number;
 };
 
-export type Ship = GameObject &
-  WithColor & {
-    docked_at?: string;
-    navigate_target?: IVector;
-    dock_target?: string;
-    tractor_target?: string;
-    trajectory: IVector[];
-    hp: number;
-    max_hp: number;
-    hp_effects: HpEffect[];
-  };
+export type Ship = {
+  id: string;
+  x: number;
+  y: number;
+  rotation: number;
+  radius: number;
+  color: string;
+  docked_at?: string;
+  navigate_target?: IVector;
+  dock_target?: string;
+  tractor_target?: string;
+  trajectory: IVector[];
+  hp: number;
+  max_hp: number;
+  hp_effects: HpEffect[];
+};
 
 export type Quest = {
   from_id: string;
@@ -92,7 +70,8 @@ export enum QuestState {
   Delivered = 'Delivered',
 }
 
-export type Player = WithId & {
+export type Player = {
+  id: string;
   ship_id?: string;
   name: string;
   quest?: Quest;
@@ -134,18 +113,30 @@ export type Dialogue = {
   right_character: string;
 };
 
-export type AsteroidBelt = GameObject & {
+export type AsteroidBelt = {
+  id: string;
+} & { x: number; y: number; rotation: number; radius: number } & {
   width: number;
   count: number;
   orbit_speed: number;
   scale_mod: number;
 };
-export type Asteroid = GameObject & {};
+export type Asteroid = {
+  id: string;
+} & { x: number; y: number; rotation: number; radius: number } & {};
 
-export type NatSpawnMineral = GameObject &
-  WithColor & {
-    value: number;
-  };
+export type NatSpawnMineral = {
+  id: string;
+} & {
+  x: number;
+  y: number;
+  rotation: number;
+  radius: number;
+} & {
+  color: string;
+} & {
+  value: number;
+};
 
 export type GameState = {
   tag: string;
@@ -286,6 +277,7 @@ export const applyShipAction = (
           break;
       }
       let directionToRotationElement = directionToRotation[direction];
+      // noinspection SuspiciousTypeOfGuard
       if (typeof directionToRotationElement !== 'number') {
         console.error(
           'move produced invalid rotation',

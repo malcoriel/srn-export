@@ -1,5 +1,5 @@
 import { Texture, Vector2, Vector3 } from 'three';
-import { size } from '../../world';
+import { size } from '../../coord';
 
 // delete viewMatrix, cameraPosition
 

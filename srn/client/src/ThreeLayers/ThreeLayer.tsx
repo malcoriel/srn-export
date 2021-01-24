@@ -6,7 +6,6 @@ import {
   min_x,
   ShipAction,
   ShipActionType,
-  size,
 } from '../world';
 import React, { Suspense } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
@@ -25,6 +24,7 @@ import { BackgroundPlane } from './BackgroundPlane';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { useStore } from '../store';
 import classnames from 'classnames';
+import { size } from '../coord';
 
 export type Vector3Arr = [number, number, number];
 

@@ -5,8 +5,9 @@ import {
   calcRealPosToScreenPos,
   calcScreenLenToRealLen,
   calcScreenPosToRealPos,
+  viewPortSizeMeters,
+  viewPortSizePixels,
 } from './coord';
-import { viewPortSizeMeters, viewPortSizePixels } from './world';
 
 export const useRealToScreen = (ns: NetState) => {
   const { visualState } = ns;

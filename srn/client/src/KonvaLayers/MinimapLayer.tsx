@@ -5,13 +5,7 @@ import color from 'color';
 
 import React, { useMemo, useState } from 'react';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
-import {
-  height_units,
-  radToDeg,
-  width_units,
-  size,
-  viewPortSizeMeters,
-} from '../world';
+import { height_units, width_units } from '../world';
 import Vector, { VectorF, VectorFzero } from '../utils/Vector';
 import _ from 'lodash';
 import {
@@ -19,6 +13,9 @@ import {
   calcRealPosToScreenPos,
   calcScreenLenToRealLen,
   calcScreenPosToRealPos,
+  radToDeg,
+  size,
+  viewPortSizeMeters,
 } from '../coord';
 
 export const minimap_proportion = 0.3;

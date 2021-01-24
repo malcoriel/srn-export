@@ -27,7 +27,7 @@ extern "C" {
 }
 
 pub fn new_id() -> Uuid {
-    // TODO use JS rand generation, Uuid v4 apparently cannot work in wasm
+    // technically, should never be needed on client as entity generation is a privileged thing
     Default::default()
 }
 
@@ -55,55 +55,84 @@ mod system_gen;
 
 pub const DEBUG_PHYSICS: bool = false;
 
-use serde_derive::Serialize;
+use serde::Deserialize as Deserializable;
+use serde_derive::{Deserialize, Serialize};
+use serde_json::Error;
 use uuid::Uuid;
+
+static DEFAULT_ERR: &str = "";
 
 #[derive(Serialize)]
 struct ErrJson {
     message: String,
 }
 
-pub fn fire_event(ev: world::GameEvent) {
+pub fn fire_event(_ev: world::GameEvent) {
     // no support for events on client
 }
 
-#[wasm_bindgen]
-pub fn parse_state(serialized_state: &str) -> String {
-    if !(cfg!(debug_assertions)) {
-        return serialized_state.to_string();
+fn extract_args<'a, T: Deserializable<'a>>(
+    serialized_args: &'a str,
+) -> (Result<T, Error>, Option<String>) {
+    let args = serde_json::from_str::<T>(serialized_args);
+    let mut return_result = None;
+    if args.is_err() {
+        let error = args.err().unwrap();
+        return_result = Some(deserialize_err_or_def(&error));
+        (Err(error), return_result)
+    } else {
+        (args, return_result)
     }
+}
 
-    let default = String::from("");
-    let result = serde_json::from_str::<world::GameState>(serialized_state);
-    return match result {
-        Ok(state) => serde_json::to_string(&state)
-            .ok()
-            .unwrap_or(default.clone()),
-        Err(reason) => serde_json::to_string(&ErrJson {
-            message: reason.to_string(),
-        })
-        .unwrap_or(default),
-    };
+fn deserialize_err_or_def(reason: &Error) -> String {
+    serde_json::to_string(&ErrJson {
+        message: format!("err deserializing {}", reason.to_string()),
+    })
+    .unwrap_or(DEFAULT_ERR.to_string())
 }
 
 #[wasm_bindgen]
-pub fn update_world(serialized_state: &str, elapsed_micro: i64) -> String {
-    let default = String::from("");
-    let result = serde_json::from_str::<world::GameState>(serialized_state);
-
-    match result {
-        Ok(_) => result
-            .ok()
-            .map(|mut state| world::update_world(state, elapsed_micro, true))
-            .map(|state| {
-                serde_json::to_string(&state)
-                    .ok()
-                    .unwrap_or(default.clone())
-            })
-            .unwrap_or(default),
-        Err(reason) => serde_json::to_string(&ErrJson {
-            message: format!("err deserializing {}", reason.to_string()),
-        })
-        .unwrap_or(default),
+pub fn parse_state(serialized_args: &str) -> String {
+    if !(cfg!(debug_assertions)) {
+        return serialized_args.to_string();
     }
+
+    let (args, return_result) = extract_args::<world::GameState>(serialized_args);
+    if return_result.is_some() {
+        return return_result.unwrap();
+    }
+    let args = args.ok().unwrap();
+    return serde_json::to_string(&args).unwrap_or(DEFAULT_ERR.to_string());
+}
+
+#[wasm_bindgen]
+pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
+    let (args, return_result) = extract_args::<world::GameState>(serialized_args);
+    if return_result.is_some() {
+        return return_result.unwrap();
+    }
+    let args = args.ok().unwrap();
+
+    let new_state = world::update_world(args, elapsed_micro, true);
+    return serde_json::to_string(&new_state).unwrap_or(DEFAULT_ERR.to_string());
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct ApplyShipActionArgs {
+    state: world::GameState,
+    ship_action: world::ShipAction,
+    player_id: Uuid,
+}
+
+// returns serialized ship
+#[wasm_bindgen]
+pub fn apply_ship_action(serialized_apply_args: &str) -> String {
+    let (args, return_result) = extract_args::<ApplyShipActionArgs>(serialized_apply_args);
+    if return_result.is_some() {
+        return return_result.unwrap();
+    }
+    let args = args.ok().unwrap();
+    let new_ship = world::apply_ship_action(args.ship_action, &args.state, args.player_id);
+    return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
 }

@@ -1,4 +1,4 @@
-import Vector, { IVector, VectorF } from './utils/Vector';
+import Vector, { IVector } from './utils/Vector';
 
 export const calcScreenPosToRealPos = (
   cameraPosition: IVector,
@@ -79,3 +79,19 @@ export const calcRealPosToScreenPos = (
       .add(halfWidthHeight);
   };
 };
+export const size = {
+  width_px: window.innerWidth,
+  height_px: window.innerHeight,
+  getMinSize: () => Math.min(size.width_px, size.height_px),
+};
+export const viewPortSizePixels = () =>
+  new Vector(size.width_px, size.height_px);
+export let pixels_per_unit = 10;
+export const viewPortSizeMeters = () =>
+  new Vector(size.width_px / pixels_per_unit, size.height_px / pixels_per_unit);
+export const unitsToPixels_x = () => pixels_per_unit;
+export const unitsToPixels_y = () => pixels_per_unit;
+export const unitsToPixels_min = () =>
+  Math.min(unitsToPixels_x(), unitsToPixels_y());
+export const radToDeg = (x: number) => (x * 180) / Math.PI;
+export const degToRad = (x: number) => (x * Math.PI) / 180;

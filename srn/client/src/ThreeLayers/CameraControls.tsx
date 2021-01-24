@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import NetState, { findMyShip } from '../NetState';
 import { useThree } from 'react-three-fiber';
-import { height_units, Ship, unitsToPixels_min, width_units } from '../world';
+import { height_units, Ship, width_units } from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { unitsToPixels_min } from '../coord';
 
 export const BoundCameraMover: React.FC = () => {
   const ns = NetState.get();

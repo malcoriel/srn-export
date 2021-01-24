@@ -8,17 +8,16 @@ import { Circle, Layer, Rect } from 'react-konva';
 import Vector from '../utils/Vector';
 import _ from 'lodash';
 import { babyBlue, yellow } from '../utils/palette';
+import { Planet, QuestState, Ship } from '../world';
+import { findPlanet } from '../HtmlLayers/NetworkStatus';
 import {
-  Planet,
-  QuestState,
-  Ship,
+  calcRealPosToScreenPos,
+  calcScreenPosToRealPos,
   size,
   unitsToPixels_min,
   viewPortSizeMeters,
   viewPortSizePixels,
-} from '../world';
-import { findPlanet } from '../HtmlLayers/NetworkStatus';
-import { calcRealPosToScreenPos, calcScreenPosToRealPos } from '../coord';
+} from '../coord';
 
 const MAX_ITER = 100;
 const TRAJECTORY_STEP = 10.0;

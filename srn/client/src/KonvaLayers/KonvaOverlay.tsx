@@ -1,20 +1,18 @@
 import Color from 'color';
 import React, { useMemo } from 'react';
-import {
-  findMineral,
-  GameState,
-  TRACTOR_DIST,
-  unitsToPixels_min,
-  viewPortSizeMeters,
-  viewPortSizePixels,
-} from '../world';
+import { findMineral, GameState, TRACTOR_DIST } from '../world';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { Circle, Layer, Text } from 'react-konva';
 import Vector, { IVector } from '../utils/Vector';
 import _ from 'lodash';
 import { babyBlue, crimson, darkGreen } from '../utils/palette';
 import Prando from 'prando';
-import { calcRealPosToScreenPos } from '../coord';
+import {
+  calcRealPosToScreenPos,
+  unitsToPixels_min,
+  viewPortSizeMeters,
+  viewPortSizePixels,
+} from '../coord';
 import { useStore } from '../store';
 
 function extractNamePositions(

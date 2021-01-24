@@ -3,7 +3,6 @@ import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
 import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
-import { size } from './world';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { NetworkStatus } from './HtmlLayers/NetworkStatus';
@@ -28,6 +27,7 @@ import shallow from 'zustand/shallow';
 import { OverheadPanel } from './HtmlLayers/OverheadPanel';
 import { TestUI } from './HtmlLayers/TestUI';
 import { HoverHintWindow } from './HtmlLayers/HoverHintWindow';
+import { size } from './coord';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
