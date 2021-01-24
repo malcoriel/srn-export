@@ -1,3 +1,12 @@
+# Version 0.3.4
+## New
+* Minerals now spawn in the asteroid belts and can be tractored to gain money.
+
+## Fixes
+* Various visual glitches.
+* Incorrect minimap coordinates and viewframe.
+* Problems with client-server logic desync.
+
 # Version 0.3.3
 ## New
 * Planet outlines on the minimap for the better visibility.
