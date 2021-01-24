@@ -93,16 +93,13 @@ export const MinimapLayer = React.memo(() => {
   const minimap_viewport_size_y =
     realLenToScreenLen(viewPortSizeMeters().y) / visualState.zoomShift;
 
-  // let moveCamera = (dragEvent: any) => {
-  //   const mouseEvent = dragEvent.evt as any;
-  //   let currentPosition = new Vector(mouseEvent.layerX, mouseEvent.layerY);
-  //   visualState.boundCameraMovement = false;
-  //   let currentPositionUV = new Vector(
-  //     currentPosition.x / get_minimap_size_x() - 0.5,
-  //     currentPosition.y / get_minimap_size_y() - 0.5
-  //   );
-  //   visualState.cameraPosition = currentPositionUV.scale(width_units);
-  // };
+  let moveCamera = (dragEvent: any) => {
+    const mouseEvent = dragEvent.evt as any;
+    let currentPosition = new Vector(mouseEvent.layerX, mouseEvent.layerY);
+    visualState.boundCameraMovement = false;
+
+    visualState.cameraPosition = screenPosToRealPos(currentPosition);
+  };
   const myShip = findMyShip(state);
   return (
     <Stage
@@ -124,14 +121,13 @@ export const MinimapLayer = React.memo(() => {
           height={get_minimap_size_y()}
           fill={gray}
           opacity={baseOpacity}
-          // onMouseDown={moveCamera}
-          //zIndex={1}
+          onMouseDown={moveCamera}
         />
         {state.star && (
           <Circle
             key={state.star.id}
             opacity={planetOpacity}
-            // onMouseDown={moveCamera}
+            onMouseDown={moveCamera}
             radius={realLenToScreenLen(state.star.radius) * 0.6}
             fill={state.star.color}
             position={realPosToScreenPos(state.star)}
@@ -173,7 +169,7 @@ export const MinimapLayer = React.memo(() => {
                     fill={p.color}
                     stroke={mint}
                     strokeWidth={0.5}
-                    // onMouseDown={moveCamera}
+                    onMouseDown={moveCamera}
                   />
                 </Group>
                 {p.anchor_tier === 1 && (
@@ -181,7 +177,7 @@ export const MinimapLayer = React.memo(() => {
                     {_.times(arcCount, (i) => {
                       return (
                         <Arc
-                          // onMouseDown={moveCamera}
+                          onMouseDown={moveCamera}
                           key={i}
                           {...arcCommonProps}
                           rotation={
@@ -241,7 +237,8 @@ export const MinimapLayer = React.memo(() => {
           stroke="white"
           strokeWidth={1}
           draggable
-          // onDragMove={moveCamera}
+          onDragMove={moveCamera}
+          onDragEnd={moveCamera}
           position={realPosToScreenPos(cameraPosition).subtract(
             new Vector(minimap_viewport_size_x, minimap_viewport_size_y).scale(
               0.5
