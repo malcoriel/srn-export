@@ -86,6 +86,7 @@ const MAX_PENDING_TICKS = 2000;
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
+const MAX_ALLOWED_DIST_DESYNC = 5.0;
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -307,8 +308,14 @@ export default class NetState extends EventEmitter {
         // 1. primarily work on planets - something that is adjusted deterministically
         this.updateLocalState(this.ping);
         const myUpdatedShip = findMyShip(this.state);
-        // 2. fix my movement rollback by allowing update
-        if (myOldShip && myUpdatedShip) {
+        // // 2. fix my movement rollback by allowing update
+        if (
+          myOldShip &&
+          myUpdatedShip &&
+          Vector.fromIVector(myOldShip).euDistTo(
+            Vector.fromIVector(myUpdatedShip)
+          ) <= MAX_ALLOWED_DIST_DESYNC
+        ) {
           myUpdatedShip.x = myOldShip.x;
           myUpdatedShip.y = myOldShip.y;
         }
