@@ -100,7 +100,7 @@ export const MyTrajectoryLayer: React.FC = () => {
         );
       })}
       {pointTarget && (
-        <Circle position={shiftPos(pointTarget)} radius={0.5} fill={babyBlue} />
+        <Circle position={shiftPos(pointTarget)} radius={5} fill={babyBlue} />
       )}
       {planetTarget && (
         <Rect
