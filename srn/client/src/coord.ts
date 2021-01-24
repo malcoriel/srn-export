@@ -1,10 +1,9 @@
 import Vector, { IVector, VectorF } from './utils/Vector';
-import { useMemo } from 'react';
 
 export const calcScreenPosToRealPos = (
   cameraPosition: IVector,
-  viewPortSizeMeters: Vector,
-  viewPortSizePixels: Vector,
+  viewPortSizeMeters: IVector,
+  viewPortSizePixels: IVector,
   zoom: number = 1
 ) => {
   const cameraShift = Vector.fromIVector(cameraPosition);
@@ -24,10 +23,42 @@ export const calcScreenPosToRealPos = (
   };
 };
 
+// this essentially locks the system to equal proportions on x, y
+// (see length usage)
+// although I can't think why would I want them different
+export const calcScreenLenToRealLen = (
+  viewPortSizeMeters: IVector,
+  viewPortSizePixels: IVector,
+  zoom: number = 1
+) => {
+  const meterPerPixel = new Vector(
+    viewPortSizeMeters.x / viewPortSizePixels.x,
+    viewPortSizeMeters.y / viewPortSizePixels.y
+  )
+    .scale(1 / zoom)
+    .minLen();
+  return (valPx: number) => valPx * meterPerPixel;
+};
+
+export const calcRealLenToScreenLen = (
+  viewPortSizeMeters: IVector,
+  viewPortSizePixels: IVector,
+  zoom: number = 1
+) => {
+  const pixelPerMeter = new Vector(
+    viewPortSizePixels.x / viewPortSizeMeters.x,
+    viewPortSizePixels.y / viewPortSizeMeters.y
+  )
+    .scale(zoom)
+    .minLen();
+
+  return (valMet: number) => valMet * pixelPerMeter;
+};
+
 export const calcRealPosToScreenPos = (
   cameraPosition: IVector,
-  viewPortSizeMeters: Vector,
-  viewPortSizePixels: Vector,
+  viewPortSizeMeters: IVector,
+  viewPortSizePixels: IVector,
   zoom: number = 1
 ) => {
   const cameraShift = Vector.fromIVector(cameraPosition);

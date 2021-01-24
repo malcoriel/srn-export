@@ -1,5 +1,5 @@
 import Vector, { VectorF } from './utils/Vector';
-import { calcRealPosToScreenPos } from './coord';
+import { calcRealLenToScreenLen, calcRealPosToScreenPos } from './coord';
 
 describe('real to screen', () => {
   describe('with screen 10x10m 100/100px (z=1)', () => {
@@ -33,6 +33,18 @@ describe('real to screen', () => {
           ).toEqual(VectorF(screenX, screenY));
         }
       );
+
+      it('can convert length', () => {
+        expect(
+          calcRealLenToScreenLen(viewPortSizeMeters, viewPortSizePixels)(5)
+        ).toEqual(50);
+        expect(
+          calcRealLenToScreenLen(viewPortSizeMeters, viewPortSizePixels)(10)
+        ).toEqual(100);
+        expect(
+          calcRealLenToScreenLen(viewPortSizeMeters, viewPortSizePixels)(3)
+        ).toEqual(30);
+      });
     });
   });
 });

@@ -6,7 +6,6 @@ import NetState from '../NetState';
 import { useRealToScreen } from '../coordHooks';
 import Vector from '../utils/Vector';
 import { StyledRect } from './ui/StyledRect';
-import classNames from 'classnames';
 
 const WINDOW_OFFSET_PX = new Vector(10, 10);
 export const HoverHintWindow: React.FC = () => {
@@ -18,7 +17,7 @@ export const HoverHintWindow: React.FC = () => {
     ? findMineral(ns.state, hintedObjectId)
     : null;
 
-  const realToScreen = useRealToScreen(ns);
+  const { realPosToScreenPos, realLenToScreenLen } = useRealToScreen(ns);
 
   let rendered = null;
   if (hintedMineral) {
@@ -27,8 +26,8 @@ export const HoverHintWindow: React.FC = () => {
     //const isCommon = hintedMineral.value >= 100;
     const rarityClass = isRare ? 'rare' : isUncommon ? 'uncommon' : 'common';
 
-    const coord = realToScreen(hintedMineral)
-      .add(new Vector(1, 1).scale(hintedMineral.radius * unitsToPixels_min()))
+    const coord = realPosToScreenPos(hintedMineral)
+      .add(new Vector(1, 1).scale(realLenToScreenLen(hintedMineral.radius)))
       .add(WINDOW_OFFSET_PX);
     rendered = (
       <div

@@ -11,7 +11,7 @@ import {
 } from '../utils/palette';
 import color from 'color';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import {
   height_units,
@@ -19,26 +19,27 @@ import {
   unitsToPixels_min,
   width_units,
   size,
+  viewPortSizeMeters,
+  viewPortSizePixels,
 } from '../world';
-import Vector, { IVector, VectorF } from '../utils/Vector';
+import Vector, { IVector, VectorF, VectorFzero } from '../utils/Vector';
 import _ from 'lodash';
+import { useRealToScreen, useScreenToReal } from '../coordHooks';
+import {
+  calcRealLenToScreenLen,
+  calcRealPosToScreenPos,
+  calcScreenLenToRealLen,
+  calcScreenPosToRealPos,
+} from '../coord';
 
 export const minimap_proportion = 0.3;
 export const inv_minimap_proportion = 1 / minimap_proportion;
 export const get_minimap_size_x = () => size.getMinSize() * minimap_proportion;
 export const get_minimap_size_y = () => size.getMinSize() * minimap_proportion;
-const posToMinimapPos = (pos: IVector) =>
-  new Vector(
-    (pos.x / width_units + 0.5) * get_minimap_size_x(),
-    (pos.y / height_units + 0.5) * get_minimap_size_y()
-  );
 
 export const minimap_scale = 0.1;
 
 export const minimap_shift = 0.005;
-
-const radiusToMinimapRadius = (val: number) =>
-  val * unitsToPixels_min() * minimap_proportion * minimap_scale;
 
 const trailWidth = 0.5;
 const baseOpacity = 0.6;
@@ -58,28 +59,50 @@ export const MinimapLayer = React.memo(() => {
 
   const { state, visualState } = ns;
   let { cameraPosition } = visualState;
-  let zoomProp = 1 / (visualState.zoomShift || 1.0);
-  const minimap_viewport_size_x =
-    size.width_px * minimap_proportion * minimap_scale * zoomProp;
-  const minimap_viewport_size_y =
-    size.height_px * minimap_proportion * minimap_scale * zoomProp;
-  let cameraPositionUV = Vector.fromIVector({
-    x: cameraPosition.x / width_units + 0.5 - (minimap_scale * zoomProp) / 2,
-    y: cameraPosition.y / height_units + 0.5 - (minimap_scale * zoomProp) / 2,
-  });
-  // for some mystic reason, having setDragPosition forces synchronization
-  const [, setDragPosition] = useState(cameraPositionUV);
-  let moveCamera = (dragEvent: any) => {
-    const mouseEvent = dragEvent.evt as any;
-    let currentPosition = new Vector(mouseEvent.layerX, mouseEvent.layerY);
-    visualState.boundCameraMovement = false;
-    let currentPositionUV = new Vector(
-      currentPosition.x / get_minimap_size_x() - 0.5,
-      currentPosition.y / get_minimap_size_y() - 0.5
+
+  const {
+    screenLenToRealLen,
+    screenPosToRealPos,
+    realLenToScreenLen,
+    realPosToScreenPos,
+  } = useMemo(() => {
+    let world_size = VectorF(width_units, height_units);
+    let minimap_size = new Vector(get_minimap_size_x(), get_minimap_size_y());
+    const realLenToScreenLen = calcRealLenToScreenLen(world_size, minimap_size);
+    const realPosToScreenPos = calcRealPosToScreenPos(
+      VectorFzero,
+      world_size,
+      minimap_size
     );
-    setDragPosition(currentPositionUV);
-    visualState.cameraPosition = currentPositionUV.scale(width_units);
-  };
+    const screenLenToRealLen = calcScreenLenToRealLen(world_size, minimap_size);
+    const screenPosToRealPos = calcScreenPosToRealPos(
+      VectorFzero,
+      world_size,
+      minimap_size
+    );
+    return {
+      screenLenToRealLen,
+      screenPosToRealPos,
+      realLenToScreenLen,
+      realPosToScreenPos,
+    };
+  }, [get_minimap_size_x(), get_minimap_size_y()]);
+
+  const minimap_viewport_size_x =
+    realLenToScreenLen(viewPortSizeMeters().x) / visualState.zoomShift;
+  const minimap_viewport_size_y =
+    realLenToScreenLen(viewPortSizeMeters().y) / visualState.zoomShift;
+
+  // let moveCamera = (dragEvent: any) => {
+  //   const mouseEvent = dragEvent.evt as any;
+  //   let currentPosition = new Vector(mouseEvent.layerX, mouseEvent.layerY);
+  //   visualState.boundCameraMovement = false;
+  //   let currentPositionUV = new Vector(
+  //     currentPosition.x / get_minimap_size_x() - 0.5,
+  //     currentPosition.y / get_minimap_size_y() - 0.5
+  //   );
+  //   visualState.cameraPosition = currentPositionUV.scale(width_units);
+  // };
   const myShip = findMyShip(state);
   return (
     <Stage
@@ -101,17 +124,17 @@ export const MinimapLayer = React.memo(() => {
           height={get_minimap_size_y()}
           fill={gray}
           opacity={baseOpacity}
-          onMouseDown={moveCamera}
+          // onMouseDown={moveCamera}
           //zIndex={1}
         />
         {state.star && (
           <Circle
             key={state.star.id}
             opacity={planetOpacity}
-            onMouseDown={moveCamera}
-            radius={radiusToMinimapRadius(state.star.radius) * 0.6}
+            // onMouseDown={moveCamera}
+            radius={realLenToScreenLen(state.star.radius) * 0.6}
             fill={state.star.color}
-            position={posToMinimapPos(state.star)}
+            position={realPosToScreenPos(state.star)}
           />
         )}
         {state.planets &&
@@ -120,7 +143,7 @@ export const MinimapLayer = React.memo(() => {
               ? Vector.fromIVector(state.star)
               : VectorF(0, 0);
             let pPos = Vector.fromIVector(p);
-            let orbitDist = radiusToMinimapRadius(pPos.euDistTo(anchorPos));
+            let orbitDist = realLenToScreenLen(pPos.euDistTo(anchorPos));
             let angleRad = pPos.angleRad(anchorPos.add(VectorF(1, 0)));
             let negativeRotation = p.orbit_speed < 0;
             let arcDirMultiplier = 1;
@@ -139,18 +162,18 @@ export const MinimapLayer = React.memo(() => {
               outerRadius: orbitDist + trailWidth / 0.5,
               fill: p.color,
               strokeWidth: 1,
-              position: posToMinimapPos(anchorPos),
+              position: realPosToScreenPos(anchorPos),
             };
             return (
               <Group key={p.id ? p.id : i}>
-                <Group position={posToMinimapPos(p)}>
+                <Group position={realPosToScreenPos(p)}>
                   <Circle
                     opacity={planetOpacity}
-                    radius={radiusToMinimapRadius(p.radius)}
+                    radius={realLenToScreenLen(p.radius)}
                     fill={p.color}
                     stroke={mint}
                     strokeWidth={0.5}
-                    onMouseDown={moveCamera}
+                    // onMouseDown={moveCamera}
                   />
                 </Group>
                 {p.anchor_tier === 1 && (
@@ -158,14 +181,14 @@ export const MinimapLayer = React.memo(() => {
                     {_.times(arcCount, (i) => {
                       return (
                         <Arc
-                          onMouseDown={moveCamera}
+                          // onMouseDown={moveCamera}
                           key={i}
                           {...arcCommonProps}
                           rotation={
                             (pPos.y < 0 ? -rotationDeg : rotationDeg) +
                             (negativeRotation ? -totalArc : 0) +
                             // shift for the planet radius
-                            // radToDeg(beta) +
+                            radToDeg(beta) +
                             // shift for every arc part
                             (i * totalArc) / arcCount
                           }
@@ -186,23 +209,23 @@ export const MinimapLayer = React.memo(() => {
           <Arc
             key={b.id}
             angle={360}
-            innerRadius={radiusToMinimapRadius(b.radius - b.width / 2)}
-            outerRadius={radiusToMinimapRadius(b.radius + b.width / 2)}
+            innerRadius={realLenToScreenLen(b.radius - b.width / 2)}
+            outerRadius={realLenToScreenLen(b.radius + b.width / 2)}
             fill={dirtyGray}
             opacity={0.4}
-            position={posToMinimapPos(VectorF(0, 0))}
+            position={realPosToScreenPos(VectorF(0, 0))}
           />
         ))}
         {state.ships.map((s) => {
-          const pos = posToMinimapPos(s);
+          const pos = realPosToScreenPos(s);
           const isMy = myShip && s.id === myShip.id;
           return (
             <Star
               key={s.id}
               x={pos.x}
               y={pos.y}
-              innerRadius={radiusToMinimapRadius(s.radius * 8)}
-              outerRadius={radiusToMinimapRadius(s.radius + 15)}
+              innerRadius={realLenToScreenLen(s.radius * 8)}
+              outerRadius={realLenToScreenLen(s.radius + 15)}
               fill={isMy ? crimson : mint}
               stroke="black"
               strokeWidth={0.5}
@@ -212,17 +235,17 @@ export const MinimapLayer = React.memo(() => {
           );
         })}
         <Rect
-          // zIndex={2}
           width={minimap_viewport_size_x}
           height={minimap_viewport_size_y}
           fill={color(yellow).alpha(0.2).string()}
           stroke="white"
           strokeWidth={1}
           draggable
-          onDragMove={moveCamera}
-          position={cameraPositionUV.scaleXY(
-            get_minimap_size_x(),
-            get_minimap_size_y()
+          // onDragMove={moveCamera}
+          position={realPosToScreenPos(cameraPosition).subtract(
+            new Vector(minimap_viewport_size_x, minimap_viewport_size_y).scale(
+              0.5
+            )
           )}
         />
       </Layer>

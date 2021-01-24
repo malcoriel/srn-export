@@ -54,6 +54,10 @@ export default class Vector implements IVector {
     return Math.sqrt(this.x * this.x + this.y * this.y);
   }
 
+  minLen() {
+    return Math.min(this.lengthX(), this.lengthY());
+  }
+
   // noinspection JSUnusedGlobalSymbols
   lengthY() {
     return Math.abs(this.y);

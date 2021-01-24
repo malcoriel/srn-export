@@ -66,7 +66,7 @@ export type VisualState = {
     y: number;
   };
   // proportion from default zoom
-  zoomShift?: number;
+  zoomShift: number;
 };
 
 const DEBUG_CREATION = false;
@@ -137,6 +137,7 @@ export default class NetState extends EventEmitter {
         x: 0,
         y: 0,
       },
+      zoomShift: 1,
     };
     this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
     this.slowTime = new vsyncedDecoupledTime(SLOW_TIME_STEP);
