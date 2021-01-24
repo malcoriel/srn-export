@@ -4,20 +4,16 @@ import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { Circle, Layer, Text } from 'react-konva';
 import Vector, { IVector } from '../utils/Vector';
 import _ from 'lodash';
-import { babyBlue, crimson, darkGreen } from '../utils/palette';
+import { babyBlue, crimson, darkGreen, teal } from '../utils/palette';
 import Prando from 'prando';
-import {
-  calcRealPosToScreenPos,
-  unitsToPixels_min,
-  viewPortSizeMeters,
-  viewPortSizePixels,
-} from '../coord';
 import { useStore } from '../store';
+import { useRealToScreen } from '../coordHooks';
 
 function extractNamePositions(
   state: GameState,
   cameraPosition: IVector,
-  shiftPos: (inp: IVector) => IVector
+  shiftPos: (inp: IVector) => IVector,
+  shiftLen: (len: number) => number
 ): Array<[string, string, IVector, number]> {
   const res = [];
   for (const planet of state.planets) {
@@ -25,7 +21,7 @@ function extractNamePositions(
       planet.id,
       planet.name,
       shiftPos(planet),
-      unitsToPixels_min() * planet.radius + 30,
+      shiftLen(planet.radius) + 30,
     ];
     res.push(planetProps);
   }
@@ -35,7 +31,7 @@ function extractNamePositions(
       state.star.id,
       state.star.name,
       shiftPos(state.star),
-      unitsToPixels_min() * state.star.radius * 0.7 + 30,
+      (shiftLen(state.star.radius) + 30) * 0.7,
     ];
     res.push(items);
   }
@@ -55,7 +51,7 @@ function extractNamePositions(
       ship.id,
       player.name,
       starNamePos,
-      unitsToPixels_min() * ship.radius + 30,
+      shiftLen(ship.radius) + 30,
     ];
     res.push(shipProps);
   }
@@ -77,7 +73,8 @@ const VIS_EFFECT_MOVE_SPEED = 0.05;
 const extractEffectsPositions = (
   state: GameState,
   cameraPosition: IVector,
-  shiftPos: (p: IVector) => IVector
+  shiftPos: (p: IVector) => IVector,
+  _shiftLen: (len: number) => number
 ): Array<VisualHpEffect> => {
   const res: VisualHpEffect[] = [];
   const shipsById = _.keyBy(state.ships, 'id');
@@ -132,32 +129,20 @@ export const KonvaOverlay: React.FC = React.memo(() => {
   const { state, visualState } = ns;
   const myShip = findMyShip(state);
 
-  const shiftPos = useMemo(
-    () =>
-      calcRealPosToScreenPos(
-        visualState.cameraPosition,
-        viewPortSizeMeters(),
-        viewPortSizePixels(),
-        visualState.zoomShift
-      ),
-    [
-      visualState.cameraPosition,
-      viewPortSizeMeters(),
-      viewPortSizePixels(),
-      visualState.zoomShift,
-    ]
-  );
+  const { realLenToScreenLen, realPosToScreenPos } = useRealToScreen(ns);
 
   const names = extractNamePositions(
     state,
     visualState.cameraPosition,
-    shiftPos
+    realPosToScreenPos,
+    realLenToScreenLen
   );
 
   const effects = extractEffectsPositions(
     state,
     visualState.cameraPosition,
-    shiftPos
+    realPosToScreenPos,
+    realLenToScreenLen
   );
 
   return (
@@ -165,18 +150,18 @@ export const KonvaOverlay: React.FC = React.memo(() => {
       {hintedMineral && (
         <>
           <Circle
-            position={shiftPos(hintedMineral)}
+            position={realPosToScreenPos(hintedMineral)}
             stroke={hintedMineral.color}
             strokeWidth={1}
-            radius={hintedMineral.radius * unitsToPixels_min()}
+            radius={realLenToScreenLen(hintedMineral.radius)}
           />
           {myShip && (
             <Circle
-              radius={TRACTOR_DIST * unitsToPixels_min()}
-              stroke="gray"
+              radius={realLenToScreenLen(TRACTOR_DIST)}
+              stroke={teal}
               strokeWidth={1}
-              position={shiftPos(myShip)}
-              dash={[1, 10]}
+              position={realPosToScreenPos(myShip)}
+              dash={[5, 10]}
             />
           )}
         </>
@@ -197,7 +182,7 @@ export const KonvaOverlay: React.FC = React.memo(() => {
         );
       })}
       {effects.map((visHpEffect) => {
-        let textWidth = 10;
+        let textWidth = 50;
         return (
           <Text
             key={visHpEffect.id}
