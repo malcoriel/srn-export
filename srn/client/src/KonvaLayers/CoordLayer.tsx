@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Arrow, Layer, Line, Text } from 'react-konva';
-import { antiScale, max_x, max_y, min_x, min_y } from '../world';
+import { max_x, max_y, min_x, min_y } from '../world';
 import React from 'react';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 
@@ -56,30 +56,16 @@ export const CoordLayer = () => {
         strokeWidth={0.5}
       />
       {numberPoints.map((p) => (
-        <Text fill="white" key={p} text={`${p}`} x={p} y={1} {...antiScale()} />
+        <Text fill="white" key={p} text={`${p}`} x={p} y={1} />
       ))}
       {numberPoints.map((p) => (
-        <Text fill="white" key={p} text={`${p}`} x={1} y={p} {...antiScale()} />
+        <Text fill="white" key={p} text={`${p}`} x={1} y={p} />
       ))}
       {numberPoints.map((p) => (
-        <Text
-          fill="white"
-          key={p}
-          text={`-${p}`}
-          x={1}
-          y={-p}
-          {...antiScale()}
-        />
+        <Text fill="white" key={p} text={`-${p}`} x={1} y={-p} />
       ))}
       {numberPoints.map((p) => (
-        <Text
-          fill="white"
-          key={p}
-          text={`-${p}`}
-          x={-p}
-          y={1}
-          {...antiScale()}
-        />
+        <Text fill="white" key={p} text={`-${p}`} x={-p} y={1} />
       ))}
     </Layer>
   );

@@ -1,42 +1,34 @@
 import React from 'react';
 import {
-  antiScale,
   GameState,
-  height_units,
-  scaleConfig,
-  width_units,
+  unitsToPixels_min,
+  viewPortSizeMeters,
+  viewPortSizePixels,
 } from '../world';
 import NetState, { useNSForceChange } from '../NetState';
 import { Layer, Text } from 'react-konva';
-import Vector, { IVector, VectorF } from '../utils/Vector';
+import Vector, { IVector } from '../utils/Vector';
 import _ from 'lodash';
 import { babyBlue, crimson, darkGreen } from '../utils/palette';
 import Prando from 'prando';
-
-export const calcShiftPos = (cameraPosition: IVector, zoomProp: number) => {
-  const cameraShift = Vector.fromIVector(cameraPosition);
-  return (objPos: IVector, offsetY = 0) => {
-    const pos = Vector.fromIVector(objPos);
-    return pos
-      .subtract(cameraShift)
-      .add(VectorF(0, offsetY))
-      .scale(1 / zoomProp);
-  };
-};
+import { calcRealPosToScreenPos } from '../coord';
 
 function extractNamePositions(
   state: GameState,
-  cameraPosition: IVector,
-  zoomProp: number
+  cameraPosition: IVector
 ): Array<[string, string, IVector, number]> {
   const res = [];
-  const shiftPos = calcShiftPos(cameraPosition, zoomProp);
+  const shiftPos = calcRealPosToScreenPos(
+    cameraPosition,
+    viewPortSizeMeters(),
+    viewPortSizePixels()
+  );
   for (const planet of state.planets) {
     let planetProps: [string, string, IVector, number] = [
       planet.id,
       planet.name,
       shiftPos(planet),
-      planet.radius,
+      unitsToPixels_min() * planet.radius + 30,
     ];
     res.push(planetProps);
   }
@@ -45,8 +37,8 @@ function extractNamePositions(
     let items: [string, string, IVector, number] = [
       state.star.id,
       state.star.name,
-      shiftPos(state.star, 15),
-      state.star.radius,
+      shiftPos(state.star),
+      unitsToPixels_min() * state.star.radius * 0.7 + 30,
     ];
     res.push(items);
   }
@@ -66,7 +58,7 @@ function extractNamePositions(
       ship.id,
       player.name,
       starNamePos,
-      ship.radius,
+      unitsToPixels_min() * ship.radius + 30,
     ];
     res.push(shipProps);
   }
@@ -91,7 +83,11 @@ const extractEffectsPositions = (
   zoomProp: number
 ): Array<VisualHpEffect> => {
   const res: VisualHpEffect[] = [];
-  const shiftPos = calcShiftPos(cameraPosition, zoomProp);
+  const shiftPos = calcRealPosToScreenPos(
+    cameraPosition,
+    viewPortSizeMeters(),
+    viewPortSizePixels()
+  );
   const shipsById = _.keyBy(state.ships, 'id');
 
   for (const player of state.players) {
@@ -140,11 +136,7 @@ export const OverObjectLayer: React.FC = React.memo(() => {
   const { state, visualState } = ns;
   let zoomProp = 1 / (visualState.zoomShift || 1.0);
 
-  const names = extractNamePositions(
-    state,
-    visualState.cameraPosition,
-    zoomProp
-  );
+  const names = extractNamePositions(state, visualState.cameraPosition);
 
   const effects = extractEffectsPositions(
     state,
@@ -154,8 +146,8 @@ export const OverObjectLayer: React.FC = React.memo(() => {
 
   return (
     <Layer>
-      {names.map(([id, name, position, radius]) => {
-        let textWidth = 300;
+      {names.map(([id, name, position, offsetY]) => {
+        let textWidth = 70;
         return (
           <Text
             key={id}
@@ -163,13 +155,9 @@ export const OverObjectLayer: React.FC = React.memo(() => {
             position={position}
             fill={babyBlue}
             align="center"
-            offsetY={
-              (scaleConfig().scaleY / zoomProp) * radius -
-              scaleConfig().offsetY / 2
-            }
+            offsetY={offsetY}
             width={textWidth}
             offsetX={textWidth / 2}
-            {...antiScale()}
           />
         );
       })}
@@ -186,7 +174,6 @@ export const OverObjectLayer: React.FC = React.memo(() => {
             offsetY={visHpEffect.offset.y}
             width={textWidth}
             offsetX={textWidth / 2 + visHpEffect.offset.x}
-            {...antiScale()}
           />
         );
       })}

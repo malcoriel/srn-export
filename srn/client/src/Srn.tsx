@@ -3,7 +3,7 @@ import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.css';
 import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
-import { scaleConfig, size } from './world';
+import { size } from './world';
 import { CoordLayer } from './KonvaLayers/CoordLayer';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
@@ -142,7 +142,6 @@ const Srn = () => {
             <Stage
               width={size.width_px}
               height={size.height_px}
-              {...scaleConfig()}
               style={{ pointerEvents: 'none' }}
             >
               <OverObjectLayer />

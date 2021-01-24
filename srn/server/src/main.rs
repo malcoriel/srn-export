@@ -611,7 +611,8 @@ fn make_new_human_player(conn_id: Uuid) {
     }
     let (ship, planets) = {
         let mut cont = STATE.write().unwrap();
-        let ship = world::spawn_ship(&mut cont.state, conn_id, None).clone();
+        let ship =
+            world::spawn_ship(&mut cont.state, conn_id, Some(Vec2f64 { x: 0.0, y: 0.0 })).clone();
         (ship, cont.state.planets.clone())
     };
     {

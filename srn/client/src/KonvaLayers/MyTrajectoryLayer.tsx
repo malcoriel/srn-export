@@ -8,7 +8,7 @@ import { Circle, Layer, Rect } from 'react-konva';
 import Vector from '../utils/Vector';
 import _ from 'lodash';
 import { babyBlue, yellow } from '../utils/palette';
-import { antiScale, Planet, QuestState, Ship } from '../world';
+import { Planet, QuestState, Ship } from '../world';
 import { findPlanet } from '../HtmlLayers/NetworkStatus';
 
 const MAX_ITER = 100;
@@ -106,7 +106,7 @@ export const MyTrajectoryLayer: React.FC = () => {
             )
             .scale(1 / zoomProp)}
           stroke={babyBlue}
-          strokeWidth={1.01 * antiScale().line}
+          strokeWidth={1.01}
           dashEnabled
           dash={[0.5]}
         />

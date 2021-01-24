@@ -4,7 +4,6 @@ import { calcScreenPosToRealPos } from './coord';
 describe('screen to real', () => {
   describe('with screen 10x10m 100/100px (z=1)', () => {
     const viewPortSizeMeters = VectorF(10, 10); //m
-    const zoom = 1;
     const viewPortSizePixels = VectorF(100, 100); //px
 
     describe('with camera position 0m 0m', () => {
@@ -38,11 +37,11 @@ describe('screen to real', () => {
 
     describe('with camera position 5m 2.5m', () => {
       const cameraPos = new Vector(5, 2.5);
-      const focus = true;
+      const focus = false;
 
       it.each`
         mouseX | mouseY | realX   | realY  | run
-        ${50}  | ${50}  | ${0}    | ${0}   | ${true}
+        ${50}  | ${50}  | ${0}    | ${0}   | ${false}
         ${100} | ${0}   | ${5}    | ${-5}  | ${false}
         ${100} | ${90}  | ${5}    | ${4}   | ${false}
         ${0}   | ${0}   | ${-5}   | ${-5}  | ${false}
@@ -99,7 +98,7 @@ describe('screen to real', () => {
 
     describe('with camera position 5m 10m', () => {
       const cameraPos = new Vector(5, 10);
-      const focus = true;
+      const focus = false;
 
       it.each`
         mouseX | mouseY | realX | realY | run
@@ -131,16 +130,47 @@ describe('screen to real', () => {
 
     describe('with camera position 0m 0m', () => {
       const cameraPos = new Vector(0, 0);
-      const focus = true;
+      const focus = false;
 
       it.each`
         mouseX | mouseY | realX | realY   | run
-        ${50}  | ${25}  | ${0}  | ${0}    | ${true}
+        ${50}  | ${25}  | ${0}  | ${0}    | ${false}
         ${50}  | ${50}  | ${0}  | ${2.5}  | ${false}
         ${100} | ${50}  | ${5}  | ${2.5}  | ${false}
         ${0}   | ${0}   | ${-5} | ${-2.5} | ${false}
-        ${60}  | ${30}  | ${1}  | ${1}    | ${false}
+        ${60}  | ${30}  | ${1}  | ${0.5}  | ${false}
       `(
+        // last case is unclear, maybe realY should be 1
+        'can convert $mouseX/$mouseY',
+        ({ mouseX, mouseY, realX, realY, run }) => {
+          if (focus && !run) {
+            return;
+          }
+          expect(
+            calcScreenPosToRealPos(
+              cameraPos,
+              viewPortSizeMeters,
+              viewPortSizePixels
+            )(VectorF(mouseX, mouseY))
+          ).toEqual(VectorF(realX, realY));
+        }
+      );
+    });
+  });
+
+  describe('with screen 100x100m 971/916px (z=1)', () => {
+    const viewPortSizeMeters = VectorF(100, 100);
+    const viewPortSizePixels = VectorF(971, 916);
+
+    describe('with camera position -50m 50m', () => {
+      const cameraPos = new Vector(-50, 50);
+      const focus = false;
+
+      it.each`
+        mouseX | mouseY | realX | realY | run
+        ${971} | ${0}   | ${0}  | ${0}  | ${false}
+      `(
+        // last case is unclear, maybe realY should be 1
         'can convert $mouseX/$mouseY',
         ({ mouseX, mouseY, realX, realY, run }) => {
           if (focus && !run) {

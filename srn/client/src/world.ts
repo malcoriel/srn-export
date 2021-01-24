@@ -6,6 +6,12 @@ export const size = {
   getMinSize: () => Math.min(size.width_px, size.height_px),
 };
 
+export const viewPortSizePixels = () =>
+  new Vector(size.width_px, size.height_px);
+
+let pixels_per_unit = 10;
+export const viewPortSizeMeters = () =>
+  new Vector(size.width_px / pixels_per_unit, size.height_px / pixels_per_unit);
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
 // noinspection JSUnusedGlobalSymbols
@@ -14,10 +20,9 @@ export const max_x = width_units / 2;
 export const max_y = height_units / 2;
 export const min_x = -max_x;
 export const min_y = -max_y;
-const units_on_screen = 100;
 
-export const unitsToPixels_x = () => size.width_px / units_on_screen;
-export const unitsToPixels_y = () => size.height_px / units_on_screen;
+export const unitsToPixels_x = () => pixels_per_unit;
+export const unitsToPixels_y = () => pixels_per_unit;
 export const unitsToPixels_min = () =>
   Math.min(unitsToPixels_x(), unitsToPixels_y());
 
@@ -158,22 +163,6 @@ export type GameState = {
   star?: Star;
   paused: boolean;
   milliseconds_remaining: number;
-};
-
-export const scaleConfig = () => ({
-  scaleX: unitsToPixels_min(),
-  scaleY: unitsToPixels_min(),
-  offsetX: ((-units_on_screen / 2) * unitsToPixels_x()) / unitsToPixels_min(),
-  offsetY: ((-units_on_screen / 2) * unitsToPixels_y()) / unitsToPixels_min(),
-});
-
-export const antiScale = () => {
-  let scaleConfigV = scaleConfig();
-  return {
-    scaleX: 1 / scaleConfigV.scaleX,
-    scaleY: 1 / scaleConfigV.scaleY,
-    line: 1 / Math.max(scaleConfigV.scaleX, scaleConfigV.scaleY),
-  };
 };
 
 export enum ShipActionType {
