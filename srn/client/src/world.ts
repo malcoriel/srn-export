@@ -232,17 +232,9 @@ export const applyShipAction = (
   const moveByTimeDiagonal = (moveByTime * Math.sqrt(2)) / 2;
   switch (sa.s_type) {
     case ShipActionType.Dock: {
-      const shipV = Vector.fromIVector(myShip);
-      if (myShip.docked_at) {
-        myShip.docked_at = undefined;
-      } else {
-        for (const planet of stateConsideringPing.planets) {
-          const planetV = Vector.fromIVector(planet);
-          if (planetV.euDistTo(shipV) < planet.radius) {
-            myShip.docked_at = planet.id;
-            break;
-          }
-        }
+      const newShip = applyShipActionWasm(stateConsideringPing, sa);
+      if (newShip) {
+        myShip = { ...newShip };
       }
       break;
     }
@@ -309,9 +301,10 @@ export const applyShipAction = (
       break;
     }
     case ShipActionType.DockNavigate: {
-      myShip.navigate_target = undefined;
-      myShip.docked_at = undefined;
-      myShip.dock_target = sa.data as string;
+      const newShip = applyShipActionWasm(stateConsideringPing, sa);
+      if (newShip) {
+        myShip = { ...newShip };
+      }
       break;
     }
     default:
