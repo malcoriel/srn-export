@@ -1,14 +1,6 @@
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { Arc, Circle, Group, Layer, Rect, Stage, Star } from 'react-konva';
-import {
-  crimson,
-  darkGreen,
-  dirtyGray,
-  gray,
-  mint,
-  teal,
-  yellow,
-} from '../utils/palette';
+import { crimson, dirtyGray, gray, mint, teal, yellow } from '../utils/palette';
 import color from 'color';
 
 import React, { useMemo, useState } from 'react';
@@ -16,15 +8,12 @@ import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import {
   height_units,
   radToDeg,
-  unitsToPixels_min,
   width_units,
   size,
   viewPortSizeMeters,
-  viewPortSizePixels,
 } from '../world';
-import Vector, { IVector, VectorF, VectorFzero } from '../utils/Vector';
+import Vector, { VectorF, VectorFzero } from '../utils/Vector';
 import _ from 'lodash';
-import { useRealToScreen, useScreenToReal } from '../coordHooks';
 import {
   calcRealLenToScreenLen,
   calcRealPosToScreenPos,
@@ -59,6 +48,8 @@ export const MinimapLayer = React.memo(() => {
 
   const { state, visualState } = ns;
   let { cameraPosition } = visualState;
+
+  const [cameraPos, setCameraPos] = useState(cameraPosition);
 
   const {
     screenLenToRealLen,
@@ -98,7 +89,9 @@ export const MinimapLayer = React.memo(() => {
     let currentPosition = new Vector(mouseEvent.layerX, mouseEvent.layerY);
     visualState.boundCameraMovement = false;
 
-    visualState.cameraPosition = screenPosToRealPos(currentPosition);
+    let newPos = screenPosToRealPos(currentPosition);
+    setCameraPos(newPos);
+    visualState.cameraPosition = newPos;
   };
   const myShip = findMyShip(state);
   return (
@@ -239,7 +232,7 @@ export const MinimapLayer = React.memo(() => {
           draggable
           onDragMove={moveCamera}
           onDragEnd={moveCamera}
-          position={realPosToScreenPos(cameraPosition).subtract(
+          position={realPosToScreenPos(cameraPos).subtract(
             new Vector(minimap_viewport_size_x, minimap_viewport_size_y).scale(
               0.5
             )
