@@ -4,7 +4,6 @@ import 'reset-css';
 import './index.css';
 import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
 import { size } from './world';
-import { CoordLayer } from './KonvaLayers/CoordLayer';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { NetworkStatus } from './HtmlLayers/NetworkStatus';
@@ -147,7 +146,6 @@ const Srn = () => {
               <OverObjectLayer />
               <HintsLayer />
               <MyTrajectoryLayer />
-              <CoordLayer />
             </Stage>
             <ShipControls />
             <NetworkStatus />

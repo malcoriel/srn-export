@@ -622,13 +622,13 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
             }
 
             if !client {
-                // state.ships = update_ship_hp_effects(
-                //     &state.star,
-                //     &state.ships,
-                //     &mut state.players,
-                //     elapsed,
-                //     state.ticks,
-                // );
+                state.ships = update_ship_hp_effects(
+                    &state.star,
+                    &state.ships,
+                    &mut state.players,
+                    elapsed,
+                    state.ticks,
+                );
                 state.minerals = update_state_minerals(&state.minerals, &state.asteroid_belts);
 
                 respawn_dead_ships(&mut state, elapsed)

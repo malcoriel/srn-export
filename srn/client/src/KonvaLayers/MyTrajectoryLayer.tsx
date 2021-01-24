@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import NetState, {
   findMyPlayer,
   findMyShip,
@@ -8,8 +8,17 @@ import { Circle, Layer, Rect } from 'react-konva';
 import Vector from '../utils/Vector';
 import _ from 'lodash';
 import { babyBlue, yellow } from '../utils/palette';
-import { Planet, QuestState, Ship } from '../world';
+import {
+  Planet,
+  QuestState,
+  Ship,
+  size,
+  unitsToPixels_min,
+  viewPortSizeMeters,
+  viewPortSizePixels,
+} from '../world';
 import { findPlanet } from '../HtmlLayers/NetworkStatus';
+import { calcRealPosToScreenPos, calcScreenPosToRealPos } from '../coord';
 
 const MAX_ITER = 100;
 const TRAJECTORY_STEP = 10.0;
@@ -42,16 +51,25 @@ export const MyTrajectoryLayer: React.FC = () => {
   useNSForceChange('MyTrajectoryLayer', true);
   const { state, visualState } = ns;
   const myShip = findMyShip(state);
-  if (!myShip) return null;
   let zoomProp = 1 / (visualState.zoomShift || 1.0);
+
+  const { shiftPos } = useMemo(() => {
+    const shiftPos = calcRealPosToScreenPos(
+      visualState.cameraPosition,
+      viewPortSizeMeters(),
+      viewPortSizePixels()
+    );
+    return { shiftPos };
+  }, [visualState.cameraPosition, zoomProp, size]);
+
+  if (!myShip) return null;
 
   let planetsById = _.keyBy(state.planets, 'id');
   let pointTarget = myShip.navigate_target;
   let planetTarget = myShip.dock_target
     ? planetsById[myShip.dock_target]
     : undefined;
-  let cameraShift = Vector.fromIVector(visualState.cameraPosition);
-  let wrapOffset = 0.5;
+  let wrapOffset = 10;
 
   const myPlayer = findMyPlayer(state);
 
@@ -74,37 +92,26 @@ export const MyTrajectoryLayer: React.FC = () => {
       {myShip.trajectory.map((position, i) => {
         return (
           <Circle
-            radius={0.2}
+            radius={3}
             key={i}
-            position={Vector.fromIVector(position)
-              .subtract(cameraShift)
-              .scale(1 / zoomProp)}
+            position={shiftPos(position)}
             fill={babyBlue}
           />
         );
       })}
       {pointTarget && (
-        <Circle
-          position={Vector.fromIVector(pointTarget)
-            .subtract(cameraShift)
-            .scale(1 / zoomProp)}
-          radius={0.5}
-          fill={babyBlue}
-        />
+        <Circle position={shiftPos(pointTarget)} radius={0.5} fill={babyBlue} />
       )}
       {planetTarget && (
         <Rect
-          width={(planetTarget.radius / zoomProp + wrapOffset) * 2}
-          height={(planetTarget.radius / zoomProp + wrapOffset) * 2}
-          position={Vector.fromIVector(planetTarget)
-            .subtract(cameraShift)
-            .subtract(
-              new Vector(
-                planetTarget.radius + wrapOffset,
-                planetTarget.radius + wrapOffset
-              )
+          width={(planetTarget.radius * unitsToPixels_min() + wrapOffset) * 2}
+          height={(planetTarget.radius * unitsToPixels_min() + wrapOffset) * 2}
+          position={shiftPos(planetTarget).subtract(
+            new Vector(
+              planetTarget.radius * unitsToPixels_min() + wrapOffset,
+              planetTarget.radius * unitsToPixels_min() + wrapOffset
             )
-            .scale(1 / zoomProp)}
+          )}
           stroke={babyBlue}
           strokeWidth={1.01}
           dashEnabled
@@ -115,25 +122,17 @@ export const MyTrajectoryLayer: React.FC = () => {
         questTargetTrajectory.map((position, i) => {
           return (
             <Rect
-              width={0.6}
-              height={0.6}
+              width={5}
+              height={5}
               key={i}
               text={name}
-              position={Vector.fromIVector(position)
-                .subtract(cameraShift)
-                .scale(1 / zoomProp)}
+              position={shiftPos(position)}
               fill={yellow}
             />
           );
         })}
       {questTarget && (
-        <Circle
-          position={Vector.fromIVector(questTarget)
-            .subtract(cameraShift)
-            .scale(1 / zoomProp)}
-          radius={0.5}
-          fill={yellow}
-        />
+        <Circle position={shiftPos(questTarget)} radius={8} fill={yellow} />
       )}
     </Layer>
   );

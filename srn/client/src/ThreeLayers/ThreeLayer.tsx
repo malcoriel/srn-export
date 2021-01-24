@@ -15,7 +15,7 @@ import NetState, { useNSForceChange } from '../NetState';
 import Vector, { IVector } from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
 import { BackgroundPlane } from './BackgroundPlane';
-import { useShowCoordinates } from '../KonvaLayers/CoordLayer';
+import { useToggleHotkey } from '../utils/useToggleHotkey';
 
 export type Vector3Arr = [number, number, number];
 
@@ -47,7 +47,7 @@ export const ThreeLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state } = ns;
-  const [shown] = useShowCoordinates();
+  const [shown] = useToggleHotkey('shift+g', false, 'show helper grid');
   const showCoords = shown;
 
   useNSForceChange('ThreeLayer', true);
