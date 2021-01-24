@@ -194,6 +194,12 @@ export class ShipAction {
       data: JSON.stringify(this.data),
     });
   }
+  public serialize_for_wasm(): any {
+    return {
+      s_type: this.s_type,
+      data: JSON.stringify(this.data),
+    };
+  }
 }
 
 const directionToRotation = {
@@ -288,11 +294,10 @@ export const applyShipAction = (
       break;
     }
     case ShipActionType.Navigate: {
-      myShip.dock_target = undefined;
-      myShip.docked_at = undefined;
-      myShip.trajectory = [];
-      let navigate_target = sa.data as IVector;
-      myShip.navigate_target = { x: navigate_target.x, y: navigate_target.y };
+      const newShip = applyShipActionWasm(stateConsideringPing, sa);
+      if (newShip) {
+        myShip = { ...newShip };
+      }
       break;
     }
     case ShipActionType.Tractor: {
@@ -338,9 +343,6 @@ const exposeJsonParseError = (
     const lines = serializedState.split('\n');
     const lineNumber = Number(match[1]);
 
-    const inState = JSON.parse(serializedState) as GameState;
-    console.log(inState.ships.filter((s: Ship) => !s.rotation));
-
     console.log(
       lines[lineNumber - 3] || '',
       '\n',
@@ -385,14 +387,17 @@ const doWasmCall = <R>(fnName: string, ...args: any[]): R | undefined => {
   } catch (e) {
     console.warn(`wasm function ${fnName} produced an invalid json`);
   }
+  if (!result) {
+    console.warn(`wasm function ${fnName} produced no result:`, result);
+    return undefined;
+  }
   if (result.message) {
-    let serializedInState = args[0];
     console.warn(
       `wasm function ${fnName} produced an error with message:\n`,
       result.message
     );
     console.warn(new Error());
-    exposeJsonParseError(serializedInState, result.message);
+    exposeJsonParseError(args[0], result.message);
 
     return undefined;
   }
@@ -416,4 +421,22 @@ const parseState = (inState: GameState): GameState | undefined => {
 export const validateState = (inState: GameState): boolean => {
   const parsed = parseState(inState);
   return !!parsed;
+};
+
+const applyShipActionWasm = (
+  state: GameState,
+  ship_action: ShipAction
+): Ship | undefined => {
+  return doWasmCall<Ship>(
+    'apply_ship_action',
+    JSON.stringify(
+      {
+        state,
+        ship_action: ship_action.serialize_for_wasm(),
+        player_id: state.my_id,
+      },
+      null,
+      2
+    )
+  );
 };

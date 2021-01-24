@@ -21,10 +21,6 @@ use wasm_bindgen::prelude::*;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 extern crate uuid;
-#[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
-}
 
 pub fn new_id() -> Uuid {
     // technically, should never be needed on client as entity generation is a privileged thing
@@ -32,9 +28,41 @@ pub fn new_id() -> Uuid {
 }
 
 #[wasm_bindgen]
-pub fn greet() {
-    alert("Hello, world!");
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    pub fn log(s: &str);
+
+    #[wasm_bindgen(js_namespace = console)]
+    pub fn warn(s: &str);
+
+    #[wasm_bindgen(js_namespace = console)]
+    pub fn error(s: &str);
 }
+
+macro_rules! log {
+    ($($t:tt)*) => {
+        unsafe {
+            (crate::log(&format_args!("wasm log: {}", $($t)*).to_string()))
+            }
+    }
+}
+
+macro_rules! warn {
+    ($($t:tt)*) => {
+        unsafe {
+            (crate::warn(&format_args!("wasm warn: {}", $($t)*).to_string()))
+            }
+    }
+}
+
+macro_rules! err {
+    ($($t:tt)*) => {
+        unsafe {
+            (crate::error(&format_args!("wasm err: {}"$($t)*).to_string()))
+            }
+    }
+}
+
 #[path = "../../server/src/world.rs"]
 mod world;
 

@@ -1199,8 +1199,9 @@ pub fn apply_ship_action(
 ) -> Option<Ship> {
     let ship_action: ShipActionRust = parse_ship_action(ship_action);
     let old_ship = find_my_ship(state, player_id);
+
     if old_ship.is_none() {
-        eprintln!("No ship");
+        warn!("No ship");
         return None;
     }
 
@@ -1208,7 +1209,7 @@ pub fn apply_ship_action(
 
     match ship_action {
         ShipActionRust::Unknown => {
-            eprintln!("Unknown ship action");
+            warn!("Unknown ship action");
             None
         }
         ShipActionRust::Move(v) => {

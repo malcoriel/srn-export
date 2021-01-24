@@ -43,6 +43,24 @@ const MAJOR: u32 = pkg_version_major!();
 const MINOR: u32 = pkg_version_minor!();
 const PATCH: u32 = pkg_version_patch!();
 
+macro_rules! log {
+    ($($t:tt)*) => {
+        (println!("log: {}", ($($t)*).to_string()))
+    }
+}
+
+macro_rules! warn {
+    ($($t:tt)*) => {
+        (eprintln!("warn: {}", ($($t)*).to_string()))
+    }
+}
+
+macro_rules! err {
+    ($($t:tt)*) => {
+        (eprintln!("err: {}", ($($t)*).to_string()))
+    }
+}
+
 #[macro_use]
 extern crate rocket;
 extern crate rocket_cors;

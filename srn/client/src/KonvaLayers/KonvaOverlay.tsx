@@ -1,4 +1,3 @@
-import Color from 'color';
 import React, { useMemo } from 'react';
 import { findMineral, GameState, TRACTOR_DIST } from '../world';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';

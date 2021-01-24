@@ -439,7 +439,7 @@ export default class NetState extends EventEmitter {
   private mutate_ship = (commands: ShipAction[], elapsedMs: number) => {
     const myShipIndex = findMyShipIndex(this.state);
     if (myShipIndex === -1 || myShipIndex === null) return;
-    let myShip = this.state.ships.splice(myShipIndex, 1)[0];
+    let myShip = this.state.ships[myShipIndex];
     for (const cmd of commands) {
       myShip = applyShipAction(
         myShip,
@@ -449,6 +449,7 @@ export default class NetState extends EventEmitter {
         this.maxPing || this.ping
       );
     }
+    this.state.ships.splice(myShipIndex, 1);
     this.state.ships.push(myShip);
     if (!validateState(this.state)) {
       console.warn('mutate ship caused invalid state');
