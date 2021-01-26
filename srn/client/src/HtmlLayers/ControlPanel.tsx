@@ -72,26 +72,43 @@ export function ControlPanel() {
           <AiOutlineSolution />
         </Button>
       </StyledRect>
-      {myShip && (
-        <StyledRect
-          height={20}
-          width={200}
-          line="thin"
-          thickness={4}
-          halfThick
-          noLeft
-          noBottom
-          className="hp-bar"
-        >
-          <div className="text">
-            {Math.floor(myShip.hp)}/{Math.floor(myShip.max_hp)}
-          </div>
-          <div
-            className="filler"
-            style={{ width: `${(myShip.hp / myShip.max_hp) * 100}%` }}
-          />
-        </StyledRect>
-      )}
+      <div className="money-and-hp">
+        {myPlayer && (
+          <StyledRect
+            line="thin"
+            thickness={4}
+            contentClassName={'money'}
+            halfThick
+            noLeft
+            noBottom
+            width={100}
+            height={22}
+          >
+            <span className="money-icon" />
+            <span className="text">{myPlayer.money}</span>
+          </StyledRect>
+        )}
+        {myShip && (
+          <StyledRect
+            height={20}
+            width={200}
+            line="thin"
+            thickness={4}
+            halfThick
+            noLeft
+            noBottom
+            className="hp-bar"
+          >
+            <div className="text">
+              {Math.floor(myShip.hp)}/{Math.floor(myShip.max_hp)}
+            </div>
+            <div
+              className="filler"
+              style={{ width: `${(myShip.hp / myShip.max_hp) * 100}%` }}
+            />
+          </StyledRect>
+        )}
+      </div>
     </div>
   );
 }

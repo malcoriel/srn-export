@@ -26,9 +26,33 @@ $controlPanelHeight: 69px;
     padding: 0;
   }
 
+  .money-and-hp {
+    align-self: flex-end;
+
+  }
+
+  .money {
+    color: white;
+    padding: 1px;
+    position: relative;
+
+    .text {
+      width: 80px;
+      display: inline-block;
+      text-align: right;
+    }
+
+    .money-icon {
+      width: 15px;
+      height: 15px;
+      display: inline-block;
+      background: url("../../public/resources/gold.png") no-repeat 0 3px;
+      background-size: 15px 15px;
+    }
+
+  }
 
   .hp-bar {
-    align-self: flex-end;
 
     .content {
       width: 100%;
