@@ -1,3 +1,7 @@
+# Version 0.3.6
+## Fixes
+* Significantly improved server-side performance.
+
 # Version 0.3.5
 ## New
 * Money display in the controls panel.
