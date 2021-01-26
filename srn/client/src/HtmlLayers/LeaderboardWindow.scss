@@ -1,3 +1,4 @@
+@import "../utils/palette.scss";
 .leaderboard-window-content {
   display: flex;
   align-items: center;
@@ -25,6 +26,25 @@
     line-height: 20px;
     color: #fbe7c6;
     margin-bottom: 10px;
+  }
+
+  .news-talk {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    vertical-align: middle;
+    height: 50px;
+    color: white;
+
+    a {
+      color: $teal !important;
+      line-height: 24px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
   }
 }
 

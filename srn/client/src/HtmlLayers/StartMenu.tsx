@@ -201,7 +201,7 @@ export const StartMenu: React.FC<{
         <div>Server version: {serverVersionFormatted}</div>
       </div>
       <div className="about">
-        <a href="https://t.me/joinchat/WLDnjKtHTPplQZje">
+        <a href="https://t.me/joinchat/WLDnjKtHTPplQZje" target="_blank">
           <FaTelegram />
           &nbsp; news & talk
         </a>

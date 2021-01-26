@@ -76,7 +76,7 @@ export const Window: React.FC<{
                   height={height}
                   line={line}
                   thickness={thickness}
-                  contentClassName={contentClassName}
+                  contentClassName={`ui-window-content ${contentClassName}`}
                 >
                   {windowButtons}
                   {children}

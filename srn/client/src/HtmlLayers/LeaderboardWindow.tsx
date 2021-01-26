@@ -3,6 +3,7 @@ import NetState, { findMyPlayer, useNSForceChange } from '../NetState';
 import { Window } from './ui/Window';
 import './LeaderboardWindow.scss';
 import { useStore, WindowState } from '../store';
+import { FaTelegram } from 'react-icons/fa';
 
 export const LeaderboardWindow: React.FC = () => {
   const ns = NetState.get();
@@ -45,6 +46,13 @@ export const LeaderboardWindow: React.FC = () => {
         )
       }
     >
+      <div className="news-talk">
+        Subscribe to{' '}
+        <a href="https://t.me/joinchat/WLDnjKtHTPplQZje" target="_blank">
+          <FaTelegram />
+          &nbsp; news & talk
+        </a>
+      </div>
       {paused && <div className="winner">Winner: {leaderboard.winner}</div>}
       <div className="header">Leaderboard:</div>
       {leaderboard.rating.map(([p, s], i) => (
