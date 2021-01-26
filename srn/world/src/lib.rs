@@ -81,7 +81,11 @@ mod dialogue;
 #[path = "../../server/src/system_gen.rs"]
 mod system_gen;
 
+#[path = "../../server/src/perf.rs"]
+mod perf;
+
 pub const DEBUG_PHYSICS: bool = false;
+pub const ENABLE_PERF: bool = false;
 
 use serde::Deserialize as Deserializable;
 use serde_derive::{Deserialize, Serialize};
@@ -142,7 +146,8 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     }
     let args = args.ok().unwrap();
 
-    let new_state = world::update_world(args, elapsed_micro, true);
+    let (new_state, _sampler) =
+        world::update_world(args, elapsed_micro, true, perf::Sampler::new(vec![]));
     return serde_json::to_string(&new_state).unwrap_or(DEFAULT_ERR.to_string());
 }
 

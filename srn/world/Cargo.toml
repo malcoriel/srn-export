@@ -33,10 +33,12 @@ serde_json = "1.0.60"
 serde_derive = "1.0.118"
 rand = {version = "0.6.5", features = ["wasm-bindgen"]}
 itertools = "0.10.0"
-chrono = "0.4.19"
+chrono = {version = "0.4.19", features = ["wasmbind"]}
 regex = "1.4.2"
 crossbeam = "0.8.0"
 objekt-clonable = "0.2.2"
+statrs = "0.13.0"
+statistical = "1.0.0"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
