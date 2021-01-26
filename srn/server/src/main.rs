@@ -759,6 +759,11 @@ const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
 const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 
+use regex::Regex;
+lazy_static! {
+    pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
+}
+
 fn main_thread() {
     let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
@@ -780,12 +785,14 @@ fn main_thread() {
             "Update planet movement",     // 9
             "Update asteroids",           // 10
             "Update ships on planets",    // 11
-            "Update ships navigation",    //12
-            "Update ships tractoring",    //13
-            "Update tractored materials", //14
-            "Update ship hp effects",     //15
-            "Update minerals respawn",    //16
-            "Update ships respawn",       //17
+            "Update ships navigation",    // 12
+            "Update ships tractoring",    // 13
+            "Update tractored materials", // 14
+            "Update ship hp effects",     // 15
+            "Update minerals respawn",    // 16
+            "Update ships respawn",       // 17
+            "Events 1",                   // 18
+            "Events 2",                   // 19
         ]
         .iter()
         .map(|v| v.to_string())
@@ -836,7 +843,9 @@ fn main_thread() {
         if events_elapsed > EVENT_TRIGGER_TIME {
             let events_mark = sampler.start(5);
             let receiver = &mut EVENTS.lock().unwrap().1;
-            let res = events::handle_events(&d_table, receiver, state, d_states);
+            let (res, updated_sampler) =
+                events::handle_events(&d_table, receiver, state, d_states, sampler);
+            sampler = updated_sampler;
             for (client_id, dialogue) in res {
                 unicast_dialogue_state(client_id, dialogue);
             }

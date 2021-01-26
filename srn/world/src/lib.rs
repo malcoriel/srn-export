@@ -75,9 +75,6 @@ mod vec2;
 #[path = "../../server/src/random_stuff.rs"]
 mod random_stuff;
 
-#[path = "../../server/src/dialogue.rs"]
-mod dialogue;
-
 #[path = "../../server/src/system_gen.rs"]
 mod system_gen;
 

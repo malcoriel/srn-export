@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use crate::fire_event;
 use crate::new_id;
+use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
@@ -210,7 +211,8 @@ impl DialogueTable {
         d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
         mut res: &mut Vec<(Uuid, Option<Dialogue>)>,
         player: &Player,
-    ) {
+        sampler: Sampler,
+    ) -> Sampler {
         let (_current_player_dialogue, player_d_states) =
             d_states.entry(player.id).or_insert((None, HashMap::new()));
 
@@ -229,8 +231,9 @@ impl DialogueTable {
             }
         }
         if d_script.is_none() {
-            return;
+            return sampler;
         }
+
         let d_script = d_script.unwrap();
         let d_id = d_script.id;
         let ship = find_my_ship(state, player.id);
@@ -258,6 +261,7 @@ impl DialogueTable {
                 }
             }
         }
+        sampler
     }
 }
 
@@ -356,7 +360,7 @@ fn substitute_text(
     game_state: &GameState,
 ) -> Vec<DialogueSubstitution> {
     let mut res = vec![];
-    let re = Regex::new(r"s_\w+").unwrap();
+    let re = &crate::SUB_RE;
     for cap in re.captures_iter(text.as_str()) {
         if cap[0] == *"s_current_planet" {
             if let Some(current_planet) = current_planet {

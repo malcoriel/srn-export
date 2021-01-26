@@ -9,10 +9,6 @@ use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 use uuid::*;
 
-use crate::dialogue::{
-    build_dialogue_from_state, Dialogue, DialogueScript, DialogueStates, DialogueTable,
-    DialogueUpdate,
-};
 use crate::perf::Sampler;
 use crate::planet_movement::{index_bodies_by_id, make_bodies_from_planets, IBody};
 use crate::random_stuff::{
@@ -23,8 +19,8 @@ use crate::random_stuff::{
 };
 use crate::system_gen::system_gen;
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::{dialogue, new_id, DEBUG_PHYSICS};
 use crate::{fire_event, planet_movement};
+use crate::{new_id, DEBUG_PHYSICS};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;

@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::cast::XCast;
 use crate::dialogue::{Dialogue, DialogueTable};
+use crate::perf::Sampler;
 use crate::world::{GameEvent, GameState};
 use crate::EVENTS;
 
@@ -13,7 +14,8 @@ pub fn handle_events(
     receiver: &mut Receiver<GameEvent>,
     state: &mut GameState,
     d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
-) -> Vec<(Uuid, Option<Dialogue>)> {
+    mut sampler: Sampler,
+) -> (Vec<(Uuid, Option<Dialogue>)>, Sampler) {
     let mut res = vec![];
 
     loop {
@@ -29,7 +31,13 @@ pub fn handle_events(
                 let mut res_argument = &mut res;
                 let player_argument = &player;
                 let d_table_argument = &d_table;
-                d_table_argument.try_trigger(state, d_states, &mut res_argument, player_argument);
+                sampler = d_table_argument.try_trigger(
+                    state,
+                    d_states,
+                    &mut res_argument,
+                    player_argument,
+                    sampler,
+                );
             }
             match event.clone() {
                 GameEvent::ShipSpawned { player, .. } => {
@@ -50,7 +58,7 @@ pub fn handle_events(
             break;
         }
     }
-    res
+    (res, sampler)
 }
 
 pub fn fire_event(ev: GameEvent) {

@@ -59,9 +59,13 @@ impl Sampler {
                     &self.labels[i],
                     bucket.len(),
                     bucket.iter().sum::<u64>() as f64 / bucket.len() as f64,
-                    standard_deviation(&f64bucket, None),
-                    max(bucket).unwrap(),
-                    min(bucket).unwrap(),
+                    if f64bucket.len() >= 2 {
+                        standard_deviation(&f64bucket, None)
+                    } else {
+                        0.0
+                    },
+                    max(bucket).unwrap_or(&0),
+                    min(bucket).unwrap_or(&0),
                 ));
             }
             self.marks.clear();
