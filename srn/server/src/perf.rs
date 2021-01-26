@@ -72,11 +72,14 @@ impl Sampler {
     }
 
     pub fn start(&mut self, label_idx: u32) -> Uuid {
-        let start = Local::now();
-        let id = crate::new_id();
-        if crate::ENABLE_PERF {
+        let id = if crate::ENABLE_PERF {
+            let id = crate::new_id();
+            let start = Local::now();
             self.mark(label_idx, start, id);
-        }
+            id
+        } else {
+            Default::default()
+        };
         return id;
     }
 
