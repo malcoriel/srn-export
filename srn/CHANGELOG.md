@@ -1,3 +1,8 @@
+# Version 0.3.5
+## New
+* Money display in the controls panel.
+* Link to the telegram channel on the leaderboard.
+
 # Version 0.3.4
 ## New
 * Minerals now spawn in the asteroid belts and can be tractored to gain money.
