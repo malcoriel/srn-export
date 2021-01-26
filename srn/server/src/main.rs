@@ -756,6 +756,8 @@ fn cleanup_thread() {
 }
 
 const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
+const BOT_ACTION_TIME: i64 = 200 * 1000;
+const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 
 fn main_thread() {
     let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
@@ -790,6 +792,8 @@ fn main_thread() {
         .collect::<Vec<_>>(),
     );
     let mut sampler_consume_elapsed = 0;
+    let mut bot_action_elapsed = 0;
+    let mut events_elapsed = 0;
     loop {
         thread::sleep(Duration::from_millis(MAIN_THREAD_SLEEP_MS));
 
@@ -816,20 +820,31 @@ fn main_thread() {
         try_assign_quests(&mut cont.state);
         sampler.end(quests_mark);
 
-        let bots_mark = sampler.start(4);
-        let state = &mut cont.state;
         let d_states = &mut **d_states;
-        let bots = &mut *bots;
-        do_bot_actions(state, bots, d_states, &d_table, elapsed_micro);
-        sampler.end(bots_mark);
+        let state = &mut cont.state;
 
-        let events_mark = sampler.start(5);
-        let receiver = &mut EVENTS.lock().unwrap().1;
-        let res = events::handle_events(&d_table, receiver, state, d_states);
-        for (client_id, dialogue) in res {
-            unicast_dialogue_state(client_id, dialogue);
+        if bot_action_elapsed > BOT_ACTION_TIME {
+            let bots_mark = sampler.start(4);
+            let bots = &mut *bots;
+            do_bot_actions(state, bots, d_states, &d_table, elapsed_micro);
+            sampler.end(bots_mark);
+            bot_action_elapsed = 0;
+        } else {
+            bot_action_elapsed += elapsed_micro;
         }
-        sampler.end(events_mark);
+
+        if events_elapsed > EVENT_TRIGGER_TIME {
+            let events_mark = sampler.start(5);
+            let receiver = &mut EVENTS.lock().unwrap().1;
+            let res = events::handle_events(&d_table, receiver, state, d_states);
+            for (client_id, dialogue) in res {
+                unicast_dialogue_state(client_id, dialogue);
+            }
+            sampler.end(events_mark);
+            events_elapsed = 0;
+        } else {
+            events_elapsed += elapsed_micro;
+        }
 
         let cleanup_mark = sampler.start(6);
         let existing_player_ships = cont
@@ -861,7 +876,11 @@ fn main_thread() {
             sampler_consume_elapsed = 0;
             let (sampler_out, metrics) = sampler.consume();
             sampler = sampler_out;
-            log!(format!("perf: \n{}", metrics.join("\n")));
+            log!(format!(
+                "performance stats over {} sec \n{}",
+                PERF_CONSUME_TIME / 1000 / 1000,
+                metrics.join("\n")
+            ));
         }
     }
 }
