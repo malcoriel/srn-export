@@ -1,4 +1,6 @@
 use chrono::{DateTime, Local};
+use itertools::{max, min};
+use statistical::standard_deviation;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -44,11 +46,18 @@ impl Sampler {
         } else {
             for i in 0..self.labels.len() {
                 let bucket = &self.buckets[&(i as u32)];
+                let f64bucket = bucket
+                    .clone()
+                    .into_iter()
+                    .map(|v| v as f64)
+                    .collect::<Vec<_>>();
                 result.push(format!(
-                    "{}={:.3}µs ({})",
+                    "{}={:.2}µs (σ={:.2} max={:.2} min={:.2})",
                     &self.labels[i],
                     bucket.iter().sum::<u64>() as f64 / bucket.len() as f64 / 1000.0,
-                    bucket.len()
+                    standard_deviation(&f64bucket, None),
+                    max(bucket).unwrap(),
+                    min(bucket).unwrap(),
                 ));
             }
             self.marks.clear();

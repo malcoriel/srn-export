@@ -21,6 +21,8 @@ regex = "1.4.2"
 crossbeam = "0.8.0"
 pkg-version = "1.0.0"
 objekt-clonable = "0.2.2"
+statrs = "0.13.0"
+statistical = "1.0.0"
 
   [dependencies.rocket]
   git = "https://github.com/SergioBenitez/Rocket"

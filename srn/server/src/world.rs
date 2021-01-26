@@ -13,6 +13,7 @@ use crate::dialogue::{
     build_dialogue_from_state, Dialogue, DialogueScript, DialogueStates, DialogueTable,
     DialogueUpdate,
 };
+use crate::perf::Sampler;
 use crate::planet_movement::{index_bodies_by_id, make_bodies_from_planets, IBody};
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
@@ -558,7 +559,12 @@ pub fn force_update_to_now(state: &mut GameState) {
     state.ticks = (now - state.start_time_ticks) as u32;
 }
 
-pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameState {
+pub fn update_world(
+    mut state: GameState,
+    elapsed: i64,
+    client: bool,
+    mut sampler: Sampler,
+) -> (GameState, Sampler) {
     state.ticks += elapsed as u32 / 1000;
     if !client {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
@@ -589,7 +595,7 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
         }
     } else {
         if !client {
-            state.leaderboard = make_leaderboard(&state.players);
+            state.leaderboard = sampler.measure(&|| make_leaderboard(&state.players), 8);
         }
         if state.milliseconds_remaining <= 0 {
             eprintln!("game end");
@@ -597,21 +603,39 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
             state.milliseconds_remaining = 10 * 1000;
             fire_event(GameEvent::GameEnded);
         } else {
-            state.planets = planet_movement::update_planets(&state.planets, &state.star, elapsed);
+            state.planets = sampler.measure(
+                &|| planet_movement::update_planets(&state.planets, &state.star, elapsed),
+                9,
+            );
+            let update_ast_id = sampler.start(10);
             state.asteroids =
                 planet_movement::update_asteroids(&state.asteroids, &state.star, elapsed);
             for mut belt in state.asteroid_belts.iter_mut() {
                 belt.rotation += belt.orbit_speed / 1000.0 / 1000.0 * elapsed as f64;
             }
-            state.ships = update_ships_on_planets(&state.planets, &state.ships);
-            state.ships = update_ships_navigation(
-                &state.ships,
-                &state.planets,
-                &state.players,
-                &state.star,
-                elapsed,
+            sampler.end(update_ast_id);
+            state.ships = sampler.measure(
+                &|| update_ships_on_planets(&state.planets, &state.ships),
+                11,
             );
-            state.ships = update_ships_tractoring(&state.ships, &state.minerals);
+            state.ships = sampler.measure(
+                &|| {
+                    update_ships_navigation(
+                        &state.ships,
+                        &state.planets,
+                        &state.players,
+                        &state.star,
+                        elapsed,
+                    )
+                },
+                12,
+            );
+            state.ships = sampler.measure(
+                &|| update_ships_tractoring(&state.ships, &state.minerals),
+                13,
+            );
+
+            let update_minerals_id = sampler.start(14);
             let (minerals, players_update) =
                 update_tractored_minerals(&state.ships, &state.minerals, elapsed, &state.players);
             state.minerals = minerals;
@@ -620,8 +644,10 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
                     p.money += pup.1;
                 }
             }
+            sampler.end(update_minerals_id);
 
             if !client {
+                let hp_effects_id = sampler.start(15);
                 state.ships = update_ship_hp_effects(
                     &state.star,
                     &state.ships,
@@ -629,13 +655,19 @@ pub fn update_world(mut state: GameState, elapsed: i64, client: bool) -> GameSta
                     elapsed,
                     state.ticks,
                 );
-                state.minerals = update_state_minerals(&state.minerals, &state.asteroid_belts);
+                sampler.end(hp_effects_id);
 
-                respawn_dead_ships(&mut state, elapsed)
+                state.minerals = sampler.measure(
+                    &|| update_state_minerals(&state.minerals, &state.asteroid_belts),
+                    16,
+                );
+                let respawn_id = sampler.start(17);
+                respawn_dead_ships(&mut state, elapsed);
+                sampler.end(respawn_id);
             }
         }
     }
-    state
+    (state, sampler)
 }
 
 fn update_ships_tractoring(ships: &Vec<Ship>, minerals: &Vec<NatSpawnMineral>) -> Vec<Ship> {

@@ -766,15 +766,24 @@ fn main_thread() {
     }
     let mut sampler = Sampler::new(
         vec![
-            "Main total",       // 0
-            "Update",           // 1
-            "Locks",            // 2
-            "Quests",           // 3
-            "Bots",             // 4
-            "Events",           // 5
-            "Ship cleanup",     // 6
-            "Multicast update", // 7
-            "Update",
+            "Main total",                 // 0
+            "Update",                     // 1
+            "Locks",                      // 2
+            "Quests",                     // 3
+            "Bots",                       // 4
+            "Events",                     // 5
+            "Ship cleanup",               // 6
+            "Multicast update",           // 7
+            "Update leaderboard",         // 8
+            "Update planet movement",     // 9
+            "Update asteroids",           // 10
+            "Update ships on planets",    // 11
+            "Update ships navigation",    //12
+            "Update ships tractoring",    //13
+            "Update tractored materials", //14
+            "Update ship hp effects",     //15
+            "Update minerals respawn",    //16
+            "Update ships respawn",       //17
         ]
         .iter()
         .map(|v| v.to_string())
@@ -795,10 +804,12 @@ fn main_thread() {
         let elapsed = now - last;
         last = now;
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
-        let updated_state = sampler.measure(
-            &|| world::update_world(cont.state.clone(), elapsed_micro, false),
-            1,
-        );
+        let update_id = sampler.start(1);
+        let (updated_state, updated_sampler) =
+            world::update_world(cont.state.clone(), elapsed_micro, false, sampler);
+        sampler = updated_sampler;
+        sampler.end(update_id);
+
         cont.state = updated_state;
 
         let quests_mark = sampler.start(3);
