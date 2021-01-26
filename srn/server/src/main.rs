@@ -791,8 +791,6 @@ fn main_thread() {
             "Update ship hp effects",     // 15
             "Update minerals respawn",    // 16
             "Update ships respawn",       // 17
-            "Events 1",                   // 18
-            "Events 2",                   // 19
         ]
         .iter()
         .map(|v| v.to_string())
