@@ -33,11 +33,13 @@ use crate::bots::{bot_init, do_bot_actions};
 use crate::dialogue::{
     execute_dialog_option, Dialogue, DialogueId, DialogueScript, DialogueUpdate,
 };
+use crate::perf::Sampler;
 use crate::vec2::Vec2f64;
 use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent,
     ShipAction,
 };
+use itertools::Itertools;
 
 const MAJOR: u32 = pkg_version_major!();
 const MINOR: u32 = pkg_version_minor!();
@@ -72,6 +74,7 @@ mod cast;
 mod dialogue;
 mod dialogue_test;
 mod events;
+mod perf;
 mod planet_movement;
 mod random_stuff;
 mod system_gen;
@@ -229,6 +232,7 @@ lazy_static! {
 //     broadcast_state(mut_state.clone());
 // }
 
+pub const ENABLE_PERF: bool = true;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
@@ -751,6 +755,8 @@ fn cleanup_thread() {
     }
 }
 
+const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
+
 fn main_thread() {
     let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
@@ -758,33 +764,63 @@ fn main_thread() {
         let mut bots = bots::BOTS.lock().unwrap();
         bot_init(&mut *bots);
     }
+    let mut sampler = Sampler::new(
+        vec![
+            "Main total",       // 0
+            "Update",           // 1
+            "Locks",            // 2
+            "Quests",           // 3
+            "Bots",             // 4
+            "Events",           // 5
+            "Ship cleanup",     // 6
+            "Multicast update", // 7
+            "Update",
+        ]
+        .iter()
+        .map(|v| v.to_string())
+        .collect::<Vec<_>>(),
+    );
+    let mut sampler_consume_elapsed = 0;
     loop {
         thread::sleep(Duration::from_millis(MAIN_THREAD_SLEEP_MS));
+
+        let total_mark = sampler.start(0);
+        let lock_mark = sampler.start(2);
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = bots::BOTS.lock().unwrap();
+        sampler.end(lock_mark);
 
         let now = Local::now();
         let elapsed = now - last;
         last = now;
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
-        cont.state = world::update_world(cont.state.clone(), elapsed_micro, false);
+        let updated_state = sampler.measure(
+            &|| world::update_world(cont.state.clone(), elapsed_micro, false),
+            1,
+        );
+        cont.state = updated_state;
 
+        let quests_mark = sampler.start(3);
         try_assign_quests(&mut cont.state);
+        sampler.end(quests_mark);
 
+        let bots_mark = sampler.start(4);
         let state = &mut cont.state;
         let d_states = &mut **d_states;
         let bots = &mut *bots;
-
         do_bot_actions(state, bots, d_states, &d_table, elapsed_micro);
+        sampler.end(bots_mark);
 
+        let events_mark = sampler.start(5);
         let receiver = &mut EVENTS.lock().unwrap().1;
-
         let res = events::handle_events(&d_table, receiver, state, d_states);
         for (client_id, dialogue) in res {
             unicast_dialogue_state(client_id, dialogue);
         }
+        sampler.end(events_mark);
 
+        let cleanup_mark = sampler.start(6);
         let existing_player_ships = cont
             .state
             .players
@@ -800,8 +836,22 @@ fn main_thread() {
             .into_iter()
             .filter(|s| existing_player_ships.contains(&s.id))
             .collect::<Vec<_>>();
+        sampler.end(cleanup_mark);
 
-        multicast_ships_update_excluding(cont.state.ships.clone(), None);
+        sampler.measure(
+            &|| multicast_ships_update_excluding(cont.state.ships.clone(), None),
+            7,
+        );
+
+        sampler.end(total_mark);
+
+        sampler_consume_elapsed += elapsed_micro;
+        if sampler_consume_elapsed > PERF_CONSUME_TIME {
+            sampler_consume_elapsed = 0;
+            let (sampler_out, metrics) = sampler.consume();
+            sampler = sampler_out;
+            log!(format!("perf: \n{}", metrics.join("\n")));
+        }
     }
 }
 
