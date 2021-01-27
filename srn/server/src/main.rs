@@ -831,7 +831,7 @@ fn main_thread() {
         if bot_action_elapsed > BOT_ACTION_TIME {
             let bots_mark = sampler.start(4);
             let bots = &mut *bots;
-            do_bot_actions(state, bots, d_states, &d_table, elapsed_micro);
+            do_bot_actions(state, bots, d_states, &d_table, bot_action_elapsed);
             sampler.end(bots_mark);
             bot_action_elapsed = 0;
         } else {
