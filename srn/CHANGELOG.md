@@ -1,3 +1,7 @@
+# Version 0.3.7
+## Fixes
+* Fix bots freezing on planets.
+
 # Version 0.3.6
 ## Fixes
 * Significantly improved server-side performance.
