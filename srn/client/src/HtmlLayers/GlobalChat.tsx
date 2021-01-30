@@ -19,7 +19,8 @@ class ChatState extends EventEmitter {
   }
 
   connect() {
-    this.socket = new WebSocket(api.getWebSocketUrl(), 'rust-websocket');
+    console.log('attempting to connect chat...');
+    this.socket = new WebSocket(api.getChatWebSocketUrl(), 'rust-websocket');
     this.socket.onmessage = (message) => {
       this.messages.push(message.data);
       this.emit('message', this.messages)
@@ -64,7 +65,8 @@ export const GlobalChat: React.FC = () => {
         chatState.disconnect();
       }
     }
-  }, [chatState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [message, setMessage] = useState('');
   let chatIsReady = chatState && chatState.connected;
   const send = () => {

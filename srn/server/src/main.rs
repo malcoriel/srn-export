@@ -83,6 +83,7 @@ mod vec2;
 mod vec2_test;
 mod world;
 mod world_test;
+mod chat;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TagConfirm {
@@ -232,7 +233,7 @@ lazy_static! {
 //     broadcast_state(mut_state.clone());
 // }
 
-pub const ENABLE_PERF: bool = true;
+pub const ENABLE_PERF: bool = false;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
@@ -686,6 +687,11 @@ fn rocket() -> rocket::Rocket {
     });
 
     std::thread::spawn(|| {
+        chat_server();
+    });
+
+
+    std::thread::spawn(|| {
         main_thread();
     });
 
@@ -760,6 +766,7 @@ const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 
 use regex::Regex;
+use crate::chat::chat_server;
 lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
 }
@@ -879,7 +886,7 @@ fn main_thread() {
         sampler.end(total_mark);
 
         sampler_consume_elapsed += elapsed_micro;
-        if sampler_consume_elapsed > PERF_CONSUME_TIME {
+        if sampler_consume_elapsed > PERF_CONSUME_TIME && ENABLE_PERF {
             sampler_consume_elapsed = 0;
             let (sampler_out, metrics) = sampler.consume();
             sampler = sampler_out;
