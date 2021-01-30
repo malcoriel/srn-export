@@ -4,7 +4,9 @@ $menuWidth: 600px;
 
 .start-menu {
   min-width: $menuWidth;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   overflow: hidden;
   display: flex;
   justify-content: center;
