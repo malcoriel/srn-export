@@ -5,9 +5,11 @@ export const Input: React.FC<{
   onChange: (ev: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
   placeholder?: string
-}> = ({ value, onChange, className, placeholder }) => {
+  disabled?: boolean
+}> = ({ value, disabled, onChange, className, placeholder }) => {
   return (
     <input
+      disabled={disabled}
       placeholder={placeholder}
       className={`input ${className}`}
       type="text"

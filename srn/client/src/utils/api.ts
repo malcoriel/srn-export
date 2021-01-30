@@ -17,4 +17,10 @@ export const api = {
       ? 'wss://srn.malcoriel.de/ws'
       : 'ws://localhost:2794';
   },
+
+  getChatWebSocketUrl() {
+    return process.env.NODE_ENV === 'production'
+      ? 'wss://srn.malcoriel.de/ws-chat'
+      : 'ws://localhost:2795';
+  },
 };
