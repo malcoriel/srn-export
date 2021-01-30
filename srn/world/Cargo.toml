@@ -38,6 +38,7 @@ regex = "1.4.2"
 crossbeam = "0.8.0"
 objekt-clonable = "0.2.2"
 statistical = "1.0.0"
+getrandom = {version = "0.2.2", features = ["js"]}
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"

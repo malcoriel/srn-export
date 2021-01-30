@@ -2,21 +2,31 @@
 
 $menuWidth: 600px;
 
+.start-menu {
+  min-width: $menuWidth;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  height: 100%;
+  width: 100%;
+  z-index: 100;
+  opacity: 0.8;
+  background-color: black;
+
+}
+
 .start-hud {
+  width: $menuWidth;
   font-size: 20px;
   display: flex;
   color: $teal;
   align-items: center;
   flex-direction:column;
   justify-content: center;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 100;
+  justify-self: center;
   height: 100%;
-  width: 100%;
-  background-color: black;
-  opacity: 0.8;
 
   &>* {
     margin-top: 30px;
@@ -181,3 +191,28 @@ $menuWidth: 600px;
     line-height: 20px;
   }
 }
+
+.global-chat-container {
+  visibility: hidden;
+  border: solid $teal 1px;
+  flex: 1;
+  margin: 40px 100px 150px 20px;
+}
+
+.changelog {
+  visibility: hidden;
+  border: solid $teal 1px;
+  flex: 1;
+  margin: 40px 20px 150px 100px;
+}
+
+@media (min-width: 1400px) {
+  .global-chat-container {
+    visibility: visible;
+  }
+
+  .changelog {
+    visibility: visible;
+  }
+}
+
