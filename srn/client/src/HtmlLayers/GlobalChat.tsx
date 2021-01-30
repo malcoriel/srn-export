@@ -10,7 +10,7 @@ class ChatState extends EventEmitter {
   private socket?: WebSocket;
   public id: string;
   public connected: boolean;
-  public messages: string[];
+  public messages: ChatMessage[];
   constructor() {
     super();
     this.id = uuid.v4();
@@ -22,12 +22,18 @@ class ChatState extends EventEmitter {
     console.log('attempting to connect chat...');
     this.socket = new WebSocket(api.getChatWebSocketUrl(), 'rust-websocket');
     this.socket.onmessage = (message) => {
-      this.messages.push(message.data);
-      this.emit('message', this.messages)
+      try {
+        const parsedMsg = JSON.parse(message.data)
+        this.messages.push(parsedMsg);
+        this.emit('message', this.messages)
+      }
+      catch(e) {
+        console.warn(e);
+      }
+
     }
     this.socket.onopen = () => {
       this.connected = true;
-      this.messages = ["You have been connected to the global chat."];
       this.emit('message', this.messages);
     }
     this.socket.onerror = (err) => {
@@ -37,10 +43,10 @@ class ChatState extends EventEmitter {
     }
   }
 
-  send(name: string, message: string) {
+  send(message: ChatMessage ) {
     if (!this.socket)
       return;
-    this.socket.send(JSON.stringify({name, message}));
+    this.socket.send(JSON.stringify(message));
   }
 
   disconnect() {
@@ -51,15 +57,27 @@ class ChatState extends EventEmitter {
   }
 }
 
+type ChatMessage = {
+  name: string;
+  message: string;
+}
+
 export const GlobalChat: React.FC = () => {
-  const [messages, setMessages] = useState(['789', '789', '789', '789']);
+  const [, setForceUpdate] = useState(false);
+  const forceUpdate = () => {
+    setForceUpdate(old => !old);
+  };
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatState, setChatState] = useState<ChatState | null>(null);
   useEffect(() => {
     let cs = new ChatState();
     setChatState(cs);
     cs.connect();
-    cs.on("message", setMessages);
-    setMessages(["connecting chat..."]);
+    setMessages([{name: "client", message:"connecting to the chat..."}]);
+    cs.on("message", (messages) => {
+      setMessages(messages);
+      forceUpdate();
+    });
     return () => {
       if (chatState) {
         chatState.disconnect();
@@ -73,8 +91,9 @@ export const GlobalChat: React.FC = () => {
     if (!(chatState && chatState.connected)) {
       return;
     }
-    chatState.send("test", message);
-    setMessages(m => [...m, message]);
+    let formattedMessage = {message: message, name: "test"};
+    chatState.send(formattedMessage);
+    setMessages((m: ChatMessage[]) => [...m, formattedMessage]);
     setMessage("");
   }
   return <div className='global-chat'>
@@ -84,7 +103,11 @@ export const GlobalChat: React.FC = () => {
         renderThumbVertical={(props) => <div {...props} className='thumb' />}
         style={{ width: '100%', height: '100%' }}>
         <div className='chat'>
-          {messages.map((m, i) => <div className='line' key={i}>{m}</div>)}
+          {messages.map((m, i) => {
+            return <div className='line' key={i}>
+              {m.name}:{m.message}
+            </div>;
+          })}
         </div>
       </Scrollbars>
     </div>

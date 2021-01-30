@@ -12,8 +12,9 @@
     flex: 1;
 
     .chat {
+      color: $teal;
+
       .line {
-        color: $teal;
         line-height: 24px;
       }
 
