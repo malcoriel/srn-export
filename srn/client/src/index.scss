@@ -2,6 +2,10 @@
   user-select: none;
 }
 
+.normal-selection {
+  user-select: all;
+}
+
 input {
   user-select:auto;
 }

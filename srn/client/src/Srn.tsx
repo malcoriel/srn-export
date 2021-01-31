@@ -141,6 +141,9 @@ const Srn = () => {
     setPlaying(false);
   };
 
+  let ns = NetState.get();
+  const seed = ns ? ns.state.seed : "";
+
   return (
     <>
       <div
@@ -186,7 +189,7 @@ const Srn = () => {
         )}
         {!playing && <TestUI />}
         {musicEnabled && <MusicControls />}
-        {menu && <StartMenu playing={playing} start={start} quit={quit} />}
+        {menu && <StartMenu seed={seed} start={start} quit={quit} />}
       </div>
     </>
   );

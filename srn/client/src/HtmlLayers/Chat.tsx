@@ -27,7 +27,7 @@ export const Chat: React.FC<{channelName: string, header?: string}> = ({channelN
         return;
       setMessages(cs.messages[channelName]);
       cs.on('message', onMessage);
-    });
+    }, 100);
     return () => {
       const cs = ChatState.get();
       if (!cs)

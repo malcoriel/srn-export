@@ -1,4 +1,4 @@
-import Vector, { IVector } from './utils/Vector';
+import { IVector } from './utils/Vector';
 
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
@@ -139,6 +139,7 @@ export type NatSpawnMineral = {
 };
 
 export type GameState = {
+  seed: string;
   tag: string;
   leaderboard?: Leaderboard;
   planets: Planet[];

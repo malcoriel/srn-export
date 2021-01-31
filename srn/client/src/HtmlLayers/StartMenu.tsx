@@ -22,8 +22,8 @@ export const makePortraitPath = (portrait: string) =>
 export const StartMenu: React.FC<{
   start: () => void;
   quit: () => void;
-  playing: boolean,
-}> = ({ start, quit }) => {
+  seed: string,
+}> = ({ start, quit, seed }) => {
   const {
     musicEnabled,
     setMusicEnabled,
@@ -202,6 +202,7 @@ export const StartMenu: React.FC<{
             </Button>
           </>
         )}
+        {playing && seed && <div>Game seed: <span className="normal-selection">{seed}</span></div>}
         <div className='versions-status'>
           <div>Client version: {versionJson.version}</div>
           <div>Server version: {serverVersionFormatted}</div>

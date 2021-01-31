@@ -77,12 +77,12 @@ pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
     let rating = all_players
         .into_iter()
         .sorted_by(|a, b| Ord::cmp(&b.money, &a.money))
-        .map(|p| (p.name.clone(), get_player_score(p)))
+        .map(|p| (p.clone(), get_player_score(p)))
         .collect::<Vec<_>>();
     let winner: String = rating
         .iter()
         .nth(0)
-        .map_or("Nobody".to_string(), |p| p.0.clone());
+        .map_or("Nobody".to_string(), |p| p.0.name.clone());
     Some(Leaderboard { rating, winner })
 }
 
@@ -341,7 +341,7 @@ impl Player {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Leaderboard {
-    pub rating: Vec<(String, u32)>,
+    pub rating: Vec<(Player, u32)>,
     pub winner: String,
 }
 
@@ -358,6 +358,7 @@ pub struct NatSpawnMineral {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState {
     pub tag: Option<String>,
+    pub seed: String,
     pub my_id: Uuid,
     pub start_time_ticks: u64,
     pub star: Option<Star>,
@@ -376,11 +377,13 @@ pub struct GameState {
 const FIXED_SEED: Option<&str> = None;
 
 pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
-    let seed:u64 = if let Some(seed) = FIXED_SEED {
-        str_to_hash(String::from(seed))
+    let seed:String = if let Some(seed) = FIXED_SEED {
+        String::from(seed)
     } else {
         let mut rng = thread_rng();
-        rng.next_u64()
+        let mut bytes:[u8; 8] = [0; 8];
+        rng.fill_bytes(&mut bytes);
+        hex::encode(bytes)
     };
     let state = system_gen(seed);
 

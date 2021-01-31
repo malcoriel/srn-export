@@ -29,9 +29,9 @@ pub fn str_to_hash(t: String) -> u64 {
     s.finish()
 }
 
-pub fn system_gen(seed: u64) -> GameState {
+pub fn system_gen(seed: String) -> GameState {
     let star_id = crate::new_id();
-    let mut prng = SmallRng::seed_from_u64(seed);
+    let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
 
     // the world is 1000x1000 for now,
     // so we have to divide 500 units between all zones
@@ -194,6 +194,7 @@ pub fn system_gen(seed: u64) -> GameState {
 
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
+        seed,
         tag: None,
         milliseconds_remaining: 3 * 60 * 1000,
         paused: false,

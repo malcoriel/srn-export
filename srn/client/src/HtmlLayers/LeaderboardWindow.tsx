@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useEffect } from 'react';
 import NetState, { findMyPlayer, useNSForceChange } from '../NetState';
 import { Window } from './ui/Window';
