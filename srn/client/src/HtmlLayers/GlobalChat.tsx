@@ -1,14 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import './GlobalChat.scss';
 import { Input } from './ui/Input';
-import { Scrollbars } from 'rc-scrollbars';
-import { ChatState } from '../ChatState';
+import { ChatMessage, Chats, ChatState } from '../ChatState';
 import { useStore } from '../store';
-
-export type ChatMessage = {
-  name: string;
-  message: string;
-}
+import { WithScrollbars } from './ui/WithScrollbars';
 
 export const GlobalChat: React.FC = () => {
   const preferredName = useStore(state => state.preferredName);
@@ -19,8 +14,8 @@ export const GlobalChat: React.FC = () => {
   };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   useEffect(() => {
-    let onMessage = (messages: ChatMessage[]) => {
-      setMessages(messages);
+    let onMessage = (messages: Chats) => {
+      setMessages(messages.global);
       forceUpdate();
     };
 
@@ -31,16 +26,16 @@ export const GlobalChat: React.FC = () => {
       if (!cs)
         return;
       cs.tryConnect(preferredName);
-      setMessages(cs.messages);
-      cs.on("message", onMessage);
+      setMessages(cs.messages.global);
+      cs.on('message', onMessage);
     });
     return () => {
       const cs = ChatState.get();
       if (!cs)
         return;
-      cs.off("message", onMessage);
+      cs.off('message', onMessage);
       cs.tryDisconnect();
-    }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [message, setMessage] = useState('');
@@ -55,22 +50,20 @@ export const GlobalChat: React.FC = () => {
     const cs = ChatState.get();
     if (!cs)
       return;
-    let formattedMessage = {message: message, name: preferredName};
-    cs.send(formattedMessage);
+    let formattedMessage = { message: message, name: preferredName };
+    cs.send(formattedMessage, "global");
     // optimistically update the component before message reaches
     // the server
     setMessages((m: ChatMessage[]) => [...m, formattedMessage]);
-    setMessage("");
-  }
+    setMessage('');
+  };
   return <div className='global-chat'>
-    <div className="header">
+    <div className='header'>
       Global chat
     </div>
     <div className='chat-container'>
-      <Scrollbars
-        renderThumbHorizontal={(props) => <div {...props} className='thumb' />}
-        renderThumbVertical={(props) => <div {...props} className='thumb' />}
-        style={{ width: '100%', height: '100%' }}>
+      <WithScrollbars
+      >
         <div className='chat'>
           {messages.map((m, i) => {
             return <div className='line' key={i}>
@@ -78,14 +71,15 @@ export const GlobalChat: React.FC = () => {
             </div>;
           })}
         </div>
-      </Scrollbars>
+      </WithScrollbars>
     </div>
     <div className='chat-input-container' onKeyDown={(ev: any) => {
       if (ev.code === 'Enter') {
         send();
       }
     }}>
-      <Input disabled={!chatIsReady} className='chat-input' placeholder={chatIsReady ? 'say something in chat...': undefined} value={message}
+      <Input disabled={!chatIsReady} className='chat-input'
+             placeholder={chatIsReady ? 'say something in chat...' : undefined} value={message}
              onChange={(val) => setMessage(val.target.value)} />
     </div>
   </div>;

@@ -14,17 +14,17 @@ use lazy_static::lazy_static;
 use serde_json::Error;
 
 lazy_static! {
-    static ref CHAT_CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ChatMessage>)>>> =
+    static ref CHAT_CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ServerChatMessage>)>>> =
         Arc::new(Mutex::new(vec![]));
 }
 
-fn init() -> (Arc<Mutex<Sender<ChatMessage>>>, Arc<Mutex<Receiver<ChatMessage>>>) {
-    let (sender, receiver) = channel::<ChatMessage>();
+fn init() -> (Arc<Mutex<Sender<ServerChatMessage>>>, Arc<Mutex<Receiver<ServerChatMessage>>>) {
+    let (sender, receiver) = channel::<ServerChatMessage>();
     (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
 }
 
 lazy_static! {
-    static ref DISPATCHER_PAIR: (Arc<Mutex<Sender<ChatMessage>>>, Arc<Mutex<Receiver<ChatMessage>>>) = init();
+    static ref DISPATCHER_PAIR: (Arc<Mutex<Sender<ServerChatMessage>>>, Arc<Mutex<Receiver<ServerChatMessage>>>) = init();
 
 }
 
@@ -33,6 +33,25 @@ struct ChatMessage {
     pub name: String,
     pub message: String,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct ServerChatMessage {
+    pub channel: String,
+    pub message: ChatMessage
+}
+
+impl ServerChatMessage {
+    pub fn global_server(msg: &str) -> ServerChatMessage {
+        ServerChatMessage {
+            channel: "global".to_string(),
+            message: ChatMessage {
+                name: "Server".to_string(),
+                message: msg.to_string()
+            }
+        }
+    }
+}
+
 
 impl ChatMessage {
     pub fn server(msg: &str) -> ChatMessage {
@@ -43,7 +62,7 @@ impl ChatMessage {
     }
 }
 
-fn broadcast_message(msg: ChatMessage) {
+fn broadcast_message(msg: ServerChatMessage) {
     let sender = DISPATCHER_PAIR.0.lock().unwrap();
     sender
         .send(msg)
@@ -104,7 +123,7 @@ fn handle_request(request: WSRequest) {
 
     log!(format!("Chat connection from {}, id={}", ip, client_id));
 
-    let (client_tx, client_rx) = mpsc::channel::<ChatMessage>();
+    let (client_tx, client_rx) = mpsc::channel::<ServerChatMessage>();
     CHAT_CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
 
     let (mut receiver, mut sender) = client.split().unwrap();
@@ -144,7 +163,7 @@ fn handle_request(request: WSRequest) {
                     let index = senders.iter().position(|s| s.0 == client_id);
                     index.map(|index| senders.remove(index));
                     log!(format!("Chat client {} id {} disconnected", ip, client_id));
-                    broadcast_message(ChatMessage::server("a user disconnected"));
+                    broadcast_message(ServerChatMessage::global_server("a user disconnected"));
                     return;
                 }
                 OwnedMessage::Ping(msg) => {
@@ -152,7 +171,7 @@ fn handle_request(request: WSRequest) {
                     sender.send_message(&message).unwrap();
                 }
                 OwnedMessage::Text(msg) => {
-                    match serde_json::from_str::<ChatMessage>(msg.as_str()) {
+                    match serde_json::from_str::<ServerChatMessage>(msg.as_str()) {
                         Ok(msg) => {
                             broadcast_message(msg);
                         }
