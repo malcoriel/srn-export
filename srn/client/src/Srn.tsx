@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
-import './index.css';
+import './index.scss';
 import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';

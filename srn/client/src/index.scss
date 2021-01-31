@@ -1,0 +1,31 @@
+* {
+  user-select: none;
+}
+
+input {
+  user-select:auto;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: black;
+}
+
+.react-jinke-music-player-main {
+  display: none;
+}
+
+.grabbable {
+  cursor: grab;
+}
+.grabbable:active {
+  cursor: grabbing;
+}
+
+.no-reset {
+  * {
+    all: revert;
+  }
+}

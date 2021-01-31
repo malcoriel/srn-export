@@ -12,6 +12,7 @@ import versionJson from '../../version.json';
 import useSWR from 'swr';
 import { api } from '../utils/api';
 import { GlobalChat } from './GlobalChat';
+import { Changelog } from './Changelog';
 
 // to only skip menu once
 let firstTime = true;
@@ -218,7 +219,8 @@ export const StartMenu: React.FC<{
 
         {/*<TestUI />*/}
       </div>
-      {!playing && <div className='changelog'>
+      {!playing && <div className='changelog-container'>
+        <Changelog/>
       </div>}
     </div>
   );

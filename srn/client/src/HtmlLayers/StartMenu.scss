@@ -201,7 +201,7 @@ $menuWidth: 600px;
   margin: 40px 100px 150px 20px;
 }
 
-.changelog {
+.changelog-container {
   visibility: hidden;
   border: solid $teal 1px;
   flex: 1;
@@ -213,7 +213,7 @@ $menuWidth: 600px;
     visibility: visible;
   }
 
-  .changelog {
+  .changelog-container {
     visibility: visible;
   }
 }

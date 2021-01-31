@@ -366,7 +366,7 @@ module.exports = function (webpackEnv) {
               },
             },
             {
-              test: /\.txt$/i,
+              test: /\.txt|\.md$/i,
               use: 'raw-loader',
             },
             // "url" loader works like "file" loader except that it embeds assets
