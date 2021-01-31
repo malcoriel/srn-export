@@ -340,10 +340,8 @@ pub fn simulate_planet_movement(
     elapsed_micro: i64,
     anchors: &mut HashMap<Uuid, Box<dyn IBody>>,
     shifts: &mut HashMap<Uuid, Vec2f64>,
-    p: Box<dyn IBody>,
+    mut p: Box<dyn IBody>,
 ) -> Box<dyn IBody> {
-    let mut p = p.clone();
-
     if DEBUG_PHYSICS {
         println!("p {} elapsed {}", p.get_id(), elapsed_micro);
     }
