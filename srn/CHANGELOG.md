@@ -1,8 +1,17 @@
 # Changelog
+## Version 0.3.9
+### New
+* In-game chat.
+* PRNG-based system generation with seed exposure in the menu.
+### Fixes
+* Simulation CPU performance improvements.
+* Better window toggling, minimized mode is not skipped anymore.
+
+
 ## Version 0.3.8
 ### New
-* Global chat in lobby
-* Changelog display
+* Global chat in lobby.
+* Changelog display.
 
 ## Version 0.3.7
 ### Fixes
