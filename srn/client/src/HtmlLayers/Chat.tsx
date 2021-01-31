@@ -5,7 +5,7 @@ import { ChatMessage, Chats, ChatState } from '../ChatState';
 import { useStore } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
 
-export const Chat: React.FC<{channelName: string, header: string}> = ({channelName, header}) => {
+export const Chat: React.FC<{channelName: string, header?: string}> = ({channelName, header}) => {
   const preferredName = useStore(state => state.preferredName);
 
   const [, setForceUpdate] = useState(false);
@@ -58,9 +58,9 @@ export const Chat: React.FC<{channelName: string, header: string}> = ({channelNa
     setMessage('');
   };
   return <div className='chat'>
-    <div className='header'>
+    {header && <div className='header'>
       {header}
-    </div>
+    </div>}
     <div className='chat-container'>
       <WithScrollbars
       >

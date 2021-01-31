@@ -1,7 +1,6 @@
 import { EventEmitter } from 'events';
 import * as uuid from 'uuid';
 import { api } from './utils/api';
-import _ from 'lodash';
 
 export type ChatMessage = {
   name: string;
@@ -37,8 +36,7 @@ export class ChatState extends EventEmitter {
     this.id = uuid.v4();
     console.log(`created CS ${this.id}`);
     this.connected = false;
-    let connecting = [{name:"Client", message: "connecting to the chat..."}];
-    this.messages = {global: _.clone(connecting), inGame: _.clone(connecting)};
+    this.messages = {global: [], inGame: []};
   }
 
   tryConnect(playerName: string) {
