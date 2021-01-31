@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import EventEmitter from 'events';
 import {
   applyShipAction,
@@ -48,13 +49,13 @@ export const findMyShipIndex = (state: GameState): number | null => {
   const foundShipIndex = state.ships.findIndex(
     (ship) => ship.id === myPlayer.ship_id
   );
-  if (foundShipIndex == -1) return null;
+  if (foundShipIndex === -1) return null;
   return foundShipIndex;
 };
 
 export const findMyShip = (state: GameState): Ship | null => {
   const index = findMyShipIndex(state);
-  if (index != -1 && index !== null) return state.ships[index];
+  if (index !== -1 && index !== null) return state.ships[index];
   return null;
 };
 
@@ -372,7 +373,7 @@ export default class NetState extends EventEmitter {
 
         if (myOldShip) {
           this.state.ships = this.state.ships.map((s) => {
-            if (s.id == myOldShip.id) {
+            if (s.id === myOldShip.id) {
               return myOldShip;
             }
             return s;
@@ -404,7 +405,7 @@ export default class NetState extends EventEmitter {
       this.maxPingTick = parsed.ticks;
       this.maxPing = this.ping;
     }
-    if (this.maxPingTick == undefined) {
+    if (this.maxPingTick === undefined) {
       this.maxPing = this.ping;
     }
   }

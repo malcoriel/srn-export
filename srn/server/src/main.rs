@@ -759,7 +759,7 @@ fn cleanup_thread() {
     }
 }
 
-const PERF_CONSUME_TIME: i64 = 10 * 1000 * 1000;
+const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
 const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 
