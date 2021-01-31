@@ -9,22 +9,29 @@ use chrono::Utc;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use std::collections::VecDeque;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 struct PoolRandomPicker<T> {
     options: Vec<T>,
-    prng: SmallRng,
 }
 
 impl<T> PoolRandomPicker<T> {
-    pub fn get(&mut self) -> T {
-        let index = self.prng.gen_range(0, self.options.len());
+    pub fn get(&mut self, prng: &mut SmallRng) -> T {
+        let index = prng.gen_range(0, self.options.len());
         self.options.remove(index as usize)
     }
 }
 
-pub fn system_gen(_seed: String) -> GameState {
+pub fn str_to_hash(t: String) -> u64 {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
+}
+
+pub fn system_gen(seed: String) -> GameState {
     let star_id = crate::new_id();
-    let seed = 123123213123123123;
+    let seed = str_to_hash(seed);
     let mut prng = SmallRng::seed_from_u64(seed);
 
     // the world is 1000x1000 for now,
@@ -79,7 +86,7 @@ pub fn system_gen(_seed: String) -> GameState {
     let star = Star {
         color: "rgb(200, 150, 65)".to_string(),
         id: star_id.clone(),
-        name: gen_star_name().to_string(),
+        name: gen_star_name(&mut prng).to_string(),
         x: 0.0,
         y: 0.0,
         rotation: 0.0,
@@ -88,12 +95,10 @@ pub fn system_gen(_seed: String) -> GameState {
 
     let mut planet_name_pool = PoolRandomPicker {
         options: Vec::from(PLANET_NAMES),
-        prng: prng.clone(),
     };
 
     let mut sat_name_pool = PoolRandomPicker {
         options: Vec::from(SAT_NAMES),
-        prng: prng.clone(),
     };
 
     let mut current_x = star_zone.0;
@@ -104,9 +109,9 @@ pub fn system_gen(_seed: String) -> GameState {
                 // too lazy to count correctly the index
                 if index != asteroid_index {
                     let planet_id = new_id();
-                    let name = planet_name_pool.get().to_string();
+                    let name = planet_name_pool.get(&mut prng).to_string();
 
-                    let planet_radius = gen_planet_radius();
+                    let planet_radius = gen_planet_radius(&mut prng);
                     let planet_center_x = current_x + width / 2.0;
                     let planet = Planet {
                         id: planet_id,
@@ -115,28 +120,28 @@ pub fn system_gen(_seed: String) -> GameState {
                         y: 0.0,
                         rotation: 0.0,
                         radius: planet_radius,
-                        orbit_speed: gen_planet_orbit_speed() / (index + 1) as f64,
+                        orbit_speed: gen_planet_orbit_speed(&mut prng) / (index + 1) as f64,
                         anchor_id: star.id.clone(),
                         anchor_tier: 1,
-                        color: gen_color().to_string(),
+                        color: gen_color(&mut prng).to_string(),
                     };
                     planets.push(planet);
 
                     let mut current_sat_x = planet_center_x + planet_radius + 10.0;
-                    for j in 0..gen_sat_count(planet_radius) {
-                        let name = sat_name_pool.get().to_string();
-                        current_sat_x += gen_sat_gap();
+                    for j in 0..gen_sat_count(planet_radius, &mut prng) {
+                        let name = sat_name_pool.get(&mut prng).to_string();
+                        current_sat_x += gen_sat_gap(&mut prng);
                         planets.push(Planet {
                             id: new_id(),
                             name,
                             x: current_sat_x,
                             y: 0.0,
                             rotation: 0.0,
-                            radius: gen_sat_radius(),
-                            orbit_speed: gen_sat_orbit_speed() / (j + 1) as f64,
+                            radius: gen_sat_radius(&mut prng),
+                            orbit_speed: gen_sat_orbit_speed(&mut prng) / (j + 1) as f64,
                             anchor_id: planet_id,
                             anchor_tier: 2,
-                            color: gen_color().to_string(),
+                            color: gen_color(&mut prng).to_string(),
                         })
                     }
                 } else {

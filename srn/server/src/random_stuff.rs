@@ -126,54 +126,51 @@ pub const CHARACTER_NAMES: [&str; 32] = [
     "Lzee Hilly",
 ];
 
-pub fn rand_32() -> usize {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn rand_32(rng: &mut SmallRng) -> usize {
     return rng.gen_range(0, 31);
 }
 
-pub fn gen_star_name() -> &'static str {
-    STAR_NAMES[rand_32()]
+pub fn gen_star_name(rng: &mut SmallRng) -> &'static str {
+    STAR_NAMES[rand_32(rng)]
 }
 
-pub fn gen_planet_name() -> &'static str {
-    PLANET_NAMES[rand_32()]
+pub fn gen_planet_name(rng: &mut SmallRng) -> &'static str {
+    PLANET_NAMES[rand_32(rng)]
 }
 
 pub fn gen_random_character_name() -> &'static str {
-    CHARACTER_NAMES[rand_32()]
+    let mut rng = thread_rng();
+    let mut prng = SmallRng::seed_from_u64(rng.next_u64());
+    CHARACTER_NAMES[rand_32(&mut prng)]
 }
 
-pub fn gen_sat_name() -> &'static str {
-    SAT_NAMES[rand_32()]
+pub fn gen_sat_name(rng: &mut SmallRng) -> &'static str {
+    SAT_NAMES[rand_32(rng)]
 }
 
-pub fn gen_color() -> &'static str {
-    COLORS[rand_32()]
+pub fn gen_color(rng: &mut SmallRng) -> &'static str {
+    COLORS[rand_32(rng)]
 }
 
-pub fn gen_bot_name() -> String {
-    format!("{} (bot)", BOT_NAMES[rand_32()].to_string())
+pub fn gen_bot_name(rng: &mut SmallRng) -> String {
+    format!("{} (bot)", BOT_NAMES[rand_32(rng)].to_string())
 }
 
-pub fn gen_planet_count() -> u32 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_planet_count(rng: &mut SmallRng) -> u32 {
     return rng.gen_range(5, 8);
 }
 
-pub fn gen_asteroid_radius() -> f64 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_asteroid_radius(rng: &mut SmallRng) -> f64 {
     return rng.gen_range(0.2, 0.8);
 }
 
-pub fn gen_asteroid_shift() -> (f64, f64) {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_asteroid_shift(rng: &mut SmallRng) -> (f64, f64) {
     let min = 3.0;
     let max = 5.0;
     return (rng.gen_range(min, max), rng.gen_range(min, max));
 }
 
-pub fn gen_sat_count(planet_radius: f64) -> u32 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_sat_count(planet_radius: f64, rng: &mut SmallRng) -> u32 {
     if planet_radius < 10.0 {
         return rng.gen_range(0, 2);
     }
@@ -183,51 +180,42 @@ pub fn gen_sat_count(planet_radius: f64) -> u32 {
     return rng.gen_range(2, 5);
 }
 
-pub fn gen_star_radius() -> f64 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_star_radius(rng: &mut SmallRng) -> f64 {
     return rng.gen_range(40.0, 60.0);
 }
 
-pub fn gen_planet_gap() -> f64 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_planet_gap(rng: &mut SmallRng) -> f64 {
     return rng.gen_range(60.0, 80.0);
 }
 
-pub fn gen_planet_orbit_speed() -> f64 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_planet_orbit_speed(rng: &mut SmallRng) -> f64 {
     let dir = if rng.gen_bool(0.5) { -1.0 } else { 1.0 };
     return rng.gen_range(5.0, 55.0) / 750.0 * dir;
 }
 
-pub fn gen_sat_orbit_speed() -> f64 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_sat_orbit_speed(rng: &mut SmallRng) -> f64 {
     let dir = if rng.gen_bool(0.5) { -1.0 } else { 1.0 };
     return rng.gen_range(20.0, 30.0) / 100.0 * dir;
 }
 
-pub fn gen_planet_radius() -> f64 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_planet_radius(rng: &mut SmallRng) -> f64 {
     return rng.gen_range(8.0, 20.0);
 }
 
-pub fn gen_sat_radius() -> f64 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_sat_radius(rng: &mut SmallRng) -> f64 {
     return rng.gen_range(2.0, 3.0);
 }
 
-pub fn gen_sat_gap() -> f64 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_sat_gap(rng: &mut SmallRng) -> f64 {
     return rng.gen_range(8.0, 12.0);
 }
 
-pub fn gen_random_photo_id() -> i32 {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_random_photo_id(rng: &mut SmallRng) -> i32 {
     return rng.gen_range(1, 10);
 }
 
 // radius, value, color
-pub fn gen_mineral_props() -> (f64, i32, String) {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn gen_mineral_props(rng: &mut SmallRng) -> (f64, i32, String) {
     let chance = rng.gen_range(0.0, 1.0);
     return if chance < 0.5 {
         (2.0, 100, "#b87333".to_string())

@@ -21,6 +21,8 @@ use crate::world::{
 use crate::DIALOGUE_STATES;
 use crate::STATE;
 use crate::{mutate_owned_ship, mutate_ship_no_lock, new_id, try_replace_ship, StateContainer};
+use rand::{thread_rng, SeedableRng, RngCore};
+use rand::rngs::SmallRng;
 
 lazy_static! {
     pub static ref BOTS: Arc<Mutex<Vec<Bot>>> = Arc::new(Mutex::new(vec![]));
@@ -199,7 +201,9 @@ fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
     let id = bot.id.clone();
     bots.push(bot);
     let mut cont = STATE.write().unwrap();
-    world::add_player(&mut cont.state, id, true, Some(gen_bot_name()));
+    let mut rng = thread_rng();
+    let mut prng = SmallRng::seed_from_u64(rng.next_u64());
+    world::add_player(&mut cont.state, id, true, Some(gen_bot_name(&mut prng)));
     world::spawn_ship(&mut cont.state, id, None);
     id
     // new_id()
