@@ -8,6 +8,7 @@ pub struct Sampler {
     buckets: HashMap<u32, Vec<u64>>,
     labels: Vec<String>,
     marks: HashMap<Uuid, (u32, DateTime<Local>)>,
+    empty: bool
 }
 
 impl Sampler {
@@ -18,8 +19,18 @@ impl Sampler {
             labels,
             buckets,
             marks: HashMap::new(),
+            empty: false
         }
     }
+    pub fn empty() -> Sampler {
+        Sampler {
+            labels: vec![],
+            buckets: HashMap::new(),
+            marks: HashMap::new(),
+            empty: true
+        }
+    }
+
 
     fn init_buckets(labels: &Vec<String>, buckets: &mut HashMap<u32, Vec<u64>>) {
         for i in 0..labels.len() {
@@ -28,6 +39,9 @@ impl Sampler {
     }
 
     pub fn add(&mut self, label_idx: u32, val: u64) {
+        if self.empty || !crate::ENABLE_PERF {
+            return;
+        }
         if let Some(bucket) = self.buckets.get_mut(&label_idx) {
             bucket.push(val);
         } else {
@@ -76,7 +90,7 @@ impl Sampler {
     }
 
     pub fn start(&mut self, label_idx: u32) -> Uuid {
-        let id = if crate::ENABLE_PERF {
+        let id = if crate::ENABLE_PERF && !self.empty {
             let id = crate::new_id();
             let start = Local::now();
             self.mark(label_idx, start, id);
@@ -88,7 +102,7 @@ impl Sampler {
     }
 
     pub fn end(&mut self, id: Uuid) {
-        if crate::ENABLE_PERF {
+        if crate::ENABLE_PERF&& !self.empty {
             if let Some((label_idx, start)) = self.extract_mark(id) {
                 let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
                 self.add(label_idx, diff as u64);
@@ -102,7 +116,7 @@ impl Sampler {
     where
         F: Fn() -> T,
     {
-        if crate::ENABLE_PERF {
+        if crate::ENABLE_PERF&& !self.empty {
             let start = Local::now();
             let res = target_fn();
             let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
@@ -123,7 +137,7 @@ impl Sampler {
     where
         F: FnMut() -> T,
     {
-        if crate::ENABLE_PERF {
+        if crate::ENABLE_PERF&& !self.empty {
             let start = Local::now();
             let res = target_fn();
             let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;

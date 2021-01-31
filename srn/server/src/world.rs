@@ -77,12 +77,12 @@ pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
     let rating = all_players
         .into_iter()
         .sorted_by(|a, b| Ord::cmp(&b.money, &a.money))
-        .map(|p| (p.clone(), get_player_score(p)))
+        .map(|p| (p.name.clone(), get_player_score(p)))
         .collect::<Vec<_>>();
     let winner: String = rating
         .iter()
         .nth(0)
-        .map_or("Nobody".to_string(), |p| p.0.name.clone());
+        .map_or("Nobody".to_string(), |p| p.0.clone());
     Some(Leaderboard { rating, winner })
 }
 
@@ -341,7 +341,7 @@ impl Player {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Leaderboard {
-    pub rating: Vec<(Player, u32)>,
+    pub rating: Vec<(String, u32)>,
     pub winner: String,
 }
 
@@ -555,11 +555,17 @@ pub fn force_update_to_now(state: &mut GameState) {
     state.ticks = (now - state.start_time_ticks) as u32;
 }
 
+#[derive(Default, Clone)]
+pub struct UpdateOptions {
+    pub disable_hp_effects: bool
+}
+
 pub fn update_world(
     mut state: GameState,
     elapsed: i64,
     client: bool,
     mut sampler: Sampler,
+    update_options: UpdateOptions
 ) -> (GameState, Sampler) {
     state.ticks += elapsed as u32 / 1000;
     if !client {
@@ -642,7 +648,7 @@ pub fn update_world(
             }
             sampler.end(update_minerals_id);
 
-            if !client {
+            if !client && !update_options.disable_hp_effects {
                 let hp_effects_id = sampler.start(15);
                 state.ships = update_ship_hp_effects(
                     &state.star,

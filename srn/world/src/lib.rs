@@ -144,7 +144,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     let args = args.ok().unwrap();
 
     let (new_state, _sampler) =
-        world::update_world(args, elapsed_micro, true, perf::Sampler::new(vec![]));
+        world::update_world(args, elapsed_micro, true, perf::Sampler::new(vec![]), world::UpdateOptions::default());
     return serde_json::to_string(&new_state).unwrap_or(DEFAULT_ERR.to_string());
 }
 

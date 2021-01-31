@@ -35,10 +35,7 @@ use crate::dialogue::{
 };
 use crate::perf::Sampler;
 use crate::vec2::Vec2f64;
-use crate::world::{
-    find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent,
-    ShipAction,
-};
+use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent, ShipAction, UpdateOptions};
 use itertools::Itertools;
 
 const MAJOR: u32 = pkg_version_major!();
@@ -233,7 +230,7 @@ lazy_static! {
 //     broadcast_state(mut_state.clone());
 // }
 
-pub const ENABLE_PERF: bool = false;
+pub const ENABLE_PERF: bool = true;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
@@ -761,7 +758,7 @@ fn cleanup_thread() {
     }
 }
 
-const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
+const PERF_CONSUME_TIME: i64 = 10 * 1000 * 1000;
 const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 
@@ -822,7 +819,7 @@ fn main_thread() {
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
         let update_id = sampler.start(1);
         let (updated_state, updated_sampler) =
-            world::update_world(cont.state.clone(), elapsed_micro, false, sampler);
+            world::update_world(cont.state.clone(), elapsed_micro, false, sampler, UpdateOptions::default());
         sampler = updated_sampler;
         sampler.end(update_id);
 

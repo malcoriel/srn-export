@@ -7,10 +7,8 @@ mod world_test {
     use crate::new_id;
     use crate::planet_movement::update_planets;
     use crate::vec2::Vec2f64;
-    use crate::world::{
-        add_player, seed_state, spawn_ship, update_ships_navigation, update_world, GameState,
-        Planet, Star,
-    };
+    use crate::world::{add_player, seed_state, spawn_ship, update_ships_navigation, update_world, GameState, Planet, Star, UpdateOptions};
+    use crate::perf::Sampler;
 
     #[test]
     fn can_rotate_planets() {
@@ -55,6 +53,8 @@ mod world_test {
             }),
             planets: vec![planet, sat],
             asteroids: vec![],
+            minerals: vec![],
+            asteroid_belts: vec![],
             ships: vec![],
             players: vec![],
             milliseconds_remaining: 0,
@@ -109,21 +109,23 @@ mod world_test {
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
 
-            state = update_world(state, 1 * 1000, is_client);
+            let options = UpdateOptions { disable_hp_effects: true };
+            let (state, _sampler) = update_world(state, 1 * 1000, is_client,
+                                                 Sampler::empty(), options.clone());
             let ship = &state.ships[0];
             eprintln!("No change ship {}/{}", ship.x, ship.y);
             assert!((ship.x).abs() < eps);
             assert!((ship.y).abs() < eps);
             assert!(ship.navigate_target.is_some());
 
-            state = update_world(state, 1000 * 1000, is_client);
+            let (state, _sampler) = update_world(state, 1000 * 1000, is_client, Sampler::empty(), options.clone());
             let ship = &state.ships[0];
             let expected_pos = 2.0f64.sqrt() / 2.0 * dist;
             assert!((ship.x - expected_pos).abs() < eps);
             assert!((ship.y - expected_pos).abs() < eps);
             assert!(ship.navigate_target.is_some());
 
-            state = update_world(state, 3 * 1000 * 1000, is_client);
+            let (state, _sampler) = update_world(state, 3 * 1000 * 1000, is_client, Sampler::empty(), options.clone());
             let ship = &state.ships[0];
             assert!((ship.x - dist).abs() < eps);
             assert!((ship.y - dist).abs() < eps);
@@ -143,7 +145,9 @@ mod world_test {
             spawn_ship(&mut state, player_id, Some(Vec2f64::zero()));
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
-            state = update_world(state, 1 * 1000, is_client);
+            let options = UpdateOptions { disable_hp_effects: true };
+
+            let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
             let ship = &mut state.ships[0];
             let expected = PI * 0.75;
             //eprintln!("rotation {} vs {}", ship.rotation, expected);
@@ -151,7 +155,7 @@ mod world_test {
 
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: -dist, y: -dist });
-            state = update_world(state, 1 * 1000, is_client);
+            let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
             let ship = &mut state.ships[0];
             let expected = PI * 0.25;
             //eprintln!("rotation {} vs -{}", ship.rotation, expected);
@@ -159,7 +163,7 @@ mod world_test {
 
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: -dist, y: dist });
-            state = update_world(state, 1 * 1000, is_client);
+            let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
             let ship = &mut state.ships[0];
             let expected = PI * 0.75;
             //eprintln!("rotation {} vs -{}", ship.rotation, expected);
@@ -169,12 +173,15 @@ mod world_test {
 
     pub fn iterate_state(mut state: GameState, time: i64, step: i64, client: bool) -> GameState {
         let mut elapsed = 0;
+        let options = UpdateOptions { disable_hp_effects: true };
+
         loop {
             if elapsed >= time {
                 break;
             }
             elapsed += step;
-            state = update_world(state, step, client);
+            let (state_out, _sampler) = update_world(state, step, client, Sampler::empty(), options.clone());
+            state = state_out;
         }
         state
     }
