@@ -62,6 +62,9 @@ export const GlobalChat: React.FC = () => {
     setMessage("");
   }
   return <div className='global-chat'>
+    <div className="header">
+      Global chat
+    </div>
     <div className='chat-container'>
       <Scrollbars
         renderThumbHorizontal={(props) => <div {...props} className='thumb' />}
