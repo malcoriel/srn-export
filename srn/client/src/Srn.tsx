@@ -84,6 +84,10 @@ const Srn = () => {
     const ns = NetState.get();
     if (!ns) return;
 
+    const cs = ChatState.get();
+    if (!cs) return;
+    cs.tryConnect(preferredName);
+
     monitorSizeInterval = setInterval(updateSize, MONITOR_SIZE_INTERVAL);
 
     if (playing) {

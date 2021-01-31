@@ -35,5 +35,18 @@
       color: black;
     }
   }
+}
 
+.chat-window-minimized {
+  height: 200px;
+
+  .ui-window-controls {
+    align-self: flex-end;
+    border-top: solid $teal 1px;
+    height: 36px;
+  }
+
+  .chat {
+    width: 100%;
+  }
 }

@@ -16,6 +16,7 @@ export const Window: React.FC<{
   halfThick?: boolean;
   contentClassName?: string;
   className?: string;
+  minimizedClassname?: string;
 }> = ({
   storeKey,
   children,
@@ -25,7 +26,7 @@ export const Window: React.FC<{
   line,
   minimized,
   className,
-  contentClassName,
+  contentClassName, minimizedClassname,
 }) => {
   const key = storeKey;
   const setKey = `set${_.upperFirst(key)}`;
@@ -88,7 +89,7 @@ export const Window: React.FC<{
         )}
       {isMinimized &&
         ReactDOM.createPortal(
-          <div className="ui-window-minimized">
+          <div className={`ui-window-minimized ${minimizedClassname}`}>
             {minimized}
             {windowButtons}
           </div>,

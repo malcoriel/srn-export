@@ -25,7 +25,6 @@ export const Chat: React.FC<{channelName: string, header?: string}> = ({channelN
       const cs = ChatState.get();
       if (!cs)
         return;
-      cs.tryConnect(preferredName);
       setMessages(cs.messages[channelName]);
       cs.on('message', onMessage);
     });
@@ -34,7 +33,6 @@ export const Chat: React.FC<{channelName: string, header?: string}> = ({channelN
       if (!cs)
         return;
       cs.off('message', onMessage);
-      cs.tryDisconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
