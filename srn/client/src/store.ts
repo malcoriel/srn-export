@@ -71,7 +71,7 @@ let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
 let lsPortrait = extractLSValue('portrait', portraitPath(portraitIndex));
 let lsPreferredName = extractLSValue('preferredName', genRandomName());
 let lsSkipMenu = extractLSValue('skipMenu', false);
-let lsMusicEnabled = extractLSValue('musicEnabled', true);
+let lsMusicEnabled = extractLSValue('musicEnabled', false);
 let lsMusicVolume = extractLSValue('musicVolume', 30);
 
 function toggleWindowState(old: WindowState, hasMinimized: boolean = false) {
