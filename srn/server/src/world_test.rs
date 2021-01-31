@@ -67,7 +67,8 @@ mod world_test {
             &state.planets,
             &state.star,
             (1000.0 * 1000.0 * PI / 2.0) as i64,
-        );
+            Sampler::empty()
+        ).0;
 
         let planet = &new_planets[0];
         let sat = &new_planets[1];
@@ -82,11 +83,13 @@ mod world_test {
         let sat_x = coord + cos_pi_8;
         let sat_y = -coord - sin_pi_8;
 
-        let new_planets = update_planets(
+        let out = update_planets(
             &state.planets,
             &state.star,
             (1000.0 * 1000.0 * PI / 4.0) as i64,
+            Sampler::empty()
         );
+        let new_planets = out.0;
         let planet = &new_planets[0];
         let sat = &new_planets[1];
         assert!((planet.x - coord).abs() < eps);

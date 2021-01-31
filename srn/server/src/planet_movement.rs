@@ -7,6 +7,7 @@ use crate::{vec2, world};
 use objekt_clonable::*;
 use std::f64::consts::PI;
 use uuid::Uuid;
+use crate::perf::Sampler;
 
 #[clonable]
 pub trait IBody: Clone {
@@ -215,30 +216,49 @@ pub fn update_planets(
     planets: &Vec<Planet>,
     star: &Option<Star>,
     elapsed_micro: i64,
-) -> Vec<Planet> {
+    mut sampler: Sampler,
+) -> (Vec<Planet>, Sampler) {
     let bodies: Vec<Box<dyn IBody>> = make_bodies_from_planets(planets, star);
     let by_id = index_bodies_by_id(bodies.clone());
     let mut anchors = build_anchors_from_bodies(bodies, &by_id);
 
-    let mut planets = planets.clone();
     let mut shifts = HashMap::new();
 
-    for tier in 1..3 {
-        planets = planets
-            .iter()
-            .map(|p| {
-                Planet::from(simulate_planet_movement(
-                    elapsed_micro,
-                    &mut anchors,
-                    &mut shifts,
-                    tier,
-                    Box::new(p.clone()),
-                ))
-            })
-            .collect::<Vec<Planet>>();
-    }
+    let tier1 = planets.iter().filter(|p| p.anchor_tier == 1).collect::<Vec<_>>();
+    let tier2 = planets.iter().filter(|p| p.anchor_tier == 2).collect::<Vec<_>>();
 
-    planets
+    let mut tier1 = tier1
+        .iter()
+        .map(|p| {
+            let iter = sampler.start(18);
+            let val = simulate_planet_movement(
+                elapsed_micro,
+                &mut anchors,
+                &mut shifts,
+                Box::new((*p).clone()),
+            );
+            sampler.end(iter);
+            Planet::from(val)
+        })
+        .collect::<Vec<Planet>>();
+
+    let mut tier2 = tier2
+        .iter()
+        .map(|p| {
+            let iter = sampler.start(18);
+            let val = simulate_planet_movement(
+                elapsed_micro,
+                &mut anchors,
+                &mut shifts,
+                Box::new((*p).clone()),
+            );
+            sampler.end(iter);
+            Planet::from(val)
+        })
+        .collect::<Vec<Planet>>();
+
+    tier1.append(&mut tier2);
+    (tier1, sampler)
 }
 
 pub fn update_asteroids(
@@ -260,7 +280,6 @@ pub fn update_asteroids(
                 elapsed_micro,
                 &mut anchors,
                 &mut shifts,
-                1,
                 Box::new(p.clone()),
             ))
         })
@@ -321,22 +340,9 @@ pub fn simulate_planet_movement(
     elapsed_micro: i64,
     anchors: &mut HashMap<Uuid, Box<dyn IBody>>,
     shifts: &mut HashMap<Uuid, Vec2f64>,
-    tier: u32,
     p: Box<dyn IBody>,
 ) -> Box<dyn IBody> {
     let mut p = p.clone();
-
-    if p.get_anchor_tier() != tier {
-        if DEBUG_PHYSICS {
-            eprintln!(
-                "skipping {} (tier {}) for tier {}",
-                p.get_name(),
-                p.get_anchor_tier(),
-                tier
-            );
-        }
-        return p;
-    }
 
     if DEBUG_PHYSICS {
         println!("p {} elapsed {}", p.get_id(), elapsed_micro);

@@ -495,7 +495,8 @@ pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
 
     let state = if seed_and_validate {
         let mut state = validate_state(state);
-        state.planets = planet_movement::update_planets(&state.planets, &state.star, SEED_TIME);
+        let (planets, _sampler) = planet_movement::update_planets(&state.planets, &state.star, SEED_TIME, Sampler::empty());
+        state.planets = planets;
         let state = validate_state(state);
         state
     } else {
@@ -564,7 +565,7 @@ pub fn update_world(
     mut state: GameState,
     elapsed: i64,
     client: bool,
-    mut sampler: Sampler,
+    sampler: Sampler,
     update_options: UpdateOptions
 ) -> (GameState, Sampler) {
     state.ticks += elapsed as u32 / 1000;
@@ -572,6 +573,7 @@ pub fn update_world(
         state.milliseconds_remaining -= elapsed as i32 / 1000;
     }
 
+    let mut sampler = sampler;
     if state.paused {
         if !client {
             if state.milliseconds_remaining <= 500 {
@@ -605,10 +607,12 @@ pub fn update_world(
             state.milliseconds_remaining = 10 * 1000;
             fire_event(GameEvent::GameEnded);
         } else {
-            state.planets = sampler.measure(
-                &|| planet_movement::update_planets(&state.planets, &state.star, elapsed),
-                9,
-            );
+            let update_planets_id = sampler.start(9);
+            let (planets, sampler_out) = planet_movement::update_planets(&state.planets, &state.star, elapsed, sampler);
+            state.planets = planets;
+            sampler = sampler_out;
+
+            sampler.end(update_planets_id);
             let update_ast_id = sampler.start(10);
             state.asteroids =
                 planet_movement::update_asteroids(&state.asteroids, &state.star, elapsed);
@@ -667,8 +671,8 @@ pub fn update_world(
                 respawn_dead_ships(&mut state, elapsed);
                 sampler.end(respawn_id);
             }
-        }
-    }
+        };
+    };
     (state, sampler)
 }
 
@@ -1095,7 +1099,6 @@ fn build_trajectory_to_planet(
             TRAJECTORY_STEP_MICRO,
             &mut anchors,
             &mut shifts,
-            current_target.anchor_tier,
             Box::new(current_target.clone()),
         ));
         result.push(current_from);
