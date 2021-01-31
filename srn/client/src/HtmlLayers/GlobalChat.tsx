@@ -16,6 +16,11 @@ export const GlobalChat: React.FC = () => {
   };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   useEffect(() => {
+    let onMessage = (messages: ChatMessage[]) => {
+      setMessages(messages);
+      forceUpdate();
+    };
+
     // force-delay chat connection as on game load
     // this component did mount happens earlier that Srn did mount
     setTimeout(() => {
@@ -24,15 +29,13 @@ export const GlobalChat: React.FC = () => {
         return;
       cs.tryConnect()
       setMessages(cs.messages);
-      cs.on("message", (messages) => {
-        setMessages(messages);
-        forceUpdate();
-      });
+      cs.on("message", onMessage);
     });
     return () => {
       const cs = ChatState.get();
       if (!cs)
         return;
+      cs.off("message", onMessage);
       cs.tryDisconnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
