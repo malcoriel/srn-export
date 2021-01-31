@@ -3,6 +3,7 @@ import './GlobalChat.scss';
 import { Input } from './ui/Input';
 import { Scrollbars } from 'rc-scrollbars';
 import { ChatState } from '../ChatState';
+import { useStore } from '../store';
 
 export type ChatMessage = {
   name: string;
@@ -42,6 +43,8 @@ export const GlobalChat: React.FC = () => {
   }, []);
   const [message, setMessage] = useState('');
 
+  const preferredName = useStore(state => state.preferredName);
+
   const cs = ChatState.get();
   if (!cs)
     return null;
@@ -51,7 +54,7 @@ export const GlobalChat: React.FC = () => {
     const cs = ChatState.get();
     if (!cs)
       return;
-    let formattedMessage = {message: message, name: "test"};
+    let formattedMessage = {message: message, name: preferredName};
     cs.send(formattedMessage);
     // optimistically update the component before message reaches
     // the server

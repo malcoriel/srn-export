@@ -18,6 +18,8 @@ export class ChatState extends EventEmitter {
     ChatState.instance = new ChatState();
   }
 
+
+
   constructor() {
     super();
     this.id = uuid.v4();
@@ -51,6 +53,8 @@ export class ChatState extends EventEmitter {
     };
     this.socket.onerror = (err) => {
       console.warn('error connecting chat', err);
+      this.messages.push({name: "Client", message: "Disconnected from the chat"});
+      this.emit('message', this.messages);
       this.connected = false;
       this.tryDisconnect();
     };
