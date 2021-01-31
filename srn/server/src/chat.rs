@@ -35,7 +35,7 @@ struct ChatMessage {
 }
 
 impl ChatMessage {
-    pub fn Server(msg: &str) -> ChatMessage {
+    pub fn server(msg: &str) -> ChatMessage {
         ChatMessage {
             name: "Server".to_string(),
             message: msg.to_string()
@@ -107,7 +107,7 @@ fn handle_request(request: WSRequest) {
     let (client_tx, client_rx) = mpsc::channel::<ChatMessage>();
     CHAT_CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
 
-    broadcast_message(ChatMessage::Server("A user connected to the chat"));
+    broadcast_message(ChatMessage::server("A user connected to the chat"));
 
     let (mut receiver, mut sender) = client.split().unwrap();
     let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
@@ -146,7 +146,7 @@ fn handle_request(request: WSRequest) {
                     let index = senders.iter().position(|s| s.0 == client_id);
                     index.map(|index| senders.remove(index));
                     log!(format!("Chat client {} id {} disconnected", ip, client_id));
-                    broadcast_message(ChatMessage::Server("a user disconnected"));
+                    broadcast_message(ChatMessage::server("a user disconnected"));
                     return;
                 }
                 OwnedMessage::Ping(msg) => {

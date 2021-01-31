@@ -2,62 +2,9 @@ import React, { useEffect, useState } from 'react';
 import './GlobalChat.scss';
 import { Input } from './ui/Input';
 import { Scrollbars } from 'rc-scrollbars';
-import { api } from '../utils/api';
-import * as uuid from 'uuid';
-import { EventEmitter } from 'events';
+import { ChatState } from '../ChatState';
 
-class ChatState extends EventEmitter {
-  private socket?: WebSocket;
-  public id: string;
-  public connected: boolean;
-  public messages: ChatMessage[];
-  constructor() {
-    super();
-    this.id = uuid.v4();
-    this.connected = false;
-    this.messages = [];
-  }
-
-  connect() {
-    console.log('attempting to connect chat...');
-    this.socket = new WebSocket(api.getChatWebSocketUrl(), 'rust-websocket');
-    this.socket.onmessage = (message) => {
-      try {
-        const parsedMsg = JSON.parse(message.data)
-        this.messages.push(parsedMsg);
-        this.emit('message', this.messages)
-      }
-      catch(e) {
-        console.warn(e);
-      }
-
-    }
-    this.socket.onopen = () => {
-      this.connected = true;
-      this.emit('message', this.messages);
-    }
-    this.socket.onerror = (err) => {
-      console.warn('error connecting chat', err);
-      this.connected = false;
-      this.disconnect();
-    }
-  }
-
-  send(message: ChatMessage ) {
-    if (!this.socket)
-      return;
-    this.socket.send(JSON.stringify(message));
-  }
-
-  disconnect() {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.close();
-      this.connected = false;
-    }
-  }
-}
-
-type ChatMessage = {
+export type ChatMessage = {
   name: string;
   message: string;
 }
@@ -68,31 +15,43 @@ export const GlobalChat: React.FC = () => {
     setForceUpdate(old => !old);
   };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [chatState, setChatState] = useState<ChatState | null>(null);
   useEffect(() => {
-    let cs = new ChatState();
-    setChatState(cs);
-    cs.connect();
-    setMessages([{name: "client", message:"connecting to the chat..."}]);
-    cs.on("message", (messages) => {
-      setMessages(messages);
-      forceUpdate();
+    // force-delay chat connection as on game load
+    // this component did mount happens earlier that Srn did mount
+    setTimeout(() => {
+      const cs = ChatState.get();
+      if (!cs)
+        return;
+      cs.tryConnect()
+      setMessages(cs.messages);
+      cs.on("message", (messages) => {
+        setMessages(messages);
+        forceUpdate();
+      });
     });
     return () => {
-      if (chatState) {
-        chatState.disconnect();
-      }
+      const cs = ChatState.get();
+      if (!cs)
+        return;
+      cs.tryDisconnect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [message, setMessage] = useState('');
-  let chatIsReady = chatState && chatState.connected;
+
+  const cs = ChatState.get();
+  if (!cs)
+    return null;
+
+  let chatIsReady = cs.connected;
   const send = () => {
-    if (!(chatState && chatState.connected)) {
+    const cs = ChatState.get();
+    if (!cs)
       return;
-    }
     let formattedMessage = {message: message, name: "test"};
-    chatState.send(formattedMessage);
+    cs.send(formattedMessage);
+    // optimistically update the component before message reaches
+    // the server
     setMessages((m: ChatMessage[]) => [...m, formattedMessage]);
     setMessage("");
   }

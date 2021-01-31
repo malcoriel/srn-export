@@ -28,6 +28,7 @@ import { OverheadPanel } from './HtmlLayers/OverheadPanel';
 import { TestUI } from './HtmlLayers/TestUI';
 import { HoverHintWindow } from './HtmlLayers/HoverHintWindow';
 import { size } from './coord';
+import { ChatState } from './ChatState';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -75,6 +76,10 @@ const Srn = () => {
     if (!NetState.get()) {
       NetState.make();
     }
+    if (!ChatState.get()) {
+      ChatState.make();
+    }
+
     const ns = NetState.get();
     if (!ns) return;
 
@@ -87,15 +92,22 @@ const Srn = () => {
       forceUpdate();
     }
     return () => {
-      const ns = NetState.get();
-      if (!ns) return;
-
+      console.log('unmounting srn...');
       if (monitorSizeInterval) {
         clearInterval(monitorSizeInterval);
       }
       Perf.stop();
-      ns.disconnectAndDestroy();
+
+      const ns = NetState.get();
+      if (ns) {
+        ns.disconnectAndDestroy();
+      }
+      const cs = ChatState.get();
+      if (cs) {
+        cs.tryDisconnect();
+      }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const start = () => {
@@ -168,7 +180,7 @@ const Srn = () => {
         )}
         {!playing && <TestUI />}
         {musicEnabled && <MusicControls />}
-        {menu && <StartMenu start={start} quit={quit} />}
+        {menu && <StartMenu playing={playing} start={start} quit={quit} />}
       </div>
     </>
   );

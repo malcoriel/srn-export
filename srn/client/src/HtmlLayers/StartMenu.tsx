@@ -21,6 +21,7 @@ export const makePortraitPath = (portrait: string) =>
 export const StartMenu: React.FC<{
   start: () => void;
   quit: () => void;
+  playing: boolean,
 }> = ({ start, quit }) => {
   const {
     musicEnabled,
@@ -78,9 +79,9 @@ export const StartMenu: React.FC<{
 
   return (
     <div className="start-menu">
-      <div className="global-chat-container">
+      {!playing && <div className="global-chat-container">
         <GlobalChat/>
-      </div>
+      </div>}
       <div className='start-hud'>
         <div className='title'>Star Rangers Network</div>
         {!playing && (
@@ -217,9 +218,8 @@ export const StartMenu: React.FC<{
 
         {/*<TestUI />*/}
       </div>
-      <div className='changelog'>
-
-      </div>
+      {!playing && <div className='changelog'>
+      </div>}
     </div>
   );
 };
