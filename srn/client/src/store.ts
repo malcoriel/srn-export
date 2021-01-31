@@ -58,8 +58,11 @@ export type SrnState = {
   setQuestWindow: (val: WindowState) => void;
   toggleQuestWindow: () => void;
   toggleHelpWindow: () => void;
+  toggleChatWindow: () => void;
   helpWindow: WindowState;
   setHelpWindow: (val: WindowState) => void;
+  chatWindow: WindowState;
+  setChatWindow: (val: WindowState) => void;
   leaderboardWindow: WindowState;
   setLeaderboardWindow: (val: WindowState) => void;
   toggleLeaderboardWindow: () => void;
@@ -101,6 +104,7 @@ export const useStore = create<SrnState>((set) => ({
   trigger: 0,
   volume: lsMusicVolume,
   questWindow: WindowState.Minimized,
+  chatWindow: WindowState.Minimized,
   helpWindow: WindowState.Hidden,
   leaderboardWindow: WindowState.Minimized,
   hintedObjectId: undefined,
@@ -119,6 +123,7 @@ export const useStore = create<SrnState>((set) => ({
     }),
   setQuestWindow: (val: WindowState) => set({ questWindow: val }),
   setHelpWindow: (val: WindowState) => set({ helpWindow: val }),
+  setChatWindow: (val: WindowState) => set({ chatWindow: val }),
   setLeaderboardWindow: (val: WindowState) => set({ leaderboardWindow: val }),
   toggleQuestWindow: () =>
     set((state) => {
@@ -127,6 +132,10 @@ export const useStore = create<SrnState>((set) => ({
   toggleHelpWindow: () =>
     set((state) => {
       return { helpWindow: toggleWindowState(state.helpWindow) };
+    }),
+  toggleChatWindow: () =>
+    set((state) => {
+      return { chatWindow: toggleWindowState(state.chatWindow) };
     }),
   toggleLeaderboardWindow: () =>
     set((state) => {

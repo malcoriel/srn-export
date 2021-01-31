@@ -1,9 +1,10 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import './ControlPanel.scss';
 import React from 'react';
 import { StyledRect } from './ui/StyledRect';
 import { Button } from './ui/Button';
 import {
-  AiOutlineSolution,
+  AiOutlineSolution, BsFillChatDotsFill,
   CgScreen,
   FaBullseye,
   FaQuestion,
@@ -16,8 +17,8 @@ import NetState, {
 } from '../NetState';
 import { makePortraitPath } from './StartMenu';
 
-const BUTTON_SIZE = 50;
-const BUTTON_COUNT = 5;
+const BUTTON_SIZE = 53;
+const BUTTON_COUNT = 6;
 const THICKNESS = 9;
 
 export function ControlPanel() {
@@ -28,6 +29,7 @@ export function ControlPanel() {
   const setMenu = useStore((state) => state.setMenu);
   const toggleQuestWindow = useStore((state) => state.toggleQuestWindow);
   const toggleHelpWindow = useStore((state) => state.toggleHelpWindow);
+  const toggleChatWindow = useStore((state) => state.toggleChatWindow);
   const toggleLeaderboardWindow = useStore(
     (state) => state.toggleLeaderboardWindow
   );
@@ -70,6 +72,9 @@ export function ControlPanel() {
         </Button>
         <Button onClick={toggleLeaderboardWindow}>
           <AiOutlineSolution />
+        </Button>
+        <Button onClick={toggleChatWindow}>
+          <BsFillChatDotsFill />
         </Button>
       </StyledRect>
       <div className="money-and-hp">

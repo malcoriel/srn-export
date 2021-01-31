@@ -29,6 +29,7 @@ import { TestUI } from './HtmlLayers/TestUI';
 import { HoverHintWindow } from './HtmlLayers/HoverHintWindow';
 import { size } from './coord';
 import { ChatState } from './ChatState';
+import { ChatWindow } from './HtmlLayers/ChatWindow';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -163,6 +164,7 @@ const Srn = () => {
             <LeaderboardWindow />
             <DialoguePanel />
             <QuestWindow />
+            <ChatWindow />
             <HotkeyWrapper
               hotkey="esc"
               onPress={() => {
