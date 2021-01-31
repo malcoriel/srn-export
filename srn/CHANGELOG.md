@@ -1,4 +1,9 @@
 # Changelog
+## Version 0.3.8
+### New
+* Global chat in lobby
+* Changelog display
+
 ## Version 0.3.7
 ### Fixes
 * Fix bots freezing on planets.
