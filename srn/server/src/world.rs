@@ -17,7 +17,7 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::system_gen::system_gen;
+use crate::system_gen::{system_gen, str_to_hash};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{fire_event, planet_movement};
 use crate::{new_id, DEBUG_PHYSICS};
@@ -373,8 +373,16 @@ pub struct GameState {
     pub ticks: u32,
 }
 
+const FIXED_SEED: Option<&str> = None;
+
 pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
-    let state = system_gen("qqq".to_string());
+    let seed:u64 = if let Some(seed) = FIXED_SEED {
+        str_to_hash(String::from(seed))
+    } else {
+        let mut rng = thread_rng();
+        rng.next_u64()
+    };
+    let state = system_gen(seed);
 
     let state = if seed_and_validate {
         let mut state = validate_state(state);
@@ -864,7 +872,7 @@ pub fn update_ships_navigation(
 ) -> Vec<Ship> {
     let mut res = vec![];
     let planets_with_star = make_bodies_from_planets(&planets, star);
-    let planets_by_id = index_bodies_by_id(planets_with_star);
+    let bodies_by_id = index_bodies_by_id(planets_with_star);
     let players_by_ship_id = index_players_by_ship_id(players);
     for mut ship in ships.clone() {
         let player = players_by_ship_id.get(&ship.id);
@@ -900,17 +908,17 @@ pub fn update_ships_navigation(
                     ship.navigate_target = None;
                 }
             } else if let Some(target) = ship.dock_target {
-                if let Some(planet) = planets_by_id.get(&target) {
-                    let planet = Planet::from(planet.clone());
+                if let Some(planet) = bodies_by_id.get(&target) {
                     let ship_pos = Vec2f64 {
                         x: ship.x,
                         y: ship.y,
                     };
                     let planet_pos = Vec2f64 {
-                        x: planet.x,
-                        y: planet.y,
+                        x: planet.get_x(),
+                        y: planet.get_y(),
                     };
-                    ship.trajectory = build_trajectory_to_planet(ship_pos, &planet, &planets_by_id);
+                    let planet_anchor = bodies_by_id.get(&planet.get_anchor_id()).unwrap();
+                    ship.trajectory = build_trajectory_to_body(ship_pos, &planet, planet_anchor);
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
                         ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
@@ -919,15 +927,15 @@ pub fn update_ships_navigation(
                         }
                         let new_pos = move_ship(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
-                        if new_pos.euclidean_distance(&planet_pos) < planet.radius {
-                            ship.docked_at = Some(planet.id);
+                        if new_pos.euclidean_distance(&planet_pos) < planet.get_radius() {
+                            ship.docked_at = Some(planet.get_id());
                             ship.dock_target = None;
                             ship.trajectory = vec![];
                             let planet = planet.clone().clone();
                             let player = player.clone().clone();
                             fire_event(GameEvent::ShipDocked {
                                 ship: ship.clone(),
-                                planet,
+                                planet: Planet::from(planet),
                                 player,
                             });
                         }
@@ -954,16 +962,16 @@ fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
 }
 
 // TODO for some weird reason, it works for anchor_tier=2 too, however I do not support it here!
-fn build_trajectory_to_planet(
+fn build_trajectory_to_body(
     from: Vec2f64,
-    to: &Planet,
-    by_id: &HashMap<Uuid, Box<dyn IBody>>,
+    to: &Box<dyn IBody>,
+    to_anchor: &Box<dyn IBody>,
 ) -> Vec<Vec2f64> {
     // let start = Utc::now();
-    let mut anchors = planet_movement::build_anchors_from_bodies(vec![Box::new(to.clone())], by_id);
+    let mut anchors = planet_movement::build_anchors_from_bodies(vec![to.clone(), to_anchor.clone()]);
     let mut shifts = HashMap::new();
     let mut counter = 0;
-    let mut current_target = to.clone();
+    let mut current_target = Planet::from(to.clone());
     let mut current_from = from.clone();
     let mut result = vec![];
     let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * SHIP_SPEED;
@@ -974,7 +982,7 @@ fn build_trajectory_to_planet(
         };
         let distance = current_target_pos.euclidean_distance(&current_from);
         let should_break =
-            counter >= TRAJECTORY_MAX_ITER || distance < to.radius / 2.0 + TRAJECTORY_EPS;
+            counter >= TRAJECTORY_MAX_ITER || distance < to.get_radius() / 2.0 + TRAJECTORY_EPS;
         if should_break {
             break;
         }
@@ -997,7 +1005,7 @@ fn build_trajectory_to_planet(
     result = result
         .into_iter()
         .take_while(|p| {
-            let cond = p.euclidean_distance(&planet_pos) < to.radius;
+            let cond = p.euclidean_distance(&planet_pos) < to.get_radius();
             if cond {
                 count -= 1;
                 return count > 0;

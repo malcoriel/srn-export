@@ -54,6 +54,7 @@ macro_rules! warn {
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! err {
     ($($t:tt)*) => {
         (eprintln!("err: {}", ($($t)*).to_string()))

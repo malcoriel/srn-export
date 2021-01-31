@@ -29,9 +29,8 @@ pub fn str_to_hash(t: String) -> u64 {
     s.finish()
 }
 
-pub fn system_gen(seed: String) -> GameState {
+pub fn system_gen(seed: u64) -> GameState {
     let star_id = crate::new_id();
-    let seed = str_to_hash(seed);
     let mut prng = SmallRng::seed_from_u64(seed);
 
     // the world is 1000x1000 for now,

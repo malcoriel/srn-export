@@ -13,7 +13,7 @@ mod world_test {
     #[test]
     fn can_move_between_valid_states() {
         let player_id = Uuid::new_v4();
-        let (dialogue_id, first_state_id, second_state_id, go_next_id, go_back_id, exit_id, script) =
+        let (dialogue_id, first_state_id, _second_state_id, go_next_id, _go_back_id, exit_id, script) =
             gen_basic_planet_script();
 
         let mut d_table: DialogueTable = DialogueTable::new();
@@ -39,13 +39,6 @@ mod world_test {
             &mut d_states,
             &d_table,
         );
-        let new_d_state = *d_states
-            .get(&player_id)
-            .unwrap()
-            .1
-            .get(&dialogue_id)
-            .unwrap()
-            .clone();
         execute_dialog_option(
             player_id,
             &mut state,
