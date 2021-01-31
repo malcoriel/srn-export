@@ -11,6 +11,8 @@ export type ChatMessage = {
 }
 
 export const GlobalChat: React.FC = () => {
+  const preferredName = useStore(state => state.preferredName);
+
   const [, setForceUpdate] = useState(false);
   const forceUpdate = () => {
     setForceUpdate(old => !old);
@@ -28,7 +30,7 @@ export const GlobalChat: React.FC = () => {
       const cs = ChatState.get();
       if (!cs)
         return;
-      cs.tryConnect()
+      cs.tryConnect(preferredName);
       setMessages(cs.messages);
       cs.on("message", onMessage);
     });
@@ -43,7 +45,6 @@ export const GlobalChat: React.FC = () => {
   }, []);
   const [message, setMessage] = useState('');
 
-  const preferredName = useStore(state => state.preferredName);
 
   const cs = ChatState.get();
   if (!cs)
@@ -73,7 +74,7 @@ export const GlobalChat: React.FC = () => {
         <div className='chat'>
           {messages.map((m, i) => {
             return <div className='line' key={i}>
-              {m.name}:{m.message}
+              {m.name}:&nbsp;{m.message}
             </div>;
           })}
         </div>

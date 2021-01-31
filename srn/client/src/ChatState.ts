@@ -25,16 +25,16 @@ export class ChatState extends EventEmitter {
     this.id = uuid.v4();
     console.log(`created CS ${this.id}`);
     this.connected = false;
-    this.messages = [{name:"Client", message: "Connecting to the chat..."}];
+    this.messages = [{name:"Client", message: "connecting to the chat..."}];
   }
 
-  tryConnect() {
+  tryConnect(playerName: string) {
     if (this.connected)
       return;
-    this.connect();
+    this.connect(playerName);
   }
 
-  connect() {
+  connect(playerName: string) {
     console.log(`attempting to connect chat ${this.id}...`);
     this.socket = new WebSocket(api.getChatWebSocketUrl(), 'rust-websocket');
     this.socket.onmessage = (message) => {
@@ -50,10 +50,10 @@ export class ChatState extends EventEmitter {
     this.socket.onopen = () => {
       this.connected = true;
       this.emit('message', this.messages);
+      this.send({name: playerName, message: "has connected to the chat"})
     };
     this.socket.onerror = (err) => {
       console.warn('error connecting chat', err);
-      this.messages.push({name: "Client", message: "Disconnected from the chat"});
       this.emit('message', this.messages);
       this.connected = false;
       this.tryDisconnect();

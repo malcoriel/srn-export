@@ -107,8 +107,6 @@ fn handle_request(request: WSRequest) {
     let (client_tx, client_rx) = mpsc::channel::<ChatMessage>();
     CHAT_CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
 
-    broadcast_message(ChatMessage::server("A user connected to the chat"));
-
     let (mut receiver, mut sender) = client.split().unwrap();
     let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
     thread::spawn(move || loop {
