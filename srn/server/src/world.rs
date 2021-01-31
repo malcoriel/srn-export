@@ -374,6 +374,7 @@ pub struct GameState {
     pub ticks: u32,
 }
 
+// b84413729214a182 - no inner planet, lol
 const FIXED_SEED: Option<&str> = None;
 
 pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {

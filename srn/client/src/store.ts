@@ -127,7 +127,7 @@ export const useStore = create<SrnState>((set) => ({
   setLeaderboardWindow: (val: WindowState) => set({ leaderboardWindow: val }),
   toggleQuestWindow: () =>
     set((state) => {
-      return { questWindow: toggleWindowState(state.questWindow) };
+      return { questWindow: toggleWindowState(state.questWindow, true) };
     }),
   toggleHelpWindow: () =>
     set((state) => {
@@ -135,11 +135,11 @@ export const useStore = create<SrnState>((set) => ({
     }),
   toggleChatWindow: () =>
     set((state) => {
-      return { chatWindow: toggleWindowState(state.chatWindow) };
+      return { chatWindow: toggleWindowState(state.chatWindow, true) };
     }),
   toggleLeaderboardWindow: () =>
     set((state) => {
-      return { leaderboardWindow: toggleWindowState(state.leaderboardWindow) };
+      return { leaderboardWindow: toggleWindowState(state.leaderboardWindow, true) };
     }),
   setMenu: (val: boolean) => set({ menu: val }),
   toggleMenu: () => set((state) => ({ menu: !state.menu })),

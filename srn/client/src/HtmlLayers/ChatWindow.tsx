@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Window } from './ui/Window';
 import './ChatWindow.scss';
 import { useStore } from '../store';
@@ -9,6 +9,10 @@ import 'react-tabs/style/react-tabs.css';
 
 export const ChatWindow = () => {
   useStore((state) => state.chatWindow);
+  const forceUpdate = useStore(state => state.forceUpdate);
+  useEffect(() => {
+    setTimeout(forceUpdate, 1)
+  }, []);
 
   return (
     <Window
