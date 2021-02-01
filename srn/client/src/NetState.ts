@@ -1,15 +1,14 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import EventEmitter from 'events';
 import {
-  AABB, AABB_maxed,
+  AABB,
   applyShipAction,
   Dialogue,
   GameState,
   Ship,
   ShipAction,
   ShipActionType,
-  updateWorld,
-  validateState,
+  updateWorld
 } from './world';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
@@ -289,9 +288,6 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.SyncExclusive
       ) {
         const parsed = JSON.parse(data);
-        if (!validateState(parsed)) {
-          console.warn('FullSync or SyncExclusive got invalid state');
-        }
         this.desync = parsed.ticks - this.state.ticks;
         if (
           parsed.tag &&
@@ -369,10 +365,6 @@ export default class NetState extends EventEmitter {
         let ships = JSON.parse(data).ships;
         const myOldShip = findMyShip(this.state);
         this.state.ships = ships;
-        if (!validateState(this.state)) {
-          console.warn('MulticastPartialShipsUpdate got invalid state');
-        }
-
         if (myOldShip) {
           this.state.ships = this.state.ships.map((s) => {
             if (s.id === myOldShip.id) {
@@ -468,9 +460,6 @@ export default class NetState extends EventEmitter {
     }
     this.state.ships.splice(myShipIndex, 1);
     this.state.ships.push(myShip);
-    if (!validateState(this.state)) {
-      console.warn('mutate ship caused invalid state');
-    }
   };
 
   onPreferredNameChange = (newName: string) => {
@@ -577,8 +566,11 @@ export const useNSForceChange = (name: string, fast = false) => {
   const ns = NetState.get();
   if (!ns) return null;
   useEffect(() => {
-    ns.on(fast ? 'change' : 'slowchange', () => {
+    let listener = () => {
       forceChange((flip) => !flip);
-    });
+    };
+    let event = fast ? 'change' : 'slowchange';
+    ns.on(event, listener);
+    return () => {ns.off(event, listener)};
   }, [ns.id]);
 };

@@ -22,6 +22,7 @@ use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{fire_event, planet_movement};
 use crate::{new_id, DEBUG_PHYSICS};
 use std::f64::{NEG_INFINITY, INFINITY};
+use std::iter::FromIterator;
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -376,7 +377,7 @@ pub struct GameState {
 }
 
 // b84413729214a182 - no inner planet, lol
-const FIXED_SEED: Option<&str> = None;
+const FIXED_SEED: Option<&str> = Some("14adf43f91e792d8");
 
 pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
     let seed:String = if let Some(seed) = FIXED_SEED {
@@ -500,9 +501,21 @@ pub fn split_bodies_by_area(bodies: Vec<Box<dyn IBody>>, area: AABB) -> (Vec<Box
             Either::Right(b)
         }
     });
-    // if a satellite gets into the area without the parent planet, it's a trouble
 
-    res
+    let (mut picked, mut dropped)= res;
+    let already_picked_ids: HashSet<Uuid> = HashSet::from_iter(picked.iter().map(|p| p.get_id()));
+    let anchors_vec = picked.iter().filter_map(|p| anchors.get(&p.get_anchor_id()).and_then(|p| {
+        if !already_picked_ids.contains(&p.get_id()) {
+            Some(p.clone())
+        }
+        else {
+            None
+        }
+    })).collect::<Vec<_>>();
+    let anchor_ids: HashSet<Uuid> = HashSet::from_iter(anchors_vec.iter().map(|a| a.get_id()));
+    picked.append(&mut anchors_vec.clone());
+    dropped = dropped.into_iter().filter(|p| !anchor_ids.contains(&p.get_id())).collect::<Vec<_>>();
+    return (picked, dropped);
 }
 
 pub fn update_world(

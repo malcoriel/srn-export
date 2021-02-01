@@ -181,6 +181,85 @@ mod world_test {
     }
 
     #[test]
+    fn can_pick_anchors_outside_limit_area() {
+        let star_id = Uuid::new_v4();
+        let planet_id = Uuid::new_v4();
+        let planet = Planet {
+            id: planet_id,
+            name: "planet".to_string(),
+            x: 5.0,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 0.0,
+            orbit_speed: 1.0,
+            anchor_id: star_id,
+            anchor_tier: 1,
+            color: "".to_string(),
+        };
+        let sat = Planet {
+            id: Uuid::new_v4(),
+            name: "satellite".to_string(),
+            x: 6.0,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 0.0,
+            orbit_speed: 0.5,
+            anchor_id: planet_id,
+            anchor_tier: 2,
+            color: "".to_string(),
+        };
+        let state = GameState {
+            tag: None,
+            seed: "".to_string(),
+            my_id: Default::default(),
+            start_time_ticks: 0,
+            star: Some(Star {
+                id: star_id,
+                name: "star".to_string(),
+                x: 0.0,
+                y: 0.0,
+                radius: 0.0,
+                rotation: 0.0,
+                color: "".to_string(),
+            }),
+            planets: vec![planet, sat],
+            asteroids: vec![],
+            minerals: vec![],
+            asteroid_belts: vec![],
+            ships: vec![],
+            players: vec![],
+            milliseconds_remaining: 0,
+            paused: false,
+            leaderboard: None,
+            ticks: 0,
+        };
+        let eps = 0.2;
+        let new_planets = update_planets(
+            &state.planets,
+            &state.star,
+            (1000.0 * 1000.0 * PI / 2.0) as i64,
+            Sampler::empty(),
+            AABB {
+                top_left: Vec2f64 {
+                    x: 5.5,
+                    y: -1.0,
+                },
+                bottom_right: Vec2f64 {
+                    x: 6.5,
+                    y: 1.0
+                }
+            },
+        ).0;
+
+        let planet = &new_planets[0];
+        let sat = &new_planets[1];
+        assert!((planet.x - 0.0).abs() < eps);
+        assert!((planet.y + 5.0).abs() < eps);
+        assert!((sat.x - 2.0f64.sqrt() / 2.0).abs() < eps);
+        assert!((sat.y + (5.0 + 2.0f64.sqrt() / 2.0)).abs() < eps);
+    }
+
+    #[test]
     pub fn can_navigate_ships_to_points() {
         let eps = 0.1;
         let dist = 20.0;
