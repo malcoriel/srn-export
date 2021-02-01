@@ -68,6 +68,7 @@ export const ThreeLayer: React.FC = () => {
 
   return (
     <Canvas
+      invalidateFrameloop
       className={classnames({ ['grabbable']: hoverOnGrabbable })}
       orthographic
       camera={{
