@@ -35,7 +35,7 @@ use crate::dialogue::{
 };
 use crate::perf::Sampler;
 use crate::vec2::Vec2f64;
-use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent, ShipAction, UpdateOptions};
+use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent, ShipAction, UpdateOptions, AABB};
 use itertools::Itertools;
 
 const MAJOR: u32 = pkg_version_major!();
@@ -822,7 +822,10 @@ fn main_thread() {
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
         let update_id = sampler.start(1);
         let (updated_state, updated_sampler) =
-            world::update_world(cont.state.clone(), elapsed_micro, false, sampler, UpdateOptions::default());
+            world::update_world(cont.state.clone(), elapsed_micro, false, sampler, UpdateOptions {
+                disable_hp_effects: false,
+                limit_area: AABB::maxed()
+            });
         sampler = updated_sampler;
         sampler.end(update_id);
 

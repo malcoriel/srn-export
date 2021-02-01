@@ -7,7 +7,7 @@ mod world_test {
     use crate::new_id;
     use crate::planet_movement::update_planets;
     use crate::vec2::Vec2f64;
-    use crate::world::{add_player, seed_state, spawn_ship, update_ships_navigation, update_world, GameState, Planet, Star, UpdateOptions};
+    use crate::world::{add_player, seed_state, spawn_ship, update_ships_navigation, update_world, GameState, Planet, Star, UpdateOptions, AABB};
     use crate::perf::Sampler;
 
     #[test]
@@ -40,6 +40,7 @@ mod world_test {
         };
         let state = GameState {
             tag: None,
+            seed: "".to_string(),
             my_id: Default::default(),
             start_time_ticks: 0,
             star: Some(Star {
@@ -67,7 +68,8 @@ mod world_test {
             &state.planets,
             &state.star,
             (1000.0 * 1000.0 * PI / 2.0) as i64,
-            Sampler::empty()
+            Sampler::empty(),
+            AABB::maxed(),
         ).0;
 
         let planet = &new_planets[0];
@@ -87,7 +89,8 @@ mod world_test {
             &state.planets,
             &state.star,
             (1000.0 * 1000.0 * PI / 4.0) as i64,
-            Sampler::empty()
+            Sampler::empty(),
+            AABB::maxed()
         );
         let new_planets = out.0;
         let planet = &new_planets[0];
@@ -96,6 +99,85 @@ mod world_test {
         assert!((planet.y + coord).abs() < eps);
         assert!((sat.x - sat_x).abs() < eps);
         assert!((sat.y - sat_y).abs() < eps);
+    }
+
+    #[test]
+    fn can_ignore_planets() {
+        let star_id = Uuid::new_v4();
+        let planet_id = Uuid::new_v4();
+        let planet = Planet {
+            id: planet_id,
+            name: "planet".to_string(),
+            x: 5.0,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 0.0,
+            orbit_speed: 1.0,
+            anchor_id: star_id,
+            anchor_tier: 1,
+            color: "".to_string(),
+        };
+        let sat = Planet {
+            id: Uuid::new_v4(),
+            name: "satellite".to_string(),
+            x: 6.0,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 0.0,
+            orbit_speed: 0.5,
+            anchor_id: planet_id,
+            anchor_tier: 2,
+            color: "".to_string(),
+        };
+        let state = GameState {
+            tag: None,
+            seed: "".to_string(),
+            my_id: Default::default(),
+            start_time_ticks: 0,
+            star: Some(Star {
+                id: star_id,
+                name: "star".to_string(),
+                x: 0.0,
+                y: 0.0,
+                radius: 0.0,
+                rotation: 0.0,
+                color: "".to_string(),
+            }),
+            planets: vec![planet, sat],
+            asteroids: vec![],
+            minerals: vec![],
+            asteroid_belts: vec![],
+            ships: vec![],
+            players: vec![],
+            milliseconds_remaining: 0,
+            paused: false,
+            leaderboard: None,
+            ticks: 0,
+        };
+        let eps = 0.2;
+        let new_planets = update_planets(
+            &state.planets,
+            &state.star,
+            (1000.0 * 1000.0 * PI / 2.0) as i64,
+            Sampler::empty(),
+            AABB {
+                top_left: Vec2f64 {
+                    x: 0.0,
+                    y: -1.0,
+                },
+                bottom_right: Vec2f64 {
+                    x: 5.5,
+                    y: 1.0
+                }
+            },
+        ).0;
+
+        let planet = &new_planets[0];
+        let sat = &new_planets[1];
+        assert!((planet.x - 0.0).abs() < eps);
+        assert!((planet.y + 5.0).abs() < eps);
+        assert!((sat.x - 6.0).abs() < eps);
+        assert!((sat.y - 0.0).abs() < eps);
     }
 
     #[test]
@@ -112,7 +194,7 @@ mod world_test {
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
 
-            let options = UpdateOptions { disable_hp_effects: true };
+            let options = UpdateOptions { disable_hp_effects: true, limit_area: AABB::maxed() };
             let (state, _sampler) = update_world(state, 1 * 1000, is_client,
                                                  Sampler::empty(), options.clone());
             let ship = &state.ships[0];
@@ -148,7 +230,7 @@ mod world_test {
             spawn_ship(&mut state, player_id, Some(Vec2f64::zero()));
             let mut ship = &mut state.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
-            let options = UpdateOptions { disable_hp_effects: true };
+            let options = UpdateOptions { disable_hp_effects: true, limit_area: AABB::maxed() };
 
             let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
             let ship = &mut state.ships[0];
@@ -176,7 +258,7 @@ mod world_test {
 
     pub fn iterate_state(mut state: GameState, time: i64, step: i64, client: bool) -> GameState {
         let mut elapsed = 0;
-        let options = UpdateOptions { disable_hp_effects: true };
+        let options = UpdateOptions { disable_hp_effects: true, limit_area: AABB::maxed() };
 
         loop {
             if elapsed >= time {

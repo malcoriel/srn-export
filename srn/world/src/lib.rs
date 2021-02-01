@@ -135,16 +135,26 @@ pub fn parse_state(serialized_args: &str) -> String {
     return serde_json::to_string(&args).unwrap_or(DEFAULT_ERR.to_string());
 }
 
+#[derive(Deserialize)]
+pub struct UpdateWorldArgs {
+    state: world::GameState,
+    limit_area: world::AABB
+}
+
 #[wasm_bindgen]
 pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
-    let (args, return_result) = extract_args::<world::GameState>(serialized_args);
+    let (args, return_result) = extract_args::<UpdateWorldArgs>(serialized_args);
     if return_result.is_some() {
         return return_result.unwrap();
     }
     let args = args.ok().unwrap();
 
+    // log!(format!("{:?}", args.limit_area));
     let (new_state, _sampler) =
-        world::update_world(args, elapsed_micro, true, perf::Sampler::new(vec![]), world::UpdateOptions::default());
+        world::update_world(args.state, elapsed_micro, true, perf::Sampler::new(vec![]), world::UpdateOptions {
+            disable_hp_effects: false,
+            limit_area: args.limit_area
+        });
     return serde_json::to_string(&new_state).unwrap_or(DEFAULT_ERR.to_string());
 }
 

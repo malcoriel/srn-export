@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import EventEmitter from 'events';
 import {
+  AABB, AABB_maxed,
   applyShipAction,
   Dialogue,
   GameState,
@@ -17,6 +18,7 @@ import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledTime, vsyncedDecoupledTime } from './utils/Times';
 import { api } from './utils/api';
 import { useEffect, useState } from 'react';
+import { viewPortSizeMeters } from './coord';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -451,6 +453,7 @@ export default class NetState extends EventEmitter {
 
   private mutate_ship = (commands: ShipAction[], elapsedMs: number) => {
     const myShipIndex = findMyShipIndex(this.state);
+    const simArea = this.getSimulationArea();
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.ships[myShipIndex];
     for (const cmd of commands) {
@@ -459,7 +462,8 @@ export default class NetState extends EventEmitter {
         cmd,
         this.state,
         elapsedMs,
-        this.maxPing || this.ping
+        this.maxPing || this.ping,
+        simArea,
       );
     }
     this.state.ships.splice(myShipIndex, 1);
@@ -503,7 +507,8 @@ export default class NetState extends EventEmitter {
     resetActions();
     let result;
 
-    result = updateWorld(this.state, elapsedMs);
+    const simArea = this.getSimulationArea();
+    result = updateWorld(this.state, simArea, elapsedMs);
     if (result) {
       this.state = result;
     }
@@ -555,6 +560,16 @@ export default class NetState extends EventEmitter {
       value: { dialogue_id: dialogueId, option_id: optionId },
       tag,
     });
+  }
+
+  private getSimulationArea() : AABB {
+    let viewportSize = viewPortSizeMeters();
+    let center = this.visualState.cameraPosition;
+    let area = {
+      top_left: new Vector(center.x - viewportSize.x / 2, center.y - viewportSize.y / 2),
+      bottom_right: new Vector(center.x + viewportSize.x / 2, center.y + viewportSize.y / 2)
+    };
+    return area
   }
 }
 export const useNSForceChange = (name: string, fast = false) => {

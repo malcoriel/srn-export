@@ -3,14 +3,14 @@ use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 
 use chrono::Utc;
-use itertools::Itertools;
+use itertools::{Itertools, Either};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 use uuid::*;
 
 use crate::perf::Sampler;
-use crate::planet_movement::{index_bodies_by_id, make_bodies_from_planets, IBody};
+use crate::planet_movement::{index_bodies_by_id, make_bodies_from_planets, IBody, build_anchors_from_bodies};
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
     gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
@@ -21,6 +21,7 @@ use crate::system_gen::{system_gen, str_to_hash};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{fire_event, planet_movement};
 use crate::{new_id, DEBUG_PHYSICS};
+use std::f64::{NEG_INFINITY, INFINITY};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -390,7 +391,7 @@ pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
 
     let state = if seed_and_validate {
         let mut state = validate_state(state);
-        let (planets, _sampler) = planet_movement::update_planets(&state.planets, &state.star, SEED_TIME, Sampler::empty());
+        let (planets, _sampler) = planet_movement::update_planets(&state.planets, &state.star, SEED_TIME, Sampler::empty(), AABB::maxed());
         state.planets = planets;
         let state = validate_state(state);
         state
@@ -451,9 +452,57 @@ pub fn force_update_to_now(state: &mut GameState) {
     state.ticks = (now - state.start_time_ticks) as u32;
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct AABB {
+    pub(crate) top_left: Vec2f64,
+    pub(crate) bottom_right: Vec2f64,
+}
+
+const WORLD_MIN_Y: f64 = -500.0;
+const WORLD_MIN_X: f64 = -500.0;
+const WORLD_MAX_Y: f64 = 500.0;
+const WORLD_MAX_X: f64 = 500.0;
+
+impl AABB {
+    pub fn maxed() -> AABB {
+        AABB {
+            top_left: Vec2f64 {
+                x: WORLD_MIN_X,
+                y: WORLD_MIN_Y
+            },
+            bottom_right: Vec2f64 {
+                x: WORLD_MAX_X,
+                y: WORLD_MAX_Y,
+            }
+        }
+    }
+    pub fn contains_body(&self, body: &Box<dyn IBody>) -> bool {
+        let x = body.get_x();
+        let y = body.get_y();
+        return self.top_left.x <= x && x <= self.bottom_right.x && self.top_left.y <= y && y <= self.bottom_right.y;
+    }
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct UpdateOptions {
-    pub disable_hp_effects: bool
+    pub disable_hp_effects: bool,
+    pub limit_area: AABB,
+}
+
+// first group is in area, second is not
+pub fn split_bodies_by_area(bodies: Vec<Box<dyn IBody>>, area: AABB) -> (Vec<Box<dyn IBody>>, Vec<Box<dyn IBody>>) {
+    let anchors = build_anchors_from_bodies(bodies.clone());
+
+    let res: (Vec<_>, Vec<_>) = bodies.into_iter().partition_map(|b| {
+        if area.contains_body(&b) {
+            Either::Left(b)
+        } else {
+            Either::Right(b)
+        }
+    });
+    // if a satellite gets into the area without the parent planet, it's a trouble
+
+    res
 }
 
 pub fn update_world(
@@ -503,7 +552,7 @@ pub fn update_world(
             fire_event(GameEvent::GameEnded);
         } else {
             let update_planets_id = sampler.start(9);
-            let (planets, sampler_out) = planet_movement::update_planets(&state.planets, &state.star, elapsed, sampler);
+            let (planets, sampler_out) = planet_movement::update_planets(&state.planets, &state.star, elapsed, sampler, update_options.limit_area);
             state.planets = planets;
             sampler = sampler_out;
 

@@ -1,4 +1,4 @@
-import { IVector } from './utils/Vector';
+import Vector, { IVector, VectorF } from './utils/Vector';
 
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
@@ -10,6 +10,18 @@ export const min_x = -max_x;
 export const min_y = -max_y;
 
 export const SHIP_SPEED = 20.0;
+
+export type AABB = {
+  top_left: Vector,
+  bottom_right: Vector,
+}
+
+export const AABB_maxed = () => {
+  return {
+    top_left: VectorF(min_x, min_y),
+    bottom_right: VectorF(max_x, max_y)
+  }
+}
 
 export type Planet = {
   id: string;
@@ -226,10 +238,11 @@ export const applyShipAction = (
   sa: ShipAction,
   state: GameState,
   elapsedMs: number,
-  ping: number
+  ping: number,
+  limitArea: AABB,
 ) => {
   const moveByTime = (SHIP_SPEED * elapsedMs) / 1000;
-  const stateConsideringPing = updateWorld(state, ping) || state;
+  const stateConsideringPing = updateWorld(state, limitArea, ping) || state;
   const moveByTimeDiagonal = (moveByTime * Math.sqrt(2)) / 2;
   switch (sa.s_type) {
     case ShipActionType.Dock: {
@@ -394,11 +407,12 @@ const doWasmCall = <R>(fnName: string, ...args: any[]): R | undefined => {
 };
 export const updateWorld = (
   inState: GameState,
+  limit_area: AABB,
   elapsedMs: number
 ): GameState | undefined => {
   return doWasmCall<GameState>(
     'update_world',
-    JSON.stringify(inState, null, 2),
+    JSON.stringify({state: inState, limit_area}, null, 2),
     BigInt(elapsedMs * 1000)
   );
 };

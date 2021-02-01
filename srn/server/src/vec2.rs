@@ -48,7 +48,7 @@ impl Vec2i32 {
     }
 }
 
-#[derive(Clone, Copy, Deserialize, Serialize)]
+#[derive(Default, Clone, Copy, Deserialize, Serialize)]
 pub struct Vec2f64 {
     pub x: f64,
     pub y: f64,
