@@ -1,5 +1,9 @@
 # Changelog
 ## Version 0.3.9
+### Fixes
+* More simulation CPU improvements. Experimental simulation culling by camera.
+
+## Version 0.3.9
 ### New
 * In-game chat.
 * PRNG-based system generation with seed exposure in the menu.
