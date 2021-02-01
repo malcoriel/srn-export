@@ -7,7 +7,7 @@ import {
   AiOutlineSolution, BsFillChatDotsFill,
   CgScreen,
   FaBullseye,
-  FaQuestion,
+  FaQuestion, FiBox,
 } from 'react-icons/all';
 import { useStore } from '../store';
 import NetState, {
@@ -18,7 +18,7 @@ import NetState, {
 import { makePortraitPath } from './StartMenu';
 
 const BUTTON_SIZE = 53;
-const BUTTON_COUNT = 6;
+const BUTTON_COUNT = 7;
 const THICKNESS = 9;
 
 export function ControlPanel() {
@@ -30,6 +30,7 @@ export function ControlPanel() {
   const toggleQuestWindow = useStore((state) => state.toggleQuestWindow);
   const toggleHelpWindow = useStore((state) => state.toggleHelpWindow);
   const toggleChatWindow = useStore((state) => state.toggleChatWindow);
+  const toggleInventoryWindow = useStore((state) => state.toggleInventoryWindow);
   const toggleLeaderboardWindow = useStore(
     (state) => state.toggleLeaderboardWindow
   );
@@ -75,6 +76,9 @@ export function ControlPanel() {
         </Button>
         <Button onClick={toggleChatWindow}>
           <BsFillChatDotsFill />
+        </Button>
+        <Button onClick={toggleInventoryWindow}>
+          <FiBox />
         </Button>
       </StyledRect>
       <div className="money-and-hp">

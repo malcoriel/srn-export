@@ -30,6 +30,7 @@ import { HoverHintWindow } from './HtmlLayers/HoverHintWindow';
 import { size } from './coord';
 import { ChatState } from './ChatState';
 import { ChatWindow } from './HtmlLayers/ChatWindow';
+import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -184,6 +185,7 @@ const Srn = () => {
             <WindowContainers />
             <OverheadPanel />
             <HelpWindow />
+            <InventoryWindow />
             <HoverHintWindow />
           </>
         )}
