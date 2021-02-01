@@ -1,5 +1,5 @@
 # Changelog
-## Version 0.3.9
+## Version 0.3.10
 ### Fixes
 * More simulation CPU improvements. Experimental simulation culling by camera.
 
