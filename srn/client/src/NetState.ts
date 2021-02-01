@@ -1,14 +1,5 @@
 import EventEmitter from 'events';
-import {
-  AABB,
-  applyShipAction,
-  Dialogue,
-  GameState,
-  Ship,
-  ShipAction,
-  ShipActionType,
-  updateWorld
-} from './world';
+import { AABB, applyShipAction, Dialogue, GameState, Ship, ShipAction, ShipActionType, updateWorld } from './world';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
 import Vector from './utils/Vector';
@@ -34,6 +25,7 @@ interface Cmd {
   tag?: string;
 }
 
+const AREA_BUFF_TO_COVER_SIZE = 1.5;
 const FORCE_SYNC_INTERVAL = 500;
 const MANUAL_MOVE_SHIP_UPDATE_INTERVAL = 200;
 const RECONNECT_INTERVAL = 1000;
@@ -551,13 +543,12 @@ export default class NetState extends EventEmitter {
   }
 
   private getSimulationArea() : AABB {
-    let viewportSize = viewPortSizeMeters();
+    let viewportSize = viewPortSizeMeters().scale(1 / this.visualState.zoomShift).scale(AREA_BUFF_TO_COVER_SIZE);
     let center = this.visualState.cameraPosition;
-    let area = {
+    return {
       top_left: new Vector(center.x - viewportSize.x / 2, center.y - viewportSize.y / 2),
       bottom_right: new Vector(center.x + viewportSize.x / 2, center.y + viewportSize.y / 2)
-    };
-    return area
+    }
   }
 }
 export const useNSForceChange = (name: string, fast = false) => {
