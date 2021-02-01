@@ -377,7 +377,7 @@ pub struct GameState {
 }
 
 // b84413729214a182 - no inner planet, lol
-const FIXED_SEED: Option<&str> = Some("14adf43f91e792d8");
+const FIXED_SEED: Option<&str> = None;
 
 pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
     let seed:String = if let Some(seed) = FIXED_SEED {
