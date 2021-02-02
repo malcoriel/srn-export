@@ -21,11 +21,15 @@ input {
   display: none;
 }
 
-.grabbable {
+.grabbable,.grabbable-invisible {
   cursor: grab;
 }
 .grabbable:active {
   cursor: grabbing;
+}
+
+.grabbable-invisible:active {
+  cursor: none;
 }
 
 .no-reset {

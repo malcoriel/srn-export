@@ -1,3 +1,30 @@
 .inventory-window {
+  height: 661px;
+  position: relative;
 
+  $cellSize: 60px;
+  $cellSizeS: 59px;
+  $gridColor: #ccc;
+
+  .grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    background-size: $cellSize $cellSize;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent $cellSizeS, $gridColor $cellSizeS, $gridColor $cellSize),
+    repeating-linear-gradient(-90deg, transparent, transparent $cellSizeS, $gridColor $cellSizeS, $gridColor $cellSize);
+  }
+
+
+  .item {
+    background: red;
+    border: solid red 1px;
+    width: 50px;
+    height: 50px;
+    box-sizing: border-box;
+  }
 }
