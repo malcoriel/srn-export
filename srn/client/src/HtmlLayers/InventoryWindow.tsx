@@ -4,13 +4,15 @@ import { Window } from './ui/Window';
 import Draggable from 'react-draggable';
 import Vector, { IVector } from '../utils/Vector';
 import { WithScrollbars } from './ui/WithScrollbars';
+import _ from "lodash";
 
 const MARGIN = 5;
 const CELL_SIZE = 60;
 const SCROLL_OFFSET = 10;
 const WINDOW_MARGIN = 10;
+const height = (rowCount: number) => CELL_SIZE * rowCount + 1; // 1 is last border
 const WINDOW_HEIGHT = 681;
-const CONTENT_HEIGHT = 881;
+const CONTENT_HEIGHT = 901;  // 15 rows
 
 const MAX_Y = CONTENT_HEIGHT;
 
@@ -21,11 +23,20 @@ const bounds = {
   bottom: MAX_Y - (CELL_SIZE - MARGIN) + SCROLL_OFFSET
 }
 
+const V_MARGIN = new Vector(MARGIN, MARGIN);
+
+const gridPositionToPosition = (p: IVector): IVector => {
+  return snap(Vector.fromIVector(p).scale(CELL_SIZE).add(V_MARGIN));
+}
+
+const positionToGridPosition = (p: IVector): IVector => {
+  return Vector.fromIVector(snap(p)).subtract(V_MARGIN).scale(1/ CELL_SIZE);
+}
 
 const snap = (pos: IVector): IVector => {
   return {
-    x: Math.round(pos.x / CELL_SIZE) * CELL_SIZE + MARGIN - SCROLL_OFFSET,
-    y: Math.round(pos.y / CELL_SIZE) * CELL_SIZE + MARGIN - SCROLL_OFFSET,
+    x: Math.round(pos.x / CELL_SIZE) * CELL_SIZE + MARGIN - SCROLL_OFFSET + 0.5,
+    y: Math.round(pos.y / CELL_SIZE) * CELL_SIZE + MARGIN + 0.5,
   }
 }
 
@@ -37,16 +48,18 @@ const Item: React.FC<{defaultPosition?:IVector, id: string, position?: IVector, 
   </Draggable>
 }
 
+const EXTRA_ROWS = 3;
 export const InventoryWindow = () => {
   const [positions, setPositions] = useState<Record<string, IVector>>({
-    "1": snap({x: 5, y: 5}),
-    "2": snap({x: 65, y: 5}),
-    "3": snap({x: 5, y: 65}),
+    "1": {x: 0, y: 0},
+    "2": {x: 1, y: 0},
+    "3": {x: 0, y: 1},
   });
+  const rowCount = Math.max(((_.max(Object.values(positions).map(p => p.y))|| 0) + 1)  + EXTRA_ROWS , 11);
   const onDrag = (id: string) => (e: any, d: IVector) => {
     setPositions((oldPos) => ({
       ...oldPos,
-      [id]: snap(Vector.fromIVector(d))
+      [id]: positionToGridPosition(d)
     }))
   }
   return <Window
@@ -59,11 +72,11 @@ export const InventoryWindow = () => {
   >
     <div className="inventory-window">
       <WithScrollbars noAutoHide>
-        <div className="content">
+        <div className="content" style={{height: height(rowCount)}}>
           <div className='grid' />
-          <Item id='1' position={positions['1']} onDrag={onDrag('1')} />
-          <Item id='2' position={positions['2']} onDrag={onDrag('2')} />
-          <Item id='3' position={positions['3']} onDrag={onDrag('3')} />
+          <Item id='1' position={gridPositionToPosition(positions['1'])} onDrag={onDrag('1')} />
+          <Item id='2' position={gridPositionToPosition(positions['2'])} onDrag={onDrag('2')} />
+          <Item id='3' position={gridPositionToPosition(positions['3'])} onDrag={onDrag('3')} />
         </div>
       </WithScrollbars>
 

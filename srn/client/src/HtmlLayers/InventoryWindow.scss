@@ -1,13 +1,12 @@
 $height: 661px;
 $width: 661px;
 $scrollOffset: 10px;
-$contentHeight: 881px;
 .inventory-window {
   height: $height;
   position: relative;
 
   .content {
-    height: $contentHeight;
+    padding: 0 10px;
     position: relative;
   }
 
