@@ -1,26 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import './InventoryWindow.scss';
 import { Window } from './ui/Window';
 import Draggable from 'react-draggable';
 import Vector, { IVector } from '../utils/Vector';
 import { WithScrollbars } from './ui/WithScrollbars';
-import _ from "lodash";
+import _ from 'lodash';
 
 const MARGIN = 5;
 const CELL_SIZE = 60;
 const SCROLL_OFFSET = 10;
 const WINDOW_MARGIN = 10;
 const height = (rowCount: number) => CELL_SIZE * rowCount + 1; // 1 is last border
-const WINDOW_HEIGHT = 681;
+let MIN_ROWS = 11;
+const WINDOW_HEIGHT = height(MIN_ROWS) + WINDOW_MARGIN * 2;
 const CONTENT_HEIGHT = 901;  // 15 rows
-
-const MAX_Y = CONTENT_HEIGHT;
 
 const bounds = {
   left: MARGIN - SCROLL_OFFSET,
   top: MARGIN - SCROLL_OFFSET,
   right: 661 - (CELL_SIZE - MARGIN) - SCROLL_OFFSET,
-  bottom: MAX_Y - (CELL_SIZE - MARGIN) + SCROLL_OFFSET
+  bottom: CONTENT_HEIGHT - (CELL_SIZE - MARGIN) + SCROLL_OFFSET
 }
 
 const V_MARGIN = new Vector(MARGIN, MARGIN);
@@ -55,7 +54,7 @@ export const InventoryWindow = () => {
     "2": {x: 1, y: 0},
     "3": {x: 0, y: 1},
   });
-  const rowCount = Math.max(((_.max(Object.values(positions).map(p => p.y))|| 0) + 1)  + EXTRA_ROWS , 11);
+  const rowCount = Math.max(((_.max(Object.values(positions).map(p => p.y))|| 0) + 1)  + EXTRA_ROWS , MIN_ROWS);
   const onDrag = (id: string) => (e: any, d: IVector) => {
     setPositions((oldPos) => ({
       ...oldPos,
