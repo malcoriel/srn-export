@@ -503,9 +503,10 @@ pub fn split_bodies_by_area(bodies: Vec<Box<dyn IBody>>, area: AABB) -> (Vec<Box
     });
 
     let (mut picked, mut dropped)= res;
-    let already_picked_ids: HashSet<Uuid> = HashSet::from_iter(picked.iter().map(|p| p.get_id()));
+    let mut already_picked_ids: HashSet<Uuid> = HashSet::from_iter(picked.iter().map(|p| p.get_id()));
     let anchors_vec = picked.iter().filter_map(|p| anchors.get(&p.get_anchor_id()).and_then(|p| {
         if !already_picked_ids.contains(&p.get_id()) {
+            already_picked_ids.insert(p.get_id());
             Some(p.clone())
         }
         else {

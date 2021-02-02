@@ -253,6 +253,7 @@ mod world_test {
 
         let planet = &new_planets[0];
         let sat = &new_planets[1];
+        assert_eq!(new_planets.len(), 2);
         assert!((planet.x - 0.0).abs() < eps);
         assert!((planet.y + 5.0).abs() < eps);
         assert!((sat.x - 2.0f64.sqrt() / 2.0).abs() < eps);

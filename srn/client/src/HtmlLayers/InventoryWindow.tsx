@@ -42,7 +42,6 @@ export const InventoryWindow = () => {
       [id]: snap(Vector.fromIVector(d))
     }))
   }
-  console.log(positions["2"]);
   return <Window
     height={681}
     width={681}
