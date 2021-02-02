@@ -1,6 +1,15 @@
+$height: 661px;
+$width: 661px;
+$scrollOffset: 10px;
+$contentHeight: 881px;
 .inventory-window {
-  height: 661px;
+  height: $height;
   position: relative;
+
+  .content {
+    height: $contentHeight;
+    position: relative;
+  }
 
   $cellSize: 60px;
   $cellSizeS: 59px;
@@ -14,7 +23,7 @@
     box-sizing: border-box;
     margin: 0;
     height: 100%;
-    width: 100%;
+    width: calc(100% - #{$scrollOffset});
     background-size: $cellSize $cellSize;
     background-image: repeating-linear-gradient(0deg, transparent, transparent $cellSizeS, $gridColor $cellSizeS, $gridColor $cellSize),
     repeating-linear-gradient(-90deg, transparent, transparent $cellSizeS, $gridColor $cellSizeS, $gridColor $cellSize);
