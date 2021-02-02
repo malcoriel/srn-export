@@ -5,6 +5,7 @@
   $cellSize: 60px;
   $cellSizeS: 59px;
   $gridColor: #ccc;
+  overflow: hidden;
 
   .grid {
     position: absolute;
@@ -21,6 +22,7 @@
 
 
   .item {
+    position: absolute;
     background: red;
     border: solid red 1px;
     width: 50px;
