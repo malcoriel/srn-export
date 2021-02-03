@@ -1,5 +1,6 @@
 $height: 661px;
 $width: 661px;
+$smallGridWidth: 311px;
 $scrollOffset: 10px;
 .inventory-window {
   height: $height;
@@ -15,6 +16,24 @@ $scrollOffset: 10px;
   $gridColor: #ccc;
   overflow: hidden;
 
+  .moving-grid {
+    height: 100%;
+  }
+  .left-grid {
+    height: 100%;
+    position: absolute;
+    width: $smallGridWidth;
+    left: 0;
+    top: 0;
+  }
+  .right-grid {
+    position: absolute;
+    right: 0;
+    width: $smallGridWidth;
+    top: 0;
+    height: 100%;
+  }
+
   .grid {
     position: absolute;
     top: 0;
@@ -24,8 +43,21 @@ $scrollOffset: 10px;
     height: 100%;
     width: calc(100% - #{$scrollOffset});
     background-size: $cellSize $cellSize;
+  }
+
+  .grid-gray {
     background-image: repeating-linear-gradient(0deg, transparent, transparent $cellSizeS, $gridColor $cellSizeS, $gridColor $cellSize),
     repeating-linear-gradient(-90deg, transparent, transparent $cellSizeS, $gridColor $cellSizeS, $gridColor $cellSize);
+  }
+
+  .grid-red {
+    background-image: repeating-linear-gradient(0deg, transparent, transparent $cellSizeS, red $cellSizeS, red $cellSize),
+    repeating-linear-gradient(-90deg, transparent, transparent $cellSizeS, red $cellSizeS, red $cellSize);
+  }
+
+  .grid-green {
+    background-image: repeating-linear-gradient(0deg, transparent, transparent $cellSizeS, green $cellSizeS, green $cellSize),
+    repeating-linear-gradient(-90deg, transparent, transparent $cellSizeS, green $cellSizeS, green $cellSize);
   }
 
 
