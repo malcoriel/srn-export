@@ -1,7 +1,8 @@
 import { Window } from './ui/Window';
 import React from 'react';
-import { cellsToPixels, Item, ItemGrid } from './ItemGrid';
+import { cellsToPixels, ItemGrid } from './ItemGrid';
 import './InventoryWindowBase.scss';
+import NetState, { findMyShip } from '../NetState';
 
 const SCROLL_OFFSET = 10;
 let MIN_ROWS = 5;
@@ -12,14 +13,16 @@ const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2;
 const WINDOW_WIDTH = cellsToPixels(COLUMNS) + WINDOW_MARGIN * 2;
 const EXTRA_ROWS = 3;
 
-const makeTestItem = (id: number, quantity: number, playerOwned: boolean = false): Item => {
-  return {
-    id: String(id),
-    quantity,
-    stackable: quantity === 1,
-    playerOwned,
-  };
-};
+const InventoryWindowItems = () => {
+  const ns = NetState.get();
+  if (!ns)
+    return null;
+  const myShip = findMyShip(ns.state);
+  if (!myShip)
+    return null;
+  const inventory = myShip.inventory;
+  return <ItemGrid items={inventory} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />;
+}
 
 export const InventoryWindow = () => {
   return <Window
@@ -32,7 +35,7 @@ export const InventoryWindow = () => {
   >
     <div className='inventory-window-base'>
       <div className={`item-grid grid-gray`} style={{ width: cellsToPixels(COLUMNS), height: cellsToPixels(COLUMNS) }} />
-      <ItemGrid items={[]} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
+      <InventoryWindowItems/>
     </div>
   </Window>;
 };

@@ -23,6 +23,7 @@ use crate::{fire_event, planet_movement};
 use crate::{new_id, DEBUG_PHYSICS};
 use std::f64::{NEG_INFINITY, INFINITY};
 use std::iter::FromIterator;
+use crate::inventory::{InventoryItem, InventoryItemType};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -298,6 +299,7 @@ pub struct Ship {
     pub navigate_target: Option<Vec2f64>,
     pub dock_target: Option<Uuid>,
     pub trajectory: Vec<Vec2f64>,
+    pub inventory: Vec<InventoryItem>,
 }
 
 impl Ship {
@@ -914,6 +916,9 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
         navigate_target: None,
         dock_target: None,
         trajectory: vec![],
+        inventory: vec![
+            InventoryItem::new(InventoryItemType::CommonMineral, 10),
+        ]
     };
     state
         .players

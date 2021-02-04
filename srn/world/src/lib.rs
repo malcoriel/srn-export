@@ -81,6 +81,9 @@ mod system_gen;
 #[path = "../../server/src/perf.rs"]
 mod perf;
 
+#[path = "../../server/src/inventory.rs"]
+mod inventory;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 

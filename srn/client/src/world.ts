@@ -66,6 +66,7 @@ export type Ship = {
   hp: number;
   max_hp: number;
   hp_effects: HpEffect[];
+  inventory: InventoryItem[];
 };
 
 export type Quest = {
@@ -149,6 +150,24 @@ export type NatSpawnMineral = {
 } & {
   value: number;
 };
+
+export enum InventoryItemType {
+  Unknown,
+  CommonMineral,
+  UncommonMineral,
+  RareMineral
+}
+
+export type InventoryItem = {
+    id: string;
+    x: number;
+    y: number;
+    quantity: number;
+    stackable: boolean;
+    player_owned: boolean;
+    item_type: InventoryItemType
+}
+
 
 export type GameState = {
   seed: string;

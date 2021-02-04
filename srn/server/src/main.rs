@@ -82,6 +82,7 @@ mod vec2_test;
 mod world;
 mod world_test;
 mod chat;
+mod inventory;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TagConfirm {

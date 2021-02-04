@@ -4,6 +4,7 @@ import Vector, { IVector, VectorFzero } from '../utils/Vector';
 import { WithScrollbars } from './ui/WithScrollbars';
 import _ from 'lodash';
 import "./ItemGrid.scss";
+import { InventoryItem } from '../world';
 
 const MARGIN = 5;
 const CELL_SIZE = 60;
@@ -34,7 +35,7 @@ export const snap = (pos: IVector): IVector => {
 
 export const OnDragEmpty: DraggableEventHandler = (e: any, d: any) => {};
 
-export const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX: number, item: Item, position?: IVector, onDragStart?: OnDragItem, onDragStop: (e: any, d: any) => void }> = ({
+export const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX: number, item: InventoryItem, position?: IVector, onDragStart?: OnDragItem, onDragStop: (e: any, d: any) => void }> = ({
   item, maxY, onDragStart,
   position, onDragStop, defaultPosition, maxX,
 }) => {
@@ -44,8 +45,6 @@ export const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX:
     right: maxX,
     bottom: maxY,
   };
-
-  console.log({ maxY });
 
   let onStart = onDragStart ? () => {
     onDragStart(item);
@@ -58,14 +57,7 @@ export const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX:
   </Draggable>;
 };
 
-export type Item = {
-  id: string,
-  stackable: boolean,
-  playerOwned: boolean,
-  quantity: number,
-}
-
-export const positionItems = (items: Item[], width: number): Record<string, IVector> => {
+export const positionItems = (items: InventoryItem[], width: number): Record<string, IVector> => {
   let row = 0;
   let column = 0;
   let res: Record<string, IVector> = {};
@@ -80,9 +72,9 @@ export const positionItems = (items: Item[], width: number): Record<string, IVec
   return res;
 };
 
-type OnDragItem = (i: Item) => void;
+type OnDragItem = (i: InventoryItem) => void;
 export const ItemGrid: React.FC<{ columnCount: number, onDragStart?:
-    OnDragItem, items: Item[], minRows: number, extraRows: number }> = ({
+    OnDragItem, items: InventoryItem[], minRows: number, extraRows: number }> = ({
   columnCount,
   items,
   minRows,
