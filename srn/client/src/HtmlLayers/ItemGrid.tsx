@@ -7,7 +7,7 @@ import "./ItemGrid.scss";
 
 const MARGIN = 5;
 const CELL_SIZE = 60;
-export const cellsToPixels = (rowCount: number) => CELL_SIZE * rowCount + 1; // 1 is last border
+export const cellsToPixels = (cellCount: number) => CELL_SIZE * cellCount + 1; // 1 is last border
 
 export const V_MARGIN = new Vector(MARGIN, MARGIN);
 

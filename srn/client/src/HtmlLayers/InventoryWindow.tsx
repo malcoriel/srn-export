@@ -24,18 +24,17 @@ const makeTestItem = (id: number, quantity: number, playerOwned: boolean = false
 
 const items = [makeTestItem(1, 1, true), makeTestItem(2, 1, true), makeTestItem(3, 10, true), makeTestItem(4, 5, true)];
 
-export const TradeWindow = () => {
+export const InventoryWindow = () => {
   return <Window
     height={WINDOW_HEIGHT}
     width={WINDOW_WIDTH + SCROLL_OFFSET}
     line='complex'
-    storeKey='tradeWindow'
+    storeKey='inventoryWindow'
     thickness={8}
     contentClassName='overflow-y-hidden'
   >
     <div className='inventory-window-base'>
-      <div className={`item-grid grid-green`} style={{ width: cellsToPixels(5) }} />
-      <div className={`item-grid grid-red`} style={{ width: cellsToPixels(5), left: cellsToPixels(6) }} />
+      <div className={`item-grid grid-gray`} style={{ width: cellsToPixels(11) }} />
       <ItemGrid items={items} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
     </div>
   </Window>;
