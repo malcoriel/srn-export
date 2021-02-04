@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import './InventoryWindow.scss';
 import Draggable, { DraggableEventHandler } from 'react-draggable';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
 import { WithScrollbars } from './ui/WithScrollbars';
 import _ from 'lodash';
+import "./ItemGrid.scss";
 
 const MARGIN = 5;
 const CELL_SIZE = 60;
@@ -51,7 +51,7 @@ export const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX:
     onDragStart(item);
   } : OnDragEmpty;
   return <Draggable onStart={onStart} position={position} onStop={onDragStop} bounds={bounds} defaultPosition={defaultPosition}>
-    <div className='item grabbable-invisible'>
+    <div className='item-grid-item grabbable-invisible'>
       <div>{item.id}</div>
       <div>{item.quantity}</div>
     </div>

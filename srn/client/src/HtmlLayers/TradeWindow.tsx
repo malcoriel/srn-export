@@ -1,6 +1,7 @@
 import { Window } from './ui/Window';
 import React from 'react';
 import { cellsToPixels, Item, ItemGrid } from './ItemGrid';
+import './InventoryWindow.scss';
 
 const SCROLL_OFFSET = 10;
 let MIN_ROWS = 11;
@@ -32,12 +33,10 @@ export const InventoryWindow = () => {
     thickness={8}
     contentClassName='overflow-y-hidden'
   >
-    <div className='inventory-window'>
-      <div className='moving-grid'>
-        <div className={`grid grid-green`} style={{ width: cellsToPixels(5) }} />
-        <div className={`grid grid-red`} style={{ width: cellsToPixels(5), left: cellsToPixels(6) }} />
-        <ItemGrid items={items} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
-      </div>
+    <div className='inventory-window-base'>
+      <div className={`item-grid grid-green`} style={{ width: cellsToPixels(5) }} />
+      <div className={`item-grid grid-red`} style={{ width: cellsToPixels(5), left: cellsToPixels(6) }} />
+      <ItemGrid items={items} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
     </div>
   </Window>;
 };

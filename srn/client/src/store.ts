@@ -56,12 +56,15 @@ export type SrnState = {
 
   questWindow: WindowState;
   setQuestWindow: (val: WindowState) => void;
+  setTradeWindow: (val: WindowState) => void;
   toggleQuestWindow: () => void;
   toggleHelpWindow: () => void;
   toggleChatWindow: () => void;
   toggleInventoryWindow: () => void;
+  toggleTradeWindow: () => void;
   helpWindow: WindowState;
   inventoryWindow: WindowState;
+  tradeWindow: WindowState;
   setHelpWindow: (val: WindowState) => void;
   setInventoryWindow: (val: WindowState) => void;
   chatWindow: WindowState;
@@ -109,6 +112,7 @@ export const useStore = create<SrnState>((set) => ({
   questWindow: WindowState.Minimized,
   chatWindow: WindowState.Minimized,
   inventoryWindow: WindowState.Shown,
+  tradeWindow: WindowState.Hidden,
   helpWindow: WindowState.Hidden,
   leaderboardWindow: WindowState.Minimized,
   hintedObjectId: undefined,
@@ -129,6 +133,7 @@ export const useStore = create<SrnState>((set) => ({
   setHelpWindow: (val: WindowState) => set({ helpWindow: val }),
   setChatWindow: (val: WindowState) => set({ chatWindow: val }),
   setInventoryWindow: (val: WindowState) => set({ inventoryWindow: val }),
+  setTradeWindow: (val: WindowState) => set({ tradeWindow: val }),
   setLeaderboardWindow: (val: WindowState) => set({ leaderboardWindow: val }),
   toggleQuestWindow: () =>
     set((state) => {
@@ -141,6 +146,10 @@ export const useStore = create<SrnState>((set) => ({
   toggleInventoryWindow: () =>
     set((state) => {
       return { inventoryWindow: toggleWindowState(state.inventoryWindow) };
+    }),
+  toggleTradeWindow: () =>
+    set((state) => {
+      return { inventoryWindow: toggleWindowState(state.tradeWindow) };
     }),
   toggleChatWindow: () =>
     set((state) => {
