@@ -22,8 +22,6 @@ const makeTestItem = (id: number, quantity: number, playerOwned: boolean = false
   };
 };
 
-const items = [makeTestItem(1, 1, true), makeTestItem(2, 1, true), makeTestItem(3, 10, true), makeTestItem(4, 5, true)];
-
 export const InventoryWindow = () => {
   return <Window
     height={WINDOW_HEIGHT}
@@ -35,7 +33,7 @@ export const InventoryWindow = () => {
   >
     <div className='inventory-window-base'>
       <div className={`item-grid grid-gray`} style={{ width: cellsToPixels(11) }} />
-      <ItemGrid items={items} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
+      <ItemGrid items={[]} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
     </div>
   </Window>;
 };
