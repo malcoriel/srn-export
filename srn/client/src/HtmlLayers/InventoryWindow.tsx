@@ -4,12 +4,11 @@ import { cellsToPixels, Item, ItemGrid } from './ItemGrid';
 import './InventoryWindowBase.scss';
 
 const SCROLL_OFFSET = 10;
-let MIN_ROWS = 11;
-const COLUMNS = 11;
+let MIN_ROWS = 5;
+const COLUMNS = 5;
 const WINDOW_MARGIN = 10;
 
 const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2;
-
 const WINDOW_WIDTH = cellsToPixels(COLUMNS) + WINDOW_MARGIN * 2;
 const EXTRA_ROWS = 3;
 
@@ -32,7 +31,7 @@ export const InventoryWindow = () => {
     contentClassName='overflow-y-hidden'
   >
     <div className='inventory-window-base'>
-      <div className={`item-grid grid-gray`} style={{ width: cellsToPixels(11) }} />
+      <div className={`item-grid grid-gray`} style={{ width: cellsToPixels(COLUMNS), height: cellsToPixels(COLUMNS) }} />
       <ItemGrid items={[]} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
     </div>
   </Window>;
