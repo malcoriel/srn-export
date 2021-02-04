@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { DragEventHandler, useState } from 'react';
 import './InventoryWindow.scss';
 import { Window } from './ui/Window';
-import Draggable from 'react-draggable';
+import Draggable, { DraggableEventHandler } from 'react-draggable';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
 import { WithScrollbars } from './ui/WithScrollbars';
 import _ from 'lodash';
@@ -10,12 +10,12 @@ const MARGIN = 5;
 const CELL_SIZE = 60;
 const SCROLL_OFFSET = 10;
 const WINDOW_MARGIN = 10;
-const height = (rowCount: number) => CELL_SIZE * rowCount + 1; // 1 is last border
+const cellsToPixels = (rowCount: number) => CELL_SIZE * rowCount + 1; // 1 is last border
 let MIN_ROWS = 11;
-const WINDOW_HEIGHT = height(MIN_ROWS) + WINDOW_MARGIN * 2;
+const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2;
 const COLUMNS = 11;
 
-const WINDOW_WIDTH = height(COLUMNS) + WINDOW_MARGIN * 2;
+const WINDOW_WIDTH = cellsToPixels(COLUMNS) + WINDOW_MARGIN * 2;
 const EXTRA_ROWS = 3;
 
 
@@ -42,9 +42,11 @@ const snap = (pos: IVector): IVector => {
   };
 };
 
-const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX: number, item: Item, position?: IVector, onDrag: (e: any, d: any) => void }> = ({
-  item, maxY,
-  position, onDrag, defaultPosition, maxX,
+const OnDragEmpty: DraggableEventHandler = (e: any, d: any) => {};
+
+const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX: number, item: Item, position?: IVector, onDragStart?: OnDragItem, onDragStop: (e: any, d: any) => void }> = ({
+  item, maxY, onDragStart,
+  position, onDragStop, defaultPosition, maxX,
 }) => {
   const bounds = {
     left: MARGIN - SCROLL_OFFSET,
@@ -55,7 +57,10 @@ const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX: number
 
   console.log({ maxY });
 
-  return <Draggable position={position} onStop={onDrag} bounds={bounds} defaultPosition={defaultPosition}>
+  let onStart = onDragStart ? () => {
+    onDragStart(item);
+  } : OnDragEmpty;
+  return <Draggable onStart={onStart} position={position} onStop={onDragStop} bounds={bounds} defaultPosition={defaultPosition}>
     <div className='item grabbable-invisible'>
       <div>{item.id}</div>
       <div>{item.quantity}</div>
@@ -66,6 +71,7 @@ const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX: number
 type Item = {
   id: string,
   stackable: boolean,
+  playerOwned: boolean,
   quantity: number,
 }
 
@@ -84,13 +90,14 @@ const positionItems = (items: Item[], width: number): Record<string, IVector> =>
   return res;
 };
 
-export const ItemGrid: React.FC<{ columnCount: number, items: Item[], minRows: number, extraRows: number, red?: boolean, green?: boolean }> = ({
-  red,
-  green,
+type OnDragItem = (i: Item) => void;
+export const ItemGrid: React.FC<{ columnCount: number, onDragStart?:
+    OnDragItem, items: Item[], minRows: number, extraRows: number }> = ({
   columnCount,
   items,
   minRows,
   extraRows,
+  onDragStart
 }) => {
   const [positions, setPositions] = useState<Record<string, IVector>>(positionItems(items, columnCount));
   const rowCount = Math.max(((_.max(Object.values(positions)
@@ -102,31 +109,32 @@ export const ItemGrid: React.FC<{ columnCount: number, items: Item[], minRows: n
     }));
   };
 
-  const color = red ? 'grid-red' : (green ? 'grid-green' : 'grid-gray');
 
-  let contentHeight = height(rowCount);
-  let contentWidth = height(columnCount);
+  let contentHeight = cellsToPixels(rowCount);
+  let contentWidth = cellsToPixels(columnCount);
   return <WithScrollbars noAutoHide>
     <div className='content' style={{ height: contentHeight }}>
-      <div className={`grid ${color}`} />
-      {items.map(item => <ItemElem maxY={contentHeight - CELL_SIZE + MARGIN} maxX={contentWidth - CELL_SIZE - 0.5 - SCROLL_OFFSET + MARGIN}
+      {items.map(item => <ItemElem maxY={contentHeight - CELL_SIZE + MARGIN}
+                                   onDragStart={onDragStart}
+                                   maxX={contentWidth - CELL_SIZE - 0.5 - SCROLL_OFFSET + MARGIN}
                                    key={item.id} item={item} position={gridPositionToPosition(positions[item.id])}
-                                   onDrag={onDragStop(item.id)} />)}
+                                   onDragStop={onDragStop(item.id)} />)}
     </div>
   </WithScrollbars>;
 };
 
-const makeTestItem = (id: number, quantity: number): Item => {
+const makeTestItem = (id: number, quantity: number, playerOwned: boolean = false): Item => {
   return {
     id: String(id),
     quantity,
     stackable: quantity === 1,
+    playerOwned,
   };
 };
 
+const items =[makeTestItem(1, 1, true), makeTestItem(2, 1, true), makeTestItem(3, 10, true), makeTestItem(4, 5, true)];
+
 export const InventoryWindow = () => {
-  const itemsGreen = [makeTestItem(1, 1), makeTestItem(2, 1), makeTestItem(3, 10), makeTestItem(4, 5)];
-  const itemsRed = [makeTestItem(5, 2), makeTestItem(6, 12)];
   return <Window
     height={WINDOW_HEIGHT}
     width={WINDOW_WIDTH + SCROLL_OFFSET}
@@ -137,13 +145,9 @@ export const InventoryWindow = () => {
   >
     <div className='inventory-window'>
       <div className='moving-grid'>
-        <ItemGrid items={[]} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
-      </div>
-      <div className='left-grid'>
-        <ItemGrid green items={itemsGreen} columnCount={5} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
-      </div>
-      <div className='right-grid'>
-        <ItemGrid red items={itemsRed} columnCount={5} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
+        <div className={`grid grid-green`} style={{width: cellsToPixels(5)}}/>
+        <div className={`grid grid-red`} style={{width: cellsToPixels(5), left: cellsToPixels(6)}} />
+        <ItemGrid items={items} columnCount={COLUMNS} extraRows={EXTRA_ROWS} minRows={MIN_ROWS} />
       </div>
     </div>
   </Window>;
