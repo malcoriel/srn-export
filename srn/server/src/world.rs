@@ -23,7 +23,7 @@ use crate::{fire_event, planet_movement};
 use crate::{new_id, DEBUG_PHYSICS};
 use std::f64::{NEG_INFINITY, INFINITY};
 use std::iter::FromIterator;
-use crate::inventory::{InventoryItem, InventoryItemType};
+use crate::inventory::{InventoryItem, InventoryItemType, add_item, shake_items};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -350,12 +350,21 @@ pub struct Leaderboard {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum Rarity {
+    Unknown,
+    Common,
+    Uncommon,
+    Rare
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NatSpawnMineral {
     pub x: f64,
     pub y: f64,
     pub id: Uuid,
     pub radius: f64,
     pub value: i32,
+    pub rarity: Rarity,
     pub color: String,
 }
 
@@ -606,8 +615,12 @@ pub fn update_world(
                 update_tractored_minerals(&state.ships, &state.minerals, elapsed, &state.players);
             state.minerals = minerals;
             for pup in players_update {
-                if let Some(p) = find_my_player_mut(&mut state, pup.0) {
-                    p.money += pup.1;
+                let pair = find_player_and_ship_mut(&mut state, pup.0);
+                if let Some(p) = pair.0  {
+                    p.money += pup.1.value;
+                }
+                if let Some(ship) = pair.1 {
+                    add_item(&mut ship.inventory, InventoryItem::from_mineral(pup.1));
                 }
             }
             sampler.end(update_minerals_id);
@@ -657,7 +670,7 @@ fn update_tractored_minerals(
     minerals: &Vec<NatSpawnMineral>,
     elapsed: i64,
     players: &Vec<Player>,
-) -> (Vec<NatSpawnMineral>, Vec<(PlayerId, i32)>) {
+) -> (Vec<NatSpawnMineral>, Vec<(PlayerId, NatSpawnMineral)>) {
     let ship_by_tractor = index_ships_by_tractor_target(ships);
     let players_by_ship_id = index_players_by_ship_id(players);
     let mut players_update = vec![];
@@ -677,7 +690,7 @@ fn update_tractored_minerals(
                     let dir = dist.normalize();
                     if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
                         if let Some(p) = players_by_ship_id.get(&ship.id) {
-                            players_update.push((p.id, m.value))
+                            players_update.push((p.id, m.clone()))
                         }
                         is_consumed = true;
                     } else {
@@ -732,6 +745,7 @@ fn seed_mineral(belts: &Vec<AsteroidBelt>) -> NatSpawnMineral {
         id: new_id(),
         radius: mineral_props.0,
         value: mineral_props.1,
+        rarity: mineral_props.3,
         color: mineral_props.2,
     }
 }
@@ -917,7 +931,6 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
         dock_target: None,
         trajectory: vec![],
         inventory: vec![
-            InventoryItem::new(InventoryItemType::CommonMineral, 10),
         ]
     };
     state
@@ -1170,6 +1183,27 @@ pub fn find_my_player_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut
         return val;
     }
     return None;
+}
+
+pub fn find_player_and_ship_mut(state: &mut GameState, player_id: Uuid) -> (Option<&mut Player>, Option<&mut Ship>) {
+    let index = state
+        .players
+        .iter()
+        .position(|player| player.id == player_id);
+    let mut player = None;
+    let mut ship = None;
+    if let Some(index) = index {
+        let found_player = &mut state.players[index];
+        if let Some(ship_id) = found_player.ship_id {
+            let index = state.ships.iter().position(|ship| ship.id == ship_id);
+            if let Some(index) = index {
+                ship = Some(&mut state.ships[index]);
+            }
+        }
+
+        player = Some(found_player);
+    }
+    return (player, ship);
 }
 
 fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {

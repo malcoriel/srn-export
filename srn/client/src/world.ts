@@ -160,8 +160,7 @@ export enum InventoryItemType {
 
 export type InventoryItem = {
     id: string;
-    x: number;
-    y: number;
+    index: number;
     quantity: number;
     stackable: boolean;
     player_owned: boolean;

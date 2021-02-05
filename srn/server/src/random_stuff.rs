@@ -1,4 +1,5 @@
 use rand::prelude::*;
+use crate::world::Rarity;
 
 pub const STAR_NAMES: [&str; 32] = [
     "Ithoins",
@@ -215,13 +216,13 @@ pub fn gen_random_photo_id(rng: &mut SmallRng) -> i32 {
 }
 
 // radius, value, color
-pub fn gen_mineral_props(rng: &mut SmallRng) -> (f64, i32, String) {
+pub fn gen_mineral_props(rng: &mut SmallRng) -> (f64, i32, String, Rarity) {
     let chance = rng.gen_range(0.0, 1.0);
     return if chance < 0.5 {
-        (2.0, 100, "#b87333".to_string())
+        (2.0, 100, "#b87333".to_string(), Rarity::Common)
     } else if chance < 0.85 {
-        (1.5, 200, "#c0c0c0".to_string())
+        (1.5, 200, "#c0c0c0".to_string(), Rarity::Uncommon)
     } else {
-        (1.0, 300, "#ffd700".to_string())
+        (1.0, 300, "#ffd700".to_string(), Rarity::Rare)
     };
 }
