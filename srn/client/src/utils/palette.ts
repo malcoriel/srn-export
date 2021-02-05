@@ -19,3 +19,6 @@ export const teal = '#06f9e6';
 export const crimson = '#e32636';
 export const darkGreen = '#03c03c';
 export const dirtyGray = '#60593c';
+export const rare = '#ffd700';
+export const uncommon = '#c0c0c0';
+export const common = '#b87333';

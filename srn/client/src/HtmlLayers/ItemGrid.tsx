@@ -1,61 +1,40 @@
 import React, { useState } from 'react';
-import Draggable, { DraggableEventHandler } from 'react-draggable';
+import { DraggableEventHandler } from 'react-draggable';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
 import { WithScrollbars } from './ui/WithScrollbars';
 import _ from 'lodash';
-import "./ItemGrid.scss";
+import './ItemGrid.scss';
 import { InventoryItem } from '../world';
+import { ItemElem } from './InventoryItem';
 
-const MARGIN = 5;
-const CELL_SIZE = 60;
-export const cellsToPixels = (cellCount: number) => CELL_SIZE * cellCount + 1; // 1 is last border
+export const ITEM_CELL_MARGIN = 5;
+export const ITEM_CELL_SIZE = 60;
+export const cellsToPixels = (cellCount: number) => ITEM_CELL_SIZE * cellCount + 1; // 1 is last border
 
-export const V_MARGIN = new Vector(MARGIN, MARGIN);
+export const V_MARGIN = new Vector(ITEM_CELL_MARGIN, ITEM_CELL_MARGIN);
 
 export const gridPositionToPosition = (p?: IVector): IVector => {
   if (!p)
     return snap(VectorFzero);
   return snap(Vector.fromIVector(p)
-    .scale(CELL_SIZE)
+    .scale(ITEM_CELL_SIZE)
     .add(V_MARGIN));
 };
 
 export const positionToGridPosition = (p: IVector): IVector => {
   return Vector.fromIVector(snap(p))
     .subtract(V_MARGIN)
-    .scale(1 / CELL_SIZE);
+    .scale(1 / ITEM_CELL_SIZE);
 };
 
 export const snap = (pos: IVector): IVector => {
   return {
-    x: Math.round(pos.x / CELL_SIZE) * CELL_SIZE - MARGIN + 0.5,
-    y: Math.round(pos.y / CELL_SIZE) * CELL_SIZE + MARGIN + 0.5,
+    x: Math.round(pos.x / ITEM_CELL_SIZE) * ITEM_CELL_SIZE - ITEM_CELL_MARGIN + 0.5,
+    y: Math.round(pos.y / ITEM_CELL_SIZE) * ITEM_CELL_SIZE + ITEM_CELL_MARGIN + 0.5,
   };
 };
 
 export const OnDragEmpty: DraggableEventHandler = (e: any, d: any) => {};
-
-export const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX: number, item: InventoryItem, position?: IVector, onDragStart?: OnDragItem, onDragStop: (e: any, d: any) => void }> = ({
-  item, maxY, onDragStart,
-  position, onDragStop, defaultPosition, maxX,
-}) => {
-  const bounds = {
-    left: -MARGIN,
-    top: MARGIN + 0.5,
-    right: maxX,
-    bottom: maxY,
-  };
-
-  let onStart = onDragStart ? () => {
-    onDragStart(item);
-  } : OnDragEmpty;
-  return <Draggable onStart={onStart} position={position} onStop={onDragStop} bounds={bounds} defaultPosition={defaultPosition}>
-    <div className='item-grid-item grabbable-invisible'>
-      <div>{item.id}</div>
-      <div>{item.quantity}</div>
-    </div>
-  </Draggable>;
-};
 
 export const positionItems = (items: InventoryItem[], width: number): Record<string, IVector> => {
   let row = 0;
@@ -72,7 +51,7 @@ export const positionItems = (items: InventoryItem[], width: number): Record<str
   return res;
 };
 
-type OnDragItem = (i: InventoryItem) => void;
+export type OnDragItem = (i: InventoryItem) => void;
 export const ItemGrid: React.FC<{ columnCount: number, onDragStart?:
     OnDragItem, items: InventoryItem[], minRows: number, extraRows: number }> = ({
   columnCount,
@@ -96,9 +75,9 @@ export const ItemGrid: React.FC<{ columnCount: number, onDragStart?:
   let contentWidth = cellsToPixels(columnCount);
   return <WithScrollbars noAutoHide>
     <div className='content' style={{ height: contentHeight }}>
-      {items.map(item => <ItemElem maxY={contentHeight - CELL_SIZE + MARGIN}
+      {items.map(item => <ItemElem maxY={contentHeight - ITEM_CELL_SIZE + ITEM_CELL_MARGIN}
                                    onDragStart={onDragStart}
-                                   maxX={contentWidth - CELL_SIZE - 0.5 - MARGIN}
+                                   maxX={contentWidth - ITEM_CELL_SIZE - 0.5 - ITEM_CELL_MARGIN}
                                    key={item.id} item={item} position={gridPositionToPosition(positions[item.id])}
                                    onDragStop={onDragStop(item.id)} />)}
     </div>
