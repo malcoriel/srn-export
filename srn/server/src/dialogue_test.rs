@@ -15,7 +15,6 @@ mod world_test {
         let dialogue_id = script.id;
         let first_state_id = script.initial_state;
         let initial_options = script.options.get(&first_state_id).unwrap();
-        eprintln!("{:?}", initial_options);
         let go_next_id = initial_options.iter().find(|(_oid, name)| name == "Go to the marketplace").unwrap().0;
         let exit_id = initial_options.iter().find(|(_oid, name)| name == "Undock and fly away").unwrap().0;
 
