@@ -32,9 +32,16 @@ $gridColor: #ccc;
 
 
 .item-grid-item {
-  color: white;
   position: absolute;
   width: 50px;
   height: 50px;
   box-sizing: border-box;
+
+  .quantity {
+    color: white;
+    font-size: 20px;
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+  }
 }

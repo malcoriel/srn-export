@@ -4,7 +4,7 @@ import { InventoryItem, InventoryItemType } from '../world';
 import Draggable from 'react-draggable';
 import { ITEM_CELL_MARGIN, OnDragEmpty, OnDragItem } from './ItemGrid';
 import { common, gray, rare, uncommon } from '../utils/palette';
-
+import MineralSvg from './ui/MineralSvg';
 const itemTypeToColor = {
   [InventoryItemType.Unknown]: gray,
   [InventoryItemType.CommonMineral]: common,
@@ -15,6 +15,7 @@ const itemTypeToColor = {
 const defaultColor = gray;
 
 const getColor = (iit: InventoryItemType) : string =>  {
+  console.log(iit);
   return itemTypeToColor[iit] || defaultColor;
 }
 
@@ -34,8 +35,9 @@ export const ItemElem: React.FC<{ defaultPosition?: IVector, maxY: number, maxX:
   } : OnDragEmpty;
   return <Draggable onStart={onStart} position={position} onStop={onDragStop} bounds={bounds}
                     defaultPosition={defaultPosition}>
-    <div className='item-grid-item grabbable-invisible' style={{backgroundColor: getColor(item.item_type)}}>
-      <div>{item.quantity}</div>
+    <div className='item-grid-item grabbable-invisible'>
+      <MineralSvg width={50} height={50} fillColor={getColor(item.item_type)} strokeColor="#00000000"/>
+      <div className="quantity">{item.quantity}</div>
     </div>
   </Draggable>;
 };

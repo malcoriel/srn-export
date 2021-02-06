@@ -152,10 +152,10 @@ export type NatSpawnMineral = {
 };
 
 export enum InventoryItemType {
-  Unknown,
-  CommonMineral,
-  UncommonMineral,
-  RareMineral
+  Unknown = "Unknown",
+  CommonMineral = "CommonMineral",
+  UncommonMineral = "UncommonMineral",
+  RareMineral = "RareMineral"
 }
 
 export type InventoryItem = {
