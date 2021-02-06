@@ -1,0 +1,18 @@
+{
+  "is_default": true,
+  "is_planetary": true,
+  "priority": 0,
+  "initial_state_name": "arrival",
+  "table": {
+    "arrival": ["You have landed on the s_current_planet_body_type s_current_planet. The space port is buzzing with activity, but there's nothing of interest here for you.", [
+      ["go_market", "Go to the marketplace", "market", ["Nothing"]],
+      ["go_exit", "Undock and fly away", "", ["Undock"]]
+    ]],
+    "market": ["You come to the marketplace on s_current_planet, but suddenly realize that you forgot your wallet on the ship! So there is nothing here for you. Maybe there will be something in the future?", [
+      ["go_back", "Go back to the space port", "arrival", ["Nothing"]],
+      ["go_exit", "Undock and fly away", "", ["Undock"]]
+    ]]
+  },
+  "bot_path": ["go_exit"],
+  "name": "basic_planet"
+}

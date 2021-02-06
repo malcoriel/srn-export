@@ -226,7 +226,7 @@ impl DialogueTable {
             // eprintln!("checking {}", script.name);
             if script.check_player(state, player, player_d_states.get(&script.id)) {
                 d_script = Some(script);
-                // eprintln!("catch!");
+                //eprintln!("catch! {}", script.name);
                 break;
             }
         }
@@ -585,8 +585,7 @@ pub fn gen_basic_planet_script() -> (Uuid, Uuid, Uuid, Uuid, Uuid, Uuid, Dialogu
 
 pub fn gen_scripts() -> Vec<DialogueScript> {
     let mut res = vec![];
-    let basic_planet = gen_basic_planet_script();
-    res.push(basic_planet.6);
+    res.push(read_from_resource("basic_planet"));
     res.push(read_from_resource("cargo_delivery_pickup"));
     res.push(gen_quest_dropoff_planet_script());
     res
