@@ -2,7 +2,7 @@ import { Window } from './ui/Window';
 import React from 'react';
 import { cellsToPixels, ItemGrid } from './ItemGrid';
 import './InventoryWindowBase.scss';
-import NetState, { findMyShip } from '../NetState';
+import NetState, { findMyShip, useNSForceChange } from '../NetState';
 
 const SCROLL_OFFSET = 10;
 let MIN_ROWS = 5;
@@ -25,6 +25,7 @@ const InventoryWindowItems = () => {
 }
 
 export const InventoryWindow = () => {
+  useNSForceChange("inventory window");
   return <Window
     height={WINDOW_HEIGHT}
     width={WINDOW_WIDTH + SCROLL_OFFSET}

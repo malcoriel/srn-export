@@ -30,7 +30,7 @@ mod inventory_test {
     #[test]
     pub fn can_consume() {
         let mut inv = vec![comm_min(1), rare_min(2), comm_min(3), rare_min(4)];
-        let consumed = consume_items_of_type(&mut inv, InventoryItemType::CommonMineral);
+        let consumed = consume_items_of_type(&mut inv, &InventoryItemType::CommonMineral);
         assert_eq!(inv.len(), 1);
         assert_eq!(inv[0].quantity, 6);
         assert_eq!(consumed.len(), 1);

@@ -4,7 +4,6 @@ use serde_derive::{Deserialize, Serialize};
 use crate::world::{NatSpawnMineral, Rarity};
 use std::collections::{HashSet, HashMap};
 use std::mem;
-use lazy_static::lazy_static;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum InventoryItemType {
@@ -13,6 +12,9 @@ pub enum InventoryItemType {
     UncommonMineral,
     RareMineral,
 }
+
+pub static MINERAL_TYPES: [InventoryItemType; 3] = [
+    InventoryItemType::CommonMineral, InventoryItemType::UncommonMineral, InventoryItemType::RareMineral];
 
 pub fn inventory_item_type_to_stackable(iit: &InventoryItemType) -> bool {
     match iit {
@@ -33,19 +35,6 @@ pub struct InventoryItem {
     pub player_owned: bool,
     pub item_type: InventoryItemType,
 }
-
-lazy_static! {
-    static ref PLACEHOLDER : InventoryItem = InventoryItem {
-        id: Uuid::nil(),
-        index: 0,
-        value: 0,
-        quantity: 0,
-        stackable: false,
-        player_owned: false,
-        item_type: InventoryItemType::Unknown
-    };
-}
-
 
 impl InventoryItem {
     pub fn new(iit: InventoryItemType, quantity: i32) -> InventoryItem {
@@ -87,7 +76,7 @@ pub fn shake_items(inventory: &mut Vec<InventoryItem>) {
         } else {
             let mut i = item.index;
             while occupied.contains(&i) {
-                i +=1;
+                i += 1;
             }
             item.index = i;
             occupied.insert(i);
@@ -109,7 +98,7 @@ pub fn group_items_of_same_type(inventory: &mut Vec<InventoryItem>) {
 
     let mut cloned_inv = inventory.clone();
     for i in 0..indexes_to_move.len() {
-        cloned_inv[indexes_to_move[i]].id = PLACEHOLDER.id;
+        cloned_inv[indexes_to_move[i]].id = Uuid::nil();
     }
 
     for i in 0..indexes_to_move.len() {
@@ -119,7 +108,7 @@ pub fn group_items_of_same_type(inventory: &mut Vec<InventoryItem>) {
         let base_item = &mut cloned_inv[base_index];
         base_item.quantity += moved_amount;
     }
-    cloned_inv = cloned_inv.into_iter().filter(|e | e.id != PLACEHOLDER.id).collect::<Vec<_>>();
+    cloned_inv = cloned_inv.into_iter().filter(|e| e.id != Uuid::nil()).collect::<Vec<_>>();
     inventory.clear();
     inventory.append(&mut cloned_inv);
 }
@@ -143,25 +132,26 @@ pub fn add_item(inventory: &mut Vec<InventoryItem>, new_item: InventoryItem) {
 //
 // }
 
-pub fn consume_items_of_type(inventory: &mut Vec<InventoryItem>, iit: InventoryItemType) -> Vec<InventoryItem> {
+pub fn consume_items_of_type(inventory: &mut Vec<InventoryItem>, iit: &InventoryItemType) -> Vec<InventoryItem> {
     let mut res = vec![];
     let mut indexes = vec![];
     let mut cloned_inv = inventory.clone();
     for i in 0..cloned_inv.len() {
-        if cloned_inv[i].item_type == iit {
+        if cloned_inv[i].item_type == *iit {
             indexes.push(i);
         }
     }
     for i in 0..indexes.len() {
-        res.push(mem::replace(&mut cloned_inv[indexes[i]], PLACEHOLDER.clone()));
+        cloned_inv[indexes[i]].id = Uuid::nil();
+        res.push(cloned_inv[indexes[i]].clone())
     }
 
-    cloned_inv = cloned_inv.into_iter().filter(|e |e.id != PLACEHOLDER.id).collect::<Vec<_>>();
+    cloned_inv = cloned_inv.into_iter().filter(|e| e.id != Uuid::nil()).collect::<Vec<_>>();
     group_items_of_same_type(&mut cloned_inv);
     // replace the contents with the filtered ones
     inventory.clear();
     inventory.append(&mut cloned_inv);
-    res = res.into_iter().map(|mut item| {
+    res = res.into_iter().map(|mut item: InventoryItem| {
         item.id = new_id();
         item
     }).collect::<Vec<_>>();
@@ -169,11 +159,37 @@ pub fn consume_items_of_type(inventory: &mut Vec<InventoryItem>, iit: InventoryI
     return res;
 }
 
-pub fn consume_items_of_types(inventory: &mut Vec<InventoryItem>, iits: Vec<InventoryItemType>) -> Vec<InventoryItem> {
+pub fn consume_items_of_types(inventory: &mut Vec<InventoryItem>, types: &Vec<InventoryItemType>) -> Vec<InventoryItem> {
     let mut res = vec![];
-    for iit in iits {
+    for iit in types {
         let mut extracted = consume_items_of_type(inventory, iit);
         res.append(&mut extracted);
+    }
+    res
+}
+
+pub fn count_items_of_types(inventory: &Vec<InventoryItem>, types: &Vec<InventoryItemType>) -> i32 {
+    let mut tmp = inventory.clone();
+    group_items_of_same_type(&mut tmp);
+    let mut res = 0;
+    for iit in types {
+        let item = tmp.iter().find(|i| i.item_type == *iit);
+        if let Some(item) = item {
+            res += item.quantity;
+        }
+    }
+    res
+}
+
+pub fn value_items_of_types(inventory: &Vec<InventoryItem>, types: &Vec<InventoryItemType>) -> i32 {
+    let mut tmp = inventory.clone();
+    group_items_of_same_type(&mut tmp);
+    let mut res = 0;
+    for iit in types {
+        let item = tmp.iter().find(|i| i.item_type == *iit);
+        if let Some(item) = item {
+            res += item.quantity * item.value;
+        }
     }
     res
 }

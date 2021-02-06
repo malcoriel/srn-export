@@ -13,7 +13,7 @@ use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId, find_player_and_ship_mut};
-use crate::inventory::{consume_items_of_types, InventoryItemType};
+use crate::inventory::{consume_items_of_types, InventoryItemType, MINERAL_TYPES, count_items_of_types, value_items_of_types};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 enum DialogueSubstitutionType {
@@ -406,7 +406,37 @@ fn substitute_text(
                 id: new_id(),
                 text: gen_random_character_name().to_string(),
             });
-        } else {
+        } else if cap[0] == *"s_minerals_amount" {
+            if let Some(player) = player {
+                if let Some(ship) = find_my_ship(game_state, player.id) {
+                    res.push(DialogueSubstitution {
+                        s_type: DialogueSubstitutionType::Generic,
+                        id: new_id(),
+                        text: count_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec()).to_string(),
+                    });
+                } else {
+                    err!("s_minerals_amount used without ship");
+                }
+            } else {
+                err!("s_minerals_amount used without player");
+            }
+        } else if cap[0] == *"s_minerals_value" {
+            if let Some(player) = player {
+                if let Some(ship) = find_my_ship(game_state, player.id) {
+                    res.push(DialogueSubstitution {
+                        s_type: DialogueSubstitutionType::Generic,
+                        id: new_id(),
+                        text: value_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec()).to_string(),
+                    });
+                } else {
+                    err!("s_minerals_value used without ship");
+                }
+            } else {
+                err!("s_minerals_value used without player");
+            }
+
+        }
+        else {
             eprintln!("Unknown substitution {}", cap[0].to_string());
         }
     }
@@ -499,9 +529,8 @@ fn apply_side_effects(
             DialogOptionSideEffect::SellMinerals => {
                 let (player, ship) = find_player_and_ship_mut(state, player_id);
                 if let (Some( player), Some(ship)) = (player, ship) {
-                    let minerals = consume_items_of_types(&mut ship.inventory, vec![
-                    InventoryItemType::CommonMineral, InventoryItemType::UncommonMineral, InventoryItemType::RareMineral]);
-                    let sum = minerals.iter().fold(0, |acc, curr| acc + curr.value);
+                    let minerals = consume_items_of_types(&mut ship.inventory, &MINERAL_TYPES.to_vec());
+                    let sum = minerals.iter().fold(0, |acc, curr| acc + curr.value * curr.quantity);
                     player.money += sum;
                 }
             }

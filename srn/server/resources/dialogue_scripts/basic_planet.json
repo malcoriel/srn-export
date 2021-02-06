@@ -10,7 +10,7 @@
     ]],
     "market": ["You come to the marketplace on s_current_planet. Here you can sell the minerals you have collected. If you have any, of course.", [
       ["go_back", "Go back to the space port", "arrival", ["Nothing"]],
-      ["sell_minerals", "Sell the minerals ", "market", ["SellMinerals"]],
+      ["sell_minerals", "Sell s_minerals_amount mineral(s) that you have for s_minerals_value", "market", ["SellMinerals"]],
       ["go_exit", "Undock and fly away", "", ["Undock"]]
     ]]
   },
