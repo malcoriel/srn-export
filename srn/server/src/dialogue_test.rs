@@ -1,10 +1,7 @@
 #[cfg(test)]
 mod world_test {
-    use crate::dialogue::{
-        execute_dialog_option, gen_basic_planet_script, DialogueScript, DialogueStates,
-        DialogueTable, DialogueUpdate,
-    };
-    use crate::world;
+    use crate::dialogue::{execute_dialog_option, DialogueScript, DialogueStates, DialogueTable, DialogueUpdate, read_from_resource};
+    use crate::{world, dialogue};
     use crate::world::GameState;
     use std::collections::HashMap;
     use std::str::FromStr;
@@ -13,8 +10,14 @@ mod world_test {
     #[test]
     fn can_move_between_valid_states() {
         let player_id = Uuid::new_v4();
-        let (dialogue_id, first_state_id, _second_state_id, go_next_id, _go_back_id, exit_id, script) =
-            gen_basic_planet_script();
+        // let (dialogue_id, first_state_id, _second_state_id, go_next_id, _go_back_id, exit_id, script) =
+        let script =    read_from_resource("basic_planet");
+        let dialogue_id = script.id;
+        let first_state_id = script.initial_state;
+        let initial_options = script.options.get(&first_state_id).unwrap();
+        eprintln!("{:?}", initial_options);
+        let go_next_id = initial_options.iter().find(|(_oid, name)| name == "Go to the marketplace").unwrap().0;
+        let exit_id = initial_options.iter().find(|(_oid, name)| name == "Undock and fly away").unwrap().0;
 
         let mut d_table: DialogueTable = DialogueTable::new();
         d_table.scripts.insert(dialogue_id, script);
