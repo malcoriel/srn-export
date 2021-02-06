@@ -12,10 +12,8 @@ use crate::fire_event;
 use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
-use crate::world::{
-    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
-    generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId,
-};
+use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId, find_player_and_ship_mut};
+use crate::inventory::{consume_items_of_types, InventoryItemType};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 enum DialogueSubstitutionType {
@@ -77,6 +75,7 @@ pub enum DialogOptionSideEffect {
     QuestCargoPickup,
     QuestCargoDropOff,
     QuestCollectReward,
+    SellMinerals,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -495,6 +494,15 @@ fn apply_side_effects(
                         my_player.quest = None;
                     }
                     state_changed = true;
+                }
+            }
+            DialogOptionSideEffect::SellMinerals => {
+                let (player, ship) = find_player_and_ship_mut(state, player_id);
+                if let (Some( player), Some(ship)) = (player, ship) {
+                    let minerals = consume_items_of_types(&mut ship.inventory, vec![
+                    InventoryItemType::CommonMineral, InventoryItemType::UncommonMineral, InventoryItemType::RareMineral]);
+                    let sum = minerals.iter().fold(0, |acc, curr| acc + curr.value);
+                    player.money += sum;
                 }
             }
         }

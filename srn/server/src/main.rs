@@ -83,6 +83,7 @@ mod world;
 mod world_test;
 mod chat;
 mod inventory;
+mod inventory_test;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TagConfirm {

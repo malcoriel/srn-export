@@ -8,8 +8,9 @@
       ["go_market", "Go to the marketplace", "market", ["Nothing"]],
       ["go_exit", "Undock and fly away", "", ["Undock"]]
     ]],
-    "market": ["You come to the marketplace on s_current_planet, but suddenly realize that you forgot your wallet on the ship! So there is nothing here for you. Maybe there will be something in the future?", [
+    "market": ["You come to the marketplace on s_current_planet. Here you can sell the minerals you have collected. If you have any, of course.", [
       ["go_back", "Go back to the space port", "arrival", ["Nothing"]],
+      ["sell_minerals", "Sell the minerals ", "market", ["SellMinerals"]],
       ["go_exit", "Undock and fly away", "", ["Undock"]]
     ]]
   },

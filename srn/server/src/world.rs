@@ -616,9 +616,6 @@ pub fn update_world(
             state.minerals = minerals;
             for pup in players_update {
                 let pair = find_player_and_ship_mut(&mut state, pup.0);
-                if let Some(p) = pair.0  {
-                    p.money += pup.1.value;
-                }
                 if let Some(ship) = pair.1 {
                     add_item(&mut ship.inventory, InventoryItem::from_mineral(pup.1));
                 }
