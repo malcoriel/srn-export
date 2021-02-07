@@ -7,7 +7,7 @@ use chrono::Local;
 use lazy_static::lazy_static;
 use uuid::Uuid;
 
-use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, DialogueState};
+use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, DialogueState, check_trigger_conditions, TriggerCondition};
 use crate::events::fire_event;
 use crate::random_stuff::gen_bot_name;
 use crate::world;
@@ -54,6 +54,8 @@ impl Bot {
         bot_d_states: &DialogueStatesForPlayer,
     ) -> (Self, Vec<BotAct>) {
         let player = find_my_player(&state, self.id);
+        // while it was designed for dialogues, it seems that it's actually very useful "trigger conditions"
+        let conditions = check_trigger_conditions(state, self.id);
         if player.is_none() {
             eprintln!("{} no player", self.id);
             return (self, vec![]);
@@ -91,13 +93,13 @@ impl Bot {
                 }
             }
         } else {
-            if quest.state == CargoDeliveryQuestState::Started {
+            if quest.state == CargoDeliveryQuestState::Started && !conditions.contains(&TriggerCondition::CurrentPlanetIsPickup) {
                 result_actions.push(BotAct::Act(ShipAction {
                     // this action doubles as undock
                     s_type: ShipActionType::DockNavigate,
                     data: format!("\"{}\"", quest.from_id),
                 }));
-            } else if quest.state == CargoDeliveryQuestState::Picked {
+            } else if quest.state == CargoDeliveryQuestState::Picked && !conditions.contains(&TriggerCondition::CurrentPlanetIsDropoff){
                 result_actions.push(BotAct::Act(ShipAction {
                     // this action doubles as undock
                     s_type: ShipActionType::DockNavigate,
@@ -120,7 +122,6 @@ impl Bot {
         let current_dialogue_name = current_script.name.clone();
         let current_d_state = bot_d_states.1.get(&current_script.id);
         // eprintln!("working on script {}, bot {}", current_script.name, self.id);
-        log!(format!("talk {:?}", current_d_state));
         current_d_state
             .and_then(|current_d_state| {
                 // if let Some(state_id) = *current_d_state.clone() {
@@ -131,7 +132,6 @@ impl Bot {
                 if option.is_none() {
                     warn!(format!("Bot {:?} is stuck without dialogue option in dialogue {} state {:?}", self, current_dialogue_name, current_d_state))
                 } else {
-                    log!(format!("chose {:?}", option))
                 }
                 option
             })
@@ -159,9 +159,9 @@ fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
 
 pub fn bot_init(bots: &mut Vec<Bot>) {
     add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
 }
 
 pub fn format_d_states(d_states: &HashMap<DialogueId, DialogueState>, d_table: &DialogueTable) -> HashMap<String, String> {
@@ -187,7 +187,6 @@ pub fn do_bot_actions(
     for orig_bot in bots.iter_mut() {
         let id: Uuid = orig_bot.id;
         let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
-        eprintln!("d_states: {:?}", format_d_states(&bot_d_states.1, d_table));
         let (bot, bot_acts) = orig_bot
             .clone()
             .act(&state, elapsed_micro, &d_table, &bot_d_states);

@@ -233,7 +233,7 @@ lazy_static! {
 //     broadcast_state(mut_state.clone());
 // }
 
-pub const ENABLE_PERF: bool = true;
+pub const ENABLE_PERF: bool = false;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;

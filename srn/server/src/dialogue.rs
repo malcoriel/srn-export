@@ -80,28 +80,28 @@ pub enum DialogOptionSideEffect {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
-pub enum DialogOptionCondition {
+pub enum TriggerCondition {
     CurrentPlanetIsPickup,
     CurrentPlanetIsDropoff,
     AnyMineralsInCargo,
 }
 
 
-pub fn check_dialogue_conditions(state: &GameState, player_id: Uuid) -> HashSet<DialogOptionCondition> {
+pub fn check_trigger_conditions(state: &GameState, player_id: Uuid) -> HashSet<TriggerCondition> {
     let mut res = HashSet::new();
     if let (Some(player), Some(ship)) = find_player_and_ship(state, player_id) {
         if let Some(planet) = find_current_planet(player, state) {
             if let Some(quest) = player.quest.clone() {
                 if quest.from_id == planet.id && quest.state == CargoDeliveryQuestState::Started {
-                    res.insert(DialogOptionCondition::CurrentPlanetIsPickup);
+                    res.insert(TriggerCondition::CurrentPlanetIsPickup);
                 } else if quest.to_id == planet.id && quest.state == CargoDeliveryQuestState::Picked {
-                    res.insert(DialogOptionCondition::CurrentPlanetIsDropoff);
+                    res.insert(TriggerCondition::CurrentPlanetIsDropoff);
                 }
             }
         }
 
         if count_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec()) > 0 {
-            res.insert(DialogOptionCondition::AnyMineralsInCargo);
+            res.insert(TriggerCondition::AnyMineralsInCargo);
         }
     }
     res
@@ -112,13 +112,13 @@ pub struct DialogueScript {
     pub id: Uuid,
     pub transitions: HashMap<(StateId, OptionId), (Option<StateId>, Vec<DialogOptionSideEffect>)>,
     pub prompts: HashMap<StateId, String>,
-    pub options: HashMap<StateId, Vec<(OptionId, String, Option<DialogOptionCondition>)>>,
+    pub options: HashMap<StateId, Vec<(OptionId, String, Option<TriggerCondition>)>>,
     pub initial_state: StateId,
     pub is_planetary: bool,
     pub priority: i32,
     pub is_default: bool,
     pub name: String,
-    pub bot_path: Vec<(StateId, OptionId, Option<DialogOptionCondition>)>,
+    pub bot_path: Vec<(StateId, OptionId, Option<TriggerCondition>)>,
     pub names_db: HashMap<Uuid, String>,
     ids_db: HashMap<String, Uuid>,
 }
@@ -144,7 +144,7 @@ impl DialogueScript {
         return self.names_db.get(&id).unwrap();
     }
     pub fn get_next_bot_path(&self, current_state: &Option<StateId>, game_state: &GameState, player_id: Uuid) -> Option<&OptionId> {
-        let current_conditions = check_dialogue_conditions(game_state, player_id);
+        let current_conditions = check_trigger_conditions(game_state, player_id);
         if current_state.is_none() {
             return None;
         }
@@ -324,6 +324,8 @@ pub fn execute_dialog_option(
     // bool means "side effect happened, state changed"
     let mut return_value = (None, false);
     let mut should_drop = false;
+    let script = dialogue_table.scripts.get(&update.dialogue_id).unwrap();
+    eprintln!("Trying to execute {} on {}", script.names_db.get(&update.option_id).unwrap(), script.name);
     if let Some(all_dialogues) = dialogue_states.get_mut(&client_id) {
         if let Some(dialogue_state) = all_dialogues.1.get_mut(&update.dialogue_id) {
             let (new_state, side_effect) = apply_dialogue_option(
@@ -333,6 +335,7 @@ pub fn execute_dialog_option(
                 state,
                 client_id,
             );
+            eprintln!("execute success, state {:?} -> {:?}", script.get_name((*dialogue_state).unwrap()), (*new_state).map(|s| script.get_name(s)));
             if new_state.is_none() {
                 should_drop = true;
             }
@@ -349,7 +352,6 @@ pub fn execute_dialog_option(
             );
         }
         if should_drop {
-            eprintln!("dropping none state for {}", update.dialogue_id);
             all_dialogues.1.remove(&update.dialogue_id);
         }
     }
@@ -364,7 +366,7 @@ pub fn build_dialogue_from_state(
     player_id: PlayerId,
     game_state: &GameState,
 ) -> Option<Dialogue> {
-    let satisfied_conditions = check_dialogue_conditions(game_state, player_id);
+    let satisfied_conditions = check_trigger_conditions(game_state, player_id);
     let script = dialogue_table.scripts.get(&dialogue_id);
     let player = find_my_player(game_state, player_id);
     if let Some(script) = script {
@@ -637,7 +639,7 @@ pub fn read_from_resource(file: &str) -> DialogueScript {
 }
 
 // option_name, option_text, new_state_name, side_effects, option_condition_name
-pub type ShortScriptLine = (String, String, String, Vec<DialogOptionSideEffect>, Option<DialogOptionCondition>);
+pub type ShortScriptLine = (String, String, String, Vec<DialogOptionSideEffect>, Option<TriggerCondition>);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShortScript {
@@ -648,7 +650,7 @@ pub struct ShortScript {
     pub initial_state_name: String,
     pub table: HashMap<String, (String, Vec<ShortScriptLine>)>,
     // [[state_name, option_name, condition_for_choosing_it]]
-    pub bot_path: Vec<(String, String, Option<DialogOptionCondition>)>,
+    pub bot_path: Vec<(String, String, Option<TriggerCondition>)>,
 }
 
 pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
