@@ -1207,6 +1207,27 @@ pub fn find_player_and_ship_mut(state: &mut GameState, player_id: Uuid) -> (Opti
     return (player, ship);
 }
 
+pub fn find_player_and_ship(state: &GameState, player_id: Uuid) -> (Option<&Player>, Option<&Ship>) {
+    let index = state
+        .players
+        .iter()
+        .position(|player| player.id == player_id);
+    let mut player = None;
+    let mut ship = None;
+    if let Some(index) = index {
+        let found_player = &state.players[index];
+        if let Some(ship_id) = found_player.ship_id {
+            let index = state.ships.iter().position(|ship| ship.id == ship_id);
+            if let Some(index) = index {
+                ship = Some(&state.ships[index]);
+            }
+        }
+
+        player = Some(found_player);
+    }
+    return (player, ship);
+}
+
 fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
     match action_raw.s_type {
         ShipActionType::Unknown => ShipActionRust::Unknown,

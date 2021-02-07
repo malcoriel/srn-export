@@ -1,5 +1,5 @@
 use std::borrow::BorrowMut;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::slice::Iter;
 
@@ -12,7 +12,7 @@ use crate::fire_event;
 use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
-use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId, find_player_and_ship_mut};
+use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId, find_player_and_ship_mut, find_player_and_ship};
 use crate::inventory::{consume_items_of_types, InventoryItemType, MINERAL_TYPES, count_items_of_types, value_items_of_types};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -79,12 +79,40 @@ pub enum DialogOptionSideEffect {
     SwitchDialogue(String),
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum DialogOptionCondition {
+    CurrentPlanetIsPickup,
+    CurrentPlanetIsDropoff,
+    AnyMineralsInCargo,
+}
+
+
+pub fn check_dialogue_conditions(state: &GameState, player_id: Uuid) -> HashSet<DialogOptionCondition> {
+    let mut res = HashSet::new();
+    if let (Some(player), Some(ship)) = find_player_and_ship(state, player_id) {
+        if let Some(planet) = find_current_planet(player, state) {
+            if let Some(quest) = player.quest.clone() {
+                if quest.from_id == planet.id && quest.state == CargoDeliveryQuestState::Started {
+                    res.insert(DialogOptionCondition::CurrentPlanetIsPickup);
+                } else if quest.to_id == planet.id && quest.state == CargoDeliveryQuestState::Picked {
+                    res.insert(DialogOptionCondition::CurrentPlanetIsDropoff);
+                }
+            }
+        }
+
+        if count_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec()) > 0 {
+            res.insert(DialogOptionCondition::AnyMineralsInCargo);
+        }
+    }
+    res
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueScript {
     pub id: Uuid,
     pub transitions: HashMap<(StateId, OptionId), (Option<StateId>, Vec<DialogOptionSideEffect>)>,
     pub prompts: HashMap<StateId, String>,
-    pub options: HashMap<StateId, Vec<(OptionId, String)>>,
+    pub options: HashMap<StateId, Vec<(OptionId, String, Option<DialogOptionCondition>)>>,
     pub initial_state: StateId,
     pub is_planetary: bool,
     pub priority: u32,
@@ -309,6 +337,7 @@ pub fn build_dialogue_from_state(
     player_id: PlayerId,
     game_state: &GameState,
 ) -> Option<Dialogue> {
+    let satisfied_conditions = check_dialogue_conditions(game_state, player_id);
     let script = dialogue_table.scripts.get(&dialogue_id);
     let player = find_my_player(game_state, player_id);
     if let Some(script) = script {
@@ -329,11 +358,25 @@ pub fn build_dialogue_from_state(
                 options: options
                     .clone()
                     .into_iter()
-                    .map(|(id, text)| DialogueElem {
-                        substitution: substitute_text(&text, &current_planet, player, game_state),
-                        text,
-                        id,
-                    })
+                    .filter_map(|(id, text, condition)| {
+                        if let Some(condition) = condition {
+                            if satisfied_conditions.contains(&condition) {
+                                Some(DialogueElem {
+                                    substitution: substitute_text(&text, &current_planet, player, game_state),
+                                    text,
+                                    id,
+                                })
+                            } else {
+                                None
+                            }
+                        } else {
+                            Some(DialogueElem {
+                                substitution: substitute_text(&text, &current_planet, player, game_state),
+                                text,
+                                id,
+                            })
+                        }
+                    } )
                     .collect::<Vec<_>>(),
                 prompt: DialogueElem {
                     text: prompt.clone(),
@@ -565,7 +608,7 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         prompts: Default::default(),
         options: Default::default(),
         initial_state: Default::default(),
-        is_planetary: true,
+        is_planetary: false,
         priority: 1,
         is_default: false,
         name: d_name.clone(),
@@ -610,8 +653,9 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
             (
                 go_drop_off,
                 "Find the person that you have to give the cargo to".to_string(),
+                None
             ),
-            (go_exit_no_drop_off, "Undock and fly away".to_string()),
+            (go_exit_no_drop_off, "Undock and fly away".to_string(), None),
         ],
     );
     script.transitions.insert(
@@ -633,7 +677,7 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         dropped_off,
         vec![(
             go_exit_dropped_off,
-            "Collect your reward and fly away.".to_string(),
+            "Collect your reward and fly away.".to_string(), None,
         )],
     );
     script.transitions.insert(
@@ -653,11 +697,16 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
 pub fn read_from_resource(file: &str) -> DialogueScript {
     let json = fs::read_to_string(format!("resources/dialogue_scripts/{}.json", file))
         .expect("script not found");
-    let ss = serde_json::from_str::<ShortScript>(json.as_str()).unwrap();
+    let result = serde_json::from_str::<ShortScript>(json.as_str());
+    if result.is_err() {
+        panic!("Failed to load dialogue script {}, err is {:?}", file, result.err());
+    }
+    let ss = result.unwrap();
     short_decrypt(ss)
 }
 
-pub type ShortScriptLine = (String, String, String, Vec<DialogOptionSideEffect>);
+// option_name, option_text, new_state_name, side_effects, option_condition_name
+pub type ShortScriptLine = (String, String, String, Vec<DialogOptionSideEffect>, Option<DialogOptionCondition>);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShortScript {
@@ -686,7 +735,7 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
         script.ids_db.insert(state_name.clone(), state_id);
         script.prompts.insert(state_id, state_prompt.clone());
 
-        for (option_name, _, _, _) in options.into_iter() {
+        for (option_name, _, _, _, _) in options.into_iter() {
             let option_id = new_id();
             script.names_db.insert(option_id, option_name.clone());
             script.ids_db.insert(option_name.clone(), option_id);
@@ -695,7 +744,7 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
 
     for (state_name, (_, options)) in ss.table.into_iter() {
         let state_id = script.ids_db.get(&state_name).unwrap().clone();
-        for (option_name, option_text, next_state_name, side_effects) in options.into_iter() {
+        for (option_name, option_text, next_state_name, side_effects, option_condition) in options.into_iter() {
             let option_id = script.ids_db.get(&option_name).unwrap().clone();
             let next_state_id = if next_state_name != "" {
                 Some(script.ids_db.get(&next_state_name).unwrap().clone())
@@ -706,7 +755,7 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
                 .transitions
                 .insert((state_id, option_id), (next_state_id, side_effects));
             let current_opts = script.options.entry(state_id).or_insert(vec![]);
-            current_opts.push((option_id, option_text));
+            current_opts.push((option_id, option_text, option_condition));
         }
     }
 
