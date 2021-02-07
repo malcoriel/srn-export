@@ -4,14 +4,55 @@
   "priority": -1,
   "initial_state_name": "arrival",
   "table": {
-    "arrival": ["You land on the s_current_planet_body_type s_current_planet. Here you must pick up the cargo to deliver to s_cargo_destination_planet.", [
-      ["go_pickup", "Find the person that has to give you the cargo", "picked_up", ["QuestCargoPickup"], null],
-      ["go_exit_no_cargo", "Undock and fly away", "", ["Undock"], null]
-    ]],
-    "picked_up": ["You find a shady man who calls himself s_random_name. He quickly hands you a suspiciously-looking sealed crate with \"do not open\" written on it, and promptly leaves. You deliver it to your ship without asking questions", [
-      ["go_exit_with_cargo", "Undock and fly to the next stop with the crate.", "", ["Undock"], null]
-    ]]
+    "arrival": [
+      "You land on the s_current_planet_body_type s_current_planet. Here you must pick up the cargo to deliver to s_cargo_destination_planet.",
+      [
+        [
+          "go_pickup",
+          "Find the person that has to give you the cargo",
+          "picked_up",
+          [
+            "QuestCargoPickup"
+          ],
+          null
+        ],
+        [
+          "go_exit_no_cargo",
+          "Undock and fly away",
+          "",
+          [
+            "Undock"
+          ],
+          null
+        ]
+      ]
+    ],
+    "picked_up": [
+      "You find a shady man who calls himself s_random_name. He quickly hands you a suspiciously-looking sealed crate with \"do not open\" written on it, and promptly leaves. You deliver it to your ship without asking questions",
+      [
+        [
+          "go_exit_with_cargo",
+          "Undock and fly to the next stop with the crate.",
+          "",
+          [
+            "Undock"
+          ],
+          null
+        ]
+      ]
+    ]
   },
-  "bot_path": ["go_pickup", "go_exit_with_cargo"],
+  "bot_path": [
+    [
+      "arrival",
+      "go_pickup",
+      null
+    ],
+    [
+      "picked_up",
+      "go_exit_with_cargo",
+      null
+    ]
+  ],
   "name": "cargo_delivery_pickup"
 }

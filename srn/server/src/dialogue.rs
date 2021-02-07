@@ -118,8 +118,8 @@ pub struct DialogueScript {
     pub priority: i32,
     pub is_default: bool,
     pub name: String,
-    pub bot_path: HashMap<StateId, OptionId>,
-    names_db: HashMap<Uuid, String>,
+    pub bot_path: Vec<(StateId, OptionId, Option<DialogOptionCondition>)>,
+    pub names_db: HashMap<Uuid, String>,
     ids_db: HashMap<String, Uuid>,
 }
 
@@ -143,8 +143,26 @@ impl DialogueScript {
     pub fn get_name(&self, id: Uuid) -> &String {
         return self.names_db.get(&id).unwrap();
     }
-    pub fn get_next_bot_path(&self, current_state: &Option<StateId>) -> Option<&OptionId> {
-        return current_state.and_then(|cs| self.bot_path.get(&cs));
+    pub fn get_next_bot_path(&self, current_state: &Option<StateId>, game_state: &GameState, player_id: Uuid) -> Option<&OptionId> {
+        let current_conditions = check_dialogue_conditions(game_state, player_id);
+        if current_state.is_none() {
+            return None;
+        }
+        let current_state = current_state.unwrap();
+
+        for (state_id, option_id, condition) in self.bot_path.iter() {
+            if *state_id == current_state {
+                if let Some(condition) = condition {
+                    if current_conditions.contains(&condition) {
+                        return Some(&option_id);
+                    }
+                } else {
+                    return Some(&option_id);
+                }
+            }
+        }
+        warn!("no next bot path found");
+        return None;
     }
     pub fn check_player(
         &self,
@@ -304,6 +322,8 @@ pub fn execute_dialog_option(
     dialogue_table: &DialogueTable,
 ) -> (Option<Dialogue>, bool) {
     // bool means "side effect happened, state changed"
+    let mut return_value = (None, false);
+    let mut should_drop = false;
     if let Some(all_dialogues) = dialogue_states.get_mut(&client_id) {
         if let Some(dialogue_state) = all_dialogues.1.get_mut(&update.dialogue_id) {
             let (new_state, side_effect) = apply_dialogue_option(
@@ -313,8 +333,11 @@ pub fn execute_dialog_option(
                 state,
                 client_id,
             );
+            if new_state.is_none() {
+                should_drop = true;
+            }
             *dialogue_state = new_state;
-            return (
+            return_value = (
                 build_dialogue_from_state(
                     update.dialogue_id,
                     dialogue_state,
@@ -325,9 +348,13 @@ pub fn execute_dialog_option(
                 side_effect,
             );
         }
+        if should_drop {
+            eprintln!("dropping none state for {}", update.dialogue_id);
+            all_dialogues.1.remove(&update.dialogue_id);
+        }
     }
 
-    return (None, false);
+    return return_value;
 }
 
 pub fn build_dialogue_from_state(
@@ -594,104 +621,8 @@ pub fn gen_scripts() -> Vec<DialogueScript> {
     let mut res = vec![];
     res.push(read_from_resource("basic_planet"));
     res.push(read_from_resource("cargo_delivery_pickup"));
-    res.push(gen_quest_dropoff_planet_script());
+    res.push(read_from_resource("cargo_delivery_dropoff"));
     res
-}
-
-fn gen_quest_dropoff_planet_script() -> DialogueScript {
-    let dialogue_id = new_id();
-    let d_name = "cargo_delivery_dropoff".to_string();
-
-    let mut script = DialogueScript {
-        id: dialogue_id,
-        transitions: Default::default(),
-        prompts: Default::default(),
-        options: Default::default(),
-        initial_state: Default::default(),
-        is_planetary: true,
-        priority: -1,
-        is_default: false,
-        name: d_name.clone(),
-        bot_path: Default::default(),
-        names_db: Default::default(),
-        ids_db: Default::default(),
-    };
-
-    script.names_db.insert(dialogue_id, d_name);
-    let arrival = new_id();
-    script.names_db.insert(arrival, "arrival".to_string());
-    let dropped_off = new_id();
-    script
-        .names_db
-        .insert(dropped_off, "dropped_off".to_string());
-    let go_drop_off = new_id();
-    script
-        .names_db
-        .insert(go_drop_off, "go_drop_off".to_string());
-    let go_exit_no_drop_off = new_id();
-    script
-        .names_db
-        .insert(go_exit_no_drop_off, "go_exit_no_drop_off".to_string());
-    let go_exit_dropped_off = new_id();
-    script
-        .names_db
-        .insert(go_exit_dropped_off, "go_exit_dropped_off".to_string());
-
-    script.bot_path.insert(arrival.clone(), go_drop_off.clone());
-    script
-        .bot_path
-        .insert(dropped_off.clone(), go_exit_dropped_off.clone());
-
-    script.initial_state = arrival;
-
-    script
-        .prompts
-        .insert(arrival, "You land on the s_current_planet_body_type s_current_planet. Here you must deliver the crate you are carrying to somebody.".to_string());
-    script.options.insert(
-        arrival,
-        vec![
-            (
-                go_drop_off,
-                "Find the person that you have to give the cargo to".to_string(),
-                None
-            ),
-            (go_exit_no_drop_off, "Undock and fly away".to_string(), None),
-        ],
-    );
-    script.transitions.insert(
-        (arrival, go_drop_off),
-        (
-            Some(dropped_off),
-            vec![DialogOptionSideEffect::QuestCargoDropOff],
-        ),
-    );
-    script.transitions.insert(
-        (arrival, go_exit_no_drop_off),
-        (None, vec![DialogOptionSideEffect::Undock]),
-    );
-
-    script
-        .prompts
-        .insert(dropped_off, "You find a businessman that thanks you, grabs the crate and hands you off some credits as a reward. He refuses to comment what was in the cargo, though.".to_string());
-    script.options.insert(
-        dropped_off,
-        vec![(
-            go_exit_dropped_off,
-            "Collect your reward and fly away.".to_string(), None,
-        )],
-    );
-    script.transitions.insert(
-        (dropped_off, go_exit_dropped_off),
-        (
-            None,
-            vec![
-                DialogOptionSideEffect::Undock,
-                DialogOptionSideEffect::QuestCollectReward,
-            ],
-        ),
-    );
-
-    script
 }
 
 pub fn read_from_resource(file: &str) -> DialogueScript {
@@ -716,7 +647,8 @@ pub struct ShortScript {
     pub priority: i32,
     pub initial_state_name: String,
     pub table: HashMap<String, (String, Vec<ShortScriptLine>)>,
-    pub bot_path: Vec<String>,
+    // [[state_name, option_name, condition_for_choosing_it]]
+    pub bot_path: Vec<(String, String, Option<DialogOptionCondition>)>,
 }
 
 pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
@@ -759,16 +691,10 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
         }
     }
 
-    let mut last_state_id = script.initial_state;
-    for option_name in ss.bot_path {
+    for (state_name, option_name, condition) in ss.bot_path {
         let option_id = script.ids_db.get(&option_name).unwrap().clone();
-        script.bot_path.insert(last_state_id, option_id);
-        let next_state = script
-            .transitions
-            .get(&(last_state_id, option_id))
-            .unwrap()
-            .clone();
-        last_state_id = next_state.0.unwrap_or(script.initial_state);
+        let state_id = script.ids_db.get(&state_name).unwrap().clone();
+        script.bot_path.push((state_id, option_id, condition));
     }
     script.name = ss.name;
     script

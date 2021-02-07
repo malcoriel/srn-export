@@ -1,0 +1,59 @@
+{
+  "is_default": false,
+  "is_planetary": true,
+  "priority": -1,
+  "initial_state_name": "arrival",
+  "table": {
+    "arrival": [
+      "You land on the s_current_planet_body_type s_current_planet. Here you must deliver the crate you are carrying to somebody.",
+      [
+        [
+          "go_drop_off",
+          "Find the person that you have to give the cargo to",
+          "dropped_off",
+          [
+            "QuestCargoDropOff"
+          ],
+          null
+        ],
+        [
+          "go_exit_no_drop_off",
+          "Undock and fly away",
+          "",
+          [
+            "Undock"
+          ],
+          null
+        ]
+      ]
+    ],
+    "dropped_off": [
+      "You find a businessman that thanks you, grabs the crate and hands you off some credits as a reward. He refuses to comment what was in the cargo, though.",
+      [
+        [
+          "go_exit_dropped_off",
+          "Collect your reward and fly away.",
+          "",
+          [
+            "Undock",
+            "QuestCollectReward"
+          ],
+          null
+        ]
+      ]
+    ]
+  },
+  "bot_path": [
+    [
+      "arrival",
+      "go_drop_off",
+      null
+    ],
+    [
+      "dropped_off",
+      "go_exit_dropped_off",
+      null
+    ]
+  ],
+  "name": "cargo_delivery_dropoff"
+}
