@@ -115,7 +115,7 @@ pub struct DialogueScript {
     pub options: HashMap<StateId, Vec<(OptionId, String, Option<DialogOptionCondition>)>>,
     pub initial_state: StateId,
     pub is_planetary: bool,
-    pub priority: u32,
+    pub priority: i32,
     pub is_default: bool,
     pub name: String,
     pub bot_path: HashMap<StateId, OptionId>,
@@ -251,7 +251,7 @@ impl DialogueTable {
             // eprintln!("checking {}", script.name);
             if script.check_player(state, player, player_d_states.get(&script.id)) {
                 d_script = Some(script);
-                //eprintln!("catch! {}", script.name);
+                // eprintln!("catch! {}", script.name);
                 break;
             }
         }
@@ -430,7 +430,7 @@ fn substitute_text(
                     .to_string(),
                 });
             } else {
-                eprintln!("s_current_planet used without current planet");
+                eprintln!("s_current_planet_body_type used without current planet");
             }
         } else if cap[0] == *"s_cargo_destination_planet" {
             if let Some(cargo_destination_planet) = player
@@ -608,8 +608,8 @@ fn gen_quest_dropoff_planet_script() -> DialogueScript {
         prompts: Default::default(),
         options: Default::default(),
         initial_state: Default::default(),
-        is_planetary: false,
-        priority: 1,
+        is_planetary: true,
+        priority: -1,
         is_default: false,
         name: d_name.clone(),
         bot_path: Default::default(),
@@ -713,7 +713,7 @@ pub struct ShortScript {
     pub name: String,
     pub is_default: bool,
     pub is_planetary: bool,
-    pub priority: u32,
+    pub priority: i32,
     pub initial_state_name: String,
     pub table: HashMap<String, (String, Vec<ShortScriptLine>)>,
     pub bot_path: Vec<String>,
