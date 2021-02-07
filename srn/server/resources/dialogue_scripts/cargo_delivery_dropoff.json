@@ -5,7 +5,7 @@
   "initial_state_name": "arrival",
   "table": {
     "arrival": [
-      "You land on the s_current_planet_body_type s_current_planet. Here you must deliver the crate you are carrying to somebody.",
+      "You remember that here, on s_current_planet, you must deliver the crate you are carrying to somebody.",
       [
         [
           "go_drop_off",
@@ -28,7 +28,7 @@
       ]
     ],
     "dropped_off": [
-      "You find a businessman that thanks you, grabs the crate and hands you off some credits as a reward. He refuses to comment what was in the cargo, though.",
+      "You find a businessman that thanks you, grabs the crate and hands you some credits as a reward. He refuses to comment what was in the cargo, though.",
       [
         [
           "go_exit_dropped_off",
@@ -37,6 +37,17 @@
           [
             "Undock",
             "QuestCollectReward"
+          ],
+          null
+        ],
+        [
+          "go_back_to_basic",
+          "Stay on the planet a little longer.",
+          "",
+          [
+            {
+              "SwitchDialogue": "basic_planet"
+            }
           ],
           null
         ]

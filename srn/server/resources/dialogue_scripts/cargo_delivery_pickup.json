@@ -5,7 +5,7 @@
   "initial_state_name": "arrival",
   "table": {
     "arrival": [
-      "You land on the s_current_planet_body_type s_current_planet. Here you must pick up the cargo to deliver to s_cargo_destination_planet.",
+      "You have arrived to a local business center on s_current_planet. Here you must pick up the cargo to deliver to s_cargo_destination_planet.",
       [
         [
           "go_pickup",
@@ -28,7 +28,7 @@
       ]
     ],
     "picked_up": [
-      "You find a shady man who calls himself s_random_name. He quickly hands you a suspiciously-looking sealed crate with \"do not open\" written on it, and promptly leaves. You deliver it to your ship without asking questions",
+      "You find a shady man who calls himself s_random_name. He quickly hands you a suspiciously-looking sealed crate with \"do not open\" written on it, and promptly leaves. You haul it to your ship without asking questions",
       [
         [
           "go_exit_with_cargo",
@@ -36,6 +36,17 @@
           "",
           [
             "Undock"
+          ],
+          null
+        ],
+        [
+          "go_back_to_basic",
+          "Stay on the planet a little longer.",
+          "",
+          [
+            {
+              "SwitchDialogue": "basic_planet"
+            }
           ],
           null
         ]
