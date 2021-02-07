@@ -772,7 +772,7 @@ lazy_static! {
 }
 
 fn main_thread() {
-    let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
+    let mut d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
     {
         let mut bots = bots::BOTS.lock().unwrap();
@@ -854,7 +854,7 @@ fn main_thread() {
             let events_mark = sampler.start(5);
             let receiver = &mut EVENTS.lock().unwrap().1;
             let (res, updated_sampler) =
-                events::handle_events(&d_table, receiver, state, d_states, sampler);
+                events::handle_events(&mut d_table, receiver, state, d_states, sampler);
             sampler = updated_sampler;
             for (client_id, dialogue) in res {
                 unicast_dialogue_state(client_id, dialogue);

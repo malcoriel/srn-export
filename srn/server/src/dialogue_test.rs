@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod world_test {
-    use crate::dialogue::{execute_dialog_option, DialogueScript, DialogueStates, DialogueTable, DialogueUpdate, read_from_resource};
-    use crate::{world, dialogue};
+    use crate::dialogue::{execute_dialog_option, DialogueScript, DialogueStates, DialogueTable, DialogueUpdate, read_from_resource, DialogOptionSideEffect};
+    use crate::{world, dialogue, new_id};
     use crate::world::GameState;
     use std::collections::HashMap;
     use std::str::FromStr;
@@ -11,7 +11,7 @@ mod world_test {
     fn can_move_between_valid_states() {
         let player_id = Uuid::new_v4();
         // let (dialogue_id, first_state_id, _second_state_id, go_next_id, _go_back_id, exit_id, script) =
-        let script =    read_from_resource("basic_planet");
+        let script = read_from_resource("basic_planet");
         let dialogue_id = script.id;
         let first_state_id = script.initial_state;
         let initial_options = script.options.get(&first_state_id).unwrap();

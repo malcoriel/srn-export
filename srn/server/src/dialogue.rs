@@ -76,6 +76,7 @@ pub enum DialogOptionSideEffect {
     QuestCargoDropOff,
     QuestCollectReward,
     SellMinerals,
+    SwitchDialogue(String),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -188,20 +189,18 @@ impl DialogueTable {
 
     pub fn trigger_dialogue(
         &self,
-        d_id: Uuid,
         script: &DialogueScript,
         res: &mut Vec<(Uuid, Option<Dialogue>)>,
         player: &Player,
         player_d_states: &mut HashMap<Uuid, Box<Option<Uuid>>>,
         game_state: &GameState,
     ) {
-        let key = d_id;
         let value = Box::new(Some(script.initial_state));
         res.push((
             player.id,
-            build_dialogue_from_state(d_id, &value, self, player.id, game_state),
+            build_dialogue_from_state(script.id, &value, self, player.id, game_state),
         ));
-        player_d_states.insert(key.clone(), value);
+        player_d_states.insert(script.id, value);
     }
 
     pub fn try_trigger(
@@ -212,8 +211,7 @@ impl DialogueTable {
         player: &Player,
         sampler: Sampler,
     ) -> Sampler {
-        let (_current_player_dialogue, player_d_states) =
-            d_states.entry(player.id).or_insert((None, HashMap::new()));
+        let player_d_states = DialogueTable::get_player_d_states(d_states, player);
 
         let mut d_script: Option<&DialogueScript> = None;
         for script in self
@@ -239,12 +237,11 @@ impl DialogueTable {
         if let Some(ship) = ship {
             if let Some(_docked_at) = ship.docked_at {
                 if !player_d_states.contains_key(&d_id) {
-                    self.trigger_dialogue(d_id, d_script, &mut res, player, player_d_states, state);
+                    self.trigger_dialogue(d_script, &mut res, player, player_d_states, state);
                 } else {
                     let existing_state = player_d_states.get(&d_id).unwrap();
                     if existing_state.is_none() {
                         self.trigger_dialogue(
-                            d_id,
                             d_script,
                             &mut res,
                             player,
@@ -261,6 +258,12 @@ impl DialogueTable {
             }
         }
         sampler
+    }
+
+    pub fn get_player_d_states<'a, 'b>(d_states: &'a mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>, player: &'b Player) -> &'a mut HashMap<Uuid, Box<Option<Uuid>>> {
+        let (_current_player_dialogue, player_d_states) =
+            d_states.entry(player.id).or_insert((None, HashMap::new()));
+        player_d_states
     }
 }
 
@@ -532,6 +535,11 @@ fn apply_side_effects(
                     let minerals = consume_items_of_types(&mut ship.inventory, &MINERAL_TYPES.to_vec());
                     let sum = minerals.iter().fold(0, |acc, curr| acc + curr.value * curr.quantity);
                     player.money += sum;
+                }
+            }
+            DialogOptionSideEffect::SwitchDialogue(name) => {
+                if let Some(player) = find_my_player(state, player_id) {
+                    fire_event(GameEvent::DialogueTriggered { dialogue_name: name, player: player.clone() })
                 }
             }
         }

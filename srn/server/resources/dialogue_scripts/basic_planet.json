@@ -6,6 +6,8 @@
   "table": {
     "arrival": ["You have landed on the s_current_planet_body_type s_current_planet. The space port is buzzing with activity, but there's nothing of interest here for you.", [
       ["go_market", "Go to the marketplace", "market", ["Nothing"]],
+      ["switch_pickup_quest_pickup", "Work on your delivery quest pick up", "", [{"SwitchDialogue": "cargo_delivery_pickup"}]],
+      ["switch_pickup_quest_delivery", "Work on your delivery quest dropoff", "", [{"SwitchDialogue": "cargo_delivery_dropoff"}]],
       ["go_exit", "Undock and fly away", "", ["Undock"]]
     ]],
     "market": ["You come to the marketplace on s_current_planet. Here you can sell the minerals you have collected. If you have any, of course.", [

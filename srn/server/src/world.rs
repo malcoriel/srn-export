@@ -279,6 +279,10 @@ pub enum GameEvent {
     },
     GameEnded,
     GameStarted,
+    DialogueTriggered  {
+        dialogue_name: String,
+        player: Player,
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

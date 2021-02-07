@@ -10,7 +10,7 @@ use crate::world::{GameEvent, GameState};
 use crate::EVENTS;
 
 pub fn handle_events(
-    d_table: &DialogueTable,
+    d_table: &mut DialogueTable,
     receiver: &mut Receiver<GameEvent>,
     state: &mut GameState,
     d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
@@ -52,7 +52,21 @@ pub fn handle_events(
                 GameEvent::GameStarted { .. } => {
                     crate::send_event(event.clone(), XCast::Broadcast);
                 }
-                _ => {}
+                GameEvent::Unknown => {
+                    // intentionally do nothing
+                }
+                GameEvent::ShipDocked { .. } => {
+                    // intentionally do nothing
+                }
+                GameEvent::ShipUndocked { .. } => {
+                    // intentionally do nothing
+                }
+                GameEvent::DialogueTriggered { dialogue_name, player } => {
+                    if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
+                        let d_states = DialogueTable::get_player_d_states(d_states, &player);
+                        d_table.trigger_dialogue(script, &mut res, &player, d_states, state)
+                    }
+                }
             }
         } else {
             break;
