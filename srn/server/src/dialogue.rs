@@ -324,8 +324,6 @@ pub fn execute_dialog_option(
     // bool means "side effect happened, state changed"
     let mut return_value = (None, false);
     let mut should_drop = false;
-    let script = dialogue_table.scripts.get(&update.dialogue_id).unwrap();
-    eprintln!("Trying to execute {} on {}", script.names_db.get(&update.option_id).unwrap(), script.name);
     if let Some(all_dialogues) = dialogue_states.get_mut(&client_id) {
         if let Some(dialogue_state) = all_dialogues.1.get_mut(&update.dialogue_id) {
             let (new_state, side_effect) = apply_dialogue_option(
@@ -335,7 +333,6 @@ pub fn execute_dialog_option(
                 state,
                 client_id,
             );
-            eprintln!("execute success, state {:?} -> {:?}", script.get_name((*dialogue_state).unwrap()), (*new_state).map(|s| script.get_name(s)));
             if new_state.is_none() {
                 should_drop = true;
             }

@@ -54,7 +54,6 @@ impl Bot {
         bot_d_states: &DialogueStatesForPlayer,
     ) -> (Self, Vec<BotAct>) {
         let player = find_my_player(&state, self.id);
-        // while it was designed for dialogues, it seems that it's actually very useful "trigger conditions"
         let conditions = check_trigger_conditions(state, self.id);
         if player.is_none() {
             eprintln!("{} no player", self.id);
@@ -159,9 +158,9 @@ fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
 
 pub fn bot_init(bots: &mut Vec<Bot>) {
     add_bot(Bot::new(), bots);
-    // add_bot(Bot::new(), bots);
-    // add_bot(Bot::new(), bots);
-    // add_bot(Bot::new(), bots);
+    add_bot(Bot::new(), bots);
+    add_bot(Bot::new(), bots);
+    add_bot(Bot::new(), bots);
 }
 
 pub fn format_d_states(d_states: &HashMap<DialogueId, DialogueState>, d_table: &DialogueTable) -> HashMap<String, String> {

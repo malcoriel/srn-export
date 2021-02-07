@@ -62,7 +62,6 @@ pub fn handle_events(
                     // intentionally do nothing
                 }
                 GameEvent::DialogueTriggered { dialogue_name, player } => {
-                    eprintln!("trigger dialogue {}", dialogue_name);
                     if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
                         let d_states = DialogueTable::get_player_d_states(d_states, &player);
                         d_table.trigger_dialogue(script, &mut res, &player, d_states, state)
