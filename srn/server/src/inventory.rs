@@ -146,12 +146,23 @@ pub fn add_item(inventory: &mut Vec<InventoryItem>, new_item: InventoryItem) {
     shake_items(inventory);
 }
 
+
 pub fn remove_quest_item(inventory: &mut Vec<InventoryItem>, quest_id: Uuid) -> Option<InventoryItem> {
-    let pos = inventory.iter().position(|i| i.item_type == InventoryItemType::QuestCargo &&
-        i.quest_id.map(|id| id == quest_id).unwrap_or(false));
+    let pos = find_quest_item_pos(inventory, quest_id);
     pos.map(|p| {
         inventory.remove(p)
     })
+}
+
+pub fn has_quest_item(inventory: &Vec<InventoryItem>, quest_id: Uuid) -> bool {
+    let pos = find_quest_item_pos(inventory, quest_id);
+    return pos.is_some();
+}
+
+fn find_quest_item_pos(inventory: &Vec<InventoryItem>, quest_id: Uuid) -> Option<usize> {
+    let pos = inventory.iter().position(|i| i.item_type == InventoryItemType::QuestCargo &&
+        i.quest_id.map(|id| id == quest_id).unwrap_or(false));
+    pos
 }
 
 pub fn consume_items_of_type(inventory: &mut Vec<InventoryItem>, iit: &InventoryItemType) -> Vec<InventoryItem> {

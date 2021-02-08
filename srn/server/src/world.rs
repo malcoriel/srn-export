@@ -23,7 +23,7 @@ use crate::{fire_event, planet_movement};
 use crate::{new_id, DEBUG_PHYSICS};
 use std::f64::{NEG_INFINITY, INFINITY};
 use std::iter::FromIterator;
-use crate::inventory::{InventoryItem, InventoryItemType, add_item, shake_items};
+use crate::inventory::{InventoryItem, InventoryItemType, add_item, shake_items, has_quest_item};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -280,10 +280,10 @@ pub enum GameEvent {
     },
     GameEnded,
     GameStarted,
-    DialogueTriggered  {
+    DialogueTriggered {
         dialogue_name: String,
         player: Player,
-    }
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -360,7 +360,7 @@ pub enum Rarity {
     Unknown,
     Common,
     Uncommon,
-    Rare
+    Rare,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -397,11 +397,11 @@ pub struct GameState {
 const FIXED_SEED: Option<&str> = None;
 
 pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
-    let seed:String = if let Some(seed) = FIXED_SEED {
+    let seed: String = if let Some(seed) = FIXED_SEED {
         String::from(seed)
     } else {
         let mut rng = thread_rng();
-        let mut bytes:[u8; 8] = [0; 8];
+        let mut bytes: [u8; 8] = [0; 8];
         rng.fill_bytes(&mut bytes);
         hex::encode(bytes)
     };
@@ -486,12 +486,12 @@ impl AABB {
         AABB {
             top_left: Vec2f64 {
                 x: WORLD_MIN_X,
-                y: WORLD_MIN_Y
+                y: WORLD_MIN_Y,
             },
             bottom_right: Vec2f64 {
                 x: WORLD_MAX_X,
                 y: WORLD_MAX_Y,
-            }
+            },
         }
     }
     pub fn contains_body(&self, body: &Box<dyn IBody>) -> bool {
@@ -519,14 +519,13 @@ pub fn split_bodies_by_area(bodies: Vec<Box<dyn IBody>>, area: AABB) -> (Vec<Box
         }
     });
 
-    let (mut picked, mut dropped)= res;
+    let (mut picked, mut dropped) = res;
     let mut already_picked_ids: HashSet<Uuid> = HashSet::from_iter(picked.iter().map(|p| p.get_id()));
     let anchors_vec = picked.iter().filter_map(|p| anchors.get(&p.get_anchor_id()).and_then(|p| {
         if !already_picked_ids.contains(&p.get_id()) {
             already_picked_ids.insert(p.get_id());
             Some(p.clone())
-        }
-        else {
+        } else {
             None
         }
     })).collect::<Vec<_>>();
@@ -541,7 +540,7 @@ pub fn update_world(
     elapsed: i64,
     client: bool,
     sampler: Sampler,
-    update_options: UpdateOptions
+    update_options: UpdateOptions,
 ) -> (GameState, Sampler) {
     state.ticks += elapsed as u32 / 1000;
     if !client {
@@ -569,8 +568,7 @@ pub fn update_world(
                     spawn_ship(&mut state, player.id, None);
                 }
                 fire_event(GameEvent::GameStarted);
-            } else {
-            }
+            } else {}
         }
     } else {
         if !client {
@@ -689,7 +687,7 @@ fn update_tractored_minerals(
                         x: ship.x,
                         y: ship.y,
                     }
-                    .subtract(&min_pos);
+                        .subtract(&min_pos);
                     let dir = dist.normalize();
                     if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
                         if let Some(p) = players_by_ship_id.get(&ship.id) {
@@ -796,6 +794,7 @@ const MAX_HP_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
 const PLAYER_RESPAWN_TIME_MS: i32 = 10 * 1000;
+
 pub fn update_ship_hp_effects(
     star: &Option<Star>,
     ships: &Vec<Ship>,
@@ -933,8 +932,7 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
         navigate_target: None,
         dock_target: None,
         trajectory: vec![],
-        inventory: vec![
-        ]
+        inventory: vec![],
     };
     state
         .players
@@ -1374,10 +1372,10 @@ fn update_ship_tractor(t: Uuid, ship: &mut Ship, vec1: &Vec<NatSpawnMineral>) {
             x: ship.x,
             y: ship.y,
         }
-        .euclidean_distance(&Vec2f64 {
-            x: mineral.x,
-            y: mineral.y,
-        });
+            .euclidean_distance(&Vec2f64 {
+                x: mineral.x,
+                y: mineral.y,
+            });
         if dist <= MAX_TRACTOR_DIST {
             ship.tractor_target = Some(t);
         } else {
@@ -1388,13 +1386,19 @@ fn update_ship_tractor(t: Uuid, ship: &mut Ship, vec1: &Vec<NatSpawnMineral>) {
     }
 }
 
-pub fn try_assign_quests(state: &mut GameState) {
+pub fn update_quests(state: &mut GameState) {
     let state_read = state.clone();
-    for player in state.players.iter_mut() {
-        if player.quest.is_none() {
-            let ship = find_my_ship(&state_read, player.id);
-            if let Some(ship) = ship {
-                player.quest = generate_random_quest(&state_read.planets, ship.docked_at)
+    let player_ids = state.players.iter().map(|p| p.id).collect::<Vec<_>>();
+    for player_id in player_ids {
+        if let (Some(mut player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
+            if player.quest.is_none() {
+                player.quest = generate_random_quest(&state_read.planets, ship.docked_at);
+            } else {
+                let quest_id = player.quest.as_ref().map(|q| q.id).unwrap();
+                if !has_quest_item(&ship.inventory, quest_id) && player.quest.as_ref().unwrap().state == CargoDeliveryQuestState::Picked {
+                    player.quest = None;
+                    log!(format!("Player {} has failed quest {} due to not having item", player_id, quest_id));
+                }
             }
         }
     }

@@ -35,7 +35,7 @@ use crate::dialogue::{
 };
 use crate::perf::Sampler;
 use crate::vec2::Vec2f64;
-use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_planet, try_assign_quests, GameEvent, ShipAction, UpdateOptions, AABB};
+use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_planet, update_quests, GameEvent, ShipAction, UpdateOptions, AABB};
 use itertools::Itertools;
 
 const MAJOR: u32 = pkg_version_major!();
@@ -834,7 +834,7 @@ fn main_thread() {
         cont.state = updated_state;
 
         let quests_mark = sampler.start(3);
-        try_assign_quests(&mut cont.state);
+        update_quests(&mut cont.state);
         sampler.end(quests_mark);
 
         let d_states = &mut **d_states;
