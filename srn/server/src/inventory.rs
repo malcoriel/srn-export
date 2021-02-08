@@ -11,6 +11,7 @@ pub enum InventoryItemType {
     CommonMineral,
     UncommonMineral,
     RareMineral,
+    QuestCargo,
 }
 
 pub static MINERAL_TYPES: [InventoryItemType; 3] = [
@@ -21,7 +22,8 @@ pub fn inventory_item_type_to_stackable(iit: &InventoryItemType) -> bool {
         InventoryItemType::Unknown => false,
         InventoryItemType::CommonMineral => true,
         InventoryItemType::UncommonMineral => true,
-        InventoryItemType::RareMineral => true
+        InventoryItemType::RareMineral => true,
+        InventoryItemType::QuestCargo => false
     }
 }
 
@@ -34,6 +36,7 @@ pub struct InventoryItem {
     pub stackable: bool,
     pub player_owned: bool,
     pub item_type: InventoryItemType,
+    pub quest_id: Option<Uuid>,
 }
 
 impl InventoryItem {
@@ -46,6 +49,20 @@ impl InventoryItem {
             stackable: inventory_item_type_to_stackable(&iit),
             player_owned: false,
             item_type: iit,
+            quest_id: None,
+        }
+    }
+
+    pub fn quest_pickup(quest_id: Uuid) -> InventoryItem {
+        InventoryItem {
+            id: Default::default(),
+            index: 0,
+            quantity: 1,
+            value: 0,
+            stackable: false,
+            player_owned: true,
+            item_type: InventoryItemType::QuestCargo,
+            quest_id: Some(quest_id),
         }
     }
 
@@ -56,13 +73,14 @@ impl InventoryItem {
             quantity: 1,
             value: mineral.value,
             stackable: true,
-            player_owned: false,
+            player_owned: true,
             item_type: match mineral.rarity {
                 Rarity::Unknown => { InventoryItemType::Unknown }
                 Rarity::Common => { InventoryItemType::CommonMineral }
                 Rarity::Uncommon => { InventoryItemType::UncommonMineral }
                 Rarity::Rare => { InventoryItemType::RareMineral }
             },
+            quest_id: None,
         }
     }
 }
@@ -128,9 +146,13 @@ pub fn add_item(inventory: &mut Vec<InventoryItem>, new_item: InventoryItem) {
     shake_items(inventory);
 }
 
-// pub fn remove_item(inventory: &mut Vec<InventoryItem>, item: InventoryItem) {
-//
-// }
+pub fn remove_quest_item(inventory: &mut Vec<InventoryItem>, quest_id: Uuid) -> Option<InventoryItem> {
+    let pos = inventory.iter().position(|i| i.item_type == InventoryItemType::QuestCargo &&
+        i.quest_id.map(|id| id == quest_id).unwrap_or(false));
+    pos.map(|p| {
+        inventory.remove(p)
+    })
+}
 
 pub fn consume_items_of_type(inventory: &mut Vec<InventoryItem>, iit: &InventoryItemType) -> Vec<InventoryItem> {
     let mut res = vec![];

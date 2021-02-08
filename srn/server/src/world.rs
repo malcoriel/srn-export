@@ -175,6 +175,7 @@ pub fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> 
     let to = &delivery[rng.gen_range(0, delivery.len())];
     let reward = rng.gen_range(500, 1001);
     return Some(Quest {
+        id: new_id(),
         from_id: from.id,
         to_id: to.id,
         state: CargoDeliveryQuestState::Started,
@@ -323,6 +324,7 @@ pub enum CargoDeliveryQuestState {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Quest {
+    pub id: Uuid,
     pub from_id: Uuid,
     pub to_id: Uuid,
     pub state: CargoDeliveryQuestState,

@@ -2,14 +2,14 @@ import React, { Suspense, useEffect, useState } from 'react';
 import './TestUI.scss';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { Button } from './ui/Button';
-import { Canvas, extend, useThree } from 'react-three-fiber';
+import { Canvas, extend, useLoader, useThree } from 'react-three-fiber';
 import { Vector3 } from 'three/src/math/Vector3';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
   BoxBufferGeometry,
   BufferGeometry,
-  Color,
-  Geometry,
+  Color, EdgesGeometry,
+  Geometry, LineBasicMaterial, LineSegments,
   Mesh,
   MeshBasicMaterial,
   MeshNormalMaterial,
@@ -22,6 +22,7 @@ import { Input } from './ui/Input';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils';
 import { ColladaExporter } from 'three/examples/jsm/exporters/ColladaExporter';
 import { ThreeRock } from '../ThreeLayers/ThreeRock';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 extend({ OrbitControls });
 
@@ -85,6 +86,19 @@ function getSphereCoords(prng: Prando, MIN_IN: number, MAX_OUT: number) {
   const y = r * Math.sin(phi) * Math.sin(theta);
   const z = r * Math.cos(phi);
   return { x, y, z };
+}
+
+const BoxModel = () => {
+  const edges = new EdgesGeometry(new BoxBufferGeometry())
+  const material = new LineBasicMaterial( { color: 0xff0000, linewidth: 5 } );
+
+  return <group position={[0,0,0]} scale={[10, 10, 10]}>
+    <mesh position={[0,0,0]} scale={[0.9999,0.9999, 0.9999]}>
+      <boxBufferGeometry/>
+      <meshBasicMaterial color="gray"/>
+    </mesh>
+    <lineSegments args={[edges, material]}/>
+  </group>;
 }
 
 export const TestUI: React.FC<{}> = () => {
@@ -240,13 +254,13 @@ export const TestUI: React.FC<{}> = () => {
     }
   };
 
-  useEffect(() => {
-    reset();
-    const link = document.createElement('a');
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    setLink(link);
-  }, [scene]);
+  // useEffect(() => {
+  //   reset();
+  //   const link = document.createElement('a');
+  //   link.style.display = 'none';
+  //   document.body.appendChild(link);
+  //   setLink(link);
+  // }, [scene]);
 
   return shown ? (
     <div className="test-ui">
@@ -268,18 +282,9 @@ export const TestUI: React.FC<{}> = () => {
         <Suspense fallback={<mesh />}>
           <SceneHook setScene={setScene} />
           <ambientLight />
-          <axesHelper args={[100]} />
-          {/*<Extrusion*/}
-          {/*  start={[25, 25]}*/}
-          {/*  paths={[*/}
-          {/*    [25, 25, 20, 0, 0, 0],*/}
-          {/*    [30, 0, 30, 35, 30, 35],*/}
-          {/*    [30, 55, 10, 77, 25, 95],*/}
-          {/*  ]}*/}
-          {/*  bevelEnabled*/}
-          {/*  amount={8}*/}
-          {/*/>*/}
+          {/*<axesHelper args={[100]} />*/}
           <OrbitControlsWrapper />
+          <BoxModel/>
           {/*<ThreeRock position={new Vector3(0, 0, 0)} />*/}
         </Suspense>
       </Canvas>
@@ -287,18 +292,18 @@ export const TestUI: React.FC<{}> = () => {
       <div
         style={{ position: 'absolute', height: '100%', right: 0, width: '20%' }}
       >
-        <Input value={seed} onChange={(e) => setSeed(e.target.value)} />
-        <Button
-          onClick={() => {
-            reset();
-            setTimeout(gen, 100);
-          }}
-        >
-          Gen
-        </Button>
-        <Button onClick={reset}>Reset</Button>
-        <Button onClick={toggleMaterial}>Material</Button>
-        <Button onClick={exportModel}>Export</Button>
+        {/*<Input value={seed} onChange={(e) => setSeed(e.target.value)} />*/}
+        {/*<Button*/}
+        {/*  onClick={() => {*/}
+        {/*    reset();*/}
+        {/*    setTimeout(gen, 100);*/}
+        {/*  }}*/}
+        {/*>*/}
+        {/*  Gen*/}
+        {/*</Button>*/}
+        {/*<Button onClick={reset}>Reset</Button>*/}
+        {/*<Button onClick={toggleMaterial}>Material</Button>*/}
+        {/*<Button onClick={exportModel}>Export</Button>*/}
         {/*<Button>Undo</Button>*/}
         {/*<Button>Redo</Button>*/}
         {/*<Button onClick={addPart}>Add part X-</Button>*/}

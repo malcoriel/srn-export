@@ -155,7 +155,8 @@ export enum InventoryItemType {
   Unknown = "Unknown",
   CommonMineral = "CommonMineral",
   UncommonMineral = "UncommonMineral",
-  RareMineral = "RareMineral"
+  RareMineral = "RareMineral",
+  QuestCargo = "QuestCargo"
 }
 
 export type InventoryItem = {

@@ -13,7 +13,7 @@ use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId, find_player_and_ship_mut, find_player_and_ship};
-use crate::inventory::{consume_items_of_types, InventoryItemType, MINERAL_TYPES, count_items_of_types, value_items_of_types};
+use crate::inventory::{consume_items_of_types, InventoryItemType, MINERAL_TYPES, count_items_of_types, value_items_of_types, add_item, InventoryItem, remove_quest_item};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 enum DialogueSubstitutionType {
@@ -572,18 +572,20 @@ fn apply_side_effects(
                 }
             }
             DialogOptionSideEffect::QuestCargoPickup => {
-                if let Some(my_player) = find_my_player_mut(state, player_id) {
+                if let (Some(my_player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
                     let quest = my_player.quest.as_mut();
                     if let Some(mut quest) = quest {
                         quest.state = CargoDeliveryQuestState::Picked;
+                        add_item(&mut ship.inventory, InventoryItem::quest_pickup(quest.id))
                     }
                     state_changed = true;
                 }
             }
             DialogOptionSideEffect::QuestCargoDropOff => {
-                if let Some(my_player) = find_my_player_mut(state, player_id) {
+                if let (Some(my_player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
                     if let Some(mut quest) = my_player.quest.as_mut() {
                         quest.state = CargoDeliveryQuestState::Delivered;
+                        remove_quest_item(&mut ship.inventory, quest.id);
                     }
                     state_changed = true;
                 }
