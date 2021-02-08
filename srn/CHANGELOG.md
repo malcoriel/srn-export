@@ -1,4 +1,14 @@
 # Changelog
+## Version 0.3.11
+### New
+* Inventory system.
+* Minerals now have to be sold on the planets.
+* Improved dialogue system.
+### Fixes
+* When you die carrying a quest item now, you'll fail the quest.
+* Fixed a bug with duplicating planets.
+
+### Fixes
 ## Version 0.3.10
 ### Fixes
 * More simulation CPU improvements. Experimental simulation culling by camera.
