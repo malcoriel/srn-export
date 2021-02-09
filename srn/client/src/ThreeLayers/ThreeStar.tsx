@@ -1,10 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import Color from 'color';
 import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
-import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
 import * as THREE from 'three';
+import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
-import _ from 'lodash';
 import NetState from '../NetState';
 import { size, unitsToPixels_min } from '../coord';
 
@@ -33,7 +32,7 @@ export const ThreeStar: React.FC<
     'resources/bowling_grass.jpg'
   );
 
-  const color = Color(props.color || 'white');
+  const color = useMemo(() => Color(props.color || 'white'), [props.color]);
 
   const { camera } = useThree();
 
@@ -46,41 +45,39 @@ export const ThreeStar: React.FC<
     }
   });
 
-  const patchedUniforms = _.clone(uniforms);
-  patchedUniforms.iChannel0.value = lavaTile;
-  patchedUniforms.iChannel1.value = grassTile;
-  patchedUniforms.color.value = new Vector3(
-    color.red() / 255,
-    color.green() / 255,
-    color.blue() / 255
-  );
-  patchedUniforms.shift.value = new Vector2(
-    (camera.position.x * unitsToPixels_min()) / zoomProp,
-    (camera.position.y * unitsToPixels_min()) / zoomProp
-  );
-  patchedUniforms.iResolution.value = new Vector3(
-    size.width_px,
-    size.height_px,
-    0
-  );
-  // 10 -> 0.25
-  // 20 -> 0.5
-  patchedUniforms.srcRadius.value = ((props.scale[0] / 10) * 0.18) / zoomProp;
-  // patchedUniforms.iResolution.value = new Vector3(
-  //   width_px / 10,
-  //   height_px / 10,
-  //   0
-  // );
+  const uniforms2 = useMemo(() => {
+    const patchedUniforms = uniforms;
+    patchedUniforms.iChannel0.value = lavaTile;
+    patchedUniforms.iChannel1.value = grassTile;
+    patchedUniforms.color.value = new Vector3(
+      color.red() / 255,
+      color.green() / 255,
+      color.blue() / 255
+    );
+    patchedUniforms.shift.value = new Vector2(
+      (camera.position.x * unitsToPixels_min()) / zoomProp,
+      (camera.position.y * unitsToPixels_min()) / zoomProp
+    );
+    patchedUniforms.iResolution.value = new Vector3(
+      size.width_px,
+      size.height_px,
+      0
+    );
+    // 10 -> 0.25
+    // 20 -> 0.5
+    patchedUniforms.srcRadius.value = ((props.scale[0] / 10) * 0.18) / zoomProp;
+    return patchedUniforms;
+    // eslint-disable-next-line
+  }, [zoomProp, unitsToPixels_min(), camera.position.x, camera.position.y]);
 
-  let rotation: [number, number, number] = [0, 0, 0];
   return (
-    <mesh {...props} ref={mesh} rotation={rotation}>
+    <mesh {...props} ref={mesh} rotation={[0, 0, 0]}>
       <icosahedronBufferGeometry args={[1, 5]} />
       <rawShaderMaterial
         transparent={true}
         fragmentShader={fragmentShader}
         vertexShader={vertexShader}
-        uniforms={uniforms}
+        uniforms={uniforms2}
       />
       {/*<meshBasicMaterial color="red" />*/}
     </mesh>

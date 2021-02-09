@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
-import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
-import { Mesh, TextureLoader } from 'three';
+import React, { useMemo, useRef } from 'react';
+import { MeshProps, useFrame, useLoader } from 'react-three-fiber';
 import * as THREE from 'three';
+import { Mesh, TextureLoader } from 'three';
 import Color from 'color';
+import { shallowEqual } from '../utils/shallowCompare';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -13,23 +14,32 @@ export const useRepeatWrappedTextureLoader = (path: string) => {
 
 export const ThreePlanetShape: React.FC<
   MeshProps & { color?: string; visible: boolean }
-> = (props) => {
-  const mesh = useRef<Mesh>();
-  const space01map = useLoader(TextureLoader, 'resources/space01.jpg');
+> = React.memo(
+  (props) => {
+    const mesh = useRef<Mesh>();
+    const space01map = useLoader(TextureLoader, 'resources/space01.jpg');
+    const color = useMemo(
+      () => Color(props.color).lighten(1.0).hex() || 'white',
+      [props.color]
+    );
 
-  const color = Color(props.color).lighten(1.0).hex() || 'white';
+    useFrame(() => {
+      if (mesh.current && props.visible) {
+        mesh.current.rotation.y = mesh.current.rotation.y += 0.02;
+      }
+    });
 
-  useFrame(() => {
-    if (mesh.current && props.visible) {
-      mesh.current.rotation.y = mesh.current.rotation.y += 0.02;
+    return (
+      <mesh {...props} ref={mesh} rotation={[0, 0, 0]}>
+        <icosahedronBufferGeometry args={[1, 5]} />
+        <meshBasicMaterial color={color} map={space01map} />
+      </mesh>
+    );
+  },
+  (prev, next) => {
+    if (!next.visible) {
+      return true;
     }
-  });
-
-  let rotation: [number, number, number] = [0, 0, 0];
-  return (
-    <mesh {...props} ref={mesh} rotation={rotation}>
-      <icosahedronBufferGeometry args={[1, 5]} />
-      <meshBasicMaterial color={color} map={space01map} />
-    </mesh>
-  );
-};
+    return shallowEqual(prev, next);
+  }
+);
