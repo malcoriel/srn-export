@@ -5,11 +5,10 @@ import _ from 'lodash';
 import { Ship } from '../world';
 import Vector from '../utils/Vector';
 
-export const ThreeShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
+export const ThreeShipsLayer: React.FC<{ visMap: Record<string, boolean>, state: GameState }> = ({ visMap, state }) => {
   if (!state) return null;
-  const { ships, players, planets } = state;
+  const { ships, planets } = state;
 
-  const playersByShipId = _.keyBy(players, 'ship_id');
   const planetsById = _.keyBy(planets, 'id');
 
   return (
@@ -23,9 +22,6 @@ export const ThreeShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
           }
         }
 
-        let { name: player_name = 'player' } = playersByShipId[s.id] || {
-          name: 'player',
-        };
         let shipPos = {
           x: s.x,
           y: s.y,
@@ -39,6 +35,7 @@ export const ThreeShipsLayer: React.FC<{ state: GameState }> = ({ state }) => {
         }
         return (
           <ThreeShip
+            visible={visMap[s.id]}
             tractorTargetPosition={tractorTargetPosition}
             key={s.id + i}
             position={Vector.fromIVector(s)}

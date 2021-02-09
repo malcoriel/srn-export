@@ -3,7 +3,7 @@ import { useFrame, useLoader } from 'react-three-fiber';
 import { Mesh, Geometry, ShaderMaterial } from 'three';
 import * as THREE from 'three';
 import Vector, { VectorF } from '../utils/Vector';
-import { posToThreePos, Vector3Arr, vecToThreePos } from './ThreeLayer';
+import { posToThreePos, vecToThreePos } from './ThreeLayer';
 import * as jellyfish from './shaders/jellyfish';
 
 const STLLoader = require('three-stl-loader')(THREE);
@@ -13,6 +13,7 @@ type ThreeShipProps = {
   tractorTargetPosition?: Vector;
   color: string;
   rotation: number;
+  visible: boolean;
 };
 
 const BEAM_WIDTH = 0.3;
@@ -22,6 +23,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = ({
   position,
   rotation,
   color,
+  visible,
 }) => {
   const tractorRef = useRef<Mesh>();
   const shipModel = useLoader<Geometry>(STLLoader, 'resources/ship.stl');
@@ -42,14 +44,8 @@ export const ThreeShip: React.FC<ThreeShipProps> = ({
     };
   }, [tractorTargetPosition, position]);
 
-  // const tractorBeamParams = {
-  //   length: 10,
-  //   rotation: 0,
-  //   position: [5, 5, 0] as Vector3Arr,
-  // };
-
   useFrame(() => {
-    if (tractorRef.current) {
+    if (tractorRef.current && visible) {
       let material = tractorRef.current.material as ShaderMaterial;
       if (material && material.uniforms) {
         material.uniforms.time.value += 0.004;

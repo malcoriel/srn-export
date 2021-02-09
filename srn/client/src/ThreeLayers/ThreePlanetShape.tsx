@@ -11,16 +11,16 @@ export const useRepeatWrappedTextureLoader = (path: string) => {
   return texture;
 };
 
-export const ThreePlanetShape: React.FC<MeshProps & { color?: string }> = (
-  props
-) => {
+export const ThreePlanetShape: React.FC<
+  MeshProps & { color?: string; visible: boolean }
+> = (props) => {
   const mesh = useRef<Mesh>();
   const space01map = useLoader(TextureLoader, 'resources/space01.jpg');
 
   const color = Color(props.color).lighten(1.0).hex() || 'white';
 
   useFrame(() => {
-    if (mesh.current) {
+    if (mesh.current && props.visible) {
       mesh.current.rotation.y = mesh.current.rotation.y += 0.02;
     }
   });

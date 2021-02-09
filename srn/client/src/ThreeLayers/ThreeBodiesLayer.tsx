@@ -9,8 +9,11 @@ import { actionsActive } from '../utils/ShipControls';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
 import { ThreeRock } from './ThreeRock';
 
-export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
-  const { planets, star, asteroids, minerals, asteroid_belts } = state;
+export const ThreeBodiesLayer: React.FC<{
+  state: GameState;
+  visMap: Record<string, boolean>;
+}> = ({ visMap, state }) => {
+  const { planets, star, minerals, asteroid_belts } = state;
   return (
     <group>
       {planets.map((p) => (
@@ -25,10 +28,12 @@ export const ThreeBodiesLayer: React.FC<{ state: GameState }> = ({ state }) => {
           key={p.id}
           scale={_.times(3, () => p.radius) as [number, number, number]}
           color={p.color}
+          visible={visMap[p.id]}
         />
       ))}
       {star && (
         <ThreeStar
+          visible={visMap[star.id]}
           scale={_.times(3, () => star.radius) as [number, number, number]}
           position={posToThreePos(star.x, star.y)}
           color={star.color}

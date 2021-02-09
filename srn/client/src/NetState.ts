@@ -1,8 +1,17 @@
 import EventEmitter from 'events';
-import { AABB, applyShipAction, Dialogue, GameState, Ship, ShipAction, ShipActionType, updateWorld } from './world';
+import {
+  AABB,
+  applyShipAction,
+  Dialogue,
+  GameState,
+  Ship,
+  ShipAction,
+  ShipActionType,
+  updateWorld,
+} from './world';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
-import Vector from './utils/Vector';
+import Vector, { IVector } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledTime, vsyncedDecoupledTime } from './utils/Times';
 import { api } from './utils/api';
@@ -74,6 +83,15 @@ export enum ServerToClientMessageCode {
   XCastGameEvent = 6,
 }
 
+const isInAABB = (bounds: AABB, obj: IVector): boolean => {
+  return (
+    bounds.top_left.x <= obj.x &&
+    obj.x <= bounds.bottom_right.x &&
+    bounds.top_left.y <= obj.y &&
+    obj.y <= bounds.bottom_right.y
+  );
+};
+
 const MAX_PENDING_TICKS = 2000;
 // it's completely ignore in actual render, since vsynced time is used
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
@@ -91,8 +109,6 @@ export default class NetState extends EventEmitter {
   public ping: number;
   public maxPing?: number;
   public maxPingTick?: number;
-  public client_start_moment?: number;
-  public initial_ping?: number;
   private forceSyncStart?: number;
   private forceSyncTag?: string;
   public visualState: VisualState;
@@ -116,6 +132,7 @@ export default class NetState extends EventEmitter {
     return NetState.instance;
   }
   private time: vsyncedCoupledTime;
+  public visMap: Record<string, boolean>;
 
   constructor() {
     super();
@@ -133,8 +150,24 @@ export default class NetState extends EventEmitter {
       },
       zoomShift: 1,
     };
+    this.visMap = {};
     this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
     this.slowTime = new vsyncedDecoupledTime(SLOW_TIME_STEP);
+  }
+
+  private updateVisMap() {
+    const AABB = this.getSimulationArea();
+    this.visMap = {};
+    for (const ship of this.state.ships) {
+      this.visMap[ship.id] = isInAABB(AABB, ship);
+    }
+    for (const planet of this.state.planets) {
+      this.visMap[planet.id] = isInAABB(AABB, planet);
+    }
+    let star = this.state.star;
+    if (star) {
+      this.visMap[star.id] = isInAABB(AABB, star);
+    }
   }
 
   private resetState() {
@@ -374,6 +407,8 @@ export default class NetState extends EventEmitter {
       }
     } catch (e) {
       console.warn('error handling message', e);
+    } finally {
+      this.updateVisMap();
     }
   }
 
@@ -446,7 +481,7 @@ export default class NetState extends EventEmitter {
         this.state,
         elapsedMs,
         this.maxPing || this.ping,
-        simArea,
+        simArea
       );
     }
     this.state.ships.splice(myShipIndex, 1);
@@ -491,6 +526,7 @@ export default class NetState extends EventEmitter {
     result = updateWorld(this.state, simArea, elapsedMs);
     if (result) {
       this.state = result;
+      this.updateVisMap();
     }
   };
 
@@ -542,13 +578,21 @@ export default class NetState extends EventEmitter {
     });
   }
 
-  private getSimulationArea() : AABB {
-    let viewportSize = viewPortSizeMeters().scale(1 / this.visualState.zoomShift).scale(AREA_BUFF_TO_COVER_SIZE);
+  private getSimulationArea(): AABB {
+    let viewportSize = viewPortSizeMeters()
+      .scale(1 / this.visualState.zoomShift)
+      .scale(AREA_BUFF_TO_COVER_SIZE);
     let center = this.visualState.cameraPosition;
     return {
-      top_left: new Vector(center.x - viewportSize.x / 2, center.y - viewportSize.y / 2),
-      bottom_right: new Vector(center.x + viewportSize.x / 2, center.y + viewportSize.y / 2)
-    }
+      top_left: new Vector(
+        center.x - viewportSize.x / 2,
+        center.y - viewportSize.y / 2
+      ),
+      bottom_right: new Vector(
+        center.x + viewportSize.x / 2,
+        center.y + viewportSize.y / 2
+      ),
+    };
   }
 }
 export const useNSForceChange = (name: string, fast = false) => {
@@ -561,6 +605,9 @@ export const useNSForceChange = (name: string, fast = false) => {
     };
     let event = fast ? 'change' : 'slowchange';
     ns.on(event, listener);
-    return () => {ns.off(event, listener)};
+    return () => {
+      ns.off(event, listener);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ns.id]);
 };

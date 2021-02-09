@@ -55,7 +55,7 @@ export const threeVectorToVector = ({
 export const ThreeLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
-  const { state } = ns;
+  const { state, visMap } = ns;
   const [shown] = useToggleHotkey('shift+g', false, 'show helper grid');
   const showCoords = shown;
 
@@ -108,8 +108,8 @@ export const ThreeLayer: React.FC = () => {
             />
           )}
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-          <ThreeBodiesLayer state={state} />
-          <ThreeShipsLayer state={state} />
+          <ThreeBodiesLayer state={state} visMap={visMap}/>
+          <ThreeShipsLayer state={state} visMap={visMap} />
         </group>
       </Suspense>
     </Canvas>

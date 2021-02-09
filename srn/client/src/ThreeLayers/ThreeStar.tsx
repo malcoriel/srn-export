@@ -16,7 +16,11 @@ export const useRepeatWrappedTextureLoader = (path: string) => {
 };
 
 export const ThreeStar: React.FC<
-  MeshProps & { color?: string; scale: [number, number, number] }
+  MeshProps & {
+    color?: string;
+    scale: [number, number, number];
+    visible: boolean;
+  }
 > = (props) => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -35,8 +39,10 @@ export const ThreeStar: React.FC<
 
   useFrame(() => {
     if (mesh.current) {
-      let material = mesh.current.material as ShaderMaterial;
-      material.uniforms.time.value += 0.008;
+      if (props.visible) {
+        let material = mesh.current.material as ShaderMaterial;
+        material.uniforms.time.value += 0.008;
+      }
     }
   });
 

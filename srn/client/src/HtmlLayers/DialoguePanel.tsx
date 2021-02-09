@@ -120,6 +120,7 @@ export const DialoguePanel: React.FC = () => {
             <pointLight position={[10, 10, 10]} />
             {dialogue.planet && (
               <ThreePlanetShape
+                visible={true}
                 key={dialogue.planet.id}
                 scale={
                   _.times(3, () => dialogue.planet!.radius) as [
