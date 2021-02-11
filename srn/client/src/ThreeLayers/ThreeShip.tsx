@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import Vector, { VectorF } from '../utils/Vector';
 import { posToThreePos, vecToThreePos } from './ThreeLayer';
 import * as jellyfish from './shaders/jellyfish';
+import { shallowEqual } from '../utils/shallowCompare';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -18,7 +19,7 @@ type ThreeShipProps = {
 
 const BEAM_WIDTH = 0.3;
 
-export const ThreeShip: React.FC<ThreeShipProps> = ({
+export const ThreeShip: React.FC<ThreeShipProps> = React.memo(({
   tractorTargetPosition,
   position,
   rotation,
@@ -82,4 +83,9 @@ export const ThreeShip: React.FC<ThreeShipProps> = ({
       )}
     </group>
   );
-};
+}, (prevProps, nextProps) => {
+  if (!nextProps.visible) {
+    return true;
+  }
+  return shallowEqual(prevProps, nextProps);
+});

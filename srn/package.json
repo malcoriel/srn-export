@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "wasm-pack": "pushd world; wasm-pack build || exit 1; popd;",
+    "wasm-pack": "cd world && wasm-pack build || exit 1",
     "start-client": "cd client && yarn start",
     "deploy": "node scripts/deploy.js",
     "up-version": "node scripts/up-version.js"

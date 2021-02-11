@@ -6,6 +6,7 @@ import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import NetState from '../NetState';
 import { size, unitsToPixels_min } from '../coord';
+import { shallowEqual } from '../utils/shallowCompare';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -20,7 +21,7 @@ export const ThreeStar: React.FC<
     scale: [number, number, number];
     visible: boolean;
   }
-> = (props) => {
+> = React.memo((props) => {
   const ns = NetState.get();
   if (!ns) return null;
   const { visualState } = ns;
@@ -82,4 +83,9 @@ export const ThreeStar: React.FC<
       {/*<meshBasicMaterial color="red" />*/}
     </mesh>
   );
-};
+}, (prevProps, nextProps) => {
+  if (!nextProps.visible) {
+    return true;
+  }
+  return shallowEqual(prevProps, nextProps);
+});
