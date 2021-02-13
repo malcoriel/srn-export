@@ -14,6 +14,12 @@ const WINDOW_WIDTH = cellsToPixels(COLUMNS) + WINDOW_MARGIN * 2;
 const EXTRA_ROWS = 3;
 
 const InventoryWindowItems = () => {
+  useNSForceChange("inventory window", false, (prevState, nextState) => {
+    const myShipPrev = findMyShip(prevState) || {inventory: []};
+    const myShipNext = findMyShip(nextState) || {inventory: []};
+    return JSON.stringify(myShipPrev.inventory) !== JSON.stringify(myShipNext.inventory);
+  });
+
   const ns = NetState.get();
   if (!ns)
     return null;
@@ -25,7 +31,6 @@ const InventoryWindowItems = () => {
 }
 
 export const InventoryWindow = () => {
-  useNSForceChange("inventory window");
   return <Window
     height={WINDOW_HEIGHT}
     width={WINDOW_WIDTH + SCROLL_OFFSET}

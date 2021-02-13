@@ -186,7 +186,7 @@ const Srn = () => {
             <WindowContainers />
             <OverheadPanel />
             <HelpWindow />
-            {/*<InventoryWindow />*/}
+            <InventoryWindow />
             {/*<TradeWindow />*/}
             <HoverHintWindow />
           </>
