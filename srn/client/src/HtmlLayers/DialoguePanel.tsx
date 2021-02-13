@@ -82,12 +82,10 @@ export const DialoguePanel: React.FC = () => {
   const { dialogue } = ns;
 
   const tryDoOption = (i: number) => () => {
-    console.log(`try do ${i}`);
     if (!dialogue) return;
     const options = dialogue.options;
     if (!options) return;
     if (options[i]) {
-      console.log(`doing option ${i} ${options[i].id} ${options[i].text}`);
       ns.sendDialogueOption(dialogue.id, options[i].id);
     }
   };

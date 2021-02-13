@@ -15,12 +15,12 @@ import Vector, { IVector } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import {
   vsyncedCoupledThrottledTime,
-  vsyncedCoupledTime,
-  vsyncedDecoupledTime,
+  vsyncedCoupledTime
 } from './utils/Times';
 import { api } from './utils/api';
 import { useEffect, useState } from 'react';
 import { viewPortSizeMeters } from './coord';
+import _ from 'lodash';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -126,6 +126,7 @@ export default class NetState extends EventEmitter {
   private lastShipPos?: Vector;
   private slowTime: vsyncedCoupledThrottledTime;
   public desync: number;
+  private lastSlowChangedState!: GameState;
   public static make() {
     NetState.instance = new NetState();
   }
@@ -258,7 +259,8 @@ export default class NetState extends EventEmitter {
 
         Perf.markEvent(Measure.SlowUpdateFrameEvent);
         Perf.usingMeasure(Measure.SlowUpdateFrameTime, () => {
-          ns.emit('slowchange');
+          ns.emit('slowchange', this.lastSlowChangedState, this.state);
+          this.lastSlowChangedState = _.clone(this.state);
         });
       },
       () => {}
@@ -606,13 +608,22 @@ export default class NetState extends EventEmitter {
     };
   }
 }
-export const useNSForceChange = (name: string, fast = false) => {
+
+export type ShouldUpdateStateChecker = (prev: GameState, next: GameState) => boolean;
+
+export const useNSForceChange = (name: string, fast = false, shouldUpdate: ShouldUpdateStateChecker = () => true) => {
   const [, forceChange] = useState(false);
   const ns = NetState.get();
   if (!ns) return null;
   useEffect(() => {
-    let listener = () => {
-      forceChange((flip) => !flip);
+    let listener = (prevState: GameState, nextState: GameState) => {
+      if (prevState && nextState && shouldUpdate) {
+        if (shouldUpdate(prevState, nextState)) {
+          forceChange((flip) => !flip);
+        }
+      } else {
+        forceChange((flip) => !flip);
+      }
     };
     let event = fast ? 'change' : 'slowchange';
     ns.on(event, listener);

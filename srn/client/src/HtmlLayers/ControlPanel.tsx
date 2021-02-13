@@ -131,7 +131,7 @@ export const ControlPanel = () => {
           <FiBox />
         </Button>
       </StyledRect>
-      <MoneyAndHp/>
+      {/*<MoneyAndHp/>*/}
     </div>
   );
 };

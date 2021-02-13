@@ -3,16 +3,23 @@ import './OverheadPanel.scss';
 import React from 'react';
 import NetState, { useNSForceChange } from '../NetState';
 
+function getSeconds(milliseconds_remaining: number) {
+  return Math.floor(milliseconds_remaining / 1000);
+}
+
 export function OverheadPanel() {
   const ns = NetState.get();
   if (!ns) return null;
-  useNSForceChange('OverheadPanel');
+  useNSForceChange('OverheadPanel', false, (prevState, nextState) => {
+    let check = getSeconds(prevState.milliseconds_remaining) !== getSeconds(nextState.milliseconds_remaining);
+    return check;
+  });
 
   const { milliseconds_remaining } = ns.state;
 
   if (milliseconds_remaining <= 0) return null;
 
-  let seconds = Math.floor(milliseconds_remaining / 1000);
+  let seconds = getSeconds(milliseconds_remaining);
   let minutes = Math.floor(seconds / 60) || '';
   seconds = seconds % 60;
   const formatted = `${minutes}${minutes ? ':' : ''}${String(seconds).padStart(

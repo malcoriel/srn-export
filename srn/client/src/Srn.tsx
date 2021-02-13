@@ -158,7 +158,7 @@ const Srn = () => {
       >
         {playing && (
           <>
-            <MinimapLayer />
+            {/*<MinimapLayer />*/}
             <ThreeLayer />
             <Stage
               width={size.width_px}
@@ -170,9 +170,9 @@ const Srn = () => {
             </Stage>
             <ShipControls />
             <NetworkStatus />
-            <LeaderboardWindow />
-            <DialoguePanel />
-            <QuestWindow />
+            {/*<LeaderboardWindow />*/}
+            {/*<DialoguePanel />*/}
+            {/*<QuestWindow />*/}
             <ChatWindow />
             <HotkeyWrapper
               hotkey="esc"
@@ -180,14 +180,14 @@ const Srn = () => {
                 toggleMenu();
               }}
             />
-            <DebugStateLayer />
+            {/*<DebugStateLayer />*/}
             <StatsPanel />
             <ControlPanel />
             <WindowContainers />
             <OverheadPanel />
             <HelpWindow />
-            <InventoryWindow />
-            <TradeWindow />
+            {/*<InventoryWindow />*/}
+            {/*<TradeWindow />*/}
             <HoverHintWindow />
           </>
         )}
