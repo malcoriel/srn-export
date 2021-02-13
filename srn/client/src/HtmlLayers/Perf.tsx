@@ -154,6 +154,13 @@ const Perf = {
           'slow render',
           Stat.SlowUpdateFPS
         );
+        Perf.measureFrameStats(
+          Stat.AvgSocketFrameTime,
+          Measure.SocketFrameTime,
+          Measure.SocketFrameEvent,
+          'socket message handling',
+          Stat.SocketFPS
+        );
         Perf.measureFPSStat(
           Measure.RealFrameEvent,
           false,
@@ -250,11 +257,12 @@ let StatsPanel = () => {
         </span>
       </div>
       <div className="row">
-        <span className="name">Avg total frame time:</span>
+        <span className="name">Slow updates:</span>
         <span className="value">
-          {formatNumber(statsHeap[Stat.AvgTotalFrameTime])}ms
+          {formatNumber(statsHeap[Stat.SlowUpdateFPS])}
         </span>
       </div>
+
       <div className="row">
         <span className="name">FPS:</span>
         <span className="value">{formatNumber(statsHeap[Stat.RealFPS])}</span>

@@ -13,7 +13,11 @@ import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
 import Vector, { IVector } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
-import { vsyncedCoupledTime, vsyncedDecoupledTime } from './utils/Times';
+import {
+  vsyncedCoupledThrottledTime,
+  vsyncedCoupledTime,
+  vsyncedDecoupledTime,
+} from './utils/Times';
 import { api } from './utils/api';
 import { useEffect, useState } from 'react';
 import { viewPortSizeMeters } from './coord';
@@ -93,7 +97,7 @@ const isInAABB = (bounds: AABB, obj: IVector): boolean => {
 };
 
 const MAX_PENDING_TICKS = 2000;
-// it's completely ignore in actual render, since vsynced time is used
+// it's completely ignored in actual render, since vsynced time is used
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
@@ -120,7 +124,7 @@ export default class NetState extends EventEmitter {
   readonly id: string;
   disconnecting: boolean = false;
   private lastShipPos?: Vector;
-  private slowTime: vsyncedDecoupledTime;
+  private slowTime: vsyncedCoupledThrottledTime;
   public desync: number;
   public static make() {
     NetState.instance = new NetState();
@@ -152,7 +156,7 @@ export default class NetState extends EventEmitter {
     };
     this.visMap = {};
     this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
-    this.slowTime = new vsyncedDecoupledTime(SLOW_TIME_STEP);
+    this.slowTime = new vsyncedCoupledThrottledTime(SLOW_TIME_STEP);
   }
 
   private updateVisMap() {
@@ -269,7 +273,10 @@ export default class NetState extends EventEmitter {
     console.log(`connecting NS ${this.id}`);
     this.socket = new WebSocket(api.getWebSocketUrl(), 'rust-websocket');
     this.socket.onmessage = (event) => {
-      this.handleMessage(event.data);
+      Perf.markEvent(Measure.SocketFrameEvent);
+      Perf.usingMeasure(Measure.SocketFrameTime, () => {
+        this.handleMessage(event.data);
+      });
     };
     this.socket.onclose = () => {
       if (!this.disconnecting) {

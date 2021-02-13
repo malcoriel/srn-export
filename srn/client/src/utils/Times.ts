@@ -337,6 +337,50 @@ export class vsyncedCoupledTime extends BasicTime {
   };
 }
 
+// like normal vsyncedCoupled time, but skips frames when they
+// already happened in this time step
+export class vsyncedCoupledThrottledTime extends BasicTime {
+  private requestId?: number;
+  private skip: boolean = false;
+  setInterval(physics: timedFn, render: timedFn) {
+    let lastCheck = performance.now();
+    let lastRender = performance.now();
+    const timerWork = () => {
+      const currentTime = performance.now();
+      const frameTime = currentTime - lastCheck;
+      lastCheck = currentTime;
+
+      if (currentTime - lastRender >= this.timeStep) {
+        this.skip = false;
+      }
+
+      if (!this.skip) {
+        render(frameTime);
+        physics(frameTime);
+        this.skip = true;
+        lastRender = currentTime;
+      }
+    };
+    const framedWork = () => {
+      try {
+        timerWork();
+        this.requestId = requestAnimationFrame(framedWork);
+      } catch (e) {
+        console.log('BREAK!');
+        throw e;
+      }
+    };
+    this.requestId = requestAnimationFrame(framedWork);
+  }
+
+  clearAnimation = () => {
+    super.clearIntervals();
+    if (this.requestId) {
+      cancelAnimationFrame(this.requestId);
+    }
+  };
+}
+
 // TODO? clamping or scheduling of physics to avoid spiral of death when performance is not enough
 // TODO? decoupled interpolated time when physics becomes too slow
 // see final touch of https://gafferongames.com/post/fix_your_timestep/
