@@ -48,13 +48,13 @@ const doBuildServer = async () => {
     await spawnWatched('docker rm -f rust-builder || true');
     await spawnWatched(
       `cd server && \
-          docker run --name="rust-builder" -it -v "$(pwd)":/home/rust/src \
-          -v cargo-git:/home/rust/.cargo/git \
-          -v cargo-registry:/home/rust/.cargo/registry \
-          -v target:/home/rust/src/target \
-          ekidd/rust-musl-builder \
-          /bin/bash -c "sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target; cargo build --release;"\
-          `,
+        docker run --name="rust-builder" -it -v $(pwd):/home/rust/src \
+        -v cargo-git:/home/rust/.cargo/git \
+        -v cargo-registry:/home/rust/.cargo/registry \
+        -v target:/home/rust/src/target \
+        ekidd/rust-musl-builder \
+        /bin/bash -c "sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target; cargo build --release;"\
+        `,
     );
     await fs.mkdirp('server/target/x86_64-unknown-linux-musl/release');
     await spawnWatched(
