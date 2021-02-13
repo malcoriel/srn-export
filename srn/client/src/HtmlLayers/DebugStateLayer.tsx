@@ -4,13 +4,18 @@ import NetState, { useNSForceChange } from '../NetState';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { PanelPosition, PanelWithHideButton } from './PanelWithHideButton';
 
-export const DebugStateLayer: React.FC = () => {
+const DebugInternals = () => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state } = ns;
 
   useNSForceChange('DebugStateLayer');
+  return <div className='debug-state'>
+    <ReactJson src={state} />
+  </div>;
+};
 
+export const DebugStateLayer: React.FC = () => {
   return (
     <PanelWithHideButton
       hotkey="ctrl+shift+d"
@@ -19,9 +24,7 @@ export const DebugStateLayer: React.FC = () => {
       position={PanelPosition.BottomRight}
       extraWide
     >
-      <div className="debug-state">
-        <ReactJson src={state} />
-      </div>
+      <DebugInternals/>
     </PanelWithHideButton>
   );
 };

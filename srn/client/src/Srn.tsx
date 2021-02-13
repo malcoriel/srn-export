@@ -180,7 +180,7 @@ const Srn = () => {
                 toggleMenu();
               }}
             />
-            {/*<DebugStateLayer />*/}
+            <DebugStateLayer />
             <StatsPanel />
             <ControlPanel />
             <WindowContainers />
