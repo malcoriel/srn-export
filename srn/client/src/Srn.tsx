@@ -172,7 +172,7 @@ const Srn = () => {
             <NetworkStatus />
             {/*<LeaderboardWindow />*/}
             {/*<DialoguePanel />*/}
-            {/*<QuestWindow />*/}
+            <QuestWindow />
             <ChatWindow />
             <HotkeyWrapper
               hotkey="esc"

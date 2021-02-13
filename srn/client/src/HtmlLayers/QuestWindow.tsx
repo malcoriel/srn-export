@@ -9,7 +9,11 @@ export const QuestWindow = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange('QuestWindow');
+  useNSForceChange('QuestWindow', false, (prevState, nextState) => {
+    const myPlayerPrev = findMyPlayer(prevState) || {quest: {}};
+    const myPlayerNext = findMyPlayer(nextState) || {quest: {}};
+    return JSON.stringify(myPlayerPrev.quest) !== JSON.stringify(myPlayerNext.quest);
+  });
 
   const { state, visualState } = ns;
   const myPlayer = findMyPlayer(state);
