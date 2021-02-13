@@ -5,6 +5,7 @@ import { StyledRect } from './ui/StyledRect';
 import './NetworkStatus.scss';
 import { FaWaveSquare, GiSplitArrows, RiFilmFill } from 'react-icons/all';
 import { Stat, statsHeap } from './Perf';
+import _ from 'lodash';
 
 export const findPlanet = (
   state: GameState,
@@ -22,9 +23,11 @@ export const NetworkStatus: React.FC = () => {
     ns.on('network', () => {
       forceUpdateNetworkStatus((i) => !i);
     });
-    ns.on('slowchange', () => {
+    // unfortunately, the slowchange provides the state diff but this
+    // component does not use it
+    ns.on('slowchange', _.throttle(() => {
       forceUpdateNetworkStatus((i) => !i);
-    });
+    }, 1000));
   }, [ns.id]);
   const { connecting, ping, maxPing, desync } = ns;
   const fps = statsHeap[Stat.RealFPS];
