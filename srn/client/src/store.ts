@@ -53,7 +53,6 @@ export type SrnState = {
   makeRandomPortrait: () => void;
   volume: number;
   setVolume: (val: number) => void;
-
   questWindow: WindowState;
   setQuestWindow: (val: WindowState) => void;
   setTradeWindow: (val: WindowState) => void;

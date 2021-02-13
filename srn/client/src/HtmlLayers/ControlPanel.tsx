@@ -16,16 +16,66 @@ import NetState, {
   useNSForceChange,
 } from '../NetState';
 import { makePortraitPath } from './StartMenu';
+import { Ship } from '../world';
 
 const BUTTON_SIZE = 53;
 const BUTTON_COUNT = 7;
 const THICKNESS = 9;
 
-export function ControlPanel() {
-  const ns = NetState.get();
-  if (!ns) return null;
+const HpDisplay = ({myShip}: {myShip: Ship}) => {
 
-  useNSForceChange('ControlPanel');
+  return <StyledRect
+    height={20}
+    width={200}
+    line='thin'
+    thickness={4}
+    halfThick
+    noLeft
+    noBottom
+    className='hp-bar'
+  >
+    <div className='text'>
+      {Math.floor(myShip.hp)}/{Math.floor(myShip.max_hp)}
+    </div>
+    <div
+      className='filler'
+      style={{ width: `${(myShip.hp / myShip.max_hp) * 100}%` }}
+    />
+  </StyledRect>;
+};
+
+const MoneyAndHp = () => {
+  useNSForceChange('MoneyAndHp');
+  const ns = NetState.get();
+  if (!ns) {
+    return null;
+  }
+  const myPlayer = findMyPlayer(ns.state);
+  const myShip = findMyShip(ns.state);
+  if (!myPlayer || !myShip) {
+    return null;
+  }
+  return <div className='money-and-hp'>
+    {myPlayer && (
+      <StyledRect
+        line='thin'
+        thickness={4}
+        contentClassName={'money'}
+        halfThick
+        noLeft
+        noBottom
+        width={100}
+        height={22}
+      >
+        <span className='money-icon' />
+        <span className='text'>{myPlayer.money}</span>
+      </StyledRect>
+    )}
+    <HpDisplay myShip={myShip} />
+  </div>;
+};
+
+export const ControlPanel = () => {
   const setMenu = useStore((state) => state.setMenu);
   const toggleQuestWindow = useStore((state) => state.toggleQuestWindow);
   const toggleHelpWindow = useStore((state) => state.toggleHelpWindow);
@@ -34,9 +84,9 @@ export function ControlPanel() {
   const toggleLeaderboardWindow = useStore(
     (state) => state.toggleLeaderboardWindow
   );
+  const myPlayerPortraitName = useStore(state => state.portrait);
 
-  const myShip = findMyShip(ns.state);
-  const myPlayer = findMyPlayer(ns.state);
+  // const myPlayer = findMyPlayer(ns.state);
 
   return (
     <div className="control-panel">
@@ -53,7 +103,7 @@ export function ControlPanel() {
           <img
             className="portrait"
             src={makePortraitPath(
-              myPlayer ? myPlayer.portrait_name : 'question'
+              myPlayerPortraitName || 'question'
             )}
             alt="p"
           />
@@ -81,43 +131,7 @@ export function ControlPanel() {
           <FiBox />
         </Button>
       </StyledRect>
-      <div className="money-and-hp">
-        {myPlayer && (
-          <StyledRect
-            line="thin"
-            thickness={4}
-            contentClassName={'money'}
-            halfThick
-            noLeft
-            noBottom
-            width={100}
-            height={22}
-          >
-            <span className="money-icon" />
-            <span className="text">{myPlayer.money}</span>
-          </StyledRect>
-        )}
-        {myShip && (
-          <StyledRect
-            height={20}
-            width={200}
-            line="thin"
-            thickness={4}
-            halfThick
-            noLeft
-            noBottom
-            className="hp-bar"
-          >
-            <div className="text">
-              {Math.floor(myShip.hp)}/{Math.floor(myShip.max_hp)}
-            </div>
-            <div
-              className="filler"
-              style={{ width: `${(myShip.hp / myShip.max_hp) * 100}%` }}
-            />
-          </StyledRect>
-        )}
-      </div>
+      <MoneyAndHp/>
     </div>
   );
-}
+};
