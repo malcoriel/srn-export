@@ -252,7 +252,10 @@ export default class NetState extends EventEmitter {
         const ns = NetState.get();
         if (!ns) return;
 
-        ns.emit('slowchange');
+        Perf.markEvent(Measure.SlowUpdateFrameEvent);
+        Perf.usingMeasure(Measure.SlowUpdateFrameTime, () => {
+          ns.emit('slowchange');
+        });
       },
       () => {}
     );

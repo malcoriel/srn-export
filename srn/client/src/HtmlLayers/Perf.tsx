@@ -11,6 +11,10 @@ export const statsHeap: Record<string, number> = {
 };
 
 const buffers: Record<Measure, number[]> = {
+  SlowUpdateFrameEvent: [],
+  SlowUpdateFrameTime: [],
+  SocketFrameEvent: [],
+  SocketFrameTime: [],
   PhysicsFrameEvent: [],
   PhysicsFrameTime: [],
   RealFrameEvent: [],
@@ -22,8 +26,12 @@ const buffers: Record<Measure, number[]> = {
 export enum Measure {
   PhysicsFrameTime = 'PhysicsFrameTime',
   RenderFrameTime = 'RenderFrameTime',
+  SlowUpdateFrameTime = 'SlowUpdateFrameTime',
   PhysicsFrameEvent = 'PhysicsFrameEvent',
   RenderFrameEvent = 'RenderFrameEvent',
+  SlowUpdateFrameEvent = 'SlowUpdateFrameEvent',
+  SocketFrameEvent = 'SocketFrameEvent',
+  SocketFrameTime = 'SocketFrameTime',
   RealFrameEvent = 'RealFrameEvent',
   RootComponentRender = 'RootComponentRender',
 }
@@ -31,11 +39,13 @@ export enum Measure {
 export enum Stat {
   AvgPhysicsFrameTime,
   AvgRenderFrameTime,
+  AvgSlowUpdateFrameTime,
+  AvgSocketFrameTime,
   AvgTotalFrameTime,
-  JSMemUsed,
-  JSMemTotal,
   PhysicsFPS,
   RenderFPS,
+  SlowUpdateFPS,
+  SocketFPS,
   RealFPS,
 }
 
@@ -49,7 +59,6 @@ let accumulatedTime = 0;
 
 const time = new Time(flushInterval);
 let frameRequest: number | undefined;
-// qqq
 const Perf = {
   start: () => {
     time.setInterval(Perf.flushBuffer, () => {});
@@ -138,6 +147,13 @@ const Perf = {
           'render',
           Stat.RenderFPS
         );
+        Perf.measureFrameStats(
+          Stat.AvgSlowUpdateFrameTime,
+          Measure.SlowUpdateFrameTime,
+          Measure.SlowUpdateFrameEvent,
+          'slow render',
+          Stat.SlowUpdateFPS
+        );
         Perf.measureFPSStat(
           Measure.RealFrameEvent,
           false,
@@ -146,12 +162,9 @@ const Perf = {
         );
         statsHeap[Stat.AvgTotalFrameTime] =
           statsHeap[Stat.AvgRenderFrameTime] +
-          statsHeap[Stat.AvgPhysicsFrameTime];
-
-        // if (performance.memory) {
-        //   statsHeap[Stats.JSMemUsed] = performance.memory.usedJSHeapSize / 1024 / 1024;
-        //   statsHeap[Stats.JSMemTotal] = performance.memory.totalJSHeapSize / 1024 / 1024;
-        // }
+          statsHeap[Stat.AvgPhysicsFrameTime] +
+          statsHeap[Stat.AvgSlowUpdateFrameTime] +
+          statsHeap[Stat.AvgSocketFrameTime];
       } catch (e) {
         console.error(e);
       } finally {
@@ -194,11 +207,7 @@ export const formatNumber = (x: any) => {
 
 const STATS_REFRESH_TIME = 1000;
 let StatsPanel = () => {
-  const [shown, setShown] = useToggleHotkey(
-    'shift+f',
-    false,
-    'show FPS & stats'
-  );
+  const [shown] = useToggleHotkey('shift+f', false, 'show FPS & stats');
   const [force, setForce] = useState(0);
   useEffect(() => {
     let timer = setInterval(() => setForce(force + 1), STATS_REFRESH_TIME);
@@ -229,23 +238,25 @@ let StatsPanel = () => {
         </span>
       </div>
       <div className="row">
+        <span className="name">Avg slow update frame time:</span>
+        <span className="value">
+          {formatNumber(statsHeap[Stat.AvgSlowUpdateFrameTime])}ms
+        </span>
+      </div>
+      <div className="row">
+        <span className="name">Avg socket frame time:</span>
+        <span className="value">
+          {formatNumber(statsHeap[Stat.AvgSocketFrameTime])}ms
+        </span>
+      </div>
+      <div className="row">
         <span className="name">Avg total frame time:</span>
         <span className="value">
           {formatNumber(statsHeap[Stat.AvgTotalFrameTime])}ms
         </span>
       </div>
       <div className="row">
-        <span className="name">PhysicsFPS:</span>
-        <span className="value">
-          {formatNumber(statsHeap[Stat.PhysicsFPS])}
-        </span>
-      </div>
-      <div className="row">
-        <span className="name">RenderFPS:</span>
-        <span className="value">{formatNumber(statsHeap[Stat.RenderFPS])}</span>
-      </div>
-      <div className="row">
-        <span className="name">Real FPS:</span>
+        <span className="name">FPS:</span>
         <span className="value">{formatNumber(statsHeap[Stat.RealFPS])}</span>
       </div>
       {/*<div className="row">*/}
