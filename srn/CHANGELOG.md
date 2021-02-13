@@ -1,4 +1,9 @@
 # Changelog
+
+## Version 0.3.12
+### Fixes
+* Optimized client-side rendering, reduced CPU usage.
+
 ## Version 0.3.11
 ### New
 * Inventory system.
