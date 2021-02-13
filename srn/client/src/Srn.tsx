@@ -144,7 +144,7 @@ const Srn = () => {
   };
 
   let ns = NetState.get();
-  const seed = ns ? ns.state.seed : "";
+  const seed = ns ? ns.state.seed : '';
 
   return (
     <>

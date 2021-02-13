@@ -379,9 +379,10 @@ export default class NetState extends EventEmitter {
           ([tag]) => !toDrop.has(tag)
         );
 
-        if (!this.disconnecting) {
-          this.emit('change', this.state);
-        }
+        // Sync updates on socket messages lead to big slowdown
+        // if (!this.disconnecting) {
+        //   this.emit('change', this.state);
+        // }
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
         let confirmedTag = JSON.parse(data).tag;
 

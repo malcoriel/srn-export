@@ -5,15 +5,13 @@ import { StyledRect } from './ui/StyledRect';
 import './NetworkStatus.scss';
 import { FaWaveSquare, GiSplitArrows, RiFilmFill } from 'react-icons/all';
 import { Stat, statsHeap } from './Perf';
-import useFitText from 'use-fit-text';
 
 export const FitText: React.FC<{ className?: string }> = ({
   children,
   className,
 }) => {
-  const { fontSize, ref } = useFitText();
   return (
-    <span className={className} ref={ref} style={{ fontSize }}>
+    <span className={className} style={{ fontSize: 10 }}>
       {children}
     </span>
   );
