@@ -6,17 +6,6 @@ import './NetworkStatus.scss';
 import { FaWaveSquare, GiSplitArrows, RiFilmFill } from 'react-icons/all';
 import { Stat, statsHeap } from './Perf';
 
-export const FitText: React.FC<{ className?: string }> = ({
-  children,
-  className,
-}) => {
-  return (
-    <span className={className} style={{ fontSize: 10 }}>
-      {children}
-    </span>
-  );
-};
-
 export const findPlanet = (
   state: GameState,
   id: string
@@ -55,17 +44,17 @@ export const NetworkStatus: React.FC = () => {
         {fps ? (
           <>
             <RiFilmFill />
-            <FitText className="fps-text">
+            <span className="fps-text">
               &nbsp;
               {fps}
               fps
-            </FitText>
+            </span>
           </>
         ) : null}
       </span>
       <span className="desync" title="desync between client and server">
         <GiSplitArrows />
-        <FitText className="desync-text">&nbsp;{desync}ms</FitText>
+        <span className="desync-text">&nbsp;{desync}ms</span>
       </span>
       {!connecting && (
         <span className="ping" title="ping (half trip sync time)">
@@ -75,16 +64,16 @@ export const NetworkStatus: React.FC = () => {
               <FaWaveSquare />
               &nbsp;
               <span title="current">
-                <FitText className="ping-text">{ping}</FitText>
+                <span className="ping-text">{ping}</span>
               </span>
               {maxPing ? (
                 <span title="max">
-                  <FitText className="ping-text">/{maxPing}</FitText>
+                  <span className="ping-text">/{maxPing}</span>
                 </span>
               ) : null}
             </>
           ) : (
-            <FitText className="connecting">Connecting...&nbsp;</FitText>
+            <span className="connecting">Connecting...&nbsp;</span>
           )}
         </span>
       )}
