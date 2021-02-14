@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.3.14
+### New
+* Prepared server-side infrastructure for tutorial rooms.
+### Fixes
+* Restored missing hp & money display.
+
 ## Version 0.3.13
 ### Fixes
 * Further optimized client-side rendering, reduced CPU usage significantly at the cost of some throttled visual changes.
