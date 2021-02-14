@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { useEffect } from 'react';
-import NetState, { findMyPlayer, useNSForceChange } from '../NetState';
+import NetState, {useNSForceChange } from '../NetState';
 import { Window } from './ui/Window';
 import './LeaderboardWindow.scss';
 import { useStore, WindowState } from '../store';
@@ -12,22 +12,29 @@ export const LeaderboardWindow: React.FC = () => {
 
   const setLeaderboardWindow = useStore((state) => state.setLeaderboardWindow);
   useEffect(() => {
-    ns.on('gameEvent', (ev: any) => {
+    let onGameStartEnd = (ev: any) => {
       if (ev === 'GameEnded') {
         setLeaderboardWindow(WindowState.Shown);
       } else if (ev === 'GameStarted') {
         setLeaderboardWindow(WindowState.Minimized);
       }
-    });
+    };
+    ns.on('gameEvent', onGameStartEnd);
+    return () => {
+      ns.off("gameEvent", onGameStartEnd);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ns.id]);
-  useNSForceChange('LeaderboardWindow');
+  useNSForceChange('LeaderboardWindow', false, (prevState, nextState) => {
+    return JSON.stringify(prevState.leaderboard) !== JSON.stringify(nextState.leaderboard);
+  });
 
   const { leaderboard, milliseconds_remaining, paused, my_id } = ns.state;
   if (!leaderboard) {
     return null;
   }
 
-  const place = leaderboard.rating.findIndex(([p]) => p.id == my_id) + 1;
+  const place = leaderboard.rating.findIndex(([p]) => p.id === my_id) + 1;
   const totalPlaces = leaderboard.rating.length;
 
   return (
@@ -49,7 +56,7 @@ export const LeaderboardWindow: React.FC = () => {
     >
       <div className="news-talk">
         Subscribe to{' '}
-        <a href="https://t.me/joinchat/WLDnjKtHTPplQZje" target="_blank">
+        <a href="https://t.me/joinchat/WLDnjKtHTPplQZje" rel="noreferrer" target="_blank">
           <FaTelegram />
           &nbsp; news & talk
         </a>
@@ -61,10 +68,6 @@ export const LeaderboardWindow: React.FC = () => {
           {i + 1}. {p.name} - {s}
         </div>
       ))}
-      <div className="countdown">
-        {paused ? 'New game' : 'Game ends'} in{' '}
-        {Math.floor(milliseconds_remaining / 1000)}
-      </div>
     </Window>
   );
 };

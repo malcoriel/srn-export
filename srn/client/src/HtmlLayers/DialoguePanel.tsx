@@ -5,7 +5,7 @@ import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import _ from 'lodash';
 import { DialogueElem, DialogueSubstitution, DialogueSubstitutionType, Planet } from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
