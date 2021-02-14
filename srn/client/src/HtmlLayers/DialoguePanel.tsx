@@ -1,21 +1,13 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import './DialoguePanel.scss';
 
 import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
-import {
-  CAMERA_DEFAULT_ZOOM,
-  CAMERA_HEIGHT,
-} from '../ThreeLayers/CameraControls';
+import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import NetState, { useNSForceChange } from '../NetState';
 import _ from 'lodash';
-import {
-  DialogueElem,
-  DialogueSubstitution,
-  DialogueSubstitutionType,
-  Planet,
-} from '../world';
+import { DialogueElem, DialogueSubstitution, DialogueSubstitutionType, Planet } from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { findPlanet } from './NetworkStatus';
 import { makePortraitPath } from './StartMenu';
@@ -78,7 +70,17 @@ export const DialoguePanel: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange('DialoguePanel');
+  const [, forceUpdate] = useState(false);
+  useEffect(() => {
+    const onDialogueChange = () => {
+      forceUpdate(old => !old);
+    }
+    ns.on("dialogue", onDialogueChange);
+    return () => {
+      ns.off("dialogue", onDialogueChange);
+    }
+  }, [ns.id]);
+
   const { dialogue } = ns;
 
   const tryDoOption = (i: number) => () => {

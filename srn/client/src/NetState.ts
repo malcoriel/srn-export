@@ -107,6 +107,7 @@ export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
   state!: GameState;
   dialogue?: Dialogue;
+  lastDialogue?: Dialogue;
   public connecting = true;
   public playerName = 'player';
   public portraitName = '1';
@@ -414,6 +415,7 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.UnicastDialogueStateChange
       ) {
         this.dialogue = JSON.parse(data).value;
+        this.emit('dialogue');
       } else if (messageCode === ServerToClientMessageCode.XCastGameEvent) {
         const event = JSON.parse(data).value;
         this.emit('gameEvent', event);

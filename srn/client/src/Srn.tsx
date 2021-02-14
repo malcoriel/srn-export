@@ -171,7 +171,7 @@ const Srn = () => {
             <ShipControls />
             <NetworkStatus />
             {/*<LeaderboardWindow />*/}
-            {/*<DialoguePanel />*/}
+            <DialoguePanel />
             <QuestWindow />
             <ChatWindow />
             <HotkeyWrapper
