@@ -25,7 +25,7 @@ use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 use websocket::{Message, OwnedMessage};
 
-use cast::XCast;
+use xcast::XCast;
 use dialogue::{DialogueStates, DialogueTable};
 use world::{GameState, Player, Ship};
 
@@ -68,7 +68,7 @@ extern crate websocket;
 #[macro_use]
 extern crate num_derive;
 mod bots;
-mod cast;
+mod xcast;
 mod dialogue;
 mod dialogue_test;
 mod events;
@@ -111,8 +111,8 @@ pub enum ServerToClientMessage {
     StateChange(GameState),
     StateChangeExclusive(GameState, Uuid),
     TagConfirm(TagConfirm, Uuid),
-    MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>),
-    DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid),
+    MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>, Uuid),
+    DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid, Uuid),
     XCastGameEvent(Wrapper<GameEvent>, XCast),
 }
 
@@ -128,10 +128,10 @@ impl ServerToClientMessage {
             ServerToClientMessage::TagConfirm(tag_confirm, _unused) => {
                 (3, serde_json::to_string(&tag_confirm).unwrap())
             }
-            ServerToClientMessage::MulticastPartialShipUpdate(ships, _unused) => {
+            ServerToClientMessage::MulticastPartialShipUpdate(ships, _, _) => {
                 (4, serde_json::to_string(ships).unwrap())
             }
-            ServerToClientMessage::DialogueStateChange(dialogue, _unused) => {
+            ServerToClientMessage::DialogueStateChange(dialogue, _, _) => {
                 (5, serde_json::to_string(dialogue).unwrap())
             }
             ServerToClientMessage::XCastGameEvent(event, _) => {
@@ -149,6 +149,7 @@ struct PersonalizeUpdate {
 }
 
 struct StateContainer {
+    tutorial_states: HashMap<Uuid, GameState>,
     state: GameState,
 }
 
@@ -203,7 +204,8 @@ lazy_static! {
 lazy_static! {
     static ref STATE: RwLock<StateContainer> = {
         let state = world::seed_state(true, true);
-        RwLock::new(StateContainer { state })
+        let states = HashMap::new();
+        RwLock::new(StateContainer { tutorial_states: states, state })
     };
 }
 
@@ -276,7 +278,7 @@ fn mutate_ship_no_lock(
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {
-            multicast_ships_update_excluding(state.ships.clone(), Some(client_id));
+            multicast_ships_update_excluding(state.ships.clone(), Some(client_id), state.id);
             if let Some(tag) = tag {
                 send_tag_confirm(tag, client_id);
             }
@@ -313,25 +315,27 @@ fn broadcast_state(state: GameState) {
     }
 }
 
-fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>) {
+fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>, current_state_id: Uuid) {
     unsafe {
         let sender = get_dispatcher_sender();
         sender
             .send(ServerToClientMessage::DialogueStateChange(
                 Wrapper::new(dialogue_state),
                 client_id,
+                current_state_id
             ))
             .unwrap();
     }
 }
 
-fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>) {
+fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>, current_state_id: Uuid) {
     unsafe {
         let sender = get_dispatcher_sender();
         sender
             .send(ServerToClientMessage::MulticastPartialShipUpdate(
                 ShipsWrapper { ships },
                 client_id,
+                current_state_id
             ))
             .unwrap();
     }
@@ -382,12 +386,14 @@ fn handle_request(request: WSRequest) {
     println!("Connection from {}, id={}", ip, client_id);
 
     make_new_human_player(client_id);
-    {
+
+    let current_state_id = {
         let mut state = STATE.read().unwrap().state.clone();
         state = patch_state_for_player(state, client_id);
         let message: Message = Message::text(serde_json::to_string(&state).unwrap());
         client.send_message(&message).unwrap();
-    }
+        state.id
+    };
 
     let (client_tx, client_rx) = mpsc::channel::<ServerToClientMessage>();
     CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
@@ -492,6 +498,7 @@ fn handle_request(request: WSRequest) {
                                                 .ok()
                                                 .unwrap(),
                                             third.map(|s| s.to_string()),
+                                            current_state_id
                                         );
                                     }
                                     ClientOpCode::Unknown => {}
@@ -509,7 +516,7 @@ fn handle_request(request: WSRequest) {
         }
         if let Ok(message) = client_rx.try_recv() {
             if !is_disconnected(client_id) {
-                let should_send: bool = cast::check_message_casting(client_id, &message);
+                let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
                 let patched_message: ServerToClientMessage = match message.clone() {
                     ServerToClientMessage::StateChangeExclusive(state, id) => {
                         ServerToClientMessage::StateChangeExclusive(
@@ -603,7 +610,7 @@ fn personalize_player(conn_id: Uuid, update: PersonalizeUpdate) {
     }
 }
 
-fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
+fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>, current_state_id: Uuid) {
     let global_state_change;
     {
         let mut cont = STATE.write().unwrap();
@@ -617,7 +624,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
             &mut *dialogue_cont,
             &*dialogue_table,
         );
-        unicast_dialogue_state(client_id.clone(), new_dialogue_state);
+        unicast_dialogue_state(client_id.clone(), new_dialogue_state, current_state_id);
         global_state_change = state_changed;
     }
     {
@@ -857,7 +864,7 @@ fn main_thread() {
                 events::handle_events(&mut d_table, receiver, state, d_states, sampler);
             sampler = updated_sampler;
             for (client_id, dialogue) in res {
-                unicast_dialogue_state(client_id, dialogue);
+                unicast_dialogue_state(client_id, dialogue, cont.state.id);
             }
             sampler.end(events_mark);
             events_elapsed = 0;
@@ -884,7 +891,7 @@ fn main_thread() {
         sampler.end(cleanup_mark);
 
         sampler.measure(
-            &|| multicast_ships_update_excluding(cont.state.ships.clone(), None),
+            &|| multicast_ships_update_excluding(cont.state.ships.clone(), None, cont.state.id),
             7,
         );
 

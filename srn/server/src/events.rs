@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crossbeam::channel::{bounded, Receiver, Sender};
 use uuid::Uuid;
 
-use crate::cast::XCast;
+use crate::xcast::XCast;
 use crate::dialogue::{Dialogue, DialogueTable};
 use crate::perf::Sampler;
 use crate::world::{GameEvent, GameState};
@@ -41,16 +41,16 @@ pub fn handle_events(
             }
             match event.clone() {
                 GameEvent::ShipSpawned { player, .. } => {
-                    crate::send_event(event.clone(), XCast::Unicast(player.id));
+                    crate::send_event(event.clone(), XCast::Unicast(player.id, state.id) );
                 }
                 GameEvent::ShipDied { .. } => {
-                    crate::send_event(event.clone(), XCast::Broadcast);
+                    crate::send_event(event.clone(), XCast::Broadcast(state.id));
                 }
                 GameEvent::GameEnded { .. } => {
-                    crate::send_event(event.clone(), XCast::Broadcast);
+                    crate::send_event(event.clone(), XCast::Broadcast(state.id));
                 }
                 GameEvent::GameStarted { .. } => {
-                    crate::send_event(event.clone(), XCast::Broadcast);
+                    crate::send_event(event.clone(), XCast::Broadcast(state.id));
                 }
                 GameEvent::Unknown => {
                     // intentionally do nothing

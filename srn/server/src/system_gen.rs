@@ -194,9 +194,10 @@ pub fn system_gen(seed: String) -> GameState {
 
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
+        id: new_id(),
         seed,
         tag: None,
-        milliseconds_remaining: 3 * 60 * 1000,
+        milliseconds_remaining: 20 * 1000,
         paused: false,
         my_id: new_id(),
         ticks: 0,
