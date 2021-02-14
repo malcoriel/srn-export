@@ -35,7 +35,7 @@ interface StaticMinimapLayerParams {
   realPosToScreenPos: (objPos: IVector) => Vector;
 }
 
-const StaticMinimapLayer = ({ moveCamera, realLenToScreenLen, realPosToScreenPos }: StaticMinimapLayerParams) => {
+const StaticEntitiesLayer = ({ moveCamera, realLenToScreenLen, realPosToScreenPos }: StaticMinimapLayerParams) => {
   const ns = NetState.get();
   if (!ns) return null;
 
@@ -43,7 +43,7 @@ const StaticMinimapLayer = ({ moveCamera, realLenToScreenLen, realPosToScreenPos
 
   const { state } = ns;
 
-  return <Layer name='static'>
+  return <Layer>
     {state.asteroid_belts.map((b) => (
       <Arc
         key={b.id}
@@ -69,6 +69,129 @@ const StaticMinimapLayer = ({ moveCamera, realLenToScreenLen, realPosToScreenPos
   </Layer>;
 };
 
+interface SlowBodiesLayerParams {
+  realLenToScreenLen: (valMet: number) => number;
+  realPosToScreenPos: (objPos: IVector) => Vector;
+  moveCamera: (dragEvent: any) => void;
+}
+
+const SlowEntitiesLayer = ({ realLenToScreenLen, realPosToScreenPos, moveCamera }: SlowBodiesLayerParams) => {
+  const ns = NetState.get();
+  if (!ns) return null;
+
+  // never update by itself for now
+
+  const { state } = ns;
+
+  return <Layer>
+    {state.planets &&
+    state.planets.map((p, i) => {
+      let anchorPos = state.star
+        ? Vector.fromIVector(state.star)
+        : VectorF(0, 0);
+      let pPos = Vector.fromIVector(p);
+      let orbitDist = realLenToScreenLen(pPos.euDistTo(anchorPos));
+      let angleRad = pPos.angleRad(anchorPos.add(VectorF(1, 0)));
+      let negativeRotation = p.orbit_speed < 0;
+      // let arcDirMultiplier = 1;
+      // if (negativeRotation) {
+      //   //arcDirMultiplier = -1;
+      // }
+
+      let rotationDeg = radToDeg(angleRad);
+      let b = p.radius;
+      let a = pPos.euDistTo(anchorPos);
+      let beta = Math.acos((2 * a * a - b * b) / (2 * a * a));
+
+      const arcCommonProps = {
+        angle: totalArc / arcCount,
+        innerRadius: orbitDist - trailWidth / 0.5,
+        outerRadius: orbitDist + trailWidth / 0.5,
+        fill: p.color,
+        strokeWidth: 1,
+        position: realPosToScreenPos(anchorPos),
+      };
+      return (
+        <Group key={p.id ? p.id : i}>
+          <Group position={realPosToScreenPos(p)}>
+            <Circle
+              opacity={planetOpacity}
+              radius={realLenToScreenLen(p.radius)}
+              fill={p.color}
+              stroke={mint}
+              strokeWidth={0.5}
+              onMouseDown={moveCamera}
+            />
+          </Group>
+          {p.anchor_tier === 1 && (
+            <Group>
+              {_.times(arcCount, (i) => {
+                return (
+                  <Arc
+                    onMouseDown={moveCamera}
+                    key={i}
+                    {...arcCommonProps}
+                    rotation={
+                      (pPos.y < 0 ? -rotationDeg : rotationDeg) +
+                      (negativeRotation ? -totalArc : 0) +
+                      // shift for the planet radius
+                      radToDeg(beta) +
+                      // shift for every arc part
+                      (i * totalArc) / arcCount
+                    }
+                    opacity={
+                      negativeRotation
+                        ? innerOpacity * (i * (1 / arcCount))
+                        : innerOpacity * (1 - i * (1 / arcCount))
+                    }
+                  />
+                );
+              })}
+            </Group>
+          )}
+        </Group>
+      );
+    })}
+  </Layer>;
+};
+
+interface FastEntitiesLayerParams {
+  realPosToScreenPos: (objPos: IVector) => Vector;
+  realLenToScreenLen: (valMet: number) => number;
+  moveCamera: (dragEvent: any) => void;
+}
+
+function FastEntitiesLayer({ realPosToScreenPos, realLenToScreenLen }: FastEntitiesLayerParams) {
+  const ns = NetState.get();
+  if (!ns) return null;
+
+  // never update by itself
+
+  const { state } = ns;
+  const myShip = findMyShip(state);
+
+  return <Layer>
+    {state.ships.map((s) => {
+      const pos = realPosToScreenPos(s);
+      const isMy = myShip && s.id === myShip.id;
+      return (
+        <Star
+          key={s.id}
+          x={pos.x}
+          y={pos.y}
+          innerRadius={realLenToScreenLen(s.radius * 8)}
+          outerRadius={realLenToScreenLen(s.radius + 15)}
+          fill={isMy ? crimson : mint}
+          stroke='black'
+          strokeWidth={0.5}
+          numPoints={5}
+          opacity={0.8}
+        />
+      );
+    })}
+  </Layer>;
+}
+
 export const MinimapPanel = React.memo(() => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -80,7 +203,7 @@ export const MinimapPanel = React.memo(() => {
     return true;
   });
 
-  const { state, visualState } = ns;
+  const { visualState } = ns;
   let { cameraPosition } = visualState;
 
   // a trick to force-sync component whenever the global camera changes,
@@ -128,7 +251,6 @@ export const MinimapPanel = React.memo(() => {
     setCameraPos(newPos);
     visualState.cameraPosition = newPos;
   };
-  const myShip = findMyShip(state);
   return (
     <Stage
       width={get_minimap_size_x()}
@@ -151,92 +273,6 @@ export const MinimapPanel = React.memo(() => {
           opacity={baseOpacity}
           onMouseDown={moveCamera}
         />
-        {state.planets &&
-        state.planets.map((p, i) => {
-          let anchorPos = state.star
-            ? Vector.fromIVector(state.star)
-            : VectorF(0, 0);
-          let pPos = Vector.fromIVector(p);
-          let orbitDist = realLenToScreenLen(pPos.euDistTo(anchorPos));
-          let angleRad = pPos.angleRad(anchorPos.add(VectorF(1, 0)));
-          let negativeRotation = p.orbit_speed < 0;
-          let arcDirMultiplier = 1;
-          if (negativeRotation) {
-            arcDirMultiplier = -1;
-          }
-
-          let rotationDeg = radToDeg(angleRad);
-          let b = p.radius;
-          let a = pPos.euDistTo(anchorPos);
-          let beta = Math.acos((2 * a * a - b * b) / (2 * a * a));
-
-          const arcCommonProps = {
-            angle: totalArc / arcCount,
-            innerRadius: orbitDist - trailWidth / 0.5,
-            outerRadius: orbitDist + trailWidth / 0.5,
-            fill: p.color,
-            strokeWidth: 1,
-            position: realPosToScreenPos(anchorPos),
-          };
-          return (
-            <Group key={p.id ? p.id : i}>
-              <Group position={realPosToScreenPos(p)}>
-                <Circle
-                  opacity={planetOpacity}
-                  radius={realLenToScreenLen(p.radius)}
-                  fill={p.color}
-                  stroke={mint}
-                  strokeWidth={0.5}
-                  onMouseDown={moveCamera}
-                />
-              </Group>
-              {p.anchor_tier === 1 && (
-                <Group>
-                  {_.times(arcCount, (i) => {
-                    return (
-                      <Arc
-                        onMouseDown={moveCamera}
-                        key={i}
-                        {...arcCommonProps}
-                        rotation={
-                          (pPos.y < 0 ? -rotationDeg : rotationDeg) +
-                          (negativeRotation ? -totalArc : 0) +
-                          // shift for the planet radius
-                          radToDeg(beta) +
-                          // shift for every arc part
-                          (i * totalArc) / arcCount
-                        }
-                        opacity={
-                          negativeRotation
-                            ? innerOpacity * (i * (1 / arcCount))
-                            : innerOpacity * (1 - i * (1 / arcCount))
-                        }
-                      />
-                    );
-                  })}
-                </Group>
-              )}
-            </Group>
-          );
-        })}
-        {state.ships.map((s) => {
-          const pos = realPosToScreenPos(s);
-          const isMy = myShip && s.id === myShip.id;
-          return (
-            <Star
-              key={s.id}
-              x={pos.x}
-              y={pos.y}
-              innerRadius={realLenToScreenLen(s.radius * 8)}
-              outerRadius={realLenToScreenLen(s.radius + 15)}
-              fill={isMy ? crimson : mint}
-              stroke='black'
-              strokeWidth={0.5}
-              numPoints={5}
-              opacity={0.8}
-            />
-          );
-        })}
         <Rect
           width={minimap_viewport_size_x}
           height={minimap_viewport_size_y}
@@ -256,7 +292,18 @@ export const MinimapPanel = React.memo(() => {
             )}
         />
       </Layer>
-      <StaticMinimapLayer
+      <FastEntitiesLayer
+        moveCamera={moveCamera}
+        realLenToScreenLen={realLenToScreenLen}
+        realPosToScreenPos={realPosToScreenPos}
+
+      />
+      <SlowEntitiesLayer
+        moveCamera={moveCamera}
+        realLenToScreenLen={realLenToScreenLen}
+        realPosToScreenPos={realPosToScreenPos}
+      />
+      <StaticEntitiesLayer
         moveCamera={moveCamera}
         realLenToScreenLen={realLenToScreenLen}
         realPosToScreenPos={realPosToScreenPos}
