@@ -207,9 +207,7 @@ export const MinimapPanel = React.memo(() => {
   const [shown] = useToggleHotkey('shift+m', true, 'show minimap');
   if (!shown) return null;
 
-  useNSForceChange('MinimapLayer', false, (prevState, nextState) => {
-    return true;
-  });
+  useNSForceChange('MinimapLayer', false, () => true);
 
   const { visualState } = ns;
   let { cameraPosition } = visualState;
