@@ -197,7 +197,7 @@ pub fn system_gen(seed: String) -> GameState {
         id: new_id(),
         seed,
         tag: None,
-        milliseconds_remaining: 20 * 1000,
+        milliseconds_remaining: 3 * 60 * 1000,
         paused: false,
         my_id: new_id(),
         ticks: 0,
