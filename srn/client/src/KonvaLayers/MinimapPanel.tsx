@@ -3,7 +3,7 @@ import { Arc, Circle, Group, Layer, Rect, Stage, Star } from 'react-konva';
 import { crimson, dirtyGray, gray, mint, teal, yellow } from '../utils/palette';
 import color from 'color';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { height_units, width_units } from '../world';
 import Vector, { IVector, VectorF, VectorFzero } from '../utils/Vector';
@@ -35,14 +35,22 @@ interface StaticMinimapLayerParams {
   realPosToScreenPos: (objPos: IVector) => Vector;
 }
 
-const StaticEntitiesLayer = ({ moveCamera, realLenToScreenLen, realPosToScreenPos }: StaticMinimapLayerParams) => {
+const StaticEntitiesLayer = React.memo(({ moveCamera, realLenToScreenLen, realPosToScreenPos }: StaticMinimapLayerParams) => {
+
   const ns = NetState.get();
   if (!ns) return null;
 
-  // never update by itself
-
   const { state } = ns;
 
+  const [,forceUpdate] = useState(false);
+  useEffect(() => {
+    // somehow I wasn't able to render this component only once,
+    // so super-throttled render instead
+    ns.on('slowchange', _.throttle(() => {
+      forceUpdate((i) => !i);
+    }, 1000));
+  }, [ns.id]);
+  
   return <Layer>
     {state.asteroid_belts.map((b) => (
       <Arc
@@ -67,7 +75,7 @@ const StaticEntitiesLayer = ({ moveCamera, realLenToScreenLen, realPosToScreenPo
       />
     )}
   </Layer>;
-};
+}, () => true);
 
 interface SlowBodiesLayerParams {
   realLenToScreenLen: (valMet: number) => number;
@@ -161,11 +169,11 @@ interface FastEntitiesLayerParams {
   moveCamera: (dragEvent: any) => void;
 }
 
-function FastEntitiesLayer({ realPosToScreenPos, realLenToScreenLen }: FastEntitiesLayerParams) {
+const FastEntitiesLayer = React.memo(({ realPosToScreenPos, realLenToScreenLen }: FastEntitiesLayerParams) => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  // never update by itself
+  useNSForceChange('FastEntitiesLayer', false, () => true);
 
   const { state } = ns;
   const myShip = findMyShip(state);
@@ -190,7 +198,7 @@ function FastEntitiesLayer({ realPosToScreenPos, realLenToScreenLen }: FastEntit
       );
     })}
   </Layer>;
-}
+}, () => true);
 
 export const MinimapPanel = React.memo(() => {
   const ns = NetState.get();
