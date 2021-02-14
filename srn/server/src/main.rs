@@ -387,13 +387,12 @@ fn handle_request(request: WSRequest) {
 
     make_new_human_player(client_id);
 
-    let current_state_id = {
+    {
         let mut state = STATE.read().unwrap().state.clone();
         state = patch_state_for_player(state, client_id);
         let message: Message = Message::text(serde_json::to_string(&state).unwrap());
         client.send_message(&message).unwrap();
-        state.id
-    };
+    }
 
     let (client_tx, client_rx) = mpsc::channel::<ServerToClientMessage>();
     CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
@@ -425,6 +424,8 @@ fn handle_request(request: WSRequest) {
         if disconnect_if_bad(client_id) {
             break;
         }
+
+        let current_state_id = STATE.read().unwrap().state.id;
 
         if let Ok(message) = message_rx.try_recv() {
             match message {
