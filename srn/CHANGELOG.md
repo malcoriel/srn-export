@@ -17,7 +17,6 @@
 * When you die carrying a quest item now, you'll fail the quest.
 * Fixed a bug with duplicating planets.
 
-### Fixes
 ## Version 0.3.10
 ### Fixes
 * More simulation CPU improvements. Experimental simulation culling by camera.
