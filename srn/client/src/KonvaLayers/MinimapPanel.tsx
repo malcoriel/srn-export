@@ -50,7 +50,7 @@ const StaticEntitiesLayer = React.memo(({ moveCamera, realLenToScreenLen, realPo
       forceUpdate((i) => !i);
     }, 1000));
   }, [ns.id]);
-  
+
   return <Layer>
     {state.asteroid_belts.map((b) => (
       <Arc
@@ -83,11 +83,11 @@ interface SlowBodiesLayerParams {
   moveCamera: (dragEvent: any) => void;
 }
 
-const SlowEntitiesLayer = ({ realLenToScreenLen, realPosToScreenPos, moveCamera }: SlowBodiesLayerParams) => {
+const SlowEntitiesLayer = React.memo(({ realLenToScreenLen, realPosToScreenPos, moveCamera }: SlowBodiesLayerParams) => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  // never update by itself for now
+  useNSForceChange('SlowEntitiesLayer', false, () => true, 250);
 
   const { state } = ns;
 
@@ -161,7 +161,7 @@ const SlowEntitiesLayer = ({ realLenToScreenLen, realPosToScreenPos, moveCamera 
       );
     })}
   </Layer>;
-};
+}, () => true);
 
 interface FastEntitiesLayerParams {
   realPosToScreenPos: (objPos: IVector) => Vector;
@@ -173,7 +173,7 @@ const FastEntitiesLayer = React.memo(({ realPosToScreenPos, realLenToScreenLen }
   const ns = NetState.get();
   if (!ns) return null;
 
-  useNSForceChange('FastEntitiesLayer', false, () => true);
+  useNSForceChange('FastEntitiesLayer', false, () => true, 100);
 
   const { state } = ns;
   const myShip = findMyShip(state);

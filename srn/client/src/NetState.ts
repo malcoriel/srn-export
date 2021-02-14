@@ -613,7 +613,7 @@ export default class NetState extends EventEmitter {
 
 export type ShouldUpdateStateChecker = (prev: GameState, next: GameState) => boolean;
 
-export const useNSForceChange = (name: string, fast = false, shouldUpdate: ShouldUpdateStateChecker = () => true) => {
+export const useNSForceChange = (name: string, fast = false, shouldUpdate: ShouldUpdateStateChecker = () => true, throttle?: number) => {
   const [, forceChange] = useState(false);
   const ns = NetState.get();
   if (!ns) return null;
@@ -627,6 +627,9 @@ export const useNSForceChange = (name: string, fast = false, shouldUpdate: Shoul
         forceChange((flip) => !flip);
       }
     };
+    if (throttle) {
+      listener = _.throttle(listener, throttle);
+    }
     let event = fast ? 'change' : 'slowchange';
     ns.on(event, listener);
     return () => {
