@@ -21,9 +21,10 @@ export const makePortraitPath = (portrait: string) =>
 
 export const StartMenu: React.FC<{
   start: () => void;
+  startTutorial: () => void;
   quit: () => void;
   seed: string,
-}> = ({ start, quit, seed }) => {
+}> = ({ start, quit, seed, startTutorial }) => {
   const {
     musicEnabled,
     setMusicEnabled,
@@ -186,6 +187,11 @@ export const StartMenu: React.FC<{
               </Button>
             </div>
           </>
+        )}
+        {!playing && (
+          <Button className='play' onClick={startTutorial}>
+            TUTORIAL
+          </Button>
         )}
         {!playing && (
           <Button className='play' onClick={start}>

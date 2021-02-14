@@ -30,6 +30,7 @@ enum ClientOpCode {
   MutateMyShip,
   Name,
   DialogueOption,
+  SwitchRoom,
 }
 
 interface Cmd {
@@ -128,8 +129,10 @@ export default class NetState extends EventEmitter {
   private slowTime: vsyncedCoupledThrottledTime;
   public desync: number;
   private lastSlowChangedState!: GameState;
-  public static make() {
+  private isTutorial!: boolean;
+  public static make(tutorial?: boolean) {
     NetState.instance = new NetState();
+    NetState.instance.isTutorial = !!tutorial;
   }
   public static get(): NetState | undefined {
     // if (!NetState.instance) {
@@ -302,6 +305,13 @@ export default class NetState extends EventEmitter {
           portrait_name: this.portraitName,
         }),
       });
+      if (this.isTutorial) {
+        this.send({
+          code: ClientOpCode.SwitchRoom,
+          value: {tutorial: true},
+          tag: uuid.v4()
+        })
+      }
     };
     this.socket.onerror = () => {
       console.warn('socket error');
@@ -470,6 +480,12 @@ export default class NetState extends EventEmitter {
           break;
         }
         case ClientOpCode.DialogueOption: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
+        case ClientOpCode.SwitchRoom: {
           this.socket.send(
             `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
           );

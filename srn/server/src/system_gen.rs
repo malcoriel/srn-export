@@ -11,6 +11,7 @@ use rand::{Rng, SeedableRng};
 use std::collections::VecDeque;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use uuid::Uuid;
 
 struct PoolRandomPicker<T> {
     options: Vec<T>,
@@ -212,4 +213,42 @@ pub fn system_gen(seed: String) -> GameState {
         minerals: vec![],
     };
     state
+}
+
+
+pub fn make_tutorial_state(client_id: Uuid) -> GameState {
+    let seed = "tutorial".to_owned();
+    let now = Utc::now().timestamp_millis() as u64;
+
+    let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
+    let star_id = new_id();
+
+    let star = Star {
+        color: "rgb(100, 200, 85)".to_string(),
+        id: star_id.clone(),
+        name: gen_star_name(&mut prng).to_string(),
+        x: 0.0,
+        y: 0.0,
+        rotation: 0.0,
+        radius: 30.0,
+    };
+
+    GameState {
+        id: client_id,
+        tag: None,
+        seed,
+        my_id: Default::default(),
+        start_time_ticks: now,
+        star: Some(star),
+        planets: vec![],
+        asteroids: vec![],
+        minerals: vec![],
+        asteroid_belts: vec![],
+        ships: vec![],
+        players: vec![],
+        milliseconds_remaining: 99 * 1000,
+        paused: false,
+        leaderboard: None,
+        ticks: 0
+    }
 }

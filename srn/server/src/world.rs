@@ -904,6 +904,19 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
     state.players.push(player);
 }
 
+pub fn remove_player_ship(state: &mut GameState, player_id: Uuid) {
+    let ship = find_my_ship(state, player_id);
+    if let Some(ship) = ship {
+        state.ships = state.ships.iter().filter_map(|s| {
+            if s.id != ship.id {
+                Some(ship.clone())
+            } else {
+                None
+            }
+        }).collect::<Vec<_>>();
+    }
+}
+
 pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -> &Ship {
     let mut rng = thread_rng();
     let mut small_rng = SmallRng::seed_from_u64(rng.next_u64());

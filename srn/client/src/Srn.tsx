@@ -30,7 +30,6 @@ import { HoverHintWindow } from './HtmlLayers/HoverHintWindow';
 import { size } from './coord';
 import { ChatState } from './ChatState';
 import { ChatWindow } from './HtmlLayers/ChatWindow';
-import { TradeWindow } from './HtmlLayers/TradeWindow';
 import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 
 const MONITOR_SIZE_INTERVAL = 1000;
@@ -117,9 +116,9 @@ const Srn = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const start = () => {
+  const start = (tutorial?: boolean) => {
     if (!NetState.get()) {
-      NetState.make();
+      NetState.make(tutorial);
     }
 
     const ns = NetState.get();
@@ -193,7 +192,7 @@ const Srn = () => {
         )}
         {!playing && <TestUI />}
         {musicEnabled && <MusicControls />}
-        {menu && <StartMenu seed={seed} start={start} quit={quit} />}
+        {menu && <StartMenu seed={seed} start={start} quit={quit} startTutorial={() => start(true)}/>}
       </div>
     </>
   );

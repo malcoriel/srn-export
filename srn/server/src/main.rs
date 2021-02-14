@@ -4,6 +4,7 @@
 extern crate serde_derive;
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::{mpsc, Arc, Mutex, RwLock, RwLockWriteGuard};
 use std::thread;
 use std::time::Duration;
@@ -35,7 +36,7 @@ use crate::dialogue::{
 };
 use crate::perf::Sampler;
 use crate::vec2::Vec2f64;
-use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_planet, update_quests, GameEvent, ShipAction, UpdateOptions, AABB};
+use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_planet, update_quests, GameEvent, ShipAction, UpdateOptions, AABB, remove_player_ship, spawn_ship};
 use itertools::Itertools;
 
 const MAJOR: u32 = pkg_version_major!();
@@ -148,6 +149,11 @@ struct PersonalizeUpdate {
     portrait_name: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct SwitchRoomPayload {
+    tutorial: bool
+}
+
 struct StateContainer {
     tutorial_states: HashMap<Uuid, GameState>,
     state: GameState,
@@ -171,6 +177,7 @@ enum ClientOpCode {
     MutateMyShip = 2,
     Name = 3,
     DialogueOption = 4,
+    SwitchRoom = 5,
 }
 
 static mut DISPATCHER_SENDER: Option<Mutex<std::sync::mpsc::Sender<ServerToClientMessage>>> = None;
@@ -249,6 +256,24 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Optio
         increment_client_errors(client_id);
         disconnect_if_bad(client_id);
     }
+}
+
+lazy_static! {
+    pub static ref IN_TUTORIAL: Arc<Mutex<HashSet<Uuid>>> = Arc::new(Mutex::new(HashSet::new()));
+}
+
+fn move_player_to_tutorial_room(client_id: Uuid) {
+    let mut cont = STATE.write().unwrap();
+    let personal_state = cont.tutorial_states.entry(client_id).or_insert(make_tutorial_state(client_id));
+    // {
+    //     remove_player_ship(&mut cont.state, client_id);
+    // }
+    {
+        spawn_ship(personal_state, client_id, None);
+    }
+    IN_TUTORIAL.lock().unwrap().insert(client_id);
+    // the state id filtering will take care of filtering the receivers
+    broadcast_state(personal_state.clone());
 }
 
 fn mutate_owned_ship(
@@ -425,7 +450,12 @@ fn handle_request(request: WSRequest) {
             break;
         }
 
-        let current_state_id = STATE.read().unwrap().state.id;
+        let in_tutorial = IN_TUTORIAL.lock().unwrap().contains(&client_id);
+        let current_state_id = if !in_tutorial {STATE.read().unwrap().state.id} else {
+            // tutorial states are personal, and have the same id as player
+            client_id
+        };
+
 
         if let Ok(message) = message_rx.try_recv() {
             match message {
@@ -502,7 +532,22 @@ fn handle_request(request: WSRequest) {
                                             current_state_id
                                         );
                                     }
+                                    ClientOpCode::SwitchRoom => {
+                                        let parsed =
+                                            serde_json::from_str::<SwitchRoomPayload>(second);
+                                        match parsed {
+                                            Ok(parsed) => {
+                                                if parsed.tutorial {
+                                                    move_player_to_tutorial_room(client_id);
+                                                }
+                                            }
+                                            Err(err) => {
+                                                warn!(format!("Bad switch room, err is {}", err));
+                                            }
+                                        }
+                                    }
                                     ClientOpCode::Unknown => {}
+
                                 },
                                 None => {}
                             },
@@ -775,6 +820,8 @@ const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 
 use regex::Regex;
 use crate::chat::chat_server;
+use crate::system_gen::make_tutorial_state;
+use std::iter::FromIterator;
 lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
 }
@@ -817,14 +864,10 @@ fn main_thread() {
     let mut bot_action_elapsed = 0;
     let mut events_elapsed = 0;
     loop {
-        thread::sleep(Duration::from_millis(MAIN_THREAD_SLEEP_MS));
-
         let total_mark = sampler.start(0);
-        let lock_mark = sampler.start(2);
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = bots::BOTS.lock().unwrap();
-        sampler.end(lock_mark);
 
         let now = Local::now();
         let elapsed = now - last;
@@ -836,6 +879,15 @@ fn main_thread() {
                 disable_hp_effects: false,
                 limit_area: AABB::maxed()
             });
+
+        cont.tutorial_states = HashMap::from_iter(cont.tutorial_states.iter().map(|(_, state)| {
+            let (new_state, _) = world::update_world(state.clone(), elapsed_micro, false, Sampler::empty(), UpdateOptions {
+                disable_hp_effects: false,
+                limit_area: AABB::maxed()
+            });
+            (new_state.id, new_state)
+        }));
+
         sampler = updated_sampler;
         sampler.end(update_id);
 
@@ -909,6 +961,7 @@ fn main_thread() {
                 metrics.join("\n")
             ));
         }
+        thread::sleep(Duration::from_millis(MAIN_THREAD_SLEEP_MS));
     }
 }
 
