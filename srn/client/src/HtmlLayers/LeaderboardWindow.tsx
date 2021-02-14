@@ -67,7 +67,7 @@ export const LeaderboardWindow: React.FC = () => {
         <div className="line" key={p.id}>
           {i + 1}. {p.name} - {s}
         </div>
-      ))}
+      ))},
     </Window>
   );
 };
