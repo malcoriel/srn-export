@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.3.13
+### Fixes
+* Further optimized client-side rendering, reduced CPU usage significantly at the cost of some throttled visual changes.
+
 ## Version 0.3.12
 ### Fixes
 * Optimized client-side rendering, reduced CPU usage.
