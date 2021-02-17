@@ -86,6 +86,7 @@ export enum ServerToClientMessageCode {
   MulticastPartialShipsUpdate = 4,
   UnicastDialogueStateChange = 5,
   XCastGameEvent = 6,
+  RoomSwitched = 7,
 }
 
 const isInAABB = (bounds: AABB, obj: IVector): boolean => {
@@ -130,6 +131,7 @@ export default class NetState extends EventEmitter {
   public desync: number;
   private lastSlowChangedState!: GameState;
   private isTutorial!: boolean;
+  private switchingRooms: boolean = false;
   public static make(tutorial?: boolean) {
     NetState.instance = new NetState();
     NetState.instance.isTutorial = !!tutorial;
@@ -243,6 +245,12 @@ export default class NetState extends EventEmitter {
         Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
           const ns = NetState.get();
           if (!ns) return;
+          if (this.connecting) {
+            return;
+          }
+          if (this.switchingRooms) {
+            return;
+          }
           ns.updateLocalState(Math.floor((elapsedMs * 1000) / 1000));
         });
       },
@@ -306,11 +314,13 @@ export default class NetState extends EventEmitter {
         }),
       });
       if (this.isTutorial) {
+        let switchRoomTag = uuid.v4();
+        this.switchingRooms = true;
         this.send({
           code: ClientOpCode.SwitchRoom,
           value: {tutorial: true},
-          tag: uuid.v4()
-        })
+          tag: switchRoomTag
+        });
       }
     };
     this.socket.onerror = () => {
@@ -330,6 +340,16 @@ export default class NetState extends EventEmitter {
       const [messageCodeStr, data] = rawData.split('_%_');
 
       let messageCode = Number(messageCodeStr);
+
+      if (this.switchingRooms) {
+        this.resetState(); // force to have initial state
+        if (messageCode !== ServerToClientMessageCode.RoomSwitched) {
+          // block updates unless it is switch success
+          return;
+        }
+        this.switchingRooms = false;
+      }
+
       if (
         messageCode === ServerToClientMessageCode.FullSync ||
         messageCode === ServerToClientMessageCode.SyncExclusive

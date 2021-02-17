@@ -59,6 +59,7 @@ pub fn check_message_casting(client_id: Uuid, message: &ServerToClientMessage, c
             }
         }
         ServerToClientMessage::XCastGameEvent(_, x_cast) => should_send_xcast(client_id, x_cast, current_state_id),
+        ServerToClientMessage::RoomSwitched(x_cast) => should_send_xcast(client_id, x_cast, current_state_id)
     }
 }
 

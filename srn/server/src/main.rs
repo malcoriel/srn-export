@@ -115,6 +115,7 @@ pub enum ServerToClientMessage {
     MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>, Uuid),
     DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid, Uuid),
     XCastGameEvent(Wrapper<GameEvent>, XCast),
+    RoomSwitched(XCast),
 }
 
 impl ServerToClientMessage {
@@ -137,6 +138,9 @@ impl ServerToClientMessage {
             }
             ServerToClientMessage::XCastGameEvent(event, _) => {
                 (6, serde_json::to_string(event).unwrap())
+            }
+            ServerToClientMessage::RoomSwitched(_) => {
+                (7, "".to_owned())
             }
         };
         format!("{}_%_{}", code, serialized)
@@ -274,6 +278,7 @@ fn move_player_to_tutorial_room(client_id: Uuid) {
     IN_TUTORIAL.lock().unwrap().insert(client_id);
     // the state id filtering will take care of filtering the receivers
     broadcast_state(personal_state.clone());
+    notify_state_changed(personal_state.id, client_id);
 }
 
 fn mutate_owned_ship(
@@ -336,6 +341,15 @@ fn broadcast_state(state: GameState) {
         let sender = get_dispatcher_sender();
         sender
             .send(ServerToClientMessage::StateChange(state))
+            .unwrap();
+    }
+}
+
+fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {
+    unsafe {
+        let sender = get_dispatcher_sender();
+        sender
+            .send(ServerToClientMessage::RoomSwitched(XCast::Unicast(state_id, target_client_id)))
             .unwrap();
     }
 }
