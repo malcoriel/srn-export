@@ -253,8 +253,8 @@ const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const DEBUG_PHYSICS: bool = false;
 const MAIN_THREAD_SLEEP_MS: u64 = 15;
 
-fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
-    let res = mutate_owned_ship(client_id, mutate_cmd, tag);
+fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>, in_tutorial: bool) {
+    let res = mutate_owned_ship(client_id, mutate_cmd, tag, in_tutorial);
     if res.is_err() {
         eprintln!("error mutating owned ship {}", res.err().unwrap().message);
         increment_client_errors(client_id);
@@ -290,9 +290,14 @@ fn mutate_owned_ship(
     client_id: Uuid,
     mutate_cmd: ShipAction,
     tag: Option<String>,
+    in_tutorial: bool,
 ) -> Result<Ship, ClientErr> {
     let mut cont = STATE.write().unwrap();
-    let mut state = &mut cont.state;
+    let mut state = if in_tutorial {
+        cont.tutorial_states.get_mut(&client_id).unwrap()
+    } else {
+        &mut cont.state
+    };
     mutate_ship_no_lock(client_id, mutate_cmd, tag, &mut state)
 }
 
@@ -522,6 +527,7 @@ fn handle_request(request: WSRequest) {
                                                 client_id,
                                                 res,
                                                 third.map(|s| s.to_string()),
+                                                in_tutorial
                                             ),
                                             Err(err) => {
                                                 eprintln!(
