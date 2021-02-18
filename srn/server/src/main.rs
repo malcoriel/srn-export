@@ -511,7 +511,7 @@ fn handle_request(request: WSRequest) {
                                                 third.unwrap().parse::<u64>().unwrap(),
                                             ))
                                         }
-                                        let mut state = STATE.read().unwrap().state.clone();
+                                        let mut state = get_state_clone_read(in_tutorial, client_id);
                                         state.tag = Some(second.to_string());
                                         broadcast_state(state)
                                     }
@@ -608,6 +608,14 @@ fn handle_request(request: WSRequest) {
             }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
+    }
+}
+
+fn get_state_clone_read(is_tutorial: bool, client_id: Uuid) -> GameState {
+    if !is_tutorial {
+        STATE.read().unwrap().state.clone()
+    } else {
+        STATE.read().unwrap().tutorial_states.get(&client_id).unwrap().clone()
     }
 }
 

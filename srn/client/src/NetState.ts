@@ -342,7 +342,6 @@ export default class NetState extends EventEmitter {
       let messageCode = Number(messageCodeStr);
 
       if (this.switchingRooms) {
-        console.log('switching rooms');
         this.resetState(); // force to have initial state
         if (messageCode !== ServerToClientMessageCode.RoomSwitched) {
           // block updates unless it is switch success
@@ -350,6 +349,7 @@ export default class NetState extends EventEmitter {
         }
         this.switchingRooms = false;
       }
+      console.log('processing message');
 
       if (
         messageCode === ServerToClientMessageCode.FullSync ||

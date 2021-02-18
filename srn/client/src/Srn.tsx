@@ -192,7 +192,7 @@ const Srn = () => {
         )}
         {!playing && <TestUI />}
         {musicEnabled && <MusicControls />}
-        {menu && <StartMenu seed={seed} start={start} quit={quit} startTutorial={() => start(true)}/>}
+        {menu && <StartMenu seed={seed} start={()=> start(false)} quit={quit} startTutorial={() => start(true)}/>}
       </div>
     </>
   );
