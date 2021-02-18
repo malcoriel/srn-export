@@ -268,7 +268,12 @@ lazy_static! {
 
 fn move_player_to_tutorial_room(client_id: Uuid) {
     let mut cont = STATE.write().unwrap();
+    let player_idx = cont.state.players.iter().position(|p| p.id == client_id).unwrap();
+    let player = cont.state.players.remove(player_idx);
+
     let personal_state = cont.tutorial_states.entry(client_id).or_insert(make_tutorial_state(client_id));
+    personal_state.players.push(player);
+
     // {
     //     remove_player_ship(&mut cont.state, client_id);
     // }
@@ -878,6 +883,8 @@ fn main_thread() {
     let mut bot_action_elapsed = 0;
     let mut events_elapsed = 0;
     loop {
+        thread::sleep(Duration::from_millis(MAIN_THREAD_SLEEP_MS));
+
         let total_mark = sampler.start(0);
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
@@ -975,7 +982,6 @@ fn main_thread() {
                 metrics.join("\n")
             ));
         }
-        thread::sleep(Duration::from_millis(MAIN_THREAD_SLEEP_MS));
     }
 }
 

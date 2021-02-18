@@ -132,9 +132,8 @@ export default class NetState extends EventEmitter {
   private lastSlowChangedState!: GameState;
   private isTutorial!: boolean;
   private switchingRooms: boolean = false;
-  public static make(tutorial?: boolean) {
+  public static make() {
     NetState.instance = new NetState();
-    NetState.instance.isTutorial = !!tutorial;
   }
   public static get(): NetState | undefined {
     // if (!NetState.instance) {
@@ -230,7 +229,8 @@ export default class NetState extends EventEmitter {
     Perf.stop();
   };
 
-  init = () => {
+  init = (tutorial?: boolean) => {
+    this.isTutorial = !!tutorial;
     console.log(`initializing NS ${this.id}`);
     this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
     this.updateOnServerInterval = setInterval(
@@ -342,6 +342,7 @@ export default class NetState extends EventEmitter {
       let messageCode = Number(messageCodeStr);
 
       if (this.switchingRooms) {
+        console.log('switching rooms');
         this.resetState(); // force to have initial state
         if (messageCode !== ServerToClientMessageCode.RoomSwitched) {
           // block updates unless it is switch success

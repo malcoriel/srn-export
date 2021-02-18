@@ -167,6 +167,9 @@ fn index_players_by_ship_id_mut(players: &mut Vec<Player>) -> HashMap<Uuid, &mut
 
 pub fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Option<Quest> {
     let mut rng: ThreadRng = rand::thread_rng();
+    if planets.len() <= 0 {
+        return None;
+    }
     let from = get_random_planet(planets, docked_at, &mut rng);
     let delivery = planets
         .into_iter()

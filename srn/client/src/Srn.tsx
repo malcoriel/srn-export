@@ -118,7 +118,7 @@ const Srn = () => {
 
   const start = (tutorial?: boolean) => {
     if (!NetState.get()) {
-      NetState.make(tutorial);
+      NetState.make();
     }
 
     const ns = NetState.get();
@@ -132,7 +132,7 @@ const Srn = () => {
     ns.playerName = preferredName;
     ns.portraitName = portrait; // portrait files are 1-based
     ns.disconnecting = false;
-    ns.init();
+    ns.init(tutorial);
   };
 
   const quit = () => {
