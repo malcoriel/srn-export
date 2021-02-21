@@ -915,6 +915,7 @@ fn main_thread() {
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = bots::BOTS.lock().unwrap();
+        let in_tutorials = IN_TUTORIAL.lock().unwrap().clone();
 
         let now = Local::now();
         let elapsed = now - last;
@@ -965,7 +966,7 @@ fn main_thread() {
             let events_mark = sampler.start(5);
             let receiver = &mut EVENTS.lock().unwrap().1;
             let (res, updated_sampler) =
-                events::handle_events(&mut d_table, receiver, &mut cont, d_states, sampler);
+                events::handle_events(&mut d_table, receiver, &mut cont, d_states, sampler, in_tutorials);
             sampler = updated_sampler;
             for (client_id, dialogue) in res {
                 unicast_dialogue_state(client_id, dialogue, cont.state.id);

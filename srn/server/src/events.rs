@@ -16,10 +16,10 @@ pub fn handle_events(
     cont: &mut RwLockWriteGuard<StateContainer>,
     d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
     mut sampler: Sampler,
+    in_tutorials: HashSet<Uuid>
 ) -> (Vec<(Uuid, Option<Dialogue>)>, Sampler) {
     let mut res = vec![];
 
-    let in_tutorials = crate::IN_TUTORIAL.lock().unwrap();
     loop {
         if let Ok(event) = receiver.try_recv() {
             let player = match event.clone() {
@@ -87,7 +87,7 @@ pub fn handle_events(
 }
 
 fn select_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
-                            in_tutorials: &'b MutexGuard<HashSet<Uuid>>, player: &'c Player) -> &'a mut GameState {
+                            in_tutorials: &'b HashSet<Uuid>, player: &'c Player) -> &'a mut GameState {
     if in_tutorials.contains(&player.id) {
         cont.tutorial_states.get_mut(&player.id).unwrap()
     } else { &mut cont.state }
