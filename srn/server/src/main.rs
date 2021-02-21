@@ -489,7 +489,7 @@ fn handle_request(request: WSRequest) {
                     let mut senders = CLIENT_SENDERS.lock().unwrap();
                     let index = senders.iter().position(|s| s.0 == client_id);
                     index.map(|index| senders.remove(index));
-                    remove_player(client_id);
+                    remove_player(client_id, in_tutorial);
                     println!("Client {} id {} disconnected", ip, client_id);
                     broadcast_state(STATE.read().unwrap().state.clone());
                     return;
@@ -628,12 +628,13 @@ fn get_state_clone_read(is_tutorial: bool, client_id: Uuid) -> GameState {
 
 fn force_disconnect_client(client_id: Uuid) {
     let mut senders = CLIENT_SENDERS.lock().unwrap();
+    let in_tutorial = IN_TUTORIAL.lock().unwrap().contains(&client_id);
     let bad_sender_index = senders.iter().position(|c| c.0 == client_id);
     if let Some(index) = bad_sender_index {
         eprintln!("force disconnecting client: {}", client_id);
         senders.remove(index);
     }
-    remove_player(client_id);
+    remove_player(client_id, in_tutorial);
 }
 
 fn disconnect_if_bad(client_id: Uuid) -> bool {
@@ -731,20 +732,27 @@ fn make_new_human_player(conn_id: Uuid) {
     }
 }
 
-fn remove_player(conn_id: Uuid) {
+fn remove_player(conn_id: Uuid, in_tutorial: bool) {
     let mut cont = STATE.write().unwrap();
-    cont.state
+    let state = if in_tutorial {cont.tutorial_states.get_mut(&conn_id).unwrap()} else { &mut cont.state};
+    remove_player_from_state(conn_id, state);
+    cont.tutorial_states.remove(&conn_id);
+    IN_TUTORIAL.lock().unwrap().remove(&conn_id);
+}
+
+fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
+    state
         .players
         .iter()
         .position(|p| p.id == conn_id)
         .map(|i| {
-            let player = cont.state.players.remove(i);
+            let player = state.players.remove(i);
             player.ship_id.map(|player_ship_id| {
-                cont.state
+                state
                     .ships
                     .iter()
                     .position(|s| s.id == player_ship_id)
-                    .map(|i| cont.state.ships.remove(i))
+                    .map(|i| state.ships.remove(i))
             })
         });
 }
@@ -922,12 +930,15 @@ fn main_thread() {
         cont.state = updated_state;
 
         let tutorial_id = sampler.start(20);
-        cont.tutorial_states = HashMap::from_iter(cont.tutorial_states.iter().map(|(_, state)| {
+        cont.tutorial_states = HashMap::from_iter(cont.tutorial_states.iter().filter_map(|(_, state)| {
+            if state.players.len() == 0 {
+                return None;
+            }
             let (new_state, _) = world::update_world(state.clone(), elapsed_micro, false, Sampler::empty(), UpdateOptions {
                 disable_hp_effects: false,
                 limit_area: AABB::maxed()
             });
-            (new_state.id, new_state)
+            Some((new_state.id, new_state))
         }));
         sampler.end(tutorial_id);
 
