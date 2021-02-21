@@ -76,6 +76,7 @@ pub enum DialogOptionSideEffect {
     QuestCargoDropOff,
     QuestCollectReward,
     SellMinerals,
+    QuitTutorial,
     SwitchDialogue(String),
 }
 
@@ -613,6 +614,9 @@ fn apply_side_effects(
                     fire_event(GameEvent::DialogueTriggered { dialogue_name: name, player: player.clone() })
                 }
             }
+            DialogOptionSideEffect::QuitTutorial => {
+                // TODO quit from tutorial, make sure UI also quits
+            }
         }
     }
     return state_changed;
@@ -623,6 +627,7 @@ pub fn gen_scripts() -> Vec<DialogueScript> {
     res.push(read_from_resource("basic_planet"));
     res.push(read_from_resource("cargo_delivery_pickup"));
     res.push(read_from_resource("cargo_delivery_dropoff"));
+    res.push(read_from_resource("tutorial_start"));
     res
 }
 

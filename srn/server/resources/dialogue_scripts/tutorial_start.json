@@ -1,0 +1,35 @@
+{
+  "is_default": false,
+  "is_planetary": false,
+  "priority": -1,
+  "initial_state_name": "start",
+  "table": {
+    "start": [
+      "Hey ranger! I bet that you are curious how to play this game. My name is Administrator, and I'll guide you through the basics here.",
+      [
+        [
+          "begin",
+          "Ok, let's go through this!",
+          "",
+          [],
+          null
+        ],
+        [
+          "cancel",
+          "On a second though, I've changed my mind. I know how to play this game and I certainly don't need your help.",
+          "cancel_confirm",
+          [],
+          null
+        ]
+      ]
+    ],
+    "cancel_confirm": [
+      "Oh well, I'm pretty sure you can handle it on your own. Good luck!",
+      [
+        ["quit", "See ya!", "", ["QuitTutorial"], null]
+      ]
+    ]
+  },
+  "bot_path": [],
+  "name": "tutorial"
+}
