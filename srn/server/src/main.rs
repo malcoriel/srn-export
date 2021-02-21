@@ -227,8 +227,11 @@ fn get_version() -> Json<String> {
 }
 
 lazy_static! {
-    static ref EVENTS: Arc<Mutex<(Sender<GameEvent>, Receiver<GameEvent>)>> =
-        Arc::new(Mutex::new(bounded::<GameEvent>(128)));
+    static ref EVENTS: (Arc<Mutex<Sender<GameEvent>>>, Arc<Mutex<Receiver<GameEvent>>>) =
+    {
+        let (sender, receiver) = bounded::<GameEvent>(128);
+        (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
+    };
 }
 
 // #[options("/state")]
@@ -964,7 +967,7 @@ fn main_thread() {
 
         if events_elapsed > EVENT_TRIGGER_TIME {
             let events_mark = sampler.start(5);
-            let receiver = &mut EVENTS.lock().unwrap().1;
+            let receiver = &mut EVENTS.1.lock().unwrap();
             let (res, updated_sampler) =
                 events::handle_events(&mut d_table, receiver, &mut cont, d_states, sampler, in_tutorials);
             sampler = updated_sampler;

@@ -22,6 +22,7 @@ pub fn handle_events(
 
     loop {
         if let Ok(event) = receiver.try_recv() {
+            eprintln!("event {:?}", event);
             let player = match event.clone() {
                 GameEvent::ShipDocked { player, .. } => Some(player),
                 GameEvent::ShipUndocked { player, .. } => Some(player),
@@ -49,6 +50,7 @@ pub fn handle_events(
                 }
                 GameEvent::RoomJoined { player, in_tutorial } => {
                     if in_tutorial {
+                        eprintln!("triggering dialogue tutorial");
                         fire_event(GameEvent::DialogueTriggered { dialogue_name: "tutorial_start".to_owned(), player: player.clone() });
                     }
                 }
@@ -94,7 +96,7 @@ fn select_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
 }
 
 pub fn fire_event(ev: GameEvent) {
-    let sender = &mut EVENTS.lock().unwrap().0;
+    let sender = &mut EVENTS.0.lock().unwrap();
     if let Err(e) = sender.send(ev.clone()) {
         eprintln!("Failed to send event {:?}, err {}", ev, e);
     } else {
