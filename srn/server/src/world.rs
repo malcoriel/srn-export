@@ -277,6 +277,10 @@ pub enum GameEvent {
         ship: Ship,
         player: Player,
     },
+    RoomJoined {
+        in_tutorial: bool,
+        player: Player,
+    },
     ShipDied {
         ship: Ship,
         player: Player,

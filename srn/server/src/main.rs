@@ -158,7 +158,7 @@ struct SwitchRoomPayload {
     tutorial: bool
 }
 
-struct StateContainer {
+pub struct StateContainer {
     tutorial_states: HashMap<Uuid, GameState>,
     state: GameState,
 }
@@ -270,7 +270,7 @@ fn move_player_to_tutorial_room(client_id: Uuid) {
     let mut cont = STATE.write().unwrap();
     let player_idx = cont.state.players.iter().position(|p| p.id == client_id).unwrap();
     let player = cont.state.players.remove(player_idx);
-
+    let player_clone = player.clone();
     let personal_state = cont.tutorial_states.entry(client_id).or_insert(make_tutorial_state(client_id));
     personal_state.players.push(player);
 
@@ -284,6 +284,7 @@ fn move_player_to_tutorial_room(client_id: Uuid) {
     // the state id filtering will take care of filtering the receivers
     broadcast_state(personal_state.clone());
     notify_state_changed(personal_state.id, client_id);
+    fire_event(GameEvent::RoomJoined { in_tutorial: true, player: player_clone });
 }
 
 fn mutate_owned_ship(
@@ -898,6 +899,7 @@ fn main_thread() {
             "Update planets 1",           // 18
             "Update planets 2",           // 19
             "Tutorial states",           // 20
+            "Tutorial events",           // 21
         ]
         .iter()
         .map(|v| v.to_string())
@@ -963,7 +965,7 @@ fn main_thread() {
             let events_mark = sampler.start(5);
             let receiver = &mut EVENTS.lock().unwrap().1;
             let (res, updated_sampler) =
-                events::handle_events(&mut d_table, receiver, state, d_states, sampler);
+                events::handle_events(&mut d_table, receiver, &mut cont, d_states, sampler);
             sampler = updated_sampler;
             for (client_id, dialogue) in res {
                 unicast_dialogue_state(client_id, dialogue, cont.state.id);
@@ -1013,7 +1015,7 @@ fn main_thread() {
     }
 }
 
-pub fn send_event(ev: GameEvent, x_cast: XCast) {
+pub fn send_event_to_client(ev: GameEvent, x_cast: XCast) {
     unsafe {
         let sender = get_dispatcher_sender();
         sender
