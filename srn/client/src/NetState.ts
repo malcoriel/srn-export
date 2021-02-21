@@ -349,7 +349,6 @@ export default class NetState extends EventEmitter {
         }
         this.switchingRooms = false;
       }
-      console.log('processing message');
 
       if (
         messageCode === ServerToClientMessageCode.FullSync ||

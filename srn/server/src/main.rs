@@ -246,7 +246,7 @@ lazy_static! {
 //     broadcast_state(mut_state.clone());
 // }
 
-pub const ENABLE_PERF: bool = false;
+pub const ENABLE_PERF: bool = true;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
@@ -554,7 +554,8 @@ fn handle_request(request: WSRequest) {
                                                 .ok()
                                                 .unwrap(),
                                             third.map(|s| s.to_string()),
-                                            current_state_id
+                                            current_state_id,
+                                            in_tutorial
                                         );
                                     }
                                     ClientOpCode::SwitchRoom => {
@@ -689,16 +690,16 @@ fn personalize_player(conn_id: Uuid, update: PersonalizeUpdate) {
     }
 }
 
-fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>, current_state_id: Uuid) {
+fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>, current_state_id: Uuid, in_tutorial: bool) {
     let global_state_change;
     {
         let mut cont = STATE.write().unwrap();
         let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
-        world::force_update_to_now(&mut cont.state);
+        world::force_update_to_now(if in_tutorial {cont.tutorial_states.get_mut(&client_id).unwrap()} else { &mut cont.state });
         let (new_dialogue_state, state_changed) = execute_dialog_option(
             client_id,
-            &mut cont.state,
+            if in_tutorial {cont.tutorial_states.get_mut(&client_id).unwrap()} else { &mut cont.state },
             dialogue_update,
             &mut *dialogue_cont,
             &*dialogue_table,
@@ -708,7 +709,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
     }
     {
         if global_state_change {
-            broadcast_state(STATE.read().unwrap().state.clone());
+            broadcast_state(get_state_clone_read(in_tutorial, client_id));
         }
     }
 }
@@ -888,6 +889,7 @@ fn main_thread() {
             "Update ships respawn",       // 17
             "Update planets 1",           // 18
             "Update planets 2",           // 19
+            "Tutorial states",           // 20
         ]
         .iter()
         .map(|v| v.to_string())
@@ -914,7 +916,12 @@ fn main_thread() {
                 disable_hp_effects: false,
                 limit_area: AABB::maxed()
             });
+        sampler = updated_sampler;
 
+        sampler.end(update_id);
+        cont.state = updated_state;
+
+        let tutorial_id = sampler.start(20);
         cont.tutorial_states = HashMap::from_iter(cont.tutorial_states.iter().map(|(_, state)| {
             let (new_state, _) = world::update_world(state.clone(), elapsed_micro, false, Sampler::empty(), UpdateOptions {
                 disable_hp_effects: false,
@@ -922,11 +929,7 @@ fn main_thread() {
             });
             (new_state.id, new_state)
         }));
-
-        sampler = updated_sampler;
-        sampler.end(update_id);
-
-        cont.state = updated_state;
+        sampler.end(tutorial_id);
 
         let quests_mark = sampler.start(3);
         update_quests(&mut cont.state);
