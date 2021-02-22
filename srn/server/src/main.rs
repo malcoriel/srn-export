@@ -2,6 +2,7 @@
 #![allow(unused_imports)]
 #[macro_use]
 extern crate serde_derive;
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter::FromIterator;
@@ -203,33 +204,7 @@ fn mutate_owned_ship(
     if let Some(tag) = tag {
         send_tag_confirm(tag, client_id);
     }
-    mutate_ship_no_lock(client_id, mutate_cmd, &mut state)
-}
-
-fn mutate_ship_no_lock(
-    client_id: Uuid,
-    mutate_cmd: ShipAction,
-    state: &mut GameState,
-) -> Option<Ship> {
-    let old_ship_index = world::find_my_ship_index(&state, client_id);
-    if old_ship_index.is_none() {
-        warn!("No old instance of ship");
-        return None;
-    }
-    world::force_update_to_now(state);
-    let updated_ship = world::apply_ship_action(mutate_cmd, &state, client_id);
-    if let Some(updated_ship) = updated_ship {
-        let replaced = try_replace_ship(state, &updated_ship, client_id);
-        if replaced {
-            multicast_ships_update_excluding(state.ships.clone(), Some(client_id), state.id);
-            return Some(updated_ship);
-        }
-        warn!("Couldn't replace ship");
-        return None;
-    }
-    world::force_update_to_now(state);
-    warn!("Ship update was invalid");
-    return None;
+    world::mutate_ship_no_lock(client_id, mutate_cmd, &mut state)
 }
 
 fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
