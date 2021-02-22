@@ -78,14 +78,14 @@ mod xcast;
 mod dialogue;
 mod dialogue_test;
 mod events;
-mod perf;
+pub mod perf;
 mod planet_movement;
 mod random_stuff;
 mod system_gen;
 #[allow(dead_code)]
 mod vec2;
 mod vec2_test;
-mod world;
+pub mod world;
 mod world_test;
 mod chat;
 mod inventory;
@@ -143,14 +143,6 @@ lazy_static! {
 fn get_version() -> Json<String> {
     let version = format!("{}.{}.{}", MAJOR, MINOR, PATCH);
     Json(version)
-}
-
-lazy_static! {
-    static ref EVENTS: (Arc<Mutex<Sender<GameEvent>>>, Arc<Mutex<Receiver<GameEvent>>>) =
-    {
-        let (sender, receiver) = bounded::<GameEvent>(128);
-        (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
-    };
 }
 
 pub const ENABLE_PERF: bool = true;
@@ -819,7 +811,7 @@ fn main_thread() {
 
         if events_elapsed > EVENT_TRIGGER_TIME {
             let events_mark = sampler.start(5);
-            let receiver = &mut EVENTS.1.lock().unwrap();
+            let receiver = &mut events::EVENTS.1.lock().unwrap();
             let (res, updated_sampler) =
                 events::handle_events(&mut d_table, receiver, &mut cont, d_states, sampler);
             sampler = updated_sampler;

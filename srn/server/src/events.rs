@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, mpsc, Mutex, RwLock};
 
 use crossbeam::channel::{bounded, Receiver, Sender};
 use uuid::Uuid;
@@ -7,8 +8,17 @@ use crate::xcast::XCast;
 use crate::dialogue::{Dialogue, DialogueTable};
 use crate::perf::Sampler;
 use crate::world::{GameEvent, GameState, Player};
-use crate::{EVENTS, StateContainer};
+use crate::{StateContainer};
 use std::sync::{MutexGuard, RwLockWriteGuard};
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref EVENTS: (Arc<Mutex<Sender<GameEvent>>>, Arc<Mutex<Receiver<GameEvent>>>) =
+    {
+        let (sender, receiver) = bounded::<GameEvent>(128);
+        (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
+    };
+}
 
 pub fn handle_events(
     d_table: &mut DialogueTable,
