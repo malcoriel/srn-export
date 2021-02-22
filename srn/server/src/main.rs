@@ -298,7 +298,7 @@ fn handle_request(request: WSRequest) {
     CLIENT_SENDERS.lock().unwrap().push((client_id, public_client_sender));
 
     let (mut socket_receiver, mut socket_sender) = client.split().unwrap();
-    let (inner_client_sender, inner_client_receiver) = bounded::<OwnedMessage>(128);
+    let (inner_client_sender, inner_incoming_client_receiver) = bounded::<OwnedMessage>(128);
 
 
     // Whenever we get something from socket, we have to put it to inner queue
@@ -332,7 +332,7 @@ fn handle_request(request: WSRequest) {
 
         // whenever we get something from inner queue (means from socket), we have to trigger
         // some logic
-        if let Ok(message) = inner_client_receiver.try_recv() {
+        if let Ok(message) = inner_incoming_client_receiver.try_recv() {
             match message {
                 OwnedMessage::Close(_) => {
                     on_client_close(ip, client_id, &mut socket_sender);
