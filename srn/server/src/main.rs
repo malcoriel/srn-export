@@ -2,7 +2,6 @@
 #![allow(unused_imports)]
 #[macro_use]
 extern crate serde_derive;
-
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter::FromIterator;
@@ -162,8 +161,8 @@ const MAIN_THREAD_SLEEP_MS: u64 = 15;
 
 fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>, in_tutorial: bool) {
     let res = mutate_owned_ship(client_id, mutate_cmd, tag, in_tutorial);
-    if res.is_err() {
-        eprintln!("error mutating owned ship {}", res.err().unwrap().message);
+    if res.is_none() {
+        warn!("error mutating owned ship");
         increment_client_errors(client_id);
         disconnect_if_bad(client_id);
     }
@@ -194,7 +193,7 @@ fn mutate_owned_ship(
     mutate_cmd: ShipAction,
     tag: Option<String>,
     in_tutorial: bool,
-) -> Result<Ship, ClientErr> {
+) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
     let mut state = if in_tutorial {
         cont.tutorial_states.get_mut(&client_id).unwrap()
@@ -209,12 +208,11 @@ fn mutate_ship_no_lock(
     mutate_cmd: ShipAction,
     tag: Option<String>,
     state: &mut GameState,
-) -> Result<Ship, ClientErr> {
+) -> Option<Ship> {
     let old_ship_index = world::find_my_ship_index(&state, client_id);
     if old_ship_index.is_none() {
-        return Err(ClientErr {
-            message: String::from("No old instance of ship"),
-        });
+        warn!("No old instance of ship");
+        return None;
     }
     world::force_update_to_now(state);
     let updated_ship = world::apply_ship_action(mutate_cmd, &state, client_id);
@@ -225,16 +223,14 @@ fn mutate_ship_no_lock(
             if let Some(tag) = tag {
                 send_tag_confirm(tag, client_id);
             }
-            return Ok(updated_ship);
+            return Some(updated_ship);
         }
-        return Err(ClientErr {
-            message: String::from("Couldn't replace ship"),
-        });
+        warn!("Couldn't replace ship");
+        return None;
     }
     world::force_update_to_now(state);
-    return Err(ClientErr {
-        message: String::from("Ship update was invalid"),
-    });
+    warn!("Ship update was invalid");
+    return None;
 }
 
 fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
@@ -381,7 +377,6 @@ fn handle_request(request: WSRequest) {
             let cont = STATE.read().unwrap();
             let in_tutorial = cont.tutorial_states.contains_key(&client_id);
 
-            eprintln!("in tut {}", in_tutorial);
             let current_state_id = if !in_tutorial { cont.state.id } else {
                 // tutorial states are personal, and have the same id as player
                 client_id
