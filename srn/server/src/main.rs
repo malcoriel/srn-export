@@ -348,7 +348,7 @@ fn handle_request(request: WSRequest) {
                     sender.send_message(&message).unwrap();
                 }
                 OwnedMessage::Text(msg) => {
-                    on_client_message(client_id, current_state_id, in_tutorial, msg)
+                    on_client_text_message(client_id, current_state_id, in_tutorial, msg)
                 }
                 _ => {}
             }
@@ -385,88 +385,90 @@ fn handle_request(request: WSRequest) {
     }
 }
 
-fn on_client_message(client_id: Uuid, current_state_id: Uuid, in_tutorial: bool, msg: String) {
+fn on_client_text_message(client_id: Uuid, current_state_id: Uuid, in_tutorial: bool, msg: String) {
     let parts = msg.split("_%_").collect::<Vec<&str>>();
     if parts.len() < 2 || parts.len() > 3 {
         eprintln!("Corrupt message (not 2-3 parts) {}", msg);
-    } else {
-        let first = parts.iter().nth(0).unwrap();
-        let second = parts.iter().nth(1).unwrap();
-        let third = parts.iter().nth(2);
+        return;
+    }
+    let first = parts.iter().nth(0).unwrap();
+    let second = parts.iter().nth(1).unwrap();
+    let third = parts.iter().nth(2);
 
-        match first.parse::<u32>() {
-            Ok(number) => match FromPrimitive::from_u32(number) {
-                Some(op_code) => match op_code {
-                    ClientOpCode::Sync => {
-                        if third.is_some() {
-                            thread::sleep(Duration::from_millis(
-                                third.unwrap().parse::<u64>().unwrap(),
-                            ))
-                        }
-                        let mut state = get_state_clone_read(in_tutorial, client_id);
-                        state.tag = Some(second.to_string());
-                        broadcast_state(state)
-                    }
-                    ClientOpCode::MutateMyShip => {
-                        let parsed = serde_json::from_str::<ShipAction>(second);
-                        match parsed {
-                            Ok(res) => mutate_owned_ship_wrapped(
-                                client_id,
-                                res,
-                                third.map(|s| s.to_string()),
-                                in_tutorial,
-                            ),
-                            Err(err) => {
-                                eprintln!(
-                                    "couldn't parse ship action {}, err {}",
-                                    second, err
-                                );
-                            }
-                        }
-                    }
-                    ClientOpCode::Name => {
-                        let parsed =
-                            serde_json::from_str::<PersonalizeUpdate>(second);
-                        match parsed {
-                            Ok(up) => {
-                                personalize_player(client_id, up);
-                            }
-                            Err(_) => {}
-                        }
-                    }
-                    ClientOpCode::DialogueOption => {
-                        handle_dialogue_option(
-                            client_id,
-                            serde_json::from_str::<DialogueUpdate>(second)
-                                .ok()
-                                .unwrap(),
-                            third.map(|s| s.to_string()),
-                            current_state_id,
-                            in_tutorial,
+    let parse_opcode = first.parse::<u32>();
+    if parse_opcode.is_err() {
+        eprintln!("Invalid opcode {} {:?}", first, parse_opcode.err());
+        return;
+    }
+    let number = parse_opcode.ok().unwrap();
+
+    match FromPrimitive::from_u32(number) {
+        Some(op_code) => match op_code {
+            ClientOpCode::Sync => {
+                if third.is_some() {
+                    thread::sleep(Duration::from_millis(
+                        third.unwrap().parse::<u64>().unwrap(),
+                    ))
+                }
+                let mut state = get_state_clone_read(in_tutorial, client_id);
+                state.tag = Some(second.to_string());
+                broadcast_state(state)
+            }
+            ClientOpCode::MutateMyShip => {
+                let parsed = serde_json::from_str::<ShipAction>(second);
+                match parsed {
+                    Ok(res) => mutate_owned_ship_wrapped(
+                        client_id,
+                        res,
+                        third.map(|s| s.to_string()),
+                        in_tutorial,
+                    ),
+                    Err(err) => {
+                        eprintln!(
+                            "couldn't parse ship action {}, err {}",
+                            second, err
                         );
                     }
-                    ClientOpCode::SwitchRoom => {
-                        let parsed =
-                            serde_json::from_str::<SwitchRoomPayload>(second);
-                        match parsed {
-                            Ok(parsed) => {
-                                if parsed.tutorial {
-                                    move_player_to_tutorial_room(client_id);
-                                }
-                            }
-                            Err(err) => {
-                                warn!(format!("Bad switch room, err is {}", err));
-                            }
+                }
+            }
+            ClientOpCode::Name => {
+                let parsed =
+                    serde_json::from_str::<PersonalizeUpdate>(second);
+                match parsed {
+                    Ok(up) => {
+                        personalize_player(client_id, up);
+                    }
+                    Err(_) => {}
+                }
+            }
+            ClientOpCode::DialogueOption => {
+                handle_dialogue_option(
+                    client_id,
+                    serde_json::from_str::<DialogueUpdate>(second)
+                        .ok()
+                        .unwrap(),
+                    third.map(|s| s.to_string()),
+                    current_state_id,
+                    in_tutorial,
+                );
+            }
+            ClientOpCode::SwitchRoom => {
+                let parsed =
+                    serde_json::from_str::<SwitchRoomPayload>(second);
+                match parsed {
+                    Ok(parsed) => {
+                        if parsed.tutorial {
+                            move_player_to_tutorial_room(client_id);
                         }
                     }
-                    ClientOpCode::Unknown => {}
-                },
-                None => {}
-            },
-            Err(e) => {
-                eprintln!("Invalid opcode {} {}", first, e);
+                    Err(err) => {
+                        warn!(format!("Bad switch room, err is {}", err));
+                    }
+                }
             }
-        }
+            ClientOpCode::Unknown => {}
+        },
+        None => {}
     }
 }
 
