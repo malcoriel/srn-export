@@ -43,6 +43,8 @@ use crate::perf::Sampler;
 use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
 use crate::world::{AABB, find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, remove_player_ship, ShipAction, spawn_ship, update_quests, UpdateOptions};
+use std::net::{SocketAddr, TcpStream};
+use websocket::client::sync::Writer;
 
 const MAJOR: u32 = pkg_version_major!();
 const MINOR: u32 = pkg_version_minor!();
@@ -338,14 +340,7 @@ fn handle_request(request: WSRequest) {
         if let Ok(message) = message_rx.try_recv() {
             match message {
                 OwnedMessage::Close(_) => {
-                    let message = Message::close();
-                    sender.send_message(&message).ok();
-                    let mut senders = CLIENT_SENDERS.lock().unwrap();
-                    let index = senders.iter().position(|s| s.0 == client_id);
-                    index.map(|index| senders.remove(index));
-                    remove_player(client_id);
-                    println!("Client {} id {} disconnected", ip, client_id);
-                    broadcast_state(STATE.read().unwrap().state.clone());
+                    on_client_close(ip, client_id, &mut sender);
                     return;
                 }
                 OwnedMessage::Ping(msg) => {
@@ -469,6 +464,17 @@ fn handle_request(request: WSRequest) {
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
+}
+
+fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStream>) {
+    let message = Message::close();
+    sender.send_message(&message).ok();
+    let mut senders = CLIENT_SENDERS.lock().unwrap();
+    let index = senders.iter().position(|s| s.0 == client_id);
+    index.map(|index| senders.remove(index));
+    remove_player(client_id);
+    println!("Client {} id {} disconnected", ip, client_id);
+    broadcast_state(STATE.read().unwrap().state.clone());
 }
 
 fn get_state_clone_read(is_tutorial: bool, client_id: Uuid) -> GameState {
