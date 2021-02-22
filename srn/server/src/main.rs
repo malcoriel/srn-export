@@ -5,15 +5,18 @@ extern crate serde_derive;
 
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::sync::{mpsc, Arc, Mutex, RwLock, RwLockWriteGuard};
+use std::iter::FromIterator;
+use std::sync::{Arc, mpsc, Mutex, RwLock, RwLockWriteGuard};
 use std::thread;
 use std::time::Duration;
 
 use chrono::{DateTime, Local, Utc};
 use crossbeam::channel::{bounded, Receiver, Sender};
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use num_traits::FromPrimitive;
 use pkg_version::*;
+use regex::Regex;
 use rocket::http::Method;
 use rocket_contrib::json::Json;
 use rocket_cors::{AllowedHeaders, AllowedOrigins};
@@ -22,22 +25,23 @@ use rocket_cors::{AllowedHeaders, AllowedOrigins};
 pub use serde_derive::*;
 use serde_derive::{Deserialize, Serialize};
 use uuid::*;
+use websocket::{Message, OwnedMessage};
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
-use websocket::{Message, OwnedMessage};
 
-use xcast::XCast;
 use dialogue::{DialogueStates, DialogueTable};
 use world::{GameState, Player, Ship};
+use xcast::XCast;
 
 use crate::bots::{bot_init, do_bot_actions};
+use crate::chat::chat_server;
 use crate::dialogue::{
-    execute_dialog_option, Dialogue, DialogueId, DialogueScript, DialogueUpdate,
+    Dialogue, DialogueId, DialogueScript, DialogueUpdate, execute_dialog_option,
 };
 use crate::perf::Sampler;
+use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
-use crate::world::{find_my_player, find_my_player_mut, find_my_ship, find_planet, update_quests, GameEvent, ShipAction, UpdateOptions, AABB, remove_player_ship, spawn_ship};
-use itertools::Itertools;
+use crate::world::{AABB, find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, remove_player_ship, ShipAction, spawn_ship, update_quests, UpdateOptions};
 
 const MAJOR: u32 = pkg_version_major!();
 const MINOR: u32 = pkg_version_minor!();
@@ -473,11 +477,11 @@ fn handle_request(request: WSRequest) {
             break;
         }
 
-        let cont = STATE.read().unwrap();
-        let in_tutorial = cont.tutorial_states.contains_key(&client_id);
+        // let cont = STATE.read().unwrap();
+        // let in_tutorial = cont.tutorial_states.contains_key(&client_id);
 
-        eprintln!("in tut {}", in_tutorial);
-        let current_state_id = if !in_tutorial {cont.state.id} else {
+        let in_tutorial = false;
+        let current_state_id = if !in_tutorial {STATE.read().unwrap().state.id} else {
             // tutorial states are personal, and have the same id as player
             client_id
         };
@@ -737,25 +741,8 @@ fn remove_player(conn_id: Uuid) {
     let mut cont = STATE.write().unwrap();
     let in_tutorial = cont.tutorial_states.contains_key(&conn_id);
     let state = if in_tutorial {cont.tutorial_states.get_mut(&conn_id).unwrap()} else { &mut cont.state};
-    remove_player_from_state(conn_id, state);
+    world::remove_player_from_state(conn_id, state);
     cont.tutorial_states.remove(&conn_id);
-}
-
-fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
-    state
-        .players
-        .iter()
-        .position(|p| p.id == conn_id)
-        .map(|i| {
-            let player = state.players.remove(i);
-            player.ship_id.map(|player_ship_id| {
-                state
-                    .ships
-                    .iter()
-                    .position(|s| s.id == player_ship_id)
-                    .map(|i| state.ships.remove(i))
-            })
-        });
 }
 
 pub fn new_id() -> Uuid {
@@ -861,10 +848,6 @@ const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
 const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 
-use regex::Regex;
-use crate::chat::chat_server;
-use crate::system_gen::make_tutorial_state;
-use std::iter::FromIterator;
 lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
 }

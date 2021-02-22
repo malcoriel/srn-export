@@ -1,29 +1,29 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::{HashMap, HashSet};
+use std::f64::{INFINITY, NEG_INFINITY};
 use std::f64::consts::PI;
+use std::iter::FromIterator;
 
 use chrono::Utc;
-use itertools::{Itertools, Either};
+use itertools::{Either, Itertools};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
-use uuid::Uuid;
 use uuid::*;
+use uuid::Uuid;
 
+use crate::{fire_event, planet_movement};
+use crate::{DEBUG_PHYSICS, new_id};
+use crate::inventory::{add_item, has_quest_item, InventoryItem, InventoryItemType, shake_items};
 use crate::perf::Sampler;
-use crate::planet_movement::{index_bodies_by_id, make_bodies_from_planets, IBody, build_anchors_from_bodies};
+use crate::planet_movement::{build_anchors_from_bodies, IBody, index_bodies_by_id, make_bodies_from_planets};
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
     gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::system_gen::{system_gen, str_to_hash};
+use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::{fire_event, planet_movement};
-use crate::{new_id, DEBUG_PHYSICS};
-use std::f64::{NEG_INFINITY, INFINITY};
-use std::iter::FromIterator;
-use crate::inventory::{InventoryItem, InventoryItemType, add_item, shake_items, has_quest_item};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -1423,4 +1423,21 @@ pub fn update_quests(state: &mut GameState) {
             }
         }
     }
+}
+
+pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
+    state
+        .players
+        .iter()
+        .position(|p| p.id == conn_id)
+        .map(|i| {
+            let player = state.players.remove(i);
+            player.ship_id.map(|player_ship_id| {
+                state
+                    .ships
+                    .iter()
+                    .position(|s| s.id == player_ship_id)
+                    .map(|i| state.ships.remove(i))
+            })
+        });
 }
