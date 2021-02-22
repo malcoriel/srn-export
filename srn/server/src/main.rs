@@ -6,7 +6,7 @@ extern crate serde_derive;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use std::sync::{Arc, mpsc, Mutex, RwLock, RwLockWriteGuard, MutexGuard};
+use std::sync::{Arc, Mutex, RwLock, RwLockWriteGuard, MutexGuard};
 use std::thread;
 use std::time::Duration;
 
@@ -296,7 +296,7 @@ fn handle_request(request: WSRequest) {
     CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
 
     let (mut receiver, mut sender) = client.split().unwrap();
-    let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
+    let (message_tx, message_rx) = bounded::<OwnedMessage>(128);
     thread::spawn(move || loop {
         if is_disconnected(client_id) {
             break;
