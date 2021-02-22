@@ -119,7 +119,7 @@ lazy_static! {
 }
 
 lazy_static! {
-    static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, std::sync::mpsc::Sender<ServerToClientMessage>)>>> =
+    static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ServerToClientMessage>)>>> =
         Arc::new(Mutex::new(vec![]));
 }
 
@@ -292,7 +292,7 @@ fn handle_request(request: WSRequest) {
         client.send_message(&message).unwrap();
     }
 
-    let (client_tx, client_rx) = mpsc::channel::<ServerToClientMessage>();
+    let (client_tx, client_rx) = bounded::<ServerToClientMessage>(128);
     CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
 
     let (mut receiver, mut sender) = client.split().unwrap();
@@ -652,7 +652,7 @@ fn rocket() -> rocket::Rocket {
 }
 
 unsafe fn dispatcher_thread(
-    client_senders: Arc<Mutex<Vec<(Uuid, std::sync::mpsc::Sender<ServerToClientMessage>)>>>,
+    client_senders: Arc<Mutex<Vec<(Uuid, Sender<ServerToClientMessage>)>>>,
 ) {
     let unwrapped = DISPATCHER.1.lock().unwrap();
     while let Ok(msg) = unwrapped.recv() {
