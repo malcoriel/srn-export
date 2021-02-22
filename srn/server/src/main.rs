@@ -30,6 +30,7 @@ use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 
 use dialogue::{DialogueStates, DialogueTable};
+use net::{ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload, TagConfirm, Wrapper};
 use world::{GameState, Player, Ship};
 use xcast::XCast;
 
@@ -89,78 +90,7 @@ mod world_test;
 mod chat;
 mod inventory;
 mod inventory_test;
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct TagConfirm {
-    tag: String,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct ShipsWrapper {
-    ships: Vec<Ship>,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Wrapper<T> {
-    value: T,
-}
-
-impl<T> Wrapper<T> {
-    pub fn new(value: T) -> Self {
-        Wrapper { value }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum ServerToClientMessage {
-    StateChange(GameState),
-    StateChangeExclusive(GameState, Uuid),
-    TagConfirm(TagConfirm, Uuid),
-    MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>, Uuid),
-    DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid, Uuid),
-    XCastGameEvent(Wrapper<GameEvent>, XCast),
-    RoomSwitched(XCast),
-}
-
-impl ServerToClientMessage {
-    pub fn serialize(&self) -> String {
-        let (code, serialized) = match self {
-            ServerToClientMessage::StateChange(state) => {
-                (1, serde_json::to_string(&state).unwrap())
-            }
-            ServerToClientMessage::StateChangeExclusive(state, _unused) => {
-                (2, serde_json::to_string(&state).unwrap())
-            }
-            ServerToClientMessage::TagConfirm(tag_confirm, _unused) => {
-                (3, serde_json::to_string(&tag_confirm).unwrap())
-            }
-            ServerToClientMessage::MulticastPartialShipUpdate(ships, _, _) => {
-                (4, serde_json::to_string(ships).unwrap())
-            }
-            ServerToClientMessage::DialogueStateChange(dialogue, _, _) => {
-                (5, serde_json::to_string(dialogue).unwrap())
-            }
-            ServerToClientMessage::XCastGameEvent(event, _) => {
-                (6, serde_json::to_string(event).unwrap())
-            }
-            ServerToClientMessage::RoomSwitched(_) => {
-                (7, "".to_owned())
-            }
-        };
-        format!("{}_%_{}", code, serialized)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct PersonalizeUpdate {
-    name: String,
-    portrait_name: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct SwitchRoomPayload {
-    tutorial: bool
-}
+mod net;
 
 pub struct StateContainer {
     tutorial_states: HashMap<Uuid, GameState>,
@@ -172,21 +102,6 @@ struct LastCheck {
 }
 type WSRequest =
     WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct ClientErr {
-    message: String,
-}
-
-#[derive(FromPrimitive, ToPrimitive, Debug, Clone)]
-enum ClientOpCode {
-    Unknown = 0,
-    Sync = 1,
-    MutateMyShip = 2,
-    Name = 3,
-    DialogueOption = 4,
-    SwitchRoom = 5,
-}
 
 static mut DISPATCHER_SENDER: Option<Mutex<std::sync::mpsc::Sender<ServerToClientMessage>>> = None;
 static mut DISPATCHER_RECEIVER: Option<Mutex<std::sync::mpsc::Receiver<ServerToClientMessage>>> =
@@ -237,21 +152,6 @@ lazy_static! {
         (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
     };
 }
-
-// #[options("/state")]
-// fn options_state() {}
-
-// #[post("/state", data = "<state>")]
-// fn post_state(state: Json<GameState>) {
-//     mutate_state(state.into_inner());
-// }
-//
-// fn mutate_state(state: GameState) {
-//     let mut mut_state = STATE.write().unwrap();
-//     mut_state.ships = state.ships.clone();
-//     mut_state.tick = mut_state.tick + 1;
-//     broadcast_state(mut_state.clone());
-// }
 
 pub const ENABLE_PERF: bool = true;
 const DEFAULT_SLEEP_MS: u64 = 1;

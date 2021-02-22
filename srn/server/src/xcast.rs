@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::ServerToClientMessage;
+use crate::net::ServerToClientMessage;
 
 #[derive(Debug, Clone)]
 pub enum XCast {
