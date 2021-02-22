@@ -73,6 +73,7 @@ extern crate rocket_cors;
 extern crate websocket;
 #[macro_use]
 extern crate num_derive;
+
 mod bots;
 mod xcast;
 mod dialogue;
@@ -100,8 +101,9 @@ pub struct StateContainer {
 struct LastCheck {
     time: DateTime<Utc>,
 }
+
 type WSRequest =
-    WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
+WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
 
 lazy_static! {
     pub static ref DISPATCHER: (Arc<Mutex<Sender<ServerToClientMessage>>>, Arc<Mutex<Receiver<ServerToClientMessage>>>) =
@@ -208,59 +210,49 @@ fn mutate_owned_ship(
 }
 
 fn broadcast_state(state: GameState) {
-    unsafe {
-        let sender =     DISPATCHER.0.lock().unwrap();
-        sender
-            .send(ServerToClientMessage::StateChange(state))
-            .unwrap();
-    }
+    let sender = DISPATCHER.0.lock().unwrap();
+    sender
+        .send(ServerToClientMessage::StateChange(state))
+        .unwrap();
 }
 
 fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {
-    unsafe {
-        let sender =     DISPATCHER.0.lock().unwrap();
-        sender
-            .send(ServerToClientMessage::RoomSwitched(XCast::Unicast(state_id, target_client_id)))
-            .unwrap();
-    }
+    let sender = DISPATCHER.0.lock().unwrap();
+    sender
+        .send(ServerToClientMessage::RoomSwitched(XCast::Unicast(state_id, target_client_id)))
+        .unwrap();
 }
 
 fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>, current_state_id: Uuid) {
-    unsafe {
-        let sender =     DISPATCHER.0.lock().unwrap();
-        sender
-            .send(ServerToClientMessage::DialogueStateChange(
-                Wrapper::new(dialogue_state),
-                client_id,
-                current_state_id
-            ))
-            .unwrap();
-    }
+    let sender = DISPATCHER.0.lock().unwrap();
+    sender
+        .send(ServerToClientMessage::DialogueStateChange(
+            Wrapper::new(dialogue_state),
+            client_id,
+            current_state_id,
+        ))
+        .unwrap();
 }
 
 fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>, current_state_id: Uuid) {
-    unsafe {
-        let sender =     DISPATCHER.0.lock().unwrap();
-        sender
-            .send(ServerToClientMessage::MulticastPartialShipUpdate(
-                ShipsWrapper { ships },
-                client_id,
-                current_state_id
-            ))
-            .unwrap();
-    }
+    let sender = DISPATCHER.0.lock().unwrap();
+    sender
+        .send(ServerToClientMessage::MulticastPartialShipUpdate(
+            ShipsWrapper { ships },
+            client_id,
+            current_state_id,
+        ))
+        .unwrap();
 }
 
 fn send_tag_confirm(tag: String, client_id: Uuid) {
-    unsafe {
-        let sender =     DISPATCHER.0.lock().unwrap();
-        sender
-            .send(ServerToClientMessage::TagConfirm(
-                TagConfirm { tag },
-                client_id,
-            ))
-            .unwrap();
-    }
+    let sender = DISPATCHER.0.lock().unwrap();
+    sender
+        .send(ServerToClientMessage::TagConfirm(
+            TagConfirm { tag },
+            client_id,
+        ))
+        .unwrap();
 }
 
 fn websocket_server() {
@@ -343,7 +335,6 @@ fn handle_request(request: WSRequest) {
         };
 
 
-
         if let Ok(message) = message_rx.try_recv() {
             match message {
                 OwnedMessage::Close(_) => {
@@ -390,7 +381,7 @@ fn handle_request(request: WSRequest) {
                                                 client_id,
                                                 res,
                                                 third.map(|s| s.to_string()),
-                                                in_tutorial
+                                                in_tutorial,
                                             ),
                                             Err(err) => {
                                                 eprintln!(
@@ -418,7 +409,7 @@ fn handle_request(request: WSRequest) {
                                                 .unwrap(),
                                             third.map(|s| s.to_string()),
                                             current_state_id,
-                                            in_tutorial
+                                            in_tutorial,
                                         );
                                     }
                                     ClientOpCode::SwitchRoom => {
@@ -436,7 +427,6 @@ fn handle_request(request: WSRequest) {
                                         }
                                     }
                                     ClientOpCode::Unknown => {}
-
                                 },
                                 None => {}
                             },
@@ -559,10 +549,10 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
         let mut cont = STATE.write().unwrap();
         let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
-        world::force_update_to_now(if in_tutorial {cont.tutorial_states.get_mut(&client_id).unwrap()} else { &mut cont.state });
+        world::force_update_to_now(if in_tutorial { cont.tutorial_states.get_mut(&client_id).unwrap() } else { &mut cont.state });
         let (new_dialogue_state, state_changed) = execute_dialog_option(
             client_id,
-            if in_tutorial {cont.tutorial_states.get_mut(&client_id).unwrap()} else { &mut cont.state },
+            if in_tutorial { cont.tutorial_states.get_mut(&client_id).unwrap() } else { &mut cont.state },
             dialogue_update,
             &mut *dialogue_cont,
             &*dialogue_table,
@@ -597,7 +587,7 @@ fn make_new_human_player(conn_id: Uuid) {
 fn remove_player(conn_id: Uuid) {
     let mut cont = STATE.write().unwrap();
     let in_tutorial = cont.tutorial_states.contains_key(&conn_id);
-    let state = if in_tutorial {cont.tutorial_states.get_mut(&conn_id).unwrap()} else { &mut cont.state};
+    let state = if in_tutorial { cont.tutorial_states.get_mut(&conn_id).unwrap() } else { &mut cont.state };
     world::remove_player_from_state(conn_id, state);
     cont.tutorial_states.remove(&conn_id);
 }
@@ -653,8 +643,8 @@ fn rocket() -> rocket::Rocket {
         allow_credentials: true,
         ..Default::default()
     }
-    .to_cors()
-    .unwrap();
+        .to_cors()
+        .unwrap();
 
     rocket::ignite()
         .attach(cors)
@@ -735,9 +725,9 @@ fn main_thread() {
             "Tutorial states",           // 20
             "Tutorial events",           // 21
         ]
-        .iter()
-        .map(|v| v.to_string())
-        .collect::<Vec<_>>(),
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<_>>(),
     );
     let mut sampler_consume_elapsed = 0;
     let mut bot_action_elapsed = 0;
@@ -758,7 +748,7 @@ fn main_thread() {
         let (updated_state, updated_sampler) =
             world::update_world(cont.state.clone(), elapsed_micro, false, sampler, UpdateOptions {
                 disable_hp_effects: false,
-                limit_area: AABB::maxed()
+                limit_area: AABB::maxed(),
             });
         sampler = updated_sampler;
 
@@ -772,7 +762,7 @@ fn main_thread() {
             }
             let (new_state, _) = world::update_world(state.clone(), elapsed_micro, false, Sampler::empty(), UpdateOptions {
                 disable_hp_effects: false,
-                limit_area: AABB::maxed()
+                limit_area: AABB::maxed(),
             });
             Some((new_state.id, new_state))
         }));
@@ -850,15 +840,13 @@ fn main_thread() {
 }
 
 pub fn send_event_to_client(ev: GameEvent, x_cast: XCast) {
-    unsafe {
-        let sender =     DISPATCHER.0.lock().unwrap();
-        sender
-            .send(ServerToClientMessage::XCastGameEvent(
-                Wrapper::new(ev),
-                x_cast,
-            ))
-            .unwrap();
-    }
+    let sender = DISPATCHER.0.lock().unwrap();
+    sender
+        .send(ServerToClientMessage::XCastGameEvent(
+            Wrapper::new(ev),
+            x_cast,
+        ))
+        .unwrap();
 }
 
 pub fn fire_event(ev: GameEvent) {
