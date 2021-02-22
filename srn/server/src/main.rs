@@ -299,6 +299,11 @@ fn handle_request(request: WSRequest) {
 
     let (mut socket_receiver, mut socket_sender) = client.split().unwrap();
     let (inner_client_sender, inner_client_receiver) = bounded::<OwnedMessage>(128);
+
+
+    // Whenever we get something from socket, we have to put it to inner queue
+    // I copied this code from examples, but apparently the idea is to
+    // make the code non-blocking
     thread::spawn(move || loop {
         if is_disconnected(client_id) {
             break;
@@ -325,6 +330,8 @@ fn handle_request(request: WSRequest) {
             break;
         }
 
+        // whenever we get something from inner queue (means from socket), we have to trigger
+        // some logic
         if let Ok(message) = inner_client_receiver.try_recv() {
             match message {
                 OwnedMessage::Close(_) => {
@@ -341,16 +348,18 @@ fn handle_request(request: WSRequest) {
                 _ => {}
             }
         }
+        // whenever some other function sends a message, we have to put it to socket
         if let Ok(message) = public_client_receiver.try_recv() {
-            if !is_disconnected(client_id) {
-                on_message_to_send_to_client(client_id, &mut socket_sender, &message)
-            }
+            on_message_to_send_to_client(client_id, &mut socket_sender, &message)
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
 }
 
 fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>, message: &ServerToClientMessage) {
+    if is_disconnected(client_id) {
+        return;
+    }
     let (current_state_id, _in_tutorial) = {
         let cont = STATE.read().unwrap();
         let in_tutorial = cont.tutorial_states.contains_key(&client_id);
