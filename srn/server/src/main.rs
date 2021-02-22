@@ -196,19 +196,11 @@ fn mutate_owned_ship(
     if let Some(tag) = tag {
         send_tag_confirm(tag, client_id);
     }
-    world::mutate_ship_no_lock(client_id, mutate_cmd, &mut state)
-}
-
-fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
-    let old_ship_index = world::find_my_ship_index(&state, player_id);
-    return if let Some(old_ship_index) = old_ship_index {
-        state.ships.remove(old_ship_index);
-        state.ships.push(updated_ship.clone());
-        true
-    } else {
-        eprintln!("couldn't replace ship");
-        false
-    };
+    let mutated = world::mutate_ship_no_lock(client_id, mutate_cmd, &mut state);
+    if mutated.is_some() {
+        crate::multicast_ships_update_excluding(state.ships.clone(), Some(client_id), state.id);
+    }
+    mutated
 }
 
 fn broadcast_state(state: GameState) {

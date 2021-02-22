@@ -9,14 +9,14 @@ use rand::{RngCore, SeedableRng, thread_rng};
 use rand::rngs::SmallRng;
 use uuid::Uuid;
 
-use crate::{new_id, StateContainer, try_replace_ship};
+use crate::{new_id, StateContainer};
 use crate::dialogue::{check_trigger_conditions, DialogueId, DialogueScript, DialogueState, DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, execute_dialog_option, TriggerCondition};
 use crate::DIALOGUE_STATES;
 use crate::events::fire_event;
 use crate::random_stuff::gen_bot_name;
 use crate::STATE;
 use crate::world;
-use crate::world::{apply_ship_action, CargoDeliveryQuestState, find_my_player, find_my_ship, find_planet, GameEvent, GameState, mutate_ship_no_lock, Ship, ShipAction, ShipActionType};
+use crate::world::{apply_ship_action, CargoDeliveryQuestState, find_my_player, find_my_ship, find_planet, GameEvent, GameState, Ship, ShipAction, ShipActionType};
 
 lazy_static! {
     pub static ref BOTS: Arc<Mutex<Vec<Bot>>> = Arc::new(Mutex::new(vec![]));
@@ -215,7 +215,7 @@ pub fn do_bot_actions(
         for act in acts {
             let updated_ship = apply_ship_action(act.clone(), state, bot_id);
             if let Some(updated_ship) = updated_ship {
-                try_replace_ship(state, &updated_ship, bot_id);
+                world::try_replace_ship(state, &updated_ship, bot_id);
             }
         }
     }

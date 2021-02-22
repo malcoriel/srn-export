@@ -1442,6 +1442,18 @@ pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
         });
 }
 
+pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
+    let old_ship_index = find_my_ship_index(&state, player_id);
+    return if let Some(old_ship_index) = old_ship_index {
+        state.ships.remove(old_ship_index);
+        state.ships.push(updated_ship.clone());
+        true
+    } else {
+        eprintln!("couldn't replace ship");
+        false
+    };
+}
+
 pub fn mutate_ship_no_lock(
     client_id: Uuid,
     mutate_cmd: ShipAction,
@@ -1455,9 +1467,8 @@ pub fn mutate_ship_no_lock(
     force_update_to_now(state);
     let updated_ship = apply_ship_action(mutate_cmd, &state, client_id);
     if let Some(updated_ship) = updated_ship {
-        let replaced = crate::try_replace_ship(state, &updated_ship, client_id);
+        let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {
-            crate::multicast_ships_update_excluding(state.ships.clone(), Some(client_id), state.id);
             return Some(updated_ship);
         }
         warn!("Couldn't replace ship");
