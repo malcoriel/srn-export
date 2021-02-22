@@ -200,13 +200,15 @@ fn mutate_owned_ship(
     } else {
         &mut cont.state
     };
-    mutate_ship_no_lock(client_id, mutate_cmd, tag, &mut state)
+    if let Some(tag) = tag {
+        send_tag_confirm(tag, client_id);
+    }
+    mutate_ship_no_lock(client_id, mutate_cmd, &mut state)
 }
 
 fn mutate_ship_no_lock(
     client_id: Uuid,
     mutate_cmd: ShipAction,
-    tag: Option<String>,
     state: &mut GameState,
 ) -> Option<Ship> {
     let old_ship_index = world::find_my_ship_index(&state, client_id);
@@ -220,9 +222,6 @@ fn mutate_ship_no_lock(
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {
             multicast_ships_update_excluding(state.ships.clone(), Some(client_id), state.id);
-            if let Some(tag) = tag {
-                send_tag_confirm(tag, client_id);
-            }
             return Some(updated_ship);
         }
         warn!("Couldn't replace ship");
