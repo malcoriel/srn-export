@@ -402,74 +402,97 @@ fn on_client_text_message(client_id: Uuid, current_state_id: Uuid, in_tutorial: 
     }
     let number = parse_opcode.ok().unwrap();
 
-    match FromPrimitive::from_u32(number) {
-        Some(op_code) => match op_code {
-            ClientOpCode::Sync => {
-                if third.is_some() {
-                    thread::sleep(Duration::from_millis(
-                        third.unwrap().parse::<u64>().unwrap(),
-                    ))
-                }
-                let mut state = get_state_clone_read(in_tutorial, client_id);
-                state.tag = Some(second.to_string());
-                broadcast_state(state)
-            }
-            ClientOpCode::MutateMyShip => {
-                let parsed = serde_json::from_str::<ShipAction>(second);
-                match parsed {
-                    Ok(res) => mutate_owned_ship_wrapped(
-                        client_id,
-                        res,
-                        third.map(|s| s.to_string()),
-                        in_tutorial,
-                    ),
-                    Err(err) => {
-                        eprintln!(
-                            "couldn't parse ship action {}, err {}",
-                            second, err
-                        );
-                    }
-                }
-            }
-            ClientOpCode::Name => {
-                let parsed =
-                    serde_json::from_str::<PersonalizeUpdate>(second);
-                match parsed {
-                    Ok(up) => {
-                        personalize_player(client_id, up);
-                    }
-                    Err(_) => {}
-                }
-            }
-            ClientOpCode::DialogueOption => {
-                handle_dialogue_option(
-                    client_id,
-                    serde_json::from_str::<DialogueUpdate>(second)
-                        .ok()
-                        .unwrap(),
-                    third.map(|s| s.to_string()),
-                    current_state_id,
-                    in_tutorial,
-                );
-            }
-            ClientOpCode::SwitchRoom => {
-                let parsed =
-                    serde_json::from_str::<SwitchRoomPayload>(second);
-                match parsed {
-                    Ok(parsed) => {
-                        if parsed.tutorial {
-                            move_player_to_tutorial_room(client_id);
-                        }
-                    }
-                    Err(err) => {
-                        warn!(format!("Bad switch room, err is {}", err));
-                    }
-                }
-            }
-            ClientOpCode::Unknown => {}
-        },
-        None => {}
+    let op_code = FromPrimitive::from_u32(number);
+    if op_code.is_none() {
+        eprintln!("Unknown opcode {}", number);
+        return;
     }
+    let op_code = op_code.unwrap();
+    match op_code {
+        ClientOpCode::Sync => {
+            on_client_sync_request(client_id, in_tutorial, second, third)
+        }
+        ClientOpCode::MutateMyShip => {
+            on_client_mutate_ship(client_id, in_tutorial, second, third)
+        }
+        ClientOpCode::Name => {
+            on_client_personalize(client_id, second)
+        }
+        ClientOpCode::DialogueOption => {
+            on_client_dialogue(client_id, current_state_id, in_tutorial, second, third);
+        }
+        ClientOpCode::SwitchRoom => {
+            on_client_switch_room(client_id, second)
+        }
+        ClientOpCode::Unknown => {}
+    };
+}
+
+fn on_client_switch_room(client_id: Uuid, second: &&str) {
+    let parsed =
+        serde_json::from_str::<SwitchRoomPayload>(second);
+    match parsed {
+        Ok(parsed) => {
+            if parsed.tutorial {
+                move_player_to_tutorial_room(client_id);
+            }
+        }
+        Err(err) => {
+            warn!(format!("Bad switch room, err is {}", err));
+        }
+    }
+}
+
+fn on_client_dialogue(client_id: Uuid, current_state_id: Uuid, in_tutorial: bool, second: &&str, third: Option<&&str>) {
+    handle_dialogue_option(
+        client_id,
+        serde_json::from_str::<DialogueUpdate>(second)
+            .ok()
+            .unwrap(),
+        third.map(|s| s.to_string()),
+        current_state_id,
+        in_tutorial,
+    );
+}
+
+fn on_client_personalize(client_id: Uuid, second: &&str) {
+    let parsed =
+        serde_json::from_str::<PersonalizeUpdate>(second);
+    match parsed {
+        Ok(up) => {
+            personalize_player(client_id, up);
+        }
+        Err(_) => {}
+    }
+}
+
+fn on_client_mutate_ship(client_id: Uuid, in_tutorial: bool, second: &&str, third: Option<&&str>) {
+    let parsed = serde_json::from_str::<ShipAction>(second);
+    match parsed {
+        Ok(res) => mutate_owned_ship_wrapped(
+            client_id,
+            res,
+            third.map(|s| s.to_string()),
+            in_tutorial,
+        ),
+        Err(err) => {
+            eprintln!(
+                "couldn't parse ship action {}, err {}",
+                second, err
+            );
+        }
+    }
+}
+
+fn on_client_sync_request(client_id: Uuid, in_tutorial: bool, second: &&str, third: Option<&&str>) {
+    if third.is_some() {
+        thread::sleep(Duration::from_millis(
+            third.unwrap().parse::<u64>().unwrap(),
+        ))
+    }
+    let mut state = get_state_clone_read(in_tutorial, client_id);
+    state.tag = Some(second.to_string());
+    broadcast_state(state)
 }
 
 fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStream>) {
