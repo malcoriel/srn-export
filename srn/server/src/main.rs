@@ -355,33 +355,37 @@ fn handle_request(request: WSRequest) {
         }
         if let Ok(message) = client_rx.try_recv() {
             if !is_disconnected(client_id) {
-                let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
-                let patched_message: ServerToClientMessage = match message.clone() {
-                    ServerToClientMessage::StateChangeExclusive(state, id) => {
-                        ServerToClientMessage::StateChangeExclusive(
-                            patch_state_for_player(state, client_id),
-                            id,
-                        )
-                    }
-                    ServerToClientMessage::StateChange(state) => {
-                        ServerToClientMessage::StateChange(patch_state_for_player(state, client_id))
-                    }
-                    m => m,
-                };
-                if should_send {
-                    let message = Message::text(patched_message.serialize());
-                    sender
-                        .send_message(&message)
-                        .map_err(|e| {
-                            eprintln!("Err {} sending {}", client_id, e);
-                            increment_client_errors(client_id);
-                            disconnect_if_bad(client_id);
-                        })
-                        .ok();
-                }
+                on_message_to_send_to_client(client_id, &mut sender, current_state_id, &message)
             }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
+    }
+}
+
+fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>, current_state_id: Uuid, message: &ServerToClientMessage) {
+    let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
+    let patched_message: ServerToClientMessage = match message.clone() {
+        ServerToClientMessage::StateChangeExclusive(state, id) => {
+            ServerToClientMessage::StateChangeExclusive(
+                patch_state_for_player(state, client_id),
+                id,
+            )
+        }
+        ServerToClientMessage::StateChange(state) => {
+            ServerToClientMessage::StateChange(patch_state_for_player(state, client_id))
+        }
+        m => m,
+    };
+    if should_send {
+        let message = Message::text(patched_message.serialize());
+        sender
+            .send_message(&message)
+            .map_err(|e| {
+                eprintln!("Err {} sending {}", client_id, e);
+                increment_client_errors(client_id);
+                disconnect_if_bad(client_id);
+            })
+            .ok();
     }
 }
 

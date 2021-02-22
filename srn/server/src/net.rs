@@ -63,6 +63,18 @@ impl ServerToClientMessage {
         };
         format!("{}_%_{}", code, serialized)
     }
+
+    pub fn get_state_id(&self) -> Uuid {
+        match self {
+            ServerToClientMessage::StateChange(state) => { state.id }
+            ServerToClientMessage::StateChangeExclusive(state, _) => { state.id }
+            ServerToClientMessage::TagConfirm(_, state_id) => { state_id.clone() }
+            ServerToClientMessage::MulticastPartialShipUpdate(_, _, state_id) => { state_id.clone() }
+            ServerToClientMessage::DialogueStateChange(_, _, state_id) => { state_id.clone() }
+            ServerToClientMessage::XCastGameEvent(_, xcast) => { xcast.get_state_id() }
+            ServerToClientMessage::RoomSwitched(xcast) => { xcast.get_state_id() }
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
