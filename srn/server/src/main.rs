@@ -265,25 +265,20 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Optio
     }
 }
 
-lazy_static! {
-    pub static ref IN_TUTORIAL: Arc<Mutex<HashSet<Uuid>>> = Arc::new(Mutex::new(HashSet::new()));
-}
-
 fn move_player_to_tutorial_room(client_id: Uuid) {
     let mut cont = STATE.write().unwrap();
     let player_idx = cont.state.players.iter().position(|p| p.id == client_id).unwrap();
+    {
+        remove_player_ship(&mut cont.state, client_id);
+    }
     let player = cont.state.players.remove(player_idx);
     let player_clone = player.clone();
     let personal_state = cont.tutorial_states.entry(client_id).or_insert(make_tutorial_state(client_id));
     personal_state.players.push(player);
 
-    // {
-    //     remove_player_ship(&mut cont.state, client_id);
-    // }
     {
         spawn_ship(personal_state, client_id, None);
     }
-    IN_TUTORIAL.lock().unwrap().insert(client_id);
     // the state id filtering will take care of filtering the receivers
     broadcast_state(personal_state.clone());
     notify_state_changed(personal_state.id, client_id);
@@ -478,8 +473,11 @@ fn handle_request(request: WSRequest) {
             break;
         }
 
-        let in_tutorial = IN_TUTORIAL.lock().unwrap().contains(&client_id);
-        let current_state_id = if !in_tutorial {STATE.read().unwrap().state.id} else {
+        let cont = STATE.read().unwrap();
+        let in_tutorial = cont.tutorial_states.contains_key(&client_id);
+
+        eprintln!("in tut {}", in_tutorial);
+        let current_state_id = if !in_tutorial {cont.state.id} else {
             // tutorial states are personal, and have the same id as player
             client_id
         };
@@ -493,7 +491,7 @@ fn handle_request(request: WSRequest) {
                     let mut senders = CLIENT_SENDERS.lock().unwrap();
                     let index = senders.iter().position(|s| s.0 == client_id);
                     index.map(|index| senders.remove(index));
-                    remove_player(client_id, in_tutorial);
+                    remove_player(client_id);
                     println!("Client {} id {} disconnected", ip, client_id);
                     broadcast_state(STATE.read().unwrap().state.clone());
                     return;
@@ -632,13 +630,12 @@ fn get_state_clone_read(is_tutorial: bool, client_id: Uuid) -> GameState {
 
 fn force_disconnect_client(client_id: Uuid) {
     let mut senders = CLIENT_SENDERS.lock().unwrap();
-    let in_tutorial = IN_TUTORIAL.lock().unwrap().contains(&client_id);
     let bad_sender_index = senders.iter().position(|c| c.0 == client_id);
     if let Some(index) = bad_sender_index {
         eprintln!("force disconnecting client: {}", client_id);
         senders.remove(index);
     }
-    remove_player(client_id, in_tutorial);
+    remove_player(client_id);
 }
 
 fn disconnect_if_bad(client_id: Uuid) -> bool {
@@ -736,12 +733,12 @@ fn make_new_human_player(conn_id: Uuid) {
     }
 }
 
-fn remove_player(conn_id: Uuid, in_tutorial: bool) {
+fn remove_player(conn_id: Uuid) {
     let mut cont = STATE.write().unwrap();
+    let in_tutorial = cont.tutorial_states.contains_key(&conn_id);
     let state = if in_tutorial {cont.tutorial_states.get_mut(&conn_id).unwrap()} else { &mut cont.state};
     remove_player_from_state(conn_id, state);
     cont.tutorial_states.remove(&conn_id);
-    IN_TUTORIAL.lock().unwrap().remove(&conn_id);
 }
 
 fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
@@ -918,7 +915,6 @@ fn main_thread() {
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = bots::BOTS.lock().unwrap();
-        let in_tutorials = IN_TUTORIAL.lock().unwrap().clone();
 
         let now = Local::now();
         let elapsed = now - last;
@@ -969,7 +965,7 @@ fn main_thread() {
             let events_mark = sampler.start(5);
             let receiver = &mut EVENTS.1.lock().unwrap();
             let (res, updated_sampler) =
-                events::handle_events(&mut d_table, receiver, &mut cont, d_states, sampler, in_tutorials);
+                events::handle_events(&mut d_table, receiver, &mut cont, d_states, sampler);
             sampler = updated_sampler;
             for (client_id, dialogue) in res {
                 unicast_dialogue_state(client_id, dialogue, cont.state.id);

@@ -15,14 +15,12 @@ pub fn handle_events(
     receiver: &mut Receiver<GameEvent>,
     cont: &mut RwLockWriteGuard<StateContainer>,
     d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
-    mut sampler: Sampler,
-    in_tutorials: HashSet<Uuid>
+    mut sampler: Sampler
 ) -> (Vec<(Uuid, Option<Dialogue>)>, Sampler) {
     let mut res = vec![];
 
     loop {
         if let Ok(event) = receiver.try_recv() {
-            eprintln!("event {:?}", event);
             let player = match event.clone() {
                 GameEvent::ShipDocked { player, .. } => Some(player),
                 GameEvent::ShipUndocked { player, .. } => Some(player),
@@ -34,7 +32,7 @@ pub fn handle_events(
                 let mut res_argument = &mut res;
                 let player_argument = &player;
                 let d_table_argument = &d_table;
-                let state = select_state(cont, &in_tutorials, &player);
+                let state = select_state(cont, &player);
                 sampler = d_table_argument.try_trigger(
                     state,
                     d_states,
@@ -45,17 +43,16 @@ pub fn handle_events(
             }
             match event.clone() {
                 GameEvent::ShipSpawned { player, .. } => {
-                    let state = select_state(cont, &in_tutorials, &player);
+                    let state = select_state(cont, &player);
                     crate::send_event_to_client(event.clone(), XCast::Unicast(player.id, state.id) );
                 }
                 GameEvent::RoomJoined { player, in_tutorial } => {
                     if in_tutorial {
-                        eprintln!("triggering dialogue tutorial");
                         fire_event(GameEvent::DialogueTriggered { dialogue_name: "tutorial_start".to_owned(), player: player.clone() });
                     }
                 }
                 GameEvent::ShipDied { player, .. } => {
-                    let state = select_state(cont, &in_tutorials, &player);
+                    let state = select_state(cont, &player);
                     crate::send_event_to_client(event.clone(), XCast::Broadcast(state.id));
                 }
                 GameEvent::GameEnded { .. } => {
@@ -74,10 +71,12 @@ pub fn handle_events(
                     // intentionally do nothing
                 }
                 GameEvent::DialogueTriggered { dialogue_name, player } => {
-                    let state = select_state(cont, &in_tutorials, &player);
+                    let state = select_state(cont, &player);
                     if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
                         let d_states = DialogueTable::get_player_d_states(d_states, &player);
                         d_table.trigger_dialogue(script, &mut res, &player, d_states, state)
+                    } else {
+                        eprintln!("No dialogue found by name {}", dialogue_name)
                     }
                 }
             }
@@ -89,8 +88,8 @@ pub fn handle_events(
 }
 
 fn select_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
-                            in_tutorials: &'b HashSet<Uuid>, player: &'c Player) -> &'a mut GameState {
-    if in_tutorials.contains(&player.id) {
+                            player: &'c Player) -> &'a mut GameState {
+    if cont.tutorial_states.contains_key(&player.id) {
         cont.tutorial_states.get_mut(&player.id).unwrap()
     } else { &mut cont.state }
 }
