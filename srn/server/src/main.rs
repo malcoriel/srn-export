@@ -6,7 +6,7 @@ extern crate serde_derive;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use std::sync::{Arc, mpsc, Mutex, RwLock, RwLockWriteGuard};
+use std::sync::{Arc, mpsc, Mutex, RwLock, RwLockWriteGuard, MutexGuard};
 use std::thread;
 use std::time::Duration;
 
@@ -103,9 +103,13 @@ struct LastCheck {
 type WSRequest =
     WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
 
-static mut DISPATCHER_SENDER: Option<Mutex<std::sync::mpsc::Sender<ServerToClientMessage>>> = None;
-static mut DISPATCHER_RECEIVER: Option<Mutex<std::sync::mpsc::Receiver<ServerToClientMessage>>> =
-    None;
+lazy_static! {
+    pub static ref DISPATCHER: (Arc<Mutex<Sender<ServerToClientMessage>>>, Arc<Mutex<Receiver<ServerToClientMessage>>>) =
+    {
+        let (sender, receiver) = bounded::<ServerToClientMessage>(128);
+        (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
+    };
+}
 
 lazy_static! {
     static ref DIALOGUE_STATES: Arc<Mutex<Box<DialogueStates>>> =
@@ -205,7 +209,7 @@ fn mutate_owned_ship(
 
 fn broadcast_state(state: GameState) {
     unsafe {
-        let sender = get_dispatcher_sender();
+        let sender =     DISPATCHER.0.lock().unwrap();
         sender
             .send(ServerToClientMessage::StateChange(state))
             .unwrap();
@@ -214,7 +218,7 @@ fn broadcast_state(state: GameState) {
 
 fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {
     unsafe {
-        let sender = get_dispatcher_sender();
+        let sender =     DISPATCHER.0.lock().unwrap();
         sender
             .send(ServerToClientMessage::RoomSwitched(XCast::Unicast(state_id, target_client_id)))
             .unwrap();
@@ -223,7 +227,7 @@ fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {
 
 fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>, current_state_id: Uuid) {
     unsafe {
-        let sender = get_dispatcher_sender();
+        let sender =     DISPATCHER.0.lock().unwrap();
         sender
             .send(ServerToClientMessage::DialogueStateChange(
                 Wrapper::new(dialogue_state),
@@ -236,7 +240,7 @@ fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>, cur
 
 fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>, current_state_id: Uuid) {
     unsafe {
-        let sender = get_dispatcher_sender();
+        let sender =     DISPATCHER.0.lock().unwrap();
         sender
             .send(ServerToClientMessage::MulticastPartialShipUpdate(
                 ShipsWrapper { ships },
@@ -249,7 +253,7 @@ fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>, c
 
 fn send_tag_confirm(tag: String, client_id: Uuid) {
     unsafe {
-        let sender = get_dispatcher_sender();
+        let sender =     DISPATCHER.0.lock().unwrap();
         sender
             .send(ServerToClientMessage::TagConfirm(
                 TagConfirm { tag },
@@ -257,10 +261,6 @@ fn send_tag_confirm(tag: String, client_id: Uuid) {
             ))
             .unwrap();
     }
-}
-
-unsafe fn get_dispatcher_sender() -> std::sync::mpsc::Sender<ServerToClientMessage> {
-    DISPATCHER_SENDER.as_ref().unwrap().lock().unwrap().clone()
 }
 
 fn websocket_server() {
@@ -608,12 +608,6 @@ pub fn new_id() -> Uuid {
 
 #[launch]
 fn rocket() -> rocket::Rocket {
-    unsafe {
-        let (tx, rx) = std::sync::mpsc::channel::<ServerToClientMessage>();
-        DISPATCHER_SENDER = Some(Mutex::new(tx));
-        DISPATCHER_RECEIVER = Some(Mutex::new(rx));
-    }
-
     {
         let mut d_table = DIALOGUE_TABLE.lock().unwrap();
         let scripts: Vec<DialogueScript> = dialogue::gen_scripts();
@@ -670,7 +664,7 @@ fn rocket() -> rocket::Rocket {
 unsafe fn dispatcher_thread(
     client_senders: Arc<Mutex<Vec<(Uuid, std::sync::mpsc::Sender<ServerToClientMessage>)>>>,
 ) {
-    let unwrapped = DISPATCHER_RECEIVER.as_mut().unwrap().lock().unwrap();
+    let unwrapped = DISPATCHER.1.lock().unwrap();
     while let Ok(msg) = unwrapped.recv() {
         for sender in client_senders.lock().unwrap().iter() {
             let send = sender.1.send(msg.clone());
@@ -857,7 +851,7 @@ fn main_thread() {
 
 pub fn send_event_to_client(ev: GameEvent, x_cast: XCast) {
     unsafe {
-        let sender = get_dispatcher_sender();
+        let sender =     DISPATCHER.0.lock().unwrap();
         sender
             .send(ServerToClientMessage::XCastGameEvent(
                 Wrapper::new(ev),
