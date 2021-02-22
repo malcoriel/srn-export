@@ -477,14 +477,18 @@ fn handle_request(request: WSRequest) {
             break;
         }
 
-        // let cont = STATE.read().unwrap();
-        // let in_tutorial = cont.tutorial_states.contains_key(&client_id);
+        let (current_state_id, in_tutorial) = {
+            let cont = STATE.read().unwrap();
+            let in_tutorial = cont.tutorial_states.contains_key(&client_id);
 
-        let in_tutorial = false;
-        let current_state_id = if !in_tutorial {STATE.read().unwrap().state.id} else {
-            // tutorial states are personal, and have the same id as player
-            client_id
+            eprintln!("in tut {}", in_tutorial);
+            let current_state_id = if !in_tutorial { cont.state.id } else {
+                // tutorial states are personal, and have the same id as player
+                client_id
+            };
+            (current_state_id, in_tutorial)
         };
+
 
 
         if let Ok(message) = message_rx.try_recv() {
