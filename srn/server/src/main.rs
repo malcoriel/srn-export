@@ -300,10 +300,10 @@ fn handle_request(request: WSRequest) {
     let (mut socket_receiver, mut socket_sender) = client.split().unwrap();
     let (inner_client_sender, inner_incoming_client_receiver) = bounded::<OwnedMessage>(128);
 
-
     // Whenever we get something from socket, we have to put it to inner queue
-    // I copied this code from examples, but apparently the idea is to
-    // make the code non-blocking
+    // It seems that recv_message is blocking, so it has to be in a separate thread
+    // to not block the main client thread. Frankly, I copied this code but it indeed did not
+    // work otherwise
     thread::spawn(move || loop {
         if is_disconnected(client_id) {
             break;
