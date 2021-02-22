@@ -294,20 +294,20 @@ fn handle_request(request: WSRequest) {
         client.send_message(&message).unwrap();
     }
 
-    let (client_tx, client_rx) = bounded::<ServerToClientMessage>(128);
-    CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
+    let (public_client_sender, public_client_receiver) = bounded::<ServerToClientMessage>(128);
+    CLIENT_SENDERS.lock().unwrap().push((client_id, public_client_sender));
 
-    let (mut receiver, mut sender) = client.split().unwrap();
-    let (message_tx, message_rx) = bounded::<OwnedMessage>(128);
+    let (mut socket_receiver, mut socket_sender) = client.split().unwrap();
+    let (inner_client_sender, inner_client_receiver) = bounded::<OwnedMessage>(128);
     thread::spawn(move || loop {
         if is_disconnected(client_id) {
             break;
         }
 
-        let message = receiver.recv_message();
+        let message = socket_receiver.recv_message();
         match message {
             Ok(m) => {
-                message_tx.send(m).ok();
+                inner_client_sender.send(m).ok();
             }
             Err(e) => {
                 eprintln!("err {} receiving ws {}", client_id, e);
@@ -325,44 +325,43 @@ fn handle_request(request: WSRequest) {
             break;
         }
 
-        let (current_state_id, in_tutorial) = {
-            let cont = STATE.read().unwrap();
-            let in_tutorial = cont.tutorial_states.contains_key(&client_id);
-
-            let current_state_id = if !in_tutorial { cont.state.id } else {
-                // tutorial states are personal, and have the same id as player
-                client_id
-            };
-            (current_state_id, in_tutorial)
-        };
-
-
-        if let Ok(message) = message_rx.try_recv() {
+        if let Ok(message) = inner_client_receiver.try_recv() {
             match message {
                 OwnedMessage::Close(_) => {
-                    on_client_close(ip, client_id, &mut sender);
+                    on_client_close(ip, client_id, &mut socket_sender);
                     return;
                 }
                 OwnedMessage::Ping(msg) => {
                     let message = Message::pong(msg);
-                    sender.send_message(&message).unwrap();
+                    socket_sender.send_message(&message).unwrap();
                 }
                 OwnedMessage::Text(msg) => {
-                    on_client_text_message(client_id, current_state_id, in_tutorial, msg)
+                    on_client_text_message(client_id, msg)
                 }
                 _ => {}
             }
         }
-        if let Ok(message) = client_rx.try_recv() {
+        if let Ok(message) = public_client_receiver.try_recv() {
             if !is_disconnected(client_id) {
-                on_message_to_send_to_client(client_id, &mut sender, current_state_id, &message)
+                on_message_to_send_to_client(client_id, &mut socket_sender, &message)
             }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
 }
 
-fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>, current_state_id: Uuid, message: &ServerToClientMessage) {
+fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>, message: &ServerToClientMessage) {
+    let (current_state_id, _in_tutorial) = {
+        let cont = STATE.read().unwrap();
+        let in_tutorial = cont.tutorial_states.contains_key(&client_id);
+
+        let current_state_id = if !in_tutorial { cont.state.id } else {
+            // tutorial states are personal, and have the same id as player
+            client_id
+        };
+        (current_state_id, in_tutorial)
+    };
+
     let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
     let patched_message: ServerToClientMessage = match message.clone() {
         ServerToClientMessage::StateChangeExclusive(state, id) => {
@@ -389,7 +388,19 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
     }
 }
 
-fn on_client_text_message(client_id: Uuid, current_state_id: Uuid, in_tutorial: bool, msg: String) {
+fn on_client_text_message(client_id: Uuid, msg: String) {
+    let (current_state_id, in_tutorial) = {
+        let cont = STATE.read().unwrap();
+        let in_tutorial = cont.tutorial_states.contains_key(&client_id);
+
+        let current_state_id = if !in_tutorial { cont.state.id } else {
+            // tutorial states are personal, and have the same id as player
+            client_id
+        };
+        (current_state_id, in_tutorial)
+    };
+
+
     let parts = msg.split("_%_").collect::<Vec<&str>>();
     if parts.len() < 2 || parts.len() > 3 {
         eprintln!("Corrupt message (not 2-3 parts) {}", msg);
