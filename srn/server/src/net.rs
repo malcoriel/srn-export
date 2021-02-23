@@ -27,7 +27,7 @@ impl<T> Wrapper<T> {
 
 #[derive(Debug, Clone)]
 pub enum ServerToClientMessage {
-    StateChange(GameState),
+    ObsoleteStateBroadcast(GameState),
     ObsoleteStateChangeExclusive(GameState, Uuid),
     TagConfirm(TagConfirm, Uuid),
     MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>, Uuid),
@@ -51,8 +51,8 @@ impl ServerToClientMessage {
                     id,
                 )
             }
-            ServerToClientMessage::StateChange(state) => {
-                ServerToClientMessage::StateChange(patch_state_for_player(state, client_id))
+            ServerToClientMessage::ObsoleteStateBroadcast(state) => {
+                ServerToClientMessage::ObsoleteStateBroadcast(patch_state_for_player(state, client_id))
             }
             ServerToClientMessage::XCastStateChange(state, x_cast) => {
                 match x_cast {
@@ -70,7 +70,7 @@ impl ServerToClientMessage {
     }
     pub fn serialize(&self) -> String {
         let (code, serialized) = match self {
-            ServerToClientMessage::StateChange(state) => {
+            ServerToClientMessage::ObsoleteStateBroadcast(state) => {
                 (1, serde_json::to_string(&state).unwrap())
             }
             ServerToClientMessage::ObsoleteStateChangeExclusive(state, _unused) => {
@@ -100,7 +100,7 @@ impl ServerToClientMessage {
 
     pub fn get_state_id(&self) -> Uuid {
         match self {
-            ServerToClientMessage::StateChange(state) => { state.id }
+            ServerToClientMessage::ObsoleteStateBroadcast(state) => { state.id }
             ServerToClientMessage::ObsoleteStateChangeExclusive(state, _) => { state.id }
             ServerToClientMessage::TagConfirm(_, state_id) => { state_id.clone() }
             ServerToClientMessage::MulticastPartialShipUpdate(_, _, state_id) => { state_id.clone() }

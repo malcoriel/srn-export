@@ -212,10 +212,8 @@ fn mutate_owned_ship(
 }
 
 fn broadcast_state(state: GameState) {
-    let sender = DISPATCHER.0.lock().unwrap();
-    sender
-        .send(ServerToClientMessage::StateChange(state))
-        .unwrap();
+    let state_id = state.id.clone();
+    x_cast_state(state, XCast::Broadcast(state_id));
 }
 
 fn x_cast_state(state: GameState, x_cast: XCast) {

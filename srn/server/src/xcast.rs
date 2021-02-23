@@ -21,7 +21,7 @@ impl XCast {
 
 pub fn check_message_casting(client_id: Uuid, message: &ServerToClientMessage, current_state_id: Uuid) -> bool {
     match message.clone() {
-        ServerToClientMessage::StateChange(state) => {
+        ServerToClientMessage::ObsoleteStateBroadcast(state) => {
             if current_state_id == state.id {
                 true
             } else {

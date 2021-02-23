@@ -80,7 +80,7 @@ const DEBUG_CREATION = false;
 
 export enum ServerToClientMessageCode {
   Unknown,
-  BroadcastGameState,
+  ObsoleteStateBroadcast,
   ObsoleteStateChangeExclusive,
   TagConfirm = 3,
   MulticastPartialShipsUpdate = 4,
@@ -352,7 +352,7 @@ export default class NetState extends EventEmitter {
       }
 
       if (
-        messageCode === ServerToClientMessageCode.BroadcastGameState ||
+        messageCode === ServerToClientMessageCode.ObsoleteStateBroadcast ||
         messageCode === ServerToClientMessageCode.ObsoleteStateChangeExclusive ||
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
