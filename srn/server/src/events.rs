@@ -42,18 +42,18 @@ pub fn handle_events(
                 let mut res_argument = &mut res;
                 let player_argument = &player;
                 let d_table_argument = &d_table;
-                let state = select_state(cont, &player);
+                let state = select_mut_state(cont, &player);
                 sampler = d_table_argument.try_trigger(
                     state,
                     d_states,
-                    &mut res_argument,
+                    res_argument,
                     player_argument,
                     sampler,
                 );
             }
             match event.clone() {
                 GameEvent::ShipSpawned { player, .. } => {
-                    let state = select_state(cont, &player);
+                    let state = select_mut_state(cont, &player);
                     crate::send_event_to_client(event.clone(), XCast::Unicast(player.id, state.id) );
                 }
                 GameEvent::RoomJoined { player, in_tutorial } => {
@@ -62,7 +62,7 @@ pub fn handle_events(
                     }
                 }
                 GameEvent::ShipDied { player, .. } => {
-                    let state = select_state(cont, &player);
+                    let state = select_mut_state(cont, &player);
                     crate::send_event_to_client(event.clone(), XCast::Broadcast(state.id));
                 }
                 GameEvent::GameEnded { .. } => {
@@ -81,7 +81,7 @@ pub fn handle_events(
                     // intentionally do nothing
                 }
                 GameEvent::DialogueTriggered { dialogue_name, player } => {
-                    let state = select_state(cont, &player);
+                    let state = select_mut_state(cont, &player);
                     if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
                         let d_states = DialogueTable::get_player_d_states(d_states, &player);
                         d_table.trigger_dialogue(script, &mut res, &player, d_states, state)
@@ -97,8 +97,8 @@ pub fn handle_events(
     (res, sampler)
 }
 
-fn select_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
-                            player: &'c Player) -> &'a mut GameState {
+fn select_mut_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
+                                player: &'c Player) -> &'a mut GameState {
     if cont.tutorial_states.contains_key(&player.id) {
         cont.tutorial_states.get_mut(&player.id).unwrap()
     } else { &mut cont.state }

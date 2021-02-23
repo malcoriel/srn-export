@@ -380,8 +380,6 @@ fn get_state_id_and_tutorial(client_id: Uuid) -> (Uuid, bool) {
 }
 
 fn on_client_text_message(client_id: Uuid, msg: String) {
-    let (current_state_id, in_tutorial) = get_state_id_and_tutorial(client_id);
-
     let parts = msg.split("_%_").collect::<Vec<&str>>();
     if parts.len() < 2 || parts.len() > 3 {
         eprintln!("Corrupt message (not 2-3 parts) {}", msg);
@@ -415,7 +413,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
             on_client_personalize(client_id, second)
         }
         ClientOpCode::DialogueOption => {
-            on_client_dialogue(client_id, current_state_id, in_tutorial, second, third);
+            on_client_dialogue(client_id, second, third);
         }
         ClientOpCode::SwitchRoom => {
             on_client_switch_room(client_id, second)
@@ -439,15 +437,13 @@ fn on_client_switch_room(client_id: Uuid, second: &&str) {
     }
 }
 
-fn on_client_dialogue(client_id: Uuid, current_state_id: Uuid, in_tutorial: bool, second: &&str, third: Option<&&str>) {
+fn on_client_dialogue(client_id: Uuid, second: &&str, third: Option<&&str>) {
     handle_dialogue_option(
         client_id,
         serde_json::from_str::<DialogueUpdate>(second)
             .ok()
             .unwrap(),
-        third.map(|s| s.to_string()),
-        current_state_id,
-        in_tutorial,
+        third.map(|s| s.to_string())
     );
 }
 
@@ -575,21 +571,23 @@ fn personalize_player(conn_id: Uuid, update: PersonalizeUpdate) {
     }
 }
 
-fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>, current_state_id: Uuid, in_tutorial: bool) {
+fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
     let global_state_change;
     {
         let mut cont = STATE.write().unwrap();
         let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
-        world::force_update_to_now(if in_tutorial { cont.tutorial_states.get_mut(&client_id).unwrap() } else { &mut cont.state });
+        let mut_state = if cont.tutorial_states.contains_key(&client_id) { cont.tutorial_states.get_mut(&client_id).unwrap() } else { &mut cont.state };
+        world::force_update_to_now(mut_state);
         let (new_dialogue_state, state_changed) = execute_dialog_option(
             client_id,
-            if in_tutorial { cont.tutorial_states.get_mut(&client_id).unwrap() } else { &mut cont.state },
+            mut_state,
             dialogue_update,
             &mut *dialogue_cont,
             &*dialogue_table,
         );
-        unicast_dialogue_state(client_id.clone(), new_dialogue_state, current_state_id);
+        eprintln!("dialogue {:?}", new_dialogue_state);
+        unicast_dialogue_state(client_id.clone(), new_dialogue_state, mut_state.id);
         global_state_change = state_changed;
     }
     {

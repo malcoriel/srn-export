@@ -150,14 +150,13 @@ fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
     world::add_player(&mut cont.state, id, true, Some(gen_bot_name(&mut prng)));
     world::spawn_ship(&mut cont.state, id, None);
     id
-    // new_id()
 }
 
 pub fn bot_init(bots: &mut Vec<Bot>) {
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
+    // add_bot(Bot::new(), bots);
 }
 
 pub fn format_d_states(d_states: &HashMap<DialogueId, DialogueState>, d_table: &DialogueTable) -> HashMap<String, String> {
