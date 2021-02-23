@@ -218,6 +218,13 @@ fn broadcast_state(state: GameState) {
         .unwrap();
 }
 
+fn x_cast_state(state: GameState, x_cast: XCast) {
+    let sender = DISPATCHER.0.lock().unwrap();
+    sender
+        .send(ServerToClientMessage::XCastStateChange(state, x_cast))
+        .unwrap();
+}
+
 fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {
     let sender = DISPATCHER.0.lock().unwrap();
     sender
@@ -355,16 +362,7 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
     if is_disconnected(client_id) {
         return;
     }
-    let (current_state_id, _in_tutorial) = {
-        let cont = STATE.read().unwrap();
-        let in_tutorial = cont.tutorial_states.contains_key(&client_id);
-
-        let current_state_id = if !in_tutorial { cont.state.id } else {
-            // tutorial states are personal, and have the same id as player
-            client_id
-        };
-        (current_state_id, in_tutorial)
-    };
+    let (current_state_id, _in_tutorial) = get_state_id_and_tutorial(client_id);
 
     let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
     let patched_message: ServerToClientMessage = message.clone().patch_with_id(client_id);
@@ -381,18 +379,19 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
     }
 }
 
-fn on_client_text_message(client_id: Uuid, msg: String) {
-    let (current_state_id, in_tutorial) = {
-        let cont = STATE.read().unwrap();
-        let in_tutorial = cont.tutorial_states.contains_key(&client_id);
+fn get_state_id_and_tutorial(client_id: Uuid) -> (Uuid, bool) {
+    let cont = STATE.read().unwrap();
+    let in_tutorial = cont.tutorial_states.contains_key(&client_id);
 
-        let current_state_id = if !in_tutorial { cont.state.id } else {
-            // tutorial states are personal, and have the same id as player
-            client_id
-        };
-        (current_state_id, in_tutorial)
+    let current_state_id = if !in_tutorial { cont.state.id } else {
+        // tutorial states are personal, and have the same id as player
+        client_id
     };
+    (current_state_id, in_tutorial)
+}
 
+fn on_client_text_message(client_id: Uuid, msg: String) {
+    let (current_state_id, in_tutorial) = get_state_id_and_tutorial(client_id);
 
     let parts = msg.split("_%_").collect::<Vec<&str>>();
     if parts.len() < 2 || parts.len() > 3 {
@@ -500,7 +499,8 @@ fn on_client_sync_request(client_id: Uuid, in_tutorial: bool, second: &&str, thi
     }
     let mut state = get_state_clone_read(in_tutorial, client_id);
     state.tag = Some(second.to_string());
-    broadcast_state(state)
+    let (current_state_id, _) = get_state_id_and_tutorial(client_id);
+    broadcast_state(state); //, XCast::Unicast(client_id, current_state_id))
 }
 
 fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStream>) {
