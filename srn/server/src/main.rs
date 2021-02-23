@@ -160,8 +160,8 @@ const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const DEBUG_PHYSICS: bool = false;
 const MAIN_THREAD_SLEEP_MS: u64 = 15;
 
-fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>, in_tutorial: bool) {
-    let res = mutate_owned_ship(client_id, mutate_cmd, tag, in_tutorial);
+fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
+    let res = mutate_owned_ship(client_id, mutate_cmd, tag);
     if res.is_none() {
         warn!("error mutating owned ship");
         increment_client_errors(client_id);
@@ -194,14 +194,15 @@ fn move_player_to_tutorial_room(client_id: Uuid) {
 fn mutate_owned_ship(
     client_id: Uuid,
     mutate_cmd: ShipAction,
-    tag: Option<String>,
-    in_tutorial: bool,
+    tag: Option<String>
 ) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
-    let mut state = if in_tutorial {
-        cont.tutorial_states.get_mut(&client_id).unwrap()
-    } else {
-        &mut cont.state
+    let mut state = {
+        if cont.tutorial_states.contains_key(&client_id) {
+            cont.tutorial_states.get_mut(&client_id).unwrap()
+        } else {
+            &mut cont.state
+        }
     };
     if let Some(tag) = tag {
         send_tag_confirm(tag, client_id);
@@ -353,11 +354,9 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
         return;
     }
     let (current_state_id, _in_tutorial) = get_state_id_and_tutorial(client_id);
-
     let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
-    let patched_message: ServerToClientMessage = message.clone().patch_with_id(client_id);
     if should_send {
-        let message = Message::text(patched_message.serialize());
+        let message = Message::text(message.clone().patch_with_id(client_id).serialize());
         sender
             .send_message(&message)
             .map_err(|e| {
@@ -407,10 +406,10 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
     let op_code = op_code.unwrap();
     match op_code {
         ClientOpCode::Sync => {
-            on_client_sync_request(client_id, in_tutorial, second, third)
+            on_client_sync_request(client_id, second, third)
         }
         ClientOpCode::MutateMyShip => {
-            on_client_mutate_ship(client_id, in_tutorial, second, third)
+            on_client_mutate_ship(client_id, second, third)
         }
         ClientOpCode::Name => {
             on_client_personalize(client_id, second)
@@ -463,14 +462,13 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
     }
 }
 
-fn on_client_mutate_ship(client_id: Uuid, in_tutorial: bool, second: &&str, third: Option<&&str>) {
+fn on_client_mutate_ship(client_id: Uuid, second: &&str, third: Option<&&str>) {
     let parsed = serde_json::from_str::<ShipAction>(second);
     match parsed {
         Ok(res) => mutate_owned_ship_wrapped(
             client_id,
             res,
             third.map(|s| s.to_string()),
-            in_tutorial,
         ),
         Err(err) => {
             eprintln!(
@@ -481,13 +479,13 @@ fn on_client_mutate_ship(client_id: Uuid, in_tutorial: bool, second: &&str, thir
     }
 }
 
-fn on_client_sync_request(client_id: Uuid, in_tutorial: bool, second: &&str, third: Option<&&str>) {
+fn on_client_sync_request(client_id: Uuid, second: &&str, third: Option<&&str>) {
     if third.is_some() {
         thread::sleep(Duration::from_millis(
             third.unwrap().parse::<u64>().unwrap(),
         ))
     }
-    let mut state = get_state_clone_read(in_tutorial, client_id);
+    let mut state = get_state_clone_read(client_id);
     state.tag = Some(second.to_string());
     let (current_state_id, _) = get_state_id_and_tutorial(client_id);
     x_cast_state(state, XCast::Unicast(current_state_id, client_id))
@@ -506,12 +504,9 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
     x_cast_state(state, XCast::Broadcast(state_id));
 }
 
-fn get_state_clone_read(is_tutorial: bool, client_id: Uuid) -> GameState {
-    if !is_tutorial {
-        STATE.read().unwrap().state.clone()
-    } else {
-        STATE.read().unwrap().tutorial_states.get(&client_id).unwrap().clone()
-    }
+fn get_state_clone_read(client_id: Uuid) -> GameState {
+    let cont = STATE.read().unwrap();
+    return cont.tutorial_states.get(&client_id).unwrap_or(&cont.state).clone();
 }
 
 fn force_disconnect_client(client_id: Uuid) {
@@ -599,7 +594,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
     }
     {
         if global_state_change {
-            let state = get_state_clone_read(in_tutorial, client_id);
+            let state = get_state_clone_read( client_id);
             let state_id = state.id.clone();
             x_cast_state(state, XCast::Broadcast(state_id));
         }
