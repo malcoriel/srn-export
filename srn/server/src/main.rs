@@ -184,7 +184,9 @@ fn move_player_to_tutorial_room(client_id: Uuid) {
         spawn_ship(personal_state, client_id, None);
     }
     // the state id filtering will take care of filtering the receivers
-    broadcast_state(personal_state.clone());
+    let state = personal_state.clone();
+    let state_id = state.id.clone();
+    x_cast_state(state, XCast::Broadcast(state_id));
     notify_state_changed(personal_state.id, client_id);
     fire_event(GameEvent::RoomJoined { in_tutorial: true, player: player_clone });
 }
@@ -211,28 +213,20 @@ fn mutate_owned_ship(
     mutated
 }
 
-fn broadcast_state(state: GameState) {
-    let state_id = state.id.clone();
-    x_cast_state(state, XCast::Broadcast(state_id));
-}
-
 fn x_cast_state(state: GameState, x_cast: XCast) {
-    let sender = DISPATCHER.0.lock().unwrap();
-    sender
+    DISPATCHER.0.lock().unwrap()
         .send(ServerToClientMessage::XCastStateChange(state, x_cast))
         .unwrap();
 }
 
 fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {
-    let sender = DISPATCHER.0.lock().unwrap();
-    sender
+    DISPATCHER.0.lock().unwrap()
         .send(ServerToClientMessage::RoomSwitched(XCast::Unicast(state_id, target_client_id)))
         .unwrap();
 }
 
 fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>, current_state_id: Uuid) {
-    let sender = DISPATCHER.0.lock().unwrap();
-    sender
+    DISPATCHER.0.lock().unwrap()
         .send(ServerToClientMessage::DialogueStateChange(
             Wrapper::new(dialogue_state),
             client_id,
@@ -242,8 +236,7 @@ fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>, cur
 }
 
 fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>, current_state_id: Uuid) {
-    let sender = DISPATCHER.0.lock().unwrap();
-    sender
+    DISPATCHER.0.lock().unwrap()
         .send(ServerToClientMessage::MulticastPartialShipUpdate(
             ShipsWrapper { ships },
             client_id,
@@ -253,8 +246,7 @@ fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>, c
 }
 
 fn send_tag_confirm(tag: String, client_id: Uuid) {
-    let sender = DISPATCHER.0.lock().unwrap();
-    sender
+    DISPATCHER.0.lock().unwrap()
         .send(ServerToClientMessage::TagConfirm(
             TagConfirm { tag },
             client_id,
@@ -509,7 +501,9 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
     index.map(|index| senders.remove(index));
     remove_player(client_id);
     println!("Client {} id {} disconnected", ip, client_id);
-    broadcast_state(STATE.read().unwrap().state.clone());
+    let state = STATE.read().unwrap().state.clone();
+    let state_id = state.id.clone();
+    x_cast_state(state, XCast::Broadcast(state_id));
 }
 
 fn get_state_clone_read(is_tutorial: bool, client_id: Uuid) -> GameState {
@@ -580,7 +574,9 @@ fn personalize_player(conn_id: Uuid, update: PersonalizeUpdate) {
             });
     }
     {
-        broadcast_state(STATE.read().unwrap().state.clone());
+        let state = STATE.read().unwrap().state.clone();
+        let state_id = state.id.clone();
+        x_cast_state(state, XCast::Broadcast(state_id));
     }
 }
 
@@ -603,7 +599,9 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
     }
     {
         if global_state_change {
-            broadcast_state(get_state_clone_read(in_tutorial, client_id));
+            let state = get_state_clone_read(in_tutorial, client_id);
+            let state_id = state.id.clone();
+            x_cast_state(state, XCast::Broadcast(state_id));
         }
     }
 }
