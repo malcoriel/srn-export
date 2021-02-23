@@ -33,6 +33,7 @@ pub enum ServerToClientMessage {
     MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>, Uuid),
     DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid, Uuid),
     XCastGameEvent(Wrapper<GameEvent>, XCast),
+    XCastStateChange(GameState, XCast),
     RoomSwitched(XCast),
 }
 
@@ -79,6 +80,9 @@ impl ServerToClientMessage {
             ServerToClientMessage::RoomSwitched(_) => {
                 (7, "".to_owned())
             }
+            ServerToClientMessage::XCastStateChange(state, _) => {
+                (8, serde_json::to_string(&state).unwrap())
+            }
         };
         format!("{}_%_{}", code, serialized)
     }
@@ -92,6 +96,7 @@ impl ServerToClientMessage {
             ServerToClientMessage::DialogueStateChange(_, _, state_id) => { state_id.clone() }
             ServerToClientMessage::XCastGameEvent(_, xcast) => { xcast.get_state_id() }
             ServerToClientMessage::RoomSwitched(xcast) => { xcast.get_state_id() }
+            ServerToClientMessage::XCastStateChange(state, _) => { state.id }
         }
     }
 }
