@@ -12,9 +12,9 @@ pub enum XCast {
 impl XCast {
     pub fn get_state_id(&self) -> Uuid {
         match self {
-            XCast::Broadcast(v) => {v.clone()}
-            XCast::MulticastExcl(_, v) => {v.clone()}
-            XCast::Unicast(_, v) => {v.clone()}
+            XCast::Broadcast(v) => { v.clone() }
+            XCast::MulticastExcl(_, v) => { v.clone() }
+            XCast::Unicast(_, v) => { v.clone() }
         }
     }
 }
@@ -70,7 +70,9 @@ pub fn check_message_casting(client_id: Uuid, message: &ServerToClientMessage, c
         }
         ServerToClientMessage::XCastGameEvent(_, x_cast) => should_send_xcast(client_id, x_cast, current_state_id),
         ServerToClientMessage::RoomSwitched(x_cast) => should_send_xcast(client_id, x_cast, current_state_id),
-        ServerToClientMessage::XCastStateChange(_, x_cast) => should_send_xcast(client_id, x_cast, current_state_id),
+        ServerToClientMessage::XCastStateChange(_, x_cast) => {
+            should_send_xcast(client_id, x_cast, current_state_id)
+        }
     }
 }
 

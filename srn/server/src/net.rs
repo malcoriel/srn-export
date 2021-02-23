@@ -54,6 +54,17 @@ impl ServerToClientMessage {
             ServerToClientMessage::StateChange(state) => {
                 ServerToClientMessage::StateChange(patch_state_for_player(state, client_id))
             }
+            ServerToClientMessage::XCastStateChange(state, x_cast) => {
+                match x_cast {
+                    XCast::Unicast(_, target_id) => {
+                        ServerToClientMessage::XCastStateChange(patch_state_for_player(state, target_id), x_cast)
+                    }
+                    _ => {
+                        ServerToClientMessage::XCastStateChange(state, x_cast)
+                    }
+                }
+
+            }
             m => m,
         }
     }
@@ -96,7 +107,7 @@ impl ServerToClientMessage {
             ServerToClientMessage::DialogueStateChange(_, _, state_id) => { state_id.clone() }
             ServerToClientMessage::XCastGameEvent(_, xcast) => { xcast.get_state_id() }
             ServerToClientMessage::RoomSwitched(xcast) => { xcast.get_state_id() }
-            ServerToClientMessage::XCastStateChange(state, _) => { state.id }
+            ServerToClientMessage::XCastStateChange(_, x_cast) => { x_cast.get_state_id() }
         }
     }
 }

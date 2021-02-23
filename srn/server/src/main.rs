@@ -500,7 +500,7 @@ fn on_client_sync_request(client_id: Uuid, in_tutorial: bool, second: &&str, thi
     let mut state = get_state_clone_read(in_tutorial, client_id);
     state.tag = Some(second.to_string());
     let (current_state_id, _) = get_state_id_and_tutorial(client_id);
-    broadcast_state(state); //, XCast::Unicast(client_id, current_state_id))
+    x_cast_state(state, XCast::Unicast(current_state_id, client_id))
 }
 
 fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStream>) {

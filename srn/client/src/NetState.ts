@@ -87,6 +87,7 @@ export enum ServerToClientMessageCode {
   UnicastDialogueStateChange = 5,
   XCastGameEvent = 6,
   RoomSwitched = 7,
+  XCastGameState = 8,
 }
 
 const isInAABB = (bounds: AABB, obj: IVector): boolean => {
@@ -352,7 +353,8 @@ export default class NetState extends EventEmitter {
 
       if (
         messageCode === ServerToClientMessageCode.FullSync ||
-        messageCode === ServerToClientMessageCode.SyncExclusive
+        messageCode === ServerToClientMessageCode.SyncExclusive ||
+        messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
         this.desync = parsed.ticks - this.state.ticks;
