@@ -28,7 +28,7 @@ pub fn check_message_casting(client_id: Uuid, message: &ServerToClientMessage, c
                 false
             }
         }
-        ServerToClientMessage::StateChangeExclusive(state, exclude_client_id) => {
+        ServerToClientMessage::ObsoleteStateChangeExclusive(state, exclude_client_id) => {
             if state.id != current_state_id {
                 false
             } else {

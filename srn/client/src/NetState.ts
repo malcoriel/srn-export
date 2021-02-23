@@ -80,8 +80,8 @@ const DEBUG_CREATION = false;
 
 export enum ServerToClientMessageCode {
   Unknown,
-  FullSync,
-  SyncExclusive,
+  BroadcastGameState,
+  ObsoleteStateChangeExclusive,
   TagConfirm = 3,
   MulticastPartialShipsUpdate = 4,
   UnicastDialogueStateChange = 5,
@@ -352,8 +352,8 @@ export default class NetState extends EventEmitter {
       }
 
       if (
-        messageCode === ServerToClientMessageCode.FullSync ||
-        messageCode === ServerToClientMessageCode.SyncExclusive ||
+        messageCode === ServerToClientMessageCode.BroadcastGameState ||
+        messageCode === ServerToClientMessageCode.ObsoleteStateChangeExclusive ||
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);

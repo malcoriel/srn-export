@@ -28,7 +28,7 @@ impl<T> Wrapper<T> {
 #[derive(Debug, Clone)]
 pub enum ServerToClientMessage {
     StateChange(GameState),
-    StateChangeExclusive(GameState, Uuid),
+    ObsoleteStateChangeExclusive(GameState, Uuid),
     TagConfirm(TagConfirm, Uuid),
     MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>, Uuid),
     DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid, Uuid),
@@ -45,8 +45,8 @@ pub fn patch_state_for_player(mut state: GameState, player_id: Uuid) -> GameStat
 impl ServerToClientMessage {
     pub fn patch_with_id(self, client_id: Uuid) -> Self {
         match self {
-            ServerToClientMessage::StateChangeExclusive(state, id) => {
-                ServerToClientMessage::StateChangeExclusive(
+            ServerToClientMessage::ObsoleteStateChangeExclusive(state, id) => {
+                ServerToClientMessage::ObsoleteStateChangeExclusive(
                     patch_state_for_player(state, client_id),
                     id,
                 )
@@ -73,7 +73,7 @@ impl ServerToClientMessage {
             ServerToClientMessage::StateChange(state) => {
                 (1, serde_json::to_string(&state).unwrap())
             }
-            ServerToClientMessage::StateChangeExclusive(state, _unused) => {
+            ServerToClientMessage::ObsoleteStateChangeExclusive(state, _unused) => {
                 (2, serde_json::to_string(&state).unwrap())
             }
             ServerToClientMessage::TagConfirm(tag_confirm, _unused) => {
@@ -101,7 +101,7 @@ impl ServerToClientMessage {
     pub fn get_state_id(&self) -> Uuid {
         match self {
             ServerToClientMessage::StateChange(state) => { state.id }
-            ServerToClientMessage::StateChangeExclusive(state, _) => { state.id }
+            ServerToClientMessage::ObsoleteStateChangeExclusive(state, _) => { state.id }
             ServerToClientMessage::TagConfirm(_, state_id) => { state_id.clone() }
             ServerToClientMessage::MulticastPartialShipUpdate(_, _, state_id) => { state_id.clone() }
             ServerToClientMessage::DialogueStateChange(_, _, state_id) => { state_id.clone() }
