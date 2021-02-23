@@ -267,11 +267,6 @@ fn websocket_server() {
     }
 }
 
-fn patch_state_for_player(mut state: GameState, player_id: Uuid) -> GameState {
-    state.my_id = player_id;
-    state
-}
-
 fn handle_request(request: WSRequest) {
     if !request.protocols().contains(&"rust-websocket".to_string()) {
         request.reject().unwrap();
@@ -289,7 +284,7 @@ fn handle_request(request: WSRequest) {
 
     {
         let mut state = STATE.read().unwrap().state.clone();
-        state = patch_state_for_player(state, client_id);
+        state = net::patch_state_for_player(state, client_id);
         let message: Message = Message::text(serde_json::to_string(&state).unwrap());
         client.send_message(&message).unwrap();
     }
@@ -372,18 +367,7 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
     };
 
     let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
-    let patched_message: ServerToClientMessage = match message.clone() {
-        ServerToClientMessage::StateChangeExclusive(state, id) => {
-            ServerToClientMessage::StateChangeExclusive(
-                patch_state_for_player(state, client_id),
-                id,
-            )
-        }
-        ServerToClientMessage::StateChange(state) => {
-            ServerToClientMessage::StateChange(patch_state_for_player(state, client_id))
-        }
-        m => m,
-    };
+    let patched_message: ServerToClientMessage = message.clone().patch_with_id(client_id);
     if should_send {
         let message = Message::text(patched_message.serialize());
         sender

@@ -36,7 +36,26 @@ pub enum ServerToClientMessage {
     RoomSwitched(XCast),
 }
 
+pub fn patch_state_for_player(mut state: GameState, player_id: Uuid) -> GameState {
+    state.my_id = player_id;
+    state
+}
+
 impl ServerToClientMessage {
+    pub fn patch_with_id(self, client_id: Uuid) -> Self {
+        match self {
+            ServerToClientMessage::StateChangeExclusive(state, id) => {
+                ServerToClientMessage::StateChangeExclusive(
+                    patch_state_for_player(state, client_id),
+                    id,
+                )
+            }
+            ServerToClientMessage::StateChange(state) => {
+                ServerToClientMessage::StateChange(patch_state_for_player(state, client_id))
+            }
+            m => m,
+        }
+    }
     pub fn serialize(&self) -> String {
         let (code, serialized) = match self {
             ServerToClientMessage::StateChange(state) => {
