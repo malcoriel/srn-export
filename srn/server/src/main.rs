@@ -662,8 +662,7 @@ fn rocket() -> rocket::Rocket {
         main_thread();
     });
 
-    let client_senders = CLIENT_SENDERS.clone();
-    thread::spawn(move || unsafe { dispatcher_thread(client_senders) });
+    thread::spawn(move || { dispatcher_thread() });
 
     thread::spawn(|| cleanup_thread());
 
@@ -694,9 +693,10 @@ fn rocket() -> rocket::Rocket {
         .mount("/api", routes![get_version]) // post_state
 }
 
-unsafe fn dispatcher_thread(
-    client_senders: Arc<Mutex<Vec<(Uuid, Sender<ServerToClientMessage>)>>>,
-) {
+fn dispatcher_thread() {
+    // due to some magic, cloning the Arc-Mutex gives me a permanent link to
+    // the non-cloned contents
+    let client_senders = CLIENT_SENDERS.clone();
     let unwrapped = DISPATCHER.1.lock().unwrap();
     while let Ok(msg) = unwrapped.recv() {
         for sender in client_senders.lock().unwrap().iter() {
