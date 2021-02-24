@@ -595,6 +595,8 @@ pub struct ShortScript {
     pub is_planetary: bool,
     pub priority: i32,
     pub initial_state_name: String,
+    pub portrait: Option<String>,
+    pub environment: Option<String>,
     pub table: HashMap<String, (String, Vec<ShortScriptLine>)>,
     // [[state_name, option_name, condition_for_choosing_it]]
     pub bot_path: Vec<(String, String, Option<TriggerCondition>)>,

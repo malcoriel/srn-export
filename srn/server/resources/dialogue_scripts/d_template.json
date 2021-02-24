@@ -1,0 +1,42 @@
+{
+  "is_default": false,
+  "is_planetary": false,
+  "priority": -1,
+  "initial_state_name": "start",
+  "table": {
+    "start": [
+      "Some prompt",
+      [
+        [
+          "opt1",
+          "opt1 text",
+          "next state",
+          [
+            {
+              "SideEffect": "SideEffectArg"
+            },
+            "AnotherSideEffect"
+          ],
+          "OptionShowCondition"
+        ],
+        [
+          "opt2",
+          "opt2 text",
+          "next state",
+          [],
+          null
+        ]
+      ]
+    ],
+    "next state": [
+      "More prompt",
+      [
+        ["opt1", "opt1 text", "next state", [], null]
+      ]
+    ]
+  },
+  "bot_path": [],
+  "name": "d_template",
+  "portrait": "administrator",
+  "environment": "space"
+}

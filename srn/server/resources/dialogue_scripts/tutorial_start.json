@@ -5,14 +5,16 @@
   "initial_state_name": "start",
   "table": {
     "start": [
-      "Hey ranger! I bet that you are curious how to play this game. My name is Administrator, and I'll guide you through the basics here.",
+      "Hey ranger! I bet that you are curious how to play this game. My name is Administrator, and I'll guide you through the basics here. Press on a response line below to answer to me. You can also use your keyboard keys 1-9 to quickly select options in any dialogue.",
       [
         [
           "begin",
           "Ok, let's go through this!",
           "",
           [
-
+            {
+              "SwitchDialogue": "tutorial_camera"
+            }
           ],
           null
         ],
@@ -33,5 +35,7 @@
     ]
   },
   "bot_path": [],
-  "name": "tutorial_start"
+  "name": "tutorial_start",
+  "portrait": "administrator",
+  "environment": "space"
 }

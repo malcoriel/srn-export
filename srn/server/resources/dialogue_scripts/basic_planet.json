@@ -99,5 +99,7 @@
       null
     ]
   ],
-  "name": "basic_planet"
+  "name": "basic_planet",
+  "portrait": null,
+  "environment": null
 }

@@ -65,5 +65,7 @@
       null
     ]
   ],
-  "name": "cargo_delivery_pickup"
+  "name": "cargo_delivery_pickup",
+  "portrait": null,
+  "environment": null
 }

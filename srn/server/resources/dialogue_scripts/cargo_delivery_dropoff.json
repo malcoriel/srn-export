@@ -66,5 +66,7 @@
       null
     ]
   ],
-  "name": "cargo_delivery_dropoff"
+  "name": "cargo_delivery_dropoff",
+  "portrait": null,
+  "environment": null
 }

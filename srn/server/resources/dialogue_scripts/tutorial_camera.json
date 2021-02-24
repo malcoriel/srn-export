@@ -1,0 +1,31 @@
+{
+  "is_default": false,
+  "is_planetary": false,
+  "priority": -1,
+  "initial_state_name": "start",
+  "table": {
+    "start": [
+      "Let me teach you how to look around. The easiest way is the default one. Your camera will always follow your ship in the center of the screen. If you want to reset your camera at any point to that state, press C button on your keyboard.",
+      [
+        [
+          "go_next",
+          "Ok, I get it. Tell me how do I look somewhere else?",
+          "step2",
+          [
+          ],
+          null
+        ]
+      ]
+    ],
+    "next state": [
+      "To move ",
+      [
+        ["opt1", "opt1 text", "next state", [], null]
+      ]
+    ]
+  },
+  "bot_path": [],
+  "name": "d_template",
+  "portrait": "administrator",
+  "environment": "space"
+}
