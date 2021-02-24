@@ -9,16 +9,6 @@ pub enum XCast {
     Unicast(Uuid, Uuid),
 }
 
-impl XCast {
-    pub fn get_state_id(&self) -> Uuid {
-        match self {
-            XCast::Broadcast(v) => { v.clone() }
-            XCast::MulticastExcl(_, v) => { v.clone() }
-            XCast::Unicast(_, v) => { v.clone() }
-        }
-    }
-}
-
 pub fn check_message_casting(client_id: Uuid, message: &ServerToClientMessage, current_state_id: Uuid) -> bool {
     match message.clone() {
         ServerToClientMessage::ObsoleteStateBroadcast(state) => {
