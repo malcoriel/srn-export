@@ -39,14 +39,13 @@ pub fn handle_events(
                 _ => None,
             };
             if let Some(player) = player {
-                let mut res_argument = &mut res;
                 let player_argument = &player;
                 let d_table_argument = &d_table;
                 let state = select_mut_state(cont, &player);
                 sampler = d_table_argument.try_trigger(
                     state,
                     d_states,
-                    res_argument,
+                    &mut res,
                     player_argument,
                     sampler,
                 );

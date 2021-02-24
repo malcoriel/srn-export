@@ -586,7 +586,6 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
             &mut *dialogue_cont,
             &*dialogue_table,
         );
-        eprintln!("dialogue {:?}", new_dialogue_state);
         unicast_dialogue_state(client_id.clone(), new_dialogue_state, mut_state.id);
         global_state_change = state_changed;
     }
