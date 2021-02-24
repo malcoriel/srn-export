@@ -88,6 +88,7 @@ export enum ServerToClientMessageCode {
   XCastGameEvent = 6,
   RoomSwitched = 7,
   XCastGameState = 8,
+  LeaveRoom = 9,
 }
 
 const isInAABB = (bounds: AABB, obj: IVector): boolean => {
@@ -226,8 +227,10 @@ export default class NetState extends EventEmitter {
     }
     this.time.clearAnimation();
     this.slowTime.clearAnimation();
-    NetState.instance = undefined;
     Perf.stop();
+    this.emit("disconnect");
+    NetState.instance = undefined;
+
   };
 
   init = (tutorial?: boolean) => {
@@ -451,6 +454,9 @@ export default class NetState extends EventEmitter {
       } else if (messageCode === ServerToClientMessageCode.XCastGameEvent) {
         const event = JSON.parse(data).value;
         this.emit('gameEvent', event);
+      } else if (messageCode === ServerToClientMessageCode.LeaveRoom) {
+        console.log("Received disconnect request from server");
+        this.disconnectAndDestroy()
       }
     } catch (e) {
       console.warn('error handling message', e);

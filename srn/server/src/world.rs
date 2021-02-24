@@ -287,10 +287,12 @@ pub enum GameEvent {
     },
     GameEnded,
     GameStarted,
-    DialogueTriggered {
+    DialogueTriggerRequest {
         dialogue_name: String,
         player: Player,
     },
+    // primarily needed for QuitDialogue effect, where we cannot force-quit
+    // the player directly
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

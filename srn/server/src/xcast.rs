@@ -63,6 +63,9 @@ pub fn check_message_casting(client_id: Uuid, message: &ServerToClientMessage, c
         ServerToClientMessage::XCastStateChange(_, x_cast) => {
             should_send_xcast(client_id, x_cast, current_state_id)
         }
+        ServerToClientMessage::RoomLeave(target_player) => {
+            target_player == client_id
+        }
     }
 }
 

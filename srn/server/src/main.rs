@@ -194,7 +194,7 @@ fn move_player_to_tutorial_room(client_id: Uuid) {
 fn mutate_owned_ship(
     client_id: Uuid,
     mutate_cmd: ShipAction,
-    tag: Option<String>
+    tag: Option<String>,
 ) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
     let mut state = {
@@ -234,6 +234,10 @@ fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>, cur
             current_state_id,
         ))
         .unwrap();
+}
+
+fn dispatch(message: ServerToClientMessage) {
+    DISPATCHER.0.lock().unwrap().send(message).unwrap();
 }
 
 fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>, current_state_id: Uuid) {
@@ -443,7 +447,7 @@ fn on_client_dialogue(client_id: Uuid, second: &&str, third: Option<&&str>) {
         serde_json::from_str::<DialogueUpdate>(second)
             .ok()
             .unwrap(),
-        third.map(|s| s.to_string())
+        third.map(|s| s.to_string()),
     );
 }
 
@@ -591,7 +595,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
     }
     {
         if global_state_change {
-            let state = get_state_clone_read( client_id);
+            let state = get_state_clone_read(client_id);
             let state_id = state.id.clone();
             x_cast_state(state, XCast::Broadcast(state_id));
         }
@@ -818,11 +822,10 @@ fn main_thread() {
         if events_elapsed > EVENT_TRIGGER_TIME {
             let events_mark = sampler.start(5);
             let receiver = &mut events::EVENTS.1.lock().unwrap();
-            let (res, updated_sampler) =
-                events::handle_events(&mut d_table, receiver, &mut cont, d_states, sampler);
-            sampler = updated_sampler;
+            let res =
+                events::handle_events(&mut d_table, receiver, &mut cont, d_states);
             for (client_id, dialogue) in res {
-                let corresponding_state_id = if cont.tutorial_states.contains_key(&client_id) { client_id } else {cont.state.id};
+                let corresponding_state_id = if cont.tutorial_states.contains_key(&client_id) { client_id } else { cont.state.id };
                 unicast_dialogue_state(client_id, dialogue, corresponding_state_id);
             }
             sampler.end(events_mark);
@@ -882,4 +885,8 @@ pub fn send_event_to_client(ev: GameEvent, x_cast: XCast) {
 
 pub fn fire_event(ev: GameEvent) {
     events::fire_event(ev);
+}
+
+pub fn kick_player(player_id: Uuid) {
+    dispatch(ServerToClientMessage::RoomLeave(player_id));
 }

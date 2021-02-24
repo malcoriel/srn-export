@@ -24,9 +24,8 @@ pub fn handle_events(
     d_table: &mut DialogueTable,
     receiver: &mut Receiver<GameEvent>,
     cont: &mut RwLockWriteGuard<StateContainer>,
-    d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
-    mut sampler: Sampler
-) -> (Vec<(Uuid, Option<Dialogue>)>, Sampler) {
+    d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>
+) -> Vec<(Uuid, Option<Dialogue>)> {
     let mut res = vec![];
 
     loop {
@@ -38,7 +37,7 @@ pub fn handle_events(
                 }
                 GameEvent::RoomJoined { player, in_tutorial } => {
                     if in_tutorial {
-                        fire_event(GameEvent::DialogueTriggered { dialogue_name: "tutorial_start".to_owned(), player: player.clone() });
+                        fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: "tutorial_start".to_owned(), player: player.clone() });
                     }
                 }
                 GameEvent::ShipDied { player, .. } => {
@@ -55,12 +54,12 @@ pub fn handle_events(
                     // intentionally do nothing
                 }
                 GameEvent::ShipDocked { player, .. } => {
-                    fire_event(GameEvent::DialogueTriggered { dialogue_name: "basic_planet".to_owned(), player: player.clone() });
+                    fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: "basic_planet".to_owned(), player: player.clone() });
                 }
                 GameEvent::ShipUndocked { .. } => {
                     // intentionally do nothing
                 }
-                GameEvent::DialogueTriggered { dialogue_name, player } => {
+                GameEvent::DialogueTriggerRequest { dialogue_name, player } => {
                     let state = select_mut_state(cont, &player);
                     if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
                         let d_states = DialogueTable::get_player_d_states(d_states, &player);
@@ -74,7 +73,7 @@ pub fn handle_events(
             break;
         }
     }
-    (res, sampler)
+    res
 }
 
 fn select_mut_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,

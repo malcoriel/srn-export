@@ -133,6 +133,10 @@ const Srn = () => {
     ns.portraitName = portrait; // portrait files are 1-based
     ns.disconnecting = false;
     ns.init(tutorial);
+    ns.on("disconnect", () => {
+      setPlaying(false);
+      setMenu(true);
+    })
   };
 
   const quit = () => {

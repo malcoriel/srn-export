@@ -35,6 +35,7 @@ pub enum ServerToClientMessage {
     XCastGameEvent(Wrapper<GameEvent>, XCast),
     XCastStateChange(GameState, XCast),
     RoomSwitched(XCast),
+    RoomLeave(Uuid),
 }
 
 pub fn patch_state_for_player(mut state: GameState, player_id: Uuid) -> GameState {
@@ -93,6 +94,9 @@ impl ServerToClientMessage {
             }
             ServerToClientMessage::XCastStateChange(state, _) => {
                 (8, serde_json::to_string(&state).unwrap())
+            }
+            ServerToClientMessage::RoomLeave(_) => {
+                (9, "".to_owned())
             }
         };
         format!("{}_%_{}", code, serialized)

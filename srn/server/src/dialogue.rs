@@ -554,11 +554,11 @@ fn apply_side_effects(
             }
             DialogOptionSideEffect::SwitchDialogue(name) => {
                 if let Some(player) = find_my_player(state, player_id) {
-                    fire_event(GameEvent::DialogueTriggered { dialogue_name: name, player: player.clone() })
+                    fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: name, player: player.clone() })
                 }
             }
             DialogOptionSideEffect::QuitTutorial => {
-                // TODO quit from tutorial, make sure UI also quits
+                crate::kick_player(player_id);
             }
         }
     }

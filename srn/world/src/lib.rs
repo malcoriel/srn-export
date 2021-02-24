@@ -103,6 +103,10 @@ pub fn fire_event(_ev: world::GameEvent) {
     // no support for events on client
 }
 
+pub fn kick_player(_p: Uuid) {
+    // no support for removing players on client
+}
+
 fn extract_args<'a, T: Deserializable<'a>>(
     serialized_args: &'a str,
 ) -> (Result<T, Error>, Option<String>) {
@@ -179,3 +183,4 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
     let new_ship = world::apply_ship_action(args.ship_action, &args.state, args.player_id);
     return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
 }
+
