@@ -31,25 +31,6 @@ pub fn handle_events(
 
     loop {
         if let Ok(event) = receiver.try_recv() {
-            let player = match event.clone() {
-                GameEvent::ShipDocked { player, .. } => Some(player),
-                GameEvent::ShipUndocked { player, .. } => Some(player),
-                GameEvent::ShipSpawned { player, .. } => Some(player),
-                GameEvent::ShipDied { player, .. } => Some(player),
-                _ => None,
-            };
-            if let Some(player) = player {
-                let player_argument = &player;
-                let d_table_argument = &d_table;
-                let state = select_mut_state(cont, &player);
-                sampler = d_table_argument.try_trigger(
-                    state,
-                    d_states,
-                    &mut res,
-                    player_argument,
-                    sampler,
-                );
-            }
             match event.clone() {
                 GameEvent::ShipSpawned { player, .. } => {
                     let state = select_mut_state(cont, &player);
@@ -73,8 +54,8 @@ pub fn handle_events(
                 GameEvent::Unknown => {
                     // intentionally do nothing
                 }
-                GameEvent::ShipDocked { .. } => {
-                    // intentionally do nothing
+                GameEvent::ShipDocked { player, .. } => {
+                    fire_event(GameEvent::DialogueTriggered { dialogue_name: "basic_planet".to_owned(), player: player.clone() });
                 }
                 GameEvent::ShipUndocked { .. } => {
                     // intentionally do nothing

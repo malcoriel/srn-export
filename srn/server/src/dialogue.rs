@@ -250,63 +250,6 @@ impl DialogueTable {
         player_d_states.insert(script.id, value);
     }
 
-    pub fn try_trigger(
-        &self,
-        state: &GameState,
-        d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
-        mut res: &mut Vec<(Uuid, Option<Dialogue>)>,
-        player: &Player,
-        sampler: Sampler,
-    ) -> Sampler {
-        let player_d_states = DialogueTable::get_player_d_states(d_states, player);
-
-        let mut d_script: Option<&DialogueScript> = None;
-        for script in self
-            .scripts
-            .values()
-            .sorted_by(|d1, d2| d1.priority.cmp(&d2.priority))
-            .rev()
-        {
-            // eprintln!("checking {}", script.name);
-            if script.check_player(state, player, player_d_states.get(&script.id)) {
-                d_script = Some(script);
-                // eprintln!("catch! {}", script.name);
-                break;
-            }
-        }
-        if d_script.is_none() {
-            return sampler;
-        }
-
-        let d_script = d_script.unwrap();
-        let d_id = d_script.id;
-        let ship = find_my_ship(state, player.id);
-        if let Some(ship) = ship {
-            if let Some(_docked_at) = ship.docked_at {
-                if !player_d_states.contains_key(&d_id) {
-                    self.trigger_dialogue(d_script, &mut res, player, player_d_states, state);
-                } else {
-                    let existing_state = player_d_states.get(&d_id).unwrap();
-                    if existing_state.is_none() {
-                        self.trigger_dialogue(
-                            d_script,
-                            &mut res,
-                            player,
-                            player_d_states,
-                            state,
-                        );
-                    }
-                }
-            } else {
-                if player_d_states.contains_key(&d_id) {
-                    player_d_states.remove(&d_id);
-                    res.push((player.id, None))
-                }
-            }
-        }
-        sampler
-    }
-
     pub fn get_player_d_states<'a, 'b>(d_states: &'a mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>, player: &'b Player) -> &'a mut HashMap<Uuid, Box<Option<Uuid>>> {
         let (_current_player_dialogue, player_d_states) =
             d_states.entry(player.id).or_insert((None, HashMap::new()));
