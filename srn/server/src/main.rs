@@ -755,7 +755,6 @@ fn main_thread() {
             "Update planets 1",           // 18
             "Update planets 2",           // 19
             "Tutorial states",           // 20
-            "Tutorial events",           // 21
         ]
             .iter()
             .map(|v| v.to_string())
@@ -824,7 +823,8 @@ fn main_thread() {
                 events::handle_events(&mut d_table, receiver, &mut cont, d_states, sampler);
             sampler = updated_sampler;
             for (client_id, dialogue) in res {
-                unicast_dialogue_state(client_id, dialogue, cont.state.id);
+                let corresponding_state_id = if cont.tutorial_states.contains_key(&client_id) { client_id } else {cont.state.id};
+                unicast_dialogue_state(client_id, dialogue, corresponding_state_id);
             }
             sampler.end(events_mark);
             events_elapsed = 0;
