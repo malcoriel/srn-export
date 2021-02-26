@@ -17,6 +17,8 @@ import {
   size,
   viewPortSizeMeters,
 } from '../coord';
+import { useHotkeys } from 'react-hotkeys-hook';
+import { getOnWheel } from '../ThreeLayers/CameraControls';
 
 export const minimap_proportion = 0.3;
 export const get_minimap_size_x = () => size.getMinSize() * minimap_proportion;
@@ -259,6 +261,9 @@ export const MinimapPanel = React.memo(() => {
   };
   return (
     <Stage
+      onWheel={getOnWheel(visualState, ({evt}: any) => {
+        return ({ x: evt.deltaX, y: evt.deltaY });
+      })}
       width={get_minimap_size_x()}
       height={get_minimap_size_y()}
       style={{

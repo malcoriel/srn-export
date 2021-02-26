@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import NetState, { findMyShip } from '../NetState';
+import NetState, { findMyShip, VisualState } from '../NetState';
 import { useThree } from 'react-three-fiber';
 import { height_units, Ship, width_units } from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { unitsToPixels_min } from '../coord';
+import { IVector } from '../utils/Vector';
 
 export const BoundCameraMover: React.FC = () => {
   const ns = NetState.get();
@@ -68,6 +69,21 @@ export const ExternalCameraControl: React.FC = () => {
   return null;
 };
 
+export const getOnWheel = (visualState: VisualState, eventAdapter: (evt: any) => IVector) => (evt: any) => {
+  const delta = eventAdapter(evt).y;
+  visualState.zoomShift = visualState.zoomShift || 1.0;
+  let deltaZoom = delta * CAMERA_ZOOM_CHANGE_SPEED;
+  visualState.zoomShift -= deltaZoom;
+  visualState.zoomShift = Math.min(
+    visualState.zoomShift,
+    CAMERA_MAX_ZOOM,
+  );
+  visualState.zoomShift = Math.max(
+    visualState.zoomShift,
+    CAMERA_MIN_ZOOM,
+  );
+};
+
 export const CameraZoomer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -78,20 +94,7 @@ export const CameraZoomer: React.FC = () => {
   });
   return (
     <group
-      onWheel={(evt: any) => {
-        const delta = evt.deltaY;
-        visualState.zoomShift = visualState.zoomShift || 1.0;
-        let deltaZoom = delta * CAMERA_ZOOM_CHANGE_SPEED;
-        visualState.zoomShift -= deltaZoom;
-        visualState.zoomShift = Math.min(
-          visualState.zoomShift,
-          CAMERA_MAX_ZOOM
-        );
-        visualState.zoomShift = Math.max(
-          visualState.zoomShift,
-          CAMERA_MIN_ZOOM
-        );
-      }}
+      onWheel={getOnWheel(visualState, (evt) => ({ y: evt.deltaY, x: evt.deltaX }))}
     >
       <mesh position={[0, 0, -20]}>
         <planeBufferGeometry args={[width_units, height_units]} />

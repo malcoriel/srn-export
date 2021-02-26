@@ -95,7 +95,7 @@
         ],
         [
           "cancel",
-          "I think I have enough of this. Let me fly already!",
+          "I think I've had enough of this. Let me fly already!",
           "cancel_confirm",
           [],
           null
