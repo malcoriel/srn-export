@@ -13,6 +13,7 @@ import useSWR from 'swr';
 import { api } from '../utils/api';
 import { GlobalChat } from './GlobalChat';
 import { Changelog } from './Changelog';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 // to only skip menu once
 let firstTime = true;
@@ -60,6 +61,12 @@ export const StartMenu: React.FC<{
   }));
 
   const hide = () => setMenu(false);
+
+  useHotkeys("q", () => {
+    if (playing) {
+      quit();
+    }
+  })
 
   useEffect(() => {
     if (skipMenu && firstTime) {
