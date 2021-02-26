@@ -2,14 +2,28 @@
   "is_default": false,
   "is_planetary": false,
   "priority": -1,
-  "initial_state_name": "start",
+  "initial_state_name": "step1",
   "table": {
-    "start": [
-      "Let me teach you how to look around. The easiest way is the default one. Your camera will always follow your ship in the center of the screen. If you want to reset your camera at any point to that state, press C button on your keyboard.",
+    "cancel_confirm": [
+      "Oh well, I'm pretty sure you can handle it on your own. Good luck!",
       [
         [
-          "go_next",
-          "Ok, I get it. Tell me how do I look somewhere else?",
+          "quit",
+          "See ya!",
+          "",
+          [
+            "QuitTutorial"
+          ],
+          null
+        ]
+      ]
+    ],
+    "step1": [
+      "Let me teach you how to look around. The easiest way is the default. Your camera will always follow your ship in the center of the screen. If you want to reset your camera at any point to that state, press C button on your keyboard.",
+      [
+        [
+          "go_step2",
+          "Ok, I get it. Tell me how do I look somewhere else but my ship?",
           "step2",
           [
           ],
@@ -17,15 +31,96 @@
         ]
       ]
     ],
-    "next state": [
-      "To move ",
+    "step2": [
+      "To move the camera around, left-click on the minimap in the top right corner. Try it out.",
       [
-        ["opt1", "opt1 text", "next state", [], null]
+        [
+          "go_step3",
+          "Fine. Is there anything else?",
+          "step3",
+          [],
+          null
+        ],
+        [
+          "go_step1",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step1",
+          [],
+          null
+        ]
+      ]
+    ],
+    "step3": [
+      "You can drag the rectangle on the minimap for a smoother movement.",
+      [
+        [
+          "go_step4",
+          "Ah, nice. Is there a way to make it bigger or smaller?",
+          "step4",
+          [],
+          null
+        ],
+        [
+          "go_step2",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step2",
+          [],
+          null
+        ]
+      ]
+    ],
+    "step4": [
+      "Yes, you can. Try scrolling your mousewheel. There zoom can be somewhere between x0.5 and x2.0.",
+      [
+        [
+          "go_step5",
+          "Cool. I think I get how to move the camera. We can do something else.",
+          "step5",
+          [],
+          null
+        ],
+        [
+          "go_step3",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step3",
+          [],
+          null
+        ],
+        [
+          "go_beginning",
+          "I don't get it at all. Can you repeat from the beginning?",
+          "step1",
+          [],
+          null
+        ],
+        [
+          "cancel",
+          "I think I have enough of this. Let me fly already!",
+          "cancel_confirm",
+          [],
+          null
+        ]
+      ]
+    ],
+    "step5": [
+      "Nice. Let me show you how to move your ship.",
+      [
+        [
+          "next_tutorial",
+          "Let's move on.",
+          "",
+          [
+            {
+              "SwitchDialogue": "tutorial_movement"
+            }
+          ],
+          null
+        ]
       ]
     ]
   },
   "bot_path": [],
-  "name": "d_template",
+  "name": "tutorial_camera",
   "portrait": "administrator",
   "environment": "space"
 }
