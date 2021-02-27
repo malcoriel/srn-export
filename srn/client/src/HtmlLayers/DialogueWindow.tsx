@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect, useState } from 'react';
-import './DialoguePanel.scss';
+import './DialogueWindow.scss';
 import { Window } from './ui/Window';
 import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
@@ -19,6 +19,8 @@ export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
     {substituteText(dialogue.text, dialogue.substitution)}
   </span>
 );
+
+
 const renderContent = (dialogue: Dialogue, ns: NetState) => (
   <div className='dialogue'>
     <div className='top-part'>
@@ -83,6 +85,27 @@ const renderContent = (dialogue: Dialogue, ns: NetState) => (
   </div>
 );
 
+const renderMinimized = (dialogue: Dialogue, ns: NetState) => (
+  <div>
+    <div className='prompt'>
+      <DialogueElemView {...dialogue.prompt} />
+    </div>
+    <div className='options'>
+      {dialogue.options.map((option, i) => (
+        <div
+          key={i}
+          className='line'
+          onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
+        >
+          {i + 1}.&nbsp;
+          <DialogueElemView key={option.id} {...option} />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+
 export const DialogueWindow: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -101,8 +124,7 @@ export const DialogueWindow: React.FC = () => {
     return () => {
       ns.off('dialogue', onDialogueChange);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ns.id]);
+  }, [ns.id, dialogueWindowState, setDialogueWindowState]);
 
   const { dialogue } = ns;
 
@@ -128,7 +150,10 @@ export const DialogueWindow: React.FC = () => {
     line={'thin'}
     halfThick
     storeKey='dialogueWindow'
-    thickness={8}>
+    thickness={8}
+    minimizedClassname="minimized-dialogue"
+    minimized={renderMinimized(dialogue, ns)}
+  >
     {renderContent(dialogue, ns)}
   </Window>;
 };
@@ -178,3 +203,4 @@ export const substituteText = (
     <span key={i}>{elem}</span>
   ));
 };
+
