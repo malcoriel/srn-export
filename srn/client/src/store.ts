@@ -25,6 +25,7 @@ export function portraitPath(portraitIndex: number) {
 }
 
 export enum WindowState {
+  Unknown,
   Hidden,
   Shown,
   Minimized,
@@ -73,6 +74,8 @@ export type SrnState = {
   toggleLeaderboardWindow: () => void;
   hintedObjectId?: string;
   setHintedObjectId: (val?: string) => void;
+  dialogueWindow: WindowState;
+  setDialogueWindow: (val: WindowState) => void;
 };
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
@@ -110,6 +113,7 @@ export const useStore = create<SrnState>((set) => ({
   volume: lsMusicVolume,
   questWindow: WindowState.Minimized,
   chatWindow: WindowState.Minimized,
+  dialogueWindow: WindowState.Hidden,
   inventoryWindow: WindowState.Hidden,
   tradeWindow: WindowState.Hidden,
   helpWindow: WindowState.Hidden,
@@ -134,6 +138,7 @@ export const useStore = create<SrnState>((set) => ({
   setInventoryWindow: (val: WindowState) => set({ inventoryWindow: val }),
   setTradeWindow: (val: WindowState) => set({ tradeWindow: val }),
   setLeaderboardWindow: (val: WindowState) => set({ leaderboardWindow: val }),
+  setDialogueWindow: (val: WindowState) => set({ dialogueWindow: val }),
   toggleQuestWindow: () =>
     set((state) => {
       return { questWindow: toggleWindowState(state.questWindow, true) };

@@ -16,7 +16,6 @@ import { HelpWindow } from './HtmlLayers/HelpWindow';
 import './HtmlLayers/Panel.scss';
 import { MinimapPanel } from './KonvaLayers/MinimapPanel';
 import 'react-jinke-music-player/assets/index.css';
-import { DialoguePanel } from './HtmlLayers/DialoguePanel';
 import { MusicControls } from './MusicControls';
 import { HotkeyWrapper } from './HotkeyWrapper';
 import { SrnState, useStore } from './store';
@@ -31,6 +30,7 @@ import { size } from './coord';
 import { ChatState } from './ChatState';
 import { ChatWindow } from './HtmlLayers/ChatWindow';
 import { InventoryWindow } from './HtmlLayers/InventoryWindow';
+import { DialogueWindow } from './HtmlLayers/DialogueWindow';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -174,7 +174,7 @@ const Srn = () => {
             <ShipControls />
             <NetworkStatus />
             <LeaderboardWindow />
-            <DialoguePanel />
+            <DialogueWindow />
             <QuestWindow />
             <ChatWindow />
             <HotkeyWrapper

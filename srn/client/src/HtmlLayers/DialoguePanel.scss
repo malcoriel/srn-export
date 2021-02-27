@@ -22,11 +22,11 @@
   }
 
   .left-character {
-
+    background-color: gray;
   }
 
   .right-character {
-
+    background-color: gray;
   }
 
   .scene {
@@ -79,4 +79,8 @@
   .sub-character {
     color: #7ec8e3;
   }
+}
+
+.dialogue-window-content {
+  opacity: 0.9
 }

@@ -8,6 +8,7 @@ import ReactDOM from 'react-dom';
 import './Window.scss';
 export const Window: React.FC<{
   storeKey: string;
+  fixedState?: WindowState;
   minimized?: React.ReactNode;
   width: number;
   height: number;
@@ -26,6 +27,7 @@ export const Window: React.FC<{
   line,
   minimized,
   className,
+  fixedState,
   contentClassName, minimizedClassname,
 }) => {
   const key = storeKey;
@@ -34,7 +36,7 @@ export const Window: React.FC<{
     [key]: (state as Record<string, any>)[key],
     [setKey]: (state as Record<string, any>)[setKey],
   }));
-  const state = storeParts[key] as WindowState;
+  const state = fixedState || storeParts[key] as WindowState;
   const minimize = () => storeParts[setKey](WindowState.Minimized);
   const maximize = () => storeParts[setKey](WindowState.Shown);
   const hide = () => storeParts[setKey](WindowState.Hidden);
