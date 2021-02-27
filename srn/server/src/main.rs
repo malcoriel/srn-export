@@ -314,6 +314,7 @@ fn handle_request(request: WSRequest) {
             Err(e) => {
                 eprintln!("err {} receiving ws {}", client_id, e);
                 increment_client_errors(client_id);
+                disconnect_if_bad(client_id);
             }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));

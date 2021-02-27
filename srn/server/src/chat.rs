@@ -12,6 +12,8 @@ use std::sync::mpsc::channel;
 use objekt_clonable::objekt::private::sync::mpsc::{Sender, Receiver};
 use lazy_static::lazy_static;
 use serde_json::Error;
+use chrono::{Utc, DateTime};
+use std::collections::HashMap;
 
 lazy_static! {
     static ref CHAT_CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ServerChatMessage>)>>> =
@@ -37,7 +39,7 @@ struct ChatMessage {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct ServerChatMessage {
     pub channel: String,
-    pub message: ChatMessage
+    pub message: ChatMessage,
 }
 
 impl ServerChatMessage {
@@ -46,8 +48,8 @@ impl ServerChatMessage {
             channel: "global".to_string(),
             message: ChatMessage {
                 name: "Server".to_string(),
-                message: msg.to_string()
-            }
+                message: msg.to_string(),
+            },
         }
     }
 }
@@ -57,7 +59,7 @@ impl ChatMessage {
     pub fn server(msg: &str) -> ChatMessage {
         ChatMessage {
             name: "Server".to_string(),
-            message: msg.to_string()
+            message: msg.to_string(),
         }
     }
 }
@@ -77,8 +79,8 @@ fn dispatcher_thread() {
             let send = sender.1.send(msg.clone());
             if let Err(e) = send {
                 eprintln!("err {} sending {}", sender.0, e);
-                // increment_client_errors(sender.0);
-                // disconnect_if_bad(sender.0);
+                increment_client_errors(sender.0);
+                disconnect_if_bad(sender.0);
             }
         }
         thread::sleep(Duration::from_millis(CHAT_SLEEP_MS))
@@ -140,7 +142,7 @@ fn handle_request(request: WSRequest) {
             }
             Err(e) => {
                 warn!(format!("err {} receiving ws {}", client_id, e));
-                // increment_client_errors(client_id);
+                increment_client_errors(client_id);
             }
         }
         thread::sleep(Duration::from_millis(CHAT_SLEEP_MS));
@@ -150,9 +152,9 @@ fn handle_request(request: WSRequest) {
         if is_disconnected(client_id) {
             break;
         }
-        // if disconnect_if_bad(client_id) {
-        //     break;
-        // }
+        if disconnect_if_bad(client_id) {
+            break;
+        }
 
         if let Ok(message) = message_rx.try_recv() {
             match message {
@@ -179,7 +181,6 @@ fn handle_request(request: WSRequest) {
                             warn!(format!("Corrupted message {}: {}", msg, err))
                         }
                     }
-
                 }
                 _ => {}
             }
@@ -191,8 +192,8 @@ fn handle_request(request: WSRequest) {
                     .send_message(&message)
                     .map_err(|e| {
                         warn!(format!("err {} sending {}", client_id, e));
-                        // increment_client_errors(client_id);
-                        // disconnect_if_bad(client_id);
+                        increment_client_errors(client_id);
+                        disconnect_if_bad(client_id);
                     })
                     .ok();
             }
@@ -201,3 +202,53 @@ fn handle_request(request: WSRequest) {
     }
 }
 
+lazy_static! {
+    static ref CHAT_CLIENT_ERRORS: Arc<Mutex<HashMap<Uuid, u32>>> = Arc::new(Mutex::new(HashMap::new()));
+}
+
+const MAX_ERRORS: u32 = 10;
+const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
+
+fn increment_client_errors(client_id: Uuid) {
+    let mut errors = CHAT_CLIENT_ERRORS.lock().unwrap();
+    let entry = errors.entry(client_id).or_insert(0);
+    *entry += 1;
+}
+
+struct LastCheck {
+    time: DateTime<Utc>,
+}
+
+lazy_static! {
+    static ref CHAT_CLIENT_ERRORS_LAST_CHECK: Arc<Mutex<LastCheck>> =
+        Arc::new(Mutex::new(LastCheck { time: Utc::now() }));
+}
+
+fn disconnect_if_bad(client_id: Uuid) -> bool {
+    let mut errors = CHAT_CLIENT_ERRORS.lock().unwrap();
+    let mut last_check = CHAT_CLIENT_ERRORS_LAST_CHECK.lock().unwrap();
+    let now = Utc::now();
+    let diff = (last_check.time - now).num_milliseconds().abs();
+    if diff > MAX_ERRORS_SAMPLE_INTERVAL {
+        if errors.values().any(|e| *e > 0) {
+            eprintln!("Resetting errors, old {:?}", errors);
+        }
+        last_check.time = now;
+        *errors = HashMap::new();
+    }
+    let entry = errors.entry(client_id).or_insert(0);
+    if *entry > MAX_ERRORS {
+        force_disconnect_client(client_id);
+        return true;
+    }
+    return false;
+}
+
+fn force_disconnect_client(client_id: Uuid) {
+    let mut senders = CHAT_CLIENT_SENDERS.lock().unwrap();
+    let bad_sender_index = senders.iter().position(|c| c.0 == client_id);
+    if let Some(index) = bad_sender_index {
+        eprintln!("force disconnecting chat client: {}", client_id);
+        senders.remove(index);
+    }
+}
