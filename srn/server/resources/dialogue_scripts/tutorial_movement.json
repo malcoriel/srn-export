@@ -1,0 +1,109 @@
+{
+  "is_default": false,
+  "is_planetary": false,
+  "priority": -1,
+  "initial_state_name": "start",
+  "table": {
+    "start": [
+      "Flying is also pretty important, if you ask me. How else would you get anywhere? Anyway, here is how you do it: just click somewhere in the space.",
+      [
+        [
+          "go_step2",
+          "That's it? So simple?",
+          "step2",
+          [
+          ],
+          null
+        ]
+      ]
+    ],
+    "step2": [
+      "Yes, that simple. However, there is more to it. If you press on a planet, your ship will build a trajectory to land on it. And when you click somewhere else, you will automatically undock.",
+      [
+        [
+          "go_step3",
+          "Sounds useful.",
+          "step3",
+          [],
+          null
+        ]
+      ]
+    ],
+    "step3": [
+      "You can also fly around on manual controls, using WASD keys, if you need more interactive experience.",
+      [
+        [
+          "go_step4",
+          "But how do I land on a planet then?",
+          "step4",
+          [],
+          null
+        ]
+      ]
+    ],
+    "step4": [
+      "Just press space. And when you press again it while landed, it will undock you.",
+      [
+        [
+          "go_step5",
+          "I see. What happens if I try to fly into the star?",
+          "step5",
+          [],
+          null
+        ]
+      ]
+    ],
+    "step5": [
+      "Your ship will blow up and you will die... I mean, your old version will die. Don't you remember this?",
+      [
+        [
+          "go_step6",
+          "What? Am I some kind of clone or something?",
+          "step6",
+          [],
+          null
+        ]
+      ]
+    ],
+    "step6": [
+      "Ah, the memory loss. Well, don't worry, it will get back to you. As you see, our cloning process is almost perfect. Maybe they added this as a feature - erasing the last unpleasant experiences.",
+      [
+        [
+          "go_step7",
+          "That raises some unpleasant philosophical questions... Do I get a new ship for free?",
+          "step7",
+          [],
+          null
+        ]
+      ]
+    ],
+    "step7": [
+      "Not exactly. The new minimap ship cost will be automatically deducted from your intergalactic bank account. But don't worry, if you don't have any, we can't deduct anything. It's just your consciousness will be used for some... experiments. Don't worry, you will also not remember that, we typically erase that part of your memory.",
+      [
+        [
+          "go_step8",
+          "Ugh. How do I earn money then to avoid being a guinea pig?",
+          "step8",
+          [],
+          null
+        ]
+      ]
+    ],
+    "step8": [
+      "Ah, I'm glad you asked. Very important thing. Let's go to the next part of this tutorial to teach you how to get some Liquid Space Credits (LSC).",
+      [
+        [
+          "go_step9",
+          "What kind of silly name for a currency is that? Whatever, let's go.",
+          "",
+          [],
+          null
+        ]
+      ]
+    ]
+  },
+  "bot_path": [],
+  "name": "tutorial_movement",
+  "portrait": "administrator",
+  "environment": "space"
+}

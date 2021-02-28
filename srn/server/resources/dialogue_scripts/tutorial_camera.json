@@ -19,11 +19,11 @@
       ]
     ],
     "step1": [
-      "Let me teach you how to look around. The easiest way is the default. Your camera will always follow your ship in the center of the screen. If you want to reset your camera at any point to that state, press C button on your keyboard.",
+      "One of the most important things - how to look around. Did you know that at least 87% of our new rangers don't ever learn how to do that properly? The easiest way is the default. Your camera will always follow your ship in the center of the screen. If you want to reset your camera at any point to that state, press the C button on your keyboard.",
       [
         [
           "go_step2",
-          "Ok, I get it. Tell me how do I look somewhere else but my ship?",
+          "Something is telling me that this statistic is fishy, but ok, I get it. Tell me how do I look somewhere else but my ship?",
           "step2",
           [
           ],
@@ -70,7 +70,7 @@
       ]
     ],
     "step4": [
-      "Yes, you can. Try scrolling your mousewheel. There zoom can be somewhere between x0.5 and x2.0. You can do it both over the minimap and in the space.",
+      "Yes, you can. Try scrolling your mousewheel. There zoom can be somewhere between x0.5 and x2.0. You can do it both over the minimap and in the space. The reset camera (C) action will also reset the zoom to x1.0.",
       [
         [
           "go_step5",
@@ -88,7 +88,7 @@
         ],
         [
           "go_beginning",
-          "I don't get it at all. Can you repeat from the beginning?",
+          "I don't get it at all. Can you repeat everything from the beginning?",
           "step1",
           [],
           null

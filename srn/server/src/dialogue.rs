@@ -572,7 +572,7 @@ pub fn gen_scripts() -> Vec<DialogueScript> {
     res.push(read_from_resource("cargo_delivery_dropoff"));
     res.push(read_from_resource("tutorial_start"));
     res.push(read_from_resource("tutorial_camera"));
-    //res.push(read_from_resource("tutorial_movement"));
+    res.push(read_from_resource("tutorial_movement"));
     //res.push(read_from_resource("tutorial_quests"));
     //res.push(read_from_resource("tutorial_gathering"));
     res
