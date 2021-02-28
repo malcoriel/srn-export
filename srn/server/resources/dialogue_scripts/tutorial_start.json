@@ -8,14 +8,10 @@
       "Hey ranger! I bet that you are curious how to play this game. My name is Administrator, and I'll guide you through the basics here. Press on a response line below to answer to me. You can also use your keyboard keys 1-9 to quickly select options in any dialogue.",
       [
         [
-          "begin",
-          "Ok, let's go through this!",
-          "",
-          [
-            {
-              "SwitchDialogue": "tutorial_camera"
-            }
-          ],
+          "continue",
+          "Wow, an interactive teaching system, nice.",
+          "minimize_tutorial",
+          [],
           null
         ],
         [
@@ -27,10 +23,46 @@
         ]
       ]
     ],
+    "minimize_tutorial": [
+      "I advise you to minimize this dialogue window before we continue. Press the small triangle button in the top right corner. Don't worry, you will still be able to see what I say and respond even in the minimized state, but it will also allow you to not have this window blocking your whole screen.",
+      [
+        [
+          "minimized",
+          "Ok, I did that. What's next?",
+          "next_tutorial",
+          [],
+          null
+        ]
+      ]
+    ],
+    "next_tutorial": [
+      "Now we'll teach you how to control your camera. Ready?",
+      [
+        [
+          "begin",
+          "Let's go already.",
+          "",
+          [
+            {
+              "SwitchDialogue": "tutorial_camera"
+            }
+          ],
+          null
+        ]
+      ]
+    ],
     "cancel_confirm": [
       "Oh well, I'm pretty sure you can handle it on your own. Good luck!",
       [
-        ["quit", "See ya!", "", ["QuitTutorial"], null]
+        [
+          "quit",
+          "See ya!",
+          "",
+          [
+            "QuitTutorial"
+          ],
+          null
+        ]
       ]
     ]
   },
