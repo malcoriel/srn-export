@@ -257,7 +257,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         asteroid_belts: vec![],
         ships: vec![],
         players: vec![],
-        milliseconds_remaining: 99 * 1000,
+        milliseconds_remaining: 60 * 1000,
         paused: false,
         leaderboard: None,
         ticks: 0

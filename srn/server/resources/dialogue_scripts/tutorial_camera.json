@@ -70,7 +70,7 @@
       ]
     ],
     "step4": [
-      "Yes, you can. Try scrolling your mousewheel. There zoom can be somewhere between x0.5 and x2.0.",
+      "Yes, you can. Try scrolling your mousewheel. There zoom can be somewhere between x0.5 and x2.0. You can do it both over the minimap and in the space.",
       [
         [
           "go_step5",

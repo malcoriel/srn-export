@@ -553,7 +553,7 @@ pub fn update_world(
     update_options: UpdateOptions,
 ) -> (GameState, Sampler) {
     state.ticks += elapsed as u32 / 1000;
-    if !client {
+    if !client && state.seed != "tutorial".to_owned() {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
     }
 
