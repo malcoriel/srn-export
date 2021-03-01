@@ -78,6 +78,7 @@ pub enum DialogOptionSideEffect {
     SellMinerals,
     QuitTutorial,
     SwitchDialogue(String),
+    TriggerTutorialQuest,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -560,6 +561,9 @@ fn apply_side_effects(
             DialogOptionSideEffect::QuitTutorial => {
                 crate::kick_player(player_id);
             }
+            DialogOptionSideEffect::TriggerTutorialQuest => {
+                // TODO
+            }
         }
     }
     return state_changed;
@@ -573,8 +577,8 @@ pub fn gen_scripts() -> Vec<DialogueScript> {
     res.push(read_from_resource("tutorial_start"));
     res.push(read_from_resource("tutorial_camera"));
     res.push(read_from_resource("tutorial_movement"));
-    //res.push(read_from_resource("tutorial_quests"));
-    //res.push(read_from_resource("tutorial_gathering"));
+    res.push(read_from_resource("tutorial_quests"));
+    res.push(read_from_resource("tutorial_end"));
     res
 }
 

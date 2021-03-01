@@ -1,0 +1,59 @@
+{
+  "is_default": false,
+  "is_planetary": false,
+  "priority": -1,
+  "initial_state_name": "start",
+  "table": {
+    "start": [
+      "Yes, you can! If you want, I can repeat any part of this tutorial.",
+      [
+        [
+          "end",
+          "That's enough learning. Let's play!",
+          "",
+          [
+            "QuitTutorial"
+          ],
+          null
+        ],
+        [
+          "go_camera",
+          "Tell me again how to control camera.",
+          "",
+          [
+            {
+              "SwitchDialogue": "tutorial_camera"
+            }
+          ],
+          null
+        ],
+        [
+          "go_movement",
+          "Tell me again how to fly.",
+          "",
+          [
+            {
+              "SwitchDialogue": "tutorial_movement"
+            }
+          ],
+          null
+        ],
+        [
+          "go_quests",
+          "Tell me again how to earn money.",
+          "",
+          [
+            {
+              "SwitchDialogue": "tutorial_quests"
+            }
+          ],
+          null
+        ]
+      ]
+    ]
+  },
+  "bot_path": [],
+  "name": "tutorial_end",
+  "portrait": "administrator",
+  "environment": "space"
+}

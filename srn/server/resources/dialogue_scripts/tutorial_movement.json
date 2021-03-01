@@ -78,7 +78,7 @@
       ]
     ],
     "step7": [
-      "Not exactly. The new minimap ship cost will be automatically deducted from your intergalactic bank account. But don't worry, if you don't have any, we can't deduct anything. It's just your consciousness will be used for some... experiments. Don't worry, you will also not remember that, we typically erase that part of your memory.",
+      "Not exactly. The new basic ship cost will be automatically deducted from your intergalactic bank account. But don't worry, if you don't have any, we can't deduct anything. It's just your consciousness will be used for some... experiments. Don't worry, you will also not remember that, we typically erase that part of your memory.",
       [
         [
           "go_step8",
@@ -90,13 +90,17 @@
       ]
     ],
     "step8": [
-      "Ah, I'm glad you asked. Very important thing. Let's go to the next part of this tutorial to teach you how to get some Liquid Space Credits (LSC).",
+      "Ah, I'm glad you asked. Very important thing. Let's go to the next part of this tutorial to teach you how to get some Space Bucks (SB).",
       [
         [
           "go_step9",
           "What kind of silly name for a currency is that? Whatever, let's go.",
           "",
-          [],
+          [
+            {
+              "SwitchDialogue": "tutorial_quests"
+            }
+          ],
           null
         ]
       ]
