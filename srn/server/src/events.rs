@@ -54,7 +54,11 @@ pub fn handle_events(
                     // intentionally do nothing
                 }
                 GameEvent::ShipDocked { player, .. } => {
-                    fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: "basic_planet".to_owned(), player: player.clone() });
+                    let state = select_mut_state(cont, &player);
+                    if state.id != player.id {
+                        // do not trigger landing dialogue on landing
+                        fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: "basic_planet".to_owned(), player: player.clone() });
+                    }
                 }
                 GameEvent::ShipUndocked { .. } => {
                     // intentionally do nothing
