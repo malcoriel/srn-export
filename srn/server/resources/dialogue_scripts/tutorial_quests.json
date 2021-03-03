@@ -28,6 +28,13 @@
             "TriggerTutorialQuest"
           ],
           null
+        ],
+        [
+          "go_step1",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step1",
+          [],
+          null
         ]
       ]
     ],
@@ -38,6 +45,13 @@
           "go_step4",
           "Sounds easy.",
           "step4",
+          [],
+          null
+        ],
+        [
+          "go_step2",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step2",
           [],
           null
         ]
@@ -55,6 +69,13 @@
               "SwitchDialogue": "tutorial_end"
             }
           ],
+          null
+        ],
+        [
+          "go_step3",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step3",
+          [],
           null
         ],
         [
