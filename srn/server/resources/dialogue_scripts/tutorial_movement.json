@@ -2,9 +2,9 @@
   "is_default": false,
   "is_planetary": false,
   "priority": -1,
-  "initial_state_name": "start",
+  "initial_state_name": "step1",
   "table": {
-    "start": [
+    "step1": [
       "Flying is also pretty important, if you ask me. How else would you get anywhere? Anyway, here is how you do it: just click somewhere in the space.",
       [
         [
@@ -26,6 +26,13 @@
           "step3",
           [],
           null
+        ],
+        [
+          "go_step1",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step1",
+          [],
+          null
         ]
       ]
     ],
@@ -36,6 +43,13 @@
           "go_step4",
           "But how do I land on a planet then?",
           "step4",
+          [],
+          null
+        ],
+        [
+          "go_step2",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step2",
           [],
           null
         ]
@@ -50,6 +64,13 @@
           "step5",
           [],
           null
+        ],
+        [
+          "go_step3",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step3",
+          [],
+          null
         ]
       ]
     ],
@@ -60,6 +81,13 @@
           "go_step6",
           "What? Am I some kind of clone or something?",
           "step6",
+          [],
+          null
+        ],
+        [
+          "go_step4",
+          "Hold on, I missed something. Can you repeat the previous step?",
+          "step1",
           [],
           null
         ]
@@ -100,6 +128,34 @@
             {
               "SwitchDialogue": "tutorial_quests"
             }
+          ],
+          null
+        ],
+        [
+          "go_beginning",
+          "I don't get it at all. Can you repeat everything about the movement from the beginning?",
+          "step1",
+          [],
+          null
+        ],
+        [
+          "cancel",
+          "I think I've had enough of this. Let me fly already!",
+          "cancel_confirm",
+          [],
+          null
+        ]
+      ]
+    ],
+    "cancel_confirm": [
+      "Oh well, I'm pretty sure you can handle it on your own. Good luck!",
+      [
+        [
+          "quit",
+          "See ya!",
+          "",
+          [
+            "QuitTutorial"
           ],
           null
         ]

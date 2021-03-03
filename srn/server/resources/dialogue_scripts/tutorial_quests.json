@@ -2,9 +2,9 @@
   "is_default": false,
   "is_planetary": false,
   "priority": -1,
-  "initial_state_name": "start",
+  "initial_state_name": "step1",
   "table": {
-    "start": [
+    "step1": [
       "How do you earn money here? Or as we call it, SB? It's fairly simple. So far, all you have to do is just fulfill simple delivery tasks.",
       [
         [
@@ -54,6 +54,34 @@
             {
               "SwitchDialogue": "tutorial_end"
             }
+          ],
+          null
+        ],
+        [
+          "go_beginning",
+          "I don't get it at all. Can you repeat everything about the quests from the beginning?",
+          "step1",
+          [],
+          null
+        ],
+        [
+          "cancel",
+          "I think I've had enough of this. Let me fly already!",
+          "cancel_confirm",
+          [],
+          null
+        ]
+      ]
+    ],
+    "cancel_confirm": [
+      "Oh well, I'm pretty sure you can handle it on your own. Good luck!",
+      [
+        [
+          "quit",
+          "See ya!",
+          "",
+          [
+            "QuitTutorial"
           ],
           null
         ]

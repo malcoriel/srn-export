@@ -347,7 +347,7 @@ pub fn build_dialogue_from_state(
                                 id,
                             })
                         }
-                    } )
+                    })
                     .collect::<Vec<_>>(),
                 prompt: DialogueElem {
                     text: prompt.clone(),
@@ -398,7 +398,7 @@ fn substitute_text(
                     } else {
                         "moon"
                     })
-                    .to_string(),
+                        .to_string(),
                 });
             } else {
                 eprintln!("s_current_planet_body_type used without current planet");
@@ -451,9 +451,7 @@ fn substitute_text(
             } else {
                 err!("s_minerals_value used without player");
             }
-
-        }
-        else {
+        } else {
             eprintln!("Unknown substitution {}", cap[0].to_string());
         }
     }
@@ -547,7 +545,7 @@ fn apply_side_effects(
             }
             DialogOptionSideEffect::SellMinerals => {
                 let (player, ship) = find_player_and_ship_mut(state, player_id);
-                if let (Some( player), Some(ship)) = (player, ship) {
+                if let (Some(player), Some(ship)) = (player, ship) {
                     let minerals = consume_items_of_types(&mut ship.inventory, &MINERAL_TYPES.to_vec());
                     let sum = minerals.iter().fold(0, |acc, curr| acc + curr.value * curr.quantity);
                     player.money += sum;
@@ -611,6 +609,7 @@ pub struct ShortScript {
 }
 
 pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
+    println!("loading {} dialogue...", ss.name);
     let mut script = DialogueScript::new();
     script.id = new_id();
     script.is_default = ss.is_default;
@@ -638,7 +637,10 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
         for (option_name, option_text, next_state_name, side_effects, option_condition) in options.into_iter() {
             let option_id = script.ids_db.get(&option_name).unwrap().clone();
             let next_state_id = if next_state_name != "" {
-                Some(script.ids_db.get(&next_state_name).unwrap().clone())
+                let option = script.ids_db.get(&next_state_name);
+                option
+                    .expect(format!("no next state by name {}", next_state_name).as_str());
+                Some(option.unwrap().clone())
             } else {
                 None
             };
