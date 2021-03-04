@@ -1,3 +1,4 @@
+@import "../utils/palette";
 .dialogue,.minimized-dialogue {
   .prompt {
     line-height: 24px;
@@ -32,32 +33,38 @@
   border-width: 3px;
   font-size: 18px;
 
-  .top-part {
-    display: flex;
+  .context-part {
     height: 200px;
+    width: 100%;
+
+    img {
+      height: 100%;
+    }
+    position: relative;
   }
 
-  .top-part * {
-    border-right: solid blue 1px;
-    border-bottom: solid blue 1px;
-    flex: 1 0;
-    height: 100%;
-  }
-
-  .top-part *:last-child {
-    border-right: none;
-  }
-
-  .left-character {
+  .context-character {
+    position: absolute;
+    top: 0;
+    right: 0;
     background-color: gray;
-  }
-
-  .right-character {
-    background-color: gray;
+    width: 50px;
+    height: 50px;
   }
 
   .scene {
+    position: absolute;
+    height: 100%;
+    top: 0;
+    right: 0;
+    border: 0 solid $teal;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+  }
 
+  .history {
+    width: 400px;
+    height: 210px;
   }
 
   .hint {

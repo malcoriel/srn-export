@@ -12,6 +12,7 @@ import { makePortraitPath } from './StartMenu';
 import { Dialogue, DialogueElem, DialogueSubstitution, DialogueSubstitutionType, Planet } from '../world';
 import { useStore, WindowState } from '../store';
 import { findPlanet } from './NetworkStatus';
+import { WithScrollbars } from './ui/WithScrollbars';
 
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
@@ -23,12 +24,11 @@ export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
 
 const renderContent = (dialogue: Dialogue, ns: NetState) => (
   <div className='dialogue'>
-    <div className='top-part'>
-      <div className='left-character'>
-        {/* eslint-disable-next-line jsx-a11y/alt-text */}
-        <img
-          src={makePortraitPath(dialogue.left_character)}
-        />
+    <div className='context-part'>
+      <div className="history">
+        <WithScrollbars>
+          LOREM IPSUM LOREM IPSUM
+        </WithScrollbars>
       </div>
       <div className='scene'>
         <Canvas
@@ -57,7 +57,7 @@ const renderContent = (dialogue: Dialogue, ns: NetState) => (
           )}
         </Canvas>
       </div>
-      <div className='right-character'>
+      <div className='context-character'>
         {/* eslint-disable-next-line jsx-a11y/alt-text */}
         <img
           src={makePortraitPath(dialogue.right_character)}
@@ -144,6 +144,7 @@ export const DialogueWindow: React.FC = () => {
   if (!dialogue) return null;
 
   return <Window
+    unclosable
     contentClassName="dialogue-window-content"
     height={616}
     width={622}

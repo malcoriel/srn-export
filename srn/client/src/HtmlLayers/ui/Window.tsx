@@ -15,6 +15,7 @@ export const Window: React.FC<{
   thickness: number;
   line: 'complex' | 'thick' | 'thin';
   halfThick?: boolean;
+  unclosable?: boolean;
   contentClassName?: string;
   className?: string;
   minimizedClassname?: string;
@@ -28,6 +29,7 @@ export const Window: React.FC<{
   minimized,
   className,
   fixedState,
+  unclosable,
   contentClassName, minimizedClassname,
 }) => {
   const key = storeKey;
@@ -39,7 +41,7 @@ export const Window: React.FC<{
   const state = fixedState || storeParts[key] as WindowState;
   const minimize = () => storeParts[setKey](WindowState.Minimized);
   const maximize = () => storeParts[setKey](WindowState.Shown);
-  const hide = () => storeParts[setKey](WindowState.Hidden);
+  const hide = () => storeParts[setKey](unclosable ? WindowState.Minimized : WindowState.Hidden);
 
   const isShown = state === WindowState.Shown;
   const isMinimized = state === WindowState.Minimized;
