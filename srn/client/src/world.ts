@@ -114,6 +114,7 @@ export type DialogueSubstitution = {
 export type DialogueElem = {
   text: string;
   id: string;
+  is_option: boolean;
   substitution: DialogueSubstitution[];
 };
 

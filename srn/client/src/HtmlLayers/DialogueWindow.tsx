@@ -23,7 +23,7 @@ export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
 
 const renderHistory = (history: DialogueElem[]) => {
   return <>{
-    history.map(hi => <div key={hi.id} className='history-item'>
+    history.map(hi => <div key={hi.id} className={`history-item ${hi.is_option && 'option'}`}>
       <DialogueElemView {...hi} />
     </div>)
   }</>;
@@ -33,7 +33,7 @@ const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]
   <div className='dialogue'>
     <div className='context-part'>
       <div className='history'>
-        <WithScrollbars noAutoHide autoScrollDown>
+        <WithScrollbars noAutoHide autoScrollDown paddedRight>
           {renderHistory(history)}
         </WithScrollbars>
       </div>
@@ -138,6 +138,7 @@ export const DialogueWindow: React.FC = () => {
     const options = dialogue.options;
     if (!options) return;
     if (options[i]) {
+      setHistory([...history, options[i]]);
       ns.sendDialogueOption(dialogue.id, options[i].id);
     }
   };

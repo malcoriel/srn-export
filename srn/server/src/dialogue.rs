@@ -34,6 +34,7 @@ pub struct DialogueSubstitution {
 pub struct DialogueElem {
     text: String,
     id: Uuid,
+    is_option: bool,
     substitution: Vec<DialogueSubstitution>,
 }
 
@@ -336,6 +337,7 @@ pub fn build_dialogue_from_state(
                                     substitution: substitute_text(&text, &current_planet, player, game_state),
                                     text,
                                     id,
+                                    is_option: true
                                 })
                             } else {
                                 None
@@ -345,6 +347,7 @@ pub fn build_dialogue_from_state(
                                 substitution: substitute_text(&text, &current_planet, player, game_state),
                                 text,
                                 id,
+                                is_option: true
                             })
                         }
                     })
@@ -352,6 +355,7 @@ pub fn build_dialogue_from_state(
                 prompt: DialogueElem {
                     text: prompt.clone(),
                     id: new_id(),
+                    is_option: false,
                     substitution: substitute_text(&prompt, &current_planet, player, game_state),
                 },
                 planet: current_planet,
