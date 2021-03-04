@@ -49,6 +49,7 @@
   align-items: center;
   position: relative;
   .ui-window-controls {
+    align-self: flex-start;
     width: 20px;
     padding: 0;
     border-left: solid 1px $teal;
@@ -59,10 +60,6 @@
 
     .ui-button {
       border-bottom: solid 1px $teal;
-    }
-
-    .ui-button:last-of-type {
-      border-bottom: none;
     }
   }
 }
