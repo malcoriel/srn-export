@@ -26,6 +26,32 @@
   }
 }
 
+.history {
+  width: 400px;
+  height: 400px;
+
+  .history-contents {
+    //height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .history-item {
+    color: #999;
+    font-size: smaller;
+    padding: 5px;
+  }
+
+  .history-item.option {
+    color: #9f9;
+  }
+
+  .history-item:last-child {
+    color: white;
+    font-size: larger;
+  }
+}
+
 .dialogue {
   position: absolute;
   width: 600px;
@@ -62,32 +88,6 @@
     border: 0 solid $teal;
   }
 
-  .history {
-    width: 400px;
-    height: 400px;
-
-    .history-contents {
-      //height: 400px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .history-item {
-      color: #999;
-      font-size: smaller;
-      padding: 5px;
-    }
-
-    .history-item.option {
-      color: #9f9;
-    }
-
-    .history-item:last-child {
-      color: white;
-      font-size: larger;
-    }
-  }
-
   .hint {
     position: absolute;
     bottom: 10px;
@@ -111,13 +111,13 @@
 }
 
 .minimized-dialogue {
-  height: 300px;
+  height: 340px;
 
   font-size: 12px;
 
   .contents {
+    height: 340px;
     width: 340px;
-    height: 300px;
   }
 
   .ui-button {
@@ -125,21 +125,35 @@
     line-height: 16px !important;
   }
 
-  .prompt {
-    height: 180px;
-    box-sizing: border-box;
-    padding: 5px;
-  }
-
   .options {
     box-sizing: border-box;
     height: 120px;
-    padding: 5px;
+    padding: 5px 15px;
   }
 
+  .history {
+    height: 220px;
+    width: 310px;
+    padding: 5px;
+    box-sizing: border-box;
+
+    .history-item {
+      font-size: smaller;
+      padding: 5px;
+    }
+
+    .history-item.option {
+      color: #9f9;
+    }
+
+    .history-item:last-child {
+      color: white;
+      font-size: medium;
+    }
+  }
 }
 
 .dialogue-window-content {
-  opacity: 0.9
+  opacity: 0.9;
 }
 

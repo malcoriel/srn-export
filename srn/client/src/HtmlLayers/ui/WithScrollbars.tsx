@@ -13,21 +13,16 @@ export const WithScrollbars: React.FC<{
   noAutoHide?: boolean;
   autoScrollDown?: boolean;
   paddedRight?: boolean;
-  shadowBottom?: boolean;
 }> = ({ children, noAutoHide, autoScrollDown, paddedRight }) => {
   const ref = useRef<Scrollbars>(null);
   useEffect(() => {
     if (autoScrollDown && ref && ref.current) {
       ref.current.scrollToBottom();
+    } else if (ref && ref.current) {
+      setShadowed(shouldShadow(ref.current.getValues()));
     }
   }, [children]);
   const [shadowOpacity, setShadowed] = useState(0);
-  useEffect(() => {
-    if (ref && ref.current) {
-      setShadowed(shouldShadow(ref.current.getValues()));
-    }
-  }, []);
-
 
   return (
     <div

@@ -89,13 +89,16 @@ const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]
   </div>
 );
 
-const renderMinimized = (dialogue: Dialogue, ns: NetState) => (
+const renderMinimized = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]) => (
   <div className="contents">
-    <div className='prompt'>
-      <WithScrollbars>
-        <DialogueElemView {...dialogue.prompt} />
-      </WithScrollbars>
-    </div>
+      {/*<WithScrollbars>*/}
+      {/*  <DialogueElemView {...dialogue.prompt} />*/}
+      {/*</WithScrollbars>*/}
+      <div className='history'>
+        <WithScrollbars noAutoHide autoScrollDown paddedRight>
+          {renderHistory(history)}
+        </WithScrollbars>
+      </div>
     <div className='options'>
       <WithScrollbars>
       {dialogue.options.map((option, i) => (
@@ -174,7 +177,7 @@ export const DialogueWindow: React.FC = () => {
     storeKey='dialogueWindow'
     thickness={8}
     minimizedClassname='minimized-dialogue'
-    minimized={renderMinimized(dialogue, ns)}
+    minimized={renderMinimized(dialogue, ns, history)}
   >
     {renderContent(dialogue, ns, history)}
   </Window>;
