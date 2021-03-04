@@ -351,8 +351,7 @@ pub fn build_dialogue_from_state(
                     .collect::<Vec<_>>(),
                 prompt: DialogueElem {
                     text: prompt.clone(),
-                    // prompt id does not matter since it cannot be selected as action
-                    id: Default::default(),
+                    id: new_id(),
                     substitution: substitute_text(&prompt, &current_planet, player, game_state),
                 },
                 planet: current_planet,

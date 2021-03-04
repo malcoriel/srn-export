@@ -1,5 +1,6 @@
 @import "../utils/palette";
-.dialogue,.minimized-dialogue {
+
+.dialogue, .minimized-dialogue {
   .prompt {
     line-height: 24px;
     font-size: larger;
@@ -40,6 +41,7 @@
     img {
       height: 100%;
     }
+
     position: relative;
   }
 
@@ -58,13 +60,24 @@
     top: 0;
     right: 0;
     border: 0 solid $teal;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
   }
 
   .history {
     width: 400px;
-    height: 210px;
+    height: 200px;
+    display: flex;
+    flex-direction: column-reverse;
+
+    .history-item {
+      color: #999;
+      font-size: smaller;
+      padding: 5px;
+    }
+
+    .history-item:last-child {
+      color: white;
+      font-size: larger;
+    }
   }
 
   .hint {

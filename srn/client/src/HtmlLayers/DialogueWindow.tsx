@@ -14,7 +14,6 @@ import { useStore, WindowState } from '../store';
 import { findPlanet } from './NetworkStatus';
 import { WithScrollbars } from './ui/WithScrollbars';
 
-
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
   <span className='dialogue-option'>
     {substituteText(dialogue.text, dialogue.substitution)}
@@ -22,12 +21,20 @@ export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
 );
 
 
-const renderContent = (dialogue: Dialogue, ns: NetState) => (
+const renderHistory = (history: DialogueElem[]) => {
+  return <>{
+    history.map(hi => <div key={hi.id} className='history-item'>
+      <DialogueElemView {...hi} />
+    </div>)
+  }</>;
+};
+
+const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]) => (
   <div className='dialogue'>
     <div className='context-part'>
-      <div className="history">
-        <WithScrollbars>
-          LOREM IPSUM LOREM IPSUM
+      <div className='history'>
+        <WithScrollbars noAutoHide autoScrollDown>
+          {renderHistory(history)}
         </WithScrollbars>
       </div>
       <div className='scene'>
@@ -36,7 +43,7 @@ const renderContent = (dialogue: Dialogue, ns: NetState) => (
           orthographic
           camera={{
             position: new Vector3(0, 0, CAMERA_HEIGHT),
-            zoom: CAMERA_DEFAULT_ZOOM() * 0.5,
+            zoom: CAMERA_DEFAULT_ZOOM() * 0.4,
           }}
         >
           <ambientLight />
@@ -57,15 +64,12 @@ const renderContent = (dialogue: Dialogue, ns: NetState) => (
           )}
         </Canvas>
       </div>
-      <div className='context-character'>
+      {dialogue.right_character !== 'question' && <div className='context-character'>
         {/* eslint-disable-next-line jsx-a11y/alt-text */}
         <img
           src={makePortraitPath(dialogue.right_character)}
         />
-      </div>
-    </div>
-    <div className='prompt'>
-      <DialogueElemView {...dialogue.prompt} />
+      </div>}
     </div>
     <div className='options'>
       {dialogue.options.map((option, i) => (
@@ -113,6 +117,7 @@ export const DialogueWindow: React.FC = () => {
   const [, forceUpdate] = useState(false);
   const dialogueWindowState = useStore(state => state.dialogueWindow);
   const setDialogueWindowState = useStore(state => state.setDialogueWindow);
+  const [history, setHistory] = useState<DialogueElem[]>([]);
   useEffect(() => {
     const onDialogueChange = () => {
       if (dialogueWindowState === WindowState.Hidden) {
@@ -141,21 +146,32 @@ export const DialogueWindow: React.FC = () => {
     useHotkeys(String(i + 1), tryDoOption(i), [tryDoOption, dialogue]);
   }
 
-  if (!dialogue) return null;
+  useEffect(() => {
+    if (dialogue) {
+      setHistory([...history, dialogue.prompt]);
+    }
+  }, [dialogue]);
+
+  if (!dialogue) {
+    if (history.length) {
+      setHistory([]);
+    }
+    return null;
+  }
 
   return <Window
     unclosable
-    contentClassName="dialogue-window-content"
+    contentClassName='dialogue-window-content'
     height={616}
     width={622}
     line={'thin'}
     halfThick
     storeKey='dialogueWindow'
     thickness={8}
-    minimizedClassname="minimized-dialogue"
+    minimizedClassname='minimized-dialogue'
     minimized={renderMinimized(dialogue, ns)}
   >
-    {renderContent(dialogue, ns)}
+    {renderContent(dialogue, ns, history)}
   </Window>;
 };
 export const enrichSub = (s: DialogueSubstitution): ReactNode => {
