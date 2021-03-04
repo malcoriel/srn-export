@@ -18,7 +18,7 @@ import { MinimapPanel } from './KonvaLayers/MinimapPanel';
 import 'react-jinke-music-player/assets/index.css';
 import { MusicControls } from './MusicControls';
 import { HotkeyWrapper } from './HotkeyWrapper';
-import { SrnState, useStore } from './store';
+import { SrnState, useStore, WindowState } from './store';
 import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
 import { WindowContainers } from './HtmlLayers/WindowContainers';
@@ -47,6 +47,8 @@ const Srn = () => {
     portrait,
     musicEnabled,
     forceUpdate,
+    setChatWindow,
+    setLeaderboardWindow,
   } = useStore(
     (state: SrnState) => ({
       playing: state.playing,
@@ -58,8 +60,10 @@ const Srn = () => {
       portrait: state.portrait,
       musicEnabled: state.musicEnabled,
       forceUpdate: state.forceUpdate,
+      setChatWindow: state.setChatWindow,
+      setLeaderboardWindow: state.setLeaderboardWindow,
     }),
-    shallow
+    shallow,
   );
   useStore((state) => state.trigger);
 
@@ -133,10 +137,17 @@ const Srn = () => {
     ns.portraitName = portrait; // portrait files are 1-based
     ns.disconnecting = false;
     ns.init(tutorial);
-    ns.on("disconnect", () => {
+    ns.on('disconnect', () => {
       setPlaying(false);
       setMenu(true);
-    })
+    });
+    if (tutorial) {
+      setChatWindow(WindowState.Hidden);
+      setLeaderboardWindow(WindowState.Hidden);
+    } else {
+      setChatWindow(WindowState.Minimized);
+      setLeaderboardWindow(WindowState.Minimized);
+    }
   };
 
   const quit = () => {
@@ -152,7 +163,7 @@ const Srn = () => {
   return (
     <>
       <div
-        className="main-container"
+        className='main-container'
         style={{
           position: 'relative',
           width: size.width_px,
@@ -178,7 +189,7 @@ const Srn = () => {
             <QuestWindow />
             <ChatWindow />
             <HotkeyWrapper
-              hotkey="esc"
+              hotkey='esc'
               onPress={() => {
                 toggleMenu();
               }}
@@ -196,7 +207,7 @@ const Srn = () => {
         )}
         {!playing && <TestUI />}
         {musicEnabled && <MusicControls />}
-        {menu && <StartMenu seed={seed} start={()=> start(false)} quit={quit} startTutorial={() => start(true)}/>}
+        {menu && <StartMenu seed={seed} start={() => start(false)} quit={quit} startTutorial={() => start(true)} />}
       </div>
     </>
   );

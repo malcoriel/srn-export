@@ -2,17 +2,17 @@ import { StyledRect } from './ui/StyledRect';
 import './OverheadPanel.scss';
 import React from 'react';
 import NetState, { useNSForceChange } from '../NetState';
+import { isStateTutorial } from '../world';
 
 function getSeconds(milliseconds_remaining: number) {
   return Math.floor(milliseconds_remaining / 1000);
 }
 
-export function OverheadPanel() {
+export const OverheadPanel = () => {
   const ns = NetState.get();
   if (!ns) return null;
   useNSForceChange('OverheadPanel', false, (prevState, nextState) => {
-    let check = getSeconds(prevState.milliseconds_remaining) !== getSeconds(nextState.milliseconds_remaining);
-    return check;
+    return getSeconds(prevState.milliseconds_remaining) !== getSeconds(nextState.milliseconds_remaining);
   });
 
   const { milliseconds_remaining } = ns.state;
@@ -26,6 +26,9 @@ export function OverheadPanel() {
     2,
     '0'
   )}`;
+
+  if (isStateTutorial(ns.state))
+    return null;
 
   return (
     <div className="overhead-panel-container">
@@ -43,4 +46,4 @@ export function OverheadPanel() {
       </StyledRect>
     </div>
   );
-}
+};

@@ -118,6 +118,10 @@ export type DialogueElem = {
   substitution: DialogueSubstitution[];
 };
 
+export const isStateTutorial = (st: GameState) => {
+  return st.my_id === st.id;
+}
+
 export type Dialogue = {
   id: string;
   options: DialogueElem[];
@@ -172,6 +176,7 @@ export type InventoryItem = {
 
 export type GameState = {
   seed: string;
+  id: string;
   tag: string;
   leaderboard?: Leaderboard;
   planets: Planet[];

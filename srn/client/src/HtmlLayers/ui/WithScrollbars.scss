@@ -1,6 +1,22 @@
 @import "../../utils/palette";
 
-.ui-thumb {
+.with-scrollbars {
+  overflow: hidden;
+
+  .ui-thumb {
     background: $teal;
     border-radius: 5px;
+  }
+
+  .scroll-shadow {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 120%;
+    left: -10%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
 }
+

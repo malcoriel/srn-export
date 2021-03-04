@@ -23,7 +23,7 @@ export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
 
 const renderHistory = (history: DialogueElem[]) => {
   return <>{
-    history.map(hi => <div key={hi.id} className={`history-item ${hi.is_option && 'option'}`}>
+    history.map((hi, i) => <div key={i} className={`history-item ${hi.is_option && 'option'}`}>
       <DialogueElemView {...hi} />
     </div>)
   }</>;
@@ -90,11 +90,14 @@ const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]
 );
 
 const renderMinimized = (dialogue: Dialogue, ns: NetState) => (
-  <div>
+  <div className="contents">
     <div className='prompt'>
-      <DialogueElemView {...dialogue.prompt} />
+      <WithScrollbars>
+        <DialogueElemView {...dialogue.prompt} />
+      </WithScrollbars>
     </div>
     <div className='options'>
+      <WithScrollbars>
       {dialogue.options.map((option, i) => (
         <div
           key={i}
@@ -105,6 +108,7 @@ const renderMinimized = (dialogue: Dialogue, ns: NetState) => (
           <DialogueElemView key={option.id} {...option} />
         </div>
       ))}
+      </WithScrollbars>
     </div>
   </div>
 );
