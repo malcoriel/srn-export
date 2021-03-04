@@ -22,11 +22,11 @@ export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
 
 
 const renderHistory = (history: DialogueElem[]) => {
-  return <>{
+  return <div className="history-contents">{
     history.map((hi, i) => <div key={i} className={`history-item ${hi.is_option && 'option'}`}>
       <DialogueElemView {...hi} />
     </div>)
-  }</>;
+  }</div>;
 };
 
 const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]) => (

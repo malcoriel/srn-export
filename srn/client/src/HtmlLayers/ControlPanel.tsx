@@ -68,7 +68,7 @@ const MoneyAndHp = () => {
         height={22}
       >
         <span className='money-icon' />
-        <span className='text'>{myPlayer.money}</span>
+        <span className='text'>{myPlayer.money} SB</span>
       </StyledRect>
     )}
     <HpDisplay myShip={myShip} />

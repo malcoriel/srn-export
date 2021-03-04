@@ -61,9 +61,9 @@ export const Window: React.FC<{
           <AiFillCaretUp />
         </Button>
       )}
-      <Button onClick={hide}>
+      {!unclosable && <Button onClick={hide}>
         <CgClose />
-      </Button>
+      </Button>}
     </div>
   );
   let minimizedMountPoint = document.getElementById('minimized-windows');

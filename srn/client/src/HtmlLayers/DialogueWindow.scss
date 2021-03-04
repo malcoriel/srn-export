@@ -65,8 +65,12 @@
   .history {
     width: 400px;
     height: 400px;
-    display: flex;
-    flex-direction: column-reverse;
+
+    .history-contents {
+      //height: 400px;
+      display: flex;
+      flex-direction: column;
+    }
 
     .history-item {
       color: #999;
