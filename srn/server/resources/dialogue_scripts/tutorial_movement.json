@@ -164,6 +164,6 @@
   },
   "bot_path": [],
   "name": "tutorial_movement",
-  "portrait": "administrator",
+  "portrait": "admin",
   "environment": "space"
 }

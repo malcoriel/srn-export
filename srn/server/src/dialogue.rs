@@ -118,6 +118,7 @@ pub struct DialogueScript {
     pub options: HashMap<StateId, Vec<(OptionId, String, Option<TriggerCondition>)>>,
     pub initial_state: StateId,
     pub is_planetary: bool,
+    pub portrait: String,
     pub priority: i32,
     pub is_default: bool,
     pub name: String,
@@ -141,6 +142,7 @@ impl DialogueScript {
             bot_path: Default::default(),
             names_db: Default::default(),
             ids_db: Default::default(),
+            portrait: "question".to_string(),
         }
     }
     pub fn get_name(&self, id: Uuid) -> &String {
@@ -337,7 +339,7 @@ pub fn build_dialogue_from_state(
                                     substitution: substitute_text(&text, &current_planet, player, game_state),
                                     text,
                                     id,
-                                    is_option: true
+                                    is_option: true,
                                 })
                             } else {
                                 None
@@ -347,7 +349,7 @@ pub fn build_dialogue_from_state(
                                 substitution: substitute_text(&text, &current_planet, player, game_state),
                                 text,
                                 id,
-                                is_option: true
+                                is_option: true,
                             })
                         }
                     })
@@ -364,7 +366,7 @@ pub fn build_dialogue_from_state(
                         format!("{}", p.portrait_name)
                     })
                 }),
-                right_character: "question".to_string(),
+                right_character: script.portrait.clone(),
             };
             return Some(result);
         }
@@ -618,6 +620,7 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
     script.is_default = ss.is_default;
     script.is_planetary = ss.is_planetary;
     script.priority = ss.priority;
+    script.portrait = ss.portrait.unwrap_or("question".to_string());
 
     for (state_name, (state_prompt, options)) in ss.table.iter() {
         let state_id = new_id();

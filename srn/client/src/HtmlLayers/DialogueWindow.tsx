@@ -13,6 +13,7 @@ import { Dialogue, DialogueElem, DialogueSubstitution, DialogueSubstitutionType,
 import { useStore, WindowState } from '../store';
 import { findPlanet } from './NetworkStatus';
 import { WithScrollbars } from './ui/WithScrollbars';
+import classNames from 'classnames';
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
   <span className='dialogue-option'>
@@ -22,7 +23,7 @@ export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
 
 
 const renderHistory = (history: DialogueElem[]) => {
-  return <div className="history-contents">{
+  return <div className='history-contents'>{
     history.map((hi, i) => <div key={i} className={`history-item ${hi.is_option && 'option'}`}>
       <DialogueElemView {...hi} />
     </div>)
@@ -38,7 +39,7 @@ const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]
         </WithScrollbars>
       </div>
       <div className='scene'>
-        <Canvas
+        {dialogue.planet && <Canvas
           style={{ width: 200, height: 200, backgroundColor: 'black' }}
           orthographic
           camera={{
@@ -48,23 +49,23 @@ const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]
         >
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
-          {dialogue.planet && (
-            <ThreePlanetShape
-              visible={true}
-              key={dialogue.planet.id}
-              scale={
-                _.times(3, () => dialogue.planet!.radius) as [
-                  number,
-                  number,
-                  number
-                ]
-              }
-              color={dialogue.planet.color}
-            />
-          )}
+          <ThreePlanetShape
+            visible={true}
+            key={dialogue.planet.id}
+            scale={
+              _.times(3, () => dialogue.planet!.radius) as [
+                number,
+                number,
+                number
+              ]
+            }
+            color={dialogue.planet.color}
+          />
         </Canvas>
+        }
       </div>
-      {dialogue.right_character !== 'question' && <div className='context-character'>
+      {dialogue.right_character !== 'question' &&
+      <div className={classNames({ 'context-character': true, 'big': !dialogue.planet })}>
         {/* eslint-disable-next-line jsx-a11y/alt-text */}
         <img
           src={makePortraitPath(dialogue.right_character)}
@@ -90,27 +91,27 @@ const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]
 );
 
 const renderMinimized = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]) => (
-  <div className="contents">
-      {/*<WithScrollbars>*/}
-      {/*  <DialogueElemView {...dialogue.prompt} />*/}
-      {/*</WithScrollbars>*/}
-      <div className='history'>
-        <WithScrollbars noAutoHide autoScrollDown paddedRight>
-          {renderHistory(history)}
-        </WithScrollbars>
-      </div>
+  <div className='contents'>
+    {/*<WithScrollbars>*/}
+    {/*  <DialogueElemView {...dialogue.prompt} />*/}
+    {/*</WithScrollbars>*/}
+    <div className='history'>
+      <WithScrollbars noAutoHide autoScrollDown paddedRight>
+        {renderHistory(history)}
+      </WithScrollbars>
+    </div>
     <div className='options'>
       <WithScrollbars>
-      {dialogue.options.map((option, i) => (
-        <div
-          key={i}
-          className='line'
-          onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
-        >
-          {i + 1}.&nbsp;
-          <DialogueElemView key={option.id} {...option} />
-        </div>
-      ))}
+        {dialogue.options.map((option, i) => (
+          <div
+            key={i}
+            className='line'
+            onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
+          >
+            {i + 1}.&nbsp;
+            <DialogueElemView key={option.id} {...option} />
+          </div>
+        ))}
       </WithScrollbars>
     </div>
   </div>
