@@ -9,7 +9,7 @@
 ## Version 0.4.0
 ### New
 * Private game rooms.
-* A tutorial mode (so far the only way for private rooms).
+* A tutorial mode (so far the only purpose for private rooms).
 * Significant visual rework of the dialogue window.
 * Visual rework of the scrollable ui elements.
 * Quit hotkey (press Q in the main menu when in-game).
