@@ -11,11 +11,19 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+
+  .hotkey-letter {
+    color: $mint;
+  }
 }
 
 .ui-button.toggled {
   background-color: darken($teal, 0.9);
   color: black;
+
+  .hotkey-letter {
+    color:black;
+  }
 }
 
 .ui-button:hover {
@@ -23,6 +31,10 @@
   background-color: darken($teal, 0.9);
   color: black;
   cursor: pointer;
+
+  .hotkey-letter {
+    color: black;
+  }
 }
 
 .ui-button:active {

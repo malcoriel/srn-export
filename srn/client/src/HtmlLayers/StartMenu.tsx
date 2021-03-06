@@ -62,12 +62,6 @@ export const StartMenu: React.FC<{
 
   const hide = () => setMenu(false);
 
-  useHotkeys('q', () => {
-    if (playing) {
-      quit();
-    }
-  });
-
   useEffect(() => {
     if (skipMenu && firstTime) {
       start();
@@ -150,17 +144,17 @@ export const StartMenu: React.FC<{
               setMusicEnabled(true);
             }}
             toggled={musicEnabled}
-          >
-            ON
-          </Button>
+            text='ON'
+            hotkey='O'
+          />
           <Button
             onClick={() => {
               setMusicEnabled(false);
             }}
             toggled={!musicEnabled}
-          >
-            OFF
-          </Button>
+            hotkey='F'
+            text='OFF'
+          />
         </div>
         {playing && (
           <>
@@ -198,18 +192,16 @@ export const StartMenu: React.FC<{
           </>
         )}
         {!playing && (
-          <Button className='play' onClick={() => setPlayMenu(true)}>
-            PLAY
-          </Button>
+          <Button className='play' onClick={() => setPlayMenu(true)}
+                  text='PLAY' hotkey='P'
+          />
         )}
         {playing && (
           <>
             <Button className='play' onClick={hide}>
               BACK
             </Button>
-            <Button className='quit' onClick={quit}>
-              QUIT
-            </Button>
+            <Button className='quit' onClick={quit} hotkey='Q' text='QUIT' />
           </>
         )}
         {playing && seed && <div>Game seed: <span className='normal-selection'>{seed}</span></div>}
@@ -218,23 +210,17 @@ export const StartMenu: React.FC<{
         <div>
           I recommend doing the tutorial if it's your first time here:
         </div>
-        <Button className='play' onClick={startTutorial}>
-          TUTORIAL
-        </Button>
+        <Button className='play' onClick={startTutorial} hotkey='t' text='TUTORIAL' />
         <div>
           Right now, you can play the cargo rush mode, where you
           can compete with bots (and other players, if any) to get
           the most amount of money in 3 minutes:
         </div>
-        <Button className='play' onClick={start}>
-          PLAY CARGO RUSH
-        </Button>
+        <Button className='play' onClick={start} hotkey='c' text='CARGO RUSH' />
         <div>
           Or you can just go to the main menu:
         </div>
-        <Button className='play' onClick={() => setPlayMenu(false)}>
-          BACK
-        </Button>
+        <Button className='play' onClick={() => setPlayMenu(false)} hotkey='b' text='BACK' />
       </div>}
       <div className='versions-status'>
         <div>Client version: {versionJson.version}</div>

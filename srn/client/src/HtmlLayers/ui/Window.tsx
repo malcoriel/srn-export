@@ -6,6 +6,7 @@ import { AiFillCaretDown, AiFillCaretUp, CgClose } from 'react-icons/all';
 import { StyledRect } from './StyledRect';
 import ReactDOM from 'react-dom';
 import './Window.scss';
+import { useHotkeys } from 'react-hotkeys-hook';
 export const Window: React.FC<{
   storeKey: string;
   fixedState?: WindowState;
@@ -42,7 +43,6 @@ export const Window: React.FC<{
   const minimize = () => storeParts[setKey](WindowState.Minimized);
   const maximize = () => storeParts[setKey](WindowState.Shown);
   const hide = () => storeParts[setKey](unclosable ? WindowState.Minimized : WindowState.Hidden);
-
   const isShown = state === WindowState.Shown;
   const isMinimized = state === WindowState.Minimized;
 
