@@ -921,7 +921,7 @@ pub fn remove_player_ship(state: &mut GameState, player_id: Uuid) {
     if let Some(ship) = ship {
         state.ships = state.ships.iter().filter_map(|s| {
             if s.id != ship.id {
-                Some(ship.clone())
+                Some(s.clone())
             } else {
                 None
             }

@@ -153,7 +153,7 @@ fn get_version() -> Json<String> {
     Json(version)
 }
 
-pub const ENABLE_PERF: bool = true;
+pub const ENABLE_PERF: bool = false;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
@@ -376,7 +376,6 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
 fn get_state_id_and_tutorial(client_id: Uuid) -> (Uuid, bool) {
     let cont = STATE.read().unwrap();
     let in_tutorial = cont.tutorial_states.contains_key(&client_id);
-
     let current_state_id = if !in_tutorial { cont.state.id } else {
         // tutorial states are personal, and have the same id as player
         client_id

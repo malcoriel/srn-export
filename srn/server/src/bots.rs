@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use chrono::Local;
 use lazy_static::lazy_static;
-use rand::{RngCore, SeedableRng, thread_rng};
+use rand::{RngCore, SeedableRng, thread_rng, Rng};
 use rand::rngs::SmallRng;
 use uuid::Uuid;
 
@@ -72,7 +72,8 @@ impl Bot {
         if bot_d_states.1.iter().count() > 0 {
             // stop all other actions when talking
             if self.timer.is_none() {
-                self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                let mut new_rng = thread_rng();
+                self.timer = Some(BOT_QUEST_ACT_DELAY_MC + new_rng.gen_range(-500, 500) * 1000);
             } else {
                 self.timer = Some(self.timer.unwrap() - elapsed_micro);
                 if self.timer.unwrap() <= 0 {
