@@ -1,5 +1,6 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::{HashMap, HashSet};
+#[allow(deprecated)]
 use std::f64::{INFINITY, NEG_INFINITY};
 use std::f64::consts::PI;
 use std::iter::FromIterator;
@@ -36,6 +37,15 @@ const ASTEROID_COUNT: u32 = 200;
 const ASTEROID_BELT_RANGE: f64 = 100.0;
 
 pub type PlayerId = Uuid;
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum GameMode {
+    Unknown = 0,
+    CargoRush = 1,
+    Tutorial = 2,
+    Sandbox = 3,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ManualMoveUpdate {
@@ -389,6 +399,7 @@ pub struct NatSpawnMineral {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState {
     pub id: Uuid,
+    pub mode: GameMode,
     pub tag: Option<String>,
     pub seed: String,
     pub my_id: Uuid,

@@ -4,7 +4,7 @@ use crate::random_stuff::{
     gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius, PLANET_NAMES,
     SAT_NAMES,
 };
-use crate::world::{AsteroidBelt, GameState, Planet, Star};
+use crate::world::{AsteroidBelt, GameState, Planet, Star, GameMode};
 use chrono::Utc;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -211,6 +211,7 @@ pub fn system_gen(seed: String) -> GameState {
         start_time_ticks: now,
         asteroid_belts,
         minerals: vec![],
+        mode: GameMode::Unknown
     };
     state
 }
@@ -236,6 +237,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
     let planet_id = new_id();
     GameState {
         id: client_id,
+        mode: GameMode::Tutorial,
         tag: None,
         seed,
         my_id: Default::default(),

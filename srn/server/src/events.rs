@@ -89,8 +89,8 @@ pub fn handle_events(
 
 fn select_mut_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
                                 player: &'c Player) -> &'a mut GameState {
-    if cont.tutorial_states.contains_key(&player.id) {
-        cont.tutorial_states.get_mut(&player.id).unwrap()
+    if cont.personal_states.contains_key(&player.id) {
+        cont.personal_states.get_mut(&player.id).unwrap()
     } else { &mut cont.state }
 }
 

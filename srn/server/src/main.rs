@@ -96,7 +96,7 @@ mod inventory_test;
 mod net;
 
 pub struct StateContainer {
-    tutorial_states: HashMap<Uuid, GameState>,
+    personal_states: HashMap<Uuid, GameState>,
     state: GameState,
 }
 
@@ -141,9 +141,10 @@ lazy_static! {
 
 lazy_static! {
     static ref STATE: RwLock<StateContainer> = {
-        let state = world::seed_state(true, true);
+        let mut state = world::seed_state(true, true);
+        state.mode = world::GameMode::CargoRush;
         let states = HashMap::new();
-        RwLock::new(StateContainer { tutorial_states: states, state })
+        RwLock::new(StateContainer { personal_states: states, state })
     };
 }
 
@@ -177,7 +178,7 @@ fn move_player_to_tutorial_room(client_id: Uuid) {
     }
     let player = cont.state.players.remove(player_idx);
     let player_clone = player.clone();
-    let personal_state = cont.tutorial_states.entry(client_id).or_insert(make_tutorial_state(client_id));
+    let personal_state = cont.personal_states.entry(client_id).or_insert(make_tutorial_state(client_id));
     personal_state.players.push(player);
 
     {
@@ -198,8 +199,8 @@ fn mutate_owned_ship(
 ) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
     let mut state = {
-        if cont.tutorial_states.contains_key(&client_id) {
-            cont.tutorial_states.get_mut(&client_id).unwrap()
+        if cont.personal_states.contains_key(&client_id) {
+            cont.personal_states.get_mut(&client_id).unwrap()
         } else {
             &mut cont.state
         }
@@ -375,7 +376,7 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
 
 fn get_state_id_and_tutorial(client_id: Uuid) -> (Uuid, bool) {
     let cont = STATE.read().unwrap();
-    let in_tutorial = cont.tutorial_states.contains_key(&client_id);
+    let in_tutorial = cont.personal_states.contains_key(&client_id);
     let current_state_id = if !in_tutorial { cont.state.id } else {
         // tutorial states are personal, and have the same id as player
         client_id
@@ -506,7 +507,7 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
 
 fn get_state_clone_read(client_id: Uuid) -> GameState {
     let cont = STATE.read().unwrap();
-    return cont.tutorial_states.get(&client_id).unwrap_or(&cont.state).clone();
+    return cont.personal_states.get(&client_id).unwrap_or(&cont.state).clone();
 }
 
 fn force_disconnect_client(client_id: Uuid) {
@@ -581,7 +582,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
         let mut cont = STATE.write().unwrap();
         let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
-        let mut_state = if cont.tutorial_states.contains_key(&client_id) { cont.tutorial_states.get_mut(&client_id).unwrap() } else { &mut cont.state };
+        let mut_state = if cont.personal_states.contains_key(&client_id) { cont.personal_states.get_mut(&client_id).unwrap() } else { &mut cont.state };
         world::force_update_to_now(mut_state);
         let (new_dialogue_state, state_changed) = execute_dialog_option(
             client_id,
@@ -621,10 +622,10 @@ fn make_new_human_player(conn_id: Uuid) {
 
 fn remove_player(conn_id: Uuid) {
     let mut cont = STATE.write().unwrap();
-    let in_tutorial = cont.tutorial_states.contains_key(&conn_id);
-    let state = if in_tutorial { cont.tutorial_states.get_mut(&conn_id).unwrap() } else { &mut cont.state };
+    let in_tutorial = cont.personal_states.contains_key(&conn_id);
+    let state = if in_tutorial { cont.personal_states.get_mut(&conn_id).unwrap() } else { &mut cont.state };
     world::remove_player_from_state(conn_id, state);
-    cont.tutorial_states.remove(&conn_id);
+    cont.personal_states.remove(&conn_id);
 }
 
 pub fn new_id() -> Uuid {
@@ -790,7 +791,7 @@ fn main_thread() {
         cont.state = updated_state;
 
         let tutorial_id = sampler.start(20);
-        cont.tutorial_states = HashMap::from_iter(cont.tutorial_states.iter().filter_map(|(_, state)| {
+        cont.personal_states = HashMap::from_iter(cont.personal_states.iter().filter_map(|(_, state)| {
             if state.players.len() == 0 {
                 return None;
             }
@@ -825,7 +826,7 @@ fn main_thread() {
             let res =
                 events::handle_events(&mut d_table, receiver, &mut cont, d_states);
             for (client_id, dialogue) in res {
-                let corresponding_state_id = if cont.tutorial_states.contains_key(&client_id) { client_id } else { cont.state.id };
+                let corresponding_state_id = if cont.personal_states.contains_key(&client_id) { client_id } else { cont.state.id };
                 unicast_dialogue_state(client_id, dialogue, corresponding_state_id);
             }
             sampler.end(events_mark);

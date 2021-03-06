@@ -1,4 +1,4 @@
-import Vector, { IVector, VectorF } from './utils/Vector';
+import Vector, { IVector } from './utils/Vector';
 
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
@@ -7,6 +7,7 @@ export const height_units = 1000;
 export const max_x = width_units / 2;
 export const max_y = height_units / 2;
 export const min_x = -max_x;
+// noinspection JSUnusedGlobalSymbols
 export const min_y = -max_y;
 
 export const SHIP_SPEED = 20.0;
@@ -14,13 +15,6 @@ export const SHIP_SPEED = 20.0;
 export type AABB = {
   top_left: Vector,
   bottom_right: Vector,
-}
-
-export const AABB_maxed = () => {
-  return {
-    top_left: VectorF(min_x, min_y),
-    bottom_right: VectorF(max_x, max_y)
-  }
 }
 
 export type Planet = {
@@ -174,15 +168,16 @@ export type InventoryItem = {
 }
 
 export enum GameMode {
-  Unknown,
-  CargoRush,
-  Tutorial,
-  Sandbox,
+  Unknown = 0,
+  CargoRush = 1,
+  Tutorial = 2,
+  Sandbox = 3,
 }
 
 export type GameState = {
   seed: string;
   id: string;
+  mode: GameMode,
   tag: string;
   leaderboard?: Leaderboard;
   planets: Planet[];
