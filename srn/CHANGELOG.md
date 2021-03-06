@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.4.1
+### New
+* Bots dialogue delays are now a bit random, to avoid funny action mirroring.
+### Fixes
+* Fixed a bug where entering a tutorial room led to removal of all ships from the main room.
+
 ## Version 0.4.0
 ### New
 * Private game rooms.
