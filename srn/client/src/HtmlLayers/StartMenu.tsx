@@ -13,7 +13,7 @@ import useSWR from 'swr';
 import { api } from '../utils/api';
 import { GlobalChat } from './GlobalChat';
 import { Changelog } from './Changelog';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { PlayMenu } from './PlayMenu';
 
 // to only skip menu once
 let firstTime = true;
@@ -23,9 +23,10 @@ export const makePortraitPath = (portrait: string) =>
 export const StartMenu: React.FC<{
   start: () => void;
   startTutorial: () => void;
+  startSandbox: () => void;
   quit: () => void;
   seed: string,
-}> = ({ start, quit, seed, startTutorial }) => {
+}> = ({ start, quit, seed, startTutorial, startSandbox }) => {
   const {
     musicEnabled,
     setMusicEnabled,
@@ -67,7 +68,7 @@ export const StartMenu: React.FC<{
       start();
       firstTime = false;
     }
-  }, []);
+  }, [skipMenu, start]);
 
   const [playMenu, setPlayMenu] = useState(false);
 
@@ -206,27 +207,13 @@ export const StartMenu: React.FC<{
         )}
         {playing && seed && <div>Game seed: <span className='normal-selection'>{seed}</span></div>}
       </div>}
-      {playMenu && <div className='play-menu'>
-        <div>
-          I recommend doing the tutorial if it's your first time here:
-        </div>
-        <Button className='play' onClick={startTutorial} hotkey='t' text='TUTORIAL' />
-        <div>
-          Right now, you can play the cargo rush mode, where you
-          can compete with bots (and other players, if any) to get
-          the most amount of money in 3 minutes:
-        </div>
-        <Button className='play' onClick={start} hotkey='c' text='CARGO RUSH' />
-        <div>
-          Or you can just go to the main menu:
-        </div>
-        <Button className='play' onClick={() => setPlayMenu(false)} hotkey='b' text='BACK' />
-      </div>}
+      {playMenu && <PlayMenu startSandbox={startSandbox} startTutorial={startTutorial} start={start} hide={() => setPlayMenu(false)} />}
       <div className='versions-status'>
         <div>Client version: {versionJson.version}</div>
         <div>Server version: {serverVersionFormatted}</div>
       </div>
       <div className='about'>
+        {/* eslint-disable-next-line react/jsx-no-target-blank */}
         <a href='https://t.me/joinchat/WLDnjKtHTPplQZje' target='_blank'>
           <FaTelegram />
           &nbsp; news & talk

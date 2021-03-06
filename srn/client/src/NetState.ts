@@ -2,7 +2,7 @@ import EventEmitter from 'events';
 import {
   AABB,
   applyShipAction,
-  Dialogue,
+  Dialogue, GameMode,
   GameState,
   Ship,
   ShipAction,
@@ -132,7 +132,7 @@ export default class NetState extends EventEmitter {
   private slowTime: vsyncedCoupledThrottledTime;
   public desync: number;
   private lastSlowChangedState!: GameState;
-  private isTutorial!: boolean;
+  private mode!: GameMode;
   private switchingRooms: boolean = false;
   public static make() {
     NetState.instance = new NetState();
@@ -233,8 +233,8 @@ export default class NetState extends EventEmitter {
 
   };
 
-  init = (tutorial?: boolean) => {
-    this.isTutorial = !!tutorial;
+  init = (mode: GameMode) => {
+    this.mode = mode;
     console.log(`initializing NS ${this.id}`);
     this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
     this.updateOnServerInterval = setInterval(
@@ -317,7 +317,7 @@ export default class NetState extends EventEmitter {
           portrait_name: this.portraitName,
         }),
       });
-      if (this.isTutorial) {
+      if (this.mode === GameMode.Tutorial) {
         let switchRoomTag = uuid.v4();
         this.switchingRooms = true;
         this.send({

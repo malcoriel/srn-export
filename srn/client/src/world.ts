@@ -173,6 +173,12 @@ export type InventoryItem = {
     item_type: InventoryItemType
 }
 
+export enum GameMode {
+  Unknown,
+  CargoRush,
+  Tutorial,
+  Sandbox,
+}
 
 export type GameState = {
   seed: string;

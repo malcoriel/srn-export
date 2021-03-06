@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.scss';
@@ -31,6 +31,7 @@ import { ChatState } from './ChatState';
 import { ChatWindow } from './HtmlLayers/ChatWindow';
 import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 import { DialogueWindow } from './HtmlLayers/DialogueWindow';
+import { GameMode } from './world';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -78,6 +79,8 @@ const Srn = () => {
     }
   };
 
+  const [mode, setMode] = useState(GameMode.CargoRush);
+
   useEffect(() => {
     if (!NetState.get()) {
       NetState.make();
@@ -97,7 +100,7 @@ const Srn = () => {
 
     if (playing) {
       console.log('remount start');
-      start();
+      start(mode);
       // this will force re-subscription to useNSForceChange
       forceUpdate();
     }
@@ -120,7 +123,7 @@ const Srn = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const start = (tutorial?: boolean) => {
+  const start = (mode: GameMode) => {
     if (!NetState.get()) {
       NetState.make();
     }
@@ -136,12 +139,13 @@ const Srn = () => {
     ns.playerName = preferredName;
     ns.portraitName = portrait; // portrait files are 1-based
     ns.disconnecting = false;
-    ns.init(tutorial);
+    setMode(mode);
+    ns.init(mode);
     ns.on('disconnect', () => {
       setPlaying(false);
       setMenu(true);
     });
-    if (tutorial) {
+    if (mode === GameMode.Tutorial) {
       setChatWindow(WindowState.Hidden);
       setLeaderboardWindow(WindowState.Hidden);
     } else {
@@ -207,7 +211,13 @@ const Srn = () => {
         )}
         {!playing && <TestUI />}
         {musicEnabled && <MusicControls />}
-        {menu && <StartMenu seed={seed} start={() => start(false)} quit={quit} startTutorial={() => start(true)} />}
+        {menu && <StartMenu
+          seed={seed}
+          start={() => start(GameMode.CargoRush)}
+          quit={quit}
+          startTutorial={() => start(GameMode.Tutorial)}
+          startSandbox={() => start(GameMode.Sandbox)}
+        />}
       </div>
     </>
   );
