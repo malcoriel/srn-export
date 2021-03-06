@@ -32,6 +32,20 @@ const serverCargoToml = {
   },
 };
 
+const worldCargoToml = {
+  filename: 'world/Cargo.toml',
+  updater: {
+    readVersion(contents) {
+      return toml.parse(contents).package.version;
+    },
+    writeVersion(contents, version) {
+      const cargo = toml.parse(contents);
+      cargo.package.version = version;
+      return toml.stringify(cargo);
+    },
+  },
+};
+
 (async () => {
   try {
     yargs
@@ -53,13 +67,13 @@ const serverCargoToml = {
           const changedFilesCount = gitStatus.files.length;
           if (changedFilesCount && !force) {
             console.error(
-              `${changedFilesCount} modified files found. Please commit them first!`
+              `${changedFilesCount} modified files found. Please commit them first!`,
             );
             return;
           }
           if (gitStatus.current !== 'master' && !force) {
             console.error(
-              `Current branch ${gitStatus.current} is not master. Upping version is forbidden here`
+              `Current branch ${gitStatus.current} is not master. Upping version is forbidden here`,
             );
             return;
           }
@@ -76,15 +90,17 @@ const serverCargoToml = {
               clientPackageJson,
               clientVersionJson,
               serverCargoToml,
+              worldCargoToml,
             ],
             packageFiles: [
               mainPackageJson,
               clientPackageJson,
               clientVersionJson,
               serverCargoToml,
+              worldCargoToml,
             ],
           });
-        }
+        },
       )
       .help()
       .version(false)
