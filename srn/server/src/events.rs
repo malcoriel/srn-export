@@ -78,7 +78,6 @@ pub fn handle_events(
                     if let Some(player) = world::find_my_player_mut(state, player.id) {
                         player.quest = world::generate_random_quest(&planets, None);
                     }
-
                 }
             }
         } else {

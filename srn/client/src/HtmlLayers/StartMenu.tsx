@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './StartMenu.scss';
 import { Button } from './ui/Button';
 import { Label } from './ui/Label';
@@ -62,11 +62,11 @@ export const StartMenu: React.FC<{
 
   const hide = () => setMenu(false);
 
-  useHotkeys("q", () => {
+  useHotkeys('q', () => {
     if (playing) {
       quit();
     }
-  })
+  });
 
   useEffect(() => {
     if (skipMenu && firstTime) {
@@ -74,6 +74,8 @@ export const StartMenu: React.FC<{
       firstTime = false;
     }
   }, []);
+
+  const [playMenu, setPlayMenu] = useState(false);
 
   const serverVersion = useSWR('/api/version', async () => api.getVersion());
 
@@ -87,11 +89,11 @@ export const StartMenu: React.FC<{
   }
 
   return (
-    <div className="start-menu">
-      {!playing && <div className="global-chat-container">
-        <GlobalChat/>
+    <div className='start-menu'>
+      {!playing && <div className='global-chat-container'>
+        <GlobalChat />
       </div>}
-      <div className='start-hud'>
+      {!playMenu && <div className='start-hud'>
         <div className='title'>Star Rangers Network</div>
         {!playing && (
           <>
@@ -196,12 +198,7 @@ export const StartMenu: React.FC<{
           </>
         )}
         {!playing && (
-          <Button className='play' onClick={startTutorial}>
-            TUTORIAL
-          </Button>
-        )}
-        {!playing && (
-          <Button className='play' onClick={start}>
+          <Button className='play' onClick={() => setPlayMenu(true)}>
             PLAY
           </Button>
         )}
@@ -215,26 +212,45 @@ export const StartMenu: React.FC<{
             </Button>
           </>
         )}
-        {playing && seed && <div>Game seed: <span className="normal-selection">{seed}</span></div>}
-        <div className='versions-status'>
-          <div>Client version: {versionJson.version}</div>
-          <div>Server version: {serverVersionFormatted}</div>
+        {playing && seed && <div>Game seed: <span className='normal-selection'>{seed}</span></div>}
+      </div>}
+      {playMenu && <div className='play-menu'>
+        <div>
+          I recommend doing the tutorial if it's your first time here:
         </div>
-        <div className='about'>
-          <a href='https://t.me/joinchat/WLDnjKtHTPplQZje' target='_blank'>
-            <FaTelegram />
-            &nbsp; news & talk
-          </a>
-          <div className='copyright'>Game by Valeriy 'Malcoriel' Kuzmin</div>
-          <div className='copyright'>Character images by artbreeder.com</div>
-          <div className='copyright'>Music powered by aiva.ai</div>
+        <Button className='play' onClick={startTutorial}>
+          TUTORIAL
+        </Button>
+        <div>
+          Right now, you can play the cargo rush mode, where you
+          can compete with bots (and other players, if any) to get
+          the most amount of money in 3 minutes:
         </div>
-        {/*<Button text="About" onClick={() => setAbout(true)} />*/}
-
-        {/*<TestUI />*/}
+        <Button className='play' onClick={start}>
+          PLAY CARGO RUSH
+        </Button>
+        <div>
+          Or you can just go to the main menu:
+        </div>
+        <Button className='play' onClick={() => setPlayMenu(false)}>
+          BACK
+        </Button>
+      </div>}
+      <div className='versions-status'>
+        <div>Client version: {versionJson.version}</div>
+        <div>Server version: {serverVersionFormatted}</div>
+      </div>
+      <div className='about'>
+        <a href='https://t.me/joinchat/WLDnjKtHTPplQZje' target='_blank'>
+          <FaTelegram />
+          &nbsp; news & talk
+        </a>
+        <div className='copyright'>Game by Valeriy 'Malcoriel' Kuzmin</div>
+        <div className='copyright'>Character images by artbreeder.com</div>
+        <div className='copyright'>Music powered by aiva.ai</div>
       </div>
       {!playing && <div className='changelog-container'>
-        <Changelog/>
+        <Changelog />
       </div>}
     </div>
   );
