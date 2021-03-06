@@ -565,7 +565,9 @@ fn apply_side_effects(
                 crate::kick_player(player_id);
             }
             DialogOptionSideEffect::TriggerTutorialQuest => {
-                // TODO
+                if let Some(player) = find_my_player(state, player_id) {
+                    fire_event(GameEvent::CargoQuestTriggerRequest { player: player.clone() })
+                }
             }
         }
     }

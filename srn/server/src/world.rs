@@ -287,6 +287,9 @@ pub enum GameEvent {
     },
     GameEnded,
     GameStarted,
+    CargoQuestTriggerRequest {
+        player: Player,
+    },
     DialogueTriggerRequest {
         dialogue_name: String,
         player: Player,

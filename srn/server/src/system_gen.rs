@@ -233,6 +233,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         radius: 30.0,
     };
 
+    let planet_id = new_id();
     GameState {
         id: client_id,
         tag: None,
@@ -240,18 +241,33 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         my_id: Default::default(),
         start_time_ticks: now,
         star: Some(star),
-        planets: vec![Planet {
-            id: new_id(),
-            name: "Schoolia".to_string(),
-            x: 100.0,
-            y: 0.0,
-            rotation: 0.0,
-            radius: 5.0,
-            orbit_speed: 0.005,
-            anchor_id: star_id.clone(),
-            anchor_tier: 1,
-            color: "#11ffff".to_string()
-        }],
+        planets: vec![
+            Planet {
+                id: planet_id,
+                name: "Schoolia".to_string(),
+                x: 100.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 8.0,
+                orbit_speed: 0.01,
+                anchor_id: star_id.clone(),
+                anchor_tier: 1,
+                color: "#11ffff".to_string(),
+
+            },
+            Planet {
+                id: new_id(),
+                name: "Sat".to_string(),
+                x: 120.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 1.5,
+                orbit_speed: 0.005,
+                anchor_id: planet_id.clone(),
+                anchor_tier: 2,
+                color: "#ff0033".to_string(),
+            }
+        ],
         asteroids: vec![],
         minerals: vec![],
         asteroid_belts: vec![],
@@ -260,6 +276,6 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         milliseconds_remaining: 60 * 1000,
         paused: false,
         leaderboard: None,
-        ticks: 0
+        ticks: 0,
     }
 }

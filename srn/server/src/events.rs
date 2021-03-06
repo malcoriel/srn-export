@@ -8,7 +8,7 @@ use crate::xcast::XCast;
 use crate::dialogue::{Dialogue, DialogueTable};
 use crate::perf::Sampler;
 use crate::world::{GameEvent, GameState, Player};
-use crate::{StateContainer};
+use crate::{StateContainer, world};
 use std::sync::{MutexGuard, RwLockWriteGuard};
 use lazy_static::lazy_static;
 
@@ -71,6 +71,14 @@ pub fn handle_events(
                     } else {
                         eprintln!("No dialogue found by name {}", dialogue_name)
                     }
+                }
+                GameEvent::CargoQuestTriggerRequest { player } => {
+                    let state = select_mut_state(cont, &player);
+                    let planets = state.planets.clone();
+                    if let Some(player) = world::find_my_player_mut(state, player.id) {
+                        player.quest = world::generate_random_quest(&planets, None);
+                    }
+
                 }
             }
         } else {
