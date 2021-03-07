@@ -28,9 +28,7 @@ export const HelpWindow = () => {
         <div className="line">c - reset camera </div>
         {Object.entries(hotkeyRegistry).map(([key, value]) => (
           <div className="line" key={key}>
-            <span>{key}</span>
-{' '}
--<span>{value}</span>
+            <span>{key}</span> -<span>{value}</span>
           </div>
         ))}
       </div>

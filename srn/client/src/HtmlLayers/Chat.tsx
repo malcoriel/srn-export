@@ -35,7 +35,6 @@ export const Chat: React.FC<{ channelName: string; header?: string }> = ({
       if (!cs) return;
       cs.off('message', onMessage);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [message, setMessage] = useState('');
 

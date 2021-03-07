@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import React, { useEffect } from 'react';
 import NetState, { useNSForceChange } from '../NetState';
 import { Window } from './ui/Window';
@@ -23,7 +22,6 @@ export const LeaderboardWindow: React.FC = () => {
     return () => {
       ns.off('gameEvent', onGameStartEnd);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ns.id]);
   useNSForceChange('LeaderboardWindow', false, (prevState, nextState) => {
     return (
@@ -32,7 +30,7 @@ export const LeaderboardWindow: React.FC = () => {
     );
   });
 
-  const { leaderboard, milliseconds_remaining, paused, my_id } = ns.state;
+  const { leaderboard, paused, my_id } = ns.state;
   if (!leaderboard) {
     return null;
   }
@@ -52,13 +50,7 @@ export const LeaderboardWindow: React.FC = () => {
       minimized={
         place && (
           <div className="leaderboard-window-minimized">
-            Your place:
-            {' '}
-{place}
-{' '}
-of 
-{' '}
-{totalPlaces}
+            Your place: {place} of {totalPlaces}
           </div>
         )
       }
@@ -74,15 +66,11 @@ of
           &nbsp; news & talk
         </a>
       </div>
-      {paused && <div className="winner">
-Winner:{leaderboard.winner}</div>}
+      {paused && <div className="winner">Winner:{leaderboard.winner}</div>}
       <div className="header">Leaderboard:</div>
       {leaderboard.rating.map(([p, s], i) => (
         <div className="line" key={p.id}>
-          {i + 1}
-.{p.name}
-{' '}
--{s}
+          {i + 1}.{p.name} -{s}
         </div>
       ))}
       ,

@@ -9,6 +9,19 @@ import { ItemElem } from './InventoryItem';
 
 export const ITEM_CELL_MARGIN = 5;
 export const ITEM_CELL_SIZE = 60;
+export const snap = (pos: IVector): IVector => {
+  return {
+    x:
+      Math.round(pos.x / ITEM_CELL_SIZE) * ITEM_CELL_SIZE -
+      ITEM_CELL_MARGIN +
+      0.5,
+    y:
+      Math.round(pos.y / ITEM_CELL_SIZE) * ITEM_CELL_SIZE +
+      ITEM_CELL_MARGIN +
+      0.5,
+  };
+};
+
 export const cellsToPixels = (cellCount: number) =>
   ITEM_CELL_SIZE * cellCount + 1; // 1 is last border
 
@@ -23,19 +36,6 @@ export const positionToGridPosition = (p: IVector): IVector => {
   return Vector.fromIVector(snap(p))
     .subtract(V_MARGIN)
     .scale(1 / ITEM_CELL_SIZE);
-};
-
-export const snap = (pos: IVector): IVector => {
-  return {
-    x:
-      Math.round(pos.x / ITEM_CELL_SIZE) * ITEM_CELL_SIZE -
-      ITEM_CELL_MARGIN +
-      0.5,
-    y:
-      Math.round(pos.y / ITEM_CELL_SIZE) * ITEM_CELL_SIZE +
-      ITEM_CELL_MARGIN +
-      0.5,
-  };
 };
 
 export const OnDragEmpty: DraggableEventHandler = (e: any, d: any) => {};

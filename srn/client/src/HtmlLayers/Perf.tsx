@@ -100,7 +100,8 @@ const Perf = {
         newFrameEvents.push(frameHappenedAt);
       }
     }
-    if (debug) console.log(
+    if (debug)
+      console.log(
         debugName,
         measuredFrameEvents.length,
         newFrameEvents.length,

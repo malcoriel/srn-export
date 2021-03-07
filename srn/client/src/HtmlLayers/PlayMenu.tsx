@@ -8,6 +8,7 @@ export const PlayMenu: React.FC<{
   hide: () => void;
 }> = ({ startTutorial, start, hide, startSandbox }) => (
   <div className="play-menu">
+    {/* eslint-disable-next-line react/no-unescaped-entities */}
     <div>I recommend doing the tutorial if it's your first time here:</div>
     <Button
       className="play"

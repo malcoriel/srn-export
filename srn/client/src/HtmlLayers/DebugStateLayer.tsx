@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactJson from 'react-json-view';
 import NetState, { useNSForceChange } from '../NetState';
-import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { PanelPosition, PanelWithHideButton } from './PanelWithHideButton';
 
 const DebugInternals = () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import './WindowContainers.scss';
 
-export const WindowContainers: React.FC<{}> = () => {
+export const WindowContainers: React.FC = () => {
   return (
     <>
       <div id="shown-windows" className="shown-windows" />

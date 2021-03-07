@@ -11,14 +11,19 @@ const formatText = (text: string, hotkey?: string) => {
         text.substr(pos, 1),
         text.substr(pos + 1, text.length - pos - 1),
       ];
-      return <span>
-        <span>{parts[0]}</span>
-        <span className="hotkey-letter">{parts[1]}</span>
-        <span>{parts[2]}</span>
-      </span>
-    } else {
-      return <span>{text} ({hotkey})</span>
+      return (
+        <span>
+          <span>{parts[0]}</span>
+          <span className="hotkey-letter">{parts[1]}</span>
+          <span>{parts[2]}</span>
+        </span>
+      );
     }
+    return (
+      <span>
+        {text} ({hotkey})
+      </span>
+    );
   }
   return <span>{text}</span>;
 };

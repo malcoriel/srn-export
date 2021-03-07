@@ -1,8 +1,7 @@
 import React from 'react';
 import './Input.scss';
-let suppress = (enable?: boolean) => (ev: any) => {
-  if (ev.code === 'Enter')
-    return;
+const suppress = (enable?: boolean) => (ev: any) => {
+  if (ev.code === 'Enter') return;
   return enable ? ev.stopPropagation() : undefined;
 };
 
@@ -10,10 +9,10 @@ export const Input: React.FC<{
   value: string;
   onChange: (ev: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
-  placeholder?: string
-  disabled?: boolean
-  noPropagation?: boolean
-}> = ({ value,noPropagation, disabled, onChange, className, placeholder }) => {
+  placeholder?: string;
+  disabled?: boolean;
+  noPropagation?: boolean;
+}> = ({ value, noPropagation, disabled, onChange, className, placeholder }) => {
   return (
     <input
       onKeyUp={suppress(noPropagation)}

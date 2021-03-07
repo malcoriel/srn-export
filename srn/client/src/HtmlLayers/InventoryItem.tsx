@@ -15,6 +15,8 @@ const itemTypeToColor = {
   [InventoryItemType.QuestCargo]: gray,
 };
 
+const defaultColor = gray;
+
 const getColor = (iit: InventoryItemType): string => {
   return itemTypeToColor[iit] || defaultColor;
 };
@@ -35,8 +37,6 @@ const renderItem = (item: InventoryItem) => {
     />
   );
 };
-
-const defaultColor = gray;
 
 export const ItemElem: React.FC<{
   defaultPosition?: IVector;
@@ -64,8 +64,8 @@ export const ItemElem: React.FC<{
 
   const onStart = onDragStart
     ? () => {
-      onDragStart(item);
-    }
+        onDragStart(item);
+      }
     : OnDragEmpty;
   return (
     <Draggable

@@ -24,7 +24,12 @@ export const HoverHintWindow: React.FC = () => {
     const isRare = hintedMineral.value >= 300;
     const isUncommon = hintedMineral.value >= 200;
     //const isCommon = hintedMineral.value >= 100;
-    const rarityClass = isRare ? 'rare' : isUncommon ? 'uncommon' : 'common';
+    let rarityClass: string;
+    if (isRare) {
+      rarityClass = 'rare';
+    } else {
+      rarityClass = isUncommon ? 'uncommon' : 'common';
+    }
 
     const coord = realPosToScreenPos(hintedMineral)
       .add(new Vector(1, 1).scale(realLenToScreenLen(hintedMineral.radius)))
@@ -43,9 +48,7 @@ export const HoverHintWindow: React.FC = () => {
         >
           <div className="header">Valuable mineral</div>
           <div>
-            Rarity:
-            {' '}
-<span className={rarityClass}>{rarityClass}</span>
+            Rarity: <span className={rarityClass}>{rarityClass}</span>
           </div>
         </StyledRect>
       </div>

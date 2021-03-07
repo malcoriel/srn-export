@@ -29,54 +29,54 @@ export const StyledRect: React.FC<{
   className,
 }) => {
   const computeStyles = () => {
-    let thicknessCoeff = halfThick ? 0.5 : 1.0;
-    let bgSizeHorizontal = `${thickness * 10}px ${thickness}px`;
-    let bgSizeVertical = `${thickness}px ${thickness * 10}px`;
-    let bgSizeCorner = `${thickness}px ${thickness}px`;
-    let padding = `${noTop ? 0 : thickness}px ${noRight ? 0 : thickness}px ${
+    const thicknessCoeff = halfThick ? 0.5 : 1.0;
+    const bgSizeHorizontal = `${thickness * 10}px ${thickness}px`;
+    const bgSizeVertical = `${thickness}px ${thickness * 10}px`;
+    const bgSizeCorner = `${thickness}px ${thickness}px`;
+    const padding = `${noTop ? 0 : thickness}px ${noRight ? 0 : thickness}px ${
       noBottom ? 0 : thickness
     }px ${noLeft ? 0 : thickness}px `;
-    let mainDivStyle = {
+    const mainDivStyle = {
       width,
       height,
       padding,
     };
-    let topStyle = {
+    const topStyle = {
       width,
       height: thickness * thicknessCoeff,
       backgroundSize: bgSizeHorizontal,
     };
-    let leftStyle = {
+    const leftStyle = {
       height,
       width: thickness * thicknessCoeff,
       backgroundSize: bgSizeVertical,
     };
-    let bottomStyle = {
+    const bottomStyle = {
       width,
       height: thickness * thicknessCoeff,
       backgroundSize: bgSizeHorizontal,
     };
-    let rightStyle = {
+    const rightStyle = {
       height,
       width: thickness * thicknessCoeff,
       backgroundSize: bgSizeVertical,
     };
-    let topLeftStyle = {
+    const topLeftStyle = {
       width: thickness,
       height: thickness,
       backgroundSize: bgSizeCorner,
     };
-    let topRightStyle = {
+    const topRightStyle = {
       width: thickness,
       height: thickness,
       backgroundSize: bgSizeCorner,
     };
-    let bottomLeftStyle = {
+    const bottomLeftStyle = {
       width: thickness,
       height: thickness,
       backgroundSize: bgSizeCorner,
     };
-    let bottomRightStyle = {
+    const bottomRightStyle = {
       width: thickness,
       height: thickness,
       backgroundSize: bgSizeCorner,
@@ -94,7 +94,7 @@ export const StyledRect: React.FC<{
     };
   };
 
-  let {
+  const {
     mainDivStyle,
     topStyle,
     leftStyle,

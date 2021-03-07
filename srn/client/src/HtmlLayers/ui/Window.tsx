@@ -6,7 +6,7 @@ import { AiFillCaretDown, AiFillCaretUp, CgClose } from 'react-icons/all';
 import { StyledRect } from './StyledRect';
 import ReactDOM from 'react-dom';
 import './Window.scss';
-import { useHotkeys } from 'react-hotkeys-hook';
+
 export const Window: React.FC<{
   storeKey: string;
   fixedState?: WindowState;
@@ -31,7 +31,8 @@ export const Window: React.FC<{
   className,
   fixedState,
   unclosable,
-  contentClassName, minimizedClassname,
+  contentClassName,
+  minimizedClassname,
 }) => {
   const key = storeKey;
   const setKey = `set${_.upperFirst(key)}`;
@@ -39,10 +40,11 @@ export const Window: React.FC<{
     [key]: (state as Record<string, any>)[key],
     [setKey]: (state as Record<string, any>)[setKey],
   }));
-  const state = fixedState || storeParts[key] as WindowState;
+  const state = fixedState || (storeParts[key] as WindowState);
   const minimize = () => storeParts[setKey](WindowState.Minimized);
   const maximize = () => storeParts[setKey](WindowState.Shown);
-  const hide = () => storeParts[setKey](unclosable ? WindowState.Minimized : WindowState.Hidden);
+  const hide = () =>
+    storeParts[setKey](unclosable ? WindowState.Minimized : WindowState.Hidden);
   const isShown = state === WindowState.Shown;
   const isMinimized = state === WindowState.Minimized;
 
@@ -61,13 +63,15 @@ export const Window: React.FC<{
           <AiFillCaretUp />
         </Button>
       )}
-      {!unclosable && <Button onClick={hide}>
-        <CgClose />
-      </Button>}
+      {!unclosable && (
+        <Button onClick={hide}>
+          <CgClose />
+        </Button>
+      )}
     </div>
   );
-  let minimizedMountPoint = document.getElementById('minimized-windows');
-  let shownWindowsMountPoint = document.getElementById('shown-windows');
+  const minimizedMountPoint = document.getElementById('minimized-windows');
+  const shownWindowsMountPoint = document.getElementById('shown-windows');
   if (!minimizedMountPoint || !shownWindowsMountPoint) return null;
   return (
     <>
@@ -75,7 +79,7 @@ export const Window: React.FC<{
         ReactDOM.createPortal(
           <div className={`ui-window ${className}`}>
             {isShown && (
-              <div className={`ui-window-shown `}>
+              <div className="ui-window-shown ">
                 <StyledRect
                   width={width}
                   height={height}

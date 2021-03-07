@@ -72,15 +72,8 @@ export const QuestWindow = () => {
       }
     >
       <div className="header">
-        Active quest:
-        {' '}
-<span className="description">Cargo delivery</span>
-        <span>
-{' '}
--{questData.reward}
-{' '}
-cr. reward
-</span>
+        Active quest: <span className="description">Cargo delivery</span>
+        <span> -{questData.reward} cr. reward</span>
       </div>
       <div className="stages">
         <div className={`line ${fromDone ? 'done' : ''}`}>

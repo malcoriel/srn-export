@@ -1,6 +1,7 @@
+/* eslint-disable no-unused-vars */
 import React, { Suspense, useEffect, useState } from 'react';
 import './TestUI.scss';
-import { Canvas, extend, useLoader, useThree } from 'react-three-fiber';
+import { Canvas, extend, useThree } from 'react-three-fiber';
 import { Vector3 } from 'three/src/math/Vector3';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
@@ -10,7 +11,6 @@ import {
   EdgesGeometry,
   Geometry,
   LineBasicMaterial,
-  LineSegments,
   Mesh,
   MeshBasicMaterial,
   MeshNormalMaterial,
@@ -106,7 +106,7 @@ const BoxModel = () => {
   );
 };
 
-export const TestUI: React.FC<{}> = () => {
+export const TestUI: React.FC = () => {
   const [seed, setSeed] = useState('qwe');
   const [shown] = useToggleHotkey('ctrl+shift+t', false);
   const [scene, setScene] = useState(null as Scene | null);

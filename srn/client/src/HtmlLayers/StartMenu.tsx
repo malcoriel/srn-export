@@ -100,6 +100,7 @@ export const StartMenu: React.FC<{
           <div className="title">Star Rangers Network</div>
           {!playing && (
             <>
+              {/* eslint-disable-next-line react/no-unescaped-entities */}
               <Label>So, what's your name, ranger?</Label>
               <div className="name-selector">
                 <Input
@@ -216,9 +217,7 @@ export const StartMenu: React.FC<{
           )}
           {playing && seed && (
             <div>
-              Game seed:
-              {' '}
-<span className="normal-selection">{seed}</span>
+              Game seed: <span className="normal-selection">{seed}</span>
             </div>
           )}
         </div>
@@ -247,6 +246,7 @@ export const StartMenu: React.FC<{
           <FaTelegram />
           &nbsp; news & talk
         </a>
+        {/* eslint-disable-next-line react/no-unescaped-entities */}
         <div className="copyright">Game by Valeriy 'Malcoriel' Kuzmin</div>
         <div className="copyright">Character images by artbreeder.com</div>
         <div className="copyright">Music powered by aiva.ai</div>
