@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Button.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';
@@ -37,11 +37,34 @@ export const Button: React.FC<{
   text?: string;
   round?: boolean;
 }> = ({ hotkey, round, text, onClick, children, className, toggled }) => {
-  useHotkeys(hotkey || 'nonexistent', () => (onClick || Function.prototype)());
+  const targetHotKey = hotkey || '🤣';
+  const [pseudoActive, setPseudoActive] = useState(false);
+  useHotkeys(
+    targetHotKey,
+    () => {
+      if (onClick) {
+        setTimeout(() => {
+          onClick();
+        }, 0);
+      }
+      setPseudoActive(false);
+    },
+    {
+      keyup: true,
+    }
+  );
+  useHotkeys(
+    targetHotKey,
+    () => {
+      setPseudoActive(true);
+    },
+    { keydown: true }
+  );
   return (
     <span
       className={classNames({
         'ui-button ': true,
+        'pseudo-active': pseudoActive,
         [className as string]: !!className,
         toggled,
         round,

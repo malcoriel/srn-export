@@ -26,7 +26,7 @@
   }
 }
 
-.ui-button:hover {
+.ui-button:hover,.pseudo-active {
   opacity: 0.9;
   background-color: darken($teal, 0.9);
   color: black;
@@ -41,7 +41,7 @@
   }
 }
 
-.ui-button:active {
+.ui-button:active,.pseudo-active {
   transition: transform .02s;
   transform: scale(0.98);
 }
