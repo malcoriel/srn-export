@@ -7,13 +7,12 @@ process.env.NODE_ENV = 'development';
 // Makes the script crash on unhandled rejections instead of silently
 // ignoring them. In the future, promise rejections that are not handled will
 // terminate the Node.js process with a non-zero exit code.
-process.on('unhandledRejection', err => {
+process.on('unhandledRejection', (err) => {
   throw err;
 });
 
 // Ensure environment variables are read.
 require('../config/env');
-
 
 const fs = require('fs');
 const chalk = require('react-dev-utils/chalk');
@@ -33,6 +32,7 @@ const paths = require('../config/paths');
 const configFactory = require('../config/webpack.config');
 const createDevServerConfig = require('../config/webpackDevServer.config');
 const getClientEnvironment = require('../config/env');
+// eslint-disable-next-line import/no-dynamic-require
 const react = require(require.resolve('react', { paths: [paths.appPath] }));
 
 const env = getClientEnvironment(paths.publicUrlOrPath.slice(0, -1));
@@ -57,7 +57,7 @@ if (process.env.HOST) {
     )
   );
   console.log(
-    `If this was unintentional, check that you haven't mistakenly set it in your shell.`
+    "If this was unintentional, check that you haven't mistakenly set it in your shell."
   );
   console.log(
     `Learn more here: ${chalk.yellow('https://cra.link/advanced-config')}`
@@ -74,7 +74,7 @@ checkBrowsers(paths.appPath, isInteractive)
     // run on a different port. `choosePort()` Promise resolves to the next free port.
     return choosePort(HOST, DEFAULT_PORT);
   })
-  .then(port => {
+  .then((port) => {
     if (port == null) {
       // We have not found a port.
       return;
@@ -82,6 +82,7 @@ checkBrowsers(paths.appPath, isInteractive)
 
     const config = configFactory('development');
     const protocol = process.env.HTTPS === 'true' ? 'https' : 'http';
+    // eslint-disable-next-line import/no-dynamic-require
     const appName = require(paths.appPackageJson).name;
 
     const useTypeScript = fs.existsSync(paths.appTsConfig);
@@ -93,9 +94,11 @@ checkBrowsers(paths.appPath, isInteractive)
       paths.publicUrlOrPath.slice(0, -1)
     );
     const devSocket = {
-      warnings: warnings =>
+      warnings: (warnings) =>
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         devServer.sockWrite(devServer.sockets, 'warnings', warnings),
-      errors: errors =>
+      errors: (errors) =>
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         devServer.sockWrite(devServer.sockets, 'errors', errors),
     };
     // Create a webpack compiler that is configured with custom messages.
@@ -110,6 +113,7 @@ checkBrowsers(paths.appPath, isInteractive)
       webpack,
     });
     // Load proxy config
+    // eslint-disable-next-line import/no-dynamic-require
     const proxySetting = require(paths.appPackageJson).proxy;
     const proxyConfig = prepareProxy(
       proxySetting,
@@ -123,7 +127,7 @@ checkBrowsers(paths.appPath, isInteractive)
     );
     const devServer = new WebpackDevServer(compiler, serverConfig);
     // Launch WebpackDevServer.
-    devServer.listen(port, HOST, err => {
+    devServer.listen(port, HOST, (err) => {
       if (err) {
         return console.log(err);
       }
@@ -143,8 +147,8 @@ checkBrowsers(paths.appPath, isInteractive)
       openBrowser(urls.localUrlForBrowser);
     });
 
-    ['SIGINT', 'SIGTERM'].forEach(function (sig) {
-      process.on(sig, function () {
+    ['SIGINT', 'SIGTERM'].forEach((sig) => {
+      process.on(sig, () => {
         devServer.close();
         process.exit();
       });
@@ -152,13 +156,13 @@ checkBrowsers(paths.appPath, isInteractive)
 
     if (process.env.CI !== 'true') {
       // Gracefully exit when stdin ends
-      process.stdin.on('end', function () {
+      process.stdin.on('end', () => {
         devServer.close();
         process.exit();
       });
     }
   })
-  .catch(err => {
+  .catch((err) => {
     if (err && err.message) {
       console.log(err.message);
     }
