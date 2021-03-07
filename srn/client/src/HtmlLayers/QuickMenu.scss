@@ -24,9 +24,7 @@ $menuDiameter: 600px;
   .center-action {
     z-index: 1;
     .ui-button {
-      width: 75px;
-      height: 75px;
-      transform: translate(-12.5px, -12.5px);
+
     }
 
     .ui-button {
@@ -40,9 +38,19 @@ $menuDiameter: 600px;
 
   .action {
     position: absolute;
-    top: calc(50% - 37.5px);
-    left: calc(50% - 37.5px);
+    top: calc(50% - 52.5px);
+    left: calc(50% - 52.5px);
     transition: transform .1s ease-in-out;
+
+    .ui-button {
+      width: 80px;
+      height: 80px;
+      font-size: 12px;
+    }
+
+    .icon {
+      font-size: 30px;
+    }
   }
 
   $counts: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10;

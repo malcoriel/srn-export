@@ -5,6 +5,7 @@ import {
   Dialogue,
   GameMode,
   GameState,
+  SandboxCommand,
   Ship,
   ShipAction,
   ShipActionType,
@@ -29,6 +30,7 @@ enum ClientOpCode {
   Name,
   DialogueOption,
   SwitchRoom,
+  SandboxCommand,
 }
 
 interface Cmd {
@@ -104,6 +106,8 @@ const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 const MAX_ALLOWED_DIST_DESYNC = 5.0;
+
+const serializeSandboxCommand = (_cmd: SandboxCommand) => '';
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -544,6 +548,12 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
+        case ClientOpCode.SandboxCommand: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
         default:
           console.warn(`Unknown opcode ${cmd.code}`);
       }
@@ -676,6 +686,14 @@ export default class NetState extends EventEmitter {
         center.y + viewportSize.y / 2
       ),
     };
+  }
+
+  public sendSandboxCmd(cmd: SandboxCommand) {
+    this.send({
+      code: ClientOpCode.SandboxCommand,
+      value: serializeSandboxCommand(cmd),
+      tag: uuid.v4(),
+    });
   }
 }
 

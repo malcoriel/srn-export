@@ -99,6 +99,41 @@ export enum DialogueSubstitutionType {
   Generic = 'Generic',
 }
 
+export enum SandboxCommandName {
+  Unknown = 'Unknown',
+  AddStar = 'AddStar',
+  AddPlanet = 'AddPlanet',
+  ToggleGodMode = 'ToggleGodMode',
+  Teleport = 'Teleport',
+}
+
+export enum PlanetType {
+  Unknown = 'Unknown',
+  Ice = 'Ice',
+  Jovian = 'Jovian',
+  Jungle = 'Jungle',
+  Barren = 'Barren',
+}
+
+export enum SandboxTeleportTarget {
+  Unknown = 'Unknown',
+  Zero = 'Zero',
+}
+
+export type SandboxCommand =
+  | SandboxCommandName.AddStar
+  | SandboxCommandName.ToggleGodMode
+  | {
+      AddPlanet: {
+        p_type: PlanetType;
+      };
+    }
+  | {
+      Teleport: {
+        target: SandboxTeleportTarget;
+      };
+    };
+
 export type DialogueSubstitution = {
   s_type: DialogueSubstitutionType;
   text: string;
@@ -110,10 +145,6 @@ export type DialogueElem = {
   id: string;
   is_option: boolean;
   substitution: DialogueSubstitution[];
-};
-
-export const isStateTutorial = (st: GameState) => {
-  return st.my_id === st.id;
 };
 
 export type Dialogue = {
@@ -173,6 +204,10 @@ export enum GameMode {
   Tutorial = 'Tutorial',
   Sandbox = 'Sandbox',
 }
+
+export const isStateTutorial = (st: GameState) => {
+  return st.mode === GameMode.Tutorial;
+};
 
 export type GameState = {
   seed: string;

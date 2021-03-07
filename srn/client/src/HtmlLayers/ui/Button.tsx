@@ -48,7 +48,8 @@ export const Button: React.FC<{
       })}
       onClick={onClick}
     >
-      {text ? formatText(text, hotkey) : children}
+      {children}
+      {text ? formatText(text, hotkey) : ''}
     </span>
   );
 };

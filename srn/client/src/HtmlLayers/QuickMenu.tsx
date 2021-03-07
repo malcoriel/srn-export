@@ -1,11 +1,13 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { Button } from './ui/Button';
 import './QuickMenu.scss';
+import { ImCross } from 'react-icons/all';
 
 type SingleMenuAction = {
   icon?: ReactNode;
   text: string;
+  noHide?: boolean;
   handler?: () => void;
 };
 
@@ -66,24 +68,33 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
   const [shown, setShown] = useState(false);
   const [animatedRotation, setAnimatedRotation] = useState(false);
   const [activeActions, setActiveActions] = useState(startActions);
+
+  // when the start actions are reset due to a no-hide option,
+  // without this the state will not update (it has to be reset like this)
+  useEffect(() => {
+    setActiveActions(startActions);
+  }, [startActions]);
   const [levels, setLevels] = useState([] as number[]);
 
-  const buildActiveActions = (levels: number[]) => {
-    const tmp = [...levels];
-    let active = startActions;
-    while (tmp.length) {
-      const curr = tmp.shift() as number;
-      const chosen = active[curr];
-      if (!isSingle(chosen)) {
-        active = chosen.children;
-      } else {
-        console.warn('invalid levels sequence', levels, startActions);
-        setShown(false);
-        setAnimatedRotation(false);
+  const buildActiveActions = useCallback(
+    (levels: number[]) => {
+      const tmp = [...levels];
+      let active = startActions;
+      while (tmp.length) {
+        const curr = tmp.shift() as number;
+        const chosen = active[curr];
+        if (!isSingle(chosen)) {
+          active = chosen.children;
+        } else {
+          console.warn('invalid levels sequence', levels, startActions);
+          setShown(false);
+          setAnimatedRotation(false);
+        }
       }
-    }
-    setActiveActions(active);
-  };
+      setActiveActions(active);
+    },
+    [startActions]
+  );
 
   const downLevel = () => {
     if (levels.length === 0) {
@@ -130,7 +141,11 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
     <div className="quick-menu-container">
       <div className={`quick-menu count-${activeActions.length}`}>
         <div className="action center-action">
-          <Button round onClick={downLevel} hotkey="b" text="back" />
+          <Button round onClick={downLevel} hotkey="b" text="BACK">
+            <span className="icon">
+              <ImCross />
+            </span>
+          </Button>
         </div>
         {activeActions.map((act, i) => {
           return (
@@ -146,13 +161,17 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
                     if (act.handler) {
                       act.handler();
                     }
-                    reset();
+                    if (!act.noHide) {
+                      reset();
+                    }
                   } else {
                     upLevel(i);
                   }
                 }}
                 text={act.text}
-              />
+              >
+                {act.icon ? <span className="icon">{act.icon}</span> : null}
+              </Button>
             </div>
           );
         })}
