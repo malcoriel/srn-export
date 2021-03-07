@@ -18,10 +18,10 @@ export const PlayMenu: React.FC<{
       the most amount of money in 3 minutes:
     </div>
     <Button className='play' onClick={start} hotkey='c' text='CARGO RUSH' />
-    <div>
-      There is a playground for building systems:
-    </div>
-    <Button className='play' onClick={startSandbox} hotkey='S' text='SANDBOX' />
+    {/*<div>*/}
+    {/*  There is a playground for building systems:*/}
+    {/*</div>*/}
+    {/*<Button className='play' onClick={startSandbox} hotkey='S' text='SANDBOX' />*/}
     <div>
       Or you can just go to the main menu:
     </div>
