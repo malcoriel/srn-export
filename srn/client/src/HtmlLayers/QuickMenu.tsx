@@ -29,6 +29,9 @@ export const testQuickMenuActions = [
     text: 'w',
   },
   {
+    text: 'rt',
+  },
+  {
     text: 'e',
     children: [
       {
@@ -54,12 +57,12 @@ export const testQuickMenuActions = [
 
 export type QuickMenuProps = { startActions: QuickMenuAction[] };
 export const QuickMenu: React.FC<QuickMenuProps> = ({ startActions }) => {
-  const [shown, setShown] = useState(true);
+  const [shown, setShown] = useState(false);
+  const [animatedRotation, setAnimatedRotation] = useState(false);
   const [activeActions, setActiveActions] = useState(startActions);
   const [levels, setLevels] = useState([] as number[]);
 
   const buildActiveActions = (levels: number[]) => {
-    console.log('build', levels);
     const tmp = [...levels];
     let active = startActions;
     while (tmp.length) {
@@ -70,15 +73,16 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({ startActions }) => {
       } else {
         console.warn('invalid levels sequence', levels, startActions);
         setShown(false);
+        setAnimatedRotation(false);
       }
     }
     setActiveActions(active);
   };
 
   const downLevel = () => {
-    console.log('down level');
     if (levels.length === 0) {
       setShown(false);
+      setAnimatedRotation(false);
     } else {
       setLevels((l) => {
         l.pop();
@@ -89,7 +93,6 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({ startActions }) => {
   };
 
   const upLevel = (actionIndex: number) => {
-    console.log('upLevel', actionIndex);
     setLevels((levels) => {
       levels.push(actionIndex);
       return levels;
@@ -97,11 +100,21 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({ startActions }) => {
     buildActiveActions(levels);
   };
 
+  const reset = () => {
+    setLevels([]);
+    buildActiveActions([]);
+    setShown(false);
+    setAnimatedRotation(false);
+  };
+
   useHotkeys(
     'b',
     () => {
       if (!shown) {
         setShown(true);
+        setTimeout(() => {
+          setAnimatedRotation(true);
+        }, 0);
       }
     },
     [setShown, shown]
@@ -109,20 +122,25 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({ startActions }) => {
   if (!shown) return null;
   return (
     <div className="quick-menu-container">
-      <div className="quick-menu">
-        <div className="center-action">
+      <div className={`quick-menu count-${activeActions.length}`}>
+        <div className="action center-action">
           <Button round onClick={downLevel} hotkey="b" text="back" />
         </div>
         {activeActions.map((act, i) => {
           return (
-            <div key={i} className="action">
+            <div
+              key={i}
+              className={`action ${animatedRotation ? `rotate-${i}` : ''}`}
+            >
               <Button
                 round
                 hotkey={String((i + 1) % 10)}
                 onClick={() => {
                   if (isSingle(act)) {
-                    if (act.handler) act.handler();
-                    console.log('act', i + 1);
+                    if (act.handler) {
+                      act.handler();
+                    }
+                    reset();
                   } else {
                     upLevel(i);
                   }

@@ -1,3 +1,7 @@
+@import "../utils/palette";
+
+$itemRadius: 200px;
+$menuDiameter: 600px;
 .quick-menu-container {
   position: absolute;
   top: 0;
@@ -10,13 +14,47 @@
   pointer-events: none;
 
   .quick-menu {
-    background: green;
-    width: 500px;
-    height: 500px;
+    border-radius: 50%;
+    width: $menuDiameter;
+    height: $menuDiameter;
     pointer-events: auto;
+    position: relative;
+  }
+
+  .center-action {
+    z-index: 1;
+    .ui-button {
+      width: 75px;
+      height: 75px;
+      transform: translate(-12.5px, -12.5px);
+    }
+
+    .ui-button {
+      opacity: 1.0 !important;
+
+      &:not(:hover) {
+        background-color: black !important;
+      }
+    }
   }
 
   .action {
+    position: absolute;
+    top: calc(50% - 37.5px);
+    left: calc(50% - 37.5px);
+    transition: transform .1s ease-in-out;
+  }
 
+  $counts: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10;
+  @each $count in $counts {
+    .count-#{$count} {
+      $angle: 360deg / $count;
+
+      @each $item in $counts {
+        .rotate-#{$item - 1} {
+          transform: rotate(($item - 1) * $angle) translate(0, -$itemRadius) rotate(-($item - 1) * $angle)
+        }
+      }
+    }
   }
 }
