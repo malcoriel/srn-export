@@ -8,8 +8,11 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import {
   BoxBufferGeometry,
   BufferGeometry,
-  Color, EdgesGeometry,
-  Geometry, LineBasicMaterial, LineSegments,
+  Color,
+  EdgesGeometry,
+  Geometry,
+  LineBasicMaterial,
+  LineSegments,
   Mesh,
   MeshBasicMaterial,
   MeshNormalMaterial,
@@ -89,17 +92,19 @@ function getSphereCoords(prng: Prando, MIN_IN: number, MAX_OUT: number) {
 }
 
 const BoxModel = () => {
-  const edges = new EdgesGeometry(new BoxBufferGeometry())
-  const material = new LineBasicMaterial( { color: 0xff0000, linewidth: 5 } );
+  const edges = new EdgesGeometry(new BoxBufferGeometry());
+  const material = new LineBasicMaterial({ color: 0xff0000, linewidth: 5 });
 
-  return <group position={[0,0,0]} scale={[10, 10, 10]}>
-    <mesh position={[0,0,0]} scale={[0.9999,0.9999, 0.9999]}>
-      <boxBufferGeometry/>
-      <meshBasicMaterial color="gray"/>
-    </mesh>
-    <lineSegments args={[edges, material]}/>
-  </group>;
-}
+  return (
+    <group position={[0, 0, 0]} scale={[10, 10, 10]}>
+      <mesh position={[0, 0, 0]} scale={[0.9999, 0.9999, 0.9999]}>
+        <boxBufferGeometry />
+        <meshBasicMaterial color="gray" />
+      </mesh>
+      <lineSegments args={[edges, material]} />
+    </group>
+  );
+};
 
 export const TestUI: React.FC<{}> = () => {
   const [seed, setSeed] = useState('qwe');
@@ -284,7 +289,7 @@ export const TestUI: React.FC<{}> = () => {
           <ambientLight />
           {/*<axesHelper args={[100]} />*/}
           <OrbitControlsWrapper />
-          <BoxModel/>
+          <BoxModel />
           {/*<ThreeRock position={new Vector3(0, 0, 0)} />*/}
         </Suspense>
       </Canvas>

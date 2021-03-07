@@ -69,19 +69,16 @@ export const ExternalCameraControl: React.FC = () => {
   return null;
 };
 
-export const getOnWheel = (visualState: VisualState, eventAdapter: (evt: any) => IVector) => (evt: any) => {
+export const getOnWheel = (
+  visualState: VisualState,
+  eventAdapter: (evt: any) => IVector
+) => (evt: any) => {
   const delta = eventAdapter(evt).y;
   visualState.zoomShift = visualState.zoomShift || 1.0;
   let deltaZoom = delta * CAMERA_ZOOM_CHANGE_SPEED;
   visualState.zoomShift -= deltaZoom;
-  visualState.zoomShift = Math.min(
-    visualState.zoomShift,
-    CAMERA_MAX_ZOOM,
-  );
-  visualState.zoomShift = Math.max(
-    visualState.zoomShift,
-    CAMERA_MIN_ZOOM,
-  );
+  visualState.zoomShift = Math.min(visualState.zoomShift, CAMERA_MAX_ZOOM);
+  visualState.zoomShift = Math.max(visualState.zoomShift, CAMERA_MIN_ZOOM);
 };
 
 export const CameraZoomer: React.FC = () => {
@@ -94,7 +91,10 @@ export const CameraZoomer: React.FC = () => {
   });
   return (
     <group
-      onWheel={getOnWheel(visualState, (evt) => ({ y: evt.deltaY, x: evt.deltaX }))}
+      onWheel={getOnWheel(visualState, (evt) => ({
+        y: evt.deltaY,
+        x: evt.deltaX,
+      }))}
     >
       <mesh position={[0, 0, -20]}>
         <planeBufferGeometry args={[width_units, height_units]} />

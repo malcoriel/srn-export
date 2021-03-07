@@ -3,80 +3,101 @@ import './DialogueWindow.scss';
 import { Window } from './ui/Window';
 import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
-import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
+import {
+  CAMERA_DEFAULT_ZOOM,
+  CAMERA_HEIGHT,
+} from '../ThreeLayers/CameraControls';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import NetState from '../NetState';
 import _ from 'lodash';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { makePortraitPath } from './StartMenu';
-import { Dialogue, DialogueElem, DialogueSubstitution, DialogueSubstitutionType, Planet } from '../world';
+import {
+  Dialogue,
+  DialogueElem,
+  DialogueSubstitution,
+  DialogueSubstitutionType,
+  Planet,
+} from '../world';
 import { useStore, WindowState } from '../store';
 import { findPlanet } from './NetworkStatus';
 import { WithScrollbars } from './ui/WithScrollbars';
 import classNames from 'classnames';
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
-  <span className='dialogue-option'>
+  <span className="dialogue-option">
     {substituteText(dialogue.text, dialogue.substitution)}
   </span>
 );
 
-
 const renderHistory = (history: DialogueElem[]) => {
-  return <div className='history-contents'>{
-    history.map((hi, i) => <div key={i} className={`history-item ${hi.is_option && 'option'}`}>
-      <DialogueElemView {...hi} />
-    </div>)
-  }</div>;
+  return (
+    <div className="history-contents">
+      {history.map((hi, i) => (
+        <div key={i} className={`history-item ${hi.is_option && 'option'}`}>
+          <DialogueElemView {...hi} />
+        </div>
+      ))}
+    </div>
+  );
 };
 
-const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]) => (
-  <div className='dialogue'>
-    <div className='context-part'>
-      <div className='history'>
+const renderContent = (
+  dialogue: Dialogue,
+  ns: NetState,
+  history: DialogueElem[]
+) => (
+  <div className="dialogue">
+    <div className="context-part">
+      <div className="history">
         <WithScrollbars noAutoHide autoScrollDown paddedRight>
           {renderHistory(history)}
         </WithScrollbars>
       </div>
-      <div className='scene'>
-        {dialogue.planet && <Canvas
-          style={{ width: 200, height: 200, backgroundColor: 'black' }}
-          orthographic
-          camera={{
-            position: new Vector3(0, 0, CAMERA_HEIGHT),
-            zoom: CAMERA_DEFAULT_ZOOM() * 0.4,
-          }}
-        >
-          <ambientLight />
-          <pointLight position={[10, 10, 10]} />
-          <ThreePlanetShape
-            visible={true}
-            key={dialogue.planet.id}
-            scale={
-              _.times(3, () => dialogue.planet!.radius) as [
-                number,
-                number,
-                number
-              ]
-            }
-            color={dialogue.planet.color}
-          />
-        </Canvas>
-        }
+      <div className="scene">
+        {dialogue.planet && (
+          <Canvas
+            style={{ width: 200, height: 200, backgroundColor: 'black' }}
+            orthographic
+            camera={{
+              position: new Vector3(0, 0, CAMERA_HEIGHT),
+              zoom: CAMERA_DEFAULT_ZOOM() * 0.4,
+            }}
+          >
+            <ambientLight />
+            <pointLight position={[10, 10, 10]} />
+            <ThreePlanetShape
+              visible={true}
+              key={dialogue.planet.id}
+              scale={
+                _.times(3, () => dialogue.planet!.radius) as [
+                  number,
+                  number,
+                  number
+                ]
+              }
+              color={dialogue.planet.color}
+            />
+          </Canvas>
+        )}
       </div>
-      {dialogue.right_character !== 'question' &&
-      <div className={classNames({ 'context-character': true, 'big': !dialogue.planet })}>
-        {/* eslint-disable-next-line jsx-a11y/alt-text */}
-        <img
-          src={makePortraitPath(dialogue.right_character)}
-        />
-      </div>}
+      {dialogue.right_character !== 'question' && (
+        <div
+          className={classNames({
+            'context-character': true,
+            big: !dialogue.planet,
+          })}
+        >
+          {/* eslint-disable-next-line jsx-a11y/alt-text */}
+          <img src={makePortraitPath(dialogue.right_character)} />
+        </div>
+      )}
     </div>
-    <div className='options'>
+    <div className="options">
       {dialogue.options.map((option, i) => (
         <div
           key={i}
-          className='line'
+          className="line"
           onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
         >
           {i + 1}.&nbsp;
@@ -84,28 +105,32 @@ const renderContent = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]
         </div>
       ))}
     </div>
-    <div className='hint'>
+    <div className="hint">
       Hint: you can use numbers row (1-9) on the keyboard to select options
     </div>
   </div>
 );
 
-const renderMinimized = (dialogue: Dialogue, ns: NetState, history: DialogueElem[]) => (
-  <div className='contents'>
+const renderMinimized = (
+  dialogue: Dialogue,
+  ns: NetState,
+  history: DialogueElem[]
+) => (
+  <div className="contents">
     {/*<WithScrollbars>*/}
     {/*  <DialogueElemView {...dialogue.prompt} />*/}
     {/*</WithScrollbars>*/}
-    <div className='history'>
+    <div className="history">
       <WithScrollbars noAutoHide autoScrollDown paddedRight>
         {renderHistory(history)}
       </WithScrollbars>
     </div>
-    <div className='options'>
+    <div className="options">
       <WithScrollbars>
         {dialogue.options.map((option, i) => (
           <div
             key={i}
-            className='line'
+            className="line"
             onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
           >
             {i + 1}.&nbsp;
@@ -117,21 +142,20 @@ const renderMinimized = (dialogue: Dialogue, ns: NetState, history: DialogueElem
   </div>
 );
 
-
 export const DialogueWindow: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
   const [, forceUpdate] = useState(false);
-  const dialogueWindowState = useStore(state => state.dialogueWindow);
-  const setDialogueWindowState = useStore(state => state.setDialogueWindow);
+  const dialogueWindowState = useStore((state) => state.dialogueWindow);
+  const setDialogueWindowState = useStore((state) => state.setDialogueWindow);
   const [history, setHistory] = useState<DialogueElem[]>([]);
   useEffect(() => {
     const onDialogueChange = () => {
       if (dialogueWindowState === WindowState.Hidden) {
         setDialogueWindowState(WindowState.Shown);
       }
-      forceUpdate(old => !old);
+      forceUpdate((old) => !old);
     };
     ns.on('dialogue', onDialogueChange);
     return () => {
@@ -168,20 +192,22 @@ export const DialogueWindow: React.FC = () => {
     return null;
   }
 
-  return <Window
-    unclosable
-    contentClassName='dialogue-window-content'
-    height={616}
-    width={622}
-    line={'thin'}
-    halfThick
-    storeKey='dialogueWindow'
-    thickness={8}
-    minimizedClassname='minimized-dialogue'
-    minimized={renderMinimized(dialogue, ns, history)}
-  >
-    {renderContent(dialogue, ns, history)}
-  </Window>;
+  return (
+    <Window
+      unclosable
+      contentClassName="dialogue-window-content"
+      height={616}
+      width={622}
+      line={'thin'}
+      halfThick
+      storeKey="dialogueWindow"
+      thickness={8}
+      minimizedClassname="minimized-dialogue"
+      minimized={renderMinimized(dialogue, ns, history)}
+    >
+      {renderContent(dialogue, ns, history)}
+    </Window>
+  );
 };
 export const enrichSub = (s: DialogueSubstitution): ReactNode => {
   const ns = NetState.get();
@@ -199,17 +225,17 @@ export const enrichSub = (s: DialogueSubstitution): ReactNode => {
       let planet = findPlanet(ns.state, s.id);
       if (!planet) {
         console.warn(`substitution planet not found by id ${s.id}`);
-        return <span className='sub-planet'>{s.text}</span>;
+        return <span className="sub-planet">{s.text}</span>;
       }
       return (
-        <span className='sub-planet found' onClick={() => focus(planet!)}>
+        <span className="sub-planet found" onClick={() => focus(planet!)}>
           {s.text}
         </span>
       );
     case DialogueSubstitutionType.CharacterName:
-      return <span className='sub-character'>{s.text}</span>;
+      return <span className="sub-character">{s.text}</span>;
     case DialogueSubstitutionType.Generic:
-      return <span className='sub-generic'>{s.text}</span>;
+      return <span className="sub-generic">{s.text}</span>;
     case DialogueSubstitutionType.Unknown:
     default: {
       console.warn(`Unknown substitution ${s.s_type} text ${s.text}`);
@@ -219,7 +245,7 @@ export const enrichSub = (s: DialogueSubstitution): ReactNode => {
 };
 export const substituteText = (
   text: string,
-  subs: DialogueSubstitution[],
+  subs: DialogueSubstitution[]
 ): ReactNode[] => {
   const parts = text.split(/s_\w+/);
   const substitutions = subs.map((s, i) => {
@@ -229,4 +255,3 @@ export const substituteText = (
     <span key={i}>{elem}</span>
   ));
 };
-

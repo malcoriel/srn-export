@@ -12,7 +12,10 @@ export const OverheadPanel = () => {
   const ns = NetState.get();
   if (!ns) return null;
   useNSForceChange('OverheadPanel', false, (prevState, nextState) => {
-    return getSeconds(prevState.milliseconds_remaining) !== getSeconds(nextState.milliseconds_remaining);
+    return (
+      getSeconds(prevState.milliseconds_remaining) !==
+      getSeconds(nextState.milliseconds_remaining)
+    );
   });
 
   const { milliseconds_remaining } = ns.state;
@@ -27,8 +30,7 @@ export const OverheadPanel = () => {
     '0'
   )}`;
 
-  if (isStateTutorial(ns.state))
-    return null;
+  if (isStateTutorial(ns.state)) return null;
 
   return (
     <div className="overhead-panel-container">

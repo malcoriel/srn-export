@@ -108,7 +108,7 @@ export const ThreeLayer: React.FC = () => {
             />
           )}
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-          <ThreeBodiesLayer state={state} visMap={visMap}/>
+          <ThreeBodiesLayer state={state} visMap={visMap} />
           <ThreeShipsLayer state={state} visMap={visMap} />
         </group>
       </Suspense>

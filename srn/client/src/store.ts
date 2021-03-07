@@ -79,13 +79,13 @@ export type SrnState = {
 };
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
-let lsPortrait = extractLSValue('portrait', portraitPath(portraitIndex));
-let lsPreferredName = extractLSValue('preferredName', genRandomName());
-let lsSkipMenu = extractLSValue('skipMenu', false);
-let lsMusicEnabled = extractLSValue('musicEnabled', false);
-let lsMusicVolume = extractLSValue('musicVolume', 30);
+const lsPortrait = extractLSValue('portrait', portraitPath(portraitIndex));
+const lsPreferredName = extractLSValue('preferredName', genRandomName());
+const lsSkipMenu = extractLSValue('skipMenu', false);
+const lsMusicEnabled = extractLSValue('musicEnabled', false);
+const lsMusicVolume = extractLSValue('musicVolume', 30);
 
-function toggleWindowState(old: WindowState, hasMinimized: boolean = false) {
+function toggleWindowState(old: WindowState, hasMinimized = false) {
   if (hasMinimized) {
     if (old === WindowState.Shown) {
       return WindowState.Minimized;
@@ -161,7 +161,9 @@ export const useStore = create<SrnState>((set) => ({
     }),
   toggleLeaderboardWindow: () =>
     set((state) => {
-      return { leaderboardWindow: toggleWindowState(state.leaderboardWindow, true) };
+      return {
+        leaderboardWindow: toggleWindowState(state.leaderboardWindow, true),
+      };
     }),
   setMenu: (val: boolean) => set({ menu: val }),
   toggleMenu: () => set((state) => ({ menu: !state.menu })),
@@ -181,8 +183,8 @@ export const useStore = create<SrnState>((set) => ({
 
   nextPortrait: () =>
     set((state) => {
-      let locIndex = (portraitIndex + 1) % portraits.length;
-      let locPort = portraitPath(locIndex);
+      const locIndex = (portraitIndex + 1) % portraits.length;
+      const locPort = portraitPath(locIndex);
       state.setPortrait(locPort);
       setLSValue('portrait', locPort);
       portraitIndex = locIndex;
@@ -193,8 +195,8 @@ export const useStore = create<SrnState>((set) => ({
     set((state) => {
       let number = portraitIndex - 1;
       if (number < 0) number = portraits.length + number;
-      let locIndex = number % portraits.length;
-      let locPort = portraitPath(locIndex);
+      const locIndex = number % portraits.length;
+      const locPort = portraitPath(locIndex);
       setLSValue('portrait', locPort);
       state.setPortrait(locPort);
       portraitIndex = locIndex;
@@ -210,8 +212,8 @@ export const useStore = create<SrnState>((set) => ({
     }),
   makeRandomPortrait: () =>
     set(() => {
-      let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
-      let portrait = portraitPath(portraitIndex);
+      const portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
+      const portrait = portraitPath(portraitIndex);
       deleteLSValue('portrait');
       return { portraitIndex, portrait };
     }),

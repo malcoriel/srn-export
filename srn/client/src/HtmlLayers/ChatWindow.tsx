@@ -6,25 +6,22 @@ import { Chat } from './Chat';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 
-
 export const ChatWindow = () => {
   useStore((state) => state.chatWindow);
-  const forceUpdate = useStore(state => state.forceUpdate);
+  const forceUpdate = useStore((state) => state.forceUpdate);
   useEffect(() => {
-    setTimeout(forceUpdate, 1)
+    setTimeout(forceUpdate, 1);
   }, []);
 
   return (
     <Window
       height={400}
       width={300}
-      line='thick'
+      line="thick"
       thickness={10}
-      storeKey='chatWindow'
-      minimizedClassname={"chat-window-minimized"}
-      minimized={
-        <Chat channelName='inGame' />
-      }
+      storeKey="chatWindow"
+      minimizedClassname={'chat-window-minimized'}
+      minimized={<Chat channelName="inGame" />}
     >
       <div className="chat-window">
         <Tabs className="tabs">
@@ -33,14 +30,12 @@ export const ChatWindow = () => {
             <Tab className="tab">Global chat</Tab>
           </TabList>
           <TabPanel className="tabs-panel">
-            <Chat channelName='inGame' />
+            <Chat channelName="inGame" />
           </TabPanel>
           <TabPanel className="tabs-panel">
-            <Chat channelName='global' />
+            <Chat channelName="global" />
           </TabPanel>
-
         </Tabs>
-
       </div>
     </Window>
   );

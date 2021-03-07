@@ -5,7 +5,10 @@ import _ from 'lodash';
 import { Ship } from '../world';
 import Vector from '../utils/Vector';
 
-export const ThreeShipsLayer: React.FC<{ visMap: Record<string, boolean>, state: GameState }> = ({ visMap, state }) => {
+export const ThreeShipsLayer: React.FC<{
+  visMap: Record<string, boolean>;
+  state: GameState;
+}> = ({ visMap, state }) => {
   if (!state) return null;
   const { ships, planets } = state;
 

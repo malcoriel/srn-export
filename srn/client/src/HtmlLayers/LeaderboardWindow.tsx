@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { useEffect } from 'react';
-import NetState, {useNSForceChange } from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import { Window } from './ui/Window';
 import './LeaderboardWindow.scss';
 import { useStore, WindowState } from '../store';
@@ -21,12 +21,15 @@ export const LeaderboardWindow: React.FC = () => {
     };
     ns.on('gameEvent', onGameStartEnd);
     return () => {
-      ns.off("gameEvent", onGameStartEnd);
-    }
+      ns.off('gameEvent', onGameStartEnd);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ns.id]);
   useNSForceChange('LeaderboardWindow', false, (prevState, nextState) => {
-    return JSON.stringify(prevState.leaderboard) !== JSON.stringify(nextState.leaderboard);
+    return (
+      JSON.stringify(prevState.leaderboard) !==
+      JSON.stringify(nextState.leaderboard)
+    );
   });
 
   const { leaderboard, milliseconds_remaining, paused, my_id } = ns.state;
@@ -56,7 +59,11 @@ export const LeaderboardWindow: React.FC = () => {
     >
       <div className="news-talk">
         Subscribe to{' '}
-        <a href="https://t.me/joinchat/WLDnjKtHTPplQZje" rel="noreferrer" target="_blank">
+        <a
+          href="https://t.me/joinchat/WLDnjKtHTPplQZje"
+          rel="noreferrer"
+          target="_blank"
+        >
           <FaTelegram />
           &nbsp; news & talk
         </a>
@@ -67,7 +74,8 @@ export const LeaderboardWindow: React.FC = () => {
         <div className="line" key={p.id}>
           {i + 1}. {p.name} - {s}
         </div>
-      ))},
+      ))}
+      ,
     </Window>
   );
 };

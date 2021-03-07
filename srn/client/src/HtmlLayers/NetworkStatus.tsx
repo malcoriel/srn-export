@@ -25,9 +25,12 @@ export const NetworkStatus: React.FC = () => {
     });
     // unfortunately, the slowchange provides the state diff but this
     // component does not use it
-    ns.on('slowchange', _.throttle(() => {
-      forceUpdateNetworkStatus((i) => !i);
-    }, 1000));
+    ns.on(
+      'slowchange',
+      _.throttle(() => {
+        forceUpdateNetworkStatus((i) => !i);
+      }, 1000)
+    );
   }, [ns.id]);
   const { connecting, ping, maxPing, desync } = ns;
   const fps = statsHeap[Stat.RealFPS];

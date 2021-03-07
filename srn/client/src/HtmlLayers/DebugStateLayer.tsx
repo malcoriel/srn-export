@@ -10,9 +10,11 @@ const DebugInternals = () => {
   const { state } = ns;
 
   useNSForceChange('DebugStateLayer');
-  return <div className='debug-state'>
-    <ReactJson src={state} />
-  </div>;
+  return (
+    <div className="debug-state">
+      <ReactJson src={state} />
+    </div>
+  );
 };
 
 export const DebugStateLayer: React.FC = () => {
@@ -24,7 +26,7 @@ export const DebugStateLayer: React.FC = () => {
       position={PanelPosition.BottomRight}
       extraWide
     >
-      <DebugInternals/>
+      <DebugInternals />
     </PanelWithHideButton>
   );
 };
