@@ -70,7 +70,7 @@ pub type StateId = Uuid;
 pub type OptionId = Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum DialogOptionSideEffect {
+pub enum DialogueOptionSideEffect {
     Nothing,
     Undock,
     QuestCargoPickup,
@@ -80,6 +80,7 @@ pub enum DialogOptionSideEffect {
     QuitTutorial,
     SwitchDialogue(String),
     TriggerTutorialQuest,
+    TriggerTrade,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -113,7 +114,7 @@ pub fn check_trigger_conditions(state: &GameState, player_id: Uuid) -> HashSet<T
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueScript {
     pub id: Uuid,
-    pub transitions: HashMap<(StateId, OptionId), (Option<StateId>, Vec<DialogOptionSideEffect>)>,
+    pub transitions: HashMap<(StateId, OptionId), (Option<StateId>, Vec<DialogueOptionSideEffect>)>,
     pub prompts: HashMap<StateId, String>,
     pub options: HashMap<StateId, Vec<(OptionId, String, Option<TriggerCondition>)>>,
     pub initial_state: StateId,
@@ -495,15 +496,15 @@ fn apply_dialogue_option(
 
 fn apply_side_effects(
     state: &mut GameState,
-    side_effects: Vec<DialogOptionSideEffect>,
+    side_effects: Vec<DialogueOptionSideEffect>,
     player_id: PlayerId,
 ) -> bool {
     let state_read = state.clone();
     let mut state_changed = false;
     for side_effect in side_effects {
         match side_effect {
-            DialogOptionSideEffect::Nothing => {}
-            DialogOptionSideEffect::Undock => {
+            DialogueOptionSideEffect::Nothing => {}
+            DialogueOptionSideEffect::Undock => {
                 let my_ship = find_my_ship_mut(state, player_id);
                 if let Some(my_ship) = my_ship {
                     my_ship.docked_at = None;
@@ -519,7 +520,7 @@ fn apply_side_effects(
                     state_changed = true;
                 }
             }
-            DialogOptionSideEffect::QuestCargoPickup => {
+            DialogueOptionSideEffect::QuestCargoPickup => {
                 if let (Some(my_player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
                     let quest = my_player.quest.as_mut();
                     if let Some(mut quest) = quest {
@@ -529,7 +530,7 @@ fn apply_side_effects(
                     state_changed = true;
                 }
             }
-            DialogOptionSideEffect::QuestCargoDropOff => {
+            DialogueOptionSideEffect::QuestCargoDropOff => {
                 if let (Some(my_player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
                     if let Some(mut quest) = my_player.quest.as_mut() {
                         quest.state = CargoDeliveryQuestState::Delivered;
@@ -538,7 +539,7 @@ fn apply_side_effects(
                     state_changed = true;
                 }
             }
-            DialogOptionSideEffect::QuestCollectReward => {
+            DialogueOptionSideEffect::QuestCollectReward => {
                 if let Some(mut my_player) = find_my_player_mut(state, player_id) {
                     if let Some(mut quest) = my_player.quest.as_mut() {
                         quest.state = CargoDeliveryQuestState::Delivered;
@@ -548,7 +549,7 @@ fn apply_side_effects(
                     state_changed = true;
                 }
             }
-            DialogOptionSideEffect::SellMinerals => {
+            DialogueOptionSideEffect::SellMinerals => {
                 let (player, ship) = find_player_and_ship_mut(state, player_id);
                 if let (Some(player), Some(ship)) = (player, ship) {
                     let minerals = consume_items_of_types(&mut ship.inventory, &MINERAL_TYPES.to_vec());
@@ -556,17 +557,24 @@ fn apply_side_effects(
                     player.money += sum;
                 }
             }
-            DialogOptionSideEffect::SwitchDialogue(name) => {
+            DialogueOptionSideEffect::SwitchDialogue(name) => {
                 if let Some(player) = find_my_player(state, player_id) {
                     fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: name, player: player.clone() })
                 }
             }
-            DialogOptionSideEffect::QuitTutorial => {
+            DialogueOptionSideEffect::QuitTutorial => {
                 crate::kick_player(player_id);
             }
-            DialogOptionSideEffect::TriggerTutorialQuest => {
+            DialogueOptionSideEffect::TriggerTutorialQuest => {
                 if let Some(player) = find_my_player(state, player_id) {
                     fire_event(GameEvent::CargoQuestTriggerRequest { player: player.clone() })
+                }
+            }
+            DialogueOptionSideEffect::TriggerTrade => {
+                if let (Some(player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
+                    if ship.docked_at.is_some() {
+                        fire_event(GameEvent::TradeTriggerRequest { player: player.clone(), planet_id: ship.docked_at.unwrap() })
+                    }
                 }
             }
         }
@@ -599,7 +607,7 @@ pub fn read_from_resource(file: &str) -> DialogueScript {
 }
 
 // option_name, option_text, new_state_name, side_effects, option_condition_name
-pub type ShortScriptLine = (String, String, String, Vec<DialogOptionSideEffect>, Option<TriggerCondition>);
+pub type ShortScriptLine = (String, String, String, Vec<DialogueOptionSideEffect>, Option<TriggerCondition>);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShortScript {

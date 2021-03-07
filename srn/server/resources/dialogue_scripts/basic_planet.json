@@ -9,10 +9,10 @@
       [
         [
           "go_market",
-          "Go to the marketplace",
-          "market",
+          "Go to the marketplace to trade.",
+          "",
           [
-            "Nothing"
+            "TriggerTrade"
           ],
           null
         ],
@@ -37,38 +37,6 @@
             }
           ],
           "CurrentPlanetIsDropoff"
-        ],
-        [
-          "go_exit",
-          "Undock and fly away",
-          "",
-          [
-            "Undock"
-          ],
-          null
-        ]
-      ]
-    ],
-    "market": [
-      "You come to the marketplace on s_current_planet. Here you can sell the minerals you have collected. If you have any, of course.",
-      [
-        [
-          "go_back",
-          "Go back to the space port",
-          "arrival",
-          [
-            "Nothing"
-          ],
-          null
-        ],
-        [
-          "sell_minerals",
-          "Sell s_minerals_amount mineral(s) that you have for s_minerals_value",
-          "market",
-          [
-            "SellMinerals"
-          ],
-          "AnyMineralsInCargo"
         ],
         [
           "go_exit",

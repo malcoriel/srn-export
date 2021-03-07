@@ -4,8 +4,10 @@ use serde_derive::{Deserialize, Serialize};
 use crate::world::{NatSpawnMineral, Rarity};
 use std::collections::{HashSet, HashMap};
 use std::mem;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, EnumIter)]
 pub enum InventoryItemType {
     Unknown,
     CommonMineral,

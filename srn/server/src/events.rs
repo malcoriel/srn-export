@@ -79,6 +79,10 @@ pub fn handle_events(
                         player.quest = world::generate_random_quest(&planets, None);
                     }
                 }
+                GameEvent::TradeTriggerRequest { player, .. } => {
+                    let state = select_mut_state(cont, player.id);
+                    crate::send_event_to_client(event.clone(), XCast::Unicast(state.id, player.id));
+                }
             }
         } else {
             break;

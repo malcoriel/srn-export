@@ -194,7 +194,7 @@ impl From<Box<dyn IBody>> for Planet {
             orbit_speed: val.get_orbit_speed(),
             anchor_id: val.get_anchor_id(),
             anchor_tier: val.get_anchor_tier(),
-            color: val.get_color(),
+            color: val.get_color()
         }
     }
 }

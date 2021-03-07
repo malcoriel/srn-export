@@ -25,6 +25,7 @@ use crate::random_stuff::{
 };
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
+use crate::market::{Market};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -227,8 +228,9 @@ pub struct Planet {
     pub orbit_speed: f64,
     pub anchor_id: Uuid,
     pub anchor_tier: u32,
-    pub color: String,
+    pub color: String
 }
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Asteroid {
@@ -307,6 +309,10 @@ pub enum GameEvent {
     GameStarted,
     CargoQuestTriggerRequest {
         player: Player,
+    },
+    TradeTriggerRequest {
+        player: Player,
+        planet_id: Uuid,
     },
     DialogueTriggerRequest {
         dialogue_name: String,
@@ -423,7 +429,8 @@ pub struct GameState {
     pub paused: bool,
     pub leaderboard: Option<Leaderboard>,
     pub ticks: u32,
-    pub disable_hp_effects: bool
+    pub disable_hp_effects: bool,
+    pub market: Market,
 }
 
 // b84413729214a182 - no inner planet, lol

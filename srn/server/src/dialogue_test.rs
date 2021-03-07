@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod world_test {
-    use crate::dialogue::{execute_dialog_option, DialogueScript, DialogueStates, DialogueTable, DialogueUpdate, read_from_resource, DialogOptionSideEffect};
+    use crate::dialogue::{execute_dialog_option, DialogueScript, DialogueStates, DialogueTable, DialogueUpdate, read_from_resource, DialogueOptionSideEffect};
     use crate::{world, dialogue, new_id};
     use crate::world::GameState;
     use std::collections::HashMap;

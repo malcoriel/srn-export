@@ -4,8 +4,11 @@ use crate::net::ServerToClientMessage;
 
 #[derive(Debug, Clone)]
 pub enum XCast {
+    // state_id
     Broadcast(Uuid),
+    // state_id, exclude_id
     MulticastExcl(Uuid, Uuid),
+    // state_id, target_id
     Unicast(Uuid, Uuid),
 }
 

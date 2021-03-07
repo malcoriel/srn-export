@@ -96,6 +96,7 @@ mod inventory;
 mod inventory_test;
 mod net;
 mod sandbox;
+mod market;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,
@@ -427,8 +428,10 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::SandboxCommand => {
             on_client_sandbox_command(client_id, second, third);
         }
+        ClientOpCode::TradeAction => {
+            on_client_trade_action(client_id, second, third);
+        }
         ClientOpCode::Unknown => {}
-
     };
 }
 
@@ -502,8 +505,31 @@ fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str
         },
         Err(err) => {
             eprintln!(
-                "couldn't parse ship action {}, err {}",
+                "couldn't parse sandbox action {}, err {}",
                 second, err
+            );
+        }
+    }
+}
+
+fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
+    let parsed = serde_json::from_str::<market::TradeAction>(data);
+    match parsed {
+        Ok(action) => {
+            let mut cont = STATE.write().unwrap();
+            let state = events::select_mut_state(&mut cont, client_id);
+            market::attempt_trade(
+                state,
+                client_id,
+                action
+            );
+            x_cast_state(state.clone(), XCast::Broadcast(state.id));
+            send_tag_confirm(tag.unwrap().to_string(), client_id);
+        }
+        Err(err) => {
+            eprintln!(
+                "couldn't parse trade action {}, err {}",
+                data, err
             );
         }
     }

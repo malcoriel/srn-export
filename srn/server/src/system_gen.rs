@@ -5,6 +5,7 @@ use crate::random_stuff::{
     SAT_NAMES,
 };
 use crate::world::{AsteroidBelt, GameState, Planet, Star, GameMode};
+use crate::market::{Market};
 use chrono::Utc;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -137,7 +138,7 @@ pub fn system_gen(seed: String) -> GameState {
                             orbit_speed: gen_sat_orbit_speed(&mut prng) / (j + 1) as f64,
                             anchor_id: planet_id,
                             anchor_tier: 2,
-                            color: gen_color(&mut prng).to_string(),
+                            color: gen_color(&mut prng).to_string()
                         })
                     }
                 } else {
@@ -208,7 +209,8 @@ pub fn system_gen(seed: String) -> GameState {
         asteroid_belts,
         minerals: vec![],
         mode: GameMode::Unknown,
-        disable_hp_effects: false
+        disable_hp_effects: false,
+        market: Market::new()
     };
     state
 }
@@ -224,7 +226,7 @@ pub fn gen_planet(mut prng: &mut SmallRng, anchor_id: Uuid, index: usize, planet
         orbit_speed: gen_planet_orbit_speed(&mut prng) / (index + 1) as f64,
         anchor_id,
         anchor_tier: 1,
-        color: gen_color(&mut prng).to_string(),
+        color: gen_color(&mut prng).to_string()
     }
 }
 
@@ -239,7 +241,7 @@ pub fn gen_planet_typed(p_type: PlanetType) -> Planet {
         orbit_speed: 0.0,
         anchor_id: Default::default(),
         anchor_tier: 0,
-        color: get_planet_type_color(p_type)
+        color: get_planet_type_color(p_type),
     }
 }
 
@@ -322,8 +324,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
                 orbit_speed: 0.01,
                 anchor_id: star_id.clone(),
                 anchor_tier: 1,
-                color: "#11ffff".to_string(),
-
+                color: "#11ffff".to_string()
             },
             Planet {
                 id: new_id(),
@@ -335,7 +336,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
                 orbit_speed: 0.005,
                 anchor_id: planet_id.clone(),
                 anchor_tier: 2,
-                color: "#ff0033".to_string(),
+                color: "#ff0033".to_string()
             }
         ],
         asteroids: vec![],
@@ -347,7 +348,8 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         paused: false,
         leaderboard: None,
         ticks: 0,
-        disable_hp_effects: false
+        disable_hp_effects: false,
+        market: Market::new()
     }
 }
 
@@ -374,6 +376,7 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
         paused: false,
         leaderboard: None,
         ticks: 0,
-        disable_hp_effects: true
+        disable_hp_effects: true,
+        market: Market::new()
     }
 }

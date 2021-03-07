@@ -24,6 +24,8 @@ objekt-clonable = "0.2.2"
 statrs = "0.13.0"
 statistical = "1.0.0"
 hex = "0.4.2"
+strum = "0.20.0"
+strum_macros = "0.20.1"
 
   [dependencies.rocket]
   git = "https://github.com/SergioBenitez/Rocket"
