@@ -22,7 +22,10 @@ export const PlayMenu: React.FC<{
       minutes:
     </div>
     <Button className="play" onClick={start} hotkey="c" text="CARGO RUSH" />
-    <div>There is a playground for building systems:</div>
+    <div>
+      There is a playground for building systems, press G to see the builder
+      menu:
+    </div>
     <Button className="play" onClick={startSandbox} hotkey="S" text="SANDBOX" />
     <div>Or you can just go to the main menu:</div>
     <Button className="play" onClick={hide} hotkey="b" text="BACK" />
