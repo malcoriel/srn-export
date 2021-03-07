@@ -75,7 +75,9 @@ export const Chat: React.FC<{channelName: string, header?: string}> = ({channelN
         send();
       }
     }}>
-      <Input disabled={!chatIsReady} className='chat-input'
+      <Input
+        noPropagation
+        disabled={!chatIsReady} className='chat-input'
              placeholder={chatIsReady ? 'say something in chat...' : undefined} value={message}
              onChange={(val) => setMessage(val.target.value)} />
     </div>
