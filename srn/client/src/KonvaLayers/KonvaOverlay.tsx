@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Circle, Layer, Text } from 'react-konva';
 import _ from 'lodash';
 import Prando from 'prando';

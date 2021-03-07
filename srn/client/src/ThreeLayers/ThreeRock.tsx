@@ -10,7 +10,7 @@ const model_fix_coeff = 1 / 5;
 
 export const ThreeRock: React.FC<
   MeshProps & { radius: number; color: string; gid: string }
-> = (props) => {
+> = ({ position, gid, radius, color }) => {
   const container = useRef<Mesh>();
   const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/asteroid.glb');
   const rockMesh = gltf.scene.children[2] as Mesh;
@@ -27,28 +27,28 @@ export const ThreeRock: React.FC<
   // @ts-ignore
   // rockMesh.material.color = props.color;
   const onClick = (ev: any) => {
-    actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(props.gid);
+    actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(gid);
     ev.stopPropagation();
   };
   return (
-    <group position={props.position} onClick={onClick}>
+    <group position={position} onClick={onClick}>
       <mesh
-        onPointerOver={() => setHintedObjectId(props.gid)}
+        onPointerOver={() => setHintedObjectId(gid)}
         onPointerOut={() => setHintedObjectId(undefined)}
       >
-        <circleBufferGeometry args={[props.radius, 16]} />
+        <circleBufferGeometry args={[radius, 16]} />
         <meshBasicMaterial color="red" opacity={0.0} transparent />
       </mesh>
       <mesh
         ref={container}
         scale={[
-          props.radius * model_fix_coeff,
-          props.radius * model_fix_coeff,
-          props.radius * model_fix_coeff,
+          radius * model_fix_coeff,
+          radius * model_fix_coeff,
+          radius * model_fix_coeff,
         ]}
         geometry={rockMesh.geometry}
       >
-        <meshBasicMaterial color={props.color} />
+        <meshBasicMaterial color={color} />
       </mesh>
     </group>
   );

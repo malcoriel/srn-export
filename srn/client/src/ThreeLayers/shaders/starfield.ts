@@ -102,7 +102,7 @@ void main( void ) {
 
 `;
 
-export let uniforms: {
+export const uniforms: {
   speed: FloatUniformValue;
   brightness: FloatUniformValue;
   time: FloatUniformValue;

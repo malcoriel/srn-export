@@ -12,7 +12,6 @@ import { Planet, QuestState, Ship } from '../world';
 import { findPlanet } from '../HtmlLayers/NetworkStatus';
 import {
   calcRealPosToScreenPos,
-  calcScreenPosToRealPos,
   size,
   unitsToPixels_min,
   viewPortSizeMeters,
@@ -78,9 +77,9 @@ export const MyTrajectoryLayer: React.FC = () => {
   let questTarget: Planet | undefined;
   let questTargetTrajectory: Vector[] | undefined;
   if (quest) {
-    if (quest.state == QuestState.Started) {
+    if (quest.state === QuestState.Started) {
       questTarget = findPlanet(state, quest.from_id);
-    } else if (quest.state == QuestState.Picked) {
+    } else if (quest.state === QuestState.Picked) {
       questTarget = findPlanet(state, quest.to_id);
     }
   }
@@ -134,7 +133,6 @@ export const MyTrajectoryLayer: React.FC = () => {
               width={5}
               height={5}
               key={i}
-              text={name}
               position={shiftPos(position)}
               fill={yellow}
             />

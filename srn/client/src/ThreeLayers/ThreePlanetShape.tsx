@@ -25,7 +25,7 @@ export const ThreePlanetShape: React.FC<
 
     useFrame(() => {
       if (mesh.current && props.visible) {
-        mesh.current.rotation.y = mesh.current.rotation.y += 0.02;
+        mesh.current.rotation.y += 0.02;
       }
     });
 

@@ -17,7 +17,7 @@ export const ThreeAsteroidBelt: React.FC<{
   scale_mod: number;
   position: Vector3Arr;
   gid: string;
-}> = ({ count, radius, position, scale_mod, rotation, gid, width }) => {
+}> = ({ count, radius, position, rotation, gid, width }) => {
   const container = useRef<Mesh>();
   const gltf: GLTF = useLoader(GLTFLoader, 'resources/models/asteroid.glb');
 

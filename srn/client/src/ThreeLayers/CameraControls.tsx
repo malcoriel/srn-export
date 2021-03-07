@@ -6,6 +6,11 @@ import { height_units, Ship, width_units } from '../world';
 import { unitsToPixels_min } from '../coord';
 import { IVector } from '../utils/Vector';
 
+export const CAMERA_HEIGHT = 100;
+export const CAMERA_DEFAULT_ZOOM = () => unitsToPixels_min();
+export const CAMERA_MAX_ZOOM = 2.0;
+export const CAMERA_MIN_ZOOM = 0.5;
+export const CAMERA_ZOOM_CHANGE_SPEED = 1 / 1000;
 export const BoundCameraMover: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -13,13 +18,11 @@ export const BoundCameraMover: React.FC = () => {
   const { state, visualState } = ns;
 
   const { camera } = useThree();
-
   const forceMoveCameraToShip = (shipOverride?: Ship) => {
     const myShip = shipOverride || findMyShip(state);
     if (myShip) {
       visualState.cameraPosition = { x: myShip.x, y: myShip.y };
     }
-
     camera.position.set(
       visualState.cameraPosition.x,
       -visualState.cameraPosition.y,
@@ -34,18 +37,11 @@ export const BoundCameraMover: React.FC = () => {
       }
     });
   }, [ns.id]);
-
   if (visualState.boundCameraMovement) {
     forceMoveCameraToShip();
   }
-
   return null;
 };
-export const CAMERA_HEIGHT = 100;
-export const CAMERA_DEFAULT_ZOOM = () => unitsToPixels_min();
-export const CAMERA_MAX_ZOOM = 2.0;
-export const CAMERA_MIN_ZOOM = 0.5;
-export const CAMERA_ZOOM_CHANGE_SPEED = 1 / 1000;
 
 export const ExternalCameraControl: React.FC = () => {
   const ns = NetState.get();

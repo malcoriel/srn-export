@@ -3,7 +3,7 @@ import { size } from '../../coord';
 
 // delete viewMatrix, cameraPosition
 
-export let vertexShader = `precision highp float;
+export const vertexShader = `precision highp float;
 precision highp int;
 
 uniform mat4 modelViewMatrix;
@@ -16,7 +16,7 @@ void main() {
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 }`;
-export let fragmentShader = `// Set the precision for data types used in this shader
+export const fragmentShader = `// Set the precision for data types used in this shader
 precision highp float;
 precision highp int;
 uniform float time;
@@ -181,7 +181,7 @@ export type Vector2UniformValue = {
   value: Vector2 | null;
 };
 
-export let uniforms: {
+export const uniforms: {
   iChannel0: TextureUniformValue;
   time: FloatUniformValue;
   iChannel1: TextureUniformValue;

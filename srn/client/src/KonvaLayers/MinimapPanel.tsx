@@ -2,7 +2,6 @@ import { Arc, Circle, Group, Layer, Rect, Stage, Star } from 'react-konva';
 import color from 'color';
 import React, { useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { crimson, dirtyGray, gray, mint, teal, yellow } from '../utils/palette';
 
@@ -188,7 +187,6 @@ const SlowEntitiesLayer = React.memo(
 interface FastEntitiesLayerParams {
   realPosToScreenPos: (objPos: IVector) => Vector;
   realLenToScreenLen: (valMet: number) => number;
-  moveCamera: (dragEvent: any) => void;
 }
 
 const FastEntitiesLayer = React.memo(
@@ -326,7 +324,6 @@ export const MinimapPanel = React.memo(() => {
         />
       </Layer>
       <FastEntitiesLayer
-        moveCamera={moveCamera}
         realLenToScreenLen={realLenToScreenLen}
         realPosToScreenPos={realPosToScreenPos}
       />

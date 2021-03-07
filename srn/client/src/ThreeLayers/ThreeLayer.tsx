@@ -38,6 +38,7 @@ export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
 
 export const vecToThreePos = (v: IVector): Vector3Arr => [v.x, -v.y, 0];
 
+// noinspection JSUnusedGlobalSymbols
 export const threePosToVector = (x: number, y: number, _z: number): Vector =>
   new Vector(x, -y);
 
@@ -45,6 +46,7 @@ export const threePosToVector = (x: number, y: number, _z: number): Vector =>
 export const threeVectorToVector = ({
   x,
   y,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   z,
 }: {
   x: number;
