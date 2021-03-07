@@ -181,6 +181,10 @@ pub fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> 
         return None;
     }
     let from = get_random_planet(planets, docked_at, &mut rng);
+    if from.is_none() {
+        return None;
+    }
+    let from = from.unwrap();
     let delivery = planets
         .into_iter()
         .filter(|p| p.id != from.id)
@@ -200,13 +204,16 @@ fn get_random_planet<'a>(
     planets: &'a Vec<Planet>,
     docked_at: Option<Uuid>,
     rng: &mut ThreadRng,
-) -> &'a Planet {
+) -> Option<&'a Planet> {
+    if planets.len() == 0 {
+        return None;
+    }
     let pickup = planets
         .into_iter()
         .filter(|p| p.id != docked_at.unwrap_or(Default::default()))
         .collect::<Vec<_>>();
     let from = &pickup[rng.gen_range(0, pickup.len())];
-    from
+    Some(from)
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -944,19 +951,27 @@ pub fn remove_player_ship(state: &mut GameState, player_id: Uuid) {
 pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -> &Ship {
     let mut rng = thread_rng();
     let mut small_rng = SmallRng::seed_from_u64(rng.next_u64());
-    let start = get_random_planet(&state.planets, None, &mut rng);
+    let rand_planet = get_random_planet(&state.planets, None, &mut rng);
+    let mut at = at;
+    if rand_planet.is_some() && at.is_none() {
+        let p = rand_planet.unwrap();
+        at = Some(Vec2f64 {
+            x: p.x.clone(),
+            y: p.y.clone(),
+        })
+    }
     let ship = Ship {
         id: crate::new_id(),
         color: gen_color(&mut small_rng).to_string(),
         x: if at.is_some() {
             at.unwrap().x
         } else {
-            start.x.clone()
+            100.0
         },
         y: if at.is_some() {
             at.unwrap().y
         } else {
-            start.y.clone()
+            100.0
         },
         hp: 100.0,
         hp_effects: vec![],

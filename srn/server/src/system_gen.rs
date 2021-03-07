@@ -230,7 +230,7 @@ pub fn seed_personal_state(client_id: Uuid, mode: &GameMode) -> GameState {
             make_tutorial_state(client_id)
         }
         GameMode::Sandbox => {
-            make_tutorial_state(client_id)
+            make_sandbox_state(client_id)
         }
     }
 }
@@ -289,6 +289,32 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
                 color: "#ff0033".to_string(),
             }
         ],
+        asteroids: vec![],
+        minerals: vec![],
+        asteroid_belts: vec![],
+        ships: vec![],
+        players: vec![],
+        milliseconds_remaining: 60 * 1000,
+        paused: false,
+        leaderboard: None,
+        ticks: 0,
+    }
+}
+
+
+pub fn make_sandbox_state(client_id: Uuid) -> GameState {
+    let seed = "sandbox".to_owned();
+    let now = Utc::now().timestamp_millis() as u64;
+
+    GameState {
+        id: client_id,
+        mode: GameMode::Sandbox,
+        tag: None,
+        seed,
+        my_id: Default::default(),
+        start_time_ticks: now,
+        star: None,
+        planets: vec![],
         asteroids: vec![],
         minerals: vec![],
         asteroid_belts: vec![],

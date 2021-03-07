@@ -55,8 +55,14 @@ export const testQuickMenuActions = [
   },
 ];
 
-export type QuickMenuProps = { startActions: QuickMenuAction[] };
-export const QuickMenu: React.FC<QuickMenuProps> = ({ startActions }) => {
+export type QuickMenuProps = {
+  startActions: QuickMenuAction[];
+  mainHotkey: string;
+};
+export const QuickMenu: React.FC<QuickMenuProps> = ({
+  startActions,
+  mainHotkey,
+}) => {
   const [shown, setShown] = useState(false);
   const [animatedRotation, setAnimatedRotation] = useState(false);
   const [activeActions, setActiveActions] = useState(startActions);
@@ -108,7 +114,7 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({ startActions }) => {
   };
 
   useHotkeys(
-    'b',
+    mainHotkey,
     () => {
       if (!shown) {
         setShown(true);
