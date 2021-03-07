@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
-import { fragmentShader, uniforms, vertexShader } from './shaders/starfield';
 import { useFrame, useThree } from 'react-three-fiber';
 import { Mesh, ShaderMaterial } from 'three';
+import { fragmentShader, uniforms, vertexShader } from './shaders/starfield';
 import { height_units, width_units } from '../world';
 
 export const BackgroundPlane = () => {
@@ -9,7 +9,7 @@ export const BackgroundPlane = () => {
 
   useFrame(() => {
     if (mesh.current) {
-      let material = mesh.current.material as ShaderMaterial;
+      const material = mesh.current.material as ShaderMaterial;
       material.uniforms.time.value += 0.01;
     }
   });

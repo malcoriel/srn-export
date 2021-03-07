@@ -14,7 +14,7 @@ export const useToggleHotkey = (
   useHotkeys(
     hotkey,
     () => {
-      let newVal = !shown;
+      const newVal = !shown;
       setShown(newVal);
       if (onSetShown) {
         onSetShown(newVal);

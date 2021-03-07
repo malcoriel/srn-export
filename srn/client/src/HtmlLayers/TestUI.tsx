@@ -1,7 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import './TestUI.scss';
-import { useToggleHotkey } from '../utils/useToggleHotkey';
-import { Button } from './ui/Button';
 import { Canvas, extend, useLoader, useThree } from 'react-three-fiber';
 import { Vector3 } from 'three/src/math/Vector3';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -21,17 +19,19 @@ import {
 import { CSG } from 'three-csg-ts';
 import Prando from 'prando';
 import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier';
-import { Input } from './ui/Input';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils';
 import { ColladaExporter } from 'three/examples/jsm/exporters/ColladaExporter';
-import { ThreeRock } from '../ThreeLayers/ThreeRock';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { ThreeRock } from '../ThreeLayers/ThreeRock';
+import { Input } from './ui/Input';
+import { Button } from './ui/Button';
+import { useToggleHotkey } from '../utils/useToggleHotkey';
 
 extend({ OrbitControls });
 
 const randNormal = (prng: Prando): number => {
-  let u = 0,
-    v = 0;
+  let u = 0;
+  let v = 0;
   while (u === 0) u = prng.next(0, 1); //Converting [0,1) to (0,1)
   while (v === 0) v = prng.next(0, 1);
   let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
@@ -62,16 +62,16 @@ const simplifyGeometry = (baseMesh: Mesh<Geometry>) => {
   const modifer = new SimplifyModifier();
   // @ts-ignore
   const numVertices = baseMesh.geometry.attributes.position.count;
-  let count1 = Math.floor(numVertices * 0.05);
+  const count1 = Math.floor(numVertices * 0.05);
   console.log(`simplifying ${count1} iterations...`);
 
-  let tmp = modifer.modify(baseMesh.geometry, count1);
+  const tmp = modifer.modify(baseMesh.geometry, count1);
   baseMesh.geometry = new Geometry().fromBufferGeometry(tmp);
 };
 
 let isReset = false;
 
-const mergeVertices = (baseMesh: Mesh<Geometry>, tolerance: number = 1) => {
+const mergeVertices = (baseMesh: Mesh<Geometry>, tolerance = 1) => {
   console.log(`merging vertices with tolerance ${tolerance}...`);
   const merged = BufferGeometryUtils.mergeVertices(
     new BufferGeometry().fromGeometry(baseMesh.geometry),
@@ -113,12 +113,12 @@ export const TestUI: React.FC<{}> = () => {
   const [sceneMesh, setSceneMesh] = useState(null as Mesh | null);
   const [link, setLink] = useState(null as HTMLAnchorElement | null);
   const gen = () => {
-    let sc = scene as Scene;
+    const sc = scene as Scene;
     if (sceneMesh && scene) {
       isReset = false;
       const prng = new Prando(seed);
       // @ts-ignore
-      let baseMesh: Mesh<Geometry> = sceneMesh;
+      const baseMesh: Mesh<Geometry> = sceneMesh;
       baseMesh.updateMatrix();
       const MAX_OUT = 21.5;
       const MIN_IN = 19.5;
@@ -127,29 +127,29 @@ export const TestUI: React.FC<{}> = () => {
       for (let i = 0; i < 20; i++) {
         console.log(`iter ${i + 1}`);
         const baseCsg = CSG.fromMesh(baseMesh);
-        let radius = prng.next(30, 45);
+        const radius = prng.next(30, 45);
         const impactMesh = new Mesh(
           new BoxBufferGeometry(radius, radius, radius)
         );
 
         // const { x, y, z } = getSphereCoords(prng, MIN_IN, MAX_OUT);
 
-        let selectorOfNonZero = prng.next(0, 3);
+        const selectorOfNonZero = prng.next(0, 3);
 
-        let x =
+        const x =
           selectorOfNonZero < 1
             ? prng.next(MIN_IN, MAX_OUT) * (prng.nextBoolean() ? 1 : -1)
             : (randNormal(prng) - 0.5) * 3 * MAX_OUT;
-        let y =
+        const y =
           selectorOfNonZero >= 1 && selectorOfNonZero < 2
             ? prng.next(MIN_IN, MAX_OUT) * (prng.nextBoolean() ? 1 : -1)
             : (randNormal(prng) - 0.5) * 3 * MAX_OUT;
-        let z =
+        const z =
           selectorOfNonZero >= 2 && selectorOfNonZero < 3
             ? prng.next(MIN_IN, MAX_OUT) * (prng.nextBoolean() ? 1 : -1)
             : (randNormal(prng) - 0.5) * 3 * MAX_OUT;
 
-        let vector3 = new Vector3(x, y, z);
+        const vector3 = new Vector3(x, y, z);
 
         // let shouldSkip = false;
         // for (const pair of existingPos) {
@@ -186,10 +186,10 @@ export const TestUI: React.FC<{}> = () => {
 
       // mergeVertices(baseMesh);
 
-      let material = new MeshNormalMaterial();
+      const material = new MeshNormalMaterial();
       console.log('done', baseMesh.geometry.vertices.length);
 
-      let mesh = new Mesh(baseMesh.geometry, material);
+      const mesh = new Mesh(baseMesh.geometry, material);
       mesh.updateMatrix();
       mesh.geometry.computeVertexNormals();
       sc.remove(baseMesh);
@@ -199,7 +199,7 @@ export const TestUI: React.FC<{}> = () => {
   };
 
   const reset = () => {
-    let sc = scene as Scene;
+    const sc = scene as Scene;
     if (isReset) {
       return;
     }
@@ -208,10 +208,10 @@ export const TestUI: React.FC<{}> = () => {
         sc.remove(sceneMesh);
       }
       isReset = true;
-      let material = new MeshBasicMaterial();
+      const material = new MeshBasicMaterial();
       material.color = new Color('pink');
       material.wireframe = true;
-      let mesh = new Mesh(new BoxBufferGeometry(40, 40, 40), material);
+      const mesh = new Mesh(new BoxBufferGeometry(40, 40, 40), material);
       sc.add(mesh);
       setSceneMesh(mesh);
     }

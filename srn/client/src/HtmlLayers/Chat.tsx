@@ -17,7 +17,7 @@ export const Chat: React.FC<{ channelName: string; header?: string }> = ({
   };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   useEffect(() => {
-    let onMessage = (messages: Chats) => {
+    const onMessage = (messages: Chats) => {
       setMessages(messages[channelName]);
       forceUpdate();
     };
@@ -42,11 +42,11 @@ export const Chat: React.FC<{ channelName: string; header?: string }> = ({
   const cs = ChatState.get();
   if (!cs) return null;
 
-  let chatIsReady = cs.connected;
+  const chatIsReady = cs.connected;
   const send = () => {
     const cs = ChatState.get();
     if (!cs) return;
-    let formattedMessage = { message: message, name: preferredName };
+    const formattedMessage = { message, name: preferredName };
     cs.send(formattedMessage, channelName);
     // optimistically update the component before message reaches
     // the server
@@ -61,7 +61,9 @@ export const Chat: React.FC<{ channelName: string; header?: string }> = ({
           <div className="chat-contents">
             {messages.map((m, i) => (
               <div className="line" key={i}>
-                {m.name}:&nbsp;{m.message}
+                {m.name}
+                :&nbsp;
+                {m.message}
               </div>
             ))}
           </div>

@@ -29,7 +29,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         return null;
       }
       const vector = tractorTargetPosition.subtract(position);
-      let angle = VectorF(0, 1).angleRad(vector);
+      const angle = VectorF(0, 1).angleRad(vector);
       return {
         length: vector.length(),
         rotation: vector.x < 0 ? angle : -angle,
@@ -42,7 +42,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
 
     useFrame(() => {
       if (tractorRef.current && visible) {
-        let material = tractorRef.current.material as ShaderMaterial;
+        const material = tractorRef.current.material as ShaderMaterial;
         if (material && material.uniforms) {
           material.uniforms.time.value += 0.004;
         }
@@ -70,7 +70,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
               args={[BEAM_WIDTH, BEAM_WIDTH, tractorBeamParams.length, 4]}
             />
             <rawShaderMaterial
-              transparent={true}
+              transparent
               {...jellyfish}
               // uniforms={tractorBeamParams.patchedUniforms}
             />

@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import NetState, { findMyShip, VisualState } from '../NetState';
 import { useThree } from 'react-three-fiber';
-import { height_units, Ship, width_units } from '../world';
 import { useHotkeys } from 'react-hotkeys-hook';
+import NetState, { findMyShip, VisualState } from '../NetState';
+import { height_units, Ship, width_units } from '../world';
 import { unitsToPixels_min } from '../coord';
 import { IVector } from '../utils/Vector';
 
@@ -60,8 +60,8 @@ export const ExternalCameraControl: React.FC = () => {
     );
   }
   if (visualState.zoomShift) {
-    let oldZoom = camera.zoom;
-    let newZoom = visualState.zoomShift * CAMERA_DEFAULT_ZOOM();
+    const oldZoom = camera.zoom;
+    const newZoom = visualState.zoomShift * CAMERA_DEFAULT_ZOOM();
     camera.zoom = newZoom;
     if (oldZoom !== newZoom) camera.updateProjectionMatrix();
   }
@@ -75,7 +75,7 @@ export const getOnWheel = (
 ) => (evt: any) => {
   const delta = eventAdapter(evt).y;
   visualState.zoomShift = visualState.zoomShift || 1.0;
-  let deltaZoom = delta * CAMERA_ZOOM_CHANGE_SPEED;
+  const deltaZoom = delta * CAMERA_ZOOM_CHANGE_SPEED;
   visualState.zoomShift -= deltaZoom;
   visualState.zoomShift = Math.min(visualState.zoomShift, CAMERA_MAX_ZOOM);
   visualState.zoomShift = Math.max(visualState.zoomShift, CAMERA_MIN_ZOOM);
@@ -98,7 +98,7 @@ export const CameraZoomer: React.FC = () => {
     >
       <mesh position={[0, 0, -20]}>
         <planeBufferGeometry args={[width_units, height_units]} />
-        <meshBasicMaterial transparent={true} color="green" />
+        <meshBasicMaterial transparent color="green" />
       </mesh>
     </group>
   );

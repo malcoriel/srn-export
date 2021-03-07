@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { DraggableEventHandler } from 'react-draggable';
+import _ from 'lodash';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
 import { WithScrollbars } from './ui/WithScrollbars';
-import _ from 'lodash';
 import './ItemGrid.scss';
 import { InventoryItem } from '../world';
 import { ItemElem } from './InventoryItem';
@@ -46,7 +46,7 @@ export const positionItems = (
 ): Record<string, IVector> => {
   let row = 0;
   let column = 0;
-  let res: Record<string, IVector> = {};
+  const res: Record<string, IVector> = {};
   for (const item of items) {
     res[item.id] = new Vector(column, row);
     column++;
@@ -80,8 +80,8 @@ export const ItemGrid: React.FC<{
     }));
   };
 
-  let contentHeight = cellsToPixels(rowCount);
-  let contentWidth = cellsToPixels(columnCount);
+  const contentHeight = cellsToPixels(rowCount);
+  const contentWidth = cellsToPixels(columnCount);
   return (
     <WithScrollbars noAutoHide>
       <div className="content" style={{ height: contentHeight }}>

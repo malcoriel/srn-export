@@ -1,10 +1,10 @@
-import { Window } from './ui/Window';
 import React from 'react';
+import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid } from './ItemGrid';
 import './InventoryWindowBase.scss';
 
 const SCROLL_OFFSET = 10;
-let MIN_ROWS = 11;
+const MIN_ROWS = 11;
 const COLUMNS = 11;
 const WINDOW_MARGIN = 10;
 
@@ -25,11 +25,11 @@ export const TradeWindow = () => {
     >
       <div className="inventory-window-base">
         <div
-          className={`item-grid grid-green`}
+          className="item-grid grid-green"
           style={{ width: cellsToPixels(5) }}
         />
         <div
-          className={`item-grid grid-red`}
+          className="item-grid grid-red"
           style={{ width: cellsToPixels(5), left: cellsToPixels(6) }}
         />
         <ItemGrid

@@ -1,5 +1,7 @@
 import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
+import React, { Suspense } from 'react';
+import classnames from 'classnames';
 import {
   findMineral,
   max_x,
@@ -7,7 +9,6 @@ import {
   ShipAction,
   ShipActionType,
 } from '../world';
-import React, { Suspense } from 'react';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
   BoundCameraMover,
@@ -23,7 +24,6 @@ import { actionsActive } from '../utils/ShipControls';
 import { BackgroundPlane } from './BackgroundPlane';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { useStore } from '../store';
-import classnames from 'classnames';
 import { size } from '../coord';
 
 export type Vector3Arr = [number, number, number];
@@ -69,7 +69,7 @@ export const ThreeLayer: React.FC = () => {
   return (
     <Canvas
       invalidateFrameloop
-      className={classnames({ ['grabbable']: hoverOnGrabbable })}
+      className={classnames({ grabbable: hoverOnGrabbable })}
       orthographic
       camera={{
         position: new Vector3(0, 0, CAMERA_HEIGHT),

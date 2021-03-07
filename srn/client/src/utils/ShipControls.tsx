@@ -6,10 +6,10 @@ export type ShipChangerCallback = (sa: ShipAction) => void;
 const makeMoveAction = (
   activeKeys: Record<string, boolean>
 ): ShipAction | undefined => {
-  const up = activeKeys['KeyW'];
-  const left = activeKeys['KeyA'];
-  const down = activeKeys['KeyS'];
-  const right = activeKeys['KeyD'];
+  const up = activeKeys.KeyW;
+  const left = activeKeys.KeyA;
+  const down = activeKeys.KeyS;
+  const right = activeKeys.KeyD;
 
   let p = '';
   p += up ? 'W' : '_';
@@ -33,7 +33,7 @@ const makeMoveAction = (
 
 const refreshActiveActions = () => {
   actionsActive[ShipActionType.Move] = makeMoveAction(keysActive);
-  actionsActive[ShipActionType.Dock] = keysActive['Space']
+  actionsActive[ShipActionType.Dock] = keysActive.Space
     ? ShipAction.Dock()
     : undefined;
 };

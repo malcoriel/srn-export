@@ -2,14 +2,18 @@ type Timeout = ReturnType<typeof setTimeout>;
 
 export abstract class BasicTime {
   protected intervals: Timeout[];
+
   constructor(public timeStep: number) {
     this.intervals = [];
   }
+
   abstract setInterval(physics: timedFn, render: timedFn): void;
+
   // noinspection JSUnusedGlobalSymbols
   registerInterval(interval: Timeout) {
     this.intervals.push(interval);
   }
+
   clearIntervals() {
     for (const int of this.intervals) {
       clearInterval(int);
@@ -67,7 +71,8 @@ export class semiFixedDeltaTime extends BasicTime {
 
 // registerInterval not implemented!!! cleanup won't work with this time
 export class clampedSemiFixedDeltaTime extends BasicTime {
-  private count: number = 0;
+  private count = 0;
+
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
     this.count = 0;
@@ -97,7 +102,9 @@ export class clampedSemiFixedDeltaTime extends BasicTime {
 // registerInterval not implemented!!! cleanup won't work with this time
 export class decoupledTime extends BasicTime {
   private accumulator = 0;
+
   private count = 0;
+
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
     this.accumulator = 0;
@@ -123,8 +130,11 @@ export class decoupledTime extends BasicTime {
 // registerInterval not implemented!!! cleanup won't work with this time
 export class decoupledLockedTime extends BasicTime {
   private lock = false;
+
   private accumulator = 0;
+
   private count = 0;
+
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
     this.accumulator = 0;
@@ -160,9 +170,13 @@ export class decoupledLockedTime extends BasicTime {
 // registerInterval not implemented!!! cleanup won't work with this time
 export class decoupledLockedClampedTime extends BasicTime {
   private lock = false;
+
   private accumulator = 0;
+
   private count = 0;
+
   private timePassed = 0;
+
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
     this.accumulator = 0;
@@ -207,7 +221,9 @@ export class decoupledLockedClampedTime extends BasicTime {
 
 export class vsyncedDecoupledTime extends BasicTime {
   private accumulator = 0;
+
   private requestId?: number;
+
   // smoother performance and lighter CPU load, but FPS occasional drops heavily due to GC
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
@@ -248,8 +264,11 @@ export class vsyncedDecoupledTime extends BasicTime {
 
 export class vsyncedDecoupledLockedTime extends BasicTime {
   private lock = false;
+
   private accumulator = 0;
+
   private requestId?: number;
+
   // smoother performance and lighter CPU load, but FPS occasional drops heavily due to GC
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
@@ -300,7 +319,9 @@ export class vsyncedDecoupledLockedTime extends BasicTime {
 
 export class vsyncedCoupledTime extends BasicTime {
   private accumulator = 0;
+
   private requestId?: number;
+
   // smoother performance and lighter CPU load, but FPS occasional drops heavily due to GC
   // time step is completely ignored
   setInterval(physics: timedFn, render: timedFn) {
@@ -341,7 +362,9 @@ export class vsyncedCoupledTime extends BasicTime {
 // already happened in this time step
 export class vsyncedCoupledThrottledTime extends BasicTime {
   private requestId?: number;
-  private skip: boolean = false;
+
+  private skip = false;
+
   setInterval(physics: timedFn, render: timedFn) {
     let lastCheck = performance.now();
     let lastRender = performance.now();

@@ -41,8 +41,8 @@ export const QuestWindow = () => {
   if (!questData) {
     return null;
   }
-  let fromDone = questData.state === QuestState.Picked;
-  let toDone = questData.state === QuestState.Delivered;
+  const fromDone = questData.state === QuestState.Picked;
+  const toDone = questData.state === QuestState.Delivered;
 
   const focus = (p: Planet) => {
     visualState.cameraPosition = { x: p.x, y: p.y };
@@ -51,7 +51,7 @@ export const QuestWindow = () => {
 
   return (
     <Window
-      storeKey={'questWindow'}
+      storeKey="questWindow"
       className="quest-window"
       width={300}
       height={200}
@@ -72,8 +72,15 @@ export const QuestWindow = () => {
       }
     >
       <div className="header">
-        Active quest: <span className="description">Cargo delivery</span>
-        <span> - {questData.reward} cr. reward</span>
+        Active quest:
+        {' '}
+<span className="description">Cargo delivery</span>
+        <span>
+{' '}
+-{questData.reward}
+{' '}
+cr. reward
+</span>
       </div>
       <div className="stages">
         <div className={`line ${fromDone ? 'done' : ''}`}>

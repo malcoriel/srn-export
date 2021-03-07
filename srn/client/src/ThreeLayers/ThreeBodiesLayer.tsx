@@ -1,10 +1,10 @@
 import React from 'react';
-import { GameState, ShipAction, ShipActionType } from '../world';
 import _ from 'lodash';
+import { MouseEvent } from 'react-three-fiber';
+import { GameState, ShipAction, ShipActionType } from '../world';
 import { ThreeStar } from './ThreeStar';
 import { posToThreePos } from './ThreeLayer';
 import { ThreePlanetShape } from './ThreePlanetShape';
-import { MouseEvent } from 'react-three-fiber';
 import { actionsActive } from '../utils/ShipControls';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
 import { ThreeRock } from './ThreeRock';

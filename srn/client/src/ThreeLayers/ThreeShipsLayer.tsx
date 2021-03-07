@@ -1,7 +1,7 @@
-import { findMineral, GameState } from '../world';
-import { ThreeShip } from './ThreeShip';
 import React from 'react';
 import _ from 'lodash';
+import { findMineral, GameState } from '../world';
+import { ThreeShip } from './ThreeShip';
 import { Ship } from '../world';
 import Vector from '../utils/Vector';
 
@@ -19,18 +19,18 @@ export const ThreeShipsLayer: React.FC<{
       {ships.map((s: Ship, i: number) => {
         let tractorTargetPosition;
         if (s.tractor_target) {
-          let min = findMineral(state, s.tractor_target);
+          const min = findMineral(state, s.tractor_target);
           if (min) {
             tractorTargetPosition = Vector.fromIVector(min);
           }
         }
 
-        let shipPos = {
+        const shipPos = {
           x: s.x,
           y: s.y,
         };
         if (s.docked_at) {
-          let dockPlanet = planetsById[s.docked_at];
+          const dockPlanet = planetsById[s.docked_at];
           if (dockPlanet) {
             shipPos.x = dockPlanet.x;
             shipPos.y = dockPlanet.y;

@@ -43,7 +43,9 @@ export const HoverHintWindow: React.FC = () => {
         >
           <div className="header">Valuable mineral</div>
           <div>
-            Rarity: <span className={rarityClass}>{rarityClass}</span>
+            Rarity:
+            {' '}
+<span className={rarityClass}>{rarityClass}</span>
           </div>
         </StyledRect>
       </div>

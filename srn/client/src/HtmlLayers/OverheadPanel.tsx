@@ -23,8 +23,8 @@ export const OverheadPanel = () => {
   if (milliseconds_remaining <= 0) return null;
 
   let seconds = getSeconds(milliseconds_remaining);
-  let minutes = Math.floor(seconds / 60) || '';
-  seconds = seconds % 60;
+  const minutes = Math.floor(seconds / 60) || '';
+  seconds %= 60;
   const formatted = `${minutes}${minutes ? ':' : ''}${String(seconds).padStart(
     2,
     '0'

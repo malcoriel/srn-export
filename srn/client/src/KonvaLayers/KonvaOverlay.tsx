@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
+import { Circle, Layer, Text } from 'react-konva';
+import _ from 'lodash';
+import Prando from 'prando';
 import { findMineral, GameState, TRACTOR_DIST } from '../world';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
-import { Circle, Layer, Text } from 'react-konva';
 import Vector, { IVector } from '../utils/Vector';
-import _ from 'lodash';
 import { babyBlue, crimson, darkGreen, teal } from '../utils/palette';
-import Prando from 'prando';
 import { useStore } from '../store';
 import { useRealToScreen } from '../coordHooks';
 
@@ -17,7 +17,7 @@ function extractNamePositions(
 ): Array<[string, string, IVector, number]> {
   const res = [];
   for (const planet of state.planets) {
-    let planetProps: [string, string, IVector, number] = [
+    const planetProps: [string, string, IVector, number] = [
       planet.id,
       planet.name,
       shiftPos(planet),
@@ -27,7 +27,7 @@ function extractNamePositions(
   }
 
   if (state.star) {
-    let items: [string, string, IVector, number] = [
+    const items: [string, string, IVector, number] = [
       state.star.id,
       state.star.name,
       shiftPos(state.star),
@@ -42,12 +42,12 @@ function extractNamePositions(
     if (!player.ship_id) {
       continue;
     }
-    let ship = shipsById[player.ship_id];
+    const ship = shipsById[player.ship_id];
     if (!ship) {
       continue;
     }
-    let starNamePos = shiftPos(ship);
-    let shipProps: [string, string, IVector, number] = [
+    const starNamePos = shiftPos(ship);
+    const shipProps: [string, string, IVector, number] = [
       ship.id,
       player.name,
       starNamePos,
@@ -83,21 +83,21 @@ const extractEffectsPositions = (
     if (!player.ship_id) {
       continue;
     }
-    let ship = shipsById[player.ship_id];
+    const ship = shipsById[player.ship_id];
     if (!ship || ship.hp_effects.length === 0) {
       continue;
     }
 
-    let namePos = shiftPos(ship);
+    const namePos = shiftPos(ship);
 
     res.push(
       ...ship.hp_effects.map((e) => {
-        let age = Math.abs(state.ticks - e.tick);
-        let opacity =
+        const age = Math.abs(state.ticks - e.tick);
+        const opacity =
           age > EFFECT_VISUAL_DURATION_MS
             ? 0.0
             : (EFFECT_VISUAL_DURATION_MS - age) / EFFECT_VISUAL_DURATION_MS;
-        let rng = new Prando(e.id);
+        const rng = new Prando(e.id);
         return {
           id: e.id,
           text: String(Math.abs(e.hp)),
@@ -167,7 +167,7 @@ export const KonvaOverlay: React.FC = React.memo(() => {
         </>
       )}
       {names.map(([id, name, position, offsetY]) => {
-        let textWidth = 70;
+        const textWidth = 70;
         return (
           <Text
             key={id}
@@ -182,7 +182,7 @@ export const KonvaOverlay: React.FC = React.memo(() => {
         );
       })}
       {effects.map((visHpEffect) => {
-        let textWidth = 50;
+        const textWidth = 50;
         return (
           <Text
             key={visHpEffect.id}

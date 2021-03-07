@@ -1,11 +1,11 @@
-import { Window } from './ui/Window';
 import React from 'react';
+import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid } from './ItemGrid';
 import './InventoryWindowBase.scss';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 
 const SCROLL_OFFSET = 10;
-let MIN_ROWS = 5;
+const MIN_ROWS = 5;
 const COLUMNS = 5;
 const WINDOW_MARGIN = 10;
 
@@ -50,7 +50,7 @@ export const InventoryWindow = () => {
     >
       <div className="inventory-window-base">
         <div
-          className={`item-grid grid-gray`}
+          className="item-grid grid-gray"
           style={{
             width: cellsToPixels(COLUMNS),
             height: cellsToPixels(COLUMNS),

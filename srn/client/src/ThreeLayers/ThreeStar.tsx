@@ -26,7 +26,7 @@ export const ThreeStar: React.FC<
     const ns = NetState.get();
     if (!ns) return null;
     const { visualState } = ns;
-    let zoomProp = 1 / (visualState.zoomShift || 1.0);
+    const zoomProp = 1 / (visualState.zoomShift || 1.0);
 
     const mesh = useRef<Mesh>();
     const lavaTile = useRepeatWrappedTextureLoader('resources/lavatile.png');
@@ -41,7 +41,7 @@ export const ThreeStar: React.FC<
     useFrame(() => {
       if (mesh.current) {
         if (props.visible) {
-          let material = mesh.current.material as ShaderMaterial;
+          const material = mesh.current.material as ShaderMaterial;
           material.uniforms.time.value += 0.008;
         }
       }
@@ -77,7 +77,7 @@ export const ThreeStar: React.FC<
       <mesh {...props} ref={mesh} rotation={[0, 0, 0]}>
         <icosahedronBufferGeometry args={[1, 5]} />
         <rawShaderMaterial
-          transparent={true}
+          transparent
           fragmentShader={fragmentShader}
           vertexShader={vertexShader}
           uniforms={uniforms2}

@@ -60,7 +60,11 @@ export const NetworkStatus: React.FC = () => {
       </span>
       <span className="desync" title="desync between client and server">
         <GiSplitArrows />
-        <span className="desync-text">&nbsp;{desync}ms</span>
+        <span className="desync-text">
+          &nbsp;
+          {desync}
+          ms
+        </span>
       </span>
       {!connecting && (
         <span className="ping" title="ping (half trip sync time)">

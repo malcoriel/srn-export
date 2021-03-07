@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import './StartMenu.scss';
-import { Button } from './ui/Button';
-import { Label } from './ui/Label';
-import { Input } from './ui/Input';
 import {
   FaAngleLeft,
   FaAngleRight,
   FaDiceD20,
   FaTelegram,
 } from 'react-icons/fa';
-import { useStore } from '../store';
 import Slider from 'rc-slider';
+import useSWR from 'swr';
+import { Button } from './ui/Button';
+import { Label } from './ui/Label';
+import { Input } from './ui/Input';
+import { useStore } from '../store';
 import 'rc-slider/assets/index.css';
 import { teal } from '../utils/palette';
 import versionJson from '../../version.json';
-import useSWR from 'swr';
 import { api } from '../utils/api';
 import { GlobalChat } from './GlobalChat';
 import { Changelog } from './Changelog';
@@ -106,7 +106,7 @@ export const StartMenu: React.FC<{
                   className="name-input"
                   value={preferredName}
                   onChange={(e) => {
-                    let name = e.target.value;
+                    const name = e.target.value;
                     setPreferredName(name);
                   }}
                 />
@@ -216,7 +216,9 @@ export const StartMenu: React.FC<{
           )}
           {playing && seed && (
             <div>
-              Game seed: <span className="normal-selection">{seed}</span>
+              Game seed:
+              {' '}
+<span className="normal-selection">{seed}</span>
             </div>
           )}
         </div>
@@ -230,8 +232,14 @@ export const StartMenu: React.FC<{
         />
       )}
       <div className="versions-status">
-        <div>Client version: {versionJson.version}</div>
-        <div>Server version: {serverVersionFormatted}</div>
+        <div>
+          Client version:
+          {versionJson.version}
+        </div>
+        <div>
+          Server version:
+          {serverVersionFormatted}
+        </div>
       </div>
       <div className="about">
         {/* eslint-disable-next-line react/jsx-no-target-blank */}

@@ -1,7 +1,7 @@
 import React from 'react';
+import Draggable from 'react-draggable';
 import { IVector } from '../utils/Vector';
 import { InventoryItem, InventoryItemType } from '../world';
-import Draggable from 'react-draggable';
 import { ITEM_CELL_MARGIN, OnDragEmpty, OnDragItem } from './ItemGrid';
 import { common, gray, rare, uncommon } from '../utils/palette';
 import MineralSvg from './ui/MineralSvg';
@@ -62,10 +62,10 @@ export const ItemElem: React.FC<{
     bottom: maxY,
   };
 
-  let onStart = onDragStart
+  const onStart = onDragStart
     ? () => {
-        onDragStart(item);
-      }
+      onDragStart(item);
+    }
     : OnDragEmpty;
   return (
     <Draggable

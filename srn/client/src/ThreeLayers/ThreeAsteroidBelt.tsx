@@ -3,9 +3,9 @@ import { useLoader } from 'react-three-fiber';
 import { Mesh, BufferGeometry, Matrix4, Quaternion, Euler } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils';
-import { posToThreePos, Vector3Arr } from './ThreeLayer';
 import Prando from 'prando';
 import { Vector3 } from 'three/src/math/Vector3';
+import { posToThreePos, Vector3Arr } from './ThreeLayer';
 const model_fix_coeff = 1;
 const anti_model_fix_coeff = 1;
 
@@ -30,16 +30,16 @@ export const ThreeAsteroidBelt: React.FC<{
     const angleStep = (Math.PI * 2) / count;
     let currentAngle = 0;
     for (let i = 0; i < count; ++i) {
-      let current = rockMesh.geometry.clone() as BufferGeometry;
+      const current = rockMesh.geometry.clone() as BufferGeometry;
       let x = Math.cos(currentAngle) * radius * anti_model_fix_coeff;
       let y = Math.sin(currentAngle) * radius * anti_model_fix_coeff;
-      let offsetX = prng.next(-width / 2, width / 2);
-      let offsetY = prng.next(-width / 2, width / 2);
+      const offsetX = prng.next(-width / 2, width / 2);
+      const offsetY = prng.next(-width / 2, width / 2);
       x += offsetX * anti_model_fix_coeff;
       y += offsetY * anti_model_fix_coeff;
-      let scale = prng.next(0.1, 0.5);
+      const scale = prng.next(0.1, 0.5);
       current.scale(scale, scale, scale);
-      let matrix = new Matrix4().compose(
+      const matrix = new Matrix4().compose(
         new Vector3(...posToThreePos(x, y)),
         new Quaternion().setFromEuler(
           new Euler(

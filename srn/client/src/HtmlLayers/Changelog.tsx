@@ -1,6 +1,6 @@
 import React from 'react';
-import { WithScrollbars } from './ui/WithScrollbars';
 import ReactMarkdown from 'react-markdown';
+import { WithScrollbars } from './ui/WithScrollbars';
 import './Changelog.scss';
 // @ts-ignore
 import ChangelogMD from '../../../CHANGELOG.md';

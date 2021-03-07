@@ -1,13 +1,14 @@
-import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { Arc, Circle, Group, Layer, Rect, Stage, Star } from 'react-konva';
-import { crimson, dirtyGray, gray, mint, teal, yellow } from '../utils/palette';
 import color from 'color';
-
 import React, { useEffect, useMemo, useState } from 'react';
+import _ from 'lodash';
+import { useHotkeys } from 'react-hotkeys-hook';
+import { useToggleHotkey } from '../utils/useToggleHotkey';
+import { crimson, dirtyGray, gray, mint, teal, yellow } from '../utils/palette';
+
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { height_units, width_units } from '../world';
 import Vector, { IVector, VectorF, VectorFzero } from '../utils/Vector';
-import _ from 'lodash';
 import {
   calcRealLenToScreenLen,
   calcRealPosToScreenPos,
@@ -17,7 +18,6 @@ import {
   size,
   viewPortSizeMeters,
 } from '../coord';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { getOnWheel } from '../ThreeLayers/CameraControls';
 
 export const minimap_proportion = 0.3;
@@ -113,22 +113,22 @@ const SlowEntitiesLayer = React.memo(
       <Layer>
         {state.planets &&
           state.planets.map((p, i) => {
-            let anchorPos = state.star
+            const anchorPos = state.star
               ? Vector.fromIVector(state.star)
               : VectorF(0, 0);
-            let pPos = Vector.fromIVector(p);
-            let orbitDist = realLenToScreenLen(pPos.euDistTo(anchorPos));
-            let angleRad = pPos.angleRad(anchorPos.add(VectorF(1, 0)));
-            let negativeRotation = p.orbit_speed < 0;
+            const pPos = Vector.fromIVector(p);
+            const orbitDist = realLenToScreenLen(pPos.euDistTo(anchorPos));
+            const angleRad = pPos.angleRad(anchorPos.add(VectorF(1, 0)));
+            const negativeRotation = p.orbit_speed < 0;
             // let arcDirMultiplier = 1;
             // if (negativeRotation) {
             //   //arcDirMultiplier = -1;
             // }
 
-            let rotationDeg = radToDeg(angleRad);
-            let b = p.radius;
-            let a = pPos.euDistTo(anchorPos);
-            let beta = Math.acos((2 * a * a - b * b) / (2 * a * a));
+            const rotationDeg = radToDeg(angleRad);
+            const b = p.radius;
+            const a = pPos.euDistTo(anchorPos);
+            const beta = Math.acos((2 * a * a - b * b) / (2 * a * a));
 
             const arcCommonProps = {
               angle: totalArc / arcCount,
@@ -237,7 +237,7 @@ export const MinimapPanel = React.memo(() => {
   useNSForceChange('MinimapLayer', false, () => true);
 
   const { visualState } = ns;
-  let { cameraPosition } = visualState;
+  const { cameraPosition } = visualState;
 
   // a trick to force-sync component whenever the global camera changes,
   // as otherwise the slow updates will not match the mouse updates
@@ -248,8 +248,8 @@ export const MinimapPanel = React.memo(() => {
     realLenToScreenLen,
     realPosToScreenPos,
   } = useMemo(() => {
-    let world_size = VectorF(width_units, height_units);
-    let minimap_size = new Vector(get_minimap_size_x(), get_minimap_size_y());
+    const world_size = VectorF(width_units, height_units);
+    const minimap_size = new Vector(get_minimap_size_x(), get_minimap_size_y());
     const realLenToScreenLen = calcRealLenToScreenLen(world_size, minimap_size);
     const realPosToScreenPos = calcRealPosToScreenPos(
       VectorFzero,
@@ -275,12 +275,12 @@ export const MinimapPanel = React.memo(() => {
   const minimap_viewport_size_y =
     realLenToScreenLen(viewPortSizeMeters().y) / visualState.zoomShift;
 
-  let moveCamera = (dragEvent: any) => {
+  const moveCamera = (dragEvent: any) => {
     const mouseEvent = dragEvent.evt as any;
-    let currentPosition = new Vector(mouseEvent.layerX, mouseEvent.layerY);
+    const currentPosition = new Vector(mouseEvent.layerX, mouseEvent.layerY);
     visualState.boundCameraMovement = false;
 
-    let newPos = screenPosToRealPos(currentPosition);
+    const newPos = screenPosToRealPos(currentPosition);
     setCameraPos(newPos);
     visualState.cameraPosition = newPos;
   };

@@ -26,7 +26,7 @@ export const ThreeRock: React.FC<
 
   // @ts-ignore
   // rockMesh.material.color = props.color;
-  let onClick = (ev: any) => {
+  const onClick = (ev: any) => {
     actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(props.gid);
     ev.stopPropagation();
   };
@@ -37,7 +37,7 @@ export const ThreeRock: React.FC<
         onPointerOut={() => setHintedObjectId(undefined)}
       >
         <circleBufferGeometry args={[props.radius, 16]} />
-        <meshBasicMaterial color="red" opacity={0.0} transparent={true} />
+        <meshBasicMaterial color="red" opacity={0.0} transparent />
       </mesh>
       <mesh
         ref={container}

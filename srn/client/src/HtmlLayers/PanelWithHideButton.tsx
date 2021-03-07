@@ -46,12 +46,12 @@ export const PanelWithHideButton: React.FC<{
   );
   if (!shown)
     return (
-      (
-        <div className="panel-minimized" onClick={() => setShown(true)}>
-          {minimized}
-        </div>
-      ) || null
-    );
+    (
+      <div className="panel-minimized" onClick={() => setShown(true)}>
+        {minimized}
+      </div>
+    ) || null
+  );
   return (
     <div
       className={`panel ${posToClassName[position]} close ${

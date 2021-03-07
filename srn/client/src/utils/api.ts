@@ -5,7 +5,7 @@ const apiUrl =
 export const api = {
   getVersion: async () => {
     try {
-      const resp = await fetch(apiUrl + '/version');
+      const resp = await fetch(`${apiUrl}/version`);
       return await resp.json();
     } catch (e) {
       console.warn('error fetching version', e);

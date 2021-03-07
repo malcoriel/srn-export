@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
+import { Circle, Layer, Rect } from 'react-konva';
+import _ from 'lodash';
 import NetState, {
   findMyPlayer,
   findMyShip,
   useNSForceChange,
 } from '../NetState';
-import { Circle, Layer, Rect } from 'react-konva';
 import Vector from '../utils/Vector';
-import _ from 'lodash';
 import { babyBlue, yellow } from '../utils/palette';
 import { Planet, QuestState, Ship } from '../world';
 import { findPlanet } from '../HtmlLayers/NetworkStatus';
@@ -24,12 +24,12 @@ const TRAJECTORY_STEP = 10.0;
 
 const buildTrajectory = (questTarget: Planet, myShip: Ship): Vector[] => {
   let current = Vector.fromIVector(myShip);
-  let res: Vector[] = [];
+  const res: Vector[] = [];
   let iter = 0;
-  let dir1 = Vector.fromIVector(questTarget).subtract(
+  const dir1 = Vector.fromIVector(questTarget).subtract(
     Vector.fromIVector(myShip)
   );
-  let dir = dir1.normalize().scale(TRAJECTORY_STEP);
+  const dir = dir1.normalize().scale(TRAJECTORY_STEP);
   while (
     Vector.fromIVector(current).euDistTo(Vector.fromIVector(questTarget)) >
     TRAJECTORY_STEP
@@ -65,18 +65,18 @@ export const MyTrajectoryLayer: React.FC = () => {
 
   const zoomProp = visualState.zoomShift || 1.0;
 
-  let planetsById = _.keyBy(state.planets, 'id');
-  let pointTarget = myShip.navigate_target;
-  let planetTarget = myShip.dock_target
+  const planetsById = _.keyBy(state.planets, 'id');
+  const pointTarget = myShip.navigate_target;
+  const planetTarget = myShip.dock_target
     ? planetsById[myShip.dock_target]
     : undefined;
-  let wrapOffset = 10;
+  const wrapOffset = 10;
 
   const myPlayer = findMyPlayer(state);
 
   const quest = myPlayer && myPlayer.quest;
-  let questTarget: Planet | undefined = undefined;
-  let questTargetTrajectory: Vector[] | undefined = undefined;
+  let questTarget: Planet | undefined;
+  let questTargetTrajectory: Vector[] | undefined;
   if (quest) {
     if (quest.state == QuestState.Started) {
       questTarget = findPlanet(state, quest.from_id);

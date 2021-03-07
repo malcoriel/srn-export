@@ -1,16 +1,17 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import './DialogueWindow.scss';
-import { Window } from './ui/Window';
 import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
+import _ from 'lodash';
+import { useHotkeys } from 'react-hotkeys-hook';
+import classNames from 'classnames';
+import { Window } from './ui/Window';
 import {
   CAMERA_DEFAULT_ZOOM,
   CAMERA_HEIGHT,
 } from '../ThreeLayers/CameraControls';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import NetState from '../NetState';
-import _ from 'lodash';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { makePortraitPath } from './StartMenu';
 import {
   Dialogue,
@@ -22,7 +23,6 @@ import {
 import { useStore, WindowState } from '../store';
 import { findPlanet } from './NetworkStatus';
 import { WithScrollbars } from './ui/WithScrollbars';
-import classNames from 'classnames';
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
   <span className="dialogue-option">
@@ -67,7 +67,7 @@ const renderContent = (
             <ambientLight />
             <pointLight position={[10, 10, 10]} />
             <ThreePlanetShape
-              visible={true}
+              visible
               key={dialogue.planet.id}
               scale={
                 _.times(3, () => dialogue.planet!.radius) as [
@@ -100,7 +100,8 @@ const renderContent = (
           className="line"
           onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
         >
-          {i + 1}.&nbsp;
+          {i + 1}
+          .&nbsp;
           <DialogueElemView key={option.id} {...option} />
         </div>
       ))}
@@ -133,7 +134,8 @@ const renderMinimized = (
             className="line"
             onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
           >
-            {i + 1}.&nbsp;
+            {i + 1}
+            .&nbsp;
             <DialogueElemView key={option.id} {...option} />
           </div>
         ))}
@@ -198,7 +200,7 @@ export const DialogueWindow: React.FC = () => {
       contentClassName="dialogue-window-content"
       height={616}
       width={622}
-      line={'thin'}
+      line="thin"
       halfThick
       storeKey="dialogueWindow"
       thickness={8}
@@ -222,7 +224,7 @@ export const enrichSub = (s: DialogueSubstitution): ReactNode => {
 
   switch (s.s_type) {
     case DialogueSubstitutionType.PlanetName:
-      let planet = findPlanet(ns.state, s.id);
+      const planet = findPlanet(ns.state, s.id);
       if (!planet) {
         console.warn(`substitution planet not found by id ${s.id}`);
         return <span className="sub-planet">{s.text}</span>;

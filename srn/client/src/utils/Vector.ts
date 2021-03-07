@@ -132,7 +132,7 @@ export default class Vector implements IVector {
   }
 
   scalarMultiply(b: Vector) {
-    let a = this;
+    const a = this;
     return a.x * b.x + a.y * b.y;
   }
 

@@ -12,7 +12,7 @@ export const LeaderboardWindow: React.FC = () => {
 
   const setLeaderboardWindow = useStore((state) => state.setLeaderboardWindow);
   useEffect(() => {
-    let onGameStartEnd = (ev: any) => {
+    const onGameStartEnd = (ev: any) => {
       if (ev === 'GameEnded') {
         setLeaderboardWindow(WindowState.Shown);
       } else if (ev === 'GameStarted') {
@@ -52,7 +52,13 @@ export const LeaderboardWindow: React.FC = () => {
       minimized={
         place && (
           <div className="leaderboard-window-minimized">
-            Your place: {place} of {totalPlaces}
+            Your place:
+            {' '}
+{place}
+{' '}
+of 
+{' '}
+{totalPlaces}
           </div>
         )
       }
@@ -68,11 +74,15 @@ export const LeaderboardWindow: React.FC = () => {
           &nbsp; news & talk
         </a>
       </div>
-      {paused && <div className="winner">Winner: {leaderboard.winner}</div>}
+      {paused && <div className="winner">
+Winner:{leaderboard.winner}</div>}
       <div className="header">Leaderboard:</div>
       {leaderboard.rating.map(([p, s], i) => (
         <div className="line" key={p.id}>
-          {i + 1}. {p.name} - {s}
+          {i + 1}
+.{p.name}
+{' '}
+-{s}
         </div>
       ))}
       ,

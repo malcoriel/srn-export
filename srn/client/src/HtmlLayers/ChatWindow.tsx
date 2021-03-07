@@ -20,7 +20,7 @@ export const ChatWindow = () => {
       line="thick"
       thickness={10}
       storeKey="chatWindow"
-      minimizedClassname={'chat-window-minimized'}
+      minimizedClassname="chat-window-minimized"
       minimized={<Chat channelName="inGame" />}
     >
       <div className="chat-window">

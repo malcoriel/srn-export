@@ -1,8 +1,8 @@
 import Q from 'q';
 import { mean } from 'simple-statistics';
 import _ from 'lodash';
-import { variableDeltaTime as Time } from '../utils/Times';
 import React, { useEffect, useState } from 'react';
+import { variableDeltaTime as Time } from '../utils/Times';
 import './StatsPanel.css';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 
@@ -77,7 +77,7 @@ const Perf = {
     frameRequest = requestAnimationFrame(Perf.startRealFPSMeter);
   },
 
-  measureFPSStat: function (
+  measureFPSStat(
     frameEvent: Measure,
     debug: boolean,
     debugName: string,
@@ -100,8 +100,7 @@ const Perf = {
         newFrameEvents.push(frameHappenedAt);
       }
     }
-    if (debug)
-      console.log(
+    if (debug) console.log(
         debugName,
         measuredFrameEvents.length,
         newFrameEvents.length,
@@ -213,11 +212,11 @@ export const formatNumber = (x: any) => {
 };
 
 const STATS_REFRESH_TIME = 1000;
-let StatsPanel = () => {
+const StatsPanel = () => {
   const [shown] = useToggleHotkey('shift+f', false, 'show FPS & stats');
   const [force, setForce] = useState(0);
   useEffect(() => {
-    let timer = setInterval(() => setForce(force + 1), STATS_REFRESH_TIME);
+    const timer = setInterval(() => setForce(force + 1), STATS_REFRESH_TIME);
     return () => clearInterval(timer);
   }, [setForce, force]);
 
@@ -235,25 +234,29 @@ let StatsPanel = () => {
       <div className="row">
         <span className="name">Avg physics frame time:</span>
         <span className="value">
-          {formatNumber(statsHeap[Stat.AvgPhysicsFrameTime])}ms
+          {formatNumber(statsHeap[Stat.AvgPhysicsFrameTime])}
+          ms
         </span>
       </div>
       <div className="row">
         <span className="name">Avg render frame time:</span>
         <span className="value">
-          {formatNumber(statsHeap[Stat.AvgRenderFrameTime])}ms
+          {formatNumber(statsHeap[Stat.AvgRenderFrameTime])}
+          ms
         </span>
       </div>
       <div className="row">
         <span className="name">Avg slow update frame time:</span>
         <span className="value">
-          {formatNumber(statsHeap[Stat.AvgSlowUpdateFrameTime])}ms
+          {formatNumber(statsHeap[Stat.AvgSlowUpdateFrameTime])}
+          ms
         </span>
       </div>
       <div className="row">
         <span className="name">Avg socket frame time:</span>
         <span className="value">
-          {formatNumber(statsHeap[Stat.AvgSocketFrameTime])}ms
+          {formatNumber(statsHeap[Stat.AvgSocketFrameTime])}
+          ms
         </span>
       </div>
       <div className="row">

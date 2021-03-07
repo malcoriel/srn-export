@@ -1,8 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import './ControlPanel.scss';
 import React from 'react';
-import { StyledRect } from './ui/StyledRect';
-import { Button } from './ui/Button';
 import {
   AiOutlineSolution,
   BsFillChatDotsFill,
@@ -11,6 +9,8 @@ import {
   FaQuestion,
   FiBox,
 } from 'react-icons/all';
+import { StyledRect } from './ui/StyledRect';
+import { Button } from './ui/Button';
 import { useStore } from '../store';
 import NetState, {
   findMyPlayer,
@@ -64,7 +64,7 @@ const MoneyAndHp = () => {
         <StyledRect
           line="thin"
           thickness={4}
-          contentClassName={'money'}
+          contentClassName="money"
           halfThick
           noLeft
           noBottom
