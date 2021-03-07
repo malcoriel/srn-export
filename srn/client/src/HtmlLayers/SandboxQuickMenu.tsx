@@ -1,6 +1,10 @@
 import { QuickMenu } from './QuickMenu';
-import React, { useState } from 'react';
-import NetState, { useNSForceChange } from '../NetState';
+import React, { useEffect, useState } from 'react';
+import NetState, {
+  findMyShip,
+  useNSForceChange,
+  VisualState,
+} from '../NetState';
 import {
   GameMode,
   GameState,
@@ -17,9 +21,27 @@ import {
   IoIosSpeedometer,
   SiGodotengine,
 } from 'react-icons/all';
+import Vector from '../utils/Vector';
+import _ from 'lodash';
 
-const pickClosestObject = (state: GameState): undefined => {
-  return undefined;
+const pickClosestObject = (
+  state: GameState,
+  visualState: VisualState
+): string => {
+  const myShip = findMyShip(state);
+  const from = Vector.fromIVector(myShip || visualState.cameraPosition);
+  if (!myShip) return '';
+  const withDist = [state.star, ...state.planets]
+    .map((obj) => {
+      if (!obj) {
+        return null;
+      }
+      const objPos = Vector.fromIVector(obj);
+      return [obj.id, objPos.euDistTo(from)];
+    })
+    .filter((s) => !!s) as [string, number][];
+  const sorted = _.sortBy(withDist, (p) => p[1]);
+  return _.get(sorted, '0.0', '');
 };
 
 const cyclePlanetType = (pt: PlanetType) => {
@@ -46,7 +68,8 @@ export const SandboxQuickMenu = () => {
 
   const [planetType, setPlanetType] = useState(PlanetType.Barren);
   const [planetSpeed, setPlanetSpeed] = useState(0.05);
-  const [anchor, setAnchor] = useState(undefined);
+  const [anchor, setAnchor] = useState('initial');
+  useEffect(() => {}, [anchor]);
 
   const actions = [
     {
@@ -58,17 +81,26 @@ export const SandboxQuickMenu = () => {
       text: 'Set anchor',
       noHide: true,
       icon: <GiStarSattelites />,
-      handler: () => setAnchor(pickClosestObject(ns.state)),
+      handler: () => {
+        const closest = pickClosestObject(ns.state, ns.visualState);
+        setAnchor(() => closest);
+      },
     },
     {
       text: `Add a ${planetType} planet sp. ${planetSpeed}`,
       icon: <BiPlanet />,
-      handler: () =>
-        ns.sendSandboxCmd({
-          [SandboxCommandName.AddPlanet]: {
-            p_type: planetType,
-          },
-        }),
+      handler: () => {
+        if (anchor) {
+          ns.sendSandboxCmd({
+            [SandboxCommandName.AddPlanet]: {
+              p_type: planetType,
+              radius: 5.0,
+              anchor_id: anchor,
+              orbit_speed: planetSpeed,
+            },
+          });
+        }
+      },
     },
     {
       text: 'Toggle planet type',
@@ -106,8 +138,6 @@ export const SandboxQuickMenu = () => {
       handler: () => ns.sendSandboxCmd(SandboxCommandName.ToggleGodMode),
     },
   ];
-
   if (!show) return null;
-
   return <QuickMenu startActions={actions} mainHotkey="g" />;
 };

@@ -51,14 +51,16 @@ export const Button: React.FC<{
     },
     {
       keyup: true,
-    }
+    },
+    [onClick, targetHotKey, pseudoActive]
   );
   useHotkeys(
     targetHotKey,
     () => {
       setPseudoActive(true);
     },
-    { keydown: true }
+    { keydown: true },
+    [onClick, targetHotKey, pseudoActive]
   );
   return (
     <span

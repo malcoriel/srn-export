@@ -137,6 +137,7 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
     [setShown, shown]
   );
   if (!shown) return null;
+
   return (
     <div className="quick-menu-container">
       <div className={`quick-menu count-${activeActions.length}`}>

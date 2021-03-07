@@ -126,6 +126,9 @@ export type SandboxCommand =
   | {
       AddPlanet: {
         p_type: PlanetType;
+        orbit_speed: number;
+        radius: number;
+        anchor_id: string;
       };
     }
   | {

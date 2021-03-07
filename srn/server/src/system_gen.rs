@@ -10,6 +10,7 @@ use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use std::collections::VecDeque;
 use std::collections::hash_map::DefaultHasher;
+use serde_derive::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 use crate::vec2::Vec2f64;
@@ -24,8 +25,8 @@ pub enum PlanetType {
 }
 
 
-struct PoolRandomPicker<T> {
-    options: Vec<T>,
+pub struct PoolRandomPicker<T> {
+    pub options: Vec<T>,
 }
 
 impl<T> PoolRandomPicker<T> {
@@ -119,18 +120,7 @@ pub fn system_gen(seed: String) -> GameState {
 
                     let planet_radius = gen_planet_radius(&mut prng);
                     let planet_center_x = current_x + width / 2.0;
-                    let planet = Planet {
-                        id: planet_id,
-                        name,
-                        x: planet_center_x,
-                        y: 0.0,
-                        rotation: 0.0,
-                        radius: planet_radius,
-                        orbit_speed: gen_planet_orbit_speed(&mut prng) / (index + 1) as f64,
-                        anchor_id: star.id.clone(),
-                        anchor_tier: 1,
-                        color: gen_color(&mut prng).to_string(),
-                    };
+                    let planet = gen_planet(&mut prng, star.id, index, planet_id, name, planet_radius, planet_center_x);
                     planets.push(planet);
 
                     let mut current_sat_x = planet_center_x + planet_radius + 10.0;
@@ -221,6 +211,46 @@ pub fn system_gen(seed: String) -> GameState {
         disable_hp_effects: false
     };
     state
+}
+
+pub fn gen_planet(mut prng: &mut SmallRng, anchor_id: Uuid, index: usize, planet_id: Uuid, name: String, planet_radius: f64, planet_center_x: f64) -> Planet {
+    Planet {
+        id: planet_id,
+        name,
+        x: planet_center_x,
+        y: 0.0,
+        rotation: 0.0,
+        radius: planet_radius,
+        orbit_speed: gen_planet_orbit_speed(&mut prng) / (index + 1) as f64,
+        anchor_id,
+        anchor_tier: 1,
+        color: gen_color(&mut prng).to_string(),
+    }
+}
+
+pub fn gen_planet_typed(p_type: PlanetType) -> Planet {
+    Planet {
+        id: new_id(),
+        name: "".to_string(),
+        x: 0.0,
+        y: 0.0,
+        rotation: 0.0,
+        radius: 0.0,
+        orbit_speed: 0.0,
+        anchor_id: Default::default(),
+        anchor_tier: 0,
+        color: get_planet_type_color(p_type)
+    }
+}
+
+pub fn get_planet_type_color(p_type: PlanetType) -> String {
+    match p_type {
+        PlanetType::Unknown => "#000000".to_string(),
+        PlanetType::Ice => "#41b0f7".to_string(),
+        PlanetType::Jovian => "#ee7e0e".to_string(),
+        PlanetType::Jungle => "#00ed39".to_string(),
+        PlanetType::Barren => "#a11010".to_string(),
+    }
 }
 
 pub fn gen_star(star_id: Uuid, mut prng: &mut SmallRng, radius: f64, pos: Vec2f64) -> Star {

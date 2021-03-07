@@ -2,6 +2,7 @@
   "extends": "../.eslintrc",
   "rules": {
     "consistent-return": 0,
-    "camelcase": 0
+    "camelcase": 0,
+    "react-hooks/rules-of-hooks": 0
   }
 }
