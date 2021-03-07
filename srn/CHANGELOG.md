@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.4.3
+### New
+* Sandbox mode for playing with planets. Highly experimental. Press G to enter the quick menu.
+* Visual effects for pressing buttons via hotkeys.
+### Fixes
+* A bug where 'N' hotkey was able to open any window.
+
 ## Version 0.4.2
 ### New
 * Fancy hotkeys for buttons.
