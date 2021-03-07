@@ -1,7 +1,15 @@
 import React, { useEffect } from 'react';
 import { Direction, ShipAction, ShipActionType } from '../world';
 
-export type ShipChangerCallback = (sa: ShipAction) => void;
+export const actionsActive: Record<string, ShipAction | undefined> = {
+  [ShipActionType.Move]: undefined,
+  [ShipActionType.Dock]: undefined,
+  [ShipActionType.Navigate]: undefined,
+  [ShipActionType.DockNavigate]: undefined,
+  [ShipActionType.Tractor]: undefined,
+};
+
+const keysActive: Record<string, boolean> = {};
 
 const makeMoveAction = (
   activeKeys: Record<string, boolean>
@@ -46,16 +54,6 @@ const keydownHandler = (keyDownEvent: KeyboardEvent) => {
 const keyUpHandler = (keyDownEvent: KeyboardEvent) => {
   keysActive[keyDownEvent.code] = false;
   refreshActiveActions();
-};
-
-const keysActive: Record<string, boolean> = {};
-
-export const actionsActive: Record<string, ShipAction | undefined> = {
-  [ShipActionType.Move]: undefined,
-  [ShipActionType.Dock]: undefined,
-  [ShipActionType.Navigate]: undefined,
-  [ShipActionType.DockNavigate]: undefined,
-  [ShipActionType.Tractor]: undefined,
 };
 
 const singleUseActions = [

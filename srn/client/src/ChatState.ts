@@ -5,23 +5,27 @@ import { api } from './utils/api';
 export type ChatMessage = {
   name: string;
   message: string;
-}
+};
 
 type ChatMessageFromServer = {
-  channel: string,
-  message: ChatMessage,
-}
+  channel: string;
+  message: ChatMessage;
+};
 
 export type Chats = Record<string, ChatMessage[]>;
 
 export class ChatState extends EventEmitter {
   private socket?: WebSocket;
+
   public id: string;
+
   public connected: boolean;
+
   public messages: Chats;
 
   private static instance?: ChatState;
-  public static get() : ChatState | undefined {
+
+  public static get(): ChatState | undefined {
     return ChatState.instance;
   }
 
@@ -29,19 +33,16 @@ export class ChatState extends EventEmitter {
     ChatState.instance = new ChatState();
   }
 
-
-
   constructor() {
     super();
     this.id = uuid.v4();
     console.log(`created CS ${this.id}`);
     this.connected = false;
-    this.messages = {global: [], inGame: []};
+    this.messages = { global: [], inGame: [] };
   }
 
   tryConnect(playerName: string) {
-    if (this.connected)
-      return;
+    if (this.connected) return;
     this.connect(playerName);
   }
 
@@ -57,12 +58,14 @@ export class ChatState extends EventEmitter {
       } catch (e) {
         console.warn(e);
       }
-
     };
     this.socket.onopen = () => {
       this.connected = true;
       this.emit('message', this.messages);
-      this.send({name: playerName, message: "has connected to the chat"}, "global")
+      this.send(
+        { name: playerName, message: 'has connected to the chat' },
+        'global'
+      );
     };
     this.socket.onerror = (err) => {
       console.warn('error connecting chat', err);
@@ -73,9 +76,8 @@ export class ChatState extends EventEmitter {
   }
 
   send(message: ChatMessage, channel: string) {
-    if (!this.socket)
-      return;
-    this.socket.send(JSON.stringify({channel, message}));
+    if (!this.socket) return;
+    this.socket.send(JSON.stringify({ channel, message }));
   }
 
   tryDisconnect() {

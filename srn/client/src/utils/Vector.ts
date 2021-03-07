@@ -117,6 +117,7 @@ export default class Vector implements IVector {
   }
 
   // noinspection JSUnusedGlobalSymbols
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
   NOTVERIFIEDturn(angle: number, around: Vector = VectorF(0, 0)) {
     const { x, y } = this;
     const { x: xOrigin, y: yOrigin } = around;
@@ -128,6 +129,7 @@ export default class Vector implements IVector {
       (yOrigin - y) * Math.cos(angle) -
       (x - xOrigin) * Math.sin(angle) +
       yOrigin;
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     return VectorF(xRotated, yRotated);
   }
 
@@ -172,7 +174,6 @@ export default class Vector implements IVector {
 }
 
 const memory = new Map();
-
 // noinspection TsLint
 export function VectorF(x: number, y: number) {
   const key = `${x}/${y}`;
@@ -195,14 +196,17 @@ export function VectorFK(key: string) {
   return VectorF(x, y);
 }
 
+// noinspection JSUnusedGlobalSymbols
 export type Rect = {
   width: number;
   height: number;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const radToDeg = (r: number): number => {
   return (r * 180) / Math.PI;
 };
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const degToRad = (r: number): number => {
   return (r / 180) * Math.PI;
 };

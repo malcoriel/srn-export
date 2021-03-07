@@ -33,6 +33,7 @@ export const useRealToScreen = (ns: NetState) => {
   ]);
 };
 
+// noinspection JSUnusedGlobalSymbols
 export const useScreenToReal = (ns: NetState) => {
   const { visualState } = ns;
 

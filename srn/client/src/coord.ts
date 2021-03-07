@@ -4,7 +4,7 @@ export const calcScreenPosToRealPos = (
   cameraPosition: IVector,
   viewPortSizeMeters: IVector,
   viewPortSizePixels: IVector,
-  zoom: number = 1
+  zoom = 1
 ) => {
   const cameraShift = Vector.fromIVector(cameraPosition);
   const halfWidthHeight = new Vector(
@@ -29,7 +29,7 @@ export const calcScreenPosToRealPos = (
 export const calcScreenLenToRealLen = (
   viewPortSizeMeters: IVector,
   viewPortSizePixels: IVector,
-  zoom: number = 1
+  zoom = 1
 ) => {
   const meterPerPixel = new Vector(
     viewPortSizeMeters.x / viewPortSizePixels.x,
@@ -43,7 +43,7 @@ export const calcScreenLenToRealLen = (
 export const calcRealLenToScreenLen = (
   viewPortSizeMeters: IVector,
   viewPortSizePixels: IVector,
-  zoom: number = 1
+  zoom = 1
 ) => {
   const pixelPerMeter = new Vector(
     viewPortSizePixels.x / viewPortSizeMeters.x,
@@ -59,7 +59,7 @@ export const calcRealPosToScreenPos = (
   cameraPosition: IVector,
   viewPortSizeMeters: IVector,
   viewPortSizePixels: IVector,
-  zoom: number = 1
+  zoom = 1
 ) => {
   const cameraShift = Vector.fromIVector(cameraPosition);
   const pixelPerMeter = new Vector(
@@ -86,7 +86,7 @@ export const size = {
 };
 export const viewPortSizePixels = () =>
   new Vector(size.width_px, size.height_px);
-export let pixels_per_unit = 10;
+export const pixels_per_unit = 10;
 export const viewPortSizeMeters = () =>
   new Vector(size.width_px / pixels_per_unit, size.height_px / pixels_per_unit);
 export const unitsToPixels_x = () => pixels_per_unit;

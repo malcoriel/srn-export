@@ -4,8 +4,12 @@ const NAMESPACE = 'SRN-v1';
 
 const makeLSKey = (key: string) => `${NAMESPACE}_${key}`;
 
-export const extractLSValue = <T>(key: string, initialValue: T): T => {
-  return extractLSValueImpl(makeLSKey(key), initialValue);
+const setLSValueImpl = <T>(key: string, valueToStore: T) => {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(valueToStore));
+  } catch (e) {
+    console.warn(`ls set failure for key ${key}`, e);
+  }
 };
 
 const extractLSValueImpl = <T>(key: string, initialValue: T) => {
@@ -18,20 +22,16 @@ const extractLSValueImpl = <T>(key: string, initialValue: T) => {
   }
 };
 
+export const extractLSValue = <T>(key: string, initialValue: T): T => {
+  return extractLSValueImpl(makeLSKey(key), initialValue);
+};
+
 export const setLSValue = <T>(key: string, valueToStore: T) => {
   setLSValueImpl(makeLSKey(key), valueToStore);
 };
 
 export const deleteLSValue = (key: string) => {
   localStorage.removeItem(makeLSKey(key));
-};
-
-const setLSValueImpl = <T>(key: string, valueToStore: T) => {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(valueToStore));
-  } catch (e) {
-    console.warn(`ls set failure for key ${key}`, e);
-  }
 };
 
 // https://usehooks.com/useLocalStorage/

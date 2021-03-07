@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ReactJkMusicPlayer from 'react-jinke-music-player';
 import { useStore } from './store';
-let bgmTracks = [
+const bgmTracks = [
   {
     name: 'c2',
     musicSrc: 'resources/bgm/c2.mp3',
@@ -33,7 +33,7 @@ export const MusicControls = () => {
   const [index, setIndex] = useState(0);
   const ref = useRef(null);
   useEffect(() => {
-    let defaultPlayIndex =
+    const defaultPlayIndex =
       parseInt(String(Math.random() * bgmTracks.length), 10) % bgmTracks.length;
     setIndex(defaultPlayIndex);
   }, [index, setIndex]);
@@ -42,7 +42,7 @@ export const MusicControls = () => {
   useEffect(() => {
     if (ref && ref.current) {
       // @ts-ignore
-      let audio = ref.current.getEnhanceAudio();
+      const audio = ref.current.getEnhanceAudio();
       audio.volume = volume / 100;
     }
   }, [volume]);

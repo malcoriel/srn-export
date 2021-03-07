@@ -2,7 +2,8 @@ import EventEmitter from 'events';
 import {
   AABB,
   applyShipAction,
-  Dialogue, GameMode,
+  Dialogue,
+  GameMode,
   GameState,
   Ship,
   ShipAction,
@@ -13,10 +14,7 @@ import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
 import Vector, { IVector } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
-import {
-  vsyncedCoupledThrottledTime,
-  vsyncedCoupledTime
-} from './utils/Times';
+import { vsyncedCoupledThrottledTime, vsyncedCoupledTime } from './utils/Times';
 import { api } from './utils/api';
 import { useEffect, useState } from 'react';
 import { viewPortSizeMeters } from './coord';
@@ -109,47 +107,74 @@ const MAX_ALLOWED_DIST_DESYNC = 5.0;
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
+
   state!: GameState;
+
   dialogue?: Dialogue;
+
   lastDialogue?: Dialogue;
+
   public connecting = true;
+
   public playerName = 'player';
+
   public portraitName = '1';
+
   public ping: number;
+
   public maxPing?: number;
+
   public maxPingTick?: number;
+
   private forceSyncStart?: number;
+
   private forceSyncTag?: string;
+
   public visualState: VisualState;
 
   private static instance?: NetState;
+
   private forceSyncInterval?: Timeout;
+
   private updateOnServerInterval?: Timeout;
+
   private reconnectTimeout?: Timeout;
+
   readonly id: string;
-  disconnecting: boolean = false;
+
+  disconnecting = false;
+
   private lastShipPos?: Vector;
+
   private slowTime: vsyncedCoupledThrottledTime;
+
   public desync: number;
+
   private lastSlowChangedState!: GameState;
+
   private mode!: GameMode;
-  private switchingRooms: boolean = false;
+
+  private switchingRooms = false;
+
   public static make() {
     NetState.instance = new NetState();
   }
+
   public static get(): NetState | undefined {
     // if (!NetState.instance) {
     //   NetState.instance = new NetState(false);
     // }
     return NetState.instance;
   }
+
   private time: vsyncedCoupledTime;
+
   public visMap: Record<string, boolean>;
 
   constructor() {
     super();
     this.id = uuid.v4();
-    let newVar = DEBUG_CREATION ? `at ${new Error().stack}` : '';
+    const newVar = DEBUG_CREATION ? `at ${new Error().stack}` : '';
     console.log(`created NS ${this.id} ${newVar}`);
     this.resetState();
     this.ping = 0;
@@ -176,7 +201,7 @@ export default class NetState extends EventEmitter {
     for (const planet of this.state.planets) {
       this.visMap[planet.id] = isInAABB(AABB, planet);
     }
-    let star = this.state.star;
+    const star = this.state.star;
     if (star) {
       this.visMap[star.id] = isInAABB(AABB, star);
     }
@@ -202,7 +227,7 @@ export default class NetState extends EventEmitter {
 
   forceSync = () => {
     if (!this.connecting) {
-      let tag = uuid.v4();
+      const tag = uuid.v4();
       this.forceSyncTag = tag;
       this.forceSyncStart = performance.now();
       const forcedDelay = 0;
@@ -228,9 +253,8 @@ export default class NetState extends EventEmitter {
     this.time.clearAnimation();
     this.slowTime.clearAnimation();
     Perf.stop();
-    this.emit("disconnect");
+    this.emit('disconnect');
     NetState.instance = undefined;
-
   };
 
   init = (mode: GameMode) => {
@@ -318,12 +342,12 @@ export default class NetState extends EventEmitter {
         }),
       });
       if (this.mode === GameMode.Tutorial || this.mode === GameMode.Sandbox) {
-        let switchRoomTag = uuid.v4();
+        const switchRoomTag = uuid.v4();
         this.switchingRooms = true;
         this.send({
           code: ClientOpCode.SwitchRoom,
-          value: {mode: GameMode[this.mode]},
-          tag: switchRoomTag
+          value: { mode: GameMode[this.mode] },
+          tag: switchRoomTag,
         });
       }
     };
@@ -343,7 +367,7 @@ export default class NetState extends EventEmitter {
     try {
       const [messageCodeStr, data] = rawData.split('_%_');
 
-      let messageCode = Number(messageCodeStr);
+      const messageCode = Number(messageCodeStr);
 
       if (this.switchingRooms) {
         this.resetState(); // force to have initial state
@@ -356,7 +380,8 @@ export default class NetState extends EventEmitter {
 
       if (
         messageCode === ServerToClientMessageCode.ObsoleteStateBroadcast ||
-        messageCode === ServerToClientMessageCode.ObsoleteStateChangeExclusive ||
+        messageCode ===
+          ServerToClientMessageCode.ObsoleteStateChangeExclusive ||
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
@@ -396,9 +421,9 @@ export default class NetState extends EventEmitter {
           myUpdatedShip.trajectory = myOldShip.trajectory;
         }
 
-        let toDrop = new Set();
+        const toDrop = new Set();
         for (const [tag, actions, ticks] of this.pendingActions) {
-          let age = Math.abs(ticks - this.state.ticks);
+          const age = Math.abs(ticks - this.state.ticks);
           if (age > MAX_PENDING_TICKS) {
             console.warn(
               `dropping pending action ${tag} with age ${age}>${MAX_PENDING_TICKS}`
@@ -422,7 +447,7 @@ export default class NetState extends EventEmitter {
         //   this.emit('change', this.state);
         // }
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
-        let confirmedTag = JSON.parse(data).tag;
+        const confirmedTag = JSON.parse(data).tag;
 
         this.pendingActions = this.pendingActions.filter(
           ([tag]) => tag !== confirmedTag
@@ -435,7 +460,7 @@ export default class NetState extends EventEmitter {
         // 2. it is also mostly an optimization to avoid sending the whole state because of other's actions
         // 3. it can be further optimized by only sending the changed ship
         // 4. without it, manual movement updates not so often (only via full syncs), so this leads to very bad look
-        let ships = JSON.parse(data).ships;
+        const ships = JSON.parse(data).ships;
         const myOldShip = findMyShip(this.state);
         this.state.ships = ships;
         if (myOldShip) {
@@ -455,8 +480,8 @@ export default class NetState extends EventEmitter {
         const event = JSON.parse(data).value;
         this.emit('gameEvent', event);
       } else if (messageCode === ServerToClientMessageCode.LeaveRoom) {
-        console.log("Received disconnect request from server");
-        this.disconnectAndDestroy()
+        console.log('Received disconnect request from server');
+        this.disconnectAndDestroy();
       }
     } catch (e) {
       console.warn('error handling message', e);
@@ -556,12 +581,12 @@ export default class NetState extends EventEmitter {
       resetActions();
       return;
     }
-    let actions = Object.values(actionsActive).filter((a) => !!a);
+    const actions = Object.values(actionsActive).filter((a) => !!a);
     this.mutate_ship(actions as ShipAction[], elapsedMs);
-    let dockAction = actionsActive[ShipActionType.Dock];
-    let navigateAction = actionsActive[ShipActionType.Navigate];
-    let dockNavigateAction = actionsActive[ShipActionType.DockNavigate];
-    let tractorAction = actionsActive[ShipActionType.Tractor];
+    const dockAction = actionsActive[ShipActionType.Dock];
+    const navigateAction = actionsActive[ShipActionType.Navigate];
+    const dockNavigateAction = actionsActive[ShipActionType.DockNavigate];
+    const tractorAction = actionsActive[ShipActionType.Tractor];
     const nonNullActions = [
       dockAction,
       navigateAction,
@@ -569,8 +594,8 @@ export default class NetState extends EventEmitter {
       tractorAction,
     ].filter((a) => !!a) as ShipAction[];
 
-    for (let action of nonNullActions) {
-      let tag = uuid.v4();
+    for (const action of nonNullActions) {
+      const tag = uuid.v4();
       this.pendingActions.push([tag, [action], this.state.ticks]);
       this.updateShipOnServer(tag, action);
     }
@@ -579,10 +604,9 @@ export default class NetState extends EventEmitter {
       this.visualState.boundCameraMovement = true;
     }
     resetActions();
-    let result;
 
     const simArea = this.getSimulationArea();
-    result = updateWorld(this.state, simArea, elapsedMs);
+    const result = updateWorld(this.state, simArea, elapsedMs);
     if (result) {
       this.state = result;
       this.updateVisMap();
@@ -601,10 +625,10 @@ export default class NetState extends EventEmitter {
 
   private updateShipOnServerManualMove = (tag: string) => {
     if (this.state && !this.state.paused) {
-      let myShipIndex = findMyShipIndex(this.state);
+      const myShipIndex = findMyShipIndex(this.state);
       if (myShipIndex !== -1 && myShipIndex !== null) {
         const myShip = this.state.ships[myShipIndex];
-        let currentShipPos = Vector.fromIVector(myShip);
+        const currentShipPos = Vector.fromIVector(myShip);
         if (
           !Vector.equals(this.lastShipPos, currentShipPos) &&
           !myShip.navigate_target &&
@@ -629,7 +653,7 @@ export default class NetState extends EventEmitter {
   };
 
   public sendDialogueOption(dialogueId: string, optionId: string) {
-    let tag = uuid.v4();
+    const tag = uuid.v4();
     this.send({
       code: ClientOpCode.DialogueOption,
       value: { dialogue_id: dialogueId, option_id: optionId },
@@ -638,10 +662,10 @@ export default class NetState extends EventEmitter {
   }
 
   private getSimulationArea(): AABB {
-    let viewportSize = viewPortSizeMeters()
+    const viewportSize = viewPortSizeMeters()
       .scale(1 / this.visualState.zoomShift)
       .scale(AREA_BUFF_TO_COVER_SIZE);
-    let center = this.visualState.cameraPosition;
+    const center = this.visualState.cameraPosition;
     return {
       top_left: new Vector(
         center.x - viewportSize.x / 2,
@@ -655,15 +679,28 @@ export default class NetState extends EventEmitter {
   }
 }
 
-export type ShouldUpdateStateChecker = (prev: GameState, next: GameState) => boolean;
+export type ShouldUpdateStateChecker = (
+  prev: GameState,
+  next: GameState
+) => boolean;
 
-export const useNSForceChange = (name: string, fast = false, shouldUpdate: ShouldUpdateStateChecker = () => true, throttle?: number) => {
+export const useNSForceChange = (
+  name: string,
+  fast = false,
+  shouldUpdate: ShouldUpdateStateChecker = () => true,
+  throttle?: number
+) => {
   const [, forceChange] = useState(false);
   const ns = NetState.get();
   if (!ns) return null;
   useEffect(() => {
     let listener = (prevState: GameState, nextState: GameState) => {
-      if (prevState && nextState && shouldUpdate) {
+      if (
+        prevState &&
+        nextState &&
+        // @ts-ignore
+        shouldUpdate
+      ) {
         if (shouldUpdate(prevState, nextState)) {
           forceChange((flip) => !flip);
         }
@@ -674,11 +711,10 @@ export const useNSForceChange = (name: string, fast = false, shouldUpdate: Shoul
     if (throttle) {
       listener = _.throttle(listener, throttle);
     }
-    let event = fast ? 'change' : 'slowchange';
+    const event = fast ? 'change' : 'slowchange';
     ns.on(event, listener);
     return () => {
       ns.off(event, listener);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ns.id]);
 };
