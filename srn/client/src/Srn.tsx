@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.scss';
+import shallow from 'zustand/shallow';
+import { useHotkeys } from 'react-hotkeys-hook';
 import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
 import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
@@ -21,7 +23,6 @@ import { SrnState, useStore, WindowState } from './store';
 import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
 import { WindowContainers } from './HtmlLayers/WindowContainers';
-import shallow from 'zustand/shallow';
 import { OverheadPanel } from './HtmlLayers/OverheadPanel';
 import { TestUI } from './HtmlLayers/TestUI';
 import { HoverHintWindow } from './HtmlLayers/HoverHintWindow';
@@ -31,7 +32,6 @@ import { ChatWindow } from './HtmlLayers/ChatWindow';
 import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 import { DialogueWindow } from './HtmlLayers/DialogueWindow';
 import { GameMode } from './world';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { QuickMenu } from './HtmlLayers/QuickMenu';
 
 const MONITOR_SIZE_INTERVAL = 1000;
@@ -65,7 +65,7 @@ const Srn = () => {
       setChatWindow: state.setChatWindow,
       setLeaderboardWindow: state.setLeaderboardWindow,
     }),
-    shallow,
+    shallow
   );
   useStore((state) => state.trigger);
 
@@ -80,17 +80,51 @@ const Srn = () => {
     }
   };
 
-  useHotkeys('esc', () => {
-    try {
-      if (playing) {
-        toggleMenu();
+  useHotkeys(
+    'esc',
+    () => {
+      try {
+        if (playing) {
+          toggleMenu();
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
-    }
-  }, [playing, toggleMenu]);
+    },
+    [playing, toggleMenu]
+  );
 
   const [mode, setMode] = useState(GameMode.CargoRush);
+
+  const start = (mode: GameMode) => {
+    if (!NetState.get()) {
+      NetState.make();
+    }
+    const ns = NetState.get();
+
+    if (!ns) {
+      return;
+    }
+
+    setPlaying(true);
+    setMenu(false);
+    ns.playerName = preferredName;
+    ns.portraitName = portrait; // portrait files are 1-based
+    ns.disconnecting = false;
+    setMode(mode);
+    ns.init(mode);
+    ns.on('disconnect', () => {
+      setPlaying(false);
+      setMenu(true);
+    });
+    if (mode === GameMode.Tutorial) {
+      setChatWindow(WindowState.Hidden);
+      setLeaderboardWindow(WindowState.Hidden);
+    } else {
+      setChatWindow(WindowState.Minimized);
+      setLeaderboardWindow(WindowState.Minimized);
+    }
+  };
 
   useEffect(() => {
     if (!NetState.get()) {
@@ -131,39 +165,7 @@ const Srn = () => {
         cs.tryDisconnect();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const start = (mode: GameMode) => {
-    if (!NetState.get()) {
-      NetState.make();
-    }
-
-    const ns = NetState.get();
-
-    if (!ns) {
-      return;
-    }
-
-    setPlaying(true);
-    setMenu(false);
-    ns.playerName = preferredName;
-    ns.portraitName = portrait; // portrait files are 1-based
-    ns.disconnecting = false;
-    setMode(mode);
-    ns.init(mode);
-    ns.on('disconnect', () => {
-      setPlaying(false);
-      setMenu(true);
-    });
-    if (mode === GameMode.Tutorial) {
-      setChatWindow(WindowState.Hidden);
-      setLeaderboardWindow(WindowState.Hidden);
-    } else {
-      setChatWindow(WindowState.Minimized);
-      setLeaderboardWindow(WindowState.Minimized);
-    }
-  };
 
   const quit = () => {
     const ns = NetState.get();
@@ -172,13 +174,13 @@ const Srn = () => {
     setPlaying(false);
   };
 
-  let ns = NetState.get();
+  const ns = NetState.get();
   const seed = ns ? ns.state.seed : '';
 
   return (
     <>
       <div
-        className='main-container'
+        className="main-container"
         style={{
           position: 'relative',
           width: size.width_px,
@@ -212,18 +214,20 @@ const Srn = () => {
             <InventoryWindow />
             {/*<TradeWindow />*/}
             <HoverHintWindow />
-            <QuickMenu/>
+            <QuickMenu />
           </>
         )}
         {!playing && <TestUI />}
         {musicEnabled && <MusicControls />}
-        {menu && <StartMenu
-          seed={seed}
-          start={() => start(GameMode.CargoRush)}
-          quit={quit}
-          startTutorial={() => start(GameMode.Tutorial)}
-          startSandbox={() => start(GameMode.Sandbox)}
-        />}
+        {menu && (
+          <StartMenu
+            seed={seed}
+            start={() => start(GameMode.CargoRush)}
+            quit={quit}
+            startTutorial={() => start(GameMode.Tutorial)}
+            startSandbox={() => start(GameMode.Sandbox)}
+          />
+        )}
       </div>
     </>
   );
