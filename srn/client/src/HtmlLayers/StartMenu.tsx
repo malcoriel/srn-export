@@ -199,9 +199,7 @@ export const StartMenu: React.FC<{
         )}
         {playing && (
           <>
-            <Button className='play' onClick={hide}>
-              BACK
-            </Button>
+            <Button className='play' onClick={hide} text='BACK' hotkey='b'/>
             <Button className='quit' onClick={quit} hotkey='Q' text='QUIT' />
           </>
         )}

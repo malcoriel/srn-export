@@ -30,7 +30,7 @@ export const Button: React.FC<{
   hotkey?: string;
   text?: string;
 }> = ({ hotkey, text, onClick, children, className, toggled }) => {
-  useHotkeys(hotkey || '', () => (onClick || Function.prototype)());
+  useHotkeys(hotkey || 'nonexistent', () => (onClick || Function.prototype)());
   return (
     <span
       className={`ui-button ${className} ${toggled ? 'toggled' : ''}`}

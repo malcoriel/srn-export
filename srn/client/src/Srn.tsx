@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.scss';
@@ -17,7 +17,6 @@ import './HtmlLayers/Panel.scss';
 import { MinimapPanel } from './KonvaLayers/MinimapPanel';
 import 'react-jinke-music-player/assets/index.css';
 import { MusicControls } from './MusicControls';
-import { HotkeyWrapper } from './HotkeyWrapper';
 import { SrnState, useStore, WindowState } from './store';
 import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
@@ -32,6 +31,7 @@ import { ChatWindow } from './HtmlLayers/ChatWindow';
 import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 import { DialogueWindow } from './HtmlLayers/DialogueWindow';
 import { GameMode } from './world';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -78,6 +78,16 @@ const Srn = () => {
       forceUpdate();
     }
   };
+
+  useHotkeys('esc', () => {
+    try {
+      if (playing) {
+        toggleMenu();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [playing, toggleMenu]);
 
   const [mode, setMode] = useState(GameMode.CargoRush);
 
@@ -192,12 +202,6 @@ const Srn = () => {
             <DialogueWindow />
             <QuestWindow />
             <ChatWindow />
-            <HotkeyWrapper
-              hotkey='esc'
-              onPress={() => {
-                toggleMenu();
-              }}
-            />
             <DebugStateLayer />
             <StatsPanel />
             <ControlPanel />
