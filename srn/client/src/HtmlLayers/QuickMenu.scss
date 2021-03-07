@@ -29,10 +29,10 @@ $menuDiameter: 600px;
 
     .ui-button {
       opacity: 1.0 !important;
+    }
 
-      &:not(:hover) {
-        background-color: black !important;
-      }
+    .ui-button:not(:hover).ui-button:not(.pseudo-active) {
+      background-color: black;
     }
   }
 
