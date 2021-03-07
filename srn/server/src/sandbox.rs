@@ -43,7 +43,8 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
     match cmd {
         SandboxCommand::AddStar => {
             if let Some(pos) = get_pos(state, player_id) {
-                state.star = Some(gen_star(new_id(), &mut prng, 50.0, pos))
+                state.star = Some(gen_star(new_id(), &mut prng, 50.0, pos));
+                state.planets = vec![];
             }
         }
         SandboxCommand::ToggleGodMode => {
