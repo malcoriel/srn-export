@@ -32,6 +32,7 @@ import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 import { DialogueWindow } from './HtmlLayers/DialogueWindow';
 import { GameMode } from './world';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { QuickMenu } from './HtmlLayers/QuickMenu';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -211,6 +212,7 @@ const Srn = () => {
             <InventoryWindow />
             {/*<TradeWindow />*/}
             <HoverHintWindow />
+            <QuickMenu/>
           </>
         )}
         {!playing && <TestUI />}
