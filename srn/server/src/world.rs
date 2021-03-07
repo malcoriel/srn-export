@@ -39,12 +39,12 @@ const ASTEROID_BELT_RANGE: f64 = 100.0;
 pub type PlayerId = Uuid;
 
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum GameMode {
-    Unknown = 0,
-    CargoRush = 1,
-    Tutorial = 2,
-    Sandbox = 3,
+    Unknown,
+    CargoRush,
+    Tutorial,
+    Sandbox,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -289,6 +289,7 @@ pub enum GameEvent {
     },
     RoomJoined {
         personal: bool,
+        mode: GameMode,
         player: Player,
     },
     ShipDied {

@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::dialogue::Dialogue;
-use crate::world::{GameEvent, GameState, Ship};
+use crate::world::{GameEvent, GameState, Ship, GameMode};
 use crate::xcast::XCast;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -111,7 +111,7 @@ pub struct PersonalizeUpdate {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SwitchRoomPayload {
-    pub tutorial: bool
+    pub mode: GameMode
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

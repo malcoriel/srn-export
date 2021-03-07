@@ -168,10 +168,10 @@ export type InventoryItem = {
 }
 
 export enum GameMode {
-  Unknown = 0,
-  CargoRush = 1,
-  Tutorial = 2,
-  Sandbox = 3,
+  Unknown = "Unknown",
+  CargoRush = "CargoRush",
+  Tutorial = "Tutorial",
+  Sandbox = "Sandbox",
 }
 
 export type GameState = {

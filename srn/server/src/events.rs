@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::xcast::XCast;
 use crate::dialogue::{Dialogue, DialogueTable};
 use crate::perf::Sampler;
-use crate::world::{GameEvent, GameState, Player};
+use crate::world::{GameEvent, GameState, Player, GameMode};
 use crate::{StateContainer, world};
 use std::sync::{MutexGuard, RwLockWriteGuard};
 use lazy_static::lazy_static;
@@ -35,8 +35,8 @@ pub fn handle_events(
                     let state = select_mut_state(cont, &player);
                     crate::send_event_to_client(event.clone(), XCast::Unicast(player.id, state.id) );
                 }
-                GameEvent::RoomJoined { player, personal: in_tutorial } => {
-                    if in_tutorial {
+                GameEvent::RoomJoined { player, personal, mode } => {
+                    if personal && mode == GameMode::Tutorial {
                         fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: "tutorial_start".to_owned(), player: player.clone() });
                     }
                 }

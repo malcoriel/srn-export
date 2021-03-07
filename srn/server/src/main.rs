@@ -31,7 +31,7 @@ use websocket::sync::Server;
 
 use dialogue::{DialogueStates, DialogueTable};
 use net::{ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload, TagConfirm, Wrapper};
-use world::{GameState, Player, Ship};
+use world::{GameState, Player, Ship, GameMode};
 use xcast::XCast;
 
 use crate::bots::{bot_init, do_bot_actions};
@@ -170,7 +170,7 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Optio
     }
 }
 
-fn move_player_to_personal_room(client_id: Uuid) {
+fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     let mut cont = STATE.write().unwrap();
     let player_idx = cont.state.players.iter().position(|p| p.id == client_id).unwrap();
     {
@@ -178,7 +178,7 @@ fn move_player_to_personal_room(client_id: Uuid) {
     }
     let player = cont.state.players.remove(player_idx);
     let player_clone = player.clone();
-    let personal_state = cont.personal_states.entry(client_id).or_insert(make_tutorial_state(client_id));
+    let personal_state = cont.personal_states.entry(client_id).or_insert(system_gen::seed_personal_state(client_id, &mode));
     personal_state.players.push(player);
 
     {
@@ -189,7 +189,7 @@ fn move_player_to_personal_room(client_id: Uuid) {
     let state_id = state.id.clone();
     x_cast_state(state, XCast::Broadcast(state_id));
     notify_state_changed(personal_state.id, client_id);
-    fire_event(GameEvent::RoomJoined { personal: true, player: player_clone });
+    fire_event(GameEvent::RoomJoined { personal: true, mode, player: player_clone });
 }
 
 fn mutate_owned_ship(
@@ -431,9 +431,7 @@ fn on_client_switch_room(client_id: Uuid, second: &&str) {
         serde_json::from_str::<SwitchRoomPayload>(second);
     match parsed {
         Ok(parsed) => {
-            if parsed.tutorial {
-                move_player_to_personal_room(client_id);
-            }
+            move_player_to_personal_room(client_id, parsed.mode);
         }
         Err(err) => {
             warn!(format!("Bad switch room, err is {}", err));

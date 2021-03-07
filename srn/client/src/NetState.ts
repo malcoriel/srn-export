@@ -317,12 +317,12 @@ export default class NetState extends EventEmitter {
           portrait_name: this.portraitName,
         }),
       });
-      if (this.mode === GameMode.Tutorial) {
+      if (this.mode === GameMode.Tutorial || this.mode === GameMode.Sandbox) {
         let switchRoomTag = uuid.v4();
         this.switchingRooms = true;
         this.send({
           code: ClientOpCode.SwitchRoom,
-          value: {tutorial: true},
+          value: {mode: GameMode[this.mode]},
           tag: switchRoomTag
         });
       }
