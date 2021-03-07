@@ -288,7 +288,7 @@ pub enum GameEvent {
         player: Player,
     },
     RoomJoined {
-        in_tutorial: bool,
+        personal: bool,
         player: Player,
     },
     ShipDied {

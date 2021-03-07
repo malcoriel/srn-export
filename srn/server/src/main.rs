@@ -170,7 +170,7 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Optio
     }
 }
 
-fn move_player_to_tutorial_room(client_id: Uuid) {
+fn move_player_to_personal_room(client_id: Uuid) {
     let mut cont = STATE.write().unwrap();
     let player_idx = cont.state.players.iter().position(|p| p.id == client_id).unwrap();
     {
@@ -189,7 +189,7 @@ fn move_player_to_tutorial_room(client_id: Uuid) {
     let state_id = state.id.clone();
     x_cast_state(state, XCast::Broadcast(state_id));
     notify_state_changed(personal_state.id, client_id);
-    fire_event(GameEvent::RoomJoined { in_tutorial: true, player: player_clone });
+    fire_event(GameEvent::RoomJoined { personal: true, player: player_clone });
 }
 
 fn mutate_owned_ship(
@@ -359,7 +359,7 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
     if is_disconnected(client_id) {
         return;
     }
-    let (current_state_id, _in_tutorial) = get_state_id_and_tutorial(client_id);
+    let current_state_id = get_state_id(client_id);
     let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
     if should_send {
         let message = Message::text(message.clone().patch_with_id(client_id).serialize());
@@ -374,14 +374,13 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
     }
 }
 
-fn get_state_id_and_tutorial(client_id: Uuid) -> (Uuid, bool) {
+fn get_state_id(client_id: Uuid) -> Uuid {
     let cont = STATE.read().unwrap();
-    let in_tutorial = cont.personal_states.contains_key(&client_id);
-    let current_state_id = if !in_tutorial { cont.state.id } else {
-        // tutorial states are personal, and have the same id as player
+    let in_personal = cont.personal_states.contains_key(&client_id);
+    let current_state_id = if !in_personal { cont.state.id } else {
         client_id
     };
-    (current_state_id, in_tutorial)
+    current_state_id
 }
 
 fn on_client_text_message(client_id: Uuid, msg: String) {
@@ -433,7 +432,7 @@ fn on_client_switch_room(client_id: Uuid, second: &&str) {
     match parsed {
         Ok(parsed) => {
             if parsed.tutorial {
-                move_player_to_tutorial_room(client_id);
+                move_player_to_personal_room(client_id);
             }
         }
         Err(err) => {
@@ -488,7 +487,7 @@ fn on_client_sync_request(client_id: Uuid, second: &&str, third: Option<&&str>) 
     }
     let mut state = get_state_clone_read(client_id);
     state.tag = Some(second.to_string());
-    let (current_state_id, _) = get_state_id_and_tutorial(client_id);
+    let current_state_id = get_state_id(client_id);
     x_cast_state(state, XCast::Unicast(current_state_id, client_id))
 }
 
@@ -622,8 +621,8 @@ fn make_new_human_player(conn_id: Uuid) {
 
 fn remove_player(conn_id: Uuid) {
     let mut cont = STATE.write().unwrap();
-    let in_tutorial = cont.personal_states.contains_key(&conn_id);
-    let state = if in_tutorial { cont.personal_states.get_mut(&conn_id).unwrap() } else { &mut cont.state };
+    let in_personal = cont.personal_states.contains_key(&conn_id);
+    let state = if in_personal { cont.personal_states.get_mut(&conn_id).unwrap() } else { &mut cont.state };
     world::remove_player_from_state(conn_id, state);
     cont.personal_states.remove(&conn_id);
 }
@@ -758,7 +757,7 @@ fn main_thread() {
             "Update ships respawn",       // 17
             "Update planets 1",           // 18
             "Update planets 2",           // 19
-            "Tutorial states",           // 20
+            "Personal states",           // 20
         ]
             .iter()
             .map(|v| v.to_string())
@@ -790,7 +789,7 @@ fn main_thread() {
         sampler.end(update_id);
         cont.state = updated_state;
 
-        let tutorial_id = sampler.start(20);
+        let personal_id = sampler.start(20);
         cont.personal_states = HashMap::from_iter(cont.personal_states.iter().filter_map(|(_, state)| {
             if state.players.len() == 0 {
                 return None;
@@ -801,7 +800,7 @@ fn main_thread() {
             });
             Some((new_state.id, new_state))
         }));
-        sampler.end(tutorial_id);
+        sampler.end(personal_id);
 
         let quests_mark = sampler.start(3);
         update_quests(&mut cont.state);
