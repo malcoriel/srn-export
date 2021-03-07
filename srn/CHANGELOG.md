@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.4.2
+### New
+* Fancy hotkeys for buttons.
+### Fixes
+* Incorrect hotkey behavior when the chat is used.
+
 ## Version 0.4.1
 ### New
 * Bots dialogue delays are now a bit random, to avoid funny action mirroring.
