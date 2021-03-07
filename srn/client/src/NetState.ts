@@ -6,6 +6,7 @@ import {
   GameMode,
   GameState,
   SandboxCommand,
+  SandboxCommandName,
   Ship,
   ShipAction,
   ShipActionType,
@@ -107,7 +108,11 @@ const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 const MAX_ALLOWED_DIST_DESYNC = 5.0;
 
-const serializeSandboxCommand = (_cmd: SandboxCommand) => '';
+const serializeSandboxCommand = (cmd: SandboxCommand) => {
+  if (cmd === SandboxCommandName.AddStar) {
+    return cmd;
+  }
+};
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;

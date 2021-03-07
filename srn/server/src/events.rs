@@ -32,7 +32,7 @@ pub fn handle_events(
         if let Ok(event) = receiver.try_recv() {
             match event.clone() {
                 GameEvent::ShipSpawned { player, .. } => {
-                    let state = select_mut_state(cont, &player);
+                    let state = select_mut_state(cont, player.id);
                     crate::send_event_to_client(event.clone(), XCast::Unicast(player.id, state.id) );
                 }
                 GameEvent::RoomJoined { player, personal, mode } => {
@@ -41,7 +41,7 @@ pub fn handle_events(
                     }
                 }
                 GameEvent::ShipDied { player, .. } => {
-                    let state = select_mut_state(cont, &player);
+                    let state = select_mut_state(cont, player.id);
                     crate::send_event_to_client(event.clone(), XCast::Broadcast(state.id));
                 }
                 GameEvent::GameEnded { .. } => {
@@ -54,7 +54,7 @@ pub fn handle_events(
                     // intentionally do nothing
                 }
                 GameEvent::ShipDocked { player, .. } => {
-                    let state = select_mut_state(cont, &player);
+                    let state = select_mut_state(cont, player.id);
                     if state.id != player.id {
                         // do not trigger landing dialogue on landing
                         fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: "basic_planet".to_owned(), player: player.clone() });
@@ -64,7 +64,7 @@ pub fn handle_events(
                     // intentionally do nothing
                 }
                 GameEvent::DialogueTriggerRequest { dialogue_name, player } => {
-                    let state = select_mut_state(cont, &player);
+                    let state = select_mut_state(cont, player.id);
                     if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
                         let d_states = DialogueTable::get_player_d_states(d_states, &player);
                         d_table.trigger_dialogue(script, &mut res, &player, d_states, state)
@@ -73,7 +73,7 @@ pub fn handle_events(
                     }
                 }
                 GameEvent::CargoQuestTriggerRequest { player } => {
-                    let state = select_mut_state(cont, &player);
+                    let state = select_mut_state(cont, player.id);
                     let planets = state.planets.clone();
                     if let Some(player) = world::find_my_player_mut(state, player.id) {
                         player.quest = world::generate_random_quest(&planets, None);
@@ -87,10 +87,10 @@ pub fn handle_events(
     res
 }
 
-fn select_mut_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
-                                player: &'c Player) -> &'a mut GameState {
-    if cont.personal_states.contains_key(&player.id) {
-        cont.personal_states.get_mut(&player.id).unwrap()
+pub fn select_mut_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
+                                player_id: Uuid) -> &'a mut GameState {
+    if cont.personal_states.contains_key(&player_id) {
+        cont.personal_states.get_mut(&player_id).unwrap()
     } else { &mut cont.state }
 }
 

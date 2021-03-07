@@ -127,4 +127,5 @@ pub enum ClientOpCode {
     Name = 3,
     DialogueOption = 4,
     SwitchRoom = 5,
+    SandboxCommand = 6,
 }

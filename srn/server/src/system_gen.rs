@@ -12,6 +12,17 @@ use std::collections::VecDeque;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
+use crate::vec2::Vec2f64;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum PlanetType {
+    Unknown,
+    Ice,
+    Jovian,
+    Jungle,
+    Barren,
+}
+
 
 struct PoolRandomPicker<T> {
     options: Vec<T>,
@@ -83,15 +94,10 @@ pub fn system_gen(seed: String) -> GameState {
 
     let star_zone = zones.pop_front().unwrap();
 
-    let star = Star {
-        color: "rgb(200, 150, 65)".to_string(),
-        id: star_id.clone(),
-        name: gen_star_name(&mut prng).to_string(),
+    let star = gen_star(star_id, &mut prng, star_zone.0, Vec2f64 {
         x: 0.0,
-        y: 0.0,
-        rotation: 0.0,
-        radius: star_zone.0,
-    };
+        y: 0.0
+    });
 
     let mut planet_name_pool = PoolRandomPicker {
         options: Vec::from(PLANET_NAMES),
@@ -214,6 +220,18 @@ pub fn system_gen(seed: String) -> GameState {
         mode: GameMode::Unknown
     };
     state
+}
+
+pub fn gen_star(star_id: Uuid, mut prng: &mut SmallRng, radius: f64, pos: Vec2f64) -> Star {
+    Star {
+        color: "rgb(200, 150, 65)".to_string(),
+        id: star_id.clone(),
+        name: gen_star_name(&mut prng).to_string(),
+        x: pos.x,
+        y: pos.y,
+        rotation: 0.0,
+        radius,
+    }
 }
 
 pub fn seed_personal_state(client_id: Uuid, mode: &GameMode) -> GameState {

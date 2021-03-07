@@ -45,6 +45,7 @@ use crate::vec2::Vec2f64;
 use crate::world::{AABB, find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, remove_player_ship, ShipAction, spawn_ship, update_quests, UpdateOptions};
 use std::net::{SocketAddr, TcpStream};
 use websocket::client::sync::Writer;
+use crate::sandbox::mutate_state;
 
 const MAJOR: u32 = pkg_version_major!();
 const MINOR: u32 = pkg_version_minor!();
@@ -94,6 +95,7 @@ mod chat;
 mod inventory;
 mod inventory_test;
 mod net;
+mod sandbox;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,
@@ -422,7 +424,11 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::SwitchRoom => {
             on_client_switch_room(client_id, second)
         }
+        ClientOpCode::SandboxCommand => {
+            on_client_sandbox_command(client_id, second, third);
+        }
         ClientOpCode::Unknown => {}
+
     };
 }
 
@@ -468,6 +474,32 @@ fn on_client_mutate_ship(client_id: Uuid, second: &&str, third: Option<&&str>) {
             res,
             third.map(|s| s.to_string()),
         ),
+        Err(err) => {
+            eprintln!(
+                "couldn't parse ship action {}, err {}",
+                second, err
+            );
+        }
+    }
+}
+
+fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str>) {
+    let parsed = serde_json::from_str::<sandbox::SandboxCommand>(second);
+    match parsed {
+        Ok(res) => {
+            let mut cont = STATE.write().unwrap();
+            let personal_state = events::select_mut_state(&mut cont, client_id);
+            if personal_state.mode != world::GameMode::Sandbox {
+                warn!(format!("Attempt to send a sandbox command to non-sandbox state by client {}", client_id));
+                return;
+            }
+            sandbox::mutate_state(
+                personal_state,
+                client_id,
+                res
+            );
+            send_tag_confirm(third.unwrap().to_string(), client_id);
+        },
         Err(err) => {
             eprintln!(
                 "couldn't parse ship action {}, err {}",
