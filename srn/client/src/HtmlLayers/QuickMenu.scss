@@ -1,0 +1,22 @@
+.quick-menu-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+
+  .quick-menu {
+    background: green;
+    width: 500px;
+    height: 500px;
+    pointer-events: auto;
+  }
+
+  .action {
+
+  }
+}

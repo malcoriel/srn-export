@@ -1,6 +1,7 @@
 import React from 'react';
 import './Button.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
+import classNames from 'classnames';
 
 const formatText = (text: string, hotkey?: string) => {
   if (hotkey) {
@@ -34,11 +35,17 @@ export const Button: React.FC<{
   toggled?: boolean | null;
   hotkey?: string;
   text?: string;
-}> = ({ hotkey, text, onClick, children, className, toggled }) => {
+  round?: boolean;
+}> = ({ hotkey, round, text, onClick, children, className, toggled }) => {
   useHotkeys(hotkey || 'nonexistent', () => (onClick || Function.prototype)());
   return (
     <span
-      className={`ui-button ${className} ${toggled ? 'toggled' : ''}`}
+      className={classNames({
+        'ui-button ': true,
+        [className as string]: !!className,
+        toggled,
+        round,
+      })}
       onClick={onClick}
     >
       {text ? formatText(text, hotkey) : children}

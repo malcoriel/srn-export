@@ -32,7 +32,7 @@ import { ChatWindow } from './HtmlLayers/ChatWindow';
 import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 import { DialogueWindow } from './HtmlLayers/DialogueWindow';
 import { GameMode } from './world';
-import { QuickMenu } from './HtmlLayers/QuickMenu';
+import { QuickMenu, testQuickMenuActions } from './HtmlLayers/QuickMenu';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -214,7 +214,7 @@ const Srn = () => {
             <InventoryWindow />
             {/*<TradeWindow />*/}
             <HoverHintWindow />
-            <QuickMenu />
+            {playing && <QuickMenu startActions={testQuickMenuActions} />}
           </>
         )}
         {!playing && <TestUI />}
