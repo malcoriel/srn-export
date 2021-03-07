@@ -217,7 +217,8 @@ pub fn system_gen(seed: String) -> GameState {
         start_time_ticks: now,
         asteroid_belts,
         minerals: vec![],
-        mode: GameMode::Unknown
+        mode: GameMode::Unknown,
+        disable_hp_effects: false
     };
     state
 }
@@ -316,6 +317,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         paused: false,
         leaderboard: None,
         ticks: 0,
+        disable_hp_effects: false
     }
 }
 
@@ -342,5 +344,6 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
         paused: false,
         leaderboard: None,
         ticks: 0,
+        disable_hp_effects: true
     }
 }

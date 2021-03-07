@@ -423,6 +423,7 @@ pub struct GameState {
     pub paused: bool,
     pub leaderboard: Option<Leaderboard>,
     pub ticks: u32,
+    pub disable_hp_effects: bool
 }
 
 // b84413729214a182 - no inner planet, lol
@@ -658,7 +659,7 @@ pub fn update_world(
             }
             sampler.end(update_minerals_id);
 
-            if !client && !update_options.disable_hp_effects {
+            if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
                 let hp_effects_id = sampler.start(15);
                 state.ships = update_ship_hp_effects(
                     &state.star,

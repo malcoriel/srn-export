@@ -109,9 +109,8 @@ statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 const MAX_ALLOWED_DIST_DESYNC = 5.0;
 
 const serializeSandboxCommand = (cmd: SandboxCommand) => {
-  if (cmd === SandboxCommandName.AddStar) {
-    return cmd;
-  }
+  // if (typeof cmd === 'string') return cmd;
+  return JSON.stringify(cmd);
 };
 
 export default class NetState extends EventEmitter {
@@ -554,9 +553,7 @@ export default class NetState extends EventEmitter {
           break;
         }
         case ClientOpCode.SandboxCommand: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
+          this.socket.send(`${cmd.code}_%_${cmd.value}_%_${cmd.tag}`);
           break;
         }
         default:

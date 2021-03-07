@@ -7,6 +7,7 @@ import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import NetState from '../NetState';
 import { size, unitsToPixels_min } from '../coord';
 import { shallowEqual } from '../utils/shallowCompare';
+import Vector, { VectorFzero } from '../utils/Vector';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -56,9 +57,16 @@ export const ThreeStar: React.FC<
         color.green() / 255,
         color.blue() / 255
       );
+      let pos: Vector;
+      if (props.position) {
+        // @ts-ignore
+        pos = new Vector(props.position[0], -props.position[1]);
+      } else {
+        pos = VectorFzero();
+      }
       patchedUniforms.shift.value = new Vector2(
-        (camera.position.x * unitsToPixels_min()) / zoomProp,
-        (camera.position.y * unitsToPixels_min()) / zoomProp
+        ((-pos.x + camera.position.x) * unitsToPixels_min()) / zoomProp,
+        ((pos.y + camera.position.y) * unitsToPixels_min()) / zoomProp
       );
       patchedUniforms.iResolution.value = new Vector3(
         size.width_px,
