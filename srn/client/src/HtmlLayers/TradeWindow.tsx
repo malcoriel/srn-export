@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
 import './InventoryWindowBase.scss';
@@ -47,21 +47,23 @@ export const TradeWindow = () => {
   const tradeWindowState = useStore((state) => state.tradeWindow);
   const setTradeWindowState = useStore((state) => state.setTradeWindow);
 
-  ns.on('gameEvent', (gameEvent: any) => {
-    if (gameEvent.TradeTriggerRequest) {
-      const event = gameEvent.TradeTriggerRequest;
-      const {
-        player,
-        planet_id,
-      }: { player: Player; planet_id: string } = event;
-      if (player.id === ns.state.my_id) {
-        setPlanetId(planet_id);
-        if (tradeWindowState !== WindowState.Shown) {
-          setTradeWindowState(WindowState.Shown);
+  useEffect(() => {
+    ns.on('gameEvent', (gameEvent: any) => {
+      if (gameEvent.TradeTriggerRequest) {
+        const event = gameEvent.TradeTriggerRequest;
+        const {
+          player,
+          planet_id,
+        }: { player: Player; planet_id: string } = event;
+        if (player.id === ns.state.my_id) {
+          setPlanetId(planet_id);
+          if (tradeWindowState !== WindowState.Shown) {
+            setTradeWindowState(WindowState.Shown);
+          }
         }
       }
-    }
-  });
+    });
+  }, [setTradeWindowState, tradeWindowState, ns]);
 
   const onMove = (move: MoveEvent) => {
     if (!planetId) return;

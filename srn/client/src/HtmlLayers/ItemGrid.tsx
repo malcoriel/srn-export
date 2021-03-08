@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { DraggableEventHandler } from 'react-draggable';
 import _ from 'lodash';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
@@ -159,6 +159,9 @@ export const ItemGrid: React.FC<{
   const [positions, setPositions] = useState<Record<string, IVector>>(
     positionItems(items, columnCount, tradeMode)
   );
+  useEffect(() => {
+    setPositions(positionItems(items, columnCount, tradeMode));
+  }, [columnCount, tradeMode, items]);
   const byId = _.keyBy(items, 'id');
   const [startMove, setStartMove] = useState({ x: 0, y: 0 });
   const rowCount = Math.max(
@@ -196,19 +199,22 @@ export const ItemGrid: React.FC<{
   return (
     <WithScrollbars noAutoHide>
       <div className="content" style={{ height: contentHeight }}>
-        {items.map((item) => (
-          <ItemElem
-            maxY={contentHeight - ITEM_CELL_SIZE + ITEM_CELL_MARGIN}
-            onDragStart={(e: any, d: any) => {
-              setStartMove(positionToGridPosition(d));
-            }}
-            maxX={contentWidth - ITEM_CELL_SIZE - 0.5 - ITEM_CELL_MARGIN}
-            key={item.id}
-            item={item}
-            position={gridPositionToPosition(positions[item.id])}
-            onDragStop={onDragStop(item.id)}
-          />
-        ))}
+        {items.map((item) => {
+          const pos = gridPositionToPosition(positions[item.id]);
+          return (
+            <ItemElem
+              maxY={contentHeight - ITEM_CELL_SIZE + ITEM_CELL_MARGIN}
+              onDragStart={(e: any, d: any) => {
+                setStartMove(positionToGridPosition(d));
+              }}
+              maxX={contentWidth - ITEM_CELL_SIZE - 0.5 - ITEM_CELL_MARGIN}
+              key={item.id}
+              item={item}
+              position={pos}
+              onDragStop={onDragStop(item.id)}
+            />
+          );
+        })}
       </div>
     </WithScrollbars>
   );

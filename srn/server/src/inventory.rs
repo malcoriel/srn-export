@@ -154,6 +154,12 @@ pub fn add_item(inventory: &mut Vec<InventoryItem>, new_item: InventoryItem) {
     shake_items(inventory);
 }
 
+pub fn add_items(inventory: &mut Vec<InventoryItem>, new_items: Vec<InventoryItem>) {
+    for item in new_items.into_iter() {
+        add_item(inventory, item);
+    }
+}
+
 
 pub fn remove_quest_item(inventory: &mut Vec<InventoryItem>, quest_id: Uuid) -> Option<InventoryItem> {
     let pos = find_quest_item_pos(inventory, quest_id);

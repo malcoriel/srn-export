@@ -1,4 +1,4 @@
-use crate::inventory::{InventoryItemType, InventoryItem};
+use crate::inventory::{InventoryItemType, InventoryItem, add_items};
 use crate::world::{GameState, find_player_and_ship_mut};
 use crate::inventory::{consume_items_of_type, add_item};
 use uuid::Uuid;
@@ -48,16 +48,26 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
         let price = planet_prices.get(&sell.0);
         if let Some(price) = price {
             let target_items_ship = consume_items_of_type(&mut ship.inventory, &sell.0);
-            let mut target_stack = target_items_ship.into_iter().nth(0).unwrap();
-            if target_stack.quantity >= sell.1 && sell.1 > 0 {
-                let mut cloned_stack = target_stack.clone();
-                target_stack.quantity -= sell.1;
-                cloned_stack.quantity = sell.1;
-                if target_stack.quantity > 0 {
+            if target_items_ship.len() == 1 {
+                let total_price = price.buy * sell.1;
+                log!(format!("executing sell of {} {:?} for {}", sell.1, sell.0, total_price));
+                let mut target_stack = target_items_ship.into_iter().nth(0).unwrap();
+                if target_stack.quantity >= sell.1 && sell.1 > 0 {
+                    let mut cloned_stack = target_stack.clone();
+                    target_stack.quantity -= sell.1;
+                    cloned_stack.quantity = sell.1;
+                    if target_stack.quantity > 0 {
+                        add_item(&mut ship.inventory, target_stack);
+                    }
+                    add_item(&mut planet_inventory, cloned_stack);
+                    player.money += total_price
+                } else {
+                    log!(format!("not enough quantity or negative sell, {} requested, {} available", sell.1, target_stack.quantity));
                     add_item(&mut ship.inventory, target_stack);
                 }
-                add_item(&mut planet_inventory, cloned_stack);
-                player.money += price.buy * sell.1
+            } else {
+                warn!(format!("invalid sell of {:?} quantity {} on planet {} by {}, no stacks found in player inventory", sell.0, sell.1, act.planet_id, player.id));
+                add_items(&mut ship.inventory, target_items_ship);
             }
         }
     }
@@ -65,17 +75,31 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
         let price = planet_prices.get(&buy.0);
         if let Some(price) = price {
             let target_items_planet = consume_items_of_type(&mut planet_inventory, &buy.0);
-            let mut target_stack = target_items_planet.into_iter().nth(0).unwrap();
-            let total_price = price.sell * buy.1;
-            if target_stack.quantity >= buy.1 && buy.1 > 0 && player.money >= total_price {
-                let mut cloned_stack = target_stack.clone();
-                target_stack.quantity -= buy.1;
-                cloned_stack.quantity = buy.1;
-                if target_stack.quantity > 0 {
+            if target_items_planet.len() == 1 {
+                let mut target_stack = target_items_planet.into_iter().nth(0).unwrap();
+                let total_price = price.sell * buy.1;
+                log!(format!("executing buy of {} {:?} for {}", buy.1, buy.0, total_price));
+                if target_stack.quantity >= buy.1 && buy.1 > 0 {
+                    if player.money >= total_price {
+                        let mut cloned_stack = target_stack.clone();
+                        target_stack.quantity -= buy.1;
+                        cloned_stack.quantity = buy.1;
+                        if target_stack.quantity > 0 {
+                            add_item(&mut planet_inventory, target_stack);
+                        }
+                        add_item(&mut ship.inventory, cloned_stack);
+                        player.money -= total_price
+                    } else {
+                        log!(format!("not enough money on player, {} needed, {} available", total_price, player.money));
+                        add_item(&mut planet_inventory, target_stack);
+                    }
+                } else {
+                    log!(format!("not enough quantity or negative buy, {} requested, {} available", buy.1, target_stack.quantity));
                     add_item(&mut planet_inventory, target_stack);
                 }
-                add_item(&mut ship.inventory, cloned_stack);
-                player.money -= total_price
+            } else {
+                add_items(&mut planet_inventory, target_items_planet);
+                warn!(format!("invalid buy of {:?} quantity {} on planet {} by {}, no stacks found in planet inventory", buy.0, buy.1, act.planet_id, player.id))
             }
         }
     }
@@ -117,7 +141,7 @@ fn make_default_prices() -> HashMap<InventoryItemType, Price> {
     res
 }
 
-pub fn get_default_value(it: &InventoryItemType) -> i32  {
+pub fn get_default_value(it: &InventoryItemType) -> i32 {
     match it {
         InventoryItemType::Unknown => {
             0
