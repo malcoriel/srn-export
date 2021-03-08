@@ -38,24 +38,72 @@ export const positionToGridPosition = (p: IVector): IVector => {
     .scale(1 / ITEM_CELL_SIZE);
 };
 
-export const OnDragEmpty: DraggableEventHandler = (e: any, d: any) => {};
+export const OnDragEmpty: DraggableEventHandler = (_e: any, _d: any) => {};
 
-export const positionItems = (
+type ItemGroup = {
+  left: number;
+  width: number;
+};
+
+const splitGroups = (
+  tradeMode: [number, number, number]
+): [ItemGroup, ItemGroup, ItemGroup] => {
+  return [
+    {
+      left: 0,
+      width: tradeMode[0],
+    },
+    {
+      left: tradeMode[0],
+      width: tradeMode[1],
+    },
+    {
+      left: tradeMode[0] + tradeMode[1],
+      width: tradeMode[2],
+    },
+  ];
+};
+
+function positionItemsInGroup(
   items: InventoryItem[],
-  width: number
-): Record<string, IVector> => {
+  shift: number,
+  width1: number
+) {
   let row = 0;
   let column = 0;
   const res: Record<string, IVector> = {};
   for (const item of items) {
-    res[item.id] = new Vector(column, row);
+    res[item.id] = new Vector(shift + column, row);
     column++;
-    if (column >= width) {
+    if (column >= width1) {
       column = 0;
       row++;
     }
   }
   return res;
+}
+
+export const positionItems = (
+  items: InventoryItem[],
+  width: number,
+  tradeMode?: [number, number, number]
+): Record<string, IVector> => {
+  if (tradeMode) {
+    const groups = splitGroups(tradeMode);
+    return {
+      ...positionItemsInGroup(
+        items.filter((i) => i.player_owned),
+        groups[0].left,
+        groups[0].width
+      ),
+      ...positionItemsInGroup(
+        items.filter((i) => !i.player_owned),
+        groups[2].left,
+        groups[2].width
+      ),
+    };
+  }
+  return positionItemsInGroup(items, 0, width);
 };
 
 export type OnDragItem = (i: InventoryItem) => void;
@@ -65,9 +113,10 @@ export const ItemGrid: React.FC<{
   items: InventoryItem[];
   minRows: number;
   extraRows: number;
-}> = ({ columnCount, items, minRows, extraRows, onDragStart }) => {
+  tradeMode?: [number, number, number];
+}> = ({ columnCount, items, tradeMode, minRows, extraRows, onDragStart }) => {
   const [positions, setPositions] = useState<Record<string, IVector>>(
-    positionItems(items, columnCount)
+    positionItems(items, columnCount, tradeMode)
   );
   const rowCount = Math.max(
     (_.max(Object.values(positions).map((p) => p.y)) || 0) + 1 + extraRows,

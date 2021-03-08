@@ -1,10 +1,12 @@
 use uuid::Uuid;
 use crate::random_stuff::{PLANET_NAMES};
-use crate::world::{GameState, find_my_ship, find_my_ship_mut};
+use crate::world::{GameState, find_my_ship, find_my_ship_mut, Ship};
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use chrono::Utc;
+use crate::inventory::{InventoryItem, add_item, InventoryItemType};
 use crate::vec2::{Vec2f64};
+use crate::market::{get_default_value};
 use crate::system_gen::{gen_star, PlanetType, gen_planet_typed, PoolRandomPicker};
 use crate::new_id;
 
@@ -18,6 +20,7 @@ pub enum SandboxTeleportTarget {
 pub enum SandboxCommand {
     AddStar,
     ToggleGodMode,
+    GetSomeWares,
     AddPlanet {
         p_type: PlanetType,
         orbit_speed: f64,
@@ -77,7 +80,30 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 }
             }
         }
+        SandboxCommand::GetSomeWares => {
+            if let Some(ship) = find_my_ship_mut(state, player_id) {
+                add_free_stuff(ship, InventoryItemType::CommonMineral, 100);
+                add_free_stuff(ship, InventoryItemType::UncommonMineral, 50);
+                add_free_stuff(ship, InventoryItemType::RareMineral, 5);
+                add_free_stuff(ship, InventoryItemType::Food, 500);
+                add_free_stuff(ship, InventoryItemType::Medicament, 100);
+                add_free_stuff(ship, InventoryItemType::HandWeapon, 50);
+            }
+        }
     }
+}
+
+fn add_free_stuff(ship: &mut Ship, iit: InventoryItemType, quantity: i32) {
+    add_item(&mut ship.inventory, InventoryItem {
+        id: new_id(),
+        index: 0,
+        quantity,
+        value: get_default_value(&iit),
+        stackable: false,
+        player_owned: false,
+        item_type: iit,
+        quest_id: None
+    })
 }
 
 fn get_anchor_tier(state: &mut GameState, anchor_id: Uuid) -> u32 {

@@ -5,6 +5,7 @@ use uuid::Uuid;
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Market {
@@ -101,8 +102,47 @@ fn make_default_prices() -> HashMap<InventoryItemType, Price> {
             InventoryItemType::QuestCargo => {
                 Price { sell: 1000, buy: 0 }
             }
+            InventoryItemType::Food => {
+                Price { sell: 50, buy: 40 }
+            }
+            InventoryItemType::Medicament => {
+                Price { sell: 160, buy: 140 }
+            }
+            InventoryItemType::HandWeapon => {
+                Price { sell: 250, buy: 200 }
+            }
         };
         res.insert(it, price);
     }
     res
 }
+
+pub fn get_default_value(it: &InventoryItemType) -> i32  {
+    match it {
+        InventoryItemType::Unknown => {
+            0
+        }
+        InventoryItemType::CommonMineral => {
+            100
+        }
+        InventoryItemType::UncommonMineral => {
+            200
+        }
+        InventoryItemType::RareMineral => {
+            500
+        }
+        InventoryItemType::QuestCargo => {
+            0
+        }
+        InventoryItemType::Food => {
+            45
+        }
+        InventoryItemType::Medicament => {
+            150
+        }
+        InventoryItemType::HandWeapon => {
+            225
+        }
+    }
+}
+

@@ -14,6 +14,9 @@ pub enum InventoryItemType {
     UncommonMineral,
     RareMineral,
     QuestCargo,
+    Food,
+    Medicament,
+    HandWeapon,
 }
 
 pub static MINERAL_TYPES: [InventoryItemType; 3] = [
@@ -25,7 +28,10 @@ pub fn inventory_item_type_to_stackable(iit: &InventoryItemType) -> bool {
         InventoryItemType::CommonMineral => true,
         InventoryItemType::UncommonMineral => true,
         InventoryItemType::RareMineral => true,
-        InventoryItemType::QuestCargo => false
+        InventoryItemType::QuestCargo => false,
+        InventoryItemType::Food => true,
+        InventoryItemType::Medicament => true,
+        InventoryItemType::HandWeapon => true
     }
 }
 

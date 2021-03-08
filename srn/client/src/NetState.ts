@@ -6,10 +6,10 @@ import {
   GameMode,
   GameState,
   SandboxCommand,
-  SandboxCommandName,
   Ship,
   ShipAction,
   ShipActionType,
+  TradeAction,
   updateWorld,
 } from './world';
 import * as uuid from 'uuid';
@@ -32,6 +32,7 @@ enum ClientOpCode {
   DialogueOption,
   SwitchRoom,
   SandboxCommand,
+  TradeAction,
 }
 
 interface Cmd {
@@ -556,6 +557,12 @@ export default class NetState extends EventEmitter {
           this.socket.send(`${cmd.code}_%_${cmd.value}_%_${cmd.tag}`);
           break;
         }
+        case ClientOpCode.TradeAction: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
         default:
           console.warn(`Unknown opcode ${cmd.code}`);
       }
@@ -697,6 +704,14 @@ export default class NetState extends EventEmitter {
       tag: uuid.v4(),
     });
   }
+
+  public sendTradeAction(cmd: TradeAction) {
+    this.send({
+      code: ClientOpCode.TradeAction,
+      value: cmd,
+      tag: uuid.v4(),
+    });
+  }
 }
 
 export type ShouldUpdateStateChecker = (
@@ -736,5 +751,5 @@ export const useNSForceChange = (
     return () => {
       ns.off(event, listener);
     };
-  }, [ns.id]);
+  }, [ns.id, fast, ns, shouldUpdate, throttle]);
 };

@@ -16,8 +16,10 @@ import {
   BiPlanet,
   CgCodeClimate,
   FaCreativeCommonsZero,
+  GiCardJoker,
   GiStarProminences,
   GiStarSattelites,
+  GiWoodenCrate,
   IoIosSpeedometer,
   SiGodotengine,
 } from 'react-icons/all';
@@ -133,9 +135,20 @@ export const SandboxQuickMenu = () => {
         }),
     },
     {
-      text: 'Toggle god mode',
-      icon: <SiGodotengine />,
-      handler: () => ns.sendSandboxCmd(SandboxCommandName.ToggleGodMode),
+      text: 'Cheats',
+      icon: <GiCardJoker />,
+      children: [
+        {
+          text: 'Toggle god mode',
+          icon: <SiGodotengine />,
+          handler: () => ns.sendSandboxCmd(SandboxCommandName.ToggleGodMode),
+        },
+        {
+          text: 'Get some wares',
+          icon: <GiWoodenCrate />,
+          handler: () => ns.sendSandboxCmd(SandboxCommandName.GetSomeWares),
+        },
+      ],
     },
   ];
   if (!show) return null;

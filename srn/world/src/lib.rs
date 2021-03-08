@@ -84,6 +84,9 @@ mod perf;
 #[path = "../../server/src/inventory.rs"]
 mod inventory;
 
+#[path = "../../server/src/market.rs"]
+mod market;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 

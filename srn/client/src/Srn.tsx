@@ -33,6 +33,7 @@ import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 import { DialogueWindow } from './HtmlLayers/DialogueWindow';
 import { GameMode } from './world';
 import { SandboxQuickMenu } from './HtmlLayers/SandboxQuickMenu';
+import { TradeWindow } from './HtmlLayers/TradeWindow';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -212,7 +213,7 @@ const Srn = () => {
             <OverheadPanel />
             <HelpWindow />
             <InventoryWindow />
-            {/*<TradeWindow />*/}
+            <TradeWindow />
             <HoverHintWindow />
             {playing && <SandboxQuickMenu />}
           </>

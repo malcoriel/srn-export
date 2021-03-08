@@ -104,6 +104,7 @@ export enum SandboxCommandName {
   AddStar = 'AddStar',
   AddPlanet = 'AddPlanet',
   ToggleGodMode = 'ToggleGodMode',
+  GetSomeWares = 'GetSomeWares',
   Teleport = 'Teleport',
 }
 
@@ -120,9 +121,18 @@ export enum SandboxTeleportTarget {
   Zero = 'Zero',
 }
 
+export type TradeItem = [InventoryItemType, number];
+
+export type TradeAction = {
+  planet_id: string;
+  sells_to_planet: TradeItem[];
+  buys_from_planet: TradeItem[];
+};
+
 export type SandboxCommand =
   | SandboxCommandName.AddStar
   | SandboxCommandName.ToggleGodMode
+  | SandboxCommandName.GetSomeWares
   | {
       AddPlanet: {
         p_type: PlanetType;
@@ -212,6 +222,16 @@ export const isStateTutorial = (st: GameState) => {
   return st.mode === GameMode.Tutorial;
 };
 
+export type Price = {
+  buy: number;
+  sell: number;
+};
+
+export type Market = {
+  wares: Record<string, InventoryItem[]>;
+  prices: Record<string, Record<InventoryItemType, Price>>;
+};
+
 export type GameState = {
   seed: string;
   id: string;
@@ -231,6 +251,7 @@ export type GameState = {
   star?: Star;
   paused: boolean;
   milliseconds_remaining: number;
+  market: Market;
 };
 
 export enum ShipActionType {
