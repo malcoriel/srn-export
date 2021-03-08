@@ -55,8 +55,7 @@ pub fn handle_events(
                 }
                 GameEvent::ShipDocked { player, .. } => {
                     let state = select_mut_state(cont, player.id);
-                    if state.id != player.id {
-                        // do not trigger landing dialogue on landing
+                    if state.mode != GameMode::Tutorial {
                         fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: "basic_planet".to_owned(), player: player.clone() });
                     }
                 }

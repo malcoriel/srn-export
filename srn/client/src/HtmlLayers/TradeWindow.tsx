@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Window } from './ui/Window';
-import { cellsToPixels, ItemGrid } from './ItemGrid';
+import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
 import './InventoryWindowBase.scss';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { GameState, Market, Player } from '../world';
+import { useStore, WindowState } from '../store';
 
 const SCROLL_OFFSET = 10;
-const MIN_ROWS = 11;
+const MIN_ROWS = 5;
 const COLUMNS = 11;
 const WINDOW_MARGIN = 10;
 
@@ -16,6 +17,9 @@ const WINDOW_WIDTH = cellsToPixels(COLUMNS) + WINDOW_MARGIN * 2;
 const EXTRA_ROWS = 3;
 
 const selectWares = (market: Market, planetId: string) => {
+  if (!market) {
+    return [];
+  }
   return (market.wares[planetId] || []).map((it) => ({
     ...it,
     player_owned: false,
@@ -39,6 +43,10 @@ export const TradeWindow = () => {
   useNSForceChange('TradeWindow', false, (oldState, newState) => {
     return JSON.stringify(oldState.market) !== JSON.stringify(newState.market);
   });
+
+  const tradeWindowState = useStore((state) => state.tradeWindow);
+  const setTradeWindowState = useStore((state) => state.setTradeWindow);
+
   ns.on('gameEvent', (gameEvent: any) => {
     if (gameEvent.TradeTriggerRequest) {
       const event = gameEvent.TradeTriggerRequest;
@@ -48,9 +56,29 @@ export const TradeWindow = () => {
       }: { player: Player; planet_id: string } = event;
       if (player.id === ns.state.my_id) {
         setPlanetId(planet_id);
+        if (tradeWindowState !== WindowState.Shown) {
+          setTradeWindowState(WindowState.Shown);
+        }
       }
     }
   });
+
+  const onMove = (move: MoveEvent) => {
+    if (!planetId) return;
+    if (move.kind === ItemMoveKind.Sell) {
+      ns.sendTradeAction({
+        planet_id: planetId,
+        sells_to_planet: [[move.item.item_type, move.item.quantity]],
+        buys_from_planet: [],
+      });
+    } else if (move.kind === ItemMoveKind.Buy) {
+      ns.sendTradeAction({
+        planet_id: planetId,
+        sells_to_planet: [],
+        buys_from_planet: [[move.item.item_type, move.item.quantity]],
+      });
+    }
+  };
 
   if (!planetId) return null;
 
@@ -81,6 +109,7 @@ export const TradeWindow = () => {
           extraRows={EXTRA_ROWS}
           minRows={MIN_ROWS}
           tradeMode={[5, 1, 5]}
+          onMove={onMove}
         />
       </div>
     </Window>

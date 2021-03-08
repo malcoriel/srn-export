@@ -182,6 +182,7 @@ export default class NetState extends EventEmitter {
 
   constructor() {
     super();
+    this.setMaxListeners(100);
     this.id = uuid.v4();
     const newVar = DEBUG_CREATION ? `at ${new Error().stack}` : '';
     console.log(`created NS ${this.id} ${newVar}`);

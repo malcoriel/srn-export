@@ -2,7 +2,7 @@ import React from 'react';
 import Draggable from 'react-draggable';
 import { IVector } from '../utils/Vector';
 import { InventoryItem, InventoryItemType } from '../world';
-import { ITEM_CELL_MARGIN, OnDragEmpty, OnDragItem } from './ItemGrid';
+import { ITEM_CELL_MARGIN, OnDragEmpty } from './ItemGrid';
 import { common, gray, rare, uncommon } from '../utils/palette';
 import MineralSvg from './ui/MineralSvg';
 import BoxPng from '../../public/resources/box.png';
@@ -44,8 +44,8 @@ export const ItemElem: React.FC<{
   maxX: number;
   item: InventoryItem;
   position?: IVector;
-  onDragStart?: OnDragItem;
   onDragStop: (e: any, d: any) => void;
+  onDragStart: (e: any, d: any) => void;
 }> = ({
   item,
   maxY,
@@ -62,14 +62,9 @@ export const ItemElem: React.FC<{
     bottom: maxY,
   };
 
-  const onStart = onDragStart
-    ? () => {
-        onDragStart(item);
-      }
-    : OnDragEmpty;
   return (
     <Draggable
-      onStart={onStart}
+      onStart={onDragStart || OnDragEmpty}
       position={position}
       onStop={onDragStop}
       bounds={bounds}

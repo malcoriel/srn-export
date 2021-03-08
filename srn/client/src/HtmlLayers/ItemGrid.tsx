@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { DraggableEventHandler } from 'react-draggable';
 import _ from 'lodash';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
@@ -35,7 +35,8 @@ export const gridPositionToPosition = (p?: IVector): IVector => {
 export const positionToGridPosition = (p: IVector): IVector => {
   return Vector.fromIVector(snap(p))
     .subtract(V_MARGIN)
-    .scale(1 / ITEM_CELL_SIZE);
+    .scale(1 / ITEM_CELL_SIZE)
+    .map((c) => Math.round(c));
 };
 
 export const OnDragEmpty: DraggableEventHandler = (_e: any, _d: any) => {};
@@ -64,11 +65,15 @@ const splitGroups = (
   ];
 };
 
-function positionItemsInGroup(
+const isInGroup = (v: IVector, group: ItemGroup) => {
+  return v.x >= group.left && v.x < group.left + group.width;
+};
+
+const positionItemsInGroup = (
   items: InventoryItem[],
   shift: number,
   width1: number
-) {
+) => {
   let row = 0;
   let column = 0;
   const res: Record<string, IVector> = {};
@@ -81,7 +86,7 @@ function positionItemsInGroup(
     }
   }
   return res;
-}
+};
 
 export const positionItems = (
   items: InventoryItem[],
@@ -107,27 +112,84 @@ export const positionItems = (
 };
 
 export type OnDragItem = (i: InventoryItem) => void;
+
+export enum ItemMoveKind {
+  Move,
+  Invalid,
+  Sell,
+  Buy,
+  Drop,
+}
+
+export type MoveEvent = {
+  from: IVector;
+  to: IVector;
+  kind: ItemMoveKind;
+  item: InventoryItem;
+};
+export type OnMove = (ev: MoveEvent) => void;
+
+const getMoveKind = (
+  startMove: IVector,
+  endMove: IVector,
+  tradeMode: [number, number, number] | undefined
+): ItemMoveKind => {
+  if (!tradeMode) return ItemMoveKind.Move;
+  const groups = splitGroups(tradeMode);
+  if (isInGroup(startMove, groups[0]) && isInGroup(endMove, groups[2])) {
+    return ItemMoveKind.Sell;
+  }
+  if (isInGroup(startMove, groups[2]) && isInGroup(endMove, groups[0])) {
+    return ItemMoveKind.Buy;
+  }
+  if (isInGroup(endMove, groups[1])) {
+    return ItemMoveKind.Invalid;
+  }
+  return ItemMoveKind.Move;
+};
+
 export const ItemGrid: React.FC<{
   columnCount: number;
-  onDragStart?: OnDragItem;
+  onMove?: OnMove;
   items: InventoryItem[];
   minRows: number;
   extraRows: number;
   tradeMode?: [number, number, number];
-}> = ({ columnCount, items, tradeMode, minRows, extraRows, onDragStart }) => {
+}> = ({ onMove, columnCount, items, tradeMode, minRows, extraRows }) => {
   const [positions, setPositions] = useState<Record<string, IVector>>(
     positionItems(items, columnCount, tradeMode)
   );
+  const byId = _.keyBy(items, 'id');
+  const [startMove, setStartMove] = useState({ x: 0, y: 0 });
   const rowCount = Math.max(
     (_.max(Object.values(positions).map((p) => p.y)) || 0) + 1 + extraRows,
     minRows
   );
-  const onDragStop = (id: string) => (e: any, d: IVector) => {
-    setPositions((oldPos) => ({
-      ...oldPos,
-      [id]: positionToGridPosition(d),
-    }));
-  };
+  const onDragStop = useCallback(
+    (id: string) => (e: any, d: IVector) => {
+      setPositions((oldPos) => {
+        const newPos = positionToGridPosition(d);
+        const moveKind = getMoveKind(startMove, newPos, tradeMode);
+        if (moveKind === ItemMoveKind.Invalid) {
+          return oldPos;
+        }
+
+        if (onMove) {
+          onMove({
+            from: startMove,
+            to: newPos,
+            kind: moveKind,
+            item: byId[id],
+          });
+        }
+        return {
+          ...oldPos,
+          [id]: newPos,
+        };
+      });
+    },
+    [tradeMode, onMove, startMove, byId]
+  );
 
   const contentHeight = cellsToPixels(rowCount);
   const contentWidth = cellsToPixels(columnCount);
@@ -137,7 +199,9 @@ export const ItemGrid: React.FC<{
         {items.map((item) => (
           <ItemElem
             maxY={contentHeight - ITEM_CELL_SIZE + ITEM_CELL_MARGIN}
-            onDragStart={onDragStart}
+            onDragStart={(e: any, d: any) => {
+              setStartMove(positionToGridPosition(d));
+            }}
             maxX={contentWidth - ITEM_CELL_SIZE - 0.5 - ITEM_CELL_MARGIN}
             key={item.id}
             item={item}

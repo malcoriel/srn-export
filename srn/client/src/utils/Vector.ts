@@ -171,6 +171,10 @@ export default class Vector implements IVector {
   normalize() {
     return this.scale(1 / this.length());
   }
+
+  map(fn: (c: number) => number) {
+    return new Vector(fn(this.x), fn(this.y));
+  }
 }
 
 const memory = new Map();
