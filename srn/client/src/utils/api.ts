@@ -18,6 +18,12 @@ export const api = {
       : 'ws://localhost:2794';
   },
 
+  getHttpApiUrl() {
+    return process.env.NODE_ENV === 'production'
+      ? 'https://srn.malcoriel.de/api'
+      : 'http://localhost:8000/api';
+  },
+
   getChatWebSocketUrl() {
     return process.env.NODE_ENV === 'production'
       ? 'wss://srn.malcoriel.de/ws-chat'

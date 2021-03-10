@@ -94,7 +94,8 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
 }
 
 fn add_free_stuff(ship: &mut Ship, iit: InventoryItemType, quantity: i32) {
-    add_item(&mut ship.inventory, InventoryItem {
+    add_item(&mut
+                 ship.inventory, InventoryItem {
         id: new_id(),
         index: 0,
         quantity,

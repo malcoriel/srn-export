@@ -14,17 +14,26 @@ import {
 } from '../world';
 import {
   BiPlanet,
+  BiReset,
   CgCodeClimate,
   FaCreativeCommonsZero,
+  FaShapes,
+  GiAppleSeeds,
   GiCardJoker,
   GiStarProminences,
   GiStarSattelites,
   GiWoodenCrate,
+  ImFloppyDisk,
   IoIosSpeedometer,
+  RiDownloadCloudLine,
+  RiUploadCloudLine,
   SiGodotengine,
 } from 'react-icons/all';
 import Vector from '../utils/Vector';
 import _ from 'lodash';
+import { FaDiceD20 } from 'react-icons/fa';
+import useSWR from 'swr';
+import { api } from '../utils/api';
 
 const pickClosestObject = (
   state: GameState,
@@ -68,6 +77,7 @@ export const SandboxQuickMenu = () => {
     return oldState.mode !== newState.mode;
   });
 
+  const savedStates = useSWR(`${api.getHttpApiUrl()}/`);
   const [planetType, setPlanetType] = useState(PlanetType.Barren);
   const [planetSpeed, setPlanetSpeed] = useState(0.05);
   const [anchor, setAnchor] = useState('initial');
@@ -75,53 +85,89 @@ export const SandboxQuickMenu = () => {
 
   const actions = [
     {
-      text: 'Add a star',
-      icon: <GiStarProminences />,
-      handler: () => ns.sendSandboxCmd(SandboxCommandName.AddStar),
+      text: 'Load/save states',
+      icon: <ImFloppyDisk />,
+      children: [
+        {
+          text: 'Load to current state',
+          icon: <RiDownloadCloudLine />,
+        },
+        {
+          text: 'Save to server',
+          icon: <RiUploadCloudLine />,
+        },
+        {
+          text: 'Generate random',
+          icon: <FaDiceD20 />,
+        },
+        {
+          text: 'Generate from seed',
+          icon: <GiAppleSeeds />,
+        },
+        {
+          text: 'Save current state as json',
+          icon: <ImFloppyDisk />,
+        },
+        {
+          text: 'Reset',
+          icon: <BiReset />,
+        },
+      ],
     },
     {
-      text: 'Set anchor',
+      text: 'Add objects',
+      icon: <FaShapes />,
+      children: [
+        {
+          text: 'Add a star',
+          icon: <GiStarProminences />,
+          handler: () => ns.sendSandboxCmd(SandboxCommandName.AddStar),
+        },
+        {
+          text: `Add a ${planetType} planet sp. ${planetSpeed}`,
+          icon: <BiPlanet />,
+          handler: () => {
+            if (anchor) {
+              ns.sendSandboxCmd({
+                [SandboxCommandName.AddPlanet]: {
+                  p_type: planetType,
+                  radius: 5.0,
+                  anchor_id: anchor,
+                  orbit_speed: planetSpeed,
+                },
+              });
+            }
+          },
+        },
+        {
+          text: 'Toggle planet type',
+          noHide: true,
+          icon: <CgCodeClimate />,
+          handler: () => {
+            setPlanetType((pt) => {
+              return cyclePlanetType(pt);
+            });
+          },
+        },
+        {
+          text: 'Toggle planet speed',
+          noHide: true,
+          icon: <IoIosSpeedometer />,
+          handler: () => {
+            setPlanetSpeed((pt) => {
+              return cyclePlanetSpeed(pt);
+            });
+          },
+        },
+      ],
+    },
+    {
+      text: 'Select anchor for actions',
       noHide: true,
       icon: <GiStarSattelites />,
       handler: () => {
         const closest = pickClosestObject(ns.state, ns.visualState);
         setAnchor(() => closest);
-      },
-    },
-    {
-      text: `Add a ${planetType} planet sp. ${planetSpeed}`,
-      icon: <BiPlanet />,
-      handler: () => {
-        if (anchor) {
-          ns.sendSandboxCmd({
-            [SandboxCommandName.AddPlanet]: {
-              p_type: planetType,
-              radius: 5.0,
-              anchor_id: anchor,
-              orbit_speed: planetSpeed,
-            },
-          });
-        }
-      },
-    },
-    {
-      text: 'Toggle planet type',
-      noHide: true,
-      icon: <CgCodeClimate />,
-      handler: () => {
-        setPlanetType((pt) => {
-          return cyclePlanetType(pt);
-        });
-      },
-    },
-    {
-      text: 'Toggle planet speed',
-      noHide: true,
-      icon: <IoIosSpeedometer />,
-      handler: () => {
-        setPlanetSpeed((pt) => {
-          return cyclePlanetSpeed(pt);
-        });
       },
     },
     {

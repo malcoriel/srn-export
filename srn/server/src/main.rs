@@ -6,7 +6,8 @@ extern crate serde_derive;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use std::sync::{Arc, Mutex, RwLock, RwLockWriteGuard, MutexGuard};
+use std::net::{SocketAddr, TcpStream};
+use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
 use std::thread;
 use std::time::Duration;
 
@@ -15,7 +16,6 @@ use crossbeam::channel::{bounded, Receiver, Sender};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use num_traits::FromPrimitive;
-use pkg_version::*;
 use regex::Regex;
 use rocket::http::Method;
 use rocket_contrib::json::Json;
@@ -26,12 +26,13 @@ pub use serde_derive::*;
 use serde_derive::{Deserialize, Serialize};
 use uuid::*;
 use websocket::{Message, OwnedMessage};
+use websocket::client::sync::Writer;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 
 use dialogue::{DialogueStates, DialogueTable};
 use net::{ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload, TagConfirm, Wrapper};
-use world::{GameState, Player, Ship, GameMode};
+use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
 use crate::bots::{bot_init, do_bot_actions};
@@ -40,16 +41,11 @@ use crate::dialogue::{
     Dialogue, DialogueId, DialogueScript, DialogueUpdate, execute_dialog_option,
 };
 use crate::perf::Sampler;
+use crate::sandbox::mutate_state;
 use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
 use crate::world::{AABB, find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, remove_player_ship, ShipAction, spawn_ship, update_quests, UpdateOptions};
-use std::net::{SocketAddr, TcpStream};
-use websocket::client::sync::Writer;
-use crate::sandbox::mutate_state;
 
-const MAJOR: u32 = pkg_version_major!();
-const MINOR: u32 = pkg_version_minor!();
-const PATCH: u32 = pkg_version_patch!();
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -97,6 +93,7 @@ mod inventory_test;
 mod net;
 mod sandbox;
 mod market;
+mod api;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,
@@ -149,12 +146,6 @@ lazy_static! {
         let states = HashMap::new();
         RwLock::new(StateContainer { personal_states: states, state })
     };
-}
-
-#[get("/version")]
-fn get_version() -> Json<String> {
-    let version = format!("{}.{}.{}", MAJOR, MINOR, PATCH);
-    Json(version)
 }
 
 pub const ENABLE_PERF: bool = false;
@@ -738,7 +729,7 @@ fn rocket() -> rocket::Rocket {
 
     rocket::ignite()
         .attach(cors)
-        .mount("/api", routes![get_version]) // post_state
+        .mount("/api", routes![api::get_version]) // post_state
 }
 
 fn dispatcher_thread() {
