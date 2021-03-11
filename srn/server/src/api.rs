@@ -60,4 +60,5 @@ pub fn load_saved_state(player_id: String, state_id: String) {
     mem::swap(current_state, &mut saved_state.state);
     saved_state.state = saved_clone;
     current_state.id = player_id;
+    current_state.players[0].id = player_id;
 }

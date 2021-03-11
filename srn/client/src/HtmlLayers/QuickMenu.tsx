@@ -157,6 +157,7 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
               <Button
                 round
                 hotkey={String((i + 1) % 10)}
+                noInlineHotkey
                 onClick={() => {
                   if (isSingle(act)) {
                     if (act.handler) {

@@ -1,4 +1,4 @@
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 
 const patchParams = (url: string, params: Record<string, string>) => {
   let res = url;
@@ -30,10 +30,11 @@ export const api = {
       ),
       { method: 'POST' }
     );
+    await mutate(`${api.getHttpApiUrl()}/saved_states`);
     return resp;
   },
   loadSavedState: async (player_id: string, state_id: string) => {
-    const resp = await fetch(
+    await fetch(
       patchParams(
         `${api.getHttpApiUrl()}/saved_states/load/<player_id>/<state_id>`,
         {
@@ -43,7 +44,6 @@ export const api = {
       ),
       { method: 'POST' }
     );
-    return await resp.json();
   },
 
   getWebSocketUrl() {

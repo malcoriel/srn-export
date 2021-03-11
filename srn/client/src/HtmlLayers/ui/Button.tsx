@@ -3,10 +3,14 @@ import './Button.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';
 
-const formatText = (text: string, hotkey?: string) => {
+const formatText = (
+  text: string,
+  hotkey: string | undefined,
+  noInlineHotkey: undefined | boolean
+) => {
   if (hotkey) {
     const pos = text.toLowerCase().indexOf(hotkey.toLowerCase());
-    if (pos > -1) {
+    if (pos > -1 && !noInlineHotkey) {
       const parts = [
         text.substr(0, pos),
         text.substr(pos, 1),
@@ -22,7 +26,7 @@ const formatText = (text: string, hotkey?: string) => {
     }
     return (
       <span>
-        {text} ({hotkey})
+        {text} <span className="hotkey-letter">({hotkey})</span>
       </span>
     );
   }
@@ -36,16 +40,31 @@ export const Button: React.FC<{
   hotkey?: string;
   text?: string;
   round?: boolean;
-}> = ({ hotkey, round, text, onClick, children, className, toggled }) => {
+  noInlineHotkey?: boolean;
+}> = ({
+  hotkey,
+  noInlineHotkey,
+  round,
+  text,
+  onClick,
+  children,
+  className,
+  toggled,
+}) => {
   const targetHotKey = hotkey || '🤣';
   const [pseudoActive, setPseudoActive] = useState(false);
+  const timedOutClick = () => {
+    setTimeout(() => {
+      if (onClick) {
+        onClick();
+      }
+    }, 0);
+  };
   useHotkeys(
     targetHotKey,
     () => {
       if (onClick) {
-        setTimeout(() => {
-          onClick();
-        }, 0);
+        timedOutClick();
       }
       setPseudoActive(false);
     },
@@ -71,10 +90,10 @@ export const Button: React.FC<{
         toggled,
         round,
       })}
-      onClick={onClick}
+      onClick={timedOutClick}
     >
       {children}
-      {text ? formatText(text, hotkey) : ''}
+      {text ? formatText(text, hotkey, noInlineHotkey) : ''}
     </span>
   );
 };

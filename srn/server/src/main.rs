@@ -731,7 +731,8 @@ fn rocket() -> rocket::Rocket {
         .mount("/api", routes![
         api::get_version,
         api::get_saved_states,
-        api::save_current_state
+        api::save_current_state,
+        api::load_saved_state
         ])
 }
 

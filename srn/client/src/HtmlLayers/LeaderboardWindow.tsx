@@ -22,7 +22,7 @@ export const LeaderboardWindow: React.FC = () => {
     return () => {
       ns.off('gameEvent', onGameStartEnd);
     };
-  }, [ns.id]);
+  }, [ns, ns.id, setLeaderboardWindow]);
   useNSForceChange('LeaderboardWindow', false, (prevState, nextState) => {
     return (
       JSON.stringify(prevState.leaderboard) !==
@@ -48,11 +48,11 @@ export const LeaderboardWindow: React.FC = () => {
       className="leaderboard-window"
       contentClassName="leaderboard-window-content"
       minimized={
-        place && (
+        place ? (
           <div className="leaderboard-window-minimized">
             Your place: {place} of {totalPlaces}
           </div>
-        )
+        ) : null
       }
     >
       <div className="news-talk">
