@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Window } from './ui/Window';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
+import './PromptWindow.scss';
 
 export const PromptWindow: React.FC = () => {
   const [prompt, resolve, reject] = useStore(
@@ -26,15 +27,17 @@ export const PromptWindow: React.FC = () => {
   return (
     <Window
       width={200}
-      height={200}
+      height={160}
       unclosable
       storeKey="promptWindow"
       line="complex"
       thickness={8}
       halfThick
+      contentClassName="prompt-window-content"
     >
-      <span>{prompt}</span>
+      <div className="prompt">{prompt}</div>
       <div
+        className="input-container"
         onKeyDown={(ev: any) => {
           if (ev.code === 'Enter') {
             confirm();
@@ -48,8 +51,14 @@ export const PromptWindow: React.FC = () => {
           onChange={(e) => setValue(e.target.value)}
         />
       </div>
-      <Button onClick={confirm}>Ok</Button>
-      <Button onClick={cancel}>Cancel</Button>
+      <div className="buttons">
+        <Button className="button" onClick={confirm}>
+          Ok
+        </Button>
+        <Button className="button" onClick={cancel}>
+          Cancel
+        </Button>
+      </div>
     </Window>
   );
 };

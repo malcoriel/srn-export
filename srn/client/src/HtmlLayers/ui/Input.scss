@@ -8,3 +8,7 @@
   color: $teal;
   border-radius: 5px;
 }
+
+.input:focus{
+  outline: none;
+}
