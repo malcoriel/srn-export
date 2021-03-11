@@ -76,6 +76,14 @@ export type SrnState = {
   setHintedObjectId: (val?: string) => void;
   dialogueWindow: WindowState;
   setDialogueWindow: (val: WindowState) => void;
+  promptWindow: WindowState;
+  promptWindowParams: [string, (val: string) => void, () => void];
+  setPromptWindow: (val: WindowState) => void;
+  setPromptWindowParams: (
+    prompt: string,
+    resolve: (val: string) => void,
+    reject: () => void
+  ) => void;
 };
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
@@ -112,6 +120,8 @@ export const useStore = create<SrnState>((set) => ({
   trigger: 0,
   volume: lsMusicVolume,
   questWindow: WindowState.Minimized,
+  promptWindow: WindowState.Hidden,
+  promptWindowParams: ['', () => {}, () => {}],
   chatWindow: WindowState.Minimized,
   dialogueWindow: WindowState.Hidden,
   inventoryWindow: WindowState.Hidden,
@@ -136,6 +146,12 @@ export const useStore = create<SrnState>((set) => ({
   setHelpWindow: (val: WindowState) => set({ helpWindow: val }),
   setChatWindow: (val: WindowState) => set({ chatWindow: val }),
   setInventoryWindow: (val: WindowState) => set({ inventoryWindow: val }),
+  setPromptWindow: (val: WindowState) => set({ promptWindow: val }),
+  setPromptWindowParams: (
+    prompt: string,
+    resolve: (val: string) => void,
+    reject: () => void
+  ) => set({ promptWindowParams: [prompt, resolve, reject] }),
   setTradeWindow: (val: WindowState) => set({ tradeWindow: val }),
   setLeaderboardWindow: (val: WindowState) => set({ leaderboardWindow: val }),
   setDialogueWindow: (val: WindowState) => set({ dialogueWindow: val }),

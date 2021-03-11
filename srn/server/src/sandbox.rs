@@ -1,19 +1,27 @@
-use uuid::Uuid;
-use crate::random_stuff::{PLANET_NAMES};
-use crate::world::{GameState, find_my_ship, find_my_ship_mut, Ship};
+use std::collections::HashMap;
+use lazy_static::lazy_static;
+use chrono::Utc;
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
-use chrono::Utc;
-use crate::inventory::{InventoryItem, add_item, InventoryItemType};
-use crate::vec2::{Vec2f64};
-use crate::market::{get_default_value};
-use crate::system_gen::{gen_star, PlanetType, gen_planet_typed, PoolRandomPicker};
+use uuid::Uuid;
+use std::sync::{Arc, Mutex};
+use crate::inventory::{add_item, InventoryItem, InventoryItemType};
+use crate::market::get_default_value;
 use crate::new_id;
+use crate::random_stuff::PLANET_NAMES;
+use crate::system_gen::{gen_planet_typed, gen_star, PlanetType, PoolRandomPicker};
+use crate::vec2::Vec2f64;
+use crate::world::{find_my_ship, find_my_ship_mut, GameState, Ship};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum SandboxTeleportTarget {
     Unknown,
     Zero
+}
+
+lazy_static! {
+    pub static ref SAVED_STATES: Arc<Mutex<Box<StateDictionary>>> =
+        Arc::new(Mutex::new(Box::new(HashMap::new())));
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -120,3 +128,11 @@ fn get_anchor_tier(state: &mut GameState, anchor_id: Uuid) -> u32 {
     let anchor_planet = anchor_planet.unwrap();
     return anchor_planet.anchor_tier + 1;
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SavedState {
+    pub name: String,
+    pub state: GameState,
+}
+
+pub type StateDictionary = HashMap<Uuid, SavedState>;

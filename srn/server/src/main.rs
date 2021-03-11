@@ -46,7 +46,6 @@ use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
 use crate::world::{AABB, find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, remove_player_ship, ShipAction, spawn_ship, update_quests, UpdateOptions};
 
-
 macro_rules! log {
     ($($t:tt)*) => {
         (println!("log: {}", ($($t)*).to_string()))
@@ -482,7 +481,7 @@ fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str
     match parsed {
         Ok(res) => {
             let mut cont = STATE.write().unwrap();
-            let personal_state = events::select_mut_state(&mut cont, client_id);
+            let personal_state = select_mut_state(&mut cont, client_id);
             if personal_state.mode != world::GameMode::Sandbox {
                 warn!(format!("Attempt to send a sandbox command to non-sandbox state by client {}", client_id));
                 return;
@@ -490,10 +489,10 @@ fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str
             sandbox::mutate_state(
                 personal_state,
                 client_id,
-                res
+                res,
             );
             send_tag_confirm(third.unwrap().to_string(), client_id);
-        },
+        }
         Err(err) => {
             eprintln!(
                 "couldn't parse sandbox action {}, err {}",
@@ -508,11 +507,11 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
-            let state = events::select_mut_state(&mut cont, client_id);
+            let state = select_mut_state(&mut cont, client_id);
             market::attempt_trade(
                 state,
                 client_id,
-                action
+                action,
             );
             x_cast_state(state.clone(), XCast::Broadcast(state.id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
@@ -729,7 +728,11 @@ fn rocket() -> rocket::Rocket {
 
     rocket::ignite()
         .attach(cors)
-        .mount("/api", routes![api::get_version]) // post_state
+        .mount("/api", routes![
+        api::get_version,
+        api::get_saved_states,
+        api::save_current_state
+        ])
 }
 
 fn dispatcher_thread() {
@@ -936,4 +939,11 @@ pub fn fire_event(ev: GameEvent) {
 
 pub fn kick_player(player_id: Uuid) {
     dispatch(ServerToClientMessage::RoomLeave(player_id));
+}
+
+pub fn select_mut_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
+                                    player_id: Uuid) -> &'a mut GameState {
+    if cont.personal_states.contains_key(&player_id) {
+        cont.personal_states.get_mut(&player_id).unwrap()
+    } else { &mut cont.state }
 }

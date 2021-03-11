@@ -32,8 +32,8 @@ import {
 import Vector from '../utils/Vector';
 import _ from 'lodash';
 import { FaDiceD20 } from 'react-icons/fa';
-import useSWR from 'swr';
 import { api } from '../utils/api';
+import { useStore, WindowState } from '../store';
 
 const pickClosestObject = (
   state: GameState,
@@ -69,6 +69,20 @@ const cyclePlanetSpeed = (sp: number) => {
   return 0.05;
 };
 
+const usePrompt = (): ((prompt: string) => Promise<string>) => {
+  const setPromptWindow = useStore((state) => state.setPromptWindow);
+  const setPromptWindowParams = useStore(
+    (state) => state.setPromptWindowParams
+  );
+  return async (prompt: string) => {
+    console.log('starting prompt', prompt);
+    return await new Promise((resolve, reject) => {
+      setPromptWindow(WindowState.Shown);
+      setPromptWindowParams(prompt, resolve, reject);
+    });
+  };
+};
+
 export const SandboxQuickMenu = () => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -76,12 +90,13 @@ export const SandboxQuickMenu = () => {
   useNSForceChange('SandboxQuickMenu', false, (oldState, newState) => {
     return oldState.mode !== newState.mode;
   });
-
-  const savedStates = useSWR(`${api.getHttpApiUrl()}/`);
+  const inputPrompt = usePrompt();
   const [planetType, setPlanetType] = useState(PlanetType.Barren);
   const [planetSpeed, setPlanetSpeed] = useState(0.05);
   const [anchor, setAnchor] = useState('initial');
   useEffect(() => {}, [anchor]);
+
+  const savedStates = api.useSavedStates();
 
   const actions = [
     {
@@ -91,10 +106,26 @@ export const SandboxQuickMenu = () => {
         {
           text: 'Load to current state',
           icon: <RiDownloadCloudLine />,
+          list: true,
+          children: savedStates.map(([name, id]: [string, string]) => {
+            return {
+              text: `${name} (${id})`,
+              handler: () => api.loadSavedState(ns.state.my_id, id),
+            };
+          }),
         },
         {
           text: 'Save to server',
           icon: <RiUploadCloudLine />,
+          handler: async () => {
+            try {
+              const name = await inputPrompt('name of the saved state');
+              return await api.saveSavedState(ns.state.my_id, name);
+            } catch (e) {
+              console.warn(e);
+              console.log('user cancelled prompt');
+            }
+          },
         },
         {
           text: 'Generate random',

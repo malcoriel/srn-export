@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { MutableRefObject, useEffect, useRef } from 'react';
 import './Input.scss';
 const suppress = (enable?: boolean) => (ev: any) => {
-  if (ev.code === 'Enter') return;
+  if (!enable) return false;
+  if (ev.code === 'Enter') {
+    return true;
+  }
   return enable ? ev.stopPropagation() : undefined;
 };
 
@@ -11,10 +14,26 @@ export const Input: React.FC<{
   className?: string;
   placeholder?: string;
   disabled?: boolean;
+  autofocus?: boolean;
   noPropagation?: boolean;
-}> = ({ value, noPropagation, disabled, onChange, className, placeholder }) => {
+}> = ({
+  value,
+  noPropagation,
+  autofocus,
+  disabled,
+  onChange,
+  className,
+  placeholder,
+}) => {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (ref && ref.current && autofocus) {
+      ref.current.focus();
+    }
+  }, [autofocus]);
   return (
     <input
+      ref={ref}
       onKeyUp={suppress(noPropagation)}
       onKeyDown={suppress(noPropagation)}
       onKeyPress={suppress(noPropagation)}
