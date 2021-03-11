@@ -734,7 +734,9 @@ fn rocket() -> rocket::Rocket {
         api::save_current_state,
         api::load_saved_state,
         api::load_random_state,
-        api::load_seeded_state
+        api::load_seeded_state,
+        api::save_state_into_json,
+        api::load_clean_state
         ])
 }
 

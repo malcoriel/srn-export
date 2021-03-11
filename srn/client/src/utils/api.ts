@@ -45,10 +45,29 @@ export const api = {
       { method: 'POST' }
     );
   },
+  downloadStateAsJson: async (player_id: string): Promise<unknown> => {
+    const res = await fetch(
+      patchParams(`${api.getHttpApiUrl()}/saved_states/json/<player_id>`, {
+        player_id,
+      })
+    );
+    return await res.json();
+  },
   loadRandomState: async (player_id: string) => {
     await fetch(
       patchParams(
         `${api.getHttpApiUrl()}/saved_states/load_random/<player_id>`,
+        {
+          player_id,
+        }
+      ),
+      { method: 'POST' }
+    );
+  },
+  loadCleanState: async (player_id: string) => {
+    await fetch(
+      patchParams(
+        `${api.getHttpApiUrl()}/saved_states/load_clean/<player_id>`,
         {
           player_id,
         }

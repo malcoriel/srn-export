@@ -1,3 +1,4 @@
+import { saveAs } from 'file-saver';
 import { QuickMenu } from './QuickMenu';
 import React, { useEffect, useState } from 'react';
 import NetState, {
@@ -146,10 +147,19 @@ export const SandboxQuickMenu = () => {
         {
           text: 'Save current state as json',
           icon: <ImFloppyDisk />,
+          handler: async () => {
+            const json = await api.downloadStateAsJson(ns.state.my_id);
+            console.log('downloaded', json);
+            saveAs(
+              new Blob([JSON.stringify(json, null, 2)]),
+              'current_state.json'
+            );
+          },
         },
         {
           text: 'Reset',
           icon: <BiReset />,
+          handler: () => api.loadCleanState(ns.state.my_id),
         },
       ],
     },

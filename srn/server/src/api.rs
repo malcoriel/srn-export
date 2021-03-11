@@ -5,6 +5,7 @@ use rocket_contrib::json::Json;
 
 use crate::sandbox::SavedState;
 use crate::{select_mut_state};
+use crate::system_gen::seed_personal_state;
 use crate::world::{seed_state, GameState, gen_state_by_seed, random_hex_seed, GameMode};
 use uuid::Uuid;
 use std::mem;
@@ -70,6 +71,32 @@ pub fn load_saved_state(player_id: String, state_id: String) {
     current_state.id = player_id;
     current_state.players[0].id = player_id;
 }
+
+#[post("/saved_states/load_clean/<player_id>")]
+pub fn load_clean_state(player_id: String) {
+    let mut current = crate::STATE.write().unwrap();
+    let player_id = Uuid::parse_str(player_id.as_str()).expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
+    let current_state = select_mut_state(&mut current, Uuid::from_u128(player_id.as_u128()));
+    if current_state.id != player_id {
+        warn!("attempt to load into non-personal state");
+        return;
+    }
+    let mut clean_state = seed_personal_state(player_id, &GameMode::Sandbox);
+    mem::swap(current_state, &mut clean_state);
+}
+
+#[get("/saved_states/json/<player_id>")]
+pub fn save_state_into_json(player_id: String) -> Json<Option<GameState>> {
+    let mut current = crate::STATE.write().unwrap();
+    let player_id = Uuid::parse_str(player_id.as_str()).expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
+    let current_state = select_mut_state(&mut current, Uuid::from_u128(player_id.as_u128()));
+    if current_state.id != player_id {
+        warn!("attempt to save non-personal state");
+        return Json(None);
+    }
+    Json(Some(current_state.clone()))
+}
+
 
 #[post("/saved_states/load_random/<player_id>")]
 pub fn load_random_state(player_id: String) {
