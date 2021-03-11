@@ -4,8 +4,8 @@ use pkg_version::*;
 use rocket_contrib::json::Json;
 
 use crate::sandbox::SavedState;
-use crate::select_mut_state;
-use crate::world::GameState;
+use crate::{select_mut_state};
+use crate::world::{seed_state, GameState, gen_state_by_seed, random_hex_seed, GameMode};
 use uuid::Uuid;
 use std::mem;
 
@@ -37,6 +37,10 @@ pub fn save_current_state(player_id: String, name: String) {
     let player_id = Uuid::parse_str(player_id.as_str()).expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
     let mut current = crate::STATE.write().unwrap();
     let state = select_mut_state(&mut current, player_id);
+    if state.id != player_id {
+        warn!("attempt to save non-personal state");
+        return;
+    }
     let mut saved = SAVED_STATES.lock().unwrap();
 
     let cloned = state.clone();
@@ -56,9 +60,51 @@ pub fn load_saved_state(player_id: String, state_id: String) {
     let mut saved_cont = SAVED_STATES.lock().unwrap();
     let saved_state = saved_cont.get_mut(&state_id).expect("Requested state does not exist");
     let current_state = select_mut_state(&mut current, Uuid::from_u128(player_id.as_u128()));
+    if current_state.id != player_id {
+        warn!("attempt to load into non-personal state");
+        return;
+    }
     let saved_clone = saved_state.state.clone();
     mem::swap(current_state, &mut saved_state.state);
     saved_state.state = saved_clone;
     current_state.id = player_id;
     current_state.players[0].id = player_id;
+}
+
+#[post("/saved_states/load_random/<player_id>")]
+pub fn load_random_state(player_id: String) {
+    let player_id = Uuid::parse_str(player_id.as_str()).expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
+    let mut current = crate::STATE.write().unwrap();
+    let current_state = select_mut_state(&mut current, player_id);
+    if current_state.id != player_id {
+        warn!("attempt to load into non-personal state");
+        return;
+    }
+    let mut random_state = gen_state_by_seed(true, random_hex_seed());
+    let player = current_state.players[0].clone();
+    let ship = current_state.ships[0].clone();
+    mem::swap(current_state, &mut random_state);
+    current_state.id = player.id;
+    current_state.players.push(player);
+    current_state.ships.push(ship);
+    current_state.mode = GameMode::Sandbox;
+}
+
+#[post("/saved_states/load_seeded/<player_id>/<seed>")]
+pub fn load_seeded_state(player_id: String, seed: String) {
+    let player_id = Uuid::parse_str(player_id.as_str()).expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
+    let mut current = crate::STATE.write().unwrap();
+    let current_state = select_mut_state(&mut current, player_id);
+    if current_state.id != player_id {
+        warn!("attempt to load into non-personal state");
+        return;
+    }
+    let mut random_state = gen_state_by_seed(true, seed);
+    let player = current_state.players[0].clone();
+    let ship = current_state.ships[0].clone();
+    mem::swap(current_state, &mut random_state);
+    current_state.id = player.id;
+    current_state.players.push(player);
+    current_state.ships.push(ship);
+    current_state.mode = GameMode::Sandbox;
 }

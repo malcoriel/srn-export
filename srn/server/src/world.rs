@@ -440,11 +440,19 @@ pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
     let seed: String = if let Some(seed) = FIXED_SEED {
         String::from(seed)
     } else {
-        let mut rng = thread_rng();
-        let mut bytes: [u8; 8] = [0; 8];
-        rng.fill_bytes(&mut bytes);
-        hex::encode(bytes)
+        random_hex_seed()
     };
+    gen_state_by_seed(seed_and_validate, seed)
+}
+
+pub fn random_hex_seed() -> String {
+    let mut rng = thread_rng();
+    let mut bytes: [u8; 8] = [0; 8];
+    rng.fill_bytes(&mut bytes);
+    hex::encode(bytes)
+}
+
+pub fn gen_state_by_seed(seed_and_validate: bool, seed: String) -> GameState {
     let state = system_gen(seed);
 
     let state = if seed_and_validate {

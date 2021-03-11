@@ -122,18 +122,26 @@ export const SandboxQuickMenu = () => {
               const name = await inputPrompt('name of the saved state');
               return await api.saveSavedState(ns.state.my_id, name);
             } catch (e) {
-              console.warn(e);
-              console.log('user cancelled prompt');
+              console.log('user cancelled prompt', e);
             }
           },
         },
         {
           text: 'Generate random',
           icon: <FaDiceD20 />,
+          handler: () => api.loadRandomState(ns.state.my_id),
         },
         {
           text: 'Generate from seed',
           icon: <GiAppleSeeds />,
+          handler: async () => {
+            try {
+              const seed = await inputPrompt('seed (any string)');
+              return await api.loadSeededState(ns.state.my_id, seed);
+            } catch (e) {
+              console.log('user cancelled prompt', e);
+            }
+          },
         },
         {
           text: 'Save current state as json',

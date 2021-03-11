@@ -732,7 +732,9 @@ fn rocket() -> rocket::Rocket {
         api::get_version,
         api::get_saved_states,
         api::save_current_state,
-        api::load_saved_state
+        api::load_saved_state,
+        api::load_random_state,
+        api::load_seeded_state
         ])
 }
 

@@ -45,6 +45,29 @@ export const api = {
       { method: 'POST' }
     );
   },
+  loadRandomState: async (player_id: string) => {
+    await fetch(
+      patchParams(
+        `${api.getHttpApiUrl()}/saved_states/load_random/<player_id>`,
+        {
+          player_id,
+        }
+      ),
+      { method: 'POST' }
+    );
+  },
+  loadSeededState: async (player_id: string, seed: string) => {
+    await fetch(
+      patchParams(
+        `${api.getHttpApiUrl()}/saved_states/load_seeded/<player_id>/<seed>`,
+        {
+          player_id,
+          seed,
+        }
+      ),
+      { method: 'POST' }
+    );
+  },
 
   getWebSocketUrl() {
     return process.env.NODE_ENV === 'production'
