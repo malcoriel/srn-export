@@ -14,6 +14,7 @@ type SingleMenuAction = {
 type DeepMenuAction = {
   icon?: ReactNode;
   text: string;
+  list?: boolean;
   children: QuickMenuAction[];
 };
 type QuickMenuAction = SingleMenuAction | DeepMenuAction;
@@ -68,6 +69,9 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
   const [shown, setShown] = useState(false);
   const [animatedRotation, setAnimatedRotation] = useState(false);
   const [activeActions, setActiveActions] = useState(startActions);
+  const [currentAction, setCurrentAction] = useState<DeepMenuAction | null>(
+    null
+  );
 
   // when the start actions are reset due to a no-hide option,
   // without this the state will not update (it has to be reset like this)
@@ -80,9 +84,10 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
     (levels: number[]) => {
       const tmp = [...levels];
       let active = startActions;
+      let chosen: SingleMenuAction | DeepMenuAction | null = null;
       while (tmp.length) {
         const curr = tmp.shift() as number;
-        const chosen = active[curr];
+        chosen = active[curr];
         if (!isSingle(chosen)) {
           active = chosen.children;
         } else {
@@ -90,6 +95,9 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
           setShown(false);
           setAnimatedRotation(false);
         }
+      }
+      if (chosen && !isSingle(chosen)) {
+        setCurrentAction(chosen);
       }
       setActiveActions(active);
     },
@@ -122,6 +130,7 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
     buildActiveActions([]);
     setShown(false);
     setAnimatedRotation(false);
+    setCurrentAction(null);
   };
 
   useHotkeys(
@@ -138,11 +147,20 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
   );
   if (!shown) return null;
 
+  const menuStyle = currentAction && currentAction.list ? 'list' : 'rounded';
+  const roundButtons = menuStyle === 'rounded';
+  const thinButtons = menuStyle === 'list';
   return (
     <div className="quick-menu-container">
-      <div className={`quick-menu count-${activeActions.length}`}>
+      <div className={`quick-menu ${menuStyle} count-${activeActions.length}`}>
         <div className="action center-action">
-          <Button round onClick={downLevel} hotkey="b" text="BACK">
+          <Button
+            thin={thinButtons}
+            round={roundButtons}
+            onClick={downLevel}
+            hotkey="b"
+            text="BACK"
+          >
             <span className="icon">
               <ImCross />
             </span>
@@ -155,7 +173,8 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
               className={`action ${animatedRotation ? `rotate-${i}` : ''}`}
             >
               <Button
-                round
+                thin={thinButtons}
+                round={roundButtons}
                 hotkey={String((i + 1) % 10)}
                 noInlineHotkey
                 onClick={() => {

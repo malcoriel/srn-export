@@ -40,6 +40,7 @@ export const Button: React.FC<{
   hotkey?: string;
   text?: string;
   round?: boolean;
+  thin?: boolean;
   noInlineHotkey?: boolean;
 }> = ({
   hotkey,
@@ -50,6 +51,7 @@ export const Button: React.FC<{
   children,
   className,
   toggled,
+  thin,
 }) => {
   const targetHotKey = hotkey || '🤣';
   const [pseudoActive, setPseudoActive] = useState(false);
@@ -86,6 +88,7 @@ export const Button: React.FC<{
       className={classNames({
         'ui-button ': true,
         'pseudo-active': pseudoActive,
+        thin,
         [className as string]: !!className,
         toggled,
         round,

@@ -14,48 +14,49 @@ $menuDiameter: 600px;
   pointer-events: none;
 
   .quick-menu {
+    pointer-events: auto;
+  }
+
+  .quick-menu.rounded {
     border-radius: 50%;
     width: $menuDiameter;
     height: $menuDiameter;
-    pointer-events: auto;
     position: relative;
-  }
 
-  .center-action {
-    z-index: 1;
-    .ui-button {
 
+    .center-action {
+      z-index: 1;
+
+      .ui-button {
+        opacity: 1.0 !important;
+      }
+
+      .ui-button:not(:hover).ui-button:not(.pseudo-active) {
+        background-color: black;
+      }
     }
 
-    .ui-button {
-      opacity: 1.0 !important;
-    }
+    .action {
+      position: absolute;
+      top: calc(50% - 52.5px);
+      left: calc(50% - 52.5px);
+      transition: transform .1s ease-in-out;
 
-    .ui-button:not(:hover).ui-button:not(.pseudo-active) {
-      background-color: black;
-    }
-  }
+      .ui-button {
+        width: 80px;
+        height: 80px;
+        font-size: 12px;
+      }
 
-  .action {
-    position: absolute;
-    top: calc(50% - 52.5px);
-    left: calc(50% - 52.5px);
-    transition: transform .1s ease-in-out;
-
-    .ui-button {
-      width: 80px;
-      height: 80px;
-      font-size: 12px;
-    }
-
-    .icon {
-      font-size: 30px;
+      .icon {
+        font-size: 30px;
+      }
     }
   }
 
   $counts: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10;
   @each $count in $counts {
-    .count-#{$count} {
+    .quick-menu.count-#{$count}.rounded {
       $angle: 360deg / $count;
 
       @each $item in $counts {
@@ -63,6 +64,19 @@ $menuDiameter: 600px;
           transform: rotate(($item - 1) * $angle) translate(0, -$itemRadius) rotate(-($item - 1) * $angle)
         }
       }
+    }
+  }
+
+  .quick-menu.list {
+
+    .ui-button {
+      opacity: 1.0 !important;
+      margin-top: 3px;
+      margin-right: 3px;
+    }
+
+    .ui-button:not(:hover).ui-button:not(.pseudo-active) {
+      background-color: black;
     }
   }
 }

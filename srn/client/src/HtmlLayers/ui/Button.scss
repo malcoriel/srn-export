@@ -51,3 +51,18 @@
   height: 50px;
   border-radius: 50%;
 }
+
+.ui-button.thin {
+  padding: 2px 10px;
+  font-size: small;
+  display: flex;
+  flex-direction: row;
+
+  & > * {
+    margin-left: 10px;
+  }
+
+  & > *:first-child {
+    margin-left: 0;
+  }
+}
