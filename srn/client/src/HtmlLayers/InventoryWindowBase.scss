@@ -1,5 +1,5 @@
-$height: 661px;
-$width: 661px;
+$height: 391px;
+$width: 391px;
 .inventory-window-base {
   height: $height;
   position: relative;
@@ -11,4 +11,9 @@ $width: 661px;
 
   overflow: hidden;
 
+}
+
+.inventory-window {
+  height: 100%;
+  padding: 10px 0 10px 10px;
 }

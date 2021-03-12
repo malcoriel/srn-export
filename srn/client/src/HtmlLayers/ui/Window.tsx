@@ -80,6 +80,7 @@ export const Window: React.FC<{
   const minimizedMountPoint = document.getElementById('minimized-windows');
   const shownWindowsMountPoint = document.getElementById('shown-windows');
   if (!minimizedMountPoint || !shownWindowsMountPoint) return null;
+  console.log('window', storeKey, { width, height });
   return (
     <>
       {!isMinimized &&

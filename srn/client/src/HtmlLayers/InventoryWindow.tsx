@@ -9,8 +9,8 @@ const MIN_ROWS = 5;
 const COLUMNS = 5;
 const WINDOW_MARGIN = 10;
 
-const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2;
-const WINDOW_WIDTH = cellsToPixels(COLUMNS) + WINDOW_MARGIN * 2;
+const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS);
+const WINDOW_WIDTH = cellsToPixels(COLUMNS) + SCROLL_OFFSET;
 const EXTRA_ROWS = 3;
 
 const InventoryWindowItems = () => {
@@ -39,23 +39,20 @@ const InventoryWindowItems = () => {
 };
 
 export const InventoryWindow = () => {
+  const height = WINDOW_HEIGHT;
+  const width = WINDOW_WIDTH + SCROLL_OFFSET;
+  console.log({ width, height });
+
   return (
     <Window
-      height={WINDOW_HEIGHT}
-      width={WINDOW_WIDTH + SCROLL_OFFSET}
+      height={height}
+      width={width}
       line="complex"
       storeKey="inventoryWindow"
       thickness={8}
       contentClassName="overflow-y-hidden"
     >
-      <div className="inventory-window-base">
-        <div
-          className="item-grid grid-gray"
-          style={{
-            width: cellsToPixels(COLUMNS),
-            height: cellsToPixels(COLUMNS),
-          }}
-        />
+      <div className="inventory-window">
         <InventoryWindowItems />
       </div>
     </Window>

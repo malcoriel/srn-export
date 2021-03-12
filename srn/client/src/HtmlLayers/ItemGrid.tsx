@@ -198,7 +198,10 @@ export const ItemGrid: React.FC<{
   const contentWidth = cellsToPixels(columnCount);
   return (
     <WithScrollbars noAutoHide>
-      <div className="content" style={{ height: contentHeight }}>
+      <div
+        className="content item-grid grid-gray"
+        style={{ height: contentHeight }}
+      >
         {items.map((item) => {
           const pos = gridPositionToPosition(positions[item.id]);
           return (

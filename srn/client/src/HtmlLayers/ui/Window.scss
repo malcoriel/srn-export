@@ -12,9 +12,8 @@
 }
 
 .ui-window-content {
-  // 10px for each padding from styled rect
-  height: calc(100% - 20px);
-  overflow-y: auto;
+  height: 100%;
+  overflow-y: hidden;
   opacity: 0.9;
   background-color: black;
 }
