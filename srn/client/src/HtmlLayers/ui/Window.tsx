@@ -20,7 +20,9 @@ export const Window: React.FC<{
   contentClassName?: string;
   className?: string;
   minimizedClassname?: string;
+  onClose?: () => void;
 }> = ({
+  onClose,
   storeKey,
   children,
   width,
@@ -43,8 +45,13 @@ export const Window: React.FC<{
   const state = fixedState || (storeParts[key] as WindowState);
   const minimize = () => storeParts[setKey](WindowState.Minimized);
   const maximize = () => storeParts[setKey](WindowState.Shown);
-  const hide = () =>
-    storeParts[setKey](unclosable ? WindowState.Minimized : WindowState.Hidden);
+  const hide = () => {
+    if (onClose) onClose();
+
+    return storeParts[setKey](
+      unclosable ? WindowState.Minimized : WindowState.Hidden
+    );
+  };
   const isShown = state === WindowState.Shown;
   const isMinimized = state === WindowState.Minimized;
 

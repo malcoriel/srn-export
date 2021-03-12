@@ -422,6 +422,9 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
             on_client_trade_action(client_id, second, third);
         }
         ClientOpCode::Unknown => {}
+        ClientOpCode::DialogueRequest => {
+            on_client_dialogue_request(client_id, second, third);
+        }
     };
 }
 
@@ -519,6 +522,38 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
         Err(err) => {
             eprintln!(
                 "couldn't parse trade action {}, err {}",
+                data, err
+            );
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct DialogueRequest {
+    planet_id: Uuid
+}
+
+fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) {
+    let parsed = serde_json::from_str::<DialogueRequest>(data);
+    match parsed {
+        // Technically, the dialogue should be triggered with the planet specified.
+        // However, the basic_planet trigger will handle the 'current' planet
+        // by itself. This will be useful later, however, to trigger something like
+        // remote-to-planet dialogue
+        Ok(_action) => {
+            let mut cont = STATE.write().unwrap();
+            let state = select_mut_state(&mut cont, client_id);
+            if let Some(player) = find_my_player(state, client_id) {
+                fire_event(GameEvent::DialogueTriggerRequest {
+                    dialogue_name: "basic_planet".to_string(),
+                    player: player.clone(),
+                })
+            }
+            send_tag_confirm(tag.unwrap().to_string(), client_id);
+        }
+        Err(err) => {
+            eprintln!(
+                "couldn't parse dialogue request {}, err {}",
                 data, err
             );
         }
@@ -627,7 +662,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
         let mut cont = STATE.write().unwrap();
         let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
-        let mut_state = if cont.personal_states.contains_key(&client_id) { cont.personal_states.get_mut(&client_id).unwrap() } else { &mut cont.state };
+        let mut_state = select_mut_state(&mut cont, client_id);
         world::force_update_to_now(mut_state);
         let (new_dialogue_state, state_changed) = execute_dialog_option(
             client_id,

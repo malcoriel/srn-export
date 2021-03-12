@@ -129,4 +129,5 @@ pub enum ClientOpCode {
     SwitchRoom = 5,
     SandboxCommand = 6,
     TradeAction = 7,
+    DialogueRequest = 8,
 }

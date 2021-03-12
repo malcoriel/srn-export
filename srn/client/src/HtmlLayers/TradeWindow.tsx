@@ -82,6 +82,10 @@ export const TradeWindow = () => {
     }
   };
 
+  const onCloseTradeWindow = () => {
+    if (planetId) ns.sendDialogueRequest(planetId);
+  };
+
   if (!planetId) return null;
 
   return (
@@ -92,6 +96,7 @@ export const TradeWindow = () => {
       storeKey="tradeWindow"
       thickness={8}
       contentClassName="overflow-y-hidden"
+      onClose={onCloseTradeWindow}
     >
       <div className="inventory-window-base">
         <div

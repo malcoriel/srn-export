@@ -33,6 +33,7 @@ enum ClientOpCode {
   SwitchRoom,
   SandboxCommand,
   TradeAction,
+  DialogueRequest,
 }
 
 interface Cmd {
@@ -564,6 +565,12 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
+        case ClientOpCode.DialogueRequest: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
         default:
           console.warn(`Unknown opcode ${cmd.code}`);
       }
@@ -710,6 +717,16 @@ export default class NetState extends EventEmitter {
     this.send({
       code: ClientOpCode.TradeAction,
       value: cmd,
+      tag: uuid.v4(),
+    });
+  }
+
+  public sendDialogueRequest(planet_id: string) {
+    this.send({
+      code: ClientOpCode.DialogueRequest,
+      value: {
+        planet_id,
+      },
       tag: uuid.v4(),
     });
   }
