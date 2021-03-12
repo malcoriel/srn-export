@@ -1,253 +1,265 @@
 {
-  "id": "ac5cdbe5-4b08-4dea-8f06-37a8df774225",
-  "mode": "Sandbox",
+  "id": "eddf4d27-5468-4d6c-a6f5-f108875e16f5",
   "version": 1,
+  "mode": "Sandbox",
   "tag": null,
-  "seed": "699c9f24aa687237",
-  "my_id": "2e71ca75-87e5-44b5-ae66-19e2e1cad777",
-  "start_time_ticks": 1615506613046,
+  "seed": "914bbbbc726d68ff",
+  "my_id": "03d90337-45bd-4389-ac35-7de9b8f1c725",
+  "start_time_ticks": 1615507669682,
   "star": {
-    "id": "e686769f-a9c3-4258-8679-4408286e18eb",
-    "name": "Hozreir",
+    "id": "9d68121a-988f-402c-badc-481c9893b39f",
+    "name": "Ruad",
     "x": 0,
     "y": 0,
-    "radius": 49.23329576230704,
+    "radius": 53.51411382443009,
     "rotation": 0,
     "color": "rgb(200, 150, 65)"
   },
   "planets": [
     {
-      "id": "a0c13d1f-65d5-413b-a4a5-dd043ea57857",
-      "name": "Valyti",
-      "x": -119.06624111912716,
-      "y": -33.05768732180167,
+      "id": "1b87a84a-8187-4833-9a13-efd4281728ec",
+      "name": "Brova",
+      "x": -107.11607679630394,
+      "y": 62.76166109933855,
       "rotation": 0,
-      "radius": 13.774736404137798,
-      "orbit_speed": -0.023618462352403877,
-      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "radius": 10.749844864110958,
+      "orbit_speed": -0.0022950442730670924,
+      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
       "anchor_tier": 1,
-      "color": "#F5B0A1"
+      "color": "#ADBEA3"
     },
     {
-      "id": "eaddcf77-b5bc-4675-9bdf-e729b1113b15",
-      "name": "Arudros",
-      "x": -23.917528770995894,
-      "y": 324.0735202467132,
+      "id": "34f1150e-e49c-4206-8894-27133362a0e3",
+      "name": "Depes",
+      "x": 235.71402532963256,
+      "y": 217.38578388325234,
       "rotation": 0,
-      "radius": 17.650660746892687,
-      "orbit_speed": 0.005806601273850377,
-      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "radius": 15.703245122766209,
+      "orbit_speed": -0.010158477830590124,
+      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
       "anchor_tier": 1,
-      "color": "#1D334A"
+      "color": "#fd151b"
     },
     {
-      "id": "7c93d647-70ae-4426-8a9c-75a0b3d4c488",
-      "name": "Synocon",
-      "x": -330.92705032273744,
-      "y": 261.151490915453,
+      "id": "c2add3c4-1e71-4249-aa27-9e46625bfaac",
+      "name": "Taruk",
+      "x": -118.22258452250082,
+      "y": 399.06169233921395,
       "rotation": 0,
-      "radius": 19.049310710800853,
-      "orbit_speed": 0.006383425396152324,
-      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "radius": 13.428909804903604,
+      "orbit_speed": 0.002488902696336484,
+      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
       "anchor_tier": 1,
-      "color": "#4D56A5"
+      "color": "#025669"
     },
     {
-      "id": "3a8f0104-3c1d-48ba-bce3-e11fb2746f03",
-      "name": "Utarid A-93",
-      "x": -89.27636957377626,
-      "y": -21.940616928613107,
+      "id": "27080fa4-303a-4a51-a3a5-0dc1f63326aa",
+      "name": "Jean U-52",
+      "x": -83.00835929493206,
+      "y": 42.13220404285565,
       "rotation": 0,
-      "radius": 2.292440040093805,
-      "orbit_speed": 0.29433660844746823,
-      "anchor_id": "a0c13d1f-65d5-413b-a4a5-dd043ea57857",
+      "radius": 2.731345885350358,
+      "orbit_speed": -0.2727241298872463,
+      "anchor_id": "1b87a84a-8187-4833-9a13-efd4281728ec",
       "anchor_tier": 2,
       "color": "#008FA9"
     },
     {
-      "id": "30cd96d8-adb3-494a-86bc-746fc8cb2d67",
-      "name": "Qurra WI-39",
-      "x": -152.93146002096245,
-      "y": -54.033402572022624,
+      "id": "c1bfe541-c343-498c-82b9-fe04f9e9d302",
+      "name": "Prhasbadi S-9",
+      "x": 255.96721341632335,
+      "y": 187.96307849059477,
       "rotation": 0,
-      "radius": 2.2501145702574714,
-      "orbit_speed": -0.14325882846161936,
-      "anchor_id": "a0c13d1f-65d5-413b-a4a5-dd043ea57857",
+      "radius": 2.0541004330357544,
+      "orbit_speed": 0.2729033322616926,
+      "anchor_id": "34f1150e-e49c-4206-8894-27133362a0e3",
       "anchor_tier": 2,
-      "color": "#AE2460"
+      "color": "#5BBAA9"
     },
     {
-      "id": "040aacf9-ea47-4bb1-895c-b03518f8a4d9",
-      "name": "Nakaya V-2",
-      "x": -13.559064902971743,
-      "y": 360.8829231553454,
+      "id": "0e184ee7-ec98-4abb-82f4-3f02b47bebaa",
+      "name": "Shintaro",
+      "x": 271.2949815871733,
+      "y": 187.2596767621969,
       "rotation": 0,
-      "radius": 2.5498385346405597,
-      "orbit_speed": 0.25436714902597507,
-      "anchor_id": "eaddcf77-b5bc-4675-9bdf-e729b1113b15",
-      "anchor_tier": 2,
-      "color": "#F5B0A1"
-    },
-    {
-      "id": "97880338-6d62-48e7-b6d5-58845f97b7fe",
-      "name": "de Coulomb BO-9",
-      "x": -65.39817881463551,
-      "y": 346.7372032783928,
-      "rotation": 0,
-      "radius": 2.1949653233937516,
-      "orbit_speed": -0.14248279286192328,
-      "anchor_id": "eaddcf77-b5bc-4675-9bdf-e729b1113b15",
+      "radius": 2.6645882311621167,
+      "orbit_speed": 0.14050656812820603,
+      "anchor_id": "34f1150e-e49c-4206-8894-27133362a0e3",
       "anchor_tier": 2,
       "color": "#fd151b"
+    },
+    {
+      "id": "cb9b9197-1fd8-4996-a52d-50fad152a065",
+      "name": "Vênus W-3",
+      "x": 201.1573662385149,
+      "y": 170.88018315592862,
+      "rotation": 0,
+      "radius": 2.6758008810472544,
+      "orbit_speed": 0.08221065044449229,
+      "anchor_id": "34f1150e-e49c-4206-8894-27133362a0e3",
+      "anchor_tier": 2,
+      "color": "#0D57AC"
+    },
+    {
+      "id": "4408f114-e009-46c2-82a9-082eab4bec67",
+      "name": "Päike RV-65",
+      "x": -99.71058566723619,
+      "y": 426.87128728936875,
+      "rotation": 0,
+      "radius": 2.360387582284792,
+      "orbit_speed": -0.23191783018154247,
+      "anchor_id": "c2add3c4-1e71-4249-aa27-9e46625bfaac",
+      "anchor_tier": 2,
+      "color": "#F5B0A1"
     }
   ],
   "asteroids": [],
   "minerals": [
     {
-      "x": -107.70661508060773,
-      "y": 195.89579155630824,
-      "id": "0fbeea50-7cb8-4ef0-a185-736dddbb89e5",
+      "x": -76.41473797221703,
+      "y": 217.0866694115734,
+      "id": "ca35cede-25ac-4d5c-ab13-25764c466771",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": 207.1867821107971,
+      "y": -13.216847943689153,
+      "id": "246009bf-924a-4cf4-8cc2-8efff254e0e9",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": -142.74776458267544,
+      "y": -166.44669759917886,
+      "id": "646e13be-7884-44e9-aa93-f50a7488087d",
+      "radius": 1.5,
+      "value": 200,
+      "rarity": "Uncommon",
+      "color": "#c0c0c0"
+    },
+    {
+      "x": -178.29119644465032,
+      "y": -131.84181577730607,
+      "id": "c0875bb5-040c-43ff-92a9-184601ed8bcd",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": -211.4158742831691,
+      "y": -73.79468231464931,
+      "id": "855d6939-ca36-462a-9b6c-0833807fa126",
+      "radius": 1.5,
+      "value": 200,
+      "rarity": "Uncommon",
+      "color": "#c0c0c0"
+    },
+    {
+      "x": -198.56148541587936,
+      "y": -101.0501314042123,
+      "id": "22f8c553-ccad-4f83-b3bd-b8e78b68c51e",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": -176.36648897362616,
+      "y": 127.31236035632851,
+      "id": "863ed415-0596-4fd0-b41f-e58dfbf44ac0",
       "radius": 1,
       "value": 300,
       "rarity": "Rare",
       "color": "#ffd700"
     },
     {
-      "x": 227.97954189796852,
-      "y": -28.758302462559907,
-      "id": "622a693a-d0d4-49cb-8556-1b69d4379c3b",
+      "x": -15.120025617879406,
+      "y": 216.50945303638775,
+      "id": "9cd8345f-a60e-45e4-ac51-7a38afd7b2be",
       "radius": 1.5,
       "value": 200,
       "rarity": "Uncommon",
       "color": "#c0c0c0"
     },
     {
-      "x": -172.64034198158578,
-      "y": 153.0283124442193,
-      "id": "5331eefb-8c3b-4006-9d5c-26588d37ee48",
-      "radius": 2,
-      "value": 100,
-      "rarity": "Common",
-      "color": "#b87333"
-    },
-    {
-      "x": 223.27926429605074,
-      "y": 17.283999341577008,
-      "id": "2432c241-9446-4d59-8c66-256341dabe6e",
-      "radius": 2,
-      "value": 100,
-      "rarity": "Common",
-      "color": "#b87333"
-    },
-    {
-      "x": -154.21596609992255,
-      "y": -153.2082269025148,
-      "id": "be6fb3c6-37db-4828-ac60-d206d68ee762",
-      "radius": 2,
-      "value": 100,
-      "rarity": "Common",
-      "color": "#b87333"
-    },
-    {
-      "x": 186.13256128338082,
-      "y": 123.10659887759753,
-      "id": "bc072ecb-7718-43d8-b0f0-dbd2e976ee3b",
+      "x": 223.99147389462027,
+      "y": 29.705691607245527,
+      "id": "082914ca-9564-4c74-ada1-8eb93b4bbf4e",
       "radius": 1.5,
       "value": 200,
       "rarity": "Uncommon",
       "color": "#c0c0c0"
     },
     {
-      "x": 48.98158199469433,
-      "y": 218.03859508185843,
-      "id": "91d1495c-badf-4770-ac24-0364be2ce05a",
-      "radius": 2,
-      "value": 100,
-      "rarity": "Common",
-      "color": "#b87333"
-    },
-    {
-      "x": -79.32336572398539,
-      "y": -214.05921284127322,
-      "id": "1024f706-6279-46e8-be6d-a2ea066612c4",
-      "radius": 2,
-      "value": 100,
-      "rarity": "Common",
-      "color": "#b87333"
-    },
-    {
-      "x": -20.409088281266087,
-      "y": -221.33981938946962,
-      "id": "dd6eba84-eb84-4857-83ec-9334ee034f98",
+      "x": 203.07586999881212,
+      "y": -52.760036633112485,
+      "id": "973639c6-8fb2-4822-aec8-7e22d370081f",
       "radius": 1.5,
       "value": 200,
       "rarity": "Uncommon",
       "color": "#c0c0c0"
-    },
-    {
-      "x": 95.80403592273798,
-      "y": -209.54880688365512,
-      "id": "f313d4ff-1d74-4a2f-b54e-1837ed5ef57c",
-      "radius": 2,
-      "value": 100,
-      "rarity": "Common",
-      "color": "#b87333"
     }
   ],
   "asteroid_belts": [
     {
-      "id": "153ce441-a805-46fa-868b-e211d22bd8c6",
+      "id": "5a3fdb9a-b74c-4129-91a6-16cc253ad5b6",
       "x": 0,
       "y": 0,
-      "rotation": 0.8068800000000214,
-      "radius": 222.3003497415557,
-      "width": 15.93375009445429,
+      "rotation": 0.18048600000000023,
+      "radius": 217.98705705579474,
+      "width": 16.62828109910906,
       "count": 200,
       "orbit_speed": 0.006,
-      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
       "anchor_tier": 0,
       "scale_mod": 1
     },
     {
-      "id": "9fed2677-8b0e-4704-b050-36df82fba540",
+      "id": "d436f3d4-6700-4475-851a-d227100567bc",
       "x": 0,
       "y": 0,
-      "rotation": 0.537920000000037,
-      "radius": 219.3003497415557,
-      "width": 14.93375009445429,
+      "rotation": 0.12032399999999933,
+      "radius": 214.98705705579474,
+      "width": 15.62828109910906,
       "count": 100,
       "orbit_speed": 0.004,
-      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
       "anchor_tier": 0,
       "scale_mod": 2
     },
     {
-      "id": "5f5bb793-40a4-42e3-888e-13108a5b5120",
+      "id": "beca1e01-c4c1-431e-95b3-f049249a3d87",
       "x": 0,
       "y": 0,
-      "rotation": 1.075840000000074,
-      "radius": 227.3003497415557,
-      "width": 14.267083427787624,
+      "rotation": 0.24064799999999867,
+      "radius": 222.98705705579474,
+      "width": 14.961614432442394,
       "count": 400,
       "orbit_speed": 0.008,
-      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
       "anchor_tier": 0,
       "scale_mod": 0.5
     }
   ],
   "ships": [
     {
-      "id": "d222a342-7973-4a63-9dc5-3e27ff0441a2",
-      "x": -113.78991981404576,
-      "y": -52.04979352972388,
+      "id": "5a05f37c-3526-4352-ae80-029622d36e5e",
+      "x": 226.99294936538377,
+      "y": 214.16795881167008,
       "hp": 100,
       "hp_effects": [],
       "max_hp": 100,
       "acc_periodic_dmg": 0,
       "acc_periodic_heal": 0,
-      "rotation": 0,
+      "rotation": 3.141592653589793,
       "radius": 1,
-      "color": "#9c46b8",
+      "color": "#DE4C0A",
       "docked_at": null,
       "tractor_target": null,
       "navigate_target": null,
@@ -255,7 +267,7 @@
       "trajectory": [],
       "inventory": [
         {
-          "id": "4705fd56-3e46-4e12-bce7-992cdf87b119",
+          "id": "4e1d833a-b37f-4ff8-a140-bd4b9ceb9ba5",
           "index": 0,
           "quantity": 100,
           "value": 100,
@@ -265,7 +277,7 @@
           "quest_id": null
         },
         {
-          "id": "d10a8b7d-64a7-4e68-8f6d-9f319eb4d440",
+          "id": "4f5f42e4-14a3-4b45-a531-1acb87bd8b81",
           "index": 1,
           "quantity": 50,
           "value": 200,
@@ -275,7 +287,7 @@
           "quest_id": null
         },
         {
-          "id": "45557d3b-ea41-45b3-9bdf-ce1be3b6893c",
+          "id": "cc16ac1c-6a34-4a6c-a629-50347ff67e77",
           "index": 2,
           "quantity": 5,
           "value": 500,
@@ -285,7 +297,7 @@
           "quest_id": null
         },
         {
-          "id": "3e546b3e-f9c3-4705-a806-61d56aa952a3",
+          "id": "0ef7138c-aef3-468c-9dd5-e15dcce796db",
           "index": 3,
           "quantity": 500,
           "value": 45,
@@ -295,7 +307,7 @@
           "quest_id": null
         },
         {
-          "id": "8ee9a92a-44d1-4501-a29c-b28cedfaaa67",
+          "id": "4ec52f9e-5444-4b49-b966-6e20de8de6f8",
           "index": 4,
           "quantity": 100,
           "value": 150,
@@ -305,7 +317,7 @@
           "quest_id": null
         },
         {
-          "id": "999a9564-87fd-482c-9dc6-9ff57795b156",
+          "id": "d1b59f23-7a16-430f-9af0-507239cff078",
           "index": 5,
           "quantity": 50,
           "value": 225,
@@ -319,38 +331,38 @@
   ],
   "players": [
     {
-      "id": "ac5cdbe5-4b08-4dea-8f06-37a8df774225",
+      "id": "eddf4d27-5468-4d6c-a6f5-f108875e16f5",
       "is_bot": false,
-      "ship_id": "d222a342-7973-4a63-9dc5-3e27ff0441a2",
+      "ship_id": "5a05f37c-3526-4352-ae80-029622d36e5e",
       "name": "Malcoriel",
       "quest": {
-        "id": "b4f8f8ed-761e-43c2-a97b-61621c422cd8",
-        "from_id": "805a7a6d-a300-4065-91ec-dd8c5516c73e",
-        "to_id": "0794ee36-c33e-43e7-bb45-971ef5e32795",
+        "id": "27f8c64e-281e-421b-96ae-66099099b184",
+        "from_id": "3a9286e3-d92e-46e2-90eb-c387ed4e28ea",
+        "to_id": "2b1b3fce-7247-4864-8d29-fb8f9ee544bb",
         "state": "Started",
-        "reward": 578
+        "reward": 924
       },
       "money": 0,
       "portrait_name": "9",
       "respawn_ms_left": 0
     }
   ],
-  "milliseconds_remaining": 45520,
+  "milliseconds_remaining": 5909919,
   "paused": false,
   "leaderboard": {
     "rating": [
       [
         {
-          "id": "ac5cdbe5-4b08-4dea-8f06-37a8df774225",
+          "id": "eddf4d27-5468-4d6c-a6f5-f108875e16f5",
           "is_bot": false,
-          "ship_id": "d222a342-7973-4a63-9dc5-3e27ff0441a2",
+          "ship_id": "5a05f37c-3526-4352-ae80-029622d36e5e",
           "name": "Malcoriel",
           "quest": {
-            "id": "b4f8f8ed-761e-43c2-a97b-61621c422cd8",
-            "from_id": "805a7a6d-a300-4065-91ec-dd8c5516c73e",
-            "to_id": "0794ee36-c33e-43e7-bb45-971ef5e32795",
+            "id": "27f8c64e-281e-421b-96ae-66099099b184",
+            "from_id": "3a9286e3-d92e-46e2-90eb-c387ed4e28ea",
+            "to_id": "2b1b3fce-7247-4864-8d29-fb8f9ee544bb",
             "state": "Started",
-            "reward": 578
+            "reward": 924
           },
           "money": 0,
           "portrait_name": "9",
@@ -361,7 +373,7 @@
     ],
     "winner": "Malcoriel"
   },
-  "ticks": 136507,
+  "ticks": 30507,
   "disable_hp_effects": true,
   "market": {
     "wares": {},

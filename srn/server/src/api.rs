@@ -70,6 +70,7 @@ pub fn load_saved_state(player_id: String, state_id: String) {
     saved_state.state = saved_clone;
     current_state.id = player_id;
     current_state.players[0].id = player_id;
+    current_state.milliseconds_remaining = 99 * 60 * 1000;
 }
 
 #[post("/saved_states/load_clean/<player_id>")]
@@ -115,6 +116,7 @@ pub fn load_random_state(player_id: String) {
     current_state.players.push(player);
     current_state.ships.push(ship);
     current_state.mode = GameMode::Sandbox;
+    current_state.milliseconds_remaining = 99 * 60 * 1000;
 }
 
 #[post("/saved_states/load_seeded/<player_id>/<seed>")]
@@ -134,4 +136,5 @@ pub fn load_seeded_state(player_id: String, seed: String) {
     current_state.players.push(player);
     current_state.ships.push(ship);
     current_state.mode = GameMode::Sandbox;
+    current_state.milliseconds_remaining = 99 * 60 * 1000;
 }
