@@ -1,0 +1,370 @@
+{
+  "id": "ac5cdbe5-4b08-4dea-8f06-37a8df774225",
+  "mode": "Sandbox",
+  "version": 1,
+  "tag": null,
+  "seed": "699c9f24aa687237",
+  "my_id": "2e71ca75-87e5-44b5-ae66-19e2e1cad777",
+  "start_time_ticks": 1615506613046,
+  "star": {
+    "id": "e686769f-a9c3-4258-8679-4408286e18eb",
+    "name": "Hozreir",
+    "x": 0,
+    "y": 0,
+    "radius": 49.23329576230704,
+    "rotation": 0,
+    "color": "rgb(200, 150, 65)"
+  },
+  "planets": [
+    {
+      "id": "a0c13d1f-65d5-413b-a4a5-dd043ea57857",
+      "name": "Valyti",
+      "x": -119.06624111912716,
+      "y": -33.05768732180167,
+      "rotation": 0,
+      "radius": 13.774736404137798,
+      "orbit_speed": -0.023618462352403877,
+      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "anchor_tier": 1,
+      "color": "#F5B0A1"
+    },
+    {
+      "id": "eaddcf77-b5bc-4675-9bdf-e729b1113b15",
+      "name": "Arudros",
+      "x": -23.917528770995894,
+      "y": 324.0735202467132,
+      "rotation": 0,
+      "radius": 17.650660746892687,
+      "orbit_speed": 0.005806601273850377,
+      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "anchor_tier": 1,
+      "color": "#1D334A"
+    },
+    {
+      "id": "7c93d647-70ae-4426-8a9c-75a0b3d4c488",
+      "name": "Synocon",
+      "x": -330.92705032273744,
+      "y": 261.151490915453,
+      "rotation": 0,
+      "radius": 19.049310710800853,
+      "orbit_speed": 0.006383425396152324,
+      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "anchor_tier": 1,
+      "color": "#4D56A5"
+    },
+    {
+      "id": "3a8f0104-3c1d-48ba-bce3-e11fb2746f03",
+      "name": "Utarid A-93",
+      "x": -89.27636957377626,
+      "y": -21.940616928613107,
+      "rotation": 0,
+      "radius": 2.292440040093805,
+      "orbit_speed": 0.29433660844746823,
+      "anchor_id": "a0c13d1f-65d5-413b-a4a5-dd043ea57857",
+      "anchor_tier": 2,
+      "color": "#008FA9"
+    },
+    {
+      "id": "30cd96d8-adb3-494a-86bc-746fc8cb2d67",
+      "name": "Qurra WI-39",
+      "x": -152.93146002096245,
+      "y": -54.033402572022624,
+      "rotation": 0,
+      "radius": 2.2501145702574714,
+      "orbit_speed": -0.14325882846161936,
+      "anchor_id": "a0c13d1f-65d5-413b-a4a5-dd043ea57857",
+      "anchor_tier": 2,
+      "color": "#AE2460"
+    },
+    {
+      "id": "040aacf9-ea47-4bb1-895c-b03518f8a4d9",
+      "name": "Nakaya V-2",
+      "x": -13.559064902971743,
+      "y": 360.8829231553454,
+      "rotation": 0,
+      "radius": 2.5498385346405597,
+      "orbit_speed": 0.25436714902597507,
+      "anchor_id": "eaddcf77-b5bc-4675-9bdf-e729b1113b15",
+      "anchor_tier": 2,
+      "color": "#F5B0A1"
+    },
+    {
+      "id": "97880338-6d62-48e7-b6d5-58845f97b7fe",
+      "name": "de Coulomb BO-9",
+      "x": -65.39817881463551,
+      "y": 346.7372032783928,
+      "rotation": 0,
+      "radius": 2.1949653233937516,
+      "orbit_speed": -0.14248279286192328,
+      "anchor_id": "eaddcf77-b5bc-4675-9bdf-e729b1113b15",
+      "anchor_tier": 2,
+      "color": "#fd151b"
+    }
+  ],
+  "asteroids": [],
+  "minerals": [
+    {
+      "x": -107.70661508060773,
+      "y": 195.89579155630824,
+      "id": "0fbeea50-7cb8-4ef0-a185-736dddbb89e5",
+      "radius": 1,
+      "value": 300,
+      "rarity": "Rare",
+      "color": "#ffd700"
+    },
+    {
+      "x": 227.97954189796852,
+      "y": -28.758302462559907,
+      "id": "622a693a-d0d4-49cb-8556-1b69d4379c3b",
+      "radius": 1.5,
+      "value": 200,
+      "rarity": "Uncommon",
+      "color": "#c0c0c0"
+    },
+    {
+      "x": -172.64034198158578,
+      "y": 153.0283124442193,
+      "id": "5331eefb-8c3b-4006-9d5c-26588d37ee48",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": 223.27926429605074,
+      "y": 17.283999341577008,
+      "id": "2432c241-9446-4d59-8c66-256341dabe6e",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": -154.21596609992255,
+      "y": -153.2082269025148,
+      "id": "be6fb3c6-37db-4828-ac60-d206d68ee762",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": 186.13256128338082,
+      "y": 123.10659887759753,
+      "id": "bc072ecb-7718-43d8-b0f0-dbd2e976ee3b",
+      "radius": 1.5,
+      "value": 200,
+      "rarity": "Uncommon",
+      "color": "#c0c0c0"
+    },
+    {
+      "x": 48.98158199469433,
+      "y": 218.03859508185843,
+      "id": "91d1495c-badf-4770-ac24-0364be2ce05a",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": -79.32336572398539,
+      "y": -214.05921284127322,
+      "id": "1024f706-6279-46e8-be6d-a2ea066612c4",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": -20.409088281266087,
+      "y": -221.33981938946962,
+      "id": "dd6eba84-eb84-4857-83ec-9334ee034f98",
+      "radius": 1.5,
+      "value": 200,
+      "rarity": "Uncommon",
+      "color": "#c0c0c0"
+    },
+    {
+      "x": 95.80403592273798,
+      "y": -209.54880688365512,
+      "id": "f313d4ff-1d74-4a2f-b54e-1837ed5ef57c",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    }
+  ],
+  "asteroid_belts": [
+    {
+      "id": "153ce441-a805-46fa-868b-e211d22bd8c6",
+      "x": 0,
+      "y": 0,
+      "rotation": 0.8068800000000214,
+      "radius": 222.3003497415557,
+      "width": 15.93375009445429,
+      "count": 200,
+      "orbit_speed": 0.006,
+      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "anchor_tier": 0,
+      "scale_mod": 1
+    },
+    {
+      "id": "9fed2677-8b0e-4704-b050-36df82fba540",
+      "x": 0,
+      "y": 0,
+      "rotation": 0.537920000000037,
+      "radius": 219.3003497415557,
+      "width": 14.93375009445429,
+      "count": 100,
+      "orbit_speed": 0.004,
+      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "anchor_tier": 0,
+      "scale_mod": 2
+    },
+    {
+      "id": "5f5bb793-40a4-42e3-888e-13108a5b5120",
+      "x": 0,
+      "y": 0,
+      "rotation": 1.075840000000074,
+      "radius": 227.3003497415557,
+      "width": 14.267083427787624,
+      "count": 400,
+      "orbit_speed": 0.008,
+      "anchor_id": "e686769f-a9c3-4258-8679-4408286e18eb",
+      "anchor_tier": 0,
+      "scale_mod": 0.5
+    }
+  ],
+  "ships": [
+    {
+      "id": "d222a342-7973-4a63-9dc5-3e27ff0441a2",
+      "x": -113.78991981404576,
+      "y": -52.04979352972388,
+      "hp": 100,
+      "hp_effects": [],
+      "max_hp": 100,
+      "acc_periodic_dmg": 0,
+      "acc_periodic_heal": 0,
+      "rotation": 0,
+      "radius": 1,
+      "color": "#9c46b8",
+      "docked_at": null,
+      "tractor_target": null,
+      "navigate_target": null,
+      "dock_target": null,
+      "trajectory": [],
+      "inventory": [
+        {
+          "id": "4705fd56-3e46-4e12-bce7-992cdf87b119",
+          "index": 0,
+          "quantity": 100,
+          "value": 100,
+          "stackable": false,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "d10a8b7d-64a7-4e68-8f6d-9f319eb4d440",
+          "index": 1,
+          "quantity": 50,
+          "value": 200,
+          "stackable": false,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "45557d3b-ea41-45b3-9bdf-ce1be3b6893c",
+          "index": 2,
+          "quantity": 5,
+          "value": 500,
+          "stackable": false,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "3e546b3e-f9c3-4705-a806-61d56aa952a3",
+          "index": 3,
+          "quantity": 500,
+          "value": 45,
+          "stackable": false,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "8ee9a92a-44d1-4501-a29c-b28cedfaaa67",
+          "index": 4,
+          "quantity": 100,
+          "value": 150,
+          "stackable": false,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "999a9564-87fd-482c-9dc6-9ff57795b156",
+          "index": 5,
+          "quantity": 50,
+          "value": 225,
+          "stackable": false,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ]
+    }
+  ],
+  "players": [
+    {
+      "id": "ac5cdbe5-4b08-4dea-8f06-37a8df774225",
+      "is_bot": false,
+      "ship_id": "d222a342-7973-4a63-9dc5-3e27ff0441a2",
+      "name": "Malcoriel",
+      "quest": {
+        "id": "b4f8f8ed-761e-43c2-a97b-61621c422cd8",
+        "from_id": "805a7a6d-a300-4065-91ec-dd8c5516c73e",
+        "to_id": "0794ee36-c33e-43e7-bb45-971ef5e32795",
+        "state": "Started",
+        "reward": 578
+      },
+      "money": 0,
+      "portrait_name": "9",
+      "respawn_ms_left": 0
+    }
+  ],
+  "milliseconds_remaining": 45520,
+  "paused": false,
+  "leaderboard": {
+    "rating": [
+      [
+        {
+          "id": "ac5cdbe5-4b08-4dea-8f06-37a8df774225",
+          "is_bot": false,
+          "ship_id": "d222a342-7973-4a63-9dc5-3e27ff0441a2",
+          "name": "Malcoriel",
+          "quest": {
+            "id": "b4f8f8ed-761e-43c2-a97b-61621c422cd8",
+            "from_id": "805a7a6d-a300-4065-91ec-dd8c5516c73e",
+            "to_id": "0794ee36-c33e-43e7-bb45-971ef5e32795",
+            "state": "Started",
+            "reward": 578
+          },
+          "money": 0,
+          "portrait_name": "9",
+          "respawn_ms_left": 0
+        },
+        0
+      ]
+    ],
+    "winner": "Malcoriel"
+  },
+  "ticks": 136507,
+  "disable_hp_effects": true,
+  "market": {
+    "wares": {},
+    "prices": {}
+  }
+}

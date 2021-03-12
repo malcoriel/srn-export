@@ -726,6 +726,7 @@ fn rocket() -> rocket::Rocket {
         .to_cors()
         .unwrap();
 
+    sandbox::init_saved_states();
     rocket::ignite()
         .attach(cors)
         .mount("/api", routes![

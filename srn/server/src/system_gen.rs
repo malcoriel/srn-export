@@ -210,7 +210,8 @@ pub fn system_gen(seed: String) -> GameState {
         minerals: vec![],
         mode: GameMode::Unknown,
         disable_hp_effects: false,
-        market: Market::new()
+        market: Market::new(),
+        version: 1
     };
     state
 }
@@ -307,6 +308,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
     let planet_id = new_id();
     GameState {
         id: client_id,
+        version: 1,
         mode: GameMode::Tutorial,
         tag: None,
         seed,
@@ -360,6 +362,7 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
 
     GameState {
         id: client_id,
+        version: 1,
         mode: GameMode::Sandbox,
         tag: None,
         seed,

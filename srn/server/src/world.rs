@@ -413,6 +413,7 @@ pub struct NatSpawnMineral {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GameState {
     pub id: Uuid,
+    pub version: u32,
     pub mode: GameMode,
     pub tag: Option<String>,
     pub seed: String,

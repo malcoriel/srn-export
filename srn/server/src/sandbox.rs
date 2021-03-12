@@ -12,6 +12,7 @@ use crate::random_stuff::PLANET_NAMES;
 use crate::system_gen::{gen_planet_typed, gen_star, PlanetType, PoolRandomPicker};
 use crate::vec2::Vec2f64;
 use crate::world::{find_my_ship, find_my_ship_mut, GameState, Ship};
+use std::fs;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum SandboxTeleportTarget {
@@ -40,6 +41,25 @@ pub enum SandboxCommand {
     }
 }
 
+pub fn init_saved_states() {
+    let paths = fs::read_dir("resources/saved_states").unwrap();
+    let mut saved_states = SAVED_STATES.lock().unwrap();
+
+    for path in paths {
+        let current_file = path.unwrap();
+        let json = fs::read_to_string(current_file.path().display().to_string()).unwrap();
+        let result = serde_json::from_str::<GameState>(json.as_str());
+        if result.is_err() {
+            panic!("Failed to load saved state {}, err is {:?}", current_file.path().display(), result.err());
+        }
+        let result = result.unwrap();
+        let filename = current_file.file_name().into_string().unwrap();
+        saved_states.insert(result.id, SavedState {
+            name: filename,
+            state: result
+        });
+    }
+}
 
 fn get_pos(state: &mut GameState, player_id:Uuid) -> Option<Vec2f64> {
     let ship = find_my_ship(state, player_id);
