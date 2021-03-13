@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { DraggableEventHandler } from 'react-draggable';
 import _ from 'lodash';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
@@ -6,19 +6,14 @@ import { WithScrollbars } from './ui/WithScrollbars';
 import './ItemGrid.scss';
 import { InventoryItem } from '../world';
 import { ItemElem } from './InventoryItem';
+import classNames from 'classnames';
 
 export const ITEM_CELL_MARGIN = 5;
 export const ITEM_CELL_SIZE = 60;
 export const snap = (pos: IVector): IVector => {
   return {
-    x:
-      Math.round(pos.x / ITEM_CELL_SIZE) * ITEM_CELL_SIZE -
-      ITEM_CELL_MARGIN +
-      0.5,
-    y:
-      Math.round(pos.y / ITEM_CELL_SIZE) * ITEM_CELL_SIZE +
-      ITEM_CELL_MARGIN +
-      0.5,
+    x: Math.round(pos.x / ITEM_CELL_SIZE) * ITEM_CELL_SIZE + ITEM_CELL_MARGIN,
+    y: Math.round(pos.y / ITEM_CELL_SIZE) * ITEM_CELL_SIZE + ITEM_CELL_MARGIN,
   };
 };
 
@@ -154,8 +149,17 @@ export const ItemGrid: React.FC<{
   items: InventoryItem[];
   minRows: number;
   extraRows: number;
+  injectedGrid?: ReactNode;
   tradeMode?: [number, number, number];
-}> = ({ onMove, columnCount, items, tradeMode, minRows, extraRows }) => {
+}> = ({
+  onMove,
+  injectedGrid,
+  columnCount,
+  items,
+  tradeMode,
+  minRows,
+  extraRows,
+}) => {
   const [positions, setPositions] = useState<Record<string, IVector>>(
     positionItems(items, columnCount, tradeMode)
   );
@@ -198,8 +202,13 @@ export const ItemGrid: React.FC<{
   const contentWidth = cellsToPixels(columnCount);
   return (
     <WithScrollbars noAutoHide>
+      {injectedGrid}
       <div
-        className="content item-grid grid-gray"
+        className={classNames({
+          content: true,
+          'item-grid': !injectedGrid,
+          'grid-gray': !injectedGrid,
+        })}
         style={{ height: contentHeight }}
       >
         {items.map((item) => {

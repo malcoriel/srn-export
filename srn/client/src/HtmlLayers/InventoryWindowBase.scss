@@ -1,19 +1,16 @@
-$height: 391px;
-$width: 391px;
-.inventory-window-base {
-  height: $height;
+.trade-window {
+  height: 100%;
+  padding: 10px 0 10px 10px;
   position: relative;
-
-  .content {
-    padding: 0 10px;
-    position: relative;
-  }
-
-  overflow: hidden;
-
 }
 
 .inventory-window {
   height: 100%;
   padding: 10px 0 10px 10px;
+}
+
+.inventory-window-padded-content {
+  height: calc(100% - 21px);
+  width: calc(100% - 0.5px);
+  position: relative;
 }

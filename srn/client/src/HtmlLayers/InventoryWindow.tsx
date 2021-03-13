@@ -53,7 +53,9 @@ export const InventoryWindow = () => {
       contentClassName="overflow-y-hidden"
     >
       <div className="inventory-window">
-        <InventoryWindowItems />
+        <div className="inventory-window-padded-content">
+          <InventoryWindowItems />
+        </div>
       </div>
     </Window>
   );

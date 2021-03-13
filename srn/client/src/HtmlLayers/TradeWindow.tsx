@@ -13,7 +13,7 @@ const WINDOW_MARGIN = 10;
 
 const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2;
 
-const WINDOW_WIDTH = cellsToPixels(COLUMNS) + WINDOW_MARGIN * 2;
+const WINDOW_WIDTH = cellsToPixels(COLUMNS) + SCROLL_OFFSET;
 const EXTRA_ROWS = 3;
 
 const selectWares = (market: Market, planetId: string) => {
@@ -98,20 +98,24 @@ export const TradeWindow = () => {
       contentClassName="overflow-y-hidden"
       onClose={onCloseTradeWindow}
     >
-      <div className="inventory-window-base">
-        <div
-          className="item-grid grid-green"
-          style={{ width: cellsToPixels(5) }}
-        />
-        <div
-          className="item-grid grid-red"
-          style={{ width: cellsToPixels(5), left: cellsToPixels(6) }}
-        />
+      <div className="trade-window">
         <ItemGrid
           items={[
             ...selectPlayerItems(ns.state),
             ...selectWares(ns.state.market, planetId),
           ]}
+          injectedGrid={
+            <>
+              <div
+                className="item-grid grid-green"
+                style={{ width: cellsToPixels(5) }}
+              />
+              <div
+                className="item-grid grid-red"
+                style={{ width: cellsToPixels(5), left: cellsToPixels(6) }}
+              />
+            </>
+          }
           columnCount={COLUMNS}
           extraRows={EXTRA_ROWS}
           minRows={MIN_ROWS}
