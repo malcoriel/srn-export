@@ -41,7 +41,6 @@ const InventoryWindowItems = () => {
 export const InventoryWindow = () => {
   const height = WINDOW_HEIGHT;
   const width = WINDOW_WIDTH + SCROLL_OFFSET;
-  console.log({ width, height });
 
   return (
     <Window
