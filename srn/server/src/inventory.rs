@@ -6,6 +6,8 @@ use std::collections::{HashSet, HashMap};
 use std::mem;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use wasm_bindgen::prelude::*;
+use typescript_definitions::TypescriptDefinition;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, EnumIter)]
 pub enum InventoryItemType {
@@ -17,6 +19,16 @@ pub enum InventoryItemType {
     Food,
     Medicament,
     HandWeapon,
+}
+
+// #[derive(Serialize, TypescriptDefinition, Deserialize, Debug, Clone)]
+// #[serde(tag = "tag", content = "fields")]
+// #[wasm_bindgen]
+pub enum InventoryAction {
+    Unknown,
+    Split {from: Uuid, count: i32},
+    Merge {from: Uuid, to: i32},
+    Move {item: Uuid, index: i32}
 }
 
 pub static MINERAL_TYPES: [InventoryItemType; 3] = [

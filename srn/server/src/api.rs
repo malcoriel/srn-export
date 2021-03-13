@@ -6,6 +6,7 @@ use rocket_contrib::json::Json;
 use crate::sandbox::SavedState;
 use crate::{select_mut_state};
 use crate::system_gen::seed_personal_state;
+use crate::market::init_all_planets_market;
 use crate::world::{seed_state, GameState, gen_state_by_seed, random_hex_seed, GameMode};
 use uuid::Uuid;
 use std::mem;
@@ -109,6 +110,7 @@ pub fn load_random_state(player_id: String) {
         return;
     }
     let mut random_state = gen_state_by_seed(true, random_hex_seed());
+    init_all_planets_market(&mut random_state);
     let player = current_state.players[0].clone();
     let ship = current_state.ships[0].clone();
     mem::swap(current_state, &mut random_state);
@@ -129,6 +131,7 @@ pub fn load_seeded_state(player_id: String, seed: String) {
         return;
     }
     let mut random_state = gen_state_by_seed(true, seed);
+    init_all_planets_market(&mut random_state);
     let player = current_state.players[0].clone();
     let ship = current_state.ships[0].clone();
     mem::swap(current_state, &mut random_state);

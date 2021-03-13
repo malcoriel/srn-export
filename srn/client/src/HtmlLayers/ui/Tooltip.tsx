@@ -1,6 +1,5 @@
 import React, { ReactElement } from 'react';
 import Tippy from '@tippyjs/react';
-import { followCursor } from 'tippy.js';
 import { StyledRect } from './StyledRect';
 import './Tooltip.scss';
 

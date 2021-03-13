@@ -21,6 +21,7 @@ import { api } from './utils/api';
 import { useEffect, useState } from 'react';
 import { viewPortSizeMeters } from './coord';
 import _ from 'lodash';
+import { UnreachableCaseError } from 'ts-essentials';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -34,6 +35,7 @@ enum ClientOpCode {
   SandboxCommand,
   TradeAction,
   DialogueRequest,
+  InventoryAction,
 }
 
 interface Cmd {
@@ -571,8 +573,14 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
+        case ClientOpCode.InventoryAction: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
         default:
-          console.warn(`Unknown opcode ${cmd.code}`);
+          throw new UnreachableCaseError(cmd.code);
       }
     }
   }

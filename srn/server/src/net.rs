@@ -130,4 +130,5 @@ pub enum ClientOpCode {
     SandboxCommand = 6,
     TradeAction = 7,
     DialogueRequest = 8,
+    InventoryAction = 9,
 }

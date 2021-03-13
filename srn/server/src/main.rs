@@ -425,6 +425,9 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::DialogueRequest => {
             on_client_dialogue_request(client_id, second, third);
         }
+        ClientOpCode::InventoryAction => {
+            on_client_inventory_action(client_id, second, third);
+        }
     };
 }
 
@@ -507,6 +510,29 @@ fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str
 
 fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
     let parsed = serde_json::from_str::<market::TradeAction>(data);
+    match parsed {
+        Ok(action) => {
+            let mut cont = STATE.write().unwrap();
+            let state = select_mut_state(&mut cont, client_id);
+            market::attempt_trade(
+                state,
+                client_id,
+                action,
+            );
+            x_cast_state(state.clone(), XCast::Broadcast(state.id));
+            send_tag_confirm(tag.unwrap().to_string(), client_id);
+        }
+        Err(err) => {
+            eprintln!(
+                "couldn't parse trade action {}, err {}",
+                data, err
+            );
+        }
+    }
+}
+
+fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
+    let parsed = serde_json::from_str::<inventory::InventoryAction>(data);
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();

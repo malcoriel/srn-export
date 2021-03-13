@@ -1,13 +1,13 @@
 {
-  "id": "eddf4d27-5468-4d6c-a6f5-f108875e16f5",
+  "id": "31af39fd-4670-43a4-ba1d-64d952479099",
   "version": 1,
   "mode": "Sandbox",
   "tag": null,
   "seed": "914bbbbc726d68ff",
-  "my_id": "03d90337-45bd-4389-ac35-7de9b8f1c725",
-  "start_time_ticks": 1615507669682,
+  "my_id": "70c629ef-b33e-4282-a57a-d0328ac4dda4",
+  "start_time_ticks": 1615659416150,
   "star": {
-    "id": "9d68121a-988f-402c-badc-481c9893b39f",
+    "id": "44719593-235d-49c5-8d26-417f0566a4c8",
     "name": "Ruad",
     "x": 0,
     "y": 0,
@@ -17,98 +17,98 @@
   },
   "planets": [
     {
-      "id": "1b87a84a-8187-4833-9a13-efd4281728ec",
+      "id": "6d703591-b4bb-4b93-a558-a8fa59a3d80c",
       "name": "Brova",
-      "x": -107.11607679630394,
-      "y": 62.76166109933855,
+      "x": -105.90429960512216,
+      "y": 64.78548708876407,
       "rotation": 0,
       "radius": 10.749844864110958,
       "orbit_speed": -0.0022950442730670924,
-      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
+      "anchor_id": "44719593-235d-49c5-8d26-417f0566a4c8",
       "anchor_tier": 1,
       "color": "#ADBEA3"
     },
     {
-      "id": "34f1150e-e49c-4206-8894-27133362a0e3",
+      "id": "15fe134b-2953-46f8-995c-21770065f6af",
       "name": "Depes",
-      "x": 235.71402532963256,
-      "y": 217.38578388325234,
+      "x": 253.14193839638642,
+      "y": 196.8167670615359,
       "rotation": 0,
       "radius": 15.703245122766209,
       "orbit_speed": -0.010158477830590124,
-      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
+      "anchor_id": "44719593-235d-49c5-8d26-417f0566a4c8",
       "anchor_tier": 1,
       "color": "#fd151b"
     },
     {
-      "id": "c2add3c4-1e71-4249-aa27-9e46625bfaac",
+      "id": "23d5b715-7260-423a-a7a6-632d2e27ee95",
       "name": "Taruk",
-      "x": -118.22258452250082,
-      "y": 399.06169233921395,
+      "x": -126.41982110882658,
+      "y": 396.54109826678655,
       "rotation": 0,
       "radius": 13.428909804903604,
       "orbit_speed": 0.002488902696336484,
-      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
+      "anchor_id": "44719593-235d-49c5-8d26-417f0566a4c8",
       "anchor_tier": 1,
       "color": "#025669"
     },
     {
-      "id": "27080fa4-303a-4a51-a3a5-0dc1f63326aa",
+      "id": "2732aa2d-cd6b-497a-846e-1770923762a9",
       "name": "Jean U-52",
-      "x": -83.00835929493206,
-      "y": 42.13220404285565,
+      "x": -137.144101174291,
+      "y": 59.232889544353675,
       "rotation": 0,
       "radius": 2.731345885350358,
       "orbit_speed": -0.2727241298872463,
-      "anchor_id": "1b87a84a-8187-4833-9a13-efd4281728ec",
+      "anchor_id": "6d703591-b4bb-4b93-a558-a8fa59a3d80c",
       "anchor_tier": 2,
       "color": "#008FA9"
     },
     {
-      "id": "c1bfe541-c343-498c-82b9-fe04f9e9d302",
+      "id": "5cc64ae0-9bef-4286-bf55-66d5e1959d92",
       "name": "Prhasbadi S-9",
-      "x": 255.96721341632335,
-      "y": 187.96307849059477,
+      "x": 262.9912718096834,
+      "y": 231.15155774986914,
       "rotation": 0,
       "radius": 2.0541004330357544,
       "orbit_speed": 0.2729033322616926,
-      "anchor_id": "34f1150e-e49c-4206-8894-27133362a0e3",
+      "anchor_id": "15fe134b-2953-46f8-995c-21770065f6af",
       "anchor_tier": 2,
       "color": "#5BBAA9"
     },
     {
-      "id": "0e184ee7-ec98-4abb-82f4-3f02b47bebaa",
+      "id": "1127ef8e-f711-40ac-baeb-a36bfd93e860",
       "name": "Shintaro",
-      "x": 271.2949815871733,
-      "y": 187.2596767621969,
+      "x": 294.90331012840926,
+      "y": 217.54294880179378,
       "rotation": 0,
       "radius": 2.6645882311621167,
       "orbit_speed": 0.14050656812820603,
-      "anchor_id": "34f1150e-e49c-4206-8894-27133362a0e3",
+      "anchor_id": "15fe134b-2953-46f8-995c-21770065f6af",
       "anchor_tier": 2,
       "color": "#fd151b"
     },
     {
-      "id": "cb9b9197-1fd8-4996-a52d-50fad152a065",
+      "id": "0ff055f2-8087-4574-a5fe-c0ebceb1eeb1",
       "name": "Vênus W-3",
-      "x": 201.1573662385149,
-      "y": 170.88018315592862,
+      "x": 255.55002631834296,
+      "y": 138.92778107016525,
       "rotation": 0,
       "radius": 2.6758008810472544,
       "orbit_speed": 0.08221065044449229,
-      "anchor_id": "34f1150e-e49c-4206-8894-27133362a0e3",
+      "anchor_id": "15fe134b-2953-46f8-995c-21770065f6af",
       "anchor_tier": 2,
       "color": "#0D57AC"
     },
     {
-      "id": "4408f114-e009-46c2-82a9-082eab4bec67",
+      "id": "4e3a0091-f860-4e60-8139-2ac705765e7c",
       "name": "Päike RV-65",
-      "x": -99.71058566723619,
-      "y": 426.87128728936875,
+      "x": -106.62381908989295,
+      "y": 369.63039450461457,
       "rotation": 0,
       "radius": 2.360387582284792,
       "orbit_speed": -0.23191783018154247,
-      "anchor_id": "c2add3c4-1e71-4249-aa27-9e46625bfaac",
+      "anchor_id": "23d5b715-7260-423a-a7a6-632d2e27ee95",
       "anchor_tier": 2,
       "color": "#F5B0A1"
     }
@@ -116,133 +116,133 @@
   "asteroids": [],
   "minerals": [
     {
-      "x": -76.41473797221703,
-      "y": 217.0866694115734,
-      "id": "ca35cede-25ac-4d5c-ab13-25764c466771",
+      "x": 209.17133145524556,
+      "y": -56.82705762388279,
+      "id": "6ac2d5fe-d002-44fc-a071-da2b0af60db1",
       "radius": 2,
       "value": 100,
       "rarity": "Common",
       "color": "#b87333"
     },
     {
-      "x": 207.1867821107971,
-      "y": -13.216847943689153,
-      "id": "246009bf-924a-4cf4-8cc2-8efff254e0e9",
-      "radius": 2,
-      "value": 100,
-      "rarity": "Common",
-      "color": "#b87333"
-    },
-    {
-      "x": -142.74776458267544,
-      "y": -166.44669759917886,
-      "id": "646e13be-7884-44e9-aa93-f50a7488087d",
+      "x": 13.01185435427622,
+      "y": 222.76964161865584,
+      "id": "04fc67c2-0331-43e4-95d5-b1c603b636e5",
       "radius": 1.5,
       "value": 200,
       "rarity": "Uncommon",
       "color": "#c0c0c0"
     },
     {
-      "x": -178.29119644465032,
-      "y": -131.84181577730607,
-      "id": "c0875bb5-040c-43ff-92a9-184601ed8bcd",
+      "x": 24.253425832961575,
+      "y": 222.3916977806876,
+      "id": "8201db83-75dc-4733-a1cb-600aca0391c8",
       "radius": 2,
       "value": 100,
       "rarity": "Common",
       "color": "#b87333"
     },
     {
-      "x": -211.4158742831691,
-      "y": -73.79468231464931,
-      "id": "855d6939-ca36-462a-9b6c-0833807fa126",
+      "x": 62.44304179646034,
+      "y": 215.97202355847668,
+      "id": "5cb8be84-df12-45d6-9c2e-e310bd7cad8e",
       "radius": 1.5,
       "value": 200,
       "rarity": "Uncommon",
       "color": "#c0c0c0"
     },
     {
-      "x": -198.56148541587936,
-      "y": -101.0501314042123,
-      "id": "22f8c553-ccad-4f83-b3bd-b8e78b68c51e",
+      "x": -219.74054420936923,
+      "y": 7.050951483721209,
+      "id": "4813b3b2-e1bf-474c-a35c-626e73e9b965",
       "radius": 2,
       "value": 100,
       "rarity": "Common",
       "color": "#b87333"
     },
     {
-      "x": -176.36648897362616,
-      "y": 127.31236035632851,
-      "id": "863ed415-0596-4fd0-b41f-e58dfbf44ac0",
+      "x": 122.56041028016001,
+      "y": 181.5774781838811,
+      "id": "350bbde4-89cb-4065-9d25-8d6cecac95af",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": 65.44548833990204,
+      "y": -202.9856507695866,
+      "id": "5d97f943-2405-449d-88d3-5984f48ddb9b",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": -65.9600330027199,
+      "y": 202.00857174048141,
+      "id": "fb3aca66-1164-46dd-b5c7-612462dc5984",
+      "radius": 1.5,
+      "value": 200,
+      "rarity": "Uncommon",
+      "color": "#c0c0c0"
+    },
+    {
+      "x": 25.044707378126752,
+      "y": -218.98902532690406,
+      "id": "e38c3f3a-39e2-4e37-97c1-9cdf3d8fe994",
+      "radius": 2,
+      "value": 100,
+      "rarity": "Common",
+      "color": "#b87333"
+    },
+    {
+      "x": -25.377945659932205,
+      "y": -206.167682021505,
+      "id": "0a468143-3bfc-41c6-ba2b-45b9452ec11e",
       "radius": 1,
       "value": 300,
       "rarity": "Rare",
       "color": "#ffd700"
-    },
-    {
-      "x": -15.120025617879406,
-      "y": 216.50945303638775,
-      "id": "9cd8345f-a60e-45e4-ac51-7a38afd7b2be",
-      "radius": 1.5,
-      "value": 200,
-      "rarity": "Uncommon",
-      "color": "#c0c0c0"
-    },
-    {
-      "x": 223.99147389462027,
-      "y": 29.705691607245527,
-      "id": "082914ca-9564-4c74-ada1-8eb93b4bbf4e",
-      "radius": 1.5,
-      "value": 200,
-      "rarity": "Uncommon",
-      "color": "#c0c0c0"
-    },
-    {
-      "x": 203.07586999881212,
-      "y": -52.760036633112485,
-      "id": "973639c6-8fb2-4822-aec8-7e22d370081f",
-      "radius": 1.5,
-      "value": 200,
-      "rarity": "Uncommon",
-      "color": "#c0c0c0"
     }
   ],
   "asteroid_belts": [
     {
-      "id": "5a3fdb9a-b74c-4129-91a6-16cc253ad5b6",
+      "id": "56bb4df1-de16-4074-8549-97a1da1693b6",
       "x": 0,
       "y": 0,
-      "rotation": 0.18048600000000023,
+      "rotation": 0.13081200000000062,
       "radius": 217.98705705579474,
       "width": 16.62828109910906,
       "count": 200,
       "orbit_speed": 0.006,
-      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
+      "anchor_id": "44719593-235d-49c5-8d26-417f0566a4c8",
       "anchor_tier": 0,
       "scale_mod": 1
     },
     {
-      "id": "d436f3d4-6700-4475-851a-d227100567bc",
+      "id": "cd9b378e-de77-4981-b348-13987ec8d012",
       "x": 0,
       "y": 0,
-      "rotation": 0.12032399999999933,
+      "rotation": 0.08720799999999963,
       "radius": 214.98705705579474,
       "width": 15.62828109910906,
       "count": 100,
       "orbit_speed": 0.004,
-      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
+      "anchor_id": "44719593-235d-49c5-8d26-417f0566a4c8",
       "anchor_tier": 0,
       "scale_mod": 2
     },
     {
-      "id": "beca1e01-c4c1-431e-95b3-f049249a3d87",
+      "id": "71b4ae0b-5238-43fe-8664-c1670116c141",
       "x": 0,
       "y": 0,
-      "rotation": 0.24064799999999867,
+      "rotation": 0.17441599999999927,
       "radius": 222.98705705579474,
       "width": 14.961614432442394,
       "count": 400,
       "orbit_speed": 0.008,
-      "anchor_id": "9d68121a-988f-402c-badc-481c9893b39f",
+      "anchor_id": "44719593-235d-49c5-8d26-417f0566a4c8",
       "anchor_tier": 0,
       "scale_mod": 0.5
     }
@@ -250,14 +250,14 @@
   "ships": [
     {
       "id": "5a05f37c-3526-4352-ae80-029622d36e5e",
-      "x": 226.99294936538377,
-      "y": 214.16795881167008,
+      "x": 240.8781566988872,
+      "y": 202.25548825735143,
       "hp": 100,
       "hp_effects": [],
       "max_hp": 100,
       "acc_periodic_dmg": 0,
       "acc_periodic_heal": 0,
-      "rotation": 3.141592653589793,
+      "rotation": -1.5707963267948966,
       "radius": 1,
       "color": "#DE4C0A",
       "docked_at": null,
@@ -269,7 +269,7 @@
         {
           "id": "4e1d833a-b37f-4ff8-a140-bd4b9ceb9ba5",
           "index": 0,
-          "quantity": 100,
+          "quantity": 200,
           "value": 100,
           "stackable": false,
           "player_owned": false,
@@ -279,7 +279,7 @@
         {
           "id": "4f5f42e4-14a3-4b45-a531-1acb87bd8b81",
           "index": 1,
-          "quantity": 50,
+          "quantity": 100,
           "value": 200,
           "stackable": false,
           "player_owned": false,
@@ -289,7 +289,7 @@
         {
           "id": "cc16ac1c-6a34-4a6c-a629-50347ff67e77",
           "index": 2,
-          "quantity": 5,
+          "quantity": 10,
           "value": 500,
           "stackable": false,
           "player_owned": false,
@@ -299,7 +299,7 @@
         {
           "id": "0ef7138c-aef3-468c-9dd5-e15dcce796db",
           "index": 3,
-          "quantity": 500,
+          "quantity": 1000,
           "value": 45,
           "stackable": false,
           "player_owned": false,
@@ -309,7 +309,7 @@
         {
           "id": "4ec52f9e-5444-4b49-b966-6e20de8de6f8",
           "index": 4,
-          "quantity": 100,
+          "quantity": 200,
           "value": 150,
           "stackable": false,
           "player_owned": false,
@@ -319,7 +319,7 @@
         {
           "id": "d1b59f23-7a16-430f-9af0-507239cff078",
           "index": 5,
-          "quantity": 50,
+          "quantity": 100,
           "value": 225,
           "stackable": false,
           "player_owned": false,
@@ -331,7 +331,7 @@
   ],
   "players": [
     {
-      "id": "eddf4d27-5468-4d6c-a6f5-f108875e16f5",
+      "id": "31af39fd-4670-43a4-ba1d-64d952479099",
       "is_bot": false,
       "ship_id": "5a05f37c-3526-4352-ae80-029622d36e5e",
       "name": "Malcoriel",
@@ -347,13 +347,13 @@
       "respawn_ms_left": 0
     }
   ],
-  "milliseconds_remaining": 5909919,
+  "milliseconds_remaining": 5918198,
   "paused": false,
   "leaderboard": {
     "rating": [
       [
         {
-          "id": "eddf4d27-5468-4d6c-a6f5-f108875e16f5",
+          "id": "31af39fd-4670-43a4-ba1d-64d952479099",
           "is_bot": false,
           "ship_id": "5a05f37c-3526-4352-ae80-029622d36e5e",
           "name": "Malcoriel",
@@ -373,10 +373,283 @@
     ],
     "winner": "Malcoriel"
   },
-  "ticks": 30507,
-  "disable_hp_effects": true,
+  "ticks": 22100,
+  "disable_hp_effects": false,
   "market": {
     "wares": {},
-    "prices": {}
+    "prices": {
+      "6d703591-b4bb-4b93-a558-a8fa59a3d80c": {
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        }
+      },
+      "1127ef8e-f711-40ac-baeb-a36bfd93e860": {
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        }
+      },
+      "5cc64ae0-9bef-4286-bf55-66d5e1959d92": {
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        }
+      },
+      "15fe134b-2953-46f8-995c-21770065f6af": {
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        }
+      },
+      "23d5b715-7260-423a-a7a6-632d2e27ee95": {
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        }
+      },
+      "2732aa2d-cd6b-497a-846e-1770923762a9": {
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        }
+      },
+      "0ff055f2-8087-4574-a5fe-c0ebceb1eeb1": {
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        }
+      },
+      "4e3a0091-f860-4e60-8139-2ac705765e7c": {
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        }
+      }
+    }
   }
 }

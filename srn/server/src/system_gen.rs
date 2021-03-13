@@ -5,7 +5,7 @@ use crate::random_stuff::{
     SAT_NAMES,
 };
 use crate::world::{AsteroidBelt, GameState, Planet, Star, GameMode};
-use crate::market::{Market};
+use crate::market::{Market, init_all_planets_market};
 use chrono::Utc;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -275,6 +275,7 @@ pub fn seed_personal_state(client_id: Uuid, mode: &GameMode) -> GameState {
         }
         GameMode::CargoRush => {
             let mut state = system_gen(client_id.to_string());
+            init_all_planets_market(&mut state);
             state.id = client_id;
             state
         }

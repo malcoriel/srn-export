@@ -35,6 +35,17 @@ pub struct TradeAction {
     pub buys_from_planet: Vec<(InventoryItemType, i32)>,
 }
 
+pub fn init_planet_market(state: &mut GameState, planet_id: Uuid) {
+    state.market.prices.entry(planet_id).or_insert(make_default_prices());
+}
+
+pub fn init_all_planets_market(state: &mut GameState) {
+    let ids = state.planets.iter().map(|p| p.id.clone()).collect::<Vec<_>>();
+    for planet_id in ids {
+        init_planet_market(state, planet_id);
+    }
+}
+
 pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
     let mut planet_inventory = state.market.wares.entry(act.planet_id).or_insert(vec![]).clone();
     let planet_prices = &state.market.prices.entry(act.planet_id).or_insert(make_default_prices()).clone();

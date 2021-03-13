@@ -25,7 +25,7 @@ use crate::random_stuff::{
 };
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::market::{Market};
+use crate::market::{Market, init_all_planets_market};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -443,7 +443,9 @@ pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
     } else {
         random_hex_seed()
     };
-    gen_state_by_seed(seed_and_validate, seed)
+    let mut state = gen_state_by_seed(seed_and_validate, seed);
+    init_all_planets_market(&mut state);
+    state
 }
 
 pub fn random_hex_seed() -> String {
