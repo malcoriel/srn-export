@@ -54,21 +54,21 @@ const doBuildServer = async () => {
         -v target:/home/rust/src/target \
         ekidd/rust-musl-builder \
         /bin/bash -c "sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target; cargo build --release;"\
-        `,
+        `
     );
     await fs.mkdirp('server/target/x86_64-unknown-linux-musl/release');
     await spawnWatched(
-      'docker cp rust-builder:/home/rust/src/target/x86_64-unknown-linux-musl/release/ ./server/target/x86_64-unknown-linux-musl/',
+      'docker cp rust-builder:/home/rust/src/target/x86_64-unknown-linux-musl/release/ ./server/target/x86_64-unknown-linux-musl/'
     );
     await spawnWatched('docker rm -f rust-builder > /dev/null || true');
 
     console.log('packing into docker...');
     const { fullImageName, builtImagePath } = makeServerPaths(
       version,
-      gitVersion,
+      gitVersion
     );
     await spawnWatched(
-      `cd server && docker build . -t ${fullImageName} -t ${latestServerImageName}`,
+      `cd server && docker build . -t ${fullImageName} -t ${latestServerImageName}`
     );
 
     console.log('exporting image to file...');
@@ -92,7 +92,7 @@ const doPushServer = async () => {
     const remoteImagePath = makeRemoteImagePath(fullImageNamePathFriendly);
 
     await spawnWatched(
-      `scp -P ${sshPort} ${builtImagePath} ${sshHost}:${remoteImagePath}`,
+      `scp -P ${sshPort} ${builtImagePath} ${sshHost}:${remoteImagePath}`
     );
 
     console.log('importing image remotely', {
@@ -105,7 +105,7 @@ const doPushServer = async () => {
     const sshBase = `ssh -p ${sshPort} ${sshHost}`;
     await spawnWatched(`${sshBase} docker load -i ${remoteImagePath}`);
     await spawnWatched(
-      `${sshBase} docker tag ${latestServerImageName} ${fullImageName} `,
+      `${sshBase} docker tag ${latestServerImageName} ${fullImageName} `
     );
   } catch (e) {
     console.error(e);
@@ -127,7 +127,7 @@ const doPushClient = async () => {
     const remoteImagePath = makeRemoteImagePath(fullImageNamePathFriendly);
 
     await spawnWatched(
-      `scp -P ${sshPort} ${builtImagePath} ${sshHost}:${remoteImagePath}`,
+      `scp -P ${sshPort} ${builtImagePath} ${sshHost}:${remoteImagePath}`
     );
 
     console.log('importing image remotely', {
@@ -140,7 +140,7 @@ const doPushClient = async () => {
     const sshBase = `ssh -p ${sshPort} ${sshHost}`;
     await spawnWatched(`${sshBase} docker load -i ${remoteImagePath}`);
     await spawnWatched(
-      `${sshBase} docker tag ${latestServerImageName} ${fullImageName} `,
+      `${sshBase} docker tag ${latestServerImageName} ${fullImageName} `
     );
   } catch (e) {
     console.error(e);
@@ -158,10 +158,10 @@ const doRemoteRestartServer = async () => {
     const sshBase = `ssh -p ${sshPort} ${sshHost}`;
     // kill existing image
     await spawnWatched(
-      `${sshBase} docker rm -f ${serverContainerName} || true`,
+      `${sshBase} docker rm -f ${serverContainerName} || true`
     );
     await spawnWatched(
-      `${sshBase} docker run -d -p 2794:2794 -p 2795:2795 -p 8000:8000 --restart=always --name=${serverContainerName} ${latestServerImageName}`,
+      `${sshBase} docker run -d -p 2794:2794 -p 2795:2795 -p 8000:8000 --restart=always --name=${serverContainerName} ${latestServerImageName}`
     );
   } catch (e) {
     console.error(e);
@@ -180,10 +180,10 @@ const doRemoteRestartClient = async () => {
     const sshBase = `ssh -p ${sshPort} ${sshHost}`;
     // kill existing image
     await spawnWatched(
-      `${sshBase} docker rm -f ${clientContainerName} || true`,
+      `${sshBase} docker rm -f ${clientContainerName} || true`
     );
     await spawnWatched(
-      `${sshBase} docker run -d -p 3000:3000 --restart=always --name=${clientContainerName} ${latestClientImageName}`,
+      `${sshBase} docker run -d -p 3000:3000 --restart=always --name=${clientContainerName} ${latestClientImageName}`
     );
   } catch (e) {
     console.error(e);
@@ -196,23 +196,23 @@ const doBuildClient = async () => {
     console.log('building client', { gitVersion, version });
 
     console.log('building wasm...');
-    await spawnWatched('cd world; wasm-pack build --release || exit 1;');
+    await spawnWatched('yarn wasm-pack');
     console.log('building client...');
     await spawnWatched('cd client; yarn build;');
 
     console.log('building docker image...');
     const { fullImageName, builtImagePath } = makeClientPaths(
       version,
-      gitVersion,
+      gitVersion
     );
     await spawnWatched(
-      `cd client && docker build . -t ${fullImageName} -t ${latestClientImageName}`,
+      `cd client && docker build . -t ${fullImageName} -t ${latestClientImageName}`
     );
 
     console.log('exporting image to file...');
     await fs.mkdirp('client/docker-image');
     await spawnWatched(
-      `docker save ${latestClientImageName} > ${builtImagePath}`,
+      `docker save ${latestClientImageName} > ${builtImagePath}`
     );
   } catch (e) {
     console.error(e);
@@ -230,25 +230,25 @@ const doBuildClient = async () => {
           await doBuildServer();
           await doPushServer();
           await doRemoteRestartServer();
-        },
+        }
       )
       .command(
         'build-server',
         'only build docker image and export it to file',
         (args) => args,
-        doBuildServer,
+        doBuildServer
       )
       .command(
         'push-server',
         'pushes the server image to remote & tags it',
         (args) => args,
-        doPushServer,
+        doPushServer
       )
       .command(
         'remote-restart-server',
         'restarts the currently running server',
         (args) => args,
-        doRemoteRestartServer,
+        doRemoteRestartServer
       )
       .command(
         'client',
@@ -258,29 +258,29 @@ const doBuildClient = async () => {
           await doBuildClient();
           await doPushClient();
           await doRemoteRestartClient();
-        },
+        }
       )
       .command(
         'build-client',
         'builds the client',
         (args) => args,
-        doBuildClient,
+        doBuildClient
       )
       .command(
         'push-client',
         'pushes the client image to remote and tags it',
         (args) => args,
-        doPushClient,
+        doPushClient
       )
       .command(
         'remote-restart-client',
         'restarts the currently running client',
         (args) => args,
-        doRemoteRestartClient,
+        doRemoteRestartClient
       )
       .demandCommand()
       .parse();
   } catch (e) {
     console.error(e);
   }
-}());
+})();
