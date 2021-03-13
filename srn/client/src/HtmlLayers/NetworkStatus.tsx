@@ -43,8 +43,8 @@ export const NetworkStatus: React.FC = () => {
       noLeft
       className="network-status"
       contentClassName="network-status-content"
-      height={30}
-      width={240}
+      height={25}
+      width={212}
     >
       <span className="fps" title="frames per second">
         {fps ? (

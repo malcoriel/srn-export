@@ -9,9 +9,8 @@
 .network-status-content {
   display: flex;
   align-items: center;
-  padding: 0;
+  padding: 5px;
   justify-content: space-around;
-
   & > * {
     flex: 1 0;
   }

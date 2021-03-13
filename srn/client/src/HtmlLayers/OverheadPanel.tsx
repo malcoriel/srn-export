@@ -35,8 +35,8 @@ export const OverheadPanel = () => {
   return (
     <div className="overhead-panel-container">
       <StyledRect
-        height={50}
-        width={80}
+        height={44}
+        width={100}
         line="thin"
         halfThick
         noTop
