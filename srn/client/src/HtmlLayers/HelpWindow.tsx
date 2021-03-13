@@ -15,6 +15,7 @@ export const HelpWindow = () => {
       thickness={10}
       storeKey="helpWindow"
       className="help-window"
+      contentClassName="help-window-content"
     >
       <div>
         <div className="header">Controls help</div>

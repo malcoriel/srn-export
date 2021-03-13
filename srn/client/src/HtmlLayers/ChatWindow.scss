@@ -1,6 +1,8 @@
 @import "../utils/palette";
+
 .chat-window {
- height: 380px;
+  padding: 10px;
+  height: calc(100% - 20px);
 
   .tabs {
     height: 100%;

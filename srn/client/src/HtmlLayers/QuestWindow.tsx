@@ -70,6 +70,7 @@ export const QuestWindow = () => {
           </div>
         )
       }
+      contentClassName="quest-window-content"
     >
       <div className="header">
         Active quest: <span className="description">Cargo delivery</span>
