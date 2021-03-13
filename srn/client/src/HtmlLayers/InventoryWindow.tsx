@@ -9,7 +9,7 @@ const MIN_ROWS = 5;
 const COLUMNS = 5;
 const WINDOW_MARGIN = 10;
 
-const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS);
+const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2 + 1;
 const WINDOW_WIDTH = cellsToPixels(COLUMNS) + SCROLL_OFFSET;
 const EXTRA_ROWS = 3;
 

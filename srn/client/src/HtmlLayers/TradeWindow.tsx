@@ -11,9 +11,9 @@ const MIN_ROWS = 5;
 const COLUMNS = 11;
 const WINDOW_MARGIN = 10;
 
-const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2;
+const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2 + 1;
 
-const WINDOW_WIDTH = cellsToPixels(COLUMNS) + SCROLL_OFFSET;
+const WINDOW_WIDTH = cellsToPixels(COLUMNS) + SCROLL_OFFSET + 1;
 const EXTRA_ROWS = 3;
 
 const selectWares = (market: Market, planetId: string) => {
@@ -99,29 +99,31 @@ export const TradeWindow = () => {
       onClose={onCloseTradeWindow}
     >
       <div className="trade-window">
-        <ItemGrid
-          items={[
-            ...selectPlayerItems(ns.state),
-            ...selectWares(ns.state.market, planetId),
-          ]}
-          injectedGrid={
-            <>
-              <div
-                className="item-grid grid-green"
-                style={{ width: cellsToPixels(5) }}
-              />
-              <div
-                className="item-grid grid-red"
-                style={{ width: cellsToPixels(5), left: cellsToPixels(6) }}
-              />
-            </>
-          }
-          columnCount={COLUMNS}
-          extraRows={EXTRA_ROWS}
-          minRows={MIN_ROWS}
-          tradeMode={[5, 1, 5]}
-          onMove={onMove}
-        />
+        <div className="trade-window-padded-content">
+          <ItemGrid
+            items={[
+              ...selectPlayerItems(ns.state),
+              ...selectWares(ns.state.market, planetId),
+            ]}
+            injectedGrid={
+              <>
+                <div
+                  className="item-grid grid-green"
+                  style={{ width: cellsToPixels(5) }}
+                />
+                <div
+                  className="item-grid grid-red"
+                  style={{ width: cellsToPixels(5), left: cellsToPixels(6) }}
+                />
+              </>
+            }
+            columnCount={COLUMNS}
+            extraRows={EXTRA_ROWS}
+            minRows={MIN_ROWS}
+            tradeMode={[5, 1, 5]}
+            onMove={onMove}
+          />
+        </div>
       </div>
     </Window>
   );

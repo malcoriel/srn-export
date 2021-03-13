@@ -198,11 +198,15 @@ export const ItemGrid: React.FC<{
     [tradeMode, onMove, startMove, byId]
   );
 
-  const contentHeight = cellsToPixels(rowCount);
+  const contentHeight = cellsToPixels(rowCount) + 0.5;
   const contentWidth = cellsToPixels(columnCount);
   return (
     <WithScrollbars noAutoHide>
-      {injectedGrid}
+      {injectedGrid ? (
+        <div style={{ height: contentHeight, position: 'absolute' }}>
+          {injectedGrid}
+        </div>
+      ) : null}
       <div
         className={classNames({
           content: true,
