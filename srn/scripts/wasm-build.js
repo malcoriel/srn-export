@@ -1,6 +1,6 @@
 const { spawnWatched } = require('../../core/util/shellspawn');
 const fs = require('fs-extra');
-
+const isWin = process.platform === 'win32';
 (async function () {
   console.log('Fixing typescript definitions...');
   await spawnWatched(
@@ -11,14 +11,13 @@ const fs = require('fs-extra');
       },
     }
   );
+  const mainBuildCommand =
+    'wasm-bindgen target/wasm32-unknown-unknown/debug/world.wasm --typescript --out-dir pkg-bindgen';
   await spawnWatched(
-    'wasm-bindgen target/wasm32-unknown-unknown/debug/world.wasm --typescript --out-dir pkg-bindgen',
+    isWin ? mainBuildCommand : `bash -c "${mainBuildCommand}"`,
     {
       spawnOptions: {
         cwd: 'world',
-        env: {
-          WASM32: 1,
-        },
       },
     }
   );
