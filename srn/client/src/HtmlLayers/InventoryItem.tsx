@@ -1,13 +1,14 @@
 import React, { useRef } from 'react';
 import Draggable from 'react-draggable';
 import { IVector } from '../utils/Vector';
-import { InventoryItem, InventoryItemType } from '../world';
+import { InventoryItem, InventoryItemType, Price } from '../world';
 import { ITEM_CELL_MARGIN, OnDragEmpty } from './ItemGrid';
 import { common, gray, rare, uncommon } from '../utils/palette';
 import MineralSvg from './ui/MineralSvg';
 import BoxPng from '../../public/resources/box.png';
 import { Tooltip } from './ui/Tooltip';
 import { UnreachableCaseError } from 'ts-essentials';
+import NetState from '../NetState';
 
 const getDisplayName = (iit: InventoryItemType): string => {
   switch (iit) {
@@ -77,6 +78,7 @@ export const ItemElem: React.FC<{
   defaultPosition?: IVector;
   maxY: number;
   maxX: number;
+  tradeModePlanet?: string;
   item: InventoryItem;
   position?: IVector;
   onDragStop: (e: any, d: any) => void;
@@ -89,7 +91,10 @@ export const ItemElem: React.FC<{
   onDragStop,
   defaultPosition,
   maxX,
+  tradeModePlanet,
 }) => {
+  const ns = NetState.get();
+  if (!ns) return null;
   const bounds = {
     left: -ITEM_CELL_MARGIN,
     top: ITEM_CELL_MARGIN + 0.5,
@@ -98,6 +103,13 @@ export const ItemElem: React.FC<{
   };
 
   const itemRef = useRef(null);
+  let price: Price | undefined;
+  if (tradeModePlanet) {
+    const planetPrices = ns.state.market.prices[tradeModePlanet];
+    if (planetPrices) {
+      price = planetPrices[item.item_type];
+    }
+  }
 
   return (
     <>
@@ -115,10 +127,17 @@ export const ItemElem: React.FC<{
           )}
         </div>
       </Draggable>
-      <Tooltip ref={itemRef} width={150} height={46}>
+      <Tooltip ref={itemRef} width={150} height={price ? 76 : 46}>
         <>
           <div>{getDisplayName(item.item_type)}</div>
           <div>Base value: {item.value}</div>
+          {price ? (
+            <>
+              {/* Sell and buy are planet's */}
+              <div>Buy here: {price.sell}</div>
+              <div>Sell here: {price.buy}</div>
+            </>
+          ) : null}
         </>
       </Tooltip>
     </>

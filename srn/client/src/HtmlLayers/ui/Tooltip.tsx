@@ -25,8 +25,7 @@ export const Tooltip: React.ForwardRefExoticComponent<
           {children}
         </StyledRect>
       }
-      followCursor
-      plugins={[followCursor]}
+      duration={[0, 0]}
       // @ts-ignore
       reference={forwardRef}
     />

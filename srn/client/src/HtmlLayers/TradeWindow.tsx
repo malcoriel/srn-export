@@ -120,7 +120,7 @@ export const TradeWindow = () => {
             columnCount={COLUMNS}
             extraRows={EXTRA_ROWS}
             minRows={MIN_ROWS}
-            tradeMode={[5, 1, 5]}
+            tradeMode={{ columnParams: [5, 1, 5], planetId }}
             onMove={onMove}
           />
         </div>

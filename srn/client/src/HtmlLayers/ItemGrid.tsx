@@ -86,10 +86,10 @@ const positionItemsInGroup = (
 export const positionItems = (
   items: InventoryItem[],
   width: number,
-  tradeMode?: [number, number, number]
+  tradeMode?: TradeModeParams
 ): Record<string, IVector> => {
   if (tradeMode) {
-    const groups = splitGroups(tradeMode);
+    const groups = splitGroups(tradeMode.columnParams);
     return {
       ...positionItemsInGroup(
         items.filter((i) => i.player_owned),
@@ -127,10 +127,10 @@ export type OnMove = (ev: MoveEvent) => void;
 const getMoveKind = (
   startMove: IVector,
   endMove: IVector,
-  tradeMode: [number, number, number] | undefined
+  tradeMode?: TradeModeParams
 ): ItemMoveKind => {
   if (!tradeMode) return ItemMoveKind.Move;
-  const groups = splitGroups(tradeMode);
+  const groups = splitGroups(tradeMode.columnParams);
   if (isInGroup(startMove, groups[0]) && isInGroup(endMove, groups[2])) {
     return ItemMoveKind.Sell;
   }
@@ -143,6 +143,10 @@ const getMoveKind = (
   return ItemMoveKind.Move;
 };
 
+type TradeModeParams = {
+  columnParams: [number, number, number];
+  planetId: string;
+};
 export const ItemGrid: React.FC<{
   columnCount: number;
   onMove?: OnMove;
@@ -150,7 +154,7 @@ export const ItemGrid: React.FC<{
   minRows: number;
   extraRows: number;
   injectedGrid?: ReactNode;
-  tradeMode?: [number, number, number];
+  tradeMode?: TradeModeParams;
 }> = ({
   onMove,
   injectedGrid,
@@ -228,6 +232,7 @@ export const ItemGrid: React.FC<{
               item={item}
               position={pos}
               onDragStop={onDragStop(item.id)}
+              tradeModePlanet={tradeMode?.planetId}
             />
           );
         })}
