@@ -198,7 +198,7 @@ const doBuildClient = async () => {
     console.log('building wasm...');
     await spawnWatched('yarn wasm-pack');
     console.log('building client...');
-    await spawnWatched('cd client; yarn build;');
+    await spawnWatched('cd client; yarn install; yarn build;');
 
     console.log('building docker image...');
     const { fullImageName, builtImagePath } = makeClientPaths(
