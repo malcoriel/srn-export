@@ -41,14 +41,16 @@ export const HoverHintWindow: React.FC = () => {
       >
         <StyledRect
           width={150}
-          height={47}
+          height={50}
           line="complex"
           thickness={2}
           contentClassName="content"
         >
-          <div className="header">Valuable mineral</div>
-          <div>
-            Rarity: <span className={rarityClass}>{rarityClass}</span>
+          <div className="hover-hint-window-content">
+            <div className="header">Valuable mineral</div>
+            <div>
+              Rarity: <span className={rarityClass}>{rarityClass}</span>
+            </div>
           </div>
         </StyledRect>
       </div>

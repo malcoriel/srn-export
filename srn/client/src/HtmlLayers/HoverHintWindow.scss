@@ -8,6 +8,11 @@
   font-size: 12px;
   line-height: 14px;
 
+  .hover-hint-window-content {
+    padding: 5px;
+    height: calc(100% - 10px);
+  }
+
   .content {
     .header {
       font-size: 14px;
