@@ -1,0 +1,9 @@
+@import "../../utils/palette";
+
+.ui-tooltip {
+  color: $teal;
+  background: black;
+  opacity: 0.9;
+  padding: 5px;
+  height: calc(100% - 10px);
+}

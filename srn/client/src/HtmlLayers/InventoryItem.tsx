@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import Draggable from 'react-draggable';
 import { IVector } from '../utils/Vector';
 import { InventoryItem, InventoryItemType } from '../world';
@@ -6,20 +6,55 @@ import { ITEM_CELL_MARGIN, OnDragEmpty } from './ItemGrid';
 import { common, gray, rare, uncommon } from '../utils/palette';
 import MineralSvg from './ui/MineralSvg';
 import BoxPng from '../../public/resources/box.png';
+import { Tooltip } from './ui/Tooltip';
+import { UnreachableCaseError } from 'ts-essentials';
 
-const itemTypeToColor = {
-  [InventoryItemType.Unknown]: gray,
-  [InventoryItemType.CommonMineral]: common,
-  [InventoryItemType.UncommonMineral]: uncommon,
-  [InventoryItemType.RareMineral]: rare,
-  [InventoryItemType.QuestCargo]: gray,
+const getDisplayName = (iit: InventoryItemType): string => {
+  switch (iit) {
+    case InventoryItemType.Food:
+      return 'Food';
+    case InventoryItemType.Medicament:
+      return 'Medicament';
+    case InventoryItemType.HandWeapon:
+      return 'Hand weapon';
+    case InventoryItemType.Unknown:
+      return 'Unknown item';
+    case InventoryItemType.CommonMineral:
+      return 'Common mineral';
+    case InventoryItemType.UncommonMineral:
+      return 'Uncommon mineral';
+    case InventoryItemType.RareMineral:
+      return 'Rare mineral';
+    case InventoryItemType.QuestCargo:
+      return 'Quest cargo';
+    default:
+      throw new UnreachableCaseError(iit);
+  }
 };
 
-const defaultColor = gray;
-
-const getColor = (iit: InventoryItemType): string => {
-  return itemTypeToColor[iit] || defaultColor;
+const getItemColor = (iit: InventoryItemType): string => {
+  switch (iit) {
+    case InventoryItemType.Food:
+      return common;
+    case InventoryItemType.Medicament:
+      return uncommon;
+    case InventoryItemType.HandWeapon:
+      return rare;
+    case InventoryItemType.Unknown:
+      return gray;
+    case InventoryItemType.CommonMineral:
+      return common;
+    case InventoryItemType.UncommonMineral:
+      return uncommon;
+    case InventoryItemType.RareMineral:
+      return rare;
+    case InventoryItemType.QuestCargo:
+      return rare;
+    default:
+      throw new UnreachableCaseError(iit);
+  }
 };
+
 const renderItem = (item: InventoryItem) => {
   if (item.item_type === InventoryItemType.QuestCargo) {
     return (
@@ -32,7 +67,7 @@ const renderItem = (item: InventoryItem) => {
     <MineralSvg
       width={50}
       height={50}
-      fillColor={getColor(item.item_type)}
+      fillColor={getItemColor(item.item_type)}
       strokeColor="#00000000"
     />
   );
@@ -62,18 +97,30 @@ export const ItemElem: React.FC<{
     bottom: maxY,
   };
 
+  const itemRef = useRef(null);
+
   return (
-    <Draggable
-      onStart={onDragStart || OnDragEmpty}
-      position={position}
-      onStop={onDragStop}
-      bounds={bounds}
-      defaultPosition={defaultPosition}
-    >
-      <div className="item-grid-item grabbable-invisible">
-        {renderItem(item)}
-        {item.quantity !== 1 && <div className="quantity">{item.quantity}</div>}
-      </div>
-    </Draggable>
+    <>
+      <Draggable
+        onStart={onDragStart || OnDragEmpty}
+        position={position}
+        onStop={onDragStop}
+        bounds={bounds}
+        defaultPosition={defaultPosition}
+      >
+        <div className="item-grid-item grabbable-invisible" ref={itemRef}>
+          {renderItem(item)}
+          {item.quantity !== 1 && (
+            <div className="quantity">{item.quantity}</div>
+          )}
+        </div>
+      </Draggable>
+      <Tooltip ref={itemRef} width={150} height={46}>
+        <>
+          <div>{getDisplayName(item.item_type)}</div>
+          <div>Base value: {item.value}</div>
+        </>
+      </Tooltip>
+    </>
   );
 };

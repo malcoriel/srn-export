@@ -200,12 +200,16 @@ export enum InventoryItemType {
   UncommonMineral = 'UncommonMineral',
   RareMineral = 'RareMineral',
   QuestCargo = 'QuestCargo',
+  Food = 'Food',
+  Medicament = 'Medicament',
+  HandWeapon = 'HandWeapon',
 }
 
 export type InventoryItem = {
   id: string;
   index: number;
   quantity: number;
+  value: number;
   stackable: boolean;
   player_owned: boolean;
   item_type: InventoryItemType;
