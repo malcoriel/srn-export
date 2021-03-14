@@ -372,13 +372,16 @@ module.exports = function (file, api) {
   return j(file.source)
     .find(j.ExportNamedDeclaration)
     .replaceWith((ex: ASTPath<ExportNamedDeclaration>) => {
+      console.log('replace');
       if (ex.value.declaration.type !== 'TSTypeAliasDeclaration') {
+        console.log('not an alias export');
         return ex.value;
       }
       const p = ex.value.declaration;
       const mainUnionName = getUnionName(p);
       if (!mainUnionName) {
         // not a union, not interesting
+        console.log('not a union');
         return ex.value;
       }
 
