@@ -22,6 +22,14 @@ export type InventoryActionMove = {
 
 export type InventoryAction = InventoryActionUnknown | InventoryActionSplit | InventoryActionMerge | InventoryActionMove;
 
+// start builder class InventoryActionBuilder
+import {
+  InventoryActionUnknown,
+  InventoryActionSplit,
+  InventoryActionMerge,
+  InventoryActionMove,
+} from "./world.d.ts";
+
 export class InventoryActionBuilder {
   static InventoryActionUnknown = (): InventoryActionUnknown => ({
     tag: "Unknown"

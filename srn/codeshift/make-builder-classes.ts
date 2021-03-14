@@ -2,6 +2,7 @@ import {
   ASTPath,
   ExportNamedDeclaration,
   Identifier,
+  ImportSpecifier,
   JSCodeshift,
   Property,
   TSPropertySignature,
@@ -114,6 +115,21 @@ const makeBuilderMethod = (
   });
 };
 
+const getImportedTypes = (
+  types: TSTypeKind[],
+  j: JSCodeshift
+): ImportSpecifier[] => {
+  return types.map((subType) => {
+    if (!isTsTypeReference(subType)) {
+      return null;
+    }
+    if (!isIdentifier(subType.typeName)) {
+      return null;
+    }
+    return j.importSpecifier(j.identifier(subType.typeName.name));
+  });
+};
+
 module.exports = function (file, api) {
   const j = api.jscodeshift;
   const typeMap: Record<string, TSTypeKind> = {};
@@ -140,43 +156,52 @@ module.exports = function (file, api) {
         const mainTypeName = typeName;
 
         const builderClassName = `${mainTypeName}Builder`;
-        return j.exportNamedDeclaration(
-          j.classDeclaration.from({
-            id: j.identifier(builderClassName),
+        return [
+          j.importDeclaration.from({
             comments: [
-              j.commentLine(
-                ` end builder class ${builderClassName}`,
-                false,
-                true
-              ),
+              j.commentLine(` start builder class ${builderClassName}`, true),
             ],
-            body: j.classBody(
-              union.types
-                .map((subType) => {
-                  if (!isTsTypeReference(subType)) {
-                    console.log('not reference');
-                    return null;
-                  }
-                  if (!isIdentifier(subType.typeName)) {
-                    return null;
-                  }
-                  return j.classProperty.from({
-                    key: j.identifier(subType.typeName.name),
-                    static: true,
-                    accessibility: 'public',
-                    declare: false,
-                    value: makeBuilderMethod(
-                      subType.typeName.name,
-                      typeMap,
-                      j,
-                      mainTypeName
-                    ),
-                  });
-                })
-                .filter((t) => !!t)
-            ),
-          })
-        );
+            importKind: 'value',
+            specifiers: getImportedTypes(union.types, j),
+            source: j.stringLiteral('./world.d.ts'),
+          }),
+          j.exportNamedDeclaration(
+            j.classDeclaration.from({
+              id: j.identifier(builderClassName),
+              comments: [
+                j.commentLine(
+                  ` end builder class ${builderClassName}`,
+                  false,
+                  true
+                ),
+              ],
+              body: j.classBody(
+                union.types
+                  .map((subType) => {
+                    if (!isTsTypeReference(subType)) {
+                      return null;
+                    }
+                    if (!isIdentifier(subType.typeName)) {
+                      return null;
+                    }
+                    return j.classProperty.from({
+                      key: j.identifier(subType.typeName.name),
+                      static: true,
+                      accessibility: 'public',
+                      declare: false,
+                      value: makeBuilderMethod(
+                        subType.typeName.name,
+                        typeMap,
+                        j,
+                        mainTypeName
+                      ),
+                    });
+                  })
+                  .filter((t) => !!t)
+              ),
+            })
+          ),
+        ];
       })
       .toSource()
       // there is some bug either in my code or in generators,

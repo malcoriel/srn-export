@@ -43,7 +43,7 @@ const isWin = process.platform === 'win32';
     'yarn jscodeshift -t codeshift/make-builder-classes.ts --extensions=ts world/pkg/world.d.ts'
   );
   const file = (await fs.readFile('world/pkg/world.d.ts')).toString();
-  const builderClassFinder = /export class (\w+)(?:.|\n|\r)*end builder class \1/gm;
+  const builderClassFinder = /\/\/ start builder class (\w+)(?:.|\n|\r)*export class \1(?:.|\n|\r)*end builder class \1/gm;
   const extracted = file.match(builderClassFinder);
   const fileWithNoClasses = file.replace(builderClassFinder, '');
   await fs.writeFile('world/pkg/world.d.ts', fileWithNoClasses);
