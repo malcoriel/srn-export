@@ -28,7 +28,6 @@ const InventoryWindowItems = () => {
   });
 
   const onMove = (moveAction: MoveEvent) => {
-    console.log({ moveAction });
     ns.sendInventoryAction(
       InventoryActionBuilder.InventoryActionMove({
         item: moveAction.item.id,

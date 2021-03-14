@@ -72,8 +72,25 @@ const positionItemsInGroup = (
   let row = 0;
   let column = 0;
   const res: Record<string, IVector> = {};
-  for (const item of items) {
-    res[item.id] = new Vector(shift + column, row);
+  const indexes = new Map();
+  for (const item of _.sortBy(items, (i) => i.index)) {
+    if (indexes.has(item.index)) {
+      console.warn(`Duplicate index ${item.index} for item ${item.id}`);
+    }
+    indexes.set(item.index, item.id);
+  }
+
+  const maxIndex = _.max(items.map((i) => i.index)) || -1;
+  if (maxIndex === -1 && items.length > 0) {
+    console.warn(
+      `No max index, probably there's a bug: ${JSON.stringify(items)}`
+    );
+    return res;
+  }
+  for (let i = 0; i < maxIndex + 1; i++) {
+    if (indexes.has(i)) {
+      res[indexes.get(i)] = new Vector(shift + column, row);
+    }
     column++;
     if (column >= width1) {
       column = 0;
@@ -148,6 +165,28 @@ type TradeModeParams = {
   columnParams: [number, number, number];
   planetId: string;
 };
+
+const calculateNewIndex = (
+  newPos: IVector,
+  tradeMode: TradeModeParams | undefined,
+  width: number
+): number => {
+  if (tradeMode) {
+    const groups = splitGroups(tradeMode.columnParams);
+    for (const group of groups) {
+      if (isInGroup(newPos, group)) {
+        return newPos.y * group.width + newPos.x - group.left;
+      }
+    }
+    console.warn(
+      'Bad groups + newPos - cannot calculate new index',
+      newPos,
+      tradeMode.columnParams
+    );
+  }
+  return newPos.y * width + newPos.x;
+};
+
 export const ItemGrid: React.FC<{
   columnCount: number;
   onMove?: OnMove;
@@ -190,7 +229,7 @@ export const ItemGrid: React.FC<{
           onMove({
             from: startMove,
             to: newPos,
-            newIndex: 0,
+            newIndex: calculateNewIndex(newPos, tradeMode, columnCount),
             kind: moveKind,
             item: byId[id],
           });
@@ -201,7 +240,7 @@ export const ItemGrid: React.FC<{
         };
       });
     },
-    [tradeMode, onMove, startMove, byId]
+    [tradeMode, onMove, startMove, byId, columnCount]
   );
 
   const contentHeight = cellsToPixels(rowCount) + 0.5;

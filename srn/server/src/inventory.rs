@@ -252,8 +252,46 @@ pub fn value_items_of_types(inventory: &Vec<InventoryItem>, types: &Vec<Inventor
     res
 }
 
+
+pub fn double_index_items(inventory: &Vec<InventoryItem>) -> (HashMap<i32, Uuid>, HashMap<Uuid, i32>) {
+    let mut by_index = HashMap::new();
+    let mut by_id = HashMap::new();
+    for item in inventory {
+        by_index.insert(item.index.clone(), item.id.clone());
+        by_id.insert(item.id.clone(), item.index.clone());
+    }
+    return (by_index, by_id);
+}
+
+pub fn index_items_by_id_mut(inventory: &mut Vec<InventoryItem>) -> HashMap<Uuid, &mut InventoryItem> {
+    let mut by_id = HashMap::new();
+    for item in inventory.iter_mut() {
+        by_id.insert(item.id.clone(), item);
+    }
+    return by_id;
+}
+
+
+
 pub fn apply_action(
     inventory: &mut Vec<InventoryItem>, action: InventoryAction
 ) {
-    eprintln!("{:?}", action);
+    match action {
+        InventoryAction::Unknown => {}
+        InventoryAction::Split { .. } => {}
+        InventoryAction::Merge { .. } => {}
+        InventoryAction::Move { item, index } => {
+            let (by_index, _by_id) = double_index_items(inventory);
+            let mut items = index_items_by_id_mut(inventory);
+            if let Some(mut moved_item) = items.get_mut(&item) {
+                if by_index.get(&index).is_some() {
+                    warn!(format!("Invalid move action {:?}, index {} already occupied", action, index));
+                } else if index < 0 {
+                    warn!(format!("Invalid move action {:?}, index {}<0", action, index));
+                } else {
+                    moved_item.index = index;
+                }
+            }
+        }
+    }
 }
