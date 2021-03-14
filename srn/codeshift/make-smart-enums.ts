@@ -1,5 +1,8 @@
 import {
   ASTPath,
+  ExportNamedDeclaration,
+  JSCodeshift,
+  ObjectTypeProperty,
   TSLiteralType,
   TSPropertySignature,
   TSTypeAliasDeclaration,
@@ -9,10 +12,268 @@ import {
 } from 'jscodeshift/src/core';
 
 import { IdentifierKind } from 'ast-types/gen/kinds';
+import {
+  AnyTypeAnnotationBuilder,
+  ArrayExpressionBuilder,
+  ArrayPatternBuilder,
+  ArrayTypeAnnotationBuilder,
+  ArrowFunctionExpressionBuilder,
+  AssignmentExpressionBuilder,
+  AssignmentPatternBuilder,
+  AwaitExpressionBuilder,
+  BigIntLiteralBuilder,
+  BigIntLiteralTypeAnnotationBuilder,
+  BigIntTypeAnnotationBuilder,
+  BinaryExpressionBuilder,
+  BindExpressionBuilder,
+  BlockBuilder,
+  BlockStatementBuilder,
+  BooleanLiteralBuilder,
+  BooleanLiteralTypeAnnotationBuilder,
+  BooleanTypeAnnotationBuilder,
+  BreakStatementBuilder,
+  CallExpressionBuilder,
+  CatchClauseBuilder,
+  ChainExpressionBuilder,
+  ClassBodyBuilder,
+  ClassDeclarationBuilder,
+  ClassExpressionBuilder,
+  ClassImplementsBuilder,
+  ClassMethodBuilder,
+  ClassPrivateMethodBuilder,
+  ClassPrivatePropertyBuilder,
+  ClassPropertyBuilder,
+  ClassPropertyDefinitionBuilder,
+  CommentBlockBuilder,
+  CommentLineBuilder,
+  ComprehensionBlockBuilder,
+  ComprehensionExpressionBuilder,
+  ConditionalExpressionBuilder,
+  ContinueStatementBuilder,
+  DebuggerStatementBuilder,
+  DeclareClassBuilder,
+  DeclaredPredicateBuilder,
+  DeclareExportAllDeclarationBuilder,
+  DeclareExportDeclarationBuilder,
+  DeclareFunctionBuilder,
+  DeclareInterfaceBuilder,
+  DeclareModuleBuilder,
+  DeclareModuleExportsBuilder,
+  DeclareOpaqueTypeBuilder,
+  DeclareTypeAliasBuilder,
+  DeclareVariableBuilder,
+  DecoratorBuilder,
+  DirectiveBuilder,
+  DirectiveLiteralBuilder,
+  DoExpressionBuilder,
+  DoWhileStatementBuilder,
+  EmptyStatementBuilder,
+  EmptyTypeAnnotationBuilder,
+  EnumBooleanBodyBuilder,
+  EnumBooleanMemberBuilder,
+  EnumDeclarationBuilder,
+  EnumDefaultedMemberBuilder,
+  EnumNumberBodyBuilder,
+  EnumNumberMemberBuilder,
+  EnumStringBodyBuilder,
+  EnumStringMemberBuilder,
+  EnumSymbolBodyBuilder,
+  ExistentialTypeParamBuilder,
+  ExistsTypeAnnotationBuilder,
+  ExportAllDeclarationBuilder,
+  ExportBatchSpecifierBuilder,
+  ExportDeclarationBuilder,
+  ExportDefaultDeclarationBuilder,
+  ExportDefaultSpecifierBuilder,
+  ExportNamedDeclarationBuilder,
+  ExportNamespaceSpecifierBuilder,
+  ExportSpecifierBuilder,
+  ExpressionStatementBuilder,
+  FileBuilder,
+  ForAwaitStatementBuilder,
+  ForInStatementBuilder,
+  ForOfStatementBuilder,
+  ForStatementBuilder,
+  FunctionDeclarationBuilder,
+  FunctionExpressionBuilder,
+  FunctionTypeAnnotationBuilder,
+  FunctionTypeParamBuilder,
+  GeneratorExpressionBuilder,
+  GenericTypeAnnotationBuilder,
+  IdentifierBuilder,
+  IfStatementBuilder,
+  ImportBuilder,
+  ImportDeclarationBuilder,
+  ImportDefaultSpecifierBuilder,
+  ImportExpressionBuilder,
+  ImportNamespaceSpecifierBuilder,
+  ImportSpecifierBuilder,
+  InferredPredicateBuilder,
+  InterfaceDeclarationBuilder,
+  InterfaceExtendsBuilder,
+  InterfaceTypeAnnotationBuilder,
+  InterpreterDirectiveBuilder,
+  IntersectionTypeAnnotationBuilder,
+  JSXAttributeBuilder,
+  JSXClosingElementBuilder,
+  JSXClosingFragmentBuilder,
+  JSXElementBuilder,
+  JSXEmptyExpressionBuilder,
+  JSXExpressionContainerBuilder,
+  JSXFragmentBuilder,
+  JSXIdentifierBuilder,
+  JSXMemberExpressionBuilder,
+  JSXNamespacedNameBuilder,
+  JSXOpeningElementBuilder,
+  JSXOpeningFragmentBuilder,
+  JSXSpreadAttributeBuilder,
+  JSXSpreadChildBuilder,
+  JSXTextBuilder,
+  LabeledStatementBuilder,
+  LineBuilder,
+  LiteralBuilder,
+  LogicalExpressionBuilder,
+  MemberExpressionBuilder,
+  MemberTypeAnnotationBuilder,
+  MetaPropertyBuilder,
+  MethodDefinitionBuilder,
+  MixedTypeAnnotationBuilder,
+  NewExpressionBuilder,
+  NoopBuilder,
+  NullableTypeAnnotationBuilder,
+  NullLiteralBuilder,
+  NullLiteralTypeAnnotationBuilder,
+  NullTypeAnnotationBuilder,
+  NumberLiteralTypeAnnotationBuilder,
+  NumberTypeAnnotationBuilder,
+  NumericLiteralBuilder,
+  NumericLiteralTypeAnnotationBuilder,
+  ObjectExpressionBuilder,
+  ObjectMethodBuilder,
+  ObjectPatternBuilder,
+  ObjectPropertyBuilder,
+  ObjectTypeAnnotationBuilder,
+  ObjectTypeCallPropertyBuilder,
+  ObjectTypeIndexerBuilder,
+  ObjectTypeInternalSlotBuilder,
+  ObjectTypePropertyBuilder,
+  ObjectTypeSpreadPropertyBuilder,
+  OpaqueTypeBuilder,
+  OptionalCallExpressionBuilder,
+  OptionalMemberExpressionBuilder,
+  ParenthesizedExpressionBuilder,
+  PrivateNameBuilder,
+  ProgramBuilder,
+  PropertyBuilder,
+  PropertyPatternBuilder,
+  QualifiedTypeIdentifierBuilder,
+  RegExpLiteralBuilder,
+  RestElementBuilder,
+  RestPropertyBuilder,
+  ReturnStatementBuilder,
+  SequenceExpressionBuilder,
+  SpreadElementBuilder,
+  SpreadElementPatternBuilder,
+  SpreadPropertyBuilder,
+  SpreadPropertyPatternBuilder,
+  StringLiteralBuilder,
+  StringLiteralTypeAnnotationBuilder,
+  StringTypeAnnotationBuilder,
+  SuperBuilder,
+  SwitchCaseBuilder,
+  SwitchStatementBuilder,
+  SymbolTypeAnnotationBuilder,
+  TaggedTemplateExpressionBuilder,
+  TemplateElementBuilder,
+  TemplateLiteralBuilder,
+  ThisExpressionBuilder,
+  ThisTypeAnnotationBuilder,
+  ThrowStatementBuilder,
+  TryStatementBuilder,
+  TSAnyKeywordBuilder,
+  TSArrayTypeBuilder,
+  TSAsExpressionBuilder,
+  TSBigIntKeywordBuilder,
+  TSBooleanKeywordBuilder,
+  TSCallSignatureDeclarationBuilder,
+  TSConditionalTypeBuilder,
+  TSConstructorTypeBuilder,
+  TSConstructSignatureDeclarationBuilder,
+  TSDeclareFunctionBuilder,
+  TSDeclareMethodBuilder,
+  TSEnumDeclarationBuilder,
+  TSEnumMemberBuilder,
+  TSExportAssignmentBuilder,
+  TSExpressionWithTypeArgumentsBuilder,
+  TSExternalModuleReferenceBuilder,
+  TSFunctionTypeBuilder,
+  TSImportEqualsDeclarationBuilder,
+  TSImportTypeBuilder,
+  TSIndexedAccessTypeBuilder,
+  TSIndexSignatureBuilder,
+  TSInferTypeBuilder,
+  TSInterfaceBodyBuilder,
+  TSInterfaceDeclarationBuilder,
+  TSIntersectionTypeBuilder,
+  TSLiteralTypeBuilder,
+  TSMappedTypeBuilder,
+  TSMethodSignatureBuilder,
+  TSModuleBlockBuilder,
+  TSModuleDeclarationBuilder,
+  TSNamedTupleMemberBuilder,
+  TSNamespaceExportDeclarationBuilder,
+  TSNeverKeywordBuilder,
+  TSNonNullExpressionBuilder,
+  TSNullKeywordBuilder,
+  TSNumberKeywordBuilder,
+  TSObjectKeywordBuilder,
+  TSOptionalTypeBuilder,
+  TSParameterPropertyBuilder,
+  TSParenthesizedTypeBuilder,
+  TSPropertySignatureBuilder,
+  TSQualifiedNameBuilder,
+  TSRestTypeBuilder,
+  TSStringKeywordBuilder,
+  TSSymbolKeywordBuilder,
+  TSThisTypeBuilder,
+  TSTupleTypeBuilder,
+  TSTypeAliasDeclarationBuilder,
+  TSTypeAnnotationBuilder,
+  TSTypeAssertionBuilder,
+  TSTypeLiteralBuilder,
+  TSTypeOperatorBuilder,
+  TSTypeParameterBuilder,
+  TSTypeParameterDeclarationBuilder,
+  TSTypeParameterInstantiationBuilder,
+  TSTypePredicateBuilder,
+  TSTypeQueryBuilder,
+  TSTypeReferenceBuilder,
+  TSUndefinedKeywordBuilder,
+  TSUnionTypeBuilder,
+  TSUnknownKeywordBuilder,
+  TSVoidKeywordBuilder,
+  TupleTypeAnnotationBuilder,
+  TypeAliasBuilder,
+  TypeAnnotationBuilder,
+  TypeCastExpressionBuilder,
+  TypeofTypeAnnotationBuilder,
+  TypeParameterBuilder,
+  TypeParameterDeclarationBuilder,
+  TypeParameterInstantiationBuilder,
+  UnaryExpressionBuilder,
+  UnionTypeAnnotationBuilder,
+  UpdateExpressionBuilder,
+  VariableDeclarationBuilder,
+  VariableDeclaratorBuilder,
+  VarianceBuilder,
+  VoidTypeAnnotationBuilder,
+  WhileStatementBuilder,
+  WithStatementBuilder,
+  YieldExpressionBuilder,
+} from 'ast-types/gen/builders';
 import { namedTypes } from 'ast-types/gen/namedTypes';
 // @ts-ignore
 import _ from 'lodash';
-import * as util from 'util';
 
 const isTSUnionType = (t: any): t is TSUnionType => {
   return t.type === 'TSUnionType';
@@ -38,32 +299,93 @@ const isTsPropertySignature = (t: any): t is TSPropertySignature => {
   return t.type === 'TSPropertySignature';
 };
 
-const getUnionName = (
-  p: ASTPath<TSTypeAliasDeclaration>
-): string | undefined => {
-  const typeName = p.value.id;
+const getUnionName = (p: TSTypeAliasDeclaration): string | undefined => {
+  const typeName = p.id;
   if (!isIdentifier(typeName)) {
     return;
   }
   return typeName.name;
 };
 
+const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
+  if (t.type !== 'TSTypeLiteral') {
+    throw new Error(`Unsupported ts type ${t.type}`);
+  }
+
+  return j.objectTypeAnnotation(
+    t.members.map(
+      (
+        tsMember:
+          | namedTypes.TSCallSignatureDeclaration
+          | namedTypes.TSConstructSignatureDeclaration
+          | namedTypes.TSIndexSignature
+          | namedTypes.TSMethodSignature
+          | namedTypes.TSPropertySignature
+      ): ObjectTypeProperty => {
+        if (tsMember.type !== 'TSPropertySignature') {
+          throw new Error(`Unsupported object member type ${tsMember.type}`);
+        }
+        if (tsMember.key.type !== 'Identifier') {
+          throw new Error(
+            `Unsupported object member key type ${tsMember.key.type}`
+          );
+        }
+        // console.log(tsMember);
+
+        const memberValue = tsMember.typeAnnotation.typeAnnotation;
+
+        let newMemberValue: FlowTypeKind;
+        if (memberValue.type === 'TSTypeReference') {
+          if (memberValue.typeName.type === 'Identifier') {
+            newMemberValue = j.typeParameter(memberValue.typeName.name);
+          }
+        } else if (memberValue.type === 'TSNumberKeyword') {
+          newMemberValue = j.numberTypeAnnotation();
+        } else if (memberValue.type === 'TSStringKeyword') {
+          newMemberValue = j.stringTypeAnnotation();
+        } else if (memberValue.type === 'TSLiteralType') {
+          if (memberValue.literal.type === 'StringLiteral') {
+            newMemberValue = j.stringLiteralTypeAnnotation(
+              memberValue.literal.value,
+              memberValue.literal.value
+            );
+          }
+        }
+
+        if (!newMemberValue) {
+          throw new Error(`Unsupported member value type: ${memberValue.type}`);
+        }
+
+        return j.objectTypeProperty(
+          tsMember.key,
+          newMemberValue,
+          tsMember.optional
+        );
+      }
+    )
+  );
+};
+
 module.exports = function (file, api) {
   const j = api.jscodeshift;
   const nameToAliases = {};
   return j(file.source)
-    .find(j.TSTypeAliasDeclaration)
-    .replaceWith((p: ASTPath<TSTypeAliasDeclaration>) => {
+    .find(j.ExportNamedDeclaration)
+    .replaceWith((ex: ASTPath<ExportNamedDeclaration>) => {
+      if (ex.value.declaration.type !== 'TSTypeAliasDeclaration') {
+        return ex.value;
+      }
+      const p = ex.value.declaration;
       const mainUnionName = getUnionName(p);
       if (!mainUnionName) {
         // not a union, not interesting
-        return p.value;
+        return ex.value;
       }
 
-      const union = p.value.typeAnnotation;
+      const union = p.typeAnnotation;
       if (!isTSUnionType(union)) {
-        console.log('early exit');
-        return p.value;
+        console.log('early exit', union.type);
+        return ex.value;
       }
       const typesWithNames = union.types
         .map((t) => {
@@ -96,8 +418,8 @@ module.exports = function (file, api) {
         (v) => v[0]
       );
       nameToAliases[mainUnionName] = aliases.map((a) => a[0]);
-      const insertedDeclarations = aliases.map(
-        ([fullMemberName, shortMemberName]) => {
+      const insertedDeclarations = aliases
+        .map(([fullMemberName, shortMemberName]) => {
           const movedType = typesByName[shortMemberName];
           if (movedType && movedType.type === 'TSTypeReference') {
             return j.typeAlias(
@@ -106,23 +428,33 @@ module.exports = function (file, api) {
               j.typeParameter(shortMemberName)
             );
           }
-          return j.literal('');
-        }
-      );
+          if (movedType && movedType.type === 'TSTypeLiteral') {
+            const convertedObjectType = convertTsTypeIntoFlowType(movedType, j);
+            return j.typeAlias(
+              j.identifier(fullMemberName),
+              null,
+              convertedObjectType
+            );
+          }
+          return null;
+        })
+        .filter((d) => !!d);
       const unionName = getUnionName(p);
       if (!unionName) {
         // not a union, not interesting
-        return;
+        console.log('not a union');
+        return ex.value;
       }
 
       const aliases2 = nameToAliases[unionName];
       if (!aliases2) {
         console.log('no aliases');
-        return p.value;
+        return ex.value;
       }
 
       return [
         ...insertedDeclarations,
+
         j.exportNamedDeclaration(
           j.typeAlias(
             j.identifier(unionName),
@@ -295,3 +627,264 @@ export declare type ExpressionKind =
   | namedTypes.TSNonNullExpression
   | namedTypes.TSTypeParameter
   | namedTypes.TSTypeAssertion;
+
+export interface builders {
+  file: FileBuilder;
+  program: ProgramBuilder;
+  identifier: IdentifierBuilder;
+  blockStatement: BlockStatementBuilder;
+  emptyStatement: EmptyStatementBuilder;
+  expressionStatement: ExpressionStatementBuilder;
+  ifStatement: IfStatementBuilder;
+  labeledStatement: LabeledStatementBuilder;
+  breakStatement: BreakStatementBuilder;
+  continueStatement: ContinueStatementBuilder;
+  withStatement: WithStatementBuilder;
+  switchStatement: SwitchStatementBuilder;
+  switchCase: SwitchCaseBuilder;
+  returnStatement: ReturnStatementBuilder;
+  throwStatement: ThrowStatementBuilder;
+  tryStatement: TryStatementBuilder;
+  catchClause: CatchClauseBuilder;
+  whileStatement: WhileStatementBuilder;
+  doWhileStatement: DoWhileStatementBuilder;
+  forStatement: ForStatementBuilder;
+  variableDeclaration: VariableDeclarationBuilder;
+  forInStatement: ForInStatementBuilder;
+  debuggerStatement: DebuggerStatementBuilder;
+  functionDeclaration: FunctionDeclarationBuilder;
+  functionExpression: FunctionExpressionBuilder;
+  variableDeclarator: VariableDeclaratorBuilder;
+  thisExpression: ThisExpressionBuilder;
+  arrayExpression: ArrayExpressionBuilder;
+  objectExpression: ObjectExpressionBuilder;
+  property: PropertyBuilder;
+  literal: LiteralBuilder;
+  sequenceExpression: SequenceExpressionBuilder;
+  unaryExpression: UnaryExpressionBuilder;
+  binaryExpression: BinaryExpressionBuilder;
+  assignmentExpression: AssignmentExpressionBuilder;
+  memberExpression: MemberExpressionBuilder;
+  updateExpression: UpdateExpressionBuilder;
+  logicalExpression: LogicalExpressionBuilder;
+  conditionalExpression: ConditionalExpressionBuilder;
+  newExpression: NewExpressionBuilder;
+  callExpression: CallExpressionBuilder;
+  restElement: RestElementBuilder;
+  typeAnnotation: TypeAnnotationBuilder;
+  tsTypeAnnotation: TSTypeAnnotationBuilder;
+  spreadElementPattern: SpreadElementPatternBuilder;
+  arrowFunctionExpression: ArrowFunctionExpressionBuilder;
+  forOfStatement: ForOfStatementBuilder;
+  yieldExpression: YieldExpressionBuilder;
+  generatorExpression: GeneratorExpressionBuilder;
+  comprehensionBlock: ComprehensionBlockBuilder;
+  comprehensionExpression: ComprehensionExpressionBuilder;
+  objectProperty: ObjectPropertyBuilder;
+  propertyPattern: PropertyPatternBuilder;
+  objectPattern: ObjectPatternBuilder;
+  arrayPattern: ArrayPatternBuilder;
+  spreadElement: SpreadElementBuilder;
+  assignmentPattern: AssignmentPatternBuilder;
+  methodDefinition: MethodDefinitionBuilder;
+  classPropertyDefinition: ClassPropertyDefinitionBuilder;
+  classProperty: ClassPropertyBuilder;
+  classBody: ClassBodyBuilder;
+  classDeclaration: ClassDeclarationBuilder;
+  classExpression: ClassExpressionBuilder;
+  super: SuperBuilder;
+  importSpecifier: ImportSpecifierBuilder;
+  importDefaultSpecifier: ImportDefaultSpecifierBuilder;
+  importNamespaceSpecifier: ImportNamespaceSpecifierBuilder;
+  importDeclaration: ImportDeclarationBuilder;
+  exportNamedDeclaration: ExportNamedDeclarationBuilder;
+  exportSpecifier: ExportSpecifierBuilder;
+  exportDefaultDeclaration: ExportDefaultDeclarationBuilder;
+  exportAllDeclaration: ExportAllDeclarationBuilder;
+  taggedTemplateExpression: TaggedTemplateExpressionBuilder;
+  templateLiteral: TemplateLiteralBuilder;
+  templateElement: TemplateElementBuilder;
+  metaProperty: MetaPropertyBuilder;
+  awaitExpression: AwaitExpressionBuilder;
+  spreadProperty: SpreadPropertyBuilder;
+  spreadPropertyPattern: SpreadPropertyPatternBuilder;
+  importExpression: ImportExpressionBuilder;
+  chainExpression: ChainExpressionBuilder;
+  optionalCallExpression: OptionalCallExpressionBuilder;
+  optionalMemberExpression: OptionalMemberExpressionBuilder;
+  jsxAttribute: JSXAttributeBuilder;
+  jsxIdentifier: JSXIdentifierBuilder;
+  jsxNamespacedName: JSXNamespacedNameBuilder;
+  jsxExpressionContainer: JSXExpressionContainerBuilder;
+  jsxElement: JSXElementBuilder;
+  jsxFragment: JSXFragmentBuilder;
+  jsxMemberExpression: JSXMemberExpressionBuilder;
+  jsxSpreadAttribute: JSXSpreadAttributeBuilder;
+  jsxEmptyExpression: JSXEmptyExpressionBuilder;
+  jsxText: JSXTextBuilder;
+  jsxSpreadChild: JSXSpreadChildBuilder;
+  jsxOpeningElement: JSXOpeningElementBuilder;
+  jsxClosingElement: JSXClosingElementBuilder;
+  jsxOpeningFragment: JSXOpeningFragmentBuilder;
+  jsxClosingFragment: JSXClosingFragmentBuilder;
+  decorator: DecoratorBuilder;
+  privateName: PrivateNameBuilder;
+  classPrivateProperty: ClassPrivatePropertyBuilder;
+  typeParameterDeclaration: TypeParameterDeclarationBuilder;
+  tsTypeParameterDeclaration: TSTypeParameterDeclarationBuilder;
+  typeParameterInstantiation: TypeParameterInstantiationBuilder;
+  tsTypeParameterInstantiation: TSTypeParameterInstantiationBuilder;
+  classImplements: ClassImplementsBuilder;
+  tsExpressionWithTypeArguments: TSExpressionWithTypeArgumentsBuilder;
+  anyTypeAnnotation: AnyTypeAnnotationBuilder;
+  emptyTypeAnnotation: EmptyTypeAnnotationBuilder;
+  mixedTypeAnnotation: MixedTypeAnnotationBuilder;
+  voidTypeAnnotation: VoidTypeAnnotationBuilder;
+  symbolTypeAnnotation: SymbolTypeAnnotationBuilder;
+  numberTypeAnnotation: NumberTypeAnnotationBuilder;
+  bigIntTypeAnnotation: BigIntTypeAnnotationBuilder;
+  numberLiteralTypeAnnotation: NumberLiteralTypeAnnotationBuilder;
+  numericLiteralTypeAnnotation: NumericLiteralTypeAnnotationBuilder;
+  bigIntLiteralTypeAnnotation: BigIntLiteralTypeAnnotationBuilder;
+  stringTypeAnnotation: StringTypeAnnotationBuilder;
+  stringLiteralTypeAnnotation: StringLiteralTypeAnnotationBuilder;
+  booleanTypeAnnotation: BooleanTypeAnnotationBuilder;
+  booleanLiteralTypeAnnotation: BooleanLiteralTypeAnnotationBuilder;
+  nullableTypeAnnotation: NullableTypeAnnotationBuilder;
+  nullLiteralTypeAnnotation: NullLiteralTypeAnnotationBuilder;
+  nullTypeAnnotation: NullTypeAnnotationBuilder;
+  thisTypeAnnotation: ThisTypeAnnotationBuilder;
+  existsTypeAnnotation: ExistsTypeAnnotationBuilder;
+  existentialTypeParam: ExistentialTypeParamBuilder;
+  functionTypeAnnotation: FunctionTypeAnnotationBuilder;
+  functionTypeParam: FunctionTypeParamBuilder;
+  arrayTypeAnnotation: ArrayTypeAnnotationBuilder;
+  objectTypeAnnotation: ObjectTypeAnnotationBuilder;
+  objectTypeProperty: ObjectTypePropertyBuilder;
+  objectTypeSpreadProperty: ObjectTypeSpreadPropertyBuilder;
+  objectTypeIndexer: ObjectTypeIndexerBuilder;
+  objectTypeCallProperty: ObjectTypeCallPropertyBuilder;
+  objectTypeInternalSlot: ObjectTypeInternalSlotBuilder;
+  variance: VarianceBuilder;
+  qualifiedTypeIdentifier: QualifiedTypeIdentifierBuilder;
+  genericTypeAnnotation: GenericTypeAnnotationBuilder;
+  memberTypeAnnotation: MemberTypeAnnotationBuilder;
+  unionTypeAnnotation: UnionTypeAnnotationBuilder;
+  intersectionTypeAnnotation: IntersectionTypeAnnotationBuilder;
+  typeofTypeAnnotation: TypeofTypeAnnotationBuilder;
+  typeParameter: TypeParameterBuilder;
+  interfaceTypeAnnotation: InterfaceTypeAnnotationBuilder;
+  interfaceExtends: InterfaceExtendsBuilder;
+  interfaceDeclaration: InterfaceDeclarationBuilder;
+  declareInterface: DeclareInterfaceBuilder;
+  typeAlias: TypeAliasBuilder;
+  declareTypeAlias: DeclareTypeAliasBuilder;
+  opaqueType: OpaqueTypeBuilder;
+  declareOpaqueType: DeclareOpaqueTypeBuilder;
+  typeCastExpression: TypeCastExpressionBuilder;
+  tupleTypeAnnotation: TupleTypeAnnotationBuilder;
+  declareVariable: DeclareVariableBuilder;
+  declareFunction: DeclareFunctionBuilder;
+  declareClass: DeclareClassBuilder;
+  declareModule: DeclareModuleBuilder;
+  declareModuleExports: DeclareModuleExportsBuilder;
+  declareExportDeclaration: DeclareExportDeclarationBuilder;
+  exportBatchSpecifier: ExportBatchSpecifierBuilder;
+  declareExportAllDeclaration: DeclareExportAllDeclarationBuilder;
+  inferredPredicate: InferredPredicateBuilder;
+  declaredPredicate: DeclaredPredicateBuilder;
+  enumDeclaration: EnumDeclarationBuilder;
+  enumBooleanBody: EnumBooleanBodyBuilder;
+  enumNumberBody: EnumNumberBodyBuilder;
+  enumStringBody: EnumStringBodyBuilder;
+  enumSymbolBody: EnumSymbolBodyBuilder;
+  enumBooleanMember: EnumBooleanMemberBuilder;
+  enumNumberMember: EnumNumberMemberBuilder;
+  enumStringMember: EnumStringMemberBuilder;
+  enumDefaultedMember: EnumDefaultedMemberBuilder;
+  exportDeclaration: ExportDeclarationBuilder;
+  block: BlockBuilder;
+  line: LineBuilder;
+  noop: NoopBuilder;
+  doExpression: DoExpressionBuilder;
+  bindExpression: BindExpressionBuilder;
+  parenthesizedExpression: ParenthesizedExpressionBuilder;
+  exportNamespaceSpecifier: ExportNamespaceSpecifierBuilder;
+  exportDefaultSpecifier: ExportDefaultSpecifierBuilder;
+  commentBlock: CommentBlockBuilder;
+  commentLine: CommentLineBuilder;
+  directive: DirectiveBuilder;
+  directiveLiteral: DirectiveLiteralBuilder;
+  interpreterDirective: InterpreterDirectiveBuilder;
+  stringLiteral: StringLiteralBuilder;
+  numericLiteral: NumericLiteralBuilder;
+  bigIntLiteral: BigIntLiteralBuilder;
+  nullLiteral: NullLiteralBuilder;
+  booleanLiteral: BooleanLiteralBuilder;
+  regExpLiteral: RegExpLiteralBuilder;
+  objectMethod: ObjectMethodBuilder;
+  classMethod: ClassMethodBuilder;
+  classPrivateMethod: ClassPrivateMethodBuilder;
+  restProperty: RestPropertyBuilder;
+  forAwaitStatement: ForAwaitStatementBuilder;
+  import: ImportBuilder;
+  tsQualifiedName: TSQualifiedNameBuilder;
+  tsTypeReference: TSTypeReferenceBuilder;
+  tsAsExpression: TSAsExpressionBuilder;
+  tsNonNullExpression: TSNonNullExpressionBuilder;
+  tsAnyKeyword: TSAnyKeywordBuilder;
+  tsBigIntKeyword: TSBigIntKeywordBuilder;
+  tsBooleanKeyword: TSBooleanKeywordBuilder;
+  tsNeverKeyword: TSNeverKeywordBuilder;
+  tsNullKeyword: TSNullKeywordBuilder;
+  tsNumberKeyword: TSNumberKeywordBuilder;
+  tsObjectKeyword: TSObjectKeywordBuilder;
+  tsStringKeyword: TSStringKeywordBuilder;
+  tsSymbolKeyword: TSSymbolKeywordBuilder;
+  tsUndefinedKeyword: TSUndefinedKeywordBuilder;
+  tsUnknownKeyword: TSUnknownKeywordBuilder;
+  tsVoidKeyword: TSVoidKeywordBuilder;
+  tsThisType: TSThisTypeBuilder;
+  tsArrayType: TSArrayTypeBuilder;
+  tsLiteralType: TSLiteralTypeBuilder;
+  tsUnionType: TSUnionTypeBuilder;
+  tsIntersectionType: TSIntersectionTypeBuilder;
+  tsConditionalType: TSConditionalTypeBuilder;
+  tsInferType: TSInferTypeBuilder;
+  tsTypeParameter: TSTypeParameterBuilder;
+  tsParenthesizedType: TSParenthesizedTypeBuilder;
+  tsFunctionType: TSFunctionTypeBuilder;
+  tsConstructorType: TSConstructorTypeBuilder;
+  tsDeclareFunction: TSDeclareFunctionBuilder;
+  tsDeclareMethod: TSDeclareMethodBuilder;
+  tsMappedType: TSMappedTypeBuilder;
+  tsTupleType: TSTupleTypeBuilder;
+  tsNamedTupleMember: TSNamedTupleMemberBuilder;
+  tsRestType: TSRestTypeBuilder;
+  tsOptionalType: TSOptionalTypeBuilder;
+  tsIndexedAccessType: TSIndexedAccessTypeBuilder;
+  tsTypeOperator: TSTypeOperatorBuilder;
+  tsIndexSignature: TSIndexSignatureBuilder;
+  tsPropertySignature: TSPropertySignatureBuilder;
+  tsMethodSignature: TSMethodSignatureBuilder;
+  tsTypePredicate: TSTypePredicateBuilder;
+  tsCallSignatureDeclaration: TSCallSignatureDeclarationBuilder;
+  tsConstructSignatureDeclaration: TSConstructSignatureDeclarationBuilder;
+  tsEnumMember: TSEnumMemberBuilder;
+  tsTypeQuery: TSTypeQueryBuilder;
+  tsImportType: TSImportTypeBuilder;
+  tsTypeLiteral: TSTypeLiteralBuilder;
+  tsTypeAssertion: TSTypeAssertionBuilder;
+  tsEnumDeclaration: TSEnumDeclarationBuilder;
+  tsTypeAliasDeclaration: TSTypeAliasDeclarationBuilder;
+  tsModuleBlock: TSModuleBlockBuilder;
+  tsModuleDeclaration: TSModuleDeclarationBuilder;
+  tsImportEqualsDeclaration: TSImportEqualsDeclarationBuilder;
+  tsExternalModuleReference: TSExternalModuleReferenceBuilder;
+  tsExportAssignment: TSExportAssignmentBuilder;
+  tsNamespaceExportDeclaration: TSNamespaceExportDeclarationBuilder;
+  tsInterfaceBody: TSInterfaceBodyBuilder;
+  tsInterfaceDeclaration: TSInterfaceDeclarationBuilder;
+  tsParameterProperty: TSParameterPropertyBuilder;
+  [builderName: string]: any;
+}
