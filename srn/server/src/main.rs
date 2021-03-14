@@ -19,7 +19,6 @@ use num_traits::FromPrimitive;
 use regex::Regex;
 use rocket::http::Method;
 use rocket_contrib::json::Json;
-use rocket_cors::{AllowedHeaders, AllowedOrigins};
 #[cfg(feature = "serde_derive")]
 #[doc(hidden)]
 pub use serde_derive::*;
@@ -67,7 +66,6 @@ macro_rules! err {
 
 #[macro_use]
 extern crate rocket;
-extern crate rocket_cors;
 extern crate websocket;
 #[macro_use]
 extern crate num_derive;
@@ -532,26 +530,26 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
 }
 
 fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
-    let parsed = serde_json::from_str::<inventory::InventoryAction>(data);
-    match parsed {
-        Ok(action) => {
-            let mut cont = STATE.write().unwrap();
-            let state = select_mut_state(&mut cont, client_id);
-            market::attempt_trade(
-                state,
-                client_id,
-                action,
-            );
-            x_cast_state(state.clone(), XCast::Broadcast(state.id));
-            send_tag_confirm(tag.unwrap().to_string(), client_id);
-        }
-        Err(err) => {
-            eprintln!(
-                "couldn't parse trade action {}, err {}",
-                data, err
-            );
-        }
-    }
+    // let parsed = serde_json::from_str::<inventory::InventoryAction>(data);
+    // match parsed {
+    //     Ok(action) => {
+    //         let mut cont = STATE.write().unwrap();
+    //         let state = select_mut_state(&mut cont, client_id);
+    //         market::attempt_trade(
+    //             state,
+    //             client_id,
+    //             action,
+    //         );
+    //         x_cast_state(state.clone(), XCast::Broadcast(state.id));
+    //         send_tag_confirm(tag.unwrap().to_string(), client_id);
+    //     }
+    //     Err(err) => {
+    //         eprintln!(
+    //             "couldn't parse trade action {}, err {}",
+    //             data, err
+    //         );
+    //     }
+    // }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -738,6 +736,28 @@ pub fn new_id() -> Uuid {
     Uuid::new_v4()
 }
 
+use rocket::{Request, Response};
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::http::Header;
+
+pub struct CORS();
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to requests",
+            kind: Kind::Response
+        }
+    }
+
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, PATCH, OPTIONS"));
+        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+    }
+}
 #[launch]
 fn rocket() -> rocket::Rocket {
     {
@@ -765,31 +785,9 @@ fn rocket() -> rocket::Rocket {
 
     thread::spawn(|| cleanup_thread());
 
-    let cors = rocket_cors::CorsOptions {
-        allowed_origins: AllowedOrigins::some_exact(&[
-            "http://localhost:3000",
-            "https://srn.malcoriel.de",
-        ]),
-        allowed_methods: vec![Method::Get, Method::Post, Method::Options]
-            .into_iter()
-            .map(From::from)
-            .collect(),
-        allowed_headers: AllowedHeaders::some(&[
-            "Authorization",
-            "Accept",
-            "Content-Type",
-            "Content-Length",
-        ]),
-
-        allow_credentials: true,
-        ..Default::default()
-    }
-        .to_cors()
-        .unwrap();
-
     sandbox::init_saved_states();
     rocket::ignite()
-        .attach(cors)
+        .attach(CORS())
         .mount("/api", routes![
         api::get_version,
         api::get_saved_states,

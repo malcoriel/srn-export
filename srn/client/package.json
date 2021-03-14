@@ -104,7 +104,7 @@
     "zustand": "^3.3.0"
   },
   "scripts": {
-    "start": "cross-env REACT_EDITOR=none node scripts/start.js",
+    "start": "cross-env REACT_EDITOR=none BROWSER=chrome node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
     "eslint": "../../node_modules/.bin/eslint",
