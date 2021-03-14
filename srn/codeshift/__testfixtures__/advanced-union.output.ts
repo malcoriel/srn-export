@@ -1,20 +1,20 @@
 type Uuid = string;
 
-type InventoryActionUnknown = { tag: "Unknown" };
+export type InventoryActionUnknown = { tag: "Unknown" };
 
-type InventoryActionSplit = {
+export type InventoryActionSplit = {
   tag: "Split",
   from: Uuid,
   count: number,
 };
 
-type InventoryActionMerge = {
+export type InventoryActionMerge = {
   tag: "Merge",
   from: Uuid,
   to: number,
 };
 
-type InventoryActionMove = {
+export type InventoryActionMove = {
   tag: "Move",
   item: Uuid,
   index: number,
