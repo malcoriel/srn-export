@@ -53,16 +53,17 @@ module.exports = function (file, api) {
   const nameToAliases = {};
   return j(file.source)
     .find(j.TSTypeAliasDeclaration)
-    .insertBefore((p: ASTPath<TSTypeAliasDeclaration>) => {
+    .replaceWith((p: ASTPath<TSTypeAliasDeclaration>) => {
       const mainUnionName = getUnionName(p);
       if (!mainUnionName) {
         // not a union, not interesting
-        return;
+        return p.value;
       }
 
       const union = p.value.typeAnnotation;
       if (!isTSUnionType(union)) {
-        return;
+        console.log('early exit');
+        return p.value;
       }
       const typesWithNames = union.types
         .map((t) => {
@@ -95,37 +96,41 @@ module.exports = function (file, api) {
         (v) => v[0]
       );
       nameToAliases[mainUnionName] = aliases.map((a) => a[0]);
-      return aliases.map(([fullMemberName, shortMemberName]) => {
-        const movedType = typesByName[shortMemberName];
-        if (movedType && movedType.type === 'TSTypeReference') {
-          return j.typeAlias(
-            j.identifier(fullMemberName),
-            null,
-            j.typeParameter(shortMemberName)
-          );
+      const insertedDeclarations = aliases.map(
+        ([fullMemberName, shortMemberName]) => {
+          const movedType = typesByName[shortMemberName];
+          if (movedType && movedType.type === 'TSTypeReference') {
+            return j.typeAlias(
+              j.identifier(fullMemberName),
+              null,
+              j.typeParameter(shortMemberName)
+            );
+          }
+          return j.literal('');
         }
-        return j.literal('');
-      });
-    })
-    .replaceWith((p: ASTPath<TSTypeAliasDeclaration>) => {
+      );
       const unionName = getUnionName(p);
       if (!unionName) {
         // not a union, not interesting
         return;
       }
 
-      const aliases = nameToAliases[unionName];
-      if (!aliases) {
+      const aliases2 = nameToAliases[unionName];
+      if (!aliases2) {
+        console.log('no aliases');
         return p.value;
       }
 
-      return j.exportNamedDeclaration(
-        j.typeAlias(
-          j.identifier(unionName),
-          null,
-          j.unionTypeAnnotation(aliases.map((a) => j.typeParameter(a)))
-        )
-      );
+      return [
+        ...insertedDeclarations,
+        j.exportNamedDeclaration(
+          j.typeAlias(
+            j.identifier(unionName),
+            null,
+            j.unionTypeAnnotation(aliases2.map((a) => j.typeParameter(a)))
+          )
+        ),
+      ];
     })
     .toSource();
 };
