@@ -139,10 +139,18 @@ module.exports = function (file, api) {
         }
         const mainTypeName = typeName;
 
+        const builderClassName = `${mainTypeName}Builder`;
         return j.exportNamedDeclaration(
-          j.classDeclaration(
-            j.identifier(`${mainTypeName}Builder`),
-            j.classBody(
+          j.classDeclaration.from({
+            id: j.identifier(builderClassName),
+            comments: [
+              j.commentLine(
+                ` end builder class ${builderClassName}`,
+                false,
+                true
+              ),
+            ],
+            body: j.classBody(
               union.types
                 .map((subType) => {
                   if (!isTsTypeReference(subType)) {
@@ -167,8 +175,7 @@ module.exports = function (file, api) {
                 })
                 .filter((t) => !!t)
             ),
-            null
-          )
+          })
         );
       })
       .toSource()

@@ -35,5 +35,19 @@ const isWin = process.platform === 'win32';
   await fs.move('world/world.d.ts.tmp', 'world/pkg/world.d.ts', {
     overwrite: true,
   });
-  console.log('Done');
+  console.log('Running codemods...');
+  await spawnWatched(
+    'yarn jscodeshift -t codeshift/make-smart-enums.ts --extensions=ts world/pkg/world.d.ts'
+  );
+  await spawnWatched(
+    'yarn jscodeshift -t codeshift/make-builder-classes.ts --extensions=ts world/pkg/world.d.ts'
+  );
+  const file = (await fs.readFile('world/pkg/world.d.ts')).toString();
+  const builderClassFinder = /export class (\w+)(?:.|\n|\r)*end builder class \1/gm;
+  const extracted = file.match(builderClassFinder);
+  const fileWithNoClasses = file.replace(builderClassFinder, '');
+  await fs.writeFile('world/pkg/world.d.ts', fileWithNoClasses);
+  const builders = extracted.join('\n\n');
+  await fs.writeFile('world/pkg/builders.ts', builders);
+  console.log('Done, ts definitions are ready!');
 })();

@@ -68,4 +68,4 @@ export class InventoryActionBuilder {
     item,
     index
   });
-}
+}// end builder class InventoryActionBuilder
