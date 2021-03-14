@@ -1,0 +1,12 @@
+{
+  "name": "codeshift",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@types/jscodeshift": "^0.11.0",
+    "jest": "^26.6.3",
+    "jscodeshift": "^0.11.0"
+  }
+}

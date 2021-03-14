@@ -251,3 +251,9 @@ pub fn value_items_of_types(inventory: &Vec<InventoryItem>, types: &Vec<Inventor
     }
     res
 }
+
+pub fn apply_action(
+    inventory: &mut Vec<InventoryItem>, action: InventoryAction
+) {
+    eprintln!("{:?}", action);
+}

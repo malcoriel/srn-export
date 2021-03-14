@@ -119,6 +119,7 @@ export enum ItemMoveKind {
 export type MoveEvent = {
   from: IVector;
   to: IVector;
+  newIndex: number;
   kind: ItemMoveKind;
   item: InventoryItem;
 };
@@ -189,6 +190,7 @@ export const ItemGrid: React.FC<{
           onMove({
             from: startMove,
             to: newPos,
+            newIndex: 0,
             kind: moveKind,
             item: byId[id],
           });

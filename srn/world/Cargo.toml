@@ -26,7 +26,7 @@ statistical = "1.0.0"
 hex = "0.4.2"
 strum_macros = "0.20.1"
 strum = "0.20.0"
-typescript-definitions = "0.1.10"
+typescript-definitions = {version ="0.1.10", features = ["type-guards"] }
 
 
 [target.wasm32-unknown-unknown.dependencies]

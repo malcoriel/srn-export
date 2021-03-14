@@ -1,8 +1,9 @@
 import React from 'react';
 import { Window } from './ui/Window';
-import { cellsToPixels, ItemGrid } from './ItemGrid';
+import { cellsToPixels, ItemGrid, MoveEvent } from './ItemGrid';
 import './InventoryWindowBase.scss';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
+import { InventoryAction } from '../../../world/pkg';
 
 const SCROLL_OFFSET = 10;
 const MIN_ROWS = 5;
@@ -14,6 +15,9 @@ const WINDOW_WIDTH = cellsToPixels(COLUMNS) + SCROLL_OFFSET;
 const EXTRA_ROWS = 3;
 
 const InventoryWindowItems = () => {
+  const ns = NetState.get();
+  if (!ns) return null;
+
   useNSForceChange('inventory window', false, (prevState, nextState) => {
     const myShipPrev = findMyShip(prevState) || { inventory: [] };
     const myShipNext = findMyShip(nextState) || { inventory: [] };
@@ -23,13 +27,21 @@ const InventoryWindowItems = () => {
     );
   });
 
-  const ns = NetState.get();
-  if (!ns) return null;
+  const onMove = (moveAction: MoveEvent) => {
+    console.log({ moveAction });
+    ns.sendInventoryAction({
+      tag: 'Move',
+      item: moveAction.item.id,
+      index: moveAction.newIndex,
+    });
+  };
+
   const myShip = findMyShip(ns.state);
   if (!myShip) return null;
   const inventory = myShip.inventory;
   return (
     <ItemGrid
+      onMove={onMove}
       items={inventory}
       columnCount={COLUMNS}
       extraRows={EXTRA_ROWS}

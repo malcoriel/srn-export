@@ -530,26 +530,27 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
 }
 
 fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
-    // let parsed = serde_json::from_str::<inventory::InventoryAction>(data);
-    // match parsed {
-    //     Ok(action) => {
-    //         let mut cont = STATE.write().unwrap();
-    //         let state = select_mut_state(&mut cont, client_id);
-    //         market::attempt_trade(
-    //             state,
-    //             client_id,
-    //             action,
-    //         );
-    //         x_cast_state(state.clone(), XCast::Broadcast(state.id));
-    //         send_tag_confirm(tag.unwrap().to_string(), client_id);
-    //     }
-    //     Err(err) => {
-    //         eprintln!(
-    //             "couldn't parse trade action {}, err {}",
-    //             data, err
-    //         );
-    //     }
-    // }
+    let parsed = serde_json::from_str::<inventory::InventoryAction>(data);
+    match parsed {
+        Ok(action) => {
+            let mut cont = STATE.write().unwrap();
+            let state = select_mut_state(&mut cont, client_id);
+            if let Some(ship) = world::find_my_ship_mut(state, client_id) {
+                inventory::apply_action(
+                    &mut ship.inventory,
+                    action,
+                );
+            }
+            x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
+            send_tag_confirm(tag.unwrap().to_string(), client_id);
+        }
+        Err(err) => {
+            eprintln!(
+                "couldn't parse trade action {}, err {}",
+                data, err
+            );
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

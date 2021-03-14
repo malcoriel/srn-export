@@ -22,6 +22,7 @@ import { useEffect, useState } from 'react';
 import { viewPortSizeMeters } from './coord';
 import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
+import { InventoryAction } from '../../world/pkg';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -735,6 +736,14 @@ export default class NetState extends EventEmitter {
       value: {
         planet_id,
       },
+      tag: uuid.v4(),
+    });
+  }
+
+  public sendInventoryAction(invAct: InventoryAction) {
+    this.send({
+      code: ClientOpCode.InventoryAction,
+      value: invAct,
       tag: uuid.v4(),
     });
   }
