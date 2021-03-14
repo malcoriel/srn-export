@@ -154,7 +154,6 @@ module.exports = function (webpackEnv) {
   };
 
   const worldPkgPath = path.resolve('../world/pkg');
-  console.log({ worldPkgPath });
   return {
     mode: isEnvProduction ? 'production' : isEnvDevelopment && 'development',
     // Stop compilation early in production
