@@ -25,8 +25,8 @@ pub enum InventoryItemType {
 #[serde(tag = "tag")]
 pub enum InventoryAction {
     Unknown,
-    Split {from: Uuid, count: i32},
-    Merge {from: Uuid, to: i32},
+    Split {from: Uuid, count: i32, to_index: i32},
+    Merge {from: Uuid, to: Uuid},
     Move {item: Uuid, index: i32}
 }
 
