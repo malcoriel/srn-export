@@ -8,50 +8,20 @@ import {
   TSTypeAliasDeclaration,
   TSTypeLiteral,
   TSTypeReference,
-  TSUnionType,
 } from 'jscodeshift/src/core';
 
-import {
-  IdentifierKind,
-  FlowTypeKind,
-  TSTypeKind,
-  FlowKind,
-} from 'ast-types/gen/kinds';
+import { FlowKind, FlowTypeKind, TSTypeKind } from 'ast-types/gen/kinds';
 import { namedTypes } from 'ast-types/gen/namedTypes';
 // @ts-ignore
 import _ from 'lodash';
-
-const isTSUnionType = (t: any): t is TSUnionType => {
-  return t.type === 'TSUnionType';
-};
-
-const isTSTypeReference = (t: any): t is TSTypeReference => {
-  return t.type === 'TSTypeReference';
-};
-
-const isIdentifier = (t: any): t is IdentifierKind => {
-  return t.type === 'Identifier';
-};
-
-const isTsTypeLiteral = (t: any): t is TSTypeLiteral => {
-  return t.type === 'TSTypeLiteral';
-};
-
-const isTsLiteralType = (t: any): t is TSLiteralType => {
-  return t.type === 'TSLiteralType';
-};
-
-const isTsPropertySignature = (t: any): t is TSPropertySignature => {
-  return t.type === 'TSPropertySignature';
-};
-
-const getUnionName = (p: TSTypeAliasDeclaration): string | undefined => {
-  const typeName = p.id;
-  if (!isIdentifier(typeName)) {
-    return;
-  }
-  return typeName.name;
-};
+import {
+  getUnionName,
+  isIdentifier,
+  isTsPropertySignature,
+  isTsTypeLiteral,
+  isTSTypeReference,
+  isTSUnionType,
+} from './helpers';
 
 const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
   if (t.type !== 'TSTypeLiteral') {
@@ -118,7 +88,6 @@ module.exports = function (file, api) {
   return j(file.source)
     .find(j.ExportNamedDeclaration)
     .replaceWith((ex: ASTPath<ExportNamedDeclaration>) => {
-      console.log('replace');
       if (ex.value.declaration.type !== 'TSTypeAliasDeclaration') {
         console.log('not an alias export');
         return ex.value;
