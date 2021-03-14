@@ -7,7 +7,7 @@ use std::mem;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use wasm_bindgen::prelude::*;
-use typescript_definitions::TypescriptDefinition;
+use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, EnumIter)]
 pub enum InventoryItemType {
@@ -21,9 +21,8 @@ pub enum InventoryItemType {
     HandWeapon,
 }
 
-// #[derive(Serialize, TypescriptDefinition, Deserialize, Debug, Clone)]
-// #[serde(tag = "tag", content = "fields")]
-// #[wasm_bindgen]
+#[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
+#[serde(tag = "tag")]
 pub enum InventoryAction {
     Unknown,
     Split {from: Uuid, count: i32},

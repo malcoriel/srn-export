@@ -87,7 +87,6 @@ mod inventory;
 
 #[path = "../../server/src/market.rs"]
 mod market;
-mod interface;
 
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
@@ -188,93 +187,3 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
     let new_ship = world::apply_ship_action(args.ship_action, &args.state, args.player_id);
     return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
 }
-
-
-use typescript_definitions::{TypeScriptify, TypescriptDefinition};
-
-#[derive(Serialize, TypescriptDefinition, TypeScriptify)]
-pub struct Newtype( pub i64);
-
-#[derive(Serialize, TypescriptDefinition, TypeScriptify, Debug)]
-pub struct Point {
-    #[serde(rename = "X")]
-    pub x: i64,
-    #[serde(rename = "Y")]
-    pub y: i64,
-    pub z: i64,
-}
-
-#[derive(Serialize, TypescriptDefinition, TypeScriptify)]
-pub enum Enum {
-    #[allow(unused)]
-    V1 {
-        #[serde(rename = "Foo")]
-        foo: bool,
-    },
-    #[allow(unused)]
-    V2 {
-        #[serde(rename = "Bar")]
-        bar: i64,
-        #[serde(rename = "Baz")]
-        baz: u64,
-    },
-    #[allow(unused)]
-    V3 {
-        #[serde(rename = "Quux")]
-        quux: String,
-    },
-}
-
-
-#[cfg(any(debug_assertions, feature = "export-typescript"))]
-fn main() -> Result<(), Error> {
-    use serde_json;
-    use self::interface::*;
-    // need the trait
-    use typescript_definitions::TypeScriptifyTrait;
-    let test: Enum = Enum::V3 {
-        quux: "123".to_string(),
-    };
-
-    let point = Point {
-        x: 23,
-        y: 24,
-        z: 33,
-    };
-
-    let f1 = FrontendMessage::Render {
-        html: "stuff".into(),
-        time: 33,
-        other_result: Err(32),
-    };
-    let f2 = FrontendMessage::ButtonState {
-        selected: vec!["a".into(), "b".into()],
-        time: 33,
-        other: None,
-    };
-
-    let b = MyBytes {
-        buffer: vec![5u8, 6, 7, 8, 9, 186, 233],
-    };
-    let nt = Newtype(32);
-
-    println!("Using Typescriptify.....");
-
-    println!("{}", serde_json::to_string(&point)?);
-    println!("{}", serde_json::to_string(&f1)?);
-    println!("{}", serde_json::to_string(&f2)?);
-    println!("{}", serde_json::to_string(&b)?);
-    println!("{}", serde_json::to_string(&nt)?);
-
-    println!("{}", Point::type_script_ify());
-    println!("{}", Newtype::type_script_ify());
-    println!("{}", Enum::type_script_ify());
-    println!("{}", FrontendMessage::type_script_ify());
-    println!("{}", Value::<i32>::type_script_ify());
-    println!("{}", MyBytes::type_script_ify());
-
-    Ok(())
-}
-
-#[cfg(not(any(debug_assertions, feature = "export-typescript")))]
-fn main() {}
