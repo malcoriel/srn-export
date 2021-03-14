@@ -20,13 +20,23 @@ export const isIdentifier = (t: any): t is IdentifierKind => {
 export const isTsTypeLiteral = (t: any): t is TSTypeLiteral => {
   return t.type === 'TSTypeLiteral';
 };
+export const isTsTypeReference = (t: any): t is TSTypeReference => {
+  return t.type === 'TSTypeReference';
+};
 const isTsLiteralType = (t: any): t is TSLiteralType => {
   return t.type === 'TSLiteralType';
+};
+export const isTsTypeAliasDeclaration = (
+  t: any
+): t is TSTypeAliasDeclaration => {
+  return t.type === 'TSTypeAliasDeclaration';
 };
 export const isTsPropertySignature = (t: any): t is TSPropertySignature => {
   return t.type === 'TSPropertySignature';
 };
-export const getUnionName = (p: TSTypeAliasDeclaration): string | undefined => {
+export const getTypeDeclaraiontName = (
+  p: TSTypeAliasDeclaration
+): string | undefined => {
   const typeName = p.id;
   if (!isIdentifier(typeName)) {
     return;

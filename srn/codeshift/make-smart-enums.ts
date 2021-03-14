@@ -15,7 +15,7 @@ import { namedTypes } from 'ast-types/gen/namedTypes';
 // @ts-ignore
 import _ from 'lodash';
 import {
-  getUnionName,
+  getTypeDeclaraiontName,
   isIdentifier,
   isTsPropertySignature,
   isTsTypeLiteral,
@@ -93,7 +93,7 @@ module.exports = function (file, api) {
         return ex.value;
       }
       const p = ex.value.declaration;
-      const mainUnionName = getUnionName(p);
+      const mainUnionName = getTypeDeclaraiontName(p);
       if (!mainUnionName) {
         // not a union, not interesting
         console.log('not a union');
@@ -161,7 +161,7 @@ module.exports = function (file, api) {
           return null;
         })
         .filter((d) => !!d);
-      const unionName = getUnionName(p);
+      const unionName = getTypeDeclaraiontName(p);
       if (!unionName) {
         // not a union, not interesting
         console.log('not a union');

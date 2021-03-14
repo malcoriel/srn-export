@@ -23,43 +23,49 @@ export type InventoryActionMove = {
 export type InventoryAction = InventoryActionUnknown | InventoryActionSplit | InventoryActionMerge | InventoryActionMove;
 
 export class InventoryActionBuilder {
-  public static InventoryActionUnknown = (): InventoryActionUnknown => ({
-    tag: 'Unknown',
+  static InventoryActionUnknown = (): InventoryActionUnknown => ({
+    tag: "Unknown"
   });
 
-  public static InventoryActionSplit = ({
+  static InventoryActionSplit = (
+    {
+      from,
+      count
+    }: {
+      from: Uuid,
+      count: number,
+    }
+  ): InventoryActionSplit => ({
+    tag: "Split",
     from,
-    count,
-  }: {
-    from: Uuid;
-    count: number;
-  }): InventoryActionSplit => ({
-    tag: 'Split',
-    from,
-    count,
+    count
   });
 
-  public static InventoryActionMerge = ({
+  static InventoryActionMerge = (
+    {
+      from,
+      to
+    }: {
+      from: Uuid,
+      to: number,
+    }
+  ): InventoryActionMerge => ({
+    tag: "Merge",
     from,
-    to,
-  }: {
-    from: Uuid;
-    to: number;
-  }): InventoryActionMerge => ({
-    tag: 'Merge',
-    from,
-    to,
+    to
   });
 
-  public static InventoryActionMove = ({
+  static InventoryActionMove = (
+    {
+      item,
+      index
+    }: {
+      item: Uuid,
+      index: number,
+    }
+  ): InventoryActionMove => ({
+    tag: "Move",
     item,
-    index,
-  }: {
-    item: Uuid;
-    index: number;
-  }): InventoryActionMove => ({
-    tag: 'Move',
-    item,
-    index,
+    index
   });
 }
