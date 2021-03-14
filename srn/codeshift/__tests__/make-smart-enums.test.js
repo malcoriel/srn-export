@@ -9,3 +9,12 @@ defineTest(
     parser: 'ts',
   }
 );
+// defineTest(
+//   __dirname,
+//   'make-smart-enums',
+//   { extensions: 'ts' },
+//   'advanced-union',
+//   {
+//     parser: 'ts',
+//   }
+// );
