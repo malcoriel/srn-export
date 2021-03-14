@@ -10,7 +10,9 @@ import {
 
 import { IdentifierKind } from 'ast-types/gen/kinds';
 import { namedTypes } from 'ast-types/gen/namedTypes';
+// @ts-ignore
 import _ from 'lodash';
+import * as util from 'util';
 
 const isTSUnionType = (t: any): t is TSUnionType => {
   return t.type === 'TSUnionType';
@@ -49,75 +51,83 @@ const getUnionName = (
 module.exports = function (file, api) {
   const j = api.jscodeshift;
   const nameToAliases = {};
-  console.log(file);
-  return j(file.source).toSource();
-  // return j(file.source)
-  //   .find(j.TSTypeAliasDeclaration)
-  //   .insertBefore((p: ASTPath<TSTypeAliasDeclaration>) => {
-  //     const mainUnionName = getUnionName(p);
-  //     if (!mainUnionName) {
-  //       // not a union, not interesting
-  //       return;
-  //     }
-  //
-  //     const union = p.value.typeAnnotation;
-  //     if (!isTSUnionType(union)) {
-  //       return;
-  //     }
-  //     const typesWithNames = union.types
-  //       .map((t) => {
-  //         if (isTSTypeReference(t) && isIdentifier(t.typeName)) {
-  //           return [t, t.typeName.name];
-  //         }
-  //         if (isTsTypeLiteral(t)) {
-  //           let tagName = null;
-  //           for (const member of t.members) {
-  //             if (isTsPropertySignature(member)) {
-  //               if (isIdentifier(member.key)) {
-  //                 if (member.key.name === 'tag') {
-  //                   const typeAnnotation = member.typeAnnotation;
-  //                   // @ts-ignore
-  //                   tagName = typeAnnotation.typeAnnotation.literal.value;
-  //                 }
-  //               }
-  //             }
-  //           }
-  //           return [t, tagName];
-  //         }
-  //         return null;
-  //       })
-  //       .filter((t) => !!t) as [TSTypeKind, string][];
-  //     // const aliases = typesWithNames.map((typeAndName) => {
-  //     //   return [`${mainUnionName}${typeAndName[1]}`, typeAndName[1]];
-  //     // });
-  //     // const typesByName = _.keyBy(typesWithNames, (p) => p[1]);
-  //     // nameToAliases[mainUnionName] = aliases.map((a) => a[0]);
-  //     return [];
-  //     // return aliases.map((first) =>
-  //     //   j.typeAlias(j.identifier(first[0]), null, typesByName[first[1]])
-  //     // );
-  //   })
-  //   .replaceWith((p: ASTPath<TSTypeAliasDeclaration>) => {
-  //     const unionName = getUnionName(p);
-  //     if (!unionName) {
-  //       // not a union, not interesting
-  //       return;
-  //     }
-  //
-  //     const aliases = nameToAliases[unionName];
-  //     if (!aliases) {
-  //       return p.value;
-  //     }
-  //
-  //     return j.exportNamedDeclaration(
-  //       j.typeAlias(
-  //         j.identifier(unionName),
-  //         null,
-  //         j.unionTypeAnnotation(aliases.map((a) => j.typeParameter(a)))
-  //       )
-  //     );
-  //   })
-  //   .toSource();
+  return j(file.source)
+    .find(j.TSTypeAliasDeclaration)
+    .insertBefore((p: ASTPath<TSTypeAliasDeclaration>) => {
+      const mainUnionName = getUnionName(p);
+      if (!mainUnionName) {
+        // not a union, not interesting
+        return;
+      }
+
+      const union = p.value.typeAnnotation;
+      if (!isTSUnionType(union)) {
+        return;
+      }
+      const typesWithNames = union.types
+        .map((t) => {
+          if (isTSTypeReference(t) && isIdentifier(t.typeName)) {
+            return [t, t.typeName.name];
+          }
+          if (isTsTypeLiteral(t)) {
+            let tagName = null;
+            for (const member of t.members) {
+              if (isTsPropertySignature(member)) {
+                if (isIdentifier(member.key)) {
+                  if (member.key.name === 'tag') {
+                    const typeAnnotation = member.typeAnnotation;
+                    // @ts-ignore
+                    tagName = typeAnnotation.typeAnnotation.literal.value;
+                  }
+                }
+              }
+            }
+            return [t, tagName];
+          }
+          return null;
+        })
+        .filter((t) => !!t) as [TSTypeKind, string][];
+      const aliases = typesWithNames.map((typeAndName) => {
+        return [`${mainUnionName}${typeAndName[1]}`, typeAndName[1]];
+      });
+      const typesByName = _.mapValues(
+        _.keyBy(typesWithNames, (p) => p[1]),
+        (v) => v[0]
+      );
+      nameToAliases[mainUnionName] = aliases.map((a) => a[0]);
+      return aliases.map(([fullMemberName, shortMemberName]) => {
+        const movedType = typesByName[shortMemberName];
+        if (movedType && movedType.type === 'TSTypeReference') {
+          return j.typeAlias(
+            j.identifier(fullMemberName),
+            null,
+            j.typeParameter(shortMemberName)
+          );
+        }
+        return j.literal('');
+      });
+    })
+    .replaceWith((p: ASTPath<TSTypeAliasDeclaration>) => {
+      const unionName = getUnionName(p);
+      if (!unionName) {
+        // not a union, not interesting
+        return;
+      }
+
+      const aliases = nameToAliases[unionName];
+      if (!aliases) {
+        return p.value;
+      }
+
+      return j.exportNamedDeclaration(
+        j.typeAlias(
+          j.identifier(unionName),
+          null,
+          j.unionTypeAnnotation(aliases.map((a) => j.typeParameter(a)))
+        )
+      );
+    })
+    .toSource();
 };
 module.exports.parser = 'ts';
 
