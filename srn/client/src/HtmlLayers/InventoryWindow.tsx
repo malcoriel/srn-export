@@ -3,7 +3,7 @@ import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid, MoveEvent } from './ItemGrid';
 import './InventoryWindowBase.scss';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
-import { InventoryAction } from '../../../world/pkg';
+import { InventoryActionBuilder } from '../../../world/pkg/builders';
 
 const SCROLL_OFFSET = 10;
 const MIN_ROWS = 5;
@@ -29,11 +29,12 @@ const InventoryWindowItems = () => {
 
   const onMove = (moveAction: MoveEvent) => {
     console.log({ moveAction });
-    ns.sendInventoryAction({
-      tag: 'Move',
-      item: moveAction.item.id,
-      index: moveAction.newIndex,
-    });
+    ns.sendInventoryAction(
+      InventoryActionBuilder.InventoryActionMove({
+        item: moveAction.item.id,
+        index: moveAction.newIndex,
+      })
+    );
   };
 
   const myShip = findMyShip(ns.state);

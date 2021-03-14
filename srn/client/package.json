@@ -177,6 +177,7 @@
     "resetMocks": true
   },
   "babel": {
+    "plugins": ["transform-class-properties"],
     "presets": [
       "react-app"
     ]

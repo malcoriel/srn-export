@@ -12,10 +12,12 @@
     "up-version": "node scripts/up-version.js"
   },
   "dependencies": {
+    "@babel/preset-env": "^7.1.6",
     "@iarna/toml": "^2.2.5",
     "@types/fs-extra": "^9.0.6",
     "cross-env": "^7.0.3",
     "fs-extra": "^9.0.1",
+    "jscodeshift": "^0.11.0",
     "simple-git": "^2.31.0",
     "standard-version": "^9.1.0",
     "yargs": "^16.2.0"

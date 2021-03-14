@@ -89,20 +89,17 @@ module.exports = function (file, api) {
     .find(j.ExportNamedDeclaration)
     .replaceWith((ex: ASTPath<ExportNamedDeclaration>) => {
       if (ex.value.declaration.type !== 'TSTypeAliasDeclaration') {
-        console.log('not an alias export');
         return ex.value;
       }
       const p = ex.value.declaration;
       const mainUnionName = getTypeDeclaraiontName(p);
       if (!mainUnionName) {
         // not a union, not interesting
-        console.log('not a union');
         return ex.value;
       }
 
       const union = p.typeAnnotation;
       if (!isTSUnionType(union)) {
-        console.log('early exit', union.type);
         return ex.value;
       }
       const typesWithNames = union.types
@@ -164,13 +161,11 @@ module.exports = function (file, api) {
       const unionName = getTypeDeclaraiontName(p);
       if (!unionName) {
         // not a union, not interesting
-        console.log('not a union');
         return ex.value;
       }
 
       const aliases2 = nameToAliases[unionName];
       if (!aliases2) {
-        console.log('no aliases');
         return ex.value;
       }
 
