@@ -1,18 +1,22 @@
 import React from 'react';
 import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
-import './InventoryWindowBase.scss';
+import styleVars from './InventoryWindow.vars.module.scss';
+import './InventoryWindow.scss';
+
+const pxToNumber = (px: string) => px.replace(/px$/, '');
+const BOTTOM_BAR_HEIGHT = Number(pxToNumber(styleVars.bottomBarHeight));
+const TOP_BAR_HEIGHT = Number(pxToNumber(styleVars.topBarHeight));
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { InventoryActionBuilder } from '../../../world/pkg/builders';
 import _ from 'lodash';
-import { move } from 'fs-extra';
 
 const SCROLL_OFFSET = 10;
 const MIN_ROWS = 5;
 const COLUMNS = 5;
 const WINDOW_MARGIN = 10;
 
-const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2 + 1;
+const CONTENT_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2 + 1;
 const WINDOW_WIDTH = cellsToPixels(COLUMNS) + SCROLL_OFFSET;
 const EXTRA_ROWS = 3;
 
@@ -79,13 +83,10 @@ const InventoryWindowItems = () => {
 };
 
 export const InventoryWindow = () => {
-  const height = WINDOW_HEIGHT;
-  const width = WINDOW_WIDTH + SCROLL_OFFSET;
-
   return (
     <Window
-      height={height}
-      width={width}
+      height={CONTENT_HEIGHT + BOTTOM_BAR_HEIGHT + TOP_BAR_HEIGHT}
+      width={WINDOW_WIDTH + SCROLL_OFFSET}
       line="complex"
       storeKey="inventoryWindow"
       thickness={8}
@@ -93,7 +94,11 @@ export const InventoryWindow = () => {
     >
       <div className="inventory-window">
         <div className="inventory-window-padded-content">
-          <InventoryWindowItems />
+          <div className="top-bar">Ship inventory</div>
+          <div className="inventory-window-items-content">
+            <InventoryWindowItems />
+          </div>
+          <div className="bottom-bar">Shift+click to split stacks</div>
         </div>
       </div>
     </Window>
