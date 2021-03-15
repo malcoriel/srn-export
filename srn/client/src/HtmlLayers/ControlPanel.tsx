@@ -119,19 +119,19 @@ export const ControlPanel = () => {
         >
           <CgScreen />
         </Button>
-        <Button onClick={toggleHelpWindow}>
+        <Button onClick={toggleHelpWindow} hotkey="h">
           <FaQuestion />
         </Button>
-        <Button onClick={toggleQuestWindow}>
+        <Button onClick={toggleQuestWindow} hotkey="o">
           <FaBullseye />
         </Button>
-        <Button onClick={toggleLeaderboardWindow}>
+        <Button onClick={toggleLeaderboardWindow} hotkey="l">
           <AiOutlineSolution />
         </Button>
-        <Button onClick={toggleChatWindow}>
+        <Button onClick={toggleChatWindow} hotkey="c">
           <BsFillChatDotsFill />
         </Button>
-        <Button onClick={toggleInventoryWindow}>
+        <Button onClick={toggleInventoryWindow} hotkey="i">
           <FiBox />
         </Button>
       </StyledRect>

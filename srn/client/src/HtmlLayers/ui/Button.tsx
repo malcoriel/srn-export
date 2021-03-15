@@ -33,6 +33,15 @@ const formatText = (
   return <span>{text}</span>;
 };
 
+const renderHotkeyHint = (
+  hotkey: string | undefined,
+  noHotkeyHint: boolean | undefined
+) => {
+  if (noHotkeyHint) return null;
+  if (!hotkey) return null;
+  return <div className="hotkey-hint">{hotkey}</div>;
+};
+
 export const Button: React.FC<{
   onClick?: () => void;
   className?: string;
@@ -42,8 +51,10 @@ export const Button: React.FC<{
   round?: boolean;
   thin?: boolean;
   noInlineHotkey?: boolean;
+  noHotkeyHint?: boolean;
 }> = ({
   hotkey,
+  noHotkeyHint,
   noInlineHotkey,
   round,
   text,
@@ -96,7 +107,9 @@ export const Button: React.FC<{
       onClick={timedOutClick}
     >
       {children}
-      {text ? formatText(text, hotkey, noInlineHotkey) : ''}
+      {text
+        ? formatText(text, hotkey, noInlineHotkey)
+        : renderHotkeyHint(hotkey, noHotkeyHint)}
     </span>
   );
 };

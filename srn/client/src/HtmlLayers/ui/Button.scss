@@ -11,9 +11,18 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  position: relative;
 
   .hotkey-letter {
     color: $mint;
+  }
+
+  .hotkey-hint {
+    font-size: smaller;
+    color: $mint;
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
   }
 }
 
