@@ -4,10 +4,10 @@ import _ from 'lodash';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
 import { WithScrollbars } from './ui/WithScrollbars';
 import './ItemGrid.scss';
-import { InventoryItem } from '../world';
+import { InventoryItem, InventoryItemType } from '../world';
 import { ItemElem } from './InventoryItem';
 import classNames from 'classnames';
-import { useHotkeys, useIsHotkeyPressed } from 'react-hotkeys-hook';
+import { useIsHotkeyPressed } from 'react-hotkeys-hook';
 import { usePrompt } from './PromptWindow';
 
 export const ITEM_CELL_MARGIN = 5;
@@ -129,6 +129,7 @@ export type OnDragItem = (i: InventoryItem) => void;
 
 export enum ItemMoveKind {
   OwnMove,
+  Merge,
   Invalid,
   Sell,
   Buy,
@@ -142,27 +143,48 @@ export type MoveEvent = {
   newIndex: number;
   kind: ItemMoveKind;
   item: InventoryItem;
+  ontoItemId?: string;
 };
 export type OnMove = (ev: MoveEvent) => void;
 
 const getMoveKind = (
   startMove: IVector,
   endMove: IVector,
+  movedItemId: string,
+  itemPositions: Record<string, IVector>,
+  // reverse map of positions
+  posToItem: Record<string, string>,
+  itemToType: Record<string, InventoryItemType>,
+  width: number,
   tradeMode?: TradeModeParams
 ): ItemMoveKind => {
-  if (!tradeMode) return ItemMoveKind.OwnMove;
-  const groups = splitGroups(tradeMode.columnParams);
-  if (isInGroup(startMove, groups[0]) && isInGroup(endMove, groups[2])) {
-    return ItemMoveKind.Sell;
-  }
-  if (isInGroup(startMove, groups[2]) && isInGroup(endMove, groups[0])) {
-    return ItemMoveKind.Buy;
-  }
-  if (isInGroup(endMove, groups[1])) {
-    return ItemMoveKind.Invalid;
+  const groups = tradeMode
+    ? splitGroups(tradeMode.columnParams)
+    : [{ left: 0, width }];
+  if (tradeMode) {
+    if (isInGroup(startMove, groups[0]) && isInGroup(endMove, groups[2])) {
+      return ItemMoveKind.Sell;
+    }
+    if (isInGroup(startMove, groups[2]) && isInGroup(endMove, groups[0])) {
+      return ItemMoveKind.Buy;
+    }
+    if (isInGroup(endMove, groups[1])) {
+      return ItemMoveKind.Invalid;
+    }
   }
   if (isInGroup(endMove, groups[0]) && isInGroup(startMove, groups[0])) {
-    return ItemMoveKind.OwnMove;
+    const endMoveVec = Vector.fromIVector(endMove);
+    const currentItemPosition = Vector.fromIVector(itemPositions[movedItemId]);
+    if (itemPositions[movedItemId] && !currentItemPosition.equals(endMoveVec)) {
+      const occupyingItem = posToItem[endMoveVec.toKey()];
+      if (!occupyingItem) {
+        return ItemMoveKind.OwnMove;
+      }
+      if (itemToType[movedItemId] !== itemToType[occupyingItem]) {
+        return ItemMoveKind.Invalid;
+      }
+      return ItemMoveKind.Merge;
+    }
   }
   return ItemMoveKind.OtherMove;
 };
@@ -232,18 +254,43 @@ export const ItemGrid: React.FC<{
     (id: string) => (e: any, d: IVector) => {
       setPositions((oldPos) => {
         const newPos = positionToGridPosition(d);
-        const moveKind = getMoveKind(startMove, newPos, tradeMode);
+        const posToItem = _.mapValues(
+          _.invertBy(positions, (value) => Vector.fromIVector(value).toKey()),
+          (v) => v[0]
+        );
+        const itemToType = _.mapValues(
+          _.keyBy(
+            items.map((i) => [i.id, i.item_type]),
+            (p) => p[0]
+          ),
+          (v) => v[1]
+        ) as Record<string, InventoryItemType>;
+        const moveKind = getMoveKind(
+          startMove,
+          newPos,
+          id,
+          positions,
+          posToItem,
+          itemToType,
+          columnCount,
+          tradeMode
+        );
         if (moveKind === ItemMoveKind.Invalid) {
           return oldPos;
         }
 
         if (onMove) {
+          let ontoItemId;
+          if (moveKind === ItemMoveKind.Merge) {
+            ontoItemId = posToItem[Vector.fromIVector(newPos).toKey()];
+          }
           onMove({
             from: startMove,
             to: newPos,
             newIndex: calculateNewIndex(newPos, tradeMode, columnCount),
             kind: moveKind,
             item: byId[id],
+            ontoItemId,
           });
         }
         return {
@@ -252,7 +299,7 @@ export const ItemGrid: React.FC<{
         };
       });
     },
-    [tradeMode, onMove, startMove, byId, columnCount]
+    [tradeMode, onMove, startMove, byId, columnCount, positions, items]
   );
 
   const contentHeight = cellsToPixels(rowCount) + 0.5;

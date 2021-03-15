@@ -6,6 +6,7 @@ import { AiFillCaretDown, AiFillCaretUp, CgClose } from 'react-icons/all';
 import { StyledRect } from './StyledRect';
 import ReactDOM from 'react-dom';
 import './Window.scss';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 export const Window: React.FC<{
   storeKey: string;

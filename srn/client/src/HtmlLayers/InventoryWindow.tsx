@@ -5,6 +5,7 @@ import './InventoryWindowBase.scss';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { InventoryActionBuilder } from '../../../world/pkg/builders';
 import _ from 'lodash';
+import { move } from 'fs-extra';
 
 const SCROLL_OFFSET = 10;
 const MIN_ROWS = 5;
@@ -34,6 +35,16 @@ const InventoryWindowItems = () => {
         InventoryActionBuilder.InventoryActionMove({
           item: moveAction.item.id,
           index: moveAction.newIndex,
+        })
+      );
+    } else if (
+      moveAction.kind === ItemMoveKind.Merge &&
+      moveAction.ontoItemId
+    ) {
+      ns.sendInventoryAction(
+        InventoryActionBuilder.InventoryActionMerge({
+          from: moveAction.item.id,
+          to: moveAction.ontoItemId,
         })
       );
     }

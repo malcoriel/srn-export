@@ -25,9 +25,9 @@ pub enum InventoryItemType {
 #[serde(tag = "tag")]
 pub enum InventoryAction {
     Unknown,
-    Split {from: Uuid, count: i32},
-    Merge {from: Uuid, to: Uuid},
-    Move {item: Uuid, index: i32}
+    Split { from: Uuid, count: i32 },
+    Merge { from: Uuid, to: Uuid },
+    Move { item: Uuid, index: i32 },
 }
 
 pub static MINERAL_TYPES: [InventoryItemType; 3] = [
@@ -190,6 +190,18 @@ fn find_quest_item_pos(inventory: &Vec<InventoryItem>, quest_id: Uuid) -> Option
     pos
 }
 
+pub fn merge_item_stacks(inventory: &mut Vec<InventoryItem>, from: Uuid, to: Uuid) {
+    let moved = inventory.iter().position(|i| i.id == from);
+    let accepting = inventory.iter().position(|i| i.id == to);
+    if let (Some(moved), Some(accepting)) = (moved, accepting) {
+        let picked = inventory.remove(moved);
+        let accepting = &mut inventory[accepting];
+        accepting.quantity += picked.quantity;
+    } else {
+        warn!(format!("Invalid merge for non-existent item ids (or one of them): {} and {}", from, to));
+    }
+}
+
 pub fn split_item_stack(inventory: &mut Vec<InventoryItem>, item_id: Uuid, count: i32) {
     let (by_index, by_id) = double_index_items(inventory);
     let target = inventory.iter_mut().find(|i| i.id == item_id);
@@ -204,7 +216,7 @@ pub fn split_item_stack(inventory: &mut Vec<InventoryItem>, item_id: Uuid, count
     }
     let mut free_index = by_id.get(&item_id).unwrap().clone() + 1;
     while by_index.get(&free_index).is_some() {
-        free_index +=1;
+        free_index += 1;
     }
     target.quantity -= count;
     let target_clone = target.clone();
@@ -216,7 +228,7 @@ pub fn split_item_stack(inventory: &mut Vec<InventoryItem>, item_id: Uuid, count
         stackable: target_clone.stackable,
         player_owned: target_clone.player_owned,
         item_type: target_clone.item_type.clone(),
-        quest_id: target_clone.quest_id
+        quest_id: target_clone.quest_id,
     })
 }
 
@@ -302,26 +314,32 @@ pub fn index_items_by_id_mut(inventory: &mut Vec<InventoryItem>) -> HashMap<Uuid
 }
 
 pub fn apply_action(
-    inventory: &mut Vec<InventoryItem>, action: InventoryAction
+    inventory: &mut Vec<InventoryItem>, action: InventoryAction,
 ) {
     match action {
         InventoryAction::Unknown => {}
         InventoryAction::Split { from, count } => {
             split_item_stack(inventory, from, count);
         }
-        InventoryAction::Merge { .. } => {}
+        InventoryAction::Merge { from, to } => {
+            merge_item_stacks(inventory, from, to);
+        }
         InventoryAction::Move { item, index } => {
-            let (by_index, _by_id) = double_index_items(inventory);
-            let mut items = index_items_by_id_mut(inventory);
-            if let Some(mut moved_item) = items.get_mut(&item) {
-                if by_index.get(&index).is_some() {
-                    warn!(format!("Invalid move action {:?}, index {} already occupied", action, index));
-                } else if index < 0 {
-                    warn!(format!("Invalid move action {:?}, index {}<0", action, index));
-                } else {
-                    moved_item.index = index;
-                }
-            }
+            move_item_stack(inventory, action, &item, index)
+        }
+    }
+}
+
+fn move_item_stack(inventory: &mut Vec<InventoryItem>, action: InventoryAction, item: &Uuid, index: i32) {
+    let (by_index, _by_id) = double_index_items(inventory);
+    let mut items = index_items_by_id_mut(inventory);
+    if let Some(mut moved_item) = items.get_mut(&item) {
+        if by_index.get(&index).is_some() {
+            warn!(format!("Invalid move action {:?}, index {} already occupied", action, index));
+        } else if index < 0 {
+            warn!(format!("Invalid move action {:?}, index {}<0", action, index));
+        } else {
+            moved_item.index = index;
         }
     }
 }
