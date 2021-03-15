@@ -1,9 +1,10 @@
 import React from 'react';
 import { Window } from './ui/Window';
-import { cellsToPixels, ItemGrid, MoveEvent } from './ItemGrid';
+import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
 import './InventoryWindowBase.scss';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { InventoryActionBuilder } from '../../../world/pkg/builders';
+import _ from 'lodash';
 
 const SCROLL_OFFSET = 10;
 const MIN_ROWS = 5;
@@ -28,10 +29,25 @@ const InventoryWindowItems = () => {
   });
 
   const onMove = (moveAction: MoveEvent) => {
+    if (moveAction.kind === ItemMoveKind.OwnMove) {
+      ns.sendInventoryAction(
+        InventoryActionBuilder.InventoryActionMove({
+          item: moveAction.item.id,
+          index: moveAction.newIndex,
+        })
+      );
+    }
+  };
+
+  const onSplit = (itemId: string, count: number) => {
+    if (_.isNaN(count) || count <= 0) {
+      console.warn(`Bad split count ${count}`);
+      return;
+    }
     ns.sendInventoryAction(
-      InventoryActionBuilder.InventoryActionMove({
-        item: moveAction.item.id,
-        index: moveAction.newIndex,
+      InventoryActionBuilder.InventoryActionSplit({
+        from: itemId,
+        count,
       })
     );
   };
@@ -41,6 +57,7 @@ const InventoryWindowItems = () => {
   const inventory = myShip.inventory;
   return (
     <ItemGrid
+      onSplit={onSplit}
       onMove={onMove}
       items={inventory}
       columnCount={COLUMNS}

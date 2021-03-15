@@ -34,7 +34,7 @@ import Vector from '../utils/Vector';
 import _ from 'lodash';
 import { FaDiceD20 } from 'react-icons/fa';
 import { api } from '../utils/api';
-import { useStore, WindowState } from '../store';
+import { usePrompt } from './PromptWindow';
 
 const pickClosestObject = (
   state: GameState,
@@ -68,20 +68,6 @@ const cyclePlanetSpeed = (sp: number) => {
     return 0.1;
   }
   return 0.05;
-};
-
-const usePrompt = (): ((prompt: string) => Promise<string>) => {
-  const setPromptWindow = useStore((state) => state.setPromptWindow);
-  const setPromptWindowParams = useStore(
-    (state) => state.setPromptWindowParams
-  );
-  return async (prompt: string) => {
-    console.log('starting prompt', prompt);
-    return await new Promise((resolve, reject) => {
-      setPromptWindow(WindowState.Shown);
-      setPromptWindowParams(prompt, resolve, reject);
-    });
-  };
 };
 
 export const SandboxQuickMenu = () => {

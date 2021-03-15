@@ -47,7 +47,7 @@ const isWin = process.platform === 'win32';
   const extracted = file.match(builderClassFinder);
   const fileWithNoClasses = file.replace(builderClassFinder, '');
   await fs.writeFile('world/pkg/world.d.ts', fileWithNoClasses);
-  const builders = extracted.join('\n\n');
+  const builders = `type Uuid = string; \n${extracted.join('\n\n')}`;
   await fs.writeFile('world/pkg/builders.ts', builders);
   console.log('Done, ts definitions are ready!');
 })();

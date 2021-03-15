@@ -82,7 +82,7 @@ export const ItemElem: React.FC<{
   item: InventoryItem;
   position?: IVector;
   onDragStop: (e: any, d: any) => void;
-  onDragStart: (e: any, d: any) => void;
+  onDragStart: (e: any, d: any, item: InventoryItem) => void;
 }> = ({
   item,
   maxY,
@@ -114,7 +114,7 @@ export const ItemElem: React.FC<{
   return (
     <>
       <Draggable
-        onStart={onDragStart || OnDragEmpty}
+        onStart={((e: any, d: any) => onDragStart(e, d, item)) || OnDragEmpty}
         position={position}
         onStop={onDragStop}
         bounds={bounds}

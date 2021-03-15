@@ -25,7 +25,7 @@ pub enum InventoryItemType {
 #[serde(tag = "tag")]
 pub enum InventoryAction {
     Unknown,
-    Split {from: Uuid, count: i32, to_index: i32},
+    Split {from: Uuid, count: i32},
     Merge {from: Uuid, to: Uuid},
     Move {item: Uuid, index: i32}
 }
@@ -190,6 +190,36 @@ fn find_quest_item_pos(inventory: &Vec<InventoryItem>, quest_id: Uuid) -> Option
     pos
 }
 
+pub fn split_item_stack(inventory: &mut Vec<InventoryItem>, item_id: Uuid, count: i32) {
+    let (by_index, by_id) = double_index_items(inventory);
+    let target = inventory.iter_mut().find(|i| i.id == item_id);
+    if target.is_none() {
+        warn!(format!("Invalid split for non-existent item id: {}", item_id));
+        return;
+    }
+    let target = target.unwrap();
+    if target.quantity <= count {
+        warn!(format!("Invalid split for item id: {}, available {}, split {} (must be greater)", item_id, target.quantity, count));
+        return;
+    }
+    let mut free_index = by_id.get(&item_id).unwrap().clone() + 1;
+    while by_index.get(&free_index).is_some() {
+        free_index +=1;
+    }
+    target.quantity -= count;
+    let target_clone = target.clone();
+    inventory.push(InventoryItem {
+        id: new_id(),
+        index: free_index,
+        quantity: count,
+        value: target_clone.value,
+        stackable: target_clone.stackable,
+        player_owned: target_clone.player_owned,
+        item_type: target_clone.item_type.clone(),
+        quest_id: target_clone.quest_id
+    })
+}
+
 pub fn consume_items_of_type(inventory: &mut Vec<InventoryItem>, iit: &InventoryItemType) -> Vec<InventoryItem> {
     let mut res = vec![];
     let mut indexes = vec![];
@@ -271,14 +301,14 @@ pub fn index_items_by_id_mut(inventory: &mut Vec<InventoryItem>) -> HashMap<Uuid
     return by_id;
 }
 
-
-
 pub fn apply_action(
     inventory: &mut Vec<InventoryItem>, action: InventoryAction
 ) {
     match action {
         InventoryAction::Unknown => {}
-        InventoryAction::Split { .. } => {}
+        InventoryAction::Split { from, count } => {
+            split_item_stack(inventory, from, count);
+        }
         InventoryAction::Merge { .. } => {}
         InventoryAction::Move { item, index } => {
             let (by_index, _by_id) = double_index_items(inventory);

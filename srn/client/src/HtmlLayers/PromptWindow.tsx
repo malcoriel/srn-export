@@ -62,3 +62,15 @@ export const PromptWindow: React.FC = () => {
     </Window>
   );
 };
+export const usePrompt = (): ((prompt: string) => Promise<string>) => {
+  const setPromptWindow = useStore((state) => state.setPromptWindow);
+  const setPromptWindowParams = useStore(
+    (state) => state.setPromptWindowParams
+  );
+  return async (prompt: string) => {
+    return await new Promise((resolve, reject) => {
+      setPromptWindow(WindowState.Shown);
+      setPromptWindowParams(prompt, resolve, reject);
+    });
+  };
+};

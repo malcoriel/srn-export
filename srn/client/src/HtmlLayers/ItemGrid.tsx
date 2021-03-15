@@ -7,6 +7,8 @@ import './ItemGrid.scss';
 import { InventoryItem } from '../world';
 import { ItemElem } from './InventoryItem';
 import classNames from 'classnames';
+import { useHotkeys, useIsHotkeyPressed } from 'react-hotkeys-hook';
+import { usePrompt } from './PromptWindow';
 
 export const ITEM_CELL_MARGIN = 5;
 export const ITEM_CELL_SIZE = 60;
@@ -126,11 +128,12 @@ export const positionItems = (
 export type OnDragItem = (i: InventoryItem) => void;
 
 export enum ItemMoveKind {
-  Move,
+  OwnMove,
   Invalid,
   Sell,
   Buy,
   Drop,
+  OtherMove,
 }
 
 export type MoveEvent = {
@@ -147,7 +150,7 @@ const getMoveKind = (
   endMove: IVector,
   tradeMode?: TradeModeParams
 ): ItemMoveKind => {
-  if (!tradeMode) return ItemMoveKind.Move;
+  if (!tradeMode) return ItemMoveKind.OwnMove;
   const groups = splitGroups(tradeMode.columnParams);
   if (isInGroup(startMove, groups[0]) && isInGroup(endMove, groups[2])) {
     return ItemMoveKind.Sell;
@@ -158,7 +161,10 @@ const getMoveKind = (
   if (isInGroup(endMove, groups[1])) {
     return ItemMoveKind.Invalid;
   }
-  return ItemMoveKind.Move;
+  if (isInGroup(endMove, groups[0]) && isInGroup(startMove, groups[0])) {
+    return ItemMoveKind.OwnMove;
+  }
+  return ItemMoveKind.OtherMove;
 };
 
 type TradeModeParams = {
@@ -187,9 +193,12 @@ const calculateNewIndex = (
   return newPos.y * width + newPos.x;
 };
 
+export type OnSplit = (itemId: string, count: number) => void;
+
 export const ItemGrid: React.FC<{
   columnCount: number;
   onMove?: OnMove;
+  onSplit?: OnSplit;
   items: InventoryItem[];
   minRows: number;
   extraRows: number;
@@ -203,6 +212,7 @@ export const ItemGrid: React.FC<{
   tradeMode,
   minRows,
   extraRows,
+  onSplit,
 }) => {
   const [positions, setPositions] = useState<Record<string, IVector>>(
     positionItems(items, columnCount, tradeMode)
@@ -216,6 +226,8 @@ export const ItemGrid: React.FC<{
     (_.max(Object.values(positions).map((p) => p.y)) || 0) + 1 + extraRows,
     minRows
   );
+  const prompt = usePrompt();
+  const isPressed = useIsHotkeyPressed();
   const onDragStop = useCallback(
     (id: string) => (e: any, d: IVector) => {
       setPositions((oldPos) => {
@@ -265,7 +277,18 @@ export const ItemGrid: React.FC<{
           return (
             <ItemElem
               maxY={contentHeight - ITEM_CELL_SIZE + ITEM_CELL_MARGIN}
-              onDragStart={(e: any, d: any) => {
+              onDragStart={(e: any, d: any, item: InventoryItem) => {
+                if (onSplit) {
+                  if (isPressed('shift')) {
+                    (async () => {
+                      const splitAmount = await prompt(
+                        `Select amount to split, out of ${item.quantity}`
+                      );
+                      onSplit(item.id, Number(splitAmount));
+                    })();
+                    return false;
+                  }
+                }
                 setStartMove(positionToGridPosition(d));
               }}
               maxX={contentWidth - ITEM_CELL_SIZE - 0.5 - ITEM_CELL_MARGIN}
