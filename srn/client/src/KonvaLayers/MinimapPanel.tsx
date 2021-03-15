@@ -230,7 +230,6 @@ export const MinimapPanel = React.memo(() => {
   if (!ns) return null;
 
   const [shown] = useToggleHotkey('shift+m', true, 'show minimap');
-  if (!shown) return null;
 
   useNSForceChange('MinimapLayer', false, () => true);
 
@@ -282,6 +281,9 @@ export const MinimapPanel = React.memo(() => {
     setCameraPos(newPos);
     visualState.cameraPosition = newPos;
   };
+
+  if (!shown) return null;
+
   return (
     <Stage
       onWheel={getOnWheel(visualState, ({ evt }: any) => {
