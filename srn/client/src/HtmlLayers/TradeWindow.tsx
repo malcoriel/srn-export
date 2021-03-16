@@ -5,6 +5,8 @@ import './InventoryWindowBase.scss';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { GameState, Market, Player } from '../world';
 import { useStore, WindowState } from '../store';
+import _ from 'lodash';
+import { InventoryActionBuilder } from '../../../world/pkg/builders';
 
 const SCROLL_OFFSET = 10;
 const MIN_ROWS = 5;
@@ -65,21 +67,55 @@ export const TradeWindow = () => {
     });
   }, [setTradeWindowState, tradeWindowState, ns]);
 
-  const onMove = (move: MoveEvent) => {
+  const onMove = (moveAction: MoveEvent) => {
     if (!planetId) return;
-    if (move.kind === ItemMoveKind.Sell) {
+    if (moveAction.kind === ItemMoveKind.Sell) {
       ns.sendTradeAction({
         planet_id: planetId,
-        sells_to_planet: [[move.item.item_type, move.item.quantity]],
+        sells_to_planet: [
+          [moveAction.item.item_type, moveAction.item.quantity],
+        ],
         buys_from_planet: [],
       });
-    } else if (move.kind === ItemMoveKind.Buy) {
+    } else if (moveAction.kind === ItemMoveKind.Buy) {
       ns.sendTradeAction({
         planet_id: planetId,
         sells_to_planet: [],
-        buys_from_planet: [[move.item.item_type, move.item.quantity]],
+        buys_from_planet: [
+          [moveAction.item.item_type, moveAction.item.quantity],
+        ],
       });
+    } else if (moveAction.kind === ItemMoveKind.OwnMove) {
+      ns.sendInventoryAction(
+        InventoryActionBuilder.InventoryActionMove({
+          item: moveAction.item.id,
+          index: moveAction.newIndex,
+        })
+      );
+    } else if (
+      moveAction.kind === ItemMoveKind.Merge &&
+      moveAction.ontoItemId
+    ) {
+      ns.sendInventoryAction(
+        InventoryActionBuilder.InventoryActionMerge({
+          from: moveAction.item.id,
+          to: moveAction.ontoItemId,
+        })
+      );
     }
+  };
+
+  const onSplit = (itemId: string, count: number) => {
+    if (_.isNaN(count) || count <= 0) {
+      console.warn(`Bad split count ${count}`);
+      return;
+    }
+    ns.sendInventoryAction(
+      InventoryActionBuilder.InventoryActionSplit({
+        from: itemId,
+        count,
+      })
+    );
   };
 
   const onCloseTradeWindow = () => {
@@ -117,6 +153,7 @@ export const TradeWindow = () => {
                 />
               </>
             }
+            onSplit={onSplit}
             columnCount={COLUMNS}
             extraRows={EXTRA_ROWS}
             minRows={MIN_ROWS}

@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use serde_derive::{Deserialize, Serialize};
+use crate::new_id;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Market {
@@ -65,6 +66,7 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
                 let mut target_stack = target_items_ship.into_iter().nth(0).unwrap();
                 if target_stack.quantity >= sell.1 && sell.1 > 0 {
                     let mut cloned_stack = target_stack.clone();
+                    cloned_stack.id = new_id();
                     target_stack.quantity -= sell.1;
                     cloned_stack.quantity = sell.1;
                     if target_stack.quantity > 0 {
@@ -74,6 +76,7 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
                     player.money += total_price
                 } else {
                     log!(format!("not enough quantity or negative sell, {} requested, {} available", sell.1, target_stack.quantity));
+                    target_stack.id = new_id();
                     add_item(&mut ship.inventory, target_stack);
                 }
             } else {
@@ -94,6 +97,7 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
                     if player.money >= total_price {
                         let mut cloned_stack = target_stack.clone();
                         target_stack.quantity -= buy.1;
+                        cloned_stack.id = new_id();
                         cloned_stack.quantity = buy.1;
                         if target_stack.quantity > 0 {
                             add_item(&mut planet_inventory, target_stack);
@@ -102,6 +106,7 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
                         player.money -= total_price
                     } else {
                         log!(format!("not enough money on player, {} needed, {} available", total_price, player.money));
+                        target_stack.id = new_id();
                         add_item(&mut planet_inventory, target_stack);
                     }
                 } else {
