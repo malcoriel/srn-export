@@ -9,6 +9,7 @@ import BoxPng from '../../public/resources/box.png';
 import { Tooltip } from './ui/Tooltip';
 import { UnreachableCaseError } from 'ts-essentials';
 import NetState from '../NetState';
+import { OreSvg } from './svg/OreSvg';
 
 const getDisplayName = (iit: InventoryItemType): string => {
   switch (iit) {
@@ -57,21 +58,72 @@ const getItemColor = (iit: InventoryItemType): string => {
 };
 
 const renderItem = (item: InventoryItem) => {
-  if (item.item_type === InventoryItemType.QuestCargo) {
-    return (
-      <div style={{ width: 50, height: 50, margin: 5 }}>
-        <img draggable={false} src={BoxPng} width={40} height={40} alt="" />
-      </div>
-    );
+  switch (item.item_type) {
+    case InventoryItemType.Unknown:
+      break;
+    case InventoryItemType.CommonMineral:
+      return (
+        <OreSvg
+          width={50}
+          height={50}
+          fill={getItemColor(item.item_type)}
+          stroke="#111"
+        />
+      );
+    case InventoryItemType.UncommonMineral:
+      return (
+        <OreSvg
+          width={50}
+          height={50}
+          fill={getItemColor(item.item_type)}
+          stroke="#111"
+        />
+      );
+    case InventoryItemType.RareMineral:
+      return (
+        <OreSvg
+          width={50}
+          height={50}
+          fill={getItemColor(item.item_type)}
+          stroke="#111"
+        />
+      );
+    case InventoryItemType.QuestCargo:
+      return (
+        <div style={{ width: 50, height: 50, margin: 5 }}>
+          <img draggable={false} src={BoxPng} width={40} height={40} alt="" />
+        </div>
+      );
+    case InventoryItemType.Food:
+      return (
+        <OreSvg
+          width={50}
+          height={50}
+          fill={getItemColor(item.item_type)}
+          stroke="#111"
+        />
+      );
+    case InventoryItemType.Medicament:
+      return (
+        <OreSvg
+          width={50}
+          height={50}
+          fill={getItemColor(item.item_type)}
+          stroke="#111"
+        />
+      );
+    case InventoryItemType.HandWeapon:
+      return (
+        <OreSvg
+          width={50}
+          height={50}
+          fill={getItemColor(item.item_type)}
+          stroke="#111"
+        />
+      );
+    default:
+      throw new UnreachableCaseError(item.item_type);
   }
-  return (
-    <MineralSvg
-      width={50}
-      height={50}
-      fillColor={getItemColor(item.item_type)}
-      strokeColor="#00000000"
-    />
-  );
 };
 
 export const ItemElem: React.FC<{

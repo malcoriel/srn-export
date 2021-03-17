@@ -28,7 +28,9 @@ export const Input: React.FC<{
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (ref && ref.current && autofocus) {
-      ref.current.focus();
+      setTimeout(() => {
+        if (ref && ref.current) ref.current.focus();
+      }, 0);
     }
   }, [autofocus]);
   return (
