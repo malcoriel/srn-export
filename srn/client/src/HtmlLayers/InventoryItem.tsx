@@ -82,10 +82,12 @@ export const ItemElem: React.FC<{
   item: InventoryItem;
   position?: IVector;
   onDragStop: (e: any, d: any) => void;
+  onClick?: (item: InventoryItem) => void;
   onDragStart: (e: any, d: any, item: InventoryItem) => void;
 }> = ({
   item,
   maxY,
+  onClick,
   onDragStart,
   position,
   onDragStop,
@@ -120,7 +122,11 @@ export const ItemElem: React.FC<{
         bounds={bounds}
         defaultPosition={defaultPosition}
       >
-        <div className="item-grid-item grabbable-invisible" ref={itemRef}>
+        <div
+          onClick={onClick ? () => onClick(item) : () => {}}
+          className="item-grid-item grabbable-invisible"
+          ref={itemRef}
+        >
           {renderItem(item)}
           {item.quantity !== 1 && (
             <div className="quantity">{item.quantity}</div>

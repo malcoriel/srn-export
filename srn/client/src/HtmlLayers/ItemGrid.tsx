@@ -125,8 +125,6 @@ export const positionItems = (
   return positionItemsInGroup(items, 0, width);
 };
 
-export type OnDragItem = (i: InventoryItem) => void;
-
 export enum ItemMoveKind {
   OwnMove,
   Merge,
@@ -304,6 +302,22 @@ export const ItemGrid: React.FC<{
 
   const contentHeight = cellsToPixels(rowCount) + 0.5;
   const contentWidth = cellsToPixels(columnCount);
+
+  const tryTriggerSplit = (item: InventoryItem): boolean => {
+    if (onSplit) {
+      if (isPressed('shift')) {
+        (async () => {
+          const splitAmount = await prompt(
+            `Select amount to split, out of ${item.quantity}`
+          );
+          onSplit(item.id, Number(splitAmount));
+        })();
+        return true;
+      }
+    }
+    return false;
+  };
+
   return (
     <WithScrollbars noAutoHide>
       {injectedGrid ? (
@@ -324,17 +338,12 @@ export const ItemGrid: React.FC<{
           return (
             <ItemElem
               maxY={contentHeight - ITEM_CELL_SIZE + ITEM_CELL_MARGIN}
+              // onClick={(item: InventoryItem) => {
+              //   tryTriggerSplit(item);
+              // }}
               onDragStart={(e: any, d: any, item: InventoryItem) => {
-                if (onSplit) {
-                  if (isPressed('shift')) {
-                    (async () => {
-                      const splitAmount = await prompt(
-                        `Select amount to split, out of ${item.quantity}`
-                      );
-                      onSplit(item.id, Number(splitAmount));
-                    })();
-                    return false;
-                  }
+                if (tryTriggerSplit(item)) {
+                  return false;
                 }
                 setStartMove(positionToGridPosition(d));
               }}

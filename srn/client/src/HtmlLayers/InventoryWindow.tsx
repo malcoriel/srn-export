@@ -3,13 +3,13 @@ import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
 import styleVars from './InventoryWindow.vars.module.scss';
 import './InventoryWindow.scss';
-
-const pxToNumber = (px: string) => px.replace(/px$/, '');
-const BOTTOM_BAR_HEIGHT = Number(pxToNumber(styleVars.bottomBarHeight));
-const TOP_BAR_HEIGHT = Number(pxToNumber(styleVars.topBarHeight));
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { InventoryActionBuilder } from '../../../world/pkg/builders';
 import _ from 'lodash';
+import { pxToNumber } from '../utils/pxToNumber';
+
+const BOTTOM_BAR_HEIGHT = Number(pxToNumber(styleVars.bottomBarHeight));
+const TOP_BAR_HEIGHT = Number(pxToNumber(styleVars.topBarHeight));
 
 const SCROLL_OFFSET = 10;
 const MIN_ROWS = 5;

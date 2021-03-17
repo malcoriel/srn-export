@@ -1,19 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
-import './InventoryWindowBase.scss';
+import './TradeWindow.scss';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import { GameState, Market, Player } from '../world';
 import { useStore, WindowState } from '../store';
 import _ from 'lodash';
 import { InventoryActionBuilder } from '../../../world/pkg/builders';
+import styleVars from './TradeWindow.vars.module.scss';
+import { pxToNumber } from '../utils/pxToNumber';
+const BOTTOM_BAR_HEIGHT = Number(pxToNumber(styleVars.bottomBarHeight));
+const TOP_BAR_HEIGHT = Number(pxToNumber(styleVars.topBarHeight));
 
 const SCROLL_OFFSET = 10;
 const MIN_ROWS = 5;
 const COLUMNS = 11;
 const WINDOW_MARGIN = 10;
 
-const WINDOW_HEIGHT = cellsToPixels(MIN_ROWS) + WINDOW_MARGIN * 2 + 1;
+const WINDOW_HEIGHT =
+  cellsToPixels(MIN_ROWS) +
+  WINDOW_MARGIN * 2 +
+  1 +
+  BOTTOM_BAR_HEIGHT +
+  TOP_BAR_HEIGHT;
 
 const WINDOW_WIDTH = cellsToPixels(COLUMNS) + SCROLL_OFFSET + 1;
 const EXTRA_ROWS = 3;
@@ -136,30 +145,37 @@ export const TradeWindow = () => {
     >
       <div className="trade-window">
         <div className="trade-window-padded-content">
-          <ItemGrid
-            items={[
-              ...selectPlayerItems(ns.state),
-              ...selectWares(ns.state.market, planetId),
-            ]}
-            injectedGrid={
-              <>
-                <div
-                  className="item-grid grid-green"
-                  style={{ width: cellsToPixels(5) }}
-                />
-                <div
-                  className="item-grid grid-red"
-                  style={{ width: cellsToPixels(5), left: cellsToPixels(6) }}
-                />
-              </>
-            }
-            onSplit={onSplit}
-            columnCount={COLUMNS}
-            extraRows={EXTRA_ROWS}
-            minRows={MIN_ROWS}
-            tradeMode={{ columnParams: [5, 1, 5], planetId }}
-            onMove={onMove}
-          />
+          <div className="top-bar">
+            <div>Ship inventory</div>
+            <div>Planet market</div>
+          </div>
+          <div className="trade-window-items-content">
+            <ItemGrid
+              items={[
+                ...selectPlayerItems(ns.state),
+                ...selectWares(ns.state.market, planetId),
+              ]}
+              injectedGrid={
+                <>
+                  <div
+                    className="item-grid grid-green"
+                    style={{ width: cellsToPixels(5) }}
+                  />
+                  <div
+                    className="item-grid grid-red"
+                    style={{ width: cellsToPixels(5), left: cellsToPixels(6) }}
+                  />
+                </>
+              }
+              onSplit={onSplit}
+              columnCount={COLUMNS}
+              extraRows={EXTRA_ROWS}
+              minRows={MIN_ROWS}
+              tradeMode={{ columnParams: [5, 1, 5], planetId }}
+              onMove={onMove}
+            />
+          </div>
+          <div className="bottom-bar">Shift+click to split stacks</div>
         </div>
       </div>
     </Window>
