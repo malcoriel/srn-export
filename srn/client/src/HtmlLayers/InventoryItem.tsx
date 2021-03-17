@@ -12,6 +12,7 @@ import NetState from '../NetState';
 import { OreSvg } from './svg/OreSvg';
 import { FoodSvg } from './svg/FoodSvg';
 import MedicineSvg from './svg/MedicineSvg';
+import { WeaponSvg } from './svg/WeaponSvg';
 
 const getDisplayName = (iit: InventoryItemType): string => {
   switch (iit) {
@@ -116,7 +117,7 @@ const renderItem = (item: InventoryItem) => {
       );
     case InventoryItemType.HandWeapon:
       return (
-        <OreSvg
+        <WeaponSvg
           width={50}
           height={50}
           fill={getItemColor(item.item_type)}
