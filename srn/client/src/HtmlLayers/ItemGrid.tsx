@@ -308,7 +308,6 @@ export const ItemGrid: React.FC<{
       if (isPressed('shift')) {
         (async () => {
           try {
-            console.log('prompt');
             const splitAmount = await prompt(
               `Select amount to split, out of ${item.quantity}`
             );
@@ -317,7 +316,6 @@ export const ItemGrid: React.FC<{
             // cancelled, do nothing
           }
         })();
-        // qwew
         return true;
       }
     }
