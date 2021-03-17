@@ -4,12 +4,12 @@ import { IVector } from '../utils/Vector';
 import { InventoryItem, InventoryItemType, Price } from '../world';
 import { ITEM_CELL_MARGIN, OnDragEmpty } from './ItemGrid';
 import { common, gray, rare, uncommon } from '../utils/palette';
-import MineralSvg from './ui/MineralSvg';
 import BoxPng from '../../public/resources/box.png';
 import { Tooltip } from './ui/Tooltip';
 import { UnreachableCaseError } from 'ts-essentials';
 import NetState from '../NetState';
 import { OreSvg } from './svg/OreSvg';
+import { FoodSvg } from './svg/FoodSvg';
 
 const getDisplayName = (iit: InventoryItemType): string => {
   switch (iit) {
@@ -60,7 +60,7 @@ const getItemColor = (iit: InventoryItemType): string => {
 const renderItem = (item: InventoryItem) => {
   switch (item.item_type) {
     case InventoryItemType.Unknown:
-      break;
+      return null;
     case InventoryItemType.CommonMineral:
       return (
         <OreSvg
@@ -96,7 +96,7 @@ const renderItem = (item: InventoryItem) => {
       );
     case InventoryItemType.Food:
       return (
-        <OreSvg
+        <FoodSvg
           width={50}
           height={50}
           fill={getItemColor(item.item_type)}

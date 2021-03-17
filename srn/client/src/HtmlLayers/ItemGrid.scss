@@ -1,3 +1,4 @@
+@import "../utils/palette";
 $cellSize: 60px;
 $cellSizeS: 59px;
 $gridColor: #ccc;
@@ -38,8 +39,11 @@ $gridColor: #ccc;
   box-sizing: border-box;
 
   .quantity {
-    color: white;
-    font-size: 20px;
+    font-size: 10px;
+    line-height: 10px;
+    color: black;
+    background-color: darken($teal, 15);
+    padding: 2px;
     position: absolute;
     bottom: 2px;
     right: 2px;
