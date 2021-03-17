@@ -4,12 +4,14 @@ import { IVector } from '../utils/Vector';
 import { InventoryItem, InventoryItemType, Price } from '../world';
 import { ITEM_CELL_MARGIN, OnDragEmpty } from './ItemGrid';
 import { common, gray, rare, uncommon } from '../utils/palette';
+
 import BoxPng from '../../public/resources/box.png';
 import { Tooltip } from './ui/Tooltip';
 import { UnreachableCaseError } from 'ts-essentials';
 import NetState from '../NetState';
 import { OreSvg } from './svg/OreSvg';
 import { FoodSvg } from './svg/FoodSvg';
+import MedicineSvg from './svg/MedicineSvg';
 
 const getDisplayName = (iit: InventoryItemType): string => {
   switch (iit) {
@@ -105,7 +107,7 @@ const renderItem = (item: InventoryItem) => {
       );
     case InventoryItemType.Medicament:
       return (
-        <OreSvg
+        <MedicineSvg
           width={50}
           height={50}
           fill={getItemColor(item.item_type)}
