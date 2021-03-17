@@ -33,6 +33,7 @@ export const PromptWindow: React.FC = () => {
       line="complex"
       thickness={8}
       halfThick
+      highPriority
       contentClassName="prompt-window-content"
     >
       <div className="prompt">{prompt}</div>

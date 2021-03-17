@@ -307,11 +307,17 @@ export const ItemGrid: React.FC<{
     if (onSplit) {
       if (isPressed('shift')) {
         (async () => {
-          const splitAmount = await prompt(
-            `Select amount to split, out of ${item.quantity}`
-          );
-          onSplit(item.id, Number(splitAmount));
+          try {
+            console.log('prompt');
+            const splitAmount = await prompt(
+              `Select amount to split, out of ${item.quantity}`
+            );
+            onSplit(item.id, Number(splitAmount));
+          } catch (e) {
+            // cancelled, do nothing
+          }
         })();
+        // qwew
         return true;
       }
     }
@@ -338,9 +344,9 @@ export const ItemGrid: React.FC<{
           return (
             <ItemElem
               maxY={contentHeight - ITEM_CELL_SIZE + ITEM_CELL_MARGIN}
-              // onClick={(item: InventoryItem) => {
-              //   tryTriggerSplit(item);
-              // }}
+              onClick={(item: InventoryItem) => {
+                tryTriggerSplit(item);
+              }}
               onDragStart={(e: any, d: any, item: InventoryItem) => {
                 if (tryTriggerSplit(item)) {
                   return false;

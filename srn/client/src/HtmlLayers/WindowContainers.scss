@@ -24,3 +24,35 @@
   justify-content: center;
   align-items: center;
 }
+
+.high-priority-windows {
+  z-index: 20;
+  pointer-events: none;
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.shown-windows, .high-priority-windows {
+  .backdrop {
+    z-index: -20;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: black;
+    opacity: 0.4;
+    pointer-events: auto;
+  }
+  div.backdrop:first-child:nth-last-child(1) {
+    background: none;
+    opacity: 0.2;
+    pointer-events: none;
+  }
+}

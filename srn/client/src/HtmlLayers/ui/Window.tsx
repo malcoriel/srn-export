@@ -18,6 +18,7 @@ export const Window: React.FC<{
   line: 'complex' | 'thick' | 'thin';
   halfThick?: boolean;
   unclosable?: boolean;
+  highPriority?: boolean;
   contentClassName?: string;
   className?: string;
   minimizedClassname?: string;
@@ -36,6 +37,7 @@ export const Window: React.FC<{
   unclosable,
   contentClassName,
   minimizedClassname,
+  highPriority,
 }) => {
   const key = storeKey;
   const setKey = `set${_.upperFirst(key)}`;
@@ -79,27 +81,28 @@ export const Window: React.FC<{
     </div>
   );
   const minimizedMountPoint = document.getElementById('minimized-windows');
-  const shownWindowsMountPoint = document.getElementById('shown-windows');
+  const shownWindowsMountPoint = !highPriority
+    ? document.getElementById('shown-windows')
+    : document.getElementById('high-priority-windows');
   if (!minimizedMountPoint || !shownWindowsMountPoint) return null;
   return (
     <>
       {!isMinimized &&
+        isShown &&
         ReactDOM.createPortal(
           <div className={`ui-window ${className}`}>
-            {isShown && (
-              <div className="ui-window-shown ">
-                <StyledRect
-                  width={width}
-                  height={height}
-                  line={line}
-                  thickness={thickness}
-                  contentClassName={`ui-window-content ${contentClassName}`}
-                >
-                  {windowButtons}
-                  {children}
-                </StyledRect>
-              </div>
-            )}
+            <div className="ui-window-shown ">
+              <StyledRect
+                width={width}
+                height={height}
+                line={line}
+                thickness={thickness}
+                contentClassName={`ui-window-content ${contentClassName}`}
+              >
+                {windowButtons}
+                {children}
+              </StyledRect>
+            </div>
           </div>,
           shownWindowsMountPoint
         )}
