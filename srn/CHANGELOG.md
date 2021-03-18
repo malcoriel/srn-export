@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.5.1 (2021-03-18)
+### Fixes
+* Fixes for objects visibility (camera culling optimization):
+    * No more star's "after-effects" when it leaves the camera view gradually.
+    * No more "dead" planet copies matching last visible planet position.
+
 ## Version 0.5.0
 ### New
 * Trading. Now every planet has a dynamic, randomly-updated market.
