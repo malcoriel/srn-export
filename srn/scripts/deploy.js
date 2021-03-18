@@ -52,7 +52,7 @@ const doBuildServer = async () => {
         -v cargo-git:/home/rust/.cargo/git \
         -v cargo-registry:/home/rust/.cargo/registry \
         -v target:/home/rust/src/target \
-        ekidd/rust-musl-builder \
+        ekidd/rust-musl-builder:nightly-2021-02-13 \
         /bin/bash -c "sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target; cargo build --release;"\
         `
     );

@@ -1,3 +1,4 @@
+#![feature(exclusive_range_pattern)]
 #![allow(dead_code)]
 #![allow(warnings)]
 #[cfg(target_arch="wasm32")]
