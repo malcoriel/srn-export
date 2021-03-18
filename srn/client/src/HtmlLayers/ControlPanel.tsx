@@ -128,7 +128,7 @@ export const ControlPanel = () => {
         <Button onClick={toggleLeaderboardWindow} hotkey="l">
           <AiOutlineSolution />
         </Button>
-        <Button onClick={toggleChatWindow} hotkey="c">
+        <Button onClick={toggleChatWindow} hotkey="v">
           <BsFillChatDotsFill />
         </Button>
         <Button onClick={toggleInventoryWindow} hotkey="i">
