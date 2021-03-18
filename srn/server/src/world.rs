@@ -947,7 +947,9 @@ pub fn update_ship_hp_effects(
                     fire_event(GameEvent::ShipDied {
                         ship: s.clone(),
                         player: player_mut.clone(),
-                    })
+                    });
+                    player_mut.money -= 1000;
+                    player_mut.money = player_mut.money.max(0);
                 }
                 None
             }
