@@ -97,12 +97,12 @@ export enum ServerToClientMessageCode {
   LeaveRoom = 9,
 }
 
-const isInAABB = (bounds: AABB, obj: IVector): boolean => {
+const isInAABB = (bounds: AABB, obj: IVector, radius: number): boolean => {
   return (
-    bounds.top_left.x <= obj.x &&
-    obj.x <= bounds.bottom_right.x &&
-    bounds.top_left.y <= obj.y &&
-    obj.y <= bounds.bottom_right.y
+    bounds.top_left.x - radius <= obj.x &&
+    obj.x <= bounds.bottom_right.x + radius &&
+    bounds.top_left.y - radius <= obj.y &&
+    obj.y <= bounds.bottom_right.y + radius
   );
 };
 
@@ -210,14 +210,14 @@ export default class NetState extends EventEmitter {
     const AABB = this.getSimulationArea();
     this.visMap = {};
     for (const ship of this.state.ships) {
-      this.visMap[ship.id] = isInAABB(AABB, ship);
+      this.visMap[ship.id] = isInAABB(AABB, ship, ship.radius);
     }
     for (const planet of this.state.planets) {
-      this.visMap[planet.id] = isInAABB(AABB, planet);
+      this.visMap[planet.id] = isInAABB(AABB, planet, planet.radius);
     }
     const star = this.state.star;
     if (star) {
-      this.visMap[star.id] = isInAABB(AABB, star);
+      this.visMap[star.id] = isInAABB(AABB, star, star.radius);
     }
   }
 
