@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 0.5.0
+### New
+* Trading. Now every planet has a dynamic, randomly-update market.
+* Full-fledged trade interface replacing old "sell minerals" option.
+* Splitting, merging, and rearranging items in the inventory.
+* New types of items with their own icons. Mineral icons reworked.
+* Saving, loading, downloading and generation of sandbox states.
+* Generating sandbox state from the seed (you can view the current seed in the menu of the active game).
+* Cheats menu in sandbox mode - now with 2 cheats, one for free items, another for invulnerability.
+* Better UX for windows, some dark backdrops and refining of prompt windows.
+* Dying now is fined by detracting 1000 SB from the player's budget.
+* All control panel buttons now have hotkeys.
+
+### Fixes
+* Some clarifications about what is Sandbox mode
+* Fixed a bug with styled borders - now direction of the ornament makes sense.
+
 ## Version 0.4.3
 ### New
 * Sandbox mode for playing with planets. Highly experimental. Press G to enter the quick menu.
