@@ -1,3 +1,4 @@
+#![feature(exclusive_range_pattern)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #[macro_use]

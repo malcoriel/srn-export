@@ -343,3 +343,8 @@ fn move_item_stack(inventory: &mut Vec<InventoryItem>, action: InventoryAction, 
         }
     }
 }
+
+pub fn cleanup_inventory_from_zeros(inventory: &mut Vec<InventoryItem>) {
+    let mut tmp = inventory.iter().filter_map(|item| if item.quantity > 0 { Some(item.clone()) } else { None }).collect::<Vec<_>>();
+    mem::swap(&mut tmp, inventory);
+}

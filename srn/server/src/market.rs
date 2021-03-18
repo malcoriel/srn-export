@@ -1,4 +1,4 @@
-use crate::inventory::{InventoryItemType, InventoryItem, add_items};
+use crate::inventory::{InventoryItemType, InventoryItem, add_items, shake_items, inventory_item_type_to_stackable, cleanup_inventory_from_zeros};
 use crate::world::{GameState, find_player_and_ship_mut};
 use crate::inventory::{consume_items_of_type, add_item};
 use uuid::Uuid;
@@ -7,11 +7,15 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use serde_derive::{Deserialize, Serialize};
 use crate::new_id;
+use rand::Rng;
+
+pub type Wares = HashMap<Uuid, Vec<InventoryItem>>;
+pub type Prices = HashMap<Uuid, HashMap<InventoryItemType, Price>>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Market {
-    pub wares: HashMap<Uuid, Vec<InventoryItem>>,
-    pub prices: HashMap<Uuid, HashMap<InventoryItemType, Price>>,
+    pub wares: Wares,
+    pub prices: Prices,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -157,6 +161,44 @@ fn make_default_prices() -> HashMap<InventoryItemType, Price> {
     res
 }
 
+fn make_default_wares() -> Vec<InventoryItem> {
+    let mut res = vec![];
+    for item in InventoryItemType::iter() {
+        let it: InventoryItemType = item;
+        let item = match it {
+            InventoryItemType::Unknown => {
+                InventoryItem::new(it, 0)
+            }
+            InventoryItemType::CommonMineral => {
+                InventoryItem::new(it, 100)
+            }
+            InventoryItemType::UncommonMineral => {
+                InventoryItem::new(it, 50)
+            }
+            InventoryItemType::RareMineral => {
+                InventoryItem::new(it, 20)
+            }
+            InventoryItemType::QuestCargo => {
+                InventoryItem::new(it, 0)
+            }
+            InventoryItemType::Food => {
+                InventoryItem::new(it, 200)
+            }
+            InventoryItemType::Medicament => {
+                InventoryItem::new(it, 50)
+            }
+            InventoryItemType::HandWeapon => {
+                InventoryItem::new(it, 10)
+            }
+        };
+        if item.quantity != 0 {
+            res.push(item);
+        }
+    }
+    shake_items(&mut res);
+    res
+}
+
 pub fn get_default_value(it: &InventoryItemType) -> i32 {
     match it {
         InventoryItemType::Unknown => {
@@ -186,3 +228,202 @@ pub fn get_default_value(it: &InventoryItemType) -> i32 {
     }
 }
 
+
+pub fn gen_price_event() -> PriceEvent {
+    let mut rng = rand::thread_rng();
+    let roll = rng.gen_range(0, 100);
+    match roll {
+        0..70 => PriceEvent::Normalize,
+        71..80 => PriceEvent::FoodShortage,
+        81..85 => PriceEvent::CivilWar,
+        86..95 => PriceEvent::IndustrialBoom,
+        96..99 => PriceEvent::Epidemic,
+        _ => PriceEvent::Unknown
+    }
+}
+
+pub fn shake_market(planet_ids: Vec<Uuid>, wares: &mut Wares, prices: &mut Prices) {
+    for planet_id in planet_ids {
+        let planet_prices = prices.entry(planet_id).or_insert(make_default_prices());
+        let planet_wares = wares.entry(planet_id).or_insert(make_default_wares());
+        shift_market(planet_prices, planet_wares)
+    }
+}
+
+pub fn shift_market(prices: &mut HashMap<InventoryItemType, Price>, wares: &mut Vec<InventoryItem>) {
+    let event = gen_price_event();
+    apply_price_event(prices, event, wares);
+}
+
+
+const NORMALIZE_DRIFT_PRICE_PERCENTAGE_PER_EVENT: f64 = 20.0;
+const NORMALIZE_DRIFT_ITEM_PERCENTAGE_PER_EVENT: f64 = 10.0;
+
+pub fn index_items_by_type(items: &mut Vec<InventoryItem>) -> HashMap<InventoryItemType, &mut InventoryItem> {
+    let mut res = HashMap::new();
+    for item in items.iter_mut() {
+        res.insert(item.item_type.clone(), item);
+    }
+    return res;
+}
+
+pub enum PriceEvent {
+    Unknown,
+    Normalize,
+    FoodShortage,
+    CivilWar,
+    IndustrialBoom,
+    Epidemic,
+}
+
+
+pub fn apply_price_event(prices: &mut HashMap<InventoryItemType, Price>, event: PriceEvent, wares: &mut Vec<InventoryItem>) {
+    match event {
+        PriceEvent::Unknown => {}
+        PriceEvent::Normalize => {
+            apply_normalize_event(prices, wares)
+        }
+        PriceEvent::FoodShortage => {
+            set_quantity(wares, &InventoryItemType::Food, QuantityVariant::Scarce);
+            set_price(prices, &InventoryItemType::Food, PriceVariant::Deficit);
+            set_price(prices, &InventoryItemType::CommonMineral, PriceVariant::Stagnated);
+            cleanup_inventory_from_zeros(wares);
+        }
+        PriceEvent::CivilWar => {
+            set_quantity(wares, &InventoryItemType::Food, QuantityVariant::Low);
+            set_price(prices, &InventoryItemType::Food, PriceVariant::Deficit);
+            set_quantity(wares, &InventoryItemType::HandWeapon, QuantityVariant::Abundant);
+            set_price(prices, &InventoryItemType::HandWeapon, PriceVariant::Prospering);
+            set_price(prices, &InventoryItemType::Medicament, PriceVariant::Deficit);
+            set_price(prices, &InventoryItemType::CommonMineral, PriceVariant::Stagnated);
+            set_quantity(wares, &InventoryItemType::CommonMineral, QuantityVariant::Zero);
+            cleanup_inventory_from_zeros(wares);
+        }
+        PriceEvent::IndustrialBoom => {
+            set_quantity(wares, &InventoryItemType::CommonMineral, QuantityVariant::Overwhelming);
+            set_price(prices, &InventoryItemType::CommonMineral, PriceVariant::Abundance);
+            set_price(prices, &InventoryItemType::Food, PriceVariant::Booming);
+            set_price(prices, &InventoryItemType::HandWeapon, PriceVariant::Abundance);
+            set_quantity(wares, &InventoryItemType::HandWeapon, QuantityVariant::Abundant);
+        }
+        PriceEvent::Epidemic => {
+            set_quantity(wares, &InventoryItemType::Medicament, QuantityVariant::Zero);
+            set_price(prices, &InventoryItemType::Medicament, PriceVariant::Deficit);
+            set_price(prices, &InventoryItemType::Food, PriceVariant::Deficit);
+            set_price(prices, &InventoryItemType::HandWeapon, PriceVariant::Stagnated);
+            set_price(prices, &InventoryItemType::CommonMineral, PriceVariant::Stagnated);
+            set_quantity(wares, &InventoryItemType::CommonMineral, QuantityVariant::Low);
+        }
+    }
+}
+
+fn apply_normalize_event(prices: &mut HashMap<InventoryItemType, Price>, wares: &mut Vec<InventoryItem>) {
+    let default_prices = make_default_prices();
+    for (it, price) in prices {
+        let default = default_prices.get(&it).unwrap();
+        let sell_diff = ((default.sell - price.sell) as f64 / 100.0 * NORMALIZE_DRIFT_PRICE_PERCENTAGE_PER_EVENT) as i32;
+        price.sell += sell_diff;
+        let buy_diff = ((default.buy - price.buy) as f64 / 100.0 * NORMALIZE_DRIFT_PRICE_PERCENTAGE_PER_EVENT) as i32;
+        price.buy += buy_diff;
+    }
+    shake_items(wares);
+
+    let mut indexed_by_type = index_items_by_type(wares);
+    let mut default_wares = make_default_wares();
+    let default_indexed = index_items_by_type(&mut default_wares);
+    let mut new_items = vec![];
+    for it in InventoryItemType::iter() {
+        let it: InventoryItemType = it;
+        let diff: i32 = if let Some(default_quantity) = default_indexed.get(&it).map(|i| i.quantity) {
+            let current_quantity = indexed_by_type.get(&it).map_or(0, |it| it.quantity);
+            ((default_quantity - current_quantity) as f64 / 100.0 * NORMALIZE_DRIFT_ITEM_PERCENTAGE_PER_EVENT) as i32
+        } else {
+            0
+        };
+        if diff != 0 {
+            if let Some(item) = indexed_by_type.get_mut(&it) {
+                item.quantity += diff;
+            } else {
+                new_items.push(InventoryItem::new(it, diff));
+            }
+        }
+    }
+    wares.extend(new_items.into_iter());
+    cleanup_inventory_from_zeros(wares)
+}
+
+enum QuantityVariant {
+    Zero,
+    Scarce,
+    Low,
+    Normal,
+    Abundant,
+    Booming,
+    Overwhelming
+}
+
+enum PriceVariant {
+    Normal,
+    Stagnated,
+    Booming,
+    Prospering,
+    Deficit,
+    Abundance
+}
+
+fn set_price(prices: &mut HashMap<InventoryItemType, Price>, target_type: &InventoryItemType, variant: PriceVariant) {
+    let default_prices = make_default_prices();
+    let default_price = default_prices.get(&target_type).unwrap();
+    let new_price = match variant {
+        PriceVariant::Normal => Price {
+            sell: default_price.sell as f64 * 1.0 as i32,
+            buy: default_price.buy as f64 * 1.0 as i32,
+        },
+        PriceVariant::Stagnated => Price {
+            sell: default_price.sell as f64 * 0.5 as i32,
+            buy: default_price.buy as f64 * 0.5 as i32,
+        },
+        PriceVariant::Booming => Price {
+            sell: default_price.sell as f64 * 1.5 as i32,
+            buy: default_price.buy as f64 * 1.5 as i32,
+        },
+        PriceVariant::Prospering => Price {
+            sell: default_price.sell as f64 * 2.0 as i32,
+            buy: default_price.buy as f64 * 2.0 as i32,
+        },
+        PriceVariant::Deficit => Price {
+            sell: default_price.sell as f64 * 1.5 as i32,
+            buy: default_price.buy as f64 * 2.5 as i32,
+        },
+        PriceVariant::Abundance => Price {
+            sell: default_price.sell as f64 * 0.75 as i32,
+            buy: default_price.buy as f64 * 0.25 as i32,
+        }
+    };
+    prices.insert(target_type.clone(), new_price);
+}
+
+fn set_quantity(wares: &mut Vec<InventoryItem>, target_type: &InventoryItemType, variant: QuantityVariant) {
+    let mut indexed_by_type = index_items_by_type(wares);
+
+    let mut default_wares = make_default_wares();
+    let default_quantity = index_items_by_type(&mut default_wares).get(&target_type).map_or(0, |i| i.quantity).unwrap();
+    let new_quantity = match variant {
+        QuantityVariant::Zero => 0,
+        QuantityVariant::Scarce => (default_quantity as f64 * 0.3) as i32,
+        QuantityVariant::Low => (default_quantity as f64 * 0.6) as i32,
+        QuantityVariant::Normal => (default_quantity as f64 * 1.0) as i32,
+        QuantityVariant::Abundant => (default_quantity as f64 * 1.5) as i32,
+        QuantityVariant::Booming => (default_quantity as f64 * 2.25) as i32,
+        QuantityVariant::Overwhelming => (default_quantity as f64 * 3.0) as i32
+    };
+    let result = if let Some(mut item) = indexed_by_type.get_mut(&target_type) {
+        item.quantity = new_quantity;
+        None
+    } else {
+        Some(InventoryItem::new(target_type.clone(), new_quantity))
+    };
+    if result.is_some() {
+        wares.push(result.unwrap());
+    }
+}
