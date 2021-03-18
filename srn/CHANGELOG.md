@@ -2,7 +2,7 @@
 
 ## Version 0.5.0
 ### New
-* Trading. Now every planet has a dynamic, randomly-update market.
+* Trading. Now every planet has a dynamic, randomly-updated market.
 * Full-fledged trade interface replacing old "sell minerals" option.
 * Splitting, merging, and rearranging items in the inventory.
 * New types of items with their own icons. Mineral icons reworked.
