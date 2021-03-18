@@ -631,8 +631,8 @@ pub fn update_world(
             else {
                 let mut wares = state.market.wares.clone();
                 let mut prices = state.market.prices.clone();
-                let planet_ids = state.planets.iter().map(|p| p.id.clone()).collect::<Vec<_>>();
-                market::shake_market(planet_ids, &mut wares, &mut prices);
+                let planets = state.planets.iter().map(|p| p.clone()).collect::<Vec<_>>();
+                market::shake_market(planets, &mut wares, &mut prices);
                 state.market = Market {
                     wares,
                     prices,

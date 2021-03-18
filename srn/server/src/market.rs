@@ -1,5 +1,5 @@
 use crate::inventory::{InventoryItemType, InventoryItem, add_items, shake_items, inventory_item_type_to_stackable, cleanup_inventory_from_zeros};
-use crate::world::{GameState, find_player_and_ship_mut};
+use crate::world::{GameState, find_player_and_ship_mut, Planet};
 use crate::inventory::{consume_items_of_type, add_item};
 use uuid::Uuid;
 use std::collections::HashMap;
@@ -12,7 +12,7 @@ use rand::Rng;
 pub type Wares = HashMap<Uuid, Vec<InventoryItem>>;
 pub type Prices = HashMap<Uuid, HashMap<InventoryItemType, Price>>;
 
-pub const SHAKE_MARKET_FREQUENCY_MCS: i64 = 10 * 1000 * 1000;
+pub const SHAKE_MARKET_FREQUENCY_MCS: i64 = 60 * 1000 * 1000;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Market {
@@ -32,7 +32,7 @@ impl Market {
         Market {
             wares: HashMap::new(),
             prices: Default::default(),
-            time_before_next_shake: SHAKE_MARKET_FREQUENCY_MCS
+            time_before_next_shake: 1000
         }
     }
 }
@@ -237,25 +237,26 @@ pub fn gen_price_event() -> PriceEvent {
     let mut rng = rand::thread_rng();
     let roll = rng.gen_range(0, 100);
     match roll {
-        0..70 => PriceEvent::Normalize,
-        71..80 => PriceEvent::FoodShortage,
-        81..85 => PriceEvent::CivilWar,
-        86..95 => PriceEvent::IndustrialBoom,
-        96..99 => PriceEvent::Epidemic,
+        0..71 => PriceEvent::Normalize,
+        71..81 => PriceEvent::FoodShortage,
+        81..86 => PriceEvent::CivilWar,
+        86..96 => PriceEvent::IndustrialBoom,
+        96..100 => PriceEvent::Epidemic,
         _ => PriceEvent::Unknown
     }
 }
 
-pub fn shake_market(planet_ids: Vec<Uuid>, wares: &mut Wares, prices: &mut Prices) {
-    for planet_id in planet_ids {
-        let planet_prices = prices.entry(planet_id).or_insert(make_default_prices());
-        let planet_wares = wares.entry(planet_id).or_insert(make_default_wares());
-        shift_market(planet_prices, planet_wares)
+pub fn shake_market(planets: Vec<Planet>, wares: &mut Wares, prices: &mut Prices) {
+    for planet in planets {
+        let planet_prices = prices.entry(planet.id).or_insert(make_default_prices());
+        let planet_wares = wares.entry(planet.id).or_insert(make_default_wares());
+        shift_market(planet_prices, planet_wares, planet.name.clone());
     }
 }
 
-pub fn shift_market(prices: &mut HashMap<InventoryItemType, Price>, wares: &mut Vec<InventoryItem>) {
+pub fn shift_market(prices: &mut HashMap<InventoryItemType, Price>, wares: &mut Vec<InventoryItem>, _planet_name: String) {
     let event = gen_price_event();
+    // log!(format!("Market event {:?} on {}", event, planet_name));
     apply_price_event(prices, event, wares);
 }
 
@@ -271,6 +272,7 @@ pub fn index_items_by_type(items: &mut Vec<InventoryItem>) -> HashMap<InventoryI
     return res;
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PriceEvent {
     Unknown,
     Normalize,
