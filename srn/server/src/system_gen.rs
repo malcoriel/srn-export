@@ -190,6 +190,7 @@ pub fn system_gen(seed: String) -> GameState {
         }
     }
 
+    log!(format!("Generated state, seed {}", seed));
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
         id: new_id(),
