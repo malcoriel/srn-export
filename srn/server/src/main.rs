@@ -874,7 +874,8 @@ fn main_thread() {
             "Update ships respawn",       // 17
             "Update planets 1",           // 18
             "Update planets 2",           // 19
-            "Personal states",           // 20
+            "Personal states",            // 20
+            "Update market"               // 21
         ]
             .iter()
             .map(|v| v.to_string())

@@ -12,10 +12,13 @@ use rand::Rng;
 pub type Wares = HashMap<Uuid, Vec<InventoryItem>>;
 pub type Prices = HashMap<Uuid, HashMap<InventoryItemType, Price>>;
 
+pub const SHAKE_MARKET_FREQUENCY_MCS: i64 = 10 * 1000 * 1000;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Market {
     pub wares: Wares,
     pub prices: Prices,
+    pub time_before_next_shake: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -29,6 +32,7 @@ impl Market {
         Market {
             wares: HashMap::new(),
             prices: Default::default(),
+            time_before_next_shake: SHAKE_MARKET_FREQUENCY_MCS
         }
     }
 }
@@ -376,28 +380,28 @@ fn set_price(prices: &mut HashMap<InventoryItemType, Price>, target_type: &Inven
     let default_price = default_prices.get(&target_type).unwrap();
     let new_price = match variant {
         PriceVariant::Normal => Price {
-            sell: default_price.sell as f64 * 1.0 as i32,
-            buy: default_price.buy as f64 * 1.0 as i32,
+            sell: (default_price.sell as f64 * 1.0) as i32,
+            buy: (default_price.buy as f64 * 1.0) as i32,
         },
         PriceVariant::Stagnated => Price {
-            sell: default_price.sell as f64 * 0.5 as i32,
-            buy: default_price.buy as f64 * 0.5 as i32,
+            sell: (default_price.sell as f64 * 0.5) as i32,
+            buy: (default_price.buy as f64 * 0.5) as i32,
         },
         PriceVariant::Booming => Price {
-            sell: default_price.sell as f64 * 1.5 as i32,
-            buy: default_price.buy as f64 * 1.5 as i32,
+            sell: (default_price.sell as f64 * 1.5) as i32,
+            buy: (default_price.buy as f64 * 1.5) as i32,
         },
         PriceVariant::Prospering => Price {
-            sell: default_price.sell as f64 * 2.0 as i32,
-            buy: default_price.buy as f64 * 2.0 as i32,
+            sell: (default_price.sell as f64 * 2.0) as i32,
+            buy: (default_price.buy as f64 * 2.0) as i32,
         },
         PriceVariant::Deficit => Price {
-            sell: default_price.sell as f64 * 1.5 as i32,
-            buy: default_price.buy as f64 * 2.5 as i32,
+            sell: (default_price.sell as f64 * 1.5) as i32,
+            buy: (default_price.buy as f64 * 2.5) as i32,
         },
         PriceVariant::Abundance => Price {
-            sell: default_price.sell as f64 * 0.75 as i32,
-            buy: default_price.buy as f64 * 0.25 as i32,
+            sell: (default_price.sell as f64 * 0.75) as i32,
+            buy: (default_price.buy as f64 * 0.25) as i32,
         }
     };
     prices.insert(target_type.clone(), new_price);
@@ -407,7 +411,7 @@ fn set_quantity(wares: &mut Vec<InventoryItem>, target_type: &InventoryItemType,
     let mut indexed_by_type = index_items_by_type(wares);
 
     let mut default_wares = make_default_wares();
-    let default_quantity = index_items_by_type(&mut default_wares).get(&target_type).map_or(0, |i| i.quantity).unwrap();
+    let default_quantity = index_items_by_type(&mut default_wares).get(&target_type).map_or(0, |i| i.quantity);
     let new_quantity = match variant {
         QuantityVariant::Zero => 0,
         QuantityVariant::Scarce => (default_quantity as f64 * 0.3) as i32,

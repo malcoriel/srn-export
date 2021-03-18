@@ -12,7 +12,7 @@ use serde_derive::{Deserialize, Serialize};
 use uuid::*;
 use uuid::Uuid;
 
-use crate::{fire_event, planet_movement};
+use crate::{fire_event, planet_movement, market};
 use crate::{DEBUG_PHYSICS, new_id};
 use crate::inventory::{add_item, has_quest_item, InventoryItem, InventoryItemType, shake_items};
 use crate::perf::Sampler;
@@ -624,6 +624,21 @@ pub fn update_world(
     } else {
         if !client {
             state.leaderboard = sampler.measure(&|| make_leaderboard(&state.players), 8);
+
+            if state.market.time_before_next_shake > 0 {
+                state.market.time_before_next_shake -= elapsed;
+            }
+            else {
+                let mut wares = state.market.wares.clone();
+                let mut prices = state.market.prices.clone();
+                let planet_ids = state.planets.iter().map(|p| p.id.clone()).collect::<Vec<_>>();
+                market::shake_market(planet_ids, &mut wares, &mut prices);
+                state.market = Market {
+                    wares,
+                    prices,
+                    time_before_next_shake: market::SHAKE_MARKET_FREQUENCY_MCS
+                }
+            }
         }
         if state.milliseconds_remaining <= 0 {
             eprintln!("game end");
