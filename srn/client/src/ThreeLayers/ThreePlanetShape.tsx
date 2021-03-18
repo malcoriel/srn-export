@@ -30,14 +30,15 @@ export const ThreePlanetShape: React.FC<
     });
 
     return (
-      <mesh {...props} ref={mesh} rotation={[0, 0, 0]}>
+      <mesh {...props} ref={mesh} rotation={[0, 0, 0]} visible={props.visible}>
         <icosahedronBufferGeometry args={[1, 5]} />
         <meshBasicMaterial color={color} map={space01map} />
       </mesh>
     );
   },
   (prev, next) => {
-    if (!next.visible) {
+    if (prev && !prev.visible && next && !next.visible) {
+      // allow one last update when switching from visible to not visible
       return true;
     }
     return shallowEqual(prev, next);
