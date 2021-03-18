@@ -1,8 +1,7 @@
 import React from 'react';
 import './QuestWindow.scss';
 import NetState, { findMyPlayer, useNSForceChange } from '../NetState';
-import { Planet, Quest, QuestState } from '../world';
-import { findPlanet } from './NetworkStatus';
+import { findPlanet, Planet, Quest, QuestState } from '../world';
 import { Window } from './ui/Window';
 
 export const QuestWindow = () => {

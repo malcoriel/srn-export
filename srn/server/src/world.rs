@@ -11,6 +11,8 @@ use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use uuid::*;
 use uuid::Uuid;
+use wasm_bindgen::prelude::*;
+use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 
 use crate::{fire_event, planet_movement, market};
 use crate::{DEBUG_PHYSICS, new_id};
@@ -217,7 +219,7 @@ fn get_random_planet<'a>(
     Some(from)
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Planet {
     pub id: Uuid,
     pub name: String,

@@ -8,8 +8,7 @@ import NetState, {
 } from '../NetState';
 import Vector from '../utils/Vector';
 import { babyBlue, yellow } from '../utils/palette';
-import { Planet, QuestState, Ship } from '../world';
-import { findPlanet } from '../HtmlLayers/NetworkStatus';
+import { findPlanet, Planet, QuestState, Ship } from '../world';
 import {
   calcRealPosToScreenPos,
   size,

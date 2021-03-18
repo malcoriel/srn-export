@@ -1,18 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { GameState, Planet } from '../world';
 import NetState from '../NetState';
 import { StyledRect } from './ui/StyledRect';
 import './NetworkStatus.scss';
 import { FaWaveSquare, GiSplitArrows, RiFilmFill } from 'react-icons/all';
 import { Stat, statsHeap } from './Perf';
 import _ from 'lodash';
-
-export const findPlanet = (
-  state: GameState,
-  id: string
-): Planet | undefined => {
-  return state.planets.find((p) => p.id === id);
-};
 
 export const NetworkStatus: React.FC = () => {
   const ns = NetState.get();

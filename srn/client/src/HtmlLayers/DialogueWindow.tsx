@@ -18,11 +18,11 @@ import {
   DialogueElem,
   DialogueSubstitution,
   DialogueSubstitutionType,
-  Planet,
+  findPlanet,
 } from '../world';
 import { useStore, WindowState } from '../store';
-import { findPlanet } from './NetworkStatus';
 import { WithScrollbars } from './ui/WithScrollbars';
+import { Planet } from '../../../world/pkg';
 
 export const enrichSub = (s: DialogueSubstitution): ReactNode => {
   const ns = NetState.get();

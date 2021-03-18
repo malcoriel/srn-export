@@ -1,5 +1,7 @@
 import Vector, { IVector } from './utils/Vector';
+import { Planet } from '../../world/pkg';
 
+export type { Planet };
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
 // noinspection JSUnusedGlobalSymbols
@@ -17,18 +19,6 @@ export type AABB = {
   bottom_right: Vector;
 };
 
-export type Planet = {
-  id: string;
-  x: number;
-  y: number;
-  rotation: number;
-  radius: number;
-  name: string;
-  color: string;
-  anchor_tier: number;
-  anchor_id: string;
-  orbit_speed: number;
-};
 export type Star = {
   id: string;
   x: number;
@@ -545,4 +535,10 @@ export const applyShipAction = (
       break;
   }
   return myShip;
+};
+export const findPlanet = (
+  state: GameState,
+  id: string
+): Planet | undefined => {
+  return state.planets.find((p) => p.id === id);
 };
