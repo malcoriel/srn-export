@@ -234,7 +234,7 @@ pub struct Planet {
 }
 
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
 pub struct Asteroid {
     pub id: Uuid,
     pub x: f64,
@@ -246,7 +246,7 @@ pub struct Asteroid {
     pub anchor_tier: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
 pub struct AsteroidBelt {
     pub id: Uuid,
     pub x: f64,
@@ -393,7 +393,7 @@ pub struct Leaderboard {
     pub winner: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone,  TypescriptDefinition, TypeScriptify,)]
 pub enum Rarity {
     Unknown,
     Common,
@@ -401,7 +401,7 @@ pub enum Rarity {
     Rare,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
 pub struct NatSpawnMineral {
     pub x: f64,
     pub y: f64,

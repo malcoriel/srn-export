@@ -13,6 +13,9 @@ import {
   TradeAction,
   Price,
   Market,
+  NatSpawnMineral,
+  Asteroid,
+  AsteroidBelt,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -21,6 +24,9 @@ import {
 } from '../../world/pkg/world.extra';
 
 export type {
+  NatSpawnMineral,
+  Asteroid,
+  AsteroidBelt,
   Planet,
   Ship,
   Star,
@@ -92,31 +98,6 @@ export type SandboxCommand =
         target: SandboxTeleportTarget;
       };
     };
-
-export type AsteroidBelt = {
-  id: string;
-} & { x: number; y: number; rotation: number; radius: number } & {
-  width: number;
-  count: number;
-  orbit_speed: number;
-  scale_mod: number;
-};
-export type Asteroid = {
-  id: string;
-} & { x: number; y: number; rotation: number; radius: number };
-
-export type NatSpawnMineral = {
-  id: string;
-} & {
-  x: number;
-  y: number;
-  rotation: number;
-  radius: number;
-} & {
-  color: string;
-} & {
-  value: number;
-};
 
 export enum GameMode {
   Unknown = 'Unknown',
