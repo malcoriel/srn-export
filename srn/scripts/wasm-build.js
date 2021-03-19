@@ -44,10 +44,15 @@ const isWin = process.platform === 'win32';
   );
   const file = (await fs.readFile('world/pkg/world.d.ts')).toString();
   const builderClassFinder = /\/\/ start builder class (\w+)(?:.|\n|\r)*export class \1(?:.|\n|\r)*end builder class \1/gm;
-  const extracted = file.match(builderClassFinder);
-  const fileWithNoClasses = file.replace(builderClassFinder, '');
-  await fs.writeFile('world/pkg/world.d.ts', fileWithNoClasses);
-  const builders = `type Uuid = string; \n${extracted.join('\n\n')}`;
-  await fs.writeFile('world/pkg/builders.ts', builders);
+  const enumFinder = /^export enum .+$/gm;
+  const extractedBuilders = file.match(builderClassFinder);
+  const extractedEnums = file.match(enumFinder);
+  const cleanedFile = file
+    .replace(builderClassFinder, '')
+    .replace(enumFinder, '');
+  await fs.writeFile('world/pkg/world.d.ts', cleanedFile);
+  const builders = `type Uuid = string; \n${extractedBuilders.join('\n\n')}`;
+  const enums = extractedEnums.join('\n\n');
+  await fs.writeFile('world/pkg/world.extra.ts', `${enums}\n\n${builders}`);
   console.log('Done, ts definitions are ready!');
 })();

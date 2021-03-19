@@ -82,7 +82,7 @@ pub struct ShipAction {
     pub data: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct HpEffect {
     pub hp: i32,
     pub id: Uuid,
@@ -230,7 +230,7 @@ pub struct Planet {
     pub orbit_speed: f64,
     pub anchor_id: Uuid,
     pub anchor_tier: u32,
-    pub color: String
+    pub color: String,
 }
 
 
@@ -270,7 +270,7 @@ impl AsVec2f64 for Planet {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
 pub struct Star {
     pub id: Uuid,
     pub name: String,
@@ -324,7 +324,7 @@ pub enum GameEvent {
     // the player directly
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
 pub struct Ship {
     pub id: Uuid,
     pub x: f64,
@@ -352,7 +352,7 @@ impl Ship {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, TypescriptDefinition, TypeScriptify)]
 pub enum CargoDeliveryQuestState {
     Unknown = 0,
     Started = 1,
@@ -360,7 +360,7 @@ pub enum CargoDeliveryQuestState {
     Delivered = 3,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Quest {
     pub id: Uuid,
     pub from_id: Uuid,
@@ -629,8 +629,7 @@ pub fn update_world(
 
             if state.market.time_before_next_shake > 0 {
                 state.market.time_before_next_shake -= elapsed;
-            }
-            else {
+            } else {
                 let mut wares = state.market.wares.clone();
                 let mut prices = state.market.prices.clone();
                 let planets = state.planets.iter().map(|p| p.clone()).collect::<Vec<_>>();
@@ -638,7 +637,7 @@ pub fn update_world(
                 state.market = Market {
                     wares,
                     prices,
-                    time_before_next_shake: market::SHAKE_MARKET_FREQUENCY_MCS
+                    time_before_next_shake: market::SHAKE_MARKET_FREQUENCY_MCS,
                 }
             }
         }

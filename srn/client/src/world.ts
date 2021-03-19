@@ -1,7 +1,9 @@
 import Vector, { IVector } from './utils/Vector';
-import { Planet } from '../../world/pkg';
+import { Planet, Quest, Ship, Star } from '../../world/pkg';
+import { CargoDeliveryQuestState } from '../../world/pkg/world.extra';
 
-export type { Planet };
+export type { Planet, Ship, Star, Quest };
+export { CargoDeliveryQuestState };
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
 // noinspection JSUnusedGlobalSymbols
@@ -19,60 +21,11 @@ export type AABB = {
   bottom_right: Vector;
 };
 
-export type Star = {
-  id: string;
-  x: number;
-  y: number;
-  rotation: number;
-  radius: number;
-  name: string;
-  color: string;
-};
-
-export type HpEffect = {
-  hp: number;
-  id: string;
-  tick: number;
-};
-
-export type Ship = {
-  id: string;
-  x: number;
-  y: number;
-  rotation: number;
-  radius: number;
-  color: string;
-  docked_at?: string;
-  navigate_target?: IVector;
-  dock_target?: string;
-  tractor_target?: string;
-  trajectory: IVector[];
-  hp: number;
-  max_hp: number;
-  hp_effects: HpEffect[];
-  inventory: InventoryItem[];
-};
-
-export type Quest = {
-  from_id: string;
-  to_id: string;
-  reward: number;
-  state: QuestState;
-};
-
-export enum QuestState {
-  Unknown = 'Unknown',
-  Started = 'Started',
-  Picked = 'Picked',
-  Delivered = 'Delivered',
-}
-
 export type Player = {
   id: string;
   ship_id?: string;
   name: string;
   quest?: Quest;
-  state: QuestState;
   money: number;
   portrait_name: string;
 };

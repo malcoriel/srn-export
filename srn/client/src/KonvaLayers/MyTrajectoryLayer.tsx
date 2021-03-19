@@ -8,7 +8,7 @@ import NetState, {
 } from '../NetState';
 import Vector from '../utils/Vector';
 import { babyBlue, yellow } from '../utils/palette';
-import { findPlanet, Planet, QuestState, Ship } from '../world';
+import { findPlanet, Planet, CargoDeliveryQuestState, Ship } from '../world';
 import {
   calcRealPosToScreenPos,
   size,
@@ -57,6 +57,7 @@ export const MyTrajectoryLayer: React.FC = () => {
       visualState.zoomShift
     );
     return { shiftPos };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visualState.cameraPosition, visualState.zoomShift, size]);
 
   if (!myShip) return null;
@@ -76,9 +77,9 @@ export const MyTrajectoryLayer: React.FC = () => {
   let questTarget: Planet | undefined;
   let questTargetTrajectory: Vector[] | undefined;
   if (quest) {
-    if (quest.state === QuestState.Started) {
+    if (quest.state === CargoDeliveryQuestState.Started) {
       questTarget = findPlanet(state, quest.from_id);
-    } else if (quest.state === QuestState.Picked) {
+    } else if (quest.state === CargoDeliveryQuestState.Picked) {
       questTarget = findPlanet(state, quest.to_id);
     }
   }

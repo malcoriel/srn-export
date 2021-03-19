@@ -1,7 +1,7 @@
 import React from 'react';
 import './QuestWindow.scss';
 import NetState, { findMyPlayer, useNSForceChange } from '../NetState';
-import { findPlanet, Planet, Quest, QuestState } from '../world';
+import { findPlanet, Planet, Quest, CargoDeliveryQuestState } from '../world';
 import { Window } from './ui/Window';
 
 export const QuestWindow = () => {
@@ -40,8 +40,8 @@ export const QuestWindow = () => {
   if (!questData) {
     return null;
   }
-  const fromDone = questData.state === QuestState.Picked;
-  const toDone = questData.state === QuestState.Delivered;
+  const fromDone = questData.state === CargoDeliveryQuestState.Picked;
+  const toDone = questData.state === CargoDeliveryQuestState.Delivered;
 
   const focus = (p: Planet) => {
     visualState.cameraPosition = { x: p.x, y: p.y };

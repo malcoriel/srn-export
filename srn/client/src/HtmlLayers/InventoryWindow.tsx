@@ -4,7 +4,7 @@ import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
 import styleVars from './InventoryWindow.vars.module.scss';
 import './InventoryWindow.scss';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
-import { InventoryActionBuilder } from '../../../world/pkg/builders';
+import { InventoryActionBuilder } from '../../../world/pkg/world.extra';
 import _ from 'lodash';
 import { pxToNumber } from '../utils/pxToNumber';
 
