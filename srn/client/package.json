@@ -7,6 +7,7 @@
     "@babel/plugin-syntax-jsx": "^7.12.1",
     "@jscad/csg": "^0.7.0",
     "@pmmmwh/react-refresh-webpack-plugin": "0.4.2",
+    "@react-three/drei": "^3.11.1",
     "@svgr/webpack": "5.4.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
@@ -44,7 +45,6 @@
     "identity-obj-proxy": "3.0.0",
     "immer": "^8.0.0",
     "jest": "^26.6.3",
-    "jest-circus": "26.6.0",
     "jest-resolve": "26.6.0",
     "jest-watch-typeahead": "0.6.1",
     "konva": "^7.2.2",
@@ -144,7 +144,6 @@
       "<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}"
     ],
     "testEnvironment": "jsdom",
-    "testRunner": "/Users/vkuzmin/src/apps/srn/client/node_modules/jest-circus/runner.js",
     "transform": {
       "^.+\\.(js|jsx|mjs|cjs|ts|tsx)$": "<rootDir>/node_modules/babel-jest",
       "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",

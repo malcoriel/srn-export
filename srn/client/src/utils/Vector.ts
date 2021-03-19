@@ -116,19 +116,13 @@ export default class Vector implements IVector {
     return dx + dy;
   }
 
-  // noinspection JSUnusedGlobalSymbols
-  // eslint-disable-next-line @typescript-eslint/no-use-before-define
-  NOTVERIFIEDturn(angle: number, around: Vector = VectorF(0, 0)) {
+  // the coordinates are mathematical, y pointing up, x pointing right
+  turnCounterClockwise(angle: number) {
     const { x, y } = this;
-    const { x: xOrigin, y: yOrigin } = around;
-    const xRotated =
-      (x - xOrigin) * Math.cos(angle) -
-      (yOrigin - y) * Math.sin(angle) +
-      xOrigin;
-    const yRotated =
-      (yOrigin - y) * Math.cos(angle) -
-      (x - xOrigin) * Math.sin(angle) +
-      yOrigin;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const xRotated = x * cos - y * sin;
+    const yRotated = x * sin + y * cos;
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     return VectorF(xRotated, yRotated);
   }
@@ -174,6 +168,10 @@ export default class Vector implements IVector {
 
   map(fn: (c: number) => number) {
     return new Vector(fn(this.x), fn(this.y));
+  }
+
+  approx(precision: number) {
+    return this.map((c) => Number(c.toPrecision(precision))).toFix(precision);
   }
 }
 

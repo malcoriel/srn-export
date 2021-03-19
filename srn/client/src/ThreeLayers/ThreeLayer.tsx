@@ -25,6 +25,7 @@ import { BackgroundPlane } from './BackgroundPlane';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { useStore } from '../store';
 import { size } from '../coord';
+import { ThreeQuestDirection } from './ThreeQuestDirection';
 
 export type Vector3Arr = [number, number, number];
 
@@ -57,7 +58,7 @@ export const threeVectorToVector = ({
 export const ThreeLayer: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
-  const { state, visMap } = ns;
+  const { state, visMap, visualState } = ns;
   const [shown] = useToggleHotkey('shift+g', false, 'show helper grid');
   const showCoords = shown;
 
@@ -112,6 +113,7 @@ export const ThreeLayer: React.FC = () => {
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <ThreeBodiesLayer state={state} visMap={visMap} />
           <ThreeShipsLayer state={state} visMap={visMap} />
+          <ThreeQuestDirection state={state} visualState={visualState} />
         </group>
       </Suspense>
     </Canvas>
