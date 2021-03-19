@@ -9,10 +9,12 @@ import {
   Dialogue,
   DialogueSubstitution,
   DialogueElem,
+  InventoryItem,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
   DialogueSubstitutionType,
+  InventoryItemType,
 } from '../../world/pkg/world.extra';
 
 export type {
@@ -25,8 +27,9 @@ export type {
   Dialogue,
   DialogueSubstitution,
   DialogueElem,
+  InventoryItem,
 };
-export { CargoDeliveryQuestState, DialogueSubstitutionType };
+export { CargoDeliveryQuestState, DialogueSubstitutionType, InventoryItemType };
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
 // noinspection JSUnusedGlobalSymbols
@@ -115,27 +118,6 @@ export type NatSpawnMineral = {
   color: string;
 } & {
   value: number;
-};
-
-export enum InventoryItemType {
-  Unknown = 'Unknown',
-  CommonMineral = 'CommonMineral',
-  UncommonMineral = 'UncommonMineral',
-  RareMineral = 'RareMineral',
-  QuestCargo = 'QuestCargo',
-  Food = 'Food',
-  Medicament = 'Medicament',
-  HandWeapon = 'HandWeapon',
-}
-
-export type InventoryItem = {
-  id: string;
-  index: number;
-  quantity: number;
-  value: number;
-  stackable: boolean;
-  player_owned: boolean;
-  item_type: InventoryItemType;
 };
 
 export enum GameMode {

@@ -50,7 +50,10 @@ const isWin = process.platform === 'win32';
   const cleanedFile = file
     .replace(builderClassFinder, '')
     .replace(enumFinder, '');
-  await fs.writeFile('world/pkg/world.d.ts', cleanedFile);
+  const extraImportsFile = `
+    import { InventoryItemType } from './world.extra';
+  `;
+  await fs.writeFile('world/pkg/world.d.ts', cleanedFile + extraImportsFile);
   const builders = `type Uuid = string; \n${extractedBuilders.join('\n\n')}`;
   const enums = extractedEnums.join('\n\n');
   await fs.writeFile('world/pkg/world.extra.ts', `${enums}\n\n${builders}`);

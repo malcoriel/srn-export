@@ -258,7 +258,9 @@ export const ItemGrid: React.FC<{
         );
         const itemToType = _.mapValues(
           _.keyBy(
-            items.map((i) => [i.id, i.item_type]),
+            items.map((i) => {
+              return [i.id, i.item_type] as [string, InventoryItemType];
+            }),
             (p) => p[0]
           ),
           (v) => v[1]

@@ -9,7 +9,7 @@ use strum_macros::EnumIter;
 use wasm_bindgen::prelude::*;
 use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, EnumIter)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, EnumIter, TypescriptDefinition, TypeScriptify)]
 pub enum InventoryItemType {
     Unknown,
     CommonMineral,
@@ -46,7 +46,7 @@ pub fn inventory_item_type_to_stackable(iit: &InventoryItemType) -> bool {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct InventoryItem {
     pub id: Uuid,
     pub index: i32,
