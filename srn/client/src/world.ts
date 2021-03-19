@@ -1,8 +1,15 @@
 import Vector, { IVector } from './utils/Vector';
-import { Planet, Quest, Ship, Star } from '../../world/pkg';
+import {
+  Planet,
+  Quest,
+  Ship,
+  Star,
+  Player,
+  Leaderboard,
+} from '../../world/pkg';
 import { CargoDeliveryQuestState } from '../../world/pkg/world.extra';
 
-export type { Planet, Ship, Star, Quest };
+export type { Planet, Ship, Star, Quest, Player, Leaderboard };
 export { CargoDeliveryQuestState };
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
@@ -19,20 +26,6 @@ export const SHIP_SPEED = 20.0;
 export type AABB = {
   top_left: Vector;
   bottom_right: Vector;
-};
-
-export type Player = {
-  id: string;
-  ship_id?: string;
-  name: string;
-  quest?: Quest;
-  money: number;
-  portrait_name: string;
-};
-
-export type Leaderboard = {
-  rating: [Player, number][];
-  winner: string;
 };
 
 export enum DialogueSubstitutionType {

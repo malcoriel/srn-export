@@ -369,7 +369,7 @@ pub struct Quest {
     pub reward: i32,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Player {
     pub id: Uuid,
     pub is_bot: bool,
@@ -387,7 +387,7 @@ impl Player {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Leaderboard {
     pub rating: Vec<(Player, u32)>,
     pub winner: String,
