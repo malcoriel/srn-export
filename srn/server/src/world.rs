@@ -42,7 +42,7 @@ const ASTEROID_BELT_RANGE: f64 = 100.0;
 pub type PlayerId = Uuid;
 
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq,  TypescriptDefinition, TypeScriptify,)]
 pub enum GameMode {
     Unknown,
     CargoRush,

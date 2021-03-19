@@ -21,6 +21,7 @@ import {
   CargoDeliveryQuestState,
   DialogueSubstitutionType,
   InventoryItemType,
+  GameMode,
 } from '../../world/pkg/world.extra';
 
 export type {
@@ -41,7 +42,12 @@ export type {
   Price,
   Market,
 };
-export { CargoDeliveryQuestState, DialogueSubstitutionType, InventoryItemType };
+export {
+  CargoDeliveryQuestState,
+  DialogueSubstitutionType,
+  InventoryItemType,
+  GameMode,
+};
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
 // noinspection JSUnusedGlobalSymbols
@@ -98,13 +104,6 @@ export type SandboxCommand =
         target: SandboxTeleportTarget;
       };
     };
-
-export enum GameMode {
-  Unknown = 'Unknown',
-  CargoRush = 'CargoRush',
-  Tutorial = 'Tutorial',
-  Sandbox = 'Sandbox',
-}
 
 export const isStateTutorial = (st: GameState) => {
   return st.mode === GameMode.Tutorial;
