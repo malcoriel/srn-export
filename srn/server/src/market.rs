@@ -8,20 +8,22 @@ use strum_macros::EnumIter;
 use serde_derive::{Deserialize, Serialize};
 use crate::new_id;
 use rand::Rng;
+use wasm_bindgen::prelude::*;
+use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 
 pub type Wares = HashMap<Uuid, Vec<InventoryItem>>;
 pub type Prices = HashMap<Uuid, HashMap<InventoryItemType, Price>>;
 
 pub const SHAKE_MARKET_FREQUENCY_MCS: i64 = 60 * 1000 * 1000;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
 pub struct Market {
-    pub wares: Wares,
-    pub prices: Prices,
+    pub wares: HashMap<Uuid, Vec<InventoryItem>>,
+    pub prices: HashMap<Uuid, HashMap<InventoryItemType, Price>>,
     pub time_before_next_shake: i64,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
 pub struct Price {
     pub sell: i32,
     pub buy: i32,
@@ -32,12 +34,12 @@ impl Market {
         Market {
             wares: HashMap::new(),
             prices: Default::default(),
-            time_before_next_shake: 1000
+            time_before_next_shake: 1000,
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct TradeAction {
     pub planet_id: Uuid,
     pub sells_to_planet: Vec<(InventoryItemType, i32)>,
@@ -365,7 +367,7 @@ enum QuantityVariant {
     Normal,
     Abundant,
     Booming,
-    Overwhelming
+    Overwhelming,
 }
 
 enum PriceVariant {
@@ -374,7 +376,7 @@ enum PriceVariant {
     Booming,
     Prospering,
     Deficit,
-    Abundance
+    Abundance,
 }
 
 fn set_price(prices: &mut HashMap<InventoryItemType, Price>, target_type: &InventoryItemType, variant: PriceVariant) {

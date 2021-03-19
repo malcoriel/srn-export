@@ -10,6 +10,9 @@ import {
   DialogueSubstitution,
   DialogueElem,
   InventoryItem,
+  TradeAction,
+  Price,
+  Market,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -28,6 +31,9 @@ export type {
   DialogueSubstitution,
   DialogueElem,
   InventoryItem,
+  TradeAction,
+  Price,
+  Market,
 };
 export { CargoDeliveryQuestState, DialogueSubstitutionType, InventoryItemType };
 // noinspection JSUnusedGlobalSymbols
@@ -68,14 +74,6 @@ export enum SandboxTeleportTarget {
   Unknown = 'Unknown',
   Zero = 'Zero',
 }
-
-export type TradeItem = [InventoryItemType, number];
-
-export type TradeAction = {
-  planet_id: string;
-  sells_to_planet: TradeItem[];
-  buys_from_planet: TradeItem[];
-};
 
 export type SandboxCommand =
   | SandboxCommandName.AddStar
@@ -129,16 +127,6 @@ export enum GameMode {
 
 export const isStateTutorial = (st: GameState) => {
   return st.mode === GameMode.Tutorial;
-};
-
-export type Price = {
-  buy: number;
-  sell: number;
-};
-
-export type Market = {
-  wares: Record<string, InventoryItem[]>;
-  prices: Record<string, Record<InventoryItemType, Price>>;
 };
 
 export type GameState = {
@@ -372,7 +360,7 @@ export const applyShipAction = (
     }
 
     case ShipActionType.Move: {
-      myShip.dock_target = undefined;
+      myShip.dock_target = null;
       myShip.navigate_target = undefined;
       myShip.trajectory = [];
       const direction = sa.data as Direction;

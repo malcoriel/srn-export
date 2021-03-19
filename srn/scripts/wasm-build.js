@@ -49,7 +49,9 @@ const isWin = process.platform === 'win32';
   const extractedEnums = file.match(enumFinder);
   const cleanedFile = file
     .replace(builderClassFinder, '')
-    .replace(enumFinder, '');
+    .replace(enumFinder, '')
+    .replace(/Uuid/gm, 'string')
+    .replace(/key: InventoryItemType/gm, 'key in InventoryItemType');
   const extraImportsFile = `
     import { InventoryItemType } from './world.extra';
   `;
