@@ -1,7 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import './DialogueWindow.scss';
 import { Canvas } from 'react-three-fiber';
-import { Vector3 } from 'three';
 import _ from 'lodash';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';
@@ -23,6 +22,7 @@ import {
 import { useStore, WindowState } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
 import { Planet } from '../../../world/pkg';
+import { Vector3 } from 'three';
 
 export const enrichSub = (s: DialogueSubstitution): ReactNode => {
   const ns = NetState.get();

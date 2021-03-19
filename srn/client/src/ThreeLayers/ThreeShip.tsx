@@ -1,11 +1,12 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame, useLoader } from 'react-three-fiber';
-import { Mesh, Geometry, ShaderMaterial } from 'three';
+import { Mesh, ShaderMaterial } from 'three';
 import * as THREE from 'three';
 import Vector, { VectorF } from '../utils/Vector';
 import { posToThreePos, vecToThreePos } from './ThreeLayer';
 import * as jellyfish from './shaders/jellyfish';
 import { shallowEqual } from '../utils/shallowCompare';
+import { Geometry } from 'three/examples/jsm/deprecated/Geometry';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -22,6 +23,7 @@ const BEAM_WIDTH = 0.3;
 export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
   ({ tractorTargetPosition, position, rotation, color, visible }) => {
     const tractorRef = useRef<Mesh>();
+    // @ts-ignore
     const shipModel = useLoader<Geometry>(STLLoader, 'resources/ship.stl');
 
     const tractorBeamParams = useMemo(() => {
@@ -56,6 +58,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           ref={tractorRef}
           scale={[0.3, 0.4, 0.5]}
           rotation={[Math.PI, 0, rotation]}
+          // @ts-ignore
           geometry={shipModel}
         >
           <meshBasicMaterial color={color} />

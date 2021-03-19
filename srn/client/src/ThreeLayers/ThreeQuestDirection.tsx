@@ -41,11 +41,13 @@ export const ThreeQuestDirection: React.FC<{
   return (
     <>
       <Line
+        flatShading={false}
         points={[leftPoint, pointerPos].map(vecToThreePos)}
         color={yellow}
         lineWidth={5}
       />
       <Line
+        flatShading={false}
         points={[rightPoint, pointerPos].map(vecToThreePos)}
         color={yellow}
         lineWidth={5}

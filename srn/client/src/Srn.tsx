@@ -24,7 +24,6 @@ import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
 import { WindowContainers } from './HtmlLayers/WindowContainers';
 import { OverheadPanel } from './HtmlLayers/OverheadPanel';
-import { TestUI } from './HtmlLayers/TestUI';
 import { HoverHintWindow } from './HtmlLayers/HoverHintWindow';
 import { size } from './coord';
 import { ChatState } from './ChatState';
@@ -220,7 +219,6 @@ const Srn = () => {
             {playing && <SandboxQuickMenu />}
           </>
         )}
-        {!playing && <TestUI />}
         {musicEnabled && <MusicControls />}
         {menu && (
           <StartMenu
