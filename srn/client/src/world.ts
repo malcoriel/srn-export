@@ -16,6 +16,7 @@ import {
   NatSpawnMineral,
   Asteroid,
   AsteroidBelt,
+  GameState,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -41,6 +42,7 @@ export type {
   TradeAction,
   Price,
   Market,
+  GameState,
 };
 export {
   CargoDeliveryQuestState,
@@ -107,28 +109,6 @@ export type SandboxCommand =
 
 export const isStateTutorial = (st: GameState) => {
   return st.mode === GameMode.Tutorial;
-};
-
-export type GameState = {
-  seed: string;
-  id: string;
-  mode: GameMode;
-  tag: string;
-  leaderboard?: Leaderboard;
-  planets: Planet[];
-  ships: Ship[];
-  players: Player[];
-  minerals: NatSpawnMineral[];
-  asteroids: Asteroid[];
-  asteroid_belts: AsteroidBelt[];
-  // technically bigint but serialization doesn't know yet
-  start_time_ticks: number;
-  ticks: number;
-  my_id: string;
-  star?: Star;
-  paused: boolean;
-  milliseconds_remaining: number;
-  market: Market;
 };
 
 export enum ShipActionType {

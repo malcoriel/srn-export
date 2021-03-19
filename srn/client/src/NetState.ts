@@ -223,6 +223,21 @@ export default class NetState extends EventEmitter {
 
   private resetState() {
     this.state = {
+      disable_hp_effects: false,
+      id: '',
+      leaderboard: {
+        rating: [],
+        winner: '',
+      },
+      market: {
+        prices: {},
+        wares: {},
+        time_before_next_shake: 0,
+      },
+      mode: undefined,
+      seed: '',
+      tag: '',
+      version: 0,
       planets: [],
       players: [],
       minerals: [],

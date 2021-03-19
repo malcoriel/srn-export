@@ -42,7 +42,7 @@ const ASTEROID_BELT_RANGE: f64 = 100.0;
 pub type PlayerId = Uuid;
 
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq,  TypescriptDefinition, TypeScriptify,)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, )]
 pub enum GameMode {
     Unknown,
     CargoRush,
@@ -393,7 +393,7 @@ pub struct Leaderboard {
     pub winner: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone,  TypescriptDefinition, TypeScriptify,)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
 pub enum Rarity {
     Unknown,
     Common,
@@ -412,7 +412,7 @@ pub struct NatSpawnMineral {
     pub color: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct GameState {
     pub id: Uuid,
     pub version: u32,
