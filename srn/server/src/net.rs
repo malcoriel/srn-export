@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::dialogue::Dialogue;
+use crate::dialogue_dto::Dialogue;
 use crate::world::{GameEvent, GameState, Ship, GameMode};
 use crate::xcast::XCast;
 

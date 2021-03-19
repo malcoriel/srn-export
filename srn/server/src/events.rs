@@ -7,7 +7,8 @@ use lazy_static::lazy_static;
 use uuid::Uuid;
 
 use crate::{StateContainer, world};
-use crate::dialogue::{Dialogue, DialogueTable};
+use crate::dialogue::DialogueTable;
+use crate::dialogue_dto::Dialogue;
 use crate::perf::Sampler;
 use crate::world::{GameEvent, GameMode, GameState, Player};
 use crate::xcast::XCast;

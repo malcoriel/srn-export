@@ -18,6 +18,9 @@ use itertools::Itertools;
 use lazy_static::lazy_static;
 use num_traits::FromPrimitive;
 use regex::Regex;
+use rocket::{Request, Response};
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::http::Header;
 use rocket::http::Method;
 use rocket_contrib::json::Json;
 #[cfg(feature = "serde_derive")]
@@ -31,6 +34,7 @@ use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 
 use dialogue::{DialogueStates, DialogueTable};
+use dialogue_dto::Dialogue;
 use net::{ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload, TagConfirm, Wrapper};
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
@@ -38,7 +42,7 @@ use xcast::XCast;
 use crate::bots::{bot_init, do_bot_actions};
 use crate::chat::chat_server;
 use crate::dialogue::{
-    Dialogue, DialogueId, DialogueScript, DialogueUpdate, execute_dialog_option,
+    DialogueId, DialogueScript, DialogueUpdate, execute_dialog_option,
 };
 use crate::perf::Sampler;
 use crate::sandbox::mutate_state;
@@ -92,6 +96,7 @@ mod net;
 mod sandbox;
 mod market;
 mod api;
+mod dialogue_dto;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,
@@ -737,10 +742,6 @@ fn remove_player(conn_id: Uuid) {
 pub fn new_id() -> Uuid {
     Uuid::new_v4()
 }
-
-use rocket::{Request, Response};
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::Header;
 
 pub struct CORS();
 

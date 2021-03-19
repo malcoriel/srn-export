@@ -89,6 +89,9 @@ mod inventory;
 #[path = "../../server/src/market.rs"]
 mod market;
 
+#[path = "../../server/src/dialogue_dto.rs"]
+mod dialogue_dto;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 

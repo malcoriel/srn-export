@@ -6,11 +6,27 @@ import {
   Star,
   Player,
   Leaderboard,
+  Dialogue,
+  DialogueSubstitution,
+  DialogueElem,
 } from '../../world/pkg';
-import { CargoDeliveryQuestState } from '../../world/pkg/world.extra';
+import {
+  CargoDeliveryQuestState,
+  DialogueSubstitutionType,
+} from '../../world/pkg/world.extra';
 
-export type { Planet, Ship, Star, Quest, Player, Leaderboard };
-export { CargoDeliveryQuestState };
+export type {
+  Planet,
+  Ship,
+  Star,
+  Quest,
+  Player,
+  Leaderboard,
+  Dialogue,
+  DialogueSubstitution,
+  DialogueElem,
+};
+export { CargoDeliveryQuestState, DialogueSubstitutionType };
 // noinspection JSUnusedGlobalSymbols
 export const width_units = 1000;
 // noinspection JSUnusedGlobalSymbols
@@ -27,13 +43,6 @@ export type AABB = {
   top_left: Vector;
   bottom_right: Vector;
 };
-
-export enum DialogueSubstitutionType {
-  Unknown = 'Unknown',
-  PlanetName = 'PlanetName',
-  CharacterName = 'CharacterName',
-  Generic = 'Generic',
-}
 
 export enum SandboxCommandName {
   Unknown = 'Unknown',
@@ -82,28 +91,6 @@ export type SandboxCommand =
         target: SandboxTeleportTarget;
       };
     };
-
-export type DialogueSubstitution = {
-  s_type: DialogueSubstitutionType;
-  text: string;
-  id: string;
-};
-
-export type DialogueElem = {
-  text: string;
-  id: string;
-  is_option: boolean;
-  substitution: DialogueSubstitution[];
-};
-
-export type Dialogue = {
-  id: string;
-  options: DialogueElem[];
-  prompt: DialogueElem;
-  planet?: Planet;
-  left_character: string;
-  right_character: string;
-};
 
 export type AsteroidBelt = {
   id: string;
