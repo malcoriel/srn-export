@@ -5,8 +5,10 @@ import { Line } from '@react-three/drei';
 import { liftThreePos, vecToThreePos } from './ThreeLayer';
 import Vector from '../utils/Vector';
 import { CargoDeliveryQuestState, findPlanet } from '../world';
-import { degToRad } from '../coord';
+import { degToRad, size } from '../coord';
 import { teal, yellow } from '../utils/palette';
+import { ThreeLine } from './blocks/ThreeLine';
+import { Vector2 } from 'three';
 
 export const ThreeQuestDirection: React.FC<{
   state: GameState;
@@ -60,22 +62,26 @@ export const ThreeQuestDirection: React.FC<{
 
   const arrowActiveIndex = Math.floor(state.milliseconds_remaining / 500) % 3;
 
+  const lineShaderResolutionVec = new Vector2(
+    size.width_px / visualState.zoomShift,
+    size.height_px / visualState.zoomShift
+  );
   return (
     <>
-      <Line
-        flatShading={false}
+      <ThreeLine
         points={arrowPoints.map(vecToThreePos).map(liftThreePos(50))}
         color={arrowActiveIndex === 0 ? teal : yellow}
         lineWidth={2}
+        resolution={lineShaderResolutionVec}
       />
-      <Line
-        flatShading={false}
+      <ThreeLine
+        resolution={lineShaderResolutionVec}
         points={mediumArrowPoints.map(vecToThreePos).map(liftThreePos(50))}
         color={arrowActiveIndex === 1 ? teal : yellow}
         lineWidth={2}
       />
-      <Line
-        flatShading={false}
+      <ThreeLine
+        resolution={lineShaderResolutionVec}
         points={smallArrowPoints.map(vecToThreePos).map(liftThreePos(50))}
         color={arrowActiveIndex === 2 ? teal : yellow}
         lineWidth={2}
