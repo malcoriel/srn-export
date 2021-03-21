@@ -35,31 +35,10 @@ import { GameMode } from './world';
 import { SandboxQuickMenu } from './HtmlLayers/SandboxQuickMenu';
 import { TradeWindow } from './HtmlLayers/TradeWindow';
 import { PromptWindow } from './HtmlLayers/PromptWindow';
-import { useProgress } from '@react-three/drei';
+import { useResourcesLoading } from './utils/useResourcesLoading';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
-
-const expectedResources = [
-  // minimal set of resources to load the game
-  'resources/ship.stl',
-];
-
-const useResourcesLoading = () => {
-  const [attemptedResources, setAttemptedResources] = useState([] as string[]);
-  const { progress: threeLoaderProgress, item, total, loaded } = useProgress();
-  useEffect(() => {
-    setAttemptedResources((old) => [...old, item]);
-  }, [item]);
-  const missingResources = new Set(expectedResources);
-  for (const res of attemptedResources) {
-    missingResources.delete(res);
-  }
-  const isLoading = Math.abs(threeLoaderProgress - 100) > 1e-9;
-  const areLoading = isLoading || missingResources.size > 0;
-  const formattedProgress = Math.floor(threeLoaderProgress);
-  return [areLoading, formattedProgress];
-};
 
 const Srn = () => {
   Perf.markEvent(Measure.RootComponentRender);
@@ -194,6 +173,7 @@ const Srn = () => {
 
   const [resourcesAreLoading, formattedProgress] = useResourcesLoading();
 
+  console.log(resourcesAreLoading);
   const quit = () => {
     const ns = NetState.get();
     if (!ns) return;
@@ -223,7 +203,7 @@ const Srn = () => {
                   <div />
                   <div />
                 </div>
-                <div className="text">Loading: {formattedProgress}%</div>
+                <div className="text">Loading: {formattedProgress}</div>
               </div>
             )}
             {!resourcesAreLoading && (
