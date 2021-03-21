@@ -5,58 +5,9 @@ import Prando from 'prando';
 import { findMineral, GameState, TRACTOR_DIST } from '../world';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import Vector, { IVector } from '../utils/Vector';
-import { babyBlue, crimson, darkGreen, teal } from '../utils/palette';
+import { crimson, darkGreen, teal } from '../utils/palette';
 import { useStore } from '../store';
 import { useRealToScreen } from '../coordHooks';
-
-function extractNamePositions(
-  state: GameState,
-  cameraPosition: IVector,
-  shiftPos: (inp: IVector) => IVector,
-  shiftLen: (len: number) => number
-): Array<[string, string, IVector, number]> {
-  const res = [];
-  for (const planet of state.planets) {
-    const planetProps: [string, string, IVector, number] = [
-      planet.id,
-      planet.name,
-      shiftPos(planet),
-      shiftLen(planet.radius) + 30,
-    ];
-    res.push(planetProps);
-  }
-
-  if (state.star) {
-    const items: [string, string, IVector, number] = [
-      state.star.id,
-      state.star.name,
-      shiftPos(state.star),
-      (shiftLen(state.star.radius) + 30) * 0.7,
-    ];
-    res.push(items);
-  }
-
-  const shipsById = _.keyBy(state.ships, 'id');
-
-  for (const player of state.players) {
-    if (!player.ship_id) {
-      continue;
-    }
-    const ship = shipsById[player.ship_id];
-    if (!ship) {
-      continue;
-    }
-    const starNamePos = shiftPos(ship);
-    const shipProps: [string, string, IVector, number] = [
-      ship.id,
-      player.name,
-      starNamePos,
-      shiftLen(ship.radius) + 30,
-    ];
-    res.push(shipProps);
-  }
-  return res;
-}
 
 type VisualHpEffect = {
   id: string; // ship-id_effect_id
@@ -130,13 +81,6 @@ export const KonvaOverlay: React.FC = React.memo(() => {
   const myShip = findMyShip(state);
 
   const { realLenToScreenLen, realPosToScreenPos } = useRealToScreen(ns);
-
-  const names = extractNamePositions(
-    state,
-    visualState.cameraPosition,
-    realPosToScreenPos,
-    realLenToScreenLen
-  );
 
   const effects = extractEffectsPositions(
     state,
