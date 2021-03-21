@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.5.2 (2021-03-21)
+### New
+* Replaced the quest trajectory line with a quest direction marker.
+
+### Fixes
+* Fixed the frame desync problem between main view and names overlay.
+* Shared client-server code stability improvements.
+
 ## Version 0.5.1 (2021-03-18)
 ### Fixes
 * Fixes for objects visibility (camera culling optimization):
