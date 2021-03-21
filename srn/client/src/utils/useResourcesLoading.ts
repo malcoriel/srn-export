@@ -27,7 +27,7 @@ export const useResourcesLoading = () => {
       // artificial delay to show 100%
       setTimeout(() => {
         setDelayed(false);
-      }, 1000);
+      }, 100);
     }
   }, [areLoading]);
   return [areLoading || delayed, formattedProgress];

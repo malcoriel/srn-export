@@ -196,7 +196,7 @@ const Srn = () => {
       >
         {playing && (
           <>
-            <ThreeLayer />
+            <ThreeLayer visible={!resourcesAreLoading} />
             {resourcesAreLoading && (
               <div className="three-loader">
                 <div className="loader ball-clip-rotate-multiple">

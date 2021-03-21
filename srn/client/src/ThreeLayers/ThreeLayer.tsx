@@ -61,7 +61,7 @@ export const threeVectorToVector = ({
   z: number;
 }): Vector => new Vector(x, -y);
 
-export const ThreeLayer: React.FC = () => {
+export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state, visMap, visualState } = ns;
@@ -96,6 +96,7 @@ export const ThreeLayer: React.FC = () => {
       {/* blue is third coord (z) */}
       <Suspense fallback={<mesh />}>
         <group
+          visible={visible}
           onClick={(evt: MouseEvent) => {
             const pos = threeVectorToVector(evt.point);
             actionsActive[ShipActionType.Navigate] = ShipAction.Navigate(
