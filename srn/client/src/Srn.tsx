@@ -174,7 +174,6 @@ const Srn = () => {
 
   const [resourcesAreLoading, formattedProgress] = useResourcesLoading();
 
-  console.log(resourcesAreLoading);
   const quit = () => {
     const ns = NetState.get();
     if (!ns) return;
