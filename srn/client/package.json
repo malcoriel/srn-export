@@ -49,6 +49,7 @@
     "jest-resolve": "26.6.0",
     "jest-watch-typeahead": "0.6.1",
     "konva": "^7.2.2",
+    "loaders.css": "^0.1.2",
     "lodash": "^4.17.20",
     "mini-css-extract-plugin": "0.11.3",
     "node-sass": "^4",

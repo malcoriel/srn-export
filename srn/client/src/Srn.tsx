@@ -34,9 +34,32 @@ import { GameMode } from './world';
 import { SandboxQuickMenu } from './HtmlLayers/SandboxQuickMenu';
 import { TradeWindow } from './HtmlLayers/TradeWindow';
 import { PromptWindow } from './HtmlLayers/PromptWindow';
+import { useProgress } from '@react-three/drei';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
+
+const expectedResources = [
+  'resources/space01.jpg',
+  'resources/lavatile.png',
+  'resources/models/asteroid.glb',
+  'resources/bowling_grass.jpg',
+];
+
+const useResourcesLoaded = () => {
+  const [attemptedResources, setAttemptedResources] = useState([] as string[]);
+  const { progress: threeLoaderProgress, item } = useProgress();
+  useEffect(() => {
+    setAttemptedResources((old) => [...old, item]);
+  }, [item]);
+  const missingResources = new Set(expectedResources);
+  for (const res of attemptedResources) {
+    missingResources.delete(res);
+  }
+  const isLoading = Math.abs(threeLoaderProgress - 100) > 1e-9;
+  console.log({ isLoading, missingResources });
+  return isLoading || missingResources.size > 0;
+};
 
 const Srn = () => {
   Perf.markEvent(Measure.RootComponentRender);
@@ -166,7 +189,10 @@ const Srn = () => {
         cs.tryDisconnect();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const resourcesLoaded = useResourcesLoaded();
 
   const quit = () => {
     const ns = NetState.get();
@@ -190,33 +216,39 @@ const Srn = () => {
       >
         {playing && (
           <>
-            <MinimapPanel />
             <ThreeLayer />
-            <Stage
-              width={size.width_px}
-              height={size.height_px}
-              style={{ pointerEvents: 'none' }}
-            >
-              <KonvaOverlay />
-              <MyTrajectoryLayer />
-            </Stage>
-            <ShipControls />
-            <NetworkStatus />
-            <LeaderboardWindow />
-            <DialogueWindow />
-            <QuestWindow />
-            <ChatWindow />
-            <DebugStateLayer />
-            <StatsPanel />
-            <ControlPanel />
-            <WindowContainers />
-            <OverheadPanel />
-            <HelpWindow />
-            <InventoryWindow />
-            <TradeWindow />
-            <HoverHintWindow />
-            <PromptWindow />
-            {playing && <SandboxQuickMenu />}
+            {!resourcesLoaded && (
+              <Stage
+                width={size.width_px}
+                height={size.height_px}
+                style={{ pointerEvents: 'none' }}
+              >
+                <KonvaOverlay />
+                <MyTrajectoryLayer />
+              </Stage>
+            )}
+            {!resourcesLoaded && (
+              <>
+                <MinimapPanel />
+                <ShipControls />
+                <NetworkStatus />
+                <LeaderboardWindow />
+                <DialogueWindow />
+                <QuestWindow />
+                <ChatWindow />
+                <DebugStateLayer />
+                <StatsPanel />
+                <ControlPanel />
+                <WindowContainers />
+                <OverheadPanel />
+                <HelpWindow />
+                <InventoryWindow />
+                <TradeWindow />
+                <HoverHintWindow />
+                <PromptWindow />
+                {playing && <SandboxQuickMenu />}
+              </>
+            )}
           </>
         )}
         {musicEnabled && <MusicControls />}

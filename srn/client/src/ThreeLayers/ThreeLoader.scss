@@ -1,0 +1,16 @@
+$loaderHalf: 17.5px;
+.three-loader {
+  color: white;
+  width: 300px;
+  height: 300px;
+
+  .loader {
+    margin-top: 50%;
+    margin-left: 50%;
+  }
+
+  .text {
+    padding-top: 40px;
+    text-align: center;
+  }
+}
