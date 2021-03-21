@@ -6,7 +6,7 @@ import { vecToThreePos } from './ThreeLayer';
 import Vector from '../utils/Vector';
 import { CargoDeliveryQuestState, findPlanet } from '../world';
 import { degToRad } from '../coord';
-import { yellow } from '../utils/palette';
+import { teal, yellow } from '../utils/palette';
 
 const liftThreePos = (zShift: number) => (
   threeArrVec: [number, number, number]
@@ -34,6 +34,9 @@ export const ThreeQuestDirection: React.FC<{
   const questTarget = targetId ? findPlanet(state, targetId) : undefined;
   if (!questTarget) return null;
   const targetPos = Vector.fromIVector(questTarget);
+  if (targetPos.euDistTo(shipPos) < 20) {
+    return null;
+  }
   const normalized = targetPos.subtract(shipPos).normalize();
   const pointerPos = shipPos.add(normalized.scale(10));
   const leftArrowSide = normalized
@@ -56,18 +59,33 @@ export const ThreeQuestDirection: React.FC<{
     smallPointerPos.add(rightArrowSide.scale(0.7)),
   ];
 
+  const mediumPointerPos = shipPos.add(normalized.scale(9));
+  const mediumArrowPoints = [
+    mediumPointerPos.add(leftArrowSide.scale(0.85)),
+    mediumPointerPos,
+    mediumPointerPos.add(rightArrowSide.scale(0.85)),
+  ];
+
+  const arrowActiveIndex = Math.floor(state.milliseconds_remaining / 500) % 3;
+
   return (
     <>
       <Line
         flatShading={false}
         points={arrowPoints.map(vecToThreePos).map(liftThreePos(50))}
-        color={yellow}
+        color={arrowActiveIndex === 0 ? teal : yellow}
+        lineWidth={2}
+      />
+      <Line
+        flatShading={false}
+        points={mediumArrowPoints.map(vecToThreePos).map(liftThreePos(50))}
+        color={arrowActiveIndex === 1 ? teal : yellow}
         lineWidth={2}
       />
       <Line
         flatShading={false}
         points={smallArrowPoints.map(vecToThreePos).map(liftThreePos(50))}
-        color={yellow}
+        color={arrowActiveIndex === 2 ? teal : yellow}
         lineWidth={2}
       />
     </>
