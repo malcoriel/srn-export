@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.scss';
+import './ThreeLayers/ThreeLoader.scss';
 import shallow from 'zustand/shallow';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
@@ -40,15 +41,13 @@ const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
 
 const expectedResources = [
-  'resources/space01.jpg',
-  'resources/lavatile.png',
-  'resources/models/asteroid.glb',
-  'resources/bowling_grass.jpg',
+  // minimal set of resources to load the game
+  'resources/ship.stl',
 ];
 
-const useResourcesLoaded = () => {
+const useResourcesLoading = () => {
   const [attemptedResources, setAttemptedResources] = useState([] as string[]);
-  const { progress: threeLoaderProgress, item } = useProgress();
+  const { progress: threeLoaderProgress, item, total, loaded } = useProgress();
   useEffect(() => {
     setAttemptedResources((old) => [...old, item]);
   }, [item]);
@@ -57,8 +56,9 @@ const useResourcesLoaded = () => {
     missingResources.delete(res);
   }
   const isLoading = Math.abs(threeLoaderProgress - 100) > 1e-9;
-  console.log({ isLoading, missingResources });
-  return isLoading || missingResources.size > 0;
+  const areLoading = isLoading || missingResources.size > 0;
+  const formattedProgress = Math.floor(threeLoaderProgress);
+  return [areLoading, formattedProgress];
 };
 
 const Srn = () => {
@@ -192,7 +192,7 @@ const Srn = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const resourcesLoaded = useResourcesLoaded();
+  const [resourcesAreLoading, formattedProgress] = useResourcesLoading();
 
   const quit = () => {
     const ns = NetState.get();
@@ -217,7 +217,16 @@ const Srn = () => {
         {playing && (
           <>
             <ThreeLayer />
-            {!resourcesLoaded && (
+            {resourcesAreLoading && (
+              <div className="three-loader">
+                <div className="loader ball-clip-rotate-multiple">
+                  <div />
+                  <div />
+                </div>
+                <div className="text">Loading: {formattedProgress}%</div>
+              </div>
+            )}
+            {!resourcesAreLoading && (
               <Stage
                 width={size.width_px}
                 height={size.height_px}
@@ -227,7 +236,7 @@ const Srn = () => {
                 <MyTrajectoryLayer />
               </Stage>
             )}
-            {!resourcesLoaded && (
+            {!resourcesAreLoading && (
               <>
                 <MinimapPanel />
                 <ShipControls />

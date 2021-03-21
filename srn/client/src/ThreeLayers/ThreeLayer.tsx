@@ -3,7 +3,6 @@ import { Vector3 } from 'three';
 import React, { Suspense } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
-import './ThreeLoader.scss';
 import {
   findMineral,
   max_x,
@@ -29,7 +28,6 @@ import { useStore } from '../store';
 import { size } from '../coord';
 import { ThreeQuestDirection } from './ThreeQuestDirection';
 import { ThreeNames } from './ThreeNames';
-import { Html, useProgress } from '@react-three/drei';
 
 export type Vector3Arr = [number, number, number];
 
@@ -62,20 +60,6 @@ export const threeVectorToVector = ({
   y: number;
   z: number;
 }): Vector => new Vector(x, -y);
-
-const Loader = () => {
-  const { progress } = useProgress();
-  const formatted = Math.floor(progress);
-  return (
-    <Html center className="three-loader">
-      <div className="loader ball-clip-rotate-multiple">
-        <div />
-        <div />
-      </div>
-      <div className="text">Loading: {formatted}%</div>
-    </Html>
-  );
-};
 
 export const ThreeLayer: React.FC = () => {
   const ns = NetState.get();
@@ -110,7 +94,7 @@ export const ThreeLayer: React.FC = () => {
       {/* red is first  coord (x) */}
       {/* green is second  coord (y) */}
       {/* blue is third coord (z) */}
-      <Suspense fallback={<Loader />}>
+      <Suspense fallback={<mesh />}>
         <group
           onClick={(evt: MouseEvent) => {
             const pos = threeVectorToVector(evt.point);

@@ -1,11 +1,14 @@
-$loaderHalf: 17.5px;
 .three-loader {
   color: white;
-  width: 300px;
-  height: 300px;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
 
   .loader {
-    margin-top: 50%;
+    margin-top: 50vh;
     margin-left: 50%;
   }
 
