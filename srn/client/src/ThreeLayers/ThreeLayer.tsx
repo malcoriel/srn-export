@@ -26,6 +26,7 @@ import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { useStore } from '../store';
 import { size } from '../coord';
 import { ThreeQuestDirection } from './ThreeQuestDirection';
+import { ThreeNames } from './ThreeNames';
 
 export type Vector3Arr = [number, number, number];
 
@@ -37,7 +38,11 @@ export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
   z || 0,
 ];
 
-export const vecToThreePos = (v: IVector): Vector3Arr => [v.x, -v.y, 0];
+export const vecToThreePos = (v: IVector, lift = 0): Vector3Arr => [
+  v.x,
+  -v.y,
+  lift,
+];
 
 // noinspection JSUnusedGlobalSymbols
 export const threePosToVector = (x: number, y: number, _z: number): Vector =>
@@ -114,8 +119,16 @@ export const ThreeLayer: React.FC = () => {
           <ThreeBodiesLayer state={state} visMap={visMap} />
           <ThreeShipsLayer state={state} visMap={visMap} />
           <ThreeQuestDirection state={state} visualState={visualState} />
+          <ThreeNames netState={ns} visMap={visMap} />
         </group>
       </Suspense>
     </Canvas>
   );
 };
+export const liftThreePos = (zShift: number) => (
+  threeArrVec: [number, number, number]
+): [number, number, number] => [
+  threeArrVec[0],
+  threeArrVec[1],
+  threeArrVec[2] + zShift,
+];

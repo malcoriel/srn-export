@@ -2,19 +2,11 @@ import React from 'react';
 import { findMyPlayer, findMyShip, VisualState } from '../NetState';
 import { GameState } from '../../../world/pkg';
 import { Line } from '@react-three/drei';
-import { vecToThreePos } from './ThreeLayer';
+import { liftThreePos, vecToThreePos } from './ThreeLayer';
 import Vector from '../utils/Vector';
 import { CargoDeliveryQuestState, findPlanet } from '../world';
 import { degToRad } from '../coord';
 import { teal, yellow } from '../utils/palette';
-
-const liftThreePos = (zShift: number) => (
-  threeArrVec: [number, number, number]
-): [number, number, number] => [
-  threeArrVec[0],
-  threeArrVec[1],
-  threeArrVec[2] + zShift,
-];
 
 export const ThreeQuestDirection: React.FC<{
   state: GameState;

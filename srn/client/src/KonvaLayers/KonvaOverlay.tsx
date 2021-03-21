@@ -166,21 +166,6 @@ export const KonvaOverlay: React.FC = React.memo(() => {
           )}
         </>
       )}
-      {names.map(([id, name, position, offsetY]) => {
-        const textWidth = 70;
-        return (
-          <Text
-            key={id}
-            text={name}
-            position={position}
-            fill={babyBlue}
-            align="center"
-            offsetY={offsetY}
-            width={textWidth}
-            offsetX={textWidth / 2}
-          />
-        );
-      })}
       {effects.map((visHpEffect) => {
         const textWidth = 50;
         return (
