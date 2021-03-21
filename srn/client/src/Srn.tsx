@@ -36,6 +36,7 @@ import { SandboxQuickMenu } from './HtmlLayers/SandboxQuickMenu';
 import { TradeWindow } from './HtmlLayers/TradeWindow';
 import { PromptWindow } from './HtmlLayers/PromptWindow';
 import { useResourcesLoading } from './utils/useResourcesLoading';
+import { TestMenu, TestUI } from './TestUI/TestUI';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -249,6 +250,12 @@ const Srn = () => {
             startTutorial={() => start(GameMode.Tutorial)}
             startSandbox={() => start(GameMode.Sandbox)}
           />
+        )}
+        {!playing && (
+          <>
+            <TestMenu />
+            <TestUI />
+          </>
         )}
       </div>
     </>

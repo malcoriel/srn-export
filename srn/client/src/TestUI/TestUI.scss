@@ -1,0 +1,25 @@
+@import "../utils/palette";
+.test-menu {
+  z-index: 101;
+  height: 100%;
+  width: 100%;
+  background: black;
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: $teal;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  & > * {
+    margin-top: 10px;
+  }
+  .hidden-button {
+    display: inline-block;
+  }
+}
+.hidden-button {
+  display: none;
+}

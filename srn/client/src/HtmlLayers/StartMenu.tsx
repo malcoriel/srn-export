@@ -11,7 +11,7 @@ import useSWR from 'swr';
 import { Button } from './ui/Button';
 import { Label } from './ui/Label';
 import { Input } from './ui/Input';
-import { useStore } from '../store';
+import { TestMenuMode, useStore } from '../store';
 import 'rc-slider/assets/index.css';
 import { teal } from '../utils/palette';
 import versionJson from '../../version.json';
@@ -48,6 +48,7 @@ export const StartMenu: React.FC<{
     makeRandomPortrait,
     volume,
     setVolume,
+    testMenuMode,
   } = useStore((state) => ({
     musicEnabled: state.musicEnabled,
     setMusicEnabled: state.setMusicEnabled,
@@ -64,6 +65,7 @@ export const StartMenu: React.FC<{
     makeRandomPortrait: state.makeRandomPortrait,
     volume: state.volume,
     setVolume: state.setVolume,
+    testMenuMode: state.testMenuMode,
   }));
 
   const hide = () => setMenu(false);
@@ -86,6 +88,10 @@ export const StartMenu: React.FC<{
     serverVersionFormatted = 'loading...';
   } else {
     serverVersionFormatted = serverVersion.data;
+  }
+
+  if (testMenuMode !== TestMenuMode.Hidden) {
+    return null;
   }
 
   return (

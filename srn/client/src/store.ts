@@ -84,7 +84,15 @@ export type SrnState = {
     resolve: (val: string) => void,
     reject: () => void
   ) => void;
+  testMenuMode: TestMenuMode;
+  setTestMenuMode: (val: TestMenuMode) => void;
 };
+
+export enum TestMenuMode {
+  Hidden,
+  Shown,
+  PlanetTest,
+}
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
 const lsPortrait = extractLSValue('portrait', portraitPath(portraitIndex));
@@ -112,6 +120,7 @@ function toggleWindowState(old: WindowState, hasMinimized = false) {
 
 export const useStore = create<SrnState>((set) => ({
   playing: false,
+  testMenuMode: TestMenuMode.Hidden,
   menu: true,
   skipMenu: lsSkipMenu,
   preferredName: lsPreferredName,
@@ -130,6 +139,7 @@ export const useStore = create<SrnState>((set) => ({
   leaderboardWindow: WindowState.Minimized,
   hintedObjectId: undefined,
 
+  setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
   setHintedObjectId: (val?: string) => set({ hintedObjectId: val }),
 
   setPreferredName: (val: string) =>
