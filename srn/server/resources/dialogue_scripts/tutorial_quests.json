@@ -39,7 +39,7 @@
       ]
     ],
     "step3": [
-      "See that line from your ship to a planet? All you have to do is to land there, and use 'work on delivery quest' option in the dialogue. That's it. A person will give you a crate, you get a destination, drop it there, and voilà - you get paid. However, this won't work during the tutorial - you have to play the real game. Why, you ask? Well, that feature is still in development.",
+      "See that arrow pointing from your ship to a planet? All you have to do is to land there, and use 'work on delivery quest' option in the dialogue. That's it. A person will give you a crate, you get a destination, drop it there, and voilà - you get paid. However, this won't work during the tutorial - you have to play the real game. Why, you ask? Well, that feature is still in development.",
       [
         [
           "go_step4",
