@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.5.3 (2021-03-21)
+### Fixes
+* Fixed incorrect line width for quest arrow.
+
 ## Version 0.5.2 (2021-03-21)
 ### New
 * Replaced the quest trajectory line with a quest direction marker.
