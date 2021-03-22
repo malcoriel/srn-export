@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.5.4 (2021-03-22)
+### New
+* Loader UI for loading heavy assets.
+
+### Fixes
+* Fixed server crash on merging items.
+* Improved server stability.
+
 ## Version 0.5.3 (2021-03-21)
 ### Fixes
 * Fixed incorrect line width for quest arrow.
