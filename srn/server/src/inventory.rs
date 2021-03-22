@@ -192,11 +192,17 @@ fn find_quest_item_pos(inventory: &Vec<InventoryItem>, quest_id: Uuid) -> Option
 
 pub fn merge_item_stacks(inventory: &mut Vec<InventoryItem>, from: Uuid, to: Uuid) {
     let moved = inventory.iter().position(|i| i.id == from);
-    let accepting = inventory.iter().position(|i| i.id == to);
-    if let (Some(moved), Some(accepting)) = (moved, accepting) {
+    if let Some(moved) = moved {
         let picked = inventory.remove(moved);
-        let accepting = &mut inventory[accepting];
-        accepting.quantity += picked.quantity;
+        let accepting = inventory.iter().position(|i| i.id == to);
+        if let Some(accepting) = accepting {
+            let accepting = inventory.iter_mut().nth(accepting);
+            if let Some(accepting) = accepting {
+                accepting.quantity += picked.quantity;
+            }
+        }
+
+
     } else {
         warn!(format!("Invalid merge for non-existent item ids (or one of them): {} and {}", from, to));
     }
