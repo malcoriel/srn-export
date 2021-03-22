@@ -201,8 +201,6 @@ pub fn merge_item_stacks(inventory: &mut Vec<InventoryItem>, from: Uuid, to: Uui
                 accepting.quantity += picked.quantity;
             }
         }
-
-
     } else {
         warn!(format!("Invalid merge for non-existent item ids (or one of them): {} and {}", from, to));
     }
