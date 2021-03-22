@@ -17,10 +17,6 @@ import {
 } from '../ThreeLayers/shaders/star';
 import { useRepeatWrappedTextureLoader } from '../ThreeLayers/ThreeStar';
 
-const fragmentShader = `
-
-`;
-
 const uniforms: {
   iChannel0: TextureUniformValue;
   time: FloatUniformValue;
@@ -31,7 +27,35 @@ const uniforms: {
   iResolution: { value: new Vector3(size.width_px, size.height_px, 0) },
 };
 
-const vertexShader = `
+const vertexShader = `# version 300 es
+precision highp float;
+precision highp int;
+uniform mat4 pvm;
+
+in vec4 position;
+in vec2 texCoord;
+
+out vec2 texCoordV;
+
+void main() {
+  texCoordV = gl_TexCoord.xy;
+  gl_Position = pvm * position;
+}
+`;
+
+const fragmentShader = `#version 300 es
+precision highp float;
+precision highp int;
+uniform float time;
+uniform vec3 color;
+
+in vec2 texCoordV;
+
+out vec4 colorOut;
+
+void main() {
+  colorOut = vec4(texCoord, 0.0, 0.0);
+}
 `;
 
 const BODIES_Z = 50;
