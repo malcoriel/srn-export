@@ -445,6 +445,7 @@ pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
     } else {
         random_hex_seed()
     };
+    log!(format!("seed_state seed={}", seed));
     let mut state = gen_state_by_seed(seed_and_validate, seed);
     init_all_planets_market(&mut state);
     state
