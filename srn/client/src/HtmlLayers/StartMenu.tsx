@@ -79,7 +79,7 @@ export const StartMenu: React.FC<{
 
   const [playMenu, setPlayMenu] = useState(false);
 
-  const serverVersion = useSWR('/api/version', async () => api.getVersion());
+  const serverVersion = useSWR('/api/version', async () => Promise.resolve(1));
 
   let serverVersionFormatted;
   if (serverVersion.error) {

@@ -53,17 +53,22 @@ const fragmentShader = `#version 300 es
 precision highp float;
 precision highp int;
 uniform float time;
+uniform sampler2D iChannel0;
+uniform vec2 iResolution;
+
 // uniform vec3 color;
 
 in vec2 vUv;
 out vec4 FragColor;
 
 void main() {
-  if (vUv.x < 0.9) {
-    FragColor = vec4(vUv.x, 0.0, 0.0, 1.0);
-  } else {
-    FragColor = vec4(vec3(0.0), 1.0);
-  }
+  // vec2 texCoord = gl_FragCoord.xy / iResolution;
+  // if (vUv.x < 0.0001) {
+  //   FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  //   return;
+  // }
+  vec4 texturePix = texture2D(iChannel0, vec2(0.0), 0.5);
+  FragColor = vec4(0.0, 0.5, 0.0, 1.0);
 }
 `;
 
@@ -76,7 +81,7 @@ const ThreePlanetShape2: React.FC<{
   const mesh = useRef<Mesh>();
   useFrame(() => {
     if (mesh.current) {
-      mesh.current.rotation.y += 0.0005;
+      //mesh.current.rotation.y += 0.0005;
       const material = mesh.current.material as ShaderMaterial;
       material.uniforms.time.value += 0.005;
     }
@@ -103,7 +108,7 @@ const ThreePlanetShape2: React.FC<{
       scale={[radius, radius, radius]}
       rotation={[0, 0, 0]}
     >
-      <planeBufferGeometry args={[1, 1]} />
+      <planeBufferGeometry args={[2, 1]} />
       {/*<icosahedronBufferGeometry args={[1, 5]} />*/}
       <rawShaderMaterial
         transparent
