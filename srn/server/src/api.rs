@@ -137,9 +137,6 @@ pub fn load_seeded_state(player_id: String, seed: String) {
         warn!("attempt to load into non-personal state");
         return;
     }
-    if seed == "fdhsakfjhdsfkjhsadfkjhsakddfajsdk".to_string() {
-        panic!("Special seed crash");
-    }
     let mut random_state = gen_state_by_seed(true, seed);
     init_all_planets_market(&mut random_state);
     let player = current_state.players[0].clone();
