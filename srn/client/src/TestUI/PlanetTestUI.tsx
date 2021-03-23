@@ -62,13 +62,13 @@ in vec2 vUv;
 out vec4 FragColor;
 
 void main() {
-  // vec2 texCoord = gl_FragCoord.xy / iResolution;
-  // if (vUv.x < 0.0001) {
-  //   FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-  //   return;
-  // }
-  vec4 texturePix = texture2D(iChannel0, vec2(0.0), 0.5);
-  FragColor = vec4(0.0, 0.5, 0.0, 1.0);
+  vec2 texCoord = gl_FragCoord.xy / iResolution;
+  if (vUv.x < 0.0001) {
+    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    return;
+  }
+  vec4 texturePix = texture(iChannel0, texCoord);
+  FragColor = texturePix;
 }
 `;
 
@@ -108,7 +108,7 @@ const ThreePlanetShape2: React.FC<{
       scale={[radius, radius, radius]}
       rotation={[0, 0, 0]}
     >
-      <planeBufferGeometry args={[2, 1]} />
+      <planeBufferGeometry args={[1, 1]} />
       {/*<icosahedronBufferGeometry args={[1, 5]} />*/}
       <rawShaderMaterial
         transparent
