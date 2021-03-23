@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.5.6 (2021-03-23)
+
+### Fixes
+* Added restarting server on error.
+
 ## Version 0.5.5 (2021-03-23)
 
 ### Fixes
