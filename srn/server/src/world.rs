@@ -31,7 +31,7 @@ use crate::market::{Market, init_all_planets_market};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
-const SEED_TIME: i64 = 10 * 1000 * 1000;
+const SEED_TIME: i64 = 9321 * 1000 * 1000;
 const MAX_ORBIT: f64 = 450.0;
 const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
 const TRAJECTORY_MAX_ITER: i32 = 10;
@@ -499,10 +499,15 @@ fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
     res
 }
 
-fn validate_state(mut in_state: GameState) -> GameState {
-    in_state.planets = in_state
+pub fn validate_state(mut in_state: GameState) -> GameState {
+    in_state.planets = extract_valid_planets(&in_state);
+    in_state
+}
+
+pub fn extract_valid_planets(in_state: &GameState) -> Vec<Planet> {
+    in_state
         .planets
-        .into_iter()
+        .iter()
         .filter(|p| {
             let p_pos = Vec2f64 { x: p.x, y: p.y };
             let check = p.x.is_finite()
@@ -518,8 +523,8 @@ fn validate_state(mut in_state: GameState) -> GameState {
             }
             return check;
         })
-        .collect::<Vec<_>>();
-    in_state
+        .map(|p| p.clone())
+        .collect::<Vec<_>>()
 }
 
 pub fn force_update_to_now(state: &mut GameState) {

@@ -97,6 +97,7 @@ mod sandbox;
 mod market;
 mod api;
 mod dialogue_dto;
+mod planet_movement_test;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,
