@@ -151,7 +151,13 @@ impl Vec2f64 {
     }
 
     pub fn angle_rad(&self, b: &Vec2f64) -> f64 {
-        (self.scalar_multiply(b) / self.euclidean_len() / b.euclidean_len()).acos()
+        let mut acos_arg = self.scalar_multiply(b) / self.euclidean_len() / b.euclidean_len();
+        if acos_arg > 1.0 {
+            acos_arg = 1.0;
+        } else if acos_arg < -1.0 {
+            acos_arg = -1.0;
+        }
+        (acos_arg).acos()
     }
 
     pub fn angle_deg(&self, b: &Vec2f64) -> f64 {

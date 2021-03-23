@@ -462,12 +462,9 @@ pub fn gen_state_by_seed(seed_and_validate: bool, seed: String) -> GameState {
     let state = system_gen(seed);
 
     let state = if seed_and_validate {
-        log!("first validation");
         let mut state = validate_state(state);
-        log!("applying seed time");
         let (planets, _sampler) = planet_movement::update_planets(&state.planets, &state.star, SEED_TIME, Sampler::empty(), AABB::maxed());
         state.planets = planets;
-        log!("second validation");
         let state = validate_state(state);
         state
     } else {
@@ -518,9 +515,9 @@ pub fn extract_valid_planets(in_state: &GameState) -> Vec<Planet> {
                 && !p.rotation.is_nan()
                 && p_pos.euclidean_len() < MAX_ORBIT;
 
-            if !check {
-                eprintln!("Validate state: removed planet {:?})", p);
-            }
+            // if !check {
+            //     eprintln!("Validate state: removed planet {:?})", p);
+            // }
             return check;
         })
         .map(|p| p.clone())
