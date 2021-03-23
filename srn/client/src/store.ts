@@ -120,7 +120,7 @@ function toggleWindowState(old: WindowState, hasMinimized = false) {
 
 export const useStore = create<SrnState>((set) => ({
   playing: false,
-  testMenuMode: TestMenuMode.Hidden,
+  testMenuMode: TestMenuMode.PlanetTest,
   menu: true,
   skipMenu: lsSkipMenu,
   preferredName: lsPreferredName,

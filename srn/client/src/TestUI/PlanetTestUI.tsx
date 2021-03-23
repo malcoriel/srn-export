@@ -6,7 +6,7 @@ import {
   CAMERA_HEIGHT,
 } from '../ThreeLayers/CameraControls';
 import { size, unitsToPixels_min } from '../coord';
-import React, { Suspense, useMemo, useRef } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useLoader } from 'react-three-fiber';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
 import { vecToThreePos } from '../ThreeLayers/ThreeLayer';
@@ -27,34 +27,43 @@ const uniforms: {
   iResolution: { value: new Vector3(size.width_px, size.height_px, 0) },
 };
 
-const vertexShader = `# version 300 es
+const vertexShader = `#version 300 es
 precision highp float;
 precision highp int;
-uniform mat4 pvm;
 
-in vec4 position;
-in vec2 texCoord;
+uniform mat4 modelMatrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform mat3 normalMatrix;
 
-out vec2 texCoordV;
+in vec3 position;
+in vec3 normal;
+in vec2 uv;
+in vec2 uv2;
+
+out vec2 vUv;
 
 void main() {
-  texCoordV = gl_TexCoord.xy;
-  gl_Position = pvm * position;
-}
-`;
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`;
 
 const fragmentShader = `#version 300 es
 precision highp float;
 precision highp int;
 uniform float time;
-uniform vec3 color;
+// uniform vec3 color;
 
-in vec2 texCoordV;
-
-out vec4 colorOut;
+in vec2 vUv;
+out vec4 FragColor;
 
 void main() {
-  colorOut = vec4(texCoord, 0.0, 0.0);
+  if (vUv.x < 0.9) {
+    FragColor = vec4(vUv.x, 0.0, 0.0, 1.0);
+  } else {
+    FragColor = vec4(vec3(0.0), 1.0);
+  }
 }
 `;
 
@@ -94,7 +103,8 @@ const ThreePlanetShape2: React.FC<{
       scale={[radius, radius, radius]}
       rotation={[0, 0, 0]}
     >
-      <icosahedronBufferGeometry args={[1, 5]} />
+      <planeBufferGeometry args={[1, 1]} />
+      {/*<icosahedronBufferGeometry args={[1, 5]} />*/}
       <rawShaderMaterial
         transparent
         fragmentShader={fragmentShader}
@@ -108,6 +118,10 @@ const ThreePlanetShape2: React.FC<{
 export const PlanetTestUI = () => {
   const setTestMenuMode = useStore((state) => state.setTestMenuMode);
   useHotkeys('esc', () => setTestMenuMode(TestMenuMode.Shown));
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    setRevision((old) => old + 1);
+  }, []);
   return (
     <Canvas
       orthographic
@@ -126,7 +140,11 @@ export const PlanetTestUI = () => {
         <ambientLight />
         <pointLight position={[0, 0, CAMERA_HEIGHT]} />
         <group position={[0, 0, 0]}>
-          <ThreePlanetShape2 radius={20} position={VectorFzero} />
+          <ThreePlanetShape2
+            key={revision}
+            radius={20}
+            position={VectorFzero}
+          />
         </group>
       </Suspense>
     </Canvas>
