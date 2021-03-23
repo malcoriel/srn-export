@@ -31,7 +31,7 @@ use crate::market::{Market, init_all_planets_market};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
-const SEED_TIME: i64 = 9321 * 1000 * 1000;
+const SEED_TIME: i64 = 10 * 1000 * 1000;
 const MAX_ORBIT: f64 = 450.0;
 const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
 const TRAJECTORY_MAX_ITER: i32 = 10;
@@ -462,9 +462,12 @@ pub fn gen_state_by_seed(seed_and_validate: bool, seed: String) -> GameState {
     let state = system_gen(seed);
 
     let state = if seed_and_validate {
+        log!("first validation");
         let mut state = validate_state(state);
+        log!("applying seed time");
         let (planets, _sampler) = planet_movement::update_planets(&state.planets, &state.star, SEED_TIME, Sampler::empty(), AABB::maxed());
         state.planets = planets;
+        log!("second validation");
         let state = validate_state(state);
         state
     } else {
@@ -526,8 +529,8 @@ pub fn force_update_to_now(state: &mut GameState) {
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct AABB {
-    pub(crate) top_left: Vec2f64,
-    pub(crate) bottom_right: Vec2f64,
+    pub top_left: Vec2f64,
+    pub bottom_right: Vec2f64,
 }
 
 const WORLD_MIN_Y: f64 = -500.0;

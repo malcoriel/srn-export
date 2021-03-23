@@ -7,7 +7,8 @@ mod world_test {
     use crate::new_id;
     use crate::planet_movement::update_planets;
     use crate::vec2::Vec2f64;
-    use crate::world::{add_player, seed_state, spawn_ship, update_ships_navigation, update_world, GameState, Planet, Star, UpdateOptions, AABB};
+    use crate::world::{add_player, GameMode, seed_state, spawn_ship, update_ships_navigation, update_world, GameState, Planet, Star, UpdateOptions, AABB};
+    use crate::market::{Market};
     use crate::perf::Sampler;
 
     #[test]
@@ -39,6 +40,9 @@ mod world_test {
             color: "".to_string(),
         };
         let state = GameState {
+            id: Default::default(),
+            version: 0,
+            mode: GameMode::CargoRush,
             tag: None,
             seed: "".to_string(),
             my_id: Default::default(),
@@ -62,6 +66,12 @@ mod world_test {
             paused: false,
             leaderboard: None,
             ticks: 0,
+            disable_hp_effects: false,
+            market: Market {
+                wares: Default::default(),
+                prices: Default::default(),
+                time_before_next_shake: 0
+            }
         };
         let eps = 0.2;
         let new_planets = update_planets(
@@ -130,6 +140,9 @@ mod world_test {
             color: "".to_string(),
         };
         let state = GameState {
+            id: Default::default(),
+            version: 0,
+            mode: GameMode::CargoRush,
             tag: None,
             seed: "".to_string(),
             my_id: Default::default(),
@@ -153,6 +166,12 @@ mod world_test {
             paused: false,
             leaderboard: None,
             ticks: 0,
+            disable_hp_effects: false,
+            market: Market {
+                wares: Default::default(),
+                prices: Default::default(),
+                time_before_next_shake: 0
+            }
         };
         let eps = 0.2;
         let new_planets = update_planets(
@@ -209,6 +228,9 @@ mod world_test {
             color: "".to_string(),
         };
         let state = GameState {
+            id: Default::default(),
+            version: 0,
+            mode: GameMode::CargoRush,
             tag: None,
             seed: "".to_string(),
             my_id: Default::default(),
@@ -232,6 +254,12 @@ mod world_test {
             paused: false,
             leaderboard: None,
             ticks: 0,
+            disable_hp_effects: false,
+            market: Market {
+                wares: Default::default(),
+                prices: Default::default(),
+                time_before_next_shake: 0
+            }
         };
         let eps = 0.2;
         let new_planets = update_planets(

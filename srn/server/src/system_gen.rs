@@ -125,6 +125,7 @@ pub fn system_gen(seed: String) -> GameState {
                     planets.push(planet);
 
                     let mut current_sat_x = planet_center_x + planet_radius + 10.0;
+                    eprintln!("current_sat_x: {}", current_sat_x);
                     for j in 0..gen_sat_count(planet_radius, &mut prng) {
                         let name = sat_name_pool.get(&mut prng).to_string();
                         current_sat_x += gen_sat_gap(&mut prng);

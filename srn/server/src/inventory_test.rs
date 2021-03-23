@@ -11,7 +11,8 @@ mod inventory_test {
             quantity: q,
             stackable: false,
             player_owned: false,
-            item_type: InventoryItemType::CommonMineral
+            item_type: InventoryItemType::CommonMineral,
+            quest_id: None
         }
     }
 
@@ -23,7 +24,8 @@ mod inventory_test {
             quantity: q,
             stackable: false,
             player_owned: false,
-            item_type: InventoryItemType::RareMineral
+            item_type: InventoryItemType::RareMineral,
+            quest_id: None
         }
     }
 
