@@ -166,7 +166,7 @@ const doRemoteRestartServer = async () => {
       `${sshBase} docker run -d -p 2794:2794 -p 2795:2795 -p 8000:8000 --restart=always --name=${serverContainerName} ${latestServerImageName}`
     );
     await spawnWatched(
-      `${sshBase} docker run -d --restart=always -v /var/run/docker.sock:/var/run/docker.sock willfarrell/autoheal --name=${autoHealName}`
+      `${sshBase} docker run -d --name=${autoHealName} --restart=always -v /var/run/docker.sock:/var/run/docker.sock willfarrell/autoheal`
     );
   } catch (e) {
     console.error(e);
@@ -189,7 +189,7 @@ const doLocalRestartServer = async () => {
       `docker run -d -p 2794:2794 -p 2795:2795 -p 8000:8000 --restart=always --name=${serverContainerName} ${latestServerImageName}`
     );
     await spawnWatched(
-      `docker run -d --restart=always -v /var/run/docker.sock:/var/run/docker.sock willfarrell/autoheal --name=${autoHealName}`
+      `docker run -d --restart=always --name=${autoHealName} -v /var/run/docker.sock:/var/run/docker.sock willfarrell/autoheal`
     );
   } catch (e) {
     console.error(e);
