@@ -7,6 +7,7 @@ const sshHost = 'root@bubblegum.malcoriel.de';
 const latestServerImageName = 'srn-server:latest';
 const latestClientImageName = 'srn-client:latest';
 const serverContainerName = 'srn-server-current';
+const autoHealName = 'srn-server-autoheal';
 const clientContainerName = 'srn-client-current';
 
 const makeServerPaths = (version, gitVersion) => {
@@ -160,8 +161,12 @@ const doRemoteRestartServer = async () => {
     await spawnWatched(
       `${sshBase} docker rm -f ${serverContainerName} || true`
     );
+    await spawnWatched(`${sshBase} docker rm -f ${autoHealName} || true`);
     await spawnWatched(
       `${sshBase} docker run -d -p 2794:2794 -p 2795:2795 -p 8000:8000 --restart=always --name=${serverContainerName} ${latestServerImageName}`
+    );
+    await spawnWatched(
+      `${sshBase} docker run -d --restart=always -v /var/run/docker.sock:/var/run/docker.sock willfarrell/autoheal --name=${autoHealName}`
     );
   } catch (e) {
     console.error(e);
@@ -179,8 +184,12 @@ const doLocalRestartServer = async () => {
 
     // kill existing image
     await spawnWatched(`docker rm -f ${serverContainerName} || true`);
+    await spawnWatched(`docker rm -f ${autoHealName} || true`);
     await spawnWatched(
       `docker run -d -p 2794:2794 -p 2795:2795 -p 8000:8000 --restart=always --name=${serverContainerName} ${latestServerImageName}`
+    );
+    await spawnWatched(
+      `docker run -d --restart=always -v /var/run/docker.sock:/var/run/docker.sock willfarrell/autoheal --name=${autoHealName}`
     );
   } catch (e) {
     console.error(e);
