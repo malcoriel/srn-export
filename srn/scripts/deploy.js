@@ -168,6 +168,25 @@ const doRemoteRestartServer = async () => {
   }
 };
 
+const doLocalRestartServer = async () => {
+  try {
+    const { gitVersion, version } = await getVersions();
+
+    console.log('restarting the local docker image', {
+      gitVersion,
+      version,
+    });
+
+    // kill existing image
+    await spawnWatched(`docker rm -f ${serverContainerName} || true`);
+    await spawnWatched(
+      `docker run -d -p 2794:2794 -p 2795:2795 -p 8000:8000 --restart=always --name=${serverContainerName} ${latestServerImageName}`
+    );
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 const doRemoteRestartClient = async () => {
   try {
     const { gitVersion, version } = await getVersions();
@@ -249,6 +268,12 @@ const doBuildClient = async () => {
         'restarts the currently running server',
         (args) => args,
         doRemoteRestartServer
+      )
+      .command(
+        'restart-local-server',
+        'restarts the currently running server locally',
+        (args) => args,
+        doLocalRestartServer
       )
       .command(
         'client',
