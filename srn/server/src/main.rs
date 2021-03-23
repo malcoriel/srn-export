@@ -794,6 +794,7 @@ fn rocket() -> rocket::Rocket {
         .attach(CORS())
         .mount("/api", routes![
         api::get_version,
+        api::get_health,
         api::get_saved_states,
         api::save_current_state,
         api::load_saved_state,
