@@ -62,8 +62,19 @@ in vec2 vUv;
 out vec4 FragColor;
 
 void main() {
-  vec4 texturePix = texture(iChannel0, vUv.yx);
-  FragColor = texturePix;
+  vec2 p = -1.0 + 2.0 * vUv.xy;
+  float r = sqrt(dot(p,p));
+  // if (r < 0.4) {
+  //   FragColor = vec4(0.0);
+  //   return;
+  // }
+  // else {
+  //   vec4 texturePix = texture(iChannel0, vUv.yx);
+  //   FragColor = texturePix;
+  // }
+  float f = sqrt(1.0 - r*r);
+  vec2 uv;
+  FragColor = vec4(f, f, f, step(0.0, f));
 }
 
 `;
@@ -79,7 +90,9 @@ const ThreePlanetShape2: React.FC<{
     if (mesh.current) {
       // mesh.current.rotation.y += 0.0005;
       const material = mesh.current.material as ShaderMaterial;
-      material.uniforms.time.value += 0.005;
+      if (material.uniforms) {
+        material.uniforms.time.value += 0.005;
+      }
     }
   });
 
@@ -104,19 +117,27 @@ const ThreePlanetShape2: React.FC<{
       position={vecToThreePos(position, BODIES_Z)}
       ref={mesh}
       scale={[radius, radius, radius]}
-      rotation={[0, Math.PI / 2, 0]}
+      rotation={[0, 0, 0]}
     >
-      {/*<planeBufferGeometry args={[1, 1]} />*/}
-      <icosahedronBufferGeometry args={[1, 9]} />
+      <planeBufferGeometry args={[1, 1]} />
+      {/*<icosahedronBufferGeometry args={[1, 9]} />*/}
       <rawShaderMaterial
         transparent
         fragmentShader={fragmentShader}
         vertexShader={vertexShader}
         uniforms={uniforms2}
       />
+      {/*<meshBasicMaterial color="red" />*/}
     </mesh>
   );
 };
+
+const BackgroundPlane = () => (
+  <mesh position={[0, 0, 0]}>
+    <planeGeometry args={[100, 100]} />
+    <meshBasicMaterial color="teal" />
+  </mesh>
+);
 
 export const PlanetTestUI = () => {
   const setTestMenuMode = useStore((state) => state.setTestMenuMode);
@@ -143,6 +164,7 @@ export const PlanetTestUI = () => {
         <ambientLight />
         <pointLight position={[0, 0, CAMERA_HEIGHT]} />
         <group position={[0, 0, 0]}>
+          <BackgroundPlane />
           <ThreePlanetShape2
             key={revision}
             radius={20}
