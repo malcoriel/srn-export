@@ -55,21 +55,17 @@ precision highp int;
 uniform float time;
 uniform sampler2D iChannel0;
 uniform vec2 iResolution;
-
+#define PI 3.14159265358979323846264338327
 // uniform vec3 color;
 
 in vec2 vUv;
 out vec4 FragColor;
 
 void main() {
-  vec2 texCoord = gl_FragCoord.xy / iResolution;
-  if (vUv.x < 0.0001) {
-    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-    return;
-  }
-  vec4 texturePix = texture(iChannel0, texCoord);
+  vec4 texturePix = texture(iChannel0, vUv.yx);
   FragColor = texturePix;
 }
+
 `;
 
 const BODIES_Z = 50;
@@ -81,13 +77,15 @@ const ThreePlanetShape2: React.FC<{
   const mesh = useRef<Mesh>();
   useFrame(() => {
     if (mesh.current) {
-      //mesh.current.rotation.y += 0.0005;
+      // mesh.current.rotation.y += 0.0005;
       const material = mesh.current.material as ShaderMaterial;
       material.uniforms.time.value += 0.005;
     }
   });
 
-  const lavaTile = useRepeatWrappedTextureLoader('resources/lavatile.png');
+  const lavaTile = useRepeatWrappedTextureLoader(
+    'resources/textures/jupiter.png'
+  );
 
   const uniforms2 = useMemo(() => {
     const patchedUniforms = uniforms;
@@ -106,10 +104,10 @@ const ThreePlanetShape2: React.FC<{
       position={vecToThreePos(position, BODIES_Z)}
       ref={mesh}
       scale={[radius, radius, radius]}
-      rotation={[0, 0, 0]}
+      rotation={[0, Math.PI / 2, 0]}
     >
-      <planeBufferGeometry args={[1, 1]} />
-      {/*<icosahedronBufferGeometry args={[1, 5]} />*/}
+      {/*<planeBufferGeometry args={[1, 1]} />*/}
+      <icosahedronBufferGeometry args={[1, 9]} />
       <rawShaderMaterial
         transparent
         fragmentShader={fragmentShader}
