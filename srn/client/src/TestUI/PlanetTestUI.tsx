@@ -64,17 +64,10 @@ out vec4 FragColor;
 void main() {
   vec2 p = -1.0 + 2.0 * vUv.xy;
   float r = sqrt(dot(p,p));
-  // if (r < 0.4) {
-  //   FragColor = vec4(0.0);
-  //   return;
-  // }
-  // else {
-  //   vec4 texturePix = texture(iChannel0, vUv.yx);
-  //   FragColor = texturePix;
-  // }
   float f = sqrt(1.0 - r*r);
-  vec2 uv;
-  FragColor = vec4(f, f, f, step(0.0, f));
+  // yx to turn texture by 90deg
+  vec3 texturePix = texture(iChannel0, vUv.yx).xyz;
+  FragColor = vec4(texturePix * f, step(0.0, f));
 }
 
 `;
