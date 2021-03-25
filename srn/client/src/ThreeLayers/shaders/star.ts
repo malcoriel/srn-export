@@ -173,6 +173,10 @@ export type FloatUniformValue = {
   value: number;
 };
 
+export type IntUniformValue = {
+  value: number;
+};
+
 export type Vector3UniformValue = {
   value: Vector3 | null;
 };
