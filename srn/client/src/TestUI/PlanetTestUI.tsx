@@ -205,19 +205,20 @@ void main() {
   float r = dot(p,p);
   float f = (1.0-sqrt(1.0-r))/(r);
   // FragColor = vec4(length(p));
-  uv.x = mod(p.x*f / 2.0 + time, 1.0);
+  uv.x = p.x*f / 2.0 + time / 4.0, 1.0;
   uv.y = p.y*f / 2.0 + 0.5;
 
+
   // random spots
-  float s = 0.6;
-  float t1 = snoise2(vUv * 2.0) - s;
-  float t2 = snoise2((vUv + 800.0) * 2.0) - s;
-  float t3 = snoise2((vUv + 1600.0) * 2.0) - s;
+  float s = 0.52;
+  float t1 = snoise2(uv * 2.0) - s;
+  float t2 = snoise2((uv + 800.0) * 2.0) - s;
+  float t3 = snoise2((uv + 1600.0) * 2.0) - s;
   float threshold = max(t1 * t2 * t3, 0.0);
-  float spots_noise = snoise2(vUv * 0.1) * threshold;
+  float spots_noise = snoise2(uv * 0.1) * threshold;
 
   // curvy stuff
-  uv += noise(vec3(vUv, 0.0), 6, 2.0, 1.0) * 0.02 + spots_noise;
+  uv += noise(vec3(uv, 0.0), 6, 2.0, 1.0) * 0.02 + spots_noise;
 
   // texturing based on curvy stuff
   FragColor = vec4(texture(iChannel0,uv.yx).xyz, step(0.0, 1.0 - r));
