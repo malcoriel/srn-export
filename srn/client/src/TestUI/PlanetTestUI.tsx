@@ -217,7 +217,7 @@ void main() {
   float t1 = snoise2(spots_uv * 2.0) - s;
   float t2 = snoise2((uv + 800.0) * 2.0) - s;
   float t3 = snoise2((spots_uv + 1600.0) * 2.0) - s;
-  float threshold = max(t1 * t2 * t3, 0.0);
+  float threshold = max(t1 * t2 * t3, 0.02);
   float spots_noise = snoise2(spots_uv * 0.1) * threshold;
 
   // curvy stuff
