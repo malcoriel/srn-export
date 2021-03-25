@@ -61,13 +61,27 @@ uniform vec2 iResolution;
 in vec2 vUv;
 out vec4 FragColor;
 
-void main() {
+void main1() {
   vec2 p = -1.0 + 2.0 * vUv.xy;
   float r = sqrt(dot(p,p));
-  float f = sqrt(1.0 - r*r);
+  if (r > 1.0) discard;
+  float sphereIntensity = sqrt(1.0 - pow(r, 20.0));
+  // float sphereIntensity = (1.0-sqrt(1.0- pow(r, 10.0)))/(r);;
   // yx to turn texture by 90deg
   vec3 texturePix = texture(iChannel0, vUv.yx).xyz;
-  FragColor = vec4(texturePix * f, step(0.0, f));
+  FragColor = vec4(texturePix * sphereIntensity, step(0.0, sphereIntensity));
+}
+
+void main() {
+  vec2 p = -1.0 + 2.0 * gl_FragCoord.xy / iResolution.xy;
+  vec2 uv;
+  float r = dot(p,p);
+  float f = (1.0-sqrt(1.0-r))/(r);
+  // FragColor = vec4(length(p));
+  uv.x = mod(p.x*f + time, 1.0);
+  uv.y = p.y*f / 2.0 + 0.5;
+  FragColor = vec4(length(uv));
+  FragColor = vec4(texture(iChannel0,uv.yx).xyz, 1.0);
 }
 
 `;
@@ -90,7 +104,7 @@ const ThreePlanetShape2: React.FC<{
   });
 
   const lavaTile = useRepeatWrappedTextureLoader(
-    'resources/textures/jupiter.png'
+    'resources/textures/jupiter-512.png'
   );
 
   const uniforms2 = useMemo(() => {
@@ -112,7 +126,7 @@ const ThreePlanetShape2: React.FC<{
       scale={[radius, radius, radius]}
       rotation={[0, 0, 0]}
     >
-      <planeBufferGeometry args={[1, 1]} />
+      <planeBufferGeometry args={[10, 10]} />
       {/*<icosahedronBufferGeometry args={[1, 9]} />*/}
       <rawShaderMaterial
         transparent
