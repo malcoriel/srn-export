@@ -63,7 +63,7 @@ out vec4 FragColor;
 
 vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
 
-float snoise2(vec2 v){
+float simplex_noise_2(vec2 v){
   const vec4 C = vec4(0.211324865405187, 0.366025403784439,
            -0.577350269189626, 0.024390243902439);
   vec2 i  = floor(v + dot(v, C.yy) );
@@ -90,13 +90,13 @@ float snoise2(vec2 v){
   return 130.0 * dot(m, g);
 }
 
-//\tSimplex 3D Noise
-//\tby Ian McEwan, Ashima Arts
+// Simplex 3D Noise
+// by Ian McEwan, Ashima Arts
 //
 vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
 vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
 
-float snoise3(vec3 v){
+float simplex_noise_3(vec3 v){
   const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
   const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
 
@@ -165,14 +165,14 @@ float snoise3(vec3 v){
                                 dot(p2,x2), dot(p3,x3) ) );
 }
 
-float noise(vec3 position, int octaves, float frequency, float persistence) {
+float fractal_noise(vec3 position, int octaves, float frequency, float persistence) {
     float total = 0.0; // Total value so far
     float maxAmplitude = 0.0; // Accumulates highest theoretical amplitude
     float amplitude = 1.0;
     for (int i = 0; i < octaves; i++) {
 
         // Get the noise sample
-        total += snoise3(position * frequency) * amplitude;
+        total += simplex_noise_3(position * frequency) * amplitude;
 
         // Make the wavelength twice as small
         frequency *= 2.0;
@@ -188,43 +188,36 @@ float noise(vec3 position, int octaves, float frequency, float persistence) {
     return total / maxAmplitude;
 }
 
-void main1() {
-  vec2 p = -1.0 + 2.0 * vUv.xy;
-  float r = sqrt(dot(p,p));
-  if (r > 1.0) discard;
-  float sphereIntensity = sqrt(1.0 - pow(r, 20.0));
-  // float sphereIntensity = (1.0-sqrt(1.0- pow(r, 10.0)))/(r);;
-  // yx to turn texture by 90deg
-  vec3 texturePix = texture(iChannel0, vUv.yx).xyz;
-  FragColor = vec4(texturePix * sphereIntensity, step(0.0, sphereIntensity));
-}
-
 void main() {
-  vec2 p = -1.0 + 2.0 * vUv;
-  vec2 uv;
-  float r = dot(p,p);
-  float f = (1.0-sqrt(1.0-r))/(r);
-  // FragColor = vec4(length(p));
-  uv.x = p.x*f / 2.0 + time / 4.0;
-  uv.y = p.y*f / 2.0 + 0.5;
+  // vUv is 0..1 coordinates inside the Three object,
+  // e.g. for a plane 0 is left bottom, 1 is right top
+  vec2 centeredCoord = -1.0 + 2.0 * vUv;
+  float distanceToCenter = dot(centeredCoord,centeredCoord);
+  float sphericalDistortion = (1.0-sqrt(1.0-distanceToCenter))/(distanceToCenter);
+
+  vec2 mainTextureCoords;
+  mainTextureCoords.x = centeredCoord.x * sphericalDistortion / 2.0 + time / 4.0;
+  mainTextureCoords.y = centeredCoord.y * sphericalDistortion / 2.0 + 0.5;
 
   vec2 spots_uv;
-  spots_uv.x = p.x*f / 2.0 + time / 5.9;
-  spots_uv.y = p.y*f / 2.0 + 0.5;
+  spots_uv.x = centeredCoord.x*sphericalDistortion / 2.0 + time / 5.9;
+  spots_uv.y = centeredCoord.y*sphericalDistortion / 2.0 + 0.5;
 
   // random spots
   float s = 0.52;
-  float t1 = snoise2(spots_uv * 2.0) - s;
-  float t2 = snoise2((uv + 800.0) * 2.0) - s;
-  float t3 = snoise2((spots_uv + 1600.0) * 2.0) - s;
+  float t1 = simplex_noise_2(spots_uv * 2.0) - s;
+  float t2 = simplex_noise_2((mainTextureCoords + 800.0) * 2.0) - s;
+  float t3 = simplex_noise_2((spots_uv + 1600.0) * 2.0) - s;
   float threshold = max(t1 * t2 * t3, 0.02);
-  float spots_noise = snoise2(spots_uv * 0.1) * threshold;
+  float spots_noise = simplex_noise_2(spots_uv * 0.1) * threshold;
 
-  // curvy stuff
-  uv += noise(vec3(uv, 0.0), 6, 2.0, 1.0) * 0.02 + spots_noise;
+  // curvy noisy lines
+  float lineDistortion = fractal_noise(vec3(mainTextureCoords, 0.0), 6, 2.0, 1.0) * 0.02 + spots_noise;
+  mainTextureCoords += lineDistortion;
 
   // texturing based on curvy stuff
-  FragColor = vec4(texture(iChannel0,uv.yx).xyz, step(0.0, 1.0 - r));
+  vec2 turnedTextureCoords = mainTextureCoords.yx;
+  FragColor = vec4(texture(iChannel0, turnedTextureCoords).xyz, step(0.0, 1.0 - distanceToCenter));
 }
 
 `;
