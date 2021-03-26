@@ -24,6 +24,7 @@ const defaultUniformValues = {
   detailOctaves: 5,
   spotsIntensity: 0.1,
   yStretchFactor: 1,
+  spotsRandomizingFactor: 3,
   rotationSpeed: 0.01 / 60,
   spotsRotationSpeed: 0.015 / 60,
 };
@@ -36,12 +37,16 @@ const uniforms: {
   yStretchFactor: FloatUniformValue;
   spotsIntensity: FloatUniformValue;
   spotsRotationSpeed: FloatUniformValue;
+  spotsRandomizingFactor: FloatUniformValue;
   iResolution: Vector3UniformValue;
 } = {
   iChannel0: { value: null },
   time: { value: 0 },
   detailOctaves: { value: defaultUniformValues.detailOctaves },
   spotsIntensity: { value: defaultUniformValues.spotsIntensity },
+  spotsRandomizingFactor: {
+    value: defaultUniformValues.spotsRandomizingFactor,
+  },
   yStretchFactor: { value: defaultUniformValues.yStretchFactor },
   rotationSpeed: { value: defaultUniformValues.rotationSpeed }, // full rotations per frame
   spotsRotationSpeed: { value: defaultUniformValues.spotsRotationSpeed },
@@ -74,6 +79,7 @@ const fragmentShader = `#version 300 es
 precision highp float;
 precision highp int;
 uniform float time;
+uniform float spotsRandomizingFactor;
 uniform int detailOctaves;
 uniform float rotationSpeed;
 uniform float yStretchFactor;
@@ -106,11 +112,12 @@ void main() {
   spots_uv.y = centeredCoord.y*sphericalDistortion / 2.0 + 0.5;
 
   // random spots
-  float s = 0.52;
-  float t1 = simplex_noise_2(spots_uv * 2.0) - s;
-  float t2 = simplex_noise_2((mainTextureCoords + 800.0) * 2.0) - s;
-  float t3 = simplex_noise_2((spots_uv + 1600.0) * 2.0) - s;
-  float threshold = max(t1 * t2 * t3, 0.02);
+  float spotSuppression = 0.1;
+  float t1 = simplex_noise_2(spots_uv * 2.0) - spotSuppression;
+  float t2 = simplex_noise_2((spots_uv + 800.0 * spotsRandomizingFactor) * 2.0) - spotSuppression;
+  float t3 = simplex_noise_2((spots_uv + 1600.0 * spotsRandomizingFactor) * 2.0) - spotSuppression;
+  float spotMinimalValue = 0.02;
+  float threshold = max(t1 * t2 * t3, spotMinimalValue);
   float spots_noise = simplex_noise_2(spots_uv * spotsIntensity) * threshold;
 
   // curvy noisy lines
@@ -139,6 +146,7 @@ const ThreePlanetShape2: React.FC<{
   detail?: number;
   rotationSpeed?: number;
   spotsRotationSpeed?: number;
+  spotsRandomizingFactor?: number;
   spotsIntensity?: number;
   yStretchFactor?: number;
 }> = ({
@@ -173,6 +181,8 @@ const ThreePlanetShape2: React.FC<{
       yStretchFactor || defaultUniformValues.yStretchFactor;
     patchedUniforms.spotsIntensity.value =
       spotsIntensity || defaultUniformValues.spotsIntensity;
+    patchedUniforms.spotsRandomizingFactor.value =
+      spotsIntensity || defaultUniformValues.spotsRandomizingFactor;
     patchedUniforms.spotsRotationSpeed.value =
       spotsRotationSpeed || defaultUniformValues.spotsRotationSpeed;
     patchedUniforms.detailOctaves.value =
@@ -243,15 +253,21 @@ export const PlanetTestUI = () => {
           <ThreePlanetShape2
             key={`1_${revision}`}
             radius={40}
-            yStretchFactor={1.5}
+            rotationSpeed={0.005 / 60}
+            spotsRotationSpeed={0.013 / 60}
+            yStretchFactor={1.6}
             spotsIntensity={0.2}
             detail={6}
+            spotsRandomizingFactor={2.5}
             position={new Vector(0, 0)}
           />
           <ThreePlanetShape2
             key={`2_${revision}`}
             detail={3}
+            rotationSpeed={0.006 / 60}
+            spotsRotationSpeed={0.016 / 60}
             radius={15}
+            spotsRandomizingFactor={3.5}
             yStretchFactor={2.5}
             position={new Vector(35, 0)}
           />
@@ -264,7 +280,10 @@ export const PlanetTestUI = () => {
           <ThreePlanetShape2
             key={`4_${revision}`}
             detail={3}
+            rotationSpeed={0.012 / 60}
+            spotsRotationSpeed={0.006 / 60}
             radius={5}
+            spotsRandomizingFactor={1.0}
             position={new Vector(0, -25)}
           />
         </group>
