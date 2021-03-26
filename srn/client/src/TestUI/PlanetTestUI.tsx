@@ -22,6 +22,7 @@ import _ from 'lodash';
 
 const defaultUniformValues = {
   detailOctaves: 5,
+  spotsIntensity: 0.1,
   yStretchFactor: 1,
   rotationSpeed: 0.01 / 60,
   spotsRotationSpeed: 0.015 / 60,
@@ -33,12 +34,14 @@ const uniforms: {
   detailOctaves: IntUniformValue;
   rotationSpeed: FloatUniformValue;
   yStretchFactor: FloatUniformValue;
+  spotsIntensity: FloatUniformValue;
   spotsRotationSpeed: FloatUniformValue;
   iResolution: Vector3UniformValue;
 } = {
   iChannel0: { value: null },
   time: { value: 0 },
   detailOctaves: { value: defaultUniformValues.detailOctaves },
+  spotsIntensity: { value: defaultUniformValues.spotsIntensity },
   yStretchFactor: { value: defaultUniformValues.yStretchFactor },
   rotationSpeed: { value: defaultUniformValues.rotationSpeed }, // full rotations per frame
   spotsRotationSpeed: { value: defaultUniformValues.spotsRotationSpeed },
@@ -74,6 +77,7 @@ uniform float time;
 uniform int detailOctaves;
 uniform float rotationSpeed;
 uniform float yStretchFactor;
+uniform float spotsIntensity;
 uniform float spotsRotationSpeed;
 uniform sampler2D iChannel0;
 uniform vec2 iResolution;
@@ -107,7 +111,7 @@ void main() {
   float t2 = simplex_noise_2((mainTextureCoords + 800.0) * 2.0) - s;
   float t3 = simplex_noise_2((spots_uv + 1600.0) * 2.0) - s;
   float threshold = max(t1 * t2 * t3, 0.02);
-  float spots_noise = simplex_noise_2(spots_uv * 0.1) * threshold;
+  float spots_noise = simplex_noise_2(spots_uv * spotsIntensity) * threshold;
 
   // curvy noisy lines
   float lineDistortion = fractal_noise(vec3(mainTextureCoords, 0.0), detailOctaves, 2.0, 1.0) * 0.02 + spots_noise;
@@ -135,6 +139,7 @@ const ThreePlanetShape2: React.FC<{
   detail?: number;
   rotationSpeed?: number;
   spotsRotationSpeed?: number;
+  spotsIntensity?: number;
   yStretchFactor?: number;
 }> = ({
   position,
@@ -143,6 +148,7 @@ const ThreePlanetShape2: React.FC<{
   rotationSpeed,
   spotsRotationSpeed,
   yStretchFactor,
+  spotsIntensity,
 }) => {
   const mesh = useRef<Mesh>();
   useFrame(() => {
@@ -165,6 +171,8 @@ const ThreePlanetShape2: React.FC<{
       rotationSpeed || defaultUniformValues.rotationSpeed;
     patchedUniforms.yStretchFactor.value =
       yStretchFactor || defaultUniformValues.yStretchFactor;
+    patchedUniforms.spotsIntensity.value =
+      spotsIntensity || defaultUniformValues.spotsIntensity;
     patchedUniforms.spotsRotationSpeed.value =
       spotsRotationSpeed || defaultUniformValues.spotsRotationSpeed;
     patchedUniforms.detailOctaves.value =
@@ -236,6 +244,7 @@ export const PlanetTestUI = () => {
             key={`1_${revision}`}
             radius={40}
             yStretchFactor={1.5}
+            spotsIntensity={0.2}
             detail={6}
             position={new Vector(0, 0)}
           />
