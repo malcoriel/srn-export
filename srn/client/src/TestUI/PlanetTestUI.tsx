@@ -158,7 +158,7 @@ void main() {
 
 const BODIES_Z = 50;
 
-const ThreePlanetShape2: React.FC<{
+export const ThreePlanetShape2: React.FC<{
   position: IVector;
   radius: number;
   color?: string;
@@ -289,8 +289,8 @@ export const ThreePlanetShape2RandomProps = (seed: string, radius: number) => {
   }
   const props = {
     detail,
-    rotationSpeed: variateNormal(0.002, 0.006, 0.003, prng) / 60,
-    spotsRotationSpeed: variateNormal(0.002, 0.06, 0.0005, prng) / 60,
+    rotationSpeed: variateNormal(0.002, 0.006, 0.003, prng) / 30,
+    spotsRotationSpeed: variateNormal(0.002, 0.06, 0.0005, prng) / 30,
     spotsRandomizingFactor: variateUniform(1, 10, prng),
     spotsIntensity: variateNormal(0.01, 0.2, 0.05, prng),
     yStretchFactor: variateNormal(1.0, 2.5, 0.5, prng),
