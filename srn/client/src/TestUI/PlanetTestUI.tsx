@@ -235,6 +235,7 @@ export const PlanetTestUI = () => {
           <ThreePlanetShape2
             key={`1_${revision}`}
             radius={40}
+            yStretchFactor={1.5}
             detail={6}
             position={new Vector(0, 0)}
           />
@@ -242,6 +243,7 @@ export const PlanetTestUI = () => {
             key={`2_${revision}`}
             detail={3}
             radius={15}
+            yStretchFactor={2.5}
             position={new Vector(35, 0)}
           />
           <ThreePlanetShape2
