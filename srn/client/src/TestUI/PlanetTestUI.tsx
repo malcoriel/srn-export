@@ -19,6 +19,9 @@ import {
 import { useRepeatWrappedTextureLoader } from '../ThreeLayers/ThreeStar';
 import { fractalNoise, simplexNoise2, simplexNoise3 } from './shaderFunctions';
 import _ from 'lodash';
+import random from 'random/dist/cjs';
+import Prando from 'prando';
+import * as uuid from 'uuid';
 
 const defaultUniformValues = {
   detailOctaves: 5,
@@ -141,8 +144,8 @@ void main() {
 const BODIES_Z = 50;
 
 const ThreePlanetShape2: React.FC<{
-  radius: number;
   position: IVector;
+  radius: number;
   detail?: number;
   rotationSpeed?: number;
   spotsRotationSpeed?: number;
@@ -224,10 +227,62 @@ const BackgroundPlane = () => (
   </mesh>
 );
 
+export const variateUniform = (min: number, max: number, prng: Prando) => {
+  return prng.next(min, max + 1e-10);
+};
+
+const randomCompatiblePrng = (prng: Prando) => {
+  return () => prng.next(0, 1);
+};
+
+export const variateNormal = (
+  min: number,
+  max: number,
+  variance: number,
+  prng: Prando
+) => {
+  const cloned = random.clone('');
+  // @ts-ignore
+  cloned.use(randomCompatiblePrng(prng));
+  let value = cloned.normal((max - min) / 2 + min, variance)();
+  value = Math.max(min, value);
+  value = Math.min(max, value);
+  return value;
+};
+
+// @ts-ignore
+window.variate = (min, max) => {
+  return variateNormal(min, max, 1, new Prando());
+};
+
+export const ThreePlanetShape2RandomProps = (seed: string, radius: number) => {
+  const prng = new Prando(seed);
+  let detail;
+  if (radius > 30) {
+    detail = 6;
+  } else if (radius > 20) {
+    detail = 5;
+  } else if (radius > 10) {
+    detail = 4;
+  } else {
+    detail = 3;
+  }
+  const props = {
+    detail,
+    rotationSpeed: variateNormal(0.002, 0.006, 0.003, prng) / 60,
+    spotsRotationSpeed: variateNormal(0.002, 0.06, 0.0005, prng) / 60,
+    spotsRandomizingFactor: variateUniform(1, 10, prng),
+    spotsIntensity: variateNormal(0.01, 0.2, 0.05, prng),
+    yStretchFactor: variateNormal(1.0, 2.5, 0.5, prng),
+  };
+  // console.log(props.yStretchFactor);
+  return props;
+};
+
 export const PlanetTestUI = () => {
   const setTestMenuMode = useStore((state) => state.setTestMenuMode);
   useHotkeys('esc', () => setTestMenuMode(TestMenuMode.Shown));
-  const [revision, setRevision] = useState(0);
+  const [revision, setRevision] = useState(uuid.v4());
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
@@ -253,37 +308,25 @@ export const PlanetTestUI = () => {
           <ThreePlanetShape2
             key={`1_${revision}`}
             radius={40}
-            rotationSpeed={0.005 / 60}
-            spotsRotationSpeed={0.013 / 60}
-            yStretchFactor={1.6}
-            spotsIntensity={0.2}
-            detail={6}
-            spotsRandomizingFactor={2.5}
+            {...ThreePlanetShape2RandomProps(`1_${revision}`, 40)}
             position={new Vector(0, 0)}
           />
           <ThreePlanetShape2
             key={`2_${revision}`}
-            detail={3}
-            rotationSpeed={0.006 / 60}
-            spotsRotationSpeed={0.016 / 60}
             radius={15}
-            spotsRandomizingFactor={3.5}
-            yStretchFactor={2.5}
+            {...ThreePlanetShape2RandomProps(`2_${revision}`, 40)}
             position={new Vector(35, 0)}
           />
           <ThreePlanetShape2
             key={`3_${revision}`}
-            detail={4}
+            {...ThreePlanetShape2RandomProps(`3_${revision}`, 40)}
             radius={25}
             position={new Vector(0, 35)}
           />
           <ThreePlanetShape2
             key={`4_${revision}`}
-            detail={3}
-            rotationSpeed={0.012 / 60}
-            spotsRotationSpeed={0.006 / 60}
             radius={5}
-            spotsRandomizingFactor={1.0}
+            {...ThreePlanetShape2RandomProps(`4_${revision}`, 40)}
             position={new Vector(0, -25)}
           />
         </group>
