@@ -22,6 +22,7 @@ import _ from 'lodash';
 import random from 'random/dist/cjs';
 import Prando from 'prando';
 import * as uuid from 'uuid';
+import { normalize3 } from '../utils/palette';
 
 const defaultUniformValues = {
   detailOctaves: 5,
@@ -30,6 +31,7 @@ const defaultUniformValues = {
   spotsRandomizingFactor: 3,
   rotationSpeed: 0.01 / 60,
   spotsRotationSpeed: 0.015 / 60,
+  inputColor: new Vector3(1, 1, 1),
 };
 
 const uniforms: {
@@ -42,6 +44,7 @@ const uniforms: {
   spotsRotationSpeed: FloatUniformValue;
   spotsRandomizingFactor: FloatUniformValue;
   iResolution: Vector3UniformValue;
+  inputColor: Vector3UniformValue;
 } = {
   iChannel0: { value: null },
   time: { value: 0 },
@@ -54,6 +57,7 @@ const uniforms: {
   rotationSpeed: { value: defaultUniformValues.rotationSpeed }, // full rotations per frame
   spotsRotationSpeed: { value: defaultUniformValues.spotsRotationSpeed },
   iResolution: { value: new Vector3(size.width_px, size.height_px, 0) },
+  inputColor: { value: defaultUniformValues.inputColor },
 };
 
 const vertexShader = `#version 300 es
@@ -91,7 +95,7 @@ uniform float spotsRotationSpeed;
 uniform sampler2D iChannel0;
 uniform vec2 iResolution;
 #define PI 3.14159265358979323846264338327
-// uniform vec3 color;
+uniform vec3 inputColor;
 
 in vec2 relativeObjectCoord;
 out vec4 FragColor;
@@ -99,6 +103,15 @@ out vec4 FragColor;
 ${simplexNoise2}
 ${simplexNoise3}
 ${fractalNoise}
+
+
+// http://www.johndcook.com/blog/2009/08/24/algorithms-convert-color-grayscale/
+vec3 grayscale(in vec3 orig, in float colorFactor) {
+  float grey = 0.21 * orig.r + 0.71 * orig.g + 0.07 * orig.b;
+  return vec3(orig.r * colorFactor + grey * (1.0 - colorFactor),
+    orig.g * colorFactor + grey * (1.0 - colorFactor),
+    orig.b * colorFactor + grey * (1.0 - colorFactor));
+}
 
 void main() {
   // e.g. for a plane 0 is left bottom, 1 is right top
@@ -138,6 +151,8 @@ void main() {
   turnedTextureCoords.x /= yStretchFactor;
   turnedTextureCoords.x += magicStretch;
   FragColor = vec4(texture(iChannel0, turnedTextureCoords).xyz, step(0.0, 1.0 - distanceToCenter));
+  FragColor.xyz = grayscale(FragColor.xyz, 0.0);
+  FragColor.xyz *= inputColor;
 }
 `;
 
@@ -146,6 +161,7 @@ const BODIES_Z = 50;
 const ThreePlanetShape2: React.FC<{
   position: IVector;
   radius: number;
+  color?: string;
   detail?: number;
   rotationSpeed?: number;
   spotsRotationSpeed?: number;
@@ -160,6 +176,7 @@ const ThreePlanetShape2: React.FC<{
   spotsRotationSpeed,
   yStretchFactor,
   spotsIntensity,
+  color,
 }) => {
   const mesh = useRef<Mesh>();
   useFrame(() => {
@@ -190,6 +207,9 @@ const ThreePlanetShape2: React.FC<{
       spotsRotationSpeed || defaultUniformValues.spotsRotationSpeed;
     patchedUniforms.detailOctaves.value =
       detail || defaultUniformValues.detailOctaves;
+    patchedUniforms.inputColor.value = color
+      ? new Vector3(...normalize3(color))
+      : defaultUniformValues.inputColor;
 
     patchedUniforms.iResolution.value = new Vector3(
       size.width_px,
@@ -307,6 +327,7 @@ export const PlanetTestUI = () => {
           <BackgroundPlane />
           <ThreePlanetShape2
             key={`1_${revision}`}
+            color="orange"
             radius={40}
             {...ThreePlanetShape2RandomProps(`1_${revision}`, 40)}
             position={new Vector(0, 0)}
