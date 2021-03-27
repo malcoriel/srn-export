@@ -8,7 +8,8 @@ import { ThreeRock } from './ThreeRock';
 import {
   ThreePlanetShape2,
   ThreePlanetShape2RandomProps,
-} from '../TestUI/PlanetTestUI';
+} from './ThreePlanetShape2';
+import { actionsActive } from '../utils/ShipControls';
 
 export const ThreeBodiesLayer: React.FC<{
   state: GameState;
@@ -21,17 +22,16 @@ export const ThreeBodiesLayer: React.FC<{
         <ThreePlanetShape2
           radius={p.radius}
           {...ThreePlanetShape2RandomProps(p.id, p.radius)}
-          // onClick={(evt: MouseEvent) => {
-          //   evt.stopPropagation();
-          //   actionsActive[
-          //     ShipActionType.DockNavigate
-          //   ] = ShipAction.DockNavigate(p.id);
-          // }}
+          onClick={(evt: MouseEvent) => {
+            evt.stopPropagation();
+            actionsActive[
+              ShipActionType.DockNavigate
+            ] = ShipAction.DockNavigate(p.id);
+          }}
           position={p}
           key={p.id}
-          // scale={_.times(3, () => p.radius) as [number, number, number]}
           color={p.color}
-          // visible={visMap[p.id]}
+          visible={visMap[p.id]}
         />
       ))}
       {star && (
