@@ -6,9 +6,9 @@ import { posToThreePos } from './ThreeLayer';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
 import { ThreeRock } from './ThreeRock';
 import {
-  ThreePlanetShape2,
-  ThreePlanetShape2RandomProps,
-} from './ThreePlanetShape2';
+  ThreePlanetShape,
+  ThreePlanetShapeRandomProps,
+} from './ThreePlanetShape';
 import { actionsActive } from '../utils/ShipControls';
 
 export const ThreeBodiesLayer: React.FC<{
@@ -19,9 +19,9 @@ export const ThreeBodiesLayer: React.FC<{
   return (
     <group>
       {planets.map((p) => (
-        <ThreePlanetShape2
+        <ThreePlanetShape
           radius={p.radius}
-          {...ThreePlanetShape2RandomProps(p.id, p.radius)}
+          {...ThreePlanetShapeRandomProps(p.id, p.radius)}
           onClick={(evt: MouseEvent) => {
             evt.stopPropagation();
             actionsActive[

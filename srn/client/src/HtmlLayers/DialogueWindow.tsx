@@ -22,7 +22,7 @@ import { useStore, WindowState } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
 import { Planet } from '../../../world/pkg';
 import { Vector3 } from 'three';
-import { ThreePlanetShape2 } from '../ThreeLayers/ThreePlanetShape2';
+import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
 
 export const enrichSub = (s: DialogueSubstitution): ReactNode => {
@@ -117,7 +117,7 @@ const renderContent = (
             <Suspense fallback={<mesh />}>
               <ambientLight />
               <pointLight position={[10, 10, 10]} />
-              <ThreePlanetShape2
+              <ThreePlanetShape
                 position={new Vector(0, 0)}
                 radius={dialogue.planet.radius}
                 visible

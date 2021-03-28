@@ -12,10 +12,10 @@ import Vector from '../utils/Vector';
 import Prando from 'prando';
 import * as uuid from 'uuid';
 import {
-  ThreePlanetShape2,
-  ThreePlanetShape2RandomProps,
+  ThreePlanetShape,
+  ThreePlanetShapeRandomProps,
   variateNormal,
-} from '../ThreeLayers/ThreePlanetShape2';
+} from '../ThreeLayers/ThreePlanetShape';
 
 const BackgroundPlane = () => (
   <mesh position={[0, 0, 0]}>
@@ -55,33 +55,33 @@ export const PlanetTestUI = () => {
         <pointLight position={[0, 0, CAMERA_HEIGHT]} />
         <group position={[0, 0, 0]}>
           <BackgroundPlane />
-          <ThreePlanetShape2
+          <ThreePlanetShape
             visible
             key={`1_${revision}`}
             color="orange"
             radius={40}
-            {...ThreePlanetShape2RandomProps(`1_${revision}`, 40)}
+            {...ThreePlanetShapeRandomProps(`1_${revision}`, 40)}
             position={new Vector(0, 0)}
           />
-          <ThreePlanetShape2
+          <ThreePlanetShape
             visible
             key={`2_${revision}`}
             radius={15}
-            {...ThreePlanetShape2RandomProps(`2_${revision}`, 40)}
+            {...ThreePlanetShapeRandomProps(`2_${revision}`, 40)}
             position={new Vector(35, 0)}
           />
-          <ThreePlanetShape2
+          <ThreePlanetShape
             visible
             key={`3_${revision}`}
-            {...ThreePlanetShape2RandomProps(`3_${revision}`, 40)}
+            {...ThreePlanetShapeRandomProps(`3_${revision}`, 40)}
             radius={25}
             position={new Vector(0, 35)}
           />
-          <ThreePlanetShape2
+          <ThreePlanetShape
             visible
             key={`4_${revision}`}
             radius={5}
-            {...ThreePlanetShape2RandomProps(`4_${revision}`, 40)}
+            {...ThreePlanetShapeRandomProps(`4_${revision}`, 40)}
             position={new Vector(0, -25)}
           />
         </group>

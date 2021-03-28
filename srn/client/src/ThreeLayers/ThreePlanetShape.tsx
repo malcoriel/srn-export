@@ -146,7 +146,7 @@ void main() {
   FragColor.xyz *= inputColor;
 }
 `;
-export const ThreePlanetShape2: React.FC<{
+export const ThreePlanetShape: React.FC<{
   position: IVector;
   onClick?: (e: any) => void;
   radius: number;
@@ -261,7 +261,7 @@ export const variateNormal = (
   value = Math.min(max, value);
   return value;
 };
-export const ThreePlanetShape2RandomProps = (seed: string, radius: number) => {
+export const ThreePlanetShapeRandomProps = (seed: string, radius: number) => {
   const prng = new Prando(seed);
   let detail;
   if (radius > 30) {
