@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, Suspense, useEffect, useState } from 'react';
 import './DialogueWindow.scss';
 import { Canvas } from 'react-three-fiber';
 import _ from 'lodash';
@@ -9,7 +9,6 @@ import {
   CAMERA_DEFAULT_ZOOM,
   CAMERA_HEIGHT,
 } from '../ThreeLayers/CameraControls';
-import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import NetState from '../NetState';
 import { makePortraitPath } from './StartMenu';
 import {
@@ -23,6 +22,8 @@ import { useStore, WindowState } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
 import { Planet } from '../../../world/pkg';
 import { Vector3 } from 'three';
+import { ThreePlanetShape2 } from '../ThreeLayers/ThreePlanetShape2';
+import Vector from '../utils/Vector';
 
 export const enrichSub = (s: DialogueSubstitution): ReactNode => {
   const ns = NetState.get();
@@ -113,20 +114,17 @@ const renderContent = (
               zoom: CAMERA_DEFAULT_ZOOM() * 0.4,
             }}
           >
-            <ambientLight />
-            <pointLight position={[10, 10, 10]} />
-            <ThreePlanetShape
-              visible
-              key={dialogue.planet.id}
-              scale={
-                _.times(3, () => dialogue.planet!.radius) as [
-                  number,
-                  number,
-                  number
-                ]
-              }
-              color={dialogue.planet.color}
-            />
+            <Suspense fallback={<mesh />}>
+              <ambientLight />
+              <pointLight position={[10, 10, 10]} />
+              <ThreePlanetShape2
+                position={new Vector(0, 0)}
+                radius={dialogue.planet.radius}
+                visible
+                key={dialogue.planet.id}
+                color={dialogue.planet.color}
+              />
+            </Suspense>
           </Canvas>
         )}
       </div>
@@ -212,6 +210,7 @@ export const DialogueWindow: React.FC = () => {
     return () => {
       ns.off('dialogue', onDialogueChange);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ns.id, dialogueWindowState, setDialogueWindowState]);
 
   const { dialogue } = ns;
@@ -234,6 +233,7 @@ export const DialogueWindow: React.FC = () => {
     if (dialogue) {
       setHistory([...history, dialogue.prompt]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dialogue]);
 
   if (!dialogue) {

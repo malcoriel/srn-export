@@ -74,7 +74,6 @@ export const LeaderboardWindow: React.FC = () => {
           {i + 1}.{p.name} -{s}
         </div>
       ))}
-      ,
     </Window>
   );
 };

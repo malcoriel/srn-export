@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.scss';
@@ -186,77 +186,79 @@ const Srn = () => {
 
   return (
     <>
-      <div
-        className="main-container"
-        style={{
-          position: 'relative',
-          width: size.width_px,
-          height: size.height_px,
-        }}
-      >
-        {playing && (
-          <>
-            <ThreeLayer visible={!resourcesAreLoading} />
-            {resourcesAreLoading && (
-              <div className="three-loader">
-                <div className="loader ball-clip-rotate-multiple">
-                  <div />
-                  <div />
+      <Suspense fallback={<div />}>
+        <div
+          className="main-container"
+          style={{
+            position: 'relative',
+            width: size.width_px,
+            height: size.height_px,
+          }}
+        >
+          {playing && (
+            <>
+              <ThreeLayer visible={!resourcesAreLoading} />
+              {resourcesAreLoading && (
+                <div className="three-loader">
+                  <div className="loader ball-clip-rotate-multiple">
+                    <div />
+                    <div />
+                  </div>
+                  <div className="text">Loading: {formattedProgress}</div>
                 </div>
-                <div className="text">Loading: {formattedProgress}</div>
-              </div>
-            )}
-            {!resourcesAreLoading && (
-              <Stage
-                width={size.width_px}
-                height={size.height_px}
-                style={{ pointerEvents: 'none' }}
-              >
-                <KonvaOverlay />
-                <MyTrajectoryLayer />
-              </Stage>
-            )}
-            {!resourcesAreLoading && (
-              <>
-                <MinimapPanel />
-                <ShipControls />
-                <NetworkStatus />
-                <LeaderboardWindow />
-                <DialogueWindow />
-                <QuestWindow />
-                <ChatWindow />
-                <DebugStateLayer />
-                <StatsPanel />
-                <ControlPanel />
-                <WindowContainers />
-                <OverheadPanel />
-                <HelpWindow />
-                <InventoryWindow />
-                <TradeWindow />
-                <HoverHintWindow />
-                <PromptWindow />
-                {playing && <SandboxQuickMenu />}
-              </>
-            )}
-          </>
-        )}
-        {musicEnabled && <MusicControls />}
-        {menu && (
-          <StartMenu
-            seed={seed}
-            start={() => start(GameMode.CargoRush)}
-            quit={quit}
-            startTutorial={() => start(GameMode.Tutorial)}
-            startSandbox={() => start(GameMode.Sandbox)}
-          />
-        )}
-        {!playing && (
-          <>
-            <TestMenu />
-            <TestUI />
-          </>
-        )}
-      </div>
+              )}
+              {!resourcesAreLoading && (
+                <Stage
+                  width={size.width_px}
+                  height={size.height_px}
+                  style={{ pointerEvents: 'none' }}
+                >
+                  <KonvaOverlay />
+                  <MyTrajectoryLayer />
+                </Stage>
+              )}
+              {!resourcesAreLoading && (
+                <>
+                  <MinimapPanel />
+                  <ShipControls />
+                  <NetworkStatus />
+                  <LeaderboardWindow />
+                  <DialogueWindow />
+                  <QuestWindow />
+                  <ChatWindow />
+                  <DebugStateLayer />
+                  <StatsPanel />
+                  <ControlPanel />
+                  <WindowContainers />
+                  <OverheadPanel />
+                  <HelpWindow />
+                  <InventoryWindow />
+                  <TradeWindow />
+                  <HoverHintWindow />
+                  <PromptWindow />
+                  {playing && <SandboxQuickMenu />}
+                </>
+              )}
+            </>
+          )}
+          {musicEnabled && <MusicControls />}
+          {menu && (
+            <StartMenu
+              seed={seed}
+              start={() => start(GameMode.CargoRush)}
+              quit={quit}
+              startTutorial={() => start(GameMode.Tutorial)}
+              startSandbox={() => start(GameMode.Sandbox)}
+            />
+          )}
+          {!playing && (
+            <>
+              <TestMenu />
+              <TestUI />
+            </>
+          )}
+        </div>
+      </Suspense>
     </>
   );
 };
