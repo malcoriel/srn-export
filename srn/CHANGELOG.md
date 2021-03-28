@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.5.7. (2021-03-28)
+
+### New
+
+* The planet visualization upgrade! Now everything is a Jupiter-like gas planet.
+
+### Fixes
+
+* Corrected z-index of entities on minimap, so that ships are no longer hidden behind the planets.
+* Fixed lack of minimap moving on minimap clicks on planets and ships.
+
 ## Version 0.5.6 (2021-03-23)
 
 ### Fixes
