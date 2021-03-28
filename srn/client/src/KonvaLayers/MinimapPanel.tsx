@@ -147,6 +147,7 @@ const SlowEntitiesLayer = React.memo(
                     stroke={mint}
                     strokeWidth={0.5}
                     onMouseDown={moveCamera}
+                    onClick={moveCamera}
                   />
                 </Group>
                 {p.anchor_tier === 1 && (
@@ -187,10 +188,15 @@ const SlowEntitiesLayer = React.memo(
 interface FastEntitiesLayerParams {
   realPosToScreenPos: (objPos: IVector) => Vector;
   realLenToScreenLen: (valMet: number) => number;
+  moveCamera: (dragEvent: any) => void;
 }
 
 const FastEntitiesLayer = React.memo(
-  ({ realPosToScreenPos, realLenToScreenLen }: FastEntitiesLayerParams) => {
+  ({
+    realPosToScreenPos,
+    realLenToScreenLen,
+    moveCamera,
+  }: FastEntitiesLayerParams) => {
     const ns = NetState.get();
     if (!ns) return null;
 
@@ -216,6 +222,8 @@ const FastEntitiesLayer = React.memo(
               strokeWidth={0.5}
               numPoints={5}
               opacity={0.8}
+              onMouseDown={moveCamera}
+              onClick={moveCamera}
             />
           );
         })}
@@ -265,6 +273,7 @@ export const MinimapPanel = React.memo(() => {
       realLenToScreenLen,
       realPosToScreenPos,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [get_minimap_size_x(), get_minimap_size_y()]);
 
   const minimap_viewport_size_x =
@@ -325,7 +334,8 @@ export const MinimapPanel = React.memo(() => {
           )}
         />
       </Layer>
-      <FastEntitiesLayer
+      <StaticEntitiesLayer
+        moveCamera={moveCamera}
         realLenToScreenLen={realLenToScreenLen}
         realPosToScreenPos={realPosToScreenPos}
       />
@@ -334,10 +344,10 @@ export const MinimapPanel = React.memo(() => {
         realLenToScreenLen={realLenToScreenLen}
         realPosToScreenPos={realPosToScreenPos}
       />
-      <StaticEntitiesLayer
-        moveCamera={moveCamera}
+      <FastEntitiesLayer
         realLenToScreenLen={realLenToScreenLen}
         realPosToScreenPos={realPosToScreenPos}
+        moveCamera={moveCamera}
       />
     </Stage>
   );
