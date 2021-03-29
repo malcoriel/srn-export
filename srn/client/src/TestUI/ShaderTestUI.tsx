@@ -6,7 +6,7 @@ import {
   CAMERA_HEIGHT,
 } from '../ThreeLayers/CameraControls';
 import { size } from '../coord';
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from 'react-three-fiber';
 import * as uuid from 'uuid';
 import {
@@ -15,6 +15,9 @@ import {
   IntUniformValue,
   Vector3ArrayUniformValue,
 } from '../ThreeLayers/shaders/star';
+import Color from 'color';
+import { normalize3 } from '../utils/palette';
+import _ from 'lodash';
 
 function padArrTo<T>(arr: T[], desiredLength: number, filler: T) {
   const res = [...arr];
@@ -23,6 +26,54 @@ function padArrTo<T>(arr: T[], desiredLength: number, filler: T) {
   }
   return res;
 }
+
+type CBS = {
+  colorCount: number;
+  colors: Vector3[];
+  boundaries: number[];
+  sharpness: number[];
+};
+
+const saturationSpread = 0.5; // +/- 50% of the whole range, so 0.5 is full range
+const valueSpread = 0.45; // +/- 45%, so 0.5 is 0.05..0.95
+const maxColors = 32;
+const colorCount = 8;
+const colorPicks = maxColors / colorCount;
+
+const genColors = (base: Color): CBS => {
+  const [hue, s, v] = base.hsv().array();
+
+  const minSat = Math.max(s - saturationSpread * 100, 0);
+  const maxSat = Math.min(s + saturationSpread * 100, 100);
+  const minValue = Math.max(v - valueSpread * 100, 0);
+  const maxValue = Math.min(v + valueSpread * 100, 100);
+
+  const satStep = (maxSat - minSat) / colorCount;
+  const valStep = (maxValue - minValue) / colorCount;
+
+  const colors = [];
+  for (let i = 0; i < colorCount; i++) {
+    colors.push(
+      Color([hue, minSat + satStep * i, minValue + valStep * i], 'hsv')
+    );
+  }
+
+  const palette = {
+    colors: padArrTo(
+      colors.map((c) => new Vector3(...normalize3(c.rgb().toString()))),
+      33,
+      new Vector3(1, 1, 1)
+    ),
+    boundaries: padArrTo(
+      [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0],
+      33,
+      1.0
+    ),
+    sharpness: padArrTo([], 32, 0.0),
+    colorCount,
+  };
+  return palette;
+};
 
 const oyster = new Vector3(158 / 255, 141 / 255, 128 / 255);
 const aluminium = new Vector3(141 / 255, 147 / 255, 181 / 255);
@@ -121,6 +172,7 @@ void main() {
 
 export const ShaderShape: React.FC = () => {
   const mesh = useRef<Mesh>();
+  const palette = useMemo(() => genColors(new Color('#bf8660')), []);
   useFrame(() => {
     if (mesh.current) {
       const material = mesh.current.material as ShaderMaterial;
@@ -129,6 +181,18 @@ export const ShaderShape: React.FC = () => {
       }
     }
   });
+
+  const uniforms2 = useMemo(() => {
+    const patchedUniforms = _.cloneDeep(uniforms);
+    patchedUniforms.colors.value = palette.colors || uniforms.colors.value;
+    patchedUniforms.boundaries.value =
+      palette.boundaries || uniforms.boundaries.value;
+    patchedUniforms.sharpness.value =
+      palette.sharpness || uniforms.sharpness.value;
+    patchedUniforms.colorCount.value =
+      palette.colorCount || uniforms.colorCount.value;
+    return patchedUniforms;
+  }, [palette]);
 
   return (
     <mesh
@@ -142,7 +206,7 @@ export const ShaderShape: React.FC = () => {
         transparent
         fragmentShader={fragmentShader}
         vertexShader={vertexShader}
-        uniforms={uniforms}
+        uniforms={uniforms2}
       />
     </mesh>
   );
