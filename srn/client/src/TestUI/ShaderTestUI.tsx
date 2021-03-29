@@ -18,6 +18,7 @@ import {
 import Color from 'color';
 import { normalize3 } from '../utils/palette';
 import _ from 'lodash';
+import Prando from 'prando';
 
 function padArrTo<T>(arr: T[], desiredLength: number, filler: T) {
   const res = [...arr];
@@ -34,13 +35,28 @@ type CBS = {
   sharpness: number[];
 };
 
+// Fisher-Yates from https://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array
+function shuffleWithPrng<T>(inArr: T[], prng: Prando) {
+  const arr = _.cloneDeep(inArr);
+  let j;
+  let x;
+  let i;
+  for (i = arr.length - 1; i > 0; i--) {
+    j = Math.floor(prng.next(0, 1) * (i + 1));
+    x = arr[i];
+    arr[i] = arr[j];
+    arr[j] = x;
+  }
+  return arr;
+}
+
 const saturationSpread = 0.5; // +/- 50% of the whole range, so 0.5 is full range
 const valueSpread = 0.45; // +/- 45%, so 0.5 is 0.05..0.95
 const maxColors = 32;
 const colorCount = 8;
 const colorPicks = maxColors / colorCount;
 
-const genColors = (base: Color): CBS => {
+const genColors = (base: Color, prng: Prando): CBS => {
   const [hue, s, v] = base.hsv().array();
 
   const minSat = Math.max(s - saturationSpread * 100, 0);
@@ -51,26 +67,43 @@ const genColors = (base: Color): CBS => {
   const satStep = (maxSat - minSat) / colorCount;
   const valStep = (maxValue - minValue) / colorCount;
 
-  const colors = [];
+  let colors = [];
   for (let i = 0; i < colorCount; i++) {
-    colors.push(
-      Color([hue, minSat + satStep * i, minValue + valStep * i], 'hsv')
-    );
+    for (let j = 0; j < colorPicks; j++) {
+      colors.push(
+        Color([hue, minSat + satStep * i, minValue + valStep * i], 'hsv')
+      );
+    }
   }
+  colors = shuffleWithPrng(colors, prng);
+
+  const boundaryStep = 1.0 / maxColors;
+  const colorsRgb = colors.map(
+    (c) => new Vector3(...normalize3(c.rgb().toString()))
+  );
+  const boundaries = _.times(maxColors, () =>
+    Number(prng.next(0, 100).toFixed(0))
+  );
+  const sum = _.sum(boundaries);
+  let currentSum = 0;
+  const cumulatedNormalizedBoundaries = boundaries
+    .reduce((acc, curr) => {
+      const res = [...acc, currentSum];
+      currentSum += curr;
+      return res;
+    }, [] as number[])
+    .map((i) => i / sum);
+
+  const sharpness = _.times(maxColors, (i) =>
+    prng.next((boundaryStep / 2) * 0.25, (boundaryStep / 2) * 1.75)
+  );
 
   const palette = {
-    colors: padArrTo(
-      colors.map((c) => new Vector3(...normalize3(c.rgb().toString()))),
-      33,
-      new Vector3(1, 1, 1)
-    ),
-    boundaries: padArrTo(
-      [0.0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0],
-      33,
-      1.0
-    ),
-    sharpness: padArrTo([], 32, 0.0),
-    colorCount,
+    // last color is a hacky bugfix, instead the shader should be shifted by some value to the right...
+    colors: padArrTo(colorsRgb, maxColors + 1, colorsRgb[colorsRgb.length - 1]),
+    boundaries: padArrTo(cumulatedNormalizedBoundaries, maxColors + 1, 1.0),
+    sharpness: padArrTo(sharpness, maxColors, boundaryStep / 2),
+    colorCount: maxColors,
   };
   return palette;
 };
@@ -143,7 +176,6 @@ void main() {
       index = i;
     }
   }
-  // FragColor = vec4(colors[index], 1.0);
   float left = boundaries[index + 1] - sharpness[index];
   if (relX <= left) {
     mixed = 0;
@@ -152,13 +184,6 @@ void main() {
   }
 
   vec3 color;
-  // color = vec3(left);
-  // if (abs(left - relX) <= 0.008) {
-  //   color = vec3(1, 0, 0);
-  // }
-  // color = vec3((relX - left) / sharpness[index]);
-  // color = vec3(mixed);
-
   if (mixed == 0) {
     color = colors[index];
   } else {
@@ -172,7 +197,10 @@ void main() {
 
 export const ShaderShape: React.FC = () => {
   const mesh = useRef<Mesh>();
-  const palette = useMemo(() => genColors(new Color('#bf8660')), []);
+  const palette = useMemo(
+    () => genColors(new Color('#bf8660'), new Prando('#bf8660')),
+    []
+  );
   useFrame(() => {
     if (mesh.current) {
       const material = mesh.current.material as ShaderMaterial;
