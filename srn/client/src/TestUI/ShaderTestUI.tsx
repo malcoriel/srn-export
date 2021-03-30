@@ -51,10 +51,22 @@ function shuffleWithPrng<T>(inArr: T[], prng: Prando) {
 }
 
 const saturationSpread = 0.5; // +/- 50% of the whole range, so 0.5 is full range
-const valueSpread = 0.45; // +/- 45%, so 0.5 is 0.05..0.95
-const maxColors = 32;
-const colorCount = 8;
+const valueSpread = 0.4; // +/- 45%, so 0.5 is 0.05..0.95
+const maxColors = 256;
+const colorCount = 64;
 const colorPicks = maxColors / colorCount;
+
+function shuffleSlice<T>(
+  arr: T[],
+  prng: Prando,
+  from: number,
+  length: number
+): T[] {
+  let slice = arr.splice(from, length);
+  slice = shuffleWithPrng(slice, prng);
+  arr.splice(from, 0, ...slice);
+  return arr;
+}
 
 const genColors = (base: Color, prng: Prando): CBS => {
   const [hue, s, v] = base.hsv().array();
@@ -68,21 +80,62 @@ const genColors = (base: Color, prng: Prando): CBS => {
   const valStep = (maxValue - minValue) / colorCount;
 
   let colors = [];
-  for (let i = 0; i < colorCount; i++) {
-    for (let j = 0; j < colorPicks; j++) {
-      colors.push(
-        Color([hue, minSat + satStep * i, minValue + valStep * i], 'hsv')
+  for (let i = colorCount - 1; i >= 0; i--) {
+    let toAdd = colorPicks;
+    let flip = false;
+    while (toAdd > 0) {
+      toAdd--;
+      const newColor = Color(
+        [hue, maxSat - satStep * i ** 0.85, minValue + valStep * i ** 1.05],
+        'hsv'
       );
+      if (flip) {
+        colors.push(newColor);
+      } else {
+        colors.unshift(newColor);
+      }
+      flip = !flip;
     }
   }
-  colors = shuffleWithPrng(colors, prng);
+  const centeredShuffleOffset = (1.0 / 3.0) * maxColors;
+  const centeredShuffleLength = maxColors - 2 * centeredShuffleOffset;
+  colors = shuffleSlice(
+    colors,
+    prng,
+    centeredShuffleOffset,
+    centeredShuffleLength
+  );
+  const sideShuffleOffset = maxColors / 5;
+  const sideShuffleLength = maxColors / 8;
+  colors = shuffleSlice(colors, prng, sideShuffleOffset, sideShuffleLength);
+  colors = shuffleSlice(
+    colors,
+    prng,
+    maxColors - sideShuffleOffset - sideShuffleLength,
+    sideShuffleLength
+  );
+  // colors = shuffleSlice(
+  //   colors,
+  //   prng,
+  //   centeredShuffleOffset,
+  //   centeredShuffleLength
+  // );
 
   const boundaryStep = 1.0 / maxColors;
   const colorsRgb = colors.map(
     (c) => new Vector3(...normalize3(c.rgb().toString()))
   );
-  const boundaries = _.times(maxColors, () =>
-    Number(prng.next(0, 100).toFixed(0))
+  const middlePoint = maxColors / 2 - 0.5;
+
+  // maximized at edges, minimzed at the middle, to
+  // narrow the "hotter" middle lines
+  const centerDistanceWeight = (i: number) => {
+    const variable = Math.abs(middlePoint - i);
+    return 10 + 10 * variable ** 0.6;
+  };
+
+  const boundaries = _.times(maxColors, (i) =>
+    Number(prng.next(0, centerDistanceWeight(i)).toFixed(0))
   );
   const sum = _.sum(boundaries);
   let currentSum = 0;
@@ -95,14 +148,14 @@ const genColors = (base: Color, prng: Prando): CBS => {
     .map((i) => i / sum);
 
   const sharpness = _.times(maxColors, (i) =>
-    prng.next((boundaryStep / 2) * 0.25, (boundaryStep / 2) * 1.75)
+    prng.next((boundaryStep / 2) * 50.0, (boundaryStep / 2) * 100.0)
   );
 
   const palette = {
     // last color is a hacky bugfix, instead the shader should be shifted by some value to the right...
     colors: padArrTo(colorsRgb, maxColors + 1, colorsRgb[colorsRgb.length - 1]),
     boundaries: padArrTo(cumulatedNormalizedBoundaries, maxColors + 1, 1.0),
-    sharpness: padArrTo(sharpness, maxColors, boundaryStep / 2),
+    sharpness: padArrTo([], maxColors, 0.01),
     colorCount: maxColors,
   };
   return palette;
@@ -159,9 +212,9 @@ const fragmentShader = `#version 300 es
 precision highp float;
 precision highp int;
 uniform float time;
-uniform vec3 colors[33];
-uniform float boundaries[33];
-uniform float sharpness[32];
+uniform vec3 colors[${maxColors + 1}];
+uniform float boundaries[${maxColors + 1}];
+uniform float sharpness[${maxColors}];
 uniform int colorCount;
 
 in vec2 relativeObjectCoord;
@@ -195,10 +248,14 @@ void main() {
 }
 `;
 
+const oysterHex = '#827A6B';
+const orangeHex = '#bf8660';
+
 export const ShaderShape: React.FC = () => {
   const mesh = useRef<Mesh>();
+
   const palette = useMemo(
-    () => genColors(new Color('#bf8660'), new Prando('#bf8660')),
+    () => genColors(new Color(oysterHex), new Prando('#bf123123')),
     []
   );
   useFrame(() => {
