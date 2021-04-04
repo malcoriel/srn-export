@@ -4,7 +4,6 @@ import './TestUI.scss';
 import { TestMenuMode, useStore } from '../store';
 import { UnreachableCaseError } from 'ts-essentials';
 import { PlanetTestUI } from './PlanetTestUI';
-import { ShaderTestUI } from './ShaderTestUI';
 
 export const TestMenu = () => {
   const testMenuMode = useStore((state) => state.testMenuMode);
@@ -38,11 +37,6 @@ export const TestMenu = () => {
         text="Planet test"
         onClick={() => setTestMenuMode(TestMenuMode.PlanetTest)}
       />
-      <Button
-        hotkey="s"
-        text="Shader test"
-        onClick={() => setTestMenuMode(TestMenuMode.ShaderTest)}
-      />
       {toggleButton}
     </div>
   ) : (
@@ -59,8 +53,6 @@ export const TestUI = () => {
       return null;
     case TestMenuMode.PlanetTest:
       return <PlanetTestUI />;
-    case TestMenuMode.ShaderTest:
-      return <ShaderTestUI />;
     default:
       throw new UnreachableCaseError(testMenuMode);
   }

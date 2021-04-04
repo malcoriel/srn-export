@@ -1,24 +1,16 @@
-import { useHotkeys } from 'react-hotkeys-hook';
-import { TestMenuMode, useStore } from '../store';
-import { Mesh, ShaderMaterial, Vector3 } from 'three';
-import {
-  CAMERA_DEFAULT_ZOOM,
-  CAMERA_HEIGHT,
-} from '../ThreeLayers/CameraControls';
-import { size } from '../coord';
-import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useFrame } from 'react-three-fiber';
-import * as uuid from 'uuid';
+import Prando from 'prando';
+import _ from 'lodash';
 import {
   FloatArrayUniformValue,
   FloatUniformValue,
   IntUniformValue,
   Vector3ArrayUniformValue,
 } from '../ThreeLayers/shaders/star';
+import { Mesh, ShaderMaterial, Vector3 } from 'three';
+import React, { useMemo, useRef } from 'react';
 import Color from 'color';
+import { useFrame } from 'react-three-fiber';
 import { normalize3 } from '../utils/palette';
-import _ from 'lodash';
-import Prando from 'prando';
 
 function padArrTo<T>(arr: T[], desiredLength: number, filler: T) {
   const res = [...arr];
@@ -60,7 +52,7 @@ function shuffleSlice<T>(
   arr: T[],
   prng: Prando,
   from: number,
-  length: number
+  length: number,
 ): T[] {
   let slice = arr.splice(from, length);
   slice = shuffleWithPrng(slice, prng);
@@ -69,7 +61,8 @@ function shuffleSlice<T>(
 }
 
 const genColors = (base: Color, prng: Prando): CBS => {
-  const [hue, s, v] = base.hsv().array();
+  const [hue, s, v] = base.hsv()
+    .array();
 
   const minSat = Math.max(s - saturationSpread * 100, 0);
   const maxSat = Math.min(s + saturationSpread * 100, 100);
@@ -87,7 +80,7 @@ const genColors = (base: Color, prng: Prando): CBS => {
       toAdd--;
       const newColor = Color(
         [hue, maxSat - satStep * i ** 0.85, minValue + valStep * i ** 3 / 220],
-        'hsv'
+        'hsv',
       );
       if (flip) {
         colors.push(newColor);
@@ -104,7 +97,7 @@ const genColors = (base: Color, prng: Prando): CBS => {
     colors,
     prng,
     maxColors - sideShuffleOffset - sideShuffleLength,
-    sideShuffleLength
+    sideShuffleLength,
   );
   const centeredShuffleOffset = (1.0 / 4.0) * maxColors;
   const centeredShuffleLength = maxColors - 2 * centeredShuffleOffset;
@@ -112,12 +105,13 @@ const genColors = (base: Color, prng: Prando): CBS => {
     colors,
     prng,
     centeredShuffleOffset,
-    centeredShuffleLength
+    centeredShuffleLength,
   );
 
   const boundaryStep = 1.0 / maxColors;
   const colorsRgb = colors.map(
-    (c) => new Vector3(...normalize3(c.rgb().toString()))
+    (c) => new Vector3(...normalize3(c.rgb()
+      .toString())),
   );
   const middlePoint = maxColors / 2 - 0.5;
 
@@ -129,7 +123,8 @@ const genColors = (base: Color, prng: Prando): CBS => {
   };
 
   const boundaries = _.times(maxColors, (i) =>
-    Number(prng.next(0, centerDistanceWeight(i)).toFixed(0))
+    Number(prng.next(0, centerDistanceWeight(i))
+      .toFixed(0)),
   );
   const sum = _.sum(boundaries);
   let currentSum = 0;
@@ -142,7 +137,7 @@ const genColors = (base: Color, prng: Prando): CBS => {
     .map((i) => i / sum);
 
   const sharpness = _.times(maxColors, (i) =>
-    prng.next((boundaryStep / 2) * 50.0, (boundaryStep / 2) * 100.0)
+    prng.next((boundaryStep / 2) * 50.0, (boundaryStep / 2) * 100.0),
   );
 
   const palette = {
@@ -154,7 +149,6 @@ const genColors = (base: Color, prng: Prando): CBS => {
   };
   return palette;
 };
-
 const oyster = new Vector3(158 / 255, 141 / 255, 128 / 255);
 const aluminium = new Vector3(141 / 255, 147 / 255, 181 / 255);
 const uniforms: {
@@ -170,13 +164,12 @@ const uniforms: {
     value: padArrTo(
       [oyster, aluminium, oyster, aluminium],
       33,
-      new Vector3(1, 1, 1)
+      new Vector3(1, 1, 1),
     ),
   },
   boundaries: { value: padArrTo([0.0, 0.1, 0.3, 0.5], 33, 1.0) },
   sharpness: { value: padArrTo([0.0], 32, 0.0) },
 };
-
 const vertexShader = `#version 300 es
 precision highp float;
 precision highp int;
@@ -198,10 +191,6 @@ void main() {
   relativeObjectCoord = uv;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`;
-
-// sharpness = 0.05 -> 0.095 - 0.105 - the mix, before is clean color1, after clean color2
-// [color, 0.1, color, 0.3, color, 0.5, color, 1.0]
-
 const fragmentShader = `#version 300 es
 precision highp float;
 precision highp int;
@@ -241,16 +230,20 @@ void main() {
   FragColor = vec4(color, 1.0);
 }
 `;
-
 const oysterHex = '#827A6B';
 const orangeHex = '#bf8660';
-
-export const ShaderShape: React.FC = () => {
+export const PlanetTextureShaderShape: React.FC<{ color: string, seed: string }> = ({ color, seed }) => {
   const mesh = useRef<Mesh>();
 
+  let baseColor: Color<string>;
+  try {
+    baseColor = new Color(color);
+  } catch (e) {
+    baseColor = new Color('#000000');
+  }
   const palette = useMemo(
-    () => genColors(new Color(oysterHex), new Prando('#bf123123')),
-    []
+    () => genColors(baseColor, new Prando(seed)),
+    [],
   );
   useFrame(() => {
     if (mesh.current) {
@@ -288,45 +281,5 @@ export const ShaderShape: React.FC = () => {
         uniforms={uniforms2}
       />
     </mesh>
-  );
-};
-
-const BackgroundPlane = () => (
-  <mesh position={[0, 0, 0]}>
-    <planeGeometry args={[100, 100]} />
-    <meshBasicMaterial color="teal" />
-  </mesh>
-);
-
-export const ShaderTestUI = () => {
-  const setTestMenuMode = useStore((state) => state.setTestMenuMode);
-  useHotkeys('esc', () => setTestMenuMode(TestMenuMode.Shown));
-  const [revision, setRevision] = useState(uuid.v4());
-  useEffect(() => {
-    setRevision((old) => old + 1);
-  }, []);
-  return (
-    <Canvas
-      orthographic
-      camera={{
-        position: new Vector3(0, 0, CAMERA_HEIGHT),
-        zoom: CAMERA_DEFAULT_ZOOM(),
-        far: 1000,
-      }}
-      style={{
-        position: 'absolute',
-        width: size.width_px,
-        height: size.height_px,
-      }}
-    >
-      <Suspense fallback={<mesh />}>
-        <ambientLight />
-        <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-        <group position={[0, 0, 0]}>
-          <BackgroundPlane />
-          <ShaderShape key={revision} />
-        </group>
-      </Suspense>
-    </Canvas>
   );
 };

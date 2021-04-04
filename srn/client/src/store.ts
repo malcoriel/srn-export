@@ -92,7 +92,6 @@ export enum TestMenuMode {
   Hidden,
   Shown,
   PlanetTest,
-  ShaderTest,
 }
 
 let portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
@@ -121,7 +120,7 @@ function toggleWindowState(old: WindowState, hasMinimized = false) {
 
 export const useStore = create<SrnState>((set) => ({
   playing: false,
-  testMenuMode: TestMenuMode.ShaderTest,
+  testMenuMode: TestMenuMode.Hidden,
   menu: true,
   skipMenu: lsSkipMenu,
   preferredName: lsPreferredName,

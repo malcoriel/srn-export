@@ -1,14 +1,14 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { Story, Meta } from '@storybook/react';
-import { ShaderShape } from './ShaderTestUI';
 import * as uuid from 'uuid';
 import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
+import { PlanetTextureShaderShape } from './PlanetTextureShaderShape';
 
 export default {
-  title: 'Example/ShaderShape',
-  component: ShaderShape
+  title: 'Example/PlanetTextureShaderShape',
+  component: PlanetTextureShaderShape
 } as Meta;
 
 const Template: Story = (args) => {
@@ -33,12 +33,14 @@ const Template: Story = (args) => {
         <ambientLight />
         <pointLight position={[0, 0, CAMERA_HEIGHT]} />
         <group position={[0, 0, 0]}>
-          <ShaderShape key={revision} {...args} />
+          <PlanetTextureShaderShape key={revision + JSON.stringify(args)} color={args.color} seed={args.seed} />
         </group>
     </Canvas>
   );
 };
 
-export const Primary = Template.bind({});
-Primary.args = {
+export const Main = Template.bind({});
+Main.args = {
+  color: "#ff00ff",
+  seed: "123"
 };
