@@ -184,7 +184,6 @@ export const ThreePlanetShape: React.FC<{
     });
 
     const uniforms2 = useMemo(() => {
-      console.log("uniforms recalc", texture);
       const patchedUniforms = _.cloneDeep(uniforms);
       patchedUniforms.iChannel0.value = texture;
       patchedUniforms.rotationSpeed.value =

@@ -5,7 +5,7 @@ import { Canvas } from 'react-three-fiber';
 import { CanvasTexture, Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 import { PlanetTextureShaderShape } from './PlanetTextureShaderShape';
-import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
+import { ThreePlanetShape, ThreePlanetShapeRandomProps } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
 
 export default {
@@ -63,7 +63,10 @@ const Template: Story = (args) => {
         <Suspense fallback={<mesh />}>
           <ambientLight />
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-          <ThreePlanetShape texture={texture} position={new Vector(0, 0)} radius={256} color='red' visible />
+          <ThreePlanetShape
+            {...ThreePlanetShapeRandomProps(args.seed, 256)}
+            texture={texture} position={new Vector(0, 0)} radius={256}
+            visible />
         </Suspense>
       </Canvas>
     </div>
