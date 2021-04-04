@@ -45,16 +45,18 @@ const Template: Story = (args) => {
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
-  const [delay, setDelay] = useState(false);
+  const [delay, setDelay] = useState(0);
   useEffect(() => {
-    setTimeout(() => setDelay(true), 0);
+    setTimeout(() => setDelay((d) => d + 1), 0);
+    setTimeout(() => setDelay((d) => d + 2), 100);
   }, []);
-  const { texture1, texture2, texture3 } = useMemo(() => {
+  const { texture1, texture2, texture3, textureMixed } = useMemo(() => {
     const canvases = document.querySelectorAll('canvas');
     return {
       texture1: new CanvasTexture(canvases[0]),
       texture2: new CanvasTexture(canvases[1]),
       texture3: new CanvasTexture(canvases[2]),
+      textureMixed: new CanvasTexture(canvases[3]),
     };
   }, [delay, args]);
   return (
@@ -108,7 +110,7 @@ const Template: Story = (args) => {
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <ThreePlanetShape
             {...ThreePlanetShapeRandomProps(args.seed, 256)}
-            texture={texture1}
+            texture={textureMixed}
             position={new Vector(0, 0)}
             radius={256}
             visible
