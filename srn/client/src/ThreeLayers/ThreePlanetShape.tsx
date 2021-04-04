@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { IVector } from '../utils/Vector';
-import { Mesh, ShaderMaterial, Vector3 } from 'three';
+import { Mesh, ShaderMaterial, Texture, Vector3 } from 'three';
 import { useFrame } from 'react-three-fiber';
 import { useRepeatWrappedTextureLoader } from './ThreeStar';
 import _ from 'lodash';
@@ -142,8 +142,8 @@ void main() {
   turnedTextureCoords.x /= yStretchFactor;
   turnedTextureCoords.x += magicStretch;
   FragColor = vec4(texture(iChannel0, turnedTextureCoords).xyz, step(0.0, 1.0 - distanceToCenter));
-  FragColor.xyz = grayscale(FragColor.xyz, 0.0);
-  FragColor.xyz *= inputColor;
+  //FragColor.xyz = grayscale(FragColor.xyz, 0.0);
+  //FragColor.xyz *= inputColor;
 }
 `;
 export const ThreePlanetShape: React.FC<{
@@ -158,6 +158,7 @@ export const ThreePlanetShape: React.FC<{
   spotsIntensity?: number;
   yStretchFactor?: number;
   visible: boolean;
+  texture: Texture;
 }> = React.memo(
   ({
     onClick,
@@ -170,6 +171,7 @@ export const ThreePlanetShape: React.FC<{
     spotsIntensity,
     color,
     visible,
+    texture
   }) => {
     const mesh = useRef<Mesh>();
     useFrame(() => {
@@ -181,13 +183,10 @@ export const ThreePlanetShape: React.FC<{
       }
     });
 
-    const lavaTile = useRepeatWrappedTextureLoader(
-      'resources/textures/jupiter-512.png'
-    );
-
     const uniforms2 = useMemo(() => {
+      console.log("uniforms recalc", texture);
       const patchedUniforms = _.cloneDeep(uniforms);
-      patchedUniforms.iChannel0.value = lavaTile;
+      patchedUniforms.iChannel0.value = texture;
       patchedUniforms.rotationSpeed.value =
         rotationSpeed || defaultUniformValues.rotationSpeed;
       patchedUniforms.yStretchFactor.value =
@@ -210,8 +209,7 @@ export const ThreePlanetShape: React.FC<{
         0
       );
       return patchedUniforms;
-      // eslint-disable-next-line
-    }, [unitsToPixels_min()]);
+    }, [unitsToPixels_min(), texture]);
 
     return (
       <mesh
@@ -224,6 +222,7 @@ export const ThreePlanetShape: React.FC<{
         <planeBufferGeometry args={[1, 1]} />
         {/*<icosahedronBufferGeometry args={[1, 9]} />*/}
         <rawShaderMaterial
+          key={texture.uuid}
           transparent
           fragmentShader={fragmentShader}
           vertexShader={vertexShader}

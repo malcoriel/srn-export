@@ -1,7 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 import { GameState, ShipAction, ShipActionType } from '../world';
-import { ThreeStar } from './ThreeStar';
+import { ThreeStar, useRepeatWrappedTextureLoader } from './ThreeStar';
 import { posToThreePos } from './ThreeLayer';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
 import { ThreeRock } from './ThreeRock';
@@ -16,10 +16,14 @@ export const ThreeBodiesLayer: React.FC<{
   visMap: Record<string, boolean>;
 }> = ({ visMap, state }) => {
   const { planets, star, minerals, asteroid_belts } = state;
+  const lavaTile = useRepeatWrappedTextureLoader(
+    'resources/textures/jupiter-512.png'
+  );
   return (
     <group>
       {planets.map((p) => (
         <ThreePlanetShape
+          texture={lavaTile}
           radius={p.radius}
           {...ThreePlanetShapeRandomProps(p.id, p.radius)}
           onClick={(evt: MouseEvent) => {

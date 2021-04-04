@@ -1,14 +1,16 @@
-import React, { Suspense, useEffect, useState } from 'react';
-import { Story, Meta } from '@storybook/react';
+import React, { useEffect, useMemo, useState, Suspense } from 'react';
+import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { Canvas } from 'react-three-fiber';
-import { Vector3 } from 'three';
-import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
+import { CanvasTexture, Vector3 } from 'three';
+import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 import { PlanetTextureShaderShape } from './PlanetTextureShaderShape';
+import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
+import Vector from '../utils/Vector';
 
 export default {
   title: 'Example/PlanetTextureShaderShape',
-  component: PlanetTextureShaderShape
+  component: PlanetTextureShaderShape,
 } as Meta;
 
 const Template: Story = (args) => {
@@ -16,31 +18,60 @@ const Template: Story = (args) => {
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
+  const [delay, setDelay] = useState(false);
+  useEffect(() => {
+    setTimeout(() => setDelay(true), 0);
+  }, []);
+  const texture = useMemo(() => {
+    const canvas = document.querySelectorAll('canvas')[0];
+    return new CanvasTexture(canvas);
+  }, [delay, args]);
   return (
-    <Canvas
-      orthographic
-      camera={{
-        position: new Vector3(0, 0, CAMERA_HEIGHT),
-        zoom: CAMERA_DEFAULT_ZOOM(),
-        far: 1000,
-      }}
-      style={{
-        position: 'absolute',
-        width: '90%',
-        height: '90%'
-      }}
-    >
+    <div>
+      <Canvas
+        orthographic
+        gl={{ preserveDrawingBuffer: true }}
+        camera={{
+          position: new Vector3(0, 0, CAMERA_HEIGHT),
+          zoom: 1.0,
+          far: 1000,
+        }}
+        style={{
+          width: 256,
+          height: 256,
+        }}
+      >
         <ambientLight />
         <pointLight position={[0, 0, CAMERA_HEIGHT]} />
         <group position={[0, 0, 0]}>
           <PlanetTextureShaderShape key={revision + JSON.stringify(args)} color={args.color} seed={args.seed} />
         </group>
-    </Canvas>
+      </Canvas>
+      <Canvas
+        orthographic
+        gl={{ preserveDrawingBuffer: true }}
+        camera={{
+          position: new Vector3(0, 0, CAMERA_HEIGHT),
+          zoom: 1.0,
+          far: 1000,
+        }}
+        style={{
+          width: 256,
+          height: 256,
+        }}
+      >
+        <Suspense fallback={<mesh />}>
+          <ambientLight />
+          <pointLight position={[0, 0, CAMERA_HEIGHT]} />
+          <ThreePlanetShape texture={texture} position={new Vector(0, 0)} radius={256} color='red' visible />
+        </Suspense>
+      </Canvas>
+    </div>
   );
 };
 
 export const Main = Template.bind({});
 Main.args = {
-  color: "#ff00ff",
-  seed: "123"
+  color: '#ff00ff',
+  seed: '123',
 };

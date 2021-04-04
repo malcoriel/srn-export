@@ -8,6 +8,7 @@
     "@jscad/csg": "^0.7.0",
     "@pmmmwh/react-refresh-webpack-plugin": "0.4.2",
     "@react-three/drei": "^3.11.1",
+    "@storybook/preset-scss": "^1.0.3",
     "@svgr/webpack": "5.4.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",

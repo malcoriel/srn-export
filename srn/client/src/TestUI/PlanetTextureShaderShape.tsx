@@ -270,7 +270,7 @@ export const PlanetTextureShaderShape: React.FC<{ color: string, seed: string }>
     <mesh
       position={[0, 0, 0]}
       ref={mesh}
-      scale={[30, 30, 30]}
+      scale={[256, 256, 256]}
       rotation={[0, 0, 0]}
     >
       <planeBufferGeometry args={[1, 1]} />
