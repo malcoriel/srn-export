@@ -15,6 +15,31 @@ import { TextureMixerShaderShape } from './TextureMixerShaderShape';
 export default {
   title: 'Example/PlanetTextureShaderShape',
   component: PlanetTextureShaderShape,
+  argTypes: {
+    color1: {
+      control: {
+        type: 'color',
+      },
+    },
+    color2: {
+      control: {
+        type: 'color',
+      },
+    },
+    color3: {
+      control: {
+        type: 'color',
+      },
+    },
+    mixThreshold: {
+      control: {
+        type: 'range',
+        min: 0.0,
+        max: 1.0,
+        step: 0.01,
+      },
+    },
+  },
 } as Meta;
 
 const StoryCanvas: React.FC = ({ children }) => {
