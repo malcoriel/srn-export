@@ -116,7 +116,9 @@
     "eslint": "../../node_modules/.bin/eslint",
     "eslint-all": "../../node_modules/.bin/eslint src/**/*.ts*",
     "prettier": "../../node_modules/.bin/prettier",
-    "up-version": "cd .. && yarn up-version"
+    "up-version": "cd .. && yarn up-version",
+    "storybook": "cross-env BROWSER=chrome start-storybook -p 6006",
+    "build-storybook": "build-storybook"
   },
   "browserslist": {
     "production": [
@@ -188,5 +190,11 @@
     "presets": [
       "react-app"
     ]
+  },
+  "devDependencies": {
+    "@storybook/addon-actions": "^6.2.2",
+    "@storybook/addon-essentials": "^6.2.2",
+    "@storybook/addon-links": "^6.2.2",
+    "@storybook/react": "^6.2.2"
   }
 }
