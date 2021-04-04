@@ -2,7 +2,6 @@ import React, { useMemo, useRef } from 'react';
 import { IVector } from '../utils/Vector';
 import { Mesh, ShaderMaterial, Texture, Vector3 } from 'three';
 import { useFrame } from 'react-three-fiber';
-import { useRepeatWrappedTextureLoader } from './ThreeStar';
 import _ from 'lodash';
 import { normalize3 } from '../utils/palette';
 import { size, unitsToPixels_min } from '../coord';
@@ -109,7 +108,6 @@ vec3 grayscale(in vec3 orig, in float colorFactor) {
 }
 
 void main() {
-  // e.g. for a plane 0 is left bottom, 1 is right top
   vec2 centeredCoord = -1.0 + 2.0 * relativeObjectCoord;
   float distanceToCenter = dot(centeredCoord,centeredCoord);
   float sphericalDistortion = (1.0-sqrt(1.0-distanceToCenter))/(distanceToCenter);
@@ -142,8 +140,6 @@ void main() {
   turnedTextureCoords.x /= yStretchFactor;
   turnedTextureCoords.x += magicStretch;
   FragColor = vec4(texture(iChannel0, turnedTextureCoords).xyz, step(0.0, 1.0 - distanceToCenter));
-  //FragColor.xyz = grayscale(FragColor.xyz, 0.0);
-  //FragColor.xyz *= inputColor;
 }
 `;
 export const ThreePlanetShape: React.FC<{
@@ -171,7 +167,7 @@ export const ThreePlanetShape: React.FC<{
     spotsIntensity,
     color,
     visible,
-    texture
+    texture,
   }) => {
     const mesh = useRef<Mesh>();
     useFrame(() => {
