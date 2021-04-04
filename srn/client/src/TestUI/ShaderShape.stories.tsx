@@ -1,12 +1,10 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { Story, Meta } from '@storybook/react';
-import { ShaderShape } from '../TestUI/ShaderTestUI';
+import { ShaderShape } from './ShaderTestUI';
 import * as uuid from 'uuid';
 import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
-import { size } from '../coord';
-
 
 export default {
   title: 'Example/ShaderShape',
@@ -27,7 +25,9 @@ const Template: Story = (args) => {
         far: 1000,
       }}
       style={{
-        position: 'absolute'
+        position: 'absolute',
+        width: '90%',
+        height: '90%'
       }}
     >
         <ambientLight />
