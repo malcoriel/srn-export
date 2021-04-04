@@ -53,7 +53,7 @@ function shuffleWithPrng<T>(inArr: T[], prng: Prando) {
 const saturationSpread = 0.5; // +/- 50% of the whole range, so 0.5 is full range
 const valueSpread = 0.4; // +/- 45%, so 0.5 is 0.05..0.95
 const maxColors = 256;
-const colorCount = 64;
+const colorCount = 16;
 const colorPicks = maxColors / colorCount;
 
 function shuffleSlice<T>(
@@ -86,7 +86,7 @@ const genColors = (base: Color, prng: Prando): CBS => {
     while (toAdd > 0) {
       toAdd--;
       const newColor = Color(
-        [hue, maxSat - satStep * i ** 0.85, minValue + valStep * i ** 1.05],
+        [hue, maxSat - satStep * i ** 0.85, minValue + valStep * i ** 3 / 220],
         'hsv'
       );
       if (flip) {
@@ -97,14 +97,6 @@ const genColors = (base: Color, prng: Prando): CBS => {
       flip = !flip;
     }
   }
-  const centeredShuffleOffset = (1.0 / 3.0) * maxColors;
-  const centeredShuffleLength = maxColors - 2 * centeredShuffleOffset;
-  colors = shuffleSlice(
-    colors,
-    prng,
-    centeredShuffleOffset,
-    centeredShuffleLength
-  );
   const sideShuffleOffset = maxColors / 5;
   const sideShuffleLength = maxColors / 8;
   colors = shuffleSlice(colors, prng, sideShuffleOffset, sideShuffleLength);
@@ -114,12 +106,14 @@ const genColors = (base: Color, prng: Prando): CBS => {
     maxColors - sideShuffleOffset - sideShuffleLength,
     sideShuffleLength
   );
-  // colors = shuffleSlice(
-  //   colors,
-  //   prng,
-  //   centeredShuffleOffset,
-  //   centeredShuffleLength
-  // );
+  const centeredShuffleOffset = (1.0 / 4.0) * maxColors;
+  const centeredShuffleLength = maxColors - 2 * centeredShuffleOffset;
+  colors = shuffleSlice(
+    colors,
+    prng,
+    centeredShuffleOffset,
+    centeredShuffleLength
+  );
 
   const boundaryStep = 1.0 / maxColors;
   const colorsRgb = colors.map(
@@ -131,7 +125,7 @@ const genColors = (base: Color, prng: Prando): CBS => {
   // narrow the "hotter" middle lines
   const centerDistanceWeight = (i: number) => {
     const variable = Math.abs(middlePoint - i);
-    return 10 + 10 * variable ** 0.6;
+    return 10 + 10 * variable ** 0.4;
   };
 
   const boundaries = _.times(maxColors, (i) =>
