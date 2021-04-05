@@ -1,6 +1,6 @@
 import { useHotkeys } from 'react-hotkeys-hook';
 import { TestMenuMode, useStore } from '../store';
-import { Vector3 } from 'three';
+import { Texture, Vector3 } from 'three';
 import {
   CAMERA_DEFAULT_ZOOM,
   CAMERA_HEIGHT,
@@ -56,6 +56,7 @@ export const PlanetTestUI = () => {
         <group position={[0, 0, 0]}>
           <BackgroundPlane />
           <ThreePlanetShape
+            texture={new Texture()}
             visible
             key={`1_${revision}`}
             color="orange"
@@ -64,6 +65,7 @@ export const PlanetTestUI = () => {
             position={new Vector(0, 0)}
           />
           <ThreePlanetShape
+            texture={new Texture()}
             visible
             key={`2_${revision}`}
             radius={15}
@@ -71,6 +73,7 @@ export const PlanetTestUI = () => {
             position={new Vector(35, 0)}
           />
           <ThreePlanetShape
+            texture={new Texture()}
             visible
             key={`3_${revision}`}
             {...ThreePlanetShapeRandomProps(`3_${revision}`, 40)}
@@ -78,6 +81,7 @@ export const PlanetTestUI = () => {
             position={new Vector(0, 35)}
           />
           <ThreePlanetShape
+            texture={new Texture()}
             visible
             key={`4_${revision}`}
             radius={5}

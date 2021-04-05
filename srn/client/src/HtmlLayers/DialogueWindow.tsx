@@ -24,6 +24,7 @@ import { Planet } from '../../../world/pkg';
 import { Vector3 } from 'three';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
+import { useColorTextures } from '../ThreeLayers/ThreeBodiesLayer';
 
 export const enrichSub = (s: DialogueSubstitution): ReactNode => {
   const ns = NetState.get();
@@ -96,68 +97,75 @@ const renderContent = (
   dialogue: Dialogue,
   ns: NetState,
   history: DialogueElem[]
-) => (
-  <div className="dialogue">
-    <div className="context-part">
-      <div className="history">
-        <WithScrollbars noAutoHide autoScrollDown paddedRight>
-          {renderHistory(history)}
-        </WithScrollbars>
-      </div>
-      <div className="scene">
-        {dialogue.planet && (
-          <Canvas
-            style={{ width: 200, height: 200, backgroundColor: 'black' }}
-            orthographic
-            camera={{
-              position: new Vector3(0, 0, CAMERA_HEIGHT),
-              zoom: CAMERA_DEFAULT_ZOOM() * 0.4,
-            }}
+) => {
+  const colorTextures = useColorTextures();
+  const texture = dialogue.planet
+    ? colorTextures[dialogue.planet.color.replace('#', '').toUpperCase()]
+    : null;
+  return (
+    <div className="dialogue">
+      <div className="context-part">
+        <div className="history">
+          <WithScrollbars noAutoHide autoScrollDown paddedRight>
+            {renderHistory(history)}
+          </WithScrollbars>
+        </div>
+        <div className="scene">
+          {dialogue.planet && texture && (
+            <Canvas
+              style={{ width: 200, height: 200, backgroundColor: 'black' }}
+              orthographic
+              camera={{
+                position: new Vector3(0, 0, CAMERA_HEIGHT),
+                zoom: CAMERA_DEFAULT_ZOOM() * 0.4,
+              }}
+            >
+              <Suspense fallback={<mesh />}>
+                <ambientLight />
+                <pointLight position={[10, 10, 10]} />
+                <ThreePlanetShape
+                  texture={texture}
+                  position={new Vector(0, 0)}
+                  radius={dialogue.planet.radius}
+                  visible
+                  key={dialogue.planet.id}
+                  color={dialogue.planet.color}
+                />
+              </Suspense>
+            </Canvas>
+          )}
+        </div>
+        {dialogue.right_character !== 'question' && (
+          <div
+            className={classNames({
+              'context-character': true,
+              big: !dialogue.planet,
+            })}
           >
-            <Suspense fallback={<mesh />}>
-              <ambientLight />
-              <pointLight position={[10, 10, 10]} />
-              <ThreePlanetShape
-                position={new Vector(0, 0)}
-                radius={dialogue.planet.radius}
-                visible
-                key={dialogue.planet.id}
-                color={dialogue.planet.color}
-              />
-            </Suspense>
-          </Canvas>
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
+            <img src={makePortraitPath(dialogue.right_character)} />
+          </div>
         )}
       </div>
-      {dialogue.right_character !== 'question' && (
-        <div
-          className={classNames({
-            'context-character': true,
-            big: !dialogue.planet,
-          })}
-        >
-          {/* eslint-disable-next-line jsx-a11y/alt-text */}
-          <img src={makePortraitPath(dialogue.right_character)} />
-        </div>
-      )}
+      <div className="options">
+        {dialogue.options.map((option, i) => (
+          <div
+            key={i}
+            className="line"
+            onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
+          >
+            {i + 1}
+            .&nbsp;
+            <DialogueElemView key={option.id} {...option} />
+          </div>
+        ))}
+      </div>
+      <div className="hint">
+        Hint: you can use numbers row (1-9) on the keyboard to select options
+      </div>
     </div>
-    <div className="options">
-      {dialogue.options.map((option, i) => (
-        <div
-          key={i}
-          className="line"
-          onClick={() => ns.sendDialogueOption(dialogue.id, option.id)}
-        >
-          {i + 1}
-          .&nbsp;
-          <DialogueElemView key={option.id} {...option} />
-        </div>
-      ))}
-    </div>
-    <div className="hint">
-      Hint: you can use numbers row (1-9) on the keyboard to select options
-    </div>
-  </div>
-);
+  );
+};
 
 const renderMinimized = (
   dialogue: Dialogue,

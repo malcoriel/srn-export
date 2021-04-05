@@ -217,7 +217,7 @@ export const ThreePlanetShape: React.FC<{
         <planeBufferGeometry args={[1, 1]} />
         {/*<icosahedronBufferGeometry args={[1, 9]} />*/}
         <rawShaderMaterial
-          key={texture.uuid}
+          key={texture ? texture.uuid : '1'}
           transparent
           fragmentShader={fragmentShader}
           vertexShader={vertexShader}
