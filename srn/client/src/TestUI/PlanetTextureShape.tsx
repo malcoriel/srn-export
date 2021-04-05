@@ -83,11 +83,7 @@ const genColors = (
     while (toAdd > 0) {
       toAdd--;
       const newColor = Color(
-        [
-          hue,
-          maxSat - satStep * i ** 0.85,
-          minValue + (valStep * i ** 3) / 220,
-        ],
+        [hue, maxSat - satStep * i, minValue + valStep * i],
         'hsv'
       );
       if (flip) {

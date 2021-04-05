@@ -11,6 +11,8 @@ import {
 } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
 import { TextureMixerShaderShape } from './TextureMixerShaderShape';
+import { Button } from '../HtmlLayers/ui/Button';
+import { saveAs } from 'file-saver';
 
 export default {
   title: 'Three/PlanetTextureGeneration',
@@ -118,6 +120,15 @@ const Template: Story = (args) => {
   }, [delay, args]);
   return (
     <div>
+      <Button
+        onClick={() => {
+          const mixedCanvas = document.querySelectorAll('canvas')[3];
+          const png = mixedCanvas.toDataURL('image/png');
+          saveAs(png, `${args.color1.replace('#', '')}.png`);
+        }}
+      >
+        Save
+      </Button>
       <StoryCanvas>
         <PlanetTextureShape
           key={revision + JSON.stringify(args)}
@@ -198,7 +209,7 @@ Main.args = {
   color1: oysterHex,
   color2: orangeHex,
   color3: '#552',
-  colorCount: 16,
+  colorCount: 64,
   maxColors: 256,
   mixThreshold: 0.8,
   saturationSpread: 0.4,
