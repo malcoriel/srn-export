@@ -4,7 +4,7 @@ import * as uuid from 'uuid';
 import { Canvas } from 'react-three-fiber';
 import { CanvasTexture, Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
-import { PlanetTextureShaderShape } from './PlanetTextureShaderShape';
+import { PlanetTextureShape } from './PlanetTextureShape';
 import {
   ThreePlanetShape,
   ThreePlanetShapeRandomProps,
@@ -13,8 +13,8 @@ import Vector from '../utils/Vector';
 import { TextureMixerShaderShape } from './TextureMixerShaderShape';
 
 export default {
-  title: 'Example/PlanetTextureShaderShape',
-  component: PlanetTextureShaderShape,
+  title: 'Three/PlanetTextureGeneration',
+  component: PlanetTextureShape,
   argTypes: {
     color1: {
       control: {
@@ -37,6 +37,22 @@ export default {
         min: 0.0,
         max: 1.0,
         step: 0.01,
+      },
+    },
+    colorCount: {
+      control: {
+        type: 'range',
+        min: 8,
+        max: 64,
+        step: 8,
+      },
+    },
+    maxColors: {
+      control: {
+        type: 'range',
+        min: 32,
+        max: 256,
+        step: 32,
       },
     },
   },
@@ -87,24 +103,30 @@ const Template: Story = (args) => {
   return (
     <div>
       <StoryCanvas>
-        <PlanetTextureShaderShape
+        <PlanetTextureShape
           key={revision + JSON.stringify(args)}
           color={args.color1}
           seed={args.seed}
+          colorCount={args.colorCount}
+          maxColors={args.maxColors}
         />
       </StoryCanvas>
       <StoryCanvas>
-        <PlanetTextureShaderShape
+        <PlanetTextureShape
           key={revision + JSON.stringify(args)}
           color={args.color2}
           seed={args.seed}
+          colorCount={args.colorCount}
+          maxColors={args.maxColors}
         />
       </StoryCanvas>
       <StoryCanvas>
-        <PlanetTextureShaderShape
+        <PlanetTextureShape
           key={revision + JSON.stringify(args)}
           color={args.color3}
           seed={args.seed}
+          colorCount={args.colorCount}
+          maxColors={args.maxColors}
         />
       </StoryCanvas>
       <StoryCanvas>
@@ -146,11 +168,16 @@ const Template: Story = (args) => {
   );
 };
 
+const oysterHex = '#827A6B';
+const orangeHex = '#bf8660';
+
 export const Main = Template.bind({});
 Main.args = {
-  color1: '#ff00ff',
-  color2: '#0000ff',
-  color3: '#225500',
+  color1: oysterHex,
+  color2: orangeHex,
+  color3: '#552',
+  colorCount: 16,
+  maxColors: 256,
   mixThreshold: 0.8,
   seed: '123',
 };

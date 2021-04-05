@@ -44,15 +44,14 @@ function shuffleWithPrng<T>(inArr: T[], prng: Prando) {
 
 const saturationSpread = 0.5; // +/- 50% of the whole range, so 0.5 is full range
 const valueSpread = 0.4; // +/- 45%, so 0.5 is 0.05..0.95
-const maxColors = 256;
-const colorCount = 16;
-const colorPicks = maxColors / colorCount;
+const defaultMaColors = 256;
+const defaultColorCount = 16;
 
 function shuffleSlice<T>(
   arr: T[],
   prng: Prando,
   from: number,
-  length: number,
+  length: number
 ): T[] {
   let slice = arr.splice(from, length);
   slice = shuffleWithPrng(slice, prng);
@@ -60,9 +59,15 @@ function shuffleSlice<T>(
   return arr;
 }
 
-const genColors = (base: Color, prng: Prando): CBS => {
-  const [hue, s, v] = base.hsv()
-    .array();
+const genColors = (
+  base: Color,
+  prng: Prando,
+  colorCount: number,
+  maxColors: number
+): CBS => {
+  const colorPicks = maxColors / colorCount;
+
+  const [hue, s, v] = base.hsv().array();
 
   const minSat = Math.max(s - saturationSpread * 100, 0);
   const maxSat = Math.min(s + saturationSpread * 100, 100);
@@ -79,8 +84,12 @@ const genColors = (base: Color, prng: Prando): CBS => {
     while (toAdd > 0) {
       toAdd--;
       const newColor = Color(
-        [hue, maxSat - satStep * i ** 0.85, minValue + valStep * i ** 3 / 220],
-        'hsv',
+        [
+          hue,
+          maxSat - satStep * i ** 0.85,
+          minValue + (valStep * i ** 3) / 220,
+        ],
+        'hsv'
       );
       if (flip) {
         colors.push(newColor);
@@ -97,7 +106,7 @@ const genColors = (base: Color, prng: Prando): CBS => {
     colors,
     prng,
     maxColors - sideShuffleOffset - sideShuffleLength,
-    sideShuffleLength,
+    sideShuffleLength
   );
   const centeredShuffleOffset = (1.0 / 4.0) * maxColors;
   const centeredShuffleLength = maxColors - 2 * centeredShuffleOffset;
@@ -105,13 +114,12 @@ const genColors = (base: Color, prng: Prando): CBS => {
     colors,
     prng,
     centeredShuffleOffset,
-    centeredShuffleLength,
+    centeredShuffleLength
   );
 
   const boundaryStep = 1.0 / maxColors;
   const colorsRgb = colors.map(
-    (c) => new Vector3(...normalize3(c.rgb()
-      .toString())),
+    (c) => new Vector3(...normalize3(c.rgb().toString()))
   );
   const middlePoint = maxColors / 2 - 0.5;
 
@@ -123,8 +131,7 @@ const genColors = (base: Color, prng: Prando): CBS => {
   };
 
   const boundaries = _.times(maxColors, (i) =>
-    Number(prng.next(0, centerDistanceWeight(i))
-      .toFixed(0)),
+    Number(prng.next(0, centerDistanceWeight(i)).toFixed(0))
   );
   const sum = _.sum(boundaries);
   let currentSum = 0;
@@ -137,7 +144,7 @@ const genColors = (base: Color, prng: Prando): CBS => {
     .map((i) => i / sum);
 
   const sharpness = _.times(maxColors, (i) =>
-    prng.next((boundaryStep / 2) * 50.0, (boundaryStep / 2) * 100.0),
+    prng.next((boundaryStep / 2) * 50.0, (boundaryStep / 2) * 100.0)
   );
 
   const palette = {
@@ -164,7 +171,7 @@ const uniforms: {
     value: padArrTo(
       [oyster, aluminium, oyster, aluminium],
       33,
-      new Vector3(1, 1, 1),
+      new Vector3(1, 1, 1)
     ),
   },
   boundaries: { value: padArrTo([0.0, 0.1, 0.3, 0.5], 33, 1.0) },
@@ -191,7 +198,10 @@ void main() {
   relativeObjectCoord = uv;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`;
-const fragmentShader = `#version 300 es
+const fragmentShader = (
+  colorCount: number,
+  maxColors: number
+) => `#version 300 es
 precision highp float;
 precision highp int;
 uniform float time;
@@ -230,9 +240,17 @@ void main() {
   FragColor = vec4(color, 1.0);
 }
 `;
-const oysterHex = '#827A6B';
-const orangeHex = '#bf8660';
-export const PlanetTextureShaderShape: React.FC<{ color: string, seed: string }> = ({ color, seed }) => {
+export const PlanetTextureShape: React.FC<{
+  color: string;
+  seed: string;
+  colorCount?: number;
+  maxColors?: number;
+}> = ({
+  color,
+  seed,
+  colorCount = defaultColorCount,
+  maxColors = defaultMaColors,
+}) => {
   const mesh = useRef<Mesh>();
 
   let baseColor: Color<string>;
@@ -242,8 +260,8 @@ export const PlanetTextureShaderShape: React.FC<{ color: string, seed: string }>
     baseColor = new Color('#000000');
   }
   const palette = useMemo(
-    () => genColors(baseColor, new Prando(seed)),
-    [],
+    () => genColors(baseColor, new Prando(seed), colorCount, maxColors),
+    [baseColor, seed, colorCount, maxColors]
   );
   useFrame(() => {
     if (mesh.current) {
@@ -276,7 +294,7 @@ export const PlanetTextureShaderShape: React.FC<{ color: string, seed: string }>
       <planeBufferGeometry args={[1, 1]} />
       <rawShaderMaterial
         transparent
-        fragmentShader={fragmentShader}
+        fragmentShader={fragmentShader(colorCount, maxColors)}
         vertexShader={vertexShader}
         uniforms={uniforms2}
       />
