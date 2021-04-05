@@ -42,8 +42,6 @@ function shuffleWithPrng<T>(inArr: T[], prng: Prando) {
   return arr;
 }
 
-const saturationSpread = 0.5; // +/- 50% of the whole range, so 0.5 is full range
-const valueSpread = 0.4; // +/- 45%, so 0.5 is 0.05..0.95
 const defaultMaColors = 256;
 const defaultColorCount = 16;
 
@@ -63,10 +61,11 @@ const genColors = (
   base: Color,
   prng: Prando,
   colorCount: number,
-  maxColors: number
+  maxColors: number,
+  saturationSpread: number,
+  valueSpread: number
 ): CBS => {
   const colorPicks = maxColors / colorCount;
-
   const [hue, s, v] = base.hsv().array();
 
   const minSat = Math.max(s - saturationSpread * 100, 0);
@@ -245,11 +244,15 @@ export const PlanetTextureShape: React.FC<{
   seed: string;
   colorCount?: number;
   maxColors?: number;
+  saturationSpread?: number;
+  valueSpread?: number;
 }> = ({
   color,
   seed,
   colorCount = defaultColorCount,
   maxColors = defaultMaColors,
+  saturationSpread,
+  valueSpread,
 }) => {
   const mesh = useRef<Mesh>();
 
@@ -260,8 +263,16 @@ export const PlanetTextureShape: React.FC<{
     baseColor = new Color('#000000');
   }
   const palette = useMemo(
-    () => genColors(baseColor, new Prando(seed), colorCount, maxColors),
-    [baseColor, seed, colorCount, maxColors]
+    () =>
+      genColors(
+        baseColor,
+        new Prando(seed),
+        colorCount,
+        maxColors,
+        saturationSpread || 0.5,
+        valueSpread || 0.4
+      ),
+    [baseColor, seed, colorCount, maxColors, saturationSpread, valueSpread]
   );
   useFrame(() => {
     if (mesh.current) {

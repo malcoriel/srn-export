@@ -55,6 +55,22 @@ export default {
         step: 32,
       },
     },
+    saturationSpread: {
+      control: {
+        type: 'range',
+        min: 0.05,
+        max: 0.5,
+        step: 0.05,
+      },
+    },
+    valueSpread: {
+      control: {
+        type: 'range',
+        min: 0.05,
+        max: 0.5,
+        step: 0.05,
+      },
+    },
   },
 } as Meta;
 
@@ -109,6 +125,8 @@ const Template: Story = (args) => {
           seed={args.seed}
           colorCount={args.colorCount}
           maxColors={args.maxColors}
+          saturationSpread={args.saturationSpread}
+          valueSpread={args.valueSpread}
         />
       </StoryCanvas>
       <StoryCanvas>
@@ -118,6 +136,8 @@ const Template: Story = (args) => {
           seed={args.seed}
           colorCount={args.colorCount}
           maxColors={args.maxColors}
+          saturationSpread={args.saturationSpread}
+          valueSpread={args.valueSpread}
         />
       </StoryCanvas>
       <StoryCanvas>
@@ -127,6 +147,8 @@ const Template: Story = (args) => {
           seed={args.seed}
           colorCount={args.colorCount}
           maxColors={args.maxColors}
+          saturationSpread={args.saturationSpread}
+          valueSpread={args.valueSpread}
         />
       </StoryCanvas>
       <StoryCanvas>
@@ -179,5 +201,7 @@ Main.args = {
   colorCount: 16,
   maxColors: 256,
   mixThreshold: 0.8,
+  saturationSpread: 0.4,
+  valueSpread: 0.4,
   seed: '123',
 };
