@@ -66,13 +66,13 @@ export const ThreeBodiesLayer: React.FC<{
   visMap: Record<string, boolean>;
 }> = ({ visMap, state }) => {
   const { planets, star, minerals, asteroid_belts } = state;
-  const colorTextures = useColorTextures();
   return (
     <group>
       {planets.map((p) => {
+        const texture = null; //colorTextures[p.color.replace('#', '').toUpperCase()];
         return (
           <ThreePlanetShape
-            texture={colorTextures[p.color.replace('#', '').toUpperCase()]}
+            texture={new Texture()}
             radius={p.radius}
             {...ThreePlanetShapeRandomProps(p.id, p.radius)}
             onClick={(evt: MouseEvent) => {

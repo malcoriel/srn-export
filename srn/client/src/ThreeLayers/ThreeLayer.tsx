@@ -18,7 +18,7 @@ import {
   CameraZoomer,
   ExternalCameraControl,
 } from './CameraControls';
-import { ThreeBodiesLayer } from './ThreeBodiesLayer';
+import { ThreeBodiesLayer, useColorTextures } from './ThreeBodiesLayer';
 import NetState, { useNSForceChange } from '../NetState';
 import Vector, { IVector } from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
@@ -74,6 +74,8 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const hoverOnGrabbable = !!(hintedObjectId
     ? findMineral(ns.state, hintedObjectId)
     : undefined);
+
+  const colorTextures = useColorTextures();
 
   return (
     <Canvas
