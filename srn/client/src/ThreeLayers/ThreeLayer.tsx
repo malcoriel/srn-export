@@ -1,6 +1,6 @@
 import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
 import {
@@ -61,6 +61,11 @@ export const threeVectorToVector = ({
   z: number;
 }): Vector => new Vector(x, -y);
 
+const ResourceLoader = () => {
+  useColorTextures();
+  return <primitive object={{}} />;
+};
+
 export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -74,8 +79,6 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const hoverOnGrabbable = !!(hintedObjectId
     ? findMineral(ns.state, hintedObjectId)
     : undefined);
-
-  const colorTextures = useColorTextures();
 
   return (
     <Canvas
@@ -96,6 +99,9 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
       {/* red is first  coord (x) */}
       {/* green is second  coord (y) */}
       {/* blue is third coord (z) */}
+      <Suspense fallback={<mesh />}>
+        <ResourceLoader />
+      </Suspense>
       <Suspense fallback={<mesh />}>
         <group
           visible={visible}

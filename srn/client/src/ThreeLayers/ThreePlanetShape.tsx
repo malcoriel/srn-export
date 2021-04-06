@@ -204,6 +204,7 @@ export const ThreePlanetShape: React.FC<{
         0
       );
       return patchedUniforms;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unitsToPixels_min(), texture]);
 
     return (

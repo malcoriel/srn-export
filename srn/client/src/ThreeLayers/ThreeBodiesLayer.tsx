@@ -51,12 +51,10 @@ const possibleColors = [
 export const useColorTextures = () => {
   const res: Record<string, Texture> = {};
   for (const color of possibleColors) {
-    const colorTexture = useRepeatWrappedTextureLoader(
-      `resources/textures/gas-giants/${color
-        .replace('#', '')
-        .toUpperCase()}.png`
+    const key = color.replace('#', '').toUpperCase();
+    res[key] = useRepeatWrappedTextureLoader(
+      `resources/textures/gas-giants/${key}.png`
     );
-    res[color] = colorTexture;
   }
   return res;
 };
@@ -66,13 +64,14 @@ export const ThreeBodiesLayer: React.FC<{
   visMap: Record<string, boolean>;
 }> = ({ visMap, state }) => {
   const { planets, star, minerals, asteroid_belts } = state;
+  const colorTextures = useColorTextures();
   return (
     <group>
       {planets.map((p) => {
-        const texture = null; //colorTextures[p.color.replace('#', '').toUpperCase()];
+        const texture = colorTextures[p.color.replace('#', '').toUpperCase()];
         return (
           <ThreePlanetShape
-            texture={new Texture()}
+            texture={texture}
             radius={p.radius}
             {...ThreePlanetShapeRandomProps(p.id, p.radius)}
             onClick={(evt: MouseEvent) => {
@@ -82,7 +81,7 @@ export const ThreeBodiesLayer: React.FC<{
               ] = ShipAction.DockNavigate(p.id);
             }}
             position={p}
-            key={p.id}
+            key={`${p.id}/${texture}` ? texture.uuid : ''}
             color={p.color}
             visible={visMap[p.id]}
           />
