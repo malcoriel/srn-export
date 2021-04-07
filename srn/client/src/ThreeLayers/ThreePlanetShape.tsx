@@ -20,6 +20,7 @@ import {
   simplexNoise3,
 } from '../TestUI/shaderFunctions';
 import { shallowEqual } from '../utils/shallowCompare';
+import { useRepeatWrappedTextureLoader } from './ThreeStar';
 
 const defaultUniformValues = {
   detailOctaves: 5,
@@ -154,7 +155,7 @@ export const ThreePlanetShape: React.FC<{
   spotsIntensity?: number;
   yStretchFactor?: number;
   visible: boolean;
-  texture: Texture;
+  texture?: Texture;
 }> = React.memo(
   ({
     onClick,
@@ -179,9 +180,21 @@ export const ThreePlanetShape: React.FC<{
       }
     });
 
+    let resolvedTexture: Texture;
+    if (color && !texture) {
+      const key = color.replace('#', '').toUpperCase();
+      resolvedTexture = useRepeatWrappedTextureLoader(
+        `resources/textures/gas-giants/${key}.png`
+      );
+    } else if (texture && !color) {
+      resolvedTexture = texture;
+    } else {
+      throw new Error('Invalid combination of color and texture');
+    }
+
     const uniforms2 = useMemo(() => {
       const patchedUniforms = _.cloneDeep(uniforms);
-      patchedUniforms.iChannel0.value = texture;
+      patchedUniforms.iChannel0.value = resolvedTexture;
       patchedUniforms.rotationSpeed.value =
         rotationSpeed || defaultUniformValues.rotationSpeed;
       patchedUniforms.yStretchFactor.value =

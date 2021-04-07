@@ -64,14 +64,11 @@ export const ThreeBodiesLayer: React.FC<{
   visMap: Record<string, boolean>;
 }> = ({ visMap, state }) => {
   const { planets, star, minerals, asteroid_belts } = state;
-  const colorTextures = useColorTextures();
   return (
     <group>
       {planets.map((p) => {
-        const texture = colorTextures[p.color.replace('#', '').toUpperCase()];
         return (
           <ThreePlanetShape
-            texture={texture}
             radius={p.radius}
             {...ThreePlanetShapeRandomProps(p.id, p.radius)}
             onClick={(evt: MouseEvent) => {
@@ -81,7 +78,7 @@ export const ThreeBodiesLayer: React.FC<{
               ] = ShipAction.DockNavigate(p.id);
             }}
             position={p}
-            key={`${p.id}/${texture}` ? texture.uuid : ''}
+            key={p.id}
             color={p.color}
             visible={visMap[p.id]}
           />

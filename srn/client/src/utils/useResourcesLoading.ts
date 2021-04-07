@@ -20,7 +20,7 @@ export const useResourcesLoading = () => {
   }
   const isLoading = Math.abs(threeLoaderProgress - 100) > 1e-9;
   const areLoading = isLoading || missingResources.size > 0;
-  const formattedProgress = `${Math.floor((loaded / total) * 100).toFixed(
+  const formattedProgress = `${Math.floor((loaded / total) * 100 || 0).toFixed(
     0
   )}% (${loaded}/${total})`;
   useEffect(() => {

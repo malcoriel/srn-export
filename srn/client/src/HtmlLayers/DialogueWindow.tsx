@@ -98,10 +98,6 @@ const renderContent = (
   ns: NetState,
   history: DialogueElem[]
 ) => {
-  const colorTextures = useColorTextures();
-  const texture = dialogue.planet
-    ? colorTextures[dialogue.planet.color.replace('#', '').toUpperCase()]
-    : null;
   return (
     <div className="dialogue">
       <div className="context-part">
@@ -111,20 +107,19 @@ const renderContent = (
           </WithScrollbars>
         </div>
         <div className="scene">
-          {dialogue.planet && texture && (
+          {dialogue.planet && (
             <Canvas
               style={{ width: 200, height: 200, backgroundColor: 'black' }}
               orthographic
               camera={{
                 position: new Vector3(0, 0, CAMERA_HEIGHT),
-                zoom: CAMERA_DEFAULT_ZOOM() * 0.4,
+                zoom: CAMERA_DEFAULT_ZOOM() * 0.8,
               }}
             >
               <Suspense fallback={<mesh />}>
                 <ambientLight />
                 <pointLight position={[10, 10, 10]} />
                 <ThreePlanetShape
-                  texture={texture}
                   position={new Vector(0, 0)}
                   radius={dialogue.planet.radius}
                   visible

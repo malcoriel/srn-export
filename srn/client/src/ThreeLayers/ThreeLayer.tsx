@@ -62,7 +62,6 @@ export const threeVectorToVector = ({
 }): Vector => new Vector(x, -y);
 
 const ResourceLoader = () => {
-  useColorTextures();
   return <primitive object={{}} />;
 };
 
