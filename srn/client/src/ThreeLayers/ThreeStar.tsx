@@ -4,7 +4,7 @@ import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
 import * as THREE from 'three';
 import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
-import NetState from '../NetState';
+import NetState, { VisualState } from '../NetState';
 import { size, unitsToPixels_min } from '../coord';
 import { shallowEqual } from '../utils/shallowCompare';
 import Vector, { VectorFzero } from '../utils/Vector';
@@ -21,13 +21,11 @@ export const ThreeStar: React.FC<
     color?: string;
     scale: [number, number, number];
     visible: boolean;
+    visualState: VisualState;
   }
 > = React.memo(
   (props) => {
-    const ns = NetState.get();
-    if (!ns) return null;
-    const { visualState } = ns;
-    const zoomProp = 1 / (visualState.zoomShift || 1.0);
+    const zoomProp = 1 / (props.visualState.zoomShift || 1.0);
 
     const mesh = useRef<Mesh>();
     const lavaTile = useRepeatWrappedTextureLoader('resources/lavatile.png');

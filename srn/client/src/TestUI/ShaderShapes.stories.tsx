@@ -13,6 +13,7 @@ import Vector from '../utils/Vector';
 import { TextureMixerShaderShape } from './TextureMixerShaderShape';
 import { Button } from '../HtmlLayers/ui/Button';
 import { saveAs } from 'file-saver';
+import { StoryCanvas } from './StoryCanvas';
 
 export default {
   title: 'Three/PlanetTextureGeneration',
@@ -76,29 +77,6 @@ export default {
   },
 } as Meta;
 
-const StoryCanvas: React.FC = ({ children }) => {
-  return (
-    <Canvas
-      orthographic
-      gl={{ preserveDrawingBuffer: true }}
-      camera={{
-        position: new Vector3(0, 0, CAMERA_HEIGHT),
-        zoom: 1.0,
-        far: 1000,
-      }}
-      style={{
-        display: 'inline-block',
-        width: 256,
-        height: 256,
-      }}
-    >
-      <ambientLight />
-      <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-      <group position={[0, 0, 0]}>{children}</group>
-    </Canvas>
-  );
-};
-
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
   useEffect(() => {
@@ -117,6 +95,7 @@ const Template: Story = (args) => {
       texture3: new CanvasTexture(canvases[2]),
       textureMixed: new CanvasTexture(canvases[3]),
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [delay, args]);
   return (
     <div>

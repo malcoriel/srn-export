@@ -118,7 +118,7 @@
     "eslint-all": "../../node_modules/.bin/eslint src/**/*.ts*",
     "prettier": "../../node_modules/.bin/prettier",
     "up-version": "cd .. && yarn up-version",
-    "storybook": "cross-env BROWSER=chrome start-storybook -p 6006",
+    "storybook": "cross-env BROWSER=chrome start-storybook -p 6006 -s ./public",
     "build-storybook": "build-storybook"
   },
   "browserslist": {

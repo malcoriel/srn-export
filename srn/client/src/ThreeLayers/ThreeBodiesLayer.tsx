@@ -61,8 +61,9 @@ export const useColorTextures = () => {
 
 export const ThreeBodiesLayer: React.FC<{
   state: GameState;
+  visualState: VisualState;
   visMap: Record<string, boolean>;
-}> = ({ visMap, state }) => {
+}> = ({ visMap, state, visualState }) => {
   const { planets, star, minerals, asteroid_belts } = state;
   return (
     <group>
@@ -86,6 +87,7 @@ export const ThreeBodiesLayer: React.FC<{
       })}
       {star && (
         <ThreeStar
+          visualState={visualState}
           visible={visMap[star.id]}
           scale={_.times(3, () => star.radius) as [number, number, number]}
           position={posToThreePos(star.x, star.y)}

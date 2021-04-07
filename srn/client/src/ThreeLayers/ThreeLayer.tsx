@@ -125,7 +125,11 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
             />
           )}
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-          <ThreeBodiesLayer state={state} visMap={visMap} />
+          <ThreeBodiesLayer
+            state={state}
+            visMap={visMap}
+            visualState={visualState}
+          />
           <ThreeShipsLayer state={state} visMap={visMap} />
           <ThreeQuestDirection state={state} visualState={visualState} />
           <ThreeNames netState={ns} visMap={visMap} />
