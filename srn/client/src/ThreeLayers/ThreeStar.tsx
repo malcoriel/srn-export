@@ -65,7 +65,7 @@ export const ThreeStar: React.FC<
 
     return (
       <mesh {...props} ref={mesh} rotation={[0, 0, 0]}>
-        <icosahedronBufferGeometry args={[1, 5]} />
+        <planeBufferGeometry args={[2, 2]} />
         <rawShaderMaterial
           transparent
           fragmentShader={fragmentShader}
