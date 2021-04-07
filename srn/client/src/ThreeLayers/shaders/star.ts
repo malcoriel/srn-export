@@ -75,11 +75,8 @@ void mainImage( out vec4 fragColor)
     float usedSrcRadius = srcRadius * 0.25;
     float radiusB = 0.24 * usedSrcRadius;
     float radiusK = 0.5 * usedSrcRadius;
-    float radiusO = 2.0 / usedSrcRadius;
     float radiusC = 2.0 / usedSrcRadius;
     vec2 srcCenter = vec2(0.5);
-    float spXCenter = srcCenter.x * 2.0;
-    float spYCenter = srcCenter.y * 2.0;
 
 
     float radius        = radiusB;
@@ -116,12 +113,10 @@ void mainImage( out vec4 fragColor)
 
 
     // outline
-    vec2 sp = vec2(0);
-    sp.x += -spXCenter + 2.0 * uv.x;
-    sp.y += -spYCenter + 2.0 * uv.y;
-    sp *= ( radiusO - brightness );
-      float r = dot((sp),(sp));
-      float fbase = (1.0-sqrt(abs(1.0-r)))/(r) + brightness * 0.5;
+    vec2 sp = vec2(uv.x - srcCenter.x - 0.25, uv.y - srcCenter.y);
+    sp *= ( 4.0 / usedSrcRadius - brightness );
+    float r = dot((sp),(sp));
+    float fbase = (1.0-sqrt(abs(1.0-r)))/(r) + brightness * 0.5;
 
 
     if( dist < radius ){
@@ -143,9 +138,9 @@ void mainImage( out vec4 fragColor)
     // outline (like in eclipse)
     fragColor.rgb += vec3( fbase * ( 0.75 + brightness * 0.3 ) * orange );
     // rotating texture
-    fragColor.rgb    += starSphere;
+    // fragColor.rgb    += starSphere;
     // corona
-    fragColor.rgb   += corona * orange;
+    // fragColor.rgb   += corona * orange;
     // emitted light
     // fragColor.rgb   += starGlow * orangeRed;
     float d = abs(length(abs(fragColor.rgb)));
