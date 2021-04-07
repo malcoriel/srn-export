@@ -4,7 +4,6 @@ import { useProgress } from '@react-three/drei';
 const expectedResources = [
   // minimal set of resources to load the game
   'resources/ship.stl',
-  'resources/textures/gas-giants/008FA9.png',
 ];
 
 export const useResourcesLoading = () => {
