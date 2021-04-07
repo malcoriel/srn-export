@@ -67,22 +67,21 @@ void mainImage( out vec4 fragColor)
     freqs[2] = texture( iChannel1, vec2( 0.15, 0.25 ) ).x;
     freqs[3] = texture( iChannel1, vec2( 0.30, 0.25 ) ).x;
 
-    float brightness    = freqs[1] * 0.25 + freqs[2] * 0.25;
-    vec3 orange            = color * 1.1;
-    vec3 orangeRed        = color / 2.0;
-    float time        = time * 0.1;
+    float brightness = freqs[1] * 0.25 + freqs[2] * 0.25;
+    vec3 orange = color * 1.1;
+    vec3 orangeRed = color / 2.0;
+    float time = time * 0.1;
 
     float usedSrcRadius = srcRadius * 0.5;
     float radiusB = 0.24 * usedSrcRadius;
     float radiusK = 0.5 * usedSrcRadius;
     float radiusC = 2.0 / usedSrcRadius;
-    vec2 srcCenter = vec2(0.5);
+    vec2 center = vec2(0.5);
 
+    float radius = radiusB;
 
-    float radius        = radiusB;
-
-    vec2 uv            = relativeObjectCoord;
-    vec2 center_offset             = uv - srcCenter;
+    vec2 uv = relativeObjectCoord;
+    vec2 center_offset = uv - center;
 
     float fade = pow( length( 1.9 * center_offset ), 0.55 );
     float fVal1 = 1.0 - fade;
@@ -92,51 +91,48 @@ void mainImage( out vec4 fragColor)
     float dist = length(center_offset);
     vec3 coord = vec3( angle, dist, time * 0.1 );
 
-    float newTime1    = abs( snoise( coord + vec3( 0.0, -time * ( 0.35 + brightness * 0.001 ), time * 0.015 ), 15.0 ) );
-    float newTime2    = abs( snoise( coord + vec3( 0.0, -time * ( 0.15 + brightness * 0.001 ), time * 0.015 ), 45.0 ) );
+    float newTime1  = abs( snoise( coord + vec3( 0.0, -time * ( 0.35 + brightness * 0.001 ), time * 0.015 ), 15.0 ) );
+    float newTime2  = abs( snoise( coord + vec3( 0.0, -time * ( 0.15 + brightness * 0.001 ), time * 0.015 ), 45.0 ) );
     for( int i=1; i<=7; i++ ){
         float power = pow( 2.0, float(i + 1) );
         fVal1 += ( 0.5 / power ) * snoise( coord + vec3( 0.0, -time, time * 0.2 ), ( power * ( 10.0 ) * ( newTime1 + 1.0 ) ) );
         fVal2 += ( 0.5 / power ) * snoise( coord + vec3( 0.0, -time, time * 0.2 ), ( power * ( 25.0 ) * ( newTime2 + 1.0 ) ) );
     }
-
     float coronaBaseBright = 1.15;
-
-    float corona        = pow( fVal1 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
-    corona                += pow( fVal2 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
-    corona                *= coronaBaseBright - newTime1;
-    vec3 starSphere        = vec3( 0.0 );
+    float corona = pow( fVal1 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
+    corona += pow( fVal2 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
+    corona *= coronaBaseBright - newTime1;
+    if(dist < radius) {
+        // cut off the corona inside the sphere
+        corona *= 0.0;
+    }
 
     // outline
     vec2 sp = center_offset * (4.0 / usedSrcRadius - brightness);
     float r = dot((sp),(sp));
     float fbase = (1.0-sqrt(abs(1.0-r)))/(r); // + brightness * 0.5;
 
-
-    if( dist < radius ){
-        // cut off the corona inside the sphere
-        corona *= 0.0;
+    vec3 starSphere = vec3( 0.0 );
+    if(dist < radius) {
         vec2 newUv;
         newUv.x = sp.x*fbase;
         newUv.y = sp.y*fbase;
-
         newUv += vec2( time, 0.0 );
-
-        vec3 texSample     = texture( iChannel0, newUv ).rgb;
-        float uOff        = ( texSample.g * brightness * 4.5 + time );
-        vec2 starUV        = newUv + vec2( uOff, 0.0 );
-        starSphere        = texture( iChannel0, starUV ).rgb;
+        vec3 texSample = texture( iChannel0, newUv ).rgb;
+        float uOff = ( texSample.g * brightness * 4.5 + time );
+        vec2 starUV = newUv + vec2( uOff, 0.0 );
+        starSphere = texture( iChannel0, starUV ).rgb;
     }
 
     // atmosphere-like effect (glow right near the edge like in an eclipse)
     fragColor.rgb += vec3( fbase * ( 0.75 + brightness * 0.3 ) * orange );
     // rotating texture
-    fragColor.rgb    += starSphere;
+    fragColor.rgb += starSphere;
     // corona
-    fragColor.rgb   += corona * orange;
+    fragColor.rgb += corona * orange;
     // emitted light
-    // float starGlow    = min( max( 1.0 - dist * ( 1.0 - brightness ), 0.0 ), 1.0 );
-    // fragColor.rgb   += starGlow * orangeRed;
+    // float starGlow = min( max( 1.0 - dist * ( 1.0 - brightness ), 0.0 ), 1.0 );
+    // fragColor.rgb += starGlow * orangeRed;
 
     // transparency outside of everything
     fragColor.a = smoothstep(0.1, 0.7, abs(length(abs(fragColor.rgb))));
