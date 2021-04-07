@@ -84,13 +84,13 @@ void mainImage( out vec4 fragColor)
     vec2 uv            = relativeObjectCoord;
     vec2 center_offset             = uv - srcCenter;
 
-    float fade        = pow( length( 1.9 * center_offset ), 0.55 );
-    float fVal1        = 1.0 - fade;
-    float fVal2        = 1.0 - fade;
+    float fade = pow( length( 1.9 * center_offset ), 0.55 );
+    float fVal1 = 1.0 - fade;
+    float fVal2 = 1.0 - fade;
 
-    float angle        = atan( center_offset.x, center_offset.y )/3.0;
-    float dist        = length(center_offset);
-    vec3 coord        = vec3( angle, dist, time * 0.1 );
+    float angle = atan( center_offset.x, center_offset.y )/3.0;
+    float dist = length(center_offset);
+    vec3 coord = vec3( angle, dist, time * 0.1 );
 
     float newTime1    = abs( snoise( coord + vec3( 0.0, -time * ( 0.35 + brightness * 0.001 ), time * 0.015 ), 15.0 ) );
     float newTime2    = abs( snoise( coord + vec3( 0.0, -time * ( 0.15 + brightness * 0.001 ), time * 0.015 ), 45.0 ) );
@@ -116,7 +116,6 @@ void mainImage( out vec4 fragColor)
     if( dist < radius ){
         // cut off the corona inside the sphere
         corona *= 0.0;
-
         vec2 newUv;
         newUv.x = sp.x*fbase;
         newUv.y = sp.y*fbase;
