@@ -4,8 +4,8 @@ import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
 import * as THREE from 'three';
 import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
-import NetState, { VisualState } from '../NetState';
-import { size, unitsToPixels_min } from '../coord';
+import { VisualState } from '../NetState';
+import { unitsToPixels_min } from '../coord';
 import { shallowEqual } from '../utils/shallowCompare';
 import Vector, { VectorFzero } from '../utils/Vector';
 
@@ -54,22 +54,6 @@ export const ThreeStar: React.FC<
         color.red() / 255,
         color.green() / 255,
         color.blue() / 255
-      );
-      let pos: Vector;
-      if (props.position) {
-        // @ts-ignore
-        pos = new Vector(props.position[0], -props.position[1]);
-      } else {
-        pos = VectorFzero();
-      }
-      patchedUniforms.shift.value = new Vector2(
-        ((-pos.x + camera.position.x) * unitsToPixels_min()) / zoomProp,
-        ((pos.y + camera.position.y) * unitsToPixels_min()) / zoomProp
-      );
-      patchedUniforms.iResolution.value = new Vector3(
-        size.width_px,
-        size.height_px,
-        0
       );
       // 10 -> 0.25
       // 20 -> 0.5

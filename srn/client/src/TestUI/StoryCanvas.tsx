@@ -9,7 +9,7 @@ export const StoryCanvas: React.FC = ({ children }) => {
       orthographic
       gl={{ preserveDrawingBuffer: true }}
       camera={{
-        position: new Vector3(0, 0, CAMERA_HEIGHT),
+        position: new Vector3(0, 0, CAMERA_HEIGHT + 100),
         zoom: 1.0,
         far: 1000,
       }}
