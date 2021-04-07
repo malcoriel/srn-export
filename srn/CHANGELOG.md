@@ -1,6 +1,11 @@
 # Changelog
 
-## Version 0.5.7. (2021-03-28)
+## Version 0.5.8 (2021-04-07)
+
+### New
+* Improved planet visualization, now the colors are much more varied.
+
+## Version 0.5.7 (2021-03-28)
 
 ### New
 
