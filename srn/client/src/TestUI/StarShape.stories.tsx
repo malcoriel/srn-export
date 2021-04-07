@@ -33,9 +33,9 @@ const Template: Story = (args) => {
             cameraPosition: new Vector(0, 0),
           }}
           visible
-          scale={_.times(3, () => 40) as [number, number, number]}
+          scale={_.times(3, () => 80) as [number, number, number]}
           position={posToThreePos(0, 0)}
-          color="red"
+          color="rgb(200, 150, 65)"
         />
       </StoryCanvas>
     </div>

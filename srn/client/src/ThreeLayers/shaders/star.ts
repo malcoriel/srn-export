@@ -3,24 +3,34 @@ import { size } from '../../coord';
 
 // delete viewMatrix, cameraPosition
 
-export const vertexShader = `precision highp float;
+export const vertexShader = `#version 300 es
+precision highp float;
 precision highp int;
 
+uniform mat4 modelMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
-uniform float time;
+uniform mat4 viewMatrix;
+uniform mat3 normalMatrix;
 
-attribute vec3 position;
+in vec3 position;
+in vec3 normal;
+in vec2 uv;
+in vec2 uv2;
+out vec2 relativeObjectCoord;
 
 void main() {
+    relativeObjectCoord = uv;
     gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-
 }`;
-export const fragmentShader = `// Set the precision for data types used in this shader
+export const fragmentShader = `#version 300 es
 precision highp float;
 precision highp int;
 uniform float time;
 uniform vec3 color;
+
+in vec2 relativeObjectCoord;
+out vec4 FragColor;
 
 // https://www.shadertoy.com/view/4dXGR4
 uniform vec3      iResolution;           // viewport resolution (in pixels)
@@ -31,7 +41,7 @@ uniform float fCenter;
 uniform vec2 shift;
 
 vec4 texture2(sampler2D sampler, vec2 coord){
-    return texture2D(sampler,  coord);
+    return texture(sampler,  coord);
 }
 
 float snoise(vec3 uv, float res)\t// by trisomie21
@@ -158,7 +168,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 }
 
 void main() {
-  mainImage(gl_FragColor, gl_FragCoord.xy);
+  mainImage(FragColor, gl_FragCoord.xy);
 }
 
 
