@@ -105,22 +105,18 @@ void mainImage( out vec4 fragColor)
     float corona        = pow( fVal1 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
     corona                += pow( fVal2 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
     corona                *= coronaBaseBright - newTime1;
-    vec3 sphereNormal     = vec3( 0.0, 0.0, 1.0 );
-    vec3 dir             = vec3( 0.0 );
-    vec3 center            = vec3( 0.5, 0.5, 1.0 );
     vec3 starSphere        = vec3( 0.0 );
 
-
-
     // outline
-    vec2 sp = vec2(uv.x - srcCenter.x, uv.y - srcCenter.y);
-    sp *= 4.0 / usedSrcRadius - brightness;
+    vec2 sp = center_offset * (4.0 / usedSrcRadius - brightness);
     float r = dot((sp),(sp));
     float fbase = (1.0-sqrt(abs(1.0-r)))/(r); // + brightness * 0.5;
 
 
     if( dist < radius ){
-        corona            *= 0.0;
+        // cut off the corona inside the sphere
+        corona *= 0.0;
+
         vec2 newUv;
         newUv.x = sp.x*fbase;
         newUv.y = sp.y*fbase;
@@ -133,18 +129,18 @@ void mainImage( out vec4 fragColor)
         starSphere        = texture( iChannel0, starUV ).rgb;
     }
 
-    float starGlow    = min( max( 1.0 - dist * ( 1.0 - brightness ), 0.0 ), 1.0 );
-    // outline (like in eclipse)
+    // atmosphere-like effect (glow right near the edge like in an eclipse)
     fragColor.rgb += vec3( fbase * ( 0.75 + brightness * 0.3 ) * orange );
-    // fragColor.rgb = vec3(uv.x);
     // rotating texture
     fragColor.rgb    += starSphere;
     // corona
     fragColor.rgb   += corona * orange;
     // emitted light
+    // float starGlow    = min( max( 1.0 - dist * ( 1.0 - brightness ), 0.0 ), 1.0 );
     // fragColor.rgb   += starGlow * orangeRed;
-    float d = abs(length(abs(fragColor.rgb)));
-    fragColor.a = smoothstep(0.1, 0.7, d);
+
+    // transparency outside of everything
+    fragColor.a = smoothstep(0.1, 0.7, abs(length(abs(fragColor.rgb))));
     // fragColor.rgba = vec4(vNormal * 0.5 + 0.5, 1);
 }
 
