@@ -11,6 +11,7 @@ import {
 } from './ThreePlanetShape';
 import { actionsActive } from '../utils/ShipControls';
 import { Texture } from 'three';
+import { VisualState } from '../NetState';
 
 // from random_stuff.rs
 const possibleColors = [

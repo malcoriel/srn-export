@@ -59,7 +59,7 @@ float snoise(vec3 uv, float res)    // by trisomie21
 float freqs[4];
 
 void main() {
-      freqs[0] = texture( iChannel1, vec2( 0.01, 0.25 ) ).x;
+    freqs[0] = texture( iChannel1, vec2( 0.01, 0.25 ) ).x;
     freqs[1] = texture( iChannel1, vec2( 0.07, 0.25 ) ).x;
     freqs[2] = texture( iChannel1, vec2( 0.15, 0.25 ) ).x;
     freqs[3] = texture( iChannel1, vec2( 0.30, 0.25 ) ).x;
@@ -69,7 +69,7 @@ void main() {
     vec3 orangeRed = color / 2.0;
     float time = time * 0.001;
 
-    float usedSrcRadius = 1.3;
+    float usedSrcRadius = 1.0;
     float radiusB = 0.24 * usedSrcRadius;
     float radiusK = 0.5 * usedSrcRadius;
     float radiusC = 2.0 / usedSrcRadius;
