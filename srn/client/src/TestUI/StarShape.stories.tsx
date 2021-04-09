@@ -27,13 +27,14 @@ const Template: Story = (args) => {
           <meshBasicMaterial color="teal" />
         </mesh>
         <ThreeStar
+          key={revision}
           visualState={{
             boundCameraMovement: false,
             zoomShift: 1,
             cameraPosition: new Vector(0, 0),
           }}
           visible
-          scale={_.times(3, () => 120) as [number, number, number]}
+          scale={_.times(3, () => 128) as [number, number, number]}
           position={posToThreePos(0, 0)}
           color="rgb(200, 150, 65)"
         />
@@ -42,18 +43,7 @@ const Template: Story = (args) => {
   );
 };
 
-const oysterHex = '#827A6B';
-const orangeHex = '#bf8660';
-
 export const Main = Template.bind({});
 Main.args = {
-  color1: oysterHex,
-  color2: orangeHex,
-  color3: '#552',
-  colorCount: 64,
-  maxColors: 256,
-  mixThreshold: 0.8,
-  saturationSpread: 0.4,
-  valueSpread: 0.4,
   seed: '123',
 };

@@ -7,7 +7,6 @@ import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import { VisualState } from '../NetState';
 import { unitsToPixels_min } from '../coord';
 import { shallowEqual } from '../utils/shallowCompare';
-import Vector, { VectorFzero } from '../utils/Vector';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -41,7 +40,7 @@ export const ThreeStar: React.FC<
       if (mesh.current) {
         if (props.visible) {
           const material = mesh.current.material as ShaderMaterial;
-          material.uniforms.time.value += 0.008;
+          material.uniforms.time.value += 1;
         }
       }
     });
@@ -55,10 +54,6 @@ export const ThreeStar: React.FC<
         color.green() / 255,
         color.blue() / 255
       );
-      // 10 -> 0.25
-      // 20 -> 0.5
-      patchedUniforms.srcRadius.value =
-        ((props.scale[0] / 10) * 0.18) / zoomProp;
       return patchedUniforms;
       // eslint-disable-next-line
     }, [zoomProp, unitsToPixels_min(), camera.position.x, camera.position.y]);

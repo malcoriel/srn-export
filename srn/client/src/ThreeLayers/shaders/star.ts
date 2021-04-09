@@ -32,8 +32,6 @@ out vec4 FragColor;
 
 uniform sampler2D iChannel0;
 uniform sampler2D iChannel1;
-uniform float srcRadius;
-uniform vec2 shift;
 
 float snoise(vec3 uv, float res)    // by trisomie21
 {
@@ -60,9 +58,8 @@ float snoise(vec3 uv, float res)    // by trisomie21
 
 float freqs[4];
 
-void mainImage( out vec4 fragColor)
-{
-    freqs[0] = texture( iChannel1, vec2( 0.01, 0.25 ) ).x;
+void main() {
+      freqs[0] = texture( iChannel1, vec2( 0.01, 0.25 ) ).x;
     freqs[1] = texture( iChannel1, vec2( 0.07, 0.25 ) ).x;
     freqs[2] = texture( iChannel1, vec2( 0.15, 0.25 ) ).x;
     freqs[3] = texture( iChannel1, vec2( 0.30, 0.25 ) ).x;
@@ -70,9 +67,9 @@ void mainImage( out vec4 fragColor)
     float brightness = freqs[1] * 0.25 + freqs[2] * 0.25;
     vec3 orange = color * 1.1;
     vec3 orangeRed = color / 2.0;
-    float time = time * 0.1;
+    float time = time * 0.001;
 
-    float usedSrcRadius = srcRadius * 0.5;
+    float usedSrcRadius = 1.3;
     float radiusB = 0.24 * usedSrcRadius;
     float radiusK = 0.5 * usedSrcRadius;
     float radiusC = 2.0 / usedSrcRadius;
@@ -125,25 +122,19 @@ void mainImage( out vec4 fragColor)
     }
 
     // atmosphere-like effect (glow right near the edge like in an eclipse)
-    fragColor.rgb += vec3( fbase * ( 0.75 + brightness * 0.3 ) * orange );
+    FragColor.rgb += vec3( fbase * ( 0.75 + brightness * 0.3 ) * orange );
     // rotating texture
-    fragColor.rgb += starSphere;
+    FragColor.rgb += starSphere;
     // corona
-    fragColor.rgb += corona * orange;
+    FragColor.rgb += corona * orange;
     // emitted light
     // float starGlow = min( max( 1.0 - dist * ( 1.0 - brightness ), 0.0 ), 1.0 );
-    // fragColor.rgb += starGlow * orangeRed;
+    // FragColor.rgb += starGlow * orangeRed;
 
     // transparency outside of everything
-    fragColor.a = smoothstep(0.1, 0.7, abs(length(abs(fragColor.rgb))));
-    // fragColor.rgba = vec4(vNormal * 0.5 + 0.5, 1);
+    FragColor.a = smoothstep(0.1, 0.7, abs(length(abs(FragColor.rgb))));
+    // FragColor.rgba = vec4(vNormal * 0.5 + 0.5, 1);
 }
-
-void main() {
-  mainImage(FragColor);
-}
-
-
 
 `;
 
@@ -178,14 +169,10 @@ export const uniforms: {
   iChannel0: TextureUniformValue;
   time: FloatUniformValue;
   iChannel1: TextureUniformValue;
-  srcRadius: FloatUniformValue;
   color: Vector3UniformValue;
-  shift: Vector2UniformValue;
 } = {
   iChannel0: { value: null },
   time: { value: 0 },
-  srcRadius: { value: 0.25 },
   iChannel1: { value: null },
   color: { value: new Vector3(0, 0, 0) },
-  shift: { value: new Vector2(0, 0) },
 };
