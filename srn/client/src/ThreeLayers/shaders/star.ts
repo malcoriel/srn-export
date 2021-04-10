@@ -1,6 +1,26 @@
 import { Texture, Vector2, Vector3 } from 'three';
 // delete viewMatrix, cameraPosition
 
+export const hsvFunctions = `
+vec3 rgb2hsv(vec3 c)
+{
+    vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+
+    float d = q.x - min(q.w, q.y);
+    float e = 1.0e-10;
+    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+}
+
+vec3 hsv2rgb(vec3 c)
+{
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+`;
+
 export const vertexShader = `#version 300 es
 precision highp float;
 precision highp int;
@@ -52,6 +72,8 @@ float snoise(vec3 uv, float res)    // by trisomie21
 float freqs[4];
 float sphereRadius = 0.25;
 
+${hsvFunctions}
+
 float calculate_corona(in vec2 center_offset, in float dist,
     in float brightness, in float time) {
     float fade = pow( length( 1.9 * center_offset ), 0.55 );
@@ -88,6 +110,10 @@ float calc_brightness() {
     return freqs[1] * 0.25 + freqs[2] * 0.25;
 }
 
+float grayscale(vec3 color) {
+  return dot(color.rgb, vec3(0.299, 0.587, 0.114));
+}
+
 void main() {
     float brightness = calc_brightness();
     vec3 orange = color * 1.1;
@@ -105,25 +131,34 @@ void main() {
     // atmosphere-like effect (glow right near the edge like in an eclipse)
     vec2 sp = center_offset * (4.0 - brightness);
     float r = dot((sp),(sp));
-    float fbase = (1.0-sqrt(abs(1.0-r)))/(r); // + brightness * 0.5;
-    FragColor.rgb += vec3( fbase * 1.25 * orange );
+    float glow_base = (1.0-sqrt(abs(1.0-r)))/(r); // + brightness * 0.5;
+
+    float glow_base2 = glow_base;
+    if (dist < sphereRadius) {
+      glow_base2 *= r;
+    }
+    FragColor.rgb += vec3( glow_base2 * 0.7 );
 
     // rotating texture
     vec3 starSphere = vec3( 0.0 );
     if(dist < sphereRadius) {
         vec2 newUv;
-        newUv.x = sp.x*fbase;
-        newUv.y = sp.y*fbase;
+        newUv.x = sp.x * glow_base;
+        newUv.y = sp.y * glow_base;
         newUv += vec2( time, 0.0 );
         vec3 texSample = texture( iChannel0, newUv ).rgb;
         float uOff = ( texSample.g * brightness * 4.5 + time );
         vec2 starUV = newUv + vec2( uOff, 0.0 );
-        starSphere = texture( iChannel0, starUV ).rgb;
+        starSphere = texture( iChannel0, starUV ).rgb * color;
     }
     FragColor.rgb += starSphere;
 
-    // transparency outside of everything
-    FragColor.a = smoothstep(0.1, 0.7, abs(length(abs(FragColor.rgb))));
+    // transparency outside of everything, limited by radius
+    if (dist > sphereRadius) {
+      FragColor.a = smoothstep(0.1, 0.7, abs(length(abs(FragColor.rgb))));
+    } else {
+      FragColor.a = 1.0;
+    }
     // FragColor.rgba = vec4(vNormal * 0.5 + 0.5, 1);
 }
 

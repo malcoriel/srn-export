@@ -27,7 +27,7 @@ const Template: Story = (args) => {
           <meshBasicMaterial color="teal" />
         </mesh>
         <ThreeStar
-          key={revision}
+          key={revision + JSON.stringify(args)}
           visualState={{
             boundCameraMovement: false,
             zoomShift: 1,
@@ -36,7 +36,7 @@ const Template: Story = (args) => {
           visible
           scale={_.times(3, () => 128) as [number, number, number]}
           position={posToThreePos(0, 0)}
-          color="rgb(200, 150, 65)"
+          color={args.color}
         />
       </StoryCanvas>
     </div>
@@ -45,5 +45,5 @@ const Template: Story = (args) => {
 
 export const Main = Template.bind({});
 Main.args = {
-  seed: '123',
+  color: 'rgb(200, 150, 65)',
 };
