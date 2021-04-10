@@ -1,9 +1,5 @@
 use crate::new_id;
-use crate::random_stuff::{
-    gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count,
-    gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius, PLANET_NAMES,
-    SAT_NAMES,
-};
+use crate::random_stuff::{gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius, PLANET_NAMES, SAT_NAMES, gen_star_color};
 use crate::world::{AsteroidBelt, GameState, Planet, Star, GameMode};
 use crate::market::{Market, init_all_planets_market};
 use chrono::Utc;
@@ -258,8 +254,11 @@ pub fn get_planet_type_color(p_type: PlanetType) -> String {
 }
 
 pub fn gen_star(star_id: Uuid, mut prng: &mut SmallRng, radius: f64, pos: Vec2f64) -> Star {
+    let colors = gen_star_color(&mut prng);
+    eprintln!("colors: {}, {}", colors.0, colors.1);
     Star {
-        color: "rgb(200, 150, 65)".to_string(),
+        color: colors.0.to_string(),
+        corona_color: colors.1.to_string(),
         id: star_id.clone(),
         name: gen_star_name(&mut prng).to_string(),
         x: pos.x,
@@ -299,6 +298,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
 
     let star = Star {
         color: "rgb(100, 200, 85)".to_string(),
+        corona_color: "rgb(100, 200, 85)".to_string(),
         id: star_id.clone(),
         name: gen_star_name(&mut prng).to_string(),
         x: 0.0,

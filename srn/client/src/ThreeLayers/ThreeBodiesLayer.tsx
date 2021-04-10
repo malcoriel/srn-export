@@ -93,6 +93,7 @@ export const ThreeBodiesLayer: React.FC<{
           scale={_.times(3, () => star.radius) as [number, number, number]}
           position={posToThreePos(star.x, star.y)}
           color={star.color}
+          coronaColor={star.corona_color}
         />
       )}
       {asteroid_belts.map((b) => (

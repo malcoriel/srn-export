@@ -13,7 +13,8 @@
     "y": 0,
     "radius": 45.86448748408963,
     "rotation": 0,
-    "color": "rgb(200, 150, 65)"
+    "color": "rgb(200, 150, 65)",
+    "corona_color": "rgb(200, 150, 65)"
   },
   "planets": [
     {

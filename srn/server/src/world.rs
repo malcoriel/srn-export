@@ -279,6 +279,7 @@ pub struct Star {
     pub radius: f64,
     pub rotation: f64,
     pub color: String,
+    pub corona_color: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

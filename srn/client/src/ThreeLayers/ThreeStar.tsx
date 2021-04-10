@@ -67,7 +67,6 @@ export const ThreeStar: React.FC<
           vertexShader={vertexShader}
           uniforms={uniforms2}
         />
-        {/*<meshBasicMaterial color="red" />*/}
       </mesh>
     );
   },

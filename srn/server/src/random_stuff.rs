@@ -43,6 +43,17 @@ pub const COLORS: [&str; 32] = [
     "#DC890C", "#F68923", "#F4A261", "#E76F51", "#849324", "#FD151B", "#D8A47F", "#EF8354",
 ];
 
+pub const STAR_COLORS: [(&str, &str); 8] = [
+    ("#6C0900", "#6C0900"), // dark red
+    ("#9D2302", "#9D2302"), // darkish red
+    ("#C64F10", "#C64F10"), // dark orange
+    ("#ED8B34", "#ED8B34"), // orange,
+    ("#FFD384", "#FFD384"), // pale yellow,
+    ("#FDFFD3", "#FDFFD3"), // yellow-white,
+    ("#E3FFFA", "#E3FFFA"), // blue-white,
+    ("#80B7FF", "#80B7FF"), // full-blue
+];
+
 pub const PLANET_NAMES: [&str; 32] = [
     "Scarol", "Dailla", "Tapella", "Agland", "Ceonine", "Depes", "Mazsea", "Brova", "Legcan",
     "Tolopa", "Intum", "Bettose", "Harutlis", "Intfiner", "Arudros", "Whimox", "Wonuria",
@@ -128,7 +139,11 @@ pub const CHARACTER_NAMES: [&str; 32] = [
 ];
 
 pub fn rand_32(rng: &mut SmallRng) -> usize {
-    return rng.gen_range(0, 31);
+    return rng.gen_range(0, 32);
+}
+
+pub fn rand_8(rng: &mut SmallRng) -> usize {
+    return rng.gen_range(0, 8);
 }
 
 pub fn gen_star_name(rng: &mut SmallRng) -> &'static str {
@@ -151,6 +166,9 @@ pub fn gen_sat_name(rng: &mut SmallRng) -> &'static str {
 
 pub fn gen_color(rng: &mut SmallRng) -> &'static str {
     COLORS[rand_32(rng)]
+}
+pub fn gen_star_color(rng: &mut SmallRng) -> (&'static str, &'static str) {
+    STAR_COLORS[rand_8(rng)]
 }
 
 pub fn gen_bot_name(rng: &mut SmallRng) -> String {
