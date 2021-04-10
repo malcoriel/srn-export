@@ -36,27 +36,48 @@ uniform sampler2D iChannel1;
 float snoise(vec3 uv, float res)    // by trisomie21
 {
     const vec3 s = vec3(1e0, 1e2, 1e4);
-
     uv *= res;
-
     vec3 uv0 = floor(mod(uv, res))*s;
     vec3 uv1 = floor(mod(uv+vec3(1.), res))*s;
-
     vec3 f = fract(uv); f = f*f*(3.0-2.0*f);
-
     vec4 v = vec4(uv0.x+uv0.y+uv0.z, uv1.x+uv0.y+uv0.z,
                     uv0.x+uv1.y+uv0.z, uv1.x+uv1.y+uv0.z);
-
     vec4 r = fract(sin(v*1e-3)*1e5);
     float r0 = mix(mix(r.x, r.y, f.x), mix(r.z, r.w, f.x), f.y);
-
     r = fract(sin((v + uv1.z - uv0.z)*1e-3)*1e5);
     float r1 = mix(mix(r.x, r.y, f.x), mix(r.z, r.w, f.x), f.y);
-
     return mix(r0, r1, f.z)*2.-1.;
 }
 
 float freqs[4];
+
+float calculate_corona(in vec2 center_offset, in float dist,
+    in float brightness, in float time) {
+    float fade = pow( length( 1.9 * center_offset ), 0.55 );
+    float fVal1 = 1.0 - fade;
+    float fVal2 = 1.0 - fade;
+
+    float angle = atan( center_offset.x, center_offset.y )/3.0;
+    vec3 coord = vec3( angle, dist, time * 0.1 );
+
+    float newTime1  = abs( snoise( coord + vec3( 0.0, -time * ( 0.35 + brightness * 0.001 ), time * 0.015 ), 15.0 ) );
+    float newTime2  = abs( snoise( coord + vec3( 0.0, -time * ( 0.15 + brightness * 0.001 ), time * 0.015 ), 45.0 ) );
+    for( int i=1; i<=7; i++ ){
+        float power = pow( 2.0, float(i + 1) );
+        fVal1 += ( 0.5 / power ) * snoise( coord + vec3( 0.0, -time, time * 0.2 ), ( power * ( 10.0 ) * ( newTime1 + 1.0 ) ) );
+        fVal2 += ( 0.5 / power ) * snoise( coord + vec3( 0.0, -time, time * 0.2 ), ( power * ( 25.0 ) * ( newTime2 + 1.0 ) ) );
+    }
+
+    float coronaBaseBright = 1.15;
+    float corona = pow( fVal1 * max( coronaBaseBright - fade, 0.0 ), 2.0 ) * 50.0;
+    corona += pow( fVal2 * max( coronaBaseBright - fade, 0.0 ), 2.0 ) * 50.0;
+    corona *= coronaBaseBright - newTime1;
+    if(dist < 0.25) {
+        // cut off the corona inside the sphere
+        corona *= 0.0;
+    }
+    return corona;
+}
 
 void main() {
     freqs[0] = texture( iChannel1, vec2( 0.01, 0.25 ) ).x;
@@ -70,47 +91,25 @@ void main() {
     float time = time * 0.001;
 
     float usedSrcRadius = 1.0;
-    float radiusB = 0.24 * usedSrcRadius;
-    float radiusK = 0.5 * usedSrcRadius;
-    float radiusC = 2.0 / usedSrcRadius;
-    vec2 center = vec2(0.5);
-
-    float radius = radiusB;
-
     vec2 uv = relativeObjectCoord;
+    vec2 center = vec2(0.5);
     vec2 center_offset = uv - center;
 
-    float fade = pow( length( 1.9 * center_offset ), 0.55 );
-    float fVal1 = 1.0 - fade;
-    float fVal2 = 1.0 - fade;
-
-    float angle = atan( center_offset.x, center_offset.y )/3.0;
     float dist = length(center_offset);
-    vec3 coord = vec3( angle, dist, time * 0.1 );
+    // corona
+    float corona = calculate_corona(center_offset, dist, brightness, time);
+    FragColor.rgb += corona * orange;
 
-    float newTime1  = abs( snoise( coord + vec3( 0.0, -time * ( 0.35 + brightness * 0.001 ), time * 0.015 ), 15.0 ) );
-    float newTime2  = abs( snoise( coord + vec3( 0.0, -time * ( 0.15 + brightness * 0.001 ), time * 0.015 ), 45.0 ) );
-    for( int i=1; i<=7; i++ ){
-        float power = pow( 2.0, float(i + 1) );
-        fVal1 += ( 0.5 / power ) * snoise( coord + vec3( 0.0, -time, time * 0.2 ), ( power * ( 10.0 ) * ( newTime1 + 1.0 ) ) );
-        fVal2 += ( 0.5 / power ) * snoise( coord + vec3( 0.0, -time, time * 0.2 ), ( power * ( 25.0 ) * ( newTime2 + 1.0 ) ) );
-    }
-    float coronaBaseBright = 1.15;
-    float corona = pow( fVal1 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
-    corona += pow( fVal2 * max( coronaBaseBright - fade, 0.0 ), radiusC ) * 50.0;
-    corona *= coronaBaseBright - newTime1;
-    if(dist < radius) {
-        // cut off the corona inside the sphere
-        corona *= 0.0;
-    }
 
-    // outline
+    // atmosphere-like effect (glow right near the edge like in an eclipse)
     vec2 sp = center_offset * (4.0 / usedSrcRadius - brightness);
     float r = dot((sp),(sp));
     float fbase = (1.0-sqrt(abs(1.0-r)))/(r); // + brightness * 0.5;
+    FragColor.rgb += vec3( fbase * ( 0.75 + brightness * 0.3 ) * orange );
 
+    // rotating texture
     vec3 starSphere = vec3( 0.0 );
-    if(dist < radius) {
+    if(dist < 0.25) {
         vec2 newUv;
         newUv.x = sp.x*fbase;
         newUv.y = sp.y*fbase;
@@ -120,13 +119,9 @@ void main() {
         vec2 starUV = newUv + vec2( uOff, 0.0 );
         starSphere = texture( iChannel0, starUV ).rgb;
     }
-
-    // atmosphere-like effect (glow right near the edge like in an eclipse)
-    FragColor.rgb += vec3( fbase * ( 0.75 + brightness * 0.3 ) * orange );
-    // rotating texture
     FragColor.rgb += starSphere;
-    // corona
-    FragColor.rgb += corona * orange;
+
+
     // emitted light
     // float starGlow = min( max( 1.0 - dist * ( 1.0 - brightness ), 0.0 ), 1.0 );
     // FragColor.rgb += starGlow * orangeRed;
