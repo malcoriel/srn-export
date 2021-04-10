@@ -46,6 +46,7 @@ precision highp float;
 precision highp int;
 uniform float time;
 uniform vec3 color;
+uniform vec3 coronaColor;
 
 in vec2 relativeObjectCoord;
 out vec4 FragColor;
@@ -125,7 +126,7 @@ void main() {
 
     // corona
     float corona = calculate_corona(center_offset, dist, brightness, time);
-    FragColor.rgb += corona * orange;
+    FragColor.rgb += corona * coronaColor;
 
 
     // atmosphere-like effect (glow right near the edge like in an eclipse)
@@ -149,7 +150,11 @@ void main() {
         vec3 texSample = texture( iChannel0, newUv ).rgb;
         float uOff = ( texSample.g * brightness * 4.5 + time );
         vec2 starUV = newUv + vec2( uOff, 0.0 );
-        starSphere = texture( iChannel0, starUV ).rgb * color;
+        float targetHue = rgb2hsv(color).x;
+        starSphere = texture( iChannel0, starUV ).rgb;
+        vec3 sphereHsv = rgb2hsv(starSphere);
+        sphereHsv.x = targetHue;
+        starSphere = hsv2rgb(sphereHsv);
     }
     FragColor.rgb += starSphere;
 
@@ -196,9 +201,11 @@ export const uniforms: {
   time: FloatUniformValue;
   iChannel1: TextureUniformValue;
   color: Vector3UniformValue;
+  coronaColor: Vector3UniformValue;
 } = {
   iChannel0: { value: null },
   time: { value: 0 },
   iChannel1: { value: null },
-  color: { value: new Vector3(0, 0, 0) },
+  color: { value: new Vector3(0.5, 0.5, 0.5) },
+  coronaColor: { value: new Vector3(0.5, 0.5, 0.5) },
 };

@@ -5,7 +5,7 @@ import {
 } from './star';
 import { Vector3 } from 'three/src/math/Vector3';
 import { Vector2 } from 'three';
-import { normalize3, teal } from '../../utils/palette';
+import { normalizeColor, teal } from '../../utils/palette';
 
 export const fragmentShader = `#define TAU 6.28318530718
 #define MAX_ITER 5
@@ -123,7 +123,7 @@ export const uniforms: {
   time: { value: 0 },
   backgroundColor: { value: new Vector3(0.0, 0.0, 0.0) },
   Tiling_Caustic1477531952046_152_color: {
-    value: new Vector3(...normalize3(teal)),
+    value: new Vector3(...normalizeColor(teal)),
   },
   resolution: { value: new Vector2(1, 1) },
   speed: { value: 1.5 },

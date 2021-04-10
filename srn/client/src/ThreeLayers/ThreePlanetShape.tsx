@@ -3,7 +3,7 @@ import { IVector } from '../utils/Vector';
 import { Mesh, ShaderMaterial, Texture, Vector3 } from 'three';
 import { useFrame } from 'react-three-fiber';
 import _ from 'lodash';
-import { normalize3 } from '../utils/palette';
+import { normalizeColor } from '../utils/palette';
 import { size, unitsToPixels_min } from '../coord';
 import { vecToThreePos } from './ThreeLayer';
 import Prando from 'prando';
@@ -208,7 +208,7 @@ export const ThreePlanetShape: React.FC<{
       patchedUniforms.detailOctaves.value =
         detail || defaultUniformValues.detailOctaves;
       patchedUniforms.inputColor.value = color
-        ? new Vector3(...normalize3(color))
+        ? new Vector3(...normalizeColor(color))
         : defaultUniformValues.inputColor;
 
       patchedUniforms.iResolution.value = new Vector3(

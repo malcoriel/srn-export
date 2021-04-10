@@ -37,6 +37,7 @@ const Template: Story = (args) => {
           scale={_.times(3, () => 128) as [number, number, number]}
           position={posToThreePos(0, 0)}
           color={args.color}
+          coronaColor={args.coronaColor}
         />
       </StoryCanvas>
     </div>
@@ -46,4 +47,5 @@ const Template: Story = (args) => {
 export const Main = Template.bind({});
 Main.args = {
   color: 'rgb(200, 150, 65)',
+  coronaColor: 'rgb(200, 150, 65)',
 };

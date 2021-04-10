@@ -1,12 +1,12 @@
 import React, { useMemo, useRef } from 'react';
-import Color from 'color';
 import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
 import * as THREE from 'three';
-import { Mesh, ShaderMaterial, TextureLoader, Vector2, Vector3 } from 'three';
+import { Mesh, ShaderMaterial, TextureLoader, Vector3 } from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';
 import { VisualState } from '../NetState';
 import { unitsToPixels_min } from '../coord';
 import { shallowEqual } from '../utils/shallowCompare';
+import { normalizeColor } from '../utils/palette';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -18,6 +18,7 @@ export const useRepeatWrappedTextureLoader = (path: string) => {
 export const ThreeStar: React.FC<
   MeshProps & {
     color?: string;
+    coronaColor?: string;
     scale: [number, number, number];
     visible: boolean;
     visualState: VisualState;
@@ -31,8 +32,6 @@ export const ThreeStar: React.FC<
     const grassTile = useRepeatWrappedTextureLoader(
       'resources/bowling_grass.jpg'
     );
-
-    const color = useMemo(() => Color(props.color || 'white'), [props.color]);
 
     const { camera } = useThree();
 
@@ -50,9 +49,10 @@ export const ThreeStar: React.FC<
       patchedUniforms.iChannel0.value = lavaTile;
       patchedUniforms.iChannel1.value = grassTile;
       patchedUniforms.color.value = new Vector3(
-        color.red() / 255,
-        color.green() / 255,
-        color.blue() / 255
+        ...normalizeColor(props.color || 'white')
+      );
+      patchedUniforms.coronaColor.value = new Vector3(
+        ...normalizeColor(props.coronaColor || 'white')
       );
       return patchedUniforms;
       // eslint-disable-next-line

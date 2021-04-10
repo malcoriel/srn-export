@@ -10,7 +10,7 @@ import { Mesh, ShaderMaterial, Vector3 } from 'three';
 import React, { useMemo, useRef } from 'react';
 import Color from 'color';
 import { useFrame } from 'react-three-fiber';
-import { normalize3 } from '../utils/palette';
+import { normalizeColor } from '../utils/palette';
 
 function padArrTo<T>(arr: T[], desiredLength: number, filler: T) {
   const res = [...arr];
@@ -114,7 +114,7 @@ const genColors = (
 
   const boundaryStep = 1.0 / maxColors;
   const colorsRgb = colors.map(
-    (c) => new Vector3(...normalize3(c.rgb().toString()))
+    (c) => new Vector3(...normalizeColor(c.rgb().toString()))
   );
   const middlePoint = maxColors / 2 - 0.5;
 

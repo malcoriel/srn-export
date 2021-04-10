@@ -1,7 +1,7 @@
 import Color from 'color';
 
 type Color3Arr = [number, number, number];
-export const normalize3 = (c: string): Color3Arr => {
+export const normalizeColor = (c: string): Color3Arr => {
   return new Color(c)
     .rgb()
     .array()
