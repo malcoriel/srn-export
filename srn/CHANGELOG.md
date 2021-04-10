@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 0.5.10 (2021-04-10)
+
+### New
+* Improved star shader generation, now stars can be of different colors and not look horrible.
+
+### Fixes
+* Fixed several client crashes caused by wrong texture filenames.
+
+## Version 0.5.9 - lost by mistake
+
 ## Version 0.5.8 (2021-04-07)
 
 ### New
