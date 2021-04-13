@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
-import { PlanetTextureShape } from './PlanetTextureShape';
 import { StoryCanvas } from './StoryCanvas';
 import { ThreeStar } from '../ThreeLayers/ThreeStar';
 import _ from 'lodash';
@@ -10,7 +9,7 @@ import Vector from '../utils/Vector';
 
 export default {
   title: 'Three/StarShape',
-  component: PlanetTextureShape,
+  component: ThreeStar,
   argTypes: {},
 } as Meta;
 
