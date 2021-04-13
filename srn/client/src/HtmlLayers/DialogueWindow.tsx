@@ -24,7 +24,6 @@ import { Planet } from '../../../world/pkg';
 import { Vector3 } from 'three';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
-import { useColorTextures } from '../ThreeLayers/ThreeBodiesLayer';
 
 export const enrichSub = (s: DialogueSubstitution): ReactNode => {
   const ns = NetState.get();

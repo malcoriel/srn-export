@@ -9,11 +9,19 @@ import {
 import { actionsActive } from '../utils/ShipControls';
 import { ShipAction, ShipActionType } from '../world';
 import Vector from '../utils/Vector';
+import { possibleGasGiantColors } from '../ThreeLayers/ThreeBodiesLayer';
 
 export default {
   title: 'Three/PlanetShape',
   component: ThreePlanetShape,
-  argTypes: {},
+  argTypes: {
+    color: {
+      options: possibleGasGiantColors,
+      control: {
+        type: 'select',
+      },
+    },
+  },
 } as Meta;
 
 const Template: Story = (args) => {
@@ -49,7 +57,7 @@ const Template: Story = (args) => {
   );
 };
 
-export const Main = Template.bind({});
-Main.args = {
+export const GasGiant = Template.bind({});
+GasGiant.args = {
   color: '#008FA9',
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 import { GameState, ShipAction, ShipActionType } from '../world';
-import { ThreeStar, useRepeatWrappedTextureLoader } from './ThreeStar';
+import { ThreeStar } from './ThreeStar';
 import { posToThreePos } from './ThreeLayer';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
 import { ThreeRock } from './ThreeRock';
@@ -10,11 +10,10 @@ import {
   ThreePlanetShapeRandomProps,
 } from './ThreePlanetShape';
 import { actionsActive } from '../utils/ShipControls';
-import { Texture } from 'three';
 import { VisualState } from '../NetState';
 
 // from random_stuff.rs
-const possibleColors = [
+export const possibleGasGiantColors = [
   '#0D57AC',
   '#AE213D',
   '#DE4C0A',
@@ -48,17 +47,6 @@ const possibleColors = [
   '#D8A47F',
   '#EF8354',
 ];
-
-export const useColorTextures = () => {
-  const res: Record<string, Texture> = {};
-  for (const color of possibleColors) {
-    const key = color.replace('#', '').toUpperCase();
-    res[key] = useRepeatWrappedTextureLoader(
-      `resources/textures/gas-giants/${key}.png`
-    );
-  }
-  return res;
-};
 
 export const ThreeBodiesLayer: React.FC<{
   state: GameState;

@@ -18,7 +18,7 @@ import {
   CameraZoomer,
   ExternalCameraControl,
 } from './CameraControls';
-import { ThreeBodiesLayer, useColorTextures } from './ThreeBodiesLayer';
+import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState, { useNSForceChange } from '../NetState';
 import Vector, { IVector } from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
