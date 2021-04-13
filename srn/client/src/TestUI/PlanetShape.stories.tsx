@@ -50,6 +50,7 @@ const Template: Story = (args) => {
           position={new Vector(0, 0)}
           key={revision + JSON.stringify(args)}
           color={args.color}
+          atmosphereColor={args.atmosphereColor}
           visible
         />
       </StoryCanvas>
@@ -60,4 +61,5 @@ const Template: Story = (args) => {
 export const GasGiant = Template.bind({});
 GasGiant.args = {
   color: '#008FA9',
+  atmosphereColor: '#008FA9',
 };

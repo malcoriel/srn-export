@@ -29,7 +29,7 @@ const defaultUniformValues = {
   spotsRandomizingFactor: 3,
   rotationSpeed: 0.01 / 60,
   spotsRotationSpeed: 0.015 / 60,
-  inputColor: new Vector3(1, 1, 1),
+  atmosphereColor: new Vector3(1, 1, 1),
 };
 const uniforms: {
   iChannel0: TextureUniformValue;
@@ -41,7 +41,7 @@ const uniforms: {
   spotsRotationSpeed: FloatUniformValue;
   spotsRandomizingFactor: FloatUniformValue;
   iResolution: Vector3UniformValue;
-  inputColor: Vector3UniformValue;
+  atmosphereColor: Vector3UniformValue;
 } = {
   iChannel0: { value: null },
   time: { value: 0 },
@@ -54,7 +54,7 @@ const uniforms: {
   rotationSpeed: { value: defaultUniformValues.rotationSpeed }, // full rotations per frame
   spotsRotationSpeed: { value: defaultUniformValues.spotsRotationSpeed },
   iResolution: { value: new Vector3(size.width_px, size.height_px, 0) },
-  inputColor: { value: defaultUniformValues.inputColor },
+  atmosphereColor: { value: defaultUniformValues.atmosphereColor },
 };
 const vertexShader = `#version 300 es
 precision highp float;
@@ -90,7 +90,7 @@ uniform float spotsRotationSpeed;
 uniform sampler2D iChannel0;
 uniform vec2 iResolution;
 #define PI 3.14159265358979323846264338327
-uniform vec3 inputColor;
+uniform vec3 atmosphereColor;
 
 in vec2 relativeObjectCoord;
 out vec4 FragColor;
@@ -141,6 +141,13 @@ void main() {
   turnedTextureCoords.x /= yStretchFactor;
   turnedTextureCoords.x += magicStretch;
   FragColor = vec4(texture(iChannel0, turnedTextureCoords).xyz, step(0.0, 1.0 - distanceToCenter));
+
+  // 'atmospheric' glow on the edge
+  float glow_base = (1.0-sqrt(abs(1.0-pow(distanceToCenter, 5.0))));
+  FragColor.xyz = vec3(glow_base) * atmosphereColor;
+  if (glow_base > 0.1) {
+    FragColor.a = 1.0 - pow(distanceToCenter, 2.0);
+  }
 }
 `;
 export const ThreePlanetShape: React.FC<{
@@ -148,6 +155,7 @@ export const ThreePlanetShape: React.FC<{
   onClick?: (e: any) => void;
   radius: number;
   color?: string;
+  atmosphereColor?: string;
   detail?: number;
   rotationSpeed?: number;
   spotsRotationSpeed?: number;
@@ -160,6 +168,7 @@ export const ThreePlanetShape: React.FC<{
   ({
     onClick,
     position,
+    atmosphereColor,
     radius,
     detail,
     rotationSpeed,
@@ -207,9 +216,9 @@ export const ThreePlanetShape: React.FC<{
         spotsRotationSpeed || defaultUniformValues.spotsRotationSpeed;
       patchedUniforms.detailOctaves.value =
         detail || defaultUniformValues.detailOctaves;
-      patchedUniforms.inputColor.value = color
-        ? new Vector3(...normalizeColor(color))
-        : defaultUniformValues.inputColor;
+      patchedUniforms.atmosphereColor.value = atmosphereColor
+        ? new Vector3(...normalizeColor(atmosphereColor))
+        : defaultUniformValues.atmosphereColor;
 
       patchedUniforms.iResolution.value = new Vector3(
         size.width_px,
