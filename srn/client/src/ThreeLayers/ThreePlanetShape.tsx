@@ -92,6 +92,7 @@ uniform vec2 iResolution;
 #define PI 3.14159265358979323846264338327
 uniform vec3 atmosphereColor;
 
+float atmospherePercent = 0.1;
 in vec2 relativeObjectCoord;
 out vec4 FragColor;
 
@@ -110,7 +111,8 @@ vec3 grayscale(in vec3 orig, in float colorFactor) {
 
 void main() {
   vec2 centeredCoord = -1.0 + 2.0 * relativeObjectCoord;
-  float distanceToCenter = dot(centeredCoord,centeredCoord);
+  float distanceToCenter = dot(centeredCoord,centeredCoord) / 0.5;
+  float trueDistanceToCenter = dot(centeredCoord,centeredCoord);
   float sphericalDistortion = (1.0-sqrt(1.0-distanceToCenter))/(distanceToCenter);
 
   vec2 mainTextureCoords;
@@ -143,10 +145,13 @@ void main() {
   FragColor = vec4(texture(iChannel0, turnedTextureCoords).xyz, step(0.0, 1.0 - distanceToCenter));
 
   // 'atmospheric' glow on the edge
-  float glow_base = (1.0-sqrt(abs(1.0-pow(distanceToCenter, 5.0))));
-  FragColor.xyz = vec3(glow_base) * atmosphereColor;
-  if (glow_base > 0.1) {
-    FragColor.a = 1.0 - pow(distanceToCenter, 2.0);
+  float insideShift = 0.45; // shift the glow closer to the center
+  float atmosphereBrightnessFactor = 2.0;
+  float glowBase = (1.0-sqrt(abs(1.0-pow(trueDistanceToCenter + insideShift, 5.0))));
+
+  if (trueDistanceToCenter > 0.5) {
+    FragColor.xyz = vec3(glowBase) * atmosphereColor * atmosphereBrightnessFactor;
+    FragColor.a = 1.0 - pow(trueDistanceToCenter, 2.0);
   }
 }
 `;
