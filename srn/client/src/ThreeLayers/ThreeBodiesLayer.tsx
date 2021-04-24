@@ -70,6 +70,7 @@ export const ThreeBodiesLayer: React.FC<{
             position={p}
             key={p.id}
             color={p.color}
+            atmosphereColor={p.color}
             visible={visMap[p.id]}
           />
         );
