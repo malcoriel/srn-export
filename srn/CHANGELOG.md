@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.5.11 (2021-04-24)
+* Nicer-looking atmosphere for planets.
+
 ## Version 0.5.10 (2021-04-10)
 
 ### New
