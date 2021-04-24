@@ -21,6 +21,14 @@ export default {
         type: 'select',
       },
     },
+    atmospherePercent: {
+      control: {
+        type: 'range',
+        min: 0.0,
+        max: 1.0,
+        step: 0.025,
+      },
+    },
   },
 } as Meta;
 
@@ -51,6 +59,7 @@ const Template: Story = (args) => {
           key={revision + JSON.stringify(args)}
           color={args.color}
           atmosphereColor={args.atmosphereColor}
+          atmospherePercent={args.atmospherePercent}
           visible
         />
       </StoryCanvas>
@@ -61,5 +70,6 @@ const Template: Story = (args) => {
 export const GasGiant = Template.bind({});
 GasGiant.args = {
   color: '#008FA9',
+  atmospherePercent: 0.15,
   atmosphereColor: '#008FA9',
 };

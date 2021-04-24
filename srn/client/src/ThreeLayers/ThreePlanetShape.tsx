@@ -28,6 +28,7 @@ const defaultUniformValues = {
   yStretchFactor: 1,
   spotsRandomizingFactor: 3,
   rotationSpeed: 0.01 / 60,
+  atmospherePercent: 0.15,
   spotsRotationSpeed: 0.015 / 60,
   atmosphereColor: new Vector3(1, 1, 1),
 };
@@ -39,6 +40,7 @@ const uniforms: {
   yStretchFactor: FloatUniformValue;
   spotsIntensity: FloatUniformValue;
   spotsRotationSpeed: FloatUniformValue;
+  atmospherePercent: FloatUniformValue;
   spotsRandomizingFactor: FloatUniformValue;
   iResolution: Vector3UniformValue;
   atmosphereColor: Vector3UniformValue;
@@ -52,6 +54,7 @@ const uniforms: {
   },
   yStretchFactor: { value: defaultUniformValues.yStretchFactor },
   rotationSpeed: { value: defaultUniformValues.rotationSpeed }, // full rotations per frame
+  atmospherePercent: { value: defaultUniformValues.atmospherePercent }, // full rotations per frame
   spotsRotationSpeed: { value: defaultUniformValues.spotsRotationSpeed },
   iResolution: { value: new Vector3(size.width_px, size.height_px, 0) },
   atmosphereColor: { value: defaultUniformValues.atmosphereColor },
@@ -89,11 +92,13 @@ uniform float spotsIntensity;
 uniform float spotsRotationSpeed;
 uniform sampler2D iChannel0;
 uniform vec2 iResolution;
-#define PI 3.14159265358979323846264338327
 uniform vec3 atmosphereColor;
+uniform float atmospherePercent;
 
 in vec2 relativeObjectCoord;
 out vec4 FragColor;
+
+#define PI 3.14159265358979323846264338327
 
 ${simplexNoise2}
 ${simplexNoise3}
@@ -108,7 +113,6 @@ vec3 grayscale(in vec3 orig, in float colorFactor) {
     orig.b * colorFactor + grey * (1.0 - colorFactor));
 }
 
-float atmospherePercent = 0.5;
 
 float sharpSpike(in float x, in float shiftX, in float power) {
   return 1.0-sqrt(abs(1.0-pow(x + shiftX, power)));
@@ -152,21 +156,26 @@ void main() {
 
   // 'atmospheric' glow on the edge
   float insideShift = 0.0; // 0.45; // shift the glow closer to the center
-  float glowBase = sharpSpike(trueDistanceToCenter * 2.0, - 1.0 + atmospherePercent, 2.0);
+
+  // these two control the tilt and the shift of the spike in the atmospheric glow
+  float k = 2.0;
+  float shift = 0.95;
+  float glowBase = sharpSpike(trueDistanceToCenter * k, - shift + atmospherePercent, 2.0) + 0.2;
 
   if (trueDistanceToCenter > (1.0 - atmospherePercent)) {
     // FragColor.xyz = vec3(0.0, 1.0, 0.0);
-    FragColor.xyz = vec3(glowBase); // * atmosphereColor * atmosphereBrightnessFactor;
+    FragColor.xyz = vec3(glowBase) * atmosphereColor;
     // FragColor.a = 1.0 - pow(trueDistanceToCenter, 3.0);
   }
 
-  if (abs(distanceToCenter - 1.0) < 0.01) {
-    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-  }
-
-  if (abs(trueDistanceToCenter - 1.0) < 0.01) {
-    FragColor = vec4(0.0, 0.0, 1.0, 1.0);
-  }
+  // debug borders between surface and atmosphere
+  // if (abs(distanceToCenter - 1.0) < 0.01) {
+  //   FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  // }
+  //
+  // if (abs(trueDistanceToCenter - 1.0) < 0.01) {
+  //   FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+  // }
 }
 `;
 export const ThreePlanetShape: React.FC<{
@@ -175,6 +184,7 @@ export const ThreePlanetShape: React.FC<{
   radius: number;
   color?: string;
   atmosphereColor?: string;
+  atmospherePercent?: number;
   detail?: number;
   rotationSpeed?: number;
   spotsRotationSpeed?: number;
@@ -196,6 +206,7 @@ export const ThreePlanetShape: React.FC<{
     spotsIntensity,
     color,
     visible,
+    atmospherePercent,
     texture,
   }) => {
     const mesh = useRef<Mesh>();
@@ -238,6 +249,8 @@ export const ThreePlanetShape: React.FC<{
       patchedUniforms.atmosphereColor.value = atmosphereColor
         ? new Vector3(...normalizeColor(atmosphereColor))
         : defaultUniformValues.atmosphereColor;
+      patchedUniforms.atmospherePercent.value =
+        atmospherePercent || defaultUniformValues.atmospherePercent;
 
       patchedUniforms.iResolution.value = new Vector3(
         size.width_px,
@@ -246,7 +259,7 @@ export const ThreePlanetShape: React.FC<{
       );
       return patchedUniforms;
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [unitsToPixels_min(), texture]);
+    }, [unitsToPixels_min(), texture, atmospherePercent, atmosphereColor]);
 
     return (
       <mesh
