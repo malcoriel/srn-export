@@ -92,7 +92,6 @@ uniform vec2 iResolution;
 #define PI 3.14159265358979323846264338327
 uniform vec3 atmosphereColor;
 
-float atmospherePercent = 0.1;
 in vec2 relativeObjectCoord;
 out vec4 FragColor;
 
@@ -109,9 +108,15 @@ vec3 grayscale(in vec3 orig, in float colorFactor) {
     orig.b * colorFactor + grey * (1.0 - colorFactor));
 }
 
+float atmospherePercent = 0.5;
+
+float sharpSpike(in float x, in float shiftX, in float power) {
+  return 1.0-sqrt(abs(1.0-pow(x + shiftX, power)));
+}
+
 void main() {
   vec2 centeredCoord = -1.0 + 2.0 * relativeObjectCoord;
-  float distanceToCenter = dot(centeredCoord,centeredCoord) / 0.5;
+  float distanceToCenter = dot(centeredCoord,centeredCoord) / (1.0 - atmospherePercent);
   float trueDistanceToCenter = dot(centeredCoord,centeredCoord);
   float sphericalDistortion = (1.0-sqrt(1.0-distanceToCenter))/(distanceToCenter);
 
@@ -142,16 +147,25 @@ void main() {
   float magicStretch = 0.5 - 1.0 / yStretchFactor / 2.0;
   turnedTextureCoords.x /= yStretchFactor;
   turnedTextureCoords.x += magicStretch;
-  FragColor = vec4(texture(iChannel0, turnedTextureCoords).xyz, step(0.0, 1.0 - distanceToCenter));
+  float alpha = step(0.0, 1.0 - trueDistanceToCenter);
+  FragColor = vec4(texture(iChannel0, turnedTextureCoords).xyz, alpha);
 
   // 'atmospheric' glow on the edge
-  float insideShift = 0.45; // shift the glow closer to the center
-  float atmosphereBrightnessFactor = 2.0;
-  float glowBase = (1.0-sqrt(abs(1.0-pow(trueDistanceToCenter + insideShift, 5.0))));
+  float insideShift = 0.0; // 0.45; // shift the glow closer to the center
+  float glowBase = sharpSpike(trueDistanceToCenter * 2.0, - 1.0 + atmospherePercent, 2.0);
 
-  if (trueDistanceToCenter > 0.5) {
-    FragColor.xyz = vec3(glowBase) * atmosphereColor * atmosphereBrightnessFactor;
-    FragColor.a = 1.0 - pow(trueDistanceToCenter, 2.0);
+  if (trueDistanceToCenter > (1.0 - atmospherePercent)) {
+    // FragColor.xyz = vec3(0.0, 1.0, 0.0);
+    FragColor.xyz = vec3(glowBase); // * atmosphereColor * atmosphereBrightnessFactor;
+    // FragColor.a = 1.0 - pow(trueDistanceToCenter, 3.0);
+  }
+
+  if (abs(distanceToCenter - 1.0) < 0.01) {
+    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  }
+
+  if (abs(trueDistanceToCenter - 1.0) < 0.01) {
+    FragColor = vec4(0.0, 0.0, 1.0, 1.0);
   }
 }
 `;
