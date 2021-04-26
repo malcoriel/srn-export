@@ -1,6 +1,13 @@
 # Changelog
 
+## Version 0.5.12 (2021-04-24)
+
+### New
+* Better stars background, no more disappearing and moving stars.
+
 ## Version 0.5.11 (2021-04-24)
+
+### New
 * Nicer-looking atmosphere for planets.
 
 ## Version 0.5.10 (2021-04-10)
