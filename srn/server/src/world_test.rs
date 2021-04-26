@@ -80,9 +80,10 @@ mod world_test {
             }
         };
         let eps = 0.2;
+        let location = &state.locations[0];
         let new_planets = update_planets(
-            &state.planets,
-            &state.star,
+            &location.planets,
+            &location.star,
             (1000.0 * 1000.0 * PI / 2.0) as i64,
             Sampler::empty(),
             AABB::maxed(),
@@ -102,8 +103,8 @@ mod world_test {
         let sat_y = -coord - sin_pi_8;
 
         let out = update_planets(
-            &state.planets,
-            &state.star,
+            &location.planets,
+            &location.star,
             (1000.0 * 1000.0 * PI / 4.0) as i64,
             Sampler::empty(),
             AABB::maxed()
@@ -187,9 +188,10 @@ mod world_test {
             }
         };
         let eps = 0.2;
+        let location = &state.locations[0];
         let new_planets = update_planets(
-            &state.planets,
-            &state.star,
+            &location.planets,
+            &location.star,
             (1000.0 * 1000.0 * PI / 2.0) as i64,
             Sampler::empty(),
             AABB {
@@ -281,9 +283,10 @@ mod world_test {
             }
         };
         let eps = 0.2;
+        let location = &state.locations[0];
         let new_planets = update_planets(
-            &state.planets,
-            &state.star,
+            &location.planets,
+            &location.star,
             (1000.0 * 1000.0 * PI / 2.0) as i64,
             Sampler::empty(),
             AABB {
