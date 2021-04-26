@@ -484,8 +484,8 @@ pub fn gen_state_by_seed(seed_and_validate: bool, seed: String) -> GameState {
 
     let state = if seed_and_validate {
         let mut state = validate_state(state);
-        let (planets, _sampler) = planet_movement::update_planets(&state.planets, &state.star, SEED_TIME, Sampler::empty(), AABB::maxed());
-        state.planets = planets;
+        let (planets, _sampler) = planet_movement::update_planets(&state.locations[0].planets, &state.locations[0].star, SEED_TIME, Sampler::empty(), AABB::maxed());
+        state.locations[0].planets = planets;
         let state = validate_state(state);
         state
     } else {
@@ -518,12 +518,13 @@ fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
 }
 
 pub fn validate_state(mut in_state: GameState) -> GameState {
-    in_state.planets = extract_valid_planets(&in_state);
+    in_state.locations[0].planets = extract_valid_planets(&in_state);
     in_state
 }
 
 pub fn extract_valid_planets(in_state: &GameState) -> Vec<Planet> {
     in_state
+        .locations[0]
         .planets
         .iter()
         .filter(|p| {
@@ -659,7 +660,7 @@ pub fn update_world(
             } else {
                 let mut wares = state.market.wares.clone();
                 let mut prices = state.market.prices.clone();
-                let planets = state.planets.iter().map(|p| p.clone()).collect::<Vec<_>>();
+                let planets = state.locations[0].planets.iter().map(|p| p.clone()).collect::<Vec<_>>();
                 market::shake_market(planets, &mut wares, &mut prices);
                 state.market = Market {
                     wares,
