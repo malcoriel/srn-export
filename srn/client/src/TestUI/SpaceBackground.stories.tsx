@@ -3,6 +3,7 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
 import { ThreeSpaceBackground } from '../ThreeLayers/ThreeSpaceBackground';
+import { VectorF } from '../utils/Vector';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
@@ -19,7 +20,7 @@ const Template: Story = (args) => {
         <ThreeSpaceBackground
           key={`${revision}+${JSON.stringify(args)}`}
           shift={args.shift}
-          size={256}
+          size={257}
         />
       </StoryCanvas>
     </div>

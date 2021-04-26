@@ -1,16 +1,14 @@
 import { Canvas, MouseEvent } from 'react-three-fiber';
 import { Vector3 } from 'three';
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
 import {
   findMineral,
-  height_units,
   max_x,
   min_x,
   ShipAction,
   ShipActionType,
-  width_units,
 } from '../world';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
@@ -24,10 +22,9 @@ import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState, { useNSForceChange } from '../NetState';
 import Vector, { IVector } from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
-import { BackgroundPlane } from './BackgroundPlane';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { useStore } from '../store';
-import { size } from '../coord';
+import { size, viewPortSizeMeters } from '../coord';
 import { ThreeQuestDirection } from './ThreeQuestDirection';
 import { ThreeNames } from './ThreeNames';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
@@ -82,6 +79,8 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
     ? findMineral(ns.state, hintedObjectId)
     : undefined);
 
+  const viewPortSize = viewPortSizeMeters();
+  const viewPortMaxDimension = Math.max(viewPortSize.x, viewPortSize.y);
   return (
     <Canvas
       invalidateFrameloop
@@ -118,7 +117,8 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           three will not register clicks (through empty space)*/}
           <ThreeSpaceBackground
             shift={0}
-            size={Math.max(width_units, height_units)}
+            size={viewPortMaxDimension}
+            cameraBound
           />
           <ExternalCameraControl />
           <CameraZoomer />

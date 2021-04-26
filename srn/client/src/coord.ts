@@ -83,6 +83,7 @@ export const size = {
   width_px: window.innerWidth,
   height_px: window.innerHeight,
   getMinSize: () => Math.min(size.width_px, size.height_px),
+  getMaxSize: () => Math.max(size.width_px, size.height_px),
 };
 export const viewPortSizePixels = () =>
   new Vector(size.width_px, size.height_px);

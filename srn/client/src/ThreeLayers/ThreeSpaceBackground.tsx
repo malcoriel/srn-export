@@ -1,10 +1,14 @@
 // @ts-ignore
 import React, { useMemo, useRef } from 'react';
 import { Mesh, ShaderMaterial } from 'three';
-import { useFrame } from 'react-three-fiber';
+import { useFrame, useThree } from 'react-three-fiber';
 // @ts-ignore
 import _ from 'lodash';
 import { FloatUniformValue } from './shaders/uniformTypes';
+import Vector, { IVector } from '../utils/Vector';
+import { posToThreePos } from './ThreeLayer';
+import { OrthographicCamera } from '@react-three/drei';
+import { CAMERA_HEIGHT } from './CameraControls';
 
 const uniforms: {
   shift: FloatUniformValue;
@@ -132,7 +136,8 @@ void main()
 export const ThreeSpaceBackground: React.FC<{
   shift: number;
   size: number;
-}> = ({ shift, size }) => {
+  cameraBound?: boolean;
+}> = ({ shift, size, cameraBound }) => {
   const mesh = useRef<Mesh>();
 
   useFrame(() => {
@@ -151,9 +156,10 @@ export const ThreeSpaceBackground: React.FC<{
     return patchedUniforms;
   }, [shift, size]);
 
-  return (
+  const meshZ = cameraBound ? -(CAMERA_HEIGHT + 10) : -10;
+  const backgroundPlaneMesh = (
     <mesh
-      position={[0, 0, -10]}
+      position={[0, 0, meshZ]}
       ref={mesh}
       scale={[size, size, size]}
       rotation={[0, 0, 0]}
@@ -166,5 +172,10 @@ export const ThreeSpaceBackground: React.FC<{
         uniforms={uniforms2}
       />
     </mesh>
+  );
+  return cameraBound ? (
+    <OrthographicCamera makeDefault>{backgroundPlaneMesh}</OrthographicCamera>
+  ) : (
+    backgroundPlaneMesh
   );
 };
