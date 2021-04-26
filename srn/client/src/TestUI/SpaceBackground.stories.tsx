@@ -3,25 +3,16 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
 import _ from 'lodash';
-import {
-  FloatUniformValue,
-  TextureUniformValue,
-} from '../ThreeLayers/shaders/star';
+import { FloatUniformValue } from '../ThreeLayers/shaders/star';
 import { Mesh, ShaderMaterial } from 'three';
 import { useFrame } from 'react-three-fiber';
 
 const uniforms: {
-  time: FloatUniformValue;
-  mixThreshold: FloatUniformValue;
-  texture1: TextureUniformValue;
-  texture2: TextureUniformValue;
-  texture3: TextureUniformValue;
+  shift: FloatUniformValue;
+  pxSize: FloatUniformValue;
 } = {
-  time: { value: 0 },
-  mixThreshold: { value: 0.8 },
-  texture1: { value: null },
-  texture2: { value: null },
-  texture3: { value: null },
+  shift: { value: 0.0 },
+  pxSize: { value: 256.0 },
 };
 
 const vertexShader = `#version 300 es
@@ -50,7 +41,9 @@ const fragmentShader = `#version 300 es
 precision highp float;
 precision highp int;
 
-uniform float time;
+uniform float pxSize;
+uniform float shift;
+
 in vec2 relativeObjectCoord;
 out vec4 FragColor;
 
@@ -131,22 +124,24 @@ vec3 StarField(vec2 p, float du)
 }
 
 
-vec2 iResolution = vec2(256.0, 256.0);
 void main()
 {
-    float du = 1.0 / 256.0;
-    vec2 uv = (relativeObjectCoord - 0.5) * 2.0;
+    float du = 1.0 / pxSize;
+    vec2 uv = (relativeObjectCoord - 0.5) * 2.0 + shift;
     FragColor = vec4(StarField(uv, du), 1.0);
 }
 `;
 
-const SpaceBackground: React.FC = () => {
+const SpaceBackground: React.FC<{ shift: number; size: number }> = ({
+  shift,
+  size,
+}) => {
   const mesh = useRef<Mesh>();
 
   useFrame(() => {
     if (mesh.current) {
       const material = mesh.current.material as ShaderMaterial;
-      if (material.uniforms) {
+      if (material.uniforms && material.uniforms.time) {
         material.uniforms.time.value += 1;
       }
     }
@@ -154,8 +149,10 @@ const SpaceBackground: React.FC = () => {
 
   const uniforms2 = useMemo(() => {
     const patchedUniforms = _.cloneDeep(uniforms);
+    patchedUniforms.pxSize.value = size;
+    patchedUniforms.shift.value = shift;
     return patchedUniforms;
-  }, []);
+  }, [shift, size]);
 
   return (
     <mesh
@@ -187,14 +184,20 @@ const Template: Story = (args) => {
           <planeBufferGeometry args={[256, 256]} />
           <meshBasicMaterial color="teal" />
         </mesh>
-        <SpaceBackground key={`${revision}+${JSON.stringify(args)}`} />
+        <SpaceBackground
+          key={`${revision}+${JSON.stringify(args)}`}
+          shift={args.shift}
+          size={256}
+        />
       </StoryCanvas>
     </div>
   );
 };
 
 export const Main = Template.bind({});
-Main.args = {};
+Main.args = {
+  shift: 0,
+};
 
 export default {
   title: 'Three/SpaceBackground',
