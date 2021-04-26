@@ -1,6 +1,6 @@
 use crate::new_id;
 use crate::random_stuff::{gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius, PLANET_NAMES, SAT_NAMES, gen_star_color};
-use crate::world::{AsteroidBelt, GameState, Planet, Star, GameMode};
+use crate::world::{AsteroidBelt, GameState, Planet, Star, GameMode, Location};
 use crate::market::{Market, init_all_planets_market};
 use chrono::Utc;
 use rand::rngs::SmallRng;
@@ -94,7 +94,7 @@ pub fn system_gen(seed: String) -> GameState {
 
     let star = gen_star(star_id, &mut prng, star_zone.0, Vec2f64 {
         x: 0.0,
-        y: 0.0
+        y: 0.0,
     });
 
     let mut planet_name_pool = PoolRandomPicker {
@@ -134,7 +134,7 @@ pub fn system_gen(seed: String) -> GameState {
                             orbit_speed: gen_sat_orbit_speed(&mut prng) / (j + 1) as f64,
                             anchor_id: planet_id,
                             anchor_tier: 2,
-                            color: gen_color(&mut prng).to_string()
+                            color: gen_color(&mut prng).to_string(),
                         })
                     }
                 } else {
@@ -190,25 +190,30 @@ pub fn system_gen(seed: String) -> GameState {
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
         id: new_id(),
-        seed,
+        seed: seed.clone(),
         tag: None,
         milliseconds_remaining: 3 * 60 * 1000,
         paused: false,
         my_id: new_id(),
         ticks: 0,
-        asteroids: vec![],
-        star: Some(star),
-        planets,
-        ships: vec![],
+        locations: vec![
+            Location {
+                seed,
+                asteroids: vec![],
+                star: Some(star),
+                planets,
+                ships: vec![],
+                asteroid_belts,
+                minerals: vec![],
+            }
+        ],
         players: vec![],
         leaderboard: None,
         start_time_ticks: now,
-        asteroid_belts,
-        minerals: vec![],
         mode: GameMode::Unknown,
         disable_hp_effects: false,
         market: Market::new(),
-        version: 1
+        version: 1,
     };
     state
 }
@@ -224,7 +229,7 @@ pub fn gen_planet(mut prng: &mut SmallRng, anchor_id: Uuid, index: usize, planet
         orbit_speed: gen_planet_orbit_speed(&mut prng) / (index + 1) as f64,
         anchor_id,
         anchor_tier: 1,
-        color: gen_color(&mut prng).to_string()
+        color: gen_color(&mut prng).to_string(),
     }
 }
 
@@ -313,47 +318,52 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         version: 1,
         mode: GameMode::Tutorial,
         tag: None,
-        seed,
+        seed: seed.clone(),
         my_id: Default::default(),
         start_time_ticks: now,
-        star: Some(star),
-        planets: vec![
-            Planet {
-                id: planet_id,
-                name: "Schoolia".to_string(),
-                x: 100.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 8.0,
-                orbit_speed: 0.01,
-                anchor_id: star_id.clone(),
-                anchor_tier: 1,
-                color: "#11ffff".to_string()
-            },
-            Planet {
-                id: new_id(),
-                name: "Sat".to_string(),
-                x: 120.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 1.5,
-                orbit_speed: 0.005,
-                anchor_id: planet_id.clone(),
-                anchor_tier: 2,
-                color: "#ff0033".to_string()
+        locations: vec![
+            Location {
+                seed,
+                star: Some(star),
+                planets: vec![
+                    Planet {
+                        id: planet_id,
+                        name: "Schoolia".to_string(),
+                        x: 100.0,
+                        y: 0.0,
+                        rotation: 0.0,
+                        radius: 8.0,
+                        orbit_speed: 0.01,
+                        anchor_id: star_id.clone(),
+                        anchor_tier: 1,
+                        color: "#11ffff".to_string(),
+                    },
+                    Planet {
+                        id: new_id(),
+                        name: "Sat".to_string(),
+                        x: 120.0,
+                        y: 0.0,
+                        rotation: 0.0,
+                        radius: 1.5,
+                        orbit_speed: 0.005,
+                        anchor_id: planet_id.clone(),
+                        anchor_tier: 2,
+                        color: "#ff0033".to_string(),
+                    }
+                ],
+                asteroids: vec![],
+                minerals: vec![],
+                asteroid_belts: vec![],
+                ships: vec![],
             }
         ],
-        asteroids: vec![],
-        minerals: vec![],
-        asteroid_belts: vec![],
-        ships: vec![],
         players: vec![],
         milliseconds_remaining: 60 * 1000,
         paused: false,
         leaderboard: None,
         ticks: 0,
         disable_hp_effects: false,
-        market: Market::new()
+        market: Market::new(),
     }
 }
 
@@ -367,21 +377,25 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
         version: 1,
         mode: GameMode::Sandbox,
         tag: None,
-        seed,
+        seed: seed.clone(),
         my_id: Default::default(),
         start_time_ticks: now,
-        star: None,
-        planets: vec![],
-        asteroids: vec![],
-        minerals: vec![],
-        asteroid_belts: vec![],
-        ships: vec![],
+        locations: vec![
+            Location {
+                star: None,
+                seed,
+                planets: vec![],
+                asteroids: vec![],
+                minerals: vec![],
+                asteroid_belts: vec![],
+                ships: vec![],
+            }],
         players: vec![],
         milliseconds_remaining: 99 * 60 * 1000,
         paused: false,
         leaderboard: None,
         ticks: 0,
         disable_hp_effects: true,
-        market: Market::new()
+        market: Market::new(),
     }
 }
