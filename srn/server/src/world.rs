@@ -414,6 +414,31 @@ pub struct NatSpawnMineral {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct Location {
+    pub seed: String,
+    pub star: Option<Star>,
+    pub planets: Vec<Planet>,
+    pub asteroids: Vec<Asteroid>,
+    pub minerals: Vec<NatSpawnMineral>,
+    pub asteroid_belts: Vec<AsteroidBelt>,
+    pub ships: Vec<Ship>,
+}
+
+impl Location {
+    pub fn new_star_system() -> Location {
+        Location {
+            seed: "empty".to_string(),
+            star: None,
+            planets: vec![],
+            asteroids: vec![],
+            minerals: vec![],
+            asteroid_belts: vec![],
+            ships: vec![]
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct GameState {
     pub id: Uuid,
     pub version: u32,
@@ -422,12 +447,6 @@ pub struct GameState {
     pub seed: String,
     pub my_id: Uuid,
     pub start_time_ticks: u64,
-    pub star: Option<Star>,
-    pub planets: Vec<Planet>,
-    pub asteroids: Vec<Asteroid>,
-    pub minerals: Vec<NatSpawnMineral>,
-    pub asteroid_belts: Vec<AsteroidBelt>,
-    pub ships: Vec<Ship>,
     pub players: Vec<Player>,
     pub milliseconds_remaining: i32,
     pub paused: bool,
@@ -435,6 +454,7 @@ pub struct GameState {
     pub ticks: u32,
     pub disable_hp_effects: bool,
     pub market: Market,
+    pub locations: Vec<Location>
 }
 
 // b84413729214a182 - no inner planet, lol

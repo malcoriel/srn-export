@@ -7,7 +7,7 @@ mod world_test {
     use crate::new_id;
     use crate::planet_movement::update_planets;
     use crate::vec2::Vec2f64;
-    use crate::world::{add_player, GameMode, seed_state, spawn_ship, update_ships_navigation, update_world, GameState, Planet, Star, UpdateOptions, AABB};
+    use crate::world::{add_player, GameMode, seed_state, spawn_ship, update_ships_navigation, update_world, GameState, Planet, Star, UpdateOptions, AABB, Location};
     use crate::market::{Market};
     use crate::perf::Sampler;
 
@@ -47,20 +47,26 @@ mod world_test {
             seed: "".to_string(),
             my_id: Default::default(),
             start_time_ticks: 0,
-            star: Some(Star {
-                id: star_id,
-                name: "star".to_string(),
-                x: 0.0,
-                y: 0.0,
-                radius: 0.0,
-                rotation: 0.0,
-                color: "".to_string(),
-            }),
-            planets: vec![planet, sat],
-            asteroids: vec![],
-            minerals: vec![],
-            asteroid_belts: vec![],
-            ships: vec![],
+            locations: vec![
+                Location {
+                    star: Some(Star {
+                        id: star_id,
+                        name: "star".to_string(),
+                        x: 0.0,
+                        y: 0.0,
+                        radius: 0.0,
+                        rotation: 0.0,
+                        color: "".to_string(),
+                        corona_color: "".to_string()
+                    }),
+                    seed: "".to_string(),
+                    planets: vec![planet, sat],
+                    asteroids: vec![],
+                    minerals: vec![],
+                    asteroid_belts: vec![],
+                    ships: vec![],
+                }
+            ],
             players: vec![],
             milliseconds_remaining: 0,
             paused: false,
@@ -147,20 +153,27 @@ mod world_test {
             seed: "".to_string(),
             my_id: Default::default(),
             start_time_ticks: 0,
-            star: Some(Star {
-                id: star_id,
-                name: "star".to_string(),
-                x: 0.0,
-                y: 0.0,
-                radius: 0.0,
-                rotation: 0.0,
-                color: "".to_string(),
-            }),
-            planets: vec![planet, sat],
-            asteroids: vec![],
-            minerals: vec![],
-            asteroid_belts: vec![],
-            ships: vec![],
+            locations: vec![
+                Location {
+                    seed: "".to_string(),
+                    star: Some(Star {
+                        id: star_id,
+                        name: "star".to_string(),
+                        x: 0.0,
+                        y: 0.0,
+                        radius: 0.0,
+                        rotation: 0.0,
+                        color: "".to_string(),
+                        corona_color: "".to_string(),
+                    }),
+                    planets: vec![planet, sat],
+                    asteroids: vec![],
+                    minerals: vec![],
+                    asteroid_belts: vec![],
+                    ships: vec![],
+
+                }
+            ],
             players: vec![],
             milliseconds_remaining: 0,
             paused: false,
@@ -235,20 +248,26 @@ mod world_test {
             seed: "".to_string(),
             my_id: Default::default(),
             start_time_ticks: 0,
-            star: Some(Star {
-                id: star_id,
-                name: "star".to_string(),
-                x: 0.0,
-                y: 0.0,
-                radius: 0.0,
-                rotation: 0.0,
-                color: "".to_string(),
-            }),
-            planets: vec![planet, sat],
-            asteroids: vec![],
-            minerals: vec![],
-            asteroid_belts: vec![],
-            ships: vec![],
+            locations: vec![
+                Location {
+                    seed: "".to_string(),
+                    star: Some(Star {
+                        id: star_id,
+                        name: "star".to_string(),
+                        x: 0.0,
+                        y: 0.0,
+                        radius: 0.0,
+                        rotation: 0.0,
+                        color: "".to_string(),
+                        corona_color: "".to_string()
+                    }),
+                    planets: vec![planet, sat],
+                    asteroids: vec![],
+                    minerals: vec![],
+                    asteroid_belts: vec![],
+                    ships: vec![],
+                }
+            ],
             players: vec![],
             milliseconds_remaining: 0,
             paused: false,
