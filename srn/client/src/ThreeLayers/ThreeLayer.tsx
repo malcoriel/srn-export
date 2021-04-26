@@ -5,10 +5,12 @@ import classnames from 'classnames';
 import 'loaders.css';
 import {
   findMineral,
+  height_units,
   max_x,
   min_x,
   ShipAction,
   ShipActionType,
+  width_units,
 } from '../world';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
@@ -28,6 +30,7 @@ import { useStore } from '../store';
 import { size } from '../coord';
 import { ThreeQuestDirection } from './ThreeQuestDirection';
 import { ThreeNames } from './ThreeNames';
+import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 
 export type Vector3Arr = [number, number, number];
 
@@ -113,7 +116,10 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
         >
           {/*background plane serves to be a click helper, as otherwise
           three will not register clicks (through empty space)*/}
-          <BackgroundPlane />
+          <ThreeSpaceBackground
+            shift={0}
+            size={Math.max(width_units, height_units)}
+          />
           <ExternalCameraControl />
           <CameraZoomer />
           <BoundCameraMover />
