@@ -208,7 +208,7 @@ fn mutate_owned_ship(
     }
     let mutated = world::mutate_ship_no_lock(client_id, mutate_cmd, &mut state);
     if mutated.is_some() {
-        crate::multicast_ships_update_excluding(state.ships.clone(), Some(client_id), state.id);
+        crate::multicast_ships_update_excluding(state.locations[0].ships.clone(), Some(client_id), state.id);
     }
     mutated
 }
@@ -723,7 +723,7 @@ fn make_new_human_player(conn_id: Uuid) {
     let (ship, planets) = {
         let mut cont = STATE.write().unwrap();
         let ship = world::spawn_ship(&mut cont.state, conn_id, None).clone();
-        (ship, cont.state.planets.clone())
+        (ship, cont.state.locations[0].planets.clone())
     };
     {
         let mut cont = STATE.write().unwrap();
@@ -964,8 +964,8 @@ fn main_thread() {
             .filter(|s| s.is_some())
             .map(|s| s.unwrap())
             .collect::<Vec<_>>();
-        cont.state.ships = cont
-            .state
+        cont.state.locations[0].ships = cont
+            .state.locations[0]
             .ships
             .clone()
             .into_iter()
@@ -974,7 +974,7 @@ fn main_thread() {
         sampler.end(cleanup_mark);
 
         sampler.measure(
-            &|| multicast_ships_update_excluding(cont.state.ships.clone(), None, cont.state.id),
+            &|| multicast_ships_update_excluding(cont.state.locations[0].ships.clone(), None, cont.state.id),
             7,
         );
 

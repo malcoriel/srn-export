@@ -74,7 +74,7 @@ pub fn handle_events(
                 }
                 GameEvent::CargoQuestTriggerRequest { player } => {
                     let state = crate::select_mut_state(cont, player.id);
-                    let planets = state.planets.clone();
+                    let planets = state.locations[0].planets.clone();
                     if let Some(player) = world::find_my_player_mut(state, player.id) {
                         player.quest = world::generate_random_quest(&planets, None);
                     }
