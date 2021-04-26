@@ -412,11 +412,12 @@ mod world_test {
         for is_client in both_client_and_server.into_iter() {
             let mut state = seed_state(false, false);
             let player_id = crate::new_id();
+            let location = &mut state.locations[0];
             add_player(&mut state, player_id, false, None);
             spawn_ship(&mut state, player_id, Some(Vec2f64::zero()));
-            let star = state.star.clone().unwrap();
+            let star = location.star.clone().unwrap();
             let planet_id = new_id();
-            state.planets = vec![
+            location.planets = vec![
                 Planet {
                     id: planet_id,
                     name: "".to_string(),
@@ -442,12 +443,12 @@ mod world_test {
                     color: "".to_string(),
                 },
             ];
-            let mut ship = &mut state.ships[0];
+            let mut ship = &mut location.ships[0];
             ship.dock_target = Some(planet_id);
 
             state = iterate_state(state, 10000 * 1000, 500, is_client);
-            let planet = &state.planets[0];
-            let ship = &state.ships[0];
+            let planet = &location.planets[0];
+            let ship = &location.ships[0];
             // eprintln!("result: ship {}/{}, {:?}", ship.x, ship.y, ship.trajectory);
             // eprintln!("result: planet {}/{}", planet.x, planet.y);
 
