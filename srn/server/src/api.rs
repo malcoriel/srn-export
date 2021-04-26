@@ -119,13 +119,14 @@ pub fn load_random_state(player_id: String) {
     let mut random_state = gen_state_by_seed(true, random_hex_seed());
     init_all_planets_market(&mut random_state);
     let player = current_state.players[0].clone();
-    let ship = current_state.ships[0].clone();
+    let ship = current_state.locations[0].ships[0].clone();
     mem::swap(current_state, &mut random_state);
     current_state.id = player.id;
     current_state.players.push(player);
-    current_state.ships.push(ship);
     current_state.mode = GameMode::Sandbox;
     current_state.milliseconds_remaining = 99 * 60 * 1000;
+    let loc = &mut current_state.locations[0];
+    loc.ships.push(ship);
 }
 
 #[post("/saved_states/load_seeded/<player_id>/<seed>")]
@@ -140,11 +141,12 @@ pub fn load_seeded_state(player_id: String, seed: String) {
     let mut random_state = gen_state_by_seed(true, seed);
     init_all_planets_market(&mut random_state);
     let player = current_state.players[0].clone();
-    let ship = current_state.ships[0].clone();
+    let ship = current_state.locations[0].ships[0].clone();
     mem::swap(current_state, &mut random_state);
     current_state.id = player.id;
     current_state.players.push(player);
-    current_state.ships.push(ship);
     current_state.mode = GameMode::Sandbox;
     current_state.milliseconds_remaining = 99 * 60 * 1000;
+    let loc = &mut current_state.locations[0];
+    loc.ships.push(ship);
 }
