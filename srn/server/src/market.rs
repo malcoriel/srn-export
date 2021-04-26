@@ -51,11 +51,13 @@ pub fn init_planet_market(state: &mut GameState, planet_id: Uuid) {
 }
 
 pub fn init_all_planets_market(state: &mut GameState) {
+    let mut ids = vec![];
     for loc in state.locations.iter() {
-        let ids = loc.planets.iter().map(|p| p.id.clone()).collect::<Vec<_>>();
-        for planet_id in ids {
-            init_planet_market(state, planet_id);
-        }
+        let mut ids2 = loc.planets.iter().map(|p| p.id.clone()).collect::<Vec<_>>();
+        ids.append(&mut ids2);
+    }
+    for planet_id in ids {
+        init_planet_market(state, planet_id);
     }
 }
 

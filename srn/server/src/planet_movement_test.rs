@@ -19,6 +19,7 @@ mod planet_movement_test {
         let name_anchors = location.planets.iter().map(|p| (p.id, p.name.clone(), p.anchor_id)).collect::<Vec<_>>();
         eprintln!("name_anchors 2 {:?}", name_anchors);
         let valid = extract_valid_planets(&state);
+        let location = &mut state.locations[0];
         assert_eq!(valid.len(), location.planets.len());
     }
 }
