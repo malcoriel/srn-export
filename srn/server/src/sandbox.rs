@@ -74,8 +74,8 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
     match cmd {
         SandboxCommand::AddStar => {
             if let Some(pos) = get_pos(state, player_id) {
-                state.star = Some(gen_star(new_id(), &mut prng, 50.0, pos));
-                state.planets = vec![];
+                state.locations[0].star = Some(gen_star(new_id(), &mut prng, 50.0, pos));
+                state.locations[0].planets = vec![];
             }
         }
         SandboxCommand::ToggleGodMode => {
@@ -96,7 +96,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 planet.anchor_tier = get_anchor_tier(state, anchor_id);
                 planet.x = pos.x;
                 planet.y = pos.y;
-                state.planets.push(planet);
+                state.locations[0].planets.push(planet);
             }
 
         }
@@ -136,9 +136,9 @@ fn add_free_stuff(ship: &mut Ship, iit: InventoryItemType, quantity: i32) {
 }
 
 fn get_anchor_tier(state: &mut GameState, anchor_id: Uuid) -> u32 {
-    let anchor_planet = state.planets.iter().find(|p| p.id == anchor_id);
+    let anchor_planet = state.locations[0].planets.iter().find(|p| p.id == anchor_id);
     if anchor_planet.is_none() {
-        if let Some(star) = state.star.as_ref() {
+        if let Some(star) = state.locations[0].star.as_ref() {
             if star.id == anchor_id {
                 return 1;
             }
