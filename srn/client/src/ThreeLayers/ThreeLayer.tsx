@@ -125,7 +125,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           three will not register clicks (through empty space)*/}
           <ThreeSpaceBackground
             shift={seedToNumber(state.seed) % 1000}
-            size={viewPortMaxDimension * 1.25} // 1.25 just in case so we have it bigger than viewport
+            size={viewPortMaxDimension * 5.0} // enlarge just in case so we have it bigger than viewport
             cameraBound
           />
           <ExternalCameraControl />
