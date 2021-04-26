@@ -321,27 +321,28 @@ mod world_test {
             let player_id = crate::new_id();
             add_player(&mut state, player_id, false, None);
             spawn_ship(&mut state, player_id, Some(Vec2f64::zero()));
-            let mut ship = &mut state.ships[0];
+            let location = &mut state.locations[0];
+            let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
 
             let options = UpdateOptions { disable_hp_effects: true, limit_area: AABB::maxed() };
             let (state, _sampler) = update_world(state, 1 * 1000, is_client,
                                                  Sampler::empty(), options.clone());
-            let ship = &state.ships[0];
+            let ship = &location.ships[0];
             eprintln!("No change ship {}/{}", ship.x, ship.y);
             assert!((ship.x).abs() < eps);
             assert!((ship.y).abs() < eps);
             assert!(ship.navigate_target.is_some());
 
             let (state, _sampler) = update_world(state, 1000 * 1000, is_client, Sampler::empty(), options.clone());
-            let ship = &state.ships[0];
+            let ship = &location.ships[0];
             let expected_pos = 2.0f64.sqrt() / 2.0 * dist;
             assert!((ship.x - expected_pos).abs() < eps);
             assert!((ship.y - expected_pos).abs() < eps);
             assert!(ship.navigate_target.is_some());
 
             let (state, _sampler) = update_world(state, 3 * 1000 * 1000, is_client, Sampler::empty(), options.clone());
-            let ship = &state.ships[0];
+            let ship = &location.ships[0];
             assert!((ship.x - dist).abs() < eps);
             assert!((ship.y - dist).abs() < eps);
             assert!(ship.navigate_target.is_none());
@@ -358,28 +359,29 @@ mod world_test {
             let player_id = crate::new_id();
             add_player(&mut state, player_id, false, None);
             spawn_ship(&mut state, player_id, Some(Vec2f64::zero()));
-            let mut ship = &mut state.ships[0];
+            let location = &mut state.locations[0];
+            let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
             let options = UpdateOptions { disable_hp_effects: true, limit_area: AABB::maxed() };
 
             let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
-            let ship = &mut state.ships[0];
+            let ship = &mut location.ships[0];
             let expected = PI * 0.75;
             //eprintln!("rotation {} vs {}", ship.rotation, expected);
             assert!((ship.rotation - expected).abs() < eps);
 
-            let mut ship = &mut state.ships[0];
+            let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: -dist, y: -dist });
             let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
-            let ship = &mut state.ships[0];
+            let ship = &mut location.ships[0];
             let expected = PI * 0.25;
             //eprintln!("rotation {} vs -{}", ship.rotation, expected);
             assert!((ship.rotation + expected).abs() < eps);
 
-            let mut ship = &mut state.ships[0];
+            let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: -dist, y: dist });
             let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
-            let ship = &mut state.ships[0];
+            let ship = &mut location.ships[0];
             let expected = PI * 0.75;
             //eprintln!("rotation {} vs -{}", ship.rotation, expected);
             assert!((ship.rotation + expected).abs() < eps)
