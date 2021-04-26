@@ -1062,8 +1062,8 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
                 player: p.clone(),
             });
         });
-    state.ships.push(ship);
-    &state.ships[state.ships.len() - 1]
+    state.locations[0].ships.push(ship);
+    &state.ships[state.locations[0].ships.len() - 1]
 }
 
 pub fn update_ships_navigation(
@@ -1246,14 +1246,14 @@ pub fn find_my_ship(state: &GameState, player_id: Uuid) -> Option<&Ship> {
     let player = find_my_player(state, player_id);
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
-            return state.ships.iter().find(|ship| ship.id == ship_id);
+            return state.locations[0].ships.iter().find(|ship| ship.id == ship_id);
         }
     }
     return None;
 }
 
 pub fn find_mineral(state: &GameState, min_id: Uuid) -> Option<&NatSpawnMineral> {
-    return state.minerals.iter().find(|mineral| mineral.id == min_id);
+    return state.locations[0].minerals.iter().find(|mineral| mineral.id == min_id);
 }
 
 pub fn find_mineral_m(minerals: &Vec<NatSpawnMineral>, min_id: Uuid) -> Option<&NatSpawnMineral> {
@@ -1264,23 +1264,23 @@ pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<usize> {
     let player = find_my_player(state, player_id);
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
-            return state.ships.iter().position(|ship| ship.id == ship_id);
+            return state.locations[0].ships.iter().position(|ship| ship.id == ship_id);
         }
     }
     return None;
 }
 
 pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<&'a Planet> {
-    return state.planets.iter().find(|p| p.id == *planet_id);
+    return state.locations[0].planets.iter().find(|p| p.id == *planet_id);
 }
 
 pub fn find_my_ship_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut Ship> {
     let player = find_my_player(state, player_id);
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
-            let index = state.ships.iter().position(|ship| ship.id == ship_id);
+            let index = state.locations[0].ships.iter().position(|ship| ship.id == ship_id);
             if let Some(index) = index {
-                return Some(&mut state.ships[index]);
+                return Some(&mut state.locations[0].ships[index]);
             }
         }
     }
@@ -1313,9 +1313,9 @@ pub fn find_player_and_ship_mut(state: &mut GameState, player_id: Uuid) -> (Opti
     if let Some(index) = index {
         let found_player = &mut state.players[index];
         if let Some(ship_id) = found_player.ship_id {
-            let index = state.ships.iter().position(|ship| ship.id == ship_id);
+            let index = state.locations[0].ships.iter().position(|ship| ship.id == ship_id);
             if let Some(index) = index {
-                ship = Some(&mut state.ships[index]);
+                ship = Some(&mut state.locations[0].ships[index]);
             }
         }
 
@@ -1334,9 +1334,9 @@ pub fn find_player_and_ship(state: &GameState, player_id: Uuid) -> (Option<&Play
     if let Some(index) = index {
         let found_player = &state.players[index];
         if let Some(ship_id) = found_player.ship_id {
-            let index = state.ships.iter().position(|ship| ship.id == ship_id);
+            let index = state.locations[0].ships.iter().position(|ship| ship.id == ship_id);
             if let Some(index) = index {
-                ship = Some(&state.ships[index]);
+                ship = Some(&state.locations[0].ships[index]);
             }
         }
 
@@ -1415,7 +1415,7 @@ pub fn apply_ship_action(
                     x: ship.x,
                     y: ship.y,
                 };
-                for planet in state.planets.iter() {
+                for planet in state.locations[0].planets.iter() {
                     let pos = Vec2f64 {
                         x: planet.x,
                         y: planet.y,
@@ -1477,7 +1477,7 @@ pub fn apply_ship_action(
         }
         ShipActionRust::Tractor(t) => {
             let mut ship = old_ship.clone();
-            update_ship_tractor(t, &mut ship, &state.minerals);
+            update_ship_tractor(t, &mut ship, &state.locations[0].minerals);
             Some(ship)
         }
     }
@@ -1509,7 +1509,7 @@ pub fn update_quests(state: &mut GameState) {
     for player_id in player_ids {
         if let (Some(mut player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
             if player.quest.is_none() {
-                player.quest = generate_random_quest(&state_read.planets, ship.docked_at);
+                player.quest = generate_random_quest(&state_read.locations[0].planets, ship.docked_at);
             } else {
                 let quest_id = player.quest.as_ref().map(|q| q.id).unwrap();
                 if !has_quest_item(&ship.inventory, quest_id) && player.quest.as_ref().unwrap().state == CargoDeliveryQuestState::Picked {
@@ -1529,11 +1529,11 @@ pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
         .map(|i| {
             let player = state.players.remove(i);
             player.ship_id.map(|player_ship_id| {
-                state
+                state.locations[0]
                     .ships
                     .iter()
                     .position(|s| s.id == player_ship_id)
-                    .map(|i| state.ships.remove(i))
+                    .map(|i| state.locations[0].ships.remove(i))
             })
         });
 }
@@ -1541,8 +1541,8 @@ pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
 pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
     let old_ship_index = find_my_ship_index(&state, player_id);
     return if let Some(old_ship_index) = old_ship_index {
-        state.ships.remove(old_ship_index);
-        state.ships.push(updated_ship.clone());
+        state.locations[0].ships.remove(old_ship_index);
+        state.locations[0].ships.push(updated_ship.clone());
         true
     } else {
         eprintln!("couldn't replace ship");
