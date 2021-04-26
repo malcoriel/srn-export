@@ -127,7 +127,7 @@ vec3 StarField(vec2 p, float du)
 
 void main()
 {
-    float du = 1.0 / size;
+    float du = 0.25 / size;
     vec2 uv = (relativeObjectCoord - 0.5) * 2.0 + shift;
     FragColor = vec4(StarField(uv, du), 1.0);
 }
@@ -174,7 +174,9 @@ export const ThreeSpaceBackground: React.FC<{
     </mesh>
   );
   return cameraBound ? (
-    <OrthographicCamera makeDefault>{backgroundPlaneMesh}</OrthographicCamera>
+    <OrthographicCamera key={shift} makeDefault>
+      {backgroundPlaneMesh}
+    </OrthographicCamera>
   ) : (
     backgroundPlaneMesh
   );

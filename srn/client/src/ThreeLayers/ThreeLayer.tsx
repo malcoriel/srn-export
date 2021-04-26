@@ -31,6 +31,14 @@ import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 
 export type Vector3Arr = [number, number, number];
 
+const seedToNumber = (seed: string) => {
+  try {
+    return Number(`0x${seed}`) || 0;
+  } catch (e) {
+    return 0;
+  }
+};
+
 // x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
 // xy is visible plane, z towards camera
 export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
@@ -116,8 +124,8 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           {/*background plane serves to be a click helper, as otherwise
           three will not register clicks (through empty space)*/}
           <ThreeSpaceBackground
-            shift={0}
-            size={viewPortMaxDimension}
+            shift={seedToNumber(state.seed) % 1000}
+            size={viewPortMaxDimension * 1.25} // 1.25 just in case so we have it bigger than viewport
             cameraBound
           />
           <ExternalCameraControl />
