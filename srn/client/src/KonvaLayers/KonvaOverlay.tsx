@@ -28,7 +28,7 @@ const extractEffectsPositions = (
   _shiftLen: (len: number) => number
 ): Array<VisualHpEffect> => {
   const res: VisualHpEffect[] = [];
-  const shipsById = _.keyBy(state.ships, 'id');
+  const shipsById = _.keyBy(state.locations[0].ships, 'id');
 
   for (const player of state.players) {
     if (!player.ship_id) {

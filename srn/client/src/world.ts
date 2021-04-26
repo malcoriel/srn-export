@@ -179,7 +179,7 @@ const directionToRotation = {
 export const TRACTOR_DIST = 30;
 
 export const findMineral = (state: GameState, min_id: string) => {
-  return state.minerals.find((m) => m.id === min_id);
+  return state.locations[0].minerals.find((m) => m.id === min_id);
 };
 
 let wasmFunctions: any = {};
@@ -403,5 +403,5 @@ export const findPlanet = (
   state: GameState,
   id: string
 ): Planet | undefined => {
-  return state.planets.find((p) => p.id === id);
+  return state.locations[0].planets.find((p) => p.id === id);
 };

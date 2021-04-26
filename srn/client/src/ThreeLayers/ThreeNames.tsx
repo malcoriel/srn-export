@@ -21,7 +21,7 @@ type NameWithPos = {
 
 const getNamesWithPos = (state: GameState): NameWithPos[] => {
   const res: NameWithPos[] = [];
-  for (const planet of state.planets) {
+  for (const planet of state.locations[0].planets) {
     res.push({
       id: planet.id,
       name: planet.name,
@@ -30,8 +30,8 @@ const getNamesWithPos = (state: GameState): NameWithPos[] => {
     });
   }
 
-  if (state.star) {
-    const star = state.star;
+  if (state.locations[0].star) {
+    const star = state.locations[0].star;
     res.push({
       id: star.id,
       name: star.name,
@@ -40,7 +40,7 @@ const getNamesWithPos = (state: GameState): NameWithPos[] => {
     });
   }
 
-  const shipsById = _.keyBy(state.ships, 'id');
+  const shipsById = _.keyBy(state.locations[0].ships, 'id');
 
   for (const player of state.players) {
     if (!player.ship_id) {

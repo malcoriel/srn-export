@@ -43,7 +43,7 @@ const pickClosestObject = (
   const myShip = findMyShip(state);
   const from = Vector.fromIVector(myShip || visualState.cameraPosition);
   if (!myShip) return '';
-  const withDist = [state.star, ...state.planets]
+  const withDist = [state.locations[0].star, ...state.locations[0].planets]
     .map((obj) => {
       if (!obj) {
         return null;

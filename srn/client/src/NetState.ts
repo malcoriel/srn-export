@@ -23,7 +23,6 @@ import { viewPortSizeMeters } from './coord';
 import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
 import { InventoryAction } from '../../world/pkg';
-import Prando from 'prando';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -59,7 +58,7 @@ export const findMyShipIndex = (state: GameState): number | null => {
   const myPlayer = findMyPlayer(state);
   if (!myPlayer) return null;
 
-  const foundShipIndex = state.ships.findIndex(
+  const foundShipIndex = state.locations[0].ships.findIndex(
     (ship) => ship.id === myPlayer.ship_id
   );
   if (foundShipIndex === -1) return null;
@@ -68,7 +67,7 @@ export const findMyShipIndex = (state: GameState): number | null => {
 
 export const findMyShip = (state: GameState): Ship | null => {
   const index = findMyShipIndex(state);
-  if (index !== -1 && index !== null) return state.ships[index];
+  if (index !== -1 && index !== null) return state.locations[0].ships[index];
   return null;
 };
 
@@ -210,13 +209,13 @@ export default class NetState extends EventEmitter {
   private updateVisMap() {
     const AABB = this.getSimulationArea();
     this.visMap = {};
-    for (const ship of this.state.ships) {
+    for (const ship of this.state.locations[0].ships) {
       this.visMap[ship.id] = isInAABB(AABB, ship, ship.radius);
     }
-    for (const planet of this.state.planets) {
+    for (const planet of this.state.locations[0].planets) {
       this.visMap[planet.id] = isInAABB(AABB, planet, planet.radius);
     }
-    const star = this.state.star;
+    const star = this.state.locations[0].star;
     if (star) {
       this.visMap[star.id] = isInAABB(AABB, star, star.radius);
     }
@@ -239,16 +238,20 @@ export default class NetState extends EventEmitter {
       seed: '',
       tag: '',
       version: 0,
-      planets: [],
+      locations: [
+        {
+          seed: '',
+          planets: [],
+          minerals: [],
+          asteroids: [],
+          asteroid_belts: [],
+          ships: [],
+          star: null,
+        },
+      ],
       players: [],
-      minerals: [],
-      asteroids: [],
-      asteroid_belts: [],
-      ships: [],
       ticks: 0,
       my_id: uuid.v4(),
-      // @ts-ignore
-      star: null,
       start_time_ticks: 0,
       milliseconds_remaining: 0,
       paused: true,
@@ -492,14 +495,16 @@ export default class NetState extends EventEmitter {
         // 4. without it, manual movement updates not so often (only via full syncs), so this leads to very bad look
         const ships = JSON.parse(data).ships;
         const myOldShip = findMyShip(this.state);
-        this.state.ships = ships;
+        this.state.locations[0].ships = ships;
         if (myOldShip) {
-          this.state.ships = this.state.ships.map((s) => {
-            if (s.id === myOldShip.id) {
-              return myOldShip;
+          this.state.locations[0].ships = this.state.locations[0].ships.map(
+            (s) => {
+              if (s.id === myOldShip.id) {
+                return myOldShip;
+              }
+              return s;
             }
-            return s;
-          });
+          );
         }
       } else if (
         messageCode === ServerToClientMessageCode.UnicastDialogueStateChange
@@ -609,7 +614,7 @@ export default class NetState extends EventEmitter {
     const myShipIndex = findMyShipIndex(this.state);
     const simArea = this.getSimulationArea();
     if (myShipIndex === -1 || myShipIndex === null) return;
-    let myShip = this.state.ships[myShipIndex];
+    let myShip = this.state.locations[0].ships[myShipIndex];
     for (const cmd of commands) {
       myShip = applyShipAction(
         myShip,
@@ -620,8 +625,8 @@ export default class NetState extends EventEmitter {
         simArea
       );
     }
-    this.state.ships.splice(myShipIndex, 1);
-    this.state.ships.push(myShip);
+    this.state.locations[0].ships.splice(myShipIndex, 1);
+    this.state.locations[0].ships.push(myShip);
   };
 
   onPreferredNameChange = (newName: string) => {
@@ -679,7 +684,7 @@ export default class NetState extends EventEmitter {
     if (this.state && !this.state.paused) {
       const myShipIndex = findMyShipIndex(this.state);
       if (myShipIndex !== -1 && myShipIndex !== null) {
-        const myShip = this.state.ships[myShipIndex];
+        const myShip = this.state.locations[0].ships[myShipIndex];
         const currentShipPos = Vector.fromIVector(myShip);
         if (
           !Vector.equals(this.lastShipPos, currentShipPos) &&

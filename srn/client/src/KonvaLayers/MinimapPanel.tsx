@@ -61,7 +61,7 @@ const StaticEntitiesLayer = React.memo(
 
     return (
       <Layer>
-        {state.asteroid_belts.map((b) => (
+        {state.locations[0].asteroid_belts.map((b) => (
           <Arc
             key={b.id}
             angle={360}
@@ -73,14 +73,14 @@ const StaticEntitiesLayer = React.memo(
             position={realPosToScreenPos(VectorF(0, 0))}
           />
         ))}
-        {state.star && (
+        {state.locations[0].star && (
           <Circle
-            key={state.star.id}
+            key={state.locations[0].star.id}
             opacity={planetOpacity}
             onMouseDown={moveCamera}
-            radius={realLenToScreenLen(state.star.radius) * 0.6}
-            fill={state.star.color}
-            position={realPosToScreenPos(state.star)}
+            radius={realLenToScreenLen(state.locations[0].star.radius) * 0.6}
+            fill={state.locations[0].star.color}
+            position={realPosToScreenPos(state.locations[0].star)}
           />
         )}
       </Layer>
@@ -110,10 +110,10 @@ const SlowEntitiesLayer = React.memo(
 
     return (
       <Layer>
-        {state.planets &&
-          state.planets.map((p, i) => {
-            const anchorPos = state.star
-              ? Vector.fromIVector(state.star)
+        {state.locations[0].planets &&
+          state.locations[0].planets.map((p, i) => {
+            const anchorPos = state.locations[0].star
+              ? Vector.fromIVector(state.locations[0].star)
               : VectorF(0, 0);
             const pPos = Vector.fromIVector(p);
             const orbitDist = realLenToScreenLen(pPos.euDistTo(anchorPos));
@@ -207,7 +207,7 @@ const FastEntitiesLayer = React.memo(
 
     return (
       <Layer>
-        {state.ships.map((s) => {
+        {state.locations[0].ships.map((s) => {
           const pos = realPosToScreenPos(s);
           const isMy = myShip && s.id === myShip.id;
           return (

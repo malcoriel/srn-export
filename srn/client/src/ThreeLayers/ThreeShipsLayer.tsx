@@ -10,7 +10,7 @@ export const ThreeShipsLayer: React.FC<{
   state: GameState;
 }> = ({ visMap, state }) => {
   if (!state) return null;
-  const { ships, planets } = state;
+  const { ships, planets } = state.locations[0];
 
   const planetsById = _.keyBy(planets, 'id');
 

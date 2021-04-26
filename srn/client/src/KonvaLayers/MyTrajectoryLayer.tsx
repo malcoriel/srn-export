@@ -60,7 +60,7 @@ export const MyTrajectoryLayer: React.FC = () => {
 
   const zoomProp = visualState.zoomShift || 1.0;
 
-  const planetsById = _.keyBy(state.planets, 'id');
+  const planetsById = _.keyBy(state.locations[0].planets, 'id');
   const pointTarget = myShip.navigate_target;
   const planetTarget = myShip.dock_target
     ? planetsById[myShip.dock_target]
