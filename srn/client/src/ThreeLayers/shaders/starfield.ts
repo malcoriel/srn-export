@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import { FloatUniformValue, Vector3UniformValue } from './star';
+import { FloatUniformValue, Vector3UniformValue } from './uniformTypes';
 
 export const vertexShader = `#version 300 es
 precision highp float;

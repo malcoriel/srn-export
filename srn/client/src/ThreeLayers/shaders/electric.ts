@@ -1,7 +1,7 @@
 // http://shaderfrog.com/view/4985
 // forked from http://shaderfrog.com/view/3373
-import { FloatUniformValue, Vector3UniformValue } from './star';
 import { Vector3 } from 'three/src/math/Vector3';
+import { FloatUniformValue, Vector3UniformValue } from './uniformTypes';
 
 export const fragmentShader = `
 precision highp float;

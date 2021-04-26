@@ -1,4 +1,9 @@
-import { Texture, Vector2, Vector3 } from 'three';
+import { Vector3 } from 'three';
+import {
+  FloatUniformValue,
+  TextureUniformValue,
+  Vector3UniformValue,
+} from './uniformTypes';
 // delete viewMatrix, cameraPosition
 
 export const hsvFunctions = `
@@ -168,33 +173,6 @@ void main() {
 }
 
 `;
-
-export type TextureUniformValue = {
-  value: Texture | null;
-};
-
-export type FloatUniformValue = {
-  value: number;
-};
-
-export type IntUniformValue = {
-  value: number;
-};
-
-export type Vector3UniformValue = {
-  value: Vector3 | null;
-};
-
-export type Vector3ArrayUniformValue = {
-  value: Vector3[] | null;
-};
-export type FloatArrayUniformValue = {
-  value: number[] | null;
-};
-
-export type Vector2UniformValue = {
-  value: Vector2 | null;
-};
 
 export const uniforms: {
   iChannel0: TextureUniformValue;

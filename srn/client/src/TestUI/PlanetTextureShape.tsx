@@ -1,16 +1,16 @@
 import Prando from 'prando';
 import _ from 'lodash';
-import {
-  FloatArrayUniformValue,
-  FloatUniformValue,
-  IntUniformValue,
-  Vector3ArrayUniformValue,
-} from '../ThreeLayers/shaders/star';
 import { Mesh, ShaderMaterial, Vector3 } from 'three';
 import React, { useMemo, useRef } from 'react';
 import Color from 'color';
 import { useFrame } from 'react-three-fiber';
 import { normalizeColor } from '../utils/palette';
+import {
+  FloatArrayUniformValue,
+  FloatUniformValue,
+  IntUniformValue,
+  Vector3ArrayUniformValue,
+} from '../ThreeLayers/shaders/uniformTypes';
 
 function padArrTo<T>(arr: T[], desiredLength: number, filler: T) {
   const res = [...arr];

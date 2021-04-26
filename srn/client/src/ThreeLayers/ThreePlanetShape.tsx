@@ -7,12 +7,6 @@ import { normalizeColor } from '../utils/palette';
 import { size, unitsToPixels_min } from '../coord';
 import { vecToThreePos } from './ThreeLayer';
 import Prando from 'prando';
-import {
-  FloatUniformValue,
-  IntUniformValue,
-  TextureUniformValue,
-  Vector3UniformValue,
-} from './shaders/star';
 import random from 'random/dist/cjs';
 import {
   fractalNoise,
@@ -21,6 +15,12 @@ import {
 } from '../TestUI/shaderFunctions';
 import { shallowEqual } from '../utils/shallowCompare';
 import { useRepeatWrappedTextureLoader } from './ThreeStar';
+import {
+  FloatUniformValue,
+  IntUniformValue,
+  TextureUniformValue,
+  Vector3UniformValue,
+} from './shaders/uniformTypes';
 
 const defaultUniformValues = {
   detailOctaves: 5,

@@ -3,9 +3,9 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
 import _ from 'lodash';
-import { FloatUniformValue } from '../ThreeLayers/shaders/star';
 import { Mesh, ShaderMaterial } from 'three';
 import { useFrame } from 'react-three-fiber';
+import { FloatUniformValue } from '../ThreeLayers/shaders/uniformTypes';
 
 const uniforms: {
   shift: FloatUniformValue;

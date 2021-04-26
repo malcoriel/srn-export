@@ -1,11 +1,11 @@
+import { Vector3 } from 'three/src/math/Vector3';
+import { Vector2 } from 'three';
+import { normalizeColor, teal } from '../../utils/palette';
 import {
   FloatUniformValue,
   Vector2UniformValue,
   Vector3UniformValue,
-} from './star';
-import { Vector3 } from 'three/src/math/Vector3';
-import { Vector2 } from 'three';
-import { normalizeColor, teal } from '../../utils/palette';
+} from './uniformTypes';
 
 export const fragmentShader = `#define TAU 6.28318530718
 #define MAX_ITER 5
