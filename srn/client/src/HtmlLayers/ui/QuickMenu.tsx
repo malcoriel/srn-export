@@ -1,6 +1,6 @@
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { Button } from './ui/Button';
+import { Button } from './Button';
 import './QuickMenu.scss';
 import { ImCross } from 'react-icons/all';
 

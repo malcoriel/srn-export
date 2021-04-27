@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import { QuickMenu } from './QuickMenu';
+import { QuickMenu } from './ui/QuickMenu';
 import React, { useEffect, useState } from 'react';
 import NetState, {
   findMyShip,

@@ -37,6 +37,7 @@ import { TradeWindow } from './HtmlLayers/TradeWindow';
 import { PromptWindow } from './HtmlLayers/PromptWindow';
 import { useResourcesLoading } from './utils/useResourcesLoading';
 import { TestMenu, TestUI } from './TestUI/TestUI';
+import { NormalQuickMenu } from './HtmlLayers/NormalQuickMenu';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -182,7 +183,7 @@ const Srn = () => {
   };
 
   const ns = NetState.get();
-  let seed: string = '???';
+  let seed = '???';
   let locationSeed = '???';
   if (ns) {
     const { state } = ns;
@@ -245,6 +246,7 @@ const Srn = () => {
                   <HoverHintWindow />
                   <PromptWindow />
                   {playing && <SandboxQuickMenu />}
+                  {playing && <NormalQuickMenu />}
                 </>
               )}
             </>
