@@ -466,9 +466,10 @@ pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
     } else {
         random_hex_seed()
     };
-    log!(format!("seed_state seed={}", seed));
+    log!(format!("Starting seeding state with seed={}", seed));
     let mut state = gen_state_by_seed(seed_and_validate, seed);
     init_all_planets_market(&mut state);
+    log!(format!("Done."));
     state
 }
 
@@ -476,6 +477,12 @@ pub fn random_hex_seed() -> String {
     let mut rng = thread_rng();
     let mut bytes: [u8; 8] = [0; 8];
     rng.fill_bytes(&mut bytes);
+    hex::encode(bytes)
+}
+
+pub fn random_hex_seed_seeded(prng: &mut SmallRng) -> String {
+    let mut bytes: [u8; 8] = [0; 8];
+    prng.fill_bytes(&mut bytes);
     hex::encode(bytes)
 }
 

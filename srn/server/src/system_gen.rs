@@ -1,10 +1,10 @@
 use crate::new_id;
 use crate::random_stuff::{gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius, PLANET_NAMES, SAT_NAMES, gen_star_color};
-use crate::world::{AsteroidBelt, GameState, Planet, Star, GameMode, Location};
+use crate::world::{AsteroidBelt, GameState, Planet, Star, GameMode, Location, random_hex_seed_seeded};
 use crate::market::{Market, init_all_planets_market};
 use chrono::Utc;
 use rand::rngs::SmallRng;
-use rand::{Rng, SeedableRng};
+use rand::{Rng, SeedableRng, RngCore};
 use std::collections::VecDeque;
 use std::collections::hash_map::DefaultHasher;
 use serde_derive::{Deserialize, Serialize};
@@ -39,10 +39,42 @@ pub fn str_to_hash(t: String) -> u64 {
     s.finish()
 }
 
+const LOCATION_COUNT: u32 = 4;
+
 pub fn system_gen(seed: String) -> GameState {
-    let star_id = crate::new_id();
     let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
 
+    let mut locations = vec![];
+    for _i in 0..LOCATION_COUNT {
+        let loc_seed = random_hex_seed_seeded(&mut prng);
+        let location = gen_star_system_location(&loc_seed);
+        locations.push(location);
+    }
+
+    let now = Utc::now().timestamp_millis() as u64;
+    let state = GameState {
+        id: new_id(),
+        seed: seed.clone(),
+        tag: None,
+        milliseconds_remaining: 3 * 60 * 1000,
+        paused: false,
+        my_id: new_id(),
+        ticks: 0,
+        locations,
+        players: vec![],
+        leaderboard: None,
+        start_time_ticks: now,
+        mode: GameMode::Unknown,
+        disable_hp_effects: false,
+        market: Market::new(),
+        version: 1,
+    };
+    state
+}
+
+fn gen_star_system_location(seed: &String) -> Location {
+    let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
+    let star_id = crate::new_id();
     // the world is 1000x1000 for now,
     // so we have to divide 500 units between all zones
 
@@ -74,19 +106,12 @@ pub fn system_gen(seed: String) -> GameState {
         }
     }
 
-    eprintln!("zones {:?}", zones);
-
     let planet_count = zones.len() / 2;
     let asteroid_index = if planet_count % 2 == 0 {
         planet_count - 2
     } else {
         planet_count - 1
     };
-    eprintln!(
-        "planets {}, asteroid_index {}",
-        planet_count, asteroid_index
-    );
-
     let mut planets = vec![];
     let mut asteroid_belts = vec![];
 
@@ -185,37 +210,16 @@ pub fn system_gen(seed: String) -> GameState {
             break;
         }
     }
-
-    log!(format!("Generated state, seed {}", seed));
-    let now = Utc::now().timestamp_millis() as u64;
-    let state = GameState {
-        id: new_id(),
+    let location = Location {
         seed: seed.clone(),
-        tag: None,
-        milliseconds_remaining: 3 * 60 * 1000,
-        paused: false,
-        my_id: new_id(),
-        ticks: 0,
-        locations: vec![
-            Location {
-                seed,
-                asteroids: vec![],
-                star: Some(star),
-                planets,
-                ships: vec![],
-                asteroid_belts,
-                minerals: vec![],
-            }
-        ],
-        players: vec![],
-        leaderboard: None,
-        start_time_ticks: now,
-        mode: GameMode::Unknown,
-        disable_hp_effects: false,
-        market: Market::new(),
-        version: 1,
+        asteroids: vec![],
+        star: Some(star),
+        planets,
+        ships: vec![],
+        asteroid_belts,
+        minerals: vec![],
     };
-    state
+    location
 }
 
 pub fn gen_planet(mut prng: &mut SmallRng, anchor_id: Uuid, index: usize, planet_id: Uuid, name: String, planet_radius: f64, planet_center_x: f64) -> Planet {
@@ -260,7 +264,6 @@ pub fn get_planet_type_color(p_type: PlanetType) -> String {
 
 pub fn gen_star(star_id: Uuid, mut prng: &mut SmallRng, radius: f64, pos: Vec2f64) -> Star {
     let colors = gen_star_color(&mut prng);
-    eprintln!("colors: {}, {}", colors.0, colors.1);
     Star {
         color: colors.0.to_string(),
         corona_color: colors.1.to_string(),
