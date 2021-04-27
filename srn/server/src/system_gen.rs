@@ -41,6 +41,13 @@ pub fn str_to_hash(t: String) -> u64 {
 
 const LOCATION_COUNT: u32 = 4;
 
+pub fn wire_locations(locations: &mut Vec<Location>) {
+    let all_ids = locations.iter().map(|l| l.id.clone()).collect::<Vec<_>>();
+    for loc in locations {
+        loc.adjacent_location_ids = all_ids.clone();
+    }
+}
+
 pub fn system_gen(seed: String) -> GameState {
     let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
 
@@ -51,6 +58,7 @@ pub fn system_gen(seed: String) -> GameState {
         locations.push(location);
     }
 
+    wire_locations(&mut locations);
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
         id: new_id(),
@@ -218,7 +226,8 @@ fn gen_star_system_location(seed: &String) -> Location {
         ships: vec![],
         asteroid_belts,
         minerals: vec![],
-        adjacent_location_ids: vec![]
+        adjacent_location_ids: vec![],
+        id: new_id()
     };
     location
 }
@@ -327,6 +336,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         start_time_ticks: now,
         locations: vec![
             Location {
+                id: new_id(),
                 seed,
                 star: Some(star),
                 adjacent_location_ids: vec![],
@@ -387,6 +397,7 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
         start_time_ticks: now,
         locations: vec![
             Location {
+                id: new_id(),
                 star: None,
                 seed,
                 planets: vec![],

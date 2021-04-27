@@ -240,12 +240,14 @@ export default class NetState extends EventEmitter {
       version: 0,
       locations: [
         {
+          id: '',
           seed: '',
           planets: [],
           minerals: [],
           asteroids: [],
           asteroid_belts: [],
           ships: [],
+          adjacent_location_ids: [],
           star: null,
         },
       ],

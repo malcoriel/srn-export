@@ -49,6 +49,7 @@ mod world_test {
             start_time_ticks: 0,
             locations: vec![
                 Location {
+                    id: new_id(),
                     adjacent_location_ids: vec![],
                     star: Some(Star {
                         id: star_id,
@@ -157,6 +158,7 @@ mod world_test {
             start_time_ticks: 0,
             locations: vec![
                 Location {
+                    id: new_id(),
                     adjacent_location_ids: vec![],
                     seed: "".to_string(),
                     star: Some(Star {
@@ -254,6 +256,7 @@ mod world_test {
             start_time_ticks: 0,
             locations: vec![
                 Location {
+                    id: new_id(),
                     adjacent_location_ids: vec![],
                     seed: "".to_string(),
                     star: Some(Star {

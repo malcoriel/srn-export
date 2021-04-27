@@ -416,6 +416,7 @@ pub struct NatSpawnMineral {
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Location {
     pub seed: String,
+    pub id: Uuid,
     pub star: Option<Star>,
     pub planets: Vec<Planet>,
     pub asteroids: Vec<Asteroid>,
@@ -428,6 +429,7 @@ pub struct Location {
 impl Location {
     pub fn new_star_system() -> Location {
         Location {
+            id: new_id(),
             adjacent_location_ids: vec![],
             seed: "empty".to_string(),
             star: None,
