@@ -3,7 +3,6 @@ import { QuickMenu } from './ui/QuickMenu';
 import React, { useEffect, useState } from 'react';
 import NetState, { useNSForceChange } from '../NetState';
 import { ImFloppyDisk } from 'react-icons/all';
-import { api } from '../utils/api';
 
 export const NormalQuickMenu = () => {
   const ns = NetState.get();
@@ -12,15 +11,20 @@ export const NormalQuickMenu = () => {
     return oldState.locations[0].id !== newState.locations[0].id;
   });
 
+  const currentLocation = ns.state.locations[0];
+  if (!currentLocation) {
+    return null;
+  }
+
   const actions = [
     {
       text: 'Jump to another system',
       icon: <ImFloppyDisk />,
       list: true,
-      children: [].map(([name, id]: [string, string]) => {
+      children: currentLocation.adjacent_location_ids.map((id: string) => {
         return {
-          text: `${name} (${id})`,
-          handler: () => api.loadSavedState(ns.state.my_id, id),
+          text: `${id}`,
+          handler: () => ns.sendLocationChange(id),
         };
       }),
     },

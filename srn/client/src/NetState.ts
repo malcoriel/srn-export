@@ -37,6 +37,7 @@ enum ClientOpCode {
   TradeAction,
   DialogueRequest,
   InventoryAction,
+  LocationChange,
 }
 
 interface Cmd {
@@ -603,6 +604,12 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
+        case ClientOpCode.LocationChange: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
         default:
           throw new UnreachableCaseError(cmd.code);
       }
@@ -767,6 +774,14 @@ export default class NetState extends EventEmitter {
     this.send({
       code: ClientOpCode.InventoryAction,
       value: invAct,
+      tag: uuid.v4(),
+    });
+  }
+
+  public sendLocationChange(id: string) {
+    this.send({
+      code: ClientOpCode.InventoryAction,
+      value: { id },
       tag: uuid.v4(),
     });
   }
