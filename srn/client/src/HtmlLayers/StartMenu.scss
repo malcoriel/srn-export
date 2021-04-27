@@ -17,6 +17,15 @@ $menuWidth: 600px;
   opacity: 0.8;
   background-color: black;
 
+  .game-seeds {
+    display: flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content: center;
+    & > * {
+      margin-bottom: 5px;
+    }
+  }
 }
 
 .start-hud {

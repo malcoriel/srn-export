@@ -182,7 +182,15 @@ const Srn = () => {
   };
 
   const ns = NetState.get();
-  const seed = ns ? ns.state.seed : '';
+  let seed: string = '???';
+  let locationSeed = '???';
+  if (ns) {
+    const { state } = ns;
+    seed = state.seed;
+    if (state.locations.length > 0) {
+      locationSeed = state.locations[0].seed;
+    }
+  }
 
   return (
     <>
@@ -245,6 +253,7 @@ const Srn = () => {
           {menu && (
             <StartMenu
               seed={seed}
+              locationSeed={locationSeed}
               start={() => start(GameMode.CargoRush)}
               quit={quit}
               startTutorial={() => start(GameMode.Tutorial)}

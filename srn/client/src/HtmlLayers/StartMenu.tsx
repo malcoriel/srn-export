@@ -31,7 +31,8 @@ export const StartMenu: React.FC<{
   startSandbox: () => void;
   quit: () => void;
   seed: string;
-}> = ({ start, quit, seed, startTutorial, startSandbox }) => {
+  locationSeed: string;
+}> = ({ start, quit, seed, startTutorial, startSandbox, locationSeed }) => {
   const {
     musicEnabled,
     setMusicEnabled,
@@ -221,9 +222,16 @@ export const StartMenu: React.FC<{
               <Button className="quit" onClick={quit} hotkey="Q" text="QUIT" />
             </>
           )}
-          {playing && seed && (
-            <div>
-              Game seed: <span className="normal-selection">{seed}</span>
+          {playing && (
+            <div className="game-seeds">
+              <div>Game seeds:</div>
+              <div>
+                <span className="normal-selection">{seed}</span> (global)
+              </div>
+              <div>
+                <span className="normal-selection">{locationSeed}</span>{' '}
+                (location)
+              </div>
             </div>
           )}
         </div>
