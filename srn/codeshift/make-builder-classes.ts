@@ -123,9 +123,11 @@ const getImportedTypes = (
     if (!isTsTypeReference(subType)) {
       return null;
     }
+    // @ts-ignore
     if (!isIdentifier(subType.typeName)) {
       return null;
     }
+    // @ts-ignore
     return j.importSpecifier(j.identifier(subType.typeName.name));
   });
 };
