@@ -422,11 +422,13 @@ pub struct Location {
     pub minerals: Vec<NatSpawnMineral>,
     pub asteroid_belts: Vec<AsteroidBelt>,
     pub ships: Vec<Ship>,
+    pub adjacent_location_ids: Vec<Uuid>
 }
 
 impl Location {
     pub fn new_star_system() -> Location {
         Location {
+            adjacent_location_ids: vec![],
             seed: "empty".to_string(),
             star: None,
             planets: vec![],

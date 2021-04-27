@@ -218,6 +218,7 @@ fn gen_star_system_location(seed: &String) -> Location {
         ships: vec![],
         asteroid_belts,
         minerals: vec![],
+        adjacent_location_ids: vec![]
     };
     location
 }
@@ -328,6 +329,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
             Location {
                 seed,
                 star: Some(star),
+                adjacent_location_ids: vec![],
                 planets: vec![
                     Planet {
                         id: planet_id,
@@ -392,6 +394,7 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
                 minerals: vec![],
                 asteroid_belts: vec![],
                 ships: vec![],
+                adjacent_location_ids: vec![]
             }],
         players: vec![],
         milliseconds_remaining: 99 * 60 * 1000,
