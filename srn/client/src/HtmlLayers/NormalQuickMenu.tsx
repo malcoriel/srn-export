@@ -29,5 +29,5 @@ export const NormalQuickMenu = () => {
       }),
     },
   ];
-  return <QuickMenu startActions={actions} mainHotkey="q" />;
+  return <QuickMenu startActions={actions} mainHotkey="e" />;
 };

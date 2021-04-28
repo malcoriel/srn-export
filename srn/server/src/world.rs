@@ -1024,6 +1024,33 @@ pub fn remove_player_ship(state: &mut GameState, player_id: Uuid) {
     }
 }
 
+pub fn find_and_extract_ship(state: &mut GameState, player_id: Uuid) -> Option<Ship> {
+    let player = find_my_player(state, player_id);
+    if player.is_none() {
+        return None;
+    }
+    let mut found_ship = None;
+    if let Some(ship_id) = player.unwrap().ship_id {
+        let mut should_break = false;
+        for loc in state.locations.iter_mut() {
+            loc.ships = loc.ships.iter().filter_map(|s| {
+                if s.id != ship_id {
+                    Some(s.clone())
+                } else {
+                    found_ship = Some(s.clone());
+                    should_break = true;
+                    None
+                }
+            }).collect::<Vec<_>>();
+            if should_break {
+                break;
+            }
+        }
+    }
+    return found_ship;
+}
+
+
 pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -> &Ship {
     let mut rng = thread_rng();
     let mut small_rng = SmallRng::seed_from_u64(rng.next_u64());

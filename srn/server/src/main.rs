@@ -98,6 +98,7 @@ mod market;
 mod api;
 mod dialogue_dto;
 mod planet_movement_test;
+mod locations;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,
@@ -433,7 +434,31 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::InventoryAction => {
             on_client_inventory_action(client_id, second, third);
         }
+        ClientOpCode::LocationChange => {
+            on_client_location_change(client_id, second, third);
+        }
     };
+}
+
+fn on_client_location_change(client_id: Uuid, data: &&str, tag: Option<&&str>) {
+    let parsed = serde_json::from_str::<locations::LocationChangePayload>(data);
+    match parsed {
+        Ok(action) => {
+            let mut cont = STATE.write().unwrap();
+            let state = select_mut_state(&mut cont, client_id);
+            if !locations::try_move_player_ship(state, client_id, action.id) {
+                warn!(format!("Impossible location change for client {} to loc {}", client_id, action.id));
+            }
+        x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
+            send_tag_confirm(tag.unwrap().to_string(), client_id);
+        }
+        Err(err) => {
+            eprintln!(
+                "couldn't parse location change action {}, err {}",
+                data, err
+            );
+        }
+    }
 }
 
 fn on_client_switch_room(client_id: Uuid, second: &&str) {

@@ -780,7 +780,7 @@ export default class NetState extends EventEmitter {
 
   public sendLocationChange(id: string) {
     this.send({
-      code: ClientOpCode.InventoryAction,
+      code: ClientOpCode.LocationChange,
       value: { id },
       tag: uuid.v4(),
     });
