@@ -99,6 +99,9 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
       if (chosen && !isSingle(chosen)) {
         setCurrentAction(chosen);
       }
+      if (levels.length === 0) {
+        setCurrentAction(null);
+      }
       setActiveActions(active);
     },
     [startActions]
