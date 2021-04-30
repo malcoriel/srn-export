@@ -495,8 +495,10 @@ pub fn gen_state_by_seed(seed_and_validate: bool, seed: String) -> GameState {
 
     let state = if seed_and_validate {
         let mut state = validate_state(state);
-        let (planets, _sampler) = planet_movement::update_planets(&state.locations[0].planets, &state.locations[0].star, SEED_TIME, Sampler::empty(), AABB::maxed());
-        state.locations[0].planets = planets;
+        for idx in 0..state.locations.len() {
+            let (planets, _sampler) = planet_movement::update_planets(&state.locations[idx].planets, &state.locations[idx].star, SEED_TIME, Sampler::empty(), AABB::maxed());
+            state.locations[idx].planets = planets;
+        }
         let state = validate_state(state);
         state
     } else {

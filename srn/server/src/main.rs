@@ -992,14 +992,9 @@ fn main_thread() {
             .collect::<Vec<_>>();
 
         for idx in 0..cont.state.locations.len() {
-            cleanup_nonexistent_ships(&mut cont, &existing_player_ships, idx);
+            sampler = cleanup_nonexistent_ships(&mut cont, &existing_player_ships, idx, sampler);
         }
         sampler.end(cleanup_mark);
-
-        sampler.measure(
-            &|| multicast_ships_update_excluding(cont.state.locations[0].ships.clone(), None, cont.state.id),
-            7,
-        );
 
         sampler.end(total_mark);
 
@@ -1017,14 +1012,25 @@ fn main_thread() {
     }
 }
 
-pub fn cleanup_nonexistent_ships(cont: &mut RwLockWriteGuard<StateContainer>, existing_player_ships: &Vec<Uuid>, location_idx: usize) {
-    cont.state.locations[location_idx].ships = cont
+pub fn cleanup_nonexistent_ships(cont: &mut RwLockWriteGuard<StateContainer>, existing_player_ships: &Vec<Uuid>, location_idx: usize, mut sampler: Sampler) -> Sampler {
+    let new_ships = cont
         .state.locations[location_idx]
         .ships
         .clone()
         .into_iter()
         .filter(|s| existing_player_ships.contains(&s.id))
         .collect::<Vec<_>>();
+    let old_ships_len = cont.state.locations[location_idx].ships.len();
+    let new_ships_len = new_ships.len();
+    cont.state.locations[location_idx].ships = new_ships;
+
+    if new_ships_len != old_ships_len {
+        sampler.measure(
+            &|| multicast_ships_update_excluding(cont.state.locations[location_idx].ships.clone(), None, cont.state.id),
+            7,
+        );
+    }
+    sampler
 }
 
 pub fn send_event_to_client(ev: GameEvent, x_cast: XCast) {
