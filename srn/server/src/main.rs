@@ -990,13 +990,10 @@ fn main_thread() {
             .filter(|s| s.is_some())
             .map(|s| s.unwrap())
             .collect::<Vec<_>>();
-        cont.state.locations[0].ships = cont
-            .state.locations[0]
-            .ships
-            .clone()
-            .into_iter()
-            .filter(|s| existing_player_ships.contains(&s.id))
-            .collect::<Vec<_>>();
+
+        for idx in 0..cont.state.locations.len() {
+            cleanup_nonexistent_ships(&mut cont, &existing_player_ships, idx);
+        }
         sampler.end(cleanup_mark);
 
         sampler.measure(
@@ -1018,6 +1015,16 @@ fn main_thread() {
             ));
         }
     }
+}
+
+pub fn cleanup_nonexistent_ships(cont: &mut RwLockWriteGuard<StateContainer>, existing_player_ships: &Vec<Uuid>, location_idx: usize) {
+    cont.state.locations[location_idx].ships = cont
+        .state.locations[location_idx]
+        .ships
+        .clone()
+        .into_iter()
+        .filter(|s| existing_player_ships.contains(&s.id))
+        .collect::<Vec<_>>();
 }
 
 pub fn send_event_to_client(ev: GameEvent, x_cast: XCast) {
