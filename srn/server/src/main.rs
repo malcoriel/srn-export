@@ -208,10 +208,11 @@ fn mutate_owned_ship(
         send_tag_confirm(tag, client_id);
     }
     let mutated = world::mutate_ship_no_lock(client_id, mutate_cmd, &mut state);
-    if mutated.is_some() {
-        crate::multicast_ships_update_excluding(state.locations[0].ships.clone(), Some(client_id), state.id);
+    if let Some(mutated) = mutated {
+        crate::multicast_ships_update_excluding(state.locations[mutated.1.location_idx as usize].ships.clone(), Some(client_id), state.id);
+        return Some(mutated.0);
     }
-    mutated
+    return None;
 }
 
 fn x_cast_state(state: GameState, x_cast: XCast) {

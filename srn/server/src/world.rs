@@ -423,7 +423,7 @@ pub struct Location {
     pub minerals: Vec<NatSpawnMineral>,
     pub asteroid_belts: Vec<AsteroidBelt>,
     pub ships: Vec<Ship>,
-    pub adjacent_location_ids: Vec<Uuid>
+    pub adjacent_location_ids: Vec<Uuid>,
 }
 
 impl Location {
@@ -437,7 +437,7 @@ impl Location {
             asteroids: vec![],
             minerals: vec![],
             asteroid_belts: vec![],
-            ships: vec![]
+            ships: vec![],
         }
     }
 }
@@ -458,7 +458,7 @@ pub struct GameState {
     pub ticks: u32,
     pub disable_hp_effects: bool,
     pub market: Market,
-    pub locations: Vec<Location>
+    pub locations: Vec<Location>,
 }
 
 // b84413729214a182 - no inner planet, lol
@@ -1299,14 +1299,34 @@ pub fn find_mineral_m(minerals: &Vec<NatSpawnMineral>, min_id: Uuid) -> Option<&
     return minerals.iter().find(|mineral| mineral.id == min_id);
 }
 
-pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<usize> {
+pub struct ShipIdx {
+    pub location_idx: usize,
+    pub ship_idx: usize,
+}
+
+pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<ShipIdx> {
     let player = find_my_player(state, player_id);
+    let mut idx = ShipIdx { location_idx: 0, ship_idx: 0 };
+    let mut found = false;
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
-            return state.locations[0].ships.iter().position(|ship| ship.id == ship_id);
+            for loc in state.locations.iter() {
+                idx.ship_idx = 0;
+                for ship in loc.ships.iter() {
+                    if ship.id == ship_id {
+                        found = true;
+                        break;
+                    }
+                    idx.ship_idx+=1;
+                }
+                if found {
+                    break;
+                }
+                idx.location_idx += 1;
+            }
         }
     }
-    return None;
+    return if found {Some(idx)} else {None};
 }
 
 pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<&'a Planet> {
@@ -1580,8 +1600,8 @@ pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
 pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
     let old_ship_index = find_my_ship_index(&state, player_id);
     return if let Some(old_ship_index) = old_ship_index {
-        state.locations[0].ships.remove(old_ship_index);
-        state.locations[0].ships.push(updated_ship.clone());
+        state.locations[old_ship_index.location_idx].ships.remove(old_ship_index.ship_idx);
+        state.locations[old_ship_index.location_idx].ships.push(updated_ship.clone());
         true
     } else {
         eprintln!("couldn't replace ship");
@@ -1593,7 +1613,7 @@ pub fn mutate_ship_no_lock(
     client_id: Uuid,
     mutate_cmd: ShipAction,
     state: &mut GameState,
-) -> Option<Ship> {
+) -> Option<(Ship, ShipIdx)> {
     let old_ship_index = find_my_ship_index(&state, client_id);
     if old_ship_index.is_none() {
         warn!("No old instance of ship");
@@ -1604,7 +1624,7 @@ pub fn mutate_ship_no_lock(
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {
-            return Some(updated_ship);
+            return Some((updated_ship, old_ship_index.unwrap()));
         }
         warn!("Couldn't replace ship");
         return None;
@@ -1638,5 +1658,5 @@ pub fn find_player_location_idx(state: &GameState, player_id: Uuid) -> Option<i3
             break;
         }
     }
-    return if !found { None} else {Some(idx) };
+    return if !found { None } else { Some(idx) };
 }
