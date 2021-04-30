@@ -1379,46 +1379,69 @@ pub fn find_my_player_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut
 }
 
 pub fn find_player_and_ship_mut(state: &mut GameState, player_id: Uuid) -> (Option<&mut Player>, Option<&mut Ship>) {
-    let index = state
+    let player_idx = state
         .players
         .iter()
         .position(|player| player.id == player_id);
     let mut player = None;
     let mut ship = None;
-    if let Some(index) = index {
-        let found_player = &mut state.players[index];
+    if let Some(player_idx) = player_idx {
+        let found_player = &mut state.players[player_idx];
         if let Some(ship_id) = found_player.ship_id {
-            let index = state.locations[0].ships.iter().position(|ship| ship.id == ship_id);
-            if let Some(index) = index {
-                ship = Some(&mut state.locations[0].ships[index]);
+            let mut ship_idx = 0;
+            let mut loc_idx = 0;
+            let mut found = false;
+            for loc in state.locations.iter() {
+                if let Some(idx) = loc.ships.iter().position(|ship| ship.id == ship_id) {
+                    ship_idx = idx;
+                    found = true;
+                    break;
+                }
+                loc_idx += 1;
+            }
+            if found {
+                ship = Some(&mut state.locations[loc_idx].ships[ship_idx]);
+            } else {
+                ship = None;
             }
         }
-
         player = Some(found_player);
     }
     return (player, ship);
 }
 
 pub fn find_player_and_ship(state: &GameState, player_id: Uuid) -> (Option<&Player>, Option<&Ship>) {
-    let index = state
+    let player_idx = state
         .players
         .iter()
         .position(|player| player.id == player_id);
     let mut player = None;
     let mut ship = None;
-    if let Some(index) = index {
-        let found_player = &state.players[index];
+    if let Some(player_idx) = player_idx {
+        let found_player = &state.players[player_idx];
         if let Some(ship_id) = found_player.ship_id {
-            let index = state.locations[0].ships.iter().position(|ship| ship.id == ship_id);
-            if let Some(index) = index {
-                ship = Some(&state.locations[0].ships[index]);
+            let mut ship_idx = 0;
+            let mut loc_idx = 0;
+            let mut found = false;
+            for loc in state.locations.iter() {
+                if let Some(idx) = loc.ships.iter().position(|ship| ship.id == ship_id) {
+                    ship_idx = idx;
+                    found = true;
+                    break;
+                }
+                loc_idx += 1;
+            }
+            if found {
+                ship = Some(&state.locations[loc_idx].ships[ship_idx]);
+            } else {
+                ship = None;
             }
         }
-
         player = Some(found_player);
     }
     return (player, ship);
 }
+
 
 fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
     match action_raw.s_type {
