@@ -690,16 +690,17 @@ pub fn update_world(
             state.milliseconds_remaining = 10 * 1000;
             fire_event(GameEvent::GameEnded);
         } else {
-            let location_idx = 0;
-            sampler = update_location(&mut state, elapsed, client, update_options, sampler, location_idx)
+            for location_idx in 0..state.locations.len() {
+                sampler = update_location(&mut state, elapsed, client, &update_options, sampler, location_idx)
+            }
         };
     };
     (state, sampler)
 }
 
-fn update_location(mut state: &mut GameState, elapsed: i64, client: bool, update_options: UpdateOptions, mut sampler: Sampler, location_idx: usize) -> Sampler {
+fn update_location(mut state: &mut GameState, elapsed: i64, client: bool, update_options: &UpdateOptions, mut sampler: Sampler, location_idx: usize) -> Sampler {
     let update_planets_id = sampler.start(9);
-    let (planets, sampler_out) = planet_movement::update_planets(&state.locations[location_idx].planets, &state.locations[location_idx].star, elapsed, sampler, update_options.limit_area);
+    let (planets, sampler_out) = planet_movement::update_planets(&state.locations[location_idx].planets, &state.locations[location_idx].star, elapsed, sampler, update_options.limit_area.clone());
     state.locations[location_idx].planets = planets;
     sampler = sampler_out;
 
