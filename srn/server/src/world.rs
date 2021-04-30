@@ -1470,14 +1470,13 @@ pub fn apply_ship_action(
     player_id: Uuid,
 ) -> Option<Ship> {
     let ship_action: ShipActionRust = parse_ship_action(ship_action);
-    let old_ship = find_my_ship(state, player_id);
-
-    if old_ship.is_none() {
+    let ship_idx = find_my_ship_index(state, player_id);
+    if ship_idx.is_none() {
         warn!("No ship");
         return None;
     }
-
-    let old_ship = old_ship.unwrap();
+    let ship_idx = ship_idx.unwrap();
+    let old_ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
 
     match ship_action {
         ShipActionRust::Unknown => {
@@ -1513,7 +1512,7 @@ pub fn apply_ship_action(
                     x: ship.x,
                     y: ship.y,
                 };
-                for planet in state.locations[0].planets.iter() {
+                for planet in state.locations[ship_idx.location_idx].planets.iter() {
                     let pos = Vec2f64 {
                         x: planet.x,
                         y: planet.y,
