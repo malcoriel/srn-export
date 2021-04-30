@@ -1,8 +1,9 @@
 use uuid::Uuid;
 
 use crate::dialogue_dto::Dialogue;
-use crate::world::{GameEvent, GameState, Ship, GameMode};
+use crate::world::{GameEvent, GameState, Ship, GameMode, find_my_player, find_player_location_idx};
 use crate::xcast::XCast;
+use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TagConfirm {
@@ -38,27 +39,35 @@ pub enum ServerToClientMessage {
     RoomLeave(Uuid),
 }
 
-pub fn patch_state_for_player(mut state: GameState, player_id: Uuid) -> GameState {
+pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> GameState {
     state.my_id = player_id;
+    let player_loc_idx = find_player_location_idx(&state, player_id);
+    if let Some(loc_idx) = player_loc_idx {
+        state.locations = vec![state.locations.into_iter().nth(loc_idx as usize).unwrap()];
+    } else {
+        // There must always be a location for client purposes for now.
+        // The zero location can be some kind of limbo or just default location.
+        state.locations = vec![state.locations.into_iter().nth(0).unwrap()];
+    }
     state
 }
 
 impl ServerToClientMessage {
-    pub fn patch_with_id(self, client_id: Uuid) -> Self {
+    pub fn patch_for_client(self, client_id: Uuid) -> Self {
         match self {
             ServerToClientMessage::ObsoleteStateChangeExclusive(state, id) => {
                 ServerToClientMessage::ObsoleteStateChangeExclusive(
-                    patch_state_for_player(state, client_id),
+                    patch_state_for_client_impl(state, client_id),
                     id,
                 )
             }
             ServerToClientMessage::ObsoleteStateBroadcast(state) => {
-                ServerToClientMessage::ObsoleteStateBroadcast(patch_state_for_player(state, client_id))
+                ServerToClientMessage::ObsoleteStateBroadcast(patch_state_for_client_impl(state, client_id))
             }
             ServerToClientMessage::XCastStateChange(state, x_cast) => {
                 match x_cast {
                     XCast::Unicast(_, target_id) => {
-                        ServerToClientMessage::XCastStateChange(patch_state_for_player(state, target_id), x_cast)
+                        ServerToClientMessage::XCastStateChange(patch_state_for_client_impl(state, target_id), x_cast)
                     }
                     _ => {
                         ServerToClientMessage::XCastStateChange(state, x_cast)

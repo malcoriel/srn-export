@@ -1613,3 +1613,30 @@ pub fn mutate_ship_no_lock(
     warn!("Ship update was invalid");
     return None;
 }
+
+pub fn find_player_location_idx(state: &GameState, player_id: Uuid) -> Option<i32> {
+    let player = find_my_player(state, player_id);
+    if player.is_none() {
+        return None;
+    }
+    let player = player.unwrap();
+    if player.ship_id.is_none() {
+        return None;
+    }
+    let ship_id = player.ship_id.unwrap();
+    let mut idx = -1;
+    let mut found = false;
+    for loc in state.locations.iter() {
+        idx += 1;
+        for ship in loc.ships.iter() {
+            if ship.id == ship_id {
+                found = true;
+                break;
+            }
+        }
+        if found {
+            break;
+        }
+    }
+    return if !found { None} else {Some(idx) };
+}

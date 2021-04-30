@@ -19,6 +19,7 @@ pub fn try_move_player_ship(state: &mut GameState, player_id: Uuid, location_id:
     }
     let location = state.locations.iter_mut().find(|l| l.id == location_id);
     return if let (Some(location), Some(ship)) = (location, ship) {
+        log!(format!("ship {} moved to location {}", ship.id, location_id));
         location.ships.push(ship);
         true
     } else {
@@ -26,6 +27,6 @@ pub fn try_move_player_ship(state: &mut GameState, player_id: Uuid, location_id:
     }
 }
 
-fn can_be_moved(_state: &mut GameState, ship: Option<Ship>, _location_id: Uuid) -> bool {
+fn can_be_moved(_state: &mut GameState, _ship: Option<Ship>, _location_id: Uuid) -> bool {
     return true;
 }

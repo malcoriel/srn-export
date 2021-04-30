@@ -286,7 +286,7 @@ fn handle_request(request: WSRequest) {
 
     {
         let mut state = STATE.read().unwrap().state.clone();
-        state = net::patch_state_for_player(state, client_id);
+        state = net::patch_state_for_client_impl(state, client_id);
         let message: Message = Message::text(serde_json::to_string(&state).unwrap());
         client.send_message(&message).unwrap();
     }
@@ -361,7 +361,7 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
     let current_state_id = get_state_id(client_id);
     let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
     if should_send {
-        let message = Message::text(message.clone().patch_with_id(client_id).serialize());
+        let message = Message::text(message.clone().patch_for_client(client_id).serialize());
         sender
             .send_message(&message)
             .map_err(|e| {
