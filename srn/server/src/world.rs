@@ -1294,6 +1294,22 @@ pub fn find_my_ship(state: &GameState, player_id: Uuid) -> Option<&Ship> {
     return None;
 }
 
+pub fn find_my_ship_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut Ship> {
+    let player = find_my_player(state, player_id);
+    if player.is_none() {
+        return None;
+    }
+    if let Some(ship_id) = player.unwrap().ship_id {
+        for loc in state.locations.iter_mut() {
+            if let Some(ship) = loc.ships.iter_mut().find(|s| s.id == ship_id) {
+                return Some(ship);
+            }
+        }
+    }
+    return None;
+}
+
+
 pub fn find_mineral(state: &GameState, min_id: Uuid) -> Option<&NatSpawnMineral> {
     for loc in state.locations.iter() {
         if let Some(mineral) = loc.minerals.iter().find(|mineral| mineral.id == min_id) {
@@ -1341,19 +1357,6 @@ pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<
     for loc in state.locations.iter() {
         if let Some(planet) = loc.planets.iter().find(|p| p.id == *planet_id) {
             return Some(planet);
-        }
-    }
-    return None;
-}
-
-pub fn find_my_ship_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut Ship> {
-    let player = find_my_player(state, player_id);
-    if let Some(player) = player {
-        if let Some(ship_id) = player.ship_id {
-            let index = state.locations[0].ships.iter().position(|ship| ship.id == ship_id);
-            if let Some(index) = index {
-                return Some(&mut state.locations[0].ships[index]);
-            }
         }
     }
     return None;
