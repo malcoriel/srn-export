@@ -531,13 +531,15 @@ fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
 }
 
 pub fn validate_state(mut in_state: GameState) -> GameState {
-    in_state.locations[0].planets = extract_valid_planets(&in_state);
+    for idx in 0..in_state.locations.len() {
+        in_state.locations[idx].planets = extract_valid_planets(&in_state, idx);
+    }
     in_state
 }
 
-pub fn extract_valid_planets(in_state: &GameState) -> Vec<Planet> {
+pub fn extract_valid_planets(in_state: &GameState, location_idx: usize) -> Vec<Planet> {
     in_state
-        .locations[0]
+        .locations[location_idx]
         .planets
         .iter()
         .filter(|p| {
