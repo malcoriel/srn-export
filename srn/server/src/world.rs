@@ -1022,19 +1022,6 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
     state.players.push(player);
 }
 
-pub fn remove_player_ship(state: &mut GameState, player_id: Uuid) {
-    let ship = find_my_ship(state, player_id);
-    if let Some(ship) = ship {
-        state.locations[0].ships = state.locations[0].ships.iter().filter_map(|s| {
-            if s.id != ship.id {
-                Some(s.clone())
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>();
-    }
-}
-
 pub fn find_and_extract_ship(state: &mut GameState, player_id: Uuid) -> Option<Ship> {
     let player = find_my_player(state, player_id);
     if player.is_none() {
@@ -1294,12 +1281,26 @@ pub fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64) -> Vec<Vec2f64> {
 
 pub fn find_my_ship(state: &GameState, player_id: Uuid) -> Option<&Ship> {
     let player = find_my_player(state, player_id);
-    if let Some(player) = player {
-        if let Some(ship_id) = player.ship_id {
-            return state.locations[0].ships.iter().find(|ship| ship.id == ship_id);
+    if player.is_none() {
+        return None;
+    }
+    let mut found_ship = None;
+    if let Some(ship_id) = player.unwrap().ship_id {
+        let mut should_break = false;
+        for loc in state.locations.iter() {
+            for ship in loc.ships.iter() {
+                if ship_id == ship.id {
+                    found_ship = Some(ship);
+                    should_break = true;
+                    break;
+                }
+            }
+            if should_break {
+                break;
+            }
         }
     }
-    return None;
+    return found_ship;
 }
 
 pub fn find_mineral(state: &GameState, min_id: Uuid) -> Option<&NatSpawnMineral> {

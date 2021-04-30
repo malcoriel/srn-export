@@ -48,7 +48,7 @@ use crate::perf::Sampler;
 use crate::sandbox::mutate_state;
 use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
-use crate::world::{AABB, find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, remove_player_ship, ShipAction, spawn_ship, update_quests, UpdateOptions};
+use crate::world::{AABB, find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, ShipAction, spawn_ship, update_quests, UpdateOptions, find_and_extract_ship};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -173,7 +173,7 @@ fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     let mut cont = STATE.write().unwrap();
     let player_idx = cont.state.players.iter().position(|p| p.id == client_id).unwrap();
     {
-        remove_player_ship(&mut cont.state, client_id);
+        find_and_extract_ship(&mut cont.state, client_id);
     }
     let player = cont.state.players.remove(player_idx);
     let player_clone = player.clone();
