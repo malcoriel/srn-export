@@ -1574,7 +1574,7 @@ pub fn apply_ship_action(
         }
         ShipActionRust::Tractor(t) => {
             let mut ship = old_ship.clone();
-            update_ship_tractor(t, &mut ship, &state.locations[0].minerals);
+            update_ship_tractor(t, &mut ship, &state.locations[ship_idx.location_idx].minerals);
             Some(ship)
         }
     }
@@ -1619,20 +1619,8 @@ pub fn update_quests(state: &mut GameState) {
 }
 
 pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
-    state
-        .players
-        .iter()
-        .position(|p| p.id == conn_id)
-        .map(|i| {
-            let player = state.players.remove(i);
-            player.ship_id.map(|player_ship_id| {
-                state.locations[0]
-                    .ships
-                    .iter()
-                    .position(|s| s.id == player_ship_id)
-                    .map(|i| state.locations[0].ships.remove(i))
-            })
-        });
+    // intentionally drop the extracted result
+    find_and_extract_ship(state, conn_id);
 }
 
 pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
