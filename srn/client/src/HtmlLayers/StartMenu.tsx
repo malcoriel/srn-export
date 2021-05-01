@@ -246,11 +246,11 @@ export const StartMenu: React.FC<{
       )}
       <div className="versions-status">
         <div>
-          Client version:
+          Client version:&nbsp;
           {versionJson.version}
         </div>
         <div>
-          Server version:
+          Server version:&nbsp;
           {serverVersionFormatted}
         </div>
       </div>
