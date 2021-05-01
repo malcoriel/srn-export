@@ -124,6 +124,7 @@ const renderContent = (
                   visible
                   key={dialogue.planet.id}
                   color={dialogue.planet.color}
+                  atmosphereColor={dialogue.planet.color}
                 />
               </Suspense>
             </Canvas>

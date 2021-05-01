@@ -82,14 +82,14 @@ const positionItemsInGroup = (
     indexes.set(item.index, item.id);
   }
 
-  const maxIndex = _.max(items.map((i) => i.index)) || -1;
-  if (maxIndex === -1 && items.length > 0) {
+  const maxIndex = _.max(items.map((i) => i.index));
+  if (maxIndex === undefined && items.length > 0) {
     console.warn(
       `No max index, probably there's a bug: ${JSON.stringify(items)}`
     );
     return res;
   }
-  for (let i = 0; i < maxIndex + 1; i++) {
+  for (let i = 0; i < (maxIndex || 0) + 1; i++) {
     if (indexes.has(i)) {
       res[indexes.get(i)] = new Vector(shift + column, row);
     }
