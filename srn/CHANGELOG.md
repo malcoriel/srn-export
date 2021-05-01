@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.6.0 (2021-05-01)
+
+### New
+* Multiple star systems support (press E to toggle teleport menu). So far, no quests or spawning there.
+
+### Fixes
+* Atmosphere of planets in the dialogue window is no longer white, and now properly matches the planet color.
+* Small visual spacing bugfix for version display.
+
 ## Version 0.5.12 (2021-04-24)
 
 ### New
