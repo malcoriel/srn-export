@@ -13,7 +13,7 @@ import {
 } from '../ThreeLayers/ThreeLayer';
 import { Vector3 } from 'three/src/math/Vector3';
 import { Text } from '@react-three/drei';
-import { crimson, teal, yellow } from '../utils/palette';
+import { blue, crimson, teal, tiffanyBlue, yellow } from '../utils/palette';
 import { ThreeLine } from '../ThreeLayers/blocks/ThreeLine';
 import { Vector2 } from 'three';
 import _ from 'lodash';
@@ -39,8 +39,8 @@ const Template: Story = (args) => {
     const normDir = dir.normalize();
     const offset1 = normDir.scale(sys1.radius + 5);
     const offset2 = normDir.scale(sys2.radius + 5);
-    return [sys1Vec.add(offset1), sys2Vec.subtract(offset2)].map(
-      vecToThreePos
+    return [sys1Vec.add(offset1), sys2Vec.subtract(offset2)].map((p) =>
+      vecToThreePos(p, -5)
     ) as [Vector3Arr, Vector3Arr];
   };
   return (
@@ -75,7 +75,7 @@ const Template: Story = (args) => {
             <Text
               visible
               position={vecToThreePos(position.add(VectorF(0, -(radius + 10))))}
-              color={teal}
+              color={yellow}
               fontSize={18}
               maxWidth={20}
               lineHeight={1}
@@ -97,8 +97,8 @@ const Template: Story = (args) => {
               <ThreeLine
                 key={i}
                 points={points}
-                color={teal}
-                lineWidth={5}
+                color={tiffanyBlue}
+                lineWidth={2}
                 resolution={new Vector2(256, 256)}
               />
             );
@@ -149,6 +149,10 @@ Main.args = {
     {
       from: '2',
       to: '4',
+    },
+    {
+      from: '1',
+      to: '2',
     },
   ],
 };
