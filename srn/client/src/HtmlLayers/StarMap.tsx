@@ -13,18 +13,16 @@ import { ThreeLine } from '../ThreeLayers/blocks/ThreeLine';
 import { Vector2 } from 'three';
 import React from 'react';
 import _ from 'lodash';
+import { Location, LocationLink } from '../../../world/pkg';
 
 export interface StarMapProps {
-  systems: any[];
-  links: any[];
+  systems: Location[];
+  links: LocationLink[];
 }
 
 export const makeLinkLineCoords = (args: StarMapProps) => {
   const systemsById = _.keyBy(args.systems, 'id');
-  const getLinkLineCoords = (
-    from: string,
-    to: string
-  ): [Vector3Arr, Vector3Arr] | null => {
+  return (from: string, to: string): [Vector3Arr, Vector3Arr] | null => {
     const sys1 = systemsById[from];
     const sys2 = systemsById[to];
     if (!sys1 || !sys2) return null;
@@ -38,7 +36,6 @@ export const makeLinkLineCoords = (args: StarMapProps) => {
       vecToThreePos(p, -5)
     ) as [Vector3Arr, Vector3Arr];
   };
-  return getLinkLineCoords;
 };
 
 export const StarMap: React.FC<StarMapProps> = (args) => {

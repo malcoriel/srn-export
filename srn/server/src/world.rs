@@ -421,9 +421,17 @@ pub struct Location {
     pub planets: Vec<Planet>,
     pub asteroids: Vec<Asteroid>,
     pub minerals: Vec<NatSpawnMineral>,
+    pub position: Vec2f64,
+    pub radius: f64,
     pub asteroid_belts: Vec<AsteroidBelt>,
     pub ships: Vec<Ship>,
     pub adjacent_location_ids: Vec<Uuid>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct LocationLink {
+    pub from: Uuid,
+    pub to: Uuid,
 }
 
 impl Location {
@@ -436,6 +444,11 @@ impl Location {
             planets: vec![],
             asteroids: vec![],
             minerals: vec![],
+            position: Vec2f64 {
+                x: 0.0,
+                y: 0.0
+            },
+            radius: 0.0,
             asteroid_belts: vec![],
             ships: vec![],
         }
