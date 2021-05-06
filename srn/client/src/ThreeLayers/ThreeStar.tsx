@@ -23,6 +23,7 @@ export const ThreeStar: React.FC<
     scale: [number, number, number];
     visible: boolean;
     visualState: VisualState;
+    timeScale?: number;
   }
 > = React.memo(
   (props) => {
@@ -40,7 +41,8 @@ export const ThreeStar: React.FC<
       if (mesh.current) {
         if (props.visible) {
           const material = mesh.current.material as ShaderMaterial;
-          material.uniforms.time.value += 1;
+          material.uniforms.time.value +=
+            1.0 * (props.timeScale !== undefined ? props.timeScale : 1.0);
         }
       }
     });

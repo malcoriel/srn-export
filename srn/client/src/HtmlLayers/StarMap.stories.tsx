@@ -28,15 +28,6 @@ const Template: Story = (args) => {
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
-  const { arrowPoints, mediumArrowPoints, smallArrowPoints } = makeArrowPoints(
-    new Vector(20, 20),
-    new Vector(0, 0)
-  );
-  let points = [
-    new Vector3(50, -50, 51),
-    new Vector3(50, 50, 50),
-    new Vector3(-50, 50, 52),
-  ];
   return (
     <div style={{ width: 256, height: 256, position: 'relative' }}>
       <StoryCanvas
@@ -46,65 +37,51 @@ const Template: Story = (args) => {
           <planeBufferGeometry args={[256, 256]} />
           <meshBasicMaterial color="teal" />
         </mesh>
-        {/*<ThreeSpaceBackground*/}
-        {/*  key={`${revision}+${JSON.stringify(args)}`}*/}
-        {/*  shift={0}*/}
-        {/*  size={256}*/}
-        {/*/>*/}
-        {/*{args.systems.map(({ id, name, color, position }: any) => (*/}
-        {/*  <group key={id}>*/}
-        {/*    <ThreeStar*/}
-        {/*      position={new Vector3(...posToThreePos(position.x, position.y))}*/}
-        {/*      scale={[20, 20, 20]}*/}
-        {/*      visible*/}
-        {/*      color={color}*/}
-        {/*      coronaColor={color}*/}
-        {/*      visualState={{*/}
-        {/*        boundCameraMovement: false,*/}
-        {/*        zoomShift: 1,*/}
-        {/*        cameraPosition: new Vector(0, 0),*/}
-        {/*      }}*/}
-        {/*    />*/}
-        {/*    <Text*/}
-        {/*      visible*/}
-        {/*      position={vecToThreePos(position.add(VectorF(0, -30)))}*/}
-        {/*      color={teal}*/}
-        {/*      fontSize={18}*/}
-        {/*      maxWidth={20}*/}
-        {/*      lineHeight={1}*/}
-        {/*      letterSpacing={0.02}*/}
-        {/*      textAlign="center"*/}
-        {/*      anchorX="center"*/}
-        {/*      anchorY="bottom" // default*/}
-        {/*    >*/}
-        {/*      {name}*/}
-        {/*    </Text>*/}
-        {/*  </group>*/}
-        {/*))}*/}
-        <ThreeLine
-          onClick={console.log}
-          color={crimson}
-          points={points.map(xyz)}
-          lineWidth={10}
-          resolution={new Vector2(256, 256)}
+        <ThreeSpaceBackground
+          key={`${revision}+${JSON.stringify(args)}`}
+          shift={0}
+          size={256}
         />
-        {/*{args.links.map(({ from, to }: any, i: number) => (*/}
-        {/*  <ThreeLine*/}
-        {/*    key={i}*/}
-        {/*    points={[*/}
-        {/*    ]}*/}
-        {/*    color={'red'}*/}
-        {/*    lineWidth={10}*/}
-        {/*    resolution={new Vector2(256, 256)}*/}
-        {/*  />*/}
-        {/*))}*/}
-        {/*<ThreeQuestDirectionImpl*/}
-        {/*  arrowActiveIndex={0}*/}
-        {/*  arrowPoints={arrowPoints}*/}
-        {/*  lineShaderResolutionVec={new Vector2(256, 256)}*/}
-        {/*  mediumArrowPoints={mediumArrowPoints}*/}
-        {/*  smallArrowPoints={smallArrowPoints}*/}
-        {/*/>*/}
+        {args.systems.map(({ id, name, color, position }: any) => (
+          <group key={id}>
+            <ThreeStar
+              position={new Vector3(...posToThreePos(position.x, position.y))}
+              scale={[20, 20, 20]}
+              visible
+              color={color}
+              coronaColor={color}
+              timeScale={0.1}
+              visualState={{
+                boundCameraMovement: false,
+                zoomShift: 1,
+                cameraPosition: new Vector(0, 0),
+              }}
+            />
+            <Text
+              visible
+              position={vecToThreePos(position.add(VectorF(0, -30)))}
+              color={teal}
+              fontSize={18}
+              maxWidth={20}
+              lineHeight={1}
+              letterSpacing={0.02}
+              textAlign="center"
+              anchorX="center"
+              anchorY="bottom" // default
+            >
+              {name}
+            </Text>
+          </group>
+        ))}
+        {args.links.map(({ from, to }: any, i: number) => (
+          <ThreeLine
+            key={i}
+            points={[vecToThreePos(from), vecToThreePos(to)]}
+            color={'red'}
+            lineWidth={10}
+            resolution={new Vector2(256, 256)}
+          />
+        ))}
       </StoryCanvas>
     </div>
   );
@@ -140,8 +117,8 @@ Main.args = {
   ],
   links: [
     {
-      from: '1',
-      to: '2',
+      from: new Vector(0, 0),
+      to: new Vector(50, 50),
     },
     // {
     //   from: '1',
