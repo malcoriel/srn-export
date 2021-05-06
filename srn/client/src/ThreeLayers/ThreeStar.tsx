@@ -7,6 +7,7 @@ import { VisualState } from '../NetState';
 import { unitsToPixels_min } from '../coord';
 import { shallowEqual } from '../utils/shallowCompare';
 import { normalizeColor } from '../utils/palette';
+import _ from 'lodash';
 
 export const useRepeatWrappedTextureLoader = (path: string) => {
   const texture = useLoader(TextureLoader, path);
@@ -45,7 +46,7 @@ export const ThreeStar: React.FC<
     });
 
     const uniforms2 = useMemo(() => {
-      const patchedUniforms = uniforms;
+      const patchedUniforms = _.cloneDeep(uniforms);
       patchedUniforms.iChannel0.value = lavaTile;
       patchedUniforms.iChannel1.value = grassTile;
       patchedUniforms.color.value = new Vector3(

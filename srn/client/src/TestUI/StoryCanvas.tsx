@@ -3,7 +3,10 @@ import { Canvas } from 'react-three-fiber';
 import { Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 
-export const StoryCanvas: React.FC = ({ children }) => {
+export const StoryCanvas: React.FC<{ styles?: any }> = ({
+  children,
+  styles,
+}) => {
   return (
     <Canvas
       orthographic
@@ -17,6 +20,7 @@ export const StoryCanvas: React.FC = ({ children }) => {
         display: 'inline-block',
         width: 256,
         height: 256,
+        ...styles,
       }}
     >
       <Suspense fallback={<mesh />}>

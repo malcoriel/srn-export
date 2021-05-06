@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Vector2, Vector3, Color } from 'three';
+import { Color, Vector2 } from 'three';
 import { ReactThreeFiber } from 'react-three-fiber';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
 import {
@@ -9,7 +9,7 @@ import {
 import { Line2 } from 'three/examples/jsm/lines/Line2';
 
 export type ThreeLineProps = {
-  points: Array<Vector3 | [number, number, number]>;
+  points: Array<[number, number, number]>;
   color?: Color | string | number;
   vertexColors?: Array<Color | [number, number, number]>;
   lineWidth?: number;
@@ -37,8 +37,7 @@ export const ThreeLine = React.forwardRef<Line2, ThreeLineProps>(function Line(
 
   const lineGeom = React.useMemo(() => {
     const geom = new LineGeometry();
-    const pValues = points.map((p) => (p instanceof Vector3 ? p.toArray() : p));
-    geom.setPositions(pValues.flat());
+    geom.setPositions(points.map((p) => p).flat());
 
     if (vertexColors) {
       const cValues = vertexColors.map((c) => {
@@ -49,7 +48,6 @@ export const ThreeLine = React.forwardRef<Line2, ThreeLineProps>(function Line(
 
     return geom;
   }, [points, vertexColors]);
-
   React.useLayoutEffect(() => {
     line2.computeLineDistances();
   }, [points, line2]);
