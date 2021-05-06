@@ -9,6 +9,7 @@ import Vector, { VectorF } from '../utils/Vector';
 import {
   liftThreePos,
   posToThreePos,
+  Vector3Arr,
   vecToThreePos,
 } from '../ThreeLayers/ThreeLayer';
 import { Vector3 } from 'three/src/math/Vector3';
@@ -20,6 +21,7 @@ import {
   makeArrowPoints,
   ThreeQuestDirectionImpl,
 } from '../ThreeLayers/ThreeQuestDirection';
+import _ from 'lodash';
 
 const xyz = (vec: Vector3): [number, number, number] => [vec.x, vec.y, vec.z];
 
@@ -28,6 +30,19 @@ const Template: Story = (args) => {
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
+  const systemsById = _.keyBy(args.systems, 'id');
+  const getLinkLineCoords = (
+    from: string,
+    to: string
+  ): [Vector3Arr, Vector3Arr] | null => {
+    const sys1 = systemsById[from];
+    const sys2 = systemsById[to];
+    if (!sys1 || !sys2) return null;
+    return [sys1.position, sys2.position].map(vecToThreePos) as [
+      Vector3Arr,
+      Vector3Arr
+    ];
+  };
   return (
     <div style={{ width: 256, height: 256, position: 'relative' }}>
       <StoryCanvas
@@ -73,15 +88,22 @@ const Template: Story = (args) => {
             </Text>
           </group>
         ))}
-        {args.links.map(({ from, to }: any, i: number) => (
-          <ThreeLine
-            key={i}
-            points={[vecToThreePos(from), vecToThreePos(to)]}
-            color={'red'}
-            lineWidth={10}
-            resolution={new Vector2(256, 256)}
-          />
-        ))}
+        {args.links.map(
+          // eslint-disable-next-line react/no-unused-prop-types
+          ({ from, to }: { from: string; to: string }, i: number) => {
+            const points = getLinkLineCoords(from, to);
+            if (!points) return null;
+            return (
+              <ThreeLine
+                key={i}
+                points={points}
+                color="red"
+                lineWidth={10}
+                resolution={new Vector2(256, 256)}
+              />
+            );
+          }
+        )}
       </StoryCanvas>
     </div>
   );
@@ -117,17 +139,13 @@ Main.args = {
   ],
   links: [
     {
-      from: new Vector(0, 0),
-      to: new Vector(50, 50),
+      from: '1',
+      to: '4',
     },
-    // {
-    //   from: '1',
-    //   to: '4',
-    // },
-    // {
-    //   from: '2',
-    //   to: '4',
-    // },
+    {
+      from: '2',
+      to: '4',
+    },
   ],
 };
 
