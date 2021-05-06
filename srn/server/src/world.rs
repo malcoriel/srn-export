@@ -422,7 +422,6 @@ pub struct Location {
     pub asteroids: Vec<Asteroid>,
     pub minerals: Vec<NatSpawnMineral>,
     pub position: Vec2f64,
-    pub radius: f64,
     pub asteroid_belts: Vec<AsteroidBelt>,
     pub ships: Vec<Ship>,
     pub adjacent_location_ids: Vec<Uuid>,
@@ -448,7 +447,6 @@ impl Location {
                 x: 0.0,
                 y: 0.0
             },
-            radius: 0.0,
             asteroid_belts: vec![],
             ships: vec![],
         }

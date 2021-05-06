@@ -229,7 +229,6 @@ fn gen_star_system_location(seed: &String) -> Location {
         position: Default::default(),
         adjacent_location_ids: vec![],
         id: new_id(),
-        radius: 0.0
     };
     location
 }
@@ -371,7 +370,6 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
                 asteroids: vec![],
                 minerals: vec![],
                 position: Default::default(),
-                radius: 0.0,
                 asteroid_belts: vec![],
                 ships: vec![],
             }
@@ -408,7 +406,6 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
                 asteroids: vec![],
                 minerals: vec![],
                 position: Default::default(),
-                radius: 0.0,
                 asteroid_belts: vec![],
                 ships: vec![],
                 adjacent_location_ids: vec![]

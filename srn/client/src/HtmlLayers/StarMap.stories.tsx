@@ -30,30 +30,38 @@ Main.args = {
   systems: [
     {
       id: '1',
-      name: 'Dune',
-      color: '#ff3880',
-      radius: 20,
+      star: {
+        name: 'Dune',
+        color: '#ff3880',
+        radius: 20,
+      },
       position: new Vector(50, 50),
     },
     {
       id: '2',
-      name: 'Flop',
-      color: '#38ff94',
-      radius: 10,
+      star: {
+        name: 'Flop',
+        color: '#38ff94',
+        radius: 10,
+      },
       position: new Vector(50, -50),
     },
     {
       id: '3',
-      name: 'Boop',
-      radius: 15,
-      color: '#fff738',
+      star: {
+        name: 'Boop',
+        radius: 15,
+        color: '#fff738',
+      },
       position: new Vector(-50, 50),
     },
     {
       id: '4',
-      name: 'Waaagh',
-      radius: 30,
-      color: '#ff6238',
+      star: {
+        name: 'Waaagh',
+        radius: 30,
+        color: '#ff6238',
+      },
       position: new Vector(-50, -50),
     },
   ],

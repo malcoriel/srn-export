@@ -26,12 +26,13 @@ export const makeLinkLineCoords = (args: StarMapProps) => {
     const sys1 = systemsById[from];
     const sys2 = systemsById[to];
     if (!sys1 || !sys2) return null;
+    if (!sys1.star || !sys2.star) return null;
     const sys1Vec = Vector.fromIVector(sys1.position);
     const sys2Vec = Vector.fromIVector(sys2.position);
     const dir = sys2Vec.subtract(sys1Vec);
     const normDir = dir.normalize();
-    const offset1 = normDir.scale(sys1.radius + 5);
-    const offset2 = normDir.scale(sys2.radius + 5);
+    const offset1 = normDir.scale(sys1.star.radius + 5);
+    const offset2 = normDir.scale(sys2.star.radius + 5);
     return [sys1Vec.add(offset1), sys2Vec.subtract(offset2)].map((p) =>
       vecToThreePos(p, -5)
     ) as [Vector3Arr, Vector3Arr];
@@ -47,37 +48,43 @@ export const StarMap: React.FC<StarMapProps> = (args) => {
         <meshBasicMaterial color="teal" />
       </mesh>
       <ThreeSpaceBackground shift={0} size={256} />
-      {args.systems.map(({ id, name, color, radius, position }: any) => (
-        <group key={id}>
-          <ThreeStar
-            position={new Vector3(...posToThreePos(position.x, position.y))}
-            scale={[radius, radius, radius]}
-            visible
-            color={color}
-            coronaColor={color}
-            timeScale={0.1}
-            visualState={{
-              boundCameraMovement: false,
-              zoomShift: 1,
-              cameraPosition: new Vector(0, 0),
-            }}
-          />
-          <Text
-            visible
-            position={vecToThreePos(position.add(VectorF(0, -(radius + 10))))}
-            color={yellow}
-            fontSize={18}
-            maxWidth={20}
-            lineHeight={1}
-            letterSpacing={0.02}
-            textAlign="center"
-            anchorX="center"
-            anchorY="bottom" // default
-          >
-            {name}
-          </Text>
-        </group>
-      ))}
+      {args.systems.map(({ id, star, position }) => {
+        if (!star) {
+          return null;
+        }
+        const { color, radius, name } = star;
+        return (
+          <group key={id}>
+            <ThreeStar
+              position={new Vector3(...posToThreePos(position.x, position.y))}
+              scale={[radius, radius, radius]}
+              visible
+              color={color}
+              coronaColor={color}
+              timeScale={0.1}
+              visualState={{
+                boundCameraMovement: false,
+                zoomShift: 1,
+                cameraPosition: new Vector(0, 0),
+              }}
+            />
+            <Text
+              visible
+              position={vecToThreePos(position.add(VectorF(0, -(radius + 10))))}
+              color={yellow}
+              fontSize={18}
+              maxWidth={20}
+              lineHeight={1}
+              letterSpacing={0.02}
+              textAlign="center"
+              anchorX="center"
+              anchorY="bottom" // default
+            >
+              {name}
+            </Text>
+          </group>
+        );
+      })}
       {args.links.map(
         // eslint-disable-next-line react/no-unused-prop-types
         ({ from, to }: { from: string; to: string }, i: number) => {
