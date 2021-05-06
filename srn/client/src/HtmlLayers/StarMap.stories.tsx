@@ -7,7 +7,6 @@ import * as uuid from 'uuid';
 import { ThreeStar } from '../ThreeLayers/ThreeStar';
 import Vector, { VectorF } from '../utils/Vector';
 import {
-  liftThreePos,
   posToThreePos,
   Vector3Arr,
   vecToThreePos,
@@ -17,10 +16,6 @@ import { Text } from '@react-three/drei';
 import { crimson, teal, yellow } from '../utils/palette';
 import { ThreeLine } from '../ThreeLayers/blocks/ThreeLine';
 import { Vector2 } from 'three';
-import {
-  makeArrowPoints,
-  ThreeQuestDirectionImpl,
-} from '../ThreeLayers/ThreeQuestDirection';
 import _ from 'lodash';
 
 const xyz = (vec: Vector3): [number, number, number] => [vec.x, vec.y, vec.z];
@@ -38,10 +33,15 @@ const Template: Story = (args) => {
     const sys1 = systemsById[from];
     const sys2 = systemsById[to];
     if (!sys1 || !sys2) return null;
-    return [sys1.position, sys2.position].map(vecToThreePos) as [
-      Vector3Arr,
-      Vector3Arr
-    ];
+    const sys1Vec = Vector.fromIVector(sys1.position);
+    const sys2Vec = Vector.fromIVector(sys2.position);
+    const dir = sys2Vec.subtract(sys1Vec);
+    const normDir = dir.normalize();
+    const offset1 = normDir.scale(sys1.radius + 5);
+    const offset2 = normDir.scale(sys2.radius + 5);
+    return [sys1Vec.add(offset1), sys2Vec.subtract(offset2)].map(
+      vecToThreePos
+    ) as [Vector3Arr, Vector3Arr];
   };
   return (
     <div style={{ width: 256, height: 256, position: 'relative' }}>
@@ -57,11 +57,11 @@ const Template: Story = (args) => {
           shift={0}
           size={256}
         />
-        {args.systems.map(({ id, name, color, position }: any) => (
+        {args.systems.map(({ id, name, color, radius, position }: any) => (
           <group key={id}>
             <ThreeStar
               position={new Vector3(...posToThreePos(position.x, position.y))}
-              scale={[20, 20, 20]}
+              scale={[radius, radius, radius]}
               visible
               color={color}
               coronaColor={color}
@@ -74,7 +74,7 @@ const Template: Story = (args) => {
             />
             <Text
               visible
-              position={vecToThreePos(position.add(VectorF(0, -30)))}
+              position={vecToThreePos(position.add(VectorF(0, -(radius + 10))))}
               color={teal}
               fontSize={18}
               maxWidth={20}
@@ -97,8 +97,8 @@ const Template: Story = (args) => {
               <ThreeLine
                 key={i}
                 points={points}
-                color="red"
-                lineWidth={10}
+                color={teal}
+                lineWidth={5}
                 resolution={new Vector2(256, 256)}
               />
             );
@@ -116,23 +116,27 @@ Main.args = {
       id: '1',
       name: 'Dune',
       color: '#ff3880',
+      radius: 20,
       position: new Vector(50, 50),
     },
     {
       id: '2',
       name: 'Flop',
       color: '#38ff94',
+      radius: 10,
       position: new Vector(50, -50),
     },
     {
       id: '3',
       name: 'Boop',
+      radius: 15,
       color: '#fff738',
       position: new Vector(-50, 50),
     },
     {
       id: '4',
       name: 'Waaagh',
+      radius: 30,
       color: '#ff6238',
       position: new Vector(-50, -50),
     },
