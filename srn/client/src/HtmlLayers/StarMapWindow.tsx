@@ -50,7 +50,7 @@ export const StarMapWindow: React.FC = () => {
           <ambientLight />
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <group position={[0, 0, 0]}>
-            <StarMap systems={locations} links={[]} />
+            {/*<StarMap systems={locations} links={[]} />*/}
           </group>
         </Suspense>
       </Canvas>

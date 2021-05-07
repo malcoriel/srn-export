@@ -77,6 +77,7 @@ export const ThreeBodiesLayer: React.FC<{
       })}
       {star && (
         <ThreeStar
+          timeScale={0.3}
           visualState={visualState}
           visible={visMap[star.id]}
           scale={_.times(3, () => star.radius) as [number, number, number]}
