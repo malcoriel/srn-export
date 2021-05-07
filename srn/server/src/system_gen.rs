@@ -119,7 +119,8 @@ fn gen_star_system_location(seed: &String) -> Location {
     let mut zones = VecDeque::new();
     let mut current = 0.0;
 
-    let mut index = 0;
+    zones.push_back((gen_star_radius(&mut prng), 0));
+    let mut index = 1;
     loop {
         let is_gap = index % 2 == 1;
         let width = if is_gap {

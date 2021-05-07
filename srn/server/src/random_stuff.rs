@@ -200,7 +200,7 @@ pub fn gen_sat_count(planet_radius: f64, rng: &mut SmallRng) -> u32 {
 }
 
 pub fn gen_star_radius(rng: &mut SmallRng) -> f64 {
-    return rng.gen_range(40.0, 60.0);
+    return rng.gen_range(20.0, 80.0);
 }
 
 pub fn gen_planet_gap(rng: &mut SmallRng) -> f64 {
