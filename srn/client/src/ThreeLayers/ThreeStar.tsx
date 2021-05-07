@@ -28,15 +28,11 @@ export const ThreeStar: React.FC<
   }
 > = React.memo(
   (props) => {
-    const zoomProp = 1 / (props.visualState.zoomShift || 1.0);
-
     const mesh = useRef<Mesh>();
     const lavaTile = useRepeatWrappedTextureLoader('resources/lavatile.png');
     const grassTile = useRepeatWrappedTextureLoader(
       'resources/bowling_grass.jpg'
     );
-
-    const { camera } = useThree();
 
     useFrame(() => {
       if (mesh.current) {
@@ -59,8 +55,14 @@ export const ThreeStar: React.FC<
         ...normalizeColor(props.coronaColor || 'white')
       );
       return patchedUniforms;
-      // eslint-disable-next-line
-    }, [zoomProp, unitsToPixels_min(), camera.position.x, camera.position.y]);
+    }, [
+      grassTile,
+      lavaTile,
+      props.coronaColor,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      unitsToPixels_min(),
+      props.color,
+    ]);
 
     return (
       <mesh {...props} ref={mesh} rotation={[0, 0, 0]} onClick={props.onClick}>

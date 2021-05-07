@@ -77,7 +77,7 @@ export const StarMap: React.FC<StarMapProps> = ({
               visible
               color={color}
               coronaColor={color}
-              timeScale={0.1}
+              timeScale={0.5}
               visualState={{
                 boundCameraMovement: false,
                 zoomShift: 1,
