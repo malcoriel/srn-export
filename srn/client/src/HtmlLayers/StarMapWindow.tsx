@@ -25,8 +25,8 @@ export const StarMapWindow: React.FC = () => {
 
   return (
     <Window
-      width={250}
-      height={400}
+      width={600}
+      height={600}
       thickness={8}
       line="thick"
       contentClassName="leaderboard-window-content"
@@ -50,7 +50,7 @@ export const StarMapWindow: React.FC = () => {
           <ambientLight />
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <group position={[0, 0, 0]}>
-            {/*<StarMap systems={locations} links={[]} />*/}
+            <StarMap systems={locations} links={[]} />
           </group>
         </Suspense>
       </Canvas>
