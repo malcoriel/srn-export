@@ -20,8 +20,8 @@ export interface StarMapProps {
   links: LocationLink[];
 }
 
-export const makeLinkLineCoords = (args: StarMapProps) => {
-  const systemsById = _.keyBy(args.systems, 'id');
+export const makeLinkLineCoords = (systems: Location[]) => {
+  const systemsById = _.keyBy(systems, 'id');
   return (from: string, to: string): [Vector3Arr, Vector3Arr] | null => {
     const sys1 = systemsById[from];
     const sys2 = systemsById[to];
@@ -39,8 +39,8 @@ export const makeLinkLineCoords = (args: StarMapProps) => {
   };
 };
 
-export const StarMap: React.FC<StarMapProps> = (args) => {
-  const getLinkLineCoords = makeLinkLineCoords(args);
+export const StarMap: React.FC<StarMapProps> = ({ links, systems }) => {
+  const getLinkLineCoords = makeLinkLineCoords(systems);
   return (
     <>
       <mesh position={[0, 0, -10]}>
@@ -48,7 +48,7 @@ export const StarMap: React.FC<StarMapProps> = (args) => {
         <meshBasicMaterial color="teal" />
       </mesh>
       <ThreeSpaceBackground shift={0} size={256} />
-      {args.systems.map(({ id, star, position }) => {
+      {systems.map(({ id, star, position }) => {
         if (!star) {
           return null;
         }
@@ -85,7 +85,7 @@ export const StarMap: React.FC<StarMapProps> = (args) => {
           </group>
         );
       })}
-      {args.links.map(
+      {links.map(
         // eslint-disable-next-line react/no-unused-prop-types
         ({ from, to }: { from: string; to: string }, i: number) => {
           const points = getLinkLineCoords(from, to);
