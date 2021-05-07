@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.6.2 (2021-05-07)
+
+### Fixes
+* Fixed star map background to fill the full window.
+* Fixed a bug that led to hanging players (and their ships) after they left the game.
+
 ## Version 0.6.1 (2021-05-07)
 
 ### New
