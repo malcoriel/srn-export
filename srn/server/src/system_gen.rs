@@ -40,7 +40,7 @@ pub fn str_to_hash(t: String) -> u64 {
     s.finish()
 }
 
-const LOCATION_COUNT: u32 = 4;
+const LOCATION_COUNT: u32 = 5;
 const DIST: f64 = 100.0;
 
 pub fn wire_shake_locations(locations: &mut Vec<Location>, prng: &mut SmallRng) {
@@ -48,8 +48,8 @@ pub fn wire_shake_locations(locations: &mut Vec<Location>, prng: &mut SmallRng) 
     let mut angle: f64 = 0.0;
     for loc in locations {
         loc.adjacent_location_ids = all_ids.clone();
-        let x = angle.cos() * (DIST + prng.gen_range(-20.0, 100.0)) ;
-        let y = angle.sin() * (DIST + prng.gen_range(-20.0, 100.0));
+        let x = angle.cos() * (DIST + prng.gen_range(0.0, 100.0)) ;
+        let y = angle.sin() * (DIST + prng.gen_range(0.0, 100.0));
         angle += 2.0 * PI / LOCATION_COUNT as f64;
         loc.position = Vec2f64 {
             x, y
@@ -230,6 +230,8 @@ fn gen_star_system_location(seed: &String) -> Location {
     let mut location = Location::new_empty();
     location.seed = seed.clone();
     location.star = Some(star);
+    location.planets = planets;
+    location.asteroid_belts = asteroid_belts;
     location
 }
 
