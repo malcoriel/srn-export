@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.6.1 (2021-05-07)
+
+### New
+* Proper star map that replaces quick jump menu. Press M to display.
+* Somewhat limited jumps (not any-to-any) and better randomized star systems.
+* Star sizes are now a bit more varied.
+
 ## Version 0.6.0 (2021-05-01)
 
 ### New
