@@ -61,6 +61,7 @@ export type SrnState = {
   toggleHelpWindow: () => void;
   toggleChatWindow: () => void;
   toggleInventoryWindow: () => void;
+  toggleMapWindow: () => void;
   toggleTradeWindow: () => void;
   helpWindow: WindowState;
   inventoryWindow: WindowState;
@@ -77,8 +78,10 @@ export type SrnState = {
   dialogueWindow: WindowState;
   setDialogueWindow: (val: WindowState) => void;
   promptWindow: WindowState;
+  mapWindow: WindowState;
   promptWindowParams: [string, (val: string) => void, () => void];
   setPromptWindow: (val: WindowState) => void;
+  setMapWindow: (val: WindowState) => void;
   setPromptWindowParams: (
     prompt: string,
     resolve: (val: string) => void,
@@ -136,10 +139,12 @@ export const useStore = create<SrnState>((set) => ({
   inventoryWindow: WindowState.Hidden,
   tradeWindow: WindowState.Hidden,
   helpWindow: WindowState.Hidden,
+  mapWindow: WindowState.Hidden,
   leaderboardWindow: WindowState.Minimized,
   hintedObjectId: undefined,
 
   setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
+  setMapWindow: (val: WindowState) => set({ mapWindow: val }),
   setHintedObjectId: (val?: string) => set({ hintedObjectId: val }),
 
   setPreferredName: (val: string) =>
@@ -180,6 +185,10 @@ export const useStore = create<SrnState>((set) => ({
   toggleTradeWindow: () =>
     set((state) => {
       return { inventoryWindow: toggleWindowState(state.tradeWindow) };
+    }),
+  toggleMapWindow: () =>
+    set((state) => {
+      return { mapWindow: toggleWindowState(state.mapWindow) };
     }),
   toggleChatWindow: () =>
     set((state) => {

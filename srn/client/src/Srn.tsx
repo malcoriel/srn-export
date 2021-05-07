@@ -38,6 +38,7 @@ import { PromptWindow } from './HtmlLayers/PromptWindow';
 import { useResourcesLoading } from './utils/useResourcesLoading';
 import { TestMenu, TestUI } from './TestUI/TestUI';
 import { NormalQuickMenu } from './HtmlLayers/NormalQuickMenu';
+import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -242,6 +243,7 @@ const Srn = () => {
                   <OverheadPanel />
                   <HelpWindow />
                   <InventoryWindow />
+                  <StarMapWindow />
                   <TradeWindow />
                   <HoverHintWindow />
                   <PromptWindow />

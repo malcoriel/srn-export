@@ -4,7 +4,6 @@ import { Window } from './ui/Window';
 import './LeaderboardWindow.scss';
 import { useStore, WindowState } from '../store';
 import { FaTelegram } from 'react-icons/fa';
-import { Player } from '../../../world/pkg';
 
 export const LeaderboardWindow: React.FC = () => {
   const ns = NetState.get();

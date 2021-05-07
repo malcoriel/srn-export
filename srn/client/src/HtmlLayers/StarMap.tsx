@@ -48,10 +48,11 @@ export const StarMap: React.FC<StarMapProps> = ({ links, systems }) => {
         <meshBasicMaterial color="teal" />
       </mesh>
       <ThreeSpaceBackground shift={0} size={256} />
-      {systems.map(({ id, star, position }) => {
+      {systems.map(({ id, star, position: rawPosition }) => {
         if (!star) {
           return null;
         }
+        const position = Vector.fromIVector(rawPosition);
         const { color, radius, name } = star;
         return (
           <group key={id}>

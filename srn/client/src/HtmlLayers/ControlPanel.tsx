@@ -6,6 +6,7 @@ import {
   CgScreen,
   FaBullseye,
   FaQuestion,
+  FcMindMap,
   FiBox,
 } from 'react-icons/all';
 import { StyledRect } from './ui/StyledRect';
@@ -20,7 +21,7 @@ import { makePortraitPath } from './StartMenu';
 import { Ship } from '../world';
 
 const BUTTON_SIZE = 53;
-const BUTTON_COUNT = 7;
+const BUTTON_COUNT = 8;
 const THICKNESS = 9;
 
 const HpDisplay = ({ myShip }: { myShip: Ship }) => {
@@ -84,6 +85,7 @@ export const ControlPanel = () => {
   const toggleQuestWindow = useStore((state) => state.toggleQuestWindow);
   const toggleHelpWindow = useStore((state) => state.toggleHelpWindow);
   const toggleChatWindow = useStore((state) => state.toggleChatWindow);
+  const toggleMapWindow = useStore((state) => state.toggleMapWindow);
   const toggleInventoryWindow = useStore(
     (state) => state.toggleInventoryWindow
   );
@@ -91,8 +93,6 @@ export const ControlPanel = () => {
     (state) => state.toggleLeaderboardWindow
   );
   const myPlayerPortraitName = useStore((state) => state.portrait);
-
-  // const myPlayer = findMyPlayer(ns.state);
 
   return (
     <div className="control-panel">
@@ -133,6 +133,9 @@ export const ControlPanel = () => {
         </Button>
         <Button onClick={toggleInventoryWindow} hotkey="i">
           <FiBox />
+        </Button>
+        <Button onClick={toggleMapWindow} hotkey="m">
+          <FcMindMap />
         </Button>
       </StyledRect>
       <MoneyAndHp />
