@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::dialogue_dto::Dialogue;
-use crate::world::{GameEvent, GameState, Ship, GameMode, find_my_player, find_player_location_idx};
+use crate::world::{GameEvent, GameState, Ship, GameMode, find_my_player, find_player_location_idx, Location};
 use crate::xcast::XCast;
 use std::collections::HashMap;
 
@@ -42,6 +42,14 @@ pub enum ServerToClientMessage {
 pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> GameState {
     state.my_id = player_id;
     let player_loc_idx = find_player_location_idx(&state, player_id);
+    let map_enough_info = state.locations.iter().map(|l| {
+        let mut res = Location::new();
+        res.id = l.id;
+        res.star = l.star.clone();
+        res.position = l.position;
+        res.adjacent_location_ids = l.adjacent_location_ids.clone();
+        return res;
+    }).collect::<Vec<_>>();
     if let Some(loc_idx) = player_loc_idx {
         state.locations = vec![state.locations.into_iter().nth(loc_idx as usize).unwrap()];
     } else {
@@ -49,7 +57,9 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
         // The zero location can be some kind of limbo or just default location.
         state.locations = vec![state.locations.into_iter().nth(0).unwrap()];
     }
-    state
+    let current_id = state.locations[0].id;
+    state.locations.append(&mut map_enough_info.into_iter().filter_map(|l| if l.id != current_id { Some(l) } else { None }).collect::<Vec<_>>());
+    return state;
 }
 
 impl ServerToClientMessage {
@@ -73,7 +83,6 @@ impl ServerToClientMessage {
                         ServerToClientMessage::XCastStateChange(state, x_cast)
                     }
                 }
-
             }
             m => m,
         }
@@ -120,7 +129,7 @@ pub struct PersonalizeUpdate {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SwitchRoomPayload {
-    pub mode: GameMode
+    pub mode: GameMode,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

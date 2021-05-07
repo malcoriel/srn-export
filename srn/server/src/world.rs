@@ -427,6 +427,23 @@ pub struct Location {
     pub adjacent_location_ids: Vec<Uuid>,
 }
 
+impl Location {
+    pub fn new() -> Self {
+        Location {
+            seed: "".to_string(),
+            id: Default::default(),
+            star: None,
+            planets: vec![],
+            asteroids: vec![],
+            minerals: vec![],
+            position: Default::default(),
+            asteroid_belts: vec![],
+            ships: vec![],
+            adjacent_location_ids: vec![]
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct LocationLink {
     pub from: Uuid,
