@@ -23,6 +23,13 @@ export const StarMapWindow: React.FC = () => {
     return null;
   }
 
+  const links = [];
+  for (const loc of locations) {
+    for (const adj of loc.adjacent_location_ids) {
+      links.push({ from: loc.id, to: adj });
+    }
+  }
+
   return (
     <Window
       width={600}
@@ -50,7 +57,7 @@ export const StarMapWindow: React.FC = () => {
           <ambientLight />
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <group position={[0, 0, 0]}>
-            <StarMap systems={locations} links={[]} />
+            <StarMap systems={locations} links={links} />
           </group>
         </Suspense>
       </Canvas>

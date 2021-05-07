@@ -5,13 +5,14 @@ use crate::market::{Market, init_all_planets_market};
 use chrono::Utc;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng, RngCore};
-use std::collections::VecDeque;
+use std::collections::{VecDeque, HashMap};
 use std::collections::hash_map::DefaultHasher;
 use serde_derive::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 use crate::vec2::Vec2f64;
 use std::f64::consts::PI;
+use core::mem;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlanetType {
@@ -42,18 +43,30 @@ pub fn str_to_hash(t: String) -> u64 {
 
 const LOCATION_COUNT: u32 = 5;
 const DIST: f64 = 100.0;
+const MAX_DIST: f64 = 250.0;
 
 pub fn wire_shake_locations(locations: &mut Vec<Location>, prng: &mut SmallRng) {
     let all_ids = locations.iter().map(|l| l.id.clone()).collect::<Vec<_>>();
     let mut angle: f64 = 0.0;
-    for loc in locations {
-        loc.adjacent_location_ids = all_ids.clone();
+    let mut loc_pos_by_id = HashMap::new();
+    for loc in locations.iter_mut() {
         let x = angle.cos() * (DIST + prng.gen_range(0.0, 100.0)) ;
         let y = angle.sin() * (DIST + prng.gen_range(0.0, 100.0));
         angle += 2.0 * PI / LOCATION_COUNT as f64;
         loc.position = Vec2f64 {
             x, y
-        }
+        };
+        loc.adjacent_location_ids = all_ids.clone().into_iter().filter(|l| *l != loc.id).collect::<Vec<_>>();
+        loc_pos_by_id.insert(loc.id, loc.position.clone());
+    }
+    for loc in locations.iter_mut() {
+        loc.adjacent_location_ids = loc.adjacent_location_ids.clone().into_iter().filter_map(|adj| {
+            let dist = loc.position.euclidean_distance(loc_pos_by_id.get(&adj).unwrap());
+            if dist > MAX_DIST {
+                return None;
+            }
+            return Some(adj);
+        }).collect();
     }
 }
 

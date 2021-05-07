@@ -27,12 +27,16 @@ export const makeLinkLineCoords = (systems: Location[]) => {
     const sys2 = systemsById[to];
     if (!sys1 || !sys2) return null;
     if (!sys1.star || !sys2.star) return null;
+    if (!sys1.star.radius || !sys2.star.radius) return null;
+    if (sys1.id === sys2.id) return null;
     const sys1Vec = Vector.fromIVector(sys1.position);
     const sys2Vec = Vector.fromIVector(sys2.position);
     const dir = sys2Vec.subtract(sys1Vec);
     const normDir = dir.normalize();
+    if (!normDir) return null;
     const offset1 = normDir.scale(sys1.star.radius + 5);
     const offset2 = normDir.scale(sys2.star.radius + 5);
+    if (_.isNaN(offset1.x) || _.isNaN(offset1.y)) return null;
     return [sys1Vec.add(offset1), sys2Vec.subtract(offset2)].map((p) =>
       vecToThreePos(p, -5)
     ) as [Vector3Arr, Vector3Arr];
