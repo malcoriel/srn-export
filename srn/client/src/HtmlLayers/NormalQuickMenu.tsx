@@ -1,8 +1,8 @@
 import { QuickMenu } from './ui/QuickMenu';
-// @ts-ignore
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import NetState, { useNSForceChange } from '../NetState';
 import { ImFloppyDisk } from 'react-icons/all';
+import _ from 'lodash';
 
 export const NormalQuickMenu = () => {
   const ns = NetState.get();
@@ -16,14 +16,23 @@ export const NormalQuickMenu = () => {
     return null;
   }
 
+  const loc_by_id = _.keyBy(ns.state.locations, 'id');
+
   const actions = [
     {
       text: 'Jump to another system',
       icon: <ImFloppyDisk />,
       list: true,
       children: currentLocation.adjacent_location_ids.map((id: string) => {
+        let text: string;
+        const loc = loc_by_id[id];
+        if (loc && loc.star) {
+          text = `${loc.star.name}`;
+        } else {
+          text = `${id}`;
+        }
         return {
-          text: `${id}`,
+          text,
           handler: () => ns.sendLocationChange(id),
         };
       }),
