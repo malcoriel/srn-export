@@ -1651,6 +1651,13 @@ pub fn update_quests(state: &mut GameState) {
 pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
     // intentionally drop the extracted result
     find_and_extract_ship(state, conn_id);
+    state
+        .players
+        .iter()
+        .position(|p| p.id == conn_id)
+        .map(|i| {
+            state.players.remove(i);
+        });
 }
 
 pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
