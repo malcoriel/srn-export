@@ -18,6 +18,7 @@ import { Location, LocationLink } from '../../../world/pkg';
 export interface StarMapProps {
   systems: Location[];
   links: LocationLink[];
+  onSystemClick?: (systemId: string) => void;
 }
 
 export const makeLinkLineCoords = (systems: Location[]) => {
@@ -43,7 +44,11 @@ export const makeLinkLineCoords = (systems: Location[]) => {
   };
 };
 
-export const StarMap: React.FC<StarMapProps> = ({ links, systems }) => {
+export const StarMap: React.FC<StarMapProps> = ({
+  links,
+  systems,
+  onSystemClick,
+}) => {
   const getLinkLineCoords = makeLinkLineCoords(systems);
   let currentSystem = null;
   if (systems.length > 0 && systems[0].star) {
@@ -60,11 +65,13 @@ export const StarMap: React.FC<StarMapProps> = ({ links, systems }) => {
         if (!star) {
           return null;
         }
+        const onClick = onSystemClick ? () => onSystemClick(id) : undefined;
         const position = Vector.fromIVector(rawPosition);
         const { color, radius, name } = star;
         return (
           <group key={id}>
             <ThreeStar
+              onClick={onClick}
               position={new Vector3(...posToThreePos(position.x, position.y))}
               scale={[radius, radius, radius]}
               visible
@@ -78,6 +85,7 @@ export const StarMap: React.FC<StarMapProps> = ({ links, systems }) => {
               }}
             />
             <Text
+              onClick={onClick}
               visible
               position={vecToThreePos(position.add(VectorF(0, -(radius + 10))))}
               color={yellow}

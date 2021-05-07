@@ -24,6 +24,7 @@ export const ThreeStar: React.FC<
     visible: boolean;
     visualState: VisualState;
     timeScale?: number;
+    onClick?: () => void;
   }
 > = React.memo(
   (props) => {
@@ -62,7 +63,7 @@ export const ThreeStar: React.FC<
     }, [zoomProp, unitsToPixels_min(), camera.position.x, camera.position.y]);
 
     return (
-      <mesh {...props} ref={mesh} rotation={[0, 0, 0]}>
+      <mesh {...props} ref={mesh} rotation={[0, 0, 0]} onClick={props.onClick}>
         <planeBufferGeometry args={[2, 2]} />
         <rawShaderMaterial
           transparent

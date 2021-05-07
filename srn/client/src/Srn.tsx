@@ -248,7 +248,6 @@ const Srn = () => {
                   <HoverHintWindow />
                   <PromptWindow />
                   {playing && <SandboxQuickMenu />}
-                  {playing && <NormalQuickMenu />}
                 </>
               )}
             </>
