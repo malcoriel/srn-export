@@ -8,7 +8,7 @@ import { ThreeStar } from '../ThreeLayers/ThreeStar';
 import { Vector3 } from 'three/src/math/Vector3';
 import Vector, { VectorF } from '../utils/Vector';
 import { Text } from '@react-three/drei';
-import { tiffanyBlue, yellow } from '../utils/palette';
+import { darkGreen, tiffanyBlue, yellow } from '../utils/palette';
 import { ThreeLine } from '../ThreeLayers/blocks/ThreeLine';
 import { Vector2 } from 'three';
 import React from 'react';
@@ -45,6 +45,10 @@ export const makeLinkLineCoords = (systems: Location[]) => {
 
 export const StarMap: React.FC<StarMapProps> = ({ links, systems }) => {
   const getLinkLineCoords = makeLinkLineCoords(systems);
+  let currentSystem = null;
+  if (systems.length > 0 && systems[0].star) {
+    currentSystem = systems[0];
+  }
   return (
     <>
       <mesh position={[0, 0, -10]}>
@@ -105,6 +109,26 @@ export const StarMap: React.FC<StarMapProps> = ({ links, systems }) => {
             />
           );
         }
+      )}
+      {currentSystem && currentSystem.star && (
+        <group
+          position={posToThreePos(
+            currentSystem.position.x,
+            currentSystem.position.y,
+            0
+          )}
+        >
+          <mesh>
+            <ringGeometry
+              args={[
+                currentSystem.star.radius - 2.5,
+                currentSystem.star.radius - 1.0,
+                128,
+              ]}
+            />
+            <meshBasicMaterial color={darkGreen} />
+          </mesh>
+        </group>
       )}
     </>
   );
