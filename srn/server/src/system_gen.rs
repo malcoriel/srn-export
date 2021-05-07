@@ -11,6 +11,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
 use crate::vec2::Vec2f64;
+use std::f64::consts::PI;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlanetType {
@@ -40,11 +41,19 @@ pub fn str_to_hash(t: String) -> u64 {
 }
 
 const LOCATION_COUNT: u32 = 4;
+const DIST: f64 = 100.0;
 
-pub fn wire_locations(locations: &mut Vec<Location>) {
+pub fn wire_shake_locations(locations: &mut Vec<Location>, prng: &mut SmallRng) {
     let all_ids = locations.iter().map(|l| l.id.clone()).collect::<Vec<_>>();
+    let mut angle: f64 = 0.0;
     for loc in locations {
         loc.adjacent_location_ids = all_ids.clone();
+        let x = angle.cos() * (DIST + prng.gen_range(-20.0, 100.0)) ;
+        let y = angle.sin() * (DIST + prng.gen_range(-20.0, 100.0));
+        angle += 2.0 * PI / LOCATION_COUNT as f64;
+        loc.position = Vec2f64 {
+            x, y
+        }
     }
 }
 
@@ -58,7 +67,7 @@ pub fn system_gen(seed: String) -> GameState {
         locations.push(location);
     }
 
-    wire_locations(&mut locations);
+    wire_shake_locations(&mut locations, &mut prng);
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
         id: new_id(),
