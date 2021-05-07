@@ -16,6 +16,7 @@ const Template: Story = (args) => {
         styles={{ position: 'absolute', top: 0, left: 0, zIndex: -5 }}
       >
         <StarMap
+          size={256}
           key={`${revision}+${JSON.stringify(args)}`}
           systems={args.systems}
           links={args.links}

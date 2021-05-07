@@ -58,6 +58,7 @@ export const StarMapWindow: React.FC = () => {
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <group position={[0, 0, 0]}>
             <StarMap
+              size={600}
               systems={locations}
               links={links}
               onSystemClick={(id) => ns.sendLocationChange(id)}

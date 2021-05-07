@@ -18,6 +18,7 @@ import { Location, LocationLink } from '../../../world/pkg';
 export interface StarMapProps {
   systems: Location[];
   links: LocationLink[];
+  size: number;
   onSystemClick?: (systemId: string) => void;
 }
 
@@ -48,6 +49,7 @@ export const StarMap: React.FC<StarMapProps> = ({
   links,
   systems,
   onSystemClick,
+  size,
 }) => {
   const getLinkLineCoords = makeLinkLineCoords(systems);
   let currentSystem = null;
@@ -56,11 +58,7 @@ export const StarMap: React.FC<StarMapProps> = ({
   }
   return (
     <>
-      <mesh position={[0, 0, -10]}>
-        <planeBufferGeometry args={[256, 256]} />
-        <meshBasicMaterial color="teal" />
-      </mesh>
-      <ThreeSpaceBackground shift={0} size={256} />
+      <ThreeSpaceBackground shift={0} size={size} />
       {systems.map(({ id, star, position: rawPosition }) => {
         if (!star) {
           return null;
