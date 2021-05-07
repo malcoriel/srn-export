@@ -43,7 +43,7 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
     state.my_id = player_id;
     let player_loc_idx = find_player_location_idx(&state, player_id);
     let map_enough_info = state.locations.iter().map(|l| {
-        let mut res = Location::new();
+        let mut res = Location::new_empty();
         res.id = l.id;
         res.star = l.star.clone();
         res.position = l.position;

@@ -428,10 +428,10 @@ pub struct Location {
 }
 
 impl Location {
-    pub fn new() -> Self {
+    pub fn new_empty() -> Self {
         Location {
             seed: "".to_string(),
-            id: Default::default(),
+            id: new_id(),
             star: None,
             planets: vec![],
             asteroids: vec![],
@@ -442,15 +442,7 @@ impl Location {
             adjacent_location_ids: vec![]
         }
     }
-}
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct LocationLink {
-    pub from: Uuid,
-    pub to: Uuid,
-}
-
-impl Location {
     pub fn new_star_system() -> Location {
         Location {
             id: new_id(),
@@ -468,6 +460,16 @@ impl Location {
             ships: vec![],
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct LocationLink {
+    pub from: Uuid,
+    pub to: Uuid,
+}
+
+impl Location {
+
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

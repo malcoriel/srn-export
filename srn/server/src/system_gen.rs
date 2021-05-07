@@ -218,18 +218,9 @@ fn gen_star_system_location(seed: &String) -> Location {
             break;
         }
     }
-    let location = Location {
-        seed: seed.clone(),
-        asteroids: vec![],
-        star: Some(star),
-        planets,
-        ships: vec![],
-        asteroid_belts,
-        minerals: vec![],
-        position: Default::default(),
-        adjacent_location_ids: vec![],
-        id: new_id(),
-    };
+    let mut location = Location::new_empty();
+    location.seed = seed.clone();
+    location.star = Some(star);
     location
 }
 
@@ -327,6 +318,35 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
     };
 
     let planet_id = new_id();
+    let mut location = Location::new_empty();
+    location.seed = seed.clone();
+    location.star = Some(star);
+    location.planets = vec![
+            Planet {
+                id: planet_id,
+                name: "Schoolia".to_string(),
+                x: 100.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 8.0,
+                orbit_speed: 0.01,
+                anchor_id: star_id.clone(),
+                anchor_tier: 1,
+                color: "#11ffff".to_string(),
+            },
+            Planet {
+                id: new_id(),
+                name: "Sat".to_string(),
+                x: 120.0,
+                y: 0.0,
+                rotation: 0.0,
+                radius: 1.5,
+                orbit_speed: 0.005,
+                anchor_id: planet_id.clone(),
+                anchor_tier: 2,
+                color: "#ff0033".to_string(),
+            }
+        ];
     GameState {
         id: client_id,
         version: 1,
@@ -336,43 +356,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         my_id: Default::default(),
         start_time_ticks: now,
         locations: vec![
-            Location {
-                id: new_id(),
-                seed,
-                star: Some(star),
-                adjacent_location_ids: vec![],
-                planets: vec![
-                    Planet {
-                        id: planet_id,
-                        name: "Schoolia".to_string(),
-                        x: 100.0,
-                        y: 0.0,
-                        rotation: 0.0,
-                        radius: 8.0,
-                        orbit_speed: 0.01,
-                        anchor_id: star_id.clone(),
-                        anchor_tier: 1,
-                        color: "#11ffff".to_string(),
-                    },
-                    Planet {
-                        id: new_id(),
-                        name: "Sat".to_string(),
-                        x: 120.0,
-                        y: 0.0,
-                        rotation: 0.0,
-                        radius: 1.5,
-                        orbit_speed: 0.005,
-                        anchor_id: planet_id.clone(),
-                        anchor_tier: 2,
-                        color: "#ff0033".to_string(),
-                    }
-                ],
-                asteroids: vec![],
-                minerals: vec![],
-                position: Default::default(),
-                asteroid_belts: vec![],
-                ships: vec![],
-            }
+            location
         ],
         players: vec![],
         milliseconds_remaining: 60 * 1000,
@@ -398,18 +382,7 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
         my_id: Default::default(),
         start_time_ticks: now,
         locations: vec![
-            Location {
-                id: new_id(),
-                star: None,
-                seed,
-                planets: vec![],
-                asteroids: vec![],
-                minerals: vec![],
-                position: Default::default(),
-                asteroid_belts: vec![],
-                ships: vec![],
-                adjacent_location_ids: vec![]
-            }],
+            Location::new_empty()],
         players: vec![],
         milliseconds_remaining: 99 * 60 * 1000,
         paused: false,
