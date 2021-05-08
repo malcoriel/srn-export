@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.6.3 (2021-05-08)
+
+### New
+* Introduced jumping preparation time for inter-system jumping.
+
+### Fixes
+* Star map now gets closed after clicking on it.
+* It's no longer possible to jump to non-adjacent systems.
+
 ## Version 0.6.2 (2021-05-07)
 
 ### Fixes
