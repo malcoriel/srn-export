@@ -590,7 +590,7 @@ fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) 
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueRequest {
-    planet_id: Uuid
+    planet_id: Uuid,
 }
 
 fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) {
@@ -779,7 +779,7 @@ impl Fairing for CORS {
     fn info(&self) -> Info {
         Info {
             name: "Add CORS headers to requests",
-            kind: Kind::Response
+            kind: Kind::Response,
         }
     }
 
@@ -790,6 +790,7 @@ impl Fairing for CORS {
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
 }
+
 #[launch]
 fn rocket() -> rocket::Rocket {
     {
@@ -906,7 +907,8 @@ fn main_thread() {
             "Update planets 1",           // 18
             "Update planets 2",           // 19
             "Personal states",            // 20
-            "Update market"               // 21
+            "Update market",              // 21
+            "Update tick long actions"    // 22
         ]
             .iter()
             .map(|v| v.to_string())

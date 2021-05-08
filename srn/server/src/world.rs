@@ -28,7 +28,7 @@ use crate::random_stuff::{
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::market::{Market, init_all_planets_market};
-use crate::long_actions::LongActProgress;
+use crate::long_actions::{LongActProgress, tick_long_act, finish_long_act};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -705,6 +705,7 @@ pub fn update_world(
             if state.market.time_before_next_shake > 0 {
                 state.market.time_before_next_shake -= elapsed;
             } else {
+                let market_update_start = sampler.start(21);
                 let mut wares = state.market.wares.clone();
                 let mut prices = state.market.prices.clone();
                 let planets = state.locations[0].planets.iter().map(|p| p.clone()).collect::<Vec<_>>();
@@ -713,9 +714,29 @@ pub fn update_world(
                     wares,
                     prices,
                     time_before_next_shake: market::SHAKE_MARKET_FREQUENCY_MCS,
-                }
+                };
+                sampler.end(market_update_start);
             }
         }
+
+        let long_act_ticks = sampler.start(22);
+        let mut to_finish = vec![];
+        for player in state.players.iter_mut() {
+            player.long_actions = player.long_actions.clone().into_iter().filter_map(|la| {
+                let (new_la, keep_ticking) = tick_long_act(la, elapsed);
+                let ret_la = new_la.clone();
+                to_finish.push((new_la.clone(), player.id));
+                return if keep_ticking { Some(ret_la) } else { None };
+            }).collect();
+        }
+        if !client {
+            for (act, player_id) in to_finish.into_iter() {
+                finish_long_act(&mut state, player_id, act);
+            }
+        }
+
+        sampler.end(long_act_ticks);
+
         if state.milliseconds_remaining <= 0 {
             eprintln!("game end");
             state.paused = true;
