@@ -743,6 +743,9 @@ pub fn update_world(
             state.paused = true;
             state.milliseconds_remaining = 10 * 1000;
             fire_event(GameEvent::GameEnded);
+            for player in state.players.iter_mut() {
+                player.long_actions = vec![];
+            }
         } else {
             for location_idx in 0..state.locations.len() {
                 sampler = update_location(&mut state, elapsed, client, &update_options, sampler, location_idx)
