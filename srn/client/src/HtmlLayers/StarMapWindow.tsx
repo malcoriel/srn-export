@@ -7,10 +7,13 @@ import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 import { Canvas } from 'react-three-fiber';
 import { StarMap } from './StarMap';
 import { LongActionBuilder } from '../../../world/pkg/world.extra';
+import { useStore, WindowState } from '../store';
 
 export const StarMapWindow: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
+
+  const setMapWindow = useStore((s) => s.setMapWindow);
 
   useNSForceChange('StarMapWindow', false, (prevState, nextState) => {
     return (
@@ -62,13 +65,12 @@ export const StarMapWindow: React.FC = () => {
               size={600}
               systems={locations}
               links={links}
-              onSystemClick={
-                (id) =>
-                  ns.startLongAction(
-                    LongActionBuilder.LongActionTransSystemJump({ to: id })
-                  )
-                // eslint-disable-next-line
-              }
+              onSystemClick={(id) => {
+                ns.startLongAction(
+                  LongActionBuilder.LongActionTransSystemJump({ to: id })
+                );
+                setMapWindow(WindowState.Hidden);
+              }}
             />
           </group>
         </Suspense>
