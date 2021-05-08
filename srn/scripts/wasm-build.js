@@ -60,9 +60,9 @@ const isWin = process.platform === 'win32';
   const enums = extractedEnums.join('\n\n');
   await fs.writeFile('world/pkg/world.extra.ts', `${enums}\n\n${builders}`);
   console.log(
-    'Done, ts definitions are ready! Will wait 1000ms to force client rebuild...'
+    'Done, ts definitions are ready! Will wait a bit to force client rebuild...'
   );
-  await new Promise((res) => setTimeout(res, 1000));
+  await new Promise((res) => setTimeout(res, 2000));
   await spawnWatched('touch world/pkg/world.extra.ts');
   console.log('Should be ok now.');
 })();

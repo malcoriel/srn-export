@@ -28,6 +28,7 @@ use crate::random_stuff::{
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::market::{Market, init_all_planets_market};
+use crate::long_actions::LongActProgress;
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -380,6 +381,7 @@ pub struct Player {
     pub money: i32,
     pub portrait_name: String,
     pub respawn_ms_left: i32,
+    pub long_actions: Vec<LongActProgress>,
 }
 
 impl Player {
@@ -1048,6 +1050,7 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
         portrait_name: "question".to_string(),
         money: 0,
         respawn_ms_left: 0,
+        long_actions: vec![],
     };
     state.players.push(player);
 }

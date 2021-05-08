@@ -6,6 +6,7 @@ import { Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 import { Canvas } from 'react-three-fiber';
 import { StarMap } from './StarMap';
+import { LongActionBuilder } from '../../../world/pkg/world.extra';
 
 export const StarMapWindow: React.FC = () => {
   const ns = NetState.get();
@@ -61,7 +62,13 @@ export const StarMapWindow: React.FC = () => {
               size={600}
               systems={locations}
               links={links}
-              onSystemClick={(id) => ns.sendLocationChange(id)}
+              onSystemClick={
+                (id) =>
+                  ns.startLongAction(
+                    LongActionBuilder.LongActionTransSystemJump({ to: id })
+                  )
+                // eslint-disable-next-line
+              }
             />
           </group>
         </Suspense>

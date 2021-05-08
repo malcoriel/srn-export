@@ -437,26 +437,27 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
             on_client_inventory_action(client_id, second, third);
         }
         ClientOpCode::LongActionStart => {
-            on_client_location_change(client_id, second, third);
+            on_client_long_action_start(client_id, second, third);
         }
     };
 }
 
-fn on_client_location_change(client_id: Uuid, data: &&str, tag: Option<&&str>) {
-    let parsed = serde_json::from_str::<locations::LocationChangePayload>(data);
+fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>) {
+    let parsed = serde_json::from_str::<long_actions::LongAction>(data);
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
             let state = select_mut_state(&mut cont, client_id);
-            if !locations::try_move_player_ship(state, client_id, action.id) {
-                warn!(format!("Impossible location change for client {} to loc {}", client_id, action.id));
+            let action_dbg = action.clone();
+            if !long_actions::try_start_long_action(state, client_id, action) {
+                warn!(format!("Impossible long action for client {}, action {:?}", client_id, action_dbg));
             }
-        x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
+            x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
         }
         Err(err) => {
             eprintln!(
-                "couldn't parse location change action {}, err {}",
+                "couldn't parse long action start {}, err {}",
                 data, err
             );
         }

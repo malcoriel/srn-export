@@ -95,6 +95,9 @@ mod dialogue_dto;
 #[path = "../../server/src/long_actions.rs"]
 mod long_actions;
 
+#[path = "../../server/src/locations.rs"]
+mod locations;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 

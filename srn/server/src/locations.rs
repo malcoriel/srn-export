@@ -27,6 +27,10 @@ pub fn try_move_player_ship(state: &mut GameState, player_id: Uuid, location_id:
     }
 }
 
-fn can_be_moved(_state: &mut GameState, _ship: Option<Ship>, _location_id: Uuid) -> bool {
+pub fn can_be_moved(_state: &mut GameState, _ship: Option<Ship>, _location_id: Uuid) -> bool {
+    return true;
+}
+
+pub fn can_be_moved_player(_state: &mut GameState, _player_id: Uuid, _location_id: Uuid) -> bool {
     return true;
 }
