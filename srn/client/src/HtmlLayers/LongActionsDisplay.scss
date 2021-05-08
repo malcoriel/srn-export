@@ -1,0 +1,22 @@
+.long-actions-display {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .container {
+    height: 100px;
+    min-width: 100px;
+    margin-top: 200px;
+    opacity: 0.5;
+
+    .action {
+      height: 100px;
+      width: 100px;
+    }
+  }
+}

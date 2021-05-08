@@ -23,7 +23,8 @@ pub enum LongActProgress {
     TransSystemJump {
         id: Uuid,
         to: Uuid,
-        micro_left: i64
+        micro_left: i64,
+        percentage: u32,
     }
 }
 
@@ -65,7 +66,8 @@ pub fn start_long_act(act: LongAction) -> LongActProgress {
             LongActProgress::TransSystemJump {
                 id: new_id(),
                 to,
-                micro_left: TRANS_SYSTEM_JUMP_TIME
+                micro_left: TRANS_SYSTEM_JUMP_TIME,
+                percentage: 0
             }
         }
     }
@@ -90,12 +92,14 @@ pub fn tick_long_act(act: LongActProgress, micro_passed: i64) -> (LongActProgres
                id,
            }, false)
         }
-        LongActProgress::TransSystemJump { to, id, micro_left } => {
+        LongActProgress::TransSystemJump { to, id, micro_left, .. } => {
             let left = micro_left - micro_passed;
+            let percentage = (((TRANS_SYSTEM_JUMP_TIME as f64 - left as f64) / TRANS_SYSTEM_JUMP_TIME as f64).max(0.0) * 100.0) as u32;
             (LongActProgress::TransSystemJump {
                 id,
                 to,
                 micro_left: left,
+                percentage
             }, left > 0)
         }
     }

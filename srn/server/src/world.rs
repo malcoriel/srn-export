@@ -724,11 +724,10 @@ pub fn update_world(
         for player in state.players.iter_mut() {
             player.long_actions = player.long_actions.clone().into_iter().filter_map(|la| {
                 let (new_la, keep_ticking) = tick_long_act(la, elapsed);
-                let ret_la = new_la.clone();
                 if !keep_ticking {
                     to_finish.push((new_la.clone(), player.id));
                 }
-                return if keep_ticking { Some(ret_la) } else { None };
+                return if keep_ticking { Some(new_la) } else { None };
             }).collect();
         }
         if !client {
