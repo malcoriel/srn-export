@@ -4,6 +4,7 @@ use uuid::Uuid;
 use serde_derive::{Deserialize, Serialize};
 use crate::world::{GameState, find_my_player_mut};
 use crate::{locations, new_id};
+use core::mem;
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
@@ -49,8 +50,23 @@ pub fn try_start_long_action(state: &mut GameState, player_id: Uuid, action: Lon
     return true;
 }
 
-fn revalidate(_long_actions: &mut Vec<LongActProgress>) {
-    return;
+fn revalidate(long_actions: &mut Vec<LongActProgress>) {
+    let mut has_jump = false;
+    let mut new_actions = long_actions.clone().into_iter().filter_map(|a| {
+        match a {
+            LongActProgress::Unknown { .. } => {
+                Some(a)
+            }
+            LongActProgress::TransSystemJump { .. } => {
+                if has_jump {
+                    return None;
+                }
+                has_jump = true;
+                Some(a)
+            }
+        }
+    }).collect();
+    mem::swap(long_actions, &mut new_actions);
 }
 
 const TRANS_SYSTEM_JUMP_TIME: i64 = 5 * 1000 * 1000;
