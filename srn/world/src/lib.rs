@@ -92,6 +92,9 @@ mod market;
 #[path = "../../server/src/dialogue_dto.rs"]
 mod dialogue_dto;
 
+#[path = "../../server/src/long_actions.rs"]
+mod long_actions;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 

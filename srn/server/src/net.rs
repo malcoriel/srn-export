@@ -149,5 +149,5 @@ pub enum ClientOpCode {
     TradeAction = 7,
     DialogueRequest = 8,
     InventoryAction = 9,
-    LocationChange = 10,
+    LongActionStart = 10,
 }

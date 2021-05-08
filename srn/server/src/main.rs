@@ -99,6 +99,7 @@ mod api;
 mod dialogue_dto;
 mod planet_movement_test;
 mod locations;
+mod long_actions;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,
@@ -435,7 +436,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::InventoryAction => {
             on_client_inventory_action(client_id, second, third);
         }
-        ClientOpCode::LocationChange => {
+        ClientOpCode::LongActionStart => {
             on_client_location_change(client_id, second, third);
         }
     };

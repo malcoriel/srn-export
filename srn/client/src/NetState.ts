@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 import { viewPortSizeMeters } from './coord';
 import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
-import { InventoryAction } from '../../world/pkg';
+import { InventoryAction, LongAction } from '../../world/pkg';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -37,7 +37,7 @@ enum ClientOpCode {
   TradeAction,
   DialogueRequest,
   InventoryAction,
-  LocationChange,
+  LongActionStart,
 }
 
 interface Cmd {
@@ -605,7 +605,7 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
-        case ClientOpCode.LocationChange: {
+        case ClientOpCode.LongActionStart: {
           this.socket.send(
             `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
           );
@@ -779,10 +779,10 @@ export default class NetState extends EventEmitter {
     });
   }
 
-  public sendLocationChange(id: string) {
+  public startLongAction(longAction: LongAction) {
     this.send({
-      code: ClientOpCode.LocationChange,
-      value: { id },
+      code: ClientOpCode.LongActionStart,
+      value: longAction,
       tag: uuid.v4(),
     });
   }
