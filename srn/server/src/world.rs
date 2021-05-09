@@ -431,7 +431,7 @@ pub struct Container {
 impl Container {
     pub fn new() -> Self {
         Container {
-            id: Default::default(),
+            id: new_id(),
             items: vec![],
             position: Default::default(),
             radius: Self::calc_radius(&vec![]),

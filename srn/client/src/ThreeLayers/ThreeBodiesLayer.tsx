@@ -4,7 +4,7 @@ import { GameState, ShipAction, ShipActionType } from '../world';
 import { ThreeStar } from './ThreeStar';
 import { posToThreePos } from './ThreeLayer';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
-import { ThreeRock } from './ThreeRock';
+import { ThreeFloatingObject } from './ThreeFloatingObject';
 import {
   ThreePlanetShape,
   ThreePlanetShapeRandomProps,
@@ -106,21 +106,25 @@ export const ThreeBodiesLayer: React.FC<{
         />
       ))}
       {minerals.map((m) => (
-        <ThreeRock
+        <ThreeFloatingObject
           gid={m.id}
           key={m.id}
           radius={m.radius}
           position={posToThreePos(m.x, m.y)}
           color={m.color}
+          modelName="asteroid.glb"
+          modelGltfIndex={2}
         />
       ))}
       {containers.map((c) => (
-        <ThreeRock
+        <ThreeFloatingObject
           gid={c.id}
           key={c.id}
           radius={c.radius}
           position={posToThreePos(c.position.x, c.position.y)}
           color="red"
+          modelName="container.glb"
+          modelGltfIndex={0}
         />
       ))}
       {/*{asteroids.map((a: Asteroid) => (*/}
