@@ -1,24 +1,29 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::{HashMap, HashSet};
+use std::f64::consts::PI;
 #[allow(deprecated)]
 use std::f64::{INFINITY, NEG_INFINITY};
-use std::f64::consts::PI;
 use std::iter::FromIterator;
 
 use chrono::Utc;
 use itertools::{Either, Itertools};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
-use uuid::*;
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
+use uuid::*;
 use wasm_bindgen::prelude::*;
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 
-use crate::{fire_event, planet_movement, market};
-use crate::{DEBUG_PHYSICS, new_id};
-use crate::inventory::{add_item, has_quest_item, InventoryItem, InventoryItemType, shake_items};
+use crate::inventory::{add_item, has_quest_item, shake_items, InventoryItem, InventoryItemType};
+use crate::long_actions::{
+    cancel_all_long_actions_of_type, finish_long_act, tick_long_act, try_start_long_action,
+    LongAction, LongActionStart,
+};
+use crate::market::{init_all_planets_market, Market};
 use crate::perf::Sampler;
-use crate::planet_movement::{build_anchors_from_bodies, IBody, index_bodies_by_id, make_bodies_from_planets};
+use crate::planet_movement::{
+    build_anchors_from_bodies, index_bodies_by_id, make_bodies_from_planets, IBody,
+};
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
     gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
@@ -27,8 +32,8 @@ use crate::random_stuff::{
 };
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::market::{Market, init_all_planets_market};
-use crate::long_actions::{LongAction, tick_long_act, finish_long_act, try_start_long_action, LongActionStart};
+use crate::{fire_event, market, planet_movement};
+use crate::{new_id, DEBUG_PHYSICS};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -42,8 +47,9 @@ const ASTEROID_BELT_RANGE: f64 = 100.0;
 
 pub type PlayerId = Uuid;
 
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, )]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
+)]
 pub enum GameMode {
     Unknown,
     CargoRush,
@@ -234,8 +240,7 @@ pub struct Planet {
     pub color: String,
 }
 
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Asteroid {
     pub id: Uuid,
     pub x: f64,
@@ -247,7 +252,7 @@ pub struct Asteroid {
     pub anchor_tier: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct AsteroidBelt {
     pub id: Uuid,
     pub x: f64,
@@ -271,7 +276,7 @@ impl AsVec2f64 for Planet {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Star {
     pub id: Uuid,
     pub name: String,
@@ -326,7 +331,7 @@ pub enum GameEvent {
     // the player directly
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Ship {
     pub id: Uuid,
     pub x: f64,
@@ -396,7 +401,7 @@ pub struct Leaderboard {
     pub winner: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub enum Rarity {
     Unknown,
     Common,
@@ -404,7 +409,7 @@ pub enum Rarity {
     Rare,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, )]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct NatSpawnMineral {
     pub x: f64,
     pub y: f64,
@@ -441,7 +446,7 @@ impl Location {
             position: Default::default(),
             asteroid_belts: vec![],
             ships: vec![],
-            adjacent_location_ids: vec![]
+            adjacent_location_ids: vec![],
         }
     }
 
@@ -454,10 +459,7 @@ impl Location {
             planets: vec![],
             asteroids: vec![],
             minerals: vec![],
-            position: Vec2f64 {
-                x: 0.0,
-                y: 0.0
-            },
+            position: Vec2f64 { x: 0.0, y: 0.0 },
             asteroid_belts: vec![],
             ships: vec![],
         }
@@ -470,9 +472,7 @@ pub struct LocationLink {
     pub to: Uuid,
 }
 
-impl Location {
-
-}
+impl Location {}
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct GameState {
@@ -528,7 +528,13 @@ pub fn gen_state_by_seed(seed_and_validate: bool, seed: String) -> GameState {
     let state = if seed_and_validate {
         let mut state = validate_state(state);
         for idx in 0..state.locations.len() {
-            let (planets, _sampler) = planet_movement::update_planets(&state.locations[idx].planets, &state.locations[idx].star, SEED_TIME, Sampler::empty(), AABB::maxed());
+            let (planets, _sampler) = planet_movement::update_planets(
+                &state.locations[idx].planets,
+                &state.locations[idx].star,
+                SEED_TIME,
+                Sampler::empty(),
+                AABB::maxed(),
+            );
             state.locations[idx].planets = planets;
         }
         let state = validate_state(state);
@@ -570,8 +576,7 @@ pub fn validate_state(mut in_state: GameState) -> GameState {
 }
 
 pub fn extract_valid_planets(in_state: &GameState, location_idx: usize) -> Vec<Planet> {
-    in_state
-        .locations[location_idx]
+    in_state.locations[location_idx]
         .planets
         .iter()
         .filter(|p| {
@@ -625,7 +630,10 @@ impl AABB {
     pub fn contains_body(&self, body: &Box<dyn IBody>) -> bool {
         let x = body.get_x();
         let y = body.get_y();
-        return self.top_left.x <= x && x <= self.bottom_right.x && self.top_left.y <= y && y <= self.bottom_right.y;
+        return self.top_left.x <= x
+            && x <= self.bottom_right.x
+            && self.top_left.y <= y
+            && y <= self.bottom_right.y;
     }
 }
 
@@ -636,7 +644,10 @@ pub struct UpdateOptions {
 }
 
 // first group is in area, second is not
-pub fn split_bodies_by_area(bodies: Vec<Box<dyn IBody>>, area: AABB) -> (Vec<Box<dyn IBody>>, Vec<Box<dyn IBody>>) {
+pub fn split_bodies_by_area(
+    bodies: Vec<Box<dyn IBody>>,
+    area: AABB,
+) -> (Vec<Box<dyn IBody>>, Vec<Box<dyn IBody>>) {
     let anchors = build_anchors_from_bodies(bodies.clone());
 
     let res: (Vec<_>, Vec<_>) = bodies.into_iter().partition_map(|b| {
@@ -648,18 +659,27 @@ pub fn split_bodies_by_area(bodies: Vec<Box<dyn IBody>>, area: AABB) -> (Vec<Box
     });
 
     let (mut picked, mut dropped) = res;
-    let mut already_picked_ids: HashSet<Uuid> = HashSet::from_iter(picked.iter().map(|p| p.get_id()));
-    let anchors_vec = picked.iter().filter_map(|p| anchors.get(&p.get_anchor_id()).and_then(|p| {
-        if !already_picked_ids.contains(&p.get_id()) {
-            already_picked_ids.insert(p.get_id());
-            Some(p.clone())
-        } else {
-            None
-        }
-    })).collect::<Vec<_>>();
+    let mut already_picked_ids: HashSet<Uuid> =
+        HashSet::from_iter(picked.iter().map(|p| p.get_id()));
+    let anchors_vec = picked
+        .iter()
+        .filter_map(|p| {
+            anchors.get(&p.get_anchor_id()).and_then(|p| {
+                if !already_picked_ids.contains(&p.get_id()) {
+                    already_picked_ids.insert(p.get_id());
+                    Some(p.clone())
+                } else {
+                    None
+                }
+            })
+        })
+        .collect::<Vec<_>>();
     let anchor_ids: HashSet<Uuid> = HashSet::from_iter(anchors_vec.iter().map(|a| a.get_id()));
     picked.append(&mut anchors_vec.clone());
-    dropped = dropped.into_iter().filter(|p| !anchor_ids.contains(&p.get_id())).collect::<Vec<_>>();
+    dropped = dropped
+        .into_iter()
+        .filter(|p| !anchor_ids.contains(&p.get_id()))
+        .collect::<Vec<_>>();
     return (picked, dropped);
 }
 
@@ -696,7 +716,8 @@ pub fn update_world(
                     spawn_ship(&mut state, player.id, None);
                 }
                 fire_event(GameEvent::GameStarted);
-            } else {}
+            } else {
+            }
         }
     } else {
         if !client {
@@ -708,7 +729,11 @@ pub fn update_world(
                 let market_update_start = sampler.start(21);
                 let mut wares = state.market.wares.clone();
                 let mut prices = state.market.prices.clone();
-                let planets = state.locations[0].planets.iter().map(|p| p.clone()).collect::<Vec<_>>();
+                let planets = state.locations[0]
+                    .planets
+                    .iter()
+                    .map(|p| p.clone())
+                    .collect::<Vec<_>>();
                 market::shake_market(planets, &mut wares, &mut prices);
                 state.market = Market {
                     wares,
@@ -722,13 +747,18 @@ pub fn update_world(
         let long_act_ticks = sampler.start(22);
         let mut to_finish = vec![];
         for player in state.players.iter_mut() {
-            player.long_actions = player.long_actions.clone().into_iter().filter_map(|la| {
-                let (new_la, keep_ticking) = tick_long_act(la, elapsed);
-                if !keep_ticking {
-                    to_finish.push((new_la.clone(), player.id));
-                }
-                return if keep_ticking { Some(new_la) } else { None };
-            }).collect();
+            player.long_actions = player
+                .long_actions
+                .clone()
+                .into_iter()
+                .filter_map(|la| {
+                    let (new_la, keep_ticking) = tick_long_act(la, elapsed);
+                    if !keep_ticking {
+                        to_finish.push((new_la.clone(), player.id));
+                    }
+                    return if keep_ticking { Some(new_la) } else { None };
+                })
+                .collect();
         }
         if !client {
             for (act, player_id) in to_finish.into_iter() {
@@ -748,29 +778,57 @@ pub fn update_world(
             }
         } else {
             for location_idx in 0..state.locations.len() {
-                sampler = update_location(&mut state, elapsed, client, &update_options, sampler, location_idx)
+                sampler = update_location(
+                    &mut state,
+                    elapsed,
+                    client,
+                    &update_options,
+                    sampler,
+                    location_idx,
+                )
             }
         };
     };
     (state, sampler)
 }
 
-fn update_location(mut state: &mut GameState, elapsed: i64, client: bool, update_options: &UpdateOptions, mut sampler: Sampler, location_idx: usize) -> Sampler {
+fn update_location(
+    mut state: &mut GameState,
+    elapsed: i64,
+    client: bool,
+    update_options: &UpdateOptions,
+    mut sampler: Sampler,
+    location_idx: usize,
+) -> Sampler {
     let update_planets_id = sampler.start(9);
-    let (planets, sampler_out) = planet_movement::update_planets(&state.locations[location_idx].planets, &state.locations[location_idx].star, elapsed, sampler, update_options.limit_area.clone());
+    let (planets, sampler_out) = planet_movement::update_planets(
+        &state.locations[location_idx].planets,
+        &state.locations[location_idx].star,
+        elapsed,
+        sampler,
+        update_options.limit_area.clone(),
+    );
     state.locations[location_idx].planets = planets;
     sampler = sampler_out;
 
     sampler.end(update_planets_id);
     let update_ast_id = sampler.start(10);
-    state.locations[location_idx].asteroids =
-        planet_movement::update_asteroids(&state.locations[location_idx].asteroids, &state.locations[location_idx].star, elapsed);
+    state.locations[location_idx].asteroids = planet_movement::update_asteroids(
+        &state.locations[location_idx].asteroids,
+        &state.locations[location_idx].star,
+        elapsed,
+    );
     for mut belt in state.locations[location_idx].asteroid_belts.iter_mut() {
         belt.rotation += belt.orbit_speed / 1000.0 / 1000.0 * elapsed as f64;
     }
     sampler.end(update_ast_id);
     state.locations[location_idx].ships = sampler.measure(
-        &|| update_ships_on_planets(&state.locations[location_idx].planets, &state.locations[location_idx].ships),
+        &|| {
+            update_ships_on_planets(
+                &state.locations[location_idx].planets,
+                &state.locations[location_idx].ships,
+            )
+        },
         11,
     );
     state.locations[location_idx].ships = sampler.measure(
@@ -786,13 +844,22 @@ fn update_location(mut state: &mut GameState, elapsed: i64, client: bool, update
         12,
     );
     state.locations[location_idx].ships = sampler.measure(
-        &|| update_ships_tractoring(&state.locations[location_idx].ships, &state.locations[location_idx].minerals),
+        &|| {
+            update_ships_tractoring(
+                &state.locations[location_idx].ships,
+                &state.locations[location_idx].minerals,
+            )
+        },
         13,
     );
 
     let update_minerals_id = sampler.start(14);
-    let (minerals, players_update) =
-        update_tractored_minerals(&state.locations[location_idx].ships, &state.locations[location_idx].minerals, elapsed, &state.players);
+    let (minerals, players_update) = update_tractored_minerals(
+        &state.locations[location_idx].ships,
+        &state.locations[location_idx].minerals,
+        elapsed,
+        &state.players,
+    );
     state.locations[location_idx].minerals = minerals;
     for pup in players_update {
         let pair = find_player_and_ship_mut(&mut state, pup.0);
@@ -814,7 +881,12 @@ fn update_location(mut state: &mut GameState, elapsed: i64, client: bool, update
         sampler.end(hp_effects_id);
 
         state.locations[location_idx].minerals = sampler.measure(
-            &|| update_state_minerals(&state.locations[location_idx].minerals, &state.locations[location_idx].asteroid_belts),
+            &|| {
+                update_state_minerals(
+                    &state.locations[location_idx].minerals,
+                    &state.locations[location_idx].asteroid_belts,
+                )
+            },
             16,
         );
         let respawn_id = sampler.start(17);
@@ -861,7 +933,7 @@ fn update_tractored_minerals(
                         x: ship.x,
                         y: ship.y,
                     }
-                        .subtract(&min_pos);
+                    .subtract(&min_pos);
                     let dir = dist.normalize();
                     if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
                         if let Some(p) = players_by_ship_id.get(&ship.id) {
@@ -940,7 +1012,12 @@ fn gen_pos_in_belt(belt: &AsteroidBelt) -> Vec2f64 {
 fn start_dead_ships_respawn(state: &mut GameState) {
     let mut to_spawn = vec![];
     for player in state.players.iter_mut() {
-        if player.ship_id.is_none() && !player.long_actions.iter().any(|a| matches!(a, LongAction::Respawn {..})) {
+        if player.ship_id.is_none()
+            && !player
+                .long_actions
+                .iter()
+                .any(|a| matches!(a, LongAction::Respawn { .. }))
+        {
             to_spawn.push(player.id);
         }
     }
@@ -1050,7 +1127,7 @@ pub fn update_ship_hp_effects(
         .collect::<Vec<_>>()
 }
 
-fn apply_ship_death(s: &Ship, player_mut: &mut &mut Player) {
+fn apply_ship_death(s: &Ship, player_mut: &mut Player) {
     player_mut.ship_id = None;
     fire_event(GameEvent::ShipDied {
         ship: s.clone(),
@@ -1058,6 +1135,15 @@ fn apply_ship_death(s: &Ship, player_mut: &mut &mut Player) {
     });
     player_mut.money -= 1000;
     player_mut.money = player_mut.money.max(0);
+    cancel_all_long_actions_of_type(
+        &mut player_mut.long_actions,
+        LongAction::TransSystemJump {
+            id: Default::default(),
+            to: Default::default(),
+            micro_left: 0,
+            percentage: 0,
+        },
+    );
 }
 
 pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
@@ -1084,15 +1170,19 @@ pub fn find_and_extract_ship(state: &mut GameState, player_id: Uuid) -> Option<S
     if let Some(ship_id) = player.unwrap().ship_id {
         let mut should_break = false;
         for loc in state.locations.iter_mut() {
-            loc.ships = loc.ships.iter().filter_map(|s| {
-                if s.id != ship_id {
-                    Some(s.clone())
-                } else {
-                    found_ship = Some(s.clone());
-                    should_break = true;
-                    None
-                }
-            }).collect::<Vec<_>>();
+            loc.ships = loc
+                .ships
+                .iter()
+                .filter_map(|s| {
+                    if s.id != ship_id {
+                        Some(s.clone())
+                    } else {
+                        found_ship = Some(s.clone());
+                        should_break = true;
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
             if should_break {
                 break;
             }
@@ -1100,7 +1190,6 @@ pub fn find_and_extract_ship(state: &mut GameState, player_id: Uuid) -> Option<S
     }
     return found_ship;
 }
-
 
 pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -> &Ship {
     let mut rng = thread_rng();
@@ -1117,16 +1206,8 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
     let ship = Ship {
         id: crate::new_id(),
         color: gen_color(&mut small_rng).to_string(),
-        x: if at.is_some() {
-            at.unwrap().x
-        } else {
-            100.0
-        },
-        y: if at.is_some() {
-            at.unwrap().y
-        } else {
-            100.0
-        },
+        x: if at.is_some() { at.unwrap().x } else { 100.0 },
+        y: if at.is_some() { at.unwrap().y } else { 100.0 },
         hp: 100.0,
         hp_effects: vec![],
         max_hp: 100.0,
@@ -1261,7 +1342,8 @@ fn build_trajectory_to_body(
     to_anchor: &Box<dyn IBody>,
 ) -> Vec<Vec2f64> {
     // let start = Utc::now();
-    let mut anchors = planet_movement::build_anchors_from_bodies(vec![to.clone(), to_anchor.clone()]);
+    let mut anchors =
+        planet_movement::build_anchors_from_bodies(vec![to.clone(), to_anchor.clone()]);
     let mut shifts = HashMap::new();
     let mut counter = 0;
     let mut current_target = Planet::from(to.clone());
@@ -1362,7 +1444,6 @@ pub fn find_my_ship_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut S
     return None;
 }
 
-
 pub fn find_mineral(state: &GameState, min_id: Uuid) -> Option<&NatSpawnMineral> {
     for loc in state.locations.iter() {
         if let Some(mineral) = loc.minerals.iter().find(|mineral| mineral.id == min_id) {
@@ -1383,7 +1464,10 @@ pub struct ShipIdx {
 
 pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<ShipIdx> {
     let player = find_my_player(state, player_id);
-    let mut idx = ShipIdx { location_idx: 0, ship_idx: 0 };
+    let mut idx = ShipIdx {
+        location_idx: 0,
+        ship_idx: 0,
+    };
     let mut found = false;
     if let Some(player) = player {
         if let Some(ship_id) = player.ship_id {
@@ -1394,7 +1478,7 @@ pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<ShipIdx>
                         found = true;
                         break;
                     }
-                    idx.ship_idx+=1;
+                    idx.ship_idx += 1;
                 }
                 if found {
                     break;
@@ -1403,7 +1487,7 @@ pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<ShipIdx>
             }
         }
     }
-    return if found {Some(idx)} else {None};
+    return if found { Some(idx) } else { None };
 }
 
 pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<&'a Planet> {
@@ -1431,7 +1515,10 @@ pub fn find_my_player_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut
     return None;
 }
 
-pub fn find_player_and_ship_mut(state: &mut GameState, player_id: Uuid) -> (Option<&mut Player>, Option<&mut Ship>) {
+pub fn find_player_and_ship_mut(
+    state: &mut GameState,
+    player_id: Uuid,
+) -> (Option<&mut Player>, Option<&mut Ship>) {
     let player_idx = state
         .players
         .iter()
@@ -1463,7 +1550,10 @@ pub fn find_player_and_ship_mut(state: &mut GameState, player_id: Uuid) -> (Opti
     return (player, ship);
 }
 
-pub fn find_player_and_ship(state: &GameState, player_id: Uuid) -> (Option<&Player>, Option<&Ship>) {
+pub fn find_player_and_ship(
+    state: &GameState,
+    player_id: Uuid,
+) -> (Option<&Player>, Option<&Ship>) {
     let player_idx = state
         .players
         .iter()
@@ -1494,7 +1584,6 @@ pub fn find_player_and_ship(state: &GameState, player_id: Uuid) -> (Option<&Play
     }
     return (player, ship);
 }
-
 
 fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
     match action_raw.s_type {
@@ -1627,7 +1716,11 @@ pub fn apply_ship_action(
         }
         ShipActionRust::Tractor(t) => {
             let mut ship = old_ship.clone();
-            update_ship_tractor(t, &mut ship, &state.locations[ship_idx.location_idx].minerals);
+            update_ship_tractor(
+                t,
+                &mut ship,
+                &state.locations[ship_idx.location_idx].minerals,
+            );
             Some(ship)
         }
     }
@@ -1639,10 +1732,10 @@ fn update_ship_tractor(t: Uuid, ship: &mut Ship, vec1: &Vec<NatSpawnMineral>) {
             x: ship.x,
             y: ship.y,
         }
-            .euclidean_distance(&Vec2f64 {
-                x: mineral.x,
-                y: mineral.y,
-            });
+        .euclidean_distance(&Vec2f64 {
+            x: mineral.x,
+            y: mineral.y,
+        });
         if dist <= MAX_TRACTOR_DIST {
             ship.tractor_target = Some(t);
         } else {
@@ -1659,12 +1752,18 @@ pub fn update_quests(state: &mut GameState) {
     for player_id in player_ids {
         if let (Some(mut player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
             if player.quest.is_none() {
-                player.quest = generate_random_quest(&state_read.locations[0].planets, ship.docked_at);
+                player.quest =
+                    generate_random_quest(&state_read.locations[0].planets, ship.docked_at);
             } else {
                 let quest_id = player.quest.as_ref().map(|q| q.id).unwrap();
-                if !has_quest_item(&ship.inventory, quest_id) && player.quest.as_ref().unwrap().state == CargoDeliveryQuestState::Picked {
+                if !has_quest_item(&ship.inventory, quest_id)
+                    && player.quest.as_ref().unwrap().state == CargoDeliveryQuestState::Picked
+                {
                     player.quest = None;
-                    log!(format!("Player {} has failed quest {} due to not having item", player_id, quest_id));
+                    log!(format!(
+                        "Player {} has failed quest {} due to not having item",
+                        player_id, quest_id
+                    ));
                 }
             }
         }
@@ -1674,20 +1773,20 @@ pub fn update_quests(state: &mut GameState) {
 pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
     // intentionally drop the extracted result
     find_and_extract_ship(state, conn_id);
-    state
-        .players
-        .iter()
-        .position(|p| p.id == conn_id)
-        .map(|i| {
-            state.players.remove(i);
-        });
+    state.players.iter().position(|p| p.id == conn_id).map(|i| {
+        state.players.remove(i);
+    });
 }
 
 pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
     let old_ship_index = find_my_ship_index(&state, player_id);
     return if let Some(old_ship_index) = old_ship_index {
-        state.locations[old_ship_index.location_idx].ships.remove(old_ship_index.ship_idx);
-        state.locations[old_ship_index.location_idx].ships.push(updated_ship.clone());
+        state.locations[old_ship_index.location_idx]
+            .ships
+            .remove(old_ship_index.ship_idx);
+        state.locations[old_ship_index.location_idx]
+            .ships
+            .push(updated_ship.clone());
         true
     } else {
         eprintln!("couldn't replace ship");
