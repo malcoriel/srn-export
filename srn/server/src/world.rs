@@ -434,7 +434,7 @@ impl Container {
             id: Default::default(),
             items: vec![],
             position: Default::default(),
-            radius: calc_radius(),
+            radius: Self::calc_radius(&vec![]),
         }
     }
 
