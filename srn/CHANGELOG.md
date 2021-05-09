@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.6.4 (2021-05-08)
+
+### Fixes
+* Jumps now get cancelled when the game has ended.
+* Jumps now get cancelled when the player ship has died.
+* It's not possible to schedule multiple jumps at once anymore.
+* Play button is now disabled when the server is down.
+
+
 ## Version 0.6.3 (2021-05-08)
 
 ### New
