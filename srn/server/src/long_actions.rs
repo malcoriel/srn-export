@@ -1,18 +1,18 @@
-use wasm_bindgen::prelude::*;
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
-use uuid::Uuid;
-use serde_derive::{Deserialize, Serialize};
-use crate::world::{GameState, find_my_player_mut, find_my_ship_index, spawn_ship, PLAYER_RESPAWN_TIME_MC};
+use crate::world::{
+    find_my_player_mut, find_my_ship_index, spawn_ship, GameState, PLAYER_RESPAWN_TIME_MC,
+};
 use crate::{locations, new_id};
 use core::mem;
+use serde_derive::{Deserialize, Serialize};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use uuid::Uuid;
+use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
 pub enum LongActionStart {
     Unknown,
-    TransSystemJump {
-        to: Uuid
-    },
+    TransSystemJump { to: Uuid },
     Respawn,
 }
 
@@ -35,7 +35,28 @@ pub enum LongAction {
     },
 }
 
-pub fn try_start_long_action(state: &mut GameState, player_id: Uuid, action: LongActionStart) -> bool {
+// This will compare the type only, all details like id are ignored for the sake of equality
+pub fn cancel_all_long_actions_of_type(la: &mut Vec<LongAction>, template: LongAction) {
+    let t = erase_details(template);
+    let mut new_la = la
+        .clone()
+        .into_iter()
+        .filter_map(|a| {
+            return if matches!(erase_details(a.clone()), t) {
+                None
+            } else {
+                Some(a)
+            };
+        })
+        .collect();
+    mem::swap(la, &mut new_la);
+}
+
+pub fn try_start_long_action(
+    state: &mut GameState,
+    player_id: Uuid,
+    action: LongActionStart,
+) -> bool {
     match action {
         LongActionStart::Unknown => {
             return false;
@@ -72,11 +93,11 @@ pub fn try_start_long_action(state: &mut GameState, player_id: Uuid, action: Lon
 fn revalidate(long_actions: &mut Vec<LongAction>) {
     let mut has_jump = false;
     let mut has_respawn = false;
-    let mut new_actions = long_actions.clone().into_iter().filter_map(|a| {
-        match a {
-            LongAction::Unknown { .. } => {
-                Some(a)
-            }
+    let mut new_actions = long_actions
+        .clone()
+        .into_iter()
+        .filter_map(|a| match a {
+            LongAction::Unknown { .. } => Some(a),
             LongAction::TransSystemJump { .. } => {
                 if has_jump {
                     return None;
@@ -91,8 +112,8 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                 has_respawn = true;
                 Some(a)
             }
-        }
-    }).collect();
+        })
+        .collect();
     mem::swap(long_actions, &mut new_actions);
 }
 
@@ -100,27 +121,19 @@ const TRANS_SYSTEM_JUMP_TIME: i32 = 5 * 1000 * 1000;
 
 pub fn start_long_act(act: LongActionStart) -> LongAction {
     return match act {
-        LongActionStart::Unknown => {
-            LongAction::Unknown {
-                id: new_id()
-            }
-        }
-        LongActionStart::TransSystemJump { to } => {
-            LongAction::TransSystemJump {
-                id: new_id(),
-                to,
-                micro_left: TRANS_SYSTEM_JUMP_TIME,
-                percentage: 0
-            }
-        }
-        LongActionStart::Respawn => {
-            LongAction::Respawn {
-                id: new_id(),
-                micro_left: PLAYER_RESPAWN_TIME_MC,
-                percentage: 0
-            }
-        }
-    }
+        LongActionStart::Unknown => LongAction::Unknown { id: new_id() },
+        LongActionStart::TransSystemJump { to } => LongAction::TransSystemJump {
+            id: new_id(),
+            to,
+            micro_left: TRANS_SYSTEM_JUMP_TIME,
+            percentage: 0,
+        },
+        LongActionStart::Respawn => LongAction::Respawn {
+            id: new_id(),
+            micro_left: PLAYER_RESPAWN_TIME_MC,
+            percentage: 0,
+        },
+    };
 }
 
 pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction) {
@@ -140,29 +153,33 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction) 
 // (update_action, keep_ticking)
 pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
     return match act {
-        LongAction::Unknown { id } => {
-            (LongAction::Unknown {
-               id,
-           }, false)
-        }
-        LongAction::TransSystemJump { to, id, micro_left, .. } => {
+        LongAction::Unknown { id } => (LongAction::Unknown { id }, false),
+        LongAction::TransSystemJump {
+            to, id, micro_left, ..
+        } => {
             let left = micro_left - micro_passed as i32;
-            (LongAction::TransSystemJump {
-                id,
-                to,
-                micro_left: left,
-                percentage: calc_percentage(left, TRANS_SYSTEM_JUMP_TIME)
-            }, left > 0)
+            (
+                LongAction::TransSystemJump {
+                    id,
+                    to,
+                    micro_left: left,
+                    percentage: calc_percentage(left, TRANS_SYSTEM_JUMP_TIME),
+                },
+                left > 0,
+            )
         }
         LongAction::Respawn { micro_left, id, .. } => {
             let left = micro_left - micro_passed as i32;
-            (LongAction::Respawn {
-                id,
-                micro_left: left,
-                percentage: calc_percentage(left, PLAYER_RESPAWN_TIME_MC)
-            }, left > 0)
+            (
+                LongAction::Respawn {
+                    id,
+                    micro_left: left,
+                    percentage: calc_percentage(left, PLAYER_RESPAWN_TIME_MC),
+                },
+                left > 0,
+            )
         }
-    }
+    };
 }
 
 fn calc_percentage(left: i32, max: i32) -> u32 {

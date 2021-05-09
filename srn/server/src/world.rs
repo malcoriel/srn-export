@@ -1042,19 +1042,22 @@ pub fn update_ship_hp_effects(
             } else {
                 let player_opt = players_by_ship_id.get_mut(&s.id);
                 if player_opt.is_some() {
-                    let player_mut = player_opt.unwrap();
-                    player_mut.ship_id = None;
-                    fire_event(GameEvent::ShipDied {
-                        ship: s.clone(),
-                        player: player_mut.clone(),
-                    });
-                    player_mut.money -= 1000;
-                    player_mut.money = player_mut.money.max(0);
+                    apply_ship_death(s, player_opt.unwrap());
                 }
                 None
             }
         })
         .collect::<Vec<_>>()
+}
+
+fn apply_ship_death(s: &Ship, player_mut: &mut &mut Player) {
+    player_mut.ship_id = None;
+    fire_event(GameEvent::ShipDied {
+        ship: s.clone(),
+        player: player_mut.clone(),
+    });
+    player_mut.money -= 1000;
+    player_mut.money = player_mut.money.max(0);
 }
 
 pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
