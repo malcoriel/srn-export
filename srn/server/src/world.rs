@@ -28,7 +28,7 @@ use crate::random_stuff::{
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::market::{Market, init_all_planets_market};
-use crate::long_actions::{LongActProgress, tick_long_act, finish_long_act};
+use crate::long_actions::{LongAction, tick_long_act, finish_long_act};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -381,7 +381,7 @@ pub struct Player {
     pub money: i32,
     pub portrait_name: String,
     pub respawn_ms_left: i32,
-    pub long_actions: Vec<LongActProgress>,
+    pub long_actions: Vec<LongAction>,
 }
 
 impl Player {

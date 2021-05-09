@@ -17,7 +17,7 @@ pub enum LongActionStart {
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
-pub enum LongActProgress {
+pub enum LongAction {
     Unknown {
         id: Uuid,
     },
@@ -50,14 +50,14 @@ pub fn try_start_long_action(state: &mut GameState, player_id: Uuid, action: Lon
     return true;
 }
 
-fn revalidate(long_actions: &mut Vec<LongActProgress>) {
+fn revalidate(long_actions: &mut Vec<LongAction>) {
     let mut has_jump = false;
     let mut new_actions = long_actions.clone().into_iter().filter_map(|a| {
         match a {
-            LongActProgress::Unknown { .. } => {
+            LongAction::Unknown { .. } => {
                 Some(a)
             }
-            LongActProgress::TransSystemJump { .. } => {
+            LongAction::TransSystemJump { .. } => {
                 if has_jump {
                     return None;
                 }
@@ -71,15 +71,15 @@ fn revalidate(long_actions: &mut Vec<LongActProgress>) {
 
 const TRANS_SYSTEM_JUMP_TIME: i64 = 5 * 1000 * 1000;
 
-pub fn start_long_act(act: LongActionStart) -> LongActProgress {
+pub fn start_long_act(act: LongActionStart) -> LongAction {
     return match act {
         LongActionStart::Unknown => {
-            LongActProgress::Unknown {
+            LongAction::Unknown {
                 id: new_id()
             }
         }
         LongActionStart::TransSystemJump { to } => {
-            LongActProgress::TransSystemJump {
+            LongAction::TransSystemJump {
                 id: new_id(),
                 to,
                 micro_left: TRANS_SYSTEM_JUMP_TIME,
@@ -89,29 +89,29 @@ pub fn start_long_act(act: LongActionStart) -> LongActProgress {
     }
 }
 
-pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongActProgress) {
+pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction) {
     match act {
-        LongActProgress::Unknown { .. } => {
+        LongAction::Unknown { .. } => {
             // nothing to do
         }
-        LongActProgress::TransSystemJump { to, .. } => {
+        LongAction::TransSystemJump { to, .. } => {
             locations::try_move_player_ship(state, player_id, to);
         }
     }
 }
 
 // (update_action, keep_ticking)
-pub fn tick_long_act(act: LongActProgress, micro_passed: i64) -> (LongActProgress, bool) {
+pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
     return match act {
-        LongActProgress::Unknown { id } => {
-            (LongActProgress::Unknown {
+        LongAction::Unknown { id } => {
+            (LongAction::Unknown {
                id,
            }, false)
         }
-        LongActProgress::TransSystemJump { to, id, micro_left, .. } => {
+        LongAction::TransSystemJump { to, id, micro_left, .. } => {
             let left = micro_left - micro_passed;
             let percentage = (((TRANS_SYSTEM_JUMP_TIME as f64 - left as f64) / TRANS_SYSTEM_JUMP_TIME as f64).max(0.0) * 100.0) as u32;
-            (LongActProgress::TransSystemJump {
+            (LongAction::TransSystemJump {
                 id,
                 to,
                 micro_left: left,
