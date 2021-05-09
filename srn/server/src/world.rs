@@ -421,6 +421,35 @@ pub struct NatSpawnMineral {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct Container {
+    pub id: Uuid,
+    pub items: Vec<InventoryItem>,
+    pub position: Vec2f64,
+}
+
+impl Container {
+    pub fn new() -> Self {
+        Container {
+            id: Default::default(),
+            items: vec![],
+            position: Default::default(),
+        }
+    }
+
+    pub fn random(prng: &mut SmallRng) -> Self {
+        let mut cont = Container::new();
+        for _i in 0..prng.gen_range(1, 5) {
+            cont.items.push(InventoryItem::random(prng))
+        }
+        cont.position = Vec2f64 {
+            x: 100.0 + prng.gen_range(1.0, 10.0) * 10.0,
+            y: 100.0,
+        };
+        cont
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Location {
     pub seed: String,
     pub id: Uuid,
@@ -428,6 +457,7 @@ pub struct Location {
     pub planets: Vec<Planet>,
     pub asteroids: Vec<Asteroid>,
     pub minerals: Vec<NatSpawnMineral>,
+    pub containers: Vec<Container>,
     pub position: Vec2f64,
     pub asteroid_belts: Vec<AsteroidBelt>,
     pub ships: Vec<Ship>,
@@ -443,6 +473,7 @@ impl Location {
             planets: vec![],
             asteroids: vec![],
             minerals: vec![],
+            containers: vec![],
             position: Default::default(),
             asteroid_belts: vec![],
             ships: vec![],
@@ -459,6 +490,7 @@ impl Location {
             planets: vec![],
             asteroids: vec![],
             minerals: vec![],
+            containers: vec![],
             position: Vec2f64 { x: 0.0, y: 0.0 },
             asteroid_belts: vec![],
             ships: vec![],

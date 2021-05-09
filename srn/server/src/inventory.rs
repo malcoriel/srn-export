@@ -1,15 +1,28 @@
-use uuid::Uuid;
 use crate::new_id;
-use serde_derive::{Deserialize, Serialize};
 use crate::world::{NatSpawnMineral, Rarity};
-use std::collections::{HashSet, HashMap};
+use rand::rngs::SmallRng;
+use rand::{Rng, RngCore, SeedableRng};
+use serde_derive::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 use std::mem;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use uuid::Uuid;
 use wasm_bindgen::prelude::*;
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, EnumIter, TypescriptDefinition, TypeScriptify)]
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    EnumIter,
+    TypescriptDefinition,
+    TypeScriptify,
+)]
 pub enum InventoryItemType {
     Unknown,
     CommonMineral,
@@ -31,7 +44,10 @@ pub enum InventoryAction {
 }
 
 pub static MINERAL_TYPES: [InventoryItemType; 3] = [
-    InventoryItemType::CommonMineral, InventoryItemType::UncommonMineral, InventoryItemType::RareMineral];
+    InventoryItemType::CommonMineral,
+    InventoryItemType::UncommonMineral,
+    InventoryItemType::RareMineral,
+];
 
 pub fn inventory_item_type_to_stackable(iit: &InventoryItemType) -> bool {
     match iit {
@@ -42,7 +58,7 @@ pub fn inventory_item_type_to_stackable(iit: &InventoryItemType) -> bool {
         InventoryItemType::QuestCargo => false,
         InventoryItemType::Food => true,
         InventoryItemType::Medicament => true,
-        InventoryItemType::HandWeapon => true
+        InventoryItemType::HandWeapon => true,
     }
 }
 
@@ -72,6 +88,19 @@ impl InventoryItem {
         }
     }
 
+    pub fn random(prng: &mut SmallRng) -> InventoryItem {
+        let possible = vec![
+            InventoryItemType::CommonMineral,
+            InventoryItemType::UncommonMineral,
+            InventoryItemType::RareMineral,
+            InventoryItemType::Food,
+            InventoryItemType::Medicament,
+            InventoryItemType::HandWeapon,
+        ];
+        let index = prng.gen_range(0, possible.len());
+        return InventoryItem::new(possible[index].clone(), prng.gen_range(1, 6));
+    }
+
     pub fn quest_pickup(quest_id: Uuid) -> InventoryItem {
         InventoryItem {
             id: Default::default(),
@@ -94,10 +123,10 @@ impl InventoryItem {
             stackable: true,
             player_owned: true,
             item_type: match mineral.rarity {
-                Rarity::Unknown => { InventoryItemType::Unknown }
-                Rarity::Common => { InventoryItemType::CommonMineral }
-                Rarity::Uncommon => { InventoryItemType::UncommonMineral }
-                Rarity::Rare => { InventoryItemType::RareMineral }
+                Rarity::Unknown => InventoryItemType::Unknown,
+                Rarity::Common => InventoryItemType::CommonMineral,
+                Rarity::Uncommon => InventoryItemType::UncommonMineral,
+                Rarity::Rare => InventoryItemType::RareMineral,
             },
             quest_id: None,
         }
@@ -145,7 +174,10 @@ pub fn group_items_of_same_type(inventory: &mut Vec<InventoryItem>) {
         let base_item = &mut cloned_inv[base_index];
         base_item.quantity += moved_amount;
     }
-    cloned_inv = cloned_inv.into_iter().filter(|e| e.id != Uuid::nil()).collect::<Vec<_>>();
+    cloned_inv = cloned_inv
+        .into_iter()
+        .filter(|e| e.id != Uuid::nil())
+        .collect::<Vec<_>>();
     inventory.clear();
     inventory.append(&mut cloned_inv);
 }
@@ -171,12 +203,12 @@ pub fn add_items(inventory: &mut Vec<InventoryItem>, new_items: Vec<InventoryIte
     }
 }
 
-
-pub fn remove_quest_item(inventory: &mut Vec<InventoryItem>, quest_id: Uuid) -> Option<InventoryItem> {
+pub fn remove_quest_item(
+    inventory: &mut Vec<InventoryItem>,
+    quest_id: Uuid,
+) -> Option<InventoryItem> {
     let pos = find_quest_item_pos(inventory, quest_id);
-    pos.map(|p| {
-        inventory.remove(p)
-    })
+    pos.map(|p| inventory.remove(p))
 }
 
 pub fn has_quest_item(inventory: &Vec<InventoryItem>, quest_id: Uuid) -> bool {
@@ -185,8 +217,10 @@ pub fn has_quest_item(inventory: &Vec<InventoryItem>, quest_id: Uuid) -> bool {
 }
 
 fn find_quest_item_pos(inventory: &Vec<InventoryItem>, quest_id: Uuid) -> Option<usize> {
-    let pos = inventory.iter().position(|i| i.item_type == InventoryItemType::QuestCargo &&
-        i.quest_id.map(|id| id == quest_id).unwrap_or(false));
+    let pos = inventory.iter().position(|i| {
+        i.item_type == InventoryItemType::QuestCargo
+            && i.quest_id.map(|id| id == quest_id).unwrap_or(false)
+    });
     pos
 }
 
@@ -202,7 +236,10 @@ pub fn merge_item_stacks(inventory: &mut Vec<InventoryItem>, from: Uuid, to: Uui
             }
         }
     } else {
-        warn!(format!("Invalid merge for non-existent item ids (or one of them): {} and {}", from, to));
+        warn!(format!(
+            "Invalid merge for non-existent item ids (or one of them): {} and {}",
+            from, to
+        ));
     }
 }
 
@@ -210,12 +247,18 @@ pub fn split_item_stack(inventory: &mut Vec<InventoryItem>, item_id: Uuid, count
     let (by_index, by_id) = double_index_items(inventory);
     let target = inventory.iter_mut().find(|i| i.id == item_id);
     if target.is_none() {
-        warn!(format!("Invalid split for non-existent item id: {}", item_id));
+        warn!(format!(
+            "Invalid split for non-existent item id: {}",
+            item_id
+        ));
         return;
     }
     let target = target.unwrap();
     if target.quantity <= count {
-        warn!(format!("Invalid split for item id: {}, available {}, split {} (must be greater)", item_id, target.quantity, count));
+        warn!(format!(
+            "Invalid split for item id: {}, available {}, split {} (must be greater)",
+            item_id, target.quantity, count
+        ));
         return;
     }
     let mut free_index = by_id.get(&item_id).unwrap().clone() + 1;
@@ -236,7 +279,10 @@ pub fn split_item_stack(inventory: &mut Vec<InventoryItem>, item_id: Uuid, count
     })
 }
 
-pub fn consume_items_of_type(inventory: &mut Vec<InventoryItem>, iit: &InventoryItemType) -> Vec<InventoryItem> {
+pub fn consume_items_of_type(
+    inventory: &mut Vec<InventoryItem>,
+    iit: &InventoryItemType,
+) -> Vec<InventoryItem> {
     let mut res = vec![];
     let mut indexes = vec![];
     let mut cloned_inv = inventory.clone();
@@ -250,20 +296,29 @@ pub fn consume_items_of_type(inventory: &mut Vec<InventoryItem>, iit: &Inventory
         res.push(cloned_inv[indexes[i]].clone())
     }
 
-    cloned_inv = cloned_inv.into_iter().filter(|e| e.id != Uuid::nil()).collect::<Vec<_>>();
+    cloned_inv = cloned_inv
+        .into_iter()
+        .filter(|e| e.id != Uuid::nil())
+        .collect::<Vec<_>>();
     group_items_of_same_type(&mut cloned_inv);
     // replace the contents with the filtered ones
     inventory.clear();
     inventory.append(&mut cloned_inv);
-    res = res.into_iter().map(|mut item: InventoryItem| {
-        item.id = new_id();
-        item
-    }).collect::<Vec<_>>();
+    res = res
+        .into_iter()
+        .map(|mut item: InventoryItem| {
+            item.id = new_id();
+            item
+        })
+        .collect::<Vec<_>>();
     group_items_of_same_type(&mut res);
     return res;
 }
 
-pub fn consume_items_of_types(inventory: &mut Vec<InventoryItem>, types: &Vec<InventoryItemType>) -> Vec<InventoryItem> {
+pub fn consume_items_of_types(
+    inventory: &mut Vec<InventoryItem>,
+    types: &Vec<InventoryItemType>,
+) -> Vec<InventoryItem> {
     let mut res = vec![];
     for iit in types {
         let mut extracted = consume_items_of_type(inventory, iit);
@@ -298,8 +353,9 @@ pub fn value_items_of_types(inventory: &Vec<InventoryItem>, types: &Vec<Inventor
     res
 }
 
-
-pub fn double_index_items(inventory: &Vec<InventoryItem>) -> (HashMap<i32, Uuid>, HashMap<Uuid, i32>) {
+pub fn double_index_items(
+    inventory: &Vec<InventoryItem>,
+) -> (HashMap<i32, Uuid>, HashMap<Uuid, i32>) {
     let mut by_index = HashMap::new();
     let mut by_id = HashMap::new();
     for item in inventory {
@@ -309,7 +365,9 @@ pub fn double_index_items(inventory: &Vec<InventoryItem>) -> (HashMap<i32, Uuid>
     return (by_index, by_id);
 }
 
-pub fn index_items_by_id_mut(inventory: &mut Vec<InventoryItem>) -> HashMap<Uuid, &mut InventoryItem> {
+pub fn index_items_by_id_mut(
+    inventory: &mut Vec<InventoryItem>,
+) -> HashMap<Uuid, &mut InventoryItem> {
     let mut by_id = HashMap::new();
     for item in inventory.iter_mut() {
         by_id.insert(item.id.clone(), item);
@@ -317,9 +375,7 @@ pub fn index_items_by_id_mut(inventory: &mut Vec<InventoryItem>) -> HashMap<Uuid
     return by_id;
 }
 
-pub fn apply_action(
-    inventory: &mut Vec<InventoryItem>, action: InventoryAction,
-) {
+pub fn apply_action(inventory: &mut Vec<InventoryItem>, action: InventoryAction) {
     match action {
         InventoryAction::Unknown => {}
         InventoryAction::Split { from, count } => {
@@ -328,20 +384,29 @@ pub fn apply_action(
         InventoryAction::Merge { from, to } => {
             merge_item_stacks(inventory, from, to);
         }
-        InventoryAction::Move { item, index } => {
-            move_item_stack(inventory, action, &item, index)
-        }
+        InventoryAction::Move { item, index } => move_item_stack(inventory, action, &item, index),
     }
 }
 
-fn move_item_stack(inventory: &mut Vec<InventoryItem>, action: InventoryAction, item: &Uuid, index: i32) {
+fn move_item_stack(
+    inventory: &mut Vec<InventoryItem>,
+    action: InventoryAction,
+    item: &Uuid,
+    index: i32,
+) {
     let (by_index, _by_id) = double_index_items(inventory);
     let mut items = index_items_by_id_mut(inventory);
     if let Some(mut moved_item) = items.get_mut(&item) {
         if by_index.get(&index).is_some() {
-            warn!(format!("Invalid move action {:?}, index {} already occupied", action, index));
+            warn!(format!(
+                "Invalid move action {:?}, index {} already occupied",
+                action, index
+            ));
         } else if index < 0 {
-            warn!(format!("Invalid move action {:?}, index {}<0", action, index));
+            warn!(format!(
+                "Invalid move action {:?}, index {}<0",
+                action, index
+            ));
         } else {
             moved_item.index = index;
         }
@@ -349,6 +414,15 @@ fn move_item_stack(inventory: &mut Vec<InventoryItem>, action: InventoryAction, 
 }
 
 pub fn cleanup_inventory_from_zeros(inventory: &mut Vec<InventoryItem>) {
-    let mut tmp = inventory.iter().filter_map(|item| if item.quantity > 0 { Some(item.clone()) } else { None }).collect::<Vec<_>>();
+    let mut tmp = inventory
+        .iter()
+        .filter_map(|item| {
+            if item.quantity > 0 {
+                Some(item.clone())
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
     mem::swap(&mut tmp, inventory);
 }

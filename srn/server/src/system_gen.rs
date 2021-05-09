@@ -1,18 +1,24 @@
+use crate::market::{init_all_planets_market, Market};
 use crate::new_id;
-use crate::random_stuff::{gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_name, gen_star_radius, PLANET_NAMES, SAT_NAMES, gen_star_color};
-use crate::world::{AsteroidBelt, GameState, Planet, Star, GameMode, Location, random_hex_seed_seeded};
-use crate::market::{Market, init_all_planets_market};
+use crate::random_stuff::{
+    gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count,
+    gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_color, gen_star_name,
+    gen_star_radius, PLANET_NAMES, SAT_NAMES,
+};
+use crate::vec2::Vec2f64;
+use crate::world::{
+    random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star,
+};
 use chrono::Utc;
+use core::mem;
 use rand::rngs::SmallRng;
-use rand::{Rng, SeedableRng, RngCore};
-use std::collections::{VecDeque, HashMap};
-use std::collections::hash_map::DefaultHasher;
+use rand::{Rng, RngCore, SeedableRng};
 use serde_derive::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
+use std::collections::{HashMap, VecDeque};
+use std::f64::consts::PI;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
-use crate::vec2::Vec2f64;
-use std::f64::consts::PI;
-use core::mem;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlanetType {
@@ -22,7 +28,6 @@ pub enum PlanetType {
     Jungle,
     Barren,
 }
-
 
 pub struct PoolRandomPicker<T> {
     pub options: Vec<T>,
@@ -50,23 +55,32 @@ pub fn wire_shake_locations(locations: &mut Vec<Location>, prng: &mut SmallRng) 
     let mut angle: f64 = 0.0;
     let mut loc_pos_by_id = HashMap::new();
     for loc in locations.iter_mut() {
-        let x = angle.cos() * (DIST + prng.gen_range(0.0, 100.0)) ;
+        let x = angle.cos() * (DIST + prng.gen_range(0.0, 100.0));
         let y = angle.sin() * (DIST + prng.gen_range(0.0, 100.0));
         angle += 2.0 * PI / LOCATION_COUNT as f64;
-        loc.position = Vec2f64 {
-            x, y
-        };
-        loc.adjacent_location_ids = all_ids.clone().into_iter().filter(|l| *l != loc.id).collect::<Vec<_>>();
+        loc.position = Vec2f64 { x, y };
+        loc.adjacent_location_ids = all_ids
+            .clone()
+            .into_iter()
+            .filter(|l| *l != loc.id)
+            .collect::<Vec<_>>();
         loc_pos_by_id.insert(loc.id, loc.position.clone());
     }
     for loc in locations.iter_mut() {
-        loc.adjacent_location_ids = loc.adjacent_location_ids.clone().into_iter().filter_map(|adj| {
-            let dist = loc.position.euclidean_distance(loc_pos_by_id.get(&adj).unwrap());
-            if dist > MAX_DIST {
-                return None;
-            }
-            return Some(adj);
-        }).collect();
+        loc.adjacent_location_ids = loc
+            .adjacent_location_ids
+            .clone()
+            .into_iter()
+            .filter_map(|adj| {
+                let dist = loc
+                    .position
+                    .euclidean_distance(loc_pos_by_id.get(&adj).unwrap());
+                if dist > MAX_DIST {
+                    return None;
+                }
+                return Some(adj);
+            })
+            .collect();
     }
 }
 
@@ -101,6 +115,9 @@ pub fn system_gen(seed: String) -> GameState {
     };
     state
 }
+
+pub const MIN_CONTAINER_DISTANCE: f64 = 50.0;
+pub const CONTAINER_COUNT: i32 = 10;
 
 fn gen_star_system_location(seed: &String) -> Location {
     let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
@@ -148,10 +165,7 @@ fn gen_star_system_location(seed: &String) -> Location {
 
     let star_zone = zones.pop_front().unwrap();
 
-    let star = gen_star(star_id, &mut prng, star_zone.0, Vec2f64 {
-        x: 0.0,
-        y: 0.0,
-    });
+    let star = gen_star(star_id, &mut prng, star_zone.0, Vec2f64 { x: 0.0, y: 0.0 });
 
     let mut planet_name_pool = PoolRandomPicker {
         options: Vec::from(PLANET_NAMES),
@@ -173,7 +187,15 @@ fn gen_star_system_location(seed: &String) -> Location {
 
                     let planet_radius = gen_planet_radius(&mut prng);
                     let planet_center_x = current_x + width / 2.0;
-                    let planet = gen_planet(&mut prng, star.id, index, planet_id, name, planet_radius, planet_center_x);
+                    let planet = gen_planet(
+                        &mut prng,
+                        star.id,
+                        index,
+                        planet_id,
+                        name,
+                        planet_radius,
+                        planet_center_x,
+                    );
                     planets.push(planet);
 
                     let mut current_sat_x = planet_center_x + planet_radius + 10.0;
@@ -243,13 +265,45 @@ fn gen_star_system_location(seed: &String) -> Location {
     }
     let mut location = Location::new_empty();
     location.seed = seed.clone();
-    location.star = Some(star);
+    location.star = Some(star.clone());
     location.planets = planets;
     location.asteroid_belts = asteroid_belts;
+    location.containers = vec![];
+    for _i in 0..CONTAINER_COUNT {
+        let container = Container::random(&mut prng);
+        let mut res_container = Some(container.clone());
+        for p in location.planets.iter() {
+            if container
+                .position
+                .euclidean_distance(&Vec2f64 { x: p.x, y: p.y })
+                < MIN_CONTAINER_DISTANCE
+            {
+                res_container = None;
+            }
+        }
+        if container.position.euclidean_distance(&Vec2f64 {
+            x: location.star.as_ref().map_or(0.0, |s| s.x),
+            y: location.star.as_ref().map_or(0.0, |s| s.y),
+        }) < MIN_CONTAINER_DISTANCE
+        {
+            res_container = None;
+        }
+        if let Some(container) = res_container {
+            location.containers.push(container);
+        }
+    }
     location
 }
 
-pub fn gen_planet(mut prng: &mut SmallRng, anchor_id: Uuid, index: usize, planet_id: Uuid, name: String, planet_radius: f64, planet_center_x: f64) -> Planet {
+pub fn gen_planet(
+    mut prng: &mut SmallRng,
+    anchor_id: Uuid,
+    index: usize,
+    planet_id: Uuid,
+    name: String,
+    planet_radius: f64,
+    planet_center_x: f64,
+) -> Planet {
     Planet {
         id: planet_id,
         name,
@@ -314,15 +368,10 @@ pub fn seed_personal_state(client_id: Uuid, mode: &GameMode) -> GameState {
             state.id = client_id;
             state
         }
-        GameMode::Tutorial => {
-            make_tutorial_state(client_id)
-        }
-        GameMode::Sandbox => {
-            make_sandbox_state(client_id)
-        }
+        GameMode::Tutorial => make_tutorial_state(client_id),
+        GameMode::Sandbox => make_sandbox_state(client_id),
     }
 }
-
 
 pub fn make_tutorial_state(client_id: Uuid) -> GameState {
     let seed = "tutorial".to_owned();
@@ -347,31 +396,31 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
     location.seed = seed.clone();
     location.star = Some(star);
     location.planets = vec![
-            Planet {
-                id: planet_id,
-                name: "Schoolia".to_string(),
-                x: 100.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 8.0,
-                orbit_speed: 0.01,
-                anchor_id: star_id.clone(),
-                anchor_tier: 1,
-                color: "#11ffff".to_string(),
-            },
-            Planet {
-                id: new_id(),
-                name: "Sat".to_string(),
-                x: 120.0,
-                y: 0.0,
-                rotation: 0.0,
-                radius: 1.5,
-                orbit_speed: 0.005,
-                anchor_id: planet_id.clone(),
-                anchor_tier: 2,
-                color: "#ff0033".to_string(),
-            }
-        ];
+        Planet {
+            id: planet_id,
+            name: "Schoolia".to_string(),
+            x: 100.0,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 8.0,
+            orbit_speed: 0.01,
+            anchor_id: star_id.clone(),
+            anchor_tier: 1,
+            color: "#11ffff".to_string(),
+        },
+        Planet {
+            id: new_id(),
+            name: "Sat".to_string(),
+            x: 120.0,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 1.5,
+            orbit_speed: 0.005,
+            anchor_id: planet_id.clone(),
+            anchor_tier: 2,
+            color: "#ff0033".to_string(),
+        },
+    ];
     GameState {
         id: client_id,
         version: 1,
@@ -380,9 +429,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         seed: seed.clone(),
         my_id: Default::default(),
         start_time_ticks: now,
-        locations: vec![
-            location
-        ],
+        locations: vec![location],
         players: vec![],
         milliseconds_remaining: 60 * 1000,
         paused: false,
@@ -392,7 +439,6 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         market: Market::new(),
     }
 }
-
 
 pub fn make_sandbox_state(client_id: Uuid) -> GameState {
     let seed = "sandbox".to_owned();
@@ -406,8 +452,7 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
         seed: seed.clone(),
         my_id: Default::default(),
         start_time_ticks: now,
-        locations: vec![
-            Location::new_empty()],
+        locations: vec![Location::new_empty()],
         players: vec![],
         milliseconds_remaining: 99 * 60 * 1000,
         paused: false,
