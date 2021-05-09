@@ -115,6 +115,7 @@
     "start": "cross-env REACT_EDITOR=none BROWSER=chrome node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
+    "touch-client": "touch package.json",
     "eslint": "../../node_modules/.bin/eslint",
     "eslint-all": "../../node_modules/.bin/eslint src/**/*.ts*",
     "prettier": "../../node_modules/.bin/prettier",

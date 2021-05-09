@@ -28,7 +28,7 @@ use crate::random_stuff::{
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::market::{Market, init_all_planets_market};
-use crate::long_actions::{LongAction, tick_long_act, finish_long_act};
+use crate::long_actions::{LongAction, tick_long_act, finish_long_act, try_start_long_action, LongActionStart};
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -818,7 +818,7 @@ fn update_location(mut state: &mut GameState, elapsed: i64, client: bool, update
             16,
         );
         let respawn_id = sampler.start(17);
-        respawn_dead_ships(&mut state, elapsed);
+        start_dead_ships_respawn(&mut state);
         sampler.end(respawn_id);
     }
     sampler
@@ -937,23 +937,16 @@ fn gen_pos_in_belt(belt: &AsteroidBelt) -> Vec2f64 {
     Vec2f64 { x, y }
 }
 
-fn respawn_dead_ships(mut state: &mut GameState, elapsed: i64) {
-    for mut player in state.players.iter_mut() {
-        if player.respawn_ms_left > 0 {
-            player.respawn_ms_left -= (elapsed / 1000) as i32;
+fn start_dead_ships_respawn(state: &mut GameState) {
+    let mut to_spawn = vec![];
+    for player in state.players.iter_mut() {
+        if player.ship_id.is_none() && !player.long_actions.iter().any(|a| matches!(a, LongAction::Respawn {..})) {
+            to_spawn.push(player.id);
         }
     }
 
-    let players_to_spawn = state
-        .players
-        .iter()
-        .filter(|p| p.respawn_ms_left <= 0 && p.ship_id.is_none())
-        .map(|p| p.id)
-        .collect::<Vec<_>>();
-
-    for pid in players_to_spawn {
-        eprintln!("Respawning {}", pid);
-        spawn_ship(&mut state, pid, None);
+    for player_id in to_spawn {
+        try_start_long_action(state, player_id, LongActionStart::Respawn);
     }
 }
 
@@ -967,7 +960,7 @@ const STAR_FAR_RADIUS: f64 = 1.1;
 const MAX_HP_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
-const PLAYER_RESPAWN_TIME_MS: i32 = 10 * 1000;
+pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
 
 pub fn update_ship_hp_effects(
     star: &Option<Star>,
@@ -1051,7 +1044,6 @@ pub fn update_ship_hp_effects(
                 if player_opt.is_some() {
                     let player_mut = player_opt.unwrap();
                     player_mut.ship_id = None;
-                    player_mut.respawn_ms_left = PLAYER_RESPAWN_TIME_MS;
                     fire_event(GameEvent::ShipDied {
                         ship: s.clone(),
                         player: player_mut.clone(),
