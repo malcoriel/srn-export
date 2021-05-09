@@ -83,12 +83,16 @@ export const StartMenu: React.FC<{
   const serverVersion = useSWR('/api/version', async () => api.getVersion());
 
   let serverVersionFormatted;
+  let serverIsDown = false;
   if (serverVersion.error) {
     serverVersionFormatted = 'server is down';
+    serverIsDown = true;
   } else if (!serverVersion.data) {
     serverVersionFormatted = 'loading...';
+    serverIsDown = true;
   } else {
     serverVersionFormatted = serverVersion.data;
+    serverIsDown = false;
   }
 
   if (testMenuMode !== TestMenuMode.Hidden) {
@@ -214,6 +218,7 @@ export const StartMenu: React.FC<{
               onClick={() => setPlayMenu(true)}
               text="PLAY"
               hotkey="P"
+              disabled={serverIsDown}
             />
           )}
           {playing && (

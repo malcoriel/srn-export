@@ -75,3 +75,17 @@
     margin-left: 0;
   }
 }
+
+.ui-button.disabled {
+  color: $gray;
+  border-color: $gray;
+  background-color: black;
+
+  transform: none;
+
+  transition: none;
+
+  .hotkey-letter {
+    color: $gray;
+  }
+}

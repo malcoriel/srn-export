@@ -8,7 +8,7 @@ use core::mem;
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
-pub enum LongAction {
+pub enum LongActionStart {
     Unknown,
     TransSystemJump {
         to: Uuid
@@ -29,12 +29,12 @@ pub enum LongActProgress {
     }
 }
 
-pub fn try_start_long_action(state: &mut GameState, player_id: Uuid, action: LongAction) -> bool {
+pub fn try_start_long_action(state: &mut GameState, player_id: Uuid, action: LongActionStart) -> bool {
     match action {
-        LongAction::Unknown => {
+        LongActionStart::Unknown => {
             return false;
         }
-        LongAction::TransSystemJump { to } => {
+        LongActionStart::TransSystemJump { to } => {
             if !locations::can_be_moved_player(state, player_id, to) {
                 return false;
             }
@@ -71,14 +71,14 @@ fn revalidate(long_actions: &mut Vec<LongActProgress>) {
 
 const TRANS_SYSTEM_JUMP_TIME: i64 = 5 * 1000 * 1000;
 
-pub fn start_long_act(act: LongAction) -> LongActProgress {
+pub fn start_long_act(act: LongActionStart) -> LongActProgress {
     return match act {
-        LongAction::Unknown => {
+        LongActionStart::Unknown => {
             LongActProgress::Unknown {
                 id: new_id()
             }
         }
-        LongAction::TransSystemJump { to } => {
+        LongActionStart::TransSystemJump { to } => {
             LongActProgress::TransSystemJump {
                 id: new_id(),
                 to,

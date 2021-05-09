@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 import { viewPortSizeMeters } from './coord';
 import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
-import { InventoryAction, LongAction } from '../../world/pkg';
+import { InventoryAction, LongActionStart } from '../../world/pkg';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -779,7 +779,7 @@ export default class NetState extends EventEmitter {
     });
   }
 
-  public startLongAction(longAction: LongAction) {
+  public startLongAction(longAction: LongActionStart) {
     this.send({
       code: ClientOpCode.LongActionStart,
       value: longAction,

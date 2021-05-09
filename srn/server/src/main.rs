@@ -443,7 +443,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
 }
 
 fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>) {
-    let parsed = serde_json::from_str::<long_actions::LongAction>(data);
+    let parsed = serde_json::from_str::<long_actions::LongActionStart>(data);
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();

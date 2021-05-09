@@ -45,6 +45,7 @@ const renderHotkeyHint = (
 export const Button: React.FC<{
   onClick?: () => void;
   className?: string;
+  disabled?: boolean;
   toggled?: boolean | null;
   hotkey?: string;
   text?: string;
@@ -63,6 +64,7 @@ export const Button: React.FC<{
   className,
   toggled,
   thin,
+  disabled,
 }) => {
   const targetHotKey = hotkey || '🤣';
   const [pseudoActive, setPseudoActive] = useState(false);
@@ -76,7 +78,7 @@ export const Button: React.FC<{
   useHotkeys(
     targetHotKey,
     () => {
-      if (onClick) {
+      if (onClick && !disabled) {
         timedOutClick();
       }
       setPseudoActive(false);
@@ -103,8 +105,9 @@ export const Button: React.FC<{
         [className as string]: !!className,
         toggled,
         round,
+        disabled,
       })}
-      onClick={timedOutClick}
+      onClick={disabled ? () => {} : timedOutClick}
     >
       {children}
       {text

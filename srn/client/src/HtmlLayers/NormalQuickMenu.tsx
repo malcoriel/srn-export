@@ -3,7 +3,7 @@ import React from 'react';
 import NetState, { useNSForceChange } from '../NetState';
 import { ImFloppyDisk } from 'react-icons/all';
 import _ from 'lodash';
-import { LongActionBuilder } from '../../../world/pkg/world.extra';
+import { LongActionStartBuilder } from '../../../world/pkg/world.extra';
 
 export const NormalQuickMenu = () => {
   const ns = NetState.get();
@@ -36,7 +36,7 @@ export const NormalQuickMenu = () => {
           text,
           handler: () =>
             ns.startLongAction(
-              LongActionBuilder.LongActionTransSystemJump({ to: id })
+              LongActionStartBuilder.LongActionStartTransSystemJump({ to: id })
             ),
         };
       }),
