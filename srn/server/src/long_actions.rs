@@ -35,14 +35,34 @@ pub enum LongAction {
     },
 }
 
+pub fn erase_details(la: LongAction) -> LongAction {
+    return match la {
+        LongAction::Unknown { .. } => LongAction::Unknown {
+            id: Default::default(),
+        },
+        LongAction::TransSystemJump { .. } => LongAction::TransSystemJump {
+            id: Default::default(),
+            to: Default::default(),
+            micro_left: 0,
+            percentage: 0,
+        },
+        LongAction::Respawn { .. } => LongAction::Respawn {
+            id: Default::default(),
+            micro_left: 0,
+            percentage: 0,
+        },
+    };
+}
+
 // This will compare the type only, all details like id are ignored for the sake of equality
 pub fn cancel_all_long_actions_of_type(la: &mut Vec<LongAction>, template: LongAction) {
-    let t = erase_details(template);
+    // rust does not understand usage in matches! macro
+    let _t = erase_details(template);
     let mut new_la = la
         .clone()
         .into_iter()
         .filter_map(|a| {
-            return if matches!(erase_details(a.clone()), t) {
+            return if matches!(erase_details(a.clone()), _t) {
                 None
             } else {
                 Some(a)
