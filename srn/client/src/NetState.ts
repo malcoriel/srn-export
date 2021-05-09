@@ -245,6 +245,7 @@ export default class NetState extends EventEmitter {
           seed: '',
           planets: [],
           minerals: [],
+          containers: [],
           asteroids: [],
           asteroid_belts: [],
           ships: [],

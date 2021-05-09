@@ -425,6 +425,7 @@ pub struct Container {
     pub id: Uuid,
     pub items: Vec<InventoryItem>,
     pub position: Vec2f64,
+    pub radius: f64,
 }
 
 impl Container {
@@ -433,7 +434,17 @@ impl Container {
             id: Default::default(),
             items: vec![],
             position: Default::default(),
+            radius: calc_radius(),
         }
+    }
+
+    pub fn calc_radius(items: &Vec<InventoryItem>) -> f64 {
+        return (items
+            .iter()
+            .fold(0.0, |acc, curr| acc + curr.quantity as f64)
+            / 5.0)
+            .max(1.0)
+            .min(3.0);
     }
 
     pub fn random(prng: &mut SmallRng) -> Self {
@@ -441,6 +452,7 @@ impl Container {
         for _i in 0..prng.gen_range(1, 5) {
             cont.items.push(InventoryItem::random(prng))
         }
+        cont.radius = Container::calc_radius(&cont.items);
         cont.position = Vec2f64 {
             x: 100.0 + prng.gen_range(1.0, 10.0) * 10.0,
             y: 100.0,

@@ -53,7 +53,13 @@ export const ThreeBodiesLayer: React.FC<{
   visualState: VisualState;
   visMap: Record<string, boolean>;
 }> = ({ visMap, state, visualState }) => {
-  const { planets, star, minerals, asteroid_belts } = state.locations[0];
+  const {
+    planets,
+    star,
+    minerals,
+    asteroid_belts,
+    containers,
+  } = state.locations[0];
   return (
     <group>
       {planets.map((p) => {
@@ -106,6 +112,15 @@ export const ThreeBodiesLayer: React.FC<{
           radius={m.radius}
           position={posToThreePos(m.x, m.y)}
           color={m.color}
+        />
+      ))}
+      {containers.map((c) => (
+        <ThreeRock
+          gid={c.id}
+          key={c.id}
+          radius={c.radius}
+          position={posToThreePos(c.position.x, c.position.y)}
+          color="red"
         />
       ))}
       {/*{asteroids.map((a: Asteroid) => (*/}
