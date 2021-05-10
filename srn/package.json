@@ -7,6 +7,7 @@
   "scripts": {
     "wasm-pack": "node scripts/wasm-build.js",
     "start-client": "cd client && yarn start",
+    "start-storybook": "cd client && yarn storybook",
     "touch-client": "cd client && touch package.json",
     "start-server": "cd server && (killall -9 srn-server || true) && cargo run",
     "deploy": "node scripts/deploy.js",
