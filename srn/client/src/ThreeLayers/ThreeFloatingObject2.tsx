@@ -59,11 +59,7 @@ export const ThreeFloatingObject2: React.FC<{
     ev.stopPropagation();
   };
   return (
-    <group
-      position={position}
-      onClick={onClick}
-      scale={[radius * scale, radius * scale, radius * scale]}
-    >
+    <group position={position} onClick={onClick}>
       <mesh
         onPointerOver={() => setHintedObjectId(gid)}
         onPointerOut={() => setHintedObjectId(undefined)}
@@ -71,7 +67,10 @@ export const ThreeFloatingObject2: React.FC<{
         <circleBufferGeometry args={[radius, 16]} />
         <meshBasicMaterial opacity={0.0} transparent />
       </mesh>
-      <group ref={container}>
+      <group
+        ref={container}
+        scale={[radius * scale, radius * scale, radius * scale]}
+      >
         {gltfMeshes.map((m, i) => (
           <primitive key={i} object={m} ref={refsArr[i]} />
         ))}

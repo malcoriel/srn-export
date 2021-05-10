@@ -4,6 +4,7 @@ import React, { Suspense } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
 import {
+  findContainer,
   findMineral,
   max_x,
   min_x,
@@ -84,7 +85,8 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
 
   const hintedObjectId = useStore((state) => state.hintedObjectId);
   const hoverOnGrabbable = !!(hintedObjectId
-    ? findMineral(ns.state, hintedObjectId)
+    ? findMineral(ns.state, hintedObjectId) ||
+      findContainer(ns.state, hintedObjectId)
     : undefined);
 
   const viewPortSize = viewPortSizeMeters();

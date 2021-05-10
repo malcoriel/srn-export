@@ -2,10 +2,10 @@ import React from 'react';
 import { Circle, Layer, Text } from 'react-konva';
 import _ from 'lodash';
 import Prando from 'prando';
-import { findMineral, GameState, TRACTOR_DIST } from '../world';
+import { findContainer, findMineral, GameState, TRACTOR_DIST } from '../world';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import Vector, { IVector } from '../utils/Vector';
-import { crimson, darkGreen, teal } from '../utils/palette';
+import { crimson, darkGreen, rare, teal } from '../utils/palette';
 import { useStore } from '../store';
 import { useRealToScreen } from '../coordHooks';
 
@@ -76,6 +76,9 @@ export const KonvaOverlay: React.FC = React.memo(() => {
   const hintedMineral = hintedObjectId
     ? findMineral(ns.state, hintedObjectId)
     : undefined;
+  const hintedContainer = hintedObjectId
+    ? findContainer(ns.state, hintedObjectId)
+    : undefined;
 
   const { state, visualState } = ns;
   const myShip = findMyShip(state);
@@ -89,6 +92,15 @@ export const KonvaOverlay: React.FC = React.memo(() => {
     realLenToScreenLen
   );
 
+  const tractorDistanceCircle = myShip && (
+    <Circle
+      radius={realLenToScreenLen(TRACTOR_DIST)}
+      stroke={teal}
+      strokeWidth={1}
+      position={realPosToScreenPos(myShip)}
+      dash={[5, 10]}
+    />
+  );
   return (
     <Layer>
       {hintedMineral && (
@@ -99,15 +111,18 @@ export const KonvaOverlay: React.FC = React.memo(() => {
             strokeWidth={1}
             radius={realLenToScreenLen(hintedMineral.radius)}
           />
-          {myShip && (
-            <Circle
-              radius={realLenToScreenLen(TRACTOR_DIST)}
-              stroke={teal}
-              strokeWidth={1}
-              position={realPosToScreenPos(myShip)}
-              dash={[5, 10]}
-            />
-          )}
+          {tractorDistanceCircle}
+        </>
+      )}
+      {hintedContainer && (
+        <>
+          <Circle
+            position={realPosToScreenPos(hintedContainer.position)}
+            stroke={rare}
+            strokeWidth={1}
+            radius={realLenToScreenLen(hintedContainer.radius)}
+          />
+          {tractorDistanceCircle}
         </>
       )}
       {effects.map((visHpEffect) => {

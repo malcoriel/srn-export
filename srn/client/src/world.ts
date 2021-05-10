@@ -182,6 +182,10 @@ export const findMineral = (state: GameState, min_id: string) => {
   return state.locations[0].minerals.find((m) => m.id === min_id);
 };
 
+export const findContainer = (state: GameState, cont_id: string) => {
+  return state.locations[0].containers.find((c) => c.id === cont_id);
+};
+
 let wasmFunctions: any = {};
 
 (async function () {
