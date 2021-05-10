@@ -443,7 +443,7 @@ impl Container {
             .iter()
             .fold(0.0, |acc, curr| acc + curr.quantity as f64)
             / 5.0)
-            .max(1.0)
+            .max(2.0)
             .min(3.0);
     }
 

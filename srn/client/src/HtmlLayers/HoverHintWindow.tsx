@@ -54,7 +54,7 @@ export const HoverHintWindow: React.FC = () => {
       windowContent = (
         <>
           <div className="header">Jettisoned container</div>
-          <div>Maybe there's something valuable inside?</div>
+          <div>Maybe there&quot;s something valuable inside?</div>
         </>
       );
     } else {
