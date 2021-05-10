@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useFrame, useLoader, Vector3 } from 'react-three-fiber';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { ShipAction, ShipActionType } from '../world';
 import { actionsActive } from '../utils/ShipControls';
 import { useStore } from '../store';
 import _ from 'lodash';
-import { Color, Group, Mesh, MeshStandardMaterial } from 'three';
+import { Color, Group, Mesh, MeshBasicMaterial } from 'three';
 
 export const ThreeFloatingObject2: React.FC<{
   position: Vector3;
@@ -27,6 +27,17 @@ export const ThreeFloatingObject2: React.FC<{
 
   const refsArr = gltfMeshes.map(() => useRef<Mesh>(null));
 
+  const materialsReplacements = useMemo(() => {
+    if (colors) {
+      return colors.map((c) => {
+        const meshBasicMaterial = new MeshBasicMaterial();
+        meshBasicMaterial.color = new Color(c);
+        return meshBasicMaterial;
+      });
+    }
+    return [];
+  }, [colors]);
+
   useFrame(() => {
     if (container && container.current && container.current.rotation) {
       container.current.rotation.x += 0.01;
@@ -36,8 +47,7 @@ export const ThreeFloatingObject2: React.FC<{
     for (let i = 0; i < refsArr.length; i++) {
       const ref = refsArr[i];
       if (ref.current && colors && colors[i]) {
-        const material = ref.current.material as MeshStandardMaterial;
-        material.color = new Color(colors[i]);
+        ref.current.material = materialsReplacements[i];
       }
     }
   });
