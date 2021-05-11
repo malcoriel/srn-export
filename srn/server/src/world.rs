@@ -5,6 +5,16 @@ use std::f64::consts::PI;
 use std::f64::{INFINITY, NEG_INFINITY};
 use std::iter::FromIterator;
 
+use chrono::Utc;
+use itertools::{Either, Itertools};
+use objekt_clonable::*;
+use rand::prelude::*;
+use serde_derive::{Deserialize, Serialize};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use uuid::Uuid;
+use uuid::*;
+use wasm_bindgen::prelude::*;
+
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
 };
@@ -25,17 +35,8 @@ use crate::random_stuff::{
 };
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::{fire_event, market, planet_movement};
+use crate::{fire_event, market, planet_movement, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
-use chrono::Utc;
-use itertools::{Either, Itertools};
-use objekt_clonable::*;
-use rand::prelude::*;
-use serde_derive::{Deserialize, Serialize};
-use typescript_definitions::{TypeScriptify, TypescriptDefinition};
-use uuid::Uuid;
-use uuid::*;
-use wasm_bindgen::prelude::*;
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -156,18 +157,7 @@ fn index_ships_by_id(ships: &Vec<Ship>) -> HashMap<Uuid, &Ship> {
     by_id
 }
 
-fn index_ships_by_tractor_target(ships: &Vec<Ship>) -> HashMap<Uuid, Vec<&Ship>> {
-    let mut by_target = HashMap::new();
-    for p in ships.iter() {
-        if let Some(tt) = p.tractor_target {
-            let entry = by_target.entry(tt).or_insert(vec![]);
-            entry.push(p);
-        }
-    }
-    by_target
-}
-
-fn index_players_by_ship_id(players: &Vec<Player>) -> HashMap<Uuid, &Player> {
+pub fn index_players_by_ship_id(players: &Vec<Player>) -> HashMap<Uuid, &Player> {
     let mut by_id = HashMap::new();
     for p in players.iter() {
         if let Some(ship_id) = p.ship_id {
@@ -422,12 +412,6 @@ pub struct NatSpawnMineral {
     pub color: String,
 }
 
-impl NatSpawnMineral {
-    pub fn from(_mov: Box<dyn IMovable>) -> Self {
-        todo!()
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Container {
     pub id: Uuid,
@@ -437,10 +421,6 @@ pub struct Container {
 }
 
 impl Container {
-    pub fn from(_mov: Box<dyn IMovable>) -> Self {
-        todo!()
-    }
-
     pub fn new() -> Self {
         Container {
             id: new_id(),
@@ -901,7 +881,7 @@ fn update_location(
     );
     state.locations[location_idx].ships = sampler.measure(
         &|| {
-            update_ships_tractoring(
+            tractoring::update_ships_tractoring(
                 &state.locations[location_idx].ships,
                 &state.locations[location_idx].minerals,
                 &state.locations[location_idx].containers,
@@ -911,9 +891,9 @@ fn update_location(
     );
 
     let update_minerals_id = sampler.start(14);
-    let (minerals, players_update) = update_tractored_objects(
+    let (minerals, players_update) = tractoring::update_tractored_objects(
         &state.locations[location_idx].ships,
-        minerals_to_imovables(&state.locations[location_idx].minerals),
+        tractoring::minerals_to_imovables(&state.locations[location_idx].minerals),
         elapsed,
         &state.players,
     );
@@ -929,9 +909,9 @@ fn update_location(
     }
     sampler.end(update_minerals_id);
     let update_containers_id = sampler.start(23);
-    let (containers, players_update) = update_tractored_objects(
+    let (containers, players_update) = tractoring::update_tractored_objects(
         &state.locations[location_idx].ships,
-        containers_to_imovables(&state.locations[location_idx].containers),
+        tractoring::containers_to_imovables(&state.locations[location_idx].containers),
         elapsed,
         &state.players,
     );
@@ -972,83 +952,6 @@ fn update_location(
         sampler.end(respawn_id);
     }
     sampler
-}
-
-fn containers_to_imovables(p0: &Vec<Container>) -> &Vec<Box<dyn IMovable>> {
-    todo!()
-}
-
-fn minerals_to_imovables(p0: &Vec<NatSpawnMineral>) -> &Vec<Box<dyn IMovable>> {
-    todo!()
-}
-
-fn update_ships_tractoring(
-    ships: &Vec<Ship>,
-    minerals: &Vec<NatSpawnMineral>,
-    containers: &Vec<Container>,
-) -> Vec<Ship> {
-    ships
-        .iter()
-        .map(|s| {
-            let mut s = s.clone();
-            if let Some(target) = s.tractor_target {
-                update_ship_tractor(target, &mut s, minerals, containers);
-            }
-            s
-        })
-        .collect::<Vec<_>>()
-}
-
-const TRACTOR_SPEED_PER_SEC: f64 = 10.0;
-const TRACTOR_PICKUP_DIST: f64 = 1.0;
-
-fn update_tractored_objects(
-    ships: &Vec<Ship>,
-    objects: &Vec<Box<dyn IMovable>>,
-    elapsed: i64,
-    players: &Vec<Player>,
-) -> (Vec<Box<dyn IMovable>>, Vec<(PlayerId, Box<dyn IMovable>)>) {
-    let ship_by_tractor = index_ships_by_tractor_target(ships);
-    let players_by_ship_id = index_players_by_ship_id(players);
-    let mut players_update = vec![];
-    let minerals = objects
-        .iter()
-        .map(|m| {
-            let mut m = (*m).clone();
-            return if let Some(ships) = ship_by_tractor.get(&m.get_id()) {
-                let old_pos = m.get_position();
-                let mut is_consumed = false;
-                for ship in ships {
-                    let dist = Vec2f64 {
-                        x: ship.x,
-                        y: ship.y,
-                    }
-                    .subtract(&old_pos);
-                    let dir = dist.normalize();
-                    if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
-                        if let Some(p) = players_by_ship_id.get(&ship.id) {
-                            players_update.push((p.id, m.clone()))
-                        }
-                        is_consumed = true;
-                    } else {
-                        let scaled = dir
-                            .scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
-
-                        m.set_position(old_pos.add(&scaled));
-                    }
-                }
-                if is_consumed {
-                    None
-                } else {
-                    Some(m)
-                }
-            } else {
-                Some(m)
-            };
-        })
-        .filter_map(|m| m)
-        .collect::<Vec<_>>();
-    (minerals, players_update)
 }
 
 #[clonable]
@@ -1719,8 +1622,6 @@ fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
     }
 }
 
-const MAX_TRACTOR_DIST: f64 = 30.0;
-
 pub fn apply_ship_action(
     ship_action: ShipAction,
     state: &GameState,
@@ -1831,7 +1732,7 @@ pub fn apply_ship_action(
         }
         ShipActionRust::Tractor(t) => {
             let mut ship = old_ship.clone();
-            update_ship_tractor(
+            tractoring::update_ship_tractor(
                 t,
                 &mut ship,
                 &state.locations[ship_idx.location_idx].minerals,
@@ -1839,28 +1740,6 @@ pub fn apply_ship_action(
             );
             Some(ship)
         }
-    }
-}
-
-fn update_ship_tractor(
-    t: Uuid,
-    ship: &mut Ship,
-    minerals: &Vec<NatSpawnMineral>,
-    containers: &Vec<Container>,
-) {
-    if let Some(position) = find_tractorable_item_position(&minerals, &containers, t) {
-        let dist = Vec2f64 {
-            x: ship.x,
-            y: ship.y,
-        }
-        .euclidean_distance(&position);
-        if dist <= MAX_TRACTOR_DIST {
-            ship.tractor_target = Some(t);
-        } else {
-            ship.tractor_target = None;
-        }
-    } else {
-        ship.tractor_target = None;
     }
 }
 

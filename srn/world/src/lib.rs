@@ -1,7 +1,7 @@
 #![feature(exclusive_range_pattern)]
 #![allow(dead_code)]
 #![allow(warnings)]
-#[cfg(target_arch="wasm32")]
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
 pub fn set_panic_hook() {
@@ -98,6 +98,9 @@ mod long_actions;
 #[path = "../../server/src/locations.rs"]
 mod locations;
 
+#[path = "../../server/src/tractoring.rs"]
+mod tractoring;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 
@@ -159,7 +162,7 @@ pub fn parse_state(serialized_args: &str) -> String {
 #[derive(Deserialize)]
 pub struct UpdateWorldArgs {
     state: world::GameState,
-    limit_area: world::AABB
+    limit_area: world::AABB,
 }
 
 #[wasm_bindgen]
@@ -171,11 +174,16 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     let args = args.ok().unwrap();
 
     // log!(format!("{:?}", args.limit_area));
-    let (new_state, _sampler) =
-        world::update_world(args.state, elapsed_micro, true, perf::Sampler::new(vec![]), world::UpdateOptions {
+    let (new_state, _sampler) = world::update_world(
+        args.state,
+        elapsed_micro,
+        true,
+        perf::Sampler::new(vec![]),
+        world::UpdateOptions {
             disable_hp_effects: false,
-            limit_area: args.limit_area
-        });
+            limit_area: args.limit_area,
+        },
+    );
     return serde_json::to_string(&new_state).unwrap_or(DEFAULT_ERR.to_string());
 }
 

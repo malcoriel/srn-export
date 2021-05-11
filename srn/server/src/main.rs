@@ -98,6 +98,7 @@ mod planet_movement_test;
 mod random_stuff;
 mod sandbox;
 mod system_gen;
+mod tractoring;
 #[allow(dead_code)]
 mod vec2;
 mod vec2_test;
