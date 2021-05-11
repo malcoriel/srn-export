@@ -18,37 +18,41 @@ use itertools::Itertools;
 use lazy_static::lazy_static;
 use num_traits::FromPrimitive;
 use regex::Regex;
-use rocket::{Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use rocket::http::Method;
+use rocket::{Request, Response};
 use rocket_contrib::json::Json;
 #[cfg(feature = "serde_derive")]
 #[doc(hidden)]
 pub use serde_derive::*;
 use serde_derive::{Deserialize, Serialize};
 use uuid::*;
-use websocket::{Message, OwnedMessage};
 use websocket::client::sync::Writer;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
+use websocket::{Message, OwnedMessage};
 
 use dialogue::{DialogueStates, DialogueTable};
 use dialogue_dto::Dialogue;
-use net::{ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload, TagConfirm, Wrapper};
+use net::{
+    ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper,
+    SwitchRoomPayload, TagConfirm, Wrapper,
+};
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
 use crate::bots::{bot_init, do_bot_actions};
 use crate::chat::chat_server;
-use crate::dialogue::{
-    DialogueId, DialogueScript, DialogueUpdate, execute_dialog_option,
-};
+use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
 use crate::perf::Sampler;
 use crate::sandbox::mutate_state;
 use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
-use crate::world::{AABB, find_my_player, find_my_player_mut, find_my_ship, find_planet, GameEvent, ShipAction, spawn_ship, update_quests, UpdateOptions, find_and_extract_ship};
+use crate::world::{
+    find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
+    spawn_ship, update_quests, GameEvent, ShipAction, UpdateOptions, AABB,
+};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -75,31 +79,31 @@ extern crate websocket;
 #[macro_use]
 extern crate num_derive;
 
+mod api;
 mod bots;
-mod xcast;
+mod chat;
 mod dialogue;
+mod dialogue_dto;
 mod dialogue_test;
 mod events;
+mod inventory;
+mod inventory_test;
+mod locations;
+mod long_actions;
+mod market;
+mod net;
 pub mod perf;
 mod planet_movement;
+mod planet_movement_test;
 mod random_stuff;
+mod sandbox;
 mod system_gen;
 #[allow(dead_code)]
 mod vec2;
 mod vec2_test;
 pub mod world;
 mod world_test;
-mod chat;
-mod inventory;
-mod inventory_test;
-mod net;
-mod sandbox;
-mod market;
-mod api;
-mod dialogue_dto;
-mod planet_movement_test;
-mod locations;
-mod long_actions;
+mod xcast;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,
@@ -111,11 +115,13 @@ struct LastCheck {
 }
 
 type WSRequest =
-WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
+    WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
 
 lazy_static! {
-    pub static ref DISPATCHER: (Arc<Mutex<Sender<ServerToClientMessage>>>, Arc<Mutex<Receiver<ServerToClientMessage>>>) =
-    {
+    pub static ref DISPATCHER: (
+        Arc<Mutex<Sender<ServerToClientMessage>>>,
+        Arc<Mutex<Receiver<ServerToClientMessage>>>
+    ) = {
         let (sender, receiver) = bounded::<ServerToClientMessage>(128);
         (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
     };
@@ -150,7 +156,10 @@ lazy_static! {
         let mut state = world::seed_state(true, true);
         state.mode = world::GameMode::CargoRush;
         let states = HashMap::new();
-        RwLock::new(StateContainer { personal_states: states, state })
+        RwLock::new(StateContainer {
+            personal_states: states,
+            state,
+        })
     };
 }
 
@@ -172,13 +181,21 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Optio
 
 fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     let mut cont = STATE.write().unwrap();
-    let player_idx = cont.state.players.iter().position(|p| p.id == client_id).unwrap();
+    let player_idx = cont
+        .state
+        .players
+        .iter()
+        .position(|p| p.id == client_id)
+        .unwrap();
     {
         find_and_extract_ship(&mut cont.state, client_id);
     }
     let player = cont.state.players.remove(player_idx);
     let player_clone = player.clone();
-    let personal_state = cont.personal_states.entry(client_id).or_insert(system_gen::seed_personal_state(client_id, &mode));
+    let personal_state = cont
+        .personal_states
+        .entry(client_id)
+        .or_insert(system_gen::seed_personal_state(client_id, &mode));
     personal_state.players.push(player);
 
     {
@@ -189,14 +206,14 @@ fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     let state_id = state.id.clone();
     x_cast_state(state, XCast::Broadcast(state_id));
     notify_state_changed(personal_state.id, client_id);
-    fire_event(GameEvent::RoomJoined { personal: true, mode, player: player_clone });
+    fire_event(GameEvent::RoomJoined {
+        personal: true,
+        mode,
+        player: player_clone,
+    });
 }
 
-fn mutate_owned_ship(
-    client_id: Uuid,
-    mutate_cmd: ShipAction,
-    tag: Option<String>,
-) -> Option<Ship> {
+fn mutate_owned_ship(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
     let mut state = {
         if cont.personal_states.contains_key(&client_id) {
@@ -210,26 +227,48 @@ fn mutate_owned_ship(
     }
     let mutated = world::mutate_ship_no_lock(client_id, mutate_cmd, &mut state);
     if let Some(mutated) = mutated {
-        crate::multicast_ships_update_excluding(state.locations[mutated.1.location_idx as usize].ships.clone(), Some(client_id), state.id);
+        crate::multicast_ships_update_excluding(
+            state.locations[mutated.1.location_idx as usize]
+                .ships
+                .clone(),
+            Some(client_id),
+            state.id,
+        );
         return Some(mutated.0);
     }
     return None;
 }
 
 fn x_cast_state(state: GameState, x_cast: XCast) {
-    DISPATCHER.0.lock().unwrap()
+    DISPATCHER
+        .0
+        .lock()
+        .unwrap()
         .send(ServerToClientMessage::XCastStateChange(state, x_cast))
         .unwrap();
 }
 
 fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {
-    DISPATCHER.0.lock().unwrap()
-        .send(ServerToClientMessage::RoomSwitched(XCast::Unicast(state_id, target_client_id)))
+    DISPATCHER
+        .0
+        .lock()
+        .unwrap()
+        .send(ServerToClientMessage::RoomSwitched(XCast::Unicast(
+            state_id,
+            target_client_id,
+        )))
         .unwrap();
 }
 
-fn unicast_dialogue_state(client_id: Uuid, dialogue_state: Option<Dialogue>, current_state_id: Uuid) {
-    DISPATCHER.0.lock().unwrap()
+fn unicast_dialogue_state(
+    client_id: Uuid,
+    dialogue_state: Option<Dialogue>,
+    current_state_id: Uuid,
+) {
+    DISPATCHER
+        .0
+        .lock()
+        .unwrap()
         .send(ServerToClientMessage::DialogueStateChange(
             Wrapper::new(dialogue_state),
             client_id,
@@ -242,8 +281,15 @@ fn dispatch(message: ServerToClientMessage) {
     DISPATCHER.0.lock().unwrap().send(message).unwrap();
 }
 
-fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>, current_state_id: Uuid) {
-    DISPATCHER.0.lock().unwrap()
+fn multicast_ships_update_excluding(
+    ships: Vec<Ship>,
+    client_id: Option<Uuid>,
+    current_state_id: Uuid,
+) {
+    DISPATCHER
+        .0
+        .lock()
+        .unwrap()
         .send(ServerToClientMessage::MulticastPartialShipUpdate(
             ShipsWrapper { ships },
             client_id,
@@ -253,7 +299,10 @@ fn multicast_ships_update_excluding(ships: Vec<Ship>, client_id: Option<Uuid>, c
 }
 
 fn send_tag_confirm(tag: String, client_id: Uuid) {
-    DISPATCHER.0.lock().unwrap()
+    DISPATCHER
+        .0
+        .lock()
+        .unwrap()
         .send(ServerToClientMessage::TagConfirm(
             TagConfirm { tag },
             client_id,
@@ -294,7 +343,10 @@ fn handle_request(request: WSRequest) {
     }
 
     let (public_client_sender, public_client_receiver) = bounded::<ServerToClientMessage>(128);
-    CLIENT_SENDERS.lock().unwrap().push((client_id, public_client_sender));
+    CLIENT_SENDERS
+        .lock()
+        .unwrap()
+        .push((client_id, public_client_sender));
 
     let (mut socket_receiver, mut socket_sender) = client.split().unwrap();
     let (inner_client_sender, inner_incoming_client_receiver) = bounded::<OwnedMessage>(128);
@@ -342,9 +394,7 @@ fn handle_request(request: WSRequest) {
                     let message = Message::pong(msg);
                     socket_sender.send_message(&message).unwrap();
                 }
-                OwnedMessage::Text(msg) => {
-                    on_client_text_message(client_id, msg)
-                }
+                OwnedMessage::Text(msg) => on_client_text_message(client_id, msg),
                 _ => {}
             }
         }
@@ -356,7 +406,11 @@ fn handle_request(request: WSRequest) {
     }
 }
 
-fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>, message: &ServerToClientMessage) {
+fn on_message_to_send_to_client(
+    client_id: Uuid,
+    sender: &mut Writer<TcpStream>,
+    message: &ServerToClientMessage,
+) {
     if is_disconnected(client_id) {
         return;
     }
@@ -378,7 +432,9 @@ fn on_message_to_send_to_client(client_id: Uuid, sender: &mut Writer<TcpStream>,
 fn get_state_id(client_id: Uuid) -> Uuid {
     let cont = STATE.read().unwrap();
     let in_personal = cont.personal_states.contains_key(&client_id);
-    let current_state_id = if !in_personal { cont.state.id } else {
+    let current_state_id = if !in_personal {
+        cont.state.id
+    } else {
         client_id
     };
     current_state_id
@@ -408,21 +464,13 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
     }
     let op_code = op_code.unwrap();
     match op_code {
-        ClientOpCode::Sync => {
-            on_client_sync_request(client_id, second, third)
-        }
-        ClientOpCode::MutateMyShip => {
-            on_client_mutate_ship(client_id, second, third)
-        }
-        ClientOpCode::Name => {
-            on_client_personalize(client_id, second)
-        }
+        ClientOpCode::Sync => on_client_sync_request(client_id, second, third),
+        ClientOpCode::MutateMyShip => on_client_mutate_ship(client_id, second, third),
+        ClientOpCode::Name => on_client_personalize(client_id, second),
         ClientOpCode::DialogueOption => {
             on_client_dialogue(client_id, second, third);
         }
-        ClientOpCode::SwitchRoom => {
-            on_client_switch_room(client_id, second)
-        }
+        ClientOpCode::SwitchRoom => on_client_switch_room(client_id, second),
         ClientOpCode::SandboxCommand => {
             on_client_sandbox_command(client_id, second, third);
         }
@@ -450,23 +498,22 @@ fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>)
             let state = select_mut_state(&mut cont, client_id);
             let action_dbg = action.clone();
             if !long_actions::try_start_long_action(state, client_id, action) {
-                warn!(format!("Impossible long action for client {}, action {:?}", client_id, action_dbg));
+                warn!(format!(
+                    "Impossible long action for client {}, action {:?}",
+                    client_id, action_dbg
+                ));
             }
             x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
         }
         Err(err) => {
-            eprintln!(
-                "couldn't parse long action start {}, err {}",
-                data, err
-            );
+            eprintln!("couldn't parse long action start {}, err {}", data, err);
         }
     }
 }
 
 fn on_client_switch_room(client_id: Uuid, second: &&str) {
-    let parsed =
-        serde_json::from_str::<SwitchRoomPayload>(second);
+    let parsed = serde_json::from_str::<SwitchRoomPayload>(second);
     match parsed {
         Ok(parsed) => {
             move_player_to_personal_room(client_id, parsed.mode);
@@ -480,16 +527,13 @@ fn on_client_switch_room(client_id: Uuid, second: &&str) {
 fn on_client_dialogue(client_id: Uuid, second: &&str, third: Option<&&str>) {
     handle_dialogue_option(
         client_id,
-        serde_json::from_str::<DialogueUpdate>(second)
-            .ok()
-            .unwrap(),
+        serde_json::from_str::<DialogueUpdate>(second).ok().unwrap(),
         third.map(|s| s.to_string()),
     );
 }
 
 fn on_client_personalize(client_id: Uuid, second: &&str) {
-    let parsed =
-        serde_json::from_str::<PersonalizeUpdate>(second);
+    let parsed = serde_json::from_str::<PersonalizeUpdate>(second);
     match parsed {
         Ok(up) => {
             personalize_player(client_id, up);
@@ -501,16 +545,9 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
 fn on_client_mutate_ship(client_id: Uuid, second: &&str, third: Option<&&str>) {
     let parsed = serde_json::from_str::<ShipAction>(second);
     match parsed {
-        Ok(res) => mutate_owned_ship_wrapped(
-            client_id,
-            res,
-            third.map(|s| s.to_string()),
-        ),
+        Ok(res) => mutate_owned_ship_wrapped(client_id, res, third.map(|s| s.to_string())),
         Err(err) => {
-            eprintln!(
-                "couldn't parse ship action {}, err {}",
-                second, err
-            );
+            eprintln!("couldn't parse ship action {}, err {}", second, err);
         }
     }
 }
@@ -522,21 +559,17 @@ fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str
             let mut cont = STATE.write().unwrap();
             let personal_state = select_mut_state(&mut cont, client_id);
             if personal_state.mode != world::GameMode::Sandbox {
-                warn!(format!("Attempt to send a sandbox command to non-sandbox state by client {}", client_id));
+                warn!(format!(
+                    "Attempt to send a sandbox command to non-sandbox state by client {}",
+                    client_id
+                ));
                 return;
             }
-            sandbox::mutate_state(
-                personal_state,
-                client_id,
-                res,
-            );
+            sandbox::mutate_state(personal_state, client_id, res);
             send_tag_confirm(third.unwrap().to_string(), client_id);
         }
         Err(err) => {
-            eprintln!(
-                "couldn't parse sandbox action {}, err {}",
-                second, err
-            );
+            eprintln!("couldn't parse sandbox action {}, err {}", second, err);
         }
     }
 }
@@ -547,19 +580,12 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
             let state = select_mut_state(&mut cont, client_id);
-            market::attempt_trade(
-                state,
-                client_id,
-                action,
-            );
+            market::attempt_trade(state, client_id, action);
             x_cast_state(state.clone(), XCast::Broadcast(state.id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
         }
         Err(err) => {
-            eprintln!(
-                "couldn't parse trade action {}, err {}",
-                data, err
-            );
+            eprintln!("couldn't parse trade action {}, err {}", data, err);
         }
     }
 }
@@ -571,19 +597,13 @@ fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) 
             let mut cont = STATE.write().unwrap();
             let state = select_mut_state(&mut cont, client_id);
             if let Some(ship) = world::find_my_ship_mut(state, client_id) {
-                inventory::apply_action(
-                    &mut ship.inventory,
-                    action,
-                );
+                inventory::apply_action(&mut ship.inventory, action);
             }
             x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
         }
         Err(err) => {
-            eprintln!(
-                "couldn't parse trade action {}, err {}",
-                data, err
-            );
+            eprintln!("couldn't parse trade action {}, err {}", data, err);
         }
     }
 }
@@ -612,10 +632,7 @@ fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) 
             send_tag_confirm(tag.unwrap().to_string(), client_id);
         }
         Err(err) => {
-            eprintln!(
-                "couldn't parse dialogue request {}, err {}",
-                data, err
-            );
+            eprintln!("couldn't parse dialogue request {}, err {}", data, err);
         }
     }
 }
@@ -647,7 +664,11 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
 
 fn get_state_clone_read(client_id: Uuid) -> GameState {
     let cont = STATE.read().unwrap();
-    return cont.personal_states.get(&client_id).unwrap_or(&cont.state).clone();
+    return cont
+        .personal_states
+        .get(&client_id)
+        .unwrap_or(&cont.state)
+        .clone();
 }
 
 fn force_disconnect_client(client_id: Uuid) {
@@ -763,7 +784,11 @@ fn make_new_human_player(conn_id: Uuid) {
 fn remove_player(conn_id: Uuid) {
     let mut cont = STATE.write().unwrap();
     let in_personal = cont.personal_states.contains_key(&conn_id);
-    let state = if in_personal { cont.personal_states.get_mut(&conn_id).unwrap() } else { &mut cont.state };
+    let state = if in_personal {
+        cont.personal_states.get_mut(&conn_id).unwrap()
+    } else {
+        &mut cont.state
+    };
     world::remove_player_from_state(conn_id, state);
     cont.personal_states.remove(&conn_id);
 }
@@ -785,7 +810,10 @@ impl Fairing for CORS {
 
     async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
         response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
-        response.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, PATCH, OPTIONS"));
+        response.set_header(Header::new(
+            "Access-Control-Allow-Methods",
+            "POST, GET, PATCH, OPTIONS",
+        ));
         response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
@@ -809,29 +837,29 @@ fn rocket() -> rocket::Rocket {
         chat_server();
     });
 
-
     std::thread::spawn(|| {
         main_thread();
     });
 
-    thread::spawn(move || { dispatcher_thread() });
+    thread::spawn(move || dispatcher_thread());
 
     thread::spawn(|| cleanup_thread());
 
     sandbox::init_saved_states();
-    rocket::ignite()
-        .attach(CORS())
-        .mount("/api", routes![
-        api::get_version,
-        api::get_health,
-        api::get_saved_states,
-        api::save_current_state,
-        api::load_saved_state,
-        api::load_random_state,
-        api::load_seeded_state,
-        api::save_state_into_json,
-        api::load_clean_state
-        ])
+    rocket::ignite().attach(CORS()).mount(
+        "/api",
+        routes![
+            api::get_version,
+            api::get_health,
+            api::get_saved_states,
+            api::save_current_state,
+            api::load_saved_state,
+            api::load_random_state,
+            api::load_seeded_state,
+            api::save_state_into_json,
+            api::load_clean_state
+        ],
+    )
 }
 
 fn dispatcher_thread() {
@@ -908,11 +936,12 @@ fn main_thread() {
             "Update planets 2",           // 19
             "Personal states",            // 20
             "Update market",              // 21
-            "Update tick long actions"    // 22
+            "Update tick long actions",   // 22
+            "Update tractored containes", // 23
         ]
-            .iter()
-            .map(|v| v.to_string())
-            .collect::<Vec<_>>(),
+        .iter()
+        .map(|v| v.to_string())
+        .collect::<Vec<_>>(),
     );
     let mut sampler_consume_elapsed = 0;
     let mut bot_action_elapsed = 0;
@@ -930,27 +959,39 @@ fn main_thread() {
         last = now;
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
         let update_id = sampler.start(1);
-        let (updated_state, updated_sampler) =
-            world::update_world(cont.state.clone(), elapsed_micro, false, sampler, UpdateOptions {
+        let (updated_state, updated_sampler) = world::update_world(
+            cont.state.clone(),
+            elapsed_micro,
+            false,
+            sampler,
+            UpdateOptions {
                 disable_hp_effects: false,
                 limit_area: AABB::maxed(),
-            });
+            },
+        );
         sampler = updated_sampler;
 
         sampler.end(update_id);
         cont.state = updated_state;
 
         let personal_id = sampler.start(20);
-        cont.personal_states = HashMap::from_iter(cont.personal_states.iter().filter_map(|(_, state)| {
-            if state.players.len() == 0 {
-                return None;
-            }
-            let (new_state, _) = world::update_world(state.clone(), elapsed_micro, false, Sampler::empty(), UpdateOptions {
-                disable_hp_effects: false,
-                limit_area: AABB::maxed(),
-            });
-            Some((new_state.id, new_state))
-        }));
+        cont.personal_states =
+            HashMap::from_iter(cont.personal_states.iter().filter_map(|(_, state)| {
+                if state.players.len() == 0 {
+                    return None;
+                }
+                let (new_state, _) = world::update_world(
+                    state.clone(),
+                    elapsed_micro,
+                    false,
+                    Sampler::empty(),
+                    UpdateOptions {
+                        disable_hp_effects: false,
+                        limit_area: AABB::maxed(),
+                    },
+                );
+                Some((new_state.id, new_state))
+            }));
         sampler.end(personal_id);
 
         let quests_mark = sampler.start(3);
@@ -973,10 +1014,13 @@ fn main_thread() {
         if events_elapsed > EVENT_TRIGGER_TIME {
             let events_mark = sampler.start(5);
             let receiver = &mut events::EVENTS.1.lock().unwrap();
-            let res =
-                events::handle_events(&mut d_table, receiver, &mut cont, d_states);
+            let res = events::handle_events(&mut d_table, receiver, &mut cont, d_states);
             for (client_id, dialogue) in res {
-                let corresponding_state_id = if cont.personal_states.contains_key(&client_id) { client_id } else { cont.state.id };
+                let corresponding_state_id = if cont.personal_states.contains_key(&client_id) {
+                    client_id
+                } else {
+                    cont.state.id
+                };
                 unicast_dialogue_state(client_id, dialogue, corresponding_state_id);
             }
             sampler.end(events_mark);
@@ -1016,9 +1060,13 @@ fn main_thread() {
     }
 }
 
-pub fn cleanup_nonexistent_ships(cont: &mut RwLockWriteGuard<StateContainer>, existing_player_ships: &Vec<Uuid>, location_idx: usize, mut sampler: Sampler) -> Sampler {
-    let new_ships = cont
-        .state.locations[location_idx]
+pub fn cleanup_nonexistent_ships(
+    cont: &mut RwLockWriteGuard<StateContainer>,
+    existing_player_ships: &Vec<Uuid>,
+    location_idx: usize,
+    mut sampler: Sampler,
+) -> Sampler {
+    let new_ships = cont.state.locations[location_idx]
         .ships
         .clone()
         .into_iter()
@@ -1030,7 +1078,13 @@ pub fn cleanup_nonexistent_ships(cont: &mut RwLockWriteGuard<StateContainer>, ex
 
     if new_ships_len != old_ships_len {
         sampler.measure(
-            &|| multicast_ships_update_excluding(cont.state.locations[location_idx].ships.clone(), None, cont.state.id),
+            &|| {
+                multicast_ships_update_excluding(
+                    cont.state.locations[location_idx].ships.clone(),
+                    None,
+                    cont.state.id,
+                )
+            },
             7,
         );
     }
@@ -1055,9 +1109,13 @@ pub fn kick_player(player_id: Uuid) {
     dispatch(ServerToClientMessage::RoomLeave(player_id));
 }
 
-pub fn select_mut_state<'a, 'b, 'c>(cont: &'a mut RwLockWriteGuard<StateContainer>,
-                                    player_id: Uuid) -> &'a mut GameState {
+pub fn select_mut_state<'a, 'b, 'c>(
+    cont: &'a mut RwLockWriteGuard<StateContainer>,
+    player_id: Uuid,
+) -> &'a mut GameState {
     if cont.personal_states.contains_key(&player_id) {
         cont.personal_states.get_mut(&player_id).unwrap()
-    } else { &mut cont.state }
+    } else {
+        &mut cont.state
+    }
 }

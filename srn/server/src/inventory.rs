@@ -1,5 +1,5 @@
 use crate::new_id;
-use crate::world::{NatSpawnMineral, Rarity};
+use crate::world::{IMovable, NatSpawnMineral, Rarity};
 use rand::rngs::SmallRng;
 use rand::{Rng, RngCore, SeedableRng};
 use serde_derive::{Deserialize, Serialize};
@@ -75,6 +75,9 @@ pub struct InventoryItem {
 }
 
 impl InventoryItem {
+    pub fn from(_mov: Box<dyn IMovable>) -> Vec<InventoryItem> {
+        todo!()
+    }
     pub fn new(iit: InventoryItemType, quantity: i32) -> InventoryItem {
         InventoryItem {
             id: new_id(),

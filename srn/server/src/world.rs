@@ -5,16 +5,9 @@ use std::f64::consts::PI;
 use std::f64::{INFINITY, NEG_INFINITY};
 use std::iter::FromIterator;
 
-use chrono::Utc;
-use itertools::{Either, Itertools};
-use rand::prelude::*;
-use serde_derive::{Deserialize, Serialize};
-use typescript_definitions::{TypeScriptify, TypescriptDefinition};
-use uuid::Uuid;
-use uuid::*;
-use wasm_bindgen::prelude::*;
-
-use crate::inventory::{add_item, has_quest_item, shake_items, InventoryItem, InventoryItemType};
+use crate::inventory::{
+    add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
+};
 use crate::long_actions::{
     cancel_all_long_actions_of_type, finish_long_act, tick_long_act, try_start_long_action,
     LongAction, LongActionStart,
@@ -34,6 +27,15 @@ use crate::system_gen::{str_to_hash, system_gen};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{fire_event, market, planet_movement};
 use crate::{new_id, DEBUG_PHYSICS};
+use chrono::Utc;
+use itertools::{Either, Itertools};
+use objekt_clonable::*;
+use rand::prelude::*;
+use serde_derive::{Deserialize, Serialize};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use uuid::Uuid;
+use uuid::*;
+use wasm_bindgen::prelude::*;
 
 const SHIP_SPEED: f64 = 20.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -420,6 +422,12 @@ pub struct NatSpawnMineral {
     pub color: String,
 }
 
+impl NatSpawnMineral {
+    pub fn from(_mov: Box<dyn IMovable>) -> Self {
+        todo!()
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Container {
     pub id: Uuid,
@@ -429,6 +437,10 @@ pub struct Container {
 }
 
 impl Container {
+    pub fn from(_mov: Box<dyn IMovable>) -> Self {
+        todo!()
+    }
+
     pub fn new() -> Self {
         Container {
             id: new_id(),
@@ -892,26 +904,48 @@ fn update_location(
             update_ships_tractoring(
                 &state.locations[location_idx].ships,
                 &state.locations[location_idx].minerals,
+                &state.locations[location_idx].containers,
             )
         },
         13,
     );
 
     let update_minerals_id = sampler.start(14);
-    let (minerals, players_update) = update_tractored_minerals(
+    let (minerals, players_update) = update_tractored_objects(
         &state.locations[location_idx].ships,
-        &state.locations[location_idx].minerals,
+        minerals_to_imovables(&state.locations[location_idx].minerals),
         elapsed,
         &state.players,
     );
-    state.locations[location_idx].minerals = minerals;
+    state.locations[location_idx].minerals = minerals
+        .into_iter()
+        .map(|tr| NatSpawnMineral::from(tr))
+        .collect();
     for pup in players_update {
         let pair = find_player_and_ship_mut(&mut state, pup.0);
         if let Some(ship) = pair.1 {
-            add_item(&mut ship.inventory, InventoryItem::from_mineral(pup.1));
+            add_items(&mut ship.inventory, InventoryItem::from(pup.1));
         }
     }
     sampler.end(update_minerals_id);
+    let update_containers_id = sampler.start(23);
+    let (containers, players_update) = update_tractored_objects(
+        &state.locations[location_idx].ships,
+        containers_to_imovables(&state.locations[location_idx].containers),
+        elapsed,
+        &state.players,
+    );
+    state.locations[location_idx].containers = containers
+        .into_iter()
+        .map(|tr| Container::from(tr))
+        .collect();
+    for pup in players_update {
+        let pair = find_player_and_ship_mut(&mut state, pup.0);
+        if let Some(ship) = pair.1 {
+            add_items(&mut ship.inventory, InventoryItem::from(pup.1));
+        }
+    }
+    sampler.end(update_containers_id);
 
     if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(15);
@@ -940,13 +974,25 @@ fn update_location(
     sampler
 }
 
-fn update_ships_tractoring(ships: &Vec<Ship>, minerals: &Vec<NatSpawnMineral>) -> Vec<Ship> {
+fn containers_to_imovables(p0: &Vec<Container>) -> &Vec<Box<dyn IMovable>> {
+    todo!()
+}
+
+fn minerals_to_imovables(p0: &Vec<NatSpawnMineral>) -> &Vec<Box<dyn IMovable>> {
+    todo!()
+}
+
+fn update_ships_tractoring(
+    ships: &Vec<Ship>,
+    minerals: &Vec<NatSpawnMineral>,
+    containers: &Vec<Container>,
+) -> Vec<Ship> {
     ships
         .iter()
         .map(|s| {
             let mut s = s.clone();
             if let Some(target) = s.tractor_target {
-                update_ship_tractor(target, &mut s, minerals);
+                update_ship_tractor(target, &mut s, minerals, containers);
             }
             s
         })
@@ -956,28 +1002,28 @@ fn update_ships_tractoring(ships: &Vec<Ship>, minerals: &Vec<NatSpawnMineral>) -
 const TRACTOR_SPEED_PER_SEC: f64 = 10.0;
 const TRACTOR_PICKUP_DIST: f64 = 1.0;
 
-fn update_tractored_minerals(
+fn update_tractored_objects(
     ships: &Vec<Ship>,
-    minerals: &Vec<NatSpawnMineral>,
+    objects: &Vec<Box<dyn IMovable>>,
     elapsed: i64,
     players: &Vec<Player>,
-) -> (Vec<NatSpawnMineral>, Vec<(PlayerId, NatSpawnMineral)>) {
+) -> (Vec<Box<dyn IMovable>>, Vec<(PlayerId, Box<dyn IMovable>)>) {
     let ship_by_tractor = index_ships_by_tractor_target(ships);
     let players_by_ship_id = index_players_by_ship_id(players);
     let mut players_update = vec![];
-    let minerals = minerals
+    let minerals = objects
         .iter()
         .map(|m| {
-            let mut m = m.clone();
-            return if let Some(ships) = ship_by_tractor.get(&m.id) {
-                let min_pos = Vec2f64 { x: m.x, y: m.y };
+            let mut m = (*m).clone();
+            return if let Some(ships) = ship_by_tractor.get(&m.get_id()) {
+                let old_pos = m.get_position();
                 let mut is_consumed = false;
                 for ship in ships {
                     let dist = Vec2f64 {
                         x: ship.x,
                         y: ship.y,
                     }
-                    .subtract(&min_pos);
+                    .subtract(&old_pos);
                     let dir = dist.normalize();
                     if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
                         if let Some(p) = players_by_ship_id.get(&ship.id) {
@@ -987,8 +1033,8 @@ fn update_tractored_minerals(
                     } else {
                         let scaled = dir
                             .scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
-                        m.x += scaled.x;
-                        m.y += scaled.y;
+
+                        m.set_position(old_pos.add(&scaled));
                     }
                 }
                 if is_consumed {
@@ -1003,6 +1049,13 @@ fn update_tractored_minerals(
         .filter_map(|m| m)
         .collect::<Vec<_>>();
     (minerals, players_update)
+}
+
+#[clonable]
+pub trait IMovable: Clone {
+    fn set_position(&mut self, pos: Vec2f64);
+    fn get_position(&self) -> Vec2f64;
+    fn get_id(&self) -> Uuid;
 }
 
 const MAX_NAT_SPAWN_MINERALS: u32 = 10;
@@ -1501,6 +1554,24 @@ pub fn find_mineral_m(minerals: &Vec<NatSpawnMineral>, min_id: Uuid) -> Option<&
     return minerals.iter().find(|mineral| mineral.id == min_id);
 }
 
+pub fn find_tractorable_item_position(
+    minerals: &Vec<NatSpawnMineral>,
+    containers: &Vec<Container>,
+    target_id: Uuid,
+) -> Option<Vec2f64> {
+    let mineral = minerals.iter().find(|mineral| mineral.id == target_id);
+    let container = containers.iter().find(|cont| cont.id == target_id);
+    if let Some(mineral) = mineral {
+        return Some(Vec2f64 {
+            x: mineral.x,
+            y: mineral.y,
+        });
+    } else if let Some(container) = container {
+        return Some(container.position.clone());
+    }
+    return None;
+}
+
 pub struct ShipIdx {
     pub location_idx: usize,
     pub ship_idx: usize,
@@ -1764,22 +1835,25 @@ pub fn apply_ship_action(
                 t,
                 &mut ship,
                 &state.locations[ship_idx.location_idx].minerals,
+                &state.locations[ship_idx.location_idx].containers,
             );
             Some(ship)
         }
     }
 }
 
-fn update_ship_tractor(t: Uuid, ship: &mut Ship, vec1: &Vec<NatSpawnMineral>) {
-    if let Some(mineral) = find_mineral_m(&vec1, t) {
+fn update_ship_tractor(
+    t: Uuid,
+    ship: &mut Ship,
+    minerals: &Vec<NatSpawnMineral>,
+    containers: &Vec<Container>,
+) {
+    if let Some(position) = find_tractorable_item_position(&minerals, &containers, t) {
         let dist = Vec2f64 {
             x: ship.x,
             y: ship.y,
         }
-        .euclidean_distance(&Vec2f64 {
-            x: mineral.x,
-            y: mineral.y,
-        });
+        .euclidean_distance(&position);
         if dist <= MAX_TRACTOR_DIST {
             ship.tractor_target = Some(t);
         } else {
