@@ -10,7 +10,7 @@ import { useStore } from '../store';
 import { useRealToScreen } from '../coordHooks';
 import { UnreachableCaseError } from 'ts-essentials';
 
-type VisualHpEffect = {
+type VisLocalEffect = {
   id: string;
   text: string;
   opacity: number;
@@ -27,8 +27,8 @@ const extractEffectsPositions = (
   cameraPosition: IVector,
   shiftPos: (p: IVector) => IVector,
   _shiftLen: (len: number) => number
-): Array<VisualHpEffect> => {
-  const res: VisualHpEffect[] = [];
+): Array<VisLocalEffect> => {
+  const res: VisLocalEffect[] = [];
   const shipsById = _.keyBy(state.locations[0].ships, 'id');
 
   for (const player of state.players) {
@@ -67,7 +67,7 @@ const extractEffectsPositions = (
               break;
             case 'PickUp':
               text = e.text;
-              color = darkGreen;
+              color = rare;
               break;
             default:
               throw new UnreachableCaseError(e);
@@ -85,7 +85,7 @@ const extractEffectsPositions = (
             position: namePos,
           };
         })
-        .filter((r) => !!r) as VisualHpEffect[])
+        .filter((r) => !!r) as VisLocalEffect[])
     );
   }
   return res;
@@ -149,19 +149,19 @@ export const KonvaOverlay: React.FC = React.memo(() => {
           {tractorDistanceCircle}
         </>
       )}
-      {effects.map((visHpEffect) => {
-        const textWidth = 50;
+      {effects.map((visEffect) => {
+        const textWidth = 500;
         return (
           <Text
-            key={visHpEffect.id}
-            text={visHpEffect.text}
-            position={visHpEffect.position}
-            fill={visHpEffect.color}
+            key={visEffect.id}
+            text={visEffect.text}
+            position={visEffect.position}
+            fill={visEffect.color}
             align="center"
-            opacity={visHpEffect.opacity}
-            offsetY={visHpEffect.offset.y}
+            opacity={visEffect.opacity}
+            offsetY={visEffect.offset.y}
             width={textWidth}
-            offsetX={textWidth / 2 + visHpEffect.offset.x}
+            offsetX={textWidth / 2 + visEffect.offset.x}
           />
         );
       })}

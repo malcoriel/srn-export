@@ -33,7 +33,7 @@ use crate::random_stuff::{
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
 use crate::system_gen::{str_to_hash, system_gen};
-use crate::tractoring::{ContainersContainer, MineralsContainer, MovablesContainer};
+use crate::tractoring::{ContainersContainer, IMovable, MineralsContainer, MovablesContainer};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{fire_event, market, planet_movement, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
@@ -936,12 +936,7 @@ fn update_location(
         .unwrap()
         .get_minerals();
     if !client {
-        for pup in consume_updates {
-            let pair = find_player_and_ship_mut(&mut state, pup.0);
-            if let Some(ship) = pair.1 {
-                add_items(&mut ship.inventory, InventoryItem::from(pup.1));
-            }
-        }
+        apply_tractored_iterms_consumption(&mut state, consume_updates)
     }
     sampler.end(update_minerals_id);
     let update_containers_id = sampler.start(23);
@@ -959,12 +954,7 @@ fn update_location(
         .unwrap()
         .get_containers();
     if !client {
-        for pup in consume_updates {
-            let pair = find_player_and_ship_mut(&mut state, pup.0);
-            if let Some(ship) = pair.1 {
-                add_items(&mut ship.inventory, InventoryItem::from(pup.1));
-            }
-        }
+        apply_tractored_iterms_consumption(&mut state, consume_updates)
     }
     sampler.end(update_containers_id);
 
@@ -993,6 +983,28 @@ fn update_location(
         sampler.end(respawn_id);
     }
     sampler
+}
+
+fn apply_tractored_iterms_consumption(
+    mut state: &mut &mut GameState,
+    consume_updates: Vec<(Uuid, Box<dyn IMovable>)>,
+) {
+    for pup in consume_updates {
+        let ticks = state.ticks.clone();
+        let pair = find_player_and_ship_mut(&mut state, pup.0);
+        let picked_items = InventoryItem::from(pup.1);
+        if let Some(player) = pair.0 {
+            player.local_effects.push(LocalEffect::PickUp {
+                id: new_id(),
+                text: format!("Pick up: {}", InventoryItem::format(&picked_items)),
+                position: Default::default(),
+                tick: ticks,
+            })
+        }
+        if let Some(ship) = pair.1 {
+            add_items(&mut ship.inventory, picked_items);
+        }
+    }
 }
 
 const MAX_NAT_SPAWN_MINERALS: u32 = 10;

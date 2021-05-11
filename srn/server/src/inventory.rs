@@ -13,6 +13,7 @@ use wasm_bindgen::prelude::*;
 use crate::new_id;
 use crate::tractoring::{IMovable, IMovableType};
 use crate::world::{Container, NatSpawnMineral, Rarity};
+use itertools::Itertools;
 
 #[derive(
     Serialize,
@@ -77,7 +78,32 @@ pub struct InventoryItem {
     pub quest_id: Option<Uuid>,
 }
 
+pub fn get_display_name(iit: InventoryItemType) -> String {
+    return match iit {
+        InventoryItemType::Unknown => "Unknown".to_string(),
+        InventoryItemType::CommonMineral => "Common mineral".to_string(),
+        InventoryItemType::UncommonMineral => "Uncommon mineral".to_string(),
+        InventoryItemType::RareMineral => "Rare mineral".to_string(),
+        InventoryItemType::QuestCargo => "Quest cargo".to_string(),
+        InventoryItemType::Food => "Food".to_string(),
+        InventoryItemType::Medicament => "Medicament".to_string(),
+        InventoryItemType::HandWeapon => "Hand weapon".to_string(),
+    };
+}
+
 impl InventoryItem {
+    pub fn format(items: &Vec<InventoryItem>) -> String {
+        let mut strs = vec![];
+        for item in items {
+            strs.push(format!(
+                "{}:{}",
+                get_display_name(item.item_type.clone()),
+                item.quantity
+            ))
+        }
+        return strs.iter().join(", ");
+    }
+
     pub fn from(mov: Box<dyn IMovable>) -> Vec<InventoryItem> {
         return match mov.get_type() {
             IMovableType::NatSpawnMineral => {
