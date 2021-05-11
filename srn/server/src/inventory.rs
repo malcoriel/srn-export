@@ -11,8 +11,8 @@ use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
 use crate::new_id;
-use crate::tractoring::IMovable;
-use crate::world::{NatSpawnMineral, Rarity};
+use crate::tractoring::{IMovable, IMovableType};
+use crate::world::{Container, NatSpawnMineral, Rarity};
 
 #[derive(
     Serialize,
@@ -78,8 +78,21 @@ pub struct InventoryItem {
 }
 
 impl InventoryItem {
-    pub fn from(_mov: Box<dyn IMovable>) -> Vec<InventoryItem> {
-        todo!()
+    pub fn from(mov: Box<dyn IMovable>) -> Vec<InventoryItem> {
+        return match mov.get_type() {
+            IMovableType::NatSpawnMineral => {
+                vec![InventoryItem::from_mineral(
+                    mov.as_any()
+                        .downcast_ref::<NatSpawnMineral>()
+                        .unwrap()
+                        .clone(),
+                )]
+            }
+            IMovableType::Container => {
+                let container = mov.as_any().downcast_ref::<Container>().unwrap();
+                container.items.clone()
+            }
+        };
     }
     pub fn new(iit: InventoryItemType, quantity: i32) -> InventoryItem {
         InventoryItem {

@@ -167,11 +167,17 @@ impl MovablesContainer for MineralsContainer {
     }
 }
 
+pub enum IMovableType {
+    NatSpawnMineral,
+    Container,
+}
+
 #[clonable]
 pub trait IMovable: Clone {
     fn set_position(&mut self, pos: Vec2f64);
     fn get_position(&self) -> Vec2f64;
     fn get_id(&self) -> Uuid;
+    fn get_type(&self) -> IMovableType;
     fn as_any(&self) -> &dyn Any;
 }
 
@@ -190,6 +196,10 @@ impl IMovable for NatSpawnMineral {
 
     fn get_id(&self) -> Uuid {
         self.id
+    }
+
+    fn get_type(&self) -> IMovableType {
+        IMovableType::NatSpawnMineral
     }
 
     fn as_any(&self) -> &dyn Any {
