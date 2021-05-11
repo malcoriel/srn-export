@@ -1,6 +1,6 @@
 import React from 'react';
 import _ from 'lodash';
-import { findMineral, GameState } from '../world';
+import { findContainer, findMineral, GameState } from '../world';
 import { ThreeShip } from './ThreeShip';
 import { Ship } from '../world';
 import Vector from '../utils/Vector';
@@ -20,8 +20,11 @@ export const ThreeShipsLayer: React.FC<{
         let tractorTargetPosition;
         if (s.tractor_target) {
           const min = findMineral(state, s.tractor_target);
+          const cont = findContainer(state, s.tractor_target);
           if (min) {
             tractorTargetPosition = Vector.fromIVector(min);
+          } else if (cont) {
+            tractorTargetPosition = Vector.fromIVector(cont.position);
           }
         }
 
