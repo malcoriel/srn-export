@@ -477,8 +477,8 @@ impl Container {
         }
         cont.radius = Container::calc_radius(&cont.items);
         cont.position = Vec2f64 {
-            x: 100.0 + prng.gen_range(1.0, 10.0) * 10.0,
-            y: 100.0,
+            x: prng.gen_range(WORLD_MIN_X / 2.0, WORLD_MAX_X / 2.0),
+            y: prng.gen_range(WORLD_MIN_Y / 2.0, WORLD_MAX_Y / 2.0),
         };
         cont
     }
