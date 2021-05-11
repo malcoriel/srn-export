@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.6.5 (2021-05-12)
+
+### New
+* Random containers with loot now seeded for every system. Grab them and sell the contents for lots of money.
+* When something is picked up - a container, or a mineral, a new fancy visual effect will appear.
+
+### Fixes
+* Leaderboard does not look like it has negative scores anymore.
+
 ## Version 0.6.4 (2021-05-08)
 
 ### Fixes
