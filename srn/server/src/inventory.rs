@@ -1,15 +1,18 @@
-use crate::new_id;
-use crate::world::{IMovable, NatSpawnMineral, Rarity};
+use std::collections::{HashMap, HashSet};
+use std::mem;
+
 use rand::rngs::SmallRng;
 use rand::{Rng, RngCore, SeedableRng};
 use serde_derive::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::mem;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
+
+use crate::new_id;
+use crate::tractoring::IMovable;
+use crate::world::{NatSpawnMineral, Rarity};
 
 #[derive(
     Serialize,

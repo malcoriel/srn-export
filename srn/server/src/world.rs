@@ -1,15 +1,13 @@
+use chrono::Utc;
+use itertools::{Either, Itertools};
+use rand::prelude::*;
+use serde_derive::{Deserialize, Serialize};
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 #[allow(deprecated)]
 use std::f64::{INFINITY, NEG_INFINITY};
 use std::iter::FromIterator;
-
-use chrono::Utc;
-use itertools::{Either, Itertools};
-use objekt_clonable::*;
-use rand::prelude::*;
-use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use uuid::*;
@@ -34,6 +32,7 @@ use crate::random_stuff::{
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
 use crate::system_gen::{str_to_hash, system_gen};
+use crate::tractoring::{MineralsContainer, MovablesContainer};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{fire_event, market, planet_movement, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
@@ -891,41 +890,44 @@ fn update_location(
     );
 
     let update_minerals_id = sampler.start(14);
-    let (minerals, players_update) = tractoring::update_tractored_objects(
+    let container = MineralsContainer::new(state.locations[location_idx].minerals.clone());
+    let mut minerals_container = Box::from(container) as Box<dyn MovablesContainer>;
+    let consume_updates = tractoring::update_tractored_objects(
         &state.locations[location_idx].ships,
-        tractoring::minerals_to_imovables(&state.locations[location_idx].minerals),
+        &mut minerals_container,
         elapsed,
         &state.players,
     );
-    state.locations[location_idx].minerals = minerals
-        .into_iter()
-        .map(|tr| NatSpawnMineral::from(tr))
-        .collect();
-    for pup in players_update {
+    state.locations[location_idx].minerals = minerals_container
+        .as_any()
+        .downcast_ref::<MineralsContainer>()
+        .unwrap()
+        .get_minerals();
+    for pup in consume_updates {
         let pair = find_player_and_ship_mut(&mut state, pup.0);
         if let Some(ship) = pair.1 {
             add_items(&mut ship.inventory, InventoryItem::from(pup.1));
         }
     }
     sampler.end(update_minerals_id);
-    let update_containers_id = sampler.start(23);
-    let (containers, players_update) = tractoring::update_tractored_objects(
-        &state.locations[location_idx].ships,
-        tractoring::containers_to_imovables(&state.locations[location_idx].containers),
-        elapsed,
-        &state.players,
-    );
-    state.locations[location_idx].containers = containers
-        .into_iter()
-        .map(|tr| Container::from(tr))
-        .collect();
-    for pup in players_update {
-        let pair = find_player_and_ship_mut(&mut state, pup.0);
-        if let Some(ship) = pair.1 {
-            add_items(&mut ship.inventory, InventoryItem::from(pup.1));
-        }
-    }
-    sampler.end(update_containers_id);
+    // let update_containers_id = sampler.start(23);
+    // let (containers, players_update) = tractoring::update_tractored_objects(
+    //     &state.locations[location_idx].ships,
+    //     &mut tractoring::containers_to_imovables(&state.locations[location_idx].containers),
+    //     elapsed,
+    //     &state.players,
+    // );
+    // state.locations[location_idx].containers = containers
+    //     .into_iter()
+    //     .map(|tr| Container::from(tr))
+    //     .collect();
+    // for pup in players_update {
+    //     let pair = find_player_and_ship_mut(&mut state, pup.0);
+    //     if let Some(ship) = pair.1 {
+    //         add_items(&mut ship.inventory, InventoryItem::from(pup.1));
+    //     }
+    // }
+    // sampler.end(update_containers_id);
 
     if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(15);
@@ -952,13 +954,6 @@ fn update_location(
         sampler.end(respawn_id);
     }
     sampler
-}
-
-#[clonable]
-pub trait IMovable: Clone {
-    fn set_position(&mut self, pos: Vec2f64);
-    fn get_position(&self) -> Vec2f64;
-    fn get_id(&self) -> Uuid;
 }
 
 const MAX_NAT_SPAWN_MINERALS: u32 = 10;
