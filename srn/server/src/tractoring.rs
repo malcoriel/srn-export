@@ -1,14 +1,14 @@
-use objekt_clonable::*;
 use std::any::Any;
 use std::collections::{HashMap, HashSet};
-use uuid::Uuid;
+use std::iter::FromIterator;
 
 use objekt_clonable::*;
+use objekt_clonable::*;
+use uuid::Uuid;
 
 use crate::vec2::Vec2f64;
 use crate::world;
 use crate::world::{Container, NatSpawnMineral, Player, PlayerId, Ship};
-use std::iter::FromIterator;
 
 pub fn update_ships_tractoring(
     ships: &Vec<Ship>,
@@ -35,7 +35,7 @@ pub fn update_ship_tractor(
     minerals: &Vec<NatSpawnMineral>,
     containers: &Vec<Container>,
 ) {
-    if let Some(position) = world::find_tractorable_item_position(&minerals, &containers, t) {
+    if let Some(position) = find_tractorable_item_position(&minerals, &containers, t) {
         let dist = Vec2f64 {
             x: ship.x,
             y: ship.y,
@@ -258,4 +258,22 @@ impl IMovable for Container {
     fn as_any(&self) -> &dyn Any {
         self
     }
+}
+
+pub fn find_tractorable_item_position(
+    minerals: &Vec<NatSpawnMineral>,
+    containers: &Vec<Container>,
+    target_id: Uuid,
+) -> Option<Vec2f64> {
+    let mineral = minerals.iter().find(|mineral| mineral.id == target_id);
+    let container = containers.iter().find(|cont| cont.id == target_id);
+    if let Some(mineral) = mineral {
+        return Some(Vec2f64 {
+            x: mineral.x,
+            y: mineral.y,
+        });
+    } else if let Some(container) = container {
+        return Some(container.position.clone());
+    }
+    return None;
 }

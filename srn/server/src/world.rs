@@ -1,13 +1,14 @@
-use chrono::Utc;
-use itertools::{Either, Itertools};
-use rand::prelude::*;
-use serde_derive::{Deserialize, Serialize};
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 #[allow(deprecated)]
 use std::f64::{INFINITY, NEG_INFINITY};
 use std::iter::FromIterator;
+
+use chrono::Utc;
+use itertools::{Either, Itertools};
+use rand::prelude::*;
+use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use uuid::*;
@@ -1483,37 +1484,6 @@ pub fn find_my_ship_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut S
                 return Some(ship);
             }
         }
-    }
-    return None;
-}
-
-pub fn find_mineral(state: &GameState, min_id: Uuid) -> Option<&NatSpawnMineral> {
-    for loc in state.locations.iter() {
-        if let Some(mineral) = loc.minerals.iter().find(|mineral| mineral.id == min_id) {
-            return Some(mineral);
-        }
-    }
-    return None;
-}
-
-pub fn find_mineral_m(minerals: &Vec<NatSpawnMineral>, min_id: Uuid) -> Option<&NatSpawnMineral> {
-    return minerals.iter().find(|mineral| mineral.id == min_id);
-}
-
-pub fn find_tractorable_item_position(
-    minerals: &Vec<NatSpawnMineral>,
-    containers: &Vec<Container>,
-    target_id: Uuid,
-) -> Option<Vec2f64> {
-    let mineral = minerals.iter().find(|mineral| mineral.id == target_id);
-    let container = containers.iter().find(|cont| cont.id == target_id);
-    if let Some(mineral) = mineral {
-        return Some(Vec2f64 {
-            x: mineral.x,
-            y: mineral.y,
-        });
-    } else if let Some(container) = container {
-        return Some(container.position.clone());
     }
     return None;
 }
