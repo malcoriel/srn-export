@@ -32,7 +32,7 @@ use crate::random_stuff::{
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
 use crate::system_gen::{str_to_hash, system_gen};
-use crate::tractoring::{MineralsContainer, MovablesContainer};
+use crate::tractoring::{ContainersContainer, MineralsContainer, MovablesContainer};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{fire_event, market, planet_movement, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
@@ -903,31 +903,38 @@ fn update_location(
         .downcast_ref::<MineralsContainer>()
         .unwrap()
         .get_minerals();
-    for pup in consume_updates {
-        let pair = find_player_and_ship_mut(&mut state, pup.0);
-        if let Some(ship) = pair.1 {
-            add_items(&mut ship.inventory, InventoryItem::from(pup.1));
+    if !client {
+        for pup in consume_updates {
+            let pair = find_player_and_ship_mut(&mut state, pup.0);
+            if let Some(ship) = pair.1 {
+                add_items(&mut ship.inventory, InventoryItem::from(pup.1));
+            }
         }
     }
     sampler.end(update_minerals_id);
-    // let update_containers_id = sampler.start(23);
-    // let (containers, players_update) = tractoring::update_tractored_objects(
-    //     &state.locations[location_idx].ships,
-    //     &mut tractoring::containers_to_imovables(&state.locations[location_idx].containers),
-    //     elapsed,
-    //     &state.players,
-    // );
-    // state.locations[location_idx].containers = containers
-    //     .into_iter()
-    //     .map(|tr| Container::from(tr))
-    //     .collect();
-    // for pup in players_update {
-    //     let pair = find_player_and_ship_mut(&mut state, pup.0);
-    //     if let Some(ship) = pair.1 {
-    //         add_items(&mut ship.inventory, InventoryItem::from(pup.1));
-    //     }
-    // }
-    // sampler.end(update_containers_id);
+    let update_containers_id = sampler.start(23);
+    let container = ContainersContainer::new(state.locations[location_idx].containers.clone());
+    let mut containers_container = Box::from(container) as Box<dyn MovablesContainer>;
+    let consume_updates = tractoring::update_tractored_objects(
+        &state.locations[location_idx].ships,
+        &mut containers_container,
+        elapsed,
+        &state.players,
+    );
+    state.locations[location_idx].containers = containers_container
+        .as_any()
+        .downcast_ref::<ContainersContainer>()
+        .unwrap()
+        .get_containers();
+    if !client {
+        for pup in consume_updates {
+            let pair = find_player_and_ship_mut(&mut state, pup.0);
+            if let Some(ship) = pair.1 {
+                add_items(&mut ship.inventory, InventoryItem::from(pup.1));
+            }
+        }
+    }
+    sampler.end(update_containers_id);
 
     if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(15);

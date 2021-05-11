@@ -153,6 +153,28 @@ impl MineralsContainer {
     }
 }
 
+pub struct ContainersContainer {
+    pub containers: Vec<Box<dyn IMovable>>,
+}
+
+impl ContainersContainer {
+    pub fn new(containers: Vec<Container>) -> Self {
+        let mut res = vec![];
+        for min in containers.into_iter() {
+            res.push(Box::new(min) as Box<dyn IMovable>);
+        }
+        Self { containers: res }
+    }
+
+    pub fn get_containers(&self) -> Vec<Container> {
+        let mut res = vec![];
+        for cont in self.containers.clone() {
+            res.push(cont.as_any().downcast_ref::<Container>().unwrap().clone())
+        }
+        res
+    }
+}
+
 pub trait MovablesContainer {
     fn mut_movables(&mut self) -> &mut Vec<Box<dyn IMovable>>;
     fn as_any(&self) -> &dyn Any;
@@ -161,6 +183,15 @@ pub trait MovablesContainer {
 impl MovablesContainer for MineralsContainer {
     fn mut_movables(&mut self) -> &mut Vec<Box<dyn IMovable>> {
         &mut self.minerals
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl MovablesContainer for ContainersContainer {
+    fn mut_movables(&mut self) -> &mut Vec<Box<dyn IMovable>> {
+        &mut self.containers
     }
     fn as_any(&self) -> &dyn Any {
         self
@@ -200,6 +231,28 @@ impl IMovable for NatSpawnMineral {
 
     fn get_type(&self) -> IMovableType {
         IMovableType::NatSpawnMineral
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl IMovable for Container {
+    fn set_position(&mut self, pos: Vec2f64) {
+        self.position = pos;
+    }
+
+    fn get_position(&self) -> Vec2f64 {
+        self.position.clone()
+    }
+
+    fn get_id(&self) -> Uuid {
+        self.id
+    }
+
+    fn get_type(&self) -> IMovableType {
+        IMovableType::Container
     }
 
     fn as_any(&self) -> &dyn Any {
