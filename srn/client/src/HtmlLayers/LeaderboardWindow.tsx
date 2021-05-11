@@ -70,7 +70,7 @@ export const LeaderboardWindow: React.FC = () => {
       <div className="header">Leaderboard:</div>
       {leaderboard.rating.map(([p, s], i) => (
         <div className="line" key={p.id}>
-          {i + 1}.{p.name} -{s}
+          {i + 1}.{p.name}&nbsp;:&nbsp;{s}
         </div>
       ))}
     </Window>
