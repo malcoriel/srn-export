@@ -92,10 +92,27 @@ pub struct ShipAction {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct HpEffect {
-    pub hp: i32,
-    pub id: Uuid,
-    pub tick: u32,
+#[serde(tag = "tag")]
+pub enum LocalEffect {
+    Unknown {},
+    DmgDone {
+        hp: i32,
+        id: Uuid,
+        tick: u32,
+        ship_id: Uuid,
+    },
+    Heal {
+        hp: i32,
+        id: Uuid,
+        tick: u32,
+        ship_id: Uuid,
+    },
+    PickUp {
+        id: Uuid,
+        text: String,
+        position: Vec2f64,
+        tick: u32,
+    },
 }
 
 pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
@@ -328,7 +345,6 @@ pub struct Ship {
     pub x: f64,
     pub y: f64,
     pub hp: f64,
-    pub hp_effects: Vec<HpEffect>,
     pub max_hp: f64,
     pub acc_periodic_dmg: f64,
     pub acc_periodic_heal: f64,
@@ -378,9 +394,24 @@ pub struct Player {
     pub portrait_name: String,
     pub respawn_ms_left: i32,
     pub long_actions: Vec<LongAction>,
+    pub local_effects: Vec<LocalEffect>,
 }
 
 impl Player {
+    pub fn new(id: Uuid) -> Self {
+        Player {
+            id,
+            is_bot: false,
+            ship_id: None,
+            name: "question".to_string(),
+            quest: None,
+            money: 0,
+            portrait_name: "".to_string(),
+            respawn_ms_left: 0,
+            long_actions: vec![],
+            local_effects: vec![],
+        }
+    }
     pub fn set_quest(&mut self, q: Option<Quest>) {
         self.quest = q;
     }
@@ -1036,7 +1067,7 @@ const STAR_DAMAGE_PER_SEC_FAR: f64 = 7.5;
 const STAR_INSIDE_RADIUS: f64 = 0.5;
 const STAR_CLOSE_RADIUS: f64 = 0.68;
 const STAR_FAR_RADIUS: f64 = 1.1;
-const MAX_HP_EFF_LIFE_MS: i32 = 10 * 1000;
+const MAX_LOCAL_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
@@ -1049,6 +1080,7 @@ pub fn update_ship_hp_effects(
     current_tick: u32,
 ) -> Vec<Ship> {
     let mut ships = ships.clone();
+    let mut players_by_ship_id = index_players_by_ship_id_mut(players);
     if let Some(star) = star {
         let star_center = Vec2f64 {
             x: star.x,
@@ -1080,11 +1112,14 @@ pub fn update_ship_hp_effects(
                 let dmg_done = ship.acc_periodic_dmg.floor() as i32;
                 ship.acc_periodic_dmg = 0.0;
                 ship.hp = (ship.hp - dmg_done as f64).max(0.0);
-                ship.hp_effects.push(HpEffect {
-                    id: new_id(),
-                    hp: -dmg_done,
-                    tick: current_tick,
-                });
+                if let Some(player) = players_by_ship_id.get_mut(&ship.id) {
+                    player.local_effects.push(LocalEffect::DmgDone {
+                        id: new_id(),
+                        hp: -dmg_done,
+                        tick: current_tick,
+                        ship_id: ship.id,
+                    });
+                }
             }
 
             if star_damage <= 0.0 && ship.hp < ship.max_hp {
@@ -1096,23 +1131,38 @@ pub fn update_ship_hp_effects(
                 let heal = ship.acc_periodic_heal.floor() as i32;
                 ship.acc_periodic_heal = 0.0;
                 ship.hp = ship.max_hp.min(ship.hp + heal as f64);
-                ship.hp_effects.push(HpEffect {
-                    id: new_id(),
-                    hp: heal as i32,
-                    tick: current_tick,
-                });
+                if let Some(player) = players_by_ship_id.get_mut(&ship.id) {
+                    player.local_effects.push(LocalEffect::Heal {
+                        id: new_id(),
+                        hp: heal as i32,
+                        tick: current_tick,
+                        ship_id: ship.id,
+                    });
+                }
             }
 
-            ship.hp_effects = ship
-                .hp_effects
-                .iter()
-                .filter(|e| (e.tick as i32 - current_tick as i32).abs() < MAX_HP_EFF_LIFE_MS)
-                .map(|e| e.clone())
-                .collect::<Vec<_>>()
+            if let Some(mut player) = players_by_ship_id.get_mut(&ship.id) {
+                player.local_effects = player
+                    .local_effects
+                    .iter()
+                    .filter(|e| {
+                        if let Some(tick) = match &e {
+                            LocalEffect::Unknown { .. } => None,
+                            LocalEffect::DmgDone { tick, .. } => Some(tick),
+                            LocalEffect::Heal { tick, .. } => Some(tick),
+                            LocalEffect::PickUp { tick, .. } => Some(tick),
+                        } {
+                            return (*tick as i32 - current_tick as i32).abs()
+                                < MAX_LOCAL_EFF_LIFE_MS;
+                        }
+                        return false;
+                    })
+                    .map(|e| e.clone())
+                    .collect::<Vec<_>>()
+            }
         }
     }
 
-    let mut players_by_ship_id = index_players_by_ship_id_mut(players);
     ships
         .iter()
         .filter_map(|s| {
@@ -1149,17 +1199,9 @@ fn apply_ship_death(s: &Ship, player_mut: &mut Player) {
 }
 
 pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
-    let player = Player {
-        id: player_id.clone(),
-        is_bot,
-        ship_id: None,
-        name: name.unwrap_or(player_id.to_string()),
-        quest: None,
-        portrait_name: "question".to_string(),
-        money: 0,
-        respawn_ms_left: 0,
-        long_actions: vec![],
-    };
+    let mut player = Player::new(player_id);
+    player.is_bot = is_bot;
+    player.name = name.unwrap_or(player_id.to_string());
     state.players.push(player);
 }
 
@@ -1211,7 +1253,6 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
         x: if at.is_some() { at.unwrap().x } else { 100.0 },
         y: if at.is_some() { at.unwrap().y } else { 100.0 },
         hp: 100.0,
-        hp_effects: vec![],
         max_hp: 100.0,
         acc_periodic_dmg: 0.0,
         acc_periodic_heal: 0.0,

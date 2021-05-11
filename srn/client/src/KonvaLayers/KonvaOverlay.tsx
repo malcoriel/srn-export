@@ -8,12 +8,13 @@ import Vector, { IVector } from '../utils/Vector';
 import { crimson, darkGreen, rare, teal } from '../utils/palette';
 import { useStore } from '../store';
 import { useRealToScreen } from '../coordHooks';
+import { UnreachableCaseError } from 'ts-essentials';
 
 type VisualHpEffect = {
-  id: string; // ship-id_effect_id
+  id: string;
   text: string;
-  opacity: number; // 0-1
-  is_heal: boolean;
+  opacity: number;
+  color: string;
   position: IVector;
   offset: IVector;
 };
@@ -35,33 +36,56 @@ const extractEffectsPositions = (
       continue;
     }
     const ship = shipsById[player.ship_id];
-    if (!ship || ship.hp_effects.length === 0) {
+    if (!ship) {
       continue;
     }
 
     const namePos = shiftPos(ship);
 
     res.push(
-      ...ship.hp_effects.map((e) => {
-        const age = Math.abs(state.ticks - e.tick);
-        const opacity =
-          age > EFFECT_VISUAL_DURATION_MS
-            ? 0.0
-            : (EFFECT_VISUAL_DURATION_MS - age) / EFFECT_VISUAL_DURATION_MS;
-        const rng = new Prando(e.id);
-        return {
-          id: e.id,
-          text: String(Math.abs(e.hp)),
-          opacity,
-          is_heal: e.hp > 0,
-          offset: new Vector(
-            rng.next(-50, 50),
-            rng.next(-75, 25) + age * VIS_EFFECT_MOVE_SPEED
-          ),
+      ...(player.local_effects
+        .map((e) => {
+          if (e.tag === 'Unknown') {
+            return null;
+          }
+          const age = Math.abs(state.ticks - e.tick);
+          const opacity =
+            age > EFFECT_VISUAL_DURATION_MS
+              ? 0.0
+              : (EFFECT_VISUAL_DURATION_MS - age) / EFFECT_VISUAL_DURATION_MS;
+          const rng = new Prando(e.id);
+          let text: string;
+          let color: string;
+          switch (e.tag) {
+            case 'DmgDone':
+              text = String(Math.abs(e.hp));
+              color = crimson;
+              break;
+            case 'Heal':
+              text = String(Math.abs(e.hp));
+              color = darkGreen;
+              break;
+            case 'PickUp':
+              text = e.text;
+              color = darkGreen;
+              break;
+            default:
+              throw new UnreachableCaseError(e);
+          }
+          return {
+            id: e.id,
+            text,
+            opacity,
+            color,
+            offset: new Vector(
+              rng.next(-50, 50),
+              rng.next(-75, 25) + age * VIS_EFFECT_MOVE_SPEED
+            ),
 
-          position: namePos,
-        };
-      })
+            position: namePos,
+          };
+        })
+        .filter((r) => !!r) as VisualHpEffect[])
     );
   }
   return res;
@@ -132,7 +156,7 @@ export const KonvaOverlay: React.FC = React.memo(() => {
             key={visHpEffect.id}
             text={visHpEffect.text}
             position={visHpEffect.position}
-            fill={visHpEffect.is_heal ? darkGreen : crimson}
+            fill={visHpEffect.color}
             align="center"
             opacity={visHpEffect.opacity}
             offsetY={visHpEffect.offset.y}
