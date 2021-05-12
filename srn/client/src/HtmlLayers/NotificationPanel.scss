@@ -53,6 +53,18 @@
 /* tooltips are outside of the main tree, as tippy appends them to body */
 .notification-tooltip {
   height: 100%;
+  padding: 3px;
+
+  .header {
+    border-bottom: solid 1px $teal;
+    padding-bottom: 3px;
+    margin-bottom: 3px;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  .text {
+
+  }
 }
 
 .tippy-content, .tippy-box {

@@ -33,6 +33,7 @@ Main.args = {
   notifications: [
     NotificationBuilder.NotificationHelp({
       id: '1',
+      header: 'help 1',
       text: {
         text: 'test help notification',
         substitutions: [],
@@ -40,13 +41,15 @@ Main.args = {
     }),
     NotificationBuilder.NotificationTask({
       id: '2',
+      header: 'New task',
       text: {
-        text: 'New task',
+        text: 'Soooooo long description',
         substitutions: [],
       },
     }),
     NotificationBuilder.NotificationHelp({
       id: '3',
+      header: 'help 2',
       text: {
         text: 'test help notification 2',
         substitutions: [],

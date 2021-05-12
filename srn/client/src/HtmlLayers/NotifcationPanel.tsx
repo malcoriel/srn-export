@@ -29,17 +29,19 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
       {notificationsFiltered.map((rawNotification) => {
         const notification: {
           icon?: React.ReactNode;
-          text?: string;
+          text: string;
           adjustClass?: string;
-        } = {};
+          header: string;
+        } = {
+          header: rawNotification.header,
+          text: rawNotification.text.text,
+        };
         switch (rawNotification.tag) {
           case 'Help':
             notification.icon = <FaQuestion />;
-            notification.text = rawNotification.text.text;
             break;
           case 'Task':
             notification.icon = <FaTasks />;
-            notification.text = rawNotification.text.text;
             notification.adjustClass = 'size-10';
             break;
           default:
@@ -58,7 +60,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                   line="thin"
                   contentClassName="notification-tooltip"
                 >
-                  {rawNotification.text.text}
+                  <div className="header">{notification.header}</div>
+                  <div className="text">{notification.text}</div>
                 </StyledRect>
               }
             >
