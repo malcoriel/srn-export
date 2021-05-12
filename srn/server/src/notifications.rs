@@ -8,7 +8,8 @@ use wasm_bindgen::prelude::*;
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
 pub enum Notification {
-    Help { Text: NotificationText },
+    Unknown,
+    Help { text: NotificationText, id: Uuid },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

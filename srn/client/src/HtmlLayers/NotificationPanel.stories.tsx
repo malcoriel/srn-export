@@ -4,6 +4,7 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { NotificationPanel } from './NotifcationPanel';
 import { teal } from '../utils/palette';
+import { NotificationBuilder } from '../../../world/pkg/world.extra';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
@@ -21,7 +22,7 @@ const Template: Story = (args) => {
       }}
     >
       <div style={{ position: 'absolute', width: '100%', bottom: 0 }}>
-        <NotificationPanel notifications={args.notifications}/>
+        <NotificationPanel notifications={args.notifications} />
       </div>
     </div>
   );
@@ -30,10 +31,13 @@ const Template: Story = (args) => {
 export const Main = Template.bind({});
 Main.args = {
   notifications: [
-    {
-      id: '1',
-      tag: '',
-    }
+    NotificationBuilder.NotificationHelp({
+      text: {
+        text: 'test help notification',
+        substitutions: [],
+      },
+    }),
+    NotificationBuilder.NotificationUnknown(),
   ],
 };
 

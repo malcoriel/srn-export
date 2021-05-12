@@ -17,6 +17,8 @@ import {
   Asteroid,
   AsteroidBelt,
   GameState,
+  Notification,
+  NotificationText,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -26,6 +28,8 @@ import {
 } from '../../world/pkg/world.extra';
 
 export type {
+  Notification,
+  NotificationText,
   NatSpawnMineral,
   Asteroid,
   AsteroidBelt,
