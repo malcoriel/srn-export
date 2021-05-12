@@ -92,6 +92,7 @@ mod locations;
 mod long_actions;
 mod market;
 mod net;
+mod notifications;
 pub mod perf;
 mod planet_movement;
 mod planet_movement_test;

@@ -1,12 +1,12 @@
 use uuid::Uuid;
 
-use serde_derive::{Deserialize, Serialize};
 use crate::world::Planet;
+use serde_derive::{Deserialize, Serialize};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub enum DialogueSubstitutionType {
+pub enum SubstitutionType {
     Unknown,
     PlanetName,
     CharacterName,
@@ -14,8 +14,8 @@ pub enum DialogueSubstitutionType {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct DialogueSubstitution {
-    pub s_type: DialogueSubstitutionType,
+pub struct Substitution {
+    pub s_type: SubstitutionType,
     pub id: Uuid,
     pub text: String,
 }
@@ -25,7 +25,7 @@ pub struct DialogueElem {
     pub text: String,
     pub id: Uuid,
     pub is_option: bool,
-    pub substitution: Vec<DialogueSubstitution>,
+    pub substitution: Vec<Substitution>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

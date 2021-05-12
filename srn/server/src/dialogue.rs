@@ -8,13 +8,20 @@ use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::dialogue_dto::{Dialogue, DialogueElem, DialogueSubstitution, DialogueSubstitutionType};
+use crate::dialogue_dto::{Dialogue, DialogueElem, Substitution, SubstitutionType};
 use crate::fire_event;
-use crate::inventory::{add_item, consume_items_of_types, count_items_of_types, InventoryItem, InventoryItemType, MINERAL_TYPES, remove_quest_item, value_items_of_types};
+use crate::inventory::{
+    add_item, consume_items_of_types, count_items_of_types, remove_quest_item,
+    value_items_of_types, InventoryItem, InventoryItemType, MINERAL_TYPES,
+};
 use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
-use crate::world::{CargoDeliveryQuestState, find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet, find_player_and_ship, find_player_and_ship_mut, GameEvent, GameState, generate_random_quest, Planet, Player, PlayerId};
+use crate::world::{
+    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
+    find_player_and_ship, find_player_and_ship_mut, generate_random_quest, CargoDeliveryQuestState,
+    GameEvent, GameState, Planet, Player, PlayerId,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueUpdate {
@@ -58,7 +65,6 @@ pub enum TriggerCondition {
     AnyMineralsInCargo,
 }
 
-
 pub fn check_trigger_conditions(state: &GameState, player_id: Uuid) -> HashSet<TriggerCondition> {
     let mut res = HashSet::new();
     if let (Some(player), Some(ship)) = find_player_and_ship(state, player_id) {
@@ -66,7 +72,8 @@ pub fn check_trigger_conditions(state: &GameState, player_id: Uuid) -> HashSet<T
             if let Some(quest) = player.quest.clone() {
                 if quest.from_id == planet.id && quest.state == CargoDeliveryQuestState::Started {
                     res.insert(TriggerCondition::CurrentPlanetIsPickup);
-                } else if quest.to_id == planet.id && quest.state == CargoDeliveryQuestState::Picked {
+                } else if quest.to_id == planet.id && quest.state == CargoDeliveryQuestState::Picked
+                {
                     res.insert(TriggerCondition::CurrentPlanetIsDropoff);
                 }
             }
@@ -117,7 +124,12 @@ impl DialogueScript {
     pub fn get_name(&self, id: Uuid) -> &String {
         return self.names_db.get(&id).unwrap();
     }
-    pub fn get_next_bot_path(&self, current_state: &Option<StateId>, game_state: &GameState, player_id: Uuid) -> Option<&OptionId> {
+    pub fn get_next_bot_path(
+        &self,
+        current_state: &Option<StateId>,
+        game_state: &GameState,
+        player_id: Uuid,
+    ) -> Option<&OptionId> {
         let current_conditions = check_trigger_conditions(game_state, player_id);
         if current_state.is_none() {
             return None;
@@ -223,7 +235,10 @@ impl DialogueTable {
         player_d_states.insert(script.id, value);
     }
 
-    pub fn get_player_d_states<'a, 'b>(d_states: &'a mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>, player: &'b Player) -> &'a mut HashMap<Uuid, Box<Option<Uuid>>> {
+    pub fn get_player_d_states<'a, 'b>(
+        d_states: &'a mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
+        player: &'b Player,
+    ) -> &'a mut HashMap<Uuid, Box<Option<Uuid>>> {
         let (_current_player_dialogue, player_d_states) =
             d_states.entry(player.id).or_insert((None, HashMap::new()));
         player_d_states
@@ -305,7 +320,12 @@ pub fn build_dialogue_from_state(
                         if let Some(condition) = condition {
                             if satisfied_conditions.contains(&condition) {
                                 Some(DialogueElem {
-                                    substitution: substitute_text(&text, &current_planet, player, game_state),
+                                    substitution: substitute_text(
+                                        &text,
+                                        &current_planet,
+                                        player,
+                                        game_state,
+                                    ),
                                     text,
                                     id,
                                     is_option: true,
@@ -315,7 +335,12 @@ pub fn build_dialogue_from_state(
                             }
                         } else {
                             Some(DialogueElem {
-                                substitution: substitute_text(&text, &current_planet, player, game_state),
+                                substitution: substitute_text(
+                                    &text,
+                                    &current_planet,
+                                    player,
+                                    game_state,
+                                ),
                                 text,
                                 id,
                                 is_option: true,
@@ -348,14 +373,14 @@ fn substitute_text(
     current_planet: &Option<Planet>,
     player: Option<&Player>,
     game_state: &GameState,
-) -> Vec<DialogueSubstitution> {
+) -> Vec<Substitution> {
     let mut res = vec![];
     let re = &crate::SUB_RE;
     for cap in re.captures_iter(text.as_str()) {
         if cap[0] == *"s_current_planet" {
             if let Some(current_planet) = current_planet {
-                res.push(DialogueSubstitution {
-                    s_type: DialogueSubstitutionType::PlanetName,
+                res.push(Substitution {
+                    s_type: SubstitutionType::PlanetName,
                     id: current_planet.id,
                     text: current_planet.name.clone(),
                 })
@@ -364,15 +389,15 @@ fn substitute_text(
             }
         } else if cap[0] == *"s_current_planet_body_type" {
             if let Some(current_planet) = current_planet {
-                res.push(DialogueSubstitution {
-                    s_type: DialogueSubstitutionType::Generic,
+                res.push(Substitution {
+                    s_type: SubstitutionType::Generic,
                     id: current_planet.id,
                     text: (if current_planet.anchor_tier == 1 {
                         "planet"
                     } else {
                         "moon"
                     })
-                        .to_string(),
+                    .to_string(),
                 });
             } else {
                 eprintln!("s_current_planet_body_type used without current planet");
@@ -383,8 +408,8 @@ fn substitute_text(
                 .and_then(|q| find_planet(game_state, &q.to_id))
             {
                 let cargo_destination_planet = cargo_destination_planet.clone();
-                res.push(DialogueSubstitution {
-                    s_type: DialogueSubstitutionType::PlanetName,
+                res.push(Substitution {
+                    s_type: SubstitutionType::PlanetName,
                     id: cargo_destination_planet.id,
                     text: cargo_destination_planet.name,
                 });
@@ -392,18 +417,19 @@ fn substitute_text(
                 eprintln!("s_cargo_destination_planet used without destination planet!");
             }
         } else if cap[0] == *"s_random_name" {
-            res.push(DialogueSubstitution {
-                s_type: DialogueSubstitutionType::CharacterName,
+            res.push(Substitution {
+                s_type: SubstitutionType::CharacterName,
                 id: new_id(),
                 text: gen_random_character_name().to_string(),
             });
         } else if cap[0] == *"s_minerals_amount" {
             if let Some(player) = player {
                 if let Some(ship) = find_my_ship(game_state, player.id) {
-                    res.push(DialogueSubstitution {
-                        s_type: DialogueSubstitutionType::Generic,
+                    res.push(Substitution {
+                        s_type: SubstitutionType::Generic,
                         id: new_id(),
-                        text: count_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec()).to_string(),
+                        text: count_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())
+                            .to_string(),
                     });
                 } else {
                     err!("s_minerals_amount used without ship");
@@ -414,10 +440,11 @@ fn substitute_text(
         } else if cap[0] == *"s_minerals_value" {
             if let Some(player) = player {
                 if let Some(ship) = find_my_ship(game_state, player.id) {
-                    res.push(DialogueSubstitution {
-                        s_type: DialogueSubstitutionType::Generic,
+                    res.push(Substitution {
+                        s_type: SubstitutionType::Generic,
                         id: new_id(),
-                        text: value_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec()).to_string(),
+                        text: value_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())
+                            .to_string(),
                     });
                 } else {
                     err!("s_minerals_value used without ship");
@@ -520,14 +547,20 @@ fn apply_side_effects(
             DialogueOptionSideEffect::SellMinerals => {
                 let (player, ship) = find_player_and_ship_mut(state, player_id);
                 if let (Some(player), Some(ship)) = (player, ship) {
-                    let minerals = consume_items_of_types(&mut ship.inventory, &MINERAL_TYPES.to_vec());
-                    let sum = minerals.iter().fold(0, |acc, curr| acc + curr.value * curr.quantity);
+                    let minerals =
+                        consume_items_of_types(&mut ship.inventory, &MINERAL_TYPES.to_vec());
+                    let sum = minerals
+                        .iter()
+                        .fold(0, |acc, curr| acc + curr.value * curr.quantity);
                     player.money += sum;
                 }
             }
             DialogueOptionSideEffect::SwitchDialogue(name) => {
                 if let Some(player) = find_my_player(state, player_id) {
-                    fire_event(GameEvent::DialogueTriggerRequest { dialogue_name: name, player: player.clone() })
+                    fire_event(GameEvent::DialogueTriggerRequest {
+                        dialogue_name: name,
+                        player: player.clone(),
+                    })
                 }
             }
             DialogueOptionSideEffect::QuitTutorial => {
@@ -535,13 +568,18 @@ fn apply_side_effects(
             }
             DialogueOptionSideEffect::TriggerTutorialQuest => {
                 if let Some(player) = find_my_player(state, player_id) {
-                    fire_event(GameEvent::CargoQuestTriggerRequest { player: player.clone() })
+                    fire_event(GameEvent::CargoQuestTriggerRequest {
+                        player: player.clone(),
+                    })
                 }
             }
             DialogueOptionSideEffect::TriggerTrade => {
                 if let (Some(player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
                     if ship.docked_at.is_some() {
-                        fire_event(GameEvent::TradeTriggerRequest { player: player.clone(), planet_id: ship.docked_at.unwrap() })
+                        fire_event(GameEvent::TradeTriggerRequest {
+                            player: player.clone(),
+                            planet_id: ship.docked_at.unwrap(),
+                        })
                     }
                 }
             }
@@ -568,14 +606,24 @@ pub fn read_from_resource(file: &str) -> DialogueScript {
         .expect("script not found");
     let result = serde_json::from_str::<ShortScript>(json.as_str());
     if result.is_err() {
-        panic!("Failed to load dialogue script {}, err is {:?}", file, result.err());
+        panic!(
+            "Failed to load dialogue script {}, err is {:?}",
+            file,
+            result.err()
+        );
     }
     let ss = result.unwrap();
     short_decrypt(ss)
 }
 
 // option_name, option_text, new_state_name, side_effects, option_condition_name
-pub type ShortScriptLine = (String, String, String, Vec<DialogueOptionSideEffect>, Option<TriggerCondition>);
+pub type ShortScriptLine = (
+    String,
+    String,
+    String,
+    Vec<DialogueOptionSideEffect>,
+    Option<TriggerCondition>,
+);
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ShortScript {
@@ -618,12 +666,13 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
 
     for (state_name, (_, options)) in ss.table.into_iter() {
         let state_id = script.ids_db.get(&state_name).unwrap().clone();
-        for (option_name, option_text, next_state_name, side_effects, option_condition) in options.into_iter() {
+        for (option_name, option_text, next_state_name, side_effects, option_condition) in
+            options.into_iter()
+        {
             let option_id = script.ids_db.get(&option_name).unwrap().clone();
             let next_state_id = if next_state_name != "" {
                 let option = script.ids_db.get(&next_state_name);
-                option
-                    .expect(format!("no next state by name {}", next_state_name).as_str());
+                option.expect(format!("no next state by name {}", next_state_name).as_str());
                 Some(option.unwrap().clone())
             } else {
                 None

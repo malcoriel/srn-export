@@ -14,8 +14,8 @@ import { makePortraitPath } from './StartMenu';
 import {
   Dialogue,
   DialogueElem,
-  DialogueSubstitution,
-  DialogueSubstitutionType,
+  Substitution,
+  SubstitutionType,
   findPlanet,
 } from '../world';
 import { useStore, WindowState } from '../store';
@@ -25,7 +25,7 @@ import { Vector3 } from 'three';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
 
-export const enrichSub = (s: DialogueSubstitution): ReactNode => {
+export const enrichSub = (s: Substitution): ReactNode => {
   const ns = NetState.get();
   if (!ns) return null;
 
@@ -37,7 +37,7 @@ export const enrichSub = (s: DialogueSubstitution): ReactNode => {
   };
 
   switch (s.s_type) {
-    case DialogueSubstitutionType.PlanetName: {
+    case SubstitutionType.PlanetName: {
       const planet = findPlanet(ns.state, s.id);
       if (!planet) {
         console.warn(`substitution planet not found by id ${s.id}`);
@@ -49,11 +49,11 @@ export const enrichSub = (s: DialogueSubstitution): ReactNode => {
         </span>
       );
     }
-    case DialogueSubstitutionType.CharacterName:
+    case SubstitutionType.CharacterName:
       return <span className="sub-character">{s.text}</span>;
-    case DialogueSubstitutionType.Generic:
+    case SubstitutionType.Generic:
       return <span className="sub-generic">{s.text}</span>;
-    case DialogueSubstitutionType.Unknown:
+    case SubstitutionType.Unknown:
     default: {
       console.warn(`Unknown substitution ${s.s_type} text ${s.text}`);
       return <span>{s.text}</span>;
@@ -63,7 +63,7 @@ export const enrichSub = (s: DialogueSubstitution): ReactNode => {
 
 export const substituteText = (
   text: string,
-  subs: DialogueSubstitution[]
+  subs: Substitution[]
 ): ReactNode[] => {
   const parts = text.split(/s_\w+/);
   const substitutions = subs.map((s, i) => {

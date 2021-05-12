@@ -7,7 +7,7 @@ import {
   Player,
   Leaderboard,
   Dialogue,
-  DialogueSubstitution,
+  Substitution,
   DialogueElem,
   InventoryItem,
   TradeAction,
@@ -20,7 +20,7 @@ import {
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
-  DialogueSubstitutionType,
+  SubstitutionType,
   InventoryItemType,
   GameMode,
 } from '../../world/pkg/world.extra';
@@ -36,7 +36,7 @@ export type {
   Player,
   Leaderboard,
   Dialogue,
-  DialogueSubstitution,
+  Substitution,
   DialogueElem,
   InventoryItem,
   TradeAction,
@@ -46,7 +46,7 @@ export type {
 };
 export {
   CargoDeliveryQuestState,
-  DialogueSubstitutionType,
+  SubstitutionType,
   InventoryItemType,
   GameMode,
 };

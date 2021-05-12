@@ -101,6 +101,9 @@ mod locations;
 #[path = "../../server/src/tractoring.rs"]
 mod tractoring;
 
+#[path = "../../server/src/notifications.rs"]
+mod notifications;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 
