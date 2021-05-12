@@ -10,6 +10,7 @@ use wasm_bindgen::prelude::*;
 pub enum Notification {
     Unknown,
     Help { text: NotificationText, id: Uuid },
+    Task { text: NotificationText, id: Uuid },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

@@ -3,9 +3,10 @@ import React from 'react';
 import './NotificationPanel.scss';
 import { Notification, NotificationUnknown } from '../../../world/pkg';
 import { UnreachableCaseError } from 'ts-essentials';
-import { BsQuestionCircle } from 'react-icons/all';
+import { BiTask, FaQuestion, FaTasks, ImClipboard } from 'react-icons/all';
 import Tippy from '@tippyjs/react';
-import 'tippy.js/dist/tippy.css'; // optional
+import 'tippy.js/dist/tippy.css';
+import { StyledRect } from './ui/StyledRect'; // optional
 
 type NotificationPanelProps = {
   notifications: Notification[];
@@ -25,23 +26,47 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   }
   return (
     <div className="notification-panel">
-      {notificationsFiltered.map((not) => {
+      {notificationsFiltered.map((rawNotification) => {
         const notification: {
           icon?: React.ReactNode;
           text?: string;
+          adjustClass?: string;
         } = {};
-        switch (not.tag) {
+        switch (rawNotification.tag) {
           case 'Help':
-            notification.icon = <BsQuestionCircle />;
-            notification.text = not.text.text;
+            notification.icon = <FaQuestion />;
+            notification.text = rawNotification.text.text;
+            break;
+          case 'Task':
+            notification.icon = <FaTasks />;
+            notification.text = rawNotification.text.text;
+            notification.adjustClass = 'size-10';
             break;
           default:
-            throw new UnreachableCaseError(not.tag);
+            throw new UnreachableCaseError(rawNotification);
         }
         return (
-          <div key={not.id}>
-            <Tippy content={<span>{notification.text}</span>}>
-              <span>{notification.icon}</span>
+          <div key={rawNotification.id} className="notification">
+            <Tippy
+              arrow={false}
+              animation={false}
+              content={
+                <StyledRect
+                  width={100}
+                  height={100}
+                  thickness={4}
+                  line="thin"
+                  contentClassName="notification-tooltip"
+                >
+                  {rawNotification.text.text}
+                </StyledRect>
+              }
+            >
+              <span
+                className={`icon-outline ${notification.adjustClass || ''}`}
+              >
+                {notification.icon}
+              </span>
             </Tippy>
           </div>
         );

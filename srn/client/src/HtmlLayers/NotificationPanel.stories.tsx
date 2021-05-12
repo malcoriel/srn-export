@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { NotificationPanel } from './NotifcationPanel';
-import { teal } from '../utils/palette';
+import { gray, teal } from '../utils/palette';
 import { NotificationBuilder } from '../../../world/pkg/world.extra';
 
 const Template: Story = (args) => {
@@ -15,7 +15,7 @@ const Template: Story = (args) => {
     <div
       key={`${revision}+${JSON.stringify(args)}`}
       style={{
-        background: teal,
+        background: gray,
         position: 'absolute',
         width: 500,
         height: 500,
@@ -32,8 +32,23 @@ export const Main = Template.bind({});
 Main.args = {
   notifications: [
     NotificationBuilder.NotificationHelp({
+      id: '1',
       text: {
         text: 'test help notification',
+        substitutions: [],
+      },
+    }),
+    NotificationBuilder.NotificationTask({
+      id: '2',
+      text: {
+        text: 'New task',
+        substitutions: [],
+      },
+    }),
+    NotificationBuilder.NotificationHelp({
+      id: '3',
+      text: {
+        text: 'test help notification 2',
         substitutions: [],
       },
     }),
