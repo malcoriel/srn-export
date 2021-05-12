@@ -3,7 +3,7 @@ import './StyledRect.scss';
 
 export const StyledRect: React.FC<{
   width: number;
-  height: number;
+  height?: number;
   thickness: number;
   line: 'complex' | 'thick' | 'thin';
   halfThick?: boolean;
@@ -14,6 +14,7 @@ export const StyledRect: React.FC<{
   noRight?: boolean;
   noLeft?: boolean;
   className?: string;
+  autoHeight?: boolean;
 }> = ({
   width,
   height,
@@ -27,6 +28,7 @@ export const StyledRect: React.FC<{
   noRight,
   noLeft,
   className,
+  autoHeight,
 }) => {
   const computeStyles = () => {
     const thicknessCoeff = halfThick ? 0.5 : 1.0;
@@ -104,7 +106,19 @@ export const StyledRect: React.FC<{
     topRightStyle,
     bottomLeftStyle,
     bottomRightStyle,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   } = useMemo(computeStyles, []);
+
+  if (autoHeight) {
+    // @ts-ignore
+    mainDivStyle.height = 'auto';
+    topStyle.height = 5;
+    bottomStyle.height = 5;
+    // @ts-ignore
+    leftStyle.height = `calc(100% - ${thickness * 2}px)`;
+    // @ts-ignore
+    rightStyle.height = `calc(100% - ${thickness * 2}px)`;
+  }
 
   return (
     <div className={`styled-rect ${line} ${className}`} style={mainDivStyle}>
