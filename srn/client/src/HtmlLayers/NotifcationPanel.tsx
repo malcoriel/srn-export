@@ -4,6 +4,8 @@ import './NotificationPanel.scss';
 import { Notification, NotificationUnknown } from '../../../world/pkg';
 import { UnreachableCaseError } from 'ts-essentials';
 import { BsQuestionCircle } from 'react-icons/all';
+import Tippy from '@tippyjs/react';
+import 'tippy.js/dist/tippy.css'; // optional
 
 type NotificationPanelProps = {
   notifications: Notification[];
@@ -37,8 +39,10 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             throw new UnreachableCaseError(not.tag);
         }
         return (
-          <div key={not.id} title={notification.text}>
-            {notification.icon}
+          <div key={not.id}>
+            <Tippy content={<span>{notification.text}</span>}>
+              <span>{notification.icon}</span>
+            </Tippy>
           </div>
         );
       })}
