@@ -1,13 +1,13 @@
 @import "../utils/palette";
 
 .notification-panel {
-  min-height: 20px;
-  background-color: black;
+  min-height: 24px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   padding: 0;
   margin: 0;
+  border-top: solid 1px $teal;
 
   .notification {
     margin-left: 1px;

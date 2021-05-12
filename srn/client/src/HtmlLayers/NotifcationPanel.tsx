@@ -10,10 +10,12 @@ import { StyledRect } from './ui/StyledRect'; // optional
 
 type NotificationPanelProps = {
   notifications: Notification[];
+  className?: string;
 };
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   notifications,
+  className,
 }) => {
   const notificationsFiltered: Exclude<
     Notification,
@@ -25,7 +27,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     }
   }
   return (
-    <div className="notification-panel">
+    <div className={`notification-panel ${className || ''}`}>
       {notificationsFiltered.map((rawNotification) => {
         const notification: {
           icon?: React.ReactNode;
@@ -52,10 +54,22 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             <Tippy
               arrow={false}
               animation={false}
+              interactive
+              hideOnClick={false}
+              popperOptions={{
+                modifiers: [
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [0, 2],
+                    },
+                  },
+                ],
+              }}
               content={
                 <StyledRect
                   width={100}
-                  height={100}
+                  autoHeight
                   thickness={4}
                   line="thin"
                   contentClassName="notification-tooltip"

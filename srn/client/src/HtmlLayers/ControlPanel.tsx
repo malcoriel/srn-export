@@ -19,6 +19,7 @@ import NetState, {
 } from '../NetState';
 import { makePortraitPath } from './StartMenu';
 import { Ship } from '../world';
+import { NotificationPanel } from './NotifcationPanel';
 
 const BUTTON_SIZE = 53;
 const BUTTON_COUNT = 8;
@@ -27,7 +28,7 @@ const THICKNESS = 9;
 const HpDisplay = ({ myShip }: { myShip: Ship }) => {
   return (
     <StyledRect
-      height={20}
+      height={22}
       width={200}
       line="thin"
       thickness={4}
@@ -69,7 +70,7 @@ const MoneyAndHp = () => {
           noLeft
           noBottom
           width={100}
-          height={22}
+          height={24}
         >
           <span className="money-icon" />
           <span className="text">{myPlayer.money} SB</span>
@@ -139,6 +140,10 @@ export const ControlPanel = () => {
         </Button>
       </StyledRect>
       <MoneyAndHp />
+      <NotificationPanel
+        className="notification-panel-in-control-panel"
+        notifications={[]}
+      />
     </div>
   );
 };
