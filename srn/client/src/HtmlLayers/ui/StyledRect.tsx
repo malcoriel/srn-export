@@ -83,6 +83,18 @@ export const StyledRect: React.FC<{
       height: thickness,
       backgroundSize: bgSizeCorner,
     };
+
+    if (autoHeight) {
+      // @ts-ignore
+      mainDivStyle.height = 'auto';
+      topStyle.height = 5;
+      bottomStyle.height = 5;
+      // @ts-ignore
+      leftStyle.height = `calc(100% - ${thickness * 2}px)`;
+      // @ts-ignore
+      rightStyle.height = `calc(100% - ${thickness * 2}px)`;
+    }
+
     return {
       mainDivStyle,
       topStyle,
@@ -108,17 +120,6 @@ export const StyledRect: React.FC<{
     bottomRightStyle,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   } = useMemo(computeStyles, []);
-
-  if (autoHeight) {
-    // @ts-ignore
-    mainDivStyle.height = 'auto';
-    topStyle.height = 5;
-    bottomStyle.height = 5;
-    // @ts-ignore
-    leftStyle.height = `calc(100% - ${thickness * 2}px)`;
-    // @ts-ignore
-    rightStyle.height = `calc(100% - ${thickness * 2}px)`;
-  }
 
   return (
     <div className={`styled-rect ${line} ${className}`} style={mainDivStyle}>

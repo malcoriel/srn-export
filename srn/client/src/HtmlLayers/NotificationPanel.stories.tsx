@@ -44,7 +44,7 @@ Main.args = {
       header: 'New task',
       text: {
         text:
-          'Soooooo long description Soooooo long description Soooooo long description',
+          'Soooooo long description\nSoooooo long description Soooooo long description',
         substitutions: [],
       },
     }),

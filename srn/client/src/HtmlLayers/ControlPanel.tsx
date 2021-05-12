@@ -81,6 +81,24 @@ const MoneyAndHp = () => {
   );
 };
 
+const Notifications = () => {
+  useNSForceChange('MoneyAndHp');
+  const ns = NetState.get();
+  if (!ns) {
+    return null;
+  }
+  const myPlayer = findMyPlayer(ns.state);
+  if (!myPlayer) {
+    return null;
+  }
+  return (
+    <NotificationPanel
+      className="notification-panel-in-control-panel"
+      notifications={myPlayer.notifications}
+    />
+  );
+};
+
 export const ControlPanel = () => {
   const setMenu = useStore((state) => state.setMenu);
   const toggleQuestWindow = useStore((state) => state.toggleQuestWindow);
@@ -140,10 +158,7 @@ export const ControlPanel = () => {
         </Button>
       </StyledRect>
       <MoneyAndHp />
-      <NotificationPanel
-        className="notification-panel-in-control-panel"
-        notifications={[]}
-      />
+      <Notifications />
     </div>
   );
 };

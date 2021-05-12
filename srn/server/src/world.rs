@@ -22,6 +22,7 @@ use crate::long_actions::{
     LongAction, LongActionStart,
 };
 use crate::market::{init_all_planets_market, Market};
+use crate::notifications::{get_default_notifications, Notification, NotificationText};
 use crate::perf::Sampler;
 use crate::planet_movement::{
     build_anchors_from_bodies, index_bodies_by_id, make_bodies_from_planets, IBody,
@@ -396,6 +397,7 @@ pub struct Player {
     pub respawn_ms_left: i32,
     pub long_actions: Vec<LongAction>,
     pub local_effects: Vec<LocalEffect>,
+    pub notifications: Vec<Notification>,
 }
 
 impl Player {
@@ -411,6 +413,7 @@ impl Player {
             respawn_ms_left: 0,
             long_actions: vec![],
             local_effects: vec![],
+            notifications: get_default_notifications(),
         }
     }
     pub fn set_quest(&mut self, q: Option<Quest>) {
