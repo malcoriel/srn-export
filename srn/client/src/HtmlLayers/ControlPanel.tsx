@@ -158,7 +158,7 @@ export const ControlPanel = () => {
         </Button>
       </StyledRect>
       <MoneyAndHp />
-      <Notifications />
+      {/*<Notifications />*/}
     </div>
   );
 };
