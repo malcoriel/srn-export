@@ -41,7 +41,7 @@ pub fn get_default_notifications() -> Vec<Notification> {
         Notification::Help {
             header: "Basic controls".to_string(),
             text: NotificationText {
-                text: "If you haven't played the tutorial yet, it's best to do it before playing this mode. However, in case you don't want boring explanations, here is the quick summary:\n1. Use WASD or left mouse button to move.\n2. To interact with something, click on it.\n3. To jump to another system, press M and click on a star.\n4. Press Esc to show the main game menu.5. If you have lost your ship, press C to center camera on it".to_string(),
+                text: "If you haven't played the tutorial yet, it's best to do it before playing this mode. However, in case you don't want boring explanations, here is the quick summary:\n1. Use WASD or left mouse button to move.\n2. To interact with something, click on it.\n3. To jump to another system, press M and click on a star.\n4. Press Esc to show the main game menu.\n5. If you have lost your ship, press C to center camera on it".to_string(),
                 substitutions: vec![],
             },
             id: new_id(),

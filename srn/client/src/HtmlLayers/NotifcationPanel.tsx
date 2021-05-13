@@ -76,6 +76,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
           <div key={rawNotification.id} className="notification">
             <Tippy
               arrow={false}
+              placement="top-start"
               animation={false}
               interactive
               hideOnClick={false}
