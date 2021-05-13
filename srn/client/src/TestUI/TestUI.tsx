@@ -12,7 +12,7 @@ export const TestMenu = () => {
     <>
       <Button
         className="hidden-button"
-        hotkey="t"
+        hotkey="alt+t"
         text="toggle test tools"
         onClick={() => {
           const old = testMenuMode;
