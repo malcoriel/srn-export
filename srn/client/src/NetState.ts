@@ -38,6 +38,7 @@ enum ClientOpCode {
   DialogueRequest,
   InventoryAction,
   LongActionStart,
+  NotificationAction,
 }
 
 interface Cmd {
@@ -612,6 +613,12 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
+        case ClientOpCode.NotificationAction: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
         default:
           throw new UnreachableCaseError(cmd.code);
       }
@@ -784,6 +791,14 @@ export default class NetState extends EventEmitter {
     this.send({
       code: ClientOpCode.LongActionStart,
       value: longAction,
+      tag: uuid.v4(),
+    });
+  }
+
+  public sendNotificationAction(notAction: NotificationAction) {
+    this.send({
+      code: ClientOpCode.NotificationAction,
+      value: notAction,
       tag: uuid.v4(),
     });
   }

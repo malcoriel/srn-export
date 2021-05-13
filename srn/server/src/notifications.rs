@@ -24,6 +24,13 @@ pub enum Notification {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[serde(tag = "tag")]
+pub enum NotificationAction {
+    Unknown,
+    Dismiss { id: Uuid },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct NotificationText {
     pub text: String,
     pub substitutions: Vec<Substitution>,

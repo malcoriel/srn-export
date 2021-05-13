@@ -100,6 +100,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                 >
                   <div className="header">{notification.header}</div>
                   <div className="text">{styleText(notification)}</div>
+                  <div className="dismiss-hint">
+                    right-click the icon to dismiss this notification
+                  </div>
                 </StyledRect>
               }
             >

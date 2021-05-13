@@ -1,7 +1,9 @@
 use uuid::Uuid;
 
 use crate::dialogue_dto::Dialogue;
-use crate::world::{GameEvent, GameState, Ship, GameMode, find_my_player, find_player_location_idx, Location};
+use crate::world::{
+    find_my_player, find_player_location_idx, GameEvent, GameMode, GameState, Location, Ship,
+};
 use crate::xcast::XCast;
 use std::collections::HashMap;
 
@@ -42,14 +44,18 @@ pub enum ServerToClientMessage {
 pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> GameState {
     state.my_id = player_id;
     let player_loc_idx = find_player_location_idx(&state, player_id);
-    let map_enough_info = state.locations.iter().map(|l| {
-        let mut res = Location::new_empty();
-        res.id = l.id;
-        res.star = l.star.clone();
-        res.position = l.position;
-        res.adjacent_location_ids = l.adjacent_location_ids.clone();
-        return res;
-    }).collect::<Vec<_>>();
+    let map_enough_info = state
+        .locations
+        .iter()
+        .map(|l| {
+            let mut res = Location::new_empty();
+            res.id = l.id;
+            res.star = l.star.clone();
+            res.position = l.position;
+            res.adjacent_location_ids = l.adjacent_location_ids.clone();
+            return res;
+        })
+        .collect::<Vec<_>>();
     if let Some(loc_idx) = player_loc_idx {
         state.locations = vec![state.locations.into_iter().nth(loc_idx as usize).unwrap()];
     } else {
@@ -58,7 +64,12 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
         state.locations = vec![state.locations.into_iter().nth(0).unwrap()];
     }
     let current_id = state.locations[0].id;
-    state.locations.append(&mut map_enough_info.into_iter().filter_map(|l| if l.id != current_id { Some(l) } else { None }).collect::<Vec<_>>());
+    state.locations.append(
+        &mut map_enough_info
+            .into_iter()
+            .filter_map(|l| if l.id != current_id { Some(l) } else { None })
+            .collect::<Vec<_>>(),
+    );
     return state;
 }
 
@@ -72,18 +83,17 @@ impl ServerToClientMessage {
                 )
             }
             ServerToClientMessage::ObsoleteStateBroadcast(state) => {
-                ServerToClientMessage::ObsoleteStateBroadcast(patch_state_for_client_impl(state, client_id))
+                ServerToClientMessage::ObsoleteStateBroadcast(patch_state_for_client_impl(
+                    state, client_id,
+                ))
             }
-            ServerToClientMessage::XCastStateChange(state, x_cast) => {
-                match x_cast {
-                    XCast::Unicast(_, target_id) => {
-                        ServerToClientMessage::XCastStateChange(patch_state_for_client_impl(state, target_id), x_cast)
-                    }
-                    _ => {
-                        ServerToClientMessage::XCastStateChange(state, x_cast)
-                    }
-                }
-            }
+            ServerToClientMessage::XCastStateChange(state, x_cast) => match x_cast {
+                XCast::Unicast(_, target_id) => ServerToClientMessage::XCastStateChange(
+                    patch_state_for_client_impl(state, target_id),
+                    x_cast,
+                ),
+                _ => ServerToClientMessage::XCastStateChange(state, x_cast),
+            },
             m => m,
         }
     }
@@ -107,15 +117,11 @@ impl ServerToClientMessage {
             ServerToClientMessage::XCastGameEvent(event, _) => {
                 (6, serde_json::to_string(event).unwrap())
             }
-            ServerToClientMessage::RoomSwitched(_) => {
-                (7, "".to_owned())
-            }
+            ServerToClientMessage::RoomSwitched(_) => (7, "".to_owned()),
             ServerToClientMessage::XCastStateChange(state, _) => {
                 (8, serde_json::to_string(&state).unwrap())
             }
-            ServerToClientMessage::RoomLeave(_) => {
-                (9, "".to_owned())
-            }
+            ServerToClientMessage::RoomLeave(_) => (9, "".to_owned()),
         };
         format!("{}_%_{}", code, serialized)
     }
@@ -150,4 +156,5 @@ pub enum ClientOpCode {
     DialogueRequest = 8,
     InventoryAction = 9,
     LongActionStart = 10,
+    NotificationAction = 11,
 }
