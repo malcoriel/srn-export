@@ -156,4 +156,5 @@ pub enum ClientOpCode {
     DialogueRequest = 8,
     InventoryAction = 9,
     LongActionStart = 10,
+    RoomJoin = 11,
 }

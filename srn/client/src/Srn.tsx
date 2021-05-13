@@ -174,7 +174,13 @@ const Srn = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [resourcesAreLoading, formattedProgress] = useResourcesLoading();
+  const [resourcesAreLoading, formattedProgress] = useResourcesLoading(() => {
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    if (ns) {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      ns.sendRoomJoin();
+    }
+  });
 
   const quit = () => {
     const ns = NetState.get();

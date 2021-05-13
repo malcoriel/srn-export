@@ -209,11 +209,6 @@ fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     let state_id = state.id.clone();
     x_cast_state(state, XCast::Broadcast(state_id));
     notify_state_changed(personal_state.id, client_id);
-    fire_event(GameEvent::RoomJoined {
-        personal: true,
-        mode,
-        player: player_clone_for_event,
-    });
 }
 
 fn mutate_owned_ship(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) -> Option<Ship> {
@@ -490,7 +485,23 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::LongActionStart => {
             on_client_long_action_start(client_id, second, third);
         }
+        ClientOpCode::RoomJoin => {
+            on_client_room_join(client_id);
+        }
     };
+}
+
+fn on_client_room_join(client_id: Uuid) {
+    let mut cont = STATE.write().unwrap();
+    let state = select_mut_state(&mut cont, client_id);
+    let player = find_my_player(&state, client_id);
+    if let Some(player) = player {
+        fire_event(GameEvent::RoomJoined {
+            personal: true,
+            mode: state.mode.clone(),
+            player: player.clone(),
+        });
+    }
 }
 
 fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>) {

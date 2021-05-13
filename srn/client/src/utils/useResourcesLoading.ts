@@ -6,7 +6,7 @@ const expectedResources = [
   'resources/ship.stl',
 ];
 
-export const useResourcesLoading = () => {
+export const useResourcesLoading = (onDone: () => void) => {
   const [attemptedResources, setAttemptedResources] = useState([] as string[]);
   const [delayed, setDelayed] = useState(true);
   const { progress: threeLoaderProgress, item, total, loaded } = useProgress();
@@ -27,8 +27,11 @@ export const useResourcesLoading = () => {
       // artificial delay to show 100%
       setTimeout(() => {
         setDelayed(false);
+        if (onDone) {
+          onDone();
+        }
       }, 100);
     }
-  }, [areLoading]);
+  }, [areLoading, onDone]);
   return [areLoading || delayed, formattedProgress];
 };

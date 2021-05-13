@@ -22,7 +22,11 @@ import { useEffect, useState } from 'react';
 import { viewPortSizeMeters } from './coord';
 import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
-import { InventoryAction, LongActionStart } from '../../world/pkg';
+import {
+  InventoryAction,
+  LongActionStart,
+  NotificationAction,
+} from '../../world/pkg';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -38,6 +42,7 @@ enum ClientOpCode {
   DialogueRequest,
   InventoryAction,
   LongActionStart,
+  RoomJoin,
   NotificationAction,
 }
 
@@ -619,6 +624,10 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
+        case ClientOpCode.RoomJoin: {
+          this.socket.send(`${cmd.code}_%_noop`);
+          break;
+        }
         default:
           throw new UnreachableCaseError(cmd.code);
       }
@@ -800,6 +809,14 @@ export default class NetState extends EventEmitter {
       code: ClientOpCode.NotificationAction,
       value: notAction,
       tag: uuid.v4(),
+    });
+  }
+
+  public sendRoomJoin() {
+    this.send({
+      code: ClientOpCode.RoomJoin,
+      value: undefined,
+      tag: undefined,
     });
   }
 }
