@@ -20,6 +20,7 @@ import NetState, {
 import { makePortraitPath } from './StartMenu';
 import { Ship } from '../world';
 import { NotificationPanel } from './NotifcationPanel';
+import { NotificationAction } from '../../../world/pkg';
 
 const BUTTON_SIZE = 53;
 const BUTTON_COUNT = 8;
@@ -95,6 +96,11 @@ const Notifications = () => {
     <NotificationPanel
       className="notification-panel-in-control-panel"
       notifications={myPlayer.notifications}
+      onAction={(act: NotificationAction) => {
+        if (ns) {
+          ns.sendNotificationAction(act);
+        }
+      }}
     />
   );
 };
@@ -158,7 +164,7 @@ export const ControlPanel = () => {
         </Button>
       </StyledRect>
       <MoneyAndHp />
-      {/*<Notifications />*/}
+      <Notifications />
     </div>
   );
 };

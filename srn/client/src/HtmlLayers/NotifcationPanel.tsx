@@ -1,17 +1,23 @@
 // @ts-ignore
 import React from 'react';
 import './NotificationPanel.scss';
-import { Notification, NotificationUnknown } from '../../../world/pkg';
+import {
+  Notification,
+  NotificationAction,
+  NotificationUnknown,
+} from '../../../world/pkg';
 import { UnreachableCaseError } from 'ts-essentials';
-import { FaQuestion, FaTasks, ImClipboard } from 'react-icons/all';
+import { FaQuestion, FaTasks } from 'react-icons/all';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import { StyledRect } from './ui/StyledRect';
 import _ from 'lodash'; // optional
+import { NotificationActionBuilder } from '../../../world/pkg/world.extra';
 
 type NotificationPanelProps = {
   notifications: Notification[];
   className?: string;
+  onAction?: (act: NotificationAction) => void;
 };
 
 const styleText = (notification: {
@@ -39,6 +45,7 @@ const styleText = (notification: {
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   notifications,
   className,
+  onAction,
 }) => {
   const notificationsFiltered: Exclude<
     Notification,
@@ -73,7 +80,21 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             throw new UnreachableCaseError(rawNotification);
         }
         return (
-          <div key={rawNotification.id} className="notification">
+          <div
+            key={rawNotification.id}
+            className="notification"
+            onContextMenu={(e) => {
+              if (onAction) {
+                onAction(
+                  NotificationActionBuilder.NotificationActionDismiss({
+                    id: rawNotification.id,
+                  })
+                );
+              }
+              e.preventDefault();
+              return false;
+            }}
+          >
             <Tippy
               arrow={false}
               placement="top-start"

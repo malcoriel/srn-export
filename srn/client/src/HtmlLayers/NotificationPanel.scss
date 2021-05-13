@@ -53,7 +53,7 @@
 /* tooltips are outside of the main tree, as tippy appends them to body */
 .notification-tooltip {
   height: 100%;
-  padding: 3px;
+  padding: 5px;
   background: rgba(0, 0, 0, 0.8);
 
   .header {
@@ -65,6 +65,12 @@
   }
   .text {
 
+  }
+
+  .dismiss-hint {
+    margin-top: 3px;
+    font-size: small;
+    color: $gray;
   }
 }
 
