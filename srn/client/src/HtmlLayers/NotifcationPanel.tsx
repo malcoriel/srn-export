@@ -1,4 +1,3 @@
-// @ts-ignore
 import React from 'react';
 import './NotificationPanel.scss';
 import {
@@ -11,7 +10,7 @@ import { FaQuestion, FaTasks } from 'react-icons/all';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import { StyledRect } from './ui/StyledRect';
-import _ from 'lodash'; // optional
+import _ from 'lodash';
 import { NotificationActionBuilder } from '../../../world/pkg/world.extra';
 
 type NotificationPanelProps = {

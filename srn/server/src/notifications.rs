@@ -1,6 +1,6 @@
 use crate::dialogue_dto::Substitution;
 use crate::new_id;
-use crate::world::GameMode;
+use crate::world::{find_my_player_mut, GameMode, GameState};
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
@@ -21,6 +21,16 @@ pub enum Notification {
         text: NotificationText,
         id: Uuid,
     },
+}
+
+impl Notification {
+    pub fn get_id(&self) -> Uuid {
+        return match self {
+            Notification::Unknown => Uuid::default(),
+            Notification::Help { id, .. } => *id,
+            Notification::Task { id, .. } => *id,
+        };
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -63,6 +73,18 @@ pub fn get_new_player_notifications(_mode: &GameMode) -> Vec<Notification> {
             id: new_id(),
         }
     ];
+}
+
+pub fn apply_action(state: &mut GameState, player_id: Uuid, action: NotificationAction) {
+    match action {
+        NotificationAction::Unknown => {}
+        NotificationAction::Dismiss { id } => {
+            let player = find_my_player_mut(state, player_id);
+            if let Some(player) = player {
+                player.notifications.retain(|n| n.get_id() != id);
+            }
+        }
+    }
 }
 
 // #[wasm_bindgen]

@@ -194,7 +194,6 @@ fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     }
     let mut player = cont.state.players.remove(player_idx);
     player.notifications = vec![];
-    let player_clone_for_event = player.clone();
     let personal_state = cont
         .personal_states
         .entry(client_id)
@@ -488,6 +487,9 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::RoomJoin => {
             on_client_room_join(client_id);
         }
+        ClientOpCode::NotificationAction => {
+            on_client_notification_action(client_id, second, third);
+        }
     };
 }
 
@@ -522,6 +524,22 @@ fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>)
         }
         Err(err) => {
             eprintln!("couldn't parse long action start {}, err {}", data, err);
+        }
+    }
+}
+
+fn on_client_notification_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
+    let parsed = serde_json::from_str::<notifications::NotificationAction>(data);
+    match parsed {
+        Ok(action) => {
+            let mut cont = STATE.write().unwrap();
+            let state = select_mut_state(&mut cont, client_id);
+            notifications::apply_action(state, client_id, action);
+            x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
+            send_tag_confirm(tag.unwrap().to_string(), client_id);
+        }
+        Err(err) => {
+            eprintln!("couldn't parse notification action {}, err {}", data, err);
         }
     }
 }
