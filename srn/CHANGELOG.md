@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.6.6 (2021-05-12)
+
+### Fixes
+* Fixed broken tutorial mode.
+* Fixed ugly-looking outline for hp display.
+
 ## Version 0.6.5 (2021-05-12)
 
 ### New
