@@ -192,8 +192,9 @@ fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     {
         find_and_extract_ship(&mut cont.state, client_id);
     }
-    let player = cont.state.players.remove(player_idx);
-    let player_clone = player.clone();
+    let mut player = cont.state.players.remove(player_idx);
+    player.notifications = vec![];
+    let player_clone_for_event = player.clone();
     let personal_state = cont
         .personal_states
         .entry(client_id)
@@ -211,7 +212,7 @@ fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     fire_event(GameEvent::RoomJoined {
         personal: true,
         mode,
-        player: player_clone,
+        player: player_clone_for_event,
     });
 }
 
