@@ -44,7 +44,6 @@ pub fn handle_events(
                     mode,
                 } => {
                     if personal && mode == GameMode::Tutorial {
-                        eprintln!("firing tutorial trigger");
                         fire_event(GameEvent::DialogueTriggerRequest {
                             dialogue_name: "tutorial_start".to_owned(),
                             player: player.clone(),
