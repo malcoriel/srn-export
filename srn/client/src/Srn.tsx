@@ -270,12 +270,6 @@ const Srn = () => {
               startSandbox={() => start(GameMode.Sandbox)}
             />
           )}
-          {!playing && (
-            <>
-              <TestMenu />
-              <TestUI />
-            </>
-          )}
         </div>
       </Suspense>
     </>
