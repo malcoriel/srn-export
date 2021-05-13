@@ -406,7 +406,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
             orbit_speed: 0.01,
             anchor_id: star_id.clone(),
             anchor_tier: 1,
-            color: "#11ffff".to_string(),
+            color: "#008FA9".to_string(),
         },
         Planet {
             id: new_id(),
@@ -418,7 +418,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
             orbit_speed: 0.005,
             anchor_id: planet_id.clone(),
             anchor_tier: 2,
-            color: "#ff0033".to_string(),
+            color: "#1D334A".to_string(),
         },
     ];
     GameState {
