@@ -22,7 +22,7 @@ use crate::long_actions::{
     LongAction, LongActionStart,
 };
 use crate::market::{init_all_planets_market, Market};
-use crate::notifications::{get_default_notifications, Notification, NotificationText};
+use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
 use crate::perf::Sampler;
 use crate::planet_movement::{
     build_anchors_from_bodies, index_bodies_by_id, make_bodies_from_planets, IBody,
@@ -401,7 +401,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(id: Uuid) -> Self {
+    pub fn new(id: Uuid, mode: &GameMode) -> Self {
         Player {
             id,
             is_bot: false,
@@ -413,7 +413,7 @@ impl Player {
             respawn_ms_left: 0,
             long_actions: vec![],
             local_effects: vec![],
-            notifications: get_default_notifications(),
+            notifications: get_new_player_notifications(mode),
         }
     }
     pub fn set_quest(&mut self, q: Option<Quest>) {
@@ -1215,7 +1215,7 @@ fn apply_ship_death(s: &Ship, player_mut: &mut Player) {
 }
 
 pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
-    let mut player = Player::new(player_id);
+    let mut player = Player::new(player_id, &state.mode);
     player.is_bot = is_bot;
     player.name = name.unwrap_or(player_id.to_string());
     state.players.push(player);
