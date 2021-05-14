@@ -103,6 +103,7 @@ vec3 StarField(vec2 p, float du)
     c += StarFieldLayer(p, du,  5.0, 1.00, 0.5);
     c += StarFieldLayer(p, du,  3.0, 1.00, 0.9);
 
+
     // Cluster:
     float s = 3.5*(max(0.2, Gradient2D(2.0*p*vec2(1.2,1.9)))-0.2)/(1.0-0.2);
     c += s*StarFieldLayer(p, du, 160.0, 0.10, 0.5);

@@ -73,9 +73,11 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             text: string;
             adjustClass?: string;
             header: string;
+            isDismissable: boolean;
           } = {
             header: rawNotification.header,
             text: rawNotification.text.text,
+            isDismissable: true,
           };
           switch (rawNotification.tag) {
             case 'Help':
@@ -83,7 +85,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               break;
             case 'Task':
               notification.icon = <FaTasks />;
-              notification.adjustClass = 'size-10';
+              notification.adjustClass = 'size-12';
+              notification.isDismissable = false;
               break;
             default:
               throw new UnreachableCaseError(rawNotification);
@@ -93,7 +96,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               key={rawNotification.id}
               className="notification"
               onContextMenu={(e) => {
-                if (onAction) {
+                if (onAction && notification.isDismissable) {
                   onAction(
                     NotificationActionBuilder.NotificationActionDismiss({
                       id: rawNotification.id,
@@ -130,9 +133,11 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                   >
                     <div className="header">{notification.header}</div>
                     <div className="text">{styleText(notification)}</div>
-                    <div className="dismiss-hint">
-                      right-click the icon to dismiss this notification
-                    </div>
+                    {notification.isDismissable && (
+                      <div className="dismiss-hint">
+                        right-click the icon to dismiss this notification
+                      </div>
+                    )}
                   </StyledRect>
                 }
               >
