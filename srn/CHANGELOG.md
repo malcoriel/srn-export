@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.6.7 (2021-05-14)
+
+### New
+* A notifications panel for more interactive and rich information flow.
+* Help button and window are now replaced with the new, dismissable, notifications that describe mostly the same thing.
+* Better-looking money and HP display.
+
 ## Version 0.6.6 (2021-05-12)
 
 ### Fixes
