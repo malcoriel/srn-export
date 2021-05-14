@@ -1,5 +1,6 @@
 module.exports = {
   plugins: [
+    ['@babel/syntax-decorators', { decoratorsBeforeExport: true }],
     [
       'transform-class-properties',
       {

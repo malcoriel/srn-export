@@ -10,5 +10,5 @@ module.exports = {
     },
     '@storybook/preset-scss',
   ],
-  babel: require('../package.json').babel,
+  babel: require('../../babel.config'),
 };
