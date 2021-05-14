@@ -5,6 +5,7 @@
   "dependencies": {
     "@babel/core": "^7.7.7",
     "@babel/plugin-syntax-jsx": "^7.12.1",
+    "@babel/preset-env": "^7.14.2",
     "@jscad/csg": "^0.7.0",
     "@pmmmwh/react-refresh-webpack-plugin": "0.4.2",
     "@popperjs/core": "^2.9.2",
@@ -191,10 +192,12 @@
   },
   "babel": {
     "plugins": [
-      "transform-class-properties"
+      "transform-class-properties",
+      ["@babel/plugin-proposal-private-methods", { "loose": true }]
     ],
     "presets": [
-      "react-app"
+      "@babel/env",
+      "@babel/typescript"
     ]
   },
   "devDependencies": {
