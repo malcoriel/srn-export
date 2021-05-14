@@ -21,7 +21,7 @@ describe('transformLinebreaksStr', () => {
   });
 
   it('can replace subs', () => {
-    const res = transformSubstitutionsStr('qq s_11 ww s22', [
+    const res = transformSubstitutionsStr('qq s_11 ww s_22', [
       {
         s_type: SubstitutionType.PlanetName,
         id: '1',
@@ -38,11 +38,13 @@ describe('transformLinebreaksStr', () => {
       {
         tagName: 'span',
         tagChildren: 'PLANET',
+        className: 'sub-planet found',
       },
       ' ww ',
       {
         tagName: 'span',
         tagChildren: 'GENERIC',
+        className: 'sub-generic',
       },
     ]);
   });

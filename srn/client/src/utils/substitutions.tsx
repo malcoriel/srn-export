@@ -1,16 +1,15 @@
-import React, { ReactNode } from 'react';
-import { Planet, Substitution } from '../../../world/pkg';
+import React from 'react';
+import { Substitution } from '../../../world/pkg';
 import _ from 'lodash';
-import NetState from '../NetState';
 import { SubstitutionType } from '../../../world/pkg/world.extra';
-import { findPlanet } from '../world';
 
-type ReactPrefab = {
+type ReactSubPrefab = {
   tagName: string;
   tagChildren?: React.ReactNode;
+  className?: string;
 };
 
-type SubPrefab = string | SubPrefab[] | ReactPrefab;
+type SubPrefab = string | SubPrefab[] | ReactSubPrefab;
 
 export const transformLinebreaksStr = (str: string): SubPrefab[] => {
   const parts = str.split('\n');
@@ -33,38 +32,34 @@ export const transformSubstitutions = (subs: SubPrefab[]): SubPrefab[] => {
   return [];
 };
 
-export const enrichSub = (s: Substitution): ReactNode => {
-  const ns = NetState.get();
-  if (!ns) return null;
-
-  const { visualState } = ns;
-
-  const focus = (p: Planet) => {
-    visualState.cameraPosition = { x: p.x, y: p.y };
-    visualState.boundCameraMovement = false;
-  };
-
+export const enrichSub = (s: Substitution): ReactSubPrefab | null => {
   switch (s.s_type) {
     case SubstitutionType.PlanetName: {
-      const planet = findPlanet(ns.state, s.id);
-      if (!planet) {
-        console.warn(`substitution planet not found by id ${s.id}`);
-        return <span className="sub-planet">{s.text}</span>;
-      }
-      return (
-        <span className="sub-planet found" onClick={() => focus(planet!)}>
-          {s.text}
-        </span>
-      );
+      return {
+        tagName: 'span',
+        className: 'sub-planet found',
+        tagChildren: s.text,
+      };
     }
     case SubstitutionType.CharacterName:
-      return <span className="sub-character">{s.text}</span>;
+      return {
+        tagName: 'span',
+        className: 'sub-character',
+        tagChildren: s.text,
+      };
     case SubstitutionType.Generic:
-      return <span className="sub-generic">{s.text}</span>;
+      return {
+        tagName: 'span',
+        className: 'sub-generic',
+        tagChildren: s.text,
+      };
     case SubstitutionType.Unknown:
     default: {
       console.warn(`Unknown substitution ${s.s_type} text ${s.text}`);
-      return <span>{s.text}</span>;
+      return {
+        tagName: 'span',
+        tagChildren: s.text,
+      };
     }
   }
 };
@@ -74,12 +69,11 @@ export const transformSubstitutionsStr = (
 ): SubPrefab[] => {
   const parts = text.split(/s_\w+/);
   const substitutions = subs.map((s, i) => {
-    return <span key={i}>{enrichSub(s)}</span>;
+    return enrichSub(s);
   });
-  return [];
-  // return _.flatMap(_.zip(parts, substitutions), (elem, i) => (
-  //   <span key={i}>{elem}</span>
-  // ));
+  return _.flatMap(_.zip(parts, substitutions)).filter(
+    (p) => !!p
+  ) as SubPrefab[];
 };
 
 export const preprocessSubstitutedText = (
