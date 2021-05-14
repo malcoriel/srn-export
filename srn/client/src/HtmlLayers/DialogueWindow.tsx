@@ -17,24 +17,11 @@ import { WithScrollbars } from './ui/WithScrollbars';
 import { Vector3 } from 'three';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
-import { enrichSub } from '../utils/substitutions';
-
-export const substituteText = (
-  text: string,
-  subs: Substitution[]
-): ReactNode[] => {
-  const parts = text.split(/s_\w+/);
-  const substitutions = subs.map((s, i) => {
-    return <span key={i}>{enrichSub(s)}</span>;
-  });
-  return _.flatMap(_.zip(parts, substitutions), (elem, i) => (
-    <span key={i}>{elem}</span>
-  ));
-};
+import { transformAllTextSubstitutions } from '../utils/substitutions';
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
   <span className="dialogue-option">
-    {substituteText(dialogue.text, dialogue.substitution)}
+    {transformAllTextSubstitutions(dialogue.text, dialogue.substitution)}
   </span>
 );
 
