@@ -5,7 +5,6 @@ import {
   BsFillChatDotsFill,
   CgScreen,
   FaBullseye,
-  FaQuestion,
   FcMindMap,
   FiBox,
 } from 'react-icons/all';
@@ -23,13 +22,13 @@ import { NotificationPanel } from './NotifcationPanel';
 import { NotificationAction } from '../../../world/pkg';
 
 const BUTTON_SIZE = 53;
-const BUTTON_COUNT = 8;
+const BUTTON_COUNT = 7;
 const THICKNESS = 9;
 
 const HpDisplay = ({ myShip }: { myShip: Ship }) => {
   return (
     <StyledRect
-      height={22}
+      height={26}
       width={200}
       line="thin"
       thickness={4}
@@ -93,22 +92,22 @@ const Notifications = () => {
     return null;
   }
   return (
-    <NotificationPanel
-      className="notification-panel-in-control-panel"
-      notifications={myPlayer.notifications}
-      onAction={(act: NotificationAction) => {
-        if (ns) {
-          ns.sendNotificationAction(act);
-        }
-      }}
-    />
+    <div className="notification-panel-in-control-panel">
+      <NotificationPanel
+        notifications={myPlayer.notifications}
+        onAction={(act: NotificationAction) => {
+          if (ns) {
+            ns.sendNotificationAction(act);
+          }
+        }}
+      />
+    </div>
   );
 };
 
 export const ControlPanel = () => {
   const setMenu = useStore((state) => state.setMenu);
   const toggleQuestWindow = useStore((state) => state.toggleQuestWindow);
-  const toggleHelpWindow = useStore((state) => state.toggleHelpWindow);
   const toggleChatWindow = useStore((state) => state.toggleChatWindow);
   const toggleMapWindow = useStore((state) => state.toggleMapWindow);
   const toggleInventoryWindow = useStore(
@@ -143,9 +142,6 @@ export const ControlPanel = () => {
           }}
         >
           <CgScreen />
-        </Button>
-        <Button onClick={toggleHelpWindow} hotkey="h">
-          <FaQuestion />
         </Button>
         <Button onClick={toggleQuestWindow} hotkey="o">
           <FaBullseye />

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import './StyledRect.scss';
 
 export const StyledRect: React.FC<{
-  width: number;
+  width?: number;
   height?: number;
   thickness: number;
   line: 'complex' | 'thick' | 'thin';
@@ -15,6 +15,7 @@ export const StyledRect: React.FC<{
   noLeft?: boolean;
   className?: string;
   autoHeight?: boolean;
+  autoWidth?: boolean;
 }> = ({
   width,
   height,
@@ -29,6 +30,7 @@ export const StyledRect: React.FC<{
   noLeft,
   className,
   autoHeight,
+  autoWidth,
 }) => {
   const computeStyles = () => {
     const thicknessCoeff = halfThick ? 0.5 : 1.0;
@@ -87,12 +89,19 @@ export const StyledRect: React.FC<{
     if (autoHeight) {
       // @ts-ignore
       mainDivStyle.height = 'auto';
-      topStyle.height = 5;
-      bottomStyle.height = 5;
       // @ts-ignore
       leftStyle.height = `calc(100% - ${thickness * 2}px)`;
       // @ts-ignore
       rightStyle.height = `calc(100% - ${thickness * 2}px)`;
+    } else if (autoWidth) {
+      // @ts-ignore
+      mainDivStyle.width = 'auto';
+      const extraWidth =
+        Number(!noLeft) * thickness + Number(!noRight) * thickness;
+      // @ts-ignore
+      topStyle.width = `calc(100% - ${extraWidth}px)`;
+      // @ts-ignore
+      bottomStyle.width = `calc(100% - ${extraWidth}px)`;
     }
 
     return {

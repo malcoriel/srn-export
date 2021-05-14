@@ -56,85 +56,96 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     }
   }
   return (
-    <div className={`notification-panel ${className || ''}`}>
-      {notificationsFiltered.map((rawNotification) => {
-        const notification: {
-          icon?: React.ReactNode;
-          text: string;
-          adjustClass?: string;
-          header: string;
-        } = {
-          header: rawNotification.header,
-          text: rawNotification.text.text,
-        };
-        switch (rawNotification.tag) {
-          case 'Help':
-            notification.icon = <FaQuestion />;
-            break;
-          case 'Task':
-            notification.icon = <FaTasks />;
-            notification.adjustClass = 'size-10';
-            break;
-          default:
-            throw new UnreachableCaseError(rawNotification);
-        }
-        return (
-          <div
-            key={rawNotification.id}
-            className="notification"
-            onContextMenu={(e) => {
-              if (onAction) {
-                onAction(
-                  NotificationActionBuilder.NotificationActionDismiss({
-                    id: rawNotification.id,
-                  })
-                );
-              }
-              e.preventDefault();
-              return false;
-            }}
-          >
-            <Tippy
-              arrow={false}
-              placement="top-start"
-              animation={false}
-              interactive
-              hideOnClick={false}
-              popperOptions={{
-                modifiers: [
-                  {
-                    name: 'offset',
-                    options: {
-                      offset: [0, 2],
-                    },
-                  },
-                ],
+    <StyledRect
+      height={26}
+      autoWidth
+      line="thin"
+      thickness={4}
+      halfThick
+      noBottom
+      noRight
+      noLeft
+    >
+      <div className={`notification-panel ${className || ''}`}>
+        {notificationsFiltered.map((rawNotification) => {
+          const notification: {
+            icon?: React.ReactNode;
+            text: string;
+            adjustClass?: string;
+            header: string;
+          } = {
+            header: rawNotification.header,
+            text: rawNotification.text.text,
+          };
+          switch (rawNotification.tag) {
+            case 'Help':
+              notification.icon = <FaQuestion />;
+              break;
+            case 'Task':
+              notification.icon = <FaTasks />;
+              notification.adjustClass = 'size-10';
+              break;
+            default:
+              throw new UnreachableCaseError(rawNotification);
+          }
+          return (
+            <div
+              key={rawNotification.id}
+              className="notification"
+              onContextMenu={(e) => {
+                if (onAction) {
+                  onAction(
+                    NotificationActionBuilder.NotificationActionDismiss({
+                      id: rawNotification.id,
+                    })
+                  );
+                }
+                e.preventDefault();
+                return false;
               }}
-              content={
-                <StyledRect
-                  width={300}
-                  autoHeight
-                  thickness={4}
-                  line="thin"
-                  contentClassName="notification-tooltip"
-                >
-                  <div className="header">{notification.header}</div>
-                  <div className="text">{styleText(notification)}</div>
-                  <div className="dismiss-hint">
-                    right-click the icon to dismiss this notification
-                  </div>
-                </StyledRect>
-              }
             >
-              <span
-                className={`icon-outline ${notification.adjustClass || ''}`}
+              <Tippy
+                arrow={false}
+                placement="top-start"
+                animation={false}
+                interactive
+                hideOnClick={false}
+                popperOptions={{
+                  modifiers: [
+                    {
+                      name: 'offset',
+                      options: {
+                        offset: [0, 2],
+                      },
+                    },
+                  ],
+                }}
+                content={
+                  <StyledRect
+                    width={300}
+                    autoHeight
+                    thickness={4}
+                    line="thin"
+                    contentClassName="notification-tooltip"
+                  >
+                    <div className="header">{notification.header}</div>
+                    <div className="text">{styleText(notification)}</div>
+                    <div className="dismiss-hint">
+                      right-click the icon to dismiss this notification
+                    </div>
+                  </StyledRect>
+                }
               >
-                {notification.icon}
-              </span>
-            </Tippy>
-          </div>
-        );
-      })}
-    </div>
+                <span
+                  className={`icon-outline ${notification.adjustClass || ''}`}
+                >
+                  {notification.icon}
+                </span>
+              </Tippy>
+            </div>
+          );
+        })}
+      </div>
+    </StyledRect>
   );
 };

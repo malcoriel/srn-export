@@ -1,9 +1,8 @@
-// @ts-ignore
 import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { NotificationPanel } from './NotifcationPanel';
-import { gray, teal } from '../utils/palette';
+import { gray } from '../utils/palette';
 import { NotificationBuilder } from '../../../world/pkg/world.extra';
 
 const Template: Story = (args) => {
@@ -18,7 +17,7 @@ const Template: Story = (args) => {
         background: gray,
         position: 'absolute',
         width: 500,
-        height: 500,
+        height: 300,
       }}
     >
       <div style={{ position: 'absolute', width: '100%', bottom: 0 }}>
