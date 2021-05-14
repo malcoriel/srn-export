@@ -153,8 +153,18 @@ export const reactifyPrefabs = (subs: SubPrefab[]): React.ReactNode[] => {
   const res = [];
   for (let i = 0; i < subs.length; i++) {
     const sub = subs[i];
-    if (typeof sub === 'string') {
-      res.push(<span key={i}>{sub}</span>);
+    if (_.isString(sub)) {
+      res.push(<span>{sub}</span>);
+    } else if (_.isArray(sub)) {
+      res.push(...reactifyPrefabs(sub));
+    } else if (sub.tagName) {
+      res.push(
+        React.createElement(
+          sub.tagName,
+          { className: sub.className },
+          sub.tagChildren
+        )
+      );
     }
   }
   return res;
@@ -168,4 +178,12 @@ export const transformAllIntoPrefabs = (
   res = transformLinebreaks(res);
   res = transformSubstitutions(res, subs);
   return res;
+};
+
+export const transformAll = (
+  str: string,
+  subs: Substitution[]
+): React.ReactNode[] => {
+  const prefabs = transformAllIntoPrefabs(str, subs);
+  return reactifyPrefabs(prefabs);
 };
