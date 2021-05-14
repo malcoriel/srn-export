@@ -14,6 +14,7 @@ import { StyledRect } from './ui/StyledRect';
 import _ from 'lodash';
 import { NotificationActionBuilder } from '../../../world/pkg/world.extra';
 import { substituteText } from './DialogueWindow';
+import { transformAllTextSubstitutions } from '../utils/substitutions';
 
 type NotificationPanelProps = {
   notifications: Notification[];
@@ -28,13 +29,16 @@ const styleText = (notification: {
   header: string;
   substitutions: Substitution[];
 }): React.ReactNode => {
-  const textWithSubs = substituteText(
-    notification.text,
-    notification.substitutions
+  return (
+    <>
+      {transformAllTextSubstitutions(
+        notification.text,
+        notification.substitutions
+      ).map((el, i) =>
+        React.cloneElement(el as React.ReactElement, { key: i })
+      )}
+    </>
   );
-  //const res = replaceLineBreaks(notification.text);
-
-  return <>{notification.text}</>;
 };
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({

@@ -3,7 +3,10 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { NotificationPanel } from './NotifcationPanel';
 import { gray } from '../utils/palette';
-import { NotificationBuilder } from '../../../world/pkg/world.extra';
+import {
+  NotificationBuilder,
+  SubstitutionType,
+} from '../../../world/pkg/world.extra';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
@@ -53,6 +56,26 @@ Main.args = {
       text: {
         text: 'test help notification 2',
         substitutions: [],
+      },
+    }),
+    NotificationBuilder.NotificationTask({
+      id: '4',
+      header: 'Quest with subs',
+      text: {
+        text:
+          'This is a delivery to s_456, from s_123. Reward will be s_unknown',
+        substitutions: [
+          {
+            id: '123',
+            s_type: SubstitutionType.PlanetName,
+            text: 'Planet 123',
+          },
+          {
+            id: '456',
+            s_type: SubstitutionType.PlanetName,
+            text: 'Planet 456',
+          },
+        ],
       },
     }),
     NotificationBuilder.NotificationUnknown(),

@@ -5,7 +5,7 @@ global.wasmFunctions = {
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import {
-  transformAll,
+  transformAllTextSubstitutions,
   transformAllIntoPrefabs,
   transformLinebreaksStr,
   transformSubstitutionsStr,
@@ -94,7 +94,7 @@ describe('substitution functions', () => {
   });
 
   it('can do full transform ', () => {
-    const res = transformAll('qq s_1\nww s_2 \n 12s_3', [
+    const res = transformAllTextSubstitutions('qq s_1\nww s_2 \n 12s_3', [
       {
         s_type: SubstitutionType.PlanetName,
         id: '1',

@@ -180,7 +180,7 @@ export const transformAllIntoPrefabs = (
   return res;
 };
 
-export const transformAll = (
+export const transformAllTextSubstitutions = (
   str: string,
   subs: Substitution[]
 ): React.ReactNode[] => {
