@@ -6,6 +6,7 @@
     "@babel/core": "^7.7.7",
     "@babel/plugin-syntax-jsx": "^7.12.1",
     "@babel/preset-env": "^7.14.2",
+    "@babel/preset-react": "^7.13.13",
     "@jscad/csg": "^0.7.0",
     "@pmmmwh/react-refresh-webpack-plugin": "0.4.2",
     "@popperjs/core": "^2.9.2",
@@ -192,11 +193,28 @@
   },
   "babel": {
     "plugins": [
-      "transform-class-properties",
-      ["@babel/plugin-proposal-private-methods", { "loose": true }]
+      [
+        "transform-class-properties",
+        {
+          "loose": true
+        }
+      ],
+      [
+        "@babel/plugin-proposal-class-properties",
+        {
+          "loose": true
+        }
+      ],
+      [
+        "@babel/plugin-proposal-private-methods",
+        {
+          "loose": true
+        }
+      ]
     ],
     "presets": [
       "@babel/env",
+      "@babel/react",
       "@babel/typescript"
     ]
   },
