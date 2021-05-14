@@ -194,7 +194,11 @@ let wasmFunctions: any = {};
 
 (async function () {
   wasmFunctions = await import('../../world/pkg');
-  wasmFunctions.set_panic_hook();
+  // jest would complain otherwise, due to the hack with resolver that I had to do
+  // the world/pkg/world_bg.js does not get imported when this file (world.ts) is imported via jest
+  if (wasmFunctions && wasmFunctions.set_panic_hook) {
+    wasmFunctions.set_panic_hook();
+  }
 })();
 
 const exposeJsonParseError = (

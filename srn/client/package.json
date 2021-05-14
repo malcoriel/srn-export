@@ -141,8 +141,10 @@
     ]
   },
   "jest": {
+    "resolver": "<rootDir>/scripts/jestResolve.js",
     "roots": [
-      "<rootDir>/src"
+      "<rootDir>/src",
+      "<rootDir>/../world/pkg"
     ],
     "collectCoverageFrom": [
       "src/**/*.{js,jsx,ts,tsx}",
@@ -160,7 +162,7 @@
     ],
     "testEnvironment": "jsdom",
     "transform": {
-      "^.+\\.(js|jsx|mjs|cjs|ts|tsx)$": "<rootDir>/node_modules/babel-jest",
+      "^.+\\.(js|jsx|mjs|cjs|ts|tsx)$": "<rootDir>/scripts/babelJestTransform.js",
       "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
       "^(?!.*\\.(js|jsx|mjs|cjs|ts|tsx|css|json)$)": "<rootDir>/config/jest/fileTransform.js"
     },
@@ -178,6 +180,7 @@
       "js",
       "web.ts",
       "ts",
+      "d.ts",
       "web.tsx",
       "tsx",
       "json",
@@ -190,33 +193,6 @@
       "jest-watch-typeahead/testname"
     ],
     "resetMocks": true
-  },
-  "babel": {
-    "plugins": [
-      [
-        "transform-class-properties",
-        {
-          "loose": true
-        }
-      ],
-      [
-        "@babel/plugin-proposal-class-properties",
-        {
-          "loose": true
-        }
-      ],
-      [
-        "@babel/plugin-proposal-private-methods",
-        {
-          "loose": true
-        }
-      ]
-    ],
-    "presets": [
-      "@babel/env",
-      "@babel/react",
-      "@babel/typescript"
-    ]
   },
   "devDependencies": {
     "@storybook/addon-actions": "^6.2.2",

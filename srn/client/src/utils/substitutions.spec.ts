@@ -1,3 +1,7 @@
+// @ts-ignore
+global.wasmFunctions = { set_panic_hook: () => {} };
+import 'core-js/stable';
+import 'regenerator-runtime/runtime';
 import {
   transformLinebreaksStr,
   transformSubstitutionsStr,
