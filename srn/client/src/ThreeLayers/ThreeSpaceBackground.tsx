@@ -1,12 +1,8 @@
-// @ts-ignore
 import React, { useMemo, useRef } from 'react';
 import { Mesh, ShaderMaterial } from 'three';
-import { useFrame, useThree } from 'react-three-fiber';
-// @ts-ignore
+import { useFrame } from 'react-three-fiber';
 import _ from 'lodash';
 import { FloatUniformValue } from './shaders/uniformTypes';
-import Vector, { IVector } from '../utils/Vector';
-import { posToThreePos } from './ThreeLayer';
 import { OrthographicCamera } from '@react-three/drei';
 import { CAMERA_HEIGHT } from './CameraControls';
 
@@ -173,6 +169,7 @@ export const ThreeSpaceBackground: React.FC<{
       />
     </mesh>
   );
+  // noinspection RequiredAttributes
   return cameraBound ? (
     <OrthographicCamera key={shift} makeDefault>
       {backgroundPlaneMesh}

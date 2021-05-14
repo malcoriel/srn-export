@@ -3,7 +3,6 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
 import { ThreeSpaceBackground } from '../ThreeLayers/ThreeSpaceBackground';
-import { VectorF } from '../utils/Vector';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
