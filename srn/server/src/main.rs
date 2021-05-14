@@ -47,6 +47,7 @@ use crate::chat::chat_server;
 use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
 use crate::perf::Sampler;
 use crate::sandbox::mutate_state;
+use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
 use crate::world::{
@@ -98,6 +99,7 @@ mod planet_movement;
 mod planet_movement_test;
 mod random_stuff;
 mod sandbox;
+mod substitutions;
 mod system_gen;
 mod tractoring;
 #[allow(dead_code)]
@@ -806,11 +808,6 @@ fn make_new_human_player(conn_id: Uuid) {
         let ship = world::spawn_ship(&mut cont.state, conn_id, None).clone();
         (ship, cont.state.locations[0].planets.clone())
     };
-    {
-        let mut cont = STATE.write().unwrap();
-        let mut player = find_my_player_mut(&mut cont.state, conn_id).unwrap();
-        player.quest = world::generate_random_quest(&planets, ship.docked_at);
-    }
 }
 
 fn remove_player(conn_id: Uuid) {

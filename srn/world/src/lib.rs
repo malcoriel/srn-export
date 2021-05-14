@@ -60,7 +60,7 @@ macro_rules! warn {
 macro_rules! err {
     ($($t:tt)*) => {
         unsafe {
-            (crate::error(&format_args!("wasm err: {}"$($t)*).to_string()))
+            (crate::error(&format_args!("wasm err: {}", $($t)*).to_string()))
             }
     }
 }
@@ -104,9 +104,14 @@ mod tractoring;
 #[path = "../../server/src/notifications.rs"]
 mod notifications;
 
+#[path = "../../server/src/substitutions.rs"]
+mod substitutions;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 
+use lazy_static::lazy_static;
+use regex::Regex;
 use serde::Deserialize as Deserializable;
 use serde_derive::{Deserialize, Serialize};
 use serde_json::Error;
@@ -117,6 +122,11 @@ static DEFAULT_ERR: &str = "";
 #[derive(Serialize)]
 struct ErrJson {
     message: String,
+}
+
+lazy_static! {
+    // no support for substitutions
+    pub static ref SUB_RE: Regex = Regex::new(r"").unwrap();
 }
 
 pub fn fire_event(_ev: world::GameEvent) {

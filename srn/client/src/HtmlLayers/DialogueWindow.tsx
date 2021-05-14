@@ -11,55 +11,13 @@ import {
 } from '../ThreeLayers/CameraControls';
 import NetState from '../NetState';
 import { makePortraitPath } from './StartMenu';
-import {
-  Dialogue,
-  DialogueElem,
-  Substitution,
-  SubstitutionType,
-  findPlanet,
-} from '../world';
+import { Dialogue, DialogueElem, Substitution } from '../world';
 import { useStore, WindowState } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
-import { Planet } from '../../../world/pkg';
 import { Vector3 } from 'three';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
-
-export const enrichSub = (s: Substitution): ReactNode => {
-  const ns = NetState.get();
-  if (!ns) return null;
-
-  const { visualState } = ns;
-
-  const focus = (p: Planet) => {
-    visualState.cameraPosition = { x: p.x, y: p.y };
-    visualState.boundCameraMovement = false;
-  };
-
-  switch (s.s_type) {
-    case SubstitutionType.PlanetName: {
-      const planet = findPlanet(ns.state, s.id);
-      if (!planet) {
-        console.warn(`substitution planet not found by id ${s.id}`);
-        return <span className="sub-planet">{s.text}</span>;
-      }
-      return (
-        <span className="sub-planet found" onClick={() => focus(planet!)}>
-          {s.text}
-        </span>
-      );
-    }
-    case SubstitutionType.CharacterName:
-      return <span className="sub-character">{s.text}</span>;
-    case SubstitutionType.Generic:
-      return <span className="sub-generic">{s.text}</span>;
-    case SubstitutionType.Unknown:
-    default: {
-      console.warn(`Unknown substitution ${s.s_type} text ${s.text}`);
-      return <span>{s.text}</span>;
-    }
-  }
-};
+import { enrichSub } from '../utils/substitutions';
 
 export const substituteText = (
   text: string,

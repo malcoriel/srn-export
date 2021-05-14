@@ -4,6 +4,7 @@ import {
   Notification,
   NotificationAction,
   NotificationUnknown,
+  Substitution,
 } from '../../../world/pkg';
 import { UnreachableCaseError } from 'ts-essentials';
 import { FaQuestion, FaTasks } from 'react-icons/all';
@@ -12,6 +13,7 @@ import 'tippy.js/dist/tippy.css';
 import { StyledRect } from './ui/StyledRect';
 import _ from 'lodash';
 import { NotificationActionBuilder } from '../../../world/pkg/world.extra';
+import { substituteText } from './DialogueWindow';
 
 type NotificationPanelProps = {
   notifications: Notification[];
@@ -24,21 +26,15 @@ const styleText = (notification: {
   text: string;
   adjustClass?: string;
   header: string;
+  substitutions: Substitution[];
 }): React.ReactNode => {
-  const parts = notification.text.split('\n');
-  const newParts = _.flatten(
-    _.zip(
-      parts,
-      _.times(parts.length, () => <br />)
-    )
+  const textWithSubs = substituteText(
+    notification.text,
+    notification.substitutions
   );
-  return (
-    <>
-      {newParts.map((p, i) => {
-        return <span key={i}>{p}</span>;
-      })}
-    </>
-  );
+  //const res = replaceLineBreaks(notification.text);
+
+  return <>{notification.text}</>;
 };
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({
@@ -74,10 +70,12 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             adjustClass?: string;
             header: string;
             isDismissable: boolean;
+            substitutions: Substitution[];
           } = {
             header: rawNotification.header,
             text: rawNotification.text.text,
             isDismissable: true,
+            substitutions: rawNotification.text.substitutions,
           };
           switch (rawNotification.tag) {
             case 'Help':

@@ -33,10 +33,11 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
+use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::tractoring::{ContainersContainer, IMovable, MineralsContainer, MovablesContainer};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::{fire_event, market, planet_movement, tractoring};
+use crate::{fire_event, market, notifications, planet_movement, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
 
 const SHIP_SPEED: f64 = 20.0;
@@ -159,7 +160,7 @@ pub fn index_planets_by_id(planets: &Vec<Planet>) -> HashMap<Uuid, &Planet> {
     by_id
 }
 
-fn index_players_by_id(players: &Vec<Player>) -> HashMap<Uuid, &Player> {
+pub fn index_players_by_id(players: &Vec<Player>) -> HashMap<Uuid, &Player> {
     let mut by_id = HashMap::new();
     for p in players.iter() {
         by_id.entry(p.id).or_insert(p);
@@ -195,14 +196,14 @@ fn index_players_by_ship_id_mut(players: &mut Vec<Player>) -> HashMap<Uuid, &mut
     by_id
 }
 
-pub fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> Option<Quest> {
+pub fn generate_random_quest(player: &mut Player, planets: &Vec<Planet>, docked_at: Option<Uuid>) {
     let mut rng: ThreadRng = rand::thread_rng();
     if planets.len() <= 0 {
-        return None;
+        return;
     }
     let from = get_random_planet(planets, docked_at, &mut rng);
     if from.is_none() {
-        return None;
+        return;
     }
     let from = from.unwrap();
     let delivery = planets
@@ -211,13 +212,15 @@ pub fn generate_random_quest(planets: &Vec<Planet>, docked_at: Option<Uuid>) -> 
         .collect::<Vec<_>>();
     let to = &delivery[rng.gen_range(0, delivery.len())];
     let reward = rng.gen_range(500, 1001);
-    return Some(Quest {
+    let quest = Quest {
         id: new_id(),
         from_id: from.id,
         to_id: to.id,
         state: CargoDeliveryQuestState::Started,
         reward,
-    });
+    };
+    player.quest = Some(quest);
+    notifications::update_quest_notifications(player);
 }
 
 fn get_random_planet<'a>(
@@ -383,6 +386,20 @@ pub struct Quest {
     pub to_id: Uuid,
     pub state: CargoDeliveryQuestState,
     pub reward: i32,
+}
+
+impl Quest {
+    pub fn as_notification(&self) -> Notification {
+        let text = format!("Deliver the goods from\ns_cargo_source_planet to\ns_cargo_destination_planet\nReward: {}", self.reward);
+        Notification::Task {
+            header: "Delivery quest".to_string(),
+            text: NotificationText {
+                text,
+                substitutions: vec![],
+            },
+            id: new_id(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -1773,12 +1790,17 @@ pub fn apply_ship_action(
 
 pub fn update_quests(state: &mut GameState) {
     let state_read = state.clone();
+    let mut any_new_quests = false;
     let player_ids = state.players.iter().map(|p| p.id).collect::<Vec<_>>();
     for player_id in player_ids {
         if let (Some(mut player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
             if player.quest.is_none() {
-                player.quest =
-                    generate_random_quest(&state_read.locations[0].planets, ship.docked_at);
+                generate_random_quest(
+                    player,
+                    &state_read.locations[0].planets.clone(),
+                    ship.docked_at,
+                );
+                any_new_quests = true;
             } else {
                 let quest_id = player.quest.as_ref().map(|q| q.id).unwrap();
                 if !has_quest_item(&ship.inventory, quest_id)
@@ -1792,6 +1814,9 @@ pub fn update_quests(state: &mut GameState) {
                 }
             }
         }
+    }
+    if any_new_quests {
+        substitute_notification_texts(state, None);
     }
 }
 

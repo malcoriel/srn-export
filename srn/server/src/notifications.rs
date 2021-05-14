@@ -1,11 +1,18 @@
-use crate::dialogue_dto::Substitution;
-use crate::new_id;
-use crate::world::{find_my_player_mut, GameMode, GameState};
+use std::collections::HashMap;
+
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use uuid::*;
 use wasm_bindgen::prelude::*;
+
+use crate::dialogue_dto::{Substitution, SubstitutionType};
+use crate::inventory::{count_items_of_types, value_items_of_types, MINERAL_TYPES};
+use crate::random_stuff::gen_random_character_name;
+use crate::world::{
+    find_my_player_mut, index_planets_by_id, GameMode, GameState, Planet, Player, Ship,
+};
+use crate::{new_id, substitutions};
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
@@ -29,6 +36,13 @@ impl Notification {
             Notification::Unknown => Uuid::default(),
             Notification::Help { id, .. } => *id,
             Notification::Task { id, .. } => *id,
+        };
+    }
+    pub fn get_text_mut(&mut self) -> Option<&mut NotificationText> {
+        return match self {
+            Notification::Unknown => None,
+            Notification::Help { text, .. } => Some(text),
+            Notification::Task { text, .. } => Some(text),
         };
     }
 }
@@ -91,3 +105,13 @@ pub fn apply_action(state: &mut GameState, player_id: Uuid, action: Notification
 // pub fn is_notification_dismissable(_not: Notification) -> bool {
 //     return false;
 // }
+
+pub fn update_quest_notifications(player: &mut Player) {
+    player.notifications.retain(|n| match n {
+        Notification::Task { .. } => false,
+        _ => true,
+    });
+    if let Some(quest) = player.quest.clone() {
+        player.notifications.push(quest.as_notification());
+    }
+}

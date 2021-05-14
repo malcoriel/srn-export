@@ -9,6 +9,7 @@ use uuid::Uuid;
 use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
 use crate::perf::Sampler;
+use crate::substitutions::substitute_notification_texts;
 use crate::world::{GameEvent, GameMode, GameState, Player};
 use crate::xcast::XCast;
 use crate::{world, StateContainer};
@@ -91,8 +92,9 @@ pub fn handle_events(
                     let state = crate::select_mut_state(cont, player.id);
                     let planets = state.locations[0].planets.clone();
                     if let Some(player) = world::find_my_player_mut(state, player.id) {
-                        player.quest = world::generate_random_quest(&planets, None);
+                        world::generate_random_quest(player, &planets.clone(), None);
                     }
+                    substitute_notification_texts(state, Some(player.id));
                 }
                 GameEvent::TradeTriggerRequest { player, .. } => {
                     let state = crate::select_mut_state(cont, player.id);
