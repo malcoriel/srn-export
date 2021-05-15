@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './NotificationPanel.scss';
 import {
   Notification,
@@ -11,9 +11,7 @@ import { FaQuestion, FaTasks } from 'react-icons/all';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import { StyledRect } from './ui/StyledRect';
-import _ from 'lodash';
 import { NotificationActionBuilder } from '../../../world/pkg/world.extra';
-import { substituteText } from './DialogueWindow';
 import { transformAllTextSubstitutions } from '../utils/substitutions';
 
 type NotificationPanelProps = {
@@ -55,6 +53,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
       notificationsFiltered.push(notification);
     }
   }
+  useEffect(() => {
+    console.log(notifications);
+  }, [notifications]);
   return (
     <StyledRect
       height={26}

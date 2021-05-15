@@ -9,8 +9,9 @@ mod substitution_test {
     pub fn can_inject_ids() {
         let init = "The s_current_planet is on fire!".to_string();
         let mut players_to_current_planets = HashMap::new();
+        let planet_id = Uuid::new_v4();
         let planet = Planet {
-            id: Default::default(),
+            id: planet_id,
             name: "FOO".to_string(),
             x: 0.0,
             y: 0.0,
@@ -30,8 +31,7 @@ mod substitution_test {
             &HashMap::new(),
             &HashMap::new(),
         );
-        let sub_id = subs_res[0].id;
         assert_eq!(subs_res[0].text, "FOO");
-        assert_eq!(text_res, format!("The s_{} is on fire!", sub_id))
+        assert_eq!(text_res, format!("The s_{} is on fire!", planet_id))
     }
 }

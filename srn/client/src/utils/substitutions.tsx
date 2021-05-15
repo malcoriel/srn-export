@@ -74,7 +74,7 @@ export const enrichSub = (s: Substitution): ReactSubPrefab | null => {
   }
 };
 
-const SUB_RE = /s_(\w+)/;
+const SUB_RE = /s_([\-\w]+)/;
 
 export const transformSubstitutionsStr = (
   text: string,
