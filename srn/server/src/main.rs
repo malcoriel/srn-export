@@ -100,6 +100,7 @@ mod planet_movement_test;
 mod random_stuff;
 mod sandbox;
 mod substitutions;
+mod substitutions_test;
 mod system_gen;
 mod tractoring;
 #[allow(dead_code)]

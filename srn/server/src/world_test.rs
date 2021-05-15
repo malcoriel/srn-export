@@ -4,12 +4,15 @@ mod world_test {
 
     use uuid::Uuid;
 
+    use crate::market::Market;
     use crate::new_id;
+    use crate::perf::Sampler;
     use crate::planet_movement::update_planets;
     use crate::vec2::Vec2f64;
-    use crate::world::{add_player, GameMode, seed_state, spawn_ship, update_ships_navigation, update_world, GameState, Planet, Star, UpdateOptions, AABB, Location};
-    use crate::market::{Market};
-    use crate::perf::Sampler;
+    use crate::world::{
+        add_player, seed_state, spawn_ship, update_ships_navigation, update_world, GameMode,
+        GameState, Location, Planet, Star, UpdateOptions, AABB,
+    };
 
     #[test]
     fn can_rotate_planets() {
@@ -47,28 +50,28 @@ mod world_test {
             seed: "".to_string(),
             my_id: Default::default(),
             start_time_ticks: 0,
-            locations: vec![
-                Location {
-                    id: new_id(),
-                    adjacent_location_ids: vec![],
-                    star: Some(Star {
-                        id: star_id,
-                        name: "star".to_string(),
-                        x: 0.0,
-                        y: 0.0,
-                        radius: 0.0,
-                        rotation: 0.0,
-                        color: "".to_string(),
-                        corona_color: "".to_string()
-                    }),
-                    seed: "".to_string(),
-                    planets: vec![planet, sat],
-                    asteroids: vec![],
-                    minerals: vec![],
-                    asteroid_belts: vec![],
-                    ships: vec![],
-                }
-            ],
+            locations: vec![Location {
+                id: new_id(),
+                adjacent_location_ids: vec![],
+                star: Some(Star {
+                    id: star_id,
+                    name: "star".to_string(),
+                    x: 0.0,
+                    y: 0.0,
+                    radius: 0.0,
+                    rotation: 0.0,
+                    color: "".to_string(),
+                    corona_color: "".to_string(),
+                }),
+                seed: "".to_string(),
+                planets: vec![planet, sat],
+                asteroids: vec![],
+                minerals: vec![],
+                containers: vec![],
+                position: Default::default(),
+                asteroid_belts: vec![],
+                ships: vec![],
+            }],
             players: vec![],
             milliseconds_remaining: 0,
             paused: false,
@@ -78,8 +81,8 @@ mod world_test {
             market: Market {
                 wares: Default::default(),
                 prices: Default::default(),
-                time_before_next_shake: 0
-            }
+                time_before_next_shake: 0,
+            },
         };
         let eps = 0.2;
         let location = &state.locations[0];
@@ -89,7 +92,8 @@ mod world_test {
             (1000.0 * 1000.0 * PI / 2.0) as i64,
             Sampler::empty(),
             AABB::maxed(),
-        ).0;
+        )
+        .0;
 
         let planet = &new_planets[0];
         let sat = &new_planets[1];
@@ -109,7 +113,7 @@ mod world_test {
             &location.star,
             (1000.0 * 1000.0 * PI / 4.0) as i64,
             Sampler::empty(),
-            AABB::maxed()
+            AABB::maxed(),
         );
         let new_planets = out.0;
         let planet = &new_planets[0];
@@ -156,29 +160,28 @@ mod world_test {
             seed: "".to_string(),
             my_id: Default::default(),
             start_time_ticks: 0,
-            locations: vec![
-                Location {
-                    id: new_id(),
-                    adjacent_location_ids: vec![],
-                    seed: "".to_string(),
-                    star: Some(Star {
-                        id: star_id,
-                        name: "star".to_string(),
-                        x: 0.0,
-                        y: 0.0,
-                        radius: 0.0,
-                        rotation: 0.0,
-                        color: "".to_string(),
-                        corona_color: "".to_string(),
-                    }),
-                    planets: vec![planet, sat],
-                    asteroids: vec![],
-                    minerals: vec![],
-                    asteroid_belts: vec![],
-                    ships: vec![],
-
-                }
-            ],
+            locations: vec![Location {
+                id: new_id(),
+                adjacent_location_ids: vec![],
+                seed: "".to_string(),
+                star: Some(Star {
+                    id: star_id,
+                    name: "star".to_string(),
+                    x: 0.0,
+                    y: 0.0,
+                    radius: 0.0,
+                    rotation: 0.0,
+                    color: "".to_string(),
+                    corona_color: "".to_string(),
+                }),
+                planets: vec![planet, sat],
+                asteroids: vec![],
+                minerals: vec![],
+                containers: vec![],
+                position: Default::default(),
+                asteroid_belts: vec![],
+                ships: vec![],
+            }],
             players: vec![],
             milliseconds_remaining: 0,
             paused: false,
@@ -188,8 +191,8 @@ mod world_test {
             market: Market {
                 wares: Default::default(),
                 prices: Default::default(),
-                time_before_next_shake: 0
-            }
+                time_before_next_shake: 0,
+            },
         };
         let eps = 0.2;
         let location = &state.locations[0];
@@ -199,16 +202,11 @@ mod world_test {
             (1000.0 * 1000.0 * PI / 2.0) as i64,
             Sampler::empty(),
             AABB {
-                top_left: Vec2f64 {
-                    x: 0.0,
-                    y: -1.0,
-                },
-                bottom_right: Vec2f64 {
-                    x: 5.5,
-                    y: 1.0
-                }
+                top_left: Vec2f64 { x: 0.0, y: -1.0 },
+                bottom_right: Vec2f64 { x: 5.5, y: 1.0 },
             },
-        ).0;
+        )
+        .0;
 
         let planet = &new_planets[0];
         let sat = &new_planets[1];
@@ -254,28 +252,28 @@ mod world_test {
             seed: "".to_string(),
             my_id: Default::default(),
             start_time_ticks: 0,
-            locations: vec![
-                Location {
-                    id: new_id(),
-                    adjacent_location_ids: vec![],
-                    seed: "".to_string(),
-                    star: Some(Star {
-                        id: star_id,
-                        name: "star".to_string(),
-                        x: 0.0,
-                        y: 0.0,
-                        radius: 0.0,
-                        rotation: 0.0,
-                        color: "".to_string(),
-                        corona_color: "".to_string()
-                    }),
-                    planets: vec![planet, sat],
-                    asteroids: vec![],
-                    minerals: vec![],
-                    asteroid_belts: vec![],
-                    ships: vec![],
-                }
-            ],
+            locations: vec![Location {
+                id: new_id(),
+                adjacent_location_ids: vec![],
+                seed: "".to_string(),
+                star: Some(Star {
+                    id: star_id,
+                    name: "star".to_string(),
+                    x: 0.0,
+                    y: 0.0,
+                    radius: 0.0,
+                    rotation: 0.0,
+                    color: "".to_string(),
+                    corona_color: "".to_string(),
+                }),
+                planets: vec![planet, sat],
+                asteroids: vec![],
+                minerals: vec![],
+                containers: vec![],
+                position: Default::default(),
+                asteroid_belts: vec![],
+                ships: vec![],
+            }],
             players: vec![],
             milliseconds_remaining: 0,
             paused: false,
@@ -285,8 +283,8 @@ mod world_test {
             market: Market {
                 wares: Default::default(),
                 prices: Default::default(),
-                time_before_next_shake: 0
-            }
+                time_before_next_shake: 0,
+            },
         };
         let eps = 0.2;
         let location = &state.locations[0];
@@ -296,16 +294,11 @@ mod world_test {
             (1000.0 * 1000.0 * PI / 2.0) as i64,
             Sampler::empty(),
             AABB {
-                top_left: Vec2f64 {
-                    x: 5.5,
-                    y: -1.0,
-                },
-                bottom_right: Vec2f64 {
-                    x: 6.5,
-                    y: 1.0
-                }
+                top_left: Vec2f64 { x: 5.5, y: -1.0 },
+                bottom_right: Vec2f64 { x: 6.5, y: 1.0 },
             },
-        ).0;
+        )
+        .0;
 
         let planet = &new_planets[0];
         let sat = &new_planets[1];
@@ -331,9 +324,17 @@ mod world_test {
             let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
 
-            let options = UpdateOptions { disable_hp_effects: true, limit_area: AABB::maxed() };
-            let (state, _sampler) = update_world(state, 1 * 1000, is_client,
-                                                 Sampler::empty(), options.clone());
+            let options = UpdateOptions {
+                disable_hp_effects: true,
+                limit_area: AABB::maxed(),
+            };
+            let (state, _sampler) = update_world(
+                state,
+                1 * 1000,
+                is_client,
+                Sampler::empty(),
+                options.clone(),
+            );
             let location = &state.locations[0];
             let ship = &location.ships[0];
             eprintln!("No change ship {}/{}", ship.x, ship.y);
@@ -341,7 +342,13 @@ mod world_test {
             assert!((ship.y).abs() < eps);
             assert!(ship.navigate_target.is_some());
 
-            let (state, _sampler) = update_world(state, 1000 * 1000, is_client, Sampler::empty(), options.clone());
+            let (state, _sampler) = update_world(
+                state,
+                1000 * 1000,
+                is_client,
+                Sampler::empty(),
+                options.clone(),
+            );
             let location = &state.locations[0];
             let ship = &location.ships[0];
             let expected_pos = 2.0f64.sqrt() / 2.0 * dist;
@@ -349,7 +356,13 @@ mod world_test {
             assert!((ship.y - expected_pos).abs() < eps);
             assert!(ship.navigate_target.is_some());
 
-            let (state, _sampler) = update_world(state, 3 * 1000 * 1000, is_client, Sampler::empty(), options.clone());
+            let (state, _sampler) = update_world(
+                state,
+                3 * 1000 * 1000,
+                is_client,
+                Sampler::empty(),
+                options.clone(),
+            );
             let location = &state.locations[0];
             let ship = &location.ships[0];
             assert!((ship.x - dist).abs() < eps);
@@ -371,9 +384,18 @@ mod world_test {
             let location = &mut state.locations[0];
             let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
-            let options = UpdateOptions { disable_hp_effects: true, limit_area: AABB::maxed() };
+            let options = UpdateOptions {
+                disable_hp_effects: true,
+                limit_area: AABB::maxed(),
+            };
 
-            let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
+            let (mut state, _sampler) = update_world(
+                state,
+                1 * 1000,
+                is_client,
+                Sampler::empty(),
+                options.clone(),
+            );
             let location = &mut state.locations[0];
             let ship = &mut location.ships[0];
             let expected = PI * 0.75;
@@ -382,7 +404,13 @@ mod world_test {
 
             let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: -dist, y: -dist });
-            let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
+            let (mut state, _sampler) = update_world(
+                state,
+                1 * 1000,
+                is_client,
+                Sampler::empty(),
+                options.clone(),
+            );
             let location = &mut state.locations[0];
             let ship = &mut location.ships[0];
             let expected = PI * 0.25;
@@ -391,7 +419,13 @@ mod world_test {
 
             let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: -dist, y: dist });
-            let (mut state, _sampler) = update_world(state, 1 * 1000, is_client, Sampler::empty(), options.clone());
+            let (mut state, _sampler) = update_world(
+                state,
+                1 * 1000,
+                is_client,
+                Sampler::empty(),
+                options.clone(),
+            );
             let location = &mut state.locations[0];
             let ship = &mut location.ships[0];
             let expected = PI * 0.75;
@@ -402,14 +436,18 @@ mod world_test {
 
     pub fn iterate_state(mut state: GameState, time: i64, step: i64, client: bool) -> GameState {
         let mut elapsed = 0;
-        let options = UpdateOptions { disable_hp_effects: true, limit_area: AABB::maxed() };
+        let options = UpdateOptions {
+            disable_hp_effects: true,
+            limit_area: AABB::maxed(),
+        };
 
         loop {
             if elapsed >= time {
                 break;
             }
             elapsed += step;
-            let (state_out, _sampler) = update_world(state, step, client, Sampler::empty(), options.clone());
+            let (state_out, _sampler) =
+                update_world(state, step, client, Sampler::empty(), options.clone());
             state = state_out;
         }
         state
