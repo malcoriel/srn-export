@@ -395,6 +395,7 @@ impl Quest {
             header: "Delivery quest".to_string(),
             text: NotificationText {
                 text,
+                substituted: false,
                 substitutions: vec![],
             },
             id: new_id(),

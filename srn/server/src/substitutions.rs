@@ -140,6 +140,7 @@ fn inject_sub_text(target: &mut String, cap0: Option<Match>, injected_id: Uuid) 
         bytes.insert(start + i + 2, injected_id_bytes[i]);
     }
     let mut joined = String::from_utf8(bytes).unwrap();
+    eprintln!("Original {}, injected {}", target, joined);
     mem::swap(target, &mut joined);
 }
 
@@ -158,16 +159,19 @@ pub fn substitute_notification_texts(state: &mut GameState, player_id: Option<Uu
     {
         for not in player.notifications.iter_mut() {
             if let Some(text) = not.get_text_mut() {
-                let (sub_res, text_res) = substitute_text(
-                    &text.text,
-                    player.id,
-                    &HashMap::new(),
-                    &players_by_id,
-                    &planets_by_id,
-                    &HashMap::new(),
-                );
-                text.text = text_res;
-                text.substitutions = sub_res;
+                if !text.substituted {
+                    let (sub_res, text_res) = substitute_text(
+                        &text.text,
+                        player.id,
+                        &HashMap::new(),
+                        &players_by_id,
+                        &planets_by_id,
+                        &HashMap::new(),
+                    );
+                    text.text = text_res;
+                    text.substitutions = sub_res;
+                    text.substituted = true;
+                }
             }
         }
     }

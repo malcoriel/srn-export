@@ -74,7 +74,7 @@ export const enrichSub = (s: Substitution): ReactSubPrefab | null => {
   }
 };
 
-const SUB_RE = /s_([\-\w]+)/;
+const SUB_RE = /s_([-\w]+)/;
 
 export const transformSubstitutionsStr = (
   text: string,
@@ -96,7 +96,7 @@ export const transformSubstitutionsStr = (
       const matchedStr = match[0];
       // console.log('match at', i, matchedStr);
       const index = match.index;
-      if (!index) {
+      if (index === undefined) {
         console.warn('match with no index', match);
         break;
       }
