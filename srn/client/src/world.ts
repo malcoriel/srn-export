@@ -1,4 +1,4 @@
-import Vector, { IVector } from './utils/Vector';
+import Vector, { isIVector, IVector } from './utils/Vector';
 import {
   Planet,
   Quest,
@@ -416,4 +416,49 @@ export const findPlanet = (
   id: string
 ): Planet | undefined => {
   return state.locations[0].planets.find((p) => p.id === id);
+};
+
+export enum FindObjectHint {
+  Planet,
+}
+
+type FindObjectResult =
+  | {
+      object: Planet;
+      locIndex: number;
+    }
+  | undefined;
+export const findObjectById = (
+  state: GameState,
+  objId: string,
+  // for further optimizations like what type & location, but for now just pure search
+  _hints?: FindObjectHint[]
+): FindObjectResult => {
+  for (let i = 0; i < state.locations.length; i++) {
+    const loc = state.locations[i];
+    const found = loc.planets.find((p) => p.id === objId);
+    if (found) {
+      return {
+        object: found,
+        locIndex: i,
+      };
+    }
+  }
+  return undefined;
+};
+
+export const getObjectPosition = (obj: any): IVector => {
+  if (isIVector(obj)) {
+    return {
+      x: obj.x,
+      y: obj.y,
+    };
+  }
+  if (obj.position && isIVector(obj.position)) {
+    return {
+      x: obj.position.x,
+      y: obj.position.y,
+    };
+  }
+  throw new Error('Invalid object for getObjectPosition');
 };

@@ -18,6 +18,7 @@ pub struct Substitution {
     pub s_type: SubstitutionType,
     pub id: Uuid,
     pub text: String,
+    pub target_id: Option<Uuid>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

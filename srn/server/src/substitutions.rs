@@ -30,6 +30,7 @@ pub fn substitute_text(
                     s_type: SubstitutionType::PlanetName,
                     id,
                     text: current_planet.name.clone(),
+                    target_id: Some(current_planet.id),
                 });
                 injects.push((cap.get(0).clone(), id));
             } else {
@@ -47,6 +48,7 @@ pub fn substitute_text(
                         "moon"
                     })
                     .to_string(),
+                    target_id: Some(current_planet.id),
                 });
                 injects.push((cap.get(0).clone(), id));
             } else {
@@ -62,6 +64,7 @@ pub fn substitute_text(
                 sub_res.push(Substitution {
                     s_type: SubstitutionType::PlanetName,
                     id,
+                    target_id: Some(cargo_destination_planet.id),
                     text: cargo_destination_planet.name.clone(),
                 });
                 injects.push((cap.get(0).clone(), id));
@@ -78,6 +81,7 @@ pub fn substitute_text(
                 sub_res.push(Substitution {
                     s_type: SubstitutionType::PlanetName,
                     id,
+                    target_id: Some(cargo_source_planet.id),
                     text: cargo_source_planet.name.clone(),
                 });
                 injects.push((cap.get(0).clone(), id));
@@ -90,6 +94,7 @@ pub fn substitute_text(
                 s_type: SubstitutionType::CharacterName,
                 id: uuid,
                 text: gen_random_character_name().to_string(),
+                target_id: None,
             });
             injects.push((cap.get(0).clone(), uuid));
         } else if cap[0] == *"s_minerals_amount" {
@@ -100,6 +105,7 @@ pub fn substitute_text(
                     id: uuid,
                     text: count_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())
                         .to_string(),
+                    target_id: Some(ship.id),
                 });
                 injects.push((cap.get(0).clone(), uuid));
             } else {
@@ -113,6 +119,7 @@ pub fn substitute_text(
                     id: uuid,
                     text: value_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())
                         .to_string(),
+                    target_id: None,
                 });
                 injects.push((cap.get(0).clone(), uuid));
             } else {

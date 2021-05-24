@@ -212,3 +212,7 @@ const radToDeg = (r: number): number => {
 const degToRad = (r: number): number => {
   return (r / 180) * Math.PI;
 };
+
+export const isIVector = (smth: any): smth is IVector => {
+  return typeof smth.x === 'number' && typeof smth.y === 'number';
+};

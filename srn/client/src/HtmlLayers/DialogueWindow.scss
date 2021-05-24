@@ -1,4 +1,5 @@
 @import "../utils/palette";
+@import "./substitutions.scss";
 
 .dialogue, .minimized-dialogue {
   .prompt {
@@ -98,20 +99,6 @@
     bottom: 10px;
     left: 20px;
     font-size: 14px;
-  }
-
-  .sub-planet {
-    color: #fbe7c6;
-    text-decoration: underline;
-    cursor: pointer;
-  }
-
-  .sub-generic {
-    color: #b4f8c8;
-  }
-
-  .sub-character {
-    color: #7ec8e3;
   }
 }
 

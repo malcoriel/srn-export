@@ -380,6 +380,7 @@ fn substitute_text(
         if cap[0] == *"s_current_planet" {
             if let Some(current_planet) = current_planet {
                 res.push(Substitution {
+                    target_id: None,
                     s_type: SubstitutionType::PlanetName,
                     id: current_planet.id,
                     text: current_planet.name.clone(),
@@ -390,6 +391,7 @@ fn substitute_text(
         } else if cap[0] == *"s_current_planet_body_type" {
             if let Some(current_planet) = current_planet {
                 res.push(Substitution {
+                    target_id: None,
                     s_type: SubstitutionType::Generic,
                     id: current_planet.id,
                     text: (if current_planet.anchor_tier == 1 {
@@ -409,6 +411,7 @@ fn substitute_text(
             {
                 let cargo_destination_planet = cargo_destination_planet.clone();
                 res.push(Substitution {
+                    target_id: None,
                     s_type: SubstitutionType::PlanetName,
                     id: cargo_destination_planet.id,
                     text: cargo_destination_planet.name,
@@ -418,6 +421,7 @@ fn substitute_text(
             }
         } else if cap[0] == *"s_random_name" {
             res.push(Substitution {
+                target_id: None,
                 s_type: SubstitutionType::CharacterName,
                 id: new_id(),
                 text: gen_random_character_name().to_string(),
@@ -426,6 +430,7 @@ fn substitute_text(
             if let Some(player) = player {
                 if let Some(ship) = find_my_ship(game_state, player.id) {
                     res.push(Substitution {
+                        target_id: None,
                         s_type: SubstitutionType::Generic,
                         id: new_id(),
                         text: count_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())
@@ -441,6 +446,7 @@ fn substitute_text(
             if let Some(player) = player {
                 if let Some(ship) = find_my_ship(game_state, player.id) {
                     res.push(Substitution {
+                        target_id: None,
                         s_type: SubstitutionType::Generic,
                         id: new_id(),
                         text: value_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())

@@ -2,12 +2,15 @@ import React from 'react';
 import { Substitution } from '../../../world/pkg';
 import _ from 'lodash';
 import { SubstitutionType } from '../../../world/pkg/world.extra';
+import '../HtmlLayers/substitutions.scss';
 
 type ReactSubPrefab = {
   tagName: string;
+  targetId: string | null;
   id: string;
   tagChildren?: React.ReactNode;
   className?: string;
+  clickable?: boolean;
 };
 
 type SubPrefab = string | SubPrefab[] | ReactSubPrefab;
@@ -45,7 +48,9 @@ export const enrichSub = (s: Substitution): ReactSubPrefab | null => {
         tagName: 'span',
         className: 'sub-planet found',
         tagChildren: s.text,
+        clickable: true,
         id: s.id,
+        targetId: s.target_id,
       };
     }
     case SubstitutionType.CharacterName:
@@ -54,6 +59,7 @@ export const enrichSub = (s: Substitution): ReactSubPrefab | null => {
         tagName: 'span',
         className: 'sub-character',
         tagChildren: s.text,
+        targetId: s.target_id,
       };
     case SubstitutionType.Generic:
       return {
@@ -61,6 +67,7 @@ export const enrichSub = (s: Substitution): ReactSubPrefab | null => {
         tagName: 'span',
         className: 'sub-generic',
         tagChildren: s.text,
+        targetId: s.target_id,
       };
     case SubstitutionType.Unknown:
     default: {
@@ -69,6 +76,7 @@ export const enrichSub = (s: Substitution): ReactSubPrefab | null => {
         id: s.id,
         tagName: 'span',
         tagChildren: s.text,
+        targetId: s.target_id,
       };
     }
   }
@@ -149,19 +157,31 @@ export const preprocessSubstitutedText = (text: string): SubPrefab[] => {
   return [text];
 };
 
-export const reactifyPrefabs = (subs: SubPrefab[]): React.ReactNode[] => {
+export const reactifyPrefabs = (
+  subs: SubPrefab[],
+  handlers?: SubstitutionInteractionHandlers
+): React.ReactNode[] => {
   const res = [];
   for (let i = 0; i < subs.length; i++) {
     const sub = subs[i];
     if (_.isString(sub)) {
       res.push(<span>{sub}</span>);
     } else if (_.isArray(sub)) {
-      res.push(...reactifyPrefabs(sub));
+      res.push(...reactifyPrefabs(sub, handlers));
     } else if (sub.tagName) {
+      const onFocusImpl = () => {
+        if (handlers && handlers.onFocusObject && sub.targetId) {
+          return handlers.onFocusObject(sub.targetId);
+        }
+      };
+      const onClick =
+        sub.clickable && handlers && handlers.onFocusObject
+          ? onFocusImpl
+          : Function.prototype;
       res.push(
         React.createElement(
           sub.tagName,
-          { className: sub.className },
+          { className: sub.className, onClick },
           sub.tagChildren
         )
       );
@@ -180,10 +200,14 @@ export const transformAllIntoPrefabs = (
   return res;
 };
 
+export type SubstitutionInteractionHandlers = {
+  onFocusObject?: (id: string) => void;
+};
 export const transformAllTextSubstitutions = (
   str: string,
-  subs: Substitution[]
+  subs: Substitution[],
+  handlers?: SubstitutionInteractionHandlers
 ): React.ReactNode[] => {
   const prefabs = transformAllIntoPrefabs(str, subs);
-  return reactifyPrefabs(prefabs);
+  return reactifyPrefabs(prefabs, handlers);
 };

@@ -1,4 +1,5 @@
 @import "../utils/palette";
+@import "./substitutions.scss";
 
 .notification-panel {
   min-height: 24px;
@@ -69,7 +70,7 @@
   .dismiss-hint {
     margin-top: 3px;
     font-size: small;
-    color: $gray;
+    color: lighten($gray, 20%);
   }
 }
 

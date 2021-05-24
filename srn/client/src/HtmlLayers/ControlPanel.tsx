@@ -17,7 +17,7 @@ import NetState, {
   useNSForceChange,
 } from '../NetState';
 import { makePortraitPath } from './StartMenu';
-import { Ship } from '../world';
+import { findObjectById, getObjectPosition, Ship } from '../world';
 import { NotificationPanel } from './NotifcationPanel';
 import { NotificationAction } from '../../../world/pkg';
 
@@ -98,6 +98,23 @@ const Notifications = () => {
         onAction={(act: NotificationAction) => {
           if (ns) {
             ns.sendNotificationAction(act);
+          }
+        }}
+        onFocusObject={(id: string) => {
+          if (ns) {
+            const objLoc = findObjectById(ns.state, id);
+            if (objLoc) {
+              if (objLoc.locIndex === 0) {
+                const pos = getObjectPosition(objLoc.object);
+                ns.visualState.cameraPosition = pos;
+                ns.visualState.boundCameraMovement = false;
+              } else {
+                // the object is outside of the current location - currently not possible.
+                // for now, do nothing, but ideally this should open the map
+                // and focus the system with it, and this logic should be reusable
+                // so it should be a separate util
+              }
+            }
           }
         }}
       />

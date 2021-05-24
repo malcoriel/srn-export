@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import './NotificationPanel.scss';
 import {
   Notification,
@@ -18,22 +18,31 @@ type NotificationPanelProps = {
   notifications: Notification[];
   className?: string;
   onAction?: (act: NotificationAction) => void;
+  onFocusObject?: (id: string) => void;
 };
 
-const styleText = (notification: {
-  icon?: React.ReactNode;
-  text: string;
-  adjustClass?: string;
-  header: string;
-  substitutions: Substitution[];
-}): React.ReactNode => {
+const styleText = (
+  notification: {
+    icon?: React.ReactNode;
+    text: string;
+    adjustClass?: string;
+    header: string;
+    substitutions: Substitution[];
+  },
+  onFocusObject: (id: string) => void
+): React.ReactNode => {
   return (
     <>
       {transformAllTextSubstitutions(
         notification.text,
-        notification.substitutions
+        notification.substitutions,
+        {
+          onFocusObject,
+        }
       ).map((el, i) =>
-        React.cloneElement(el as React.ReactElement, { key: i })
+        React.cloneElement(el as React.ReactElement, {
+          key: i,
+        })
       )}
     </>
   );
@@ -43,6 +52,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   notifications,
   className,
   onAction,
+  onFocusObject = (_id) => undefined,
 }) => {
   const notificationsFiltered: Exclude<
     Notification,
@@ -132,12 +142,14 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                     contentClassName="notification-tooltip"
                   >
                     <div className="header">{notification.header}</div>
-                    <div className="text">{styleText(notification)}</div>
-                    {notification.isDismissable && (
-                      <div className="dismiss-hint">
-                        right-click the icon to dismiss this notification
-                      </div>
-                    )}
+                    <div className="text">
+                      {styleText(notification, onFocusObject)}
+                    </div>
+                    <div className="dismiss-hint">
+                      {notification.isDismissable
+                        ? 'right-click the icon to dismiss this notification'
+                        : 'this notification is not dismissable'}
+                    </div>
                   </StyledRect>
                 }
               >
