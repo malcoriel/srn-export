@@ -53,9 +53,6 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
       notificationsFiltered.push(notification);
     }
   }
-  useEffect(() => {
-    console.log(notifications);
-  }, [notifications]);
   return (
     <StyledRect
       height={26}
