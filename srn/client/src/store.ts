@@ -131,7 +131,7 @@ export const useStore = create<SrnState>((set) => ({
   portrait: lsPortrait,
   trigger: 0,
   volume: lsMusicVolume,
-  questWindow: WindowState.Minimized,
+  questWindow: WindowState.Hidden,
   promptWindow: WindowState.Hidden,
   promptWindowParams: ['', () => {}, () => {}],
   chatWindow: WindowState.Minimized,

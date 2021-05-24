@@ -410,7 +410,7 @@ pub struct Quest {
 
 impl Quest {
     pub fn as_notification(&self) -> Notification {
-        let text = format!("Deliver the goods from\ns_cargo_source_planet to\ns_cargo_destination_planet\nReward: {}", self.reward);
+        let text = format!("You've been tasked with delivering a cargo from one planet to another. Here's what you need:\n\n1. Pick up the cargo at s_cargo_source_planet.\n2. Drop off the cargo at s_cargo_destination_planet.\n\nYour employer, who wished to remain anonymous, will reward you: {} SB", self.reward);
         Notification::Task {
             header: "Delivery quest".to_string(),
             text: NotificationText {
