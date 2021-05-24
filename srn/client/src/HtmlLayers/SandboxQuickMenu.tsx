@@ -158,42 +158,42 @@ export const SandboxQuickMenu = () => {
           icon: <GiStarProminences />,
           handler: () => ns.sendSandboxCmd(SandboxCommandName.AddStar),
         },
-        {
-          text: `Add a ${planetType} planet sp. ${planetSpeed}`,
-          icon: <BiPlanet />,
-          handler: () => {
-            if (anchor) {
-              ns.sendSandboxCmd({
-                [SandboxCommandName.AddPlanet]: {
-                  p_type: planetType,
-                  radius: 5.0,
-                  anchor_id: anchor,
-                  orbit_speed: planetSpeed,
-                },
-              });
-            }
-          },
-        },
-        {
-          text: 'Toggle planet type',
-          noHide: true,
-          icon: <CgCodeClimate />,
-          handler: () => {
-            setPlanetType((pt) => {
-              return cyclePlanetType(pt);
-            });
-          },
-        },
-        {
-          text: 'Toggle planet speed',
-          noHide: true,
-          icon: <IoIosSpeedometer />,
-          handler: () => {
-            setPlanetSpeed((pt) => {
-              return cyclePlanetSpeed(pt);
-            });
-          },
-        },
+        // {
+        //   text: `Add a ${planetType} planet sp. ${planetSpeed}`,
+        //   icon: <BiPlanet />,
+        //   handler: () => {
+        //     if (anchor) {
+        //       ns.sendSandboxCmd({
+        //         [SandboxCommandName.AddPlanet]: {
+        //           p_type: planetType,
+        //           radius: 5.0,
+        //           anchor_id: anchor,
+        //           orbit_speed: planetSpeed,
+        //         },
+        //       });
+        //     }
+        //   },
+        // },
+        // {
+        //   text: 'Toggle planet type',
+        //   noHide: true,
+        //   icon: <CgCodeClimate />,
+        //   handler: () => {
+        //     setPlanetType((pt) => {
+        //       return cyclePlanetType(pt);
+        //     });
+        //   },
+        // },
+        // {
+        //   text: 'Toggle planet speed',
+        //   noHide: true,
+        //   icon: <IoIosSpeedometer />,
+        //   handler: () => {
+        //     setPlanetSpeed((pt) => {
+        //       return cyclePlanetSpeed(pt);
+        //     });
+        //   },
+        // },
       ],
     },
     {
