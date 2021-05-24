@@ -17,10 +17,11 @@ use crate::inventory::{
 use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
+use crate::substitutions::{index_state_for_substitution, substitute_text};
 use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
-    find_player_and_ship, find_player_and_ship_mut, generate_random_quest, CargoDeliveryQuestState,
-    GameEvent, GameState, Planet, Player, PlayerId,
+    find_player_and_ship, find_player_and_ship_mut, generate_random_quest, index_planets_by_id,
+    CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId, Ship,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -295,6 +296,9 @@ pub fn build_dialogue_from_state(
     player_id: PlayerId,
     game_state: &GameState,
 ) -> Option<Dialogue> {
+    let (planets_by_id, players_by_id, players_to_current_planets, ships_by_player_id, _) =
+        index_state_for_substitution(game_state);
+
     let satisfied_conditions = check_trigger_conditions(game_state, player_id);
     let script = dialogue_table.scripts.get(&dialogue_id);
     let player = find_my_player(game_state, player_id);
@@ -311,49 +315,34 @@ pub fn build_dialogue_from_state(
             } else {
                 None
             };
+
+            let (subs, prompt) = substitute_text(
+                &prompt,
+                player_id,
+                &players_to_current_planets,
+                &players_by_id,
+                &planets_by_id,
+                &ships_by_player_id,
+            );
+
+            let prompt = DialogueElem {
+                text: prompt,
+                id: new_id(),
+                is_option: false,
+                substitution: subs,
+            };
             let result = Dialogue {
                 id: dialogue_id.clone(),
-                options: options
-                    .clone()
-                    .into_iter()
-                    .filter_map(|(id, text, condition)| {
-                        if let Some(condition) = condition {
-                            if satisfied_conditions.contains(&condition) {
-                                Some(DialogueElem {
-                                    substitution: substitute_text(
-                                        &text,
-                                        &current_planet,
-                                        player,
-                                        game_state,
-                                    ),
-                                    text,
-                                    id,
-                                    is_option: true,
-                                })
-                            } else {
-                                None
-                            }
-                        } else {
-                            Some(DialogueElem {
-                                substitution: substitute_text(
-                                    &text,
-                                    &current_planet,
-                                    player,
-                                    game_state,
-                                ),
-                                text,
-                                id,
-                                is_option: true,
-                            })
-                        }
-                    })
-                    .collect::<Vec<_>>(),
-                prompt: DialogueElem {
-                    text: prompt.clone(),
-                    id: new_id(),
-                    is_option: false,
-                    substitution: substitute_text(&prompt, &current_planet, player, game_state),
-                },
+                options: build_dialogue_options(
+                    player_id,
+                    &planets_by_id,
+                    &players_by_id,
+                    &players_to_current_planets,
+                    &ships_by_player_id,
+                    satisfied_conditions,
+                    options,
+                ),
+                prompt: prompt,
                 planet: current_planet,
                 left_character: format!("{}", {
                     player.map_or("question.png".to_string(), |p| {
@@ -368,101 +357,56 @@ pub fn build_dialogue_from_state(
     return None;
 }
 
-fn substitute_text(
-    text: &String,
-    current_planet: &Option<Planet>,
-    player: Option<&Player>,
-    game_state: &GameState,
-) -> Vec<Substitution> {
-    let mut res = vec![];
-    let re = &crate::SUB_RE;
-    for cap in re.captures_iter(text.as_str()) {
-        if cap[0] == *"s_current_planet" {
-            if let Some(current_planet) = current_planet {
-                res.push(Substitution {
-                    target_id: None,
-                    s_type: SubstitutionType::PlanetName,
-                    id: current_planet.id,
-                    text: current_planet.name.clone(),
-                })
-            } else {
-                eprintln!("s_current_planet used without current planet");
-            }
-        } else if cap[0] == *"s_current_planet_body_type" {
-            if let Some(current_planet) = current_planet {
-                res.push(Substitution {
-                    target_id: None,
-                    s_type: SubstitutionType::Generic,
-                    id: current_planet.id,
-                    text: (if current_planet.anchor_tier == 1 {
-                        "planet"
-                    } else {
-                        "moon"
+fn build_dialogue_options(
+    player_id: Uuid,
+    planets_by_id: &HashMap<Uuid, &Planet>,
+    players_by_id: &HashMap<Uuid, &Player>,
+    players_to_current_planets: &HashMap<Uuid, &Planet>,
+    ships_by_player_id: &HashMap<Uuid, &Ship>,
+    satisfied_conditions: HashSet<TriggerCondition>,
+    options: &Vec<(Uuid, String, Option<TriggerCondition>)>,
+) -> Vec<DialogueElem> {
+    options
+        .clone()
+        .into_iter()
+        .filter_map(|(id, text, condition)| {
+            if let Some(condition) = condition {
+                if satisfied_conditions.contains(&condition) {
+                    let (subs, text) = substitute_text(
+                        &text,
+                        player_id,
+                        &players_to_current_planets,
+                        &players_by_id,
+                        &planets_by_id,
+                        &ships_by_player_id,
+                    );
+                    Some(DialogueElem {
+                        substitution: subs,
+                        text,
+                        id,
+                        is_option: true,
                     })
-                    .to_string(),
-                });
-            } else {
-                eprintln!("s_current_planet_body_type used without current planet");
-            }
-        } else if cap[0] == *"s_cargo_destination_planet" {
-            if let Some(cargo_destination_planet) = player
-                .and_then(|p| p.quest.clone())
-                .and_then(|q| find_planet(game_state, &q.to_id))
-            {
-                let cargo_destination_planet = cargo_destination_planet.clone();
-                res.push(Substitution {
-                    target_id: None,
-                    s_type: SubstitutionType::PlanetName,
-                    id: cargo_destination_planet.id,
-                    text: cargo_destination_planet.name,
-                });
-            } else {
-                eprintln!("s_cargo_destination_planet used without destination planet!");
-            }
-        } else if cap[0] == *"s_random_name" {
-            res.push(Substitution {
-                target_id: None,
-                s_type: SubstitutionType::CharacterName,
-                id: new_id(),
-                text: gen_random_character_name().to_string(),
-            });
-        } else if cap[0] == *"s_minerals_amount" {
-            if let Some(player) = player {
-                if let Some(ship) = find_my_ship(game_state, player.id) {
-                    res.push(Substitution {
-                        target_id: None,
-                        s_type: SubstitutionType::Generic,
-                        id: new_id(),
-                        text: count_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())
-                            .to_string(),
-                    });
                 } else {
-                    err!("s_minerals_amount used without ship");
+                    None
                 }
             } else {
-                err!("s_minerals_amount used without player");
+                let (subs, text) = substitute_text(
+                    &text,
+                    player_id,
+                    &players_to_current_planets,
+                    &players_by_id,
+                    &planets_by_id,
+                    &ships_by_player_id,
+                );
+                Some(DialogueElem {
+                    substitution: subs,
+                    text,
+                    id,
+                    is_option: true,
+                })
             }
-        } else if cap[0] == *"s_minerals_value" {
-            if let Some(player) = player {
-                if let Some(ship) = find_my_ship(game_state, player.id) {
-                    res.push(Substitution {
-                        target_id: None,
-                        s_type: SubstitutionType::Generic,
-                        id: new_id(),
-                        text: value_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())
-                            .to_string(),
-                    });
-                } else {
-                    err!("s_minerals_value used without ship");
-                }
-            } else {
-                err!("s_minerals_value used without player");
-            }
-        } else {
-            eprintln!("Unknown substitution {}", cap[0].to_string());
-        }
-    }
-    res
+        })
+        .collect::<Vec<_>>()
 }
 
 fn apply_dialogue_option(

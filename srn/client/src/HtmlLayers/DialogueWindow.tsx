@@ -11,7 +11,7 @@ import {
 } from '../ThreeLayers/CameraControls';
 import NetState from '../NetState';
 import { makePortraitPath } from './StartMenu';
-import { Dialogue, DialogueElem, Substitution } from '../world';
+import { Dialogue, DialogueElem } from '../world';
 import { useStore, WindowState } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
 import { Vector3 } from 'three';

@@ -6,7 +6,10 @@ use crate::dialogue_dto::{Substitution, SubstitutionType};
 use crate::inventory::{count_items_of_types, value_items_of_types, MINERAL_TYPES};
 use crate::new_id;
 use crate::random_stuff::gen_random_character_name;
-use crate::world::{index_planets_by_id, index_players_by_id, GameState, Planet, Player, Ship};
+use crate::world::{
+    index_all_planets_by_id, index_all_ships_by_id, index_planets_by_id, index_players_by_id,
+    index_ships_by_id, GameState, Planet, Player, Ship,
+};
 use regex::{Captures, Match};
 use std::mem;
 
@@ -169,23 +172,11 @@ fn inject_sub_text(target: &mut String, start: usize, end: usize, injected_id: U
     mem::swap(target, &mut joined);
 }
 
-/*
-inject
-Deliver the goods from s_cargo_source_planet to s_cargo_destination_planet
-start 23 end 44
-inject
-Deliver the goods from s_0a911af4-3ed5-4793-afc8-2d7a1a48476e to s_cargo_destination_planet
-start 48 end 74
-*/
-
 pub fn substitute_notification_texts(state: &mut GameState, player_id: Option<Uuid>) {
-    let mut all_planets = vec![];
-    for mut loc in state.locations.clone().into_iter() {
-        all_planets.append(&mut loc.planets);
-    }
-    let planets_by_id = index_planets_by_id(&all_planets);
-    let players_state_clone = state.players.clone();
-    let players_by_id = index_players_by_id(&players_state_clone);
+    let indexed_state = state.clone();
+    let (planets_by_id, players_by_id, players_to_current_planets, ships_by_player_id, _) =
+        index_state_for_substitution(&indexed_state);
+
     for player in state
         .players
         .iter_mut()
@@ -197,10 +188,10 @@ pub fn substitute_notification_texts(state: &mut GameState, player_id: Option<Uu
                     let (sub_res, text_res) = substitute_text(
                         &text.text,
                         player.id,
-                        &HashMap::new(),
+                        &players_to_current_planets,
                         &players_by_id,
                         &planets_by_id,
-                        &HashMap::new(),
+                        &ships_by_player_id,
                     );
                     text.text = text_res;
                     text.substitutions = sub_res;
@@ -209,4 +200,42 @@ pub fn substitute_notification_texts(state: &mut GameState, player_id: Option<Uu
             }
         }
     }
+}
+
+pub fn index_state_for_substitution(
+    state: &GameState,
+) -> (
+    HashMap<Uuid, &Planet>,
+    HashMap<Uuid, &Player>,
+    HashMap<Uuid, &Planet>,
+    HashMap<Uuid, &Ship>,
+    HashMap<Uuid, &Ship>,
+) {
+    let mut planets_by_id = index_all_planets_by_id(&state.locations);
+    let players_state_clone = &state.players;
+    let players_by_id = index_players_by_id(&players_state_clone);
+    let mut players_to_current_planets = HashMap::new();
+    let mut ships_by_player_id = HashMap::new();
+    let ships_by_id = index_all_ships_by_id(&state.locations);
+
+    for player in state.players.iter() {
+        if let Some(ship_id) = player.ship_id {
+            if let Some(ship) = ships_by_id.get(&ship_id) {
+                ships_by_player_id.insert(ship_id, *ship);
+                if let Some(docked_at) = ship.docked_at {
+                    if let Some(planet) = planets_by_id.get(&docked_at) {
+                        players_to_current_planets.insert(player.id, *planet);
+                    }
+                }
+            }
+        }
+    }
+
+    (
+        planets_by_id,
+        players_by_id,
+        players_to_current_planets,
+        ships_by_player_id,
+        ships_by_id,
+    )
 }
