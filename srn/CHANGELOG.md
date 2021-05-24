@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.6.7 (2021-05-24)
+
+### New
+* Quest window is now replaced with a permanent quest notification.
+
 ## Version 0.6.7 (2021-05-14)
 
 ### New
