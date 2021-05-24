@@ -21,23 +21,26 @@ pub fn substitute_text(
     let mut text_res = text.clone();
     let mut sub_res = vec![];
     let re = &crate::SUB_RE;
+    let mut injects = vec![];
     for cap in re.captures_iter(text.as_str()) {
         if cap[0] == *"s_current_planet" {
             if let Some(current_planet) = players_to_current_planets.get(&player_id) {
+                let id = new_id();
                 sub_res.push(Substitution {
                     s_type: SubstitutionType::PlanetName,
-                    id: current_planet.id,
+                    id,
                     text: current_planet.name.clone(),
                 });
-                inject_sub_text(&mut text_res, cap.get(0).clone(), current_planet.id);
+                injects.push((cap.get(0).clone(), id));
             } else {
                 eprintln!("s_current_planet used without current planet");
             }
         } else if cap[0] == *"s_current_planet_body_type" {
             if let Some(current_planet) = players_to_current_planets.get(&player_id) {
+                let id = new_id();
                 sub_res.push(Substitution {
                     s_type: SubstitutionType::Generic,
-                    id: current_planet.id,
+                    id,
                     text: (if current_planet.anchor_tier == 1 {
                         "planet"
                     } else {
@@ -45,7 +48,7 @@ pub fn substitute_text(
                     })
                     .to_string(),
                 });
-                inject_sub_text(&mut text_res, cap.get(0).clone(), current_planet.id);
+                injects.push((cap.get(0).clone(), id));
             } else {
                 eprintln!("s_current_planet_body_type used without current planet");
             }
@@ -55,13 +58,13 @@ pub fn substitute_text(
                 .and_then(|p| p.quest.clone())
                 .and_then(|q| planets_by_id.get(&q.to_id))
             {
-                let dest_planet = cargo_destination_planet.clone();
+                let id = new_id();
                 sub_res.push(Substitution {
                     s_type: SubstitutionType::PlanetName,
-                    id: dest_planet.id,
+                    id,
                     text: cargo_destination_planet.name.clone(),
                 });
-                inject_sub_text(&mut text_res, cap.get(0).clone(), dest_planet.id);
+                injects.push((cap.get(0).clone(), id));
             } else {
                 eprintln!("s_cargo_destination_planet used without destination planet!");
             }
@@ -71,13 +74,13 @@ pub fn substitute_text(
                 .and_then(|p| p.quest.clone())
                 .and_then(|q| planets_by_id.get(&q.from_id))
             {
-                let source_planet = cargo_source_planet.clone();
+                let id = new_id();
                 sub_res.push(Substitution {
                     s_type: SubstitutionType::PlanetName,
-                    id: source_planet.id,
+                    id,
                     text: cargo_source_planet.name.clone(),
                 });
-                inject_sub_text(&mut text_res, cap.get(0).clone(), source_planet.id);
+                injects.push((cap.get(0).clone(), id));
             } else {
                 eprintln!("s_cargo_destination_planet used without destination planet!");
             }
@@ -88,7 +91,7 @@ pub fn substitute_text(
                 id: uuid,
                 text: gen_random_character_name().to_string(),
             });
-            inject_sub_text(&mut text_res, cap.get(0).clone(), uuid);
+            injects.push((cap.get(0).clone(), uuid));
         } else if cap[0] == *"s_minerals_amount" {
             if let Some(ship) = ships_by_player_id.get(&player_id) {
                 let uuid = new_id();
@@ -98,7 +101,7 @@ pub fn substitute_text(
                     text: count_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())
                         .to_string(),
                 });
-                inject_sub_text(&mut text_res, cap.get(0).clone(), uuid);
+                injects.push((cap.get(0).clone(), uuid));
             } else {
                 err!("s_minerals_amount used without ship");
             }
@@ -111,7 +114,7 @@ pub fn substitute_text(
                     text: value_items_of_types(&ship.inventory, &MINERAL_TYPES.to_vec())
                         .to_string(),
                 });
-                inject_sub_text(&mut text_res, cap.get(0).clone(), uuid);
+                injects.push((cap.get(0).clone(), uuid));
             } else {
                 err!("s_minerals_value used without ship");
             }
@@ -119,20 +122,36 @@ pub fn substitute_text(
             eprintln!("Unknown substitution {}", cap[0].to_string());
         }
     }
+    const ID_LENGTH: usize = 36;
+    let mut accumulated_shift = 0;
+    for inject in injects {
+        let (cap, id) = inject;
+        let cap = cap.unwrap();
+        let cap_len = cap.as_str().len();
+        assert!(cap_len < ID_LENGTH + 2);
+        inject_sub_text(
+            &mut text_res,
+            cap.start() + accumulated_shift,
+            cap.end() + accumulated_shift,
+            id,
+        );
+        // Due to the difference in length, the moment first cap is replaced,
+        // all other locations become invalid.
+        // To combat it, we 'shift' everything to the right by the diff.
+        let diff = ID_LENGTH + 2 - cap_len;
+        accumulated_shift += diff;
+    }
     (sub_res, text_res)
 }
 
-fn inject_sub_text(target: &mut String, cap0: Option<Match>, injected_id: Uuid) {
-    let cap0 = cap0.unwrap();
-    let start = cap0.start();
-    let end = cap0.end();
+fn inject_sub_text(target: &mut String, start: usize, end: usize, injected_id: Uuid) {
+    //eprintln!("inject {} start {} end {}", target, start, end);
     let len = end - start;
     let injected_id_str = injected_id.to_string();
     let injected_id_bytes = injected_id_str.clone().into_bytes();
     let replaced_id_substr = (&injected_id_str[0..len]).to_string().into_bytes();
     let mut bytes = target.clone().into_bytes();
     // s_123123, so 2 characters has to be skipped and 2 less replaced
-    // this code assumes that the substitution length is less than 36 (UUID length).
     for i in start..(end - 2) {
         bytes[i + 2] = replaced_id_substr[i - start]
     }
@@ -140,9 +159,17 @@ fn inject_sub_text(target: &mut String, cap0: Option<Match>, injected_id: Uuid) 
         bytes.insert(start + i + 2, injected_id_bytes[i]);
     }
     let mut joined = String::from_utf8(bytes).unwrap();
-    eprintln!("Original {}, injected {}", target, joined);
     mem::swap(target, &mut joined);
 }
+
+/*
+inject
+Deliver the goods from s_cargo_source_planet to s_cargo_destination_planet
+start 23 end 44
+inject
+Deliver the goods from s_0a911af4-3ed5-4793-afc8-2d7a1a48476e to s_cargo_destination_planet
+start 48 end 74
+*/
 
 pub fn substitute_notification_texts(state: &mut GameState, player_id: Option<Uuid>) {
     let mut all_planets = vec![];
