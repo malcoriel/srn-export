@@ -211,7 +211,7 @@ pub fn index_state_for_substitution(
     HashMap<Uuid, &Ship>,
     HashMap<Uuid, &Ship>,
 ) {
-    let mut planets_by_id = index_all_planets_by_id(&state.locations);
+    let planets_by_id = index_all_planets_by_id(&state.locations);
     let players_state_clone = &state.players;
     let players_by_id = index_players_by_id(&players_state_clone);
     let mut players_to_current_planets = HashMap::new();

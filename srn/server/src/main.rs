@@ -804,11 +804,9 @@ fn make_new_human_player(conn_id: Uuid) {
         let mut cont = STATE.write().unwrap();
         world::add_player(&mut cont.state, conn_id, false, None);
     }
-    let (ship, planets) = {
-        let mut cont = STATE.write().unwrap();
-        let ship = world::spawn_ship(&mut cont.state, conn_id, None).clone();
-        (ship, cont.state.locations[0].planets.clone())
-    };
+
+    let mut cont = STATE.write().unwrap();
+    world::spawn_ship(&mut cont.state, conn_id, None);
 }
 
 fn remove_player(conn_id: Uuid) {
