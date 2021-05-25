@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.6.9 (2021-05-26)
+
+### New
+* Subtle main menu background.
+
+### Fixes
+* Temporary removed sandbox commands causing client crashes.
+
 ## Version 0.6.8 (2021-05-24)
 
 ### New
