@@ -36,9 +36,9 @@ import { SandboxQuickMenu } from './HtmlLayers/SandboxQuickMenu';
 import { TradeWindow } from './HtmlLayers/TradeWindow';
 import { PromptWindow } from './HtmlLayers/PromptWindow';
 import { useResourcesLoading } from './utils/useResourcesLoading';
-import { TestMenu, TestUI } from './TestUI/TestUI';
 import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 import { LongActionsDisplay } from './HtmlLayers/LongActionsDisplay';
+import { StartMenuBackground } from './StartMenuBackground';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -270,6 +270,7 @@ const Srn = () => {
               startSandbox={() => start(GameMode.Sandbox)}
             />
           )}
+          {!playing && <StartMenuBackground />}
         </div>
       </Suspense>
     </>

@@ -9,9 +9,11 @@ import { CAMERA_HEIGHT } from './CameraControls';
 const uniforms: {
   shift: FloatUniformValue;
   size: FloatUniformValue;
+  boost: FloatUniformValue;
 } = {
   shift: { value: 0.0 },
   size: { value: 256.0 },
+  boost: { value: 1.0 },
 };
 const vertexShader = `#version 300 es
 precision highp float;
@@ -40,6 +42,7 @@ precision highp int;
 
 uniform float size;
 uniform float shift;
+uniform float boost;
 
 in vec2 relativeObjectCoord;
 out vec4 FragColor;
@@ -126,7 +129,7 @@ void main()
 {
     float du = 0.25 / size;
     vec2 uv = (relativeObjectCoord - 0.5) * 2.0 + shift;
-    FragColor = vec4(StarField(uv, du), 1.0);
+    FragColor = vec4(StarField(uv, du) * boost, 1.0);
 }
 `;
 
@@ -134,14 +137,16 @@ export const ThreeSpaceBackground: React.FC<{
   shift: number;
   size: number;
   cameraBound?: boolean;
-}> = ({ shift, size, cameraBound }) => {
+  boost?: number;
+  animationSpeed?: number;
+}> = ({ shift, size, cameraBound, animationSpeed, boost = 1.0 }) => {
   const mesh = useRef<Mesh>();
 
   useFrame(() => {
     if (mesh.current) {
       const material = mesh.current.material as ShaderMaterial;
-      if (material.uniforms && material.uniforms.time) {
-        material.uniforms.time.value += 1;
+      if (animationSpeed) {
+        material.uniforms.shift.value += animationSpeed / 1000 / 600;
       }
     }
   });
@@ -150,8 +155,9 @@ export const ThreeSpaceBackground: React.FC<{
     const patchedUniforms = _.cloneDeep(uniforms);
     patchedUniforms.size.value = size;
     patchedUniforms.shift.value = shift;
+    patchedUniforms.boost.value = boost;
     return patchedUniforms;
-  }, [shift, size]);
+  }, [shift, size, boost]);
 
   const meshZ = cameraBound ? -(CAMERA_HEIGHT + 10) : -10;
   const backgroundPlaneMesh = (
