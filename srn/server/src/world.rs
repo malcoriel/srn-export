@@ -76,6 +76,7 @@ pub enum ShipActionRust {
     Navigate(Vec2f64),
     DockNavigate(Uuid),
     Tractor(Uuid),
+    //Shoot(Uuid),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,6 +87,7 @@ pub enum ShipActionType {
     Navigate = 3,
     DockNavigate = 4,
     Tractor = 5,
+    //Shoot = 6,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
