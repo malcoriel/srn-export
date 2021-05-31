@@ -11,6 +11,7 @@ import {
   setLSValue,
 } from './utils/useLocalStorage';
 import React from 'react';
+import { GlobalContextMenuItem } from './ThreeLayers/blocks/ThreeInteractor';
 
 export function genRandomName() {
   return uniqueNamesGenerator({
@@ -92,8 +93,8 @@ export type SrnState = {
   setTestMenuMode: (val: TestMenuMode) => void;
   contextMenuRef: React.RefObject<any>;
   setContextMenuRef: (ref: React.RefObject<any>) => void;
-  contextMenuItems: any[];
-  setContextMenuItems: (items: any[]) => void;
+  contextMenuItems: GlobalContextMenuItem[];
+  setContextMenuItems: (items: GlobalContextMenuItem[]) => void;
 };
 
 export enum TestMenuMode {
@@ -224,7 +225,8 @@ export const useStore = create<SrnState>((set) => ({
   setPlaying: (val: boolean) => set({ playing: val }),
   setContextMenuRef: (ref: React.RefObject<any>) =>
     set({ contextMenuRef: ref }),
-  setContextMenuItems: (items: any[]) => set({ contextMenuItems: items }),
+  setContextMenuItems: (items: GlobalContextMenuItem[]) =>
+    set({ contextMenuItems: items }),
 
   nextPortrait: () =>
     set((state) => {

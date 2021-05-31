@@ -34,10 +34,17 @@ const DEFAULT_OUTLINE_COLOR = 'red';
 
 type InteractorSelectFn = (objectId: string, val: boolean) => void;
 
+export interface GlobalContextMenuItem {
+  id: string;
+  text: string;
+  onClick: () => void;
+}
+
 export const GlobalContextMenu = () => {
   const menuAnchorRef = useStore((state) => state.contextMenuRef);
   const isMenuOpen = useStore((state) => state.contextMenuItems.length > 0);
   const items = useStore((state) => state.contextMenuItems);
+  const setContextMenuItems = useStore((state) => state.setContextMenuItems);
   return (
     <ControlledMenu
       animation={false}
@@ -45,7 +52,9 @@ export const GlobalContextMenu = () => {
       isOpen={isMenuOpen}
     >
       {items.map((item, i) => (
-        <MenuItem key={_.isNil(item.id) ? i : item.id}>{item.text}</MenuItem>
+        <MenuItem onClick={item.onClick} key={_.isNil(item.id) ? i : item.id}>
+          {item.text}
+        </MenuItem>
       ))}
     </ControlledMenu>
   );
@@ -116,14 +125,29 @@ export const ThreeInteractor = ({
   useEffect(() => {
     if (menuShown && menuAnchorRef.current) {
       setContextMenuRef(menuAnchorRef);
-      setContextMenuItems([{ text: 1 }, { text: 2 }]);
+      const items = [...(actions?.entries() || [])].map(([key, fn]) => ({
+        text: InteractorActionType[key],
+        onClick: () => {
+          fn(objectId);
+          setMenuShown(false);
+        },
+        id: key.toString(),
+      }));
+      setContextMenuItems(items);
     } else {
       setContextMenuItems([]);
       setTimeout(() => {
         setContextMenuRef({ current: null });
       }, 0);
     }
-  }, [menuAnchorRef, menuShown, setContextMenuItems, setContextMenuRef]);
+  }, [
+    objectId,
+    menuAnchorRef,
+    menuShown,
+    setContextMenuItems,
+    setContextMenuRef,
+    actions,
+  ]);
   return (
     <group
       onClick={onLeftClick}
