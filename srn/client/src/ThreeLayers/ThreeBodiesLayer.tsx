@@ -11,6 +11,7 @@ import {
 } from './ThreePlanetShape';
 import { actionsActive } from '../utils/ShipControls';
 import { VisualState } from '../NetState';
+import { InteractorActionType } from './blocks/ThreeInteractor';
 
 // from random_stuff.rs
 export const possibleGasGiantColors = [
@@ -47,6 +48,24 @@ export const possibleGasGiantColors = [
   '#D8A47F',
   '#EF8354',
 ];
+
+const mineralActionsMap = new Map([
+  [
+    InteractorActionType.Tractor,
+    (objectId: string) => {
+      actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(objectId);
+    },
+  ],
+]);
+
+const containerActionsMap = new Map([
+  [
+    InteractorActionType.Tractor,
+    (objectId: string) => {
+      actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(objectId);
+    },
+  ],
+]);
 
 export const ThreeBodiesLayer: React.FC<{
   state: GameState;
@@ -115,6 +134,9 @@ export const ThreeBodiesLayer: React.FC<{
           colors={[m.color]}
           modelName="asteroid.glb"
           meshes={['2']}
+          interactor={{
+            actions: mineralActionsMap,
+          }}
         />
       ))}
       {containers.map((c) => (
@@ -126,6 +148,9 @@ export const ThreeBodiesLayer: React.FC<{
           modelName="container.glb"
           meshes={['0.children.0', '0.children.1', '0.children.2']}
           scale={0.002}
+          interactor={{
+            actions: containerActionsMap,
+          }}
         />
       ))}
       {/*{asteroids.map((a: Asteroid) => (*/}

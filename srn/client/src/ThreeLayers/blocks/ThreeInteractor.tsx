@@ -3,9 +3,7 @@ import { useStore } from '../../store';
 import { Color } from 'three';
 import { MouseEvent } from 'react-three-fiber/canvas';
 import { Html } from '@react-three/drei';
-import { ControlledMenu, MenuItem } from '@szhsin/react-menu';
 import '@szhsin/react-menu/dist/index.css';
-import _ from 'lodash';
 
 export enum InteractorActionType {
   Unknown,
@@ -29,35 +27,10 @@ export interface ThreeInteractorProps {
   outlineColor?: string;
 }
 
-const DEFAULT_OUTLINE_THICKNESS = 0.5;
+const DEFAULT_OUTLINE_THICKNESS = 0.1;
 const DEFAULT_OUTLINE_COLOR = 'red';
 
 type InteractorSelectFn = (objectId: string, val: boolean) => void;
-
-export interface GlobalContextMenuItem {
-  id: string;
-  text: string;
-  onClick: () => void;
-}
-
-export const GlobalContextMenu = () => {
-  const menuAnchorRef = useStore((state) => state.contextMenuRef);
-  const isMenuOpen = useStore((state) => state.contextMenuItems.length > 0);
-  const items = useStore((state) => state.contextMenuItems);
-  return (
-    <ControlledMenu
-      animation={false}
-      anchorRef={menuAnchorRef}
-      isOpen={isMenuOpen}
-    >
-      {items.map((item, i) => (
-        <MenuItem onClick={item.onClick} key={_.isNil(item.id) ? i : item.id}>
-          {item.text}
-        </MenuItem>
-      ))}
-    </ControlledMenu>
-  );
-};
 
 export const ThreeInteractor = ({
   objectId,
@@ -165,7 +138,7 @@ export const ThreeInteractor = ({
           args={[
             radius - outlineThickness,
             radius + outlineThickness,
-            radius * 2,
+            Math.max(16, radius * 2),
           ]}
         />
         <meshBasicMaterial

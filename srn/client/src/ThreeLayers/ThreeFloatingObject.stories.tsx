@@ -6,11 +6,9 @@ import { ThreeFloatingObject } from './ThreeFloatingObject';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { rare } from '../utils/palette';
-import {
-  GlobalContextMenu,
-  InteractorActionType,
-} from './blocks/ThreeInteractor';
+import { InteractorActionType } from './blocks/ThreeInteractor';
 import _ from 'lodash';
+import { GlobalContextMenu } from '../HtmlLayers/GlobalContextMenu';
 
 export default {
   title: 'Three/ThreeFloatingObject',

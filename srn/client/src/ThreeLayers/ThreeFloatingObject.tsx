@@ -1,8 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame, useLoader, Vector3 } from 'react-three-fiber';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { ShipAction, ShipActionType } from '../world';
-import { actionsActive } from '../utils/ShipControls';
 import _ from 'lodash';
 import { Color, Group, Mesh, MeshBasicMaterial } from 'three';
 import {
@@ -65,12 +63,8 @@ export const ThreeFloatingObject: React.FC<{
     }
   });
 
-  const onClick = (ev: any) => {
-    actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(gid);
-    ev.stopPropagation();
-  };
   return (
-    <group position={position} onClick={onClick}>
+    <group position={position}>
       {interactor && (
         <ThreeInteractor
           objectId={gid}

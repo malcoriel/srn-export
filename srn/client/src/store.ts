@@ -11,7 +11,7 @@ import {
   setLSValue,
 } from './utils/useLocalStorage';
 import React from 'react';
-import { GlobalContextMenuItem } from './ThreeLayers/blocks/ThreeInteractor';
+import { GlobalContextMenuItem } from './HtmlLayers/GlobalContextMenu';
 
 export function genRandomName() {
   return uniqueNamesGenerator({
