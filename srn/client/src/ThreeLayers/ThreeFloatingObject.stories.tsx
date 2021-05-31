@@ -2,14 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
-import { ThreeFloatingObject2 } from './ThreeFloatingObject2';
+import { ThreeFloatingObject } from './ThreeFloatingObject';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { rare } from '../utils/palette';
 
 export default {
-  title: 'Three/ThreeFloatingObject2',
-  component: ThreeFloatingObject2,
+  title: 'Three/ThreeFloatingObject',
+  component: ThreeFloatingObject,
   argTypes: {},
 } as Meta;
 
@@ -22,7 +22,7 @@ const Template: Story = (args) => {
     <div>
       <StoryCanvas>
         <ThreeSpaceBackground size={256} shift={0} />
-        <ThreeFloatingObject2
+        <ThreeFloatingObject
           modelName={args.modelName}
           radius={40}
           gid="1"

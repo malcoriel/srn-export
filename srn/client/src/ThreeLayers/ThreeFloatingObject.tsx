@@ -7,7 +7,7 @@ import { useStore } from '../store';
 import _ from 'lodash';
 import { Color, Group, Mesh, MeshBasicMaterial } from 'three';
 
-export const ThreeFloatingObject2: React.FC<{
+export const ThreeFloatingObject: React.FC<{
   position: Vector3;
   radius: number;
   scale: number;
