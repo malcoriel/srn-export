@@ -3,7 +3,7 @@ import { useStore } from '../../store';
 import { Color } from 'three';
 import { MouseEvent } from 'react-three-fiber/canvas';
 import { Html } from '@react-three/drei';
-import { ControlledMenu, MenuItem, MenuButton } from '@szhsin/react-menu';
+import { ControlledMenu, MenuItem } from '@szhsin/react-menu';
 import '@szhsin/react-menu/dist/index.css';
 import _ from 'lodash';
 
@@ -44,7 +44,6 @@ export const GlobalContextMenu = () => {
   const menuAnchorRef = useStore((state) => state.contextMenuRef);
   const isMenuOpen = useStore((state) => state.contextMenuItems.length > 0);
   const items = useStore((state) => state.contextMenuItems);
-  const setContextMenuItems = useStore((state) => state.setContextMenuItems);
   return (
     <ControlledMenu
       animation={false}
