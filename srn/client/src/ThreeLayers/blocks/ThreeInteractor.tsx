@@ -2,17 +2,6 @@ import React, { ReactNode, useMemo, useState } from 'react';
 import { useStore } from '../../store';
 import { Color } from 'three';
 
-interface ThreeInteractorOutlineProps {
-  onHover: ((objectId: string) => void) | undefined;
-  objectId: string;
-  onBlur: ((objectId: string) => void) | undefined;
-  radius: number;
-  // eslint-disable-next-line react/require-default-props
-  outlineThickness?: number;
-  // eslint-disable-next-line react/require-default-props
-  outlineColor?: string;
-}
-
 export enum InteractorActionType {
   Unknown,
   Select,
@@ -29,12 +18,33 @@ export interface ThreeInteractorProps {
   hint?: ReactNode;
   onHover?: InteractorActionFn;
   onBlur?: InteractorActionFn;
+  onReportSelected?: InteractorSelectFn;
+  isSelected?: boolean;
   outlineThickness?: number;
   outlineColor?: string;
 }
 
 const DEFAULT_OUTLINE_THICKNESS = 0.5;
 const DEFAULT_OUTLINE_COLOR = 'red';
+
+type InteractorSelectFn = (objectId: string, val: boolean) => void;
+
+interface ThreeInteractorOutlineProps {
+  onHover: ((objectId: string) => void) | undefined;
+  objectId: string;
+  onBlur: ((objectId: string) => void) | undefined;
+  radius: number;
+  // eslint-disable-next-line react/require-default-props
+  outlineThickness?: number;
+  // eslint-disable-next-line react/require-default-props
+  outlineColor?: string;
+  // eslint-disable-next-line react/require-default-props
+  actions?: Map<InteractorActionType, InteractorActionFn>;
+  // eslint-disable-next-line react/require-default-props
+  isSelected?: boolean;
+  // eslint-disable-next-line react/require-default-props
+  onReportSelected?: InteractorSelectFn;
+}
 
 export const ThreeInteractorOutline = ({
   onHover,
@@ -43,6 +53,9 @@ export const ThreeInteractorOutline = ({
   radius,
   outlineThickness = DEFAULT_OUTLINE_THICKNESS,
   outlineColor = DEFAULT_OUTLINE_COLOR,
+  actions,
+  onReportSelected,
+  isSelected,
 }: ThreeInteractorOutlineProps) => {
   const setHintedObjectId = useStore((state) => state.setHintedObjectId);
 
@@ -62,9 +75,18 @@ export const ThreeInteractorOutline = ({
     onPointerOutExternal();
   };
 
+  const selectOnLeftClick = actions && actions.get(InteractorActionType.Select);
+  const onLeftClick = () => {
+    if (onReportSelected && selectOnLeftClick) {
+      onReportSelected(objectId, !isSelected);
+    }
+    setActive(!isSelected);
+  };
+
   const memoizedColor = useMemo(() => new Color(outlineColor), [outlineColor]);
+  const outlineVisible = active || isSelected ? 1.0 : 0.0;
   return (
-    <group>
+    <group onClick={onLeftClick} position={[0, 0, radius]}>
       <mesh onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
         <circleBufferGeometry args={[radius, 16]} />
         <meshBasicMaterial opacity={0.0} transparent />
@@ -78,7 +100,7 @@ export const ThreeInteractorOutline = ({
           ]}
         />
         <meshBasicMaterial
-          opacity={active ? 1.0 : 0.0}
+          opacity={outlineVisible}
           transparent
           color={memoizedColor}
         />

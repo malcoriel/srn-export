@@ -34,6 +34,8 @@ export const ThreeFloatingObject: React.FC<
   hint,
   outlineThickness,
   outlineColor,
+  isSelected,
+  onReportSelected,
 }) => {
   const container = useRef<Group>(null);
   const gltf: GLTF = useLoader(GLTFLoader, `resources/models/${modelName}`);
@@ -84,6 +86,9 @@ export const ThreeFloatingObject: React.FC<
         radius={radius}
         outlineColor={outlineColor}
         outlineThickness={outlineThickness}
+        actions={actions}
+        isSelected={isSelected}
+        onReportSelected={onReportSelected}
       />
       <group
         ref={container}

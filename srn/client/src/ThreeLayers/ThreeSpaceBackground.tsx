@@ -139,7 +139,8 @@ export const ThreeSpaceBackground: React.FC<{
   cameraBound?: boolean;
   boost?: number;
   animationSpeed?: number;
-}> = ({ shift, size, cameraBound, animationSpeed, boost = 1.0 }) => {
+  onClick?: () => void;
+}> = ({ shift, size, onClick, cameraBound, animationSpeed, boost = 1.0 }) => {
   const mesh = useRef<Mesh>();
 
   useFrame(() => {
@@ -162,6 +163,7 @@ export const ThreeSpaceBackground: React.FC<{
   const meshZ = cameraBound ? -(CAMERA_HEIGHT + 10) : -10;
   const backgroundPlaneMesh = (
     <mesh
+      onClick={onClick}
       position={[0, 0, meshZ]}
       ref={mesh}
       scale={[size, size, size]}

@@ -20,10 +20,19 @@ const Template: Story = (args) => {
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
+  const [isSelected, setSelected] = useState(false);
+  const spySetSelected = (val: boolean) => {
+    console.log('set selected', val);
+    setSelected(val);
+  };
   return (
     <div>
       <StoryCanvas>
-        <ThreeSpaceBackground size={256} shift={0} />
+        <ThreeSpaceBackground
+          size={256}
+          shift={0}
+          onClick={() => spySetSelected(false)}
+        />
         <ThreeFloatingObject
           modelName={args.modelName}
           radius={40}
@@ -39,6 +48,8 @@ const Template: Story = (args) => {
           onBlur={args.onBlur}
           outlineThickness={args.outlineThickness}
           outlineColor={args.outlineColor}
+          isSelected={isSelected}
+          onReportSelected={(_id, val) => spySetSelected(val)}
         />
       </StoryCanvas>
     </div>
