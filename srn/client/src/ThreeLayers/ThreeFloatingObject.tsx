@@ -6,7 +6,7 @@ import { actionsActive } from '../utils/ShipControls';
 import _ from 'lodash';
 import { Color, Group, Mesh, MeshBasicMaterial } from 'three';
 import {
-  ThreeInteractorOutline,
+  ThreeInteractor,
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
 
@@ -72,7 +72,7 @@ export const ThreeFloatingObject: React.FC<{
   return (
     <group position={position} onClick={onClick}>
       {interactor && (
-        <ThreeInteractorOutline
+        <ThreeInteractor
           objectId={gid}
           radius={radius}
           interactor={interactor}

@@ -1,6 +1,8 @@
-import React, { ReactNode, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useStore } from '../../store';
 import { Color } from 'three';
+import { MouseEvent } from 'react-three-fiber/canvas';
+import { Html } from '@react-three/drei';
 
 export enum InteractorActionType {
   Unknown,
@@ -29,7 +31,7 @@ const DEFAULT_OUTLINE_COLOR = 'red';
 
 type InteractorSelectFn = (objectId: string, val: boolean) => void;
 
-export const ThreeInteractorOutline = ({
+export const ThreeInteractor = ({
   objectId,
   radius,
   interactor: {
@@ -55,6 +57,12 @@ export const ThreeInteractorOutline = ({
     ? () => onBlur(objectId)
     : () => setHintedObjectId(undefined);
   const [active, setActive] = useState(false);
+  const [menuShown, setMenuShown] = useState(false);
+  useEffect(() => {
+    if (!isSelected) {
+      setMenuShown(false);
+    }
+  }, [isSelected, setMenuShown]);
   const onPointerOver = () => {
     setActive(true);
     onPointerOverExternal();
@@ -71,15 +79,29 @@ export const ThreeInteractorOutline = ({
     }
     setActive(!isSelected);
   };
+  const onContextMenu = (e: MouseEvent) => {
+    e.sourceEvent.preventDefault();
+    setMenuShown(true);
+    return false;
+  };
 
   const memoizedColor = useMemo(() => new Color(outlineColor), [outlineColor]);
   const outlineVisible = active || isSelected ? 1.0 : 0.0;
   return (
-    <group onClick={onLeftClick} position={[0, 0, radius]}>
+    <group
+      onClick={onLeftClick}
+      position={[0, 0, radius]}
+      onContextMenu={onContextMenu}
+    >
       <mesh onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
         <circleBufferGeometry args={[radius, 16]} />
         <meshBasicMaterial opacity={0.0} transparent />
       </mesh>
+      {menuShown && (
+        <Html>
+          <div style={{ fontSize: 30, color: 'red' }}>123123</div>
+        </Html>
+      )}
       <mesh>
         <ringGeometry
           args={[
