@@ -1,12 +1,16 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useMemo, useState } from 'react';
 import { useStore } from '../../store';
-import Color from 'color';
+import { Color } from 'three';
 
 interface ThreeInteractorOutlineParams {
   onHover: ((objectId: string) => void) | undefined;
   objectId: string;
   onBlur: ((objectId: string) => void) | undefined;
   radius: number;
+  // eslint-disable-next-line react/require-default-props
+  outlineThickness?: number;
+  // eslint-disable-next-line react/require-default-props
+  outlineColor?: string;
 }
 
 export enum InteractorActionType {
@@ -58,6 +62,7 @@ export const ThreeInteractorOutline = ({
     onPointerOutExternal();
   };
 
+  const memoizedColor = useMemo(() => new Color(outlineColor), [outlineColor]);
   return (
     <group>
       <mesh onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
@@ -75,7 +80,7 @@ export const ThreeInteractorOutline = ({
         <meshBasicMaterial
           opacity={active ? 1.0 : 0.0}
           transparent
-          color={outlineColor}
+          color={memoizedColor}
         />
       </mesh>
     </group>
