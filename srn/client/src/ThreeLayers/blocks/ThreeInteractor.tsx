@@ -1,5 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 import { useStore } from '../../store';
+import Color from 'color';
 
 interface ThreeInteractorOutlineParams {
   onHover: ((objectId: string) => void) | undefined;
@@ -24,15 +25,20 @@ export interface ThreeInteractorProps {
   hint?: ReactNode;
   onHover?: InteractorActionFn;
   onBlur?: InteractorActionFn;
+  outlineThickness?: number;
+  outlineColor?: Color | string;
 }
 
-const HOVER_THICKNESS = 0.5;
+const DEFAULT_OUTLINE_THICKNESS = 0.5;
+const DEFAULT_OUTLINE_COLOR = 'red';
 
 export const ThreeInteractorOutline = ({
   onHover,
   objectId,
   onBlur,
   radius,
+  outlineThickness = DEFAULT_OUTLINE_THICKNESS,
+  outlineColor = DEFAULT_OUTLINE_COLOR,
 }: ThreeInteractorOutlineParams) => {
   const setHintedObjectId = useStore((state) => state.setHintedObjectId);
 
@@ -61,15 +67,15 @@ export const ThreeInteractorOutline = ({
       <mesh>
         <ringGeometry
           args={[
-            radius - HOVER_THICKNESS,
-            radius + HOVER_THICKNESS,
+            radius - outlineThickness,
+            radius + outlineThickness,
             radius * 2,
           ]}
         />
         <meshBasicMaterial
           opacity={active ? 1.0 : 0.0}
           transparent
-          color="red"
+          color={outlineColor}
         />
       </mesh>
     </group>
