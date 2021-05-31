@@ -3,19 +3,36 @@ import { useFrame, useLoader, Vector3 } from 'react-three-fiber';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { ShipAction, ShipActionType } from '../world';
 import { actionsActive } from '../utils/ShipControls';
-import { useStore } from '../store';
 import _ from 'lodash';
 import { Color, Group, Mesh, MeshBasicMaterial } from 'three';
+import {
+  ThreeInteractorOutline,
+  ThreeInteractorProps,
+} from './blocks/ThreeInteractor';
 
-export const ThreeFloatingObject: React.FC<{
-  position: Vector3;
-  radius: number;
-  scale: number;
-  colors?: string[];
-  gid: string;
-  modelName: string;
-  meshes: string[];
-}> = ({ position, meshes, gid, radius, colors, modelName, scale }) => {
+export const ThreeFloatingObject: React.FC<
+  {
+    position: Vector3;
+    radius: number;
+    scale: number;
+    colors?: string[];
+    gid: string;
+    modelName: string;
+    meshes: string[];
+  } & ThreeInteractorProps
+> = ({
+  position,
+  meshes,
+  gid,
+  radius,
+  colors,
+  modelName,
+  scale,
+  actions,
+  onHover,
+  onBlur,
+  hint,
+}) => {
   const container = useRef<Group>(null);
   const gltf: GLTF = useLoader(GLTFLoader, `resources/models/${modelName}`);
   // Gltf scene meshes cannot be reused if rendered directly like here (if it's not e.g. just geometry)
@@ -52,21 +69,18 @@ export const ThreeFloatingObject: React.FC<{
     }
   });
 
-  const setHintedObjectId = useStore((state) => state.setHintedObjectId);
-
   const onClick = (ev: any) => {
     actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(gid);
     ev.stopPropagation();
   };
   return (
     <group position={position} onClick={onClick}>
-      <mesh
-        onPointerOver={() => setHintedObjectId(gid)}
-        onPointerOut={() => setHintedObjectId(undefined)}
-      >
-        <circleBufferGeometry args={[radius, 16]} />
-        <meshBasicMaterial opacity={0.0} transparent />
-      </mesh>
+      <ThreeInteractorOutline
+        onHover={onHover}
+        objectId={gid}
+        onBlur={onBlur}
+        radius={radius}
+      />
       <group
         ref={container}
         scale={[radius * scale, radius * scale, radius * scale]}

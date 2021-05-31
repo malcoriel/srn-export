@@ -6,6 +6,8 @@ import { ThreeFloatingObject } from './ThreeFloatingObject';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { rare } from '../utils/palette';
+import { InteractorActionType } from './blocks/ThreeInteractor';
+import _ from 'lodash';
 
 export default {
   title: 'Three/ThreeFloatingObject',
@@ -31,6 +33,10 @@ const Template: Story = (args) => {
           meshes={args.meshes}
           scale={args.scale}
           key={revision + JSON.stringify(args)}
+          actions={args.actions}
+          hint={args.hint}
+          onHover={args.onHover}
+          onBlur={args.onBlur}
         />
       </StoryCanvas>
     </div>
@@ -42,6 +48,16 @@ Container.args = {
   meshes: ['0.children.0', '0.children.1', '0.children.2'],
   modelName: 'container.glb',
   scale: 0.002,
+};
+export const ContainerWithActions = Template.bind({});
+ContainerWithActions.args = {
+  ...Container.args,
+  actions: new Map([
+    [InteractorActionType.Select, _.partial(console.log, 'select')],
+    [InteractorActionType.Tractor, _.partial(console.log, 'tractor')],
+  ]),
+  onHover: _.partial(console.log, 'hover'),
+  onBlur: _.partial(console.log, 'blur'),
 };
 
 export const Asteroid = Template.bind({});
