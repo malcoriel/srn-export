@@ -32,6 +32,8 @@ export const ThreeFloatingObject: React.FC<
   onHover,
   onBlur,
   hint,
+  outlineThickness,
+  outlineColor,
 }) => {
   const container = useRef<Group>(null);
   const gltf: GLTF = useLoader(GLTFLoader, `resources/models/${modelName}`);
@@ -80,6 +82,8 @@ export const ThreeFloatingObject: React.FC<
         objectId={gid}
         onBlur={onBlur}
         radius={radius}
+        outlineColor={outlineColor}
+        outlineThickness={outlineThickness}
       />
       <group
         ref={container}

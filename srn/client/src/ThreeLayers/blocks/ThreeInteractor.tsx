@@ -2,7 +2,7 @@ import React, { ReactNode, useMemo, useState } from 'react';
 import { useStore } from '../../store';
 import { Color } from 'three';
 
-interface ThreeInteractorOutlineParams {
+interface ThreeInteractorOutlineProps {
   onHover: ((objectId: string) => void) | undefined;
   objectId: string;
   onBlur: ((objectId: string) => void) | undefined;
@@ -30,7 +30,7 @@ export interface ThreeInteractorProps {
   onHover?: InteractorActionFn;
   onBlur?: InteractorActionFn;
   outlineThickness?: number;
-  outlineColor?: Color | string;
+  outlineColor?: string;
 }
 
 const DEFAULT_OUTLINE_THICKNESS = 0.5;
@@ -43,7 +43,7 @@ export const ThreeInteractorOutline = ({
   radius,
   outlineThickness = DEFAULT_OUTLINE_THICKNESS,
   outlineColor = DEFAULT_OUTLINE_COLOR,
-}: ThreeInteractorOutlineParams) => {
+}: ThreeInteractorOutlineProps) => {
   const setHintedObjectId = useStore((state) => state.setHintedObjectId);
 
   const onPointerOverExternal = onHover

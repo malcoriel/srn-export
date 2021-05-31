@@ -37,6 +37,8 @@ const Template: Story = (args) => {
           hint={args.hint}
           onHover={args.onHover}
           onBlur={args.onBlur}
+          outlineThickness={args.outlineThickness}
+          outlineColor={args.outlineColor}
         />
       </StoryCanvas>
     </div>
@@ -58,6 +60,8 @@ ContainerWithActions.args = {
   ]),
   onHover: _.partial(console.log, 'hover'),
   onBlur: _.partial(console.log, 'blur'),
+  outlineThickness: 2,
+  outlineColor: 'green',
 };
 
 export const Asteroid = Template.bind({});
