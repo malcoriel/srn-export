@@ -25,6 +25,16 @@ const Template: Story = (args) => {
     console.log('set selected', val);
     setSelected(val);
   };
+  const interactorProps = {
+    actions: args.actions,
+    hint: args.hint,
+    onHover: args.onHover,
+    onBlur: args.onBlur,
+    outlineThickness: args.outlineThickness,
+    outlineColor: args.outlineColor,
+    isSelected,
+    onReportSelected: (_id: string, val: boolean) => spySetSelected(val),
+  };
   return (
     <div>
       <StoryCanvas>
@@ -42,14 +52,7 @@ const Template: Story = (args) => {
           meshes={args.meshes}
           scale={args.scale}
           key={revision + JSON.stringify(args)}
-          actions={args.actions}
-          hint={args.hint}
-          onHover={args.onHover}
-          onBlur={args.onBlur}
-          outlineThickness={args.outlineThickness}
-          outlineColor={args.outlineColor}
-          isSelected={isSelected}
-          onReportSelected={(_id, val) => spySetSelected(val)}
+          interactor={args.actions ? interactorProps : undefined}
         />
       </StoryCanvas>
     </div>

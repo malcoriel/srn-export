@@ -10,17 +10,17 @@ import {
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
 
-export const ThreeFloatingObject: React.FC<
-  {
-    position: Vector3;
-    radius: number;
-    scale: number;
-    colors?: string[];
-    gid: string;
-    modelName: string;
-    meshes: string[];
-  } & ThreeInteractorProps
-> = ({
+export const ThreeFloatingObject: React.FC<{
+  position: Vector3;
+  radius: number;
+  scale: number;
+  colors?: string[];
+  gid: string;
+  modelName: string;
+  meshes: string[];
+  interactor?: ThreeInteractorProps;
+}> = ({
+  interactor,
   position,
   meshes,
   gid,
@@ -28,14 +28,6 @@ export const ThreeFloatingObject: React.FC<
   colors,
   modelName,
   scale,
-  actions,
-  onHover,
-  onBlur,
-  hint,
-  outlineThickness,
-  outlineColor,
-  isSelected,
-  onReportSelected,
 }) => {
   const container = useRef<Group>(null);
   const gltf: GLTF = useLoader(GLTFLoader, `resources/models/${modelName}`);
@@ -79,17 +71,13 @@ export const ThreeFloatingObject: React.FC<
   };
   return (
     <group position={position} onClick={onClick}>
-      <ThreeInteractorOutline
-        onHover={onHover}
-        objectId={gid}
-        onBlur={onBlur}
-        radius={radius}
-        outlineColor={outlineColor}
-        outlineThickness={outlineThickness}
-        actions={actions}
-        isSelected={isSelected}
-        onReportSelected={onReportSelected}
-      />
+      {interactor && (
+        <ThreeInteractorOutline
+          objectId={gid}
+          radius={radius}
+          interactor={interactor}
+        />
+      )}
       <group
         ref={container}
         scale={[radius * scale, radius * scale, radius * scale]}

@@ -29,34 +29,23 @@ const DEFAULT_OUTLINE_COLOR = 'red';
 
 type InteractorSelectFn = (objectId: string, val: boolean) => void;
 
-interface ThreeInteractorOutlineProps {
-  onHover: ((objectId: string) => void) | undefined;
-  objectId: string;
-  onBlur: ((objectId: string) => void) | undefined;
-  radius: number;
-  // eslint-disable-next-line react/require-default-props
-  outlineThickness?: number;
-  // eslint-disable-next-line react/require-default-props
-  outlineColor?: string;
-  // eslint-disable-next-line react/require-default-props
-  actions?: Map<InteractorActionType, InteractorActionFn>;
-  // eslint-disable-next-line react/require-default-props
-  isSelected?: boolean;
-  // eslint-disable-next-line react/require-default-props
-  onReportSelected?: InteractorSelectFn;
-}
-
 export const ThreeInteractorOutline = ({
-  onHover,
   objectId,
-  onBlur,
   radius,
-  outlineThickness = DEFAULT_OUTLINE_THICKNESS,
-  outlineColor = DEFAULT_OUTLINE_COLOR,
-  actions,
-  onReportSelected,
-  isSelected,
-}: ThreeInteractorOutlineProps) => {
+  interactor: {
+    onHover,
+    onBlur,
+    outlineThickness = DEFAULT_OUTLINE_THICKNESS,
+    outlineColor = DEFAULT_OUTLINE_COLOR,
+    actions,
+    onReportSelected,
+    isSelected,
+  },
+}: {
+  objectId: string;
+  radius: number;
+  interactor: ThreeInteractorProps;
+}) => {
   const setHintedObjectId = useStore((state) => state.setHintedObjectId);
 
   const onPointerOverExternal = onHover
