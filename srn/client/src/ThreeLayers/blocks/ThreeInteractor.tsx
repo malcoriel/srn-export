@@ -1,8 +1,11 @@
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../../store';
 import { Color } from 'three';
 import { MouseEvent } from 'react-three-fiber/canvas';
 import { Html } from '@react-three/drei';
+import { ControlledMenu, MenuItem, MenuButton } from '@szhsin/react-menu';
+import '@szhsin/react-menu/dist/index.css';
+import { useFrame } from 'react-three-fiber';
 
 export enum InteractorActionType {
   Unknown,
@@ -58,11 +61,6 @@ export const ThreeInteractor = ({
     : () => setHintedObjectId(undefined);
   const [active, setActive] = useState(false);
   const [menuShown, setMenuShown] = useState(false);
-  useEffect(() => {
-    if (!isSelected) {
-      setMenuShown(false);
-    }
-  }, [isSelected, setMenuShown]);
   const onPointerOver = () => {
     setActive(true);
     onPointerOverExternal();
@@ -81,12 +79,27 @@ export const ThreeInteractor = ({
   };
   const onContextMenu = (e: MouseEvent) => {
     e.sourceEvent.preventDefault();
-    setMenuShown(true);
+    if (!isSelected) {
+      onLeftClick();
+    }
+    setMenuShown(!menuShown);
     return false;
   };
+  useEffect(() => {
+    if (!isSelected) {
+      setMenuShown(false);
+    }
+  }, [isSelected, setMenuShown]);
+
+  // useFrame(() => {
+  //   if (menuShown && !isSelected) {
+  //     setMenuShown(false);
+  //   }
+  // });
 
   const memoizedColor = useMemo(() => new Color(outlineColor), [outlineColor]);
   const outlineVisible = active || isSelected ? 1.0 : 0.0;
+  const menuAnchorRef = useRef(null);
   return (
     <group
       onClick={onLeftClick}
@@ -97,11 +110,15 @@ export const ThreeInteractor = ({
         <circleBufferGeometry args={[radius, 16]} />
         <meshBasicMaterial opacity={0.0} transparent />
       </mesh>
-      {menuShown && (
-        <Html>
-          <div style={{ fontSize: 30, color: 'red' }}>123123</div>
-        </Html>
-      )}
+      <Html>
+        <div ref={menuAnchorRef} />
+        <div>
+          <ControlledMenu anchorRef={menuAnchorRef} isOpen={menuShown}>
+            <MenuItem>123</MenuItem>
+            <MenuItem>456</MenuItem>
+          </ControlledMenu>
+        </div>
+      </Html>
       <mesh>
         <ringGeometry
           args={[
