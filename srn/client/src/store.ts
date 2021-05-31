@@ -10,6 +10,7 @@ import {
   extractLSValue,
   setLSValue,
 } from './utils/useLocalStorage';
+import React from 'react';
 
 export function genRandomName() {
   return uniqueNamesGenerator({
@@ -89,6 +90,10 @@ export type SrnState = {
   ) => void;
   testMenuMode: TestMenuMode;
   setTestMenuMode: (val: TestMenuMode) => void;
+  contextMenuRef: React.RefObject<any>;
+  setContextMenuRef: (ref: React.RefObject<any>) => void;
+  contextMenuItems: any[];
+  setContextMenuItems: (items: any[]) => void;
 };
 
 export enum TestMenuMode {
@@ -142,6 +147,8 @@ export const useStore = create<SrnState>((set) => ({
   mapWindow: WindowState.Hidden,
   leaderboardWindow: WindowState.Minimized,
   hintedObjectId: undefined,
+  contextMenuItems: [],
+  contextMenuRef: { current: null },
 
   setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
   setMapWindow: (val: WindowState) => set({ mapWindow: val }),
@@ -215,6 +222,9 @@ export const useStore = create<SrnState>((set) => ({
   setPortrait: (val: string) => set({ portrait: val }),
   forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
   setPlaying: (val: boolean) => set({ playing: val }),
+  setContextMenuRef: (ref: React.RefObject<any>) =>
+    set({ contextMenuRef: ref }),
+  setContextMenuItems: (items: any[]) => set({ contextMenuItems: items }),
 
   nextPortrait: () =>
     set((state) => {

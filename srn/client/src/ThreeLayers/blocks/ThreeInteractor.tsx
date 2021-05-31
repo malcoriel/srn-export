@@ -5,7 +5,7 @@ import { MouseEvent } from 'react-three-fiber/canvas';
 import { Html } from '@react-three/drei';
 import { ControlledMenu, MenuItem, MenuButton } from '@szhsin/react-menu';
 import '@szhsin/react-menu/dist/index.css';
-import { useFrame } from 'react-three-fiber';
+import _ from 'lodash';
 
 export enum InteractorActionType {
   Unknown,
@@ -33,6 +33,23 @@ const DEFAULT_OUTLINE_THICKNESS = 0.5;
 const DEFAULT_OUTLINE_COLOR = 'red';
 
 type InteractorSelectFn = (objectId: string, val: boolean) => void;
+
+export const GlobalContextMenu = () => {
+  const menuAnchorRef = useStore((state) => state.contextMenuRef);
+  const isMenuOpen = useStore((state) => state.contextMenuItems.length > 0);
+  const items = useStore((state) => state.contextMenuItems);
+  return (
+    <ControlledMenu
+      animation={false}
+      anchorRef={menuAnchorRef}
+      isOpen={isMenuOpen}
+    >
+      {items.map((item, i) => (
+        <MenuItem key={_.isNil(item.id) ? i : item.id}>{item.text}</MenuItem>
+      ))}
+    </ControlledMenu>
+  );
+};
 
 export const ThreeInteractor = ({
   objectId,
@@ -91,15 +108,22 @@ export const ThreeInteractor = ({
     }
   }, [isSelected, setMenuShown]);
 
-  // useFrame(() => {
-  //   if (menuShown && !isSelected) {
-  //     setMenuShown(false);
-  //   }
-  // });
-
   const memoizedColor = useMemo(() => new Color(outlineColor), [outlineColor]);
   const outlineVisible = active || isSelected ? 1.0 : 0.0;
   const menuAnchorRef = useRef(null);
+  const setContextMenuRef = useStore((state) => state.setContextMenuRef);
+  const setContextMenuItems = useStore((state) => state.setContextMenuItems);
+  useEffect(() => {
+    if (menuShown && menuAnchorRef.current) {
+      setContextMenuRef(menuAnchorRef);
+      setContextMenuItems([{ text: 1 }, { text: 2 }]);
+    } else {
+      setContextMenuItems([]);
+      setTimeout(() => {
+        setContextMenuRef({ current: null });
+      }, 0);
+    }
+  }, [menuAnchorRef, menuShown, setContextMenuItems, setContextMenuRef]);
   return (
     <group
       onClick={onLeftClick}
@@ -112,12 +136,6 @@ export const ThreeInteractor = ({
       </mesh>
       <Html>
         <div ref={menuAnchorRef} />
-        <div>
-          <ControlledMenu anchorRef={menuAnchorRef} isOpen={menuShown}>
-            <MenuItem>123</MenuItem>
-            <MenuItem>456</MenuItem>
-          </ControlledMenu>
-        </div>
       </Html>
       <mesh>
         <ringGeometry

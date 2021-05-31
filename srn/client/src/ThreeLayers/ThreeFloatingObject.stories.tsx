@@ -6,7 +6,10 @@ import { ThreeFloatingObject } from './ThreeFloatingObject';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { rare } from '../utils/palette';
-import { InteractorActionType } from './blocks/ThreeInteractor';
+import {
+  GlobalContextMenu,
+  InteractorActionType,
+} from './blocks/ThreeInteractor';
 import _ from 'lodash';
 
 export default {
@@ -55,6 +58,7 @@ const Template: Story = (args) => {
           interactor={args.actions ? interactorProps : undefined}
         />
       </StoryCanvas>
+      <GlobalContextMenu />
     </div>
   );
 };

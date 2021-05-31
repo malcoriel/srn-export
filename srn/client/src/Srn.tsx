@@ -39,6 +39,7 @@ import { useResourcesLoading } from './utils/useResourcesLoading';
 import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 import { LongActionsDisplay } from './HtmlLayers/LongActionsDisplay';
 import { StartMenuBackground } from './StartMenuBackground';
+import { GlobalContextMenu } from './ThreeLayers/blocks/ThreeInteractor';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -254,6 +255,7 @@ const Srn = () => {
                   <TradeWindow />
                   <HoverHintWindow />
                   <PromptWindow />
+                  <GlobalContextMenu />
                   {playing && <SandboxQuickMenu />}
                 </>
               )}
