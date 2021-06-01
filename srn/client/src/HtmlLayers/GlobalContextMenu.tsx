@@ -2,6 +2,7 @@ import { useStore } from '../store';
 import { ControlledMenu, MenuItem } from '@szhsin/react-menu';
 import _ from 'lodash';
 import React from 'react';
+import './GlobalContextMenu.scss';
 
 export interface GlobalContextMenuItem {
   id: string;
@@ -18,9 +19,14 @@ export const GlobalContextMenu = () => {
       animation={false}
       anchorRef={menuAnchorRef}
       isOpen={isMenuOpen}
+      className="global-context-menu"
     >
       {items.map((item, i) => (
-        <MenuItem onClick={item.onClick} key={_.isNil(item.id) ? i : item.id}>
+        <MenuItem
+          className="menu-item"
+          onClick={item.onClick}
+          key={_.isNil(item.id) ? i : item.id}
+        >
           {item.text}
         </MenuItem>
       ))}
