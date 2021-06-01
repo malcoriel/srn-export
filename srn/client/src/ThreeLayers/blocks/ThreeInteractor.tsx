@@ -69,11 +69,16 @@ export const ThreeInteractor = ({
   };
 
   const selectOnLeftClick = actions && actions.get(InteractorActionType.Select);
-  const onLeftClick = () => {
+  const onLeftClick = (e?: MouseEvent) => {
     if (onReportSelected && selectOnLeftClick) {
       onReportSelected(objectId, !isSelected);
     }
     setActive(!isSelected);
+    if (e) {
+      e.sourceEvent.preventDefault();
+      e.sourceEvent.stopPropagation();
+    }
+    return false;
   };
   const onContextMenu = (e: MouseEvent) => {
     e.sourceEvent.preventDefault();

@@ -77,6 +77,9 @@ export type SrnState = {
   toggleLeaderboardWindow: () => void;
   hintedObjectId?: string;
   setHintedObjectId: (val?: string) => void;
+  selectedObjectId?: string;
+  setSelectedObjectId: (id?: string) => void;
+  onReportSelected: (id: string, value: boolean) => void;
   dialogueWindow: WindowState;
   setDialogueWindow: (val: WindowState) => void;
   promptWindow: WindowState;
@@ -148,12 +151,16 @@ export const useStore = create<SrnState>((set) => ({
   mapWindow: WindowState.Hidden,
   leaderboardWindow: WindowState.Minimized,
   hintedObjectId: undefined,
+  selectedObjectId: undefined,
   contextMenuItems: [],
   contextMenuRef: { current: null },
 
   setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
   setMapWindow: (val: WindowState) => set({ mapWindow: val }),
   setHintedObjectId: (val?: string) => set({ hintedObjectId: val }),
+  setSelectedObjectId: (val?: string) => set({ selectedObjectId: val }),
+  onReportSelected: (id: string, val: boolean) =>
+    set(() => ({ selectedObjectId: val ? id : undefined })),
 
   setPreferredName: (val: string) =>
     set(() => {

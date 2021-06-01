@@ -12,6 +12,7 @@ import {
 import { actionsActive } from '../utils/ShipControls';
 import { VisualState } from '../NetState';
 import { InteractorActionType } from './blocks/ThreeInteractor';
+import { useStore } from '../store';
 
 // from random_stuff.rs
 export const possibleGasGiantColors = [
@@ -50,6 +51,7 @@ export const possibleGasGiantColors = [
 ];
 
 const mineralActionsMap = new Map([
+  [InteractorActionType.Select, () => undefined],
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
@@ -59,6 +61,7 @@ const mineralActionsMap = new Map([
 ]);
 
 const containerActionsMap = new Map([
+  [InteractorActionType.Select, () => undefined],
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
@@ -79,6 +82,9 @@ export const ThreeBodiesLayer: React.FC<{
     asteroid_belts,
     containers,
   } = state.locations[0];
+  // const selectedObjectId = useStore((state) => state.selectedObjectId);
+  // const onReportSelected = useStore((state) => state.onReportSelected);
+
   return (
     <group>
       {planets.map((p) => {
