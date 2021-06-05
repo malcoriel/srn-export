@@ -84,6 +84,7 @@ extern crate num_derive;
 mod api;
 mod bots;
 mod chat;
+mod combat;
 mod dialogue;
 mod dialogue_dto;
 mod dialogue_test;

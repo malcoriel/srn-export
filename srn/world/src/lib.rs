@@ -110,6 +110,9 @@ mod substitutions;
 #[path = "../../server/src/ship_action.rs"]
 mod ship_action;
 
+#[path = "../../server/src/combat.rs"]
+mod combat;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 

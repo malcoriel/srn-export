@@ -13,7 +13,7 @@ import { actionsActive } from '../utils/ShipControls';
 import { VisualState } from '../NetState';
 import { InteractorActionType } from './blocks/ThreeInteractor';
 import { common, rare, uncommon } from '../utils/palette';
-import { Rarity } from '../../../world/pkg/world.extra';
+import { Rarity, ShootTargetBuilder } from '../../../world/pkg/world.extra';
 import { UnreachableCaseError } from 'ts-essentials';
 import {
   containerHintContent,
@@ -66,7 +66,9 @@ const mineralActionsMap = new Map([
   [
     InteractorActionType.Shoot,
     (objectId: string) => {
-      actionsActive[ShipActionType.Shoot] = ShipAction.Shoot(objectId);
+      actionsActive[ShipActionType.Shoot] = ShipAction.Shoot(
+        ShootTargetBuilder.ShootTargetMineral({ id: objectId })
+      );
     },
   ],
 ]);

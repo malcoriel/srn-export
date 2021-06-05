@@ -1,6 +1,7 @@
+use crate::combat::ShootTarget;
 use crate::vec2::Vec2f64;
 use crate::world::{GameEvent, GameState, ManualMoveUpdate, Ship};
-use crate::{fire_event, tractoring, world};
+use crate::{combat, fire_event, tractoring, world};
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -12,7 +13,7 @@ pub enum ShipActionRust {
     Navigate(Vec2f64),
     DockNavigate(Uuid),
     Tractor(Uuid),
-    // Shoot(Uuid),
+    Shoot(ShootTarget),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,7 +24,7 @@ pub enum ShipActionType {
     Navigate = 3,
     DockNavigate = 4,
     Tractor = 5,
-    //Shoot = 6,
+    Shoot = 6,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -48,6 +49,9 @@ fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
         ShipActionType::Tractor => serde_json::from_str::<Uuid>(action_raw.data.as_str())
             .ok()
             .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Tractor(v)),
+        ShipActionType::Shoot => serde_json::from_str::<ShootTarget>(action_raw.data.as_str())
+            .ok()
+            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Shoot(v)),
     }
 }
 
@@ -167,6 +171,11 @@ pub fn apply_ship_action(
                 &state.locations[ship_idx.location_idx].minerals,
                 &state.locations[ship_idx.location_idx].containers,
             );
+            Some(ship)
+        }
+        ShipActionRust::Shoot(t) => {
+            let mut ship = old_ship.clone();
+            combat::commence_shoot(t, &mut ship, &state.locations[ship_idx.location_idx]);
             Some(ship)
         }
     }
