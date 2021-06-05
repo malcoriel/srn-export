@@ -79,11 +79,10 @@ const Srn = () => {
   const updateSize = () => {
     if (
       size.width_px !== window.innerWidth ||
-      size.height_px !== window.innerHeight - 1
+      size.height_px !== window.innerHeight
     ) {
       size.width_px = window.innerWidth;
-      // Chrome has a 1px bug here
-      size.height_px = window.innerHeight - 1;
+      size.height_px = window.innerHeight;
       forceUpdate();
     }
   };

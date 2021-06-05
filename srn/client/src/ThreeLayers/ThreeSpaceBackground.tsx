@@ -5,6 +5,7 @@ import _ from 'lodash';
 import { FloatUniformValue } from './shaders/uniformTypes';
 import { OrthographicCamera } from '@react-three/drei';
 import { CAMERA_HEIGHT } from './CameraControls';
+import { MouseEvent } from 'react-three-fiber/canvas';
 
 const uniforms: {
   shift: FloatUniformValue;
@@ -163,6 +164,10 @@ export const ThreeSpaceBackground: React.FC<{
   const meshZ = cameraBound ? -(CAMERA_HEIGHT + 10) : -10;
   const backgroundPlaneMesh = (
     <mesh
+      onContextMenu={(e: MouseEvent) => {
+        e.sourceEvent.stopPropagation();
+        e.sourceEvent.preventDefault();
+      }}
       onClick={onClick}
       position={[0, 0, meshZ]}
       ref={mesh}
