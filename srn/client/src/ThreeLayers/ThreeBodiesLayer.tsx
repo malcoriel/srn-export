@@ -12,7 +12,9 @@ import {
 import { actionsActive } from '../utils/ShipControls';
 import { VisualState } from '../NetState';
 import { InteractorActionType } from './blocks/ThreeInteractor';
-import { useStore } from '../store';
+import { common, rare, uncommon } from '../utils/palette';
+import { Rarity } from '../../../world/pkg/world.extra';
+import { UnreachableCaseError } from 'ts-essentials';
 
 // from random_stuff.rs
 export const possibleGasGiantColors = [
@@ -69,6 +71,21 @@ const containerActionsMap = new Map([
     },
   ],
 ]);
+
+const rarityToColor = (rarity: Rarity): string => {
+  switch (rarity) {
+    case Rarity.Unknown:
+      return 'white';
+    case Rarity.Common:
+      return common;
+    case Rarity.Uncommon:
+      return uncommon;
+    case Rarity.Rare:
+      return rare;
+    default:
+      throw new UnreachableCaseError(rarity);
+  }
+};
 
 export const ThreeBodiesLayer: React.FC<{
   state: GameState;
@@ -130,21 +147,24 @@ export const ThreeBodiesLayer: React.FC<{
           scale_mod={b.scale_mod}
         />
       ))}
-      {minerals.map((m) => (
-        <ThreeFloatingObject
-          gid={m.id}
-          key={m.id}
-          scale={0.2}
-          radius={m.radius}
-          position={posToThreePos(m.x, m.y)}
-          colors={[m.color]}
-          modelName="asteroid.glb"
-          meshes={['2']}
-          interactor={{
-            actions: mineralActionsMap,
-          }}
-        />
-      ))}
+      {minerals.map((m) => {
+        return (
+          <ThreeFloatingObject
+            gid={m.id}
+            key={m.id}
+            scale={0.2}
+            radius={m.radius}
+            position={posToThreePos(m.x, m.y)}
+            colors={[rarityToColor(m.rarity)]}
+            modelName="asteroid.glb"
+            meshes={['2']}
+            interactor={{
+              outlineColor: rarityToColor(m.rarity),
+              actions: mineralActionsMap,
+            }}
+          />
+        );
+      })}
       {containers.map((c) => (
         <ThreeFloatingObject
           gid={c.id}
@@ -155,6 +175,7 @@ export const ThreeBodiesLayer: React.FC<{
           meshes={['0.children.0', '0.children.1', '0.children.2']}
           scale={0.002}
           interactor={{
+            outlineColor: rare,
             actions: containerActionsMap,
           }}
         />
