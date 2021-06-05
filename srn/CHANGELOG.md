@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.6.10 (2021-06-05)
+### New
+* Reworked the object interaction system. Now every interactable object
+  (containers and minerals, as before) has a context menu that shows possible actions.
+
+### Fixes
+* Fixed a bug that caused the main window content to overflow and shor an ugly scroll.
+
 ## Version 0.6.9 (2021-05-26)
 
 ### New
