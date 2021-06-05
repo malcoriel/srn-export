@@ -29,8 +29,6 @@ const Template: Story = (args) => {
   const interactorProps = {
     actions: args.actions,
     hint: args.hint,
-    onHover: args.onHover,
-    onBlur: args.onBlur,
     outlineThickness: args.outlineThickness,
     outlineColor: args.outlineColor,
     isSelected,
@@ -74,8 +72,6 @@ ContainerWithActions.args = {
     [InteractorActionType.Select, _.partial(console.log, 'select')],
     [InteractorActionType.Tractor, _.partial(console.log, 'tractor')],
   ]),
-  onHover: _.partial(console.log, 'hover'),
-  onBlur: _.partial(console.log, 'blur'),
   outlineThickness: 2,
   outlineColor: 'green',
 };

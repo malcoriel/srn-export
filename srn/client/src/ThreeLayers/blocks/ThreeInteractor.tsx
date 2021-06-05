@@ -19,8 +19,6 @@ export type InteractorActionFn = (objectId: string) => void;
 export interface ThreeInteractorProps {
   actions?: Map<InteractorActionType, InteractorActionFn>;
   hint?: ReactNode;
-  onHover?: InteractorActionFn;
-  onBlur?: InteractorActionFn;
   onReportSelected?: InteractorSelectFn;
   isSelected?: boolean;
   outlineThickness?: number;
@@ -36,8 +34,6 @@ export const ThreeInteractor = ({
   objectId,
   radius,
   interactor: {
-    onHover,
-    onBlur,
     outlineThickness = DEFAULT_OUTLINE_THICKNESS,
     outlineColor = DEFAULT_OUTLINE_COLOR,
     actions,
@@ -51,12 +47,8 @@ export const ThreeInteractor = ({
 }) => {
   const setHintedObjectId = useStore((state) => state.setHintedObjectId);
 
-  const onPointerOverExternal = onHover
-    ? () => onHover(objectId)
-    : () => setHintedObjectId(objectId);
-  const onPointerOutExternal = onBlur
-    ? () => onBlur(objectId)
-    : () => setHintedObjectId(undefined);
+  const onPointerOverExternal = () => setHintedObjectId(objectId);
+  const onPointerOutExternal = () => setHintedObjectId(undefined);
   const [active, setActive] = useState(false);
   const [menuShown, setMenuShown] = useState(false);
   const onPointerOver = () => {
