@@ -15,6 +15,10 @@ import { InteractorActionType } from './blocks/ThreeInteractor';
 import { common, rare, uncommon } from '../utils/palette';
 import { Rarity } from '../../../world/pkg/world.extra';
 import { UnreachableCaseError } from 'ts-essentials';
+import {
+  containerHintContent,
+  mineralHintContent,
+} from '../HtmlLayers/HintWindow';
 
 // from random_stuff.rs
 export const possibleGasGiantColors = [
@@ -159,6 +163,7 @@ export const ThreeBodiesLayer: React.FC<{
             modelName="asteroid.glb"
             meshes={['2']}
             interactor={{
+              hint: mineralHintContent(m),
               outlineColor: rarityToColor(m.rarity),
               actions: mineralActionsMap,
             }}
@@ -175,6 +180,7 @@ export const ThreeBodiesLayer: React.FC<{
           meshes={['0.children.0', '0.children.1', '0.children.2']}
           scale={0.002}
           interactor={{
+            hint: containerHintContent(),
             outlineColor: rare,
             actions: containerActionsMap,
           }}

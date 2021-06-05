@@ -25,7 +25,7 @@ import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
 import { WindowContainers } from './HtmlLayers/WindowContainers';
 import { OverheadPanel } from './HtmlLayers/OverheadPanel';
-import { HoverHintWindow } from './HtmlLayers/HoverHintWindow';
+import { HintWindow } from './HtmlLayers/HintWindow';
 import { size } from './coord';
 import { ChatState } from './ChatState';
 import { ChatWindow } from './HtmlLayers/ChatWindow';
@@ -256,7 +256,6 @@ const Srn = () => {
                   <LongActionsDisplay />
                   <StarMapWindow />
                   <TradeWindow />
-                  <HoverHintWindow />
                   <PromptWindow />
                   <GlobalContextMenu />
                   {playing && <SandboxQuickMenu />}

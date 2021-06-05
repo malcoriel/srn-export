@@ -4,6 +4,7 @@ import { Color } from 'three';
 import { MouseEvent } from 'react-three-fiber/canvas';
 import { Html } from '@react-three/drei';
 import '@szhsin/react-menu/dist/index.css';
+import { HintWindow } from '../../HtmlLayers/HintWindow';
 
 export enum InteractorActionType {
   Unknown,
@@ -39,25 +40,20 @@ export const ThreeInteractor = ({
     actions,
     onReportSelected,
     isSelected,
+    hint,
   },
 }: {
   objectId: string;
   radius: number;
   interactor: ThreeInteractorProps;
 }) => {
-  const setHintedObjectId = useStore((state) => state.setHintedObjectId);
-
-  const onPointerOverExternal = () => setHintedObjectId(objectId);
-  const onPointerOutExternal = () => setHintedObjectId(undefined);
   const [active, setActive] = useState(false);
   const [menuShown, setMenuShown] = useState(false);
   const onPointerOver = () => {
     setActive(true);
-    onPointerOverExternal();
   };
   const onPointerOut = () => {
     setActive(false);
-    onPointerOutExternal();
   };
 
   const selectOnLeftClick = actions && actions.get(InteractorActionType.Select);
@@ -129,6 +125,8 @@ export const ThreeInteractor = ({
       </mesh>
       <Html>
         <div ref={menuAnchorRef} />
+        {active && hint && <HintWindow windowContent={hint} />}
+        {/*{active && hint && }*/}
       </Html>
       <mesh>
         <ringGeometry
