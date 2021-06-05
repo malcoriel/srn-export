@@ -33,11 +33,12 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
+use crate::ship_action::ShipAction;
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::tractoring::{ContainersContainer, IMovable, MineralsContainer, MovablesContainer};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::{fire_event, market, notifications, planet_movement, tractoring};
+use crate::{fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
 
 const SHIP_SPEED: f64 = 20.0;
@@ -66,34 +67,6 @@ pub enum GameMode {
 pub struct ManualMoveUpdate {
     pub position: Vec2f64,
     pub rotation: f64,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum ShipActionRust {
-    Unknown,
-    Move(ManualMoveUpdate),
-    Dock,
-    Navigate(Vec2f64),
-    DockNavigate(Uuid),
-    Tractor(Uuid),
-    //Shoot(Uuid),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ShipActionType {
-    Unknown = 0,
-    Move = 1,
-    Dock = 2,
-    Navigate = 3,
-    DockNavigate = 4,
-    Tractor = 5,
-    //Shoot = 6,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ShipAction {
-    pub s_type: ShipActionType,
-    pub data: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -1692,146 +1665,6 @@ pub fn find_player_and_ship(
     return (player, ship);
 }
 
-fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
-    match action_raw.s_type {
-        ShipActionType::Unknown => ShipActionRust::Unknown,
-        ShipActionType::Move => serde_json::from_str::<ManualMoveUpdate>(action_raw.data.as_str())
-            .ok()
-            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Move(v)),
-        ShipActionType::Dock => ShipActionRust::Dock,
-        ShipActionType::Navigate => serde_json::from_str::<Vec2f64>(action_raw.data.as_str())
-            .ok()
-            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Navigate(v)),
-        ShipActionType::DockNavigate => serde_json::from_str::<Uuid>(action_raw.data.as_str())
-            .ok()
-            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::DockNavigate(v)),
-        ShipActionType::Tractor => serde_json::from_str::<Uuid>(action_raw.data.as_str())
-            .ok()
-            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Tractor(v)),
-    }
-}
-
-pub fn apply_ship_action(
-    ship_action: ShipAction,
-    state: &GameState,
-    player_id: Uuid,
-) -> Option<Ship> {
-    let ship_action: ShipActionRust = parse_ship_action(ship_action);
-    let ship_idx = find_my_ship_index(state, player_id);
-    if ship_idx.is_none() {
-        warn!("No ship");
-        return None;
-    }
-    let ship_idx = ship_idx.unwrap();
-    let old_ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
-
-    match ship_action {
-        ShipActionRust::Unknown => {
-            warn!("Unknown ship action");
-            None
-        }
-        ShipActionRust::Move(v) => {
-            let mut ship = old_ship.clone();
-            ship.x = v.position.x;
-            ship.y = v.position.y;
-            ship.rotation = v.rotation;
-            ship.navigate_target = None;
-            ship.dock_target = None;
-            ship.trajectory = vec![];
-            Some(ship)
-        }
-        ShipActionRust::Dock => {
-            let mut ship = old_ship.clone();
-            ship.navigate_target = None;
-            ship.dock_target = None;
-            if ship.docked_at.is_some() {
-                let planet_id = ship.docked_at.unwrap();
-                let planet = find_planet(state, &planet_id).unwrap().clone();
-                let player = find_my_player(state, player_id).unwrap().clone();
-                ship.docked_at = None;
-                fire_event(GameEvent::ShipUndocked {
-                    ship: ship.clone(),
-                    planet,
-                    player,
-                });
-            } else {
-                let ship_pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                };
-                for planet in state.locations[ship_idx.location_idx].planets.iter() {
-                    let pos = Vec2f64 {
-                        x: planet.x,
-                        y: planet.y,
-                    };
-                    if pos.euclidean_distance(&ship_pos) < planet.radius {
-                        ship.docked_at = Some(planet.id);
-                        ship.x = planet.x;
-                        ship.y = planet.y;
-                        ship.navigate_target = None;
-                        ship.dock_target = None;
-                        ship.trajectory = vec![];
-                        let player = find_my_player(state, player_id).unwrap().clone();
-
-                        fire_event(GameEvent::ShipDocked {
-                            ship: ship.clone(),
-                            player,
-                            planet: planet.clone(),
-                        });
-                        break;
-                    }
-                }
-            }
-            Some(ship)
-        }
-        ShipActionRust::Navigate(v) => {
-            let mut ship = old_ship.clone();
-            let ship_pos = Vec2f64 {
-                x: ship.x,
-                y: ship.y,
-            };
-
-            ship.navigate_target = None;
-            ship.dock_target = None;
-            ship.docked_at = None;
-            ship.navigate_target = Some(v);
-            ship.trajectory = build_trajectory_to_point(ship_pos, &v);
-            Some(ship)
-        }
-        ShipActionRust::DockNavigate(t) => {
-            let mut ship = old_ship.clone();
-            if let Some(planet) = find_planet(state, &t) {
-                let ship_pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                };
-                let planet_pos = Vec2f64 {
-                    x: planet.x,
-                    y: planet.y,
-                };
-                ship.navigate_target = None;
-                ship.dock_target = None;
-                ship.docked_at = None;
-                ship.dock_target = Some(t);
-                ship.trajectory = build_trajectory_to_point(ship_pos, &planet_pos);
-                Some(ship)
-            } else {
-                None
-            }
-        }
-        ShipActionRust::Tractor(t) => {
-            let mut ship = old_ship.clone();
-            tractoring::update_ship_tractor(
-                t,
-                &mut ship,
-                &state.locations[ship_idx.location_idx].minerals,
-                &state.locations[ship_idx.location_idx].containers,
-            );
-            Some(ship)
-        }
-    }
-}
-
 pub fn update_quests(state: &mut GameState) {
     let state_read = state.clone();
     let mut any_new_quests = false;
@@ -1899,7 +1732,7 @@ pub fn mutate_ship_no_lock(
         return None;
     }
     force_update_to_now(state);
-    let updated_ship = apply_ship_action(mutate_cmd, &state, client_id);
+    let updated_ship = ship_action::apply_ship_action(mutate_cmd, &state, client_id);
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {

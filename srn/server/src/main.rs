@@ -39,6 +39,7 @@ use net::{
     ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper,
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
+use ship_action::ShipAction;
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
@@ -52,7 +53,7 @@ use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
 use crate::world::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
-    spawn_ship, update_quests, GameEvent, ShipAction, UpdateOptions, AABB,
+    spawn_ship, update_quests, GameEvent, UpdateOptions, AABB,
 };
 
 macro_rules! log {
@@ -99,6 +100,7 @@ mod planet_movement;
 mod planet_movement_test;
 mod random_stuff;
 mod sandbox;
+mod ship_action;
 mod substitutions;
 mod substitutions_test;
 mod system_gen;

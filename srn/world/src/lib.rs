@@ -107,6 +107,9 @@ mod notifications;
 #[path = "../../server/src/substitutions.rs"]
 mod substitutions;
 
+#[path = "../../server/src/ship_action.rs"]
+mod ship_action;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 
@@ -203,7 +206,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct ApplyShipActionArgs {
     state: world::GameState,
-    ship_action: world::ShipAction,
+    ship_action: ship_action::ShipAction,
     player_id: Uuid,
 }
 
@@ -215,6 +218,6 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
         return return_result.unwrap();
     }
     let args = args.ok().unwrap();
-    let new_ship = world::apply_ship_action(args.ship_action, &args.state, args.player_id);
+    let new_ship = ship_action::apply_ship_action(args.ship_action, &args.state, args.player_id);
     return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
 }

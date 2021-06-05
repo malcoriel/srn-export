@@ -126,7 +126,7 @@ export enum ShipActionType {
   Navigate = 'Navigate',
   DockNavigate = 'DockNavigate',
   Tractor = 'Tractor',
-  //Shoot = 'Shoot',
+  Shoot = 'Shoot',
 }
 
 export enum Direction {
@@ -158,8 +158,8 @@ export class ShipAction {
   public static Tractor = (obj_id: string) =>
     new ShipAction(ShipActionType.Tractor, obj_id);
 
-  // public static Shoot = (obj_id: string) =>
-  //   new ShipAction(ShipActionType.Shoot, obj_id);
+  public static Shoot = (obj_id: string) =>
+    new ShipAction(ShipActionType.Shoot, obj_id);
 
   public serialize(): string {
     return JSON.stringify({

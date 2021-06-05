@@ -63,6 +63,12 @@ const mineralActionsMap = new Map([
       actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(objectId);
     },
   ],
+  [
+    InteractorActionType.Shoot,
+    (objectId: string) => {
+      actionsActive[ShipActionType.Shoot] = ShipAction.Shoot(objectId);
+    },
+  ],
 ]);
 
 const containerActionsMap = new Map([

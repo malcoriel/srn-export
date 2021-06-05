@@ -1,22 +1,28 @@
 use std::collections::HashMap;
-use std::sync::{Arc, mpsc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
+use std::sync::{mpsc, Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
 use std::thread;
 use std::time::Duration;
 
 use chrono::Local;
 use lazy_static::lazy_static;
-use rand::{RngCore, SeedableRng, thread_rng, Rng};
 use rand::rngs::SmallRng;
+use rand::{thread_rng, Rng, RngCore, SeedableRng};
 use uuid::Uuid;
 
-use crate::{new_id, StateContainer};
-use crate::dialogue::{check_trigger_conditions, DialogueId, DialogueScript, DialogueState, DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, execute_dialog_option, TriggerCondition};
-use crate::DIALOGUE_STATES;
+use crate::dialogue::{
+    check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
+    DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
+};
 use crate::events::fire_event;
 use crate::random_stuff::gen_bot_name;
-use crate::STATE;
+use crate::ship_action::{apply_ship_action, ShipAction, ShipActionType};
 use crate::world;
-use crate::world::{apply_ship_action, CargoDeliveryQuestState, find_my_player, find_my_ship, find_planet, GameEvent, GameState, Ship, ShipAction, ShipActionType};
+use crate::world::{
+    find_my_player, find_my_ship, find_planet, CargoDeliveryQuestState, GameEvent, GameState, Ship,
+};
+use crate::DIALOGUE_STATES;
+use crate::STATE;
+use crate::{new_id, StateContainer};
 
 lazy_static! {
     pub static ref BOTS: Arc<Mutex<Vec<Bot>>> = Arc::new(Mutex::new(vec![]));
@@ -80,7 +86,8 @@ impl Bot {
                     self.timer = Some(BOT_QUEST_ACT_DELAY_MC);
                     // time to act on all the dialogues
                     for (dialogue_id, _) in bot_d_states.1.iter() {
-                        let act = self.make_dialogue_act(d_table, bot_d_states, *dialogue_id, state);
+                        let act =
+                            self.make_dialogue_act(d_table, bot_d_states, *dialogue_id, state);
                         if let Some(act) = act {
                             result_actions.push(act);
                         }
@@ -90,13 +97,17 @@ impl Bot {
                 }
             }
         } else {
-            if quest.state == CargoDeliveryQuestState::Started && !conditions.contains(&TriggerCondition::CurrentPlanetIsPickup) {
+            if quest.state == CargoDeliveryQuestState::Started
+                && !conditions.contains(&TriggerCondition::CurrentPlanetIsPickup)
+            {
                 result_actions.push(BotAct::Act(ShipAction {
                     // this action doubles as undock
                     s_type: ShipActionType::DockNavigate,
                     data: format!("\"{}\"", quest.from_id),
                 }));
-            } else if quest.state == CargoDeliveryQuestState::Picked && !conditions.contains(&TriggerCondition::CurrentPlanetIsDropoff){
+            } else if quest.state == CargoDeliveryQuestState::Picked
+                && !conditions.contains(&TriggerCondition::CurrentPlanetIsDropoff)
+            {
                 result_actions.push(BotAct::Act(ShipAction {
                     // this action doubles as undock
                     s_type: ShipActionType::DockNavigate,
@@ -125,9 +136,16 @@ impl Bot {
                 //     // eprintln!("current state {}", current_script.get_name(&state_id));
                 // }
 
-                let option = current_script.get_next_bot_path(&*(current_d_state.clone()), game_state, self.id);
+                let option = current_script.get_next_bot_path(
+                    &*(current_d_state.clone()),
+                    game_state,
+                    self.id,
+                );
                 if option.is_none() {
-                    warn!(format!("Bot {:?} is stuck without dialogue option in dialogue {} state {:?}", self, current_dialogue_name, current_d_state))
+                    warn!(format!(
+                        "Bot {:?} is stuck without dialogue option in dialogue {} state {:?}",
+                        self, current_dialogue_name, current_d_state
+                    ))
                 } else {
                 }
                 option
@@ -160,11 +178,18 @@ pub fn bot_init(bots: &mut Vec<Bot>) {
     add_bot(Bot::new(), bots);
 }
 
-pub fn format_d_states(d_states: &HashMap<DialogueId, DialogueState>, d_table: &DialogueTable) -> HashMap<String, String> {
+pub fn format_d_states(
+    d_states: &HashMap<DialogueId, DialogueState>,
+    d_table: &DialogueTable,
+) -> HashMap<String, String> {
     let mut res = HashMap::new();
     for (key, val) in d_states.iter() {
         let script = d_table.scripts.get(key).unwrap();
-        let state_name = if val.is_some() { script.names_db.get(&(*val).unwrap()).unwrap().clone() } else { "None".to_string() };
+        let state_name = if val.is_some() {
+            script.names_db.get(&(*val).unwrap()).unwrap().clone()
+        } else {
+            "None".to_string()
+        };
         res.insert(format!("{}:{}", script.name.clone(), key), state_name);
     }
     res
