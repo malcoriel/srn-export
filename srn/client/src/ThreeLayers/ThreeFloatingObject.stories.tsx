@@ -21,27 +21,16 @@ const Template: Story = (args) => {
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
-  const [isSelected, setSelected] = useState(false);
-  const spySetSelected = (val: boolean) => {
-    console.log('set selected', val);
-    setSelected(val);
-  };
   const interactorProps = {
     actions: args.actions,
     hint: args.hint,
     outlineThickness: args.outlineThickness,
     outlineColor: args.outlineColor,
-    isSelected,
-    onReportSelected: (_id: string, val: boolean) => spySetSelected(val),
   };
   return (
     <div>
       <StoryCanvas>
-        <ThreeSpaceBackground
-          size={256}
-          shift={0}
-          onClick={() => spySetSelected(false)}
-        />
+        <ThreeSpaceBackground size={256} shift={0} />
         <ThreeFloatingObject
           modelName={args.modelName}
           radius={40}
@@ -69,7 +58,6 @@ export const ContainerWithActions = Template.bind({});
 ContainerWithActions.args = {
   ...Container.args,
   actions: new Map([
-    [InteractorActionType.Select, _.partial(console.log, 'select')],
     [InteractorActionType.Tractor, _.partial(console.log, 'tractor')],
   ]),
   outlineThickness: 2,

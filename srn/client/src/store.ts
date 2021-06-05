@@ -77,9 +77,6 @@ export type SrnState = {
   toggleLeaderboardWindow: () => void;
   showTractorCircle?: boolean;
   setShowTractorCircle: (val?: boolean) => void;
-  selectedObjectId?: string;
-  setSelectedObjectId: (id?: string) => void;
-  onReportSelected: (id: string, value: boolean) => void;
   dialogueWindow: WindowState;
   setDialogueWindow: (val: WindowState) => void;
   promptWindow: WindowState;
@@ -158,9 +155,6 @@ export const useStore = create<SrnState>((set) => ({
   setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
   setMapWindow: (val: WindowState) => set({ mapWindow: val }),
   setShowTractorCircle: (val) => set({ showTractorCircle: val }),
-  setSelectedObjectId: (val) => set({ selectedObjectId: val }),
-  onReportSelected: (id: string, val: boolean) =>
-    set(() => ({ selectedObjectId: val ? id : undefined })),
 
   setPreferredName: (val: string) =>
     set(() => {

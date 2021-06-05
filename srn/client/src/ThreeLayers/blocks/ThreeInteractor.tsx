@@ -8,7 +8,6 @@ import { HintWindow } from '../../HtmlLayers/HintWindow';
 
 export enum InteractorActionType {
   Unknown,
-  Select,
   Dock,
   Undock,
   Tractor,
@@ -20,16 +19,13 @@ export type InteractorActionFn = (objectId: string) => void;
 export interface ThreeInteractorProps {
   actions?: Map<InteractorActionType, InteractorActionFn>;
   hint?: ReactNode;
-  onReportSelected?: InteractorSelectFn;
-  isSelected?: boolean;
   outlineThickness?: number;
   outlineColor?: string;
+  defaultAction?: InteractorActionType;
 }
 
 const DEFAULT_OUTLINE_THICKNESS = 0.1;
 const DEFAULT_OUTLINE_COLOR = 'red';
-
-type InteractorSelectFn = (objectId: string, val: boolean) => void;
 
 export const ThreeInteractor = ({
   objectId,
@@ -38,9 +34,8 @@ export const ThreeInteractor = ({
     outlineThickness = DEFAULT_OUTLINE_THICKNESS,
     outlineColor = DEFAULT_OUTLINE_COLOR,
     actions,
-    onReportSelected,
-    isSelected,
     hint,
+    defaultAction,
   },
 }: {
   objectId: string;
@@ -56,34 +51,27 @@ export const ThreeInteractor = ({
     setActive(false);
   };
 
-  const selectOnLeftClick = actions && actions.get(InteractorActionType.Select);
   const onLeftClick = (e?: MouseEvent) => {
-    if (onReportSelected && selectOnLeftClick) {
-      onReportSelected(objectId, !isSelected);
-    }
-    setActive(!isSelected);
     if (e) {
+      e.stopPropagation();
       e.sourceEvent.preventDefault();
       e.sourceEvent.stopPropagation();
+    }
+    if (actions && defaultAction) {
+      const fn = actions.get(defaultAction);
+      if (fn) {
+        fn(objectId);
+      }
     }
     return false;
   };
   const onContextMenu = (e: MouseEvent) => {
     e.sourceEvent.preventDefault();
-    if (!isSelected) {
-      onLeftClick();
-    }
     setMenuShown(!menuShown);
     return false;
   };
-  useEffect(() => {
-    if (!isSelected) {
-      setMenuShown(false);
-    }
-  }, [isSelected, setMenuShown]);
-
   const memoizedColor = useMemo(() => new Color(outlineColor), [outlineColor]);
-  const outlineVisible = active || isSelected ? 1.0 : 0.0;
+  const outlineVisible = active ? 1.0 : 0.0;
   const menuAnchorRef = useRef(null);
   const setContextMenuRef = useStore((state) => state.setContextMenuRef);
   const setContextMenuItems = useStore((state) => state.setContextMenuItems);
@@ -130,7 +118,6 @@ export const ThreeInteractor = ({
       <Html>
         <div ref={menuAnchorRef} />
         {active && hint && <HintWindow windowContent={hint} />}
-        {/*{active && hint && }*/}
       </Html>
       <mesh>
         <ringGeometry

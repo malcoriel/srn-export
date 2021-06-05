@@ -57,7 +57,6 @@ export const possibleGasGiantColors = [
 ];
 
 const mineralActionsMap = new Map([
-  [InteractorActionType.Select, () => undefined],
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
@@ -67,7 +66,6 @@ const mineralActionsMap = new Map([
 ]);
 
 const containerActionsMap = new Map([
-  [InteractorActionType.Select, () => undefined],
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
@@ -164,6 +162,7 @@ export const ThreeBodiesLayer: React.FC<{
             meshes={['2']}
             interactor={{
               hint: mineralHintContent(m),
+              defaultAction: InteractorActionType.Tractor,
               outlineColor: rarityToColor(m.rarity),
               actions: mineralActionsMap,
             }}
@@ -181,6 +180,7 @@ export const ThreeBodiesLayer: React.FC<{
           scale={0.002}
           interactor={{
             hint: containerHintContent(),
+            defaultAction: InteractorActionType.Tractor,
             outlineColor: rare,
             actions: containerActionsMap,
           }}
