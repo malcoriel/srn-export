@@ -3,14 +3,7 @@ import { Vector3 } from 'three';
 import React, { Suspense } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
-import {
-  findContainer,
-  findMineral,
-  max_x,
-  min_x,
-  ShipAction,
-  ShipActionType,
-} from '../world';
+import { max_x, min_x, ShipAction, ShipActionType } from '../world';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
   BoundCameraMover,
@@ -83,11 +76,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
 
   useNSForceChange('ThreeLayer', true);
 
-  const hintedObjectId = useStore((state) => state.hintedObjectId);
-  const hoverOnGrabbable = !!(hintedObjectId
-    ? findMineral(ns.state, hintedObjectId) ||
-      findContainer(ns.state, hintedObjectId)
-    : undefined);
+  const hoverOnGrabbable = useStore((state) => state.showTractorCircle);
 
   const viewPortSize = viewPortSizeMeters();
   const viewPortMaxDimension = Math.max(viewPortSize.x, viewPortSize.y);

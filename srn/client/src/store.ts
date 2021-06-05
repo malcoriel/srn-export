@@ -75,8 +75,8 @@ export type SrnState = {
   leaderboardWindow: WindowState;
   setLeaderboardWindow: (val: WindowState) => void;
   toggleLeaderboardWindow: () => void;
-  hintedObjectId?: string;
-  setHintedObjectId: (val?: string) => void;
+  showTractorCircle?: boolean;
+  setShowTractorCircle: (val?: boolean) => void;
   selectedObjectId?: string;
   setSelectedObjectId: (id?: string) => void;
   onReportSelected: (id: string, value: boolean) => void;
@@ -150,15 +150,15 @@ export const useStore = create<SrnState>((set) => ({
   helpWindow: WindowState.Hidden,
   mapWindow: WindowState.Hidden,
   leaderboardWindow: WindowState.Minimized,
-  hintedObjectId: undefined,
+  showTractorCircle: undefined,
   selectedObjectId: undefined,
   contextMenuItems: [],
   contextMenuRef: { current: null },
 
   setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
   setMapWindow: (val: WindowState) => set({ mapWindow: val }),
-  setHintedObjectId: (val?: string) => set({ hintedObjectId: val }),
-  setSelectedObjectId: (val?: string) => set({ selectedObjectId: val }),
+  setShowTractorCircle: (val) => set({ showTractorCircle: val }),
+  setSelectedObjectId: (val) => set({ selectedObjectId: val }),
   onReportSelected: (id: string, val: boolean) =>
     set(() => ({ selectedObjectId: val ? id : undefined })),
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Circle, Layer, Text } from 'react-konva';
 import _ from 'lodash';
 import Prando from 'prando';
-import { findContainer, findMineral, GameState, TRACTOR_DIST } from '../world';
+import { GameState, TRACTOR_DIST } from '../world';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import Vector, { IVector } from '../utils/Vector';
 import { crimson, darkGreen, rare, teal } from '../utils/palette';
@@ -96,13 +96,7 @@ export const KonvaOverlay: React.FC = React.memo(() => {
   if (!ns) return null;
 
   useNSForceChange('KonvaOverlay', true);
-  const hintedObjectId = useStore((state) => state.hintedObjectId);
-  const hintedMineral = hintedObjectId
-    ? findMineral(ns.state, hintedObjectId)
-    : undefined;
-  const hintedContainer = hintedObjectId
-    ? findContainer(ns.state, hintedObjectId)
-    : undefined;
+  const showTractorCircle = useStore((state) => state.showTractorCircle);
 
   const { state, visualState } = ns;
   const myShip = findMyShip(state);
@@ -127,8 +121,7 @@ export const KonvaOverlay: React.FC = React.memo(() => {
   );
   return (
     <Layer>
-      {hintedMineral && <>{tractorDistanceCircle}</>}
-      {hintedContainer && <>{tractorDistanceCircle}</>}
+      {showTractorCircle && <>{tractorDistanceCircle}</>}
       {effects.map((visEffect) => {
         const textWidth = 500;
         return (

@@ -87,6 +87,10 @@ export const ThreeInteractor = ({
   const menuAnchorRef = useRef(null);
   const setContextMenuRef = useStore((state) => state.setContextMenuRef);
   const setContextMenuItems = useStore((state) => state.setContextMenuItems);
+  const setShowTractorCircle = useStore((state) => state.setShowTractorCircle);
+  useEffect(() => {
+    setShowTractorCircle(active);
+  }, [active, setShowTractorCircle]);
   useEffect(() => {
     if (menuShown && menuAnchorRef.current) {
       setContextMenuRef(menuAnchorRef);
