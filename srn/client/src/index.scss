@@ -1,3 +1,7 @@
+html {
+  // prevent ugly scrolls
+  overflow: hidden;
+}
 * {
   user-select: none;
 }

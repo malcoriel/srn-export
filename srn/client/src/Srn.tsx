@@ -79,10 +79,11 @@ const Srn = () => {
   const updateSize = () => {
     if (
       size.width_px !== window.innerWidth ||
-      size.height_px !== window.innerHeight
+      size.height_px !== window.innerHeight - 1
     ) {
       size.width_px = window.innerWidth;
-      size.height_px = window.innerHeight;
+      // Chrome has a 1px bug here
+      size.height_px = window.innerHeight - 1;
       forceUpdate();
     }
   };
@@ -148,6 +149,8 @@ const Srn = () => {
     if (!cs) return;
     cs.tryConnect(preferredName);
 
+    // chrome has 1px height bug that needs to be fixed on load
+    updateSize();
     monitorSizeInterval = setInterval(updateSize, MONITOR_SIZE_INTERVAL);
 
     if (playing) {
