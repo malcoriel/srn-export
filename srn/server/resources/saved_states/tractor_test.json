@@ -1,0 +1,141 @@
+{
+  "id": "dca066b9-e258-474e-9327-8e923c3f01d4",
+  "version": 1,
+  "mode": "Sandbox",
+  "tag": null,
+  "seed": "sandbox",
+  "my_id": "00000000-0000-0000-0000-000000000000",
+  "start_time_ticks": 1622907618874,
+  "players": [
+    {
+      "id": "dca066b9-e258-474e-9327-8e923c3f01d4",
+      "is_bot": false,
+      "ship_id": "81d6a993-7e70-43bb-adb6-20b41f7a27d9",
+      "name": "Malcoriel",
+      "quest": null,
+      "money": 0,
+      "portrait_name": "9",
+      "respawn_ms_left": 0,
+      "long_actions": [],
+      "local_effects": [],
+      "notifications": []
+    }
+  ],
+  "milliseconds_remaining": 5902999,
+  "paused": false,
+  "leaderboard": {
+    "rating": [
+      [
+        {
+          "id": "dca066b9-e258-474e-9327-8e923c3f01d4",
+          "is_bot": false,
+          "ship_id": "81d6a993-7e70-43bb-adb6-20b41f7a27d9",
+          "name": "Malcoriel",
+          "quest": null,
+          "money": 0,
+          "portrait_name": "9",
+          "respawn_ms_left": 0,
+          "long_actions": [],
+          "local_effects": [],
+          "notifications": []
+        },
+        0
+      ]
+    ],
+    "winner": "Malcoriel"
+  },
+  "ticks": 37620,
+  "disable_hp_effects": true,
+  "market": {
+    "wares": {},
+    "prices": {},
+    "time_before_next_shake": 23048000
+  },
+  "locations": [
+    {
+      "seed": "",
+      "id": "f1197f72-2a7b-470d-8f22-b686d52c8e4b",
+      "star": null,
+      "planets": [],
+      "asteroids": [],
+      "minerals": [
+        {
+          "x": 82.44426406871195,
+          "y": 55.788890347313696,
+          "id": "09309706-e910-402a-9bcb-1b7509b2fa7f",
+          "radius": 1,
+          "value": 300,
+          "rarity": "Common",
+          "color": "#ffd700"
+        },
+        {
+          "x": 69.79056782462003,
+          "y": 62.3025865914057,
+          "id": "7ff3a075-451e-4939-ab9c-653daeb93ad1",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Common",
+          "color": "#c0c0c0"
+        }
+      ],
+      "containers": [
+        {
+          "id": "7d68b170-3879-445c-b60a-9239e33f49b7",
+          "items": [
+            {
+              "id": "a19b2b47-9732-4ca0-86aa-a464f53095f5",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "212491f7-da2d-41b7-9759-aa5e923e5a75",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 82.44426406871195,
+            "y": 72.00889034731364
+          },
+          "radius": 2
+        }
+      ],
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "asteroid_belts": [],
+      "ships": [
+        {
+          "id": "81d6a993-7e70-43bb-adb6-20b41f7a27d9",
+          "x": 80.5740115370178,
+          "y": 63.42603030380357,
+          "hp": 100,
+          "max_hp": 100,
+          "acc_periodic_dmg": 0,
+          "acc_periodic_heal": 0,
+          "rotation": 1.5707963267948966,
+          "radius": 1,
+          "color": "#F5B0A1",
+          "docked_at": null,
+          "tractor_target": null,
+          "navigate_target": null,
+          "dock_target": null,
+          "trajectory": [],
+          "inventory": []
+        }
+      ],
+      "adjacent_location_ids": []
+    }
+  ]
+}

@@ -127,28 +127,8 @@ export const KonvaOverlay: React.FC = React.memo(() => {
   );
   return (
     <Layer>
-      {hintedMineral && (
-        <>
-          <Circle
-            position={realPosToScreenPos(hintedMineral)}
-            stroke={hintedMineral.color}
-            strokeWidth={1}
-            radius={realLenToScreenLen(hintedMineral.radius)}
-          />
-          {tractorDistanceCircle}
-        </>
-      )}
-      {hintedContainer && (
-        <>
-          <Circle
-            position={realPosToScreenPos(hintedContainer.position)}
-            stroke={rare}
-            strokeWidth={1}
-            radius={realLenToScreenLen(hintedContainer.radius)}
-          />
-          {tractorDistanceCircle}
-        </>
-      )}
+      {hintedMineral && <>{tractorDistanceCircle}</>}
+      {hintedContainer && <>{tractorDistanceCircle}</>}
       {effects.map((visEffect) => {
         const textWidth = 500;
         return (

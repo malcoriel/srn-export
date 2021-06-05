@@ -75,6 +75,8 @@ export enum SandboxCommandName {
   Unknown = 'Unknown',
   AddStar = 'AddStar',
   AddPlanet = 'AddPlanet',
+  AddContainer = 'AddContainer',
+  AddMineral = 'AddMineral',
   ToggleGodMode = 'ToggleGodMode',
   GetSomeWares = 'GetSomeWares',
   Teleport = 'Teleport',
@@ -95,6 +97,8 @@ export enum SandboxTeleportTarget {
 
 export type SandboxCommand =
   | SandboxCommandName.AddStar
+  | SandboxCommandName.AddContainer
+  | SandboxCommandName.AddMineral
   | SandboxCommandName.ToggleGodMode
   | SandboxCommandName.GetSomeWares
   | {

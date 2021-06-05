@@ -1,23 +1,23 @@
-use std::collections::HashMap;
-use lazy_static::lazy_static;
-use chrono::Utc;
-use rand::rngs::SmallRng;
-use rand::SeedableRng;
-use uuid::Uuid;
-use std::sync::{Arc, Mutex};
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;
-use crate::new_id;
 use crate::random_stuff::PLANET_NAMES;
 use crate::system_gen::{gen_planet_typed, gen_star, PlanetType, PoolRandomPicker};
 use crate::vec2::Vec2f64;
 use crate::world::{find_my_ship, find_my_ship_mut, GameState, Ship};
+use crate::{new_id, world};
+use chrono::Utc;
+use lazy_static::lazy_static;
+use rand::rngs::SmallRng;
+use rand::SeedableRng;
+use std::collections::HashMap;
 use std::fs;
+use std::sync::{Arc, Mutex};
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum SandboxTeleportTarget {
     Unknown,
-    Zero
+    Zero,
 }
 
 lazy_static! {
@@ -28,17 +28,19 @@ lazy_static! {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum SandboxCommand {
     AddStar,
+    AddMineral,
+    AddContainer,
     ToggleGodMode,
     GetSomeWares,
     AddPlanet {
         p_type: PlanetType,
         orbit_speed: f64,
         radius: f64,
-        anchor_id: Uuid
+        anchor_id: Uuid,
     },
     Teleport {
-        target: SandboxTeleportTarget
-    }
+        target: SandboxTeleportTarget,
+    },
 }
 
 pub fn init_saved_states() {
@@ -50,23 +52,27 @@ pub fn init_saved_states() {
         let json = fs::read_to_string(current_file.path().display().to_string()).unwrap();
         let result = serde_json::from_str::<GameState>(json.as_str());
         if result.is_err() {
-            panic!("Failed to load saved state {}, err is {:?}", current_file.path().display(), result.err());
+            panic!(
+                "Failed to load saved state {}, err is {:?}",
+                current_file.path().display(),
+                result.err()
+            );
         }
         let result = result.unwrap();
         let filename = current_file.file_name().into_string().unwrap();
-        saved_states.insert(result.id, SavedState {
-            name: filename,
-            state: result
-        });
+        saved_states.insert(
+            result.id,
+            SavedState {
+                name: filename,
+                state: result,
+            },
+        );
     }
 }
 
-fn get_pos(state: &mut GameState, player_id:Uuid) -> Option<Vec2f64> {
+fn get_pos(state: &mut GameState, player_id: Uuid) -> Option<Vec2f64> {
     let ship = find_my_ship(state, player_id);
-    ship.map(|s| Vec2f64 {
-        x: s.x,
-        y: s.y
-    })
+    ship.map(|s| Vec2f64 { x: s.x, y: s.y })
 }
 
 pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand) {
@@ -81,7 +87,12 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
         SandboxCommand::ToggleGodMode => {
             state.disable_hp_effects = !state.disable_hp_effects;
         }
-        SandboxCommand::AddPlanet { p_type, orbit_speed, radius, anchor_id } => {
+        SandboxCommand::AddPlanet {
+            p_type,
+            orbit_speed,
+            radius,
+            anchor_id,
+        } => {
             if let Some(pos) = get_pos(state, player_id) {
                 let mut planet_name_pool = PoolRandomPicker {
                     // TODO filter out existing planets
@@ -98,7 +109,6 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 planet.y = pos.y;
                 state.locations[0].planets.push(planet);
             }
-
         }
         SandboxCommand::Teleport { target } => {
             if target == SandboxTeleportTarget::Zero {
@@ -118,25 +128,52 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 add_free_stuff(ship, InventoryItemType::HandWeapon, 50);
             }
         }
+        SandboxCommand::AddMineral => {
+            if let Some(loc) = world::find_my_ship_index(state, player_id) {
+                let ship = &state.locations[loc.location_idx].ships[loc.ship_idx];
+                let pos = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                };
+                let location = &mut state.locations[loc.location_idx];
+                world::spawn_mineral(location, world::Rarity::Common, pos);
+            }
+        }
+        SandboxCommand::AddContainer => {
+            if let Some(loc) = world::find_my_ship_index(state, player_id) {
+                let ship = &state.locations[loc.location_idx].ships[loc.ship_idx];
+                let pos = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                };
+                let location = &mut state.locations[loc.location_idx];
+                world::spawn_container(location, pos);
+            }
+        }
     }
 }
 
 fn add_free_stuff(ship: &mut Ship, iit: InventoryItemType, quantity: i32) {
-    add_item(&mut
-                 ship.inventory, InventoryItem {
-        id: new_id(),
-        index: 0,
-        quantity,
-        value: get_default_value(&iit),
-        stackable: false,
-        player_owned: false,
-        item_type: iit,
-        quest_id: None
-    })
+    add_item(
+        &mut ship.inventory,
+        InventoryItem {
+            id: new_id(),
+            index: 0,
+            quantity,
+            value: get_default_value(&iit),
+            stackable: false,
+            player_owned: false,
+            item_type: iit,
+            quest_id: None,
+        },
+    )
 }
 
 fn get_anchor_tier(state: &mut GameState, anchor_id: Uuid) -> u32 {
-    let anchor_planet = state.locations[0].planets.iter().find(|p| p.id == anchor_id);
+    let anchor_planet = state.locations[0]
+        .planets
+        .iter()
+        .find(|p| p.id == anchor_id);
     if anchor_planet.is_none() {
         if let Some(star) = state.locations[0].star.as_ref() {
             if star.id == anchor_id {

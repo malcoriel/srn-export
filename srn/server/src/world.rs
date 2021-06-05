@@ -1068,16 +1068,37 @@ fn update_state_minerals(
     res
 }
 
+pub fn spawn_mineral(location: &mut Location, rarity: Rarity, pos: Vec2f64) {
+    let mut small_rng = get_rand_small_rng();
+    let mut min = gen_mineral(&mut small_rng, pos);
+    min.rarity = rarity;
+    location.minerals.push(min)
+}
+
+pub fn spawn_container(loc: &mut Location, at: Vec2f64) {
+    let mut prng = get_rand_small_rng();
+    let mut container = Container::random(&mut prng);
+    container.position = at;
+    loc.containers.push(container);
+}
+
 fn seed_mineral(belts: &Vec<AsteroidBelt>) -> NatSpawnMineral {
-    let mut rng = thread_rng();
-    let mut small_rng = SmallRng::seed_from_u64(rng.next_u64());
+    let mut small_rng = get_rand_small_rng();
     let picked = small_rng.gen_range(0, belts.len());
     let belt = &belts[picked];
     let pos_in_belt = gen_pos_in_belt(belt);
+    gen_mineral(&mut small_rng, pos_in_belt)
+}
+
+fn get_rand_small_rng() -> SmallRng {
+    SmallRng::seed_from_u64(thread_rng().next_u64())
+}
+
+fn gen_mineral(mut small_rng: &mut SmallRng, pos: Vec2f64) -> NatSpawnMineral {
     let mineral_props = gen_mineral_props(&mut small_rng);
     NatSpawnMineral {
-        x: pos_in_belt.x,
-        y: pos_in_belt.y,
+        x: pos.x,
+        y: pos.y,
         id: new_id(),
         radius: mineral_props.0,
         value: mineral_props.1,
