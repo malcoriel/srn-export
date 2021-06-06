@@ -4,6 +4,22 @@ import NetState, { findMyPlayer, useNSForceChange } from '../NetState';
 import _ from 'lodash';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import { LongAction } from '../../../world/pkg';
+
+const getActionName = (a: LongAction): string | undefined => {
+  switch (a.tag) {
+    case 'Unknown':
+      return undefined;
+    case 'TransSystemJump':
+      return 'Jumping...';
+    case 'Respawn':
+      return 'Respawning...';
+    case 'Shoot':
+      return undefined;
+    default:
+      return undefined;
+  }
+};
 
 export const LongActionsDisplay = () => {
   const ns = NetState.get();
@@ -26,8 +42,10 @@ export const LongActionsDisplay = () => {
           if (a.tag === 'Unknown' || a.tag === 'Shoot') {
             return null;
           }
+          const name = getActionName(a);
           return (
             <div key={a.id} className="action">
+              {name && <div className="name">{name}</div>}
               <CircularProgressbar
                 value={a.percentage + 2}
                 text={`${(Math.floor(a.micro_left / 1000 / 100) / 10).toFixed(
