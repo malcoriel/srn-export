@@ -19,6 +19,7 @@ import {
   GameState,
   Notification,
   NotificationText,
+  Location,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -26,6 +27,8 @@ import {
   InventoryItemType,
   GameMode,
 } from '../../world/pkg/world.extra';
+import _ from 'lodash';
+import { Dictionary } from 'ts-essentials';
 
 export type {
   Notification,
@@ -425,9 +428,10 @@ export enum FindObjectHint {
   Planet,
 }
 
+type FindableObject = Planet;
 type FindObjectResult =
   | {
-      object: Planet;
+      object: FindableObject;
       locIndex: number;
     }
   | undefined;
@@ -437,6 +441,8 @@ export const findObjectById = (
   // for further optimizations like what type & location, but for now just pure search
   _hints?: FindObjectHint[]
 ): FindObjectResult => {
+  // considering the fact server only provides 0-th location, this is safe to
+  // iterate them all, for now
   for (let i = 0; i < state.locations.length; i++) {
     const loc = state.locations[i];
     const found = loc.planets.find((p) => p.id === objId);
@@ -464,4 +470,33 @@ export const getObjectPosition = (obj: any): IVector => {
     };
   }
   throw new Error('Invalid object for getObjectPosition');
+};
+
+export const indexShipsByPlayerId = (
+  loc: Location,
+  players: Player[]
+): Record<string, Ship> => {
+  const playersByShip = _.keyBy(
+    players,
+    (p: Player) => p.ship_id
+  ) as Dictionary<Player>;
+  const res: Record<string, Ship> = {};
+  for (const ship of loc.ships) {
+    if (playersByShip[ship.id]) {
+      res[playersByShip[ship.id].id] = ship;
+    }
+  }
+  return res;
+};
+
+export const findObjectPositionById = (
+  state: GameState,
+  objId: string
+): Vector | null => {
+  const objRes = findObjectById(state, objId);
+  if (!objRes) {
+    return null;
+  }
+  const { object } = objRes;
+  return Vector.fromIVector(getObjectPosition(object));
 };

@@ -37,6 +37,11 @@ Slow.args = {
   tickInterval: 50,
 };
 
+export const Fast = Template.bind({});
+Fast.args = {
+  tickInterval: 16,
+};
+
 // noinspection JSUnusedGlobalSymbols
 export default {
   title: 'Three/LaserBeam',

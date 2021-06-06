@@ -22,6 +22,7 @@ import { size, viewPortSizeMeters } from '../coord';
 import { ThreeQuestDirection } from './ThreeQuestDirection';
 import { ThreeNames } from './ThreeNames';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
+import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
 
 export type Vector3Arr = [number, number, number];
 
@@ -138,6 +139,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           <ThreeShipsLayer state={state} visMap={visMap} />
           <ThreeQuestDirection state={state} visualState={visualState} />
           <ThreeNames netState={ns} visMap={visMap} />
+          <ThreeWeaponEffectsLayer />
         </group>
       </Suspense>
     </Canvas>
