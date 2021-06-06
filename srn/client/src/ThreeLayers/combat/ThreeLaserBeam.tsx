@@ -17,17 +17,19 @@ export const calcBeamParams = (start: Vector, end: Vector) => {
 export const ThreeLaserBeam: React.FC<{
   start: Vector;
   end: Vector;
+  width?: number;
+  color?: string;
   progression: number;
-}> = ({ start, end, progression }) => {
+}> = ({ start, end, progression, width = 1, color = 'red' }) => {
   const beamParams = useMemo(() => calcBeamParams(start, end), [start, end]);
   return (
     <mesh
       position={beamParams.position}
       rotation={[0, 0, -beamParams.rotation]}
     >
-      <planeGeometry args={[3, beamParams.length, 1]} />
+      <planeGeometry args={[width, beamParams.length, 1]} />
       <meshBasicMaterial
-        color="red"
+        color={color}
         opacity={EasingFunctions.easeInCubic((50 + progression / 2) / 100)}
         transparent
       />

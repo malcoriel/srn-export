@@ -1,14 +1,8 @@
-// @ts-ignore
 import React from 'react';
-// @ts-ignore
 import NetState from '../NetState';
-import { LongAction, LongActionShoot, Player } from '../../../world/pkg';
+import { LongAction, Player } from '../../../world/pkg';
 import Vector from '../utils/Vector';
-import {
-  findObjectById,
-  findObjectPositionById,
-  indexShipsByPlayerId,
-} from '../world';
+import { findObjectPositionById, indexShipsByPlayerId } from '../world';
 import { ThreeLaserBeam } from './combat/ThreeLaserBeam';
 
 type BeamProps = {
@@ -17,6 +11,7 @@ type BeamProps = {
   end: Vector;
   progression: number;
 };
+
 export const ThreeWeaponEffectsLayer = () => {
   const ns = NetState.get();
   if (!ns) {
@@ -62,6 +57,8 @@ export const ThreeWeaponEffectsLayer = () => {
           start={bp.start}
           end={bp.end}
           progression={bp.progression}
+          width={0.2}
+          color="red"
         />
       ))}
     </>

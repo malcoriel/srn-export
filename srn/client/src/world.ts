@@ -20,6 +20,7 @@ import {
   Notification,
   NotificationText,
   Location,
+  Container,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -428,7 +429,7 @@ export enum FindObjectHint {
   Planet,
 }
 
-type FindableObject = Planet;
+type FindableObject = Planet | NatSpawnMineral | Container | Ship;
 type FindObjectResult =
   | {
       object: FindableObject;
@@ -445,7 +446,29 @@ export const findObjectById = (
   // iterate them all, for now
   for (let i = 0; i < state.locations.length; i++) {
     const loc = state.locations[i];
-    const found = loc.planets.find((p) => p.id === objId);
+    let found;
+    found = loc.planets.find((p) => p.id === objId);
+    if (found) {
+      return {
+        object: found,
+        locIndex: i,
+      };
+    }
+    found = loc.ships.find((p) => p.id === objId);
+    if (found) {
+      return {
+        object: found,
+        locIndex: i,
+      };
+    }
+    found = loc.minerals.find((p) => p.id === objId);
+    if (found) {
+      return {
+        object: found,
+        locIndex: i,
+      };
+    }
+    found = loc.containers.find((p) => p.id === objId);
     if (found) {
       return {
         object: found,
