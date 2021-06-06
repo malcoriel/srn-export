@@ -123,7 +123,6 @@ pub fn try_start_long_action(
             revalidate(&mut player.long_actions);
         }
         LongActionStart::Shoot { target } => {
-            log!("starting shoot");
             let ship_idx = find_my_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
@@ -134,7 +133,6 @@ pub fn try_start_long_action(
                 return false;
             }
             let player = player.unwrap();
-            log!("validating shoot");
             if !combat::validate_shoot(
                 target.clone(),
                 &state.locations[ship_idx.location_idx],
@@ -145,7 +143,6 @@ pub fn try_start_long_action(
             }
 
             let player = find_my_player_mut(state, player_id).unwrap();
-            log!("creating shoot");
             player.long_actions.push(start_long_act(action));
             revalidate(&mut player.long_actions);
             let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
@@ -155,12 +152,10 @@ pub fn try_start_long_action(
                     Ability::Shoot {
                         cooldown_ticks_remaining,
                     } => {
-                        log!("setting cooldown");
                         mem::swap(cooldown_ticks_remaining, &mut SHOOT_COOLDOWN_MCS.clone());
                     }
                 }
             }
-            log!("shoot done");
         }
     }
     return true;
