@@ -52,7 +52,9 @@ impl Ability {
             Ability::Unknown => {}
             Ability::Shoot {
                 cooldown_ticks_remaining,
-            } => mem::swap(cooldown_ticks_remaining, &mut val.clone()),
+            } => {
+                *cooldown_ticks_remaining = val;
+            }
         };
     }
 
@@ -62,8 +64,8 @@ impl Ability {
             Ability::Shoot {
                 cooldown_ticks_remaining,
             } => {
-                let mut new_val = (*cooldown_ticks_remaining - ticks_elapsed as i32).max(0);
-                mem::swap(cooldown_ticks_remaining, &mut new_val);
+                *cooldown_ticks_remaining =
+                    (*cooldown_ticks_remaining - ticks_elapsed as i32).max(0);
             }
         };
     }
