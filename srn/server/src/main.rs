@@ -1096,7 +1096,7 @@ pub fn cleanup_nonexistent_ships(
                     cont.state.id,
                 )
             },
-            7,
+            SamplerMarks::ShipCleanup as u32,
         );
     }
     sampler

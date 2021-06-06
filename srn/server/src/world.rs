@@ -26,7 +26,7 @@ use crate::long_actions::{
 };
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
-use crate::perf::Sampler;
+use crate::perf::{Sampler, SamplerMarks};
 use crate::planet_movement::{
     build_anchors_from_bodies, index_bodies_by_id, make_bodies_from_planets, IBody,
 };
@@ -835,12 +835,15 @@ pub fn update_world(
         }
     } else {
         if !client {
-            state.leaderboard = sampler.measure(&|| make_leaderboard(&state.players), 8);
+            state.leaderboard = sampler.measure(
+                &|| make_leaderboard(&state.players),
+                SamplerMarks::UpdateLeaderboard as u32,
+            );
 
             if state.market.time_before_next_shake > 0 {
                 state.market.time_before_next_shake -= elapsed;
             } else {
-                let market_update_start = sampler.start(21);
+                let market_update_start = sampler.start(SamplerMarks::UpdateMarket as u32);
                 let mut wares = state.market.wares.clone();
                 let mut prices = state.market.prices.clone();
                 let planets = state.locations[0]
@@ -858,7 +861,7 @@ pub fn update_world(
             }
         }
 
-        let long_act_ticks = sampler.start(22);
+        let long_act_ticks = sampler.start(SamplerMarks::UpdateTickLongActions as u32);
         let mut to_finish = vec![];
         for player in state.players.iter_mut() {
             player.long_actions = player
@@ -914,7 +917,7 @@ fn update_location(
     mut sampler: Sampler,
     location_idx: usize,
 ) -> Sampler {
-    let update_planets_id = sampler.start(9);
+    let update_planets_id = sampler.start(SamplerMarks::UpdatePlanetMovement as u32);
     let (planets, sampler_out) = planet_movement::update_planets(
         &state.locations[location_idx].planets,
         &state.locations[location_idx].star,
@@ -926,7 +929,7 @@ fn update_location(
     sampler = sampler_out;
 
     sampler.end(update_planets_id);
-    let update_ast_id = sampler.start(10);
+    let update_ast_id = sampler.start(SamplerMarks::UpdateAsteroids as u32);
     state.locations[location_idx].asteroids = planet_movement::update_asteroids(
         &state.locations[location_idx].asteroids,
         &state.locations[location_idx].star,
@@ -943,7 +946,7 @@ fn update_location(
                 &state.locations[location_idx].ships,
             )
         },
-        11,
+        SamplerMarks::UpdateShipsOnPlanets as u32,
     );
     state.locations[location_idx].ships = sampler.measure(
         &|| {
@@ -955,7 +958,7 @@ fn update_location(
                 elapsed,
             )
         },
-        12,
+        SamplerMarks::UpdateShipsNavigation as u32,
     );
     state.locations[location_idx].ships = sampler.measure(
         &|| {
@@ -965,13 +968,13 @@ fn update_location(
                 &state.locations[location_idx].containers,
             )
         },
-        13,
+        SamplerMarks::UpdateShipsTractoring as u32,
     );
-    let cooldowns_id = sampler.start(24);
+    let cooldowns_id = sampler.start(SamplerMarks::UpdateAbilityCooldowns as u32);
     abilities::update_ships_ability_cooldowns(&mut state.locations[location_idx].ships, elapsed);
     sampler.end(cooldowns_id);
 
-    let update_minerals_id = sampler.start(14);
+    let update_minerals_id = sampler.start(SamplerMarks::UpdateTractoredMaterials as u32);
     let container = MineralsContainer::new(state.locations[location_idx].minerals.clone());
     let mut minerals_container = Box::from(container) as Box<dyn MovablesContainer>;
     let consume_updates = tractoring::update_tractored_objects(
@@ -989,7 +992,7 @@ fn update_location(
         apply_tractored_iterms_consumption(&mut state, consume_updates)
     }
     sampler.end(update_minerals_id);
-    let update_containers_id = sampler.start(23);
+    let update_containers_id = sampler.start(SamplerMarks::UpdateTractoredContainers as u32);
     let container = ContainersContainer::new(state.locations[location_idx].containers.clone());
     let mut containers_container = Box::from(container) as Box<dyn MovablesContainer>;
     let consume_updates = tractoring::update_tractored_objects(
@@ -1009,7 +1012,7 @@ fn update_location(
     sampler.end(update_containers_id);
 
     if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
-        let hp_effects_id = sampler.start(15);
+        let hp_effects_id = sampler.start(SamplerMarks::UpdateShipHpEffects as u32);
         state.locations[location_idx].ships = update_ship_hp_effects(
             &state.locations[location_idx].star,
             &state.locations[location_idx].ships,
@@ -1026,9 +1029,9 @@ fn update_location(
                     &state.locations[location_idx].asteroid_belts,
                 )
             },
-            16,
+            SamplerMarks::UpdateMineralsRespawn as u32,
         );
-        let respawn_id = sampler.start(17);
+        let respawn_id = sampler.start(SamplerMarks::UpdateShipsRespawn as u32);
         start_dead_ships_respawn(&mut state);
         sampler.end(respawn_id);
     }

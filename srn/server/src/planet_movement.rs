@@ -266,7 +266,7 @@ pub fn update_planets(
     let mut tier2 = tier2
         .iter()
         .map(|p| {
-            let iter = sampler.start(18);
+            let iter = sampler.start(SamplerMarks::UpdatePlanets1 as u32);
             let val =
                 simulate_planet_movement(elapsed_micro, &mut anchors, &mut shifts, (*p).clone());
             sampler.end(iter);
