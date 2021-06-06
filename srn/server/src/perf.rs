@@ -1,14 +1,19 @@
+use std::collections::HashMap;
+use std::fmt;
+use std::fmt::{Display, Formatter};
+
 use chrono::{DateTime, Local};
 use itertools::{max, min};
 use statistical::standard_deviation;
-use std::collections::HashMap;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 use uuid::Uuid;
 
 pub struct Sampler {
     buckets: HashMap<u32, Vec<u64>>,
     labels: Vec<String>,
     marks: HashMap<Uuid, (u32, DateTime<Local>)>,
-    empty: bool
+    empty: bool,
 }
 
 impl Sampler {
@@ -19,7 +24,7 @@ impl Sampler {
             labels,
             buckets,
             marks: HashMap::new(),
-            empty: false
+            empty: false,
         }
     }
     pub fn empty() -> Sampler {
@@ -27,10 +32,9 @@ impl Sampler {
             labels: vec![],
             buckets: HashMap::new(),
             marks: HashMap::new(),
-            empty: true
+            empty: true,
         }
     }
-
 
     fn init_buckets(labels: &Vec<String>, buckets: &mut HashMap<u32, Vec<u64>>) {
         for i in 0..labels.len() {
@@ -102,7 +106,7 @@ impl Sampler {
     }
 
     pub fn end(&mut self, id: Uuid) {
-        if crate::ENABLE_PERF&& !self.empty {
+        if crate::ENABLE_PERF && !self.empty {
             if let Some((label_idx, start)) = self.extract_mark(id) {
                 let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
                 self.add(label_idx, diff as u64);
@@ -116,7 +120,7 @@ impl Sampler {
     where
         F: Fn() -> T,
     {
-        if crate::ENABLE_PERF&& !self.empty {
+        if crate::ENABLE_PERF && !self.empty {
             let start = Local::now();
             let res = target_fn();
             let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
@@ -137,7 +141,7 @@ impl Sampler {
     where
         F: FnMut() -> T,
     {
-        if crate::ENABLE_PERF&& !self.empty {
+        if crate::ENABLE_PERF && !self.empty {
             let start = Local::now();
             let res = target_fn();
             let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
@@ -195,4 +199,39 @@ where
     F: FnMut() -> T,
 {
     return target_fn();
+}
+
+#[derive(Debug, EnumIter, Clone)]
+pub enum SamplerMarks {
+    MainTotal = 0,
+    Update = 1,
+    Locks = 2,
+    Quests = 3,
+    Bots = 4,
+    Events = 5,
+    ShipCleanup = 6,
+    MulticastUpdate = 7,
+    UpdateLeaderboard = 8,
+    UpdatePlanetMovement = 9,
+    UpdateAsteroids = 10,
+    UpdateShipsOnPlanets = 11,
+    UpdateShipsNavigation = 12,
+    UpdateShipsTractoring = 13,
+    UpdateTractoredMaterials = 14,
+    UpdateShipHpEffects = 15,
+    UpdateMineralsRespawn = 16,
+    UpdateShipsRespawn = 17,
+    UpdatePlanets1 = 18,
+    UpdatePlanets2 = 19,
+    PersonalStates = 20,
+    UpdateMarket = 21,
+    UpdateTickLongActions = 22,
+    UpdateTractoredContainers = 23,
+    UpdateAbilityCooldowns = 24,
+}
+
+impl Display for SamplerMarks {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }

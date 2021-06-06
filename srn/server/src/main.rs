@@ -6,6 +6,7 @@ extern crate serde_derive;
 
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::fmt::{Display, Formatter};
 use std::iter::FromIterator;
 use std::net::{SocketAddr, TcpStream};
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
@@ -27,6 +28,8 @@ use rocket_contrib::json::Json;
 #[doc(hidden)]
 pub use serde_derive::*;
 use serde_derive::{Deserialize, Serialize};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 use uuid::*;
 use websocket::client::sync::Writer;
 use websocket::server::upgrade::WsUpgrade;
@@ -39,6 +42,7 @@ use net::{
     ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper,
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
+use perf::SamplerMarks;
 use ship_action::ShipAction;
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
@@ -55,9 +59,6 @@ use crate::world::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
     spawn_ship, update_quests, GameEvent, UpdateOptions, AABB,
 };
-use std::fmt::{Display, Formatter};
-use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -939,41 +940,6 @@ const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 
 lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
-}
-
-#[derive(Debug, EnumIter, Clone)]
-pub enum SamplerMarks {
-    MainTotal = 0,
-    Update = 1,
-    Locks = 2,
-    Quests = 3,
-    Bots = 4,
-    Events = 5,
-    ShipCleanup = 6,
-    MulticastUpdate = 7,
-    UpdateLeaderboard = 8,
-    UpdatePlanetMovement = 9,
-    UpdateAsteroids = 10,
-    UpdateShipsOnPlanets = 11,
-    UpdateShipsNavigation = 12,
-    UpdateShipsTractoring = 13,
-    UpdateTractoredMaterials = 14,
-    UpdateShipHpEffects = 15,
-    UpdateMineralsRespawn = 16,
-    UpdateShipsRespawn = 17,
-    UpdatePlanets1 = 18,
-    UpdatePlanets2 = 19,
-    PersonalStates = 20,
-    UpdateMarket = 21,
-    UpdateTickLongActions = 22,
-    UpdateTractoredContainers = 23,
-    UpdateAbilityCooldowns = 24,
-}
-
-impl Display for SamplerMarks {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
 }
 
 fn main_thread() {
