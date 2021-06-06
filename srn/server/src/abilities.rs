@@ -16,7 +16,7 @@ impl Ability {
     pub fn get_duration(&self) -> i32 {
         match self {
             Ability::Unknown => 0,
-            Ability::Shoot { .. } => 500 * 1000,
+            Ability::Shoot { .. } => 100 * 1000,
         }
     }
 
@@ -27,7 +27,7 @@ impl Ability {
     pub fn get_cooldown(&self) -> i32 {
         match self {
             Ability::Unknown => 0,
-            Ability::Shoot { .. } => 500 * 1000,
+            Ability::Shoot { .. } => 200 * 1000,
         }
     }
 

@@ -23,7 +23,7 @@ export const LongActionsDisplay = () => {
     <div className="long-actions-display">
       <div className="container">
         {long_actions.map((a) => {
-          if (a.tag === 'Unknown') {
+          if (a.tag === 'Unknown' || a.tag === 'Shoot') {
             return null;
           }
           return (
