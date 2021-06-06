@@ -178,7 +178,7 @@ pub fn substitute_notification_texts(state: &mut GameState, player_ids: HashSet<
     let players_to_update = state
         .players
         .iter_mut()
-        .filter(|p| player_ids.contains(&p.id))
+        .filter(|p| player_ids.contains(&p.id) && !p.is_bot)
         .collect::<Vec<_>>();
 
     if players_to_update.len() == 0 {
