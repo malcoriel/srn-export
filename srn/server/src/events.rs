@@ -31,6 +31,7 @@ pub fn handle_events(
     d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
 ) -> Vec<(Uuid, Option<Dialogue>)> {
     let mut res = vec![];
+    let mut prng = world::gen_rng();
 
     loop {
         if let Ok(event) = receiver.try_recv() {
@@ -92,7 +93,7 @@ pub fn handle_events(
                     let state = crate::select_mut_state(cont, player.id);
                     let planets = state.locations[0].planets.clone();
                     if let Some(player) = world::find_my_player_mut(state, player.id) {
-                        world::generate_random_quest(player, &planets.clone(), None);
+                        world::generate_random_quest(player, &planets.clone(), None, &mut prng);
                     }
                     substitute_notification_texts(state, Some(player.id));
                 }

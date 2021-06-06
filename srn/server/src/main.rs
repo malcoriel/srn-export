@@ -934,7 +934,7 @@ fn cleanup_thread() {
     }
 }
 
-const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
+const PERF_CONSUME_TIME: i64 = 60 * 1000 * 1000;
 const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 
@@ -943,6 +943,7 @@ lazy_static! {
 }
 
 fn main_thread() {
+    let mut prng = world::gen_rng();
     let mut d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
     {
@@ -1006,7 +1007,7 @@ fn main_thread() {
         sampler.end(personal_id);
 
         let quests_mark = sampler.start(SamplerMarks::Quests as u32);
-        update_quests(&mut cont.state);
+        update_quests(&mut cont.state, &mut prng);
         sampler.end(quests_mark);
 
         let d_states = &mut **d_states;

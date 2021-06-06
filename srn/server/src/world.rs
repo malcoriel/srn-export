@@ -194,12 +194,16 @@ fn index_players_by_ship_id_mut(players: &mut Vec<Player>) -> HashMap<Uuid, &mut
     by_id
 }
 
-pub fn generate_random_quest(player: &mut Player, planets: &Vec<Planet>, docked_at: Option<Uuid>) {
-    let mut rng: ThreadRng = rand::thread_rng();
+pub fn generate_random_quest(
+    player: &mut Player,
+    planets: &Vec<Planet>,
+    docked_at: Option<Uuid>,
+    prng: &mut SmallRng,
+) {
     if planets.len() <= 0 {
         return;
     }
-    let from = get_random_planet(planets, docked_at, &mut rng);
+    let from = get_random_planet(planets, docked_at, prng);
     if from.is_none() {
         return;
     }
@@ -208,8 +212,8 @@ pub fn generate_random_quest(player: &mut Player, planets: &Vec<Planet>, docked_
         .into_iter()
         .filter(|p| p.id != from.id)
         .collect::<Vec<_>>();
-    let to = &delivery[rng.gen_range(0, delivery.len())];
-    let reward = rng.gen_range(500, 1001);
+    let to = &delivery[prng.gen_range(0, delivery.len())];
+    let reward = prng.gen_range(500, 1001);
     let quest = Quest {
         id: new_id(),
         from_id: from.id,
@@ -224,7 +228,7 @@ pub fn generate_random_quest(player: &mut Player, planets: &Vec<Planet>, docked_
 fn get_random_planet<'a>(
     planets: &'a Vec<Planet>,
     docked_at: Option<Uuid>,
-    rng: &mut ThreadRng,
+    rng: &mut SmallRng,
 ) -> Option<&'a Planet> {
     if planets.len() == 0 {
         return None;
@@ -1079,28 +1083,28 @@ fn update_state_minerals(
 }
 
 pub fn spawn_mineral(location: &mut Location, rarity: Rarity, pos: Vec2f64) {
-    let mut small_rng = get_rand_small_rng();
+    let mut small_rng = gen_rng();
     let mut min = gen_mineral(&mut small_rng, pos);
     min.rarity = rarity;
     location.minerals.push(min)
 }
 
 pub fn spawn_container(loc: &mut Location, at: Vec2f64) {
-    let mut prng = get_rand_small_rng();
+    let mut prng = gen_rng();
     let mut container = Container::random(&mut prng);
     container.position = at;
     loc.containers.push(container);
 }
 
 fn seed_mineral(belts: &Vec<AsteroidBelt>) -> NatSpawnMineral {
-    let mut small_rng = get_rand_small_rng();
+    let mut small_rng = gen_rng();
     let picked = small_rng.gen_range(0, belts.len());
     let belt = &belts[picked];
     let pos_in_belt = gen_pos_in_belt(belt);
     gen_mineral(&mut small_rng, pos_in_belt)
 }
 
-fn get_rand_small_rng() -> SmallRng {
+pub fn gen_rng() -> SmallRng {
     SmallRng::seed_from_u64(thread_rng().next_u64())
 }
 
@@ -1323,9 +1327,8 @@ pub fn find_and_extract_ship(state: &mut GameState, player_id: Uuid) -> Option<S
 }
 
 pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -> &Ship {
-    let mut rng = thread_rng();
-    let mut small_rng = SmallRng::seed_from_u64(rng.next_u64());
-    let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut rng);
+    let mut small_rng = gen_rng();
+    let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
     let mut at = at;
     if rand_planet.is_some() && at.is_none() {
         let p = rand_planet.unwrap();
@@ -1685,18 +1688,14 @@ pub fn find_player_and_ship(
     return (player, ship);
 }
 
-pub fn update_quests(state: &mut GameState) {
-    let state_read = state.clone();
+pub fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
+    let quest_planets = state.locations[0].planets.clone();
     let mut any_new_quests = false;
     let player_ids = state.players.iter().map(|p| p.id).collect::<Vec<_>>();
     for player_id in player_ids {
         if let (Some(mut player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
             if player.quest.is_none() {
-                generate_random_quest(
-                    player,
-                    &state_read.locations[0].planets.clone(),
-                    ship.docked_at,
-                );
+                generate_random_quest(player, &quest_planets, ship.docked_at, prng);
                 any_new_quests = true;
             } else {
                 let quest_id = player.quest.as_ref().map(|q| q.id).unwrap();
