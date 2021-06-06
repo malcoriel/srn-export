@@ -113,6 +113,12 @@ mod ship_action;
 #[path = "../../server/src/combat.rs"]
 mod combat;
 
+#[path = "../../server/src/indexing.rs"]
+mod indexing;
+
+#[path = "../../server/src/abilities.rs"]
+mod abilities;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 

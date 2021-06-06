@@ -81,6 +81,7 @@ extern crate websocket;
 #[macro_use]
 extern crate num_derive;
 
+mod abilities;
 mod api;
 mod bots;
 mod chat;
@@ -89,6 +90,7 @@ mod dialogue;
 mod dialogue_dto;
 mod dialogue_test;
 mod events;
+mod indexing;
 mod inventory;
 mod inventory_test;
 mod locations;
@@ -945,30 +947,31 @@ fn main_thread() {
     }
     let mut sampler = Sampler::new(
         vec![
-            "Main total",                 // 0
-            "Update",                     // 1
-            "Locks",                      // 2
-            "Quests",                     // 3
-            "Bots",                       // 4
-            "Events",                     // 5
-            "Ship cleanup",               // 6
-            "Multicast update",           // 7
-            "Update leaderboard",         // 8
-            "Update planet movement",     // 9
-            "Update asteroids",           // 10
-            "Update ships on planets",    // 11
-            "Update ships navigation",    // 12
-            "Update ships tractoring",    // 13
-            "Update tractored materials", // 14
-            "Update ship hp effects",     // 15
-            "Update minerals respawn",    // 16
-            "Update ships respawn",       // 17
-            "Update planets 1",           // 18
-            "Update planets 2",           // 19
-            "Personal states",            // 20
-            "Update market",              // 21
-            "Update tick long actions",   // 22
-            "Update tractored containes", // 23
+            "Main total",                  // 0
+            "Update",                      // 1
+            "Locks",                       // 2
+            "Quests",                      // 3
+            "Bots",                        // 4
+            "Events",                      // 5
+            "Ship cleanup",                // 6
+            "Multicast update",            // 7
+            "Update leaderboard",          // 8
+            "Update planet movement",      // 9
+            "Update asteroids",            // 10
+            "Update ships on planets",     // 11
+            "Update ships navigation",     // 12
+            "Update ships tractoring",     // 13
+            "Update tractored materials",  // 14
+            "Update ship hp effects",      // 15
+            "Update minerals respawn",     // 16
+            "Update ships respawn",        // 17
+            "Update planets 1",            // 18
+            "Update planets 2",            // 19
+            "Personal states",             // 20
+            "Update market",               // 21
+            "Update tick long actions",    // 22
+            "Update tractored containers", // 23
+            "Update ability cooldowns",    // 24
         ]
         .iter()
         .map(|v| v.to_string())

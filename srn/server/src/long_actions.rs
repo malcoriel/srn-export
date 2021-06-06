@@ -1,19 +1,23 @@
+use crate::abilities::Ability;
+use crate::combat::{ShootTarget, SHOOT_COOLDOWN_MCS};
 use crate::world::{
-    find_my_player_mut, find_my_ship_index, spawn_ship, GameState, PLAYER_RESPAWN_TIME_MC,
+    find_my_player, find_my_player_mut, find_my_ship_index, spawn_ship, GameState,
+    PLAYER_RESPAWN_TIME_MC,
 };
-use crate::{locations, new_id};
+use crate::{combat, locations, new_id};
 use core::mem;
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-#[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
+#[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone, Copy)]
 #[serde(tag = "tag")]
 pub enum LongActionStart {
     Unknown,
     TransSystemJump { to: Uuid },
     Respawn,
+    Shoot { target: ShootTarget },
 }
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
@@ -33,6 +37,12 @@ pub enum LongAction {
         micro_left: i32,
         percentage: u32,
     },
+    Shoot {
+        id: Uuid,
+        target: ShootTarget,
+        micro_left: i32,
+        percentage: u32,
+    },
 }
 
 pub fn erase_details(la: LongAction) -> LongAction {
@@ -48,6 +58,12 @@ pub fn erase_details(la: LongAction) -> LongAction {
         },
         LongAction::Respawn { .. } => LongAction::Respawn {
             id: Default::default(),
+            micro_left: 0,
+            percentage: 0,
+        },
+        LongAction::Shoot { .. } => LongAction::Shoot {
+            id: Default::default(),
+            target: Default::default(),
             micro_left: 0,
             percentage: 0,
         },
@@ -106,6 +122,46 @@ pub fn try_start_long_action(
             player.long_actions.push(start_long_act(action));
             revalidate(&mut player.long_actions);
         }
+        LongActionStart::Shoot { target } => {
+            log!("starting shoot");
+            let ship_idx = find_my_ship_index(state, player_id);
+            if ship_idx.is_none() {
+                return false;
+            }
+            let ship_idx = ship_idx.unwrap();
+            let player = find_my_player(state, player_id);
+            if player.is_none() {
+                return false;
+            }
+            let player = player.unwrap();
+            log!("validating shoot");
+            if !combat::validate_shoot(
+                target.clone(),
+                &state.locations[ship_idx.location_idx],
+                &player,
+                &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
+            ) {
+                return false;
+            }
+
+            let player = find_my_player_mut(state, player_id).unwrap();
+            log!("creating shoot");
+            player.long_actions.push(start_long_act(action));
+            revalidate(&mut player.long_actions);
+            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+            for ability in ship.abilities.iter_mut() {
+                match ability {
+                    Ability::Unknown => {}
+                    Ability::Shoot {
+                        cooldown_ticks_remaining,
+                    } => {
+                        log!("setting cooldown");
+                        mem::swap(cooldown_ticks_remaining, &mut SHOOT_COOLDOWN_MCS.clone());
+                    }
+                }
+            }
+            log!("shoot done");
+        }
     }
     return true;
 }
@@ -132,6 +188,7 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                 has_respawn = true;
                 Some(a)
             }
+            LongAction::Shoot { .. } => Some(a),
         })
         .collect();
     mem::swap(long_actions, &mut new_actions);
@@ -153,6 +210,12 @@ pub fn start_long_act(act: LongActionStart) -> LongAction {
             micro_left: PLAYER_RESPAWN_TIME_MC,
             percentage: 0,
         },
+        LongActionStart::Shoot { target } => LongAction::Shoot {
+            id: new_id(),
+            target,
+            micro_left: combat::SHOOT_DURATION_TICKS,
+            percentage: 0,
+        },
     };
 }
 
@@ -167,6 +230,7 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction) 
         LongAction::Respawn { .. } => {
             spawn_ship(state, player_id, None);
         }
+        LongAction::Shoot { .. } => {}
     }
 }
 
@@ -195,6 +259,23 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                     id,
                     micro_left: left,
                     percentage: calc_percentage(left, PLAYER_RESPAWN_TIME_MC),
+                },
+                left > 0,
+            )
+        }
+        LongAction::Shoot {
+            micro_left,
+            id,
+            target,
+            ..
+        } => {
+            let left = micro_left - micro_passed as i32;
+            (
+                LongAction::Shoot {
+                    id,
+                    micro_left: left,
+                    target,
+                    percentage: calc_percentage(left, combat::SHOOT_DURATION_TICKS),
                 },
                 left > 0,
             )

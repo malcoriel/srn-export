@@ -5,6 +5,7 @@ use std::f64::consts::PI;
 use std::f64::{INFINITY, NEG_INFINITY};
 use std::iter::FromIterator;
 
+use crate::abilities;
 use chrono::Utc;
 use itertools::{Either, Itertools};
 use rand::prelude::*;
@@ -14,6 +15,8 @@ use uuid::Uuid;
 use uuid::*;
 use wasm_bindgen::prelude::*;
 
+use crate::abilities::Ability;
+use crate::combat::ShootTarget;
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
 };
@@ -38,7 +41,7 @@ use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::tractoring::{ContainersContainer, IMovable, MineralsContainer, MovablesContainer};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::{fire_event, market, notifications, planet_movement, ship_action, tractoring};
+use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
 
 const SHIP_SPEED: f64 = 20.0;
@@ -357,6 +360,34 @@ pub struct Ship {
     pub dock_target: Option<Uuid>,
     pub trajectory: Vec<Vec2f64>,
     pub inventory: Vec<InventoryItem>,
+    #[serde(default)]
+    pub abilities: Vec<Ability>,
+}
+
+impl Ship {
+    pub fn new(mut small_rng: &mut SmallRng, at: &mut Option<Vec2f64>) -> Ship {
+        Ship {
+            id: crate::new_id(),
+            color: gen_color(&mut small_rng).to_string(),
+            x: if at.is_some() { at.unwrap().x } else { 100.0 },
+            y: if at.is_some() { at.unwrap().y } else { 100.0 },
+            hp: 100.0,
+            max_hp: 100.0,
+            acc_periodic_dmg: 0.0,
+            acc_periodic_heal: 0.0,
+            rotation: 0.0,
+            radius: 1.0,
+            docked_at: None,
+            tractor_target: None,
+            navigate_target: None,
+            dock_target: None,
+            trajectory: vec![],
+            inventory: vec![],
+            abilities: vec![Ability::Shoot {
+                cooldown_ticks_remaining: 0,
+            }],
+        }
+    }
 }
 
 impl Ship {
@@ -936,6 +967,9 @@ fn update_location(
         },
         13,
     );
+    let cooldowns_id = sampler.start(24);
+    abilities::update_ships_ability_cooldowns(&mut state.locations[location_idx].ships, elapsed);
+    sampler.end(cooldowns_id);
 
     let update_minerals_id = sampler.start(14);
     let container = MineralsContainer::new(state.locations[location_idx].minerals.clone());
@@ -1297,24 +1331,7 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
             y: p.y.clone(),
         })
     }
-    let ship = Ship {
-        id: crate::new_id(),
-        color: gen_color(&mut small_rng).to_string(),
-        x: if at.is_some() { at.unwrap().x } else { 100.0 },
-        y: if at.is_some() { at.unwrap().y } else { 100.0 },
-        hp: 100.0,
-        max_hp: 100.0,
-        acc_periodic_dmg: 0.0,
-        acc_periodic_heal: 0.0,
-        rotation: 0.0,
-        radius: 1.0,
-        docked_at: None,
-        tractor_target: None,
-        navigate_target: None,
-        dock_target: None,
-        trajectory: vec![],
-        inventory: vec![],
-    };
+    let ship = Ship::new(&mut small_rng, &mut at);
     state
         .players
         .iter_mut()

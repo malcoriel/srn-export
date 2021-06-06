@@ -10,10 +10,14 @@ import {
   ThreePlanetShapeRandomProps,
 } from './ThreePlanetShape';
 import { actionsActive } from '../utils/ShipControls';
-import { VisualState } from '../NetState';
+import NetState, { VisualState } from '../NetState';
 import { InteractorActionType } from './blocks/ThreeInteractor';
 import { common, rare, uncommon } from '../utils/palette';
-import { Rarity, ShootTargetBuilder } from '../../../world/pkg/world.extra';
+import {
+  LongActionStartBuilder,
+  Rarity,
+  ShootTargetBuilder,
+} from '../../../world/pkg/world.extra';
 import { UnreachableCaseError } from 'ts-essentials';
 import {
   containerHintContent,
@@ -66,9 +70,14 @@ const mineralActionsMap = new Map([
   [
     InteractorActionType.Shoot,
     (objectId: string) => {
-      actionsActive[ShipActionType.Shoot] = ShipAction.Shoot(
-        ShootTargetBuilder.ShootTargetMineral({ id: objectId })
-      );
+      const ns = NetState.get();
+      if (ns) {
+        ns.startLongAction(
+          LongActionStartBuilder.LongActionStartShoot({
+            target: ShootTargetBuilder.ShootTargetMineral({ id: objectId }),
+          })
+        );
+      }
     },
   ],
 ]);
