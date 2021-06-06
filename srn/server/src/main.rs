@@ -9,8 +9,8 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::net::{SocketAddr, TcpStream};
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
-use std::thread;
 use std::time::Duration;
+use std::{fmt, thread};
 
 use chrono::{DateTime, Local, Utc};
 use crossbeam::channel::{bounded, Receiver, Sender};
@@ -55,6 +55,9 @@ use crate::world::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
     spawn_ship, update_quests, GameEvent, UpdateOptions, AABB,
 };
+use std::fmt::{Display, Formatter};
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -173,7 +176,7 @@ lazy_static! {
     };
 }
 
-pub const ENABLE_PERF: bool = false;
+pub const ENABLE_PERF: bool = true;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
@@ -938,6 +941,41 @@ lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
 }
 
+#[derive(Debug, EnumIter, Clone)]
+pub enum SamplerMarks {
+    MainTotal = 0,
+    Update = 1,
+    Locks = 2,
+    Quests = 3,
+    Bots = 4,
+    Events = 5,
+    ShipCleanup = 6,
+    MulticastUpdate = 7,
+    UpdateLeaderboard = 8,
+    UpdatePlanetMovement = 9,
+    UpdateAsteroids = 10,
+    UpdateShipsOnPlanets = 11,
+    UpdateShipsNavigation = 12,
+    UpdateShipsTractoring = 13,
+    UpdateTractoredMaterials = 14,
+    UpdateShipHpEffects = 15,
+    UpdateMineralsRespawn = 16,
+    UpdateShipsRespawn = 17,
+    UpdatePlanets1 = 18,
+    UpdatePlanets2 = 19,
+    PersonalStates = 20,
+    UpdateMarket = 21,
+    UpdateTickLongActions = 22,
+    UpdateTractoredContainers = 23,
+    UpdateAbilityCooldowns = 24,
+}
+
+impl Display for SamplerMarks {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 fn main_thread() {
     let mut d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
@@ -945,45 +983,18 @@ fn main_thread() {
         let mut bots = bots::BOTS.lock().unwrap();
         bot_init(&mut *bots);
     }
-    let mut sampler = Sampler::new(
-        vec![
-            "Main total",                  // 0
-            "Update",                      // 1
-            "Locks",                       // 2
-            "Quests",                      // 3
-            "Bots",                        // 4
-            "Events",                      // 5
-            "Ship cleanup",                // 6
-            "Multicast update",            // 7
-            "Update leaderboard",          // 8
-            "Update planet movement",      // 9
-            "Update asteroids",            // 10
-            "Update ships on planets",     // 11
-            "Update ships navigation",     // 12
-            "Update ships tractoring",     // 13
-            "Update tractored materials",  // 14
-            "Update ship hp effects",      // 15
-            "Update minerals respawn",     // 16
-            "Update ships respawn",        // 17
-            "Update planets 1",            // 18
-            "Update planets 2",            // 19
-            "Personal states",             // 20
-            "Update market",               // 21
-            "Update tick long actions",    // 22
-            "Update tractored containers", // 23
-            "Update ability cooldowns",    // 24
-        ]
-        .iter()
-        .map(|v| v.to_string())
-        .collect::<Vec<_>>(),
-    );
+    let mut marks_holder = vec![];
+    for mark in SamplerMarks::iter() {
+        marks_holder.push(mark.to_string());
+    }
+    let mut sampler = Sampler::new(marks_holder);
     let mut sampler_consume_elapsed = 0;
     let mut bot_action_elapsed = 0;
     let mut events_elapsed = 0;
     loop {
         thread::sleep(Duration::from_millis(MAIN_THREAD_SLEEP_MS));
 
-        let total_mark = sampler.start(0);
+        let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = bots::BOTS.lock().unwrap();
@@ -992,7 +1003,7 @@ fn main_thread() {
         let elapsed = now - last;
         last = now;
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
-        let update_id = sampler.start(1);
+        let update_id = sampler.start(SamplerMarks::Update as u32);
         let (updated_state, updated_sampler) = world::update_world(
             cont.state.clone(),
             elapsed_micro,
@@ -1008,7 +1019,7 @@ fn main_thread() {
         sampler.end(update_id);
         cont.state = updated_state;
 
-        let personal_id = sampler.start(20);
+        let personal_id = sampler.start(SamplerMarks::PersonalStates as u32);
         cont.personal_states =
             HashMap::from_iter(cont.personal_states.iter().filter_map(|(_, state)| {
                 if state.players.len() == 0 {
@@ -1028,7 +1039,7 @@ fn main_thread() {
             }));
         sampler.end(personal_id);
 
-        let quests_mark = sampler.start(3);
+        let quests_mark = sampler.start(SamplerMarks::Quests as u32);
         update_quests(&mut cont.state);
         sampler.end(quests_mark);
 
@@ -1036,7 +1047,7 @@ fn main_thread() {
         let state = &mut cont.state;
 
         if bot_action_elapsed > BOT_ACTION_TIME {
-            let bots_mark = sampler.start(4);
+            let bots_mark = sampler.start(SamplerMarks::Bots as u32);
             let bots = &mut *bots;
             do_bot_actions(state, bots, d_states, &d_table, bot_action_elapsed);
             sampler.end(bots_mark);
@@ -1046,7 +1057,7 @@ fn main_thread() {
         }
 
         if events_elapsed > EVENT_TRIGGER_TIME {
-            let events_mark = sampler.start(5);
+            let events_mark = sampler.start(SamplerMarks::Events as u32);
             let receiver = &mut events::EVENTS.1.lock().unwrap();
             let res = events::handle_events(&mut d_table, receiver, &mut cont, d_states);
             for (client_id, dialogue) in res {
@@ -1063,7 +1074,7 @@ fn main_thread() {
             events_elapsed += elapsed_micro;
         }
 
-        let cleanup_mark = sampler.start(6);
+        let cleanup_mark = sampler.start(SamplerMarks::ShipCleanup as u32);
         let existing_player_ships = cont
             .state
             .players
