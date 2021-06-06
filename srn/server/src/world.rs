@@ -1712,7 +1712,7 @@ pub fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
         }
     }
     if any_new_quests {
-        substitute_notification_texts(state, None);
+        substitute_notification_texts(state, HashSet::new());
     }
 }
 

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use uuid::Uuid;
 
@@ -172,16 +172,23 @@ fn inject_sub_text(target: &mut String, start: usize, end: usize, injected_id: U
     mem::swap(target, &mut joined);
 }
 
-pub fn substitute_notification_texts(state: &mut GameState, player_id: Option<Uuid>) {
+pub fn substitute_notification_texts(state: &mut GameState, player_ids: HashSet<Uuid>) {
     let indexed_state = state.clone();
+
+    let players_to_update = state
+        .players
+        .iter_mut()
+        .filter(|p| player_ids.contains(&p.id))
+        .collect::<Vec<_>>();
+
+    if players_to_update.len() == 0 {
+        return;
+    }
+
     let (planets_by_id, players_by_id, players_to_current_planets, ships_by_player_id, _) =
         index_state_for_substitution(&indexed_state);
 
-    for player in state
-        .players
-        .iter_mut()
-        .filter(|p| player_id.map_or(true, |player_id| player_id == p.id))
-    {
+    for player in players_to_update.into_iter() {
         for not in player.notifications.iter_mut() {
             if let Some(text) = not.get_text_mut() {
                 if !text.substituted {
