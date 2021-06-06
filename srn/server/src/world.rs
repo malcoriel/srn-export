@@ -1036,7 +1036,7 @@ fn update_location(
             SamplerMarks::UpdateMineralsRespawn as u32,
         );
         let respawn_id = sampler.start(SamplerMarks::UpdateShipsRespawn as u32);
-        start_dead_ships_respawn(&mut state);
+        update_ships_respawn(&mut state);
         sampler.end(respawn_id);
     }
     sampler
@@ -1133,16 +1133,18 @@ fn gen_pos_in_belt(belt: &AsteroidBelt) -> Vec2f64 {
     Vec2f64 { x, y }
 }
 
-fn start_dead_ships_respawn(state: &mut GameState) {
+fn update_ships_respawn(state: &mut GameState) {
     let mut to_spawn = vec![];
-    for player in state.players.iter_mut() {
-        if player.ship_id.is_none()
-            && !player
+    for player in state.players.iter() {
+        if player.ship_id.is_none() {
+            let respawns_in_progress = player
                 .long_actions
                 .iter()
-                .any(|a| matches!(a, LongAction::Respawn { .. }))
-        {
-            to_spawn.push(player.id);
+                .any(|a| matches!(a, LongAction::Respawn { .. }));
+
+            if !respawns_in_progress {
+                to_spawn.push(player.id);
+            }
         }
     }
 
