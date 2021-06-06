@@ -89,6 +89,19 @@ const containerActionsMap = new Map([
       actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(objectId);
     },
   ],
+  [
+    InteractorActionType.Shoot,
+    (objectId: string) => {
+      const ns = NetState.get();
+      if (ns) {
+        ns.startLongAction(
+          LongActionStartBuilder.LongActionStartShoot({
+            target: ShootTargetBuilder.ShootTargetContainer({ id: objectId }),
+          })
+        );
+      }
+    },
+  ],
 ]);
 
 const rarityToColor = (rarity: Rarity): string => {

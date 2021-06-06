@@ -1790,13 +1790,17 @@ pub fn find_player_location_idx(state: &GameState, player_id: Uuid) -> Option<i3
     return if !found { None } else { Some(idx) };
 }
 
-pub enum RemoveObject {
+pub enum ObjectSpecifier {
     Unknown,
     Mineral { id: Uuid },
+    Container { id: Uuid },
 }
-pub fn remove_object_by_id(state: &mut GameState, loc_idx: usize, remove: RemoveObject) {
+pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecifier) {
     match remove {
-        RemoveObject::Unknown => {}
-        RemoveObject::Mineral { id } => state.locations[loc_idx].minerals.retain(|m| m.id != id),
+        ObjectSpecifier::Unknown => {}
+        ObjectSpecifier::Mineral { id } => state.locations[loc_idx].minerals.retain(|m| m.id != id),
+        ObjectSpecifier::Container { id } => {
+            state.locations[loc_idx].containers.retain(|m| m.id != id)
+        }
     }
 }

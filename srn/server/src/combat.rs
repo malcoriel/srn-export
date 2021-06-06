@@ -1,7 +1,7 @@
 use crate::abilities::Ability;
 use crate::vec2::Vec2f64;
 use crate::world::{
-    find_my_ship_index, remove_object_by_id, GameState, Location, Player, RemoveObject, Ship,
+    find_my_ship_index, remove_object, GameState, Location, ObjectSpecifier, Player, Ship,
 };
 use crate::{indexing, world};
 use serde_derive::{Deserialize, Serialize};
@@ -55,7 +55,15 @@ pub fn validate_shoot(
                 return false;
             }
         }
-        ShootTarget::Container { .. } => {}
+        ShootTarget::Container { id } => {
+            if let Some(cont) = indexing::find_container(loc, id) {
+                if !check_distance(ship, shoot_ability, cont.position) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
     };
     return true;
 }
@@ -94,12 +102,29 @@ pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget
                     if !check_distance(ship, shoot_ability, min_pos) {
                         return;
                     }
-                    remove_object_by_id(state, ship_loc.location_idx, RemoveObject::Mineral { id })
+                    remove_object(
+                        state,
+                        ship_loc.location_idx,
+                        ObjectSpecifier::Mineral { id },
+                    )
                 } else {
                     return;
                 }
             }
-            ShootTarget::Container { .. } => {}
+            ShootTarget::Container { id } => {
+                if let Some(cont) = indexing::find_container(loc, id) {
+                    if !check_distance(ship, shoot_ability, cont.position) {
+                        return;
+                    }
+                    remove_object(
+                        state,
+                        ship_loc.location_idx,
+                        ObjectSpecifier::Container { id },
+                    )
+                } else {
+                    return;
+                }
+            }
         }
     }
 }
