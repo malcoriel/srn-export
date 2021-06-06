@@ -1,6 +1,8 @@
 use crate::abilities::Ability;
 use crate::vec2::Vec2f64;
-use crate::world::{GameState, Location, Player, Ship};
+use crate::world::{
+    find_my_ship_index, remove_object_by_id, GameState, Location, Player, RemoveObject, Ship,
+};
 use crate::{indexing, world};
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -22,10 +24,6 @@ impl Default for ShootTarget {
     }
 }
 
-pub const SHOOT_DISTANCE: f64 = 50.0;
-pub const SHOOT_COOLDOWN_MCS: i32 = 5 * 1000 * 1000;
-pub const SHOOT_DURATION_TICKS: i32 = 5 * 1000 * 1000;
-
 pub fn validate_shoot(
     target: ShootTarget,
     loc: &world::Location,
@@ -40,9 +38,8 @@ pub fn validate_shoot(
         return false;
     }
     let shoot_ability = shoot_ability.unwrap();
-    log!(format!("cooldown rem {}", shoot_ability.cooldown()));
 
-    if shoot_ability.cooldown() > 0 {
+    if shoot_ability.get_current_cooldown() > 0 {
         return false;
     }
     match target {
@@ -51,11 +48,7 @@ pub fn validate_shoot(
         ShootTarget::Mineral { id } => {
             if let Some(min) = indexing::find_mineral(loc, id) {
                 let min_pos = Vec2f64 { x: min.x, y: min.y };
-                let ship_pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                };
-                if min_pos.euclidean_distance(&ship_pos) > SHOOT_DISTANCE {
+                if !check_distance(ship, shoot_ability, min_pos) {
                     return false;
                 }
             } else {
@@ -65,4 +58,48 @@ pub fn validate_shoot(
         ShootTarget::Container { .. } => {}
     };
     return true;
+}
+
+fn check_distance(ship: &Ship, shoot_ability: &Ability, min_pos: Vec2f64) -> bool {
+    let ship_pos = Vec2f64 {
+        x: ship.x,
+        y: ship.y,
+    };
+    if min_pos.euclidean_distance(&ship_pos) > shoot_ability.get_distance() {
+        return false;
+    }
+    return true;
+}
+
+pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget) {
+    if let Some(ship_loc) = find_my_ship_index(state, player_id) {
+        let loc = &state.locations[ship_loc.location_idx];
+        let ship = &loc.ships[ship_loc.ship_idx];
+
+        let shoot_ability = ship
+            .abilities
+            .iter()
+            .find(|a| matches!(a, Ability::Shoot { .. }));
+        if shoot_ability.is_none() {
+            return;
+        }
+        let shoot_ability = shoot_ability.unwrap();
+
+        match target {
+            ShootTarget::Unknown => {}
+            ShootTarget::Ship { .. } => {}
+            ShootTarget::Mineral { id } => {
+                if let Some(min) = indexing::find_mineral(loc, id) {
+                    let min_pos = Vec2f64 { x: min.x, y: min.y };
+                    if !check_distance(ship, shoot_ability, min_pos) {
+                        return;
+                    }
+                    remove_object_by_id(state, ship_loc.location_idx, RemoveObject::Mineral { id })
+                } else {
+                    return;
+                }
+            }
+            ShootTarget::Container { .. } => {}
+        }
+    }
 }

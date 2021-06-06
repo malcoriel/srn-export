@@ -1,5 +1,5 @@
 use crate::abilities::Ability;
-use crate::combat::{ShootTarget, SHOOT_COOLDOWN_MCS};
+use crate::combat::ShootTarget;
 use crate::world::{
     find_my_player, find_my_player_mut, find_my_ship_index, spawn_ship, GameState,
     PLAYER_RESPAWN_TIME_MC,
@@ -149,10 +149,8 @@ pub fn try_start_long_action(
             for ability in ship.abilities.iter_mut() {
                 match ability {
                     Ability::Unknown => {}
-                    Ability::Shoot {
-                        cooldown_ticks_remaining,
-                    } => {
-                        mem::swap(cooldown_ticks_remaining, &mut SHOOT_COOLDOWN_MCS.clone());
+                    Ability::Shoot { .. } => {
+                        ability.set_max_cooldown();
                     }
                 }
             }
@@ -164,6 +162,7 @@ pub fn try_start_long_action(
 fn revalidate(long_actions: &mut Vec<LongAction>) {
     let mut has_jump = false;
     let mut has_respawn = false;
+    let mut has_shoot = false;
     let mut new_actions = long_actions
         .clone()
         .into_iter()
@@ -183,7 +182,13 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                 has_respawn = true;
                 Some(a)
             }
-            LongAction::Shoot { .. } => Some(a),
+            LongAction::Shoot { .. } => {
+                if has_shoot {
+                    return None;
+                }
+                has_shoot = true;
+                Some(a)
+            }
         })
         .collect();
     mem::swap(long_actions, &mut new_actions);
@@ -208,7 +213,10 @@ pub fn start_long_act(act: LongActionStart) -> LongAction {
         LongActionStart::Shoot { target } => LongAction::Shoot {
             id: new_id(),
             target,
-            micro_left: combat::SHOOT_DURATION_TICKS,
+            micro_left: Ability::Shoot {
+                cooldown_ticks_remaining: 0,
+            }
+            .get_cooldown(),
             percentage: 0,
         },
     };
@@ -225,7 +233,9 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction) 
         LongAction::Respawn { .. } => {
             spawn_ship(state, player_id, None);
         }
-        LongAction::Shoot { .. } => {}
+        LongAction::Shoot { target, .. } => {
+            combat::resolve_shoot(state, player_id, target);
+        }
     }
 }
 
@@ -270,7 +280,13 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                     id,
                     micro_left: left,
                     target,
-                    percentage: calc_percentage(left, combat::SHOOT_DURATION_TICKS),
+                    percentage: calc_percentage(
+                        left,
+                        Ability::Shoot {
+                            cooldown_ticks_remaining: 0,
+                        }
+                        .get_duration(),
+                    ),
                 },
                 left > 0,
             )

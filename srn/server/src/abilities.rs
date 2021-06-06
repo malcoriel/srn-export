@@ -13,12 +13,46 @@ pub enum Ability {
 }
 
 impl Ability {
-    pub fn cooldown(&self) -> i32 {
+    pub fn get_duration(&self) -> i32 {
+        match self {
+            Ability::Unknown => 0,
+            Ability::Shoot { .. } => 500 * 1000,
+        }
+    }
+
+    pub fn set_max_cooldown(&mut self) {
+        self.set_current_cooldown(self.get_cooldown());
+    }
+
+    pub fn get_cooldown(&self) -> i32 {
+        match self {
+            Ability::Unknown => 0,
+            Ability::Shoot { .. } => 500 * 1000,
+        }
+    }
+
+    pub fn get_distance(&self) -> f64 {
+        match self {
+            Ability::Unknown => 0.0,
+            Ability::Shoot { .. } => 50.0,
+        }
+    }
+
+    pub fn get_current_cooldown(&self) -> i32 {
         return match self {
             Ability::Unknown => 0,
             Ability::Shoot {
                 cooldown_ticks_remaining,
             } => *cooldown_ticks_remaining,
+        };
+    }
+
+    pub fn set_current_cooldown(&mut self, val: i32) {
+        match self {
+            Ability::Unknown => {}
+            Ability::Shoot {
+                cooldown_ticks_remaining,
+            } => mem::swap(cooldown_ticks_remaining, &mut val.clone()),
         };
     }
 
@@ -28,7 +62,7 @@ impl Ability {
             Ability::Shoot {
                 cooldown_ticks_remaining,
             } => {
-                let mut new_val = *cooldown_ticks_remaining - ticks_elapsed as i32;
+                let mut new_val = (*cooldown_ticks_remaining - ticks_elapsed as i32).max(0);
                 mem::swap(cooldown_ticks_remaining, &mut new_val);
             }
         };

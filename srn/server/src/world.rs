@@ -1789,3 +1789,14 @@ pub fn find_player_location_idx(state: &GameState, player_id: Uuid) -> Option<i3
     }
     return if !found { None } else { Some(idx) };
 }
+
+pub enum RemoveObject {
+    Unknown,
+    Mineral { id: Uuid },
+}
+pub fn remove_object_by_id(state: &mut GameState, loc_idx: usize, remove: RemoveObject) {
+    match remove {
+        RemoveObject::Unknown => {}
+        RemoveObject::Mineral { id } => state.locations[loc_idx].minerals.retain(|m| m.id != id),
+    }
+}
