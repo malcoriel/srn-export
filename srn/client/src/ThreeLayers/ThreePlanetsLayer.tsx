@@ -4,7 +4,7 @@ import React from 'react';
 import { ThreePlanetShape } from './ThreePlanetShape';
 import { actionsActive } from '../utils/ShipControls';
 import { ShipAction, ShipActionType } from '../world';
-import { ThreePlanetShapeRandomProps } from './shaders/gasGiant';
+import { gasGiantShaderRandomProps } from './shaders/gasGiant';
 
 export const possibleGasGiantColors = [
   '#0D57AC',

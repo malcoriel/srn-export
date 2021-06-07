@@ -190,7 +190,7 @@ export const variateNormal = (
   value = Math.min(max, value);
   return value;
 };
-export const ThreePlanetShapeRandomProps = (seed: string, radius: number) => {
+export const gasGiantShaderRandomProps = (seed: string, radius: number) => {
   const prng = new Prando(seed);
   let detail;
   if (radius > 30) {

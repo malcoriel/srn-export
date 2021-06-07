@@ -13,7 +13,7 @@ import Prando from 'prando';
 import * as uuid from 'uuid';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import {
-  ThreePlanetShapeRandomProps,
+  gasGiantShaderRandomProps,
   variateNormal,
 } from '../ThreeLayers/shaders/gasGiant';
 
@@ -62,7 +62,7 @@ export const PlanetTestUI = () => {
             key={`1_${revision}`}
             color="orange"
             radius={40}
-            {...ThreePlanetShapeRandomProps(`1_${revision}`, 40)}
+            {...gasGiantShaderRandomProps(`1_${revision}`, 40)}
             position={new Vector(0, 0)}
           />
           <ThreePlanetShape
@@ -71,7 +71,7 @@ export const PlanetTestUI = () => {
             visible
             key={`2_${revision}`}
             radius={15}
-            {...ThreePlanetShapeRandomProps(`2_${revision}`, 40)}
+            {...gasGiantShaderRandomProps(`2_${revision}`, 40)}
             position={new Vector(35, 0)}
           />
           <ThreePlanetShape
@@ -79,7 +79,7 @@ export const PlanetTestUI = () => {
             texture={new Texture()}
             visible
             key={`3_${revision}`}
-            {...ThreePlanetShapeRandomProps(`3_${revision}`, 40)}
+            {...gasGiantShaderRandomProps(`3_${revision}`, 40)}
             radius={25}
             position={new Vector(0, 35)}
           />
@@ -89,7 +89,7 @@ export const PlanetTestUI = () => {
             visible
             key={`4_${revision}`}
             radius={5}
-            {...ThreePlanetShapeRandomProps(`4_${revision}`, 40)}
+            {...gasGiantShaderRandomProps(`4_${revision}`, 40)}
             position={new Vector(0, -25)}
           />
         </group>

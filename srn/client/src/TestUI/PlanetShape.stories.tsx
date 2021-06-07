@@ -7,7 +7,7 @@ import { actionsActive } from '../utils/ShipControls';
 import { ShipAction, ShipActionType } from '../world';
 import Vector from '../utils/Vector';
 import { possibleGasGiantColors } from '../ThreeLayers/ThreePlanetsLayer';
-import { ThreePlanetShapeRandomProps } from '../ThreeLayers/shaders/gasGiant';
+import { gasGiantShaderRandomProps } from '../ThreeLayers/shaders/gasGiant';
 
 // noinspection JSUnusedGlobalSymbols
 export default {
@@ -48,7 +48,7 @@ const Template: Story = (args) => {
         <ThreePlanetShape
           gid="1"
           radius={radius}
-          {...ThreePlanetShapeRandomProps(id, radius)}
+          {...gasGiantShaderRandomProps(id, radius)}
           onClick={(evt: MouseEvent) => {
             evt.stopPropagation();
             actionsActive[

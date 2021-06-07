@@ -11,7 +11,7 @@ import { TextureMixerShaderShape } from './TextureMixerShaderShape';
 import { Button } from '../HtmlLayers/ui/Button';
 import { saveAs } from 'file-saver';
 import { StoryCanvas } from './StoryCanvas';
-import { ThreePlanetShapeRandomProps } from '../ThreeLayers/shaders/gasGiant';
+import { gasGiantShaderRandomProps } from '../ThreeLayers/shaders/gasGiant';
 
 export default {
   title: 'Three/PlanetTextureGeneration',
@@ -167,7 +167,7 @@ const Template: Story = (args) => {
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <ThreePlanetShape
             gid="1"
-            {...ThreePlanetShapeRandomProps(args.seed, 256)}
+            {...gasGiantShaderRandomProps(args.seed, 256)}
             texture={textureMixed}
             position={new Vector(0, 0)}
             radius={256}

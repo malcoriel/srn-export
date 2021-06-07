@@ -11,7 +11,7 @@ import { useRepeatWrappedTextureLoader } from './ThreeStar';
 import {
   defaultUniformValues,
   fragmentShader,
-  ThreePlanetShapeRandomProps,
+  gasGiantShaderRandomProps,
   uniforms,
   vertexShader,
 } from './shaders/gasGiant';
@@ -60,7 +60,7 @@ export const ThreePlanetShape: React.FC<{
           spotsIntensity,
           yStretchFactor,
         },
-        ThreePlanetShapeRandomProps(gid, radius)
+        gasGiantShaderRandomProps(gid, radius)
       );
     }, [
       gid,
