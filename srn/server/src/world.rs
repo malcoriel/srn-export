@@ -915,8 +915,11 @@ fn update_location(
     sampler.end(cooldowns_id);
 
     let update_minerals_id = sampler.start(SamplerMarks::UpdateTractoredMinerals as u32);
+    let update_min_clone_id = sampler.start(SamplerMarks::UpdateTractoredMineralsClone as u32);
     let container = MineralsContainer::new(state.locations[location_idx].minerals.clone());
     let mut minerals_container = Box::from(container) as Box<dyn MovablesContainer>;
+    sampler.end(update_min_clone_id);
+    let update_min_id = sampler.start(SamplerMarks::UpdateTractoredMineralsUpdate as u32);
     let consume_updates = tractoring::update_tractored_objects(
         &state.locations[location_idx].ships,
         &mut minerals_container,
@@ -928,9 +931,12 @@ fn update_location(
         .downcast_ref::<MineralsContainer>()
         .unwrap()
         .get_minerals();
+    sampler.end(update_min_id);
+    let update_min_consume_id = sampler.start(SamplerMarks::UpdateTractoredMineralsConsume as u32);
     if !client {
         apply_tractored_iterms_consumption(&mut state, consume_updates)
     }
+    sampler.end(update_min_consume_id);
     sampler.end(update_minerals_id);
     let update_containers_id = sampler.start(SamplerMarks::UpdateTractoredContainers as u32);
     let container = ContainersContainer::new(state.locations[location_idx].containers.clone());

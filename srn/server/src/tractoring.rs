@@ -121,10 +121,11 @@ pub struct MineralsContainer {
 
 impl MineralsContainer {
     pub fn new(minerals: Vec<NatSpawnMineral>) -> Self {
-        let mut res = vec![];
-        for min in minerals.into_iter() {
-            res.push(Box::new(min) as Box<dyn IMovable>);
-        }
+        let res = Vec::from_iter(
+            minerals
+                .into_iter()
+                .map(|m| Box::new(m) as Box<dyn IMovable>),
+        );
         MineralsContainer { minerals: res }
     }
 
