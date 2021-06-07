@@ -4,7 +4,8 @@
 
 ### New
 
-* Pew-pew! Now it's possible to shoot. Only minerals and containers, though. Try context menu - Shoot.
+* Pew-pew! Now it's possible to shoot. Only at minerals and containers, though. Try context menu - Shoot.
+* Now the long actions (e.g. system jump and respawn) display their name on top of the progress indicator.
 
 ### Fixes
 
