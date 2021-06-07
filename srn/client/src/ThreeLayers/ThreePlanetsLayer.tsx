@@ -56,8 +56,8 @@ export const ThreePlanetsLayer: React.FC<ThreePlanetsLayerParams> = ({
     {planets.map((p) => {
       return (
         <ThreePlanetShape
+          gid={p.id}
           radius={p.radius}
-          {...ThreePlanetShapeRandomProps(p.id, p.radius)}
           onClick={(evt: MouseEvent) => {
             evt.stopPropagation();
             actionsActive[

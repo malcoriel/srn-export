@@ -1,9 +1,7 @@
 import React from 'react';
 import { ThreeFloatingObject } from './ThreeFloatingObject';
 import { posToThreePos } from './ThreeLayer';
-import { containerHintContent } from '../HtmlLayers/HintWindow';
 import { InteractorActionType } from './blocks/ThreeInteractor';
-import { rare } from '../utils/palette';
 import { Container } from '../../../world/pkg';
 import { actionsActive } from '../utils/ShipControls';
 import { ShipAction, ShipActionType } from '../world';

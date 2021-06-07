@@ -11,6 +11,7 @@ import { ShipAction, ShipActionType } from '../world';
 import Vector from '../utils/Vector';
 import { possibleGasGiantColors } from '../ThreeLayers/ThreePlanetsLayer';
 
+// noinspection JSUnusedGlobalSymbols
 export default {
   title: 'Three/PlanetShape',
   component: ThreePlanetShape,
@@ -47,6 +48,7 @@ const Template: Story = (args) => {
           <meshBasicMaterial color="#333" />
         </mesh>
         <ThreePlanetShape
+          gid="1"
           radius={radius}
           {...ThreePlanetShapeRandomProps(id, radius)}
           onClick={(evt: MouseEvent) => {

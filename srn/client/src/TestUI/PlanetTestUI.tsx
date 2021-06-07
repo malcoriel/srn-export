@@ -56,6 +56,7 @@ export const PlanetTestUI = () => {
         <group position={[0, 0, 0]}>
           <BackgroundPlane />
           <ThreePlanetShape
+            gid="1"
             texture={new Texture()}
             visible
             key={`1_${revision}`}
@@ -65,6 +66,7 @@ export const PlanetTestUI = () => {
             position={new Vector(0, 0)}
           />
           <ThreePlanetShape
+            gid="2"
             texture={new Texture()}
             visible
             key={`2_${revision}`}
@@ -73,6 +75,7 @@ export const PlanetTestUI = () => {
             position={new Vector(35, 0)}
           />
           <ThreePlanetShape
+            gid="3"
             texture={new Texture()}
             visible
             key={`3_${revision}`}
@@ -81,6 +84,7 @@ export const PlanetTestUI = () => {
             position={new Vector(0, 35)}
           />
           <ThreePlanetShape
+            gid="4"
             texture={new Texture()}
             visible
             key={`4_${revision}`}

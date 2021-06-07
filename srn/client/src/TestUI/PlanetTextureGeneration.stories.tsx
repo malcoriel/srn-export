@@ -168,6 +168,7 @@ const Template: Story = (args) => {
           <ambientLight />
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <ThreePlanetShape
+            gid="1"
             {...ThreePlanetShapeRandomProps(args.seed, 256)}
             texture={textureMixed}
             position={new Vector(0, 0)}

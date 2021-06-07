@@ -1,4 +1,4 @@
-import React, { ReactNode, Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import './DialogueWindow.scss';
 import { Canvas } from 'react-three-fiber';
 import _ from 'lodash';
@@ -64,6 +64,7 @@ const renderContent = (
                 <ambientLight />
                 <pointLight position={[10, 10, 10]} />
                 <ThreePlanetShape
+                  gid={dialogue.planet.id}
                   position={new Vector(0, 0)}
                   radius={dialogue.planet.radius}
                   visible

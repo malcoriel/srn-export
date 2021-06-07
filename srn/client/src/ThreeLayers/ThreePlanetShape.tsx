@@ -178,7 +178,52 @@ void main() {
   // }
 }
 `;
+
+export const variateUniform = (min: number, max: number, prng: Prando) => {
+  return prng.next(min, max + 1e-10);
+};
+const randomCompatiblePrng = (prng: Prando) => {
+  return () => prng.next(0, 1);
+};
+export const variateNormal = (
+  min: number,
+  max: number,
+  variance: number,
+  prng: Prando
+) => {
+  const cloned = random.clone('');
+  // @ts-ignore
+  cloned.use(randomCompatiblePrng(prng));
+  let value = cloned.normal((max - min) / 2 + min, variance)();
+  value = Math.max(min, value);
+  value = Math.min(max, value);
+  return value;
+};
+
+export const ThreePlanetShapeRandomProps = (seed: string, radius: number) => {
+  const prng = new Prando(seed);
+  let detail;
+  if (radius > 30) {
+    detail = 6;
+  } else if (radius > 20) {
+    detail = 5;
+  } else if (radius > 10) {
+    detail = 4;
+  } else {
+    detail = 3;
+  }
+  return {
+    detail,
+    rotationSpeed: variateNormal(0.002, 0.006, 0.003, prng) / 30,
+    spotsRotationSpeed: variateNormal(0.002, 0.06, 0.0005, prng) / 30,
+    spotsRandomizingFactor: variateUniform(1, 10, prng),
+    spotsIntensity: variateNormal(0.01, 0.2, 0.05, prng),
+    yStretchFactor: variateNormal(1.0, 2.5, 0.5, prng),
+  };
+};
+
 export const ThreePlanetShape: React.FC<{
+  gid: string;
   position: IVector;
   onClick?: (e: any) => void;
   radius: number;
@@ -195,6 +240,7 @@ export const ThreePlanetShape: React.FC<{
   texture?: Texture;
 }> = React.memo(
   ({
+    gid,
     onClick,
     position,
     atmosphereColor,
@@ -202,6 +248,7 @@ export const ThreePlanetShape: React.FC<{
     detail,
     rotationSpeed,
     spotsRotationSpeed,
+    spotsRandomizingFactor,
     yStretchFactor,
     spotsIntensity,
     color,
@@ -209,6 +256,29 @@ export const ThreePlanetShape: React.FC<{
     atmospherePercent,
     texture,
   }) => {
+    const shaderProps = useMemo(() => {
+      return _.assign(
+        {
+          detail,
+          rotationSpeed,
+          spotsRotationSpeed,
+          spotsRandomizingFactor,
+          spotsIntensity,
+          yStretchFactor,
+        },
+        ThreePlanetShapeRandomProps(gid, radius)
+      );
+    }, [
+      gid,
+      radius,
+      detail,
+      rotationSpeed,
+      spotsRotationSpeed,
+      spotsRandomizingFactor,
+      spotsIntensity,
+      yStretchFactor,
+    ]);
+
     const mesh = useRef<Mesh>();
     useFrame(() => {
       if (mesh.current && visible) {
@@ -237,15 +307,17 @@ export const ThreePlanetShape: React.FC<{
       patchedUniforms.rotationSpeed.value =
         rotationSpeed || defaultUniformValues.rotationSpeed;
       patchedUniforms.yStretchFactor.value =
-        yStretchFactor || defaultUniformValues.yStretchFactor;
+        shaderProps.yStretchFactor || defaultUniformValues.yStretchFactor;
       patchedUniforms.spotsIntensity.value =
-        spotsIntensity || defaultUniformValues.spotsIntensity;
+        shaderProps.spotsIntensity || defaultUniformValues.spotsIntensity;
       patchedUniforms.spotsRandomizingFactor.value =
-        spotsIntensity || defaultUniformValues.spotsRandomizingFactor;
+        shaderProps.spotsRandomizingFactor ||
+        defaultUniformValues.spotsRandomizingFactor;
       patchedUniforms.spotsRotationSpeed.value =
-        spotsRotationSpeed || defaultUniformValues.spotsRotationSpeed;
+        shaderProps.spotsRotationSpeed ||
+        defaultUniformValues.spotsRotationSpeed;
       patchedUniforms.detailOctaves.value =
-        detail || defaultUniformValues.detailOctaves;
+        shaderProps.detail || defaultUniformValues.detailOctaves;
       patchedUniforms.atmosphereColor.value = atmosphereColor
         ? new Vector3(...normalizeColor(atmosphereColor))
         : defaultUniformValues.atmosphereColor;
@@ -270,7 +342,6 @@ export const ThreePlanetShape: React.FC<{
         rotation={[0, 0, 0]}
       >
         <planeBufferGeometry args={[1, 1]} />
-        {/*<icosahedronBufferGeometry args={[1, 9]} />*/}
         <rawShaderMaterial
           key={texture ? texture.uuid : '1'}
           transparent
@@ -278,7 +349,6 @@ export const ThreePlanetShape: React.FC<{
           vertexShader={vertexShader}
           uniforms={uniforms2}
         />
-        {/*<meshBasicMaterial color="red" />*/}
       </mesh>
     );
   },
@@ -290,46 +360,3 @@ export const ThreePlanetShape: React.FC<{
     return shallowEqual(prev, next);
   }
 );
-export const variateUniform = (min: number, max: number, prng: Prando) => {
-  return prng.next(min, max + 1e-10);
-};
-const randomCompatiblePrng = (prng: Prando) => {
-  return () => prng.next(0, 1);
-};
-export const variateNormal = (
-  min: number,
-  max: number,
-  variance: number,
-  prng: Prando
-) => {
-  const cloned = random.clone('');
-  // @ts-ignore
-  cloned.use(randomCompatiblePrng(prng));
-  let value = cloned.normal((max - min) / 2 + min, variance)();
-  value = Math.max(min, value);
-  value = Math.min(max, value);
-  return value;
-};
-export const ThreePlanetShapeRandomProps = (seed: string, radius: number) => {
-  const prng = new Prando(seed);
-  let detail;
-  if (radius > 30) {
-    detail = 6;
-  } else if (radius > 20) {
-    detail = 5;
-  } else if (radius > 10) {
-    detail = 4;
-  } else {
-    detail = 3;
-  }
-  const props = {
-    detail,
-    rotationSpeed: variateNormal(0.002, 0.006, 0.003, prng) / 30,
-    spotsRotationSpeed: variateNormal(0.002, 0.06, 0.0005, prng) / 30,
-    spotsRandomizingFactor: variateUniform(1, 10, prng),
-    spotsIntensity: variateNormal(0.01, 0.2, 0.05, prng),
-    yStretchFactor: variateNormal(1.0, 2.5, 0.5, prng),
-  };
-  // console.log(props.yStretchFactor);
-  return props;
-};
