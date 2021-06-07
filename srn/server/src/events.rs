@@ -7,7 +7,7 @@ use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use uuid::Uuid;
 
-use world::indexing;
+use crate::indexing;
 
 use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;

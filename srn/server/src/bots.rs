@@ -9,7 +9,7 @@ use rand::rngs::SmallRng;
 use rand::{thread_rng, Rng, RngCore, SeedableRng};
 use uuid::Uuid;
 
-use world::indexing::{find_my_player, find_my_ship, find_planet};
+use crate::indexing::{find_my_player, find_my_ship, find_planet};
 
 use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,

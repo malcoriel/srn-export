@@ -8,8 +8,8 @@ use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use uuid::Uuid;
 
-use world::indexing;
-use world::indexing::{find_my_ship, find_my_ship_mut};
+use crate::indexing;
+use crate::indexing::{find_my_ship, find_my_ship_mut};
 
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;

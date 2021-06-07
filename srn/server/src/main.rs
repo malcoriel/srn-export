@@ -36,6 +36,9 @@ use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 use websocket::{Message, OwnedMessage};
 
+use crate::indexing::{
+    find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
+};
 use dialogue::{DialogueStates, DialogueTable};
 use dialogue_dto::Dialogue;
 use net::{
@@ -44,10 +47,7 @@ use net::{
 };
 use perf::SamplerMarks;
 use ship_action::ShipAction;
-use world::indexing::{
-    find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
-};
-use world::{indexing, GameMode, GameState, Player, Ship};
+use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
 use crate::bots::{bot_init, do_bot_actions};
@@ -102,7 +102,7 @@ mod long_actions;
 mod market;
 mod net;
 mod notifications;
-pub mod perf;
+mod perf;
 mod planet_movement;
 mod planet_movement_test;
 mod random_stuff;
