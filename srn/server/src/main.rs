@@ -44,7 +44,10 @@ use net::{
 };
 use perf::SamplerMarks;
 use ship_action::ShipAction;
-use world::{GameMode, GameState, Player, Ship};
+use world::indexing::{
+    find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
+};
+use world::{indexing, GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
 use crate::bots::{bot_init, do_bot_actions};
@@ -55,10 +58,7 @@ use crate::sandbox::mutate_state;
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
-use crate::world::{
-    find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
-    spawn_ship, update_quests, GameEvent, UpdateOptions, AABB,
-};
+use crate::world::{spawn_ship, update_quests, GameEvent, UpdateOptions, AABB};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -181,7 +181,7 @@ pub const ENABLE_PERF: bool = true;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
-const DEBUG_PHYSICS: bool = false;
+pub const DEBUG_PHYSICS: bool = false;
 const MAIN_THREAD_SLEEP_MS: u64 = 15;
 
 fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
@@ -640,7 +640,7 @@ fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) 
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
             let state = select_mut_state(&mut cont, client_id);
-            if let Some(ship) = world::find_my_ship_mut(state, client_id) {
+            if let Some(ship) = indexing::find_my_ship_mut(state, client_id) {
                 inventory::apply_action(&mut ship.inventory, action);
             }
             x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));

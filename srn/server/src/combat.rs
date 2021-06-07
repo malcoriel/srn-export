@@ -1,13 +1,13 @@
-use crate::abilities::Ability;
-use crate::vec2::Vec2f64;
-use crate::world::{
-    find_my_ship_index, remove_object, GameState, Location, ObjectSpecifier, Player, Ship,
-};
-use crate::{indexing, world};
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
+
+use crate::abilities::Ability;
+use crate::indexing::find_my_ship_index;
+use crate::vec2::Vec2f64;
+use crate::world::{remove_object, GameState, Location, ObjectSpecifier, Player, Ship};
+use crate::{indexing, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy)]
 #[serde(tag = "tag")]

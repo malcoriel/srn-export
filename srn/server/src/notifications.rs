@@ -7,11 +7,10 @@ use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::dialogue_dto::{Substitution, SubstitutionType};
+use crate::indexing::{find_my_player_mut, index_planets_by_id};
 use crate::inventory::{count_items_of_types, value_items_of_types, MINERAL_TYPES};
 use crate::random_stuff::gen_random_character_name;
-use crate::world::{
-    find_my_player_mut, index_planets_by_id, GameMode, GameState, Planet, Player, Ship,
-};
+use crate::world::{GameMode, GameState, Planet, Player, Ship};
 use crate::{new_id, substitutions};
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

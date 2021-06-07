@@ -1,15 +1,15 @@
-use crate::abilities::Ability;
-use crate::combat::ShootTarget;
-use crate::world::{
-    find_my_player, find_my_player_mut, find_my_ship_index, spawn_ship, GameState,
-    PLAYER_RESPAWN_TIME_MC,
-};
-use crate::{combat, locations, new_id};
 use core::mem;
+
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
+
+use crate::abilities::Ability;
+use crate::combat::ShootTarget;
+use crate::indexing::{find_my_player, find_my_player_mut, find_my_ship_index};
+use crate::world::{spawn_ship, GameState, PLAYER_RESPAWN_TIME_MC};
+use crate::{combat, locations, new_id};
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone, Copy)]
 #[serde(tag = "tag")]

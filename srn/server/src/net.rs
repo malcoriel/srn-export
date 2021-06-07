@@ -1,11 +1,11 @@
+use std::collections::HashMap;
+
 use uuid::Uuid;
 
 use crate::dialogue_dto::Dialogue;
-use crate::world::{
-    find_my_player, find_player_location_idx, GameEvent, GameMode, GameState, Location, Ship,
-};
+use crate::indexing::find_my_player;
+use crate::world::{find_player_location_idx, GameEvent, GameMode, GameState, Location, Ship};
 use crate::xcast::XCast;
-use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TagConfirm {

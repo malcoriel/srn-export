@@ -7,8 +7,8 @@ use objekt_clonable::*;
 use uuid::Uuid;
 
 use crate::vec2::Vec2f64;
-use crate::world;
 use crate::world::{Container, NatSpawnMineral, Player, PlayerId, Ship};
+use crate::{indexing, world};
 
 pub fn update_ships_tractoring(
     ships: &Vec<Ship>,
@@ -51,17 +51,6 @@ pub fn update_ship_tractor(
     }
 }
 
-pub fn index_ships_by_tractor_target(ships: &Vec<Ship>) -> HashMap<Uuid, Vec<&Ship>> {
-    let mut by_target = HashMap::new();
-    for p in ships.iter() {
-        if let Some(tt) = p.tractor_target {
-            let entry = by_target.entry(tt).or_insert(vec![]);
-            entry.push(p);
-        }
-    }
-    by_target
-}
-
 const TRACTOR_SPEED_PER_SEC: f64 = 10.0;
 const TRACTOR_PICKUP_DIST: f64 = 1.0;
 
@@ -71,8 +60,8 @@ pub fn update_tractored_objects(
     elapsed: i64,
     players: &Vec<Player>,
 ) -> Vec<(PlayerId, Box<dyn IMovable>)> {
-    let ship_by_tractor = index_ships_by_tractor_target(ships);
-    let players_by_ship_id = world::index_players_by_ship_id(players);
+    let ship_by_tractor = indexing::index_ships_by_tractor_target(ships);
+    let players_by_ship_id = indexing::index_players_by_ship_id(players);
     let mut players_update = vec![];
     let mut ids_to_remove = HashSet::new();
     for m in objects.mut_movables().iter_mut() {

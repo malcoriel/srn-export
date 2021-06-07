@@ -1,18 +1,23 @@
+use std::collections::HashMap;
+use std::fs;
+use std::sync::{Arc, Mutex};
+
+use chrono::Utc;
+use lazy_static::lazy_static;
+use rand::rngs::SmallRng;
+use rand::SeedableRng;
+use uuid::Uuid;
+
+use world::indexing;
+use world::indexing::{find_my_ship, find_my_ship_mut};
+
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;
 use crate::random_stuff::PLANET_NAMES;
 use crate::system_gen::{gen_planet_typed, gen_star, PlanetType, PoolRandomPicker};
 use crate::vec2::Vec2f64;
-use crate::world::{find_my_ship, find_my_ship_mut, GameState, Ship};
+use crate::world::{GameState, Ship};
 use crate::{new_id, world};
-use chrono::Utc;
-use lazy_static::lazy_static;
-use rand::rngs::SmallRng;
-use rand::SeedableRng;
-use std::collections::HashMap;
-use std::fs;
-use std::sync::{Arc, Mutex};
-use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum SandboxTeleportTarget {
@@ -129,7 +134,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
             }
         }
         SandboxCommand::AddMineral => {
-            if let Some(loc) = world::find_my_ship_index(state, player_id) {
+            if let Some(loc) = indexing::find_my_ship_index(state, player_id) {
                 let ship = &state.locations[loc.location_idx].ships[loc.ship_idx];
                 let pos = Vec2f64 {
                     x: ship.x,
@@ -140,7 +145,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
             }
         }
         SandboxCommand::AddContainer => {
-            if let Some(loc) = world::find_my_ship_index(state, player_id) {
+            if let Some(loc) = indexing::find_my_ship_index(state, player_id) {
                 let ship = &state.locations[loc.location_idx].ships[loc.ship_idx];
                 let pos = Vec2f64 {
                     x: ship.x,

@@ -1,10 +1,13 @@
 use std::collections::{HashMap, HashSet};
+use std::iter::FromIterator;
 use std::sync::{mpsc, Arc, Mutex, RwLock};
 use std::sync::{MutexGuard, RwLockWriteGuard};
 
 use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use uuid::Uuid;
+
+use world::indexing;
 
 use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
@@ -13,7 +16,6 @@ use crate::substitutions::substitute_notification_texts;
 use crate::world::{GameEvent, GameMode, GameState, Player};
 use crate::xcast::XCast;
 use crate::{world, StateContainer};
-use std::iter::FromIterator;
 
 lazy_static! {
     pub static ref EVENTS: (
@@ -93,7 +95,7 @@ pub fn handle_events(
                 GameEvent::CargoQuestTriggerRequest { player } => {
                     let state = crate::select_mut_state(cont, player.id);
                     let planets = state.locations[0].planets.clone();
-                    if let Some(player) = world::find_my_player_mut(state, player.id) {
+                    if let Some(player) = indexing::find_my_player_mut(state, player.id) {
                         world::generate_random_quest(player, &planets.clone(), None, &mut prng);
                     }
                     substitute_notification_texts(state, HashSet::from_iter(vec![player.id]));

@@ -1,9 +1,10 @@
+use serde_derive::{Deserialize, Serialize};
+use uuid::Uuid;
+
 use crate::combat::ShootTarget;
 use crate::vec2::Vec2f64;
 use crate::world::{GameEvent, GameState, ManualMoveUpdate, Ship};
-use crate::{combat, fire_event, tractoring, world};
-use serde_derive::{Deserialize, Serialize};
-use uuid::Uuid;
+use crate::{combat, fire_event, indexing, tractoring, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ShipActionRust {
@@ -56,7 +57,7 @@ pub fn apply_ship_action(
     player_id: Uuid,
 ) -> Option<Ship> {
     let ship_action: ShipActionRust = parse_ship_action(ship_action);
-    let ship_idx = world::find_my_ship_index(state, player_id);
+    let ship_idx = indexing::find_my_ship_index(state, player_id);
     if ship_idx.is_none() {
         warn!("No ship");
         return None;
@@ -85,8 +86,8 @@ pub fn apply_ship_action(
             ship.dock_target = None;
             if ship.docked_at.is_some() {
                 let planet_id = ship.docked_at.unwrap();
-                let planet = world::find_planet(state, &planet_id).unwrap().clone();
-                let player = world::find_my_player(state, player_id).unwrap().clone();
+                let planet = indexing::find_planet(state, &planet_id).unwrap().clone();
+                let player = indexing::find_my_player(state, player_id).unwrap().clone();
                 ship.docked_at = None;
                 fire_event(GameEvent::ShipUndocked {
                     ship: ship.clone(),
@@ -110,7 +111,7 @@ pub fn apply_ship_action(
                         ship.navigate_target = None;
                         ship.dock_target = None;
                         ship.trajectory = vec![];
-                        let player = world::find_my_player(state, player_id).unwrap().clone();
+                        let player = indexing::find_my_player(state, player_id).unwrap().clone();
 
                         fire_event(GameEvent::ShipDocked {
                             ship: ship.clone(),
@@ -139,7 +140,7 @@ pub fn apply_ship_action(
         }
         ShipActionRust::DockNavigate(t) => {
             let mut ship = old_ship.clone();
-            if let Some(planet) = world::find_planet(state, &t) {
+            if let Some(planet) = indexing::find_planet(state, &t) {
                 let ship_pos = Vec2f64 {
                     x: ship.x,
                     y: ship.y,

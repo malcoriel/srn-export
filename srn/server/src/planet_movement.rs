@@ -1,15 +1,17 @@
 use std::collections::HashMap;
+use std::f64::consts::PI;
 
+use itertools::chain;
+use objekt_clonable::*;
+use uuid::Uuid;
+
+use crate::indexing::index_planets_by_id;
 use crate::perf::Sampler;
 use crate::perf::SamplerMarks;
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::world::{index_planets_by_id, split_bodies_by_area, Asteroid, Planet, Star, AABB};
+use crate::world::{split_bodies_by_area, Asteroid, Planet, Star, AABB};
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
-use itertools::chain;
-use objekt_clonable::*;
-use std::f64::consts::PI;
-use uuid::Uuid;
 
 #[clonable]
 pub trait IBody: Clone {

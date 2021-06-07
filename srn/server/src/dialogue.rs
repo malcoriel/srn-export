@@ -10,6 +10,10 @@ use uuid::Uuid;
 
 use crate::dialogue_dto::{Dialogue, DialogueElem, Substitution, SubstitutionType};
 use crate::fire_event;
+use crate::indexing::{
+    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
+    find_player_and_ship, find_player_and_ship_mut, index_planets_by_id,
+};
 use crate::inventory::{
     add_item, consume_items_of_types, count_items_of_types, remove_quest_item,
     value_items_of_types, InventoryItem, InventoryItemType, MINERAL_TYPES,
@@ -19,9 +23,8 @@ use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
 use crate::world::{
-    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
-    find_player_and_ship, find_player_and_ship_mut, generate_random_quest, index_planets_by_id,
-    CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId, Ship,
+    generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId,
+    Ship,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
