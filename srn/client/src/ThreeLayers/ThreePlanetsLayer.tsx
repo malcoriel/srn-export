@@ -1,10 +1,7 @@
-// from random_stuff.rs
 import { Planet } from '../../../world/pkg';
 import React from 'react';
 import { ThreePlanetShape } from './ThreePlanetShape';
-import { actionsActive } from '../utils/ShipControls';
-import { ShipAction, ShipActionType } from '../world';
-import { gasGiantShaderRandomProps } from './shaders/gasGiant';
+import { InteractorMap } from './InteractorMap';
 
 export const possibleGasGiantColors = [
   '#0D57AC',
@@ -56,17 +53,18 @@ export const ThreePlanetsLayer: React.FC<ThreePlanetsLayerParams> = ({
         <ThreePlanetShape
           gid={p.id}
           radius={p.radius}
-          onClick={(evt: MouseEvent) => {
-            evt.stopPropagation();
-            actionsActive[
-              ShipActionType.DockNavigate
-            ] = ShipAction.DockNavigate(p.id);
-          }}
+          // onClick={(evt: MouseEvent) => {
+          //   evt.stopPropagation();
+          //   actionsActive[
+          //     ShipActionType.DockNavigate
+          //   ] = ShipAction.DockNavigate(p.id);
+          // }}
           position={p}
           key={p.id}
           color={p.color}
           atmosphereColor={p.color}
           visible={visMap[p.id]}
+          interactor={InteractorMap.planet(p)}
         />
       );
     })}

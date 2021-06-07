@@ -15,6 +15,10 @@ import {
   uniforms,
   vertexShader,
 } from './shaders/gasGiant';
+import {
+  ThreeInteractor,
+  ThreeInteractorProps,
+} from './blocks/ThreeInteractor';
 
 export const ThreePlanetShape: React.FC<{
   gid: string;
@@ -32,6 +36,7 @@ export const ThreePlanetShape: React.FC<{
   yStretchFactor?: number;
   visible: boolean;
   texture?: Texture;
+  interactor?: ThreeInteractorProps;
 }> = React.memo(
   ({
     gid,
@@ -49,6 +54,7 @@ export const ThreePlanetShape: React.FC<{
     visible,
     atmospherePercent,
     texture,
+    interactor,
   }) => {
     const shaderProps = useMemo(() => {
       return _.assign(
@@ -128,22 +134,30 @@ export const ThreePlanetShape: React.FC<{
     }, [unitsToPixels_min(), texture, atmospherePercent, atmosphereColor]);
 
     return (
-      <mesh
-        onClick={onClick || ((e) => {})}
-        position={vecToThreePos(position, 10)}
-        ref={mesh}
-        scale={[radius, radius, radius]}
-        rotation={[0, 0, 0]}
-      >
-        <planeBufferGeometry args={[1, 1]} />
-        <rawShaderMaterial
-          key={texture ? texture.uuid : '1'}
-          transparent
-          fragmentShader={fragmentShader}
-          vertexShader={vertexShader}
-          uniforms={uniforms2}
-        />
-      </mesh>
+      <group position={vecToThreePos(position, 10)}>
+        {interactor && (
+          <ThreeInteractor
+            objectId={gid}
+            radius={radius}
+            interactor={interactor}
+          />
+        )}
+        <mesh
+          onClick={onClick || ((_e) => {})}
+          ref={mesh}
+          scale={[radius, radius, radius]}
+          rotation={[0, 0, 0]}
+        >
+          <planeBufferGeometry args={[1, 1]} />
+          <rawShaderMaterial
+            key={texture ? texture.uuid : '1'}
+            transparent
+            fragmentShader={fragmentShader}
+            vertexShader={vertexShader}
+            uniforms={uniforms2}
+          />
+        </mesh>
+      </group>
     );
   },
   (prev, next) => {

@@ -6,10 +6,23 @@ import {
   containerHintContent,
   mineralHintContent,
 } from '../HtmlLayers/HintWindow';
-import { rare } from '../utils/palette';
+import { common, rare } from '../utils/palette';
 import { containerActionsMap } from './ContainersLayer';
 import _ from 'lodash';
 import { mineralActionsMap, rarityToColor } from './MineralsLayer';
+import { actionsActive } from '../utils/ShipControls';
+import { ShipAction, ShipActionType } from '../world';
+
+const planetActionMap = new Map([
+  [
+    InteractorActionType.Dock,
+    (objectId: string) => {
+      actionsActive[ShipActionType.DockNavigate] = ShipAction.DockNavigate(
+        objectId
+      );
+    },
+  ],
+]);
 
 export const InteractorMap: Record<
   string,
@@ -30,6 +43,15 @@ export const InteractorMap: Record<
       defaultAction: InteractorActionType.Tractor,
       outlineColor: rarityToColor(m.rarity),
       actions: mineralActionsMap,
+    }),
+    (m) => m.id
+  ),
+  planet: _.memoize(
+    (p) => ({
+      hint: null,
+      defaultAction: InteractorActionType.Dock,
+      outlineColor: common,
+      actions: planetActionMap,
     }),
     (m) => m.id
   ),

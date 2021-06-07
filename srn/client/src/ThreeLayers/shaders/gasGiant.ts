@@ -1,6 +1,6 @@
 import Prando from 'prando';
 import { Vector3 } from 'three';
-import random from 'random';
+import random from 'random/dist/cjs';
 import {
   FloatUniformValue,
   IntUniformValue,
