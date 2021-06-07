@@ -4,9 +4,27 @@ import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import _ from 'lodash';
 import { Color, Group, Mesh, MeshBasicMaterial } from 'three';
 import {
+  InteractorActionType,
   ThreeInteractor,
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
+import { containerHintContent } from '../HtmlLayers/HintWindow';
+import { rare } from '../utils/palette';
+import { containerActionsMap } from './ContainersLayer';
+
+export const ModelMeshMap: Record<string, string[]> = {
+  'container.glb': ['0.children.0', '0.children.1', '0.children.2'],
+  'asteroid.glb': ['2'],
+};
+
+export const InteractorMap: Record<string, ThreeInteractorProps> = {
+  container: {
+    hint: containerHintContent(),
+    defaultAction: InteractorActionType.Tractor,
+    outlineColor: rare,
+    actions: containerActionsMap,
+  },
+};
 
 export const ThreeFloatingObject: React.FC<{
   position: Vector3;
@@ -15,7 +33,8 @@ export const ThreeFloatingObject: React.FC<{
   colors?: string[];
   gid: string;
   modelName: string;
-  meshes: string[];
+  meshes?: string[];
+  interactorKind?: string;
   interactor?: ThreeInteractorProps;
 }> = ({
   interactor,
@@ -25,6 +44,7 @@ export const ThreeFloatingObject: React.FC<{
   radius,
   colors,
   modelName,
+  interactorKind,
   scale,
 }) => {
   const container = useRef<Group>(null);
@@ -34,7 +54,10 @@ export const ThreeFloatingObject: React.FC<{
   // https://github.com/pmndrs/react-three-fiber/issues/1255
   // https://stackoverflow.com/questions/67154742/react-three-react-three-fiber-useloader-to-load-new-file-on-props-change
   const copiedScene = useMemo(() => gltf.scene.clone(), [gltf.scene]);
-  const gltfMeshes = meshes.map((path) => _.get(copiedScene.children, path));
+  const usedMeshes = meshes || ModelMeshMap[modelName] || [];
+  const gltfMeshes = usedMeshes.map((path) =>
+    _.get(copiedScene.children, path)
+  );
 
   const refsArr = gltfMeshes.map(() => useRef<Mesh>(null));
 
@@ -63,13 +86,14 @@ export const ThreeFloatingObject: React.FC<{
     }
   });
 
+  const usedInteractor = interactor || InteractorMap[interactorKind || ''];
   return (
     <group position={position}>
-      {interactor && (
+      {usedInteractor && (
         <ThreeInteractor
           objectId={gid}
           radius={radius}
-          interactor={interactor}
+          interactor={usedInteractor}
         />
       )}
       <group

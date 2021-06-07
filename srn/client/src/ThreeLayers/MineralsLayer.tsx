@@ -67,7 +67,6 @@ export const MineralsLayer: React.FC<MineralsLayerParams> = ({ minerals }) => (
           position={posToThreePos(m.x, m.y)}
           colors={[rarityToColor(m.rarity)]}
           modelName="asteroid.glb"
-          meshes={['2']}
           interactor={{
             hint: mineralHintContent(m),
             defaultAction: InteractorActionType.Tractor,

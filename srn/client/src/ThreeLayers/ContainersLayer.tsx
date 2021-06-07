@@ -13,7 +13,7 @@ import {
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 
-const containerActionsMap = new Map([
+export const containerActionsMap = new Map([
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
@@ -50,14 +50,8 @@ export const ContainersLayer: React.FC<ContainersLayerParams> = ({
         radius={c.radius}
         position={posToThreePos(c.position.x, c.position.y)}
         modelName="container.glb"
-        meshes={['0.children.0', '0.children.1', '0.children.2']}
         scale={0.002}
-        interactor={{
-          hint: containerHintContent(),
-          defaultAction: InteractorActionType.Tractor,
-          outlineColor: rare,
-          actions: containerActionsMap,
-        }}
+        interactorKind="container"
       />
     ))}
   </>
