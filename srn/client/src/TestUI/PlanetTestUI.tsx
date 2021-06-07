@@ -11,11 +11,11 @@ import { Canvas } from 'react-three-fiber';
 import Vector from '../utils/Vector';
 import Prando from 'prando';
 import * as uuid from 'uuid';
+import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import {
-  ThreePlanetShape,
   ThreePlanetShapeRandomProps,
   variateNormal,
-} from '../ThreeLayers/ThreePlanetShape';
+} from '../ThreeLayers/shaders/gasGiant';
 
 const BackgroundPlane = () => (
   <mesh position={[0, 0, 0]}>

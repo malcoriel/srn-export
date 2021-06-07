@@ -2,14 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
-import {
-  ThreePlanetShape,
-  ThreePlanetShapeRandomProps,
-} from '../ThreeLayers/ThreePlanetShape';
+import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import { actionsActive } from '../utils/ShipControls';
 import { ShipAction, ShipActionType } from '../world';
 import Vector from '../utils/Vector';
 import { possibleGasGiantColors } from '../ThreeLayers/ThreePlanetsLayer';
+import { ThreePlanetShapeRandomProps } from '../ThreeLayers/shaders/gasGiant';
 
 // noinspection JSUnusedGlobalSymbols
 export default {

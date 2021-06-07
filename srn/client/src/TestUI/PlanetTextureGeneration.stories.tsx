@@ -5,15 +5,13 @@ import { Canvas } from 'react-three-fiber';
 import { CanvasTexture, Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 import { PlanetTextureShape } from './PlanetTextureShape';
-import {
-  ThreePlanetShape,
-  ThreePlanetShapeRandomProps,
-} from '../ThreeLayers/ThreePlanetShape';
+import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
 import { TextureMixerShaderShape } from './TextureMixerShaderShape';
 import { Button } from '../HtmlLayers/ui/Button';
 import { saveAs } from 'file-saver';
 import { StoryCanvas } from './StoryCanvas';
+import { ThreePlanetShapeRandomProps } from '../ThreeLayers/shaders/gasGiant';
 
 export default {
   title: 'Three/PlanetTextureGeneration',
