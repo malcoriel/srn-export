@@ -1,29 +1,46 @@
 # Changelog
 
-## Version 0.6.10 (2021-06-05)
+## Version 0.6.11 (2021-06-07)
+
 ### New
+
+* Pew-pew! Now it's possible to shoot. Only minerals and containers, though. Try context menu - Shoot.
+
+### Fixes
+
+* Server and client performance optimizations
+
+## Version 0.6.10 (2021-06-05)
+
+### New
+
 * Reworked the object interaction system. Now every interactable object
   (containers and minerals, as before) has a context menu that shows possible actions.
 
 ### Fixes
+
 * Fixed a bug that caused the main window content to overflow and shor an ugly scroll.
 
 ## Version 0.6.9 (2021-05-26)
 
 ### New
+
 * Subtle main menu background.
 
 ### Fixes
+
 * Temporary removed sandbox commands causing client crashes.
 
 ## Version 0.6.8 (2021-05-24)
 
 ### New
+
 * Quest window is now replaced with a permanent quest notification.
 
 ## Version 0.6.7 (2021-05-14)
 
 ### New
+
 * A notifications panel for more interactive and rich information flow.
 * Help button and window are now replaced with the new, dismissable, notifications that describe mostly the same thing.
 * Better-looking money and HP display.
@@ -31,45 +48,52 @@
 ## Version 0.6.6 (2021-05-12)
 
 ### Fixes
+
 * Fixed broken tutorial mode.
 * Fixed ugly-looking outline for hp display.
 
 ## Version 0.6.5 (2021-05-12)
 
 ### New
+
 * Random containers with loot now seeded for every system. Grab them and sell the contents for lots of money.
 * When something is picked up - a container, or a mineral, a new fancy visual effect will appear.
 
 ### Fixes
+
 * Leaderboard does not look like it has negative scores anymore.
 
 ## Version 0.6.4 (2021-05-08)
 
 ### Fixes
+
 * Jumps now get cancelled when the game has ended.
 * Jumps now get cancelled when the player ship has died.
 * It's not possible to schedule multiple jumps at once anymore.
 * Play button is now disabled when the server is down.
 
-
 ## Version 0.6.3 (2021-05-08)
 
 ### New
+
 * Introduced jumping preparation time for inter-system jumping.
 
 ### Fixes
+
 * Star map now gets closed after clicking on it.
 * It's no longer possible to jump to non-adjacent systems.
 
 ## Version 0.6.2 (2021-05-07)
 
 ### Fixes
+
 * Fixed star map background to fill the full window.
 * Fixed a bug that led to hanging players (and their ships) after they left the game.
 
 ## Version 0.6.1 (2021-05-07)
 
 ### New
+
 * Proper star map that replaces quick jump menu. Press M to display.
 * Somewhat limited jumps (not any-to-any) and better randomized star systems.
 * Star sizes are now a bit more varied.
@@ -77,28 +101,34 @@
 ## Version 0.6.0 (2021-05-01)
 
 ### New
+
 * Multiple star systems support (press E to toggle teleport menu). So far, no quests or spawning there.
 
 ### Fixes
+
 * Atmosphere of planets in the dialogue window is no longer white, and now properly matches the planet color.
 * Small visual spacing bugfix for version display.
 
 ## Version 0.5.12 (2021-04-24)
 
 ### New
+
 * Better stars background, no more disappearing and moving stars.
 
 ## Version 0.5.11 (2021-04-24)
 
 ### New
+
 * Nicer-looking atmosphere for planets.
 
 ## Version 0.5.10 (2021-04-10)
 
 ### New
+
 * Improved star shader generation, now stars can be of different colors and not look horrible.
 
 ### Fixes
+
 * Fixed several client crashes caused by wrong texture filenames.
 
 ## Version 0.5.9 - lost by mistake
@@ -106,6 +136,7 @@
 ## Version 0.5.8 (2021-04-07)
 
 ### New
+
 * Improved planet visualization, now the colors are much more varied.
 
 ## Version 0.5.7 (2021-03-28)
@@ -122,6 +153,7 @@
 ## Version 0.5.6 (2021-03-23)
 
 ### Fixes
+
 * Added restarting server on error.
 
 ## Version 0.5.5 (2021-03-23)
