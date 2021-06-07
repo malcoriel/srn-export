@@ -149,10 +149,11 @@ pub struct ContainersContainer {
 
 impl ContainersContainer {
     pub fn new(containers: Vec<Container>) -> Self {
-        let mut res = vec![];
-        for min in containers.into_iter() {
-            res.push(Box::new(min) as Box<dyn IMovable>);
-        }
+        let res = Vec::from_iter(
+            containers
+                .into_iter()
+                .map(|c| Box::new(c) as Box<dyn IMovable>),
+        );
         Self { containers: res }
     }
 
