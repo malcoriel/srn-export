@@ -1,6 +1,13 @@
 import React from 'react';
 import _ from 'lodash';
-import { GameState, ShipAction, ShipActionType } from '../world';
+import {
+  AsteroidBelt,
+  GameState,
+  NatSpawnMineral,
+  Planet,
+  ShipAction,
+  ShipActionType,
+} from '../world';
 import { ThreeStar } from './ThreeStar';
 import { posToThreePos } from './ThreeLayer';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
@@ -23,6 +30,7 @@ import {
   containerHintContent,
   mineralHintContent,
 } from '../HtmlLayers/HintWindow';
+import { Container } from '../../../world/pkg';
 
 // from random_stuff.rs
 export const possibleGasGiantColors = [
@@ -119,6 +127,118 @@ const rarityToColor = (rarity: Rarity): string => {
   }
 };
 
+interface ThreePlanetsLayerParams {
+  planets: Planet[];
+  visMap: Record<string, boolean>;
+}
+
+const ThreePlanetsLayer: React.FC<ThreePlanetsLayerParams> = ({
+  planets,
+  visMap,
+}) => (
+  <>
+    {planets.map((p) => {
+      return (
+        <ThreePlanetShape
+          radius={p.radius}
+          {...ThreePlanetShapeRandomProps(p.id, p.radius)}
+          onClick={(evt: MouseEvent) => {
+            evt.stopPropagation();
+            actionsActive[
+              ShipActionType.DockNavigate
+            ] = ShipAction.DockNavigate(p.id);
+          }}
+          position={p}
+          key={p.id}
+          color={p.color}
+          atmosphereColor={p.color}
+          visible={visMap[p.id]}
+        />
+      );
+    })}
+  </>
+);
+
+interface AsteroidBeltsLayerParams {
+  asteroid_belts: AsteroidBelt[];
+}
+
+const AsteroidBeltsLayer: React.FC<AsteroidBeltsLayerParams> = ({
+  asteroid_belts,
+}: AsteroidBeltsLayerParams) => (
+  <>
+    {asteroid_belts.map((b) => (
+      <ThreeAsteroidBelt
+        key={b.id}
+        count={b.count}
+        radius={b.radius}
+        position={posToThreePos(b.x, b.y)}
+        width={b.width}
+        rotation={[0, 0, b.rotation]}
+        gid={b.id}
+        scale_mod={b.scale_mod}
+      />
+    ))}
+  </>
+);
+
+interface MineralsLayerParams {
+  minerals: NatSpawnMineral[];
+}
+
+const MineralsLayer: React.FC<MineralsLayerParams> = ({ minerals }) => (
+  <>
+    {minerals.map((m) => {
+      return (
+        <ThreeFloatingObject
+          gid={m.id}
+          key={m.id}
+          scale={0.2}
+          radius={m.radius}
+          position={posToThreePos(m.x, m.y)}
+          colors={[rarityToColor(m.rarity)]}
+          modelName="asteroid.glb"
+          meshes={['2']}
+          interactor={{
+            hint: mineralHintContent(m),
+            defaultAction: InteractorActionType.Tractor,
+            outlineColor: rarityToColor(m.rarity),
+            actions: mineralActionsMap,
+          }}
+        />
+      );
+    })}
+  </>
+);
+
+interface ContainersLayerParams {
+  containers: Container[];
+}
+
+const ContainersLayer: React.FC<ContainersLayerParams> = ({
+  containers,
+}: ContainersLayerParams) => (
+  <>
+    {containers.map((c) => (
+      <ThreeFloatingObject
+        gid={c.id}
+        key={c.id}
+        radius={c.radius}
+        position={posToThreePos(c.position.x, c.position.y)}
+        modelName="container.glb"
+        meshes={['0.children.0', '0.children.1', '0.children.2']}
+        scale={0.002}
+        interactor={{
+          hint: containerHintContent(),
+          defaultAction: InteractorActionType.Tractor,
+          outlineColor: rare,
+          actions: containerActionsMap,
+        }}
+      />
+    ))}
+  </>
+);
+
 export const ThreeBodiesLayer: React.FC<{
   state: GameState;
   visualState: VisualState;
@@ -136,25 +256,7 @@ export const ThreeBodiesLayer: React.FC<{
 
   return (
     <group>
-      {planets.map((p) => {
-        return (
-          <ThreePlanetShape
-            radius={p.radius}
-            {...ThreePlanetShapeRandomProps(p.id, p.radius)}
-            onClick={(evt: MouseEvent) => {
-              evt.stopPropagation();
-              actionsActive[
-                ShipActionType.DockNavigate
-              ] = ShipAction.DockNavigate(p.id);
-            }}
-            position={p}
-            key={p.id}
-            color={p.color}
-            atmosphereColor={p.color}
-            visible={visMap[p.id]}
-          />
-        );
-      })}
+      <ThreePlanetsLayer planets={planets} visMap={visMap} />
       {star && (
         <ThreeStar
           key={star.id}
@@ -167,55 +269,9 @@ export const ThreeBodiesLayer: React.FC<{
           coronaColor={star.corona_color}
         />
       )}
-      {asteroid_belts.map((b) => (
-        <ThreeAsteroidBelt
-          key={b.id}
-          count={b.count}
-          radius={b.radius}
-          position={posToThreePos(b.x, b.y)}
-          width={b.width}
-          rotation={[0, 0, b.rotation]}
-          gid={b.id}
-          scale_mod={b.scale_mod}
-        />
-      ))}
-      {minerals.map((m) => {
-        return (
-          <ThreeFloatingObject
-            gid={m.id}
-            key={m.id}
-            scale={0.2}
-            radius={m.radius}
-            position={posToThreePos(m.x, m.y)}
-            colors={[rarityToColor(m.rarity)]}
-            modelName="asteroid.glb"
-            meshes={['2']}
-            interactor={{
-              hint: mineralHintContent(m),
-              defaultAction: InteractorActionType.Tractor,
-              outlineColor: rarityToColor(m.rarity),
-              actions: mineralActionsMap,
-            }}
-          />
-        );
-      })}
-      {containers.map((c) => (
-        <ThreeFloatingObject
-          gid={c.id}
-          key={c.id}
-          radius={c.radius}
-          position={posToThreePos(c.position.x, c.position.y)}
-          modelName="container.glb"
-          meshes={['0.children.0', '0.children.1', '0.children.2']}
-          scale={0.002}
-          interactor={{
-            hint: containerHintContent(),
-            defaultAction: InteractorActionType.Tractor,
-            outlineColor: rare,
-            actions: containerActionsMap,
-          }}
-        />
-      ))}
+      <AsteroidBeltsLayer asteroid_belts={asteroid_belts} />
+      <MineralsLayer minerals={minerals} />
+      <ContainersLayer containers={containers} />
       {/*{asteroids.map((a: Asteroid) => (*/}
       {/*  <ThreeRock*/}
       {/*    key={a.id}*/}
