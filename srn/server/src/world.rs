@@ -38,7 +38,9 @@ use crate::random_stuff::{
 use crate::ship_action::ShipAction;
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{str_to_hash, system_gen};
-use crate::tractoring::{ContainersContainer, IMovable, MineralsContainer, MovablesContainer};
+use crate::tractoring::{
+    ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
+};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::{abilities, indexing};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
@@ -915,43 +917,29 @@ fn update_location(
     sampler.end(cooldowns_id);
 
     let update_minerals_id = sampler.start(SamplerMarks::UpdateTractoredMinerals as u32);
-    let update_min_clone_id = sampler.start(SamplerMarks::UpdateTractoredMineralsClone as u32);
-    let container = MineralsContainer::new(state.locations[location_idx].minerals.clone());
-    let mut minerals_container = Box::from(container) as Box<dyn MovablesContainer>;
-    sampler.end(update_min_clone_id);
-    let update_min_id = sampler.start(SamplerMarks::UpdateTractoredMineralsUpdate as u32);
+    let mut container =
+        MovablesContainerBase::new_minerals(state.locations[location_idx].minerals.clone());
     let consume_updates = tractoring::update_tractored_objects(
         &state.locations[location_idx].ships,
-        &mut minerals_container,
+        &mut container.movables,
         elapsed,
         &state.players,
     );
-    state.locations[location_idx].minerals = minerals_container
-        .as_any()
-        .downcast_ref::<MineralsContainer>()
-        .unwrap()
-        .get_minerals();
-    sampler.end(update_min_id);
-    let update_min_consume_id = sampler.start(SamplerMarks::UpdateTractoredMineralsConsume as u32);
+    state.locations[location_idx].minerals = container.get_minerals();
     if !client {
         apply_tractored_iterms_consumption(&mut state, consume_updates)
     }
-    sampler.end(update_min_consume_id);
     sampler.end(update_minerals_id);
     let update_containers_id = sampler.start(SamplerMarks::UpdateTractoredContainers as u32);
-    let container = ContainersContainer::new(state.locations[location_idx].containers.clone());
-    let mut containers_container = Box::from(container) as Box<dyn MovablesContainer>;
+    let mut container =
+        MovablesContainerBase::new_containers(state.locations[location_idx].containers.clone());
     let consume_updates = tractoring::update_tractored_objects(
         &state.locations[location_idx].ships,
-        &mut containers_container,
+        &mut container.movables,
         elapsed,
         &state.players,
     );
-    state.locations[location_idx].containers = containers_container
-        .as_any()
-        .downcast_ref::<ContainersContainer>()
-        .unwrap()
-        .get_containers();
+    state.locations[location_idx].containers = container.get_containers();
     if !client {
         apply_tractored_iterms_consumption(&mut state, consume_updates)
     }

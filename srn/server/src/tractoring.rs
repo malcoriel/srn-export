@@ -56,7 +56,7 @@ const TRACTOR_PICKUP_DIST: f64 = 1.0;
 
 pub fn update_tractored_objects(
     ships: &Vec<Ship>,
-    objects: &mut Box<dyn MovablesContainer>,
+    objects: &mut Vec<Box<dyn IMovable>>,
     elapsed: i64,
     players: &Vec<Player>,
 ) -> Vec<(PlayerId, Box<dyn IMovable>)> {
@@ -64,9 +64,9 @@ pub fn update_tractored_objects(
     let players_by_ship_id = indexing::index_players_by_ship_id(players);
     let mut players_update = vec![];
     let mut ids_to_remove = HashSet::new();
-    for m in objects.mut_movables().iter_mut() {
-        if let Some(ships) = ship_by_tractor.get(&m.get_id()) {
-            let old_pos = m.get_position();
+    for object in objects.iter_mut() {
+        if let Some(ships) = ship_by_tractor.get(&object.get_id()) {
+            let old_pos = object.get_position();
             let mut is_consumed = false;
             for ship in ships {
                 let dist = Vec2f64 {
@@ -77,25 +77,23 @@ pub fn update_tractored_objects(
                 let dir = dist.normalize();
                 if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
                     if let Some(p) = players_by_ship_id.get(&ship.id) {
-                        players_update.push((p.id, m.clone()))
+                        players_update.push((p.id, object.clone()))
                     }
                     is_consumed = true;
                 } else {
                     let scaled =
                         dir.scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
 
-                    m.set_position(old_pos.add(&scaled));
+                    object.set_position(old_pos.add(&scaled));
                 }
             }
             if is_consumed {
-                ids_to_remove.insert(m.get_id());
+                ids_to_remove.insert(object.get_id());
             }
         }
     }
 
-    objects
-        .mut_movables()
-        .retain(|o| !ids_to_remove.contains(&o.get_id()));
+    objects.retain(|o| !ids_to_remove.contains(&o.get_id()));
     players_update
 }
 
@@ -119,6 +117,47 @@ pub struct MineralsContainer {
     pub minerals: Vec<Box<dyn IMovable>>,
 }
 
+pub struct MovablesContainerBase {
+    pub movables: Vec<Box<dyn IMovable>>,
+}
+
+impl MovablesContainerBase {
+    pub fn new_minerals(minerals: Vec<NatSpawnMineral>) -> Self {
+        let res = Vec::from_iter(
+            minerals
+                .into_iter()
+                .map(|m| Box::new(m) as Box<dyn IMovable>),
+        );
+        MovablesContainerBase { movables: res }
+    }
+
+    pub fn new_containers(minerals: Vec<Container>) -> Self {
+        let res = Vec::from_iter(
+            minerals
+                .into_iter()
+                .map(|m| Box::new(m) as Box<dyn IMovable>),
+        );
+        MovablesContainerBase { movables: res }
+    }
+
+    pub fn get_minerals(&self) -> Vec<NatSpawnMineral> {
+        return Vec::from_iter(self.movables.iter().map(|m| {
+            m.as_any()
+                .downcast_ref::<NatSpawnMineral>()
+                .unwrap()
+                .clone()
+        }));
+    }
+
+    pub fn get_containers(&self) -> Vec<Container> {
+        return Vec::from_iter(
+            self.movables
+                .iter()
+                .map(|m| m.as_any().downcast_ref::<Container>().unwrap().clone()),
+        );
+    }
+}
+
 impl MineralsContainer {
     pub fn new(minerals: Vec<NatSpawnMineral>) -> Self {
         let res = Vec::from_iter(
@@ -130,16 +169,12 @@ impl MineralsContainer {
     }
 
     pub fn get_minerals(&self) -> Vec<NatSpawnMineral> {
-        let mut res = vec![];
-        for min in self.minerals.clone() {
-            res.push(
-                min.as_any()
-                    .downcast_ref::<NatSpawnMineral>()
-                    .unwrap()
-                    .clone(),
-            )
-        }
-        res
+        return Vec::from_iter(self.minerals.iter().map(|m| {
+            m.as_any()
+                .downcast_ref::<NatSpawnMineral>()
+                .unwrap()
+                .clone()
+        }));
     }
 }
 
@@ -174,6 +209,15 @@ pub trait MovablesContainer {
 impl MovablesContainer for MineralsContainer {
     fn mut_movables(&mut self) -> &mut Vec<Box<dyn IMovable>> {
         &mut self.minerals
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+impl MovablesContainer for MovablesContainerBase {
+    fn mut_movables(&mut self) -> &mut Vec<Box<dyn IMovable>> {
+        &mut self.movables
     }
     fn as_any(&self) -> &dyn Any {
         self
