@@ -9,7 +9,7 @@ import {
 import { actionsActive } from '../utils/ShipControls';
 import { ShipAction, ShipActionType } from '../world';
 import Vector from '../utils/Vector';
-import { possibleGasGiantColors } from '../ThreeLayers/ThreeBodiesLayer';
+import { possibleGasGiantColors } from '../ThreeLayers/ThreePlanetsLayer';
 
 export default {
   title: 'Three/PlanetShape',
