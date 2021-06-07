@@ -2,10 +2,11 @@ import React, { ReactNode } from 'react';
 import './HoverHintWindow.scss';
 import { StyledRect } from './ui/StyledRect';
 import { NatSpawnMineral } from '../../../world/pkg';
+import { Rarity } from '../../../world/pkg/world.extra';
 
 export const mineralHintContent = (hintedMineral: NatSpawnMineral) => {
-  const isRare = hintedMineral.value >= 300;
-  const isUncommon = hintedMineral.value >= 200;
+  const isRare = hintedMineral.rarity === Rarity.Rare;
+  const isUncommon = hintedMineral.rarity === Rarity.Uncommon;
   //const isCommon = hintedMineral.value >= 100;
   let rarityClass: string;
   if (isRare) {

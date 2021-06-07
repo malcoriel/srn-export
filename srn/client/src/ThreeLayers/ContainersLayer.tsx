@@ -12,6 +12,7 @@ import {
   LongActionStartBuilder,
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
+import { InteractorMap } from './InteractorMap';
 
 export const containerActionsMap = new Map([
   [
@@ -51,7 +52,7 @@ export const ContainersLayer: React.FC<ContainersLayerParams> = ({
         position={posToThreePos(c.position.x, c.position.y)}
         modelName="container.glb"
         scale={0.002}
-        interactorKind="container"
+        interactor={InteractorMap.container(c)}
       />
     ))}
   </>

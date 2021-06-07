@@ -4,26 +4,13 @@ import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import _ from 'lodash';
 import { Color, Group, Mesh, MeshBasicMaterial } from 'three';
 import {
-  InteractorActionType,
   ThreeInteractor,
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
-import { containerHintContent } from '../HtmlLayers/HintWindow';
-import { rare } from '../utils/palette';
-import { containerActionsMap } from './ContainersLayer';
 
 export const ModelMeshMap: Record<string, string[]> = {
   'container.glb': ['0.children.0', '0.children.1', '0.children.2'],
   'asteroid.glb': ['2'],
-};
-
-export const InteractorMap: Record<string, ThreeInteractorProps> = {
-  container: {
-    hint: containerHintContent(),
-    defaultAction: InteractorActionType.Tractor,
-    outlineColor: rare,
-    actions: containerActionsMap,
-  },
 };
 
 export const ThreeFloatingObject: React.FC<{
@@ -34,7 +21,6 @@ export const ThreeFloatingObject: React.FC<{
   gid: string;
   modelName: string;
   meshes?: string[];
-  interactorKind?: string;
   interactor?: ThreeInteractorProps;
 }> = ({
   interactor,
@@ -44,7 +30,6 @@ export const ThreeFloatingObject: React.FC<{
   radius,
   colors,
   modelName,
-  interactorKind,
   scale,
 }) => {
   const container = useRef<Group>(null);
@@ -86,14 +71,13 @@ export const ThreeFloatingObject: React.FC<{
     }
   });
 
-  const usedInteractor = interactor || InteractorMap[interactorKind || ''];
   return (
     <group position={position}>
-      {usedInteractor && (
+      {interactor && (
         <ThreeInteractor
           objectId={gid}
           radius={radius}
-          interactor={usedInteractor}
+          interactor={interactor}
         />
       )}
       <group

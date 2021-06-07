@@ -13,8 +13,9 @@ import { posToThreePos } from './ThreeLayer';
 import { mineralHintContent } from '../HtmlLayers/HintWindow';
 import { common, rare, uncommon } from '../utils/palette';
 import { UnreachableCaseError } from 'ts-essentials';
+import { InteractorMap } from './InteractorMap';
 
-const mineralActionsMap = new Map([
+export const mineralActionsMap = new Map([
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
@@ -67,12 +68,7 @@ export const MineralsLayer: React.FC<MineralsLayerParams> = ({ minerals }) => (
           position={posToThreePos(m.x, m.y)}
           colors={[rarityToColor(m.rarity)]}
           modelName="asteroid.glb"
-          interactor={{
-            hint: mineralHintContent(m),
-            defaultAction: InteractorActionType.Tractor,
-            outlineColor: rarityToColor(m.rarity),
-            actions: mineralActionsMap,
-          }}
+          interactor={InteractorMap.mineral(m)}
         />
       );
     })}
