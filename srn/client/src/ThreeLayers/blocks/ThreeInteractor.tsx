@@ -80,7 +80,7 @@ export const ThreeInteractor = ({
     if (defaultAction === InteractorActionType.Tractor) {
       setShowTractorCircle(active);
     }
-  }, [active, setShowTractorCircle]);
+  }, [defaultAction, active, setShowTractorCircle]);
   useEffect(() => {
     if (menuShown && menuAnchorRef.current) {
       setContextMenuRef(menuAnchorRef);
@@ -126,7 +126,7 @@ export const ThreeInteractor = ({
           args={[
             radius - outlineThickness,
             radius + outlineThickness,
-            Math.max(16, radius * 2),
+            Math.max(16, radius * 3),
           ]}
         />
         <meshBasicMaterial
