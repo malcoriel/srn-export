@@ -7,21 +7,37 @@ import { posToThreePos, vecToThreePos } from './ThreeLayer';
 import * as jellyfish from './shaders/jellyfish';
 import { shallowEqual } from '../utils/shallowCompare';
 import { Geometry } from 'three/examples/jsm/deprecated/Geometry';
+import {
+  ThreeInteractor,
+  ThreeInteractorProps,
+} from './blocks/ThreeInteractor';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
 type ThreeShipProps = {
+  gid: string;
   position: Vector;
   tractorTargetPosition?: Vector;
   color: string;
   rotation: number;
+  radius: number;
   visible: boolean;
+  interactor?: ThreeInteractorProps;
 };
 
 const BEAM_WIDTH = 0.3;
 
 export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
-  ({ tractorTargetPosition, position, rotation, color, visible }) => {
+  ({
+    tractorTargetPosition,
+    position,
+    rotation,
+    color,
+    visible,
+    interactor,
+    radius,
+    gid,
+  }) => {
     const tractorRef = useRef<Mesh>();
     // @ts-ignore
     const shipModel = useLoader<Geometry>(STLLoader, 'resources/ship.stl');
@@ -53,6 +69,13 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
 
     return (
       <group position={posToThreePos(position.x, position.y, 50)}>
+        {interactor && (
+          <ThreeInteractor
+            objectId={gid}
+            radius={radius}
+            interactor={interactor}
+          />
+        )}
         <mesh
           position={[0, 0, 0]}
           ref={tractorRef}

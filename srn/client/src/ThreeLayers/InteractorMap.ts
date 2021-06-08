@@ -12,6 +12,11 @@ import _ from 'lodash';
 import { mineralActionsMap, rarityToColor } from './MineralsLayer';
 import { actionsActive } from '../utils/ShipControls';
 import { ShipAction, ShipActionType } from '../world';
+import {
+  LongActionStartBuilder,
+  ShootTargetBuilder,
+} from '../../../world/pkg/world.extra';
+import NetState from '../NetState';
 
 const planetActionMap = new Map([
   [
@@ -19,6 +24,23 @@ const planetActionMap = new Map([
     (objectId: string) => {
       actionsActive[ShipActionType.DockNavigate] = ShipAction.DockNavigate(
         objectId
+      );
+    },
+  ],
+]);
+
+const shipActionMap = new Map([
+  [
+    InteractorActionType.Shoot,
+    (id: string) => {
+      const ns = NetState.get();
+      if (!ns) {
+        return;
+      }
+      ns.startLongAction(
+        LongActionStartBuilder.LongActionStartShoot({
+          target: ShootTargetBuilder.ShootTargetShip({ id }),
+        })
       );
     },
   ],
@@ -47,11 +69,20 @@ export const InteractorMap: Record<
     (m) => m.id
   ),
   planet: _.memoize(
-    (p) => ({
+    (_p) => ({
       hint: null,
       defaultAction: InteractorActionType.Dock,
       outlineColor: common,
       actions: planetActionMap,
+    }),
+    (m) => m.id
+  ),
+  ship: _.memoize(
+    (_p) => ({
+      hint: null,
+      defaultAction: InteractorActionType.Shoot,
+      outlineColor: common,
+      actions: shipActionMap,
     }),
     (m) => m.id
   ),

@@ -4,6 +4,7 @@ import { findContainer, findMineral, GameState } from '../world';
 import { ThreeShip } from './ThreeShip';
 import { Ship } from '../world';
 import Vector from '../utils/Vector';
+import { InteractorMap } from './InteractorMap';
 
 export const ThreeShipsLayer: React.FC<{
   visMap: Record<string, boolean>;
@@ -41,12 +42,15 @@ export const ThreeShipsLayer: React.FC<{
         }
         return (
           <ThreeShip
+            gid={s.id}
+            radius={s.radius}
             visible={visMap[s.id]}
             tractorTargetPosition={tractorTargetPosition}
             key={s.id + i}
             position={Vector.fromIVector(s)}
             rotation={s.rotation}
             color={s.color}
+            interactor={InteractorMap.ship(s)}
           />
         );
       })}
