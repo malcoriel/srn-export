@@ -62,7 +62,6 @@ pub type PlayerId = Uuid;
 #[derive(
     Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
 )]
-#[serde(tag = "tag")]
 pub enum GameMode {
     Unknown,
     CargoRush,
@@ -1025,9 +1024,12 @@ pub fn update_location(
         update_ships_respawn(&mut state);
         sampler.end(respawn_id);
     }
-    let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
-    autofocus::update_autofocus(&mut state);
-    sampler.end(autofocus_id);
+    if !client {
+        let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
+        autofocus::update_location_autofocus(location_idx, &mut state.locations[location_idx]);
+        sampler.end(autofocus_id);
+    }
+
     sampler
 }
 

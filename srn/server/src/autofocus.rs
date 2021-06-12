@@ -120,37 +120,41 @@ fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
 
 pub const AUTOFOCUS_RADIUS: f64 = 30.0;
 
-pub fn update_autofocus(state: &mut GameState) {
+pub fn update_autofocus_full(state: &mut GameState) {
     for i in 0..state.locations.len() {
         let loc = &mut state.locations[i];
-        let index = build_spatial_index(&loc, i);
-        let mut ship_mods = vec![];
-        for ship in loc.ships.iter() {
-            let ship_pos = Vec2f64 {
-                x: ship.x,
-                y: ship.y,
-            };
-            let mut around = index.rad_search(&ship_pos, AUTOFOCUS_RADIUS);
-            around.sort_by(|a, b| {
-                let a_pos = get_position(&loc, a);
-                let a_dist = a_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
-                let b_pos = get_position(&loc, b);
-                let b_dist = b_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
-                if !b_dist.is_finite() || !a_dist.is_finite() {
-                    return Ordering::Equal;
-                }
-                a_dist.partial_cmp(&b_dist).unwrap()
-            });
-            ship_mods.push(
-                around
-                    .get(0)
-                    .and_then(|ois| object_index_into_object_id(ois, &loc)),
-            )
-        }
-        for i in 0..loc.ships.len() {
-            let ship = &mut loc.ships[i];
-            ship.auto_focus = ship_mods[i].clone();
-        }
+        update_location_autofocus(i, loc)
+    }
+}
+
+pub fn update_location_autofocus(i: usize, loc: &mut Location) {
+    let index = build_spatial_index(&loc, i);
+    let mut ship_mods = vec![];
+    for ship in loc.ships.iter() {
+        let ship_pos = Vec2f64 {
+            x: ship.x,
+            y: ship.y,
+        };
+        let mut around = index.rad_search(&ship_pos, AUTOFOCUS_RADIUS);
+        around.sort_by(|a, b| {
+            let a_pos = get_position(&loc, a);
+            let a_dist = a_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
+            let b_pos = get_position(&loc, b);
+            let b_dist = b_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
+            if !b_dist.is_finite() || !a_dist.is_finite() {
+                return Ordering::Equal;
+            }
+            a_dist.partial_cmp(&b_dist).unwrap()
+        });
+        ship_mods.push(
+            around
+                .get(0)
+                .and_then(|ois| object_index_into_object_id(ois, &loc)),
+        )
+    }
+    for i in 0..loc.ships.len() {
+        let ship = &mut loc.ships[i];
+        ship.auto_focus = ship_mods[i].clone();
     }
 }
 

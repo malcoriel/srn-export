@@ -30,7 +30,7 @@ mod autofocus_test {
         other.x = 5.0;
         other.y = 0.5;
         state.locations[0].planets.push(other);
-        autofocus::update_autofocus(&mut state);
+        autofocus::update_autofocus_full(&mut state);
         let ship = &state.locations[0].ships[0];
         assert_eq!(
             ship.auto_focus,

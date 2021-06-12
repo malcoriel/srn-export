@@ -95,6 +95,8 @@ export type SrnState = {
   setContextMenuRef: (ref: React.RefObject<any>) => void;
   contextMenuItems: GlobalContextMenuItem[];
   setContextMenuItems: (items: GlobalContextMenuItem[]) => void;
+  activeInteractorId?: string;
+  setActiveInteractorId: (id?: string) => void;
 };
 
 export enum TestMenuMode {
@@ -265,4 +267,7 @@ export const useStore = create<SrnState>((set) => ({
       deleteLSValue('portrait');
       return { portraitIndex, portrait };
     }),
+  activeInteractorId: undefined,
+  setActiveInteractorId: (id: string | undefined) =>
+    set(() => ({ activeInteractorId: id })),
 }));

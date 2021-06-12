@@ -5,6 +5,7 @@ import { MouseEvent } from 'react-three-fiber/canvas';
 import { Html } from '@react-three/drei';
 import '@szhsin/react-menu/dist/index.css';
 import { HintWindow } from '../../HtmlLayers/HintWindow';
+import NetState from '../../NetState';
 
 export enum InteractorActionType {
   Unknown,
@@ -51,6 +52,38 @@ export const ThreeInteractor = ({
     setActive(false);
   };
 
+  const setActiveInteractorId = useStore(
+    (state) => state.setActiveInteractorId
+  );
+  const activeInteractorId = useStore((state) => state.activeInteractorId);
+
+  const isAutoFocused = (() => {
+    const ns = NetState.get();
+    if (!ns) {
+      return false;
+    }
+    const autoFocus = ns.indexes.myShip?.auto_focus;
+    if (!autoFocus || autoFocus.tag === 'Unknown' || autoFocus.tag === 'Star')
+      return false;
+    return autoFocus?.id === objectId;
+  })();
+
+  useEffect(() => {
+    if (active && !isAutoFocused) {
+      setActiveInteractorId(objectId);
+    } else if (activeInteractorId === objectId) {
+      setActiveInteractorId(undefined);
+    }
+  }, [
+    active,
+    setActiveInteractorId,
+    objectId,
+    activeInteractorId,
+    isAutoFocused,
+  ]);
+
+  const tempAutoFocusActive = !activeInteractorId && isAutoFocused;
+
   const onLeftClick = (e?: MouseEvent) => {
     if (e) {
       e.stopPropagation();
@@ -70,17 +103,20 @@ export const ThreeInteractor = ({
     setMenuShown(!menuShown);
     return false;
   };
+
+  const visuallyActive = tempAutoFocusActive || active;
+
   const memoizedColor = useMemo(() => new Color(outlineColor), [outlineColor]);
-  const outlineVisible = active ? 1.0 : 0.0;
+  const outlineVisible = visuallyActive ? 1.0 : 0.0;
   const menuAnchorRef = useRef(null);
   const setContextMenuRef = useStore((state) => state.setContextMenuRef);
   const setContextMenuItems = useStore((state) => state.setContextMenuItems);
   const setShowTractorCircle = useStore((state) => state.setShowTractorCircle);
   useEffect(() => {
     if (defaultAction === InteractorActionType.Tractor) {
-      setShowTractorCircle(active);
+      setShowTractorCircle(visuallyActive);
     }
-  }, [defaultAction, active, setShowTractorCircle]);
+  }, [defaultAction, visuallyActive, setShowTractorCircle]);
   useEffect(() => {
     if (menuShown && menuAnchorRef.current) {
       setContextMenuRef(menuAnchorRef);
@@ -107,6 +143,8 @@ export const ThreeInteractor = ({
     setContextMenuRef,
     actions,
   ]);
+
+  // noinspection RequiredAttributes
   return (
     <group
       onClick={onLeftClick}
@@ -119,7 +157,7 @@ export const ThreeInteractor = ({
       </mesh>
       <Html>
         <div ref={menuAnchorRef} />
-        {active && hint && <HintWindow windowContent={hint} />}
+        {visuallyActive && hint && <HintWindow windowContent={hint} />}
       </Html>
       <mesh>
         <ringGeometry

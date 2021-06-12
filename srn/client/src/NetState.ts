@@ -3,11 +3,8 @@ import {
   AABB,
   applyShipAction,
   Dialogue,
-  findObjectById,
-  FindObjectHint,
   GameMode,
   GameState,
-  getObjectPosition,
   SandboxCommand,
   Ship,
   ShipAction,
@@ -128,10 +125,16 @@ const serializeSandboxCommand = (cmd: SandboxCommand) => {
   return JSON.stringify(cmd);
 };
 
+export interface NetStateIndexes {
+  myShip: Ship | null;
+}
+
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
 
   state!: GameState;
+
+  indexes!: NetStateIndexes;
 
   dialogue?: Dialogue;
 
@@ -270,6 +273,14 @@ export default class NetState extends EventEmitter {
       milliseconds_remaining: 0,
       paused: true,
     };
+    this.reindex();
+  }
+
+  private reindex() {
+    this.indexes = {
+      myShip: null,
+    };
+    this.indexes.myShip = findMyShip(this.state);
   }
 
   forceSync = () => {
@@ -532,6 +543,7 @@ export default class NetState extends EventEmitter {
         console.log('Received disconnect request from server');
         this.disconnectAndDestroy();
       }
+      this.reindex();
     } catch (e) {
       console.warn('error handling message', e);
     } finally {
@@ -657,6 +669,7 @@ export default class NetState extends EventEmitter {
     }
     this.state.locations[0].ships.splice(myShipIndex, 1);
     this.state.locations[0].ships.push(myShip);
+    this.reindex();
   };
 
   onPreferredNameChange = (newName: string) => {
@@ -696,6 +709,7 @@ export default class NetState extends EventEmitter {
     const result = updateWorld(this.state, simArea, elapsedMs);
     if (result) {
       this.state = result;
+      this.reindex();
       this.updateVisMap();
     }
   };
