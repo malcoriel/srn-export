@@ -1,6 +1,9 @@
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
-
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
+use uuid::*;
+use wasm_bindgen::prelude::*;
 
 use crate::world;
 use crate::world::{
@@ -271,4 +274,56 @@ pub fn find_player_and_ship(
         player = Some(found_player);
     }
     return (player, ship);
+}
+
+#[derive(
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
+)]
+#[serde(tag = "tag")]
+pub enum ObjectSpecifier {
+    Unknown,
+    Mineral { id: Uuid },
+    Container { id: Uuid },
+    Planet { id: Uuid },
+    Ship { id: Uuid },
+    Star,
+}
+
+#[derive(
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
+)]
+#[serde(tag = "tag")]
+pub enum ObjectIndexSpecifier {
+    Unknown,
+    Mineral { idx: usize },
+    Container { idx: usize },
+    Planet { idx: usize },
+    Ship { idx: usize },
+    Star,
+}
+
+#[derive(
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
+)]
+pub struct FullObjectIndexSpecifier {
+    pub loc_idx: usize,
+    pub obj_idx: ObjectIndexSpecifier,
+}
+
+pub struct GameStateIndexes<'a> {
+    pub planets_by_id: HashMap<Uuid, &'a Planet>,
+    pub players_by_id: HashMap<Uuid, &'a Player>,
+    pub ships_by_id: HashMap<Uuid, &'a Ship>,
+}
+
+pub fn index_state(state: &GameState) -> GameStateIndexes {
+    let planets_by_id = index_all_planets_by_id(&state.locations);
+    let players_by_id = index_players_by_id(&state.players);
+    let ships_by_id = index_all_ships_by_id(&state.locations);
+
+    GameStateIndexes {
+        planets_by_id,
+        players_by_id,
+        ships_by_id,
+    }
 }

@@ -16,6 +16,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
 use crate::combat::ShootTarget;
+use crate::indexing::ObjectSpecifier;
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
 };
@@ -42,7 +43,7 @@ use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::{abilities, indexing};
+use crate::{abilities, autofocus, indexing};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
 
@@ -61,6 +62,7 @@ pub type PlayerId = Uuid;
 #[derive(
     Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
 )]
+#[serde(tag = "tag")]
 pub enum GameMode {
     Unknown,
     CargoRush,
@@ -193,6 +195,23 @@ pub struct Planet {
     pub color: String,
 }
 
+impl Planet {
+    pub fn new() -> Self {
+        Self {
+            id: Default::default(),
+            name: "".to_string(),
+            x: 0.0,
+            y: 0.0,
+            rotation: 0.0,
+            radius: 0.0,
+            orbit_speed: 0.0,
+            anchor_id: Default::default(),
+            anchor_tier: 1,
+            color: "".to_string(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Asteroid {
     pub id: Uuid,
@@ -304,6 +323,7 @@ pub struct Ship {
     pub inventory: Vec<InventoryItem>,
     #[serde(default)]
     pub abilities: Vec<Ability>,
+    pub auto_focus: Option<ObjectSpecifier>,
 }
 
 impl Ship {
@@ -328,6 +348,7 @@ impl Ship {
             abilities: vec![Ability::Shoot {
                 cooldown_ticks_remaining: 0,
             }],
+            auto_focus: None,
         }
     }
 }
@@ -549,6 +570,32 @@ pub struct GameState {
     pub locations: Vec<Location>,
 }
 
+impl GameState {
+    pub fn new() -> Self {
+        Self {
+            id: Default::default(),
+            version: 0,
+            mode: GameMode::Unknown,
+            tag: None,
+            seed: "".to_string(),
+            my_id: Default::default(),
+            start_time_ticks: 0,
+            players: vec![],
+            milliseconds_remaining: 0,
+            paused: false,
+            leaderboard: None,
+            ticks: 0,
+            disable_hp_effects: false,
+            market: Market {
+                wares: Default::default(),
+                prices: Default::default(),
+                time_before_next_shake: 0,
+            },
+            locations: vec![],
+        }
+    }
+}
+
 // b84413729214a182 - no inner planet, lol
 const FIXED_SEED: Option<&str> = None;
 
@@ -697,6 +744,15 @@ impl AABB {
 pub struct UpdateOptions {
     pub disable_hp_effects: bool,
     pub limit_area: AABB,
+}
+
+impl UpdateOptions {
+    pub fn new() -> Self {
+        Self {
+            disable_hp_effects: false,
+            limit_area: AABB::maxed(),
+        }
+    }
 }
 
 // first group is in area, second is not
@@ -851,7 +907,7 @@ pub fn update_world(
     (state, sampler)
 }
 
-fn update_location(
+pub fn update_location(
     mut state: &mut GameState,
     elapsed: i64,
     client: bool,
@@ -969,6 +1025,9 @@ fn update_location(
         update_ships_respawn(&mut state);
         sampler.end(respawn_id);
     }
+    let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
+    autofocus::update_autofocus(&mut state);
+    sampler.end(autofocus_id);
     sampler
 }
 
@@ -1542,17 +1601,17 @@ pub fn find_player_location_idx(state: &GameState, player_id: Uuid) -> Option<i3
     return if !found { None } else { Some(idx) };
 }
 
-pub enum ObjectSpecifier {
-    Unknown,
-    Mineral { id: Uuid },
-    Container { id: Uuid },
-}
 pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecifier) {
     match remove {
         ObjectSpecifier::Unknown => {}
         ObjectSpecifier::Mineral { id } => state.locations[loc_idx].minerals.retain(|m| m.id != id),
         ObjectSpecifier::Container { id } => {
             state.locations[loc_idx].containers.retain(|m| m.id != id)
+        }
+        ObjectSpecifier::Ship { id } => state.locations[loc_idx].ships.retain(|m| m.id != id),
+        ObjectSpecifier::Planet { id } => state.locations[loc_idx].planets.retain(|m| m.id != id),
+        ObjectSpecifier::Star { .. } => {
+            state.locations[loc_idx].star = None;
         }
     }
 }

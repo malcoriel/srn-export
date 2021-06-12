@@ -28,6 +28,7 @@ strum = "0.20.0"
 strum_macros = "0.20.1"
 typescript-definitions = "0.1.10"
 wasm-bindgen = "0.2.71"
+kdbush = "0.2.0"
 
   [dependencies.rocket]
   git = "https://github.com/SergioBenitez/Rocket"

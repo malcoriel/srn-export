@@ -87,6 +87,7 @@ extern crate num_derive;
 
 mod abilities;
 mod api;
+mod autofocus;
 mod bots;
 mod chat;
 mod combat;
@@ -118,6 +119,7 @@ mod vec2_test;
 pub mod world;
 mod world_test;
 mod xcast;
+mod autofocus_test;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,

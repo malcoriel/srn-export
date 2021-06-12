@@ -27,6 +27,7 @@ statistical = "1.0.0"
 hex = "0.4.2"
 strum_macros = "0.20.1"
 strum = "0.20.0"
+kdbush = "0.2.0"
 
   [dependencies.typescript-definitions]
   version = "0.1.10"

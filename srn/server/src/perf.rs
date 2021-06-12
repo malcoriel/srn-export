@@ -228,6 +228,7 @@ pub enum SamplerMarks {
     UpdateTickLongActions = 22,
     UpdateTractoredContainers = 23,
     UpdateAbilityCooldowns = 24,
+    UpdateAutofocus = 25,
 }
 
 impl Display for SamplerMarks {

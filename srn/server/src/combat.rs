@@ -4,9 +4,9 @@ use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
-use crate::indexing::find_my_ship_index;
+use crate::indexing::{find_my_ship_index, ObjectSpecifier};
 use crate::vec2::Vec2f64;
-use crate::world::{remove_object, GameState, Location, ObjectSpecifier, Player, Ship};
+use crate::world::{remove_object, GameState, Location, Player, Ship};
 use crate::{indexing, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy)]

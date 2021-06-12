@@ -119,6 +119,9 @@ mod indexing;
 #[path = "../../server/src/abilities.rs"]
 mod abilities;
 
+#[path = "../../server/src/autofocus.rs"]
+mod autofocus;
+
 pub const DEBUG_PHYSICS: bool = false;
 pub const ENABLE_PERF: bool = false;
 
