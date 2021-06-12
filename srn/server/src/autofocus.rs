@@ -168,25 +168,67 @@ fn object_index_into_object_id(
             .minerals
             .get(*idx)
             .map(|o| ObjectSpecifier::Mineral { id: o.id }),
-        ObjectIndexSpecifier::Container { .. } => None,
+        ObjectIndexSpecifier::Container { idx } => loc
+            .containers
+            .get(*idx)
+            .map(|o| ObjectSpecifier::Container { id: o.id }),
         ObjectIndexSpecifier::Planet { idx } => loc
             .planets
             .get(*idx)
             .map(|o| ObjectSpecifier::Planet { id: o.id }),
-        ObjectIndexSpecifier::Ship { .. } => None,
-        ObjectIndexSpecifier::Star => None,
+        ObjectIndexSpecifier::Ship { idx } => loc
+            .ships
+            .get(*idx)
+            .map(|o| ObjectSpecifier::Ship { id: o.id }),
+        ObjectIndexSpecifier::Star => loc
+            .star
+            .as_ref()
+            .map(|s| ObjectSpecifier::Star { id: s.id }),
     }
 }
 
 fn get_position(loc: &Location, sp: &ObjectIndexSpecifier) -> Option<Vec2f64> {
     match sp {
         ObjectIndexSpecifier::Unknown => None,
-        ObjectIndexSpecifier::Mineral { .. } => None,
-        ObjectIndexSpecifier::Container { .. } => None,
+        ObjectIndexSpecifier::Mineral { idx } => {
+            loc.minerals.get(*idx).map(|m| Vec2f64 { x: m.x, y: m.y })
+        }
+        ObjectIndexSpecifier::Container { idx } => {
+            loc.containers.get(*idx).map(|c| c.position.clone())
+        }
         ObjectIndexSpecifier::Planet { idx } => {
             loc.planets.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
         }
-        ObjectIndexSpecifier::Ship { .. } => None,
-        ObjectIndexSpecifier::Star => None,
+        ObjectIndexSpecifier::Ship { idx } => {
+            loc.ships.get(*idx).map(|s| Vec2f64 { x: s.x, y: s.y })
+        }
+        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|s| Vec2f64 { x: s.x, y: s.y }),
+    }
+}
+
+pub enum PlayerStance {
+    Normal,
+    Scavenge,
+    Combat,
+}
+
+pub fn autofocus_priority(_loc: &Location, stance: &PlayerStance) {
+    match stance {
+        PlayerStance::Normal => {
+            // Planets,
+            // Ships,
+            // Containers/Minerals
+        }
+        PlayerStance::Scavenge => {
+            // Containers/Minerals
+            // Planets
+            // Ships
+        }
+        PlayerStance::Combat => {
+            // Hostile ships
+            // Friendly ships
+            // Containers/minerals
+            // Planets
+        }
     }
 }

@@ -286,7 +286,7 @@ pub enum ObjectSpecifier {
     Container { id: Uuid },
     Planet { id: Uuid },
     Ship { id: Uuid },
-    Star,
+    Star { id: Uuid },
 }
 
 #[derive(
