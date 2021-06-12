@@ -134,7 +134,7 @@ fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
     SpatialIndex::new(loc_idx, index, refs)
 }
 
-pub const AUTOFOCUS_RADIUS: f64 = 30.0;
+pub const AUTOFOCUS_RADIUS: f64 = 40.0;
 
 pub fn update_autofocus_full(state: &mut GameState) {
     for i in 0..state.locations.len() {
