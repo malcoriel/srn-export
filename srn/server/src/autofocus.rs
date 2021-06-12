@@ -134,7 +134,7 @@ fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
     SpatialIndex::new(loc_idx, index, refs)
 }
 
-pub const AUTOFOCUS_RADIUS: f64 = 40.0;
+pub const AUTOFOCUS_RADIUS: f64 = 30.0;
 
 pub fn update_autofocus_full(state: &mut GameState) {
     for i in 0..state.locations.len() {
@@ -144,6 +144,9 @@ pub fn update_autofocus_full(state: &mut GameState) {
 }
 
 pub fn update_location_autofocus(i: usize, loc: &mut Location) {
+    if loc.planets.len() + loc.ships.len() + loc.minerals.len() + loc.containers.len() == 0 {
+        return;
+    }
     let index = build_spatial_index(&loc, i);
     let mut ship_mods = vec![];
     for ship in loc.ships.iter() {
