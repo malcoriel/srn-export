@@ -107,12 +107,28 @@ impl SpatialIndex {
 }
 
 fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
-    let mut refs = Vec::with_capacity(loc.planets.len());
-    let mut points = Vec::with_capacity(loc.planets.len());
+    let count = loc.planets.len() + loc.ships.len() + loc.minerals.len() + loc.containers.len() + 1;
+    let mut refs = Vec::with_capacity(count);
+    let mut points = Vec::with_capacity(count);
     for i in 0..loc.planets.len() {
         let p = &loc.planets[i];
         refs.push(ObjectIndexSpecifier::Planet { idx: i });
         points.push((p.x, p.y));
+    }
+    for i in 0..loc.ships.len() {
+        let s = &loc.ships[i];
+        refs.push(ObjectIndexSpecifier::Ship { idx: i });
+        points.push((s.x, s.y));
+    }
+    for i in 0..loc.minerals.len() {
+        let m = &loc.minerals[i];
+        refs.push(ObjectIndexSpecifier::Mineral { idx: i });
+        points.push((m.x, m.y));
+    }
+    for i in 0..loc.containers.len() {
+        let c = &loc.containers[i];
+        refs.push(ObjectIndexSpecifier::Container { idx: i });
+        points.push((c.position.x, c.position.y));
     }
     let index = KDBush::create(points, kdbush::DEFAULT_NODE_SIZE);
     SpatialIndex::new(loc_idx, index, refs)
@@ -135,7 +151,25 @@ pub fn update_location_autofocus(i: usize, loc: &mut Location) {
             x: ship.x,
             y: ship.y,
         };
-        let mut around = index.rad_search(&ship_pos, AUTOFOCUS_RADIUS);
+        let around_unfiltered = index.rad_search(&ship_pos, AUTOFOCUS_RADIUS);
+        let mut around = around_unfiltered
+            .iter()
+            .filter(|sp| {
+                return match sp {
+                    ObjectIndexSpecifier::Ship { .. } => {
+                        if let Some(osp) = object_index_into_object_id(&sp, loc) {
+                            match osp {
+                                ObjectSpecifier::Ship { id } => id != ship.id,
+                                _ => true,
+                            }
+                        } else {
+                            true
+                        }
+                    }
+                    _ => true,
+                };
+            })
+            .collect::<Vec<_>>();
         around.sort_by(|a, b| {
             let a_pos = get_position(&loc, a);
             let a_dist = a_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
