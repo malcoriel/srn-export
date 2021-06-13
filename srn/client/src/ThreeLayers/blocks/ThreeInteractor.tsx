@@ -6,6 +6,12 @@ import { Html } from '@react-three/drei';
 import '@szhsin/react-menu/dist/index.css';
 import { HintWindow } from '../../HtmlLayers/HintWindow';
 import NetState from '../../NetState';
+import { useHotkeys } from 'react-hotkeys-hook';
+import './ThreeInteractor.scss';
+import { Text, Center } from '@react-three/drei';
+import { vecToThreePos } from '../ThreeLayer';
+import { VectorF } from '../../utils/Vector';
+import { teal } from '../../utils/palette';
 
 export enum InteractorActionType {
   Unknown,
@@ -14,6 +20,10 @@ export enum InteractorActionType {
   Tractor,
   Shoot,
 }
+
+const mapActionToText = (t: InteractorActionType) => {
+  return InteractorActionType[t];
+};
 
 export type InteractorActionFn = (objectId: string) => void;
 
@@ -27,6 +37,20 @@ export interface ThreeInteractorProps {
 
 const DEFAULT_OUTLINE_THICKNESS = 0.1;
 const DEFAULT_OUTLINE_COLOR = 'red';
+
+const KbAction: React.FC<{
+  action?: InteractorActionFn;
+  hotkey: string;
+  objectId: string;
+}> = ({ objectId, action, hotkey }) => {
+  useHotkeys(hotkey, () => {
+    if (!action) {
+      return;
+    }
+    action(objectId);
+  });
+  return null;
+};
 
 export const ThreeInteractor = ({
   objectId,
@@ -155,6 +179,29 @@ export const ThreeInteractor = ({
         <circleBufferGeometry args={[radius, 16]} />
         <meshBasicMaterial opacity={0.0} transparent />
       </mesh>
+      {visuallyActive && defaultAction && (
+        <>
+          <KbAction
+            action={actions && actions.get(defaultAction)}
+            objectId={objectId}
+            hotkey="e"
+          />
+          <Text
+            visible
+            position={vecToThreePos(VectorF(0, -(radius + 6)))}
+            color={teal}
+            fontSize={1.5}
+            maxWidth={20}
+            lineHeight={1}
+            letterSpacing={0.02}
+            textAlign="left"
+            anchorX="center"
+            anchorY="bottom"
+          >
+            Press E to {mapActionToText(defaultAction)}
+          </Text>
+        </>
+      )}
       <Html>
         <div ref={menuAnchorRef} />
         {visuallyActive && hint && <HintWindow windowContent={hint} />}
