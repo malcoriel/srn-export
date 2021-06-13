@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 0.6.12 (2021-06-13)
+
+### New
+
+* Planets and ships are now interactable with, using the new mechanism.
+* There is now an auto-focus for the closest interactable object.
+* If the object is focused either via mouse or via auto-focus, you can now execute the default (first) interaction by pressing E.
+* It is possible to shoot at ships now, but it will do nothing apart from the visual effect.
+
+### Fixes
+
+* Slight client performance improvements.
+
 ## Version 0.6.11 (2021-06-07)
 
 ### New
