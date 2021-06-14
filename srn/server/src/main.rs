@@ -88,6 +88,7 @@ extern crate num_derive;
 mod abilities;
 mod api;
 mod autofocus;
+mod autofocus_test;
 mod bots;
 mod chat;
 mod combat;
@@ -119,7 +120,6 @@ mod vec2_test;
 pub mod world;
 mod world_test;
 mod xcast;
-mod autofocus_test;
 
 pub struct StateContainer {
     personal_states: HashMap<Uuid, GameState>,
@@ -179,7 +179,7 @@ lazy_static! {
     };
 }
 
-pub const ENABLE_PERF: bool = false;
+pub const ENABLE_PERF: bool = true;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
@@ -1091,16 +1091,13 @@ pub fn cleanup_nonexistent_ships(
     cont.state.locations[location_idx].ships = new_ships;
 
     if new_ships_len != old_ships_len {
-        sampler.measure(
-            &|| {
-                multicast_ships_update_excluding(
-                    cont.state.locations[location_idx].ships.clone(),
-                    None,
-                    cont.state.id,
-                )
-            },
-            SamplerMarks::ShipCleanup as u32,
+        let ship_cleanup_id = sampler.start(SamplerMarks::ShipCleanup as u32);
+        multicast_ships_update_excluding(
+            cont.state.locations[location_idx].ships.clone(),
+            None,
+            cont.state.id,
         );
+        sampler.end(ship_cleanup_id)
     }
     sampler
 }

@@ -832,10 +832,9 @@ pub fn update_world(
         }
     } else {
         if !client {
-            state.leaderboard = sampler.measure(
-                &|| make_leaderboard(&state.players),
-                SamplerMarks::UpdateLeaderboard as u32,
-            );
+            let update_leaderboard_id = sampler.start(SamplerMarks::UpdateLeaderboard as u32);
+            state.leaderboard = make_leaderboard(&state.players);
+            sampler.end(update_leaderboard_id);
 
             if state.market.time_before_next_shake > 0 {
                 state.market.time_before_next_shake -= elapsed;
@@ -936,37 +935,30 @@ pub fn update_location(
         belt.rotation += belt.orbit_speed / 1000.0 / 1000.0 * elapsed as f64;
     }
     sampler.end(update_ast_id);
-    state.locations[location_idx].ships = sampler.measure(
-        &|| {
-            update_ships_on_planets(
-                &state.locations[location_idx].planets,
-                &state.locations[location_idx].ships,
-            )
-        },
-        SamplerMarks::UpdateShipsOnPlanets as u32,
+    let update_ships_on_planets_id = sampler.start(SamplerMarks::UpdateShipsOnPlanets as u32);
+    state.locations[location_idx].ships = update_ships_on_planets(
+        &state.locations[location_idx].planets,
+        &state.locations[location_idx].ships,
     );
-    state.locations[location_idx].ships = sampler.measure(
-        &|| {
-            update_ships_navigation(
-                &state.locations[location_idx].ships,
-                &state.locations[location_idx].planets,
-                &state.players,
-                &state.locations[location_idx].star,
-                elapsed,
-            )
-        },
-        SamplerMarks::UpdateShipsNavigation as u32,
+    sampler.end(update_ships_on_planets_id);
+
+    let update_ships_navigation_id = sampler.start(SamplerMarks::UpdateShipsNavigation as u32);
+    state.locations[location_idx].ships = update_ships_navigation(
+        &state.locations[location_idx].ships,
+        &state.locations[location_idx].planets,
+        &state.players,
+        &state.locations[location_idx].star,
+        elapsed,
     );
-    state.locations[location_idx].ships = sampler.measure(
-        &|| {
-            tractoring::update_ships_tractoring(
-                &state.locations[location_idx].ships,
-                &state.locations[location_idx].minerals,
-                &state.locations[location_idx].containers,
-            )
-        },
-        SamplerMarks::UpdateShipsTractoring as u32,
+
+    sampler.end(update_ships_navigation_id);
+    let update_ship_tractoring_id = sampler.start(SamplerMarks::UpdateShipsTractoring as u32);
+    state.locations[location_idx].ships = tractoring::update_ships_tractoring(
+        &state.locations[location_idx].ships,
+        &state.locations[location_idx].minerals,
+        &state.locations[location_idx].containers,
     );
+    sampler.end(update_ship_tractoring_id);
     let cooldowns_id = sampler.start(SamplerMarks::UpdateAbilityCooldowns as u32);
     abilities::update_ships_ability_cooldowns(&mut state.locations[location_idx].ships, elapsed);
     sampler.end(cooldowns_id);
@@ -1011,15 +1003,12 @@ pub fn update_location(
         );
         sampler.end(hp_effects_id);
 
-        state.locations[location_idx].minerals = sampler.measure(
-            &|| {
-                update_state_minerals(
-                    &state.locations[location_idx].minerals,
-                    &state.locations[location_idx].asteroid_belts,
-                )
-            },
-            SamplerMarks::UpdateMineralsRespawn as u32,
+        let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
+        state.locations[location_idx].minerals = update_state_minerals(
+            &state.locations[location_idx].minerals,
+            &state.locations[location_idx].asteroid_belts,
         );
+        sampler.end(update_minerals_respawn_id);
         let respawn_id = sampler.start(SamplerMarks::UpdateShipsRespawn as u32);
         update_ships_respawn(&mut state);
         sampler.end(respawn_id);
@@ -1126,6 +1115,9 @@ fn update_ships_respawn(state: &mut GameState) {
     let mut to_spawn = vec![];
     for player in state.players.iter() {
         if player.ship_id.is_none() {
+            if player.long_actions.len() > 5 {
+                eprintln!("too long long actions {}", player.long_actions.len());
+            }
             let respawns_in_progress = player
                 .long_actions
                 .iter()
