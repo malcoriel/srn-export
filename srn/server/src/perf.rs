@@ -14,6 +14,7 @@ pub struct Sampler {
     labels: Vec<String>,
     marks: HashMap<Uuid, (u32, DateTime<Local>)>,
     empty: bool,
+    budget: i32,
 }
 
 impl Sampler {
@@ -21,14 +22,21 @@ impl Sampler {
         let mut buckets = HashMap::new();
         Sampler::init_buckets(&labels, &mut buckets);
         Sampler {
+            budget: 0,
             labels,
             buckets,
             marks: HashMap::new(),
             empty: false,
         }
     }
+
+    pub fn set_budget(&mut self, val: i32) {
+        self.budget = val;
+    }
+
     pub fn empty() -> Sampler {
         Sampler {
+            budget: 0,
             labels: vec![],
             buckets: HashMap::new(),
             marks: HashMap::new(),
@@ -94,7 +102,7 @@ impl Sampler {
     }
 
     pub fn start(&mut self, label_idx: u32) -> Uuid {
-        let id = if crate::ENABLE_PERF && !self.empty {
+        return if !self.empty {
             let id = crate::new_id();
             let start = Local::now();
             self.mark(label_idx, start, id);
@@ -102,18 +110,19 @@ impl Sampler {
         } else {
             Default::default()
         };
-        return id;
     }
 
-    pub fn end(&mut self, id: Uuid) {
-        if crate::ENABLE_PERF && !self.empty {
+    pub fn end(&mut self, id: Uuid) -> i32 {
+        let res = 0;
+        if !self.empty {
             if let Some((label_idx, start)) = self.extract_mark(id) {
                 let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
                 self.add(label_idx, diff as u64);
-            } else {
-                warn!(format!("non"))
+                self.budget -= diff as i32;
+                return self.budget;
             }
         }
+        return res;
     }
 
     pub fn measure<T, F>(&mut self, target_fn: &F, label_idx: u32) -> T

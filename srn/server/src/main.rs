@@ -1061,15 +1061,17 @@ fn main_thread() {
         sampler.end(total_mark);
 
         sampler_consume_elapsed += elapsed_micro;
-        if sampler_consume_elapsed > PERF_CONSUME_TIME && ENABLE_PERF {
+        if sampler_consume_elapsed > PERF_CONSUME_TIME {
             sampler_consume_elapsed = 0;
             let (sampler_out, metrics) = sampler.consume();
             sampler = sampler_out;
-            log!(format!(
-                "performance stats over {} sec \n{}",
-                PERF_CONSUME_TIME / 1000 / 1000,
-                metrics.join("\n")
-            ));
+            if ENABLE_PERF {
+                log!(format!(
+                    "performance stats over {} sec \n{}",
+                    PERF_CONSUME_TIME / 1000 / 1000,
+                    metrics.join("\n")
+                ));
+            }
         }
     }
 }
@@ -1097,7 +1099,7 @@ pub fn cleanup_nonexistent_ships(
             None,
             cont.state.id,
         );
-        sampler.end(ship_cleanup_id)
+        sampler.end(ship_cleanup_id);
     }
     sampler
 }
