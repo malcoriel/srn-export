@@ -941,6 +941,7 @@ const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
 const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 const FRAME_BUDGET_TICKS: i32 = 15 * 1000;
+const FRAME_STATS_COUNT: i32 = 1000;
 
 lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
@@ -962,7 +963,23 @@ fn main_thread() {
     let mut sampler_consume_elapsed = 0;
     let mut bot_action_elapsed = 0;
     let mut events_elapsed = 0;
+    let mut frame_count = 0;
+    let mut over_budget_frame = 0;
+    let mut shortcut_frame = 0;
+
     loop {
+        frame_count += 1;
+        if frame_count >= FRAME_STATS_COUNT {
+            let over_budget_pct = (over_budget_frame as f32 / frame_count as f32 * 100.0);
+            let shortcut_pct = (shortcut_frame as f32 / frame_count as f32 * 100.0);
+            log!(format!(
+                "Frame stats: shortcut {:.0}%, over-budget {:.0}% for {}",
+                shortcut_pct, over_budget_pct, frame_count
+            ));
+            frame_count = 0;
+            over_budget_frame = 0;
+            shortcut_frame = 0;
+        }
         sampler.budget = FRAME_BUDGET_TICKS;
         let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
         let mut cont = STATE.write().unwrap();
@@ -1076,6 +1093,7 @@ fn main_thread() {
         }
 
         if sampler.budget < 0 {
+            over_budget_frame += 1;
             // log!(format!("Frame over budget by {}µs", -sampler.budget));
         }
         let sleep_remaining = sampler.budget.max(0);
