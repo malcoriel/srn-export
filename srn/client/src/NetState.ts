@@ -176,6 +176,8 @@ export default class NetState extends EventEmitter {
 
   public desync: number;
 
+  public lastReceivedServerTicks: number;
+
   private lastSlowChangedState!: GameState;
 
   private mode!: GameMode;
@@ -206,6 +208,7 @@ export default class NetState extends EventEmitter {
     this.resetState();
     this.ping = 0;
     this.desync = 0;
+    this.lastReceivedServerTicks = -1;
     this.visualState = {
       boundCameraMovement: true,
       cameraPosition: {
@@ -443,6 +446,18 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
+        // 1. try to deal with out-of-order packets by rejecting
+        // the ones that are older than already received ones
+        // 2. However, when the state resets and ticks go back to 0,
+        // this protection will lead to a freeze. Hence, that check for big diff
+        if (
+          parsed.ticks < this.lastReceivedServerTicks &&
+          Math.abs(parsed.ticks - this.lastReceivedServerTicks) < 100000
+        ) {
+          return;
+        }
+        this.lastReceivedServerTicks = parsed.ticks;
+
         this.desync = parsed.ticks - this.state.ticks;
         if (
           parsed.tag &&
