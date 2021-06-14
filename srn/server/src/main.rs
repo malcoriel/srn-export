@@ -185,6 +185,7 @@ const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 pub const DEBUG_PHYSICS: bool = false;
 const MAIN_THREAD_SLEEP_MS: u64 = 15;
+const MIN_SLEEP_TICKS: i32 = 100;
 
 fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
     let res = mutate_owned_ship(client_id, mutate_cmd, tag);
@@ -939,6 +940,7 @@ fn cleanup_thread() {
 const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
 const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
+const FRAME_BUDGET_TICKS: i32 = 15 * 1000;
 
 lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
@@ -961,8 +963,7 @@ fn main_thread() {
     let mut bot_action_elapsed = 0;
     let mut events_elapsed = 0;
     loop {
-        thread::sleep(Duration::from_millis(MAIN_THREAD_SLEEP_MS));
-
+        sampler.budget = FRAME_BUDGET_TICKS;
         let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
@@ -1072,6 +1073,14 @@ fn main_thread() {
                     metrics.join("\n")
                 ));
             }
+        }
+
+        if sampler.budget < 0 {
+            // log!(format!("Frame over budget by {}µs", -sampler.budget));
+        }
+        let sleep_remaining = sampler.budget.max(0);
+        if sleep_remaining > MIN_SLEEP_TICKS {
+            thread::sleep(Duration::from_micros(sleep_remaining as u64));
         }
     }
 }

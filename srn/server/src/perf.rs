@@ -14,7 +14,7 @@ pub struct Sampler {
     labels: Vec<String>,
     marks: HashMap<Uuid, (u32, DateTime<Local>)>,
     empty: bool,
-    budget: i32,
+    pub budget: i32,
 }
 
 impl Sampler {
@@ -28,10 +28,6 @@ impl Sampler {
             marks: HashMap::new(),
             empty: false,
         }
-    }
-
-    pub fn set_budget(&mut self, val: i32) {
-        self.budget = val;
     }
 
     pub fn empty() -> Sampler {
@@ -118,7 +114,7 @@ impl Sampler {
             if let Some((label_idx, start)) = self.extract_mark(id) {
                 let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
                 self.add(label_idx, diff as u64);
-                self.budget -= diff as i32;
+                self.budget -= (diff / 1000.0) as i32;
                 return self.budget;
             }
         }
