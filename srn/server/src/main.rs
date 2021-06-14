@@ -179,12 +179,12 @@ lazy_static! {
     };
 }
 
-pub const ENABLE_PERF: bool = true;
+pub const ENABLE_PERF: bool = false;
+const DEBUG_FRAME_STATS: bool = false;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 pub const DEBUG_PHYSICS: bool = false;
-const MAIN_THREAD_SLEEP_MS: u64 = 15;
 const MIN_SLEEP_TICKS: i32 = 100;
 
 fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
@@ -941,7 +941,7 @@ const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
 const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 const FRAME_BUDGET_TICKS: i32 = 15 * 1000;
-const FRAME_STATS_COUNT: i32 = 1000;
+const FRAME_STATS_COUNT: i32 = 2000;
 
 lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
@@ -970,21 +970,28 @@ fn main_thread() {
     loop {
         frame_count += 1;
         if frame_count >= FRAME_STATS_COUNT {
-            let over_budget_pct = (over_budget_frame as f32 / frame_count as f32 * 100.0);
-            let shortcut_pct = (shortcut_frame as f32 / frame_count as f32 * 100.0);
-            log!(format!(
-                "Frame stats: shortcut {:.0}%, over-budget {:.0}% for {}",
-                shortcut_pct, over_budget_pct, frame_count
-            ));
+            let over_budget_pct = over_budget_frame as f32 / frame_count as f32 * 100.0;
+            let shortcut_pct = shortcut_frame as f32 / frame_count as f32 * 100.0;
+            if DEBUG_FRAME_STATS {
+                log!(format!(
+                    "Frame stats: shortcut {:.2}%, over-budget {:.2}% for {}",
+                    shortcut_pct, over_budget_pct, frame_count
+                ));
+            }
             frame_count = 0;
             over_budget_frame = 0;
             shortcut_frame = 0;
         }
         sampler.budget = FRAME_BUDGET_TICKS;
         let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
+        let locks_id = sampler.start(SamplerMarks::Locks as u32);
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         let mut bots = bots::BOTS.lock().unwrap();
+        if sampler.end_top(locks_id) < 0 {
+            shortcut_frame += 1;
+            continue;
+        }
 
         let now = Local::now();
         let elapsed = now - last;
@@ -1002,9 +1009,12 @@ fn main_thread() {
             },
         );
         sampler = updated_sampler;
-
-        sampler.end(update_id);
         cont.state = updated_state;
+
+        if sampler.end_top(update_id) < 0 {
+            shortcut_frame += 1;
+            continue;
+        }
 
         let personal_id = sampler.start(SamplerMarks::PersonalStates as u32);
         cont.personal_states =
@@ -1024,11 +1034,17 @@ fn main_thread() {
                 );
                 Some((new_state.id, new_state))
             }));
-        sampler.end(personal_id);
+        if sampler.end_top(personal_id) < 0 {
+            shortcut_frame += 1;
+            continue;
+        }
 
         let quests_mark = sampler.start(SamplerMarks::Quests as u32);
         update_quests(&mut cont.state, &mut prng);
-        sampler.end(quests_mark);
+        if sampler.end_top(quests_mark) < 0 {
+            shortcut_frame += 1;
+            continue;
+        }
 
         let d_states = &mut **d_states;
         let state = &mut cont.state;
@@ -1037,8 +1053,11 @@ fn main_thread() {
             let bots_mark = sampler.start(SamplerMarks::Bots as u32);
             let bots = &mut *bots;
             do_bot_actions(state, bots, d_states, &d_table, bot_action_elapsed);
-            sampler.end(bots_mark);
             bot_action_elapsed = 0;
+            if sampler.end_top(bots_mark) < 0 {
+                shortcut_frame += 1;
+                continue;
+            }
         } else {
             bot_action_elapsed += elapsed_micro;
         }
@@ -1055,7 +1074,10 @@ fn main_thread() {
                 };
                 unicast_dialogue_state(client_id, dialogue, corresponding_state_id);
             }
-            sampler.end(events_mark);
+            if sampler.end_top(events_mark) < 0 {
+                shortcut_frame += 1;
+                continue;
+            }
             events_elapsed = 0;
         } else {
             events_elapsed += elapsed_micro;
@@ -1074,7 +1096,10 @@ fn main_thread() {
         for idx in 0..cont.state.locations.len() {
             sampler = cleanup_nonexistent_ships(&mut cont, &existing_player_ships, idx, sampler);
         }
-        sampler.end(cleanup_mark);
+        if sampler.end_top(cleanup_mark) < 0 {
+            shortcut_frame += 1;
+            continue;
+        }
 
         sampler.end(total_mark);
 

@@ -109,12 +109,25 @@ impl Sampler {
     }
 
     pub fn end(&mut self, id: Uuid) -> i32 {
+        return self.end_impl(id, false);
+    }
+
+    pub fn end_top(&mut self, id: Uuid) -> i32 {
+        return self.end_impl(id, true);
+    }
+
+    fn end_impl(&mut self, id: Uuid, top_level: bool) -> i32 {
         let res = 0;
         if !self.empty {
             if let Some((label_idx, start)) = self.extract_mark(id) {
                 let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
                 self.add(label_idx, diff as u64);
-                self.budget -= (diff / 1000.0) as i32;
+                // since marks can be inside each other,
+                // subtracting twice might happen for the inside
+                // marks
+                if top_level {
+                    self.budget -= (diff / 1000.0) as i32;
+                }
                 return self.budget;
             }
         }
