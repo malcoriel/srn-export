@@ -6,6 +6,11 @@ import { variableDeltaTime as Time } from '../utils/Times';
 import './StatsPanel.css';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 
+export const DEV_PERF_COUNTERS_ENABLED = true;
+
+export const PERF_COUNTERS_ENABLED =
+  process.env.NODE_ENV == 'production' ? false : DEV_PERF_COUNTERS_ENABLED;
+
 export const statsHeap: Record<string, number> = {
   timeStep: 0,
 };
@@ -22,6 +27,8 @@ const buffers: Record<Measure, number[]> = {
   RenderFrameTime: [],
   RootComponentRender: [],
 };
+
+let counters: Record<string, number> = {};
 
 export enum Measure {
   PhysicsFrameTime = 'PhysicsFrameTime',
@@ -206,6 +213,10 @@ const Perf = {
   markEvent: (measure: Measure) => {
     buffers[measure].push(performance.now());
   },
+  markCounter: (name: string) => {
+    counters[name] = counters[name] || 0;
+    counters[name]++;
+  },
 };
 
 export const formatNumber = (x: any) => {
@@ -283,3 +294,12 @@ const StatsPanel = () => {
 export { StatsPanel };
 
 export { Perf };
+
+let lastFlush = performance.now();
+// @ts-ignore
+window.flushPerfCounters = () => {
+  console.log('time', (performance.now() - lastFlush).toFixed(0), 'ms');
+  lastFlush = performance.now();
+  console.log(counters);
+  counters = {};
+};

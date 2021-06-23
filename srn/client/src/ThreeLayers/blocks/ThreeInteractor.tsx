@@ -12,6 +12,10 @@ import { Text, Center } from '@react-three/drei';
 import { vecToThreePos } from '../ThreeLayer';
 import { VectorF } from '../../utils/Vector';
 import { teal } from '../../utils/palette';
+import {
+  UpdateStrategy,
+  UpdateStrategyBuilder,
+} from '../../utils/UpdateStrategy';
 
 export enum InteractorActionType {
   Unknown,
@@ -52,7 +56,7 @@ const KbAction: React.FC<{
   return null;
 };
 
-export const ThreeInteractor = ({
+const ThreeInteractorImpl = ({
   objectId,
   radius,
   interactor: {
@@ -63,6 +67,7 @@ export const ThreeInteractor = ({
     defaultAction,
   },
 }: {
+  perfId?: string;
   objectId: string;
   radius: number;
   interactor: ThreeInteractorProps;
@@ -223,3 +228,9 @@ export const ThreeInteractor = ({
     </group>
   );
 };
+
+export const ThreeInteractor = UpdateStrategy(
+  ThreeInteractorImpl,
+  'ThreeInteractor',
+  UpdateStrategyBuilder.NoInvisibleUpdate()
+);

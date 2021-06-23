@@ -75,6 +75,7 @@ export const ThreeFloatingObject: React.FC<{
     <group position={position}>
       {interactor && (
         <ThreeInteractor
+          perfId={`float-${gid}`}
           objectId={gid}
           radius={radius}
           interactor={interactor}

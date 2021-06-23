@@ -71,6 +71,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
       <group position={posToThreePos(position.x, position.y, 50)}>
         {interactor && (
           <ThreeInteractor
+            perfId={`ship-${gid}`}
             objectId={gid}
             radius={radius}
             interactor={interactor}

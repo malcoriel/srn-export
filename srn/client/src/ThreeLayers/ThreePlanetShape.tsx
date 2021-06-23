@@ -137,6 +137,7 @@ export const ThreePlanetShape: React.FC<{
       <group position={vecToThreePos(position, 10)}>
         {interactor && (
           <ThreeInteractor
+            perfId={`planet-${gid}`}
             objectId={gid}
             radius={radius}
             interactor={interactor}
