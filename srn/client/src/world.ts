@@ -21,6 +21,7 @@ import {
   NotificationText,
   Location,
   Container,
+  ObjectSpecifier,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -522,4 +523,11 @@ export const findObjectPositionById = (
   }
   const { object } = objRes;
   return Vector.fromIVector(getObjectPosition(object));
+};
+
+export const getSpecifierId = (
+  os?: ObjectSpecifier | null
+): string | undefined => {
+  if (!os || os.tag === 'Unknown') return undefined;
+  return os.id;
 };

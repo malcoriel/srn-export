@@ -2,13 +2,11 @@ import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../../store';
 import { Color } from 'three';
 import { MouseEvent } from 'react-three-fiber/canvas';
-import { Html } from '@react-three/drei';
+import { Html, Text } from '@react-three/drei';
 import '@szhsin/react-menu/dist/index.css';
 import { HintWindow } from '../../HtmlLayers/HintWindow';
-import NetState from '../../NetState';
 import { useHotkeys } from 'react-hotkeys-hook';
 import './ThreeInteractor.scss';
-import { Text, Center } from '@react-three/drei';
 import { vecToThreePos } from '../ThreeLayer';
 import { VectorF } from '../../utils/Vector';
 import { teal } from '../../utils/palette';
@@ -67,7 +65,8 @@ const ThreeInteractorImpl = ({
     defaultAction,
   },
 }: {
-  perfId?: string;
+  // eslint-disable-next-line react/no-unused-prop-types
+  perfId: string;
   objectId: string;
   radius: number;
   interactor: ThreeInteractorProps;
@@ -85,16 +84,16 @@ const ThreeInteractorImpl = ({
     (state) => state.setActiveInteractorId
   );
   const activeInteractorId = useStore((state) => state.activeInteractorId);
+  const autofocusSpecifier = useStore((state) => state.autoFocusSpecifier);
 
   const isAutoFocused = (() => {
-    const ns = NetState.get();
-    if (!ns) {
+    if (
+      !autofocusSpecifier ||
+      autofocusSpecifier.tag === 'Unknown' ||
+      autofocusSpecifier.tag === 'Star'
+    )
       return false;
-    }
-    const autoFocus = ns.indexes.myShip?.auto_focus;
-    if (!autoFocus || autoFocus.tag === 'Unknown' || autoFocus.tag === 'Star')
-      return false;
-    return autoFocus?.id === objectId;
+    return autofocusSpecifier?.id === objectId;
   })();
 
   useEffect(() => {

@@ -39,6 +39,7 @@ import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 import { LongActionsDisplay } from './HtmlLayers/LongActionsDisplay';
 import { StartMenuBackground } from './StartMenuBackground';
 import { GlobalContextMenu } from './HtmlLayers/GlobalContextMenu';
+import { StateStoreSyncer } from './StateStoreSyncer';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -256,6 +257,7 @@ const Srn = () => {
                   <TradeWindow />
                   <PromptWindow />
                   <GlobalContextMenu />
+                  <StateStoreSyncer />
                   {playing && <SandboxQuickMenu />}
                 </>
               )}

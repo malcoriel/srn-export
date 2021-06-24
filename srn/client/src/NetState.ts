@@ -863,7 +863,7 @@ export const useNSForceChange = (
   fast = false,
   shouldUpdate: ShouldUpdateStateChecker = () => true,
   throttle?: number
-) => {
+): NetState | null => {
   const [, forceChange] = useState(false);
   const ns = NetState.get();
   if (!ns) return null;
@@ -891,4 +891,5 @@ export const useNSForceChange = (
       ns.off(event, listener);
     };
   }, [ns.id, fast, ns, shouldUpdate, throttle]);
+  return ns;
 };

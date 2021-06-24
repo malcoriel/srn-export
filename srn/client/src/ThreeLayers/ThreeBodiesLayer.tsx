@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { GameState } from '../world';
 import { ThreeStar } from './ThreeStar';
 import { posToThreePos } from './ThreeLayer';
-import { VisualState } from '../NetState';
+import { findMyShip, NetStateIndexes, VisualState } from '../NetState';
 import { MineralsLayer } from './MineralsLayer';
 import { ContainersLayer } from './ContainersLayer';
 import { ThreePlanetsLayer } from './ThreePlanetsLayer';
@@ -21,8 +21,6 @@ export const ThreeBodiesLayer: React.FC<{
     asteroid_belts,
     containers,
   } = state.locations[0];
-  // const selectedObjectId = useStore((state) => state.selectedObjectId);
-  // const onReportSelected = useStore((state) => state.onReportSelected);
 
   return (
     <group>

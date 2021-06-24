@@ -12,6 +12,7 @@ import {
 } from './utils/useLocalStorage';
 import React from 'react';
 import { GlobalContextMenuItem } from './HtmlLayers/GlobalContextMenu';
+import { ObjectSpecifier } from '../../world/pkg';
 
 export function genRandomName() {
   return uniqueNamesGenerator({
@@ -97,6 +98,8 @@ export type SrnState = {
   setContextMenuItems: (items: GlobalContextMenuItem[]) => void;
   activeInteractorId?: string;
   setActiveInteractorId: (id?: string) => void;
+  autoFocusSpecifier?: ObjectSpecifier | null;
+  setAutoFocusSpecifier: (sp?: ObjectSpecifier | null) => void;
 };
 
 export enum TestMenuMode {
@@ -153,6 +156,7 @@ export const useStore = create<SrnState>((set) => ({
   selectedObjectId: undefined,
   contextMenuItems: [],
   contextMenuRef: { current: null },
+  autoFocusSpecifier: undefined,
 
   setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
   setMapWindow: (val: WindowState) => set({ mapWindow: val }),
@@ -270,4 +274,5 @@ export const useStore = create<SrnState>((set) => ({
   activeInteractorId: undefined,
   setActiveInteractorId: (id: string | undefined) =>
     set(() => ({ activeInteractorId: id })),
+  setAutoFocusSpecifier: (sp) => set((state) => ({ autoFocusSpecifier: sp })),
 }));
