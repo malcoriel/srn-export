@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNSForceChange } from './NetState';
 import { useStore } from './store';
 import { getSpecifierId } from './world';
@@ -13,12 +13,16 @@ export const StateStoreSyncer: React.FC = () => {
     return null;
   }
 
-  const { indexes } = ns;
-  const myShipAutofocus = indexes.myShip?.auto_focus;
-  if (getSpecifierId(myShipAutofocus) !== getSpecifierId(autoFocusSpecifier)) {
-    console.log('focus change');
-    setAutoFocusSpecifier(myShipAutofocus);
-  }
+  // intentionally always update, because it will only rerender on ns fast change
+  useEffect(() => {
+    const { indexes } = ns;
+    const myShipAutofocus = indexes.myShip?.auto_focus;
+    if (
+      getSpecifierId(myShipAutofocus) !== getSpecifierId(autoFocusSpecifier)
+    ) {
+      setAutoFocusSpecifier(myShipAutofocus);
+    }
+  });
 
   return null;
 };
