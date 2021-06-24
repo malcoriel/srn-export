@@ -10,10 +10,10 @@ import {
 import React from 'react';
 import { ThreeFloatingObject } from './ThreeFloatingObject';
 import { posToThreePos } from './ThreeLayer';
-import { mineralHintContent } from '../HtmlLayers/HintWindow';
 import { common, rare, uncommon } from '../utils/palette';
 import { UnreachableCaseError } from 'ts-essentials';
 import { InteractorMap } from './InteractorMap';
+import _ from 'lodash';
 
 export const mineralActionsMap = new Map([
   [
@@ -37,7 +37,7 @@ export const mineralActionsMap = new Map([
   ],
 ]);
 
-export const rarityToColor = (rarity: Rarity): string => {
+export const rarityToColor = _.memoize((rarity: Rarity): string => {
   switch (rarity) {
     case Rarity.Unknown:
       return 'white';
@@ -50,27 +50,32 @@ export const rarityToColor = (rarity: Rarity): string => {
     default:
       throw new UnreachableCaseError(rarity);
   }
-};
+});
+
+export const rarityToColorArr = _.memoize((rarity: Rarity) => [
+  rarityToColor(rarity),
+]);
 
 interface MineralsLayerParams {
   minerals: NatSpawnMineral[];
 }
-
-export const MineralsLayer: React.FC<MineralsLayerParams> = ({ minerals }) => (
-  <>
-    {minerals.map((m) => {
-      return (
-        <ThreeFloatingObject
-          gid={m.id}
-          key={m.id}
-          scale={0.2}
-          radius={m.radius}
-          position={posToThreePos(m.x, m.y)}
-          colors={[rarityToColor(m.rarity)]}
-          modelName="asteroid.glb"
-          interactor={InteractorMap.mineral(m)}
-        />
-      );
-    })}
-  </>
-);
+export const MineralsLayer: React.FC<MineralsLayerParams> = ({ minerals }) => {
+  return (
+    <>
+      {minerals.map((m) => {
+        return (
+          <ThreeFloatingObject
+            gid={m.id}
+            key={m.id}
+            scale={0.2}
+            radius={m.radius}
+            position={posToThreePos(m.x, m.y)}
+            colors={rarityToColorArr(m.rarity)}
+            modelName="asteroid.glb"
+            interactor={InteractorMap.mineral(m)}
+          />
+        );
+      })}
+    </>
+  );
+};

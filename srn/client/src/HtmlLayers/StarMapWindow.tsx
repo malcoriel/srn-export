@@ -16,10 +16,7 @@ export const StarMapWindow: React.FC = () => {
   const setMapWindow = useStore((s) => s.setMapWindow);
 
   useNSForceChange('StarMapWindow', false, (prevState, nextState) => {
-    return (
-      JSON.stringify(prevState.locations) !==
-      JSON.stringify(nextState.locations)
-    );
+    return prevState.locations[0].id !== nextState.locations[0].id;
   });
 
   const { locations } = ns.state;

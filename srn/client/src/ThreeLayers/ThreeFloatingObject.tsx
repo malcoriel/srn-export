@@ -7,13 +7,14 @@ import {
   ThreeInteractor,
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
+import { UpdateStrategy, UpdateStrategyBuilder } from '../utils/UpdateStrategy';
 
 export const ModelMeshMap: Record<string, string[]> = {
   'container.glb': ['0.children.0', '0.children.1', '0.children.2'],
   'asteroid.glb': ['2'],
 };
 
-export const ThreeFloatingObject: React.FC<{
+const ThreeFloatingObjectImpl: React.FC<{
   position: Vector3;
   radius: number;
   scale: number;
@@ -92,3 +93,9 @@ export const ThreeFloatingObject: React.FC<{
     </group>
   );
 };
+
+export const ThreeFloatingObject = UpdateStrategy(
+  ThreeFloatingObjectImpl,
+  'ThreeFloatingObject',
+  UpdateStrategyBuilder.Always()
+);
