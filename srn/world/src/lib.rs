@@ -205,7 +205,7 @@ pub struct InternalTimers {
 }
 
 pub const DEBUG_PHYSICS: bool = false;
-pub const ENABLE_PERF: bool = true;
+pub const ENABLE_PERF: bool = false;
 const PERF_CONSUME_TIME_MS: i32 = 30 * 1000;
 
 lazy_static! {
