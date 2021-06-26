@@ -16,7 +16,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
 use crate::combat::ShootTarget;
-use crate::indexing::ObjectSpecifier;
+use crate::indexing::{find_my_ship, find_my_ship_index, ObjectSpecifier};
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
 };
@@ -890,7 +890,10 @@ pub fn update_world(
                 player.long_actions = vec![];
             }
         } else {
-            for location_idx in 0..state.locations.len() {
+            // the client only operates with the first location,
+            // so to conserve effort we skip the others
+            let max_loc = if client { 1 } else { state.locations.len() };
+            for location_idx in 0..max_loc {
                 sampler = update_location(
                     &mut state,
                     elapsed,
@@ -943,21 +946,26 @@ pub fn update_location(
     sampler.end(update_ships_on_planets_id);
 
     let update_ships_navigation_id = sampler.start(SamplerMarks::UpdateShipsNavigation as u32);
+    let my_ship_id = find_my_ship(&state, state.my_id).map(|s| s.id);
     state.locations[location_idx].ships = update_ships_navigation(
         &state.locations[location_idx].ships,
         &state.locations[location_idx].planets,
         &state.players,
         &state.locations[location_idx].star,
         elapsed,
+        my_ship_id,
+        client,
     );
 
     sampler.end(update_ships_navigation_id);
     let update_ship_tractoring_id = sampler.start(SamplerMarks::UpdateShipsTractoring as u32);
-    state.locations[location_idx].ships = tractoring::update_ships_tractoring(
-        &state.locations[location_idx].ships,
-        &state.locations[location_idx].minerals,
-        &state.locations[location_idx].containers,
-    );
+    if !client {
+        state.locations[location_idx].ships = tractoring::update_ships_tractoring(
+            &state.locations[location_idx].ships,
+            &state.locations[location_idx].minerals,
+            &state.locations[location_idx].containers,
+        );
+    }
     sampler.end(update_ship_tractoring_id);
     let cooldowns_id = sampler.start(SamplerMarks::UpdateAbilityCooldowns as u32);
     abilities::update_ships_ability_cooldowns(&mut state.locations[location_idx].ships, elapsed);
@@ -1312,12 +1320,22 @@ pub fn update_ships_navigation(
     players: &Vec<Player>,
     star: &Option<Star>,
     elapsed_micro: i64,
+    _my_ship_id: Option<Uuid>,
+    _client: bool,
 ) -> Vec<Ship> {
     let mut res = vec![];
     let planets_with_star = make_bodies_from_planets(&planets, star);
     let bodies_by_id = index_bodies_by_id(planets_with_star);
     let players_by_ship_id = indexing::index_players_by_ship_id(players);
+
     for mut ship in ships.clone() {
+        // impossible to optimize yet, simply because the
+        // movement by trajectory is coupled with trajectory building,
+        // so this is required for smooth client movement of other ships
+        // if client && ship.id != my_ship_id.unwrap_or(Uuid::default()) {
+        //     res.push(ship);
+        //     continue;
+        // }
         let player = players_by_ship_id.get(&ship.id);
         if player.is_none() {
             eprintln!("Cannot update ship {} without owner", ship.id);
