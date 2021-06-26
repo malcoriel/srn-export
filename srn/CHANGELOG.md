@@ -1,5 +1,17 @@
 # Changelog
 
+## Version 0.6.13 (2021-06-26)
+
+### New
+
+* Ships now have more accurate size, matching the selection outline.
+
+### Fixes
+
+* Client-side performance improvements.
+* Server-side performance improvements.
+* Temporarily disabled context menus as they were impacting rendering too much.
+
 ## Version 0.6.12 (2021-06-13)
 
 ### New
