@@ -337,7 +337,7 @@ impl Ship {
             acc_periodic_dmg: 0.0,
             acc_periodic_heal: 0.0,
             rotation: 0.0,
-            radius: 1.0,
+            radius: 2.0,
             docked_at: None,
             tractor_target: None,
             navigate_target: None,

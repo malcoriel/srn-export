@@ -3,7 +3,7 @@ import { useFrame, useLoader } from 'react-three-fiber';
 import { Mesh, ShaderMaterial } from 'three';
 import * as THREE from 'three';
 import Vector, { VectorF } from '../utils/Vector';
-import { posToThreePos, vecToThreePos } from './ThreeLayer';
+import { posToThreePos, Vector3Arr, vecToThreePos } from './ThreeLayer';
 import * as jellyfish from './shaders/jellyfish';
 import { shallowEqual } from '../utils/shallowCompare';
 import { Geometry } from 'three/examples/jsm/deprecated/Geometry';
@@ -67,6 +67,10 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
       }
     });
 
+    const memoScale = useMemo(
+      () => [0.15, 0.2, 0.25].map((v: number) => v * radius) as Vector3Arr,
+      [radius]
+    );
     return (
       <group position={posToThreePos(position.x, position.y, 50)}>
         {interactor && (
@@ -80,7 +84,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         <mesh
           position={[0, 0, 0]}
           ref={tractorRef}
-          scale={[0.3, 0.4, 0.5]}
+          scale={memoScale}
           rotation={[Math.PI, 0, rotation]}
           // @ts-ignore
           geometry={shipModel}
