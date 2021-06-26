@@ -9,6 +9,7 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct Sampler {
     buckets: HashMap<u32, Vec<u64>>,
     labels: Vec<String>,
@@ -76,19 +77,21 @@ impl Sampler {
                     .into_iter()
                     .map(|v| v as f64)
                     .collect::<Vec<_>>();
-                result.push(format!(
-                    "{}(µs):n={} mn={:.2} σ={:.2} max={:.2} min={:.2}",
-                    &self.labels[i],
-                    bucket.len(),
-                    bucket.iter().sum::<u64>() as f64 / bucket.len() as f64,
-                    if f64bucket.len() >= 2 {
-                        standard_deviation(&f64bucket, None)
-                    } else {
-                        0.0
-                    },
-                    max(bucket).unwrap_or(&0),
-                    min(bucket).unwrap_or(&0),
-                ));
+                if bucket.len() > 0 {
+                    result.push(format!(
+                        "{}(µs):n={} mn={:.2} σ={:.2} max={:.2} min={:.2}",
+                        &self.labels[i],
+                        bucket.len(),
+                        bucket.iter().sum::<u64>() as f64 / bucket.len() as f64,
+                        if f64bucket.len() >= 2 {
+                            standard_deviation(&f64bucket, None)
+                        } else {
+                            0.0
+                        },
+                        max(bucket).unwrap_or(&0),
+                        min(bucket).unwrap_or(&0),
+                    ));
+                }
             }
             self.marks.clear();
             self.buckets.clear();

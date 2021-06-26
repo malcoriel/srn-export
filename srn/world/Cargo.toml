@@ -28,6 +28,7 @@ hex = "0.4.2"
 strum_macros = "0.20.1"
 strum = "0.20.0"
 kdbush = "0.2.0"
+mut_static = "5.0.0"
 
   [dependencies.typescript-definitions]
   version = "0.1.10"
@@ -50,6 +51,7 @@ kdbush = "0.2.0"
 
   [dependencies.chrono]
   version = "0.4.19"
+  features= ["wasmbind"]
 
   [dependencies.getrandom]
   version = "0.2.2"

@@ -122,14 +122,13 @@ mod abilities;
 #[path = "../../server/src/autofocus.rs"]
 mod autofocus;
 
-pub const DEBUG_PHYSICS: bool = false;
-pub const ENABLE_PERF: bool = false;
-
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize as Deserializable;
 use serde_derive::{Deserialize, Serialize};
 use serde_json::Error;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 use uuid::Uuid;
 
 static DEFAULT_ERR: &str = "";
@@ -187,6 +186,34 @@ pub fn parse_state(serialized_args: &str) -> String {
     return serde_json::to_string(&args).unwrap_or(DEFAULT_ERR.to_string());
 }
 
+use mut_static::MutStatic;
+use std::mem;
+use std::ops::DerefMut;
+
+lazy_static! {
+    pub static ref global_sampler: MutStatic<perf::Sampler> = {
+        let mut marks_holder = vec![];
+        for mark in perf::SamplerMarks::iter() {
+            marks_holder.push(mark.to_string());
+        }
+        MutStatic::from(perf::Sampler::new(marks_holder))
+    };
+}
+
+pub struct InternalTimers {
+    last_perf_flush_at_ticks: u32,
+}
+
+pub const DEBUG_PHYSICS: bool = false;
+pub const ENABLE_PERF: bool = true;
+const PERF_CONSUME_TIME_MS: i32 = 30 * 1000;
+
+lazy_static! {
+    pub static ref timers: MutStatic<InternalTimers> = MutStatic::from(InternalTimers {
+        last_perf_flush_at_ticks: 0
+    });
+}
+
 #[derive(Deserialize)]
 pub struct UpdateWorldArgs {
     state: world::GameState,
@@ -202,16 +229,41 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     let args = args.ok().unwrap();
 
     // log!(format!("{:?}", args.limit_area));
-    let (new_state, _sampler) = world::update_world(
+    let (new_state, sampler) = world::update_world(
         args.state,
         elapsed_micro,
         true,
-        perf::Sampler::new(vec![]),
+        if ENABLE_PERF {
+            global_sampler.read().unwrap().clone()
+        } else {
+            perf::Sampler::new(vec![])
+        },
         world::UpdateOptions {
             disable_hp_effects: false,
             limit_area: args.limit_area,
         },
     );
+
+    if ENABLE_PERF {
+        mem::replace(global_sampler.write().unwrap().deref_mut(), sampler);
+
+        let last_flush = {
+            let guard = timers.read().unwrap();
+            guard.last_perf_flush_at_ticks
+        } as i32;
+        let diff = (new_state.ticks as i32 - last_flush).abs();
+        if diff > PERF_CONSUME_TIME_MS {
+            timers.write().unwrap().last_perf_flush_at_ticks = new_state.ticks;
+            let (sampler_out, metrics) = global_sampler.write().unwrap().clone().consume();
+            mem::replace(global_sampler.write().unwrap().deref_mut(), sampler_out);
+            log!(format!(
+                "performance stats over {} sec \n{}",
+                PERF_CONSUME_TIME_MS / 1000 / 1000,
+                metrics.join("\n")
+            ));
+        }
+    }
+
     return serde_json::to_string(&new_state).unwrap_or(DEFAULT_ERR.to_string());
 }
 
