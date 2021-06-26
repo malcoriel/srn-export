@@ -145,32 +145,32 @@ const ThreeInteractorImpl = ({
       setShowTractorCircle(visuallyActive);
     }
   }, [defaultAction, visuallyActive, setShowTractorCircle]);
-  useEffect(() => {
-    if (menuShown && menuAnchorRef.current) {
-      setContextMenuRef(menuAnchorRef);
-      const items = [...(actions?.entries() || [])].map(([key, fn]) => ({
-        text: InteractorActionType[key],
-        onClick: () => {
-          fn(objectId);
-          setMenuShown(false);
-        },
-        id: key.toString(),
-      }));
-      setContextMenuItems(items);
-    } else {
-      setContextMenuItems([]);
-      setTimeout(() => {
-        setContextMenuRef({ current: null });
-      }, 0);
-    }
-  }, [
-    objectId,
-    menuAnchorRef,
-    menuShown,
-    setContextMenuItems,
-    setContextMenuRef,
-    actions,
-  ]);
+  // useEffect(() => {
+  //   if (menuShown && menuAnchorRef.current) {
+  //     setContextMenuRef(menuAnchorRef);
+  //     const items = [...(actions?.entries() || [])].map(([key, fn]) => ({
+  //       text: InteractorActionType[key],
+  //       onClick: () => {
+  //         fn(objectId);
+  //         setMenuShown(false);
+  //       },
+  //       id: key.toString(),
+  //     }));
+  //     setContextMenuItems(items);
+  //   } else {
+  //     setContextMenuItems([]);
+  //     setTimeout(() => {
+  //       setContextMenuRef({ current: null });
+  //     }, 0);
+  //   }
+  // }, [
+  //   objectId,
+  //   menuAnchorRef,
+  //   menuShown,
+  //   setContextMenuItems,
+  //   setContextMenuRef,
+  //   actions,
+  // ]);
 
   // noinspection RequiredAttributes
   return (
