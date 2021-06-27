@@ -88,11 +88,10 @@ impl ServerToClientMessage {
                 ))
             }
             ServerToClientMessage::XCastStateChange(state, x_cast) => match x_cast {
-                XCast::Unicast(_, target_id) => ServerToClientMessage::XCastStateChange(
-                    patch_state_for_client_impl(state, target_id),
+                _ => ServerToClientMessage::XCastStateChange(
+                    patch_state_for_client_impl(state, client_id),
                     x_cast,
                 ),
-                _ => ServerToClientMessage::XCastStateChange(state, x_cast),
             },
             m => m,
         }

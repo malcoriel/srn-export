@@ -23,8 +23,8 @@ export const NetworkStatus: React.FC = () => {
         forceUpdateNetworkStatus((i) => !i);
       }, 1000)
     );
-  }, [ns.id]);
-  const { connecting, ping, maxPing, desync } = ns;
+  }, [ns, ns.id]);
+  const { desync } = ns;
   const fps = statsHeap[Stat.RealFPS];
 
   return (
