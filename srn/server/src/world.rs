@@ -36,7 +36,7 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::ship_action::ShipActionRust;
+use crate::ship_action::{ShipActionRust, ShipMovement};
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::tractoring::{
@@ -323,6 +323,8 @@ pub struct Ship {
     #[serde(default)]
     pub abilities: Vec<Ability>,
     pub auto_focus: Option<ObjectSpecifier>,
+    #[serde(default)]
+    pub movement: ShipMovement,
 }
 
 impl Ship {
@@ -348,6 +350,7 @@ impl Ship {
                 cooldown_ticks_remaining: 0,
             }],
             auto_focus: None,
+            movement: Default::default(),
         }
     }
 }

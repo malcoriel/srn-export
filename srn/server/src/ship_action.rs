@@ -13,6 +13,10 @@ use wasm_bindgen::prelude::*;
 pub enum ShipActionRust {
     Unknown,
     Move { update: ManualMoveUpdate },
+    Gas,
+    Reverse,
+    TurnRight,
+    TurnLeft,
     Dock,
     Navigate { target: Vec2f64 },
     DockNavigate { target: Uuid },
@@ -37,15 +41,16 @@ pub fn apply_ship_action(
             warn!("Unknown ship action");
             None
         }
-        ShipActionRust::Move { update } => {
-            let mut ship = old_ship.clone();
-            ship.x = update.position.x;
-            ship.y = update.position.y;
-            ship.rotation = update.rotation;
-            ship.navigate_target = None;
-            ship.dock_target = None;
-            ship.trajectory = vec![];
-            Some(ship)
+        ShipActionRust::Move { .. } => {
+            warn!("Move ship action is obsolete");
+            // let mut ship = old_ship.clone();
+            // ship.x = update.position.x;
+            // ship.y = update.position.y;
+            // ship.rotation = update.rotation;
+            // ship.navigate_target = None;
+            // ship.dock_target = None;
+            // ship.trajectory = vec![];
+            Some(old_ship.clone())
         }
         ShipActionRust::Dock => {
             let mut ship = old_ship.clone();
@@ -136,5 +141,64 @@ pub fn apply_ship_action(
             );
             Some(ship)
         }
+        ShipActionRust::Gas => {
+            let mut ship = old_ship.clone();
+            ship.movement.gas = Some(MoveAxisParam {
+                forward: true,
+                last_tick: state.ticks,
+            });
+            Some(ship)
+        }
+        ShipActionRust::Reverse => {
+            let mut ship = old_ship.clone();
+            ship.movement.gas = Some(MoveAxisParam {
+                forward: false,
+                last_tick: state.ticks,
+            });
+            Some(ship)
+        }
+        ShipActionRust::TurnRight => {
+            let mut ship = old_ship.clone();
+            ship.movement.turn = Some(MoveAxisParam {
+                forward: true,
+                last_tick: state.ticks,
+            });
+            Some(ship)
+        }
+        ShipActionRust::TurnLeft => {
+            let mut ship = old_ship.clone();
+            ship.movement.turn = Some(MoveAxisParam {
+                forward: false,
+                last_tick: state.ticks,
+            });
+            Some(ship)
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct MoveAxisParam {
+    pub forward: bool,
+    pub last_tick: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct ShipMovement {
+    pub gas: Option<MoveAxisParam>,
+    pub turn: Option<MoveAxisParam>,
+}
+
+impl ShipMovement {
+    pub fn new() -> Self {
+        Self {
+            gas: None,
+            turn: None,
+        }
+    }
+}
+
+impl Default for ShipMovement {
+    fn default() -> Self {
+        ShipMovement::new()
     }
 }
