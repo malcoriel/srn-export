@@ -36,7 +36,7 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::ship_action::ShipAction;
+use crate::ship_action::ShipActionRust;
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{str_to_hash, system_gen};
 use crate::tractoring::{
@@ -1561,7 +1561,7 @@ pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: U
 
 pub fn mutate_ship_no_lock(
     client_id: Uuid,
-    mutate_cmd: ShipAction,
+    mutate_cmd: ShipActionRust,
     state: &mut GameState,
 ) -> Option<(Ship, ShipIdx)> {
     let old_ship_index = indexing::find_my_ship_index(&state, client_id);

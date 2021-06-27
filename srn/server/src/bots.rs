@@ -17,7 +17,7 @@ use crate::dialogue::{
 };
 use crate::events::fire_event;
 use crate::random_stuff::gen_bot_name;
-use crate::ship_action::{apply_ship_action, ShipAction, ShipActionType};
+use crate::ship_action::{apply_ship_action, ShipActionRust};
 use crate::world;
 use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship};
 use crate::DIALOGUE_STATES;
@@ -39,7 +39,7 @@ const BOT_QUEST_ACT_DELAY_MC: i64 = 2 * 1000 * 1000;
 
 pub enum BotAct {
     Speak(DialogueUpdate),
-    Act(ShipAction),
+    Act(ShipActionRust),
 }
 
 impl Bot {
@@ -100,19 +100,11 @@ impl Bot {
             if quest.state == CargoDeliveryQuestState::Started
                 && !conditions.contains(&TriggerCondition::CurrentPlanetIsPickup)
             {
-                result_actions.push(BotAct::Act(ShipAction {
-                    // this action doubles as undock
-                    s_type: ShipActionType::DockNavigate,
-                    data: format!("\"{}\"", quest.from_id),
-                }));
+                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate(quest.from_id)));
             } else if quest.state == CargoDeliveryQuestState::Picked
                 && !conditions.contains(&TriggerCondition::CurrentPlanetIsDropoff)
             {
-                result_actions.push(BotAct::Act(ShipAction {
-                    // this action doubles as undock
-                    s_type: ShipActionType::DockNavigate,
-                    data: format!("\"{}\"", quest.to_id),
-                }));
+                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate(quest.to_id)));
             }
         }
 
@@ -202,7 +194,7 @@ pub fn do_bot_actions(
     d_table: &DialogueTable,
     elapsed_micro: i64,
 ) {
-    let mut ship_updates: HashMap<Uuid, Vec<ShipAction>> = HashMap::new();
+    let mut ship_updates: HashMap<Uuid, Vec<ShipActionRust>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
 
     for orig_bot in bots.iter_mut() {

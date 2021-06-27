@@ -16,47 +16,11 @@ pub enum ShipActionRust {
     Tractor(Uuid),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ShipActionType {
-    Unknown = 0,
-    Move = 1,
-    Dock = 2,
-    Navigate = 3,
-    DockNavigate = 4,
-    Tractor = 5,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ShipAction {
-    pub s_type: ShipActionType,
-    pub data: String,
-}
-
-fn parse_ship_action(action_raw: ShipAction) -> ShipActionRust {
-    match action_raw.s_type {
-        ShipActionType::Unknown => ShipActionRust::Unknown,
-        ShipActionType::Move => serde_json::from_str::<ManualMoveUpdate>(action_raw.data.as_str())
-            .ok()
-            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Move(v)),
-        ShipActionType::Dock => ShipActionRust::Dock,
-        ShipActionType::Navigate => serde_json::from_str::<Vec2f64>(action_raw.data.as_str())
-            .ok()
-            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Navigate(v)),
-        ShipActionType::DockNavigate => serde_json::from_str::<Uuid>(action_raw.data.as_str())
-            .ok()
-            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::DockNavigate(v)),
-        ShipActionType::Tractor => serde_json::from_str::<Uuid>(action_raw.data.as_str())
-            .ok()
-            .map_or(ShipActionRust::Unknown, |v| ShipActionRust::Tractor(v)),
-    }
-}
-
 pub fn apply_ship_action(
-    ship_action: ShipAction,
+    ship_action: ShipActionRust,
     state: &GameState,
     player_id: Uuid,
 ) -> Option<Ship> {
-    let ship_action: ShipActionRust = parse_ship_action(ship_action);
     let ship_idx = indexing::find_my_ship_index(state, player_id);
     if ship_idx.is_none() {
         warn!("No ship");

@@ -481,7 +481,7 @@ export default class NetState extends EventEmitter {
             //     (a) => a.type
             //   )}`
             // );
-            this.mutate_ship(actions, this.ping);
+            // this.mutate_ship(actions, this.ping);
           }
         }
         this.pendingActions = this.pendingActions.filter(

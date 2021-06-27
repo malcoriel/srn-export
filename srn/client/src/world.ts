@@ -126,6 +126,8 @@ export const isStateTutorial = (st: GameState) => {
 export enum ShipActionType {
   Unknown = 'Unknown',
   Move = 'Move',
+  MoveL = 'MoveL',
+  Turn = 'Turn',
   Dock = 'Dock',
   Navigate = 'Navigate',
   DockNavigate = 'DockNavigate',
@@ -149,6 +151,12 @@ export class ShipAction {
 
   public static Move = (dir: Direction) =>
     new ShipAction(ShipActionType.Move, dir);
+
+  public static MoveL = (len: number) =>
+    new ShipAction(ShipActionType.MoveL, len);
+
+  public static Turn = (turn: number) =>
+    new ShipAction(ShipActionType.Turn, turn);
 
   public static Dock = () => new ShipAction(ShipActionType.Dock, '');
 

@@ -36,9 +36,19 @@ use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 use websocket::{Message, OwnedMessage};
 
+use crate::bots::{bot_init, do_bot_actions};
+use crate::chat::chat_server;
+use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
 use crate::indexing::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
 };
+use crate::perf::Sampler;
+use crate::sandbox::mutate_state;
+use crate::ship_action::ShipActionRust;
+use crate::substitutions::substitute_notification_texts;
+use crate::system_gen::make_tutorial_state;
+use crate::vec2::Vec2f64;
+use crate::world::{spawn_ship, update_quests, GameEvent, UpdateOptions, AABB};
 use dialogue::{DialogueStates, DialogueTable};
 use dialogue_dto::Dialogue;
 use net::{
@@ -46,19 +56,8 @@ use net::{
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
 use perf::SamplerMarks;
-use ship_action::ShipAction;
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
-
-use crate::bots::{bot_init, do_bot_actions};
-use crate::chat::chat_server;
-use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
-use crate::perf::Sampler;
-use crate::sandbox::mutate_state;
-use crate::substitutions::substitute_notification_texts;
-use crate::system_gen::make_tutorial_state;
-use crate::vec2::Vec2f64;
-use crate::world::{spawn_ship, update_quests, GameEvent, UpdateOptions, AABB};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -188,7 +187,7 @@ const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 pub const DEBUG_PHYSICS: bool = false;
 const MIN_SLEEP_TICKS: i32 = 100;
 
-fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) {
+fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipActionRust, tag: Option<String>) {
     let res = mutate_owned_ship(client_id, mutate_cmd, tag);
     if res.is_none() {
         warn!("error mutating owned ship");
@@ -226,7 +225,11 @@ fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     notify_state_changed(personal_state.id, client_id);
 }
 
-fn mutate_owned_ship(client_id: Uuid, mutate_cmd: ShipAction, tag: Option<String>) -> Option<Ship> {
+fn mutate_owned_ship(
+    client_id: Uuid,
+    mutate_cmd: ShipActionRust,
+    tag: Option<String>,
+) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
     let mut state = {
         if cont.personal_states.contains_key(&client_id) {
@@ -593,7 +596,7 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
 }
 
 fn on_client_mutate_ship(client_id: Uuid, second: &&str, third: Option<&&str>) {
-    let parsed = serde_json::from_str::<ShipAction>(second);
+    let parsed = serde_json::from_str::<ShipActionRust>(second);
     match parsed {
         Ok(res) => mutate_owned_ship_wrapped(client_id, res, third.map(|s| s.to_string())),
         Err(err) => {
