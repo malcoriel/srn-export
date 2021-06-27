@@ -12,11 +12,11 @@ use wasm_bindgen::prelude::*;
 #[serde(tag = "tag")]
 pub enum ShipActionRust {
     Unknown,
-    Move(ManualMoveUpdate),
+    Move { update: ManualMoveUpdate },
     Dock,
-    Navigate(Vec2f64),
-    DockNavigate(Uuid),
-    Tractor(Uuid),
+    Navigate { target: Vec2f64 },
+    DockNavigate { target: Uuid },
+    Tractor { target: Uuid },
 }
 
 pub fn apply_ship_action(
@@ -37,11 +37,11 @@ pub fn apply_ship_action(
             warn!("Unknown ship action");
             None
         }
-        ShipActionRust::Move(v) => {
+        ShipActionRust::Move { update } => {
             let mut ship = old_ship.clone();
-            ship.x = v.position.x;
-            ship.y = v.position.y;
-            ship.rotation = v.rotation;
+            ship.x = update.position.x;
+            ship.y = update.position.y;
+            ship.rotation = update.rotation;
             ship.navigate_target = None;
             ship.dock_target = None;
             ship.trajectory = vec![];
@@ -91,7 +91,7 @@ pub fn apply_ship_action(
             }
             Some(ship)
         }
-        ShipActionRust::Navigate(v) => {
+        ShipActionRust::Navigate { target } => {
             let mut ship = old_ship.clone();
             let ship_pos = Vec2f64 {
                 x: ship.x,
@@ -101,13 +101,13 @@ pub fn apply_ship_action(
             ship.navigate_target = None;
             ship.dock_target = None;
             ship.docked_at = None;
-            ship.navigate_target = Some(v);
-            ship.trajectory = world::build_trajectory_to_point(ship_pos, &v);
+            ship.navigate_target = Some(target);
+            ship.trajectory = world::build_trajectory_to_point(ship_pos, &target);
             Some(ship)
         }
-        ShipActionRust::DockNavigate(t) => {
+        ShipActionRust::DockNavigate { target } => {
             let mut ship = old_ship.clone();
-            if let Some(planet) = indexing::find_planet(state, &t) {
+            if let Some(planet) = indexing::find_planet(state, &target) {
                 let ship_pos = Vec2f64 {
                     x: ship.x,
                     y: ship.y,
@@ -119,17 +119,17 @@ pub fn apply_ship_action(
                 ship.navigate_target = None;
                 ship.dock_target = None;
                 ship.docked_at = None;
-                ship.dock_target = Some(t);
+                ship.dock_target = Some(target);
                 ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos);
                 Some(ship)
             } else {
                 None
             }
         }
-        ShipActionRust::Tractor(t) => {
+        ShipActionRust::Tractor { target } => {
             let mut ship = old_ship.clone();
             tractoring::update_ship_tractor(
-                t,
+                target,
                 &mut ship,
                 &state.locations[ship_idx.location_idx].minerals,
                 &state.locations[ship_idx.location_idx].containers,

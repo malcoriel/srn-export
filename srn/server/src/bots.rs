@@ -100,11 +100,15 @@ impl Bot {
             if quest.state == CargoDeliveryQuestState::Started
                 && !conditions.contains(&TriggerCondition::CurrentPlanetIsPickup)
             {
-                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate(quest.from_id)));
+                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
+                    target: quest.from_id,
+                }));
             } else if quest.state == CargoDeliveryQuestState::Picked
                 && !conditions.contains(&TriggerCondition::CurrentPlanetIsDropoff)
             {
-                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate(quest.to_id)));
+                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
+                    target: quest.to_id,
+                }));
             }
         }
 
