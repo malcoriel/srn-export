@@ -3,7 +3,7 @@ import { Vector3 } from 'three';
 import React, { Suspense } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
-import { max_x, min_x, ShipAction, ShipActionType } from '../world';
+import { max_x, min_x } from '../world';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
   BoundCameraMover,
@@ -23,6 +23,7 @@ import { ThreeQuestDirection } from './ThreeQuestDirection';
 import { ThreeNames } from './ThreeNames';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
+import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 
 export type Vector3Arr = [number, number, number];
 
@@ -108,8 +109,8 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           visible={visible}
           onClick={(evt: MouseEvent) => {
             const pos = threeVectorToVector(evt.point);
-            actionsActive[ShipActionType.Navigate] = ShipAction.Navigate(
-              Vector.fromIVector(pos)
+            actionsActive.Navigate = ShipActionRustBuilder.ShipActionRustNavigate(
+              { fields: Vector.fromIVector(pos) }
             );
           }}
         >

@@ -3,8 +3,6 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
-import { actionsActive } from '../utils/ShipControls';
-import { ShipAction, ShipActionType } from '../world';
 import Vector from '../utils/Vector';
 import { possibleGasGiantColors } from '../ThreeLayers/ThreePlanetsLayer';
 import { gasGiantShaderRandomProps } from '../ThreeLayers/shaders/gasGiant';
@@ -49,12 +47,7 @@ const Template: Story = (args) => {
           gid="1"
           radius={radius}
           {...gasGiantShaderRandomProps(id, radius)}
-          onClick={(evt: MouseEvent) => {
-            evt.stopPropagation();
-            actionsActive[
-              ShipActionType.DockNavigate
-            ] = ShipAction.DockNavigate(id);
-          }}
+          onClick={(_: MouseEvent) => {}}
           position={new Vector(0, 0)}
           key={revision + JSON.stringify(args)}
           color={args.color}

@@ -22,6 +22,7 @@ import {
   Location,
   Container,
   ObjectSpecifier,
+  ShipActionRust,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -123,17 +124,6 @@ export const isStateTutorial = (st: GameState) => {
   return st.mode === GameMode.Tutorial;
 };
 
-export enum ShipActionType {
-  Unknown = 'Unknown',
-  Move = 'Move',
-  MoveL = 'MoveL',
-  Turn = 'Turn',
-  Dock = 'Dock',
-  Navigate = 'Navigate',
-  DockNavigate = 'DockNavigate',
-  Tractor = 'Tractor',
-}
-
 export enum Direction {
   Unknown,
   Up,
@@ -144,44 +134,6 @@ export enum Direction {
   DownLeft,
   Left,
   UpLeft,
-}
-
-export class ShipAction {
-  constructor(public s_type: ShipActionType, public data?: any) {}
-
-  public static Move = (dir: Direction) =>
-    new ShipAction(ShipActionType.Move, dir);
-
-  public static MoveL = (len: number) =>
-    new ShipAction(ShipActionType.MoveL, len);
-
-  public static Turn = (turn: number) =>
-    new ShipAction(ShipActionType.Turn, turn);
-
-  public static Dock = () => new ShipAction(ShipActionType.Dock, '');
-
-  public static Navigate = (to: IVector) =>
-    new ShipAction(ShipActionType.Navigate, to);
-
-  public static DockNavigate = (to: string) =>
-    new ShipAction(ShipActionType.DockNavigate, to);
-
-  public static Tractor = (obj_id: string) =>
-    new ShipAction(ShipActionType.Tractor, obj_id);
-
-  public serialize(): string {
-    return JSON.stringify({
-      s_type: this.s_type,
-      data: JSON.stringify(this.data),
-    });
-  }
-
-  public serialize_for_wasm(): any {
-    return {
-      s_type: this.s_type,
-      data: JSON.stringify(this.data),
-    };
-  }
 }
 
 const directionToRotation = {
@@ -308,16 +260,16 @@ export const validateState = (inState: GameState): boolean => {
   return !!parsed;
 };
 
-const applyShipActionWasm = (
+export const applyShipActionWasm = (
   state: GameState,
-  ship_action: ShipAction
+  ship_action: ShipActionRust
 ): Ship | undefined => {
   return doWasmCall<Ship>(
     'apply_ship_action',
     JSON.stringify(
       {
         state,
-        ship_action: ship_action.serialize_for_wasm(),
+        ship_action,
         player_id: state.my_id,
       },
       null,
@@ -326,107 +278,6 @@ const applyShipActionWasm = (
   );
 };
 
-export const applyShipAction = (
-  myShip: Ship,
-  sa: ShipAction,
-  state: GameState,
-  elapsedMs: number,
-  ping: number,
-  limitArea: AABB
-) => {
-  const moveByTime = (SHIP_SPEED * elapsedMs) / 1000;
-  const stateConsideringPing = updateWorld(state, limitArea, ping) || state;
-  const moveByTimeDiagonal = (moveByTime * Math.sqrt(2)) / 2;
-  switch (sa.s_type) {
-    case ShipActionType.Dock: {
-      const newShip = applyShipActionWasm(stateConsideringPing, sa);
-      if (newShip) {
-        // eslint-disable-next-line no-param-reassign
-        myShip = { ...newShip };
-      }
-      break;
-    }
-
-    case ShipActionType.Move: {
-      myShip.dock_target = null;
-      myShip.navigate_target = undefined;
-      myShip.trajectory = [];
-      const direction = sa.data as Direction;
-      switch (direction) {
-        case Direction.Up:
-          myShip.y -= moveByTime;
-          break;
-        case Direction.UpRight:
-          myShip.x += moveByTimeDiagonal;
-          myShip.y -= moveByTimeDiagonal;
-          break;
-        case Direction.Right:
-          myShip.x += moveByTime;
-          break;
-        case Direction.DownRight:
-          myShip.y += moveByTimeDiagonal;
-          myShip.x += moveByTimeDiagonal;
-          break;
-        case Direction.Down:
-          myShip.y += moveByTime;
-          break;
-        case Direction.DownLeft:
-          myShip.y += moveByTimeDiagonal;
-          myShip.x -= moveByTimeDiagonal;
-          break;
-        case Direction.Left:
-          myShip.x -= moveByTime;
-          break;
-        case Direction.UpLeft:
-          myShip.y -= moveByTimeDiagonal;
-          myShip.x -= moveByTimeDiagonal;
-          break;
-        default:
-          console.warn('default case for direction');
-          break;
-      }
-      const directionToRotationElement = directionToRotation[direction];
-      // noinspection SuspiciousTypeOfGuard
-      if (typeof directionToRotationElement !== 'number') {
-        console.error(
-          'move produced invalid rotation',
-          directionToRotationElement
-        );
-      }
-      myShip.rotation = directionToRotationElement;
-      break;
-    }
-    case ShipActionType.Navigate: {
-      const newShip = applyShipActionWasm(stateConsideringPing, sa);
-      if (newShip) {
-        // eslint-disable-next-line no-param-reassign
-        myShip = { ...newShip };
-      }
-      break;
-    }
-    case ShipActionType.Tractor: {
-      const newShip = applyShipActionWasm(stateConsideringPing, sa);
-      if (newShip) {
-        // eslint-disable-next-line no-param-reassign
-        myShip = { ...newShip };
-      }
-
-      break;
-    }
-    case ShipActionType.DockNavigate: {
-      const newShip = applyShipActionWasm(stateConsideringPing, sa);
-      if (newShip) {
-        // eslint-disable-next-line no-param-reassign
-        myShip = { ...newShip };
-      }
-      break;
-    }
-    default:
-      console.warn('unknown action', sa);
-      break;
-  }
-  return myShip;
-};
 export const findPlanet = (
   state: GameState,
   id: string

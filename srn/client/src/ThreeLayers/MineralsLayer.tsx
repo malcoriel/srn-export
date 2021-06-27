@@ -1,10 +1,11 @@
 import { InteractorActionType } from './blocks/ThreeInteractor';
 import { actionsActive } from '../utils/ShipControls';
-import { NatSpawnMineral, ShipAction, ShipActionType } from '../world';
+import { NatSpawnMineral } from '../world';
 import NetState from '../NetState';
 import {
   LongActionStartBuilder,
   Rarity,
+  ShipActionRustBuilder,
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import React from 'react';
@@ -19,7 +20,9 @@ export const mineralActionsMap = new Map([
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
-      actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(objectId);
+      actionsActive.Tractor = ShipActionRustBuilder.ShipActionRustTractor({
+        fields: objectId,
+      });
     },
   ],
   [

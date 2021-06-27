@@ -11,9 +11,9 @@ import { containerActionsMap } from './ContainersLayer';
 import _ from 'lodash';
 import { mineralActionsMap, rarityToColor } from './MineralsLayer';
 import { actionsActive } from '../utils/ShipControls';
-import { ShipAction, ShipActionType } from '../world';
 import {
   LongActionStartBuilder,
+  ShipActionRustBuilder,
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import NetState from '../NetState';
@@ -22,8 +22,8 @@ const planetActionMap = new Map([
   [
     InteractorActionType.Dock,
     (objectId: string) => {
-      actionsActive[ShipActionType.DockNavigate] = ShipAction.DockNavigate(
-        objectId
+      actionsActive.Navigate = ShipActionRustBuilder.ShipActionRustDockNavigate(
+        { fields: objectId }
       );
     },
   ],

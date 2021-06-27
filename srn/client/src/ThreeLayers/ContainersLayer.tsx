@@ -4,10 +4,10 @@ import { posToThreePos } from './ThreeLayer';
 import { InteractorActionType } from './blocks/ThreeInteractor';
 import { Container } from '../../../world/pkg';
 import { actionsActive } from '../utils/ShipControls';
-import { ShipAction, ShipActionType } from '../world';
 import NetState from '../NetState';
 import {
   LongActionStartBuilder,
+  ShipActionRustBuilder,
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import { InteractorMap } from './InteractorMap';
@@ -16,7 +16,9 @@ export const containerActionsMap = new Map([
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
-      actionsActive[ShipActionType.Tractor] = ShipAction.Tractor(objectId);
+      actionsActive.Tractor = ShipActionRustBuilder.ShipActionRustTractor({
+        fields: objectId,
+      });
     },
   ],
   [

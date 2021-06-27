@@ -69,7 +69,7 @@ pub enum GameMode {
     Sandbox,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct ManualMoveUpdate {
     pub position: Vec2f64,
     pub rotation: f64,

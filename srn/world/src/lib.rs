@@ -270,7 +270,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct ApplyShipActionArgs {
     state: world::GameState,
-    ship_action: ship_action::ShipAction,
+    ship_action: ship_action::ShipActionRust,
     player_id: Uuid,
 }
 

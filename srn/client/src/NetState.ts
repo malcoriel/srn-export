@@ -1,14 +1,12 @@
 import EventEmitter from 'events';
 import {
   AABB,
-  applyShipAction,
+  applyShipActionWasm,
   Dialogue,
   GameMode,
   GameState,
   SandboxCommand,
   Ship,
-  ShipAction,
-  ShipActionType,
   TradeAction,
   updateWorld,
 } from './world';
@@ -26,6 +24,7 @@ import {
   InventoryAction,
   LongActionStart,
   NotificationAction,
+  ShipActionRust,
 } from '../../world/pkg';
 
 export type Timeout = ReturnType<typeof setTimeout>;
@@ -301,10 +300,10 @@ export default class NetState extends EventEmitter {
   init = (mode: GameMode) => {
     this.mode = mode;
     console.log(`initializing NS ${this.id}`);
-    this.updateOnServerInterval = setInterval(
-      () => this.updateShipOnServerManualMove(uuid.v4()),
-      MANUAL_MOVE_SHIP_UPDATE_INTERVAL
-    );
+    // this.updateOnServerInterval = setInterval(
+    //   () => this.updateShipOnServerManualMove(uuid.v4()),
+    //   MANUAL_MOVE_SHIP_UPDATE_INTERVAL
+    // );
     this.connecting = true;
     Perf.start();
     this.time.setInterval(
@@ -633,22 +632,18 @@ export default class NetState extends EventEmitter {
   }
 
   // [tag, action, ticks], the order is the order of appearance
-  private pendingActions: [string, ShipAction[], number][] = [];
+  private pendingActions: [string, ShipActionRust[], number][] = [];
 
-  private mutate_ship = (commands: ShipAction[], elapsedMs: number) => {
+  private mutate_ship = (commands: ShipActionRust[], elapsedMs: number) => {
     const myShipIndex = findMyShipIndex(this.state);
     const simArea = this.getSimulationArea();
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.locations[0].ships[myShipIndex];
     for (const cmd of commands) {
-      myShip = applyShipAction(
-        myShip,
-        cmd,
-        this.state,
-        elapsedMs,
-        this.maxPing || this.ping,
-        simArea
-      );
+      const res = applyShipActionWasm(this.state, cmd);
+      if (res) {
+        myShip = res;
+      }
     }
     this.state.locations[0].ships.splice(myShipIndex, 1);
     this.state.locations[0].ships.push(myShip);
@@ -665,17 +660,17 @@ export default class NetState extends EventEmitter {
       return;
     }
     const actions = Object.values(actionsActive).filter((a) => !!a);
-    this.mutate_ship(actions as ShipAction[], elapsedMs);
-    const dockAction = actionsActive[ShipActionType.Dock];
-    const navigateAction = actionsActive[ShipActionType.Navigate];
-    const dockNavigateAction = actionsActive[ShipActionType.DockNavigate];
-    const tractorAction = actionsActive[ShipActionType.Tractor];
+    this.mutate_ship(actions as ShipActionRust[], elapsedMs);
+    const dockAction = actionsActive.Dock;
+    const navigateAction = actionsActive.Navigate;
+    const dockNavigateAction = actionsActive.DockNavigate;
+    const tractorAction = actionsActive.Tractor;
     const nonNullActions = [
       dockAction,
       navigateAction,
       dockNavigateAction,
       tractorAction,
-    ].filter((a) => !!a) as ShipAction[];
+    ].filter((a) => !!a) as ShipActionRust[];
 
     for (const action of nonNullActions) {
       const tag = uuid.v4();
@@ -683,7 +678,7 @@ export default class NetState extends EventEmitter {
       this.updateShipOnServer(tag, action);
     }
 
-    if (actionsActive[ShipActionType.Move]) {
+    if (actionsActive.Move) {
       this.visualState.boundCameraMovement = true;
     }
     resetActions();
@@ -697,44 +692,44 @@ export default class NetState extends EventEmitter {
     }
   };
 
-  private updateShipOnServer = (tag: string, action: ShipAction) => {
+  private updateShipOnServer = (tag: string, action: ShipActionRust) => {
     if (this.state && !this.state.paused) {
       this.send({
         code: ClientOpCode.MutateMyShip,
-        value: action.serialize(),
+        value: action,
         tag,
       });
     }
   };
 
-  private updateShipOnServerManualMove = (tag: string) => {
-    if (this.state && !this.state.paused) {
-      const myShipIndex = findMyShipIndex(this.state);
-      if (myShipIndex !== -1 && myShipIndex !== null) {
-        const myShip = this.state.locations[0].ships[myShipIndex];
-        const currentShipPos = Vector.fromIVector(myShip);
-        if (
-          !Vector.equals(this.lastShipPos, currentShipPos) &&
-          !myShip.navigate_target &&
-          !myShip.dock_target &&
-          !myShip.docked_at
-        ) {
-          this.send({
-            code: ClientOpCode.MutateMyShip,
-            value: JSON.stringify({
-              s_type: ShipActionType.Move,
-              data: JSON.stringify({
-                position: currentShipPos,
-                rotation: myShip.rotation,
-              }),
-            }),
-            tag,
-          });
-        }
-        this.lastShipPos = currentShipPos;
-      }
-    }
-  };
+  // private updateShipOnServerManualMove = (tag: string) => {
+  //   if (this.state && !this.state.paused) {
+  //     const myShipIndex = findMyShipIndex(this.state);
+  //     if (myShipIndex !== -1 && myShipIndex !== null) {
+  //       const myShip = this.state.locations[0].ships[myShipIndex];
+  //       const currentShipPos = Vector.fromIVector(myShip);
+  //       if (
+  //         !Vector.equals(this.lastShipPos, currentShipPos) &&
+  //         !myShip.navigate_target &&
+  //         !myShip.dock_target &&
+  //         !myShip.docked_at
+  //       ) {
+  //         this.send({
+  //           code: ClientOpCode.MutateMyShip,
+  //           value: JSON.stringify({
+  //             s_type: "Move",
+  //             data: JSON.stringify({
+  //               position: currentShipPos,
+  //               rotation: myShip.rotation,
+  //             }),
+  //           }),
+  //           tag,
+  //         });
+  //       }
+  //       this.lastShipPos = currentShipPos;
+  //     }
+  //   }
+  // };
 
   public sendDialogueOption(dialogueId: string, optionId: string) {
     const tag = uuid.v4();

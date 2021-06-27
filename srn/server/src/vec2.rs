@@ -1,6 +1,8 @@
 use serde_derive::{Deserialize, Serialize};
 use std::f64::consts::PI;
 use std::fmt::{Debug, Display, Formatter, Result};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use wasm_bindgen::prelude::*;
 
 #[derive(Clone, Eq, Hash, Copy)]
 pub struct Vec2i32 {
@@ -48,7 +50,7 @@ impl Vec2i32 {
     }
 }
 
-#[derive(Default, Clone, Copy, Deserialize, Serialize)]
+#[derive(Default, Clone, Copy, Deserialize, Serialize, TypescriptDefinition, TypeScriptify)]
 pub struct Vec2f64 {
     pub x: f64,
     pub y: f64,

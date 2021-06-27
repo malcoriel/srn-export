@@ -5,8 +5,11 @@ use crate::combat::ShootTarget;
 use crate::vec2::Vec2f64;
 use crate::world::{GameEvent, GameState, ManualMoveUpdate, Ship};
 use crate::{combat, fire_event, indexing, tractoring, world};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use wasm_bindgen::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[serde(tag = "tag")]
 pub enum ShipActionRust {
     Unknown,
     Move(ManualMoveUpdate),
