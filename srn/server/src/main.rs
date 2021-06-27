@@ -477,7 +477,9 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
     }
     let op_code = op_code.unwrap();
     match op_code {
-        ClientOpCode::Sync => on_client_sync_request(client_id, second, third),
+        ClientOpCode::Sync => {
+            warn!("Unsupported client op code 'Sync'");
+        }
         ClientOpCode::MutateMyShip => on_client_mutate_ship(client_id, second, third),
         ClientOpCode::Name => on_client_personalize(client_id, second),
         ClientOpCode::DialogueOption => {
@@ -683,18 +685,6 @@ fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) 
             eprintln!("couldn't parse dialogue request {}, err {}", data, err);
         }
     }
-}
-
-fn on_client_sync_request(client_id: Uuid, second: &&str, third: Option<&&str>) {
-    if third.is_some() {
-        thread::sleep(Duration::from_millis(
-            third.unwrap().parse::<u64>().unwrap(),
-        ))
-    }
-    let mut state = get_state_clone_read(client_id);
-    state.tag = Some(second.to_string());
-    let current_state_id = get_state_id(client_id);
-    x_cast_state(state, XCast::Unicast(current_state_id, client_id))
 }
 
 fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStream>) {

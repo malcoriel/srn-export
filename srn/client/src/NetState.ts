@@ -565,12 +565,7 @@ export default class NetState extends EventEmitter {
           break;
         }
         case ClientOpCode.Sync: {
-          // TODO use cmd.tag instead of value tag for force-syncs
-          let syncMsg = `${cmd.code}_%_${cmd.value.tag}`;
-          if (cmd.value.forcedDelay) {
-            syncMsg += `_%_${cmd.value.forcedDelay}`;
-          }
-          this.socket.send(syncMsg);
+          console.warn('unsupported command');
           break;
         }
         case ClientOpCode.MutateMyShip: {
