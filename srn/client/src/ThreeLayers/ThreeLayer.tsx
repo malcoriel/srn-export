@@ -110,7 +110,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           onClick={(evt: MouseEvent) => {
             const pos = threeVectorToVector(evt.point);
             actionsActive.Navigate = ShipActionRustBuilder.ShipActionRustNavigate(
-              { fields: Vector.fromIVector(pos) }
+              { target: Vector.fromIVector(pos) }
             );
           }}
         >
@@ -146,6 +146,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
     </Canvas>
   );
 };
+
 export const liftThreePos = (zShift: number) => (
   threeArrVec: [number, number, number]
 ): [number, number, number] => [

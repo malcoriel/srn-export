@@ -568,7 +568,9 @@ export default class NetState extends EventEmitter {
           break;
         }
         case ClientOpCode.MutateMyShip: {
-          this.socket.send(`${cmd.code}_%_${cmd.value}_%_${cmd.tag}`);
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
           break;
         }
         case ClientOpCode.Name: {
@@ -636,7 +638,6 @@ export default class NetState extends EventEmitter {
 
   private mutate_ship = (commands: ShipActionRust[], elapsedMs: number) => {
     const myShipIndex = findMyShipIndex(this.state);
-    const simArea = this.getSimulationArea();
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.locations[0].ships[myShipIndex];
     for (const cmd of commands) {

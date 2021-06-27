@@ -17,7 +17,7 @@ export const containerActionsMap = new Map([
     InteractorActionType.Tractor,
     (objectId: string) => {
       actionsActive.Tractor = ShipActionRustBuilder.ShipActionRustTractor({
-        fields: objectId,
+        target: objectId,
       });
     },
   ],

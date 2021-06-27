@@ -23,7 +23,7 @@ const planetActionMap = new Map([
     InteractorActionType.Dock,
     (objectId: string) => {
       actionsActive.Navigate = ShipActionRustBuilder.ShipActionRustDockNavigate(
-        { fields: objectId }
+        { target: objectId }
       );
     },
   ],
