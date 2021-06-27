@@ -52,9 +52,7 @@ interface Cmd {
 }
 
 const AREA_BUFF_TO_COVER_SIZE = 1.5;
-const MANUAL_MOVE_SHIP_UPDATE_INTERVAL = 50;
 const RECONNECT_INTERVAL = 1000;
-const MAX_PING_LIFE = 10000;
 
 export const findMyPlayer = (state: GameState) =>
   state.players.find((player) => player.id === state.my_id);
@@ -148,8 +146,6 @@ export default class NetState extends EventEmitter {
 
   public maxPing?: number;
 
-  public maxPingTick?: number;
-
   public visualState: VisualState;
 
   private static instance?: NetState;
@@ -161,8 +157,6 @@ export default class NetState extends EventEmitter {
   readonly id: string;
 
   disconnecting = false;
-
-  private lastShipPos?: Vector;
 
   private slowTime: vsyncedCoupledThrottledTime;
 
@@ -467,6 +461,7 @@ export default class NetState extends EventEmitter {
         }
 
         const toDrop = new Set();
+        // noinspection JSUnusedLocalSymbols
         for (const [tag, actions, ticks] of this.pendingActions) {
           const age = Math.abs(ticks - this.state.ticks);
           if (age > MAX_PENDING_TICKS) {
@@ -480,7 +475,7 @@ export default class NetState extends EventEmitter {
             //     (a) => a.type
             //   )}`
             // );
-            // this.mutate_ship(actions, this.ping);
+            this.mutate_ship(actions);
           }
         }
         this.pendingActions = this.pendingActions.filter(
@@ -535,24 +530,6 @@ export default class NetState extends EventEmitter {
       console.warn('error handling message', e);
     } finally {
       this.updateVisMap();
-    }
-  }
-
-  private handleMaxPing(parsed: GameState) {
-    // This method is fairly dumb since it resets max ping
-    // Instead, it could use a sliding window of pings over last X seconds
-    if (
-      this.maxPingTick !== undefined &&
-      this.maxPingTick + MAX_PING_LIFE < parsed.ticks
-    ) {
-      this.maxPingTick = undefined;
-    }
-    if (this.maxPing !== undefined && this.ping > this.maxPing) {
-      this.maxPingTick = parsed.ticks;
-      this.maxPing = this.ping;
-    }
-    if (this.maxPingTick === undefined) {
-      this.maxPing = this.ping;
     }
   }
 
@@ -636,7 +613,7 @@ export default class NetState extends EventEmitter {
   // [tag, action, ticks], the order is the order of appearance
   private pendingActions: [string, ShipActionRust[], number][] = [];
 
-  private mutate_ship = (commands: ShipActionRust[], elapsedMs: number) => {
+  private mutate_ship = (commands: ShipActionRust[]) => {
     const myShipIndex = findMyShipIndex(this.state);
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.locations[0].ships[myShipIndex];
@@ -661,7 +638,7 @@ export default class NetState extends EventEmitter {
       return;
     }
     const actions = Object.values(actionsActive).filter((a) => !!a);
-    this.mutate_ship(actions as ShipActionRust[], elapsedMs);
+    this.mutate_ship(actions as ShipActionRust[]);
     const dockAction = actionsActive.Dock;
     const navigateAction = actionsActive.Navigate;
     const dockNavigateAction = actionsActive.DockNavigate;
@@ -702,35 +679,6 @@ export default class NetState extends EventEmitter {
       });
     }
   };
-
-  // private updateShipOnServerManualMove = (tag: string) => {
-  //   if (this.state && !this.state.paused) {
-  //     const myShipIndex = findMyShipIndex(this.state);
-  //     if (myShipIndex !== -1 && myShipIndex !== null) {
-  //       const myShip = this.state.locations[0].ships[myShipIndex];
-  //       const currentShipPos = Vector.fromIVector(myShip);
-  //       if (
-  //         !Vector.equals(this.lastShipPos, currentShipPos) &&
-  //         !myShip.navigate_target &&
-  //         !myShip.dock_target &&
-  //         !myShip.docked_at
-  //       ) {
-  //         this.send({
-  //           code: ClientOpCode.MutateMyShip,
-  //           value: JSON.stringify({
-  //             s_type: "Move",
-  //             data: JSON.stringify({
-  //               position: currentShipPos,
-  //               rotation: myShip.rotation,
-  //             }),
-  //           }),
-  //           tag,
-  //         });
-  //       }
-  //       this.lastShipPos = currentShipPos;
-  //     }
-  //   }
-  // };
 
   public sendDialogueOption(dialogueId: string, optionId: string) {
     const tag = uuid.v4();
