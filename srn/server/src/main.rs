@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
 use std::iter::FromIterator;
 use std::net::{SocketAddr, TcpStream};
-use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
+use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::time::Duration;
 use std::{fmt, thread};
 
@@ -182,6 +182,7 @@ lazy_static! {
 pub const ENABLE_PERF: bool = false;
 const DEBUG_FRAME_STATS: bool = false;
 const DEFAULT_SLEEP_MS: u64 = 1;
+const BROADCAST_SLEEP_MS: u64 = 500;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 pub const DEBUG_PHYSICS: bool = false;
@@ -880,6 +881,9 @@ fn rocket() -> rocket::Rocket {
     std::thread::spawn(|| {
         main_thread();
     });
+    std::thread::spawn(|| {
+        broadcast_state_thread();
+    });
 
     thread::spawn(move || dispatcher_thread());
 
@@ -934,6 +938,21 @@ fn cleanup_thread() {
             disconnect_if_bad(client_id);
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
+    }
+}
+
+fn broadcast_state_thread() {
+    loop {
+        let diff = {
+            let start = Local::now();
+            let cont = STATE.read().unwrap();
+            broadcast_all_states(&cont);
+            (Local::now() - start).num_milliseconds()
+        };
+        // log!(format!("broadcast duration={}ms", diff));
+        thread::sleep(Duration::from_millis(
+            (BROADCAST_SLEEP_MS as i64 - diff).max(0) as u64,
+        ));
     }
 }
 
@@ -1119,12 +1138,19 @@ fn main_thread() {
 
         if sampler.budget < 0 {
             over_budget_frame += 1;
-            // log!(format!("Frame over budget by {}µs", -sampler.budget));
+            log!(format!("Frame over budget by {}µs", -sampler.budget));
         }
         let sleep_remaining = sampler.budget.max(0);
         if sleep_remaining > MIN_SLEEP_TICKS {
             thread::sleep(Duration::from_micros(sleep_remaining as u64));
         }
+    }
+}
+
+fn broadcast_all_states(cont: &RwLockReadGuard<StateContainer>) {
+    x_cast_state(cont.state.clone(), XCast::Broadcast(cont.state.id));
+    for (id, state) in cont.personal_states.iter() {
+        x_cast_state(state.clone(), XCast::Broadcast(*id));
     }
 }
 

@@ -36,7 +36,7 @@ export const NetworkStatus: React.FC = () => {
       className="network-status"
       contentClassName="network-status-content"
       height={25}
-      width={212}
+      width={140}
     >
       <span className="fps" title="frames per second">
         {fps ? (
@@ -58,27 +58,27 @@ export const NetworkStatus: React.FC = () => {
           ms
         </span>
       </span>
-      {!connecting && (
-        <span className="ping" title="ping (half trip sync time)">
-          {ping ? (
-            <>
-              &nbsp;
-              <FaWaveSquare />
-              &nbsp;
-              <span title="current">
-                <span className="ping-text">{ping}</span>
-              </span>
-              {maxPing ? (
-                <span title="max">
-                  <span className="ping-text">/{maxPing}</span>
-                </span>
-              ) : null}
-            </>
-          ) : (
-            <span className="connecting">Connecting...&nbsp;</span>
-          )}
-        </span>
-      )}
+      {/*{!connecting && (*/}
+      {/*  <span className="ping" title="ping (half trip sync time)">*/}
+      {/*    {ping ? (*/}
+      {/*      <>*/}
+      {/*        &nbsp;*/}
+      {/*        <FaWaveSquare />*/}
+      {/*        &nbsp;*/}
+      {/*        <span title="current">*/}
+      {/*          <span className="ping-text">{ping}</span>*/}
+      {/*        </span>*/}
+      {/*        {maxPing ? (*/}
+      {/*          <span title="max">*/}
+      {/*            <span className="ping-text">/{maxPing}</span>*/}
+      {/*          </span>*/}
+      {/*        ) : null}*/}
+      {/*      </>*/}
+      {/*    ) : (*/}
+      {/*      <span className="connecting"></span>*/}
+      {/*    )}*/}
+      {/*  </span>*/}
+      {/*)}*/}
     </StyledRect>
   );
 };

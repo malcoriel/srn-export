@@ -53,7 +53,6 @@ interface Cmd {
 }
 
 const AREA_BUFF_TO_COVER_SIZE = 1.5;
-const FORCE_SYNC_INTERVAL = 200;
 const MANUAL_MOVE_SHIP_UPDATE_INTERVAL = 50;
 const RECONNECT_INTERVAL = 1000;
 const MAX_PING_LIFE = 10000;
@@ -152,15 +151,9 @@ export default class NetState extends EventEmitter {
 
   public maxPingTick?: number;
 
-  private forceSyncStart?: number;
-
-  private forceSyncTag?: string;
-
   public visualState: VisualState;
 
   private static instance?: NetState;
-
-  private forceSyncInterval?: Timeout;
 
   private updateOnServerInterval?: Timeout;
 
@@ -286,24 +279,11 @@ export default class NetState extends EventEmitter {
     this.indexes.myShip = findMyShip(this.state);
   }
 
-  forceSync = () => {
-    if (!this.connecting) {
-      const tag = uuid.v4();
-      this.forceSyncTag = tag;
-      this.forceSyncStart = performance.now();
-      const forcedDelay = 0;
-      this.send({ code: ClientOpCode.Sync, value: { tag, forcedDelay } });
-    }
-  };
-
   disconnectAndDestroy = () => {
     this.disconnecting = true;
     console.log(`disconnecting NS ${this.id}`);
     if (this.socket) {
       this.socket.close();
-    }
-    if (this.forceSyncInterval) {
-      clearInterval(this.forceSyncInterval);
     }
     if (this.updateOnServerInterval) {
       clearInterval(this.updateOnServerInterval);
@@ -321,7 +301,6 @@ export default class NetState extends EventEmitter {
   init = (mode: GameMode) => {
     this.mode = mode;
     console.log(`initializing NS ${this.id}`);
-    this.forceSyncInterval = setInterval(this.forceSync, FORCE_SYNC_INTERVAL);
     this.updateOnServerInterval = setInterval(
       () => this.updateShipOnServerManualMove(uuid.v4()),
       MANUAL_MOVE_SHIP_UPDATE_INTERVAL
@@ -454,22 +433,16 @@ export default class NetState extends EventEmitter {
           parsed.ticks < this.lastReceivedServerTicks &&
           Math.abs(parsed.ticks - this.lastReceivedServerTicks) < 100000
         ) {
+          console.log(
+            'drop out-of-order xcast_state',
+            parsed.ticks,
+            this.lastReceivedServerTicks
+          );
           return;
         }
         this.lastReceivedServerTicks = parsed.ticks;
 
         this.desync = parsed.ticks - this.state.ticks;
-        if (
-          parsed.tag &&
-          parsed.tag === this.forceSyncTag &&
-          this.forceSyncStart
-        ) {
-          this.ping = Math.floor((performance.now() - this.forceSyncStart) / 2);
-          this.handleMaxPing(parsed);
-
-          this.forceSyncTag = undefined;
-          this.forceSyncStart = undefined;
-        }
 
         const myOldShip = findMyShip(this.state);
         this.state = parsed;
