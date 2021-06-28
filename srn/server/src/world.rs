@@ -42,7 +42,7 @@ use crate::system_gen::{str_to_hash, system_gen};
 use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
-use crate::vec2::{AsVec2f64, Precision, Vec2f64};
+use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
 use crate::{abilities, autofocus, indexing};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
@@ -1070,6 +1070,23 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
         ship.movement.gas = new_move;
         if let Some(new_pos) = new_pos {
             ship.set_from(&new_pos);
+        }
+        let new_rotation = if let Some(params) = &ship.movement.turn {
+            if (params.last_tick as i32 - current_tick as i32).abs()
+                > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
+            {
+                None
+            } else {
+                let sign = if params.forward { 1.0 } else { -1.0 };
+                let diff =
+                    deg_to_rad(SHIP_TURN_SPEED_DEG * elapsed_micro as f64 / 1000.0 / 1000.0 * sign);
+                Some(ship.rotation + diff)
+            }
+        } else {
+            None
+        };
+        if let Some(new_rotation) = new_rotation {
+            ship.rotation = new_rotation;
         }
     }
 }

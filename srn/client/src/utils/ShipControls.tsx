@@ -33,6 +33,20 @@ const refreshActiveActions = () => {
     actionsActive.StopGas = ShipActionRustBuilder.ShipActionRustStopGas();
   }
 
+  if (!keysActive.KeyA && keysActive.KeyD) {
+    actionsActive.TurnRight = ShipActionRustBuilder.ShipActionRustTurnRight();
+    actionsActive.TurnLeft = undefined;
+    actionsActive.StopTurn = undefined;
+  } else if (keysActive.KeyA && !keysActive.KeyD) {
+    actionsActive.TurnRight = undefined;
+    actionsActive.TurnLeft = ShipActionRustBuilder.ShipActionRustTurnLeft();
+    actionsActive.StopTurn = undefined;
+  } else {
+    actionsActive.TurnRight = undefined;
+    actionsActive.TurnLeft = undefined;
+    actionsActive.StopTurn = ShipActionRustBuilder.ShipActionRustStopTurn();
+  }
+
   actionsActive.Dock = keysActive.Space
     ? ShipActionRustBuilder.ShipActionRustDock()
     : undefined;
