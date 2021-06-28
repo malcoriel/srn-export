@@ -14,6 +14,8 @@ pub enum ShipActionRust {
     Unknown,
     Move { update: ManualMoveUpdate },
     Gas,
+    StopGas,
+    StopTurn,
     Reverse,
     TurnRight,
     TurnLeft,
@@ -108,6 +110,8 @@ pub fn apply_ship_action(
             ship.docked_at = None;
             ship.navigate_target = Some(target);
             ship.trajectory = world::build_trajectory_to_point(ship_pos, &target);
+            ship.movement.gas = None;
+            ship.movement.turn = None;
             Some(ship)
         }
         ShipActionRust::DockNavigate { target } => {
@@ -126,6 +130,8 @@ pub fn apply_ship_action(
                 ship.docked_at = None;
                 ship.dock_target = Some(target);
                 ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos);
+                ship.movement.gas = None;
+                ship.movement.turn = None;
                 Some(ship)
             } else {
                 None
@@ -147,6 +153,10 @@ pub fn apply_ship_action(
                 forward: true,
                 last_tick: state.ticks,
             });
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            ship.docked_at = None;
+            ship.trajectory = vec![];
             Some(ship)
         }
         ShipActionRust::Reverse => {
@@ -155,6 +165,10 @@ pub fn apply_ship_action(
                 forward: false,
                 last_tick: state.ticks,
             });
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            ship.docked_at = None;
+            ship.trajectory = vec![];
             Some(ship)
         }
         ShipActionRust::TurnRight => {
@@ -163,6 +177,10 @@ pub fn apply_ship_action(
                 forward: true,
                 last_tick: state.ticks,
             });
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            ship.docked_at = None;
+            ship.trajectory = vec![];
             Some(ship)
         }
         ShipActionRust::TurnLeft => {
@@ -171,6 +189,20 @@ pub fn apply_ship_action(
                 forward: false,
                 last_tick: state.ticks,
             });
+            ship.navigate_target = None;
+            ship.dock_target = None;
+            ship.docked_at = None;
+            ship.trajectory = vec![];
+            Some(ship)
+        }
+        ShipActionRust::StopGas => {
+            let mut ship = old_ship.clone();
+            ship.movement.gas = None;
+            Some(ship)
+        }
+        ShipActionRust::StopTurn => {
+            let mut ship = old_ship.clone();
+            ship.movement.turn = None;
             Some(ship)
         }
     }

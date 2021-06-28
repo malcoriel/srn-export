@@ -47,7 +47,9 @@ use crate::{abilities, autofocus, indexing};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
 
+// speeds are per second
 const SHIP_SPEED: f64 = 20.0;
+const SHIP_TURN_SPEED_DEG: f64 = 90.0;
 const ORB_SPEED_MULT: f64 = 1.0;
 const SEED_TIME: i64 = 9321 * 1000 * 1000;
 const MAX_ORBIT: f64 = 450.0;
@@ -959,8 +961,17 @@ pub fn update_location(
         my_ship_id,
         client,
     );
-
     sampler.end(update_ships_navigation_id);
+
+    let update_ship_manual_movement_id =
+        sampler.start(SamplerMarks::UpdateShipsManualMovement as u32);
+    update_ships_manual_movement(
+        &mut state.locations[location_idx].ships,
+        elapsed,
+        state.ticks,
+    );
+    sampler.end(update_ship_manual_movement_id);
+
     let update_ship_tractoring_id = sampler.start(SamplerMarks::UpdateShipsTractoring as u32);
     if !client {
         state.locations[location_idx].ships = tractoring::update_ships_tractoring(
@@ -985,7 +996,7 @@ pub fn update_location(
     );
     state.locations[location_idx].minerals = container.get_minerals();
     if !client {
-        apply_tractored_iterms_consumption(&mut state, consume_updates)
+        apply_tractored_items_consumption(&mut state, consume_updates)
     }
     sampler.end(update_minerals_id);
     let update_containers_id = sampler.start(SamplerMarks::UpdateTractoredContainers as u32);
@@ -999,7 +1010,7 @@ pub fn update_location(
     );
     state.locations[location_idx].containers = container.get_containers();
     if !client {
-        apply_tractored_iterms_consumption(&mut state, consume_updates)
+        apply_tractored_items_consumption(&mut state, consume_updates)
     }
     sampler.end(update_containers_id);
 
@@ -1031,7 +1042,39 @@ pub fn update_location(
     sampler
 }
 
-fn apply_tractored_iterms_consumption(
+const MANUAL_MOVEMENT_INACTIVITY_DROP_MS: i32 = 500;
+
+fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, current_tick: u32) {
+    for ship in ships.iter_mut() {
+        let (new_move, new_pos) = if let Some(params) = &mut ship.movement.gas {
+            if (params.last_tick as i32 - current_tick as i32).abs()
+                > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
+            {
+                (None, None)
+            } else {
+                let sign = if params.forward { 1.0 } else { -1.0 };
+                let distance = SHIP_SPEED * elapsed_micro as f64 / 1000.0 / 1000.0 * sign;
+                let shift = Vec2f64 { x: 0.0, y: 1.0 }
+                    .rotate(ship.rotation)
+                    .scalar_mul(distance);
+                let new_pos = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                }
+                .add(&shift);
+                (Some(params.clone()), Some(new_pos))
+            }
+        } else {
+            (None, None)
+        };
+        ship.movement.gas = new_move;
+        if let Some(new_pos) = new_pos {
+            ship.set_from(&new_pos);
+        }
+    }
+}
+
+fn apply_tractored_items_consumption(
     mut state: &mut &mut GameState,
     consume_updates: Vec<(Uuid, Box<dyn IMovable>)>,
 ) {

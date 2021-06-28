@@ -639,16 +639,7 @@ export default class NetState extends EventEmitter {
     }
     const actions = Object.values(actionsActive).filter((a) => !!a);
     this.mutate_ship(actions as ShipActionRust[]);
-    const dockAction = actionsActive.Dock;
-    const navigateAction = actionsActive.Navigate;
-    const dockNavigateAction = actionsActive.DockNavigate;
-    const tractorAction = actionsActive.Tractor;
-    const nonNullActions = [
-      dockAction,
-      navigateAction,
-      dockNavigateAction,
-      tractorAction,
-    ].filter((a) => !!a) as ShipActionRust[];
+    const nonNullActions = actions.filter((a) => !!a) as ShipActionRust[];
 
     for (const action of nonNullActions) {
       const tag = uuid.v4();

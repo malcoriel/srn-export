@@ -250,6 +250,7 @@ pub enum SamplerMarks {
     UpdateTractoredContainers = 23,
     UpdateAbilityCooldowns = 24,
     UpdateAutofocus = 25,
+    UpdateShipsManualMovement = 26,
 }
 
 impl Display for SamplerMarks {
