@@ -194,7 +194,7 @@ const BROADCAST_SLEEP_MS: u64 = 500;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const MAX_MESSAGES_PER_INTERVAL: u32 = 10;
-const MAX_MESSAGE_SAMPLE_INTERVAL: i64 = 1000;
+const MAX_MESSAGE_SAMPLE_INTERVAL_MS: i64 = 200;
 pub const DEBUG_PHYSICS: bool = false;
 const MIN_SLEEP_TICKS: i32 = 100;
 
@@ -472,7 +472,7 @@ fn check_message_overflow_happened(client_id: Uuid) -> bool {
     let mut last_check = CLIENT_MESSAGE_COUNTS_LAST_CHECK.lock().unwrap();
     let now = Utc::now();
     let diff = (last_check.time - now).num_milliseconds().abs();
-    if diff > MAX_MESSAGE_SAMPLE_INTERVAL {
+    if diff > MAX_MESSAGE_SAMPLE_INTERVAL_MS {
         last_check.time = now;
         *message_counts = HashMap::new();
     }
@@ -487,7 +487,6 @@ fn check_message_overflow_happened(client_id: Uuid) -> bool {
         return true;
     }
     (*current_count) += 1;
-    eprintln!("client {} = {} msg", client_id, current_count);
     return false;
 }
 

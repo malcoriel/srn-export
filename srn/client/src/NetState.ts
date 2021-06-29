@@ -661,13 +661,11 @@ export default class NetState extends EventEmitter {
             this.lastSendOfManualMovementMap[action.tag] - performance.now()
           ) < MANUAL_MOVEMENT_SYNC_INTERVAL_MS
         ) {
-          console.log(`skip act ${action.tag} to not overflow server`);
           continue;
         } else {
           this.lastSendOfManualMovementMap[action.tag] = performance.now();
         }
       }
-      console.log('not skipped', action.tag);
       const tag = uuid.v4();
       this.pendingActions.push([tag, [action], this.state.ticks]);
       this.updateShipOnServer(tag, action);
