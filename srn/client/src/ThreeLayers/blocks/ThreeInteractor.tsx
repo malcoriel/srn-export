@@ -177,10 +177,7 @@ const ThreeInteractorImpl = ({
           </Text>
         </>
       )}
-      <Html>
-        {visuallyActive && <div id="interactor-menu-portal" />}
-        {visuallyActive && hint && <HintWindow windowContent={hint} />}
-      </Html>
+      <Html>{active && hint && <HintWindow windowContent={hint} />}</Html>
       <mesh>
         <ringGeometry
           args={[
