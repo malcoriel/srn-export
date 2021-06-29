@@ -10,8 +10,6 @@ import {
   extractLSValue,
   setLSValue,
 } from './utils/useLocalStorage';
-import React from 'react';
-import { GlobalContextMenuItem } from './HtmlLayers/GlobalContextMenu';
 import { ObjectSpecifier } from '../../world/pkg';
 
 export function genRandomName() {
@@ -92,10 +90,6 @@ export type SrnState = {
   ) => void;
   testMenuMode: TestMenuMode;
   setTestMenuMode: (val: TestMenuMode) => void;
-  contextMenuRef: React.RefObject<any>;
-  setContextMenuRef: (ref: React.RefObject<any>) => void;
-  contextMenuItems: GlobalContextMenuItem[];
-  setContextMenuItems: (items: GlobalContextMenuItem[]) => void;
   activeInteractorId?: string;
   setActiveInteractorId: (id?: string) => void;
   autoFocusSpecifier?: ObjectSpecifier | null;
@@ -230,10 +224,6 @@ export const useStore = create<SrnState>((set) => ({
   setPortrait: (val: string) => set({ portrait: val }),
   forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
   setPlaying: (val: boolean) => set({ playing: val }),
-  setContextMenuRef: (ref: React.RefObject<any>) =>
-    set({ contextMenuRef: ref }),
-  setContextMenuItems: (items: GlobalContextMenuItem[]) =>
-    set({ contextMenuItems: items }),
 
   nextPortrait: () =>
     set((state) => {
@@ -274,5 +264,5 @@ export const useStore = create<SrnState>((set) => ({
   activeInteractorId: undefined,
   setActiveInteractorId: (id: string | undefined) =>
     set(() => ({ activeInteractorId: id })),
-  setAutoFocusSpecifier: (sp) => set((state) => ({ autoFocusSpecifier: sp })),
+  setAutoFocusSpecifier: (sp) => set(() => ({ autoFocusSpecifier: sp })),
 }));

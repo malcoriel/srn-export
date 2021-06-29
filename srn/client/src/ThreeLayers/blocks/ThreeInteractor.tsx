@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useStore } from '../../store';
 import { Color } from 'three';
 import { MouseEvent } from 'react-three-fiber/canvas';
@@ -136,41 +136,12 @@ const ThreeInteractorImpl = ({
 
   const memoizedColor = useMemo(() => new Color(outlineColor), [outlineColor]);
   const outlineVisible = visuallyActive ? 1.0 : 0.0;
-  const menuAnchorRef = useRef(null);
-  const setContextMenuRef = useStore((state) => state.setContextMenuRef);
-  const setContextMenuItems = useStore((state) => state.setContextMenuItems);
   const setShowTractorCircle = useStore((state) => state.setShowTractorCircle);
   useEffect(() => {
     if (defaultAction === InteractorActionType.Tractor) {
       setShowTractorCircle(visuallyActive);
     }
   }, [defaultAction, visuallyActive, setShowTractorCircle]);
-  // useEffect(() => {
-  //   if (menuShown && menuAnchorRef.current) {
-  //     setContextMenuRef(menuAnchorRef);
-  //     const items = [...(actions?.entries() || [])].map(([key, fn]) => ({
-  //       text: InteractorActionType[key],
-  //       onClick: () => {
-  //         fn(objectId);
-  //         setMenuShown(false);
-  //       },
-  //       id: key.toString(),
-  //     }));
-  //     setContextMenuItems(items);
-  //   } else {
-  //     setContextMenuItems([]);
-  //     setTimeout(() => {
-  //       setContextMenuRef({ current: null });
-  //     }, 0);
-  //   }
-  // }, [
-  //   objectId,
-  //   menuAnchorRef,
-  //   menuShown,
-  //   setContextMenuItems,
-  //   setContextMenuRef,
-  //   actions,
-  // ]);
 
   // noinspection RequiredAttributes
   return (
@@ -207,7 +178,7 @@ const ThreeInteractorImpl = ({
         </>
       )}
       <Html>
-        <div ref={menuAnchorRef} />
+        {visuallyActive && <div id="interactor-menu-portal" />}
         {visuallyActive && hint && <HintWindow windowContent={hint} />}
       </Html>
       <mesh>
