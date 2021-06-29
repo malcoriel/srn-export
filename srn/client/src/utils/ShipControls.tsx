@@ -27,7 +27,7 @@ const refreshActiveActions = () => {
     actionsActive.Gas = ShipActionRustBuilder.ShipActionRustGas();
     actionsActive.Reverse = undefined;
     actionsActive.StopGas = undefined;
-  } else {
+  } else if (actionsActive.Gas || actionsActive.Reverse) {
     actionsActive.Reverse = undefined;
     actionsActive.Gas = undefined;
     actionsActive.StopGas = ShipActionRustBuilder.ShipActionRustStopGas();
@@ -41,7 +41,7 @@ const refreshActiveActions = () => {
     actionsActive.TurnRight = undefined;
     actionsActive.TurnLeft = ShipActionRustBuilder.ShipActionRustTurnLeft();
     actionsActive.StopTurn = undefined;
-  } else {
+  } else if (actionsActive.TurnRight || actionsActive.TurnLeft) {
     actionsActive.TurnRight = undefined;
     actionsActive.TurnLeft = undefined;
     actionsActive.StopTurn = ShipActionRustBuilder.ShipActionRustStopTurn();

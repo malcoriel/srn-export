@@ -5,6 +5,7 @@ import {
   Dialogue,
   GameMode,
   GameState,
+  isStillValidRepeatedControlActionThatCanBeIgnored,
   SandboxCommand,
   Ship,
   TradeAction,
@@ -294,10 +295,6 @@ export default class NetState extends EventEmitter {
   init = (mode: GameMode) => {
     this.mode = mode;
     console.log(`initializing NS ${this.id}`);
-    // this.updateOnServerInterval = setInterval(
-    //   () => this.updateShipOnServerManualMove(uuid.v4()),
-    //   MANUAL_MOVE_SHIP_UPDATE_INTERVAL
-    // );
     this.connecting = true;
     Perf.start();
     this.time.setInterval(
@@ -639,9 +636,21 @@ export default class NetState extends EventEmitter {
     }
     const actions = Object.values(actionsActive).filter((a) => !!a);
     this.mutate_ship(actions as ShipActionRust[]);
-    const nonNullActions = actions.filter((a) => !!a) as ShipActionRust[];
+    const actionsToSync = actions.filter((a) => !!a) as ShipActionRust[];
 
-    for (const action of nonNullActions) {
+    for (const action of actionsToSync) {
+      // prevent server DOS via gas action flooding
+      if (
+        isStillValidRepeatedControlActionThatCanBeIgnored(
+          action,
+          this.state.ticks,
+          this.indexes.myShip
+        )
+      ) {
+        console.log('skip act to not overflow server');
+        continue;
+      }
+      console.log('not skipped', action.tag);
       const tag = uuid.v4();
       this.pendingActions.push([tag, [action], this.state.ticks]);
       this.updateShipOnServer(tag, action);

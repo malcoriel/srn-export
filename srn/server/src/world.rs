@@ -1042,6 +1042,7 @@ pub fn update_location(
     sampler
 }
 
+// keep synced with world.ts
 const MANUAL_MOVEMENT_INACTIVITY_DROP_MS: i32 = 500;
 
 fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, current_tick: u32) {

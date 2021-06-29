@@ -158,7 +158,16 @@ lazy_static! {
 }
 
 lazy_static! {
+    static ref CLIENT_MESSAGE_COUNTS_LAST_CHECK: Arc<Mutex<LastCheck>> =
+        Arc::new(Mutex::new(LastCheck { time: Utc::now() }));
+}
+
+lazy_static! {
     static ref CLIENT_ERRORS: Arc<Mutex<HashMap<Uuid, u32>>> = Arc::new(Mutex::new(HashMap::new()));
+}
+lazy_static! {
+    static ref CLIENT_MESSAGE_COUNTS: Arc<Mutex<HashMap<Uuid, u32>>> =
+        Arc::new(Mutex::new(HashMap::new()));
 }
 
 lazy_static! {
@@ -184,6 +193,8 @@ const DEFAULT_SLEEP_MS: u64 = 1;
 const BROADCAST_SLEEP_MS: u64 = 500;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
+const MAX_MESSAGES_PER_INTERVAL: u32 = 10;
+const MAX_MESSAGE_SAMPLE_INTERVAL: i64 = 1000;
 pub const DEBUG_PHYSICS: bool = false;
 const MIN_SLEEP_TICKS: i32 = 100;
 
@@ -456,7 +467,34 @@ fn get_state_id(client_id: Uuid) -> Uuid {
     current_state_id
 }
 
+fn check_message_overflow_happened(client_id: Uuid) -> bool {
+    let mut message_counts = CLIENT_MESSAGE_COUNTS.lock().unwrap();
+    let mut last_check = CLIENT_MESSAGE_COUNTS_LAST_CHECK.lock().unwrap();
+    let now = Utc::now();
+    let diff = (last_check.time - now).num_milliseconds().abs();
+    if diff > MAX_MESSAGE_SAMPLE_INTERVAL {
+        last_check.time = now;
+        *message_counts = HashMap::new();
+    }
+
+    let current_count = message_counts.entry(client_id).or_insert(0);
+    if *current_count > MAX_MESSAGES_PER_INTERVAL {
+        warn!(format!(
+            "message overflow from client {}, skipping",
+            client_id
+        ));
+        increment_client_errors(client_id);
+        return true;
+    }
+    (*current_count) += 1;
+    eprintln!("client {} = {} msg", client_id, current_count);
+    return false;
+}
+
 fn on_client_text_message(client_id: Uuid, msg: String) {
+    if check_message_overflow_happened(client_id) {
+        return;
+    }
     let parts = msg.split("_%_").collect::<Vec<&str>>();
     if parts.len() < 2 || parts.len() > 3 {
         eprintln!("Corrupt message (not 2-3 parts) {}", msg);
