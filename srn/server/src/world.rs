@@ -1051,6 +1051,7 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
             if (params.last_tick as i32 - current_tick as i32).abs()
                 > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
             {
+                log!("expire gas/reverse");
                 (None, None)
             } else {
                 let sign = if params.forward { 1.0 } else { -1.0 };
@@ -1076,6 +1077,7 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
             if (params.last_tick as i32 - current_tick as i32).abs()
                 > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
             {
+                log!("expire turn");
                 None
             } else {
                 let sign = if params.forward { 1.0 } else { -1.0 };

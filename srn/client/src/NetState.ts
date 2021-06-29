@@ -5,7 +5,7 @@ import {
   Dialogue,
   GameMode,
   GameState,
-  isStillValidRepeatedControlActionThatCanBeIgnored,
+  isManualMovement,
   SandboxCommand,
   Ship,
   TradeAction,
@@ -116,6 +116,7 @@ const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 const MAX_ALLOWED_DIST_DESYNC = 5.0;
+const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 100;
 
 const serializeSandboxCommand = (cmd: SandboxCommand) => {
   // if (typeof cmd === 'string') return cmd;
@@ -164,6 +165,8 @@ export default class NetState extends EventEmitter {
   public desync: number;
 
   public lastReceivedServerTicks: number;
+
+  private lastSendOfManualMovement?: number;
 
   private lastSlowChangedState!: GameState;
 
@@ -634,27 +637,33 @@ export default class NetState extends EventEmitter {
       resetActions();
       return;
     }
+
     const actions = Object.values(actionsActive).filter((a) => !!a);
-    this.mutate_ship(actions as ShipActionRust[]);
     const actionsToSync = actions.filter((a) => !!a) as ShipActionRust[];
 
     for (const action of actionsToSync) {
       // prevent server DOS via gas action flooding
-      if (
-        isStillValidRepeatedControlActionThatCanBeIgnored(
-          action,
-          this.state.ticks,
-          this.indexes.myShip
-        )
-      ) {
-        console.log('skip act to not overflow server');
-        continue;
+      // it's important this runs before applying it to the local simulation,
+      // as otherwise it'll always get suppressed
+      if (isManualMovement(action)) {
+        if (
+          this.lastSendOfManualMovement &&
+          Math.abs(this.lastSendOfManualMovement - performance.now()) <
+            MANUAL_MOVEMENT_SYNC_INTERVAL_MS
+        ) {
+          console.log(`skip act ${action.tag} to not overflow server`);
+          continue;
+        } else {
+          this.lastSendOfManualMovement = performance.now();
+        }
       }
       console.log('not skipped', action.tag);
       const tag = uuid.v4();
       this.pendingActions.push([tag, [action], this.state.ticks]);
       this.updateShipOnServer(tag, action);
     }
+
+    this.mutate_ship(actions as ShipActionRust[]);
 
     if (actionsActive.Move) {
       this.visualState.boundCameraMovement = true;

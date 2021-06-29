@@ -391,51 +391,11 @@ export const getSpecifierId = (
   return os.id;
 };
 
-// keep synced with world.rs
-const MANUAL_MOVEMENT_INACTIVITY_DROP_MS = 500;
-
-const keepSuppressing = (
-  last_tick: number | undefined,
-  state_ticks: number
-) => {
-  if (!last_tick) {
-    return false;
-  }
-  return Math.abs(last_tick - state_ticks) < MANUAL_MOVEMENT_INACTIVITY_DROP_MS;
-};
-
-export const isStillValidRepeatedControlActionThatCanBeIgnored = (
-  act: ShipActionRust,
-  state_ticks: number,
-  myShip: Ship | null
-): boolean => {
-  switch (act.tag) {
-    case 'Unknown':
-      return true;
-    case 'Move':
-      return true;
-    case 'Gas': {
-      return keepSuppressing(myShip?.movement.gas?.last_tick, state_ticks);
-    }
-    case 'StopGas':
-      return false;
-    case 'StopTurn':
-      return false;
-    case 'Reverse':
-      return keepSuppressing(myShip?.movement.gas?.last_tick, state_ticks);
-    case 'TurnRight':
-      return keepSuppressing(myShip?.movement.turn?.last_tick, state_ticks);
-    case 'TurnLeft':
-      return keepSuppressing(myShip?.movement.turn?.last_tick, state_ticks);
-    case 'Dock':
-      return false;
-    case 'Navigate':
-      return false;
-    case 'DockNavigate':
-      return false;
-    case 'Tractor':
-      return false;
-    default:
-      throw new UnreachableCaseError(act);
-  }
+export const isManualMovement = (act: ShipActionRust): boolean => {
+  return (
+    act.tag === 'Gas' ||
+    act.tag === 'Reverse' ||
+    act.tag === 'TurnRight' ||
+    act.tag === 'TurnLeft'
+  );
 };

@@ -148,6 +148,7 @@ pub fn apply_ship_action(
             Some(ship)
         }
         ShipActionRust::Gas => {
+            log!("gas");
             let mut ship = old_ship.clone();
             ship.movement.gas = Some(MoveAxisParam {
                 forward: true,
@@ -160,6 +161,7 @@ pub fn apply_ship_action(
             Some(ship)
         }
         ShipActionRust::Reverse => {
+            log!("reverse");
             let mut ship = old_ship.clone();
             ship.movement.gas = Some(MoveAxisParam {
                 forward: false,
@@ -172,6 +174,7 @@ pub fn apply_ship_action(
             Some(ship)
         }
         ShipActionRust::TurnRight => {
+            log!("turn right");
             let mut ship = old_ship.clone();
             ship.movement.turn = Some(MoveAxisParam {
                 forward: true,
@@ -184,6 +187,7 @@ pub fn apply_ship_action(
             Some(ship)
         }
         ShipActionRust::TurnLeft => {
+            log!("turn left");
             let mut ship = old_ship.clone();
             ship.movement.turn = Some(MoveAxisParam {
                 forward: false,
@@ -196,11 +200,13 @@ pub fn apply_ship_action(
             Some(ship)
         }
         ShipActionRust::StopGas => {
+            log!("stop gas");
             let mut ship = old_ship.clone();
             ship.movement.gas = None;
             Some(ship)
         }
         ShipActionRust::StopTurn => {
+            log!("stop turn");
             let mut ship = old_ship.clone();
             ship.movement.turn = None;
             Some(ship)
