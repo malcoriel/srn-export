@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.6.14 (2021-06-29)
+
+### New
+* Manual ship movement is now acceleration-turn-based, rather than axis-aligned direction-based. Essentially,
+pressing W does no longer move you up, but rather forward to wherever your ship is facing.
+* Disabled ping calculation due to change of the network mechanics (see fixes).
+
+### Fixes
+* Improved server-side communication so less data is sent back and forth.
+* Somewhat fixed manual movement lags - no more horrible rollbacks, although there are still some little ones.
+
 ## Version 0.6.13 (2021-06-26)
 
 ### New
