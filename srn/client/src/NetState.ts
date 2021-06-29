@@ -6,6 +6,7 @@ import {
   GameMode,
   GameState,
   isManualMovement,
+  ManualMovementActionTags,
   SandboxCommand,
   Ship,
   TradeAction,
@@ -116,7 +117,8 @@ const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 const MAX_ALLOWED_DIST_DESYNC = 5.0;
-const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 100;
+// this has to be less than expiry (500ms) minus ping
+const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
 
 const serializeSandboxCommand = (cmd: SandboxCommand) => {
   // if (typeof cmd === 'string') return cmd;
@@ -166,7 +168,10 @@ export default class NetState extends EventEmitter {
 
   public lastReceivedServerTicks: number;
 
-  private lastSendOfManualMovement?: number;
+  private readonly lastSendOfManualMovementMap: Record<
+    ManualMovementActionTags,
+    number
+  >;
 
   private lastSlowChangedState!: GameState;
 
@@ -199,6 +204,12 @@ export default class NetState extends EventEmitter {
     this.ping = 0;
     this.desync = 0;
     this.lastReceivedServerTicks = -1;
+    this.lastSendOfManualMovementMap = {
+      Gas: 0,
+      Reverse: 0,
+      TurnRight: 0,
+      TurnLeft: 0,
+    };
     this.visualState = {
       boundCameraMovement: true,
       cameraPosition: {
@@ -642,19 +653,18 @@ export default class NetState extends EventEmitter {
     const actionsToSync = actions.filter((a) => !!a) as ShipActionRust[];
 
     for (const action of actionsToSync) {
-      // prevent server DOS via gas action flooding
-      // it's important this runs before applying it to the local simulation,
-      // as otherwise it'll always get suppressed
+      // prevent server DOS via gas action flooding, separated by action type
       if (isManualMovement(action)) {
         if (
-          this.lastSendOfManualMovement &&
-          Math.abs(this.lastSendOfManualMovement - performance.now()) <
-            MANUAL_MOVEMENT_SYNC_INTERVAL_MS
+          this.lastSendOfManualMovementMap[action.tag] &&
+          Math.abs(
+            this.lastSendOfManualMovementMap[action.tag] - performance.now()
+          ) < MANUAL_MOVEMENT_SYNC_INTERVAL_MS
         ) {
           console.log(`skip act ${action.tag} to not overflow server`);
           continue;
         } else {
-          this.lastSendOfManualMovement = performance.now();
+          this.lastSendOfManualMovementMap[action.tag] = performance.now();
         }
       }
       console.log('not skipped', action.tag);

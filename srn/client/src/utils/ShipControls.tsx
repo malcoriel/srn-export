@@ -19,6 +19,13 @@ export const actionsActive: Record<string, ShipActionRust | undefined> = {
 const keysActive: Record<string, boolean> = {};
 
 const refreshActiveActions = () => {
+  console.log(
+    Object.keys(keysActive).reduce((acc, curr) => {
+      if (keysActive[curr]) return acc + curr;
+      return acc;
+    }, '')
+  );
+
   if (!keysActive.KeyW && keysActive.KeyS) {
     actionsActive.Reverse = ShipActionRustBuilder.ShipActionRustReverse();
     actionsActive.Gas = undefined;

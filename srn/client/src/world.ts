@@ -23,6 +23,10 @@ import {
   Container,
   ObjectSpecifier,
   ShipActionRust,
+  ShipActionRustGas,
+  ShipActionRustReverse,
+  ShipActionRustTurnRight,
+  ShipActionRustTurnLeft,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -391,7 +395,21 @@ export const getSpecifierId = (
   return os.id;
 };
 
-export const isManualMovement = (act: ShipActionRust): boolean => {
+export type ManualMovementActionTags =
+  | 'Gas'
+  | 'Reverse'
+  | 'TurnRight'
+  | 'TurnLeft';
+
+export type ManualMovementAction =
+  | ShipActionRustGas
+  | ShipActionRustReverse
+  | ShipActionRustTurnRight
+  | ShipActionRustTurnLeft;
+
+export const isManualMovement = (
+  act: ShipActionRust
+): act is ManualMovementAction => {
   return (
     act.tag === 'Gas' ||
     act.tag === 'Reverse' ||
