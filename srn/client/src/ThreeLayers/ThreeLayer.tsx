@@ -69,6 +69,18 @@ const ResourceLoader = () => {
   return <primitive object={{}} />;
 };
 
+const SAFE_ENLARGE_BACKGROUND = 5.0;
+
+const getViewPortMaxDimension = () => {
+  const viewPortSize = viewPortSizeMeters();
+  return Math.max(viewPortSize.x, viewPortSize.y);
+};
+
+export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
+  const viewPortMaxDimension = getViewPortMaxDimension();
+  return viewPortMaxDimension * SAFE_ENLARGE_BACKGROUND * cameraZoomFactor;
+};
+
 export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -80,8 +92,6 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
 
   const hoverOnGrabbable = useStore((state) => state.showTractorCircle);
 
-  const viewPortSize = viewPortSizeMeters();
-  const viewPortMaxDimension = Math.max(viewPortSize.x, viewPortSize.y);
   return (
     <Canvas
       invalidateFrameloop
@@ -118,7 +128,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           three will not register clicks (through empty space)*/}
           <ThreeSpaceBackground
             shift={seedToNumber(state.seed) % 1000}
-            size={viewPortMaxDimension * 5.0} // enlarge just in case so we have it bigger than viewport
+            size={getBackgroundSize()}
             cameraBound
           />
           <ExternalCameraControl />

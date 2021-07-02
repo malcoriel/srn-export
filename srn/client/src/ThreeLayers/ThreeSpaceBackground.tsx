@@ -1,11 +1,12 @@
 import React, { useMemo, useRef } from 'react';
 import { Mesh, ShaderMaterial } from 'three';
-import { useFrame } from 'react-three-fiber';
+import { useFrame, useThree } from 'react-three-fiber';
 import _ from 'lodash';
 import { FloatUniformValue } from './shaders/uniformTypes';
 import { OrthographicCamera } from '@react-three/drei';
-import { CAMERA_HEIGHT } from './CameraControls';
+import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from './CameraControls';
 import { MouseEvent } from 'react-three-fiber/canvas';
+import { getBackgroundSize, Vector3Arr } from './ThreeLayer';
 
 const uniforms: {
   shift: FloatUniformValue;
@@ -144,12 +145,14 @@ export const ThreeSpaceBackground: React.FC<{
 }> = ({ shift, size, onClick, cameraBound, animationSpeed, boost = 1.0 }) => {
   const mesh = useRef<Mesh>();
 
-  useFrame(() => {
+  useFrame(({ camera }) => {
     if (mesh.current) {
       const material = mesh.current.material as ShaderMaterial;
       if (animationSpeed) {
         material.uniforms.shift.value += animationSpeed / 1000 / 600;
       }
+      const scale = getBackgroundSize(CAMERA_DEFAULT_ZOOM() / camera.zoom);
+      mesh.current.scale.set(scale, scale, scale);
     }
   });
 
