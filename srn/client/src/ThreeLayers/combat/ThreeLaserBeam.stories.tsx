@@ -21,7 +21,7 @@ const Template: Story = (args) => {
   return (
     <div key={`${revision}+${JSON.stringify(args)}`}>
       <StoryCanvas>
-        <ThreeSpaceBackground size={256} shift={0} />
+        <ThreeSpaceBackground size={256} shaderShift={0} />
         <ThreeLaserBeam
           start={new Vector(-50, 0)}
           end={new Vector(50, 25)}

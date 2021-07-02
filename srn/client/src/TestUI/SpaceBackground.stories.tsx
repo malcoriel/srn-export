@@ -18,7 +18,7 @@ const Template: Story = (args) => {
         </mesh>
         <ThreeSpaceBackground
           key={`${revision}+${JSON.stringify(args)}`}
-          shift={args.shift}
+          shaderShift={args.shift}
           size={257}
         />
       </StoryCanvas>

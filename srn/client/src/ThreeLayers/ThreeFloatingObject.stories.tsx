@@ -29,7 +29,7 @@ const Template: Story = (args) => {
   return (
     <div>
       <StoryCanvas>
-        <ThreeSpaceBackground size={256} shift={0} />
+        <ThreeSpaceBackground size={256} shaderShift={0} />
         <ThreeFloatingObject
           modelName={args.modelName}
           radius={40}

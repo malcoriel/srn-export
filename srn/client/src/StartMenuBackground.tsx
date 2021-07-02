@@ -26,7 +26,7 @@ export const StartMenuBackground = () => {
       }}
     >
       <ThreeSpaceBackground
-        shift={5}
+        shaderShift={5}
         boost={10.0}
         size={viewPortMaxDimension * 17.0}
         animationSpeed={3}

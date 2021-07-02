@@ -127,7 +127,8 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           {/*background plane serves to be a click helper, as otherwise
           three will not register clicks (through empty space)*/}
           <ThreeSpaceBackground
-            shift={seedToNumber(state.seed) % 1000}
+            shaderShift={seedToNumber(state.seed) % 1000}
+            cameraPositonParallaxed
             size={getBackgroundSize()}
             cameraBound
           />

@@ -58,7 +58,7 @@ export const StarMap: React.FC<StarMapProps> = ({
   }
   return (
     <>
-      <ThreeSpaceBackground shift={0} size={size} />
+      <ThreeSpaceBackground shaderShift={0} size={size} />
       {systems.map(({ id, star, position: rawPosition }) => {
         if (!star) {
           return null;

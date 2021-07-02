@@ -1,12 +1,14 @@
 import React, { useMemo, useRef } from 'react';
 import { Mesh, ShaderMaterial } from 'three';
-import { useFrame, useThree } from 'react-three-fiber';
+import { useFrame } from 'react-three-fiber';
 import _ from 'lodash';
 import { FloatUniformValue } from './shaders/uniformTypes';
 import { OrthographicCamera } from '@react-three/drei';
 import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from './CameraControls';
 import { MouseEvent } from 'react-three-fiber/canvas';
-import { getBackgroundSize, Vector3Arr } from './ThreeLayer';
+import { getBackgroundSize } from './ThreeLayer';
+import Vector, { IVector, VectorFzero } from '../utils/Vector';
+import NetState from '../NetState';
 
 const uniforms: {
   shift: FloatUniformValue;
@@ -135,17 +137,40 @@ void main()
 }
 `;
 
+const PARALLAX_COEFF = -0.05;
+
 export const ThreeSpaceBackground: React.FC<{
-  shift: number;
+  shaderShift: number;
   size: number;
   cameraBound?: boolean;
+  cameraPositonParallaxed?: boolean;
   boost?: number;
   animationSpeed?: number;
   onClick?: () => void;
-}> = ({ shift, size, onClick, cameraBound, animationSpeed, boost = 1.0 }) => {
+}> = ({
+  shaderShift,
+  size,
+  cameraPositonParallaxed,
+  onClick,
+  cameraBound,
+  animationSpeed,
+  boost = 1.0,
+}) => {
   const mesh = useRef<Mesh>();
+  const meshZ = cameraBound ? -(CAMERA_HEIGHT + 10) : -10;
 
   useFrame(({ camera }) => {
+    let parallaxShift: IVector;
+    if (!cameraPositonParallaxed) {
+      parallaxShift = VectorFzero;
+    } else {
+      const cameraPos = camera.position;
+      parallaxShift = new Vector(
+        cameraPos.x * PARALLAX_COEFF,
+        cameraPos.y * PARALLAX_COEFF
+      );
+    }
+
     if (mesh.current) {
       const material = mesh.current.material as ShaderMaterial;
       if (animationSpeed) {
@@ -153,18 +178,20 @@ export const ThreeSpaceBackground: React.FC<{
       }
       const scale = getBackgroundSize(CAMERA_DEFAULT_ZOOM() / camera.zoom);
       mesh.current.scale.set(scale, scale, scale);
+      console.log(parallaxShift);
+      mesh.current.position.x = parallaxShift.x;
+      mesh.current.position.y = parallaxShift.y;
     }
   });
 
   const uniforms2 = useMemo(() => {
     const patchedUniforms = _.cloneDeep(uniforms);
     patchedUniforms.size.value = size;
-    patchedUniforms.shift.value = shift;
+    patchedUniforms.shift.value = shaderShift;
     patchedUniforms.boost.value = boost;
     return patchedUniforms;
-  }, [shift, size, boost]);
+  }, [shaderShift, size, boost]);
 
-  const meshZ = cameraBound ? -(CAMERA_HEIGHT + 10) : -10;
   const backgroundPlaneMesh = (
     <mesh
       onContextMenu={(e: MouseEvent) => {
@@ -188,7 +215,7 @@ export const ThreeSpaceBackground: React.FC<{
   );
   // noinspection RequiredAttributes
   return cameraBound ? (
-    <OrthographicCamera key={shift} makeDefault>
+    <OrthographicCamera key={shaderShift} makeDefault>
       {backgroundPlaneMesh}
     </OrthographicCamera>
   ) : (

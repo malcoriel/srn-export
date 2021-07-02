@@ -161,9 +161,9 @@ const SlowEntitiesLayer = React.memo(
                           rotation={
                             (pPos.y < 0 ? -rotationDeg : rotationDeg) +
                             (negativeRotation ? -totalArc : 0) +
-                            // shift for the planet radius
+                            // shaderShift for the planet radius
                             radToDeg(beta) +
-                            // shift for every arc part
+                            // shaderShift for every arc part
                             (i * totalArc) / arcCount
                           }
                           opacity={
