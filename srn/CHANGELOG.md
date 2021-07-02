@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.6.14 (2021-07-02)
+
+### New
+* Space background now has a slight parallax effect relative to camera positon.
+
+### Fixes
+* Space background is no longer zoomed together with camera.
+
 ## Version 0.6.14 (2021-06-29)
 
 ### New
