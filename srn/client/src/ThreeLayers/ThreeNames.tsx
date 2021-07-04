@@ -47,7 +47,7 @@ const getNamesWithPos = (state: GameState): NameWithPos[] => {
       continue;
     }
     const ship = shipsById[player.ship_id];
-    if (!ship) {
+    if (!ship || ship.docked_at) {
       continue;
     }
     res.push({

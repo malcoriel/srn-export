@@ -36,7 +36,7 @@ const extractEffectsPositions = (
       continue;
     }
     const ship = shipsById[player.ship_id];
-    if (!ship) {
+    if (!ship || ship.docked_at) {
       continue;
     }
 
