@@ -1,9 +1,17 @@
 # Changelog
 
-## Version 0.6.14 (2021-07-02)
+## Version 0.6.16 (2021-07-04)
 
 ### New
-* Space background now has a slight parallax effect relative to camera positon.
+* Docked ships are now invisible.
+
+### Fixes
+* Removed unnecessary console logging.
+
+## Version 0.6.15 (2021-07-02)
+
+### New
+* Space background now has a slight parallax effect relative to camera position.
 
 ### Fixes
 * Space background is no longer zoomed together with camera.

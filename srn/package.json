@@ -1,6 +1,6 @@
 {
   "name": "srn",
-  "version": "0.6.15",
+  "version": "0.6.16",
   "main": "index.js",
   "license": "MIT",
   "private": true,
