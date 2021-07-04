@@ -27,6 +27,7 @@ import {
   ShipActionRustReverse,
   ShipActionRustTurnRight,
   ShipActionRustTurnLeft,
+  FullObjectSpecifier,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -343,7 +344,39 @@ export const findObjectById = (
   return undefined;
 };
 
-export const getObjectPosition = (obj: any): IVector => {
+export const findObjectBySpecifier = (
+  state: GameState,
+  specifier: FullObjectSpecifier
+): any => {
+  const loc = state.locations[specifier.loc_idx];
+  switch (specifier.obj_spec.tag) {
+    case 'Unknown':
+      return undefined;
+    case 'Mineral': {
+      const spec = specifier.obj_spec;
+      return loc.minerals.find((m) => m.id === spec.id);
+    }
+    case 'Container': {
+      const spec = specifier.obj_spec;
+      return loc.containers.find((c) => c.id === spec.id);
+    }
+    case 'Planet': {
+      const spec = specifier.obj_spec;
+      return loc.planets.find((o) => o.id === spec.id);
+    }
+    case 'Ship': {
+      const spec = specifier.obj_spec;
+      return loc.ships.find((o) => o.id === spec.id);
+    }
+    case 'Star': {
+      return loc.star?.id === specifier.obj_spec.id ? loc.star : undefined;
+    }
+    default:
+      throw new UnreachableCaseError(specifier.obj_spec);
+  }
+};
+
+export const findObjectPosition = (obj: any): IVector | null => {
   if (isIVector(obj)) {
     return {
       x: obj.x,
@@ -356,7 +389,15 @@ export const getObjectPosition = (obj: any): IVector => {
       y: obj.position.y,
     };
   }
-  throw new Error('Invalid object for getObjectPosition');
+  return null;
+};
+
+export const getObjectPosition = (obj: any): IVector => {
+  const pos = findObjectPosition(obj);
+  if (!pos) {
+    throw new Error('Invalid object for getObjectPosition');
+  }
+  return pos;
 };
 
 export const indexShipsByPlayerId = (

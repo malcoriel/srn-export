@@ -310,6 +310,14 @@ pub struct FullObjectIndexSpecifier {
     pub obj_idx: ObjectIndexSpecifier,
 }
 
+#[derive(
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
+)]
+pub struct FullObjectSpecifier {
+    pub loc_idx: usize,
+    pub obj_spec: ObjectSpecifier,
+}
+
 pub struct GameStateIndexes<'a> {
     pub planets_by_id: HashMap<Uuid, &'a Planet>,
     pub players_by_id: HashMap<Uuid, &'a Player>,

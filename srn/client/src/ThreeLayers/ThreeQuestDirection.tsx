@@ -91,6 +91,7 @@ export const ThreeQuestDirection: React.FC<{
   const myPlayer = findMyPlayer(state);
   const myShip = findMyShip(state);
   if (!myShip || !myPlayer) return null;
+  if (myShip.docked_at) return null;
   const shipPos = Vector.fromIVector(myShip);
   const quest = myPlayer?.quest;
   if (!quest) return null;

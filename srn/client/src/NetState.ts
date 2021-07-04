@@ -3,6 +3,9 @@ import {
   AABB,
   applyShipActionWasm,
   Dialogue,
+  findObjectById,
+  findObjectBySpecifier,
+  findObjectPosition,
   GameMode,
   GameState,
   isManualMovement,
@@ -28,6 +31,7 @@ import {
   NotificationAction,
   ShipActionRust,
 } from '../../world/pkg';
+import { ObjectSpecifierBuilder } from '../../world/pkg/world.extra';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -127,6 +131,7 @@ const serializeSandboxCommand = (cmd: SandboxCommand) => {
 
 export interface NetStateIndexes {
   myShip: Ship | null;
+  myShipPosition: Vector | null;
 }
 
 export default class NetState extends EventEmitter {
@@ -283,8 +288,26 @@ export default class NetState extends EventEmitter {
   private reindex() {
     this.indexes = {
       myShip: null,
+      myShipPosition: null,
     };
-    this.indexes.myShip = findMyShip(this.state);
+    const myShip = findMyShip(this.state);
+    this.indexes.myShip = myShip;
+    if (myShip) {
+      if (myShip.docked_at) {
+        const planet = findObjectBySpecifier(this.state, {
+          loc_idx: 0,
+          obj_spec: ObjectSpecifierBuilder.ObjectSpecifierPlanet({
+            id: myShip.docked_at,
+          }),
+        });
+        const myShipPosition = findObjectPosition(planet);
+        if (myShipPosition) {
+          this.indexes.myShipPosition = Vector.fromIVector(myShipPosition);
+        }
+      } else {
+        this.indexes.myShipPosition = Vector.fromIVector(myShip);
+      }
+    }
   }
 
   disconnectAndDestroy = () => {

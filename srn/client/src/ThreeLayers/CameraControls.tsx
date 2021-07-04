@@ -15,13 +15,15 @@ export const BoundCameraMover: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
 
-  const { state, visualState } = ns;
+  const { visualState, indexes } = ns;
 
   const { camera } = useThree();
   const forceMoveCameraToShip = (shipOverride?: Ship) => {
-    const myShip = shipOverride || findMyShip(state);
-    if (myShip) {
-      visualState.cameraPosition = { x: myShip.x, y: myShip.y };
+    const myShipPos = shipOverride
+      ? { x: shipOverride.x, y: shipOverride.y }
+      : indexes.myShipPosition;
+    if (myShipPos) {
+      visualState.cameraPosition = { x: myShipPos.x, y: myShipPos.y };
     }
     camera.position.set(
       visualState.cameraPosition.x,
