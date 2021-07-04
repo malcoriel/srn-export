@@ -3,7 +3,6 @@ import {
   AABB,
   applyShipActionWasm,
   Dialogue,
-  findObjectById,
   findObjectBySpecifier,
   findObjectPosition,
   GameMode,

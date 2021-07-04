@@ -178,7 +178,6 @@ export const ThreeSpaceBackground: React.FC<{
       }
       const scale = getBackgroundSize(CAMERA_DEFAULT_ZOOM() / camera.zoom);
       mesh.current.scale.set(scale, scale, scale);
-      console.log(parallaxShift);
       mesh.current.position.x = parallaxShift.x;
       mesh.current.position.y = parallaxShift.y;
     }
