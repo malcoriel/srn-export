@@ -2,8 +2,9 @@ use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::combat::ShootTarget;
+use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
-use crate::world::{GameEvent, GameState, ManualMoveUpdate, Ship};
+use crate::world::{dock_ship, GameEvent, GameState, ManualMoveUpdate, Ship};
 use crate::{combat, fire_event, indexing, tractoring, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
@@ -79,19 +80,11 @@ pub fn apply_ship_action(
                         y: planet.y,
                     };
                     if pos.euclidean_distance(&ship_pos) < planet.radius {
-                        ship.docked_at = Some(planet.id);
-                        ship.x = planet.x;
-                        ship.y = planet.y;
-                        ship.navigate_target = None;
-                        ship.dock_target = None;
-                        ship.trajectory = vec![];
-                        let player = indexing::find_my_player(state, player_id).unwrap().clone();
-
-                        fire_event(GameEvent::ShipDocked {
-                            ship: ship.clone(),
-                            player,
-                            planet: planet.clone(),
-                        });
+                        let player = indexing::find_my_player(state, player_id);
+                        if let Some(player) = player {
+                            let boxed = Box::new(planet.clone());
+                            dock_ship(&mut ship, player, &(boxed as Box<dyn IBody>));
+                        }
                         break;
                     }
                 }

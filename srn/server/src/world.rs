@@ -118,23 +118,6 @@ fn get_player_score(p: &Player) -> u32 {
     p.money as u32
 }
 
-pub fn update_ships_on_planets(planets: &Vec<Planet>, ships: &Vec<Ship>) -> Vec<Ship> {
-    let by_id = indexing::index_planets_by_id(planets);
-    ships
-        .into_iter()
-        .map(|s| {
-            let mut ship = s.clone();
-            if let Some(docked_at) = ship.docked_at {
-                by_id.get(&docked_at).map(|p| {
-                    ship.x = p.x;
-                    ship.y = p.y;
-                });
-            }
-            ship
-        })
-        .collect::<Vec<_>>()
-}
-
 pub fn generate_random_quest(
     player: &mut Player,
     planets: &Vec<Planet>,
@@ -943,12 +926,6 @@ pub fn update_location(
         belt.rotation += belt.orbit_speed / 1000.0 / 1000.0 * elapsed as f64;
     }
     sampler.end(update_ast_id);
-    let update_ships_on_planets_id = sampler.start(SamplerMarks::UpdateShipsOnPlanets as u32);
-    state.locations[location_idx].ships = update_ships_on_planets(
-        &state.locations[location_idx].planets,
-        &state.locations[location_idx].ships,
-    );
-    sampler.end(update_ships_on_planets_id);
 
     let update_ships_navigation_id = sampler.start(SamplerMarks::UpdateShipsNavigation as u32);
     let my_ship_id = find_my_ship(&state, state.my_id).map(|s| s.id);
@@ -1454,16 +1431,7 @@ pub fn update_ships_navigation(
                         let new_pos = move_ship(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
                         if new_pos.euclidean_distance(&planet_pos) < planet.get_radius() {
-                            ship.docked_at = Some(planet.get_id());
-                            ship.dock_target = None;
-                            ship.trajectory = vec![];
-                            let planet = planet.clone().clone();
-                            let player = player.clone().clone();
-                            fire_event(GameEvent::ShipDocked {
-                                ship: ship.clone(),
-                                planet: Planet::from(planet),
-                                player,
-                            });
+                            dock_ship(&mut ship, player, planet);
                         }
                     }
                 } else {
@@ -1477,6 +1445,21 @@ pub fn update_ships_navigation(
         res.push(ship);
     }
     res
+}
+
+pub fn dock_ship(mut ship: &mut Ship, player: &Player, planet: &Box<dyn IBody>) {
+    ship.docked_at = Some(planet.get_id());
+    ship.dock_target = None;
+    ship.x = planet.get_x();
+    ship.y = planet.get_y();
+    ship.trajectory = vec![];
+    let planet = planet.clone().clone();
+    let player = player.clone().clone();
+    fire_event(GameEvent::ShipDocked {
+        ship: ship.clone(),
+        planet: Planet::from(planet),
+        player,
+    });
 }
 
 fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
