@@ -18,6 +18,8 @@ pub enum LongActionStart {
     TransSystemJump { to: Uuid },
     Respawn,
     Shoot { target: ShootTarget },
+    // Dock { target_planet: Uuid },
+    // Undock { target_planet: Uuid },
 }
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
@@ -43,6 +45,12 @@ pub enum LongAction {
         micro_left: i32,
         percentage: u32,
     },
+    // Dock {
+    //     id: Uuid,
+    //     target: ShootTarget,
+    //     micro_left: i32,
+    //     percentage: u32,
+    // },
 }
 
 pub fn erase_details(la: LongAction) -> LongAction {
