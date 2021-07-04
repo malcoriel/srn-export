@@ -8,6 +8,7 @@ use wasm_bindgen::prelude::*;
 use crate::abilities::Ability;
 use crate::combat::ShootTarget;
 use crate::indexing::{find_my_player, find_my_player_mut, find_my_ship_index};
+use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, PLAYER_RESPAWN_TIME_MC};
 use crate::{combat, locations, new_id};
 
@@ -18,8 +19,8 @@ pub enum LongActionStart {
     TransSystemJump { to: Uuid },
     Respawn,
     Shoot { target: ShootTarget },
-    // Dock { target_planet: Uuid },
-    // Undock { target_planet: Uuid },
+    Dock { target_planet: Uuid },
+    Undock { target_planet: Uuid },
 }
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
@@ -45,12 +46,22 @@ pub enum LongAction {
         micro_left: i32,
         percentage: u32,
     },
-    // Dock {
-    //     id: Uuid,
-    //     target: ShootTarget,
-    //     micro_left: i32,
-    //     percentage: u32,
-    // },
+    Dock {
+        id: Uuid,
+        target_planet: Uuid,
+        end_pos: Vec2f64,
+        start_pos: Vec2f64,
+        micro_left: i32,
+        percentage: u32,
+    },
+    Undock {
+        id: Uuid,
+        from_planet: Uuid,
+        start_pos: Vec2f64,
+        end_pos: Vec2f64,
+        micro_left: i32,
+        percentage: u32,
+    },
 }
 
 pub fn erase_details(la: LongAction) -> LongAction {
@@ -72,6 +83,22 @@ pub fn erase_details(la: LongAction) -> LongAction {
         LongAction::Shoot { .. } => LongAction::Shoot {
             id: Default::default(),
             target: Default::default(),
+            micro_left: 0,
+            percentage: 0,
+        },
+        LongAction::Dock { .. } => LongAction::Dock {
+            id: Default::default(),
+            target_planet: Default::default(),
+            end_pos: Default::default(),
+            start_pos: Default::default(),
+            micro_left: 0,
+            percentage: 0,
+        },
+        LongAction::Undock { .. } => LongAction::Undock {
+            id: Default::default(),
+            from_planet: Default::default(),
+            start_pos: Default::default(),
+            end_pos: Default::default(),
             micro_left: 0,
             percentage: 0,
         },
@@ -163,6 +190,41 @@ pub fn try_start_long_action(
                 }
             }
         }
+        LongActionStart::Dock { target_planet, .. } => {
+            let ship_idx = find_my_ship_index(state, player_id);
+            if ship_idx.is_none() {
+                return false;
+            }
+            let ship_idx = ship_idx.unwrap();
+            let ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+            let planet = &state.locations[ship_idx.location_idx]
+                .planets
+                .iter()
+                .find(|p| p.id == target_planet);
+            if planet.is_none() {
+                return false;
+            }
+            let planet = planet.unwrap();
+            // currently, docking can only be initiated in the planet radius
+            if (Vec2f64 {
+                x: planet.x,
+                y: planet.y,
+            })
+            .euclidean_distance(&Vec2f64 {
+                x: ship.x,
+                y: ship.y,
+            }) < planet.radius
+            {
+                return false;
+            }
+            let player = find_my_player(state, player_id);
+            if player.is_none() {
+                return false;
+            }
+            let player = find_my_player_mut(state, player_id).unwrap();
+            player.long_actions.push(start_long_act(action));
+        }
+        LongActionStart::Undock { .. } => {}
     }
     return true;
 }
