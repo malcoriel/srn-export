@@ -16,7 +16,9 @@ use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
 use crate::combat::ShootTarget;
-use crate::indexing::{find_my_ship, find_my_ship_index, ObjectSpecifier};
+use crate::indexing::{
+    find_my_player, find_my_ship, find_my_ship_index, find_planet, ObjectSpecifier,
+};
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
 };
@@ -1460,6 +1462,21 @@ pub fn dock_ship(mut ship: &mut Ship, player: &Player, planet: &Box<dyn IBody>) 
         planet: Planet::from(planet),
         player,
     });
+}
+
+pub fn undock_ship(mut ship: &mut Ship, player_id: Uuid, state: &GameState) {
+    if let Some(planet_id) = ship.docked_at {
+        ship.docked_at = None;
+        let planet = find_planet(state, &planet_id).unwrap().clone();
+        ship.x = planet.x;
+        ship.y = planet.y;
+        let player = find_my_player(state, player_id).unwrap().clone();
+        fire_event(GameEvent::ShipUndocked {
+            ship: ship.clone(),
+            planet,
+            player: player.clone(),
+        });
+    }
 }
 
 fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {

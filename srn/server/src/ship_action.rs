@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::combat::ShootTarget;
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
-use crate::world::{dock_ship, GameEvent, GameState, ManualMoveUpdate, Ship};
+use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship};
 use crate::{combat, fire_event, indexing, tractoring, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
@@ -60,15 +60,7 @@ pub fn apply_ship_action(
             ship.navigate_target = None;
             ship.dock_target = None;
             if ship.docked_at.is_some() {
-                let planet_id = ship.docked_at.unwrap();
-                let planet = indexing::find_planet(state, &planet_id).unwrap().clone();
-                let player = indexing::find_my_player(state, player_id).unwrap().clone();
-                ship.docked_at = None;
-                fire_event(GameEvent::ShipUndocked {
-                    ship: ship.clone(),
-                    planet,
-                    player,
-                });
+                undock_ship(&mut ship, player_id, &state)
             } else {
                 let ship_pos = Vec2f64 {
                     x: ship.x,
@@ -100,7 +92,7 @@ pub fn apply_ship_action(
 
             ship.navigate_target = None;
             ship.dock_target = None;
-            ship.docked_at = None;
+            undock_ship(&mut ship, player_id, &state);
             ship.navigate_target = Some(target);
             ship.trajectory = world::build_trajectory_to_point(ship_pos, &target);
             ship.movement.gas = None;
@@ -120,7 +112,7 @@ pub fn apply_ship_action(
                 };
                 ship.navigate_target = None;
                 ship.dock_target = None;
-                ship.docked_at = None;
+                undock_ship(&mut ship, player_id, &state);
                 ship.dock_target = Some(target);
                 ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos);
                 ship.movement.gas = None;

@@ -9,7 +9,6 @@ use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::dialogue_dto::{Dialogue, DialogueElem, Substitution, SubstitutionType};
-use crate::fire_event;
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
     find_player_and_ship, find_player_and_ship_mut, index_planets_by_id,
@@ -26,6 +25,7 @@ use crate::world::{
     generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId,
     Ship,
 };
+use crate::{fire_event, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueUpdate {
@@ -455,16 +455,7 @@ fn apply_side_effects(
             DialogueOptionSideEffect::Undock => {
                 let my_ship = find_my_ship_mut(state, player_id);
                 if let Some(my_ship) = my_ship {
-                    my_ship.docked_at = None;
-                    if let Some(planet_id) = my_ship.docked_at {
-                        let planet = find_planet(&state_read, &planet_id).unwrap().clone();
-                        let player = find_my_player(&state_read, player_id).unwrap().clone();
-                        fire_event(GameEvent::ShipUndocked {
-                            ship: my_ship.clone(),
-                            planet,
-                            player: player.clone(),
-                        });
-                    }
+                    world::undock_ship(my_ship, player_id, &state_read);
                     state_changed = true;
                 }
             }
