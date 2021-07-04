@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.6.17 (2021-07-04)
+
+### Fixes
+* Hide names and effects of now-invisible docked ships.
+
 ## Version 0.6.16 (2021-07-04)
 
 ### New
