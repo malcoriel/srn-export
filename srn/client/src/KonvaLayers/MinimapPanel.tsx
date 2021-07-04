@@ -208,6 +208,7 @@ const FastEntitiesLayer = React.memo(
     return (
       <Layer>
         {state.locations[0].ships.map((s) => {
+          if (s.docked_at) return null;
           const pos = realPosToScreenPos(s);
           const isMy = myShip && s.id === myShip.id;
           return (

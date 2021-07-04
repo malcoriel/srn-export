@@ -18,6 +18,7 @@ export const ThreeShipsLayer: React.FC<{
   return (
     <group>
       {ships.map((s: Ship, i: number) => {
+        if (s.docked_at) return null;
         let tractorTargetPosition;
         if (s.tractor_target) {
           const min = findMineral(state, s.tractor_target);
