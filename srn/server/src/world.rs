@@ -1182,7 +1182,7 @@ fn update_ships_respawn(state: &mut GameState) {
     }
 
     for player_id in to_spawn {
-        try_start_long_action(state, player_id, LongActionStart::Respawn);
+        try_start_long_action(state, player_id, LongActionStart::Respawn, &mut gen_rng());
     }
 }
 

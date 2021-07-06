@@ -8,11 +8,13 @@ use wasm_bindgen::prelude::*;
 use crate::abilities::Ability;
 use crate::combat::ShootTarget;
 use crate::indexing::{find_my_player, find_my_player_mut, find_my_ship_index};
+use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, PLAYER_RESPAWN_TIME_MC};
 use crate::{combat, indexing, locations, new_id, world};
 use rand::prelude::SmallRng;
 use rand::Rng;
+use std::f64::consts::PI;
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone, Copy)]
 #[serde(tag = "tag")]
@@ -193,10 +195,7 @@ pub fn try_start_long_action(
                 }
             }
         }
-        LongActionStart::Dock {
-            to_planet: target_planet,
-            ..
-        } => {
+        LongActionStart::Dock { to_planet, .. } => {
             let ship_idx = find_my_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
@@ -206,21 +205,21 @@ pub fn try_start_long_action(
             let planet = &state.locations[ship_idx.location_idx]
                 .planets
                 .iter()
-                .find(|p| p.id == target_planet);
+                .find(|p| p.id == to_planet);
             if planet.is_none() {
                 return false;
             }
             let planet = planet.unwrap();
             // currently, docking can only be initiated in the planet radius
-            if (Vec2f64 {
-                x: planet.x,
-                y: planet.y,
-            })
-            .euclidean_distance(&Vec2f64 {
+            let ship_pos = Vec2f64 {
                 x: ship.x,
                 y: ship.y,
-            }) < planet.radius
-            {
+            };
+            let planet_pos = Vec2f64 {
+                x: planet.x,
+                y: planet.y,
+            };
+            if planet_pos.euclidean_distance(&ship_pos) < planet.radius {
                 return false;
             }
             let player = find_my_player(state, player_id);
@@ -228,17 +227,11 @@ pub fn try_start_long_action(
                 return false;
             }
             let player = find_my_player_mut(state, player_id).unwrap();
-            let mut act = LongAction::Dock {
+            let act = LongAction::Dock {
                 id: new_id(),
                 to_planet,
-                start_pos: Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                },
-                end_pos: Vec2f64 {
-                    x: planet.x,
-                    y: planet.y,
-                },
+                start_pos: ship_pos,
+                end_pos: planet_pos,
                 micro_left: SHIP_DOCK_TIME_TICKS,
                 percentage: 0,
             };
@@ -258,27 +251,29 @@ pub fn try_start_long_action(
             if planet.is_none() || ship.docked_at.map_or(true, |d| d != from_planet) {
                 return false;
             }
+            let planet = planet.unwrap();
             let player = find_my_player(state, player_id);
             if player.is_none() {
                 return false;
             }
-            let player = find_my_player_mut(state, player_id).unwrap();
-            let random_angle = prng.gen_range(0.0, f64::PI * 2.0);
+            let random_angle = prng.gen_range(0.0, PI * 2.0);
             let dist = planet.radius * 1.2;
             let vec = Vec2f64 { x: 1.0, y: 0.0 }
                 .rotate(random_angle)
                 .scalar_mul(dist);
-            let mut act = LongAction::Dock {
+            let planet_pos = Vec2f64 {
+                x: planet.x,
+                y: planet.y,
+            };
+            let act = LongAction::Undock {
                 id: new_id(),
-                to_planet,
-                start_pos: Vec2f64 {
-                    x: planet.x,
-                    y: planet.y,
-                },
+                from_planet,
+                start_pos: planet_pos,
                 end_pos: Vec2f64 { x: vec.x, y: vec.y },
                 micro_left: SHIP_DOCK_TIME_TICKS,
                 percentage: 0,
             };
+            let player = find_my_player_mut(state, player_id).unwrap();
             player.long_actions.push(act);
         }
     }
@@ -322,12 +317,14 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                     return None;
                 }
                 has_dock = true;
+                Some(a)
             }
             LongAction::Undock { .. } => {
                 if has_dock || has_undock {
                     return None;
                 }
                 has_undock = true;
+                Some(a)
             }
         })
         .collect();
@@ -399,13 +396,15 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction) 
             let planet = indexing::find_planet(state, &to_planet).map(|p| p.clone());
             let ship = indexing::find_my_ship_mut(state, player_id);
             if let (Some(ship), Some(player), Some(planet)) = (ship, player, planet) {
-                world::dock_ship(ship, &player, &planet);
+                let body = Box::new(planet) as Box<dyn IBody>;
+                world::dock_ship(ship, &player, &body);
             }
         }
-        LongAction::Undock { from_planet, .. } => {
+        LongAction::Undock { .. } => {
+            let state_read = state.clone();
             let ship = indexing::find_my_ship_mut(state, player_id);
             if let Some(ship) = ship {
-                world::undock_ship(ship, player_id, &state.clone())
+                world::undock_ship(ship, player_id, &state_read)
             }
         }
     }
@@ -463,8 +462,48 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                 left > 0,
             )
         }
-        LongAction::Dock { .. } => {}
-        LongAction::Undock { .. } => {}
+        LongAction::Dock {
+            micro_left,
+            id,
+            to_planet,
+            start_pos,
+            end_pos,
+            ..
+        } => {
+            let left = micro_left - micro_passed as i32;
+            (
+                LongAction::Dock {
+                    id,
+                    micro_left: left,
+                    to_planet,
+                    start_pos,
+                    end_pos,
+                    percentage: calc_percentage(left, SHIP_DOCK_TIME_TICKS),
+                },
+                left > 0,
+            )
+        }
+        LongAction::Undock {
+            micro_left,
+            id,
+            from_planet,
+            start_pos,
+            end_pos,
+            ..
+        } => {
+            let left = micro_left - micro_passed as i32;
+            (
+                LongAction::Undock {
+                    id,
+                    micro_left: left,
+                    from_planet,
+                    start_pos,
+                    end_pos,
+                    percentage: calc_percentage(left, SHIP_UNDOCK_TIME_TICKS),
+                },
+                left > 0,
+            )
+        }
     };
 }
 
