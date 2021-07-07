@@ -17,7 +17,8 @@ use wasm_bindgen::prelude::*;
 use crate::abilities::Ability;
 use crate::combat::ShootTarget;
 use crate::indexing::{
-    find_my_player, find_my_ship, find_my_ship_index, find_planet, ObjectSpecifier,
+    find_my_player, find_my_ship, find_my_ship_index, find_planet, index_planets_by_id,
+    index_players_by_ship_id, ObjectSpecifier,
 };
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
@@ -941,6 +942,12 @@ pub fn update_location(
         client,
     );
     sampler.end(update_ships_navigation_id);
+    if !client {
+        let initiate_docking_id =
+            sampler.start(SamplerMarks::UpdateInitiateShipsDockingByNavigation as u32);
+        update_initiate_ship_docking_by_navigation(state, location_idx, &mut gen_rng());
+        sampler.end(initiate_docking_id);
+    }
 
     let update_ship_manual_movement_id =
         sampler.start(SamplerMarks::UpdateShipsManualMovement as u32);
@@ -1011,7 +1018,7 @@ pub fn update_location(
         );
         sampler.end(update_minerals_respawn_id);
         let respawn_id = sampler.start(SamplerMarks::UpdateShipsRespawn as u32);
-        update_ships_respawn(&mut state);
+        update_ships_respawn(&mut state, &mut gen_rng());
         sampler.end(respawn_id);
     }
     let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
@@ -1019,6 +1026,54 @@ pub fn update_location(
     sampler.end(autofocus_id);
 
     sampler
+}
+
+fn update_initiate_ship_docking_by_navigation(
+    state: &mut GameState,
+    location_idx: usize,
+    prng: &mut SmallRng,
+) {
+    let ships = &state.locations[location_idx].ships;
+    let planets_by_id = index_planets_by_id(&state.locations[location_idx].planets);
+    let players_by_ship_id = index_players_by_ship_id(&state.players);
+    let mut to_dock = vec![];
+    for i in 0..ships.len() {
+        let ship = &ships[i];
+        if let Some(t) = ship.dock_target {
+            if let Some(planet) = planets_by_id.get(&t) {
+                if let Some(player) = players_by_ship_id.get(&ship.id) {
+                    let planet_pos = Vec2f64 {
+                        x: planet.x,
+                        y: planet.y,
+                    };
+                    let ship_pos = Vec2f64 {
+                        x: ship.x,
+                        y: ship.y,
+                    };
+                    if planet_pos.euclidean_distance(&ship_pos) < planet.radius {
+                        let docks_in_progress = player
+                            .long_actions
+                            .iter()
+                            .any(|a| matches!(a, LongAction::Dock { .. }));
+
+                        if !docks_in_progress {
+                            to_dock.push((player.id, planet.id))
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for (player_id, planet_id) in to_dock {
+        try_start_long_action(
+            state,
+            player_id,
+            LongActionStart::Dock {
+                to_planet: planet_id,
+            },
+            prng,
+        );
+    }
 }
 
 // keep synced with world.ts
@@ -1163,7 +1218,7 @@ fn gen_pos_in_belt(belt: &AsteroidBelt) -> Vec2f64 {
     Vec2f64 { x, y }
 }
 
-fn update_ships_respawn(state: &mut GameState) {
+fn update_ships_respawn(state: &mut GameState, prng: &mut SmallRng) {
     let mut to_spawn = vec![];
     for player in state.players.iter() {
         if player.ship_id.is_none() {
@@ -1182,7 +1237,7 @@ fn update_ships_respawn(state: &mut GameState) {
     }
 
     for player_id in to_spawn {
-        try_start_long_action(state, player_id, LongActionStart::Respawn, &mut gen_rng());
+        try_start_long_action(state, player_id, LongActionStart::Respawn, prng);
     }
 }
 
@@ -1385,7 +1440,6 @@ pub fn update_ships_navigation(
             eprintln!("Cannot update ship {} without owner", ship.id);
             continue;
         }
-        let player = player.unwrap();
         if !ship.docked_at.is_some() {
             let max_shift = SHIP_SPEED * elapsed_micro as f64 / 1000.0 / 1000.0;
 
@@ -1418,10 +1472,6 @@ pub fn update_ships_navigation(
                         x: ship.x,
                         y: ship.y,
                     };
-                    let planet_pos = Vec2f64 {
-                        x: planet.get_x(),
-                        y: planet.get_y(),
-                    };
                     let planet_anchor = bodies_by_id.get(&planet.get_anchor_id()).unwrap();
                     ship.trajectory = build_trajectory_to_body(ship_pos, &planet, planet_anchor);
                     if let Some(first) = ship.trajectory.clone().get(0) {
@@ -1432,9 +1482,6 @@ pub fn update_ships_navigation(
                         }
                         let new_pos = move_ship(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
-                        if new_pos.euclidean_distance(&planet_pos) < planet.get_radius() {
-                            dock_ship(&mut ship, player, planet);
-                        }
                     }
                 } else {
                     eprintln!("Attempt to navigate to non-existent planet {}", target);

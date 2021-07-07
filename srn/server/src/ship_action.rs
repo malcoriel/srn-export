@@ -46,42 +46,11 @@ pub fn apply_ship_action(
         }
         ShipActionRust::Move { .. } => {
             warn!("Move ship action is obsolete");
-            // let mut ship = old_ship.clone();
-            // ship.x = update.position.x;
-            // ship.y = update.position.y;
-            // ship.rotation = update.rotation;
-            // ship.navigate_target = None;
-            // ship.dock_target = None;
-            // ship.trajectory = vec![];
             Some(old_ship.clone())
         }
         ShipActionRust::Dock => {
-            let mut ship = old_ship.clone();
-            ship.navigate_target = None;
-            ship.dock_target = None;
-            if ship.docked_at.is_some() {
-                undock_ship(&mut ship, player_id, &state)
-            } else {
-                let ship_pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                };
-                for planet in state.locations[ship_idx.location_idx].planets.iter() {
-                    let pos = Vec2f64 {
-                        x: planet.x,
-                        y: planet.y,
-                    };
-                    if pos.euclidean_distance(&ship_pos) < planet.radius {
-                        let player = indexing::find_my_player(state, player_id);
-                        if let Some(player) = player {
-                            let boxed = Box::new(planet.clone());
-                            dock_ship(&mut ship, player, &(boxed as Box<dyn IBody>));
-                        }
-                        break;
-                    }
-                }
-            }
-            Some(ship)
+            warn!("Dock ship action is obsolete");
+            Some(old_ship.clone())
         }
         ShipActionRust::Navigate { target } => {
             let mut ship = old_ship.clone();
@@ -89,7 +58,6 @@ pub fn apply_ship_action(
                 x: ship.x,
                 y: ship.y,
             };
-
             ship.navigate_target = None;
             ship.dock_target = None;
             undock_ship(&mut ship, player_id, &state);

@@ -219,7 +219,7 @@ pub fn try_start_long_action(
                 x: planet.x,
                 y: planet.y,
             };
-            if planet_pos.euclidean_distance(&ship_pos) < planet.radius {
+            if planet_pos.euclidean_distance(&ship_pos) > planet.radius {
                 return false;
             }
             let player = find_my_player(state, player_id);
