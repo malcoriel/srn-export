@@ -5,9 +5,14 @@ import _ from 'lodash';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { LongAction } from '../../../world/pkg';
+import { UnreachableCaseError } from 'ts-essentials';
 
 const getActionName = (a: LongAction): string | undefined => {
   switch (a.tag) {
+    case 'Dock':
+      return 'Docking...';
+    case 'Undock':
+      return 'Undocking..';
     case 'Unknown':
       return undefined;
     case 'TransSystemJump':
@@ -17,7 +22,26 @@ const getActionName = (a: LongAction): string | undefined => {
     case 'Shoot':
       return undefined;
     default:
-      return undefined;
+      throw new UnreachableCaseError(a);
+  }
+};
+
+export const isDisplayableLongAction = (a: LongAction): boolean => {
+  switch (a.tag) {
+    case 'Unknown':
+      return false;
+    case 'TransSystemJump':
+      return true;
+    case 'Respawn':
+      return true;
+    case 'Shoot':
+      return false;
+    case 'Dock':
+      return true;
+    case 'Undock':
+      return true;
+    default:
+      throw new UnreachableCaseError(a);
   }
 };
 
@@ -39,7 +63,7 @@ export const LongActionsDisplay = () => {
     <div className="long-actions-display">
       <div className="container">
         {long_actions.map((a) => {
-          if (a.tag === 'Unknown' || a.tag === 'Shoot') {
+          if (a.tag === 'Unknown' || !isDisplayableLongAction(a)) {
             return null;
           }
           const name = getActionName(a);

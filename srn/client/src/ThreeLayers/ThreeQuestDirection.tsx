@@ -25,7 +25,7 @@ export const ThreeQuestDirectionImpl: React.FC<ThreeQuestDirectionImplParams> = 
   mediumArrowPoints,
   smallArrowPoints,
 }: ThreeQuestDirectionImplParams) => {
-  let points = arrowPoints.map(vecToThreePos).map(liftThreePos(50));
+  const points = arrowPoints.map(vecToThreePos).map(liftThreePos(50));
   return (
     <>
       <ThreeLine
