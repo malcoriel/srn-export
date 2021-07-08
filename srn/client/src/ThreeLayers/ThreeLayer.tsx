@@ -84,7 +84,7 @@ export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
 export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const ns = NetState.get();
   if (!ns) return null;
-  const { state, visMap, visualState } = ns;
+  const { state, visMap, visualState, indexes } = ns;
   const [shown] = useToggleHotkey('shift+g', false, 'show helper grid');
   const showCoords = shown;
 
@@ -148,7 +148,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
             visMap={visMap}
             visualState={visualState}
           />
-          <ThreeShipsLayer state={state} visMap={visMap} />
+          <ThreeShipsLayer state={state} visMap={visMap} indexes={indexes} />
           <ThreeQuestDirection state={state} visualState={visualState} />
           <ThreeNames netState={ns} visMap={visMap} />
           <ThreeWeaponEffectsLayer />

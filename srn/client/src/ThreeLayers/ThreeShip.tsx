@@ -22,6 +22,7 @@ type ThreeShipProps = {
   rotation: number;
   radius: number;
   visible: boolean;
+  opacity: number;
   interactor?: ThreeInteractorProps;
 };
 
@@ -37,6 +38,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     interactor,
     radius,
     gid,
+    opacity,
   }) => {
     const tractorRef = useRef<Mesh>();
     // @ts-ignore
@@ -89,7 +91,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           // @ts-ignore
           geometry={shipModel}
         >
-          <meshBasicMaterial color={color} />
+          <meshBasicMaterial color={color} opacity={opacity} transparent />
         </mesh>
         {tractorBeamParams && (
           <mesh

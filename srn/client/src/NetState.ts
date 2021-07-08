@@ -9,6 +9,7 @@ import {
   GameState,
   isManualMovement,
   ManualMovementActionTags,
+  Player,
   SandboxCommand,
   Ship,
   TradeAction,
@@ -131,6 +132,8 @@ const serializeSandboxCommand = (cmd: SandboxCommand) => {
 export interface NetStateIndexes {
   myShip: Ship | null;
   myShipPosition: Vector | null;
+  playersById: Map<string, Player>;
+  playersByShipId: Map<string, Player>;
 }
 
 export default class NetState extends EventEmitter {
@@ -288,6 +291,8 @@ export default class NetState extends EventEmitter {
     this.indexes = {
       myShip: null,
       myShipPosition: null,
+      playersById: new Map(),
+      playersByShipId: new Map(),
     };
     const myShip = findMyShip(this.state);
     this.indexes.myShip = myShip;
@@ -305,6 +310,12 @@ export default class NetState extends EventEmitter {
         }
       } else {
         this.indexes.myShipPosition = Vector.fromIVector(myShip);
+      }
+    }
+    for (const player of this.state.players) {
+      this.indexes.playersById.set(player.id, player);
+      if (player.ship_id) {
+        this.indexes.playersByShipId.set(player.ship_id, player);
       }
     }
   }
