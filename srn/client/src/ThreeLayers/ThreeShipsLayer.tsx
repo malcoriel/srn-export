@@ -1,18 +1,10 @@
 import React from 'react';
-import _ from 'lodash';
-import { findContainer, findMineral, GameState } from '../world';
+import { findContainer, findMineral, GameState, Ship } from '../world';
 import { ThreeShip } from './ThreeShip';
-import { Ship } from '../world';
 import Vector from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
 import { NetStateIndexes } from '../NetState';
 import { LongActionDock } from '../../../world/pkg';
-
-const interpolate = (from: number, to: number, percentage: number): number => {
-  let res = (to - from) * percentage + from;
-  //console.log(from, to, res);
-  return res;
-};
 
 export const ThreeShipsLayer: React.FC<{
   visMap: Record<string, boolean>;
@@ -20,9 +12,7 @@ export const ThreeShipsLayer: React.FC<{
   indexes: NetStateIndexes;
 }> = ({ visMap, state, indexes }) => {
   if (!state) return null;
-  const { ships, planets } = state.locations[0];
-
-  const planetsById = _.keyBy(planets, 'id');
+  const { ships } = state.locations[0];
 
   return (
     <group>
@@ -39,10 +29,6 @@ export const ThreeShipsLayer: React.FC<{
           }
         }
 
-        const shipPos = {
-          x: s.x,
-          y: s.y,
-        };
         const player = indexes.playersByShipId.get(s.id);
 
         let dockingLongAction;
@@ -52,25 +38,6 @@ export const ThreeShipsLayer: React.FC<{
           ) as LongActionDock;
         }
 
-        if (s.docked_at) {
-          const dockPlanet = planetsById[s.docked_at];
-          if (dockPlanet) {
-            shipPos.x = dockPlanet.x;
-            shipPos.y = dockPlanet.y;
-          }
-        } else if (dockingLongAction) {
-          const pct = dockingLongAction.percentage / 100;
-          shipPos.x = interpolate(
-            dockingLongAction.start_pos.x,
-            dockingLongAction.end_pos.x,
-            pct
-          );
-          shipPos.y = interpolate(
-            dockingLongAction.start_pos.y,
-            dockingLongAction.end_pos.y,
-            pct
-          );
-        }
         let opacity = dockingLongAction
           ? 1 - dockingLongAction.percentage / 100
           : 1.0;

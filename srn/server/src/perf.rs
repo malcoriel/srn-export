@@ -252,6 +252,7 @@ pub enum SamplerMarks {
     UpdateAutofocus = 25,
     UpdateShipsManualMovement = 26,
     UpdateInitiateShipsDockingByNavigation = 27,
+    UpdateInterpolateDockingShips = 28,
 }
 
 impl Display for SamplerMarks {

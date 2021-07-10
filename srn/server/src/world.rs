@@ -18,14 +18,14 @@ use crate::abilities::Ability;
 use crate::combat::ShootTarget;
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, index_planets_by_id,
-    index_players_by_ship_id, ObjectSpecifier,
+    index_players_by_ship_id, index_ships_by_id, ObjectSpecifier,
 };
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
 };
 use crate::long_actions::{
     cancel_all_long_actions_of_type, finish_long_act, tick_long_act, try_start_long_action,
-    LongAction, LongActionStart,
+    LongAction, LongActionStart, SHIP_DOCKING_RADIUS_COEFF,
 };
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
@@ -948,7 +948,9 @@ pub fn update_location(
         update_initiate_ship_docking_by_navigation(state, location_idx, &mut gen_rng());
         sampler.end(initiate_docking_id);
     }
-
+    let interpolate_docking_id = sampler.start(SamplerMarks::UpdateInterpolateDockingShips as u32);
+    interpolate_docking_ships_position(state, location_idx);
+    sampler.end(interpolate_docking_id);
     let update_ship_manual_movement_id =
         sampler.start(SamplerMarks::UpdateShipsManualMovement as u32);
     update_ships_manual_movement(
@@ -1028,6 +1030,43 @@ pub fn update_location(
     sampler
 }
 
+fn interpolate(from: f64, to: f64, percentage: f64) -> f64 {
+    return (to - from) * percentage + from;
+}
+
+fn interpolate_docking_ships_position(state: &mut GameState, location_idx: usize) {
+    let docking_ship_ids: HashMap<Uuid, &LongAction> =
+        HashMap::from_iter(state.players.iter().filter_map(|p| {
+            let long_act = p
+                .long_actions
+                .iter()
+                .filter(|la| matches!(la, LongAction::Dock { .. }))
+                .nth(0);
+            if let Some(la) = long_act {
+                if let Some(sid) = p.ship_id {
+                    return Some((sid, la));
+                }
+            }
+            return None;
+        }));
+    for ship in state.locations[location_idx].ships.iter_mut() {
+        if let Some(long_act) = docking_ship_ids.get(&ship.id) {
+            match long_act {
+                LongAction::Dock {
+                    start_pos,
+                    end_pos,
+                    percentage,
+                    ..
+                } => {
+                    ship.x = interpolate(start_pos.x, end_pos.x, *percentage as f64 / 100.0);
+                    ship.y = interpolate(start_pos.y, end_pos.y, *percentage as f64 / 100.0);
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
 fn update_initiate_ship_docking_by_navigation(
     state: &mut GameState,
     location_idx: usize,
@@ -1050,7 +1089,9 @@ fn update_initiate_ship_docking_by_navigation(
                         x: ship.x,
                         y: ship.y,
                     };
-                    if planet_pos.euclidean_distance(&ship_pos) < planet.radius {
+                    if planet_pos.euclidean_distance(&ship_pos)
+                        < planet.radius * planet.radius * SHIP_DOCKING_RADIUS_COEFF
+                    {
                         let docks_in_progress = player
                             .long_actions
                             .iter()

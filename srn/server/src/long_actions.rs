@@ -219,7 +219,9 @@ pub fn try_start_long_action(
                 x: planet.x,
                 y: planet.y,
             };
-            if planet_pos.euclidean_distance(&ship_pos) > planet.radius {
+            eprintln!("ship_pos {:?} planet_pos {:?}", ship_pos, planet_pos);
+            if planet_pos.euclidean_distance(&ship_pos) > planet.radius * SHIP_DOCKING_RADIUS_COEFF
+            {
                 return false;
             }
             let player = find_my_player(state, player_id);
@@ -236,6 +238,11 @@ pub fn try_start_long_action(
                 percentage: 0,
             };
             player.long_actions.push(act);
+
+            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+            ship.trajectory = vec![];
+            ship.dock_target = None;
+            ship.navigate_target = None;
         }
         LongActionStart::Undock { from_planet } => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -334,6 +341,7 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
 const TRANS_SYSTEM_JUMP_TIME: i32 = 5 * 1000 * 1000;
 const SHIP_DOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
 const SHIP_UNDOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
+pub const SHIP_DOCKING_RADIUS_COEFF: f64 = 2.0;
 
 pub fn start_long_act(act: LongActionStart) -> LongAction {
     return match act {
