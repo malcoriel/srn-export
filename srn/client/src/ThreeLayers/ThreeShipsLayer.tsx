@@ -38,12 +38,9 @@ export const ThreeShipsLayer: React.FC<{
           ) as LongActionDock;
         }
 
-        let opacity = dockingLongAction
+        const opacity = dockingLongAction
           ? 1 - dockingLongAction.percentage / 100
           : 1.0;
-        if (s.docked_at) {
-          opacity = 0.0;
-        }
         return (
           <ThreeShip
             gid={s.id}

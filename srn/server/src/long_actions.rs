@@ -53,7 +53,6 @@ pub enum LongAction {
     Dock {
         id: Uuid,
         to_planet: Uuid,
-        end_pos: Vec2f64,
         start_pos: Vec2f64,
         micro_left: i32,
         percentage: u32,
@@ -93,7 +92,6 @@ pub fn erase_details(la: LongAction) -> LongAction {
         LongAction::Dock { .. } => LongAction::Dock {
             id: Default::default(),
             to_planet: Default::default(),
-            end_pos: Default::default(),
             start_pos: Default::default(),
             micro_left: 0,
             percentage: 0,
@@ -219,7 +217,6 @@ pub fn try_start_long_action(
                 x: planet.x,
                 y: planet.y,
             };
-            eprintln!("ship_pos {:?} planet_pos {:?}", ship_pos, planet_pos);
             if planet_pos.euclidean_distance(&ship_pos) > planet.radius * SHIP_DOCKING_RADIUS_COEFF
             {
                 return false;
@@ -233,7 +230,6 @@ pub fn try_start_long_action(
                 id: new_id(),
                 to_planet,
                 start_pos: ship_pos,
-                end_pos: planet_pos,
                 micro_left: SHIP_DOCK_TIME_TICKS,
                 percentage: 0,
             };
@@ -370,7 +366,6 @@ pub fn start_long_act(act: LongActionStart) -> LongAction {
             id: new_id(),
             to_planet,
             start_pos: Default::default(),
-            end_pos: Default::default(),
             micro_left: SHIP_DOCK_TIME_TICKS,
             percentage: 0,
         },
@@ -385,19 +380,25 @@ pub fn start_long_act(act: LongActionStart) -> LongAction {
     };
 }
 
-pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction) {
+pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, client: bool) {
     match act {
         LongAction::Unknown { .. } => {
             // nothing to do
         }
         LongAction::TransSystemJump { to, .. } => {
-            locations::try_move_player_ship(state, player_id, to);
+            if !client {
+                locations::try_move_player_ship(state, player_id, to);
+            }
         }
         LongAction::Respawn { .. } => {
-            spawn_ship(state, player_id, None);
+            if !client {
+                spawn_ship(state, player_id, None);
+            }
         }
         LongAction::Shoot { target, .. } => {
-            combat::resolve_shoot(state, player_id, target);
+            if !client {
+                combat::resolve_shoot(state, player_id, target);
+            }
         }
         LongAction::Dock { to_planet, .. } => {
             let player = indexing::find_my_player(state, player_id).map(|p| p.clone());
@@ -475,7 +476,6 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
             id,
             to_planet,
             start_pos,
-            end_pos,
             ..
         } => {
             let left = micro_left - micro_passed as i32;
@@ -485,7 +485,6 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                     micro_left: left,
                     to_planet,
                     start_pos,
-                    end_pos,
                     percentage: calc_percentage(left, SHIP_DOCK_TIME_TICKS),
                 },
                 left > 0,

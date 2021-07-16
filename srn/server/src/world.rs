@@ -864,10 +864,8 @@ pub fn update_world(
                 })
                 .collect();
         }
-        if !client {
-            for (act, player_id) in to_finish.into_iter() {
-                finish_long_act(&mut state, player_id, act);
-            }
+        for (act, player_id) in to_finish.into_iter() {
+            finish_long_act(&mut state, player_id, act, client);
         }
 
         sampler.end(long_act_ticks);
@@ -1035,6 +1033,8 @@ fn interpolate(from: f64, to: f64, percentage: f64) -> f64 {
 }
 
 fn interpolate_docking_ships_position(state: &mut GameState, location_idx: usize) {
+    let planets_read = state.locations[location_idx].planets.clone();
+    let planets_by_id = index_planets_by_id(&planets_read);
     let docking_ship_ids: HashMap<Uuid, &LongAction> =
         HashMap::from_iter(state.players.iter().filter_map(|p| {
             let long_act = p
@@ -1054,12 +1054,28 @@ fn interpolate_docking_ships_position(state: &mut GameState, location_idx: usize
             match long_act {
                 LongAction::Dock {
                     start_pos,
-                    end_pos,
+                    to_planet,
                     percentage,
                     ..
                 } => {
-                    ship.x = interpolate(start_pos.x, end_pos.x, *percentage as f64 / 100.0);
-                    ship.y = interpolate(start_pos.y, end_pos.y, *percentage as f64 / 100.0);
+                    if let Some(planet) = planets_by_id.get(&to_planet) {
+                        let target = Vec2f64 {
+                            x: planet.x,
+                            y: planet.y,
+                        };
+                        let ship_pos = Vec2f64 {
+                            x: ship.x,
+                            y: ship.y,
+                        };
+                        let dir = target.subtract(&ship_pos);
+                        ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
+                        if dir.x < 0.0 {
+                            ship.rotation = -ship.rotation;
+                        }
+
+                        ship.x = interpolate(start_pos.x, planet.x, *percentage as f64 / 100.0);
+                        ship.y = interpolate(start_pos.y, planet.y, *percentage as f64 / 100.0);
+                    }
                 }
                 _ => {}
             }
