@@ -8,7 +8,6 @@ export const actionsActive: Record<string, ShipActionRust | undefined> = {
   TurnLeft: undefined,
   Reverse: undefined,
   Move: undefined,
-  Dock: undefined,
   Navigate: undefined,
   DockNavigate: undefined,
   Tractor: undefined,
@@ -46,10 +45,6 @@ const refreshActiveActions = () => {
     actionsActive.TurnLeft = undefined;
     actionsActive.StopTurn = ShipActionRustBuilder.ShipActionRustStopTurn();
   }
-
-  actionsActive.Dock = keysActive.Space
-    ? ShipActionRustBuilder.ShipActionRustDock()
-    : undefined;
 };
 
 const keydownHandler = (keyDownEvent: KeyboardEvent) => {

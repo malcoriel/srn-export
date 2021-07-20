@@ -4,7 +4,7 @@ import { ThreeShip } from './ThreeShip';
 import Vector from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
 import { NetStateIndexes } from '../NetState';
-import { LongActionDock } from '../../../world/pkg';
+import { LongActionDock, LongActionUndock } from '../../../world/pkg';
 
 export const ThreeShipsLayer: React.FC<{
   visMap: Record<string, boolean>;
@@ -32,15 +32,24 @@ export const ThreeShipsLayer: React.FC<{
         const player = indexes.playersByShipId.get(s.id);
 
         let dockingLongAction;
+        let undockingLongAction;
         if (player) {
           dockingLongAction = player.long_actions.find(
             (a) => a.tag === 'Dock'
           ) as LongActionDock;
+          undockingLongAction = player.long_actions.find(
+            (a) => a.tag === 'Undock'
+          ) as LongActionUndock;
         }
 
-        const opacity = dockingLongAction
-          ? 1 - dockingLongAction.percentage / 100
-          : 1.0;
+        let opacity: number;
+        if (dockingLongAction) {
+          opacity = 1 - dockingLongAction.percentage / 100;
+        } else if (undockingLongAction) {
+          opacity = undockingLongAction.percentage / 100;
+        } else {
+          opacity = 1.0;
+        }
         return (
           <ThreeShip
             gid={s.id}

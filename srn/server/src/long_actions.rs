@@ -246,12 +246,11 @@ pub fn try_start_long_action(
                 return false;
             }
             let ship_idx = ship_idx.unwrap();
-            let ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
             let planet = &state.locations[ship_idx.location_idx]
                 .planets
                 .iter()
                 .find(|p| p.id == from_planet);
-            if planet.is_none() || ship.docked_at.map_or(true, |d| d != from_planet) {
+            if planet.is_none() {
                 return false;
             }
             let planet = planet.unwrap();
@@ -261,13 +260,14 @@ pub fn try_start_long_action(
             }
             let random_angle = prng.gen_range(0.0, PI * 2.0);
             let dist = planet.radius * 1.2;
-            let vec = Vec2f64 { x: 1.0, y: 0.0 }
-                .rotate(random_angle)
-                .scalar_mul(dist);
             let planet_pos = Vec2f64 {
                 x: planet.x,
                 y: planet.y,
             };
+            let vec = Vec2f64 { x: 1.0, y: 0.0 }
+                .rotate(random_angle)
+                .scalar_mul(dist)
+                .add(&planet_pos);
             let act = LongAction::Undock {
                 id: new_id(),
                 from_planet,
@@ -410,10 +410,9 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, 
             }
         }
         LongAction::Undock { .. } => {
-            let state_read = state.clone();
-            let ship = indexing::find_my_ship_mut(state, player_id);
+            let ship = indexing::find_my_ship_index(state, player_id);
             if let Some(ship) = ship {
-                world::undock_ship(ship, player_id, &state_read)
+                world::undock_ship(state, ship, player_id)
             }
         }
     }

@@ -10,8 +10,8 @@ use uuid::Uuid;
 
 use crate::dialogue_dto::{Dialogue, DialogueElem, Substitution, SubstitutionType};
 use crate::indexing::{
-    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
-    find_player_and_ship, find_player_and_ship_mut, index_planets_by_id,
+    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_index, find_my_ship_mut,
+    find_planet, find_player_and_ship, find_player_and_ship_mut, index_planets_by_id,
 };
 use crate::inventory::{
     add_item, consume_items_of_types, count_items_of_types, remove_quest_item,
@@ -447,15 +447,14 @@ fn apply_side_effects(
     side_effects: Vec<DialogueOptionSideEffect>,
     player_id: PlayerId,
 ) -> bool {
-    let state_read = state.clone();
     let mut state_changed = false;
     for side_effect in side_effects {
         match side_effect {
             DialogueOptionSideEffect::Nothing => {}
             DialogueOptionSideEffect::Undock => {
-                let my_ship = find_my_ship_mut(state, player_id);
-                if let Some(my_ship) = my_ship {
-                    world::undock_ship(my_ship, player_id, &state_read);
+                let my_ship_idx = find_my_ship_index(state, player_id);
+                if let Some(my_ship_idx) = my_ship_idx {
+                    world::undock_ship(state, my_ship_idx, player_id);
                     state_changed = true;
                 }
             }

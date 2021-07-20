@@ -21,7 +21,9 @@ import { transformAllTextSubstitutions } from '../utils/substitutions';
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
   <span className="dialogue-option">
-    {React.Children.toArray(transformAllTextSubstitutions(dialogue.text, dialogue.substitution))}
+    {React.Children.toArray(
+      transformAllTextSubstitutions(dialogue.text, dialogue.substitution)
+    )}
   </span>
 );
 

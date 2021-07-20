@@ -1032,6 +1032,7 @@ fn interpolate(from: f64, to: f64, percentage: f64) -> f64 {
     return (to - from) * percentage + from;
 }
 
+// and undocking!
 fn interpolate_docking_ships_position(state: &mut GameState, location_idx: usize) {
     let planets_read = state.locations[location_idx].planets.clone();
     let planets_by_id = index_planets_by_id(&planets_read);
@@ -1041,6 +1042,20 @@ fn interpolate_docking_ships_position(state: &mut GameState, location_idx: usize
                 .long_actions
                 .iter()
                 .filter(|la| matches!(la, LongAction::Dock { .. }))
+                .nth(0);
+            if let Some(la) = long_act {
+                if let Some(sid) = p.ship_id {
+                    return Some((sid, la));
+                }
+            }
+            return None;
+        }));
+    let undocking_ship_ids: HashMap<Uuid, &LongAction> =
+        HashMap::from_iter(state.players.iter().filter_map(|p| {
+            let long_act = p
+                .long_actions
+                .iter()
+                .filter(|la| matches!(la, LongAction::Undock { .. }))
                 .nth(0);
             if let Some(la) = long_act {
                 if let Some(sid) = p.ship_id {
@@ -1075,6 +1090,35 @@ fn interpolate_docking_ships_position(state: &mut GameState, location_idx: usize
 
                         ship.x = interpolate(start_pos.x, planet.x, *percentage as f64 / 100.0);
                         ship.y = interpolate(start_pos.y, planet.y, *percentage as f64 / 100.0);
+                    }
+                }
+                _ => {}
+            }
+        } else if let Some(long_act) = undocking_ship_ids.get(&ship.id) {
+            match long_act {
+                LongAction::Undock {
+                    from_planet,
+                    end_pos,
+                    percentage,
+                    ..
+                } => {
+                    if let Some(planet) = planets_by_id.get(&from_planet) {
+                        let from_pos = Vec2f64 {
+                            x: planet.x,
+                            y: planet.y,
+                        };
+                        let ship_pos = Vec2f64 {
+                            x: ship.x,
+                            y: ship.y,
+                        };
+                        let dir = ship_pos.subtract(&from_pos);
+                        ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
+                        if dir.x < 0.0 {
+                            ship.rotation = -ship.rotation;
+                        }
+
+                        ship.x = interpolate(from_pos.x, end_pos.x, *percentage as f64 / 100.0);
+                        ship.y = interpolate(from_pos.y, end_pos.y, *percentage as f64 / 100.0);
                     }
                 }
                 _ => {}
@@ -1586,18 +1630,28 @@ pub fn dock_ship(mut ship: &mut Ship, player: &Player, planet: &Box<dyn IBody>) 
     });
 }
 
-pub fn undock_ship(mut ship: &mut Ship, player_id: Uuid, state: &GameState) {
+pub fn undock_ship(state: &mut GameState, ship_idx: ShipIdx, player_id: Uuid) {
+    let state_read = state.clone();
+    let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
     if let Some(planet_id) = ship.docked_at {
         ship.docked_at = None;
-        let planet = find_planet(state, &planet_id).unwrap().clone();
+        let planet = find_planet(&state_read, &planet_id).unwrap().clone();
         ship.x = planet.x;
         ship.y = planet.y;
-        let player = find_my_player(state, player_id).unwrap().clone();
+        let player = find_my_player(&state_read, player_id).unwrap().clone();
         fire_event(GameEvent::ShipUndocked {
             ship: ship.clone(),
             planet,
             player: player.clone(),
         });
+        try_start_long_action(
+            state,
+            player_id,
+            LongActionStart::Undock {
+                from_planet: planet_id,
+            },
+            &mut gen_rng(),
+        );
     }
 }
 
@@ -1688,6 +1742,7 @@ pub fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64) -> Vec<Vec2f64> {
     result
 }
 
+#[derive(Clone)]
 pub struct ShipIdx {
     pub location_idx: usize,
     pub ship_idx: usize,
