@@ -1483,6 +1483,19 @@ pub fn update_ships_navigation(
     let planets_with_star = make_bodies_from_planets(&planets, star);
     let bodies_by_id = index_bodies_by_id(planets_with_star);
     let players_by_ship_id = indexing::index_players_by_ship_id(players);
+    let docking_ship_ids: HashSet<Uuid> = HashSet::from_iter(players.iter().filter_map(|p| {
+        let long_act = p
+            .long_actions
+            .iter()
+            .filter(|la| matches!(la, LongAction::Dock { .. }))
+            .nth(0);
+        if let Some(_la) = long_act {
+            if let Some(sid) = p.ship_id {
+                return Some(sid);
+            }
+        }
+        return None;
+    }));
 
     for mut ship in ships.clone() {
         // impossible to optimize yet, simply because the
@@ -1492,6 +1505,11 @@ pub fn update_ships_navigation(
         //     res.push(ship);
         //     continue;
         // }
+        if docking_ship_ids.contains(&ship.id) {
+            ship.trajectory = vec![];
+            res.push(ship);
+            continue;
+        }
         let player = players_by_ship_id.get(&ship.id);
         if player.is_none() {
             eprintln!("Cannot update ship {} without owner", ship.id);

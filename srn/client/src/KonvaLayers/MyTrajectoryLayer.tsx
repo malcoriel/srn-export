@@ -4,7 +4,6 @@ import _ from 'lodash';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
 import Vector from '../utils/Vector';
 import { babyBlue } from '../utils/palette';
-import { Planet, Ship } from '../world';
 import {
   calcRealPosToScreenPos,
   size,
@@ -12,30 +11,6 @@ import {
   viewPortSizeMeters,
   viewPortSizePixels,
 } from '../coord';
-
-const MAX_ITER = 100;
-const TRAJECTORY_STEP = 10.0;
-
-const buildTrajectory = (questTarget: Planet, myShip: Ship): Vector[] => {
-  let current = Vector.fromIVector(myShip);
-  const res: Vector[] = [];
-  let iter = 0;
-  const dir1 = Vector.fromIVector(questTarget).subtract(
-    Vector.fromIVector(myShip)
-  );
-  const dir = dir1.normalize().scale(TRAJECTORY_STEP);
-  while (
-    Vector.fromIVector(current).euDistTo(Vector.fromIVector(questTarget)) >
-    TRAJECTORY_STEP
-  ) {
-    current = current.add(dir);
-    res.push(current);
-    if (iter++ > MAX_ITER) {
-      break;
-    }
-  }
-  return res;
-};
 
 export const MyTrajectoryLayer: React.FC = () => {
   const ns = NetState.get();
