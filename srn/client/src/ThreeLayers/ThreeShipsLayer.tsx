@@ -53,7 +53,7 @@ export const ThreeShipsLayer: React.FC<{
         return (
           <ThreeShip
             gid={s.id}
-            radius={s.radius}
+            radius={s.radius * (opacity / 2 + 0.5)}
             visible={visMap[s.id]}
             tractorTargetPosition={tractorTargetPosition}
             key={s.id + i}

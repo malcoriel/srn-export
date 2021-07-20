@@ -10,9 +10,9 @@ import { UnreachableCaseError } from 'ts-essentials';
 const getActionName = (a: LongAction): string | undefined => {
   switch (a.tag) {
     case 'Dock':
-      return 'Docking...';
+      return undefined;
     case 'Undock':
-      return 'Undocking..';
+      return undefined;
     case 'Unknown':
       return undefined;
     case 'TransSystemJump':
@@ -37,9 +37,9 @@ export const isDisplayableLongAction = (a: LongAction): boolean => {
     case 'Shoot':
       return false;
     case 'Dock':
-      return true;
+      return false;
     case 'Undock':
-      return true;
+      return false;
     default:
       throw new UnreachableCaseError(a);
   }
