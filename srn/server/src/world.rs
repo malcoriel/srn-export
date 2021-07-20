@@ -25,7 +25,7 @@ use crate::inventory::{
 };
 use crate::long_actions::{
     cancel_all_long_actions_of_type, finish_long_act, tick_long_act, try_start_long_action,
-    LongAction, LongActionStart, SHIP_DOCKING_RADIUS_COEFF,
+    LongAction, LongActionStart, MIN_SHIP_DOCKING_RADIUS, SHIP_DOCKING_RADIUS_COEFF,
 };
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
@@ -1150,7 +1150,8 @@ fn update_initiate_ship_docking_by_navigation(
                         y: ship.y,
                     };
                     if planet_pos.euclidean_distance(&ship_pos)
-                        < planet.radius * planet.radius * SHIP_DOCKING_RADIUS_COEFF
+                        < (planet.radius * planet.radius * SHIP_DOCKING_RADIUS_COEFF)
+                            .max(MIN_SHIP_DOCKING_RADIUS)
                     {
                         let docks_in_progress = player
                             .long_actions
@@ -1540,6 +1541,19 @@ pub fn update_ships_navigation(
         }
         return None;
     }));
+    let undocking_ship_ids: HashSet<Uuid> = HashSet::from_iter(players.iter().filter_map(|p| {
+        let long_act = p
+            .long_actions
+            .iter()
+            .filter(|la| matches!(la, LongAction::Undock { .. }))
+            .nth(0);
+        if let Some(_la) = long_act {
+            if let Some(sid) = p.ship_id {
+                return Some(sid);
+            }
+        }
+        return None;
+    }));
 
     for mut ship in ships.clone() {
         // impossible to optimize yet, simply because the
@@ -1549,7 +1563,7 @@ pub fn update_ships_navigation(
         //     res.push(ship);
         //     continue;
         // }
-        if docking_ship_ids.contains(&ship.id) {
+        if docking_ship_ids.contains(&ship.id) || undocking_ship_ids.contains(&ship.id) {
             ship.trajectory = vec![];
             res.push(ship);
             continue;

@@ -217,7 +217,8 @@ pub fn try_start_long_action(
                 x: planet.x,
                 y: planet.y,
             };
-            if planet_pos.euclidean_distance(&ship_pos) > planet.radius * SHIP_DOCKING_RADIUS_COEFF
+            if planet_pos.euclidean_distance(&ship_pos)
+                > (planet.radius * SHIP_DOCKING_RADIUS_COEFF).max(MIN_SHIP_DOCKING_RADIUS)
             {
                 return false;
             }
@@ -259,7 +260,7 @@ pub fn try_start_long_action(
                 return false;
             }
             let random_angle = prng.gen_range(0.0, PI * 2.0);
-            let dist = planet.radius * 1.2;
+            let dist = (planet.radius * 1.2).max(MIN_SHIP_DOCKING_RADIUS);
             let planet_pos = Vec2f64 {
                 x: planet.x,
                 y: planet.y,
@@ -338,6 +339,7 @@ const TRANS_SYSTEM_JUMP_TIME: i32 = 5 * 1000 * 1000;
 const SHIP_DOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
 const SHIP_UNDOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
 pub const SHIP_DOCKING_RADIUS_COEFF: f64 = 2.0;
+pub const MIN_SHIP_DOCKING_RADIUS: f64 = 5.0;
 
 pub fn start_long_act(act: LongActionStart) -> LongAction {
     return match act {
