@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.6.18 (2021-07-21)
+
+### New
+* A better-looking docking and undocking process for the ships.
+
 ## Version 0.6.17 (2021-07-04)
 
 ### Fixes
