@@ -728,6 +728,13 @@ impl AABB {
             && self.top_left.y <= y
             && y <= self.bottom_right.y;
     }
+
+    pub fn contains_vec(&self, vec: &Vec2f64) -> bool {
+        return self.top_left.x <= vec.x
+            && vec.x <= self.bottom_right.x
+            && self.top_left.y <= vec.y
+            && vec.y <= self.bottom_right.y;
+    }
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
@@ -938,6 +945,7 @@ pub fn update_location(
         elapsed,
         my_ship_id,
         client,
+        update_options,
     );
     sampler.end(update_ships_navigation_id);
     if !client {
@@ -947,7 +955,7 @@ pub fn update_location(
         sampler.end(initiate_docking_id);
     }
     let interpolate_docking_id = sampler.start(SamplerMarks::UpdateInterpolateDockingShips as u32);
-    interpolate_docking_ships_position(state, location_idx);
+    interpolate_docking_ships_position(state, location_idx, update_options);
     sampler.end(interpolate_docking_id);
     let update_ship_manual_movement_id =
         sampler.start(SamplerMarks::UpdateShipsManualMovement as u32);
@@ -1033,7 +1041,11 @@ fn interpolate(from: f64, to: f64, percentage: f64) -> f64 {
 }
 
 // and undocking!
-fn interpolate_docking_ships_position(state: &mut GameState, location_idx: usize) {
+fn interpolate_docking_ships_position(
+    state: &mut GameState,
+    location_idx: usize,
+    update_options: &UpdateOptions,
+) {
     let planets_read = state.locations[location_idx].planets.clone();
     let planets_by_id = index_planets_by_id(&planets_read);
     let docking_ship_ids: HashMap<Uuid, &LongAction> =
@@ -1065,6 +1077,12 @@ fn interpolate_docking_ships_position(state: &mut GameState, location_idx: usize
             return None;
         }));
     for ship in state.locations[location_idx].ships.iter_mut() {
+        if !update_options.limit_area.contains_vec(&Vec2f64 {
+            x: ship.x,
+            y: ship.y,
+        }) {
+            continue;
+        }
         if let Some(long_act) = docking_ship_ids.get(&ship.id) {
             match long_act {
                 LongAction::Dock {
@@ -1523,6 +1541,7 @@ pub fn update_ships_navigation(
     elapsed_micro: i64,
     _my_ship_id: Option<Uuid>,
     _client: bool,
+    update_options: &UpdateOptions,
 ) -> Vec<Ship> {
     let mut res = vec![];
     let planets_with_star = make_bodies_from_planets(&planets, star);
@@ -1563,7 +1582,13 @@ pub fn update_ships_navigation(
         //     res.push(ship);
         //     continue;
         // }
-        if docking_ship_ids.contains(&ship.id) || undocking_ship_ids.contains(&ship.id) {
+        if docking_ship_ids.contains(&ship.id)
+            || undocking_ship_ids.contains(&ship.id)
+            || !update_options.limit_area.contains_vec(&Vec2f64 {
+                x: ship.x,
+                y: ship.y,
+            })
+        {
             ship.trajectory = vec![];
             res.push(ship);
             continue;
