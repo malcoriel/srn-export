@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.6.19 (2021-07-22)
+
+### Fixes
+* Fixed ugly max-width for ultra-wide monitors.
+* Improved client performance a bit.
+
 ## Version 0.6.18 (2021-07-21)
 
 ### New
