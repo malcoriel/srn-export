@@ -223,10 +223,12 @@ $menuWidth: 600px;
 
 .global-chat-container {
   display: none;
+  max-width: 500px;
 }
 
 .changelog-container {
   display: none;
+  max-width: 500px;
 }
 
 @media (min-width: 1400px) {
