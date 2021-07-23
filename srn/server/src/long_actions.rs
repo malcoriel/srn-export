@@ -144,7 +144,12 @@ pub fn try_start_long_action(
                 return false;
             }
             let player = player.unwrap();
-            player.long_actions.push(start_long_act(action));
+            player.long_actions.push(LongAction::TransSystemJump {
+                id: new_id(),
+                to,
+                micro_left: TRANS_SYSTEM_JUMP_TIME,
+                percentage: 0,
+            });
             revalidate(&mut player.long_actions);
         }
         LongActionStart::Respawn => {
@@ -157,7 +162,11 @@ pub fn try_start_long_action(
                 return false;
             }
             let player = player.unwrap();
-            player.long_actions.push(start_long_act(action));
+            player.long_actions.push(LongAction::Respawn {
+                id: new_id(),
+                micro_left: PLAYER_RESPAWN_TIME_MC,
+                percentage: 0,
+            });
             revalidate(&mut player.long_actions);
         }
         LongActionStart::Shoot { target } => {
@@ -181,7 +190,15 @@ pub fn try_start_long_action(
             }
 
             let player = find_my_player_mut(state, player_id).unwrap();
-            player.long_actions.push(start_long_act(action));
+            player.long_actions.push(LongAction::Shoot {
+                id: new_id(),
+                target,
+                micro_left: Ability::Shoot {
+                    cooldown_ticks_remaining: 0,
+                }
+                .get_cooldown(),
+                percentage: 0,
+            });
             revalidate(&mut player.long_actions);
             let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
             for ability in ship.abilities.iter_mut() {
@@ -340,47 +357,6 @@ const SHIP_DOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
 const SHIP_UNDOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
 pub const SHIP_DOCKING_RADIUS_COEFF: f64 = 2.0;
 pub const MIN_SHIP_DOCKING_RADIUS: f64 = 5.0;
-
-pub fn start_long_act(act: LongActionStart) -> LongAction {
-    return match act {
-        LongActionStart::Unknown => LongAction::Unknown { id: new_id() },
-        LongActionStart::TransSystemJump { to } => LongAction::TransSystemJump {
-            id: new_id(),
-            to,
-            micro_left: TRANS_SYSTEM_JUMP_TIME,
-            percentage: 0,
-        },
-        LongActionStart::Respawn => LongAction::Respawn {
-            id: new_id(),
-            micro_left: PLAYER_RESPAWN_TIME_MC,
-            percentage: 0,
-        },
-        LongActionStart::Shoot { target } => LongAction::Shoot {
-            id: new_id(),
-            target,
-            micro_left: Ability::Shoot {
-                cooldown_ticks_remaining: 0,
-            }
-            .get_cooldown(),
-            percentage: 0,
-        },
-        LongActionStart::Dock { to_planet, .. } => LongAction::Dock {
-            id: new_id(),
-            to_planet,
-            start_pos: Default::default(),
-            micro_left: SHIP_DOCK_TIME_TICKS,
-            percentage: 0,
-        },
-        LongActionStart::Undock { from_planet, .. } => LongAction::Undock {
-            id: new_id(),
-            from_planet,
-            start_pos: Default::default(),
-            end_pos: Default::default(),
-            micro_left: SHIP_UNDOCK_TIME_TICKS,
-            percentage: 0,
-        },
-    };
-}
 
 pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, client: bool) {
     match act {
