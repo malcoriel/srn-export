@@ -313,6 +313,8 @@ pub struct Ship {
     pub movement: ShipMovement,
     #[serde(default)]
     pub health: Health,
+    #[serde(default)]
+    pub local_effects: Vec<LocalEffect>,
 }
 
 impl Ship {
@@ -338,6 +340,7 @@ impl Ship {
             auto_focus: None,
             movement: Default::default(),
             health: Health::new(100.0),
+            local_effects: vec![],
         }
     }
 }
@@ -392,7 +395,6 @@ pub struct Player {
     pub portrait_name: String,
     pub respawn_ms_left: i32,
     pub long_actions: Vec<LongAction>,
-    pub local_effects: Vec<LocalEffect>,
     pub notifications: Vec<Notification>,
 }
 
@@ -408,7 +410,6 @@ impl Player {
             portrait_name: "".to_string(),
             respawn_ms_left: 0,
             long_actions: vec![],
-            local_effects: vec![],
             notifications: get_new_player_notifications(mode),
         }
     }
@@ -559,7 +560,7 @@ pub struct GameState {
     pub locations: Vec<Location>,
 }
 
-pub const GAME_STATE_VERSION: u32 = 2;
+pub const GAME_STATE_VERSION: u32 = 3;
 
 impl GameState {
     pub fn new() -> Self {
@@ -1256,15 +1257,13 @@ fn apply_tractored_items_consumption(
         let ticks = state.ticks.clone();
         let pair = indexing::find_player_and_ship_mut(&mut state, pup.0);
         let picked_items = InventoryItem::from(pup.1);
-        if let Some(player) = pair.0 {
-            player.local_effects.push(LocalEffect::PickUp {
+        if let Some(ship) = pair.1 {
+            ship.local_effects.push(LocalEffect::PickUp {
                 id: new_id(),
                 text: format!("Pick up: {}", InventoryItem::format(&picked_items)),
                 position: Default::default(),
                 tick: ticks,
-            })
-        }
-        if let Some(ship) = pair.1 {
+            });
             add_items(&mut ship.inventory, picked_items);
         }
     }
@@ -1414,14 +1413,12 @@ pub fn update_ship_hp_effects(
                 let dmg_done = ship.acc_periodic_dmg.floor() as i32;
                 ship.acc_periodic_dmg = 0.0;
                 ship.health.current = (ship.health.current - dmg_done as f64).max(0.0);
-                if let Some(player) = players_by_ship_id.get_mut(&ship.id) {
-                    player.local_effects.push(LocalEffect::DmgDone {
-                        id: new_id(),
-                        hp: -dmg_done,
-                        tick: current_tick,
-                        ship_id: ship.id,
-                    });
-                }
+                ship.local_effects.push(LocalEffect::DmgDone {
+                    id: new_id(),
+                    hp: -dmg_done,
+                    tick: current_tick,
+                    ship_id: ship.id,
+                });
             }
 
             if star_damage <= 0.0 && ship.health.current < ship.health.max {
@@ -1433,35 +1430,30 @@ pub fn update_ship_hp_effects(
                 let heal = ship.acc_periodic_heal.floor() as i32;
                 ship.acc_periodic_heal = 0.0;
                 ship.health.current = ship.health.max.min(ship.health.current + heal as f64);
-                if let Some(player) = players_by_ship_id.get_mut(&ship.id) {
-                    player.local_effects.push(LocalEffect::Heal {
-                        id: new_id(),
-                        hp: heal as i32,
-                        tick: current_tick,
-                        ship_id: ship.id,
-                    });
-                }
+                ship.local_effects.push(LocalEffect::Heal {
+                    id: new_id(),
+                    hp: heal as i32,
+                    tick: current_tick,
+                    ship_id: ship.id,
+                });
             }
 
-            if let Some(mut player) = players_by_ship_id.get_mut(&ship.id) {
-                player.local_effects = player
-                    .local_effects
-                    .iter()
-                    .filter(|e| {
-                        if let Some(tick) = match &e {
-                            LocalEffect::Unknown { .. } => None,
-                            LocalEffect::DmgDone { tick, .. } => Some(tick),
-                            LocalEffect::Heal { tick, .. } => Some(tick),
-                            LocalEffect::PickUp { tick, .. } => Some(tick),
-                        } {
-                            return (*tick as i32 - current_tick as i32).abs()
-                                < MAX_LOCAL_EFF_LIFE_MS;
-                        }
-                        return false;
-                    })
-                    .map(|e| e.clone())
-                    .collect::<Vec<_>>()
-            }
+            ship.local_effects = ship
+                .local_effects
+                .iter()
+                .filter(|e| {
+                    if let Some(tick) = match &e {
+                        LocalEffect::Unknown { .. } => None,
+                        LocalEffect::DmgDone { tick, .. } => Some(tick),
+                        LocalEffect::Heal { tick, .. } => Some(tick),
+                        LocalEffect::PickUp { tick, .. } => Some(tick),
+                    } {
+                        return (*tick as i32 - current_tick as i32).abs() < MAX_LOCAL_EFF_LIFE_MS;
+                    }
+                    return false;
+                })
+                .map(|e| e.clone())
+                .collect::<Vec<_>>()
         }
     }
 

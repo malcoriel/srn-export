@@ -29,21 +29,12 @@ const extractEffectsPositions = (
   _shiftLen: (len: number) => number
 ): Array<VisLocalEffect> => {
   const res: VisLocalEffect[] = [];
-  const shipsById = _.keyBy(state.locations[0].ships, 'id');
 
-  for (const player of state.players) {
-    if (!player.ship_id) {
-      continue;
-    }
-    const ship = shipsById[player.ship_id];
-    if (!ship || ship.docked_at) {
-      continue;
-    }
-
+  for (const ship of state.locations[0].ships) {
     const namePos = shiftPos(ship);
 
     res.push(
-      ...(player.local_effects
+      ...(ship.local_effects
         .map((e) => {
           if (e.tag === 'Unknown') {
             return null;

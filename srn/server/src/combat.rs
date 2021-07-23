@@ -117,12 +117,8 @@ pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget
                     .ships
                     .iter_mut()
                     .find(|s| s.id == ship_id);
-                let mut dmg_done = false;
                 if let Some(target_ship) = target_ship {
                     target_ship.health.current -= dmg;
-                    dmg_done = true;
-                }
-                if dmg_done {
                     let effect = LocalEffect::DmgDone {
                         id: new_id(),
                         hp: dmg as i32,
@@ -130,16 +126,7 @@ pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget
                         tick: state.ticks,
                     };
 
-                    if let Some(target_player) = state
-                        .players
-                        .iter_mut()
-                        .find(|p| p.ship_id.map_or(false, |s| s == ship_id))
-                    {
-                        target_player.local_effects.push(effect.clone())
-                    }
-                    // if let Some(player) = find_my_player_mut(state, player_id) {
-                    //     player.local_effects.push(effect.clone())
-                    // }
+                    target_ship.local_effects.push(effect.clone())
                 }
             }
             ShootTarget::Mineral { id } => {
