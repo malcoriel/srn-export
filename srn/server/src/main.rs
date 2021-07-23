@@ -573,10 +573,11 @@ fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>)
             let action_dbg = action.clone();
             if !long_actions::try_start_long_action(state, client_id, action, &mut world::gen_rng())
             {
-                warn!(format!(
-                    "Impossible long action for client {}, action {:?}",
-                    client_id, action_dbg
-                ));
+                // invalid shooting produces too much noise
+                // warn!(format!(
+                //     "Impossible long action for client {}, action {:?}",
+                //     client_id, action_dbg
+                // ));
             }
             x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);

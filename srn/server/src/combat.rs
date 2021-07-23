@@ -137,9 +137,9 @@ pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget
                     {
                         target_player.local_effects.push(effect.clone())
                     }
-                    if let Some(player) = find_my_player_mut(state, player_id) {
-                        player.local_effects.push(effect.clone())
-                    }
+                    // if let Some(player) = find_my_player_mut(state, player_id) {
+                    //     player.local_effects.push(effect.clone())
+                    // }
                 }
             }
             ShootTarget::Mineral { id } => {
