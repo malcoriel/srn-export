@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
 use crate::combat::ShootTarget;
-use crate::indexing::{find_my_player, find_my_player_mut, find_my_ship_index};
+use crate::indexing::{find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut};
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, PLAYER_RESPAWN_TIME_MC};
@@ -29,6 +29,19 @@ pub enum LongActionStart {
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
+pub enum LongActionPlayer {
+    Unknown {
+        id: Uuid,
+    },
+    Respawn {
+        id: Uuid,
+        micro_left: i32,
+        percentage: u32,
+    },
+}
+
+#[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
+#[serde(tag = "tag")]
 pub enum LongAction {
     Unknown {
         id: Uuid,
@@ -36,11 +49,6 @@ pub enum LongAction {
     TransSystemJump {
         id: Uuid,
         to: Uuid,
-        micro_left: i32,
-        percentage: u32,
-    },
-    Respawn {
-        id: Uuid,
         micro_left: i32,
         percentage: u32,
     },
@@ -75,11 +83,6 @@ pub fn erase_details(la: LongAction) -> LongAction {
         LongAction::TransSystemJump { .. } => LongAction::TransSystemJump {
             id: Default::default(),
             to: Default::default(),
-            micro_left: 0,
-            percentage: 0,
-        },
-        LongAction::Respawn { .. } => LongAction::Respawn {
-            id: Default::default(),
             micro_left: 0,
             percentage: 0,
         },
@@ -139,18 +142,18 @@ pub fn try_start_long_action(
             if !locations::can_be_moved_player(state, player_id, to) {
                 return false;
             }
-            let player = find_my_player_mut(state, player_id);
-            if player.is_none() {
+            let ship = find_my_ship_mut(state, player_id);
+            if ship.is_none() {
                 return false;
             }
-            let player = player.unwrap();
-            player.long_actions.push(LongAction::TransSystemJump {
+            let ship = ship.unwrap();
+            ship.long_actions.push(LongAction::TransSystemJump {
                 id: new_id(),
                 to,
                 micro_left: TRANS_SYSTEM_JUMP_TIME,
                 percentage: 0,
             });
-            revalidate(&mut player.long_actions);
+            revalidate(&mut ship.long_actions);
         }
         LongActionStart::Respawn => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -162,12 +165,12 @@ pub fn try_start_long_action(
                 return false;
             }
             let player = player.unwrap();
-            player.long_actions.push(LongAction::Respawn {
+            player.long_actions.push(LongActionPlayer::Respawn {
                 id: new_id(),
                 micro_left: PLAYER_RESPAWN_TIME_MC,
                 percentage: 0,
             });
-            revalidate(&mut player.long_actions);
+            revalidate_player(&mut player.long_actions);
         }
         LongActionStart::Shoot { target } => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -175,22 +178,16 @@ pub fn try_start_long_action(
                 return false;
             }
             let ship_idx = ship_idx.unwrap();
-            let player = find_my_player(state, player_id);
-            if player.is_none() {
-                return false;
-            }
-            let player = player.unwrap();
             if !combat::validate_shoot(
                 target.clone(),
                 &state.locations[ship_idx.location_idx],
-                &player,
                 &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
             ) {
                 return false;
             }
 
-            let player = find_my_player_mut(state, player_id).unwrap();
-            player.long_actions.push(LongAction::Shoot {
+            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+            ship.long_actions.push(LongAction::Shoot {
                 id: new_id(),
                 target,
                 micro_left: Ability::Shoot {
@@ -199,8 +196,7 @@ pub fn try_start_long_action(
                 .get_cooldown(),
                 percentage: 0,
             });
-            revalidate(&mut player.long_actions);
-            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+            revalidate(&mut ship.long_actions);
             for ability in ship.abilities.iter_mut() {
                 match ability {
                     Ability::Unknown => {}
@@ -239,11 +235,7 @@ pub fn try_start_long_action(
             {
                 return false;
             }
-            let player = find_my_player(state, player_id);
-            if player.is_none() {
-                return false;
-            }
-            let player = find_my_player_mut(state, player_id).unwrap();
+            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
             let act = LongAction::Dock {
                 id: new_id(),
                 to_planet,
@@ -251,9 +243,7 @@ pub fn try_start_long_action(
                 micro_left: SHIP_DOCK_TIME_TICKS,
                 percentage: 0,
             };
-            player.long_actions.push(act);
-
-            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+            ship.long_actions.push(act);
             ship.trajectory = vec![];
             ship.dock_target = None;
             ship.navigate_target = None;
@@ -272,10 +262,6 @@ pub fn try_start_long_action(
                 return false;
             }
             let planet = planet.unwrap();
-            let player = find_my_player(state, player_id);
-            if player.is_none() {
-                return false;
-            }
             let random_angle = prng.gen_range(0.0, PI * 2.0);
             let dist = (planet.radius * 1.2).max(MIN_SHIP_DOCKING_RADIUS);
             let planet_pos = Vec2f64 {
@@ -294,8 +280,8 @@ pub fn try_start_long_action(
                 micro_left: SHIP_DOCK_TIME_TICKS,
                 percentage: 0,
             };
-            let player = find_my_player_mut(state, player_id).unwrap();
-            player.long_actions.push(act);
+            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+            ship.long_actions.push(act);
         }
     }
     return true;
@@ -305,7 +291,6 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
     let mut has_jump = false;
     let mut has_dock = false;
     let mut has_undock = false;
-    let mut has_respawn = false;
     let mut has_shoot = false;
     let mut new_actions = long_actions
         .clone()
@@ -317,13 +302,6 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                     return None;
                 }
                 has_jump = true;
-                Some(a)
-            }
-            LongAction::Respawn { .. } => {
-                if has_respawn {
-                    return None;
-                }
-                has_respawn = true;
                 Some(a)
             }
             LongAction::Shoot { .. } => {
@@ -352,6 +330,25 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
     mem::swap(long_actions, &mut new_actions);
 }
 
+fn revalidate_player(long_actions: &mut Vec<LongActionPlayer>) {
+    let mut has_respawn = false;
+    let mut new_actions = long_actions
+        .clone()
+        .into_iter()
+        .filter_map(|a| match a {
+            LongActionPlayer::Unknown { .. } => Some(a),
+            LongActionPlayer::Respawn { .. } => {
+                if has_respawn {
+                    return None;
+                }
+                has_respawn = true;
+                Some(a)
+            }
+        })
+        .collect();
+    mem::swap(long_actions, &mut new_actions);
+}
+
 const TRANS_SYSTEM_JUMP_TIME: i32 = 5 * 1000 * 1000;
 const SHIP_DOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
 const SHIP_UNDOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
@@ -366,11 +363,6 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, 
         LongAction::TransSystemJump { to, .. } => {
             if !client {
                 locations::try_move_player_ship(state, player_id, to);
-            }
-        }
-        LongAction::Respawn { .. } => {
-            if !client {
-                spawn_ship(state, player_id, None);
             }
         }
         LongAction::Shoot { target, .. } => {
@@ -396,6 +388,24 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, 
     }
 }
 
+pub fn finish_long_act_player(
+    state: &mut GameState,
+    player_id: Uuid,
+    act: LongActionPlayer,
+    client: bool,
+) {
+    match act {
+        LongActionPlayer::Unknown { .. } => {
+            // nothing to do
+        }
+        LongActionPlayer::Respawn { .. } => {
+            if !client {
+                spawn_ship(state, player_id, None);
+            }
+        }
+    }
+}
+
 // (update_action, keep_ticking)
 pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
     return match act {
@@ -410,17 +420,6 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                     to,
                     micro_left: left,
                     percentage: calc_percentage(left, TRANS_SYSTEM_JUMP_TIME),
-                },
-                left > 0,
-            )
-        }
-        LongAction::Respawn { micro_left, id, .. } => {
-            let left = micro_left - micro_passed as i32;
-            (
-                LongAction::Respawn {
-                    id,
-                    micro_left: left,
-                    percentage: calc_percentage(left, PLAYER_RESPAWN_TIME_MC),
                 },
                 left > 0,
             )
@@ -484,6 +483,24 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                     start_pos,
                     end_pos,
                     percentage: calc_percentage(left, SHIP_UNDOCK_TIME_TICKS),
+                },
+                left > 0,
+            )
+        }
+    };
+}
+
+// (update_action, keep_ticking)
+pub fn tick_long_act_player(act: LongActionPlayer, micro_passed: i64) -> (LongActionPlayer, bool) {
+    return match act {
+        LongActionPlayer::Unknown { id } => (LongActionPlayer::Unknown { id }, false),
+        LongActionPlayer::Respawn { micro_left, id, .. } => {
+            let left = micro_left - micro_passed as i32;
+            (
+                LongActionPlayer::Respawn {
+                    id,
+                    micro_left: left,
+                    percentage: calc_percentage(left, PLAYER_RESPAWN_TIME_MC),
                 },
                 left > 0,
             )

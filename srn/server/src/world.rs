@@ -24,8 +24,9 @@ use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
 };
 use crate::long_actions::{
-    cancel_all_long_actions_of_type, finish_long_act, tick_long_act, try_start_long_action,
-    LongAction, LongActionStart, MIN_SHIP_DOCKING_RADIUS, SHIP_DOCKING_RADIUS_COEFF,
+    cancel_all_long_actions_of_type, finish_long_act, finish_long_act_player, tick_long_act,
+    tick_long_act_player, try_start_long_action, LongAction, LongActionPlayer, LongActionStart,
+    MIN_SHIP_DOCKING_RADIUS, SHIP_DOCKING_RADIUS_COEFF,
 };
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
@@ -315,6 +316,8 @@ pub struct Ship {
     pub health: Health,
     #[serde(default)]
     pub local_effects: Vec<LocalEffect>,
+    #[serde(default)]
+    pub long_actions: Vec<LongAction>,
 }
 
 impl Ship {
@@ -341,6 +344,7 @@ impl Ship {
             movement: Default::default(),
             health: Health::new(100.0),
             local_effects: vec![],
+            long_actions: vec![],
         }
     }
 }
@@ -394,7 +398,7 @@ pub struct Player {
     pub money: i32,
     pub portrait_name: String,
     pub respawn_ms_left: i32,
-    pub long_actions: Vec<LongAction>,
+    pub long_actions: Vec<LongActionPlayer>,
     pub notifications: Vec<Notification>,
 }
 
@@ -865,7 +869,7 @@ pub fn update_world(
                 .clone()
                 .into_iter()
                 .filter_map(|la| {
-                    let (new_la, keep_ticking) = tick_long_act(la, elapsed);
+                    let (new_la, keep_ticking) = tick_long_act_player(la, elapsed);
                     if !keep_ticking {
                         to_finish.push((new_la.clone(), player.id));
                     }
@@ -874,7 +878,7 @@ pub fn update_world(
                 .collect();
         }
         for (act, player_id) in to_finish.into_iter() {
-            finish_long_act(&mut state, player_id, act, client);
+            finish_long_act_player(&mut state, player_id, act, client);
         }
 
         sampler.end(long_act_ticks);
@@ -1035,6 +1039,28 @@ pub fn update_location(
     autofocus::update_location_autofocus(location_idx, &mut state.locations[location_idx]);
     sampler.end(autofocus_id);
 
+    let long_act_ticks = sampler.start(SamplerMarks::UpdateTickLongActionsShips as u32);
+    let mut to_finish = vec![];
+    for ship in state.locations[location_idx].ships.iter_mut() {
+        ship.long_actions = ship
+            .long_actions
+            .clone()
+            .into_iter()
+            .filter_map(|la| {
+                let (new_la, keep_ticking) = tick_long_act(la, elapsed);
+                if !keep_ticking {
+                    to_finish.push((new_la.clone(), ship.id));
+                }
+                return if keep_ticking { Some(new_la) } else { None };
+            })
+            .collect();
+    }
+    for (act, player_id) in to_finish.into_iter() {
+        finish_long_act(&mut state, player_id, act, client);
+    }
+
+    sampler.end(long_act_ticks);
+
     sampler
 }
 
@@ -1051,30 +1077,26 @@ fn interpolate_docking_ships_position(
     let planets_read = state.locations[location_idx].planets.clone();
     let planets_by_id = index_planets_by_id(&planets_read);
     let docking_ship_ids: HashMap<Uuid, &LongAction> =
-        HashMap::from_iter(state.players.iter().filter_map(|p| {
-            let long_act = p
+        HashMap::from_iter(state.locations[location_idx].ships.iter().filter_map(|s| {
+            let long_act = s
                 .long_actions
                 .iter()
                 .filter(|la| matches!(la, LongAction::Dock { .. }))
                 .nth(0);
             if let Some(la) = long_act {
-                if let Some(sid) = p.ship_id {
-                    return Some((sid, la));
-                }
+                return Some((s.id, la));
             }
             return None;
         }));
     let undocking_ship_ids: HashMap<Uuid, &LongAction> =
-        HashMap::from_iter(state.players.iter().filter_map(|p| {
-            let long_act = p
+        HashMap::from_iter(state.locations[location_idx].ships.iter().filter_map(|s| {
+            let long_act = s
                 .long_actions
                 .iter()
                 .filter(|la| matches!(la, LongAction::Undock { .. }))
                 .nth(0);
             if let Some(la) = long_act {
-                if let Some(sid) = p.ship_id {
-                    return Some((sid, la));
-                }
+                return Some((s.id, la));
             }
             return None;
         }));
@@ -1173,7 +1195,7 @@ fn update_initiate_ship_docking_by_navigation(
                         < (planet.radius * planet.radius * SHIP_DOCKING_RADIUS_COEFF)
                             .max(MIN_SHIP_DOCKING_RADIUS)
                     {
-                        let docks_in_progress = player
+                        let docks_in_progress = ship
                             .long_actions
                             .iter()
                             .any(|a| matches!(a, LongAction::Dock { .. }));
@@ -1348,7 +1370,7 @@ fn update_ships_respawn(state: &mut GameState, prng: &mut SmallRng) {
             let respawns_in_progress = player
                 .long_actions
                 .iter()
-                .any(|a| matches!(a, LongAction::Respawn { .. }));
+                .any(|a| matches!(a, LongActionPlayer::Respawn { .. }));
 
             if !respawns_in_progress {
                 to_spawn.push(player.id);
@@ -1473,16 +1495,16 @@ pub fn update_ship_hp_effects(
         .collect::<Vec<_>>()
 }
 
-fn apply_ship_death(s: &Ship, player_mut: &mut Player) {
-    player_mut.ship_id = None;
+fn apply_ship_death(ship: &mut Ship, player: &mut Player) {
+    player.ship_id = None;
     fire_event(GameEvent::ShipDied {
-        ship: s.clone(),
-        player: player_mut.clone(),
+        ship: ship.clone(),
+        player: player.clone(),
     });
-    player_mut.money -= 1000;
-    player_mut.money = player_mut.money.max(0);
+    player.money -= 1000;
+    player.money = player.money.max(0);
     cancel_all_long_actions_of_type(
-        &mut player_mut.long_actions,
+        &mut ship.long_actions,
         LongAction::TransSystemJump {
             id: Default::default(),
             to: Default::default(),
@@ -1540,29 +1562,25 @@ pub fn update_ships_navigation(
     let planets_with_star = make_bodies_from_planets(&planets, star);
     let bodies_by_id = index_bodies_by_id(planets_with_star);
     let players_by_ship_id = indexing::index_players_by_ship_id(players);
-    let docking_ship_ids: HashSet<Uuid> = HashSet::from_iter(players.iter().filter_map(|p| {
-        let long_act = p
+    let docking_ship_ids: HashSet<Uuid> = HashSet::from_iter(ships.iter().filter_map(|s| {
+        let long_act = s
             .long_actions
             .iter()
             .filter(|la| matches!(la, LongAction::Dock { .. }))
             .nth(0);
         if let Some(_la) = long_act {
-            if let Some(sid) = p.ship_id {
-                return Some(sid);
-            }
+            return Some(s.id);
         }
         return None;
     }));
-    let undocking_ship_ids: HashSet<Uuid> = HashSet::from_iter(players.iter().filter_map(|p| {
-        let long_act = p
+    let undocking_ship_ids: HashSet<Uuid> = HashSet::from_iter(ships.iter().filter_map(|s| {
+        let long_act = s
             .long_actions
             .iter()
             .filter(|la| matches!(la, LongAction::Undock { .. }))
             .nth(0);
         if let Some(_la) = long_act {
-            if let Some(sid) = p.ship_id {
-                return Some(sid);
-            }
+            return Some(s.id);
         }
         return None;
     }));

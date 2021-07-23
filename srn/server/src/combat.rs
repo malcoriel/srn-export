@@ -38,12 +38,7 @@ impl Health {
     }
 }
 
-pub fn validate_shoot(
-    target: ShootTarget,
-    loc: &world::Location,
-    _player: &Player,
-    ship: &Ship,
-) -> bool {
+pub fn validate_shoot(target: ShootTarget, loc: &world::Location, ship: &Ship) -> bool {
     let shoot_ability = ship
         .abilities
         .iter()
