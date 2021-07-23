@@ -9,6 +9,7 @@ import {
   GameState,
   isManualMovement,
   ManualMovementActionTags,
+  Planet,
   Player,
   SandboxCommand,
   Ship,
@@ -133,6 +134,7 @@ export interface NetStateIndexes {
   myShip: Ship | null;
   myShipPosition: Vector | null;
   playersById: Map<string, Player>;
+  planetsById: Map<string, Planet>;
   playersByShipId: Map<string, Player>;
 }
 
@@ -292,6 +294,7 @@ export default class NetState extends EventEmitter {
       myShip: null,
       myShipPosition: null,
       playersById: new Map(),
+      planetsById: new Map(),
       playersByShipId: new Map(),
     };
     const myShip = findMyShip(this.state);
@@ -317,6 +320,9 @@ export default class NetState extends EventEmitter {
       if (player.ship_id) {
         this.indexes.playersByShipId.set(player.ship_id, player);
       }
+    }
+    for (const planet of this.state.locations[0].planets) {
+      this.indexes.planetsById.set(planet.id, planet);
     }
   }
 

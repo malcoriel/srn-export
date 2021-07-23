@@ -14,7 +14,6 @@ import { StartMenu } from './HtmlLayers/StartMenu';
 import { LeaderboardWindow } from './HtmlLayers/LeaderboardWindow';
 import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { KonvaOverlay } from './KonvaLayers/KonvaOverlay';
-import { MyTrajectoryLayer } from './KonvaLayers/MyTrajectoryLayer';
 import { HelpWindow } from './HtmlLayers/HelpWindow';
 import './HtmlLayers/Panel.scss';
 import { MinimapPanel } from './KonvaLayers/MinimapPanel';
@@ -232,7 +231,6 @@ const Srn = () => {
                   style={{ pointerEvents: 'none' }}
                 >
                   <KonvaOverlay />
-                  <MyTrajectoryLayer />
                 </Stage>
               )}
               {!resourcesAreLoading && (

@@ -24,6 +24,7 @@ import { ThreeNames } from './ThreeNames';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
 import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
+import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 
 export type Vector3Arr = [number, number, number];
 
@@ -152,6 +153,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           <ThreeQuestDirection state={state} visualState={visualState} />
           <ThreeNames netState={ns} visMap={visMap} />
           <ThreeWeaponEffectsLayer />
+          <ThreeTrajectoryLayer indexes={indexes} />
         </group>
       </Suspense>
     </Canvas>
