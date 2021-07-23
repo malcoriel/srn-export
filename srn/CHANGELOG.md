@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.6.20 (2021-07-23)
+
+### New
+* Finally, working ship shooting. Try blowing up some bots!
+
+### Fixes
+* Fixed some client crashes related to docking.
+* Fixed broken quest notifications substitutions.
+
 ## Version 0.6.19 (2021-07-22)
 
 ### Fixes
