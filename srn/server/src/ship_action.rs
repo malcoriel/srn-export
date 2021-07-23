@@ -32,6 +32,7 @@ pub fn apply_ship_action(
     ship_action: ShipActionRust,
     state: &GameState,
     player_id: Uuid,
+    client: bool,
 ) -> Option<Ship> {
     let ship_idx = indexing::find_my_ship_index(state, player_id);
     if ship_idx.is_none() {
@@ -62,7 +63,7 @@ pub fn apply_ship_action(
             };
             ship.navigate_target = None;
             ship.dock_target = None;
-            undock_ship_via_clone(state, player_id, &mut ship);
+            undock_ship_via_clone(state, player_id, &mut ship, client);
             ship.navigate_target = Some(target);
             ship.trajectory = world::build_trajectory_to_point(ship_pos, &target);
             ship.movement.gas = None;
@@ -82,7 +83,7 @@ pub fn apply_ship_action(
                 };
                 ship.navigate_target = None;
                 ship.dock_target = None;
-                undock_ship_via_clone(state, player_id, &mut ship);
+                undock_ship_via_clone(state, player_id, &mut ship, client);
                 ship.dock_target = Some(target);
                 ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos);
                 ship.movement.gas = None;
@@ -159,10 +160,10 @@ pub fn apply_ship_action(
     }
 }
 
-fn undock_ship_via_clone(state: &GameState, player_id: Uuid, mut ship: &mut Ship) {
+fn undock_ship_via_clone(state: &GameState, player_id: Uuid, mut ship: &mut Ship, client: bool) {
     let mut state_mut_clone = state.clone();
     let ship_idx = find_my_ship_index(&state_mut_clone, player_id).unwrap();
-    undock_ship(&mut state_mut_clone, ship_idx.clone(), player_id);
+    undock_ship(&mut state_mut_clone, ship_idx.clone(), player_id, client);
     let mut mutated_ship =
         state_mut_clone.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].clone();
     mem::swap(&mut mutated_ship, &mut ship);

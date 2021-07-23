@@ -234,7 +234,7 @@ pub fn do_bot_actions(
 
     for (bot_id, acts) in ship_updates.into_iter() {
         for act in acts {
-            let updated_ship = apply_ship_action(act.clone(), state, bot_id);
+            let updated_ship = apply_ship_action(act.clone(), state, bot_id, false);
             if let Some(updated_ship) = updated_ship {
                 world::try_replace_ship(state, &updated_ship, bot_id);
             }

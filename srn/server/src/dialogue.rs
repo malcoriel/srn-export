@@ -454,7 +454,7 @@ fn apply_side_effects(
             DialogueOptionSideEffect::Undock => {
                 let my_ship_idx = find_my_ship_index(state, player_id);
                 if let Some(my_ship_idx) = my_ship_idx {
-                    world::undock_ship(state, my_ship_idx, player_id);
+                    world::undock_ship(state, my_ship_idx, player_id, false);
                     state_changed = true;
                 }
             }

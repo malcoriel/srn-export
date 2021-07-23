@@ -1670,28 +1670,34 @@ pub fn dock_ship(mut ship: &mut Ship, player: &Player, planet: &Box<dyn IBody>) 
     });
 }
 
-pub fn undock_ship(state: &mut GameState, ship_idx: ShipIdx, player_id: Uuid) {
+pub fn undock_ship(state: &mut GameState, ship_idx: ShipIdx, player_id: Uuid, client: bool) {
     let state_read = state.clone();
     let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
     if let Some(planet_id) = ship.docked_at {
         ship.docked_at = None;
-        let planet = find_planet(&state_read, &planet_id).unwrap().clone();
-        ship.x = planet.x;
-        ship.y = planet.y;
-        let player = find_my_player(&state_read, player_id).unwrap().clone();
-        fire_event(GameEvent::ShipUndocked {
-            ship: ship.clone(),
-            planet,
-            player: player.clone(),
-        });
-        try_start_long_action(
-            state,
-            player_id,
-            LongActionStart::Undock {
-                from_planet: planet_id,
-            },
-            &mut gen_rng(),
-        );
+        if let Some(planet) = find_planet(&state_read, &planet_id) {
+            let planet = planet.clone();
+            ship.x = planet.x;
+            ship.y = planet.y;
+            if !client {
+                if let Some(player) = find_my_player(&state_read, player_id) {
+                    let player = player.clone();
+                    fire_event(GameEvent::ShipUndocked {
+                        ship: ship.clone(),
+                        planet,
+                        player,
+                    });
+                    try_start_long_action(
+                        state,
+                        player_id,
+                        LongActionStart::Undock {
+                            from_planet: planet_id,
+                        },
+                        &mut gen_rng(),
+                    );
+                }
+            }
+        }
     }
 }
 
@@ -1852,7 +1858,7 @@ pub fn mutate_ship_no_lock(
         return None;
     }
     force_update_to_now(state);
-    let updated_ship = ship_action::apply_ship_action(mutate_cmd, &state, client_id);
+    let updated_ship = ship_action::apply_ship_action(mutate_cmd, &state, client_id, false);
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {

@@ -570,7 +570,7 @@ fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>)
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
             let state = select_mut_state(&mut cont, client_id);
-            let action_dbg = action.clone();
+            // let action_dbg = action.clone();
             if !long_actions::try_start_long_action(state, client_id, action, &mut world::gen_rng())
             {
                 // invalid shooting produces too much noise

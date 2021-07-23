@@ -390,7 +390,7 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, 
         LongAction::Undock { .. } => {
             let ship = indexing::find_my_ship_index(state, player_id);
             if let Some(ship) = ship {
-                world::undock_ship(state, ship, player_id)
+                world::undock_ship(state, ship, player_id, client)
             }
         }
     }
