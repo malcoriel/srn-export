@@ -1789,14 +1789,14 @@ pub struct ShipIdx {
 
 pub fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
     let quest_planets = state.locations[0].planets.clone();
-    let mut any_new_quests = false;
+    let mut any_new_quests = vec![];
     let player_ids = state.players.iter().map(|p| p.id).collect::<Vec<_>>();
     for player_id in player_ids {
         if let (Some(mut player), Some(ship)) = indexing::find_player_and_ship_mut(state, player_id)
         {
             if player.quest.is_none() {
                 generate_random_quest(player, &quest_planets, ship.docked_at, prng);
-                any_new_quests = true;
+                any_new_quests.push(player_id);
             } else {
                 let quest_id = player.quest.as_ref().map(|q| q.id).unwrap();
                 if !has_quest_item(&ship.inventory, quest_id)
@@ -1811,8 +1811,8 @@ pub fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
             }
         }
     }
-    if any_new_quests {
-        substitute_notification_texts(state, HashSet::new());
+    if any_new_quests.len() > 0 {
+        substitute_notification_texts(state, HashSet::from_iter(any_new_quests));
     }
 }
 
