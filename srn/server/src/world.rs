@@ -15,7 +15,7 @@ use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
-use crate::combat::ShootTarget;
+use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, index_planets_by_id,
     index_players_by_ship_id, index_ships_by_id, ObjectSpecifier,
@@ -295,8 +295,6 @@ pub struct Ship {
     pub id: Uuid,
     pub x: f64,
     pub y: f64,
-    pub hp: f64,
-    pub max_hp: f64,
     pub acc_periodic_dmg: f64,
     pub acc_periodic_heal: f64,
     pub rotation: f64,
@@ -313,6 +311,8 @@ pub struct Ship {
     pub auto_focus: Option<ObjectSpecifier>,
     #[serde(default)]
     pub movement: ShipMovement,
+    #[serde(default)]
+    pub health: Health,
 }
 
 impl Ship {
@@ -322,8 +322,6 @@ impl Ship {
             color: gen_color(&mut small_rng).to_string(),
             x: if at.is_some() { at.unwrap().x } else { 100.0 },
             y: if at.is_some() { at.unwrap().y } else { 100.0 },
-            hp: 100.0,
-            max_hp: 100.0,
             acc_periodic_dmg: 0.0,
             acc_periodic_heal: 0.0,
             rotation: 0.0,
@@ -339,6 +337,7 @@ impl Ship {
             }],
             auto_focus: None,
             movement: Default::default(),
+            health: Health::new(100.0),
         }
     }
 }
@@ -560,11 +559,13 @@ pub struct GameState {
     pub locations: Vec<Location>,
 }
 
+pub const GAME_STATE_VERSION: u32 = 2;
+
 impl GameState {
     pub fn new() -> Self {
         Self {
             id: Default::default(),
-            version: 0,
+            version: GAME_STATE_VERSION,
             mode: GameMode::Unknown,
             tag: None,
             seed: "".to_string(),
@@ -1412,7 +1413,7 @@ pub fn update_ship_hp_effects(
             if ship.acc_periodic_dmg >= DMG_EFFECT_MIN {
                 let dmg_done = ship.acc_periodic_dmg.floor() as i32;
                 ship.acc_periodic_dmg = 0.0;
-                ship.hp = (ship.hp - dmg_done as f64).max(0.0);
+                ship.health.current = (ship.health.current - dmg_done as f64).max(0.0);
                 if let Some(player) = players_by_ship_id.get_mut(&ship.id) {
                     player.local_effects.push(LocalEffect::DmgDone {
                         id: new_id(),
@@ -1423,7 +1424,7 @@ pub fn update_ship_hp_effects(
                 }
             }
 
-            if star_damage <= 0.0 && ship.hp < ship.max_hp {
+            if star_damage <= 0.0 && ship.health.current < ship.health.max {
                 let regen = SHIP_REGEN_PER_SEC * elapsed_micro as f64 / 1000.0 / 1000.0;
                 ship.acc_periodic_heal += regen;
             }
@@ -1431,7 +1432,7 @@ pub fn update_ship_hp_effects(
             if ship.acc_periodic_heal >= HEAL_EFFECT_MIN {
                 let heal = ship.acc_periodic_heal.floor() as i32;
                 ship.acc_periodic_heal = 0.0;
-                ship.hp = ship.max_hp.min(ship.hp + heal as f64);
+                ship.health.current = ship.health.max.min(ship.health.current + heal as f64);
                 if let Some(player) = players_by_ship_id.get_mut(&ship.id) {
                     player.local_effects.push(LocalEffect::Heal {
                         id: new_id(),
@@ -1467,7 +1468,7 @@ pub fn update_ship_hp_effects(
     ships
         .iter()
         .filter_map(|s| {
-            if s.hp > 0.0 {
+            if s.health.current > 0.0 {
                 Some(s.clone())
             } else {
                 let player_opt = players_by_ship_id.get_mut(&s.id);

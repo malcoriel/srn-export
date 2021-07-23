@@ -8,6 +8,7 @@ use crate::random_stuff::{
 use crate::vec2::Vec2f64;
 use crate::world::{
     random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star,
+    GAME_STATE_VERSION,
 };
 use chrono::Utc;
 use core::mem;
@@ -111,7 +112,7 @@ pub fn system_gen(seed: String) -> GameState {
         mode: GameMode::Unknown,
         disable_hp_effects: false,
         market: Market::new(),
-        version: 1,
+        version: GAME_STATE_VERSION,
     };
     state
 }
@@ -423,7 +424,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
     ];
     GameState {
         id: client_id,
-        version: 1,
+        version: GAME_STATE_VERSION,
         mode: GameMode::Tutorial,
         tag: None,
         seed: seed.clone(),
@@ -446,7 +447,7 @@ pub fn make_sandbox_state(client_id: Uuid) -> GameState {
 
     GameState {
         id: client_id,
-        version: 1,
+        version: GAME_STATE_VERSION,
         mode: GameMode::Sandbox,
         tag: None,
         seed: seed.clone(),

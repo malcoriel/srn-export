@@ -44,7 +44,7 @@ mod world_test {
         };
         let state = GameState {
             id: Default::default(),
-            version: 0,
+            version: GAME_STATE_VERSION,
             mode: GameMode::CargoRush,
             tag: None,
             seed: "".to_string(),
@@ -154,7 +154,7 @@ mod world_test {
         };
         let state = GameState {
             id: Default::default(),
-            version: 0,
+            version: GAME_STATE_VERSION,
             mode: GameMode::CargoRush,
             tag: None,
             seed: "".to_string(),
@@ -246,7 +246,7 @@ mod world_test {
         };
         let state = GameState {
             id: Default::default(),
-            version: 0,
+            version: GAME_STATE_VERSION,
             mode: GameMode::CargoRush,
             tag: None,
             seed: "".to_string(),

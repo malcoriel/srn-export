@@ -24,6 +24,20 @@ impl Default for ShootTarget {
     }
 }
 
+#[derive(
+    Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy, Default,
+)]
+pub struct Health {
+    pub current: f64,
+    pub max: f64,
+}
+
+impl Health {
+    pub fn new(max: f64) -> Health {
+        Health { current: max, max }
+    }
+}
+
 pub fn validate_shoot(
     target: ShootTarget,
     loc: &world::Location,

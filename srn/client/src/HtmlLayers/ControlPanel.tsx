@@ -38,11 +38,13 @@ const HpDisplay = ({ myShip }: { myShip: Ship }) => {
       className="hp-bar"
     >
       <div className="text">
-        {Math.floor(myShip.hp)}/{Math.floor(myShip.max_hp)}
+        {Math.floor(myShip.health.current)}/{Math.floor(myShip.health.max)}
       </div>
       <div
         className="filler"
-        style={{ width: `${(myShip.hp / myShip.max_hp) * 100}%` }}
+        style={{
+          width: `${(myShip.health.current / myShip.health.max) * 100}%`,
+        }}
       />
     </StyledRect>
   );
