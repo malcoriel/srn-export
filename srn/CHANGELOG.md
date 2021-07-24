@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.6.21 (2021-07-24)
+
+### Fixes
+* Less desync for trajectory display - it won't jump as much, specifically for planets.
+
 ## Version 0.6.20 (2021-07-23)
 
 ### New
