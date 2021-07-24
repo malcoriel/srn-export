@@ -24,7 +24,7 @@ export const ThreeWeaponEffectsLayer = () => {
     if (!ship) {
       return acc;
     }
-    const shoots = curr.long_actions
+    const shoots = ship.long_actions
       .map((shootLongAct: LongAction) => {
         if (shootLongAct.tag !== 'Shoot') {
           return null;

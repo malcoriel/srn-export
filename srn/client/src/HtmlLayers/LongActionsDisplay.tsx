@@ -1,10 +1,14 @@
 import React from 'react';
 import './LongActionsDisplay.scss';
-import NetState, { findMyPlayer, useNSForceChange } from '../NetState';
+import NetState, {
+  findMyPlayer,
+  findMyShip,
+  useNSForceChange,
+} from '../NetState';
 import _ from 'lodash';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { LongAction } from '../../../world/pkg';
+import { LongAction, LongActionPlayer } from '../../../world/pkg';
 import { UnreachableCaseError } from 'ts-essentials';
 
 const getActionName = (a: LongAction): string | undefined => {
@@ -17,8 +21,6 @@ const getActionName = (a: LongAction): string | undefined => {
       return undefined;
     case 'TransSystemJump':
       return 'Jumping...';
-    case 'Respawn':
-      return 'Respawning...';
     case 'Shoot':
       return undefined;
     default:
@@ -26,20 +28,12 @@ const getActionName = (a: LongAction): string | undefined => {
   }
 };
 
-export const isDisplayableLongAction = (a: LongAction): boolean => {
+const getActionNamePlayer = (a: LongActionPlayer): string | undefined => {
   switch (a.tag) {
     case 'Unknown':
-      return false;
-    case 'TransSystemJump':
-      return true;
+      return undefined;
     case 'Respawn':
-      return true;
-    case 'Shoot':
-      return false;
-    case 'Dock':
-      return false;
-    case 'Undock':
-      return false;
+      return 'Respawning...';
     default:
       throw new UnreachableCaseError(a);
   }
@@ -50,23 +44,29 @@ export const LongActionsDisplay = () => {
   if (!ns) return null;
   useNSForceChange('LongActionsDisplay', false, (oldState, newState) => {
     const myPlayerOld = findMyPlayer(oldState);
+    const myShipOld = findMyShip(oldState);
+    const myShipNew = findMyShip(newState);
     const myPlayerNew = findMyPlayer(newState);
     if (!myPlayerOld || !myPlayerNew) return false;
-    return !_.isEqual(myPlayerOld.long_actions, myPlayerNew.long_actions);
+    return (
+      !_.isEqual(myPlayerOld.long_actions, myPlayerNew.long_actions) ||
+      !_.isEqual(myShipOld, myShipNew)
+    );
   });
   const myPlayer = findMyPlayer(ns.state);
   if (!myPlayer) {
     return null;
   }
   const { long_actions } = myPlayer;
+  const myShip = ns.indexes.myShip;
   return (
     <div className="long-actions-display">
       <div className="container">
         {long_actions.map((a) => {
-          if (a.tag === 'Unknown' || !isDisplayableLongAction(a)) {
+          const name = getActionNamePlayer(a);
+          if (a.tag === 'Unknown' || !name) {
             return null;
           }
-          const name = getActionName(a);
           return (
             <div key={a.id} className="action">
               {name && <div className="name">{name}</div>}
@@ -79,6 +79,24 @@ export const LongActionsDisplay = () => {
             </div>
           );
         })}
+        {myShip &&
+          myShip.long_actions.map((a) => {
+            const name = getActionName(a);
+            if (a.tag === 'Unknown' || !name) {
+              return null;
+            }
+            return (
+              <div key={a.id} className="action">
+                {name && <div className="name">{name}</div>}
+                <CircularProgressbar
+                  value={a.percentage + 2}
+                  text={`${(Math.floor(a.micro_left / 1000 / 100) / 10).toFixed(
+                    1
+                  )}s`}
+                />
+              </div>
+            );
+          })}
       </div>
     </div>
   );
