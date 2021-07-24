@@ -1480,39 +1480,35 @@ pub fn update_ship_hp_effects(
     state.locations[location_idx].ships = state.locations[location_idx]
         .ships
         .iter()
-        .filter_map(|s| {
-            if s.health.current > 0.0 {
-                Some(s.clone())
+        .filter_map(|ship| {
+            if ship.health.current > 0.0 {
+                Some(ship.clone())
             } else {
-                player_ids_to_die.push(players_by_ship_id.get(&s.id).map(|p| p.id));
+                player_ids_to_die.push(
+                    players_by_ship_id
+                        .get(&ship.id)
+                        .map(|p| (p.id, ship.clone())),
+                );
                 None
             }
         })
         .collect::<Vec<_>>();
-    for pid in player_ids_to_die.into_iter().filter_map(|o| o) {
-        if let (Some(player), Some(ship)) = find_player_and_ship_mut(state, pid) {
-            apply_ship_death(ship, player);
+    for (pid, ship_clone) in player_ids_to_die.into_iter().filter_map(|o| o) {
+        if let Some(player) = indexing::find_my_player_mut(state, pid) {
+            apply_ship_death(ship_clone, player);
         }
     }
 }
 
-fn apply_ship_death(ship: &mut Ship, player: &mut Player) {
+fn apply_ship_death(ship: Ship, player: &mut Player) {
     player.ship_id = None;
+    log!("ship id reset");
     fire_event(GameEvent::ShipDied {
         ship: ship.clone(),
         player: player.clone(),
     });
     player.money -= 1000;
     player.money = player.money.max(0);
-    cancel_all_long_actions_of_type(
-        &mut ship.long_actions,
-        LongAction::TransSystemJump {
-            id: Default::default(),
-            to: Default::default(),
-            micro_left: 0,
-            percentage: 0,
-        },
-    );
 }
 
 pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
