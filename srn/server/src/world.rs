@@ -1034,7 +1034,10 @@ pub fn update_location(
     sampler.end(autofocus_id);
 
     let long_act_ticks = sampler.start(SamplerMarks::UpdateTickLongActionsShips as u32);
+    let players_read = state.players.clone();
+    let players_by_ship_id_read = index_players_by_ship_id(&players_read);
     let mut to_finish = vec![];
+
     for ship in state.locations[location_idx].ships.iter_mut() {
         ship.long_actions = ship
             .long_actions
@@ -1043,7 +1046,9 @@ pub fn update_location(
             .filter_map(|la| {
                 let (new_la, keep_ticking) = tick_long_act(la, elapsed);
                 if !keep_ticking {
-                    to_finish.push((new_la.clone(), ship.id));
+                    if let Some(player) = players_by_ship_id_read.get(&ship.id) {
+                        to_finish.push((new_la.clone(), player.id));
+                    }
                 }
                 return if keep_ticking { Some(new_la) } else { None };
             })
