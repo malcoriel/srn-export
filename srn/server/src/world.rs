@@ -17,8 +17,8 @@ use wasm_bindgen::prelude::*;
 use crate::abilities::Ability;
 use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
-    find_my_player, find_my_ship, find_my_ship_index, find_planet, index_planets_by_id,
-    index_players_by_ship_id, index_ships_by_id, ObjectSpecifier,
+    find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
+    index_planets_by_id, index_players_by_ship_id, index_ships_by_id, ObjectSpecifier,
 };
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
@@ -1016,13 +1016,7 @@ pub fn update_location(
 
     if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(SamplerMarks::UpdateShipHpEffects as u32);
-        state.locations[location_idx].ships = update_ship_hp_effects(
-            &state.locations[location_idx].star,
-            &state.locations[location_idx].ships,
-            &mut state.players,
-            elapsed,
-            state.ticks,
-        );
+        update_ship_hp_effects(state, location_idx, elapsed, state.ticks);
         sampler.end(hp_effects_id);
 
         let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
@@ -1076,7 +1070,7 @@ fn interpolate_docking_ships_position(
 ) {
     let planets_read = state.locations[location_idx].planets.clone();
     let planets_by_id = index_planets_by_id(&planets_read);
-    let docking_ship_ids: HashMap<Uuid, &LongAction> =
+    let docking_ship_ids: HashMap<Uuid, LongAction> =
         HashMap::from_iter(state.locations[location_idx].ships.iter().filter_map(|s| {
             let long_act = s
                 .long_actions
@@ -1084,11 +1078,11 @@ fn interpolate_docking_ships_position(
                 .filter(|la| matches!(la, LongAction::Dock { .. }))
                 .nth(0);
             if let Some(la) = long_act {
-                return Some((s.id, la));
+                return Some((s.id, la.clone()));
             }
             return None;
         }));
-    let undocking_ship_ids: HashMap<Uuid, &LongAction> =
+    let undocking_ship_ids: HashMap<Uuid, LongAction> =
         HashMap::from_iter(state.locations[location_idx].ships.iter().filter_map(|s| {
             let long_act = s
                 .long_actions
@@ -1096,7 +1090,7 @@ fn interpolate_docking_ships_position(
                 .filter(|la| matches!(la, LongAction::Undock { .. }))
                 .nth(0);
             if let Some(la) = long_act {
-                return Some((s.id, la));
+                return Some((s.id, la.clone()));
             }
             return None;
         }));
@@ -1396,20 +1390,18 @@ const HEAL_EFFECT_MIN: f64 = 5.0;
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
 
 pub fn update_ship_hp_effects(
-    star: &Option<Star>,
-    ships: &Vec<Ship>,
-    players: &mut Vec<Player>,
+    state: &mut GameState,
+    location_idx: usize,
     elapsed_micro: i64,
     current_tick: u32,
-) -> Vec<Ship> {
-    let mut ships = ships.clone();
-    let mut players_by_ship_id = indexing::index_players_by_ship_id_mut(players);
-    if let Some(star) = star {
+) {
+    let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
+    if let Some(star) = state.locations[location_idx].star.clone() {
         let star_center = Vec2f64 {
             x: star.x,
             y: star.y,
         };
-        for mut ship in ships.iter_mut() {
+        for mut ship in state.locations[location_idx].ships.iter_mut() {
             let ship_pos = Vec2f64 {
                 x: ship.x,
                 y: ship.y,
@@ -1479,20 +1471,24 @@ pub fn update_ship_hp_effects(
         }
     }
 
-    ships
+    let mut player_ids_to_die = vec![];
+    state.locations[location_idx].ships = state.locations[location_idx]
+        .ships
         .iter()
         .filter_map(|s| {
             if s.health.current > 0.0 {
                 Some(s.clone())
             } else {
-                let player_opt = players_by_ship_id.get_mut(&s.id);
-                if player_opt.is_some() {
-                    apply_ship_death(s, player_opt.unwrap());
-                }
+                player_ids_to_die.push(players_by_ship_id.get(&s.id).map(|p| p.id));
                 None
             }
         })
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>();
+    for pid in player_ids_to_die.into_iter().filter_map(|o| o) {
+        if let (Some(player), Some(ship)) = find_player_and_ship_mut(state, pid) {
+            apply_ship_death(ship, player);
+        }
+    }
 }
 
 fn apply_ship_death(ship: &mut Ship, player: &mut Player) {
