@@ -25,6 +25,7 @@ import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
 import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
+import { ThreeWormhole } from './ThreeWormhole';
 
 export type Vector3Arr = [number, number, number];
 
@@ -154,6 +155,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
           <ThreeNames netState={ns} visMap={visMap} />
           <ThreeWeaponEffectsLayer />
           <ThreeTrajectoryLayer indexes={indexes} />
+          {/*<ThreeWormhole position={posToThreePos(50, 50)} radius={3} />*/}
         </group>
       </Suspense>
     </Canvas>

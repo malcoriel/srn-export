@@ -19,7 +19,7 @@ in vec3 fragCoord;
 out vec4 FragColor;
 
 #define iterations 12
-#define formuparam 0.57
+#define formuparam 0.56
 #define PI 3.14159265358979323846264338327
 
 #define volsteps 10
@@ -83,7 +83,7 @@ void mainImage( out vec4 fragColor )
    dir = mix(dir, pos * sqrt(intensity), blackholeIntensity * intensity);
 
    //volumetric rendering
-   float s=0.1,fade=3.0;
+   float s=0.05,fade=2.5;
    vec3 v=vec3(0.);
    for (int r=0; r<volsteps; r++) {
      vec3 p=from+s*dir*.5;
@@ -109,7 +109,7 @@ void mainImage( out vec4 fragColor )
   fragColor = vec4(0.0);
  }
  // white dot correciton
- if (length(abs(fragColor.rgb)) >= sqrt(3.0) - 0.4) {
+ if (length(abs(fragColor.rgb)) >= sqrt(3.0) - 0.5) {
   fragColor.rgb = vec3(0.2);
  }
  fragColor.a = smoothstep(0.1, 0.9, abs(length(abs(fragColor.rgb))));
