@@ -139,9 +139,9 @@ const ThreeInteractorImpl = ({
   const setShowTractorCircle = useStore((state) => state.setShowTractorCircle);
   useEffect(() => {
     if (defaultAction === InteractorActionType.Tractor) {
-      setShowTractorCircle(visuallyActive);
+      setShowTractorCircle(active);
     }
-  }, [defaultAction, visuallyActive, setShowTractorCircle]);
+  }, [defaultAction, active, setShowTractorCircle]);
 
   // noinspection RequiredAttributes
   return (
