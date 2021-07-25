@@ -20,15 +20,12 @@ const Template: Story = (args) => {
   return (
     <div>
       <StoryCanvas>
-        {/*<ThreeSpaceBackground size={256} shaderShift={0} />*/}
-        <mesh>
-          <planeBufferGeometry args={[256, 256]} />
-          <meshBasicMaterial color="teal" />
-        </mesh>
+        <ThreeSpaceBackground size={256} shaderShift={0} />
         <ThreeWormhole
           radius={100}
           position={[0, 0, 10]}
-          key={revision + JSON.stringify(args)}
+          key={revision} // no json.stringify props because it causes remount
+          open={args.open}
         />
       </StoryCanvas>
     </div>
@@ -36,4 +33,6 @@ const Template: Story = (args) => {
 };
 
 export const Basic = Template.bind({});
-Basic.args = {};
+Basic.args = {
+  open: false,
+};

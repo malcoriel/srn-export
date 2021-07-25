@@ -1,18 +1,17 @@
 // @ts-ignore
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Vector3 } from 'three/src/math/Vector3';
 import { fragmentShader, vertexShader, uniforms } from './shaders/lensing';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, RawShaderMaterial } from 'three';
 import { Vector3Arr } from './ThreeLayer';
-import { useSpring, animated } from '@react-spring/three';
+import { useSpring, animated, config } from '@react-spring/three';
 
 export const ThreeWormhole: React.FC<{
   position: Vector3 | Vector3Arr;
   radius: number;
-  opening?: boolean;
-  closing?: boolean;
-}> = ({ position, radius, opening }) => {
+  open: boolean;
+}> = ({ position, radius, open }) => {
   const meshRef = useRef<Mesh>();
   useFrame(() => {
     if (meshRef && meshRef.current) {
@@ -23,10 +22,14 @@ export const ThreeWormhole: React.FC<{
     }
   });
   const uniforms2 = useMemo(() => uniforms, []);
-  const { scale } = useSpring({ scale: opening ? 1.5 : 1 });
+
+  const { scale } = useSpring({
+    scale: open ? 1.0 : 0.0,
+    config: config.wobbly,
+  });
 
   return (
-    <animated.mesh position={position} ref={meshRef}>
+    <animated.mesh scale={scale} position={position} ref={meshRef}>
       <circleBufferGeometry args={[radius, 64]} />
       <rawShaderMaterial
         transparent
@@ -36,4 +39,16 @@ export const ThreeWormhole: React.FC<{
       />
     </animated.mesh>
   );
+
+  // return (
+  //   <mesh position={position} ref={meshRef}>
+  //     <circleBufferGeometry args={[radius, 64]} />
+  // <rawShaderMaterial
+  //   transparent
+  //   fragmentShader={fragmentShader}
+  //   vertexShader={vertexShader}
+  //   uniforms={uniforms2}
+  // />;
+  //   </mesh>
+  // );
 };
