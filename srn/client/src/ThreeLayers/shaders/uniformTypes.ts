@@ -12,6 +12,7 @@ export type IntUniformValue = {
 export type Vector3UniformValue = {
   value: Vector3 | null;
 };
+
 export type Vector3ArrayUniformValue = {
   value: Vector3[] | null;
 };
