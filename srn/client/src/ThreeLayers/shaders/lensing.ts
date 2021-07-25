@@ -21,6 +21,7 @@ out vec4 FragColor;
 
 #define iterations 12
 #define formuparam 0.57
+#define PI 3.14159265358979323846264338327
 
 #define volsteps 10
 #define stepsize 0.2
@@ -29,13 +30,13 @@ out vec4 FragColor;
 #define tile   1.0
 #define speed  0.010
 
-#define brightness 0.0015
-#define darkmatter 1.00
+#define brightness 0.0010
+#define darkmatter 1.0
 #define distfading 0.730
 #define saturation 1.0
 
 #define mo (2.0 * iMouse.xy - iResolution.xy) / iResolution.y
-#define blackholeCenter vec3(time,time,-2.)
+#define blackholeCenter vec3(sin(time),sin(time),-2.)
 #define blackholeRadius 0.0
 #define blackholeIntensity 20.0
 
@@ -86,7 +87,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
    dir = mix(dir, pos * sqrt(intensity), blackholeIntensity * intensity);
 
    //volumetric rendering
-   float s=0.1,fade=1.;
+   float s=0.1,fade=2.0;
    vec3 v=vec3(0.);
    for (int r=0; r<volsteps; r++) {
      vec3 p=from+s*dir*.5;
@@ -108,10 +109,15 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
    }
    v=mix(vec3(length(v)),v,saturation); //color adjust
    fragColor = vec4(v*.01,1.);
-   } else {
-    fragColor = vec4(0.0);
-   }
-   fragColor.a = smoothstep(0.01, 1.0, abs(length(abs(fragColor.rgb))));
+ } else {
+  fragColor = vec4(0.0);
+ }
+ // white dot correciton
+ if (length(abs(fragColor.rgb)) >= sqrt(3.0) - 0.5) {
+  fragColor.rgb = vec3(0.0);
+ }
+ fragColor.a = smoothstep(0.01, 0.9, abs(length(abs(fragColor.rgb))));
+
 }
 
 void main() {
