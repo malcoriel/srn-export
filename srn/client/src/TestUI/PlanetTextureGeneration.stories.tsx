@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
-import { Canvas } from 'react-three-fiber';
+import { Canvas } from '@react-three/fiber';
 import { CanvasTexture, Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 import { PlanetTextureShape } from './PlanetTextureShape';

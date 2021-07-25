@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Canvas } from 'react-three-fiber';
+import { Canvas } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 

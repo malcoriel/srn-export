@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { useFrame, useLoader } from 'react-three-fiber';
+import { useFrame, useLoader } from '@react-three/fiber';
 import { Mesh, ShaderMaterial } from 'three';
 import * as THREE from 'three';
 import Vector, { VectorF } from '../utils/Vector';

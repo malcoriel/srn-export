@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { Mesh, ShaderMaterial, Vector3 } from 'three';
 import React, { useMemo, useRef } from 'react';
 import Color from 'color';
-import { useFrame } from 'react-three-fiber';
+import { useFrame } from '@react-three/fiber';
 import { normalizeColor } from '../utils/palette';
 import {
   FloatArrayUniformValue,

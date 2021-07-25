@@ -1,7 +1,6 @@
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useStore } from '../../store';
 import { Color } from 'three';
-import { MouseEvent } from 'react-three-fiber/canvas';
 import { Html, Text } from '@react-three/drei';
 import '@szhsin/react-menu/dist/index.css';
 import { HintWindow } from '../../HtmlLayers/HintWindow';
@@ -14,6 +13,7 @@ import {
   UpdateStrategy,
   UpdateStrategyBuilder,
 } from '../../utils/UpdateStrategy';
+import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 
 export enum InteractorActionType {
   Unknown,
@@ -112,11 +112,10 @@ const ThreeInteractorImpl = ({
 
   const tempAutoFocusActive = !activeInteractorId && isAutoFocused;
 
-  const onLeftClick = (e?: MouseEvent) => {
+  const onLeftClick = (e?: ThreeEvent<MouseEvent>) => {
     if (e) {
       e.stopPropagation();
-      e.sourceEvent.preventDefault();
-      e.sourceEvent.stopPropagation();
+      e.preventDefault();
     }
     if (actions && defaultAction) {
       const fn = actions.get(defaultAction);
@@ -126,8 +125,8 @@ const ThreeInteractorImpl = ({
     }
     return false;
   };
-  const onContextMenu = (e: MouseEvent) => {
-    e.sourceEvent.preventDefault();
+  const onContextMenu = (e: ThreeEvent<MouseEvent>) => {
+    e.preventDefault();
     setMenuShown(!menuShown);
     return false;
   };

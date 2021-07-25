@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { MeshProps, useFrame, useLoader, useThree } from 'react-three-fiber';
+import { MeshProps, useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Mesh, ShaderMaterial, TextureLoader, Vector3 } from 'three';
 import { fragmentShader, uniforms, vertexShader } from './shaders/star';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Color, Vector2 } from 'three';
-import { ReactThreeFiber } from 'react-three-fiber';
+import { ReactThreeFiber } from '@react-three/fiber';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
 import {
   LineMaterial,

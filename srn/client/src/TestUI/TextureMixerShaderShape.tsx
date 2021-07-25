@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import { Mesh, ShaderMaterial, Texture } from 'three';
-import { useFrame } from 'react-three-fiber';
+import { useFrame } from '@react-three/fiber';
 import _ from 'lodash';
 import {
   FloatUniformValue,

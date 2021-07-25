@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import './DialogueWindow.scss';
-import { Canvas } from 'react-three-fiber';
+import { Canvas } from '@react-three/fiber';
 import _ from 'lodash';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';

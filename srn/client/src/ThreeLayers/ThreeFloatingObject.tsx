@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react';
-import { useFrame, useLoader, Vector3 } from 'react-three-fiber';
+import { useFrame, useLoader, Vector3 } from '@react-three/fiber';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import _ from 'lodash';
 import { Color, Group, Mesh, MeshBasicMaterial } from 'three';

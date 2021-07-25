@@ -4,7 +4,7 @@ import { Window } from './ui/Window';
 import './LeaderboardWindow.scss';
 import { Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
-import { Canvas } from 'react-three-fiber';
+import { Canvas } from '@react-three/fiber';
 import { StarMap } from './StarMap';
 import { LongActionStartBuilder } from '../../../world/pkg/world.extra';
 import { useStore, WindowState } from '../store';

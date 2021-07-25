@@ -1,14 +1,13 @@
 import React, { useMemo, useRef } from 'react';
 import { Mesh, ShaderMaterial } from 'three';
-import { useFrame } from 'react-three-fiber';
+import { useFrame } from '@react-three/fiber';
 import _ from 'lodash';
 import { FloatUniformValue } from './shaders/uniformTypes';
 import { OrthographicCamera } from '@react-three/drei';
 import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from './CameraControls';
-import { MouseEvent } from 'react-three-fiber/canvas';
 import { getBackgroundSize } from './ThreeLayer';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
-import NetState from '../NetState';
+import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 
 const uniforms: {
   shift: FloatUniformValue;
@@ -193,9 +192,9 @@ export const ThreeSpaceBackground: React.FC<{
 
   const backgroundPlaneMesh = (
     <mesh
-      onContextMenu={(e: MouseEvent) => {
-        e.sourceEvent.stopPropagation();
-        e.sourceEvent.preventDefault();
+      onContextMenu={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        e.preventDefault();
       }}
       onClick={onClick}
       position={[0, 0, meshZ]}

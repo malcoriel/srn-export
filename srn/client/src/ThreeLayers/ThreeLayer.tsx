@@ -1,4 +1,4 @@
-import { Canvas, MouseEvent } from 'react-three-fiber';
+import { Canvas } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import React, { Suspense } from 'react';
 import classnames from 'classnames';
@@ -25,7 +25,8 @@ import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
 import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
-import { ThreeWormhole } from './ThreeWormhole';
+//import { ThreeWormhole } from './ThreeWormhole';
+import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 
 export type Vector3Arr = [number, number, number];
 
@@ -96,7 +97,6 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
 
   return (
     <Canvas
-      invalidateFrameloop
       className={classnames({ grabbable: hoverOnGrabbable })}
       orthographic
       camera={{
@@ -119,7 +119,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
       <Suspense fallback={<mesh />}>
         <group
           visible={visible}
-          onClick={(evt: MouseEvent) => {
+          onClick={(evt: ThreeEvent<MouseEvent>) => {
             const pos = threeVectorToVector(evt.point);
             actionsActive.Navigate = ShipActionRustBuilder.ShipActionRustNavigate(
               { target: Vector.fromIVector(pos) }

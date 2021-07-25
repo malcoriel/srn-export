@@ -2,14 +2,17 @@
 import React, { useMemo, useRef } from 'react';
 import { Vector3 } from 'three/src/math/Vector3';
 import { fragmentShader, vertexShader, uniforms } from './shaders/lensing';
-import { useFrame } from 'react-three-fiber';
+import { useFrame } from '@react-three/fiber';
 import { Mesh, RawShaderMaterial } from 'three';
 import { Vector3Arr } from './ThreeLayer';
+import { useSpring, animated } from '@react-spring/three';
 
 export const ThreeWormhole: React.FC<{
   position: Vector3 | Vector3Arr;
   radius: number;
-}> = ({ position, radius }) => {
+  opening?: boolean;
+  closing?: boolean;
+}> = ({ position, radius, opening }) => {
   const meshRef = useRef<Mesh>();
   useFrame(() => {
     if (meshRef && meshRef.current) {
@@ -20,9 +23,10 @@ export const ThreeWormhole: React.FC<{
     }
   });
   const uniforms2 = useMemo(() => uniforms, []);
+  const { scale } = useSpring({ scale: opening ? 1.5 : 1 });
 
   return (
-    <mesh position={position} ref={meshRef}>
+    <animated.mesh position={position} ref={meshRef}>
       <circleBufferGeometry args={[radius, 64]} />
       <rawShaderMaterial
         transparent
@@ -30,6 +34,6 @@ export const ThreeWormhole: React.FC<{
         vertexShader={vertexShader}
         uniforms={uniforms2}
       />
-    </mesh>
+    </animated.mesh>
   );
 };

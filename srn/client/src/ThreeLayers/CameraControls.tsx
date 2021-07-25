@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { useThree } from 'react-three-fiber';
+import { useThree } from '@react-three/fiber';
 import { useHotkeys } from 'react-hotkeys-hook';
-import NetState, { findMyShip, VisualState } from '../NetState';
+import NetState, { VisualState } from '../NetState';
 import { height_units, Ship, width_units } from '../world';
 import { unitsToPixels_min } from '../coord';
 import { IVector } from '../utils/Vector';

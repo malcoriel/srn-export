@@ -7,7 +7,7 @@ import {
 } from '../ThreeLayers/CameraControls';
 import { size } from '../coord';
 import React, { Suspense, useEffect, useState } from 'react';
-import { Canvas } from 'react-three-fiber';
+import { Canvas } from '@react-three/fiber';
 import Vector from '../utils/Vector';
 import Prando from 'prando';
 import * as uuid from 'uuid';

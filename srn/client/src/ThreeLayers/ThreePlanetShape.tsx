@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import { IVector } from '../utils/Vector';
 import { Mesh, ShaderMaterial, Texture, Vector3 } from 'three';
-import { useFrame } from 'react-three-fiber';
+import { useFrame } from '@react-three/fiber';
 import _ from 'lodash';
 import { normalizeColor } from '../utils/palette';
 import { size, unitsToPixels_min } from '../coord';

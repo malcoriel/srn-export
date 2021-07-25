@@ -1,12 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Vector3 } from 'three';
-import {
-  CAMERA_DEFAULT_ZOOM,
-  CAMERA_HEIGHT,
-} from './ThreeLayers/CameraControls';
+import { CAMERA_HEIGHT } from './ThreeLayers/CameraControls';
 import { size, viewPortSizeMeters } from './coord';
 import { ThreeSpaceBackground } from './ThreeLayers/ThreeSpaceBackground';
-import { Canvas } from 'react-three-fiber';
+import { Canvas } from '@react-three/fiber';
 
 export const StartMenuBackground = () => {
   const viewPortSize = viewPortSizeMeters();
