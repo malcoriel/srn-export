@@ -61,9 +61,8 @@ pub fn apply_ship_action(
                 x: ship.x,
                 y: ship.y,
             };
-            ship.navigate_target = None;
-            ship.dock_target = None;
             undock_ship_via_clone(state, player_id, &mut ship, client);
+            ship.dock_target = None;
             ship.navigate_target = Some(target);
             ship.trajectory = world::build_trajectory_to_point(ship_pos, &target);
             ship.movement.gas = None;
@@ -81,9 +80,9 @@ pub fn apply_ship_action(
                     x: planet.x,
                     y: planet.y,
                 };
+                undock_ship_via_clone(state, player_id, &mut ship, client);
                 ship.navigate_target = None;
                 ship.dock_target = None;
-                undock_ship_via_clone(state, player_id, &mut ship, client);
                 ship.dock_target = Some(target);
                 ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos);
                 ship.movement.gas = None;

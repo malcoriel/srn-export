@@ -50,7 +50,7 @@ export const LongActionsDisplay = () => {
     if (!myPlayerOld || !myPlayerNew) return false;
     return (
       !_.isEqual(myPlayerOld.long_actions, myPlayerNew.long_actions) ||
-      !_.isEqual(myShipOld, myShipNew)
+      !_.isEqual(myShipOld.long_actions, myShipNew.long_actions)
     );
   });
   const myPlayer = findMyPlayer(ns.state);
