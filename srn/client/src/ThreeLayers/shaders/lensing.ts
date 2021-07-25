@@ -12,7 +12,6 @@ precision highp float;
 precision highp int;
 
 uniform float iTime;
-uniform vec2 iResolution;
 uniform vec2 iMouse;
 
 in vec2 relativeObjectCoord;
@@ -35,10 +34,9 @@ out vec4 FragColor;
 #define distfading 0.730
 #define saturation 1.0
 
-#define mo (2.0 * iMouse.xy - iResolution.xy) / iResolution.y
-#define blackholeCenter vec3(sin(time),sin(time),-2.)
+#define blackholeCenter vec3(time, sin(time * PI),-2.)
 #define blackholeRadius 0.0
-#define blackholeIntensity 20.0
+#define blackholeIntensity 21.0
 
 float iSphere(vec3 ray, vec3 dir, vec3 center, float radius)
 {
@@ -65,18 +63,16 @@ vec3 r(vec3 v, vec2 r) //incomplete but ultrafast rotation fcn thnx to rodolphit
                 v.x * t.x + g * t.z);
 }
 
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
+void mainImage( out vec4 fragColor )
 {
- //get coords and direction
- vec2 uv=fragCoord.xy/iResolution.xy-.5;
- uv.y*=iResolution.y/iResolution.x;
+ vec2 uv = relativeObjectCoord - .5;
  vec3 dir=vec3(uv*zoom,1.);
  float time=iTime*speed+.25;
 
  //mouse rotation
  vec3 from=vec3(0.0, 0.0, -15.0);
- from = r(from, mo / 10.0);
- dir = r(dir, mo / 10.0);
+ from = r(from, vec2(0.0) / 10.0);
+ dir = r(dir, vec2(0.0) / 10.0);
  from+=blackholeCenter;
  vec3 nml = normalize(blackholeCenter - from);
  vec3 pos = iPlane(from, dir, blackholeCenter, nml);
@@ -87,7 +83,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
    dir = mix(dir, pos * sqrt(intensity), blackholeIntensity * intensity);
 
    //volumetric rendering
-   float s=0.1,fade=2.0;
+   float s=0.1,fade=3.0;
    vec3 v=vec3(0.);
    for (int r=0; r<volsteps; r++) {
      vec3 p=from+s*dir*.5;
@@ -113,15 +109,15 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
   fragColor = vec4(0.0);
  }
  // white dot correciton
- if (length(abs(fragColor.rgb)) >= sqrt(3.0) - 0.5) {
-  fragColor.rgb = vec3(0.0);
+ if (length(abs(fragColor.rgb)) >= sqrt(3.0) - 0.4) {
+  fragColor.rgb = vec3(0.2);
  }
- fragColor.a = smoothstep(0.01, 0.9, abs(length(abs(fragColor.rgb))));
+ fragColor.a = smoothstep(0.1, 0.9, abs(length(abs(fragColor.rgb))));
 
 }
 
 void main() {
-  mainImage(FragColor, relativeObjectCoord.xy * iResolution.x);
+  mainImage(FragColor);
 }
 `;
 export const vertexShader = `#version 300 es
@@ -150,14 +146,10 @@ void main() {
 export const uniforms: {
   iTime: FloatUniformValue;
   baseColor: Vector3UniformValue;
-  iResolution: Vector2UniformValue;
   iMouse: Vector2UniformValue;
 } = {
   baseColor: { value: new Vector3(0.5, 0.5, 1.0) },
   iTime: { value: 0 },
-  iResolution: {
-    value: new Vector2(256, 256),
-  },
   iMouse: {
     value: new Vector2(0, 0),
   },
