@@ -9,7 +9,16 @@ import { ThreeWormhole } from './ThreeWormhole';
 export default {
   title: 'Three/ThreeWormhole',
   component: ThreeWormhole,
-  argTypes: {},
+  argTypes: {
+    scale: {
+      control: {
+        type: 'range',
+        min: 0.0,
+        max: 1.0,
+        step: 0.01,
+      },
+    },
+  },
 } as Meta;
 
 const Template: Story = (args) => {
@@ -25,7 +34,7 @@ const Template: Story = (args) => {
           radius={100}
           position={[0, 0, 10]}
           key={revision} // no json.stringify props because it causes remount
-          open={args.open}
+          scale={args.scale}
         />
       </StoryCanvas>
     </div>
@@ -34,5 +43,5 @@ const Template: Story = (args) => {
 
 export const Basic = Template.bind({});
 Basic.args = {
-  open: false,
+  scale: 1.0,
 };

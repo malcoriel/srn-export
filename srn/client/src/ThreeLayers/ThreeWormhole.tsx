@@ -5,13 +5,12 @@ import { fragmentShader, vertexShader, uniforms } from './shaders/lensing';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, RawShaderMaterial } from 'three';
 import { Vector3Arr } from './ThreeLayer';
-import { useSpring, animated, config } from '@react-spring/three';
 
 export const ThreeWormhole: React.FC<{
   position: Vector3 | Vector3Arr;
   radius: number;
-  open: boolean;
-}> = ({ position, radius, open }) => {
+  scale: number;
+}> = ({ position, radius, scale }) => {
   const meshRef = useRef<Mesh>();
   useFrame(() => {
     if (meshRef && meshRef.current) {
@@ -22,14 +21,10 @@ export const ThreeWormhole: React.FC<{
     }
   });
   const uniforms2 = useMemo(() => uniforms, []);
-
-  const { scale } = useSpring({
-    scale: open ? 1.0 : 0.0,
-    config: config.wobbly,
-  });
+  const vecScale = useMemo(() => new Vector3(scale, scale, scale), [scale]);
 
   return (
-    <animated.mesh scale={scale} position={position} ref={meshRef}>
+    <mesh scale={vecScale} position={position} ref={meshRef}>
       <circleBufferGeometry args={[radius, 64]} />
       <rawShaderMaterial
         transparent
@@ -37,7 +32,7 @@ export const ThreeWormhole: React.FC<{
         vertexShader={vertexShader}
         uniforms={uniforms2}
       />
-    </animated.mesh>
+    </mesh>
   );
 
   // return (
