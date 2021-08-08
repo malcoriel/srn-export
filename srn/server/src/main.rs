@@ -247,13 +247,7 @@ fn mutate_owned_ship(
     tag: Option<String>,
 ) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
-    let mut state = {
-        if cont.states.contains_key(&client_id) {
-            cont.states.get_mut(&client_id).unwrap()
-        } else {
-            &mut cont.state
-        }
-    };
+    let mut state = select_mut_state(&mut cont, client_id);
     if let Some(tag) = tag {
         send_tag_confirm(tag, client_id);
     }
@@ -767,7 +761,7 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
 
 fn get_state_clone_read(client_id: Uuid) -> GameState {
     let cont = STATE.read().unwrap();
-    return cont.states.get(&client_id).unwrap_or(&cont.state).clone();
+    return select_state(&cont, client_id).clone();
 }
 
 fn force_disconnect_client(client_id: Uuid) {
@@ -1267,6 +1261,13 @@ pub fn select_mut_state<'a>(
     return select_mut_state_v2(cont, player_id);
 }
 
+pub fn select_state<'a>(
+    cont: &'a RwLockReadGuard<StateContainer>,
+    player_id: Uuid,
+) -> &'a GameState {
+    return select_state_v2(cont, player_id);
+}
+
 pub fn select_mut_state_v1<'a>(
     cont: &'a mut RwLockWriteGuard<StateContainer>,
     player_id: Uuid,
@@ -1290,5 +1291,20 @@ pub fn select_mut_state_v2<'a>(
         cont.states.get_mut(&room_state_id.unwrap()).unwrap()
     } else {
         cont.states.get_mut(&state_id).unwrap()
+    };
+}
+
+pub fn select_state_v2<'a>(
+    cont: &'a RwLockReadGuard<StateContainer>,
+    player_id: Uuid,
+) -> &'a GameState {
+    let state_id = get_state_id_cont(cont, player_id);
+    let room_state_id = find_room_state(player_id);
+    return if state_id == cont.state.id {
+        &cont.state
+    } else if room_state_id.is_some() {
+        cont.states.get(&room_state_id.unwrap()).unwrap()
+    } else {
+        cont.states.get(&state_id).unwrap()
     };
 }
