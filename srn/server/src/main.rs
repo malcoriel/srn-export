@@ -107,7 +107,9 @@ mod perf;
 mod planet_movement;
 mod planet_movement_test;
 mod random_stuff;
+mod rooms_api;
 mod sandbox;
+mod sandbox_api;
 mod ship_action;
 mod substitutions;
 mod substitutions_test;
@@ -922,20 +924,21 @@ fn rocket() -> rocket::Rocket {
     thread::spawn(|| cleanup_thread());
 
     sandbox::init_saved_states();
-    rocket::ignite().attach(CORS()).mount(
-        "/api",
-        routes![
-            api::get_version,
-            api::get_health,
-            api::get_saved_states,
-            api::save_current_state,
-            api::load_saved_state,
-            api::load_random_state,
-            api::load_seeded_state,
-            api::save_state_into_json,
-            api::load_clean_state
-        ],
-    )
+    rocket::ignite()
+        .attach(CORS())
+        .mount("/api", routes![api::get_version, api::get_health])
+        .mount(
+            "/api/sandbox",
+            routes![
+                sandbox_api::get_saved_states,
+                sandbox_api::save_current_state,
+                sandbox_api::load_saved_state,
+                sandbox_api::load_random_state,
+                sandbox_api::load_seeded_state,
+                sandbox_api::save_state_into_json,
+                sandbox_api::load_clean_state
+            ],
+        )
 }
 
 fn dispatcher_thread() {

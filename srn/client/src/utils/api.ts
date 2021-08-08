@@ -18,11 +18,11 @@ export const api = {
     return await resp.json();
   },
   useSavedStates: () =>
-    useSWR(`${api.getHttpApiUrl()}/saved_states`).data || [],
+    useSWR(`${api.getSandboxApiUrl()}/saved_states`).data || [],
   saveSavedState: async (player_id: string, name: string) => {
     const resp = await fetch(
       patchParams(
-        `${api.getHttpApiUrl()}/saved_states/save_current/<player_id>/<name>`,
+        `${api.getSandboxApiUrl()}/saved_states/save_current/<player_id>/<name>`,
         {
           player_id,
           name,
@@ -30,13 +30,13 @@ export const api = {
       ),
       { method: 'POST' }
     );
-    await mutate(`${api.getHttpApiUrl()}/saved_states`);
+    await mutate(`${api.getSandboxApiUrl()}/saved_states`);
     return resp;
   },
   loadSavedState: async (player_id: string, state_id: string) => {
     await fetch(
       patchParams(
-        `${api.getHttpApiUrl()}/saved_states/load/<player_id>/<state_id>`,
+        `${api.getSandboxApiUrl()}/saved_states/load/<player_id>/<state_id>`,
         {
           player_id,
           state_id,
@@ -47,7 +47,7 @@ export const api = {
   },
   downloadStateAsJson: async (player_id: string): Promise<unknown> => {
     const res = await fetch(
-      patchParams(`${api.getHttpApiUrl()}/saved_states/json/<player_id>`, {
+      patchParams(`${api.getSandboxApiUrl()}/saved_states/json/<player_id>`, {
         player_id,
       })
     );
@@ -56,7 +56,7 @@ export const api = {
   loadRandomState: async (player_id: string) => {
     await fetch(
       patchParams(
-        `${api.getHttpApiUrl()}/saved_states/load_random/<player_id>`,
+        `${api.getSandboxApiUrl()}/saved_states/load_random/<player_id>`,
         {
           player_id,
         }
@@ -67,7 +67,7 @@ export const api = {
   loadCleanState: async (player_id: string) => {
     await fetch(
       patchParams(
-        `${api.getHttpApiUrl()}/saved_states/load_clean/<player_id>`,
+        `${api.getSandboxApiUrl()}/saved_states/load_clean/<player_id>`,
         {
           player_id,
         }
@@ -78,7 +78,7 @@ export const api = {
   loadSeededState: async (player_id: string, seed: string) => {
     await fetch(
       patchParams(
-        `${api.getHttpApiUrl()}/saved_states/load_seeded/<player_id>/<seed>`,
+        `${api.getSandboxApiUrl()}/saved_states/load_seeded/<player_id>/<seed>`,
         {
           player_id,
           seed,
@@ -94,10 +94,14 @@ export const api = {
       : 'ws://localhost:2794';
   },
 
-  getHttpApiUrl() {
+  getMainApiUrl() {
     return process.env.NODE_ENV === 'production'
       ? 'https://srn.malcoriel.de/api'
       : 'http://localhost:8000/api';
+  },
+
+  getSandboxApiUrl() {
+    return `${api.getMainApiUrl()}/sandbox`;
   },
 
   getChatWebSocketUrl() {
