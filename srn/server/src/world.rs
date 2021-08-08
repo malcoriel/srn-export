@@ -9,9 +9,10 @@ use chrono::Utc;
 use itertools::{Either, Itertools};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
-use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use uuid::*;
+
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;

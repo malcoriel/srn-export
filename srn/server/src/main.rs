@@ -36,19 +36,6 @@ use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 use websocket::{Message, OwnedMessage};
 
-use crate::bots::{bot_init, do_bot_actions};
-use crate::chat::chat_server;
-use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
-use crate::indexing::{
-    find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
-};
-use crate::perf::Sampler;
-use crate::sandbox::mutate_state;
-use crate::ship_action::ShipActionRust;
-use crate::substitutions::substitute_notification_texts;
-use crate::system_gen::make_tutorial_state;
-use crate::vec2::Vec2f64;
-use crate::world::{spawn_ship, update_quests, GameEvent, UpdateOptions, AABB};
 use dialogue::{DialogueStates, DialogueTable};
 use dialogue_dto::Dialogue;
 use net::{
@@ -58,6 +45,21 @@ use net::{
 use perf::SamplerMarks;
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
+
+use crate::bots::{bot_init, do_bot_actions};
+use crate::chat::chat_server;
+use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
+use crate::indexing::{
+    find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
+};
+use crate::perf::Sampler;
+use crate::rooms_api::{find_room_state, ROOMS_STATE};
+use crate::sandbox::mutate_state;
+use crate::ship_action::ShipActionRust;
+use crate::substitutions::substitute_notification_texts;
+use crate::system_gen::make_tutorial_state;
+use crate::vec2::Vec2f64;
+use crate::world::{spawn_ship, update_quests, GameEvent, UpdateOptions, AABB};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -86,6 +88,7 @@ extern crate num_derive;
 
 mod abilities;
 mod api;
+mod api_struct;
 mod autofocus;
 mod autofocus_test;
 mod bots;
@@ -123,7 +126,7 @@ mod world_test;
 mod xcast;
 
 pub struct StateContainer {
-    personal_states: HashMap<Uuid, GameState>,
+    states: HashMap<Uuid, GameState>,
     state: GameState,
 }
 
@@ -183,7 +186,7 @@ lazy_static! {
         state.mode = world::GameMode::CargoRush;
         let states = HashMap::new();
         RwLock::new(StateContainer {
-            personal_states: states,
+            states: states,
             state,
         })
     };
@@ -223,7 +226,7 @@ fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     let mut player = cont.state.players.remove(player_idx);
     player.notifications = vec![];
     let personal_state = cont
-        .personal_states
+        .states
         .entry(client_id)
         .or_insert(system_gen::seed_personal_state(client_id, &mode));
     personal_state.players.push(player);
@@ -245,8 +248,8 @@ fn mutate_owned_ship(
 ) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
     let mut state = {
-        if cont.personal_states.contains_key(&client_id) {
-            cont.personal_states.get_mut(&client_id).unwrap()
+        if cont.states.contains_key(&client_id) {
+            cont.states.get_mut(&client_id).unwrap()
         } else {
             &mut cont.state
         }
@@ -460,13 +463,31 @@ fn on_message_to_send_to_client(
 
 fn get_state_id(client_id: Uuid) -> Uuid {
     let cont = STATE.read().unwrap();
-    let in_personal = cont.personal_states.contains_key(&client_id);
-    let current_state_id = if !in_personal {
-        cont.state.id
-    } else {
+    return get_state_id_cont(&cont, client_id);
+}
+
+fn get_state_id_cont(cont: &RwLockReadGuard<StateContainer>, client_id: Uuid) -> Uuid {
+    let in_personal = cont.states.contains_key(&client_id);
+    let room_state = find_room_state(client_id);
+    return if in_personal {
         client_id
+    } else if room_state.is_some() {
+        room_state.unwrap()
+    } else {
+        cont.state.id.clone()
     };
-    current_state_id
+}
+
+fn get_state_id_cont_mut(cont: &RwLockWriteGuard<StateContainer>, client_id: Uuid) -> Uuid {
+    let in_personal = cont.states.contains_key(&client_id);
+    let room_state = find_room_state(client_id);
+    return if in_personal {
+        client_id
+    } else if room_state.is_some() {
+        room_state.unwrap()
+    } else {
+        cont.state.id.clone()
+    };
 }
 
 fn check_message_overflow_happened(client_id: Uuid) -> bool {
@@ -746,11 +767,7 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
 
 fn get_state_clone_read(client_id: Uuid) -> GameState {
     let cont = STATE.read().unwrap();
-    return cont
-        .personal_states
-        .get(&client_id)
-        .unwrap_or(&cont.state)
-        .clone();
+    return cont.states.get(&client_id).unwrap_or(&cont.state).clone();
 }
 
 fn force_disconnect_client(client_id: Uuid) {
@@ -858,14 +875,14 @@ fn make_new_human_player(conn_id: Uuid) {
 
 fn remove_player(conn_id: Uuid) {
     let mut cont = STATE.write().unwrap();
-    let in_personal = cont.personal_states.contains_key(&conn_id);
+    let in_personal = cont.states.contains_key(&conn_id);
     let state = if in_personal {
-        cont.personal_states.get_mut(&conn_id).unwrap()
+        cont.states.get_mut(&conn_id).unwrap()
     } else {
         &mut cont.state
     };
     world::remove_player_from_state(conn_id, state);
-    cont.personal_states.remove(&conn_id);
+    cont.states.remove(&conn_id);
 }
 
 pub fn new_id() -> Uuid {
@@ -923,6 +940,7 @@ fn rocket() -> rocket::Rocket {
 
     thread::spawn(|| cleanup_thread());
 
+    rooms_api::init();
     sandbox::init_saved_states();
     rocket::ignite()
         .attach(CORS())
@@ -937,6 +955,14 @@ fn rocket() -> rocket::Rocket {
                 sandbox_api::load_seeded_state,
                 sandbox_api::save_state_into_json,
                 sandbox_api::load_clean_state
+            ],
+        )
+        .mount(
+            "/api/rooms",
+            routes![
+                rooms_api::get_rooms,
+                rooms_api::join_room,
+                rooms_api::create_room,
             ],
         )
 }
@@ -1071,23 +1097,22 @@ fn main_thread() {
         }
 
         let personal_id = sampler.start(SamplerMarks::PersonalStates as u32);
-        cont.personal_states =
-            HashMap::from_iter(cont.personal_states.iter().filter_map(|(_, state)| {
-                if state.players.len() == 0 {
-                    return None;
-                }
-                let (new_state, _) = world::update_world(
-                    state.clone(),
-                    elapsed_micro,
-                    false,
-                    Sampler::empty(),
-                    UpdateOptions {
-                        disable_hp_effects: false,
-                        limit_area: AABB::maxed(),
-                    },
-                );
-                Some((new_state.id, new_state))
-            }));
+        cont.states = HashMap::from_iter(cont.states.iter().filter_map(|(_, state)| {
+            if state.players.len() == 0 {
+                return None;
+            }
+            let (new_state, _) = world::update_world(
+                state.clone(),
+                elapsed_micro,
+                false,
+                Sampler::empty(),
+                UpdateOptions {
+                    disable_hp_effects: false,
+                    limit_area: AABB::maxed(),
+                },
+            );
+            Some((new_state.id, new_state))
+        }));
         if sampler.end_top(personal_id) < 0 {
             shortcut_frame += 1;
             continue;
@@ -1121,7 +1146,7 @@ fn main_thread() {
             let receiver = &mut events::EVENTS.1.lock().unwrap();
             let res = events::handle_events(&mut d_table, receiver, &mut cont, d_states);
             for (client_id, dialogue) in res {
-                let corresponding_state_id = if cont.personal_states.contains_key(&client_id) {
+                let corresponding_state_id = if cont.states.contains_key(&client_id) {
                     client_id
                 } else {
                     cont.state.id
@@ -1184,7 +1209,7 @@ fn main_thread() {
 
 fn broadcast_all_states(cont: &RwLockReadGuard<StateContainer>) {
     x_cast_state(cont.state.clone(), XCast::Broadcast(cont.state.id));
-    for (id, state) in cont.personal_states.iter() {
+    for (id, state) in cont.states.iter() {
         x_cast_state(state.clone(), XCast::Broadcast(*id));
     }
 }
@@ -1235,13 +1260,35 @@ pub fn kick_player(player_id: Uuid) {
     dispatch(ServerToClientMessage::RoomLeave(player_id));
 }
 
-pub fn select_mut_state<'a, 'b, 'c>(
+pub fn select_mut_state<'a>(
     cont: &'a mut RwLockWriteGuard<StateContainer>,
     player_id: Uuid,
 ) -> &'a mut GameState {
-    if cont.personal_states.contains_key(&player_id) {
-        cont.personal_states.get_mut(&player_id).unwrap()
+    return select_mut_state_v2(cont, player_id);
+}
+
+pub fn select_mut_state_v1<'a>(
+    cont: &'a mut RwLockWriteGuard<StateContainer>,
+    player_id: Uuid,
+) -> &'a mut GameState {
+    if cont.states.contains_key(&player_id) {
+        cont.states.get_mut(&player_id).unwrap()
     } else {
         &mut cont.state
     }
+}
+
+pub fn select_mut_state_v2<'a>(
+    cont: &'a mut RwLockWriteGuard<StateContainer>,
+    player_id: Uuid,
+) -> &'a mut GameState {
+    let state_id = get_state_id_cont_mut(cont, player_id);
+    let room_state_id = find_room_state(player_id);
+    return if state_id == cont.state.id {
+        &mut cont.state
+    } else if room_state_id.is_some() {
+        cont.states.get_mut(&room_state_id.unwrap()).unwrap()
+    } else {
+        cont.states.get_mut(&state_id).unwrap()
+    };
 }
