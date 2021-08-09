@@ -325,14 +325,6 @@ fn handle_request(request: WSRequest) {
         make_new_human_player(client_id, select_default_state(&mut cont));
     }
 
-    {
-        // TODO decide which state to send on connection, probably none
-        // let mut state = STATE.read().unwrap().state.clone();
-        // state = net::patch_state_for_client_impl(state, client_id);
-        // let message: Message = Message::text(serde_json::to_string(&state).unwrap());
-        // client.send_message(&message).unwrap();
-    }
-
     let (public_client_sender, public_client_receiver) = bounded::<ServerToClientMessage>(128);
     CLIENT_SENDERS
         .lock()

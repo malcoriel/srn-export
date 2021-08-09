@@ -115,7 +115,9 @@ const ThreeInteractorImpl = ({
   const onLeftClick = (e?: ThreeEvent<MouseEvent>) => {
     if (e) {
       e.stopPropagation();
-      e.preventDefault();
+      if (e.preventDefault) {
+        e.preventDefault();
+      }
     }
     if (actions && defaultAction) {
       const fn = actions.get(defaultAction);

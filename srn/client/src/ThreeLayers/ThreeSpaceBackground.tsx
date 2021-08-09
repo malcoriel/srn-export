@@ -194,7 +194,9 @@ export const ThreeSpaceBackground: React.FC<{
     <mesh
       onContextMenu={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
-        e.preventDefault();
+        if (e.preventDefault) {
+          e.preventDefault();
+        }
       }}
       onClick={onClick}
       position={[0, 0, meshZ]}
