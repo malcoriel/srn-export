@@ -43,7 +43,7 @@ use net::{
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
 use perf::SamplerMarks;
-use states::StateContainer;
+use states::{get_states_iter, select_default_state, update_states, StateContainer, STATE};
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
@@ -57,6 +57,10 @@ use crate::perf::Sampler;
 use crate::rooms_api::{find_room_state, ROOMS_STATE};
 use crate::sandbox::mutate_state;
 use crate::ship_action::ShipActionRust;
+use crate::states::{
+    get_state_id_cont, get_state_id_cont_mut, get_states_iter_read, select_default_state_read,
+    select_mut_state, select_state, update_default_state,
+};
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
@@ -177,18 +181,6 @@ lazy_static! {
         Arc::new(Mutex::new(Box::new(DialogueTable::new())));
 }
 
-lazy_static! {
-    static ref STATE: RwLock<StateContainer> = {
-        let mut state = world::seed_state(true, true);
-        state.mode = world::GameMode::CargoRush;
-        let states = HashMap::new();
-        RwLock::new(StateContainer {
-            states: states,
-            state,
-        })
-    };
-}
-
 pub const ENABLE_PERF: bool = false;
 const DEBUG_FRAME_STATS: bool = false;
 const DEFAULT_SLEEP_MS: u64 = 1;
@@ -207,35 +199,6 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipActionRust, tag: O
         increment_client_errors(client_id);
         disconnect_if_bad(client_id);
     }
-}
-
-fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
-    let mut cont = STATE.write().unwrap();
-    let player_idx = cont
-        .state
-        .players
-        .iter()
-        .position(|p| p.id == client_id)
-        .unwrap();
-    {
-        find_and_extract_ship(&mut cont.state, client_id);
-    }
-    let mut player = cont.state.players.remove(player_idx);
-    player.notifications = vec![];
-    let personal_state = cont
-        .states
-        .entry(client_id)
-        .or_insert(system_gen::seed_personal_state(client_id, &mode));
-    personal_state.players.push(player);
-
-    {
-        spawn_ship(personal_state, client_id, None);
-    }
-    // the state id filtering will take care of filtering the receivers
-    let state = personal_state.clone();
-    let state_id = state.id.clone();
-    x_cast_state(state, XCast::Broadcast(state_id));
-    notify_state_changed(personal_state.id, client_id);
 }
 
 fn mutate_owned_ship(
@@ -349,20 +312,25 @@ fn handle_request(request: WSRequest) {
         return;
     }
 
-    let mut client = request.use_protocol("rust-websocket").accept().unwrap();
+    let client = request.use_protocol("rust-websocket").accept().unwrap();
 
     let ip = client.peer_addr().unwrap();
 
     let client_id = Uuid::new_v4();
     println!("Connection from {}, id={}", ip, client_id);
 
-    make_new_human_player(client_id);
+    {
+        // TODO do we even have to create a player on connection immediately? probably not
+        let mut cont = STATE.write().unwrap();
+        make_new_human_player(client_id, select_default_state(&mut cont));
+    }
 
     {
-        let mut state = STATE.read().unwrap().state.clone();
-        state = net::patch_state_for_client_impl(state, client_id);
-        let message: Message = Message::text(serde_json::to_string(&state).unwrap());
-        client.send_message(&message).unwrap();
+        // TODO decide which state to send on connection, probably none
+        // let mut state = STATE.read().unwrap().state.clone();
+        // state = net::patch_state_for_client_impl(state, client_id);
+        // let message: Message = Message::text(serde_json::to_string(&state).unwrap());
+        // client.send_message(&message).unwrap();
     }
 
     let (public_client_sender, public_client_receiver) = bounded::<ServerToClientMessage>(128);
@@ -437,7 +405,8 @@ fn on_message_to_send_to_client(
     if is_disconnected(client_id) {
         return;
     }
-    let current_state_id = get_state_id(client_id);
+    let cont = STATE.read().unwrap();
+    let current_state_id = get_state_id_cont(&cont, client_id);
     let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
     if should_send {
         let message = Message::text(message.clone().patch_for_client(client_id).serialize());
@@ -450,35 +419,6 @@ fn on_message_to_send_to_client(
             })
             .ok();
     }
-}
-
-fn get_state_id(client_id: Uuid) -> Uuid {
-    let cont = STATE.read().unwrap();
-    return get_state_id_cont(&cont, client_id);
-}
-
-fn get_state_id_cont(cont: &RwLockReadGuard<StateContainer>, client_id: Uuid) -> Uuid {
-    let in_personal = cont.states.contains_key(&client_id);
-    let room_state = find_room_state(client_id);
-    return if in_personal {
-        client_id
-    } else if room_state.is_some() {
-        room_state.unwrap()
-    } else {
-        cont.state.id.clone()
-    };
-}
-
-fn get_state_id_cont_mut(cont: &RwLockWriteGuard<StateContainer>, client_id: Uuid) -> Uuid {
-    let in_personal = cont.states.contains_key(&client_id);
-    let room_state = find_room_state(client_id);
-    return if in_personal {
-        client_id
-    } else if room_state.is_some() {
-        room_state.unwrap()
-    } else {
-        cont.state.id.clone()
-    };
 }
 
 fn check_message_overflow_happened(client_id: Uuid) -> bool {
@@ -622,7 +562,7 @@ fn on_client_switch_room(client_id: Uuid, second: &&str) {
     let parsed = serde_json::from_str::<SwitchRoomPayload>(second);
     match parsed {
         Ok(parsed) => {
-            move_player_to_personal_room(client_id, parsed.mode);
+            states::move_player_to_personal_room(client_id, parsed.mode);
         }
         Err(err) => {
             warn!(format!("Bad switch room, err is {}", err));
@@ -642,7 +582,9 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
     let parsed = serde_json::from_str::<PersonalizeUpdate>(second);
     match parsed {
         Ok(up) => {
-            personalize_player(client_id, up);
+            let mut cont = STATE.write().unwrap();
+            let state = select_mut_state(&mut cont, client_id);
+            personalize_player(state, client_id, up);
         }
         Err(_) => {}
     }
@@ -749,11 +691,16 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
     let mut senders = CLIENT_SENDERS.lock().unwrap();
     let index = senders.iter().position(|s| s.0 == client_id);
     index.map(|index| senders.remove(index));
-    remove_player(client_id);
+    {
+        let mut cont = STATE.write().unwrap();
+        let state_to_remove_client_from = select_mut_state(&mut cont, client_id);
+        remove_player(client_id, state_to_remove_client_from);
+    }
     println!("Client {} id {} disconnected", ip, client_id);
-    let state = STATE.read().unwrap().state.clone();
+    let cont = STATE.read().unwrap();
+    let state = select_state(&cont, client_id);
     let state_id = state.id.clone();
-    x_cast_state(state, XCast::Broadcast(state_id));
+    x_cast_state(state.clone(), XCast::Broadcast(state_id));
 }
 
 fn get_state_clone_read(client_id: Uuid) -> GameState {
@@ -768,7 +715,9 @@ fn force_disconnect_client(client_id: Uuid) {
         eprintln!("force disconnecting client: {}", client_id);
         senders.remove(index);
     }
-    remove_player(client_id);
+    let mut cont = STATE.write().unwrap();
+    let state = select_mut_state(&mut cont, client_id);
+    remove_player(client_id, state);
 }
 
 fn disconnect_if_bad(client_id: Uuid) -> bool {
@@ -807,21 +756,16 @@ fn is_disconnected(client_id: Uuid) -> bool {
     return false;
 }
 
-fn personalize_player(conn_id: Uuid, update: PersonalizeUpdate) {
+fn personalize_player(state: &mut GameState, conn_id: Uuid, update: PersonalizeUpdate) {
     {
-        let mut cont = STATE.write().unwrap();
-        world::force_update_to_now(&mut cont.state);
-        cont.state
-            .players
-            .iter_mut()
-            .find(|p| p.id == conn_id)
-            .map(|p| {
-                p.name = update.name;
-                p.portrait_name = update.portrait_name;
-            });
+        world::force_update_to_now(state);
+        state.players.iter_mut().find(|p| p.id == conn_id).map(|p| {
+            p.name = update.name;
+            p.portrait_name = update.portrait_name;
+        });
     }
     {
-        let state = STATE.read().unwrap().state.clone();
+        let state = state.clone();
         let state_id = state.id.clone();
         x_cast_state(state, XCast::Broadcast(state_id));
     }
@@ -854,26 +798,15 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
     }
 }
 
-fn make_new_human_player(conn_id: Uuid) {
-    {
-        let mut cont = STATE.write().unwrap();
-        world::add_player(&mut cont.state, conn_id, false, None);
-    }
-
-    let mut cont = STATE.write().unwrap();
-    world::spawn_ship(&mut cont.state, conn_id, None);
+fn make_new_human_player(conn_id: Uuid, state: &mut GameState) {
+    world::add_player(state, conn_id, false, None);
+    world::spawn_ship(state, conn_id, None);
 }
 
-fn remove_player(conn_id: Uuid) {
-    let mut cont = STATE.write().unwrap();
-    let in_personal = cont.states.contains_key(&conn_id);
-    let state = if in_personal {
-        cont.states.get_mut(&conn_id).unwrap()
-    } else {
-        &mut cont.state
-    };
+fn remove_player(conn_id: Uuid, state: &mut GameState) {
     world::remove_player_from_state(conn_id, state);
-    cont.states.remove(&conn_id);
+    // TODO remove empty personal state
+    // cont.states.remove(&conn_id);
 }
 
 pub fn new_id() -> Uuid {
@@ -1024,7 +957,8 @@ fn main_thread() {
     let mut last = Local::now();
     {
         let mut bots = bots::BOTS.lock().unwrap();
-        bot_init(&mut *bots);
+        let mut cont = STATE.write().unwrap();
+        bot_init(&mut *bots, select_default_state(&mut cont));
     }
     let mut marks_holder = vec![];
     for mark in SamplerMarks::iter() {
@@ -1070,7 +1004,7 @@ fn main_thread() {
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
         let update_id = sampler.start(SamplerMarks::Update as u32);
         let (updated_state, updated_sampler) = world::update_world(
-            cont.state.clone(),
+            select_default_state(&mut cont).clone(),
             elapsed_micro,
             false,
             sampler,
@@ -1080,7 +1014,7 @@ fn main_thread() {
             },
         );
         sampler = updated_sampler;
-        cont.state = updated_state;
+        update_default_state(&mut cont, updated_state);
 
         if sampler.end_top(update_id) < 0 {
             shortcut_frame += 1;
@@ -1088,7 +1022,7 @@ fn main_thread() {
         }
 
         let personal_id = sampler.start(SamplerMarks::PersonalStates as u32);
-        cont.states = HashMap::from_iter(cont.states.iter().filter_map(|(_, state)| {
+        let updated_states = HashMap::from_iter(get_states_iter(&cont).filter_map(|(_, state)| {
             if state.players.len() == 0 {
                 return None;
             }
@@ -1104,32 +1038,35 @@ fn main_thread() {
             );
             Some((new_state.id, new_state))
         }));
+        update_states(&mut cont, updated_states);
         if sampler.end_top(personal_id) < 0 {
             shortcut_frame += 1;
             continue;
         }
 
         let quests_mark = sampler.start(SamplerMarks::Quests as u32);
-        update_quests(&mut cont.state, &mut prng);
+        update_quests(select_default_state(&mut cont), &mut prng);
         if sampler.end_top(quests_mark) < 0 {
             shortcut_frame += 1;
             continue;
         }
 
         let d_states = &mut **d_states;
-        let state = &mut cont.state;
+        {
+            let mut_state_bots = select_default_state(&mut cont);
 
-        if bot_action_elapsed > BOT_ACTION_TIME {
-            let bots_mark = sampler.start(SamplerMarks::Bots as u32);
-            let bots = &mut *bots;
-            do_bot_actions(state, bots, d_states, &d_table, bot_action_elapsed);
-            bot_action_elapsed = 0;
-            if sampler.end_top(bots_mark) < 0 {
-                shortcut_frame += 1;
-                continue;
+            if bot_action_elapsed > BOT_ACTION_TIME {
+                let bots_mark = sampler.start(SamplerMarks::Bots as u32);
+                let bots = &mut *bots;
+                do_bot_actions(mut_state_bots, bots, d_states, &d_table, bot_action_elapsed);
+                bot_action_elapsed = 0;
+                if sampler.end_top(bots_mark) < 0 {
+                    shortcut_frame += 1;
+                    continue;
+                }
+            } else {
+                bot_action_elapsed += elapsed_micro;
             }
-        } else {
-            bot_action_elapsed += elapsed_micro;
         }
 
         if events_elapsed > EVENT_TRIGGER_TIME {
@@ -1137,11 +1074,7 @@ fn main_thread() {
             let receiver = &mut events::EVENTS.1.lock().unwrap();
             let res = events::handle_events(&mut d_table, receiver, &mut cont, d_states);
             for (client_id, dialogue) in res {
-                let corresponding_state_id = if cont.states.contains_key(&client_id) {
-                    client_id
-                } else {
-                    cont.state.id
-                };
+                let corresponding_state_id = get_state_id_cont_mut(&mut cont, client_id);
                 unicast_dialogue_state(client_id, dialogue, corresponding_state_id);
             }
             if sampler.end_top(events_mark) < 0 {
@@ -1154,8 +1087,7 @@ fn main_thread() {
         }
 
         let cleanup_mark = sampler.start(SamplerMarks::ShipCleanup as u32);
-        let existing_player_ships = cont
-            .state
+        let existing_player_ships = select_default_state(&mut cont)
             .players
             .iter()
             .map(|p| p.ship_id.clone())
@@ -1163,8 +1095,14 @@ fn main_thread() {
             .map(|s| s.unwrap())
             .collect::<Vec<_>>();
 
-        for idx in 0..cont.state.locations.len() {
-            sampler = cleanup_nonexistent_ships(&mut cont, &existing_player_ships, idx, sampler);
+        let len = select_default_state(&mut cont).locations.len();
+        for idx in 0..len {
+            sampler = cleanup_nonexistent_ships(
+                select_default_state(&mut cont),
+                &existing_player_ships,
+                idx,
+                sampler,
+            );
         }
         if sampler.end_top(cleanup_mark) < 0 {
             shortcut_frame += 1;
@@ -1199,34 +1137,35 @@ fn main_thread() {
 }
 
 fn broadcast_all_states(cont: &RwLockReadGuard<StateContainer>) {
-    x_cast_state(cont.state.clone(), XCast::Broadcast(cont.state.id));
-    for (id, state) in cont.states.iter() {
+    let read_state = select_default_state_read(cont);
+    x_cast_state(read_state.clone(), XCast::Broadcast(read_state.id));
+    for (id, state) in get_states_iter_read(cont) {
         x_cast_state(state.clone(), XCast::Broadcast(*id));
     }
 }
 
 pub fn cleanup_nonexistent_ships(
-    cont: &mut RwLockWriteGuard<StateContainer>,
+    state: &mut GameState,
     existing_player_ships: &Vec<Uuid>,
     location_idx: usize,
     mut sampler: Sampler,
 ) -> Sampler {
-    let new_ships = cont.state.locations[location_idx]
+    let new_ships = state.locations[location_idx]
         .ships
         .clone()
         .into_iter()
         .filter(|s| existing_player_ships.contains(&s.id))
         .collect::<Vec<_>>();
-    let old_ships_len = cont.state.locations[location_idx].ships.len();
+    let old_ships_len = state.locations[location_idx].ships.len();
     let new_ships_len = new_ships.len();
-    cont.state.locations[location_idx].ships = new_ships;
+    state.locations[location_idx].ships = new_ships;
 
     if new_ships_len != old_ships_len {
         let ship_cleanup_id = sampler.start(SamplerMarks::ShipCleanup as u32);
         multicast_ships_update_excluding(
-            cont.state.locations[location_idx].ships.clone(),
+            state.locations[location_idx].ships.clone(),
             None,
-            cont.state.id,
+            state.id,
         );
         sampler.end(ship_cleanup_id);
     }

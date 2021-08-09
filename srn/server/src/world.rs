@@ -275,8 +275,12 @@ pub enum GameEvent {
         ship: Ship,
         player: Player,
     },
-    GameEnded,
-    GameStarted,
+    GameEnded {
+        state_id: Uuid,
+    },
+    GameStarted {
+        state_id: Uuid,
+    },
     CargoQuestTriggerRequest {
         player: Player,
     },
@@ -831,7 +835,7 @@ pub fn update_world(
                 for player in players.iter() {
                     spawn_ship(&mut state, player.id, None);
                 }
-                fire_event(GameEvent::GameStarted);
+                fire_event(GameEvent::GameStarted { state_id: state.id });
             } else {
             }
         }
@@ -888,7 +892,7 @@ pub fn update_world(
             eprintln!("game end");
             state.paused = true;
             state.milliseconds_remaining = 10 * 1000;
-            fire_event(GameEvent::GameEnded);
+            fire_event(GameEvent::GameEnded { state_id: state.id });
             for player in state.players.iter_mut() {
                 player.long_actions = vec![];
             }

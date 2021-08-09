@@ -156,22 +156,21 @@ impl Bot {
     }
 }
 
-fn add_bot(bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
+fn add_bot(state: &mut GameState, bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
     let id = bot.id.clone();
     bots.push(bot);
-    let mut cont = STATE.write().unwrap();
     let mut rng = thread_rng();
     let mut prng = SmallRng::seed_from_u64(rng.next_u64());
-    world::add_player(&mut cont.state, id, true, Some(gen_bot_name(&mut prng)));
-    world::spawn_ship(&mut cont.state, id, None);
+    world::add_player(state, id, true, Some(gen_bot_name(&mut prng)));
+    world::spawn_ship(state, id, None);
     id
 }
 
-pub fn bot_init(bots: &mut Vec<Bot>) {
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
-    add_bot(Bot::new(), bots);
+pub fn bot_init(bots: &mut Vec<Bot>, state: &mut GameState) {
+    add_bot(state, Bot::new(), bots);
+    add_bot(state, Bot::new(), bots);
+    add_bot(state, Bot::new(), bots);
+    add_bot(state, Bot::new(), bots);
 }
 
 pub fn format_d_states(

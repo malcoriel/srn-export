@@ -59,11 +59,11 @@ pub fn handle_events(
                     let state = crate::states::select_mut_state(cont, player.id);
                     crate::send_event_to_client(event.clone(), XCast::Broadcast(state.id));
                 }
-                GameEvent::GameEnded { .. } => {
-                    crate::send_event_to_client(event.clone(), XCast::Broadcast(cont.state.id));
+                GameEvent::GameEnded { state_id } => {
+                    crate::send_event_to_client(event.clone(), XCast::Broadcast(state_id));
                 }
-                GameEvent::GameStarted { .. } => {
-                    crate::send_event_to_client(event.clone(), XCast::Broadcast(cont.state.id));
+                GameEvent::GameStarted { state_id } => {
+                    crate::send_event_to_client(event.clone(), XCast::Broadcast(state_id));
                 }
                 GameEvent::Unknown => {
                     // intentionally do nothing
