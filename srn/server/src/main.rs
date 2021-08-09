@@ -43,6 +43,7 @@ use net::{
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
 use perf::SamplerMarks;
+use states::StateContainer;
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
@@ -114,6 +115,7 @@ mod rooms_api;
 mod sandbox;
 mod sandbox_api;
 mod ship_action;
+mod states;
 mod substitutions;
 mod substitutions_test;
 mod system_gen;
@@ -124,11 +126,6 @@ mod vec2_test;
 pub mod world;
 mod world_test;
 mod xcast;
-
-pub struct StateContainer {
-    states: HashMap<Uuid, GameState>,
-    state: GameState,
-}
 
 struct LastCheck {
     time: DateTime<Utc>,
@@ -247,7 +244,7 @@ fn mutate_owned_ship(
     tag: Option<String>,
 ) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
-    let mut state = select_mut_state(&mut cont, client_id);
+    let mut state = states::select_mut_state(&mut cont, client_id);
     if let Some(tag) = tag {
         send_tag_confirm(tag, client_id);
     }
@@ -570,7 +567,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
 
 fn on_client_room_join(client_id: Uuid) {
     let mut cont = STATE.write().unwrap();
-    let state = select_mut_state(&mut cont, client_id);
+    let state = states::select_mut_state(&mut cont, client_id);
     let player = find_my_player(&state, client_id);
     if let Some(player) = player {
         fire_event(GameEvent::RoomJoined {
@@ -586,7 +583,7 @@ fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>)
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
-            let state = select_mut_state(&mut cont, client_id);
+            let state = states::select_mut_state(&mut cont, client_id);
             // let action_dbg = action.clone();
             if !long_actions::try_start_long_action(state, client_id, action, &mut world::gen_rng())
             {
@@ -610,7 +607,7 @@ fn on_client_notification_action(client_id: Uuid, data: &&str, tag: Option<&&str
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
-            let state = select_mut_state(&mut cont, client_id);
+            let state = states::select_mut_state(&mut cont, client_id);
             notifications::apply_action(state, client_id, action);
             x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
@@ -666,7 +663,7 @@ fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str
     match parsed {
         Ok(res) => {
             let mut cont = STATE.write().unwrap();
-            let personal_state = select_mut_state(&mut cont, client_id);
+            let personal_state = states::select_mut_state(&mut cont, client_id);
             if personal_state.mode != world::GameMode::Sandbox {
                 warn!(format!(
                     "Attempt to send a sandbox command to non-sandbox state by client {}",
@@ -688,7 +685,7 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
-            let state = select_mut_state(&mut cont, client_id);
+            let state = states::select_mut_state(&mut cont, client_id);
             market::attempt_trade(state, client_id, action);
             x_cast_state(state.clone(), XCast::Broadcast(state.id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
@@ -704,7 +701,7 @@ fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) 
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
-            let state = select_mut_state(&mut cont, client_id);
+            let state = states::select_mut_state(&mut cont, client_id);
             if let Some(ship) = indexing::find_my_ship_mut(state, client_id) {
                 inventory::apply_action(&mut ship.inventory, action);
             }
@@ -731,7 +728,7 @@ fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) 
         // remote-to-planet dialogue
         Ok(_action) => {
             let mut cont = STATE.write().unwrap();
-            let state = select_mut_state(&mut cont, client_id);
+            let state = states::select_mut_state(&mut cont, client_id);
             if let Some(player) = find_my_player(state, client_id) {
                 fire_event(GameEvent::DialogueTriggerRequest {
                     dialogue_name: "basic_planet".to_string(),
@@ -761,7 +758,7 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
 
 fn get_state_clone_read(client_id: Uuid) -> GameState {
     let cont = STATE.read().unwrap();
-    return select_state(&cont, client_id).clone();
+    return states::select_state(&cont, client_id).clone();
 }
 
 fn force_disconnect_client(client_id: Uuid) {
@@ -836,7 +833,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
         let mut cont = STATE.write().unwrap();
         let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
-        let mut_state = select_mut_state(&mut cont, client_id);
+        let mut_state = states::select_mut_state(&mut cont, client_id);
         world::force_update_to_now(mut_state);
         let (new_dialogue_state, state_changed) = execute_dialog_option(
             client_id,
@@ -1252,59 +1249,4 @@ pub fn fire_event(ev: GameEvent) {
 
 pub fn kick_player(player_id: Uuid) {
     dispatch(ServerToClientMessage::RoomLeave(player_id));
-}
-
-pub fn select_mut_state<'a>(
-    cont: &'a mut RwLockWriteGuard<StateContainer>,
-    player_id: Uuid,
-) -> &'a mut GameState {
-    return select_mut_state_v2(cont, player_id);
-}
-
-pub fn select_state<'a>(
-    cont: &'a RwLockReadGuard<StateContainer>,
-    player_id: Uuid,
-) -> &'a GameState {
-    return select_state_v2(cont, player_id);
-}
-
-pub fn select_mut_state_v1<'a>(
-    cont: &'a mut RwLockWriteGuard<StateContainer>,
-    player_id: Uuid,
-) -> &'a mut GameState {
-    if cont.states.contains_key(&player_id) {
-        cont.states.get_mut(&player_id).unwrap()
-    } else {
-        &mut cont.state
-    }
-}
-
-pub fn select_mut_state_v2<'a>(
-    cont: &'a mut RwLockWriteGuard<StateContainer>,
-    player_id: Uuid,
-) -> &'a mut GameState {
-    let state_id = get_state_id_cont_mut(cont, player_id);
-    let room_state_id = find_room_state(player_id);
-    return if state_id == cont.state.id {
-        &mut cont.state
-    } else if room_state_id.is_some() {
-        cont.states.get_mut(&room_state_id.unwrap()).unwrap()
-    } else {
-        cont.states.get_mut(&state_id).unwrap()
-    };
-}
-
-pub fn select_state_v2<'a>(
-    cont: &'a RwLockReadGuard<StateContainer>,
-    player_id: Uuid,
-) -> &'a GameState {
-    let state_id = get_state_id_cont(cont, player_id);
-    let room_state_id = find_room_state(player_id);
-    return if state_id == cont.state.id {
-        &cont.state
-    } else if room_state_id.is_some() {
-        cont.states.get(&room_state_id.unwrap()).unwrap()
-    } else {
-        cont.states.get(&state_id).unwrap()
-    };
 }

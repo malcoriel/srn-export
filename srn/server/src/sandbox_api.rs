@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::market::init_all_planets_market;
 use crate::sandbox::SavedState;
 use crate::sandbox::SAVED_STATES;
-use crate::select_mut_state;
+use crate::states::select_mut_state;
 use crate::system_gen::seed_personal_state;
 use crate::world::{gen_state_by_seed, random_hex_seed, seed_state, GameMode, GameState};
 

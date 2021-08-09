@@ -7,15 +7,15 @@ use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use uuid::Uuid;
 
-use crate::indexing;
-
 use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
+use crate::indexing;
 use crate::perf::Sampler;
+use crate::states::StateContainer;
 use crate::substitutions::substitute_notification_texts;
+use crate::world;
 use crate::world::{GameEvent, GameMode, GameState, Player};
 use crate::xcast::XCast;
-use crate::{world, StateContainer};
 
 lazy_static! {
     pub static ref EVENTS: (
@@ -40,7 +40,7 @@ pub fn handle_events(
         if let Ok(event) = receiver.try_recv() {
             match event.clone() {
                 GameEvent::ShipSpawned { player, .. } => {
-                    let state = crate::select_mut_state(cont, player.id);
+                    let state = crate::states::select_mut_state(cont, player.id);
                     crate::send_event_to_client(event.clone(), XCast::Unicast(player.id, state.id));
                 }
                 GameEvent::RoomJoined {
@@ -56,7 +56,7 @@ pub fn handle_events(
                     }
                 }
                 GameEvent::ShipDied { player, .. } => {
-                    let state = crate::select_mut_state(cont, player.id);
+                    let state = crate::states::select_mut_state(cont, player.id);
                     crate::send_event_to_client(event.clone(), XCast::Broadcast(state.id));
                 }
                 GameEvent::GameEnded { .. } => {
@@ -69,7 +69,7 @@ pub fn handle_events(
                     // intentionally do nothing
                 }
                 GameEvent::ShipDocked { player, .. } => {
-                    let state = crate::select_mut_state(cont, player.id);
+                    let state = crate::states::select_mut_state(cont, player.id);
                     if state.mode != GameMode::Tutorial {
                         fire_event(GameEvent::DialogueTriggerRequest {
                             dialogue_name: "basic_planet".to_owned(),
@@ -84,7 +84,7 @@ pub fn handle_events(
                     dialogue_name,
                     player,
                 } => {
-                    let state = crate::select_mut_state(cont, player.id);
+                    let state = crate::states::select_mut_state(cont, player.id);
                     if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
                         let d_states = DialogueTable::get_player_d_states(d_states, &player);
                         d_table.trigger_dialogue(script, &mut res, &player, d_states, state)
@@ -93,7 +93,7 @@ pub fn handle_events(
                     }
                 }
                 GameEvent::CargoQuestTriggerRequest { player } => {
-                    let state = crate::select_mut_state(cont, player.id);
+                    let state = crate::states::select_mut_state(cont, player.id);
                     let planets = state.locations[0].planets.clone();
                     if let Some(player) = indexing::find_my_player_mut(state, player.id) {
                         world::generate_random_quest(player, &planets.clone(), None, &mut prng);
@@ -101,7 +101,7 @@ pub fn handle_events(
                     substitute_notification_texts(state, HashSet::from_iter(vec![player.id]));
                 }
                 GameEvent::TradeTriggerRequest { player, .. } => {
-                    let state = crate::select_mut_state(cont, player.id);
+                    let state = crate::states::select_mut_state(cont, player.id);
                     crate::send_event_to_client(event.clone(), XCast::Unicast(state.id, player.id));
                 }
             }
