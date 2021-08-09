@@ -1,33 +1,37 @@
-use std::thread;
-use crate::{WSRequest, new_id};
+use crate::{new_id, WSRequest};
+use chrono::{DateTime, Utc};
+use lazy_static::lazy_static;
+use objekt_clonable::objekt::private::sync::mpsc::{Receiver, Sender};
+use serde_derive::{Deserialize, Serialize};
+use serde_json::Error;
+use std::collections::HashMap;
+use std::sync::mpsc::channel;
 use std::sync::{mpsc, Arc, Mutex};
-use websocket::{OwnedMessage, Message};
+use std::thread;
+use std::time::Duration;
+use uuid::Uuid;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
-use serde_derive::{Deserialize, Serialize};
-
-use uuid::Uuid;
-use std::time::Duration;
-use std::sync::mpsc::channel;
-use objekt_clonable::objekt::private::sync::mpsc::{Sender, Receiver};
-use lazy_static::lazy_static;
-use serde_json::Error;
-use chrono::{Utc, DateTime};
-use std::collections::HashMap;
+use websocket::{Message, OwnedMessage};
 
 lazy_static! {
     static ref CHAT_CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ServerChatMessage>)>>> =
         Arc::new(Mutex::new(vec![]));
 }
 
-fn init() -> (Arc<Mutex<Sender<ServerChatMessage>>>, Arc<Mutex<Receiver<ServerChatMessage>>>) {
+fn init() -> (
+    Arc<Mutex<Sender<ServerChatMessage>>>,
+    Arc<Mutex<Receiver<ServerChatMessage>>>,
+) {
     let (sender, receiver) = channel::<ServerChatMessage>();
     (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
 }
 
 lazy_static! {
-    static ref DISPATCHER_PAIR: (Arc<Mutex<Sender<ServerChatMessage>>>, Arc<Mutex<Receiver<ServerChatMessage>>>) = init();
-
+    static ref DISPATCHER_PAIR: (
+        Arc<Mutex<Sender<ServerChatMessage>>>,
+        Arc<Mutex<Receiver<ServerChatMessage>>>
+    ) = init();
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -54,7 +58,6 @@ impl ServerChatMessage {
     }
 }
 
-
 impl ChatMessage {
     pub fn server(msg: &str) -> ChatMessage {
         ChatMessage {
@@ -66,9 +69,7 @@ impl ChatMessage {
 
 fn broadcast_message(msg: ServerChatMessage) {
     let sender = DISPATCHER_PAIR.0.lock().unwrap();
-    sender
-        .send(msg)
-        .unwrap();
+    sender.send(msg).unwrap();
 }
 
 fn dispatcher_thread() {
@@ -126,7 +127,10 @@ fn handle_request(request: WSRequest) {
     log!(format!("Chat connection from {}, id={}", ip, client_id));
 
     let (client_tx, client_rx) = mpsc::channel::<ServerChatMessage>();
-    CHAT_CLIENT_SENDERS.lock().unwrap().push((client_id, client_tx));
+    CHAT_CLIENT_SENDERS
+        .lock()
+        .unwrap()
+        .push((client_id, client_tx));
 
     let (mut receiver, mut sender) = client.split().unwrap();
     let (message_tx, message_rx) = mpsc::channel::<OwnedMessage>();
@@ -203,7 +207,8 @@ fn handle_request(request: WSRequest) {
 }
 
 lazy_static! {
-    static ref CHAT_CLIENT_ERRORS: Arc<Mutex<HashMap<Uuid, u32>>> = Arc::new(Mutex::new(HashMap::new()));
+    static ref CHAT_CLIENT_ERRORS: Arc<Mutex<HashMap<Uuid, u32>>> =
+        Arc::new(Mutex::new(HashMap::new()));
 }
 
 const MAX_ERRORS: u32 = 10;

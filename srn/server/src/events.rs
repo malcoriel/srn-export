@@ -41,7 +41,10 @@ pub fn handle_events(
             match event.clone() {
                 GameEvent::ShipSpawned { player, .. } => {
                     let state = crate::states::select_mut_state(cont, player.id);
-                    crate::send_event_to_client(event.clone(), XCast::Unicast(player.id, state.id));
+                    crate::main_ws_server::send_event_to_client(
+                        event.clone(),
+                        XCast::Unicast(player.id, state.id),
+                    );
                 }
                 GameEvent::RoomJoined {
                     player,
@@ -57,13 +60,22 @@ pub fn handle_events(
                 }
                 GameEvent::ShipDied { player, .. } => {
                     let state = crate::states::select_mut_state(cont, player.id);
-                    crate::send_event_to_client(event.clone(), XCast::Broadcast(state.id));
+                    crate::main_ws_server::send_event_to_client(
+                        event.clone(),
+                        XCast::Broadcast(state.id),
+                    );
                 }
                 GameEvent::GameEnded { state_id } => {
-                    crate::send_event_to_client(event.clone(), XCast::Broadcast(state_id));
+                    crate::main_ws_server::send_event_to_client(
+                        event.clone(),
+                        XCast::Broadcast(state_id),
+                    );
                 }
                 GameEvent::GameStarted { state_id } => {
-                    crate::send_event_to_client(event.clone(), XCast::Broadcast(state_id));
+                    crate::main_ws_server::send_event_to_client(
+                        event.clone(),
+                        XCast::Broadcast(state_id),
+                    );
                 }
                 GameEvent::Unknown => {
                     // intentionally do nothing
@@ -102,7 +114,10 @@ pub fn handle_events(
                 }
                 GameEvent::TradeTriggerRequest { player, .. } => {
                     let state = crate::states::select_mut_state(cont, player.id);
-                    crate::send_event_to_client(event.clone(), XCast::Unicast(state.id, player.id));
+                    crate::main_ws_server::send_event_to_client(
+                        event.clone(),
+                        XCast::Unicast(state.id, player.id),
+                    );
                 }
             }
         } else {

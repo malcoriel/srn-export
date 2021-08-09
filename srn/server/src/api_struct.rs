@@ -1,4 +1,5 @@
 use crate::world::{GameMode, PlayerId};
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;

@@ -140,8 +140,8 @@ pub fn move_player_to_personal_room(client_id: Uuid, mode: GameMode) {
     // the state id filtering will take care of filtering the receivers
     let state = personal_state.clone();
     let state_id = state.id.clone();
-    crate::x_cast_state(state, XCast::Broadcast(state_id));
-    crate::notify_state_changed(personal_state.id, client_id);
+    crate::main_ws_server::x_cast_state(state, XCast::Broadcast(state_id));
+    crate::main_ws_server::notify_state_changed(personal_state.id, client_id);
 }
 
 pub fn get_state_id_cont(cont: &RwLockReadGuard<StateContainer>, client_id: Uuid) -> Uuid {
