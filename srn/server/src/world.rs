@@ -1503,7 +1503,6 @@ pub fn update_ship_hp_effects(
 
 fn apply_ship_death(ship: Ship, player: &mut Player) {
     player.ship_id = None;
-    log!("ship id reset");
     fire_event(GameEvent::ShipDied {
         ship: ship.clone(),
         player: player.clone(),

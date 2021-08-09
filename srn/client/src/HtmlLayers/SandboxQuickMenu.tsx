@@ -80,8 +80,6 @@ export const SandboxQuickMenu = () => {
     return oldState.mode !== newState.mode;
   });
   const inputPrompt = usePrompt();
-  const [planetType, setPlanetType] = useState(PlanetType.Barren);
-  const [planetSpeed, setPlanetSpeed] = useState(0.05);
   const [anchor, setAnchor] = useState('initial');
   useEffect(() => {}, [anchor]);
 
