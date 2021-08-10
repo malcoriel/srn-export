@@ -16,6 +16,7 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
+use crate::api_struct::RoomId;
 use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,

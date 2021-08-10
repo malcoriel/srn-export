@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::market::init_all_planets_market;
 use crate::sandbox::SavedState;
 use crate::sandbox::SAVED_STATES;
-use crate::states::select_mut_state;
+use crate::states::select_state_mut;
 use crate::system_gen::seed_personal_state;
 use crate::world::{gen_state_by_seed, random_hex_seed, seed_state, GameMode, GameState};
 
@@ -30,7 +30,7 @@ pub fn save_current_state(player_id: String, name: String) {
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
     let mut current = crate::STATE.write().unwrap();
-    let state = select_mut_state(&mut current, player_id);
+    let state = select_state_mut(&mut current, player_id);
     if state.id != player_id {
         warn!("attempt to save non-personal state");
         return;
@@ -57,7 +57,7 @@ pub fn load_saved_state(player_id: String, state_id: String) {
     let saved_state = saved_cont
         .get_mut(&state_id)
         .expect("Requested state does not exist");
-    let current_state = select_mut_state(&mut current, Uuid::from_u128(player_id.as_u128()));
+    let current_state = select_state_mut(&mut current, Uuid::from_u128(player_id.as_u128()));
     if current_state.id != player_id {
         warn!("attempt to load into non-personal state");
         return;
@@ -75,7 +75,7 @@ pub fn load_clean_state(player_id: String) {
     let mut current = crate::STATE.write().unwrap();
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-    let current_state = select_mut_state(&mut current, Uuid::from_u128(player_id.as_u128()));
+    let current_state = select_state_mut(&mut current, Uuid::from_u128(player_id.as_u128()));
     if current_state.id != player_id {
         warn!("attempt to load into non-personal state");
         return;
@@ -89,7 +89,7 @@ pub fn save_state_into_json(player_id: String) -> Json<Option<GameState>> {
     let mut current = crate::STATE.write().unwrap();
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-    let current_state = select_mut_state(&mut current, Uuid::from_u128(player_id.as_u128()));
+    let current_state = select_state_mut(&mut current, Uuid::from_u128(player_id.as_u128()));
     if current_state.id != player_id {
         warn!("attempt to save non-personal state");
         return Json(None);
@@ -102,7 +102,7 @@ pub fn load_random_state(player_id: String) {
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
     let mut current = crate::STATE.write().unwrap();
-    let current_state = select_mut_state(&mut current, player_id);
+    let current_state = select_state_mut(&mut current, player_id);
     if current_state.id != player_id {
         warn!("attempt to load into non-personal state");
         return;
@@ -125,7 +125,7 @@ pub fn load_seeded_state(player_id: String, seed: String) {
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
     let mut current = crate::STATE.write().unwrap();
-    let current_state = select_mut_state(&mut current, player_id);
+    let current_state = select_state_mut(&mut current, player_id);
     if current_state.id != player_id {
         warn!("attempt to load into non-personal state");
         return;

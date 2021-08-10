@@ -7,8 +7,8 @@ use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
 pub struct ClientMarker {
-    name: String,
-    client_id: Uuid,
+    pub name: String,
+    pub client_id: Uuid,
 }
 
 pub type RoomId = Uuid;
@@ -17,6 +17,8 @@ pub type RoomId = Uuid;
 pub struct RoomsState {
     pub rooms: Vec<Room>,
     pub players_to_rooms: HashMap<PlayerId, RoomId>,
+    pub rooms_states_by_id: HashMap<RoomId, Uuid>,
+    pub rooms_index_by_id: HashMap<RoomId, usize>,
 }
 
 impl RoomsState {
@@ -24,15 +26,23 @@ impl RoomsState {
         RoomsState {
             rooms: vec![],
             players_to_rooms: HashMap::new(),
+            rooms_states_by_id: HashMap::new(),
+            rooms_index_by_id: HashMap::new(),
         }
     }
     pub fn reindex(&mut self) {
-        for room in self.rooms.clone() {
-            for client in room.clients {
+        let rooms_clone = self.rooms.clone();
+        for i in 0..rooms_clone.len() {
+            let room = rooms_clone.get(i).unwrap();
+            for client in room.clients.iter() {
                 self.players_to_rooms
                     .entry(client.client_id)
                     .or_insert(room.id);
             }
+            self.rooms_states_by_id
+                .entry(room.id)
+                .or_insert(room.state_id);
+            self.rooms_index_by_id.entry(room.id).or_insert(i);
         }
     }
 }

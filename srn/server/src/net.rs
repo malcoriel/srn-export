@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
-use uuid::Uuid;
-
+use crate::api_struct::RoomId;
 use crate::dialogue_dto::Dialogue;
 use crate::indexing::find_my_player;
 use crate::world::{find_player_location_idx, GameEvent, GameMode, GameState, Location, Ship};
 use crate::xcast::XCast;
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use uuid::Uuid;
+use wasm_bindgen::prelude::*;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct TagConfirm {
@@ -132,9 +134,10 @@ pub struct PersonalizeUpdate {
     pub portrait_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct SwitchRoomPayload {
-    pub mode: GameMode,
+    pub room_id: RoomId,
+    pub client_name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

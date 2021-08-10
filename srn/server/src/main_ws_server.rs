@@ -21,9 +21,10 @@ use crate::net::{
     ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
     TagConfirm, Wrapper,
 };
+use crate::rooms_api::ROOMS_STATE;
 use crate::ship_action::ShipActionRust;
 use crate::states::{
-    get_state_id_cont, select_default_state, select_mut_state, select_state, STATE,
+    get_state_id_cont, select_default_state, select_state, select_state_mut, STATE,
 };
 use crate::world::{GameEvent, GameState, Player, Ship};
 use crate::xcast::XCast;
@@ -291,7 +292,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
 
 fn on_client_room_join(client_id: Uuid) {
     let mut cont = STATE.write().unwrap();
-    let state = states::select_mut_state(&mut cont, client_id);
+    let state = states::select_state_mut(&mut cont, client_id);
     let player = find_my_player(&state, client_id);
     if let Some(player) = player {
         crate::fire_event(GameEvent::RoomJoined {
@@ -307,7 +308,7 @@ fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>)
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
-            let state = states::select_mut_state(&mut cont, client_id);
+            let state = states::select_state_mut(&mut cont, client_id);
             // let action_dbg = action.clone();
             if !long_actions::try_start_long_action(state, client_id, action, &mut world::gen_rng())
             {
@@ -331,7 +332,7 @@ fn on_client_notification_action(client_id: Uuid, data: &&str, tag: Option<&&str
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
-            let state = states::select_mut_state(&mut cont, client_id);
+            let state = states::select_state_mut(&mut cont, client_id);
             notifications::apply_action(state, client_id, action);
             x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
@@ -346,7 +347,7 @@ fn on_client_switch_room(client_id: Uuid, second: &&str) {
     let parsed = serde_json::from_str::<SwitchRoomPayload>(second);
     match parsed {
         Ok(parsed) => {
-            states::move_player_to_personal_room(client_id, parsed.mode);
+            states::move_player_to_room(client_id, parsed.room_id, parsed.client_name);
         }
         Err(err) => {
             warn!(format!("Bad switch room, err is {}", err));
@@ -367,7 +368,7 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
     match parsed {
         Ok(up) => {
             let mut cont = STATE.write().unwrap();
-            let state = select_mut_state(&mut cont, client_id);
+            let state = select_state_mut(&mut cont, client_id);
             crate::personalize_player(state, client_id, up);
         }
         Err(_) => {}
@@ -389,7 +390,7 @@ fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str
     match parsed {
         Ok(res) => {
             let mut cont = STATE.write().unwrap();
-            let personal_state = states::select_mut_state(&mut cont, client_id);
+            let personal_state = states::select_state_mut(&mut cont, client_id);
             if personal_state.mode != world::GameMode::Sandbox {
                 warn!(format!(
                     "Attempt to send a sandbox command to non-sandbox state by client {}",
@@ -411,7 +412,7 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
-            let state = states::select_mut_state(&mut cont, client_id);
+            let state = states::select_state_mut(&mut cont, client_id);
             market::attempt_trade(state, client_id, action);
             x_cast_state(state.clone(), XCast::Broadcast(state.id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
@@ -427,7 +428,7 @@ fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) 
     match parsed {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
-            let state = states::select_mut_state(&mut cont, client_id);
+            let state = states::select_state_mut(&mut cont, client_id);
             if let Some(ship) = indexing::find_my_ship_mut(state, client_id) {
                 inventory::apply_action(&mut ship.inventory, action);
             }
@@ -448,7 +449,7 @@ fn force_disconnect_client(client_id: Uuid) {
         senders.remove(index);
     }
     let mut cont = STATE.write().unwrap();
-    let state = select_mut_state(&mut cont, client_id);
+    let state = select_state_mut(&mut cont, client_id);
     crate::remove_player(client_id, state);
 }
 
@@ -509,7 +510,7 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
     index.map(|index| senders.remove(index));
     {
         let mut cont = STATE.write().unwrap();
-        let state_to_remove_client_from = select_mut_state(&mut cont, client_id);
+        let state_to_remove_client_from = select_state_mut(&mut cont, client_id);
         crate::remove_player(client_id, state_to_remove_client_from);
     }
     println!("Client {} id {} disconnected", ip, client_id);
@@ -544,7 +545,7 @@ fn mutate_owned_ship(
     tag: Option<String>,
 ) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
-    let mut state = states::select_mut_state(&mut cont, client_id);
+    let mut state = states::select_state_mut(&mut cont, client_id);
     if let Some(tag) = tag {
         send_tag_confirm(tag, client_id);
     }
@@ -621,7 +622,7 @@ fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) 
         // remote-to-planet dialogue
         Ok(_action) => {
             let mut cont = STATE.write().unwrap();
-            let state = states::select_mut_state(&mut cont, client_id);
+            let state = states::select_state_mut(&mut cont, client_id);
             if let Some(player) = find_my_player(state, client_id) {
                 crate::fire_event(GameEvent::DialogueTriggerRequest {
                     dialogue_name: "basic_planet".to_string(),
@@ -642,7 +643,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
         let mut cont = STATE.write().unwrap();
         let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
-        let mut_state = states::select_mut_state(&mut cont, client_id);
+        let mut_state = states::select_state_mut(&mut cont, client_id);
         world::force_update_to_now(mut_state);
         let (new_dialogue_state, state_changed) = execute_dialog_option(
             client_id,
