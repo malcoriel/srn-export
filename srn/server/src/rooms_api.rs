@@ -90,7 +90,13 @@ pub fn cleanup_empty_rooms() {
                 .collect::<Vec<Uuid>>()
                 .into_iter(),
         );
-        cont.rooms.retain(|r| !to_drop.contains(&r.id));
+        cont.rooms.retain(|r| {
+            let keep = !to_drop.contains(&r.id);
+            if !keep {
+                log!(format!("dropping room {} without players", r.id));
+            }
+            keep
+        });
         thread::sleep(Duration::from_millis(ROOM_CLEANUP_SLEEP_MS));
     }
 }
