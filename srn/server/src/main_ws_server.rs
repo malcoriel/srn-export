@@ -664,7 +664,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
     }
 }
 
-pub fn cleanup_thread() {
+pub fn cleanup_bad_clients_thread() {
     loop {
         let client_errors = CLIENT_ERRORS.lock().unwrap();
         let clients = client_errors

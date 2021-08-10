@@ -59,7 +59,7 @@ use crate::sandbox::mutate_state;
 use crate::ship_action::ShipActionRust;
 use crate::states::{
     get_state_id_cont, get_state_id_cont_mut, get_states_iter_read, select_default_state_read,
-    select_state_mut, select_state, update_default_state,
+    select_state, select_state_mut, update_default_state,
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::make_tutorial_state;
@@ -232,24 +232,39 @@ fn rocket() -> rocket::Rocket {
         }
     }
 
-    std::thread::spawn(|| {
-        main_ws_server::websocket_server();
-    });
+    make_thread("websocket_server")
+        .spawn(|| {
+            main_ws_server::websocket_server();
+        })
+        .ok();
 
-    std::thread::spawn(|| {
-        chat_server();
-    });
+    make_thread("chat_server")
+        .spawn(|| {
+            chat_server();
+        })
+        .ok();
 
-    std::thread::spawn(|| {
-        main_thread();
-    });
-    std::thread::spawn(|| {
-        broadcast_state_thread();
-    });
+    make_thread("main")
+        .spawn(|| {
+            main_thread();
+        })
+        .ok();
+    make_thread("broadcast_state")
+        .spawn(|| {
+            broadcast_state_thread();
+        })
+        .ok();
 
-    thread::spawn(move || main_ws_server::dispatcher_thread());
+    make_thread("dispatcher")
+        .spawn(move || main_ws_server::dispatcher_thread())
+        .ok();
 
-    thread::spawn(|| main_ws_server::cleanup_thread());
+    make_thread("websocket_server_cleanup")
+        .spawn(|| main_ws_server::cleanup_bad_clients_thread())
+        .ok();
+    make_thread("rooms_api_cleanup")
+        .spawn(|| rooms_api::cleanup_empty_rooms())
+        .ok();
 
     rooms_api::init();
     sandbox::init_saved_states();
@@ -270,12 +285,12 @@ fn rocket() -> rocket::Rocket {
         )
         .mount(
             "/api/rooms",
-            routes![
-                rooms_api::get_rooms,
-                rooms_api::join_room,
-                rooms_api::create_room,
-            ],
+            routes![rooms_api::get_rooms, rooms_api::create_room,],
         )
+}
+
+fn make_thread(name: &str) -> std::thread::Builder {
+    std::thread::Builder::new().name(name.to_string())
 }
 
 fn broadcast_state_thread() {

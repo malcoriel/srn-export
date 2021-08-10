@@ -1,16 +1,19 @@
-use std::sync::RwLock;
-
 use rocket::http::Status;
 use rocket::response::Responder;
 use rocket::Request;
 use rocket_contrib::json::Json;
 use serde_derive::{Deserialize, Serialize};
+use std::collections::HashSet;
+use std::iter::FromIterator;
+use std::sync::RwLock;
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 use uuid::Uuid;
 
 use state::Storage;
 
 use crate::api_struct::*;
+use std::thread;
+use std::time::Duration;
 
 pub static ROOMS_STATE: Storage<RwLock<RoomsState>> = Storage::new();
 
@@ -20,16 +23,8 @@ pub fn init() {
 
 #[get("/")]
 pub fn get_rooms() -> Json<Vec<Room>> {
-    Json(vec![])
-}
-
-#[post("/<room_id>/join")]
-pub fn join_room(room_id: String) -> Status {
-    let id = Uuid::parse_str(room_id.as_str());
-    if id.is_err() {
-        return Status::BadRequest;
-    }
-    return Status::Ok;
+    let rooms = ROOMS_STATE.get().read().unwrap().rooms.clone();
+    Json(rooms)
 }
 
 #[post("/<game_mode>/create")]
@@ -38,6 +33,7 @@ pub fn create_room(game_mode: String) -> Status {
     if mode.is_err() {
         return Status::BadRequest;
     }
+
     return Status::Ok;
 }
 
@@ -74,4 +70,27 @@ pub fn try_add_client_to_room(client_id: Uuid, room_id: RoomId, client_name: Str
         client_id,
     });
     cont.reindex();
+}
+
+pub const ROOM_CLEANUP_SLEEP_MS: u64 = 500;
+
+pub fn cleanup_empty_rooms() {
+    loop {
+        let cont = &mut ROOMS_STATE.get().write().unwrap();
+        let to_drop: HashSet<RoomId> = HashSet::from_iter(
+            cont.rooms
+                .iter()
+                .filter_map(|room| {
+                    if room.clients.len() == 0 {
+                        Some(room.id.clone())
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<Uuid>>()
+                .into_iter(),
+        );
+        cont.rooms.retain(|r| !to_drop.contains(&r.id));
+        thread::sleep(Duration::from_millis(ROOM_CLEANUP_SLEEP_MS));
+    }
 }
