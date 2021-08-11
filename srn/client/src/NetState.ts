@@ -427,11 +427,14 @@ export default class NetState extends EventEmitter {
       if (this.mode === GameMode.Tutorial || this.mode === GameMode.Sandbox) {
         const switchRoomTag = uuid.v4();
         this.switchingRooms = true;
-        this.send({
-          code: ClientOpCode.SwitchRoom,
-          value: { mode: GameMode[this.mode] },
-          tag: switchRoomTag,
-        });
+        (async () => {
+          const roomId = await api.createRoom(this.mode);
+          this.send({
+            code: ClientOpCode.SwitchRoom,
+            value: { room_id: roomId, client_name: this.playerName },
+            tag: switchRoomTag,
+          });
+        })();
       }
     };
     this.socket.onerror = () => {

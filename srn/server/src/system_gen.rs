@@ -358,23 +358,7 @@ pub fn gen_star(star_id: Uuid, mut prng: &mut SmallRng, radius: f64, pos: Vec2f6
     }
 }
 
-pub fn seed_personal_state(client_id: Uuid, mode: &GameMode) -> GameState {
-    match mode {
-        GameMode::Unknown => {
-            panic!("Unknown mode to seed");
-        }
-        GameMode::CargoRush => {
-            let mut state = system_gen(client_id.to_string());
-            init_all_planets_market(&mut state);
-            state.id = client_id;
-            state
-        }
-        GameMode::Tutorial => make_tutorial_state(client_id),
-        GameMode::Sandbox => make_sandbox_state(client_id),
-    }
-}
-
-pub fn seed_room_state(mode: &GameMode, seed: String, room_name: &String) -> GameState {
+pub fn seed_room_state(mode: &GameMode, seed: String) -> GameState {
     match mode {
         GameMode::Unknown => {
             panic!("Unknown mode to seed");
@@ -382,15 +366,15 @@ pub fn seed_room_state(mode: &GameMode, seed: String, room_name: &String) -> Gam
         GameMode::CargoRush => {
             let mut state = system_gen(seed);
             init_all_planets_market(&mut state);
-            state.id = client_id;
+            state.id = new_id();
             state
         }
-        GameMode::Tutorial => make_tutorial_state(client_id),
-        GameMode::Sandbox => make_sandbox_state(client_id),
+        GameMode::Tutorial => make_tutorial_state(),
+        GameMode::Sandbox => make_sandbox_state(),
     }
 }
 
-pub fn make_tutorial_state(client_id: Uuid) -> GameState {
+pub fn make_tutorial_state() -> GameState {
     let seed = "tutorial".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
@@ -439,7 +423,7 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
         },
     ];
     GameState {
-        id: client_id,
+        id: new_id(),
         version: GAME_STATE_VERSION,
         mode: GameMode::Tutorial,
         tag: None,
@@ -457,12 +441,12 @@ pub fn make_tutorial_state(client_id: Uuid) -> GameState {
     }
 }
 
-pub fn make_sandbox_state(client_id: Uuid) -> GameState {
+pub fn make_sandbox_state() -> GameState {
     let seed = "sandbox".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
     GameState {
-        id: client_id,
+        id: new_id(),
         version: GAME_STATE_VERSION,
         mode: GameMode::Sandbox,
         tag: None,

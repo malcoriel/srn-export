@@ -48,6 +48,11 @@ impl RoomsState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
+pub struct RoomIdResponse {
+    pub room_id: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
 pub struct Room {
     pub id: RoomId,
     pub name: String,

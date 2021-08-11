@@ -9,7 +9,7 @@ use crate::market::init_all_planets_market;
 use crate::sandbox::SavedState;
 use crate::sandbox::SAVED_STATES;
 use crate::states::select_state_mut;
-use crate::system_gen::seed_personal_state;
+use crate::system_gen::seed_room_state;
 use crate::world::{gen_state_by_seed, random_hex_seed, seed_state, GameMode, GameState};
 
 #[get("/saved_states")]
@@ -80,7 +80,7 @@ pub fn load_clean_state(player_id: String) {
         warn!("attempt to load into non-personal state");
         return;
     }
-    let mut clean_state = seed_personal_state(player_id, &GameMode::Sandbox);
+    let mut clean_state = seed_room_state(&GameMode::Sandbox, "clean".to_string());
     mem::swap(current_state, &mut clean_state);
 }
 

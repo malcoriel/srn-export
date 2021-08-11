@@ -1,4 +1,5 @@
 import { GameMode } from '../../../world/pkg/world.extra';
+import { RoomIdResponse } from '../../../world/pkg/world';
 import useSWR, { mutate } from 'swr';
 
 const patchParams = (url: string, params: Record<string, string>) => {
@@ -66,13 +67,16 @@ export const api = {
     );
   },
 
-  createRoom: async (mode: GameMode) => {
-    await fetch(
+  createRoom: async (mode: string): Promise<string> => {
+    const res = await fetch(
       patchParams(`${api.getRoomsApiUrl()}/create/<mode>`, {
         mode,
       }),
       { method: 'POST' }
     );
+    let rawResponse = await res.json();
+    console.log('create room response', rawResponse);
+    return (rawResponse as RoomIdResponse).room_id;
   },
 
   loadCleanState: async (player_id: string) => {
@@ -113,6 +117,10 @@ export const api = {
 
   getSandboxApiUrl() {
     return `${api.getMainApiUrl()}/sandbox`;
+  },
+
+  getRoomsApiUrl() {
+    return `${api.getMainApiUrl()}/rooms`;
   },
 
   getChatWebSocketUrl() {

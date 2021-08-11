@@ -12,7 +12,7 @@ use uuid::Uuid;
 use state::Storage;
 
 use crate::api_struct::*;
-use crate::{new_id, system_gen};
+use crate::{new_id, system_gen, world};
 use std::thread;
 use std::time::Duration;
 
@@ -28,16 +28,19 @@ pub fn get_rooms() -> Json<Vec<Room>> {
     Json(rooms)
 }
 
-#[post("/<game_mode>/create")]
-pub fn create_room(game_mode: String) -> Status {
-    let mode = serde_json::from_str::<crate::world::GameMode>(game_mode.as_str());
+#[post("/create/<game_mode>")]
+pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
+    let mode =
+        serde_json::from_str::<crate::world::GameMode>(format!("\"{}\"", game_mode).as_str());
     if mode.is_err() {
-        return Status::BadRequest;
+        return Json(RoomIdResponse {
+            room_id: Uuid::default(),
+        });
     }
     let mode = mode.ok().unwrap();
     let room_id = new_id();
     let room_name = format!("{} - {}", mode, room_id);
-    let state = system_gen::seed_room_state(&mode, random_hex_seed(), room_name);
+    let state = system_gen::seed_room_state(&mode, world::random_hex_seed());
     let cont = &mut ROOMS_STATE.get().write().unwrap();
     cont.rooms.push(Room {
         id: room_id,
@@ -48,7 +51,7 @@ pub fn create_room(game_mode: String) -> Status {
     });
     cont.reindex();
 
-    return Status::Ok;
+    return Json(RoomIdResponse { room_id });
 }
 
 pub fn find_room_state_id_by_player_id(client_id: Uuid) -> Option<Uuid> {
