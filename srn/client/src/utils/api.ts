@@ -1,3 +1,4 @@
+import { GameMode } from '../../../world/pkg/world.extra';
 import useSWR, { mutate } from 'swr';
 
 const patchParams = (url: string, params: Record<string, string>) => {
@@ -64,6 +65,16 @@ export const api = {
       { method: 'POST' }
     );
   },
+
+  createRoom: async (mode: GameMode) => {
+    await fetch(
+      patchParams(`${api.getRoomsApiUrl()}/create/<mode>`, {
+        mode,
+      }),
+      { method: 'POST' }
+    );
+  },
+
   loadCleanState: async (player_id: string) => {
     await fetch(
       patchParams(

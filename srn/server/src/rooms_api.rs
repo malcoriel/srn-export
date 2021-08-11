@@ -12,6 +12,7 @@ use uuid::Uuid;
 use state::Storage;
 
 use crate::api_struct::*;
+use crate::{new_id, system_gen};
 use std::thread;
 use std::time::Duration;
 
@@ -33,6 +34,19 @@ pub fn create_room(game_mode: String) -> Status {
     if mode.is_err() {
         return Status::BadRequest;
     }
+    let mode = mode.ok().unwrap();
+    let room_id = new_id();
+    let room_name = format!("{} - {}", mode, room_id);
+    let state = system_gen::seed_room_state(&mode, random_hex_seed(), room_name);
+    let cont = &mut ROOMS_STATE.get().write().unwrap();
+    cont.rooms.push(Room {
+        id: room_id,
+        name: room_name,
+        state_id: state.id,
+        mode,
+        clients: vec![],
+    });
+    cont.reindex();
 
     return Status::Ok;
 }

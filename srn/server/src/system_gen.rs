@@ -7,8 +7,8 @@ use crate::random_stuff::{
 };
 use crate::vec2::Vec2f64;
 use crate::world::{
-    random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star,
-    GAME_STATE_VERSION,
+    gen_rng, random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location,
+    Planet, Star, GAME_STATE_VERSION,
 };
 use chrono::Utc;
 use core::mem;
@@ -365,6 +365,22 @@ pub fn seed_personal_state(client_id: Uuid, mode: &GameMode) -> GameState {
         }
         GameMode::CargoRush => {
             let mut state = system_gen(client_id.to_string());
+            init_all_planets_market(&mut state);
+            state.id = client_id;
+            state
+        }
+        GameMode::Tutorial => make_tutorial_state(client_id),
+        GameMode::Sandbox => make_sandbox_state(client_id),
+    }
+}
+
+pub fn seed_room_state(mode: &GameMode, seed: String, room_name: &String) -> GameState {
+    match mode {
+        GameMode::Unknown => {
+            panic!("Unknown mode to seed");
+        }
+        GameMode::CargoRush => {
+            let mut state = system_gen(seed);
             init_all_planets_market(&mut state);
             state.id = client_id;
             state

@@ -52,6 +52,7 @@ use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
 use crate::{abilities, autofocus, indexing};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
+use std::fmt::{Display, Formatter};
 
 // speeds are per second
 const SHIP_SPEED: f64 = 20.0;
@@ -75,6 +76,11 @@ pub enum GameMode {
     CargoRush,
     Tutorial,
     Sandbox,
+}
+impl Display for GameMode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

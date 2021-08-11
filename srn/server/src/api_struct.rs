@@ -54,5 +54,4 @@ pub struct Room {
     pub state_id: Uuid,
     pub mode: GameMode,
     pub clients: Vec<ClientMarker>,
-    pub max_players: u32,
 }
