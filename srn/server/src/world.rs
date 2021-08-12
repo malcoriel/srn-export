@@ -264,6 +264,9 @@ pub enum GameEvent {
         planet: Planet,
         player: Player,
     },
+    NewStateCreated {
+        state: GameState,
+    },
     ShipUndocked {
         ship: Ship,
         planet: Planet,

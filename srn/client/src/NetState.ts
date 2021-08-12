@@ -424,11 +424,15 @@ export default class NetState extends EventEmitter {
           portrait_name: this.portraitName,
         }),
       });
+      console.log('mode', this.mode);
       if (this.mode === GameMode.Tutorial || this.mode === GameMode.Sandbox) {
         const switchRoomTag = uuid.v4();
         this.switchingRooms = true;
         (async () => {
+          console.log('creating room');
           const roomId = await api.createRoom(this.mode);
+          await new Promise((res) => setTimeout(res, 2000));
+          console.log('switching room to', roomId);
           this.send({
             code: ClientOpCode.SwitchRoom,
             value: { room_id: roomId, client_name: this.playerName },

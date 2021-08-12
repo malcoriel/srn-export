@@ -12,6 +12,9 @@ use uuid::Uuid;
 use state::Storage;
 
 use crate::api_struct::*;
+use crate::events::fire_event;
+use crate::states::{add_state, STATE};
+use crate::world::GameEvent;
 use crate::{new_id, system_gen, world};
 use std::thread;
 use std::time::Duration;
@@ -49,13 +52,25 @@ pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
         mode,
         clients: vec![],
     });
+    log!(format!(
+        "created room {} with state {} for mode {}",
+        room_id, state.id, game_mode
+    ));
+    {
+        fire_event(GameEvent::NewStateCreated { state });
+    }
     cont.reindex();
 
     return Json(RoomIdResponse { room_id });
 }
 
 pub fn find_room_state_id_by_player_id(client_id: Uuid) -> Option<Uuid> {
-    let players_to_rooms = ROOMS_STATE.get().read().unwrap().players_to_rooms.clone();
+    let players_to_rooms = ROOMS_STATE
+        .get()
+        .read()
+        .unwrap()
+        .players_to_state_ids
+        .clone();
     players_to_rooms.get(&client_id).map(|id| id.clone())
 }
 

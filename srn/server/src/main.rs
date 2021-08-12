@@ -262,9 +262,9 @@ fn rocket() -> rocket::Rocket {
     make_thread("websocket_server_cleanup")
         .spawn(|| main_ws_server::cleanup_bad_clients_thread())
         .ok();
-    make_thread("rooms_api_cleanup")
-        .spawn(|| rooms_api::cleanup_empty_rooms())
-        .ok();
+    // make_thread("rooms_api_cleanup")
+    //     .spawn(|| rooms_api::cleanup_empty_rooms())
+    //     .ok();
 
     rooms_api::init();
     sandbox::init_saved_states();
@@ -390,9 +390,9 @@ fn main_thread() {
 
         let personal_id = sampler.start(SamplerMarks::PersonalStates as u32);
         let updated_states = HashMap::from_iter(get_states_iter(&cont).filter_map(|(_, state)| {
-            if state.players.len() == 0 {
-                return None;
-            }
+            // if state.players.len() == 0 {
+            //     return None;
+            // }
             let (new_state, _) = world::update_world(
                 state.clone(),
                 elapsed_micro,

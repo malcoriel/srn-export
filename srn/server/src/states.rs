@@ -3,7 +3,7 @@ use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::api_struct::RoomId;
 use crate::indexing::find_and_extract_ship;
-use crate::world::{spawn_ship, GameMode};
+use crate::world::{spawn_ship, GameMode, Player};
 use uuid::Uuid;
 
 use crate::rooms_api::{
@@ -12,7 +12,7 @@ use crate::rooms_api::{
 };
 use crate::world::GameState;
 use crate::xcast::XCast;
-use crate::{system_gen, world};
+use crate::{new_id, system_gen, world};
 use lazy_static::lazy_static;
 use std::collections::hash_map::Iter;
 
@@ -70,6 +70,11 @@ pub fn update_states(cont: &mut RwLockWriteGuard<StateContainer>, val: HashMap<U
     cont.states = val;
 }
 
+pub fn add_state(cont: &mut RwLockWriteGuard<StateContainer>, state: GameState) {
+    eprintln!("adding state id {}", state.id);
+    cont.states.insert(state.id, state);
+}
+
 pub fn select_state<'a>(
     cont: &'a RwLockReadGuard<StateContainer>,
     player_id: Uuid,
@@ -119,21 +124,21 @@ pub fn select_state_v2<'a>(
 }
 
 pub fn move_player_to_room(client_id: Uuid, room_id: RoomId, client_name: String) {
-    let mut player = {
+    let player = {
         let mut cont = STATE.write().unwrap();
         let old_player_state = select_state_mut(&mut cont, client_id);
-        let player_idx = old_player_state
+        old_player_state
             .players
             .iter()
             .position(|p| p.id == client_id)
-            .unwrap();
-        {
-            // intentionally drop the result as the ship gets erased
-            find_and_extract_ship(old_player_state, client_id);
-        }
-        old_player_state.players.remove(player_idx)
+            .map(|player_idx| {
+                // intentionally drop the result as the ship gets erased
+                find_and_extract_ship(old_player_state, client_id);
+                old_player_state.players.remove(player_idx)
+            })
     };
 
+    let mut player = player.unwrap_or(Player::new(new_id(), &GameMode::Sandbox));
     player.notifications = vec![];
     let mut cont = STATE.write().unwrap();
 
@@ -149,7 +154,8 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId, client_name: String
             err!(format!(
                 "attempt to join room {} with non-existent state {}",
                 room_id, state_id
-            ))
+            ));
+            return;
         }
         new_state.unwrap()
     };
@@ -206,5 +212,12 @@ pub fn select_state_by_id_mut<'a>(
     if cont.state.id == state_id {
         return Some(&mut cont.state);
     }
+    eprintln!("selecting state {}", state_id);
+    let keys = cont
+        .states
+        .keys()
+        .map(|k| format!("{}", k.clone()))
+        .collect::<Vec<_>>();
+    eprintln!("current keys {}", keys.join(", "));
     return cont.states.get_mut(&state_id);
 }
