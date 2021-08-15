@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use crate::api_struct::RoomId;
+use crate::api_struct::{Room, RoomId, RoomsState};
 use crate::indexing::find_and_extract_ship;
 use crate::world::{spawn_ship, GameMode, Player};
 use uuid::Uuid;
 
 use crate::rooms_api::{
-    find_room_state_id_by_player_id, find_room_state_id_by_room_id, try_add_client_to_room,
-    ROOMS_STATE,
+    find_room_by_player_id_mut, find_room_state_id_by_player_id,
+    find_room_state_id_by_player_id_mut, find_room_state_id_by_room_id_mut, try_add_client_to_room,
 };
 use crate::world::GameState;
 use crate::xcast::XCast;
@@ -24,20 +24,31 @@ lazy_static! {
         RwLock::new(StateContainer {
             states: states,
             state,
+            rooms: RoomsState::new(),
         })
     };
 }
 
 pub struct StateContainer {
-    states: HashMap<Uuid, GameState>,
-    state: GameState,
+    pub states: HashMap<Uuid, GameState>,
+    pub state: GameState,
+    pub rooms: RoomsState,
 }
 
 pub fn select_state_mut<'a>(
-    cont: &'a mut RwLockWriteGuard<StateContainer>,
+    state_cont: &'a mut RwLockWriteGuard<StateContainer>,
     player_id: Uuid,
 ) -> &'a mut GameState {
-    return select_mut_state_v2(cont, player_id);
+    return select_mut_state_v2(state_cont, player_id);
+}
+
+// second return value is a clone, not a room that can be edited
+pub fn select_state_and_room_mut<'a>(
+    cont_st: &'a mut RwLockWriteGuard<StateContainer>,
+    player_id: Uuid,
+) -> (&'a mut GameState, Option<Room>) {
+    let room_clone = find_room_by_player_id_mut(cont_st, player_id).map(|r| r.clone());
+    return (select_mut_state_v2(cont_st, player_id), room_clone);
 }
 
 pub fn select_default_state<'a>(
@@ -75,11 +86,11 @@ pub fn add_state(cont: &mut RwLockWriteGuard<StateContainer>, state: GameState) 
     cont.states.insert(state.id, state);
 }
 
-pub fn select_state<'a>(
-    cont: &'a RwLockReadGuard<StateContainer>,
+pub fn select_state<'a, 'b>(
+    state_cont: &'a RwLockReadGuard<StateContainer>,
     player_id: Uuid,
 ) -> &'a GameState {
-    return select_state_v2(cont, player_id);
+    return select_state_v2(state_cont, player_id);
 }
 
 pub fn select_mut_state_v1<'a>(
@@ -93,40 +104,40 @@ pub fn select_mut_state_v1<'a>(
     }
 }
 
-pub fn select_mut_state_v2<'a>(
-    cont: &'a mut RwLockWriteGuard<StateContainer>,
+pub fn select_mut_state_v2<'a, 'b>(
+    state_cont: &'a mut RwLockWriteGuard<StateContainer>,
     player_id: Uuid,
 ) -> &'a mut GameState {
-    let state_id = get_state_id_cont_mut(cont, player_id);
-    let room_state_id = find_room_state_id_by_player_id(player_id);
-    return if state_id == cont.state.id {
-        &mut cont.state
+    let state_id = get_state_id_cont_mut(state_cont, player_id);
+    let room_state_id = find_room_state_id_by_player_id_mut(state_cont, player_id);
+    return if state_id == state_cont.state.id {
+        &mut state_cont.state
     } else if room_state_id.is_some() {
-        cont.states.get_mut(&room_state_id.unwrap()).unwrap()
+        state_cont.states.get_mut(&room_state_id.unwrap()).unwrap()
     } else {
-        cont.states.get_mut(&state_id).unwrap()
+        state_cont.states.get_mut(&state_id).unwrap()
     };
 }
 
-pub fn select_state_v2<'a>(
-    cont: &'a RwLockReadGuard<StateContainer>,
+pub fn select_state_v2<'a, 'b>(
+    state_cont: &'a RwLockReadGuard<StateContainer>,
     player_id: Uuid,
 ) -> &'a GameState {
-    let state_id = get_state_id_cont(cont, player_id);
-    let room_state_id = find_room_state_id_by_player_id(player_id);
-    return if state_id == cont.state.id {
-        &cont.state
+    let state_id = get_state_id_cont(state_cont, player_id);
+    let room_state_id = find_room_state_id_by_player_id(state_cont, player_id);
+    return if state_id == state_cont.state.id {
+        &state_cont.state
     } else if room_state_id.is_some() {
-        cont.states.get(&room_state_id.unwrap()).unwrap()
+        state_cont.states.get(&room_state_id.unwrap()).unwrap()
     } else {
-        cont.states.get(&state_id).unwrap()
+        state_cont.states.get(&state_id).unwrap()
     };
 }
 
 pub fn move_player_to_room(client_id: Uuid, room_id: RoomId, client_name: String) {
     let player = {
-        let mut cont = STATE.write().unwrap();
-        let old_player_state = select_state_mut(&mut cont, client_id);
+        let mut state_cont = STATE.write().unwrap();
+        let old_player_state = select_state_mut(&mut state_cont, client_id);
         old_player_state
             .players
             .iter()
@@ -140,58 +151,68 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId, client_name: String
 
     let mut player = player.unwrap_or(Player::new(new_id(), &GameMode::Sandbox));
     player.notifications = vec![];
-    let mut cont = STATE.write().unwrap();
 
-    let new_state = {
-        let state_id = find_room_state_id_by_room_id(room_id);
-        if state_id.is_none() {
-            err!(format!("attempt to join non-existent room {}", room_id));
-            return;
-        }
-        let state_id = state_id.unwrap();
-        let new_state = select_state_by_id_mut(&mut cont, state_id);
-        if new_state.is_none() {
-            err!(format!(
-                "attempt to join room {} with non-existent state {}",
-                room_id, state_id
-            ));
-            return;
-        }
-        new_state.unwrap()
+    let player_id = player.id;
+    let new_state_id = {
+        let mut cont = STATE.write().unwrap();
+
+        let new_state = {
+            let state_id = find_room_state_id_by_room_id_mut(&mut cont, room_id);
+            if state_id.is_none() {
+                err!(format!("attempt to join non-existent room {}", room_id));
+                return;
+            }
+            let state_id = state_id.unwrap();
+            let new_state = select_state_by_id_mut(&mut cont, state_id);
+            if new_state.is_none() {
+                err!(format!(
+                    "attempt to join room {} with non-existent state {}",
+                    room_id, state_id
+                ));
+                return;
+            }
+            new_state.unwrap()
+        };
+        new_state.players.push(player);
+        spawn_ship(new_state, client_id, None);
+        new_state.id
     };
-    let player_id = player.id.clone();
-    new_state.players.push(player);
-    spawn_ship(new_state, client_id, None);
-    // the broadcast will take care of actually delivering the state, as long as we update the rooms
-    try_add_client_to_room(player_id, room_id, client_name);
+    {
+        let mut cont = STATE.write().unwrap();
+        // the broadcast will take care of actually delivering the state, as long as we update the rooms
+        try_add_client_to_room(&mut cont, player_id, room_id, client_name);
+    }
 
     // let state = new_state.clone();
     // let state_id = state.id.clone();
     // crate::main_ws_server::x_cast_state(state, XCast::Broadcast(state_id));
-    crate::main_ws_server::notify_state_changed(new_state.id, client_id);
+    crate::main_ws_server::notify_state_changed(new_state_id, client_id);
 }
 
-pub fn get_state_id_cont(cont: &RwLockReadGuard<StateContainer>, client_id: Uuid) -> Uuid {
-    let in_personal = cont.states.contains_key(&client_id);
-    let room_state = find_room_state_id_by_player_id(client_id);
+pub fn get_state_id_cont(state_cont: &RwLockReadGuard<StateContainer>, client_id: Uuid) -> Uuid {
+    let in_personal = state_cont.states.contains_key(&client_id);
+    let room_state = find_room_state_id_by_player_id(state_cont, client_id);
     return if in_personal {
         client_id
     } else if room_state.is_some() {
         room_state.unwrap()
     } else {
-        cont.state.id.clone()
+        state_cont.state.id.clone()
     };
 }
 
-pub fn get_state_id_cont_mut(cont: &RwLockWriteGuard<StateContainer>, client_id: Uuid) -> Uuid {
-    let in_personal = cont.states.contains_key(&client_id);
-    let room_state = find_room_state_id_by_player_id(client_id);
+pub fn get_state_id_cont_mut(
+    state_cont: &RwLockWriteGuard<StateContainer>,
+    client_id: Uuid,
+) -> Uuid {
+    let in_personal = state_cont.states.contains_key(&client_id);
+    let room_state = find_room_state_id_by_player_id_mut(state_cont, client_id);
     return if in_personal {
         client_id
     } else if room_state.is_some() {
         room_state.unwrap()
     } else {
-        cont.state.id.clone()
+        state_cont.state.id.clone()
     };
 }
 

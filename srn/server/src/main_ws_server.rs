@@ -21,7 +21,6 @@ use crate::net::{
     ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
     TagConfirm, Wrapper,
 };
-use crate::rooms_api::ROOMS_STATE;
 use crate::ship_action::ShipActionRust;
 use crate::states::{
     get_state_id_cont, select_default_state, select_state, select_state_mut, STATE,

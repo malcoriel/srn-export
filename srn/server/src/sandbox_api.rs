@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::market::init_all_planets_market;
 use crate::sandbox::SavedState;
 use crate::sandbox::SAVED_STATES;
-use crate::states::select_state_mut;
+use crate::states::{select_state_and_room_mut, select_state_mut};
 use crate::system_gen::seed_room_state;
 use crate::world::{gen_state_by_seed, random_hex_seed, seed_state, GameMode, GameState};
 
@@ -99,25 +99,37 @@ pub fn save_state_into_json(player_id: String) -> Json<Option<GameState>> {
 
 #[post("/saved_states/load_random/<player_id>")]
 pub fn load_random_state(player_id: String) {
-    let player_id = Uuid::parse_str(player_id.as_str())
-        .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-    let mut current = crate::STATE.write().unwrap();
-    let current_state = select_state_mut(&mut current, player_id);
-    if current_state.id != player_id {
-        warn!("attempt to load into non-personal state");
-        return;
+    {
+        let player_id = Uuid::parse_str(player_id.as_str())
+            .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
+        let mut state_cont = crate::STATE.write().unwrap();
+        let (current_state, room) = select_state_and_room_mut(&mut state_cont, player_id);
+        if room.is_none() {
+            warn!("attempt to load state for non-existent room");
+            return;
+        }
+        let room = room.unwrap();
+        let owner_id = room.clients.get(0);
+        if owner_id.map_or(Uuid::default(), |o| o.client_id) != player_id {
+            warn!("attempt to load into non-owned room's state (first player = owner)");
+            return;
+        }
+        let mut random_state = gen_state_by_seed(true, random_hex_seed());
+        init_all_planets_market(&mut random_state);
+        let player = current_state.players[0].clone();
+        let ship = current_state.locations[0].ships[0].clone();
+        mem::swap(current_state, &mut random_state);
+        current_state.id = player.id;
+        current_state.players.push(player);
+        current_state.mode = GameMode::Sandbox;
+        current_state.milliseconds_remaining = 99 * 60 * 1000;
+        let loc = &mut current_state.locations[0];
+        loc.ships.push(ship);
     }
-    let mut random_state = gen_state_by_seed(true, random_hex_seed());
-    init_all_planets_market(&mut random_state);
-    let player = current_state.players[0].clone();
-    let ship = current_state.locations[0].ships[0].clone();
-    mem::swap(current_state, &mut random_state);
-    current_state.id = player.id;
-    current_state.players.push(player);
-    current_state.mode = GameMode::Sandbox;
-    current_state.milliseconds_remaining = 99 * 60 * 1000;
-    let loc = &mut current_state.locations[0];
-    loc.ships.push(ship);
+    {
+        let mut state_cont = crate::STATE.write().unwrap();
+        state_cont.rooms.reindex();
+    }
 }
 
 #[post("/saved_states/load_seeded/<player_id>/<seed>")]

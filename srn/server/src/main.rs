@@ -54,7 +54,7 @@ use crate::indexing::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
 };
 use crate::perf::Sampler;
-use crate::rooms_api::{find_room_state_id_by_player_id, ROOMS_STATE};
+use crate::rooms_api::find_room_state_id_by_player_id;
 use crate::sandbox::mutate_state;
 use crate::ship_action::ShipActionRust;
 use crate::states::{
@@ -266,7 +266,6 @@ fn rocket() -> rocket::Rocket {
     //     .spawn(|| rooms_api::cleanup_empty_rooms())
     //     .ok();
 
-    rooms_api::init();
     sandbox::init_saved_states();
     rocket::ignite()
         .attach(CORS())
