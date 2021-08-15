@@ -1,4 +1,4 @@
-use crate::world::{GameMode, PlayerId};
+use crate::world::{GameMode, GameState, PlayerId};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -32,17 +32,34 @@ impl RoomsState {
             idx_by_player_id: HashMap::new(),
         }
     }
+
+    pub fn get_state_by_id_mut(&mut self, id: &Uuid) -> Option<&mut GameState> {
+        self.idx_by_id
+            .get(id)
+            .map(|idx| idx.clone())
+            .and_then(move |idx| self.values.get_mut(idx))
+            .and_then(|r| Some(&mut r.state))
+    }
+
+    pub fn get_state_by_id(&self, id: &Uuid) -> Option<&GameState> {
+        self.idx_by_id
+            .get(id)
+            .map(|idx| idx.clone())
+            .and_then(move |idx| self.values.get(idx))
+            .and_then(|r| Some(&r.state))
+    }
+
     pub fn reindex(&mut self) {
         let rooms_clone = self.values.clone();
         for i in 0..rooms_clone.len() {
             let room = rooms_clone.get(i).unwrap();
-            for client in room.clients.iter() {
+            for client in room.state.players.iter() {
                 self.state_id_by_player_id
-                    .entry(client.client_id)
-                    .or_insert(room.state_id);
-                self.idx_by_player_id.entry(client.client_id).or_insert(i);
+                    .entry(client.id)
+                    .or_insert(room.state.id);
+                self.idx_by_player_id.entry(client.id).or_insert(i);
             }
-            self.state_id_by_id.entry(room.id).or_insert(room.state_id);
+            self.state_id_by_id.entry(room.id).or_insert(room.state.id);
             self.idx_by_id.entry(room.id).or_insert(i);
         }
     }
@@ -57,7 +74,5 @@ pub struct RoomIdResponse {
 pub struct Room {
     pub id: RoomId,
     pub name: String,
-    pub state_id: Uuid,
-    pub mode: GameMode,
-    pub clients: Vec<ClientMarker>,
+    pub state: GameState,
 }

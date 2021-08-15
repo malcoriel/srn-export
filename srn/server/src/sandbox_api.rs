@@ -109,8 +109,8 @@ pub fn load_random_state(player_id: String) {
             return;
         }
         let room = room.unwrap();
-        let owner_id = room.clients.get(0);
-        if owner_id.map_or(Uuid::default(), |o| o.client_id) != player_id {
+        let owner_id = room.state.players.get(0);
+        if owner_id.map_or(Uuid::default(), |o| o.id) != player_id {
             warn!("attempt to load into non-owned room's state (first player = owner)");
             return;
         }

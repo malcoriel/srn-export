@@ -43,10 +43,11 @@ use net::{
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
 use perf::SamplerMarks;
-use states::{get_states_iter, select_default_state, update_states, StateContainer, STATE};
+use states::{get_rooms_iter, select_default_state, update_rooms, StateContainer, STATE};
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
+use crate::api_struct::Room;
 use crate::bots::{bot_init, do_bot_actions};
 use crate::chat::chat_server;
 use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
@@ -58,8 +59,8 @@ use crate::rooms_api::find_room_state_id_by_player_id;
 use crate::sandbox::mutate_state;
 use crate::ship_action::ShipActionRust;
 use crate::states::{
-    get_state_id_cont, get_state_id_cont_mut, get_states_iter_read, select_default_state_read,
-    select_state, select_state_mut, update_default_state,
+    get_state_id_cont, get_state_id_cont_mut, select_default_state_read, select_state,
+    select_state_mut, update_default_state,
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::make_tutorial_state;
@@ -296,8 +297,8 @@ fn broadcast_state_thread() {
     loop {
         let diff = {
             let start = Local::now();
-            let cont = STATE.read().unwrap();
-            broadcast_all_states(&cont);
+            let mut cont = STATE.write().unwrap();
+            broadcast_all_states(&mut cont);
             (Local::now() - start).num_milliseconds()
         };
         // log!(format!("broadcast duration={}ms", diff));
@@ -388,23 +389,30 @@ fn main_thread() {
         }
 
         let personal_id = sampler.start(SamplerMarks::PersonalStates as u32);
-        let updated_states = HashMap::from_iter(get_states_iter(&cont).filter_map(|(_, state)| {
-            // if state.players.len() == 0 {
-            //     return None;
-            // }
-            let (new_state, _) = world::update_world(
-                state.clone(),
-                elapsed_micro,
-                false,
-                Sampler::empty(),
-                UpdateOptions {
-                    disable_hp_effects: false,
-                    limit_area: AABB::maxed(),
-                },
-            );
-            Some((new_state.id, new_state))
-        }));
-        update_states(&mut cont, updated_states);
+        let updated_rooms = get_rooms_iter(&cont)
+            .filter_map(|room| {
+                // if state.players.len() == 0 {
+                //     return None;
+                // }
+                let (new_state, _) = world::update_world(
+                    room.state.clone(),
+                    elapsed_micro,
+                    false,
+                    Sampler::empty(),
+                    UpdateOptions {
+                        disable_hp_effects: false,
+                        limit_area: AABB::maxed(),
+                    },
+                );
+                let room_clone = Room {
+                    id: room.id,
+                    name: room.name.clone(),
+                    state: new_state,
+                };
+                Some(room_clone)
+            })
+            .collect();
+        update_rooms(&mut cont, updated_rooms);
         if sampler.end_top(personal_id) < 0 {
             shortcut_frame += 1;
             continue;
@@ -502,11 +510,11 @@ fn main_thread() {
     }
 }
 
-fn broadcast_all_states(cont: &RwLockReadGuard<StateContainer>) {
-    let read_state = select_default_state_read(cont);
+fn broadcast_all_states(cont: &mut RwLockWriteGuard<StateContainer>) {
+    let read_state = select_default_state(cont);
     main_ws_server::x_cast_state(read_state.clone(), XCast::Broadcast(read_state.id));
-    for (id, state) in get_states_iter_read(cont) {
-        main_ws_server::x_cast_state(state.clone(), XCast::Broadcast(*id));
+    for room in get_rooms_iter(cont) {
+        main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(room.state.id));
     }
 }
 

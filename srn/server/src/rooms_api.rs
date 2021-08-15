@@ -13,7 +13,7 @@ use state::Storage;
 
 use crate::api_struct::*;
 use crate::events::fire_event;
-use crate::states::{add_state, StateContainer, STATE};
+use crate::states::{StateContainer, STATE};
 use crate::world::{GameEvent, PlayerId};
 use crate::{new_id, system_gen, world};
 use std::thread;
@@ -40,20 +40,16 @@ pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
     let room_id = new_id();
     let room_name = format!("{} - {}", mode, room_id);
     let state = system_gen::seed_room_state(&mode, world::random_hex_seed());
+    let state_id = state.id.clone();
     cont.rooms.values.push(Room {
         id: room_id,
         name: room_name,
-        state_id: state.id,
-        mode,
-        clients: vec![],
+        state,
     });
     log!(format!(
         "created room {} with state {} for mode {}",
-        room_id, state.id, game_mode
+        room_id, state_id, game_mode
     ));
-    {
-        fire_event(GameEvent::NewStateCreated { state });
-    }
     cont.rooms.reindex();
 
     return Json(RoomIdResponse { room_id });
@@ -104,25 +100,6 @@ pub fn find_room_by_player_id_mut<'a>(
         .and_then(move |idx| cont.rooms.values.get_mut(idx))
 }
 
-pub fn try_add_client_to_room(
-    cont: &mut RwLockWriteGuard<StateContainer>,
-    client_id: Uuid,
-    room_id: RoomId,
-    client_name: String,
-) {
-    let room = find_room_by_id_mut(cont, room_id);
-    if room.is_none() {
-        err!("no room to add player to");
-        return;
-    }
-    let room = room.unwrap();
-    room.clients.push(ClientMarker {
-        name: client_name,
-        client_id,
-    });
-    cont.rooms.reindex();
-}
-
 pub const ROOM_CLEANUP_SLEEP_MS: u64 = 500;
 
 pub fn cleanup_empty_rooms() {
@@ -133,7 +110,7 @@ pub fn cleanup_empty_rooms() {
                 .values
                 .iter()
                 .filter_map(|room| {
-                    if room.clients.len() == 0 {
+                    if room.state.players.len() == 0 {
                         Some(room.id.clone())
                     } else {
                         None

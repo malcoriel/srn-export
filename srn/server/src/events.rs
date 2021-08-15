@@ -11,7 +11,7 @@ use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
 use crate::indexing;
 use crate::perf::Sampler;
-use crate::states::{add_state, StateContainer};
+use crate::states::StateContainer;
 use crate::substitutions::substitute_notification_texts;
 use crate::world;
 use crate::world::{GameEvent, GameMode, GameState, Player};
@@ -119,11 +119,6 @@ pub fn handle_events(
                         event.clone(),
                         XCast::Unicast(state.id, player.id),
                     );
-                }
-                GameEvent::NewStateCreated { state } => {
-                    log!("adding state");
-                    add_state(cont, state);
-                    log!("state added");
                 }
             }
         } else {

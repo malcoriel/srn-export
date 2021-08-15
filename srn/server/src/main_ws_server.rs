@@ -346,7 +346,7 @@ fn on_client_switch_room(client_id: Uuid, second: &&str) {
     let parsed = serde_json::from_str::<SwitchRoomPayload>(second);
     match parsed {
         Ok(parsed) => {
-            states::move_player_to_room(client_id, parsed.room_id, parsed.client_name);
+            states::move_player_to_room(client_id, parsed.room_id);
         }
         Err(err) => {
             warn!(format!("Bad switch room, err is {}", err));
