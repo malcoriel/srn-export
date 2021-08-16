@@ -49,18 +49,16 @@ impl RoomsState {
             .and_then(|r| Some(&r.state))
     }
 
-    pub fn reindex(&mut self) {
+    pub fn reindex(&mut self, debug: bool) {
         let rooms_clone = self.values.clone();
         for i in 0..rooms_clone.len() {
             let room = rooms_clone.get(i).unwrap();
-            for client in room.state.players.iter() {
-                self.state_id_by_player_id
-                    .entry(client.id)
-                    .or_insert(room.state.id);
-                self.idx_by_player_id.entry(client.id).or_insert(i);
+            for player in room.state.players.iter() {
+                self.state_id_by_player_id.insert(player.id, room.state.id);
+                self.idx_by_player_id.insert(player.id, i);
             }
-            self.state_id_by_id.entry(room.id).or_insert(room.state.id);
-            self.idx_by_id.entry(room.id).or_insert(i);
+            self.state_id_by_id.insert(room.id, room.state.id);
+            self.idx_by_id.insert(room.id, i);
         }
     }
 }

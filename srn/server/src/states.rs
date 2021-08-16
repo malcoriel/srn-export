@@ -40,12 +40,11 @@ pub fn select_state_mut<'a>(
 }
 
 // second return value is a clone, not a room that can be edited
-pub fn select_state_and_room_mut<'a>(
+pub fn select_room_mut<'a>(
     cont_st: &'a mut RwLockWriteGuard<StateContainer>,
     player_id: Uuid,
-) -> (&'a mut GameState, Option<Room>) {
-    let room_clone = find_room_by_player_id_mut(cont_st, player_id).map(|r| r.clone());
-    return (select_mut_state_v2(cont_st, player_id), room_clone);
+) -> Option<&'a mut Room> {
+    return find_room_by_player_id_mut(cont_st, player_id);
 }
 
 pub fn select_default_state<'a>(
@@ -72,12 +71,12 @@ pub fn get_rooms_iter_read<'a>(cont: &'a RwLockReadGuard<StateContainer>) -> Ite
 
 pub fn update_rooms(cont: &mut RwLockWriteGuard<StateContainer>, val: Vec<Room>) {
     cont.rooms.values = val;
-    cont.rooms.reindex();
+    cont.rooms.reindex(false);
 }
 
 pub fn add_room(cont: &mut RwLockWriteGuard<StateContainer>, room: Room) {
     cont.rooms.values.push(room);
-    cont.rooms.reindex();
+    cont.rooms.reindex(false);
 }
 
 pub fn select_state<'a, 'b>(

@@ -8,7 +8,7 @@ use uuid::Uuid;
 use crate::market::init_all_planets_market;
 use crate::sandbox::SavedState;
 use crate::sandbox::SAVED_STATES;
-use crate::states::{select_state_and_room_mut, select_state_mut};
+use crate::states::{select_room_mut, select_state_mut};
 use crate::system_gen::seed_room_state;
 use crate::world::{gen_state_by_seed, random_hex_seed, seed_state, GameMode, GameState};
 
@@ -103,32 +103,47 @@ pub fn load_random_state(player_id: String) {
         let player_id = Uuid::parse_str(player_id.as_str())
             .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
         let mut state_cont = crate::STATE.write().unwrap();
-        let (current_state, room) = select_state_and_room_mut(&mut state_cont, player_id);
-        if room.is_none() {
-            warn!("attempt to load state for non-existent room");
-            return;
+        {
+            let room = select_room_mut(&mut state_cont, player_id);
+            if room.is_none() {
+                warn!("attempt to load state for non-existent room");
+                return;
+            }
+            let room = room.unwrap();
+            let owner_id = room.state.players.get(0);
+            if owner_id.map_or(Uuid::default(), |o| o.id) != player_id {
+                warn!("attempt to load into non-owned room's state (first player = owner)");
+                return;
+            }
+            let mut random_state = gen_state_by_seed(true, random_hex_seed());
+            eprintln!("generated state id {}", random_state.id);
+            init_all_planets_market(&mut random_state);
+            let player = room.state.players[0].clone();
+            let ship = room.state.locations[0].ships[0].clone();
+            room.state = random_state;
+            room.state.players.push(player);
+            room.state.mode = GameMode::Sandbox;
+            room.state.milliseconds_remaining = 99 * 60 * 1000;
+            let loc = &mut room.state.locations[0];
+            loc.ships.push(ship);
+            log!(format!(
+                "loaded random state for player {}, room id {}, new state id {}",
+                player_id, room.id, room.state.id
+            ))
         }
-        let room = room.unwrap();
-        let owner_id = room.state.players.get(0);
-        if owner_id.map_or(Uuid::default(), |o| o.id) != player_id {
-            warn!("attempt to load into non-owned room's state (first player = owner)");
-            return;
-        }
-        let mut random_state = gen_state_by_seed(true, random_hex_seed());
-        init_all_planets_market(&mut random_state);
-        let player = current_state.players[0].clone();
-        let ship = current_state.locations[0].ships[0].clone();
-        mem::swap(current_state, &mut random_state);
-        current_state.id = player.id;
-        current_state.players.push(player);
-        current_state.mode = GameMode::Sandbox;
-        current_state.milliseconds_remaining = 99 * 60 * 1000;
-        let loc = &mut current_state.locations[0];
-        loc.ships.push(ship);
-    }
-    {
-        let mut state_cont = crate::STATE.write().unwrap();
-        state_cont.rooms.reindex();
+        eprintln!(
+            "before index, state_id_by_player_id={:?} idx_by_player_id={:?} state_id_by_id={:?}",
+            state_cont.rooms.state_id_by_player_id,
+            state_cont.rooms.idx_by_player_id,
+            state_cont.rooms.state_id_by_id
+        );
+        state_cont.rooms.reindex(true);
+        eprintln!(
+            "after index, state_id_by_player_id={:?} idx_by_player_id={:?} state_id_by_id={:?}",
+            state_cont.rooms.state_id_by_player_id,
+            state_cont.rooms.idx_by_player_id,
+            state_cont.rooms.state_id_by_id
+        );
     }
 }
 
