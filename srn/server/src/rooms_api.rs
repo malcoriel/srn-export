@@ -50,7 +50,7 @@ pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
         "created room {} with state {} for mode {}",
         room_id, state_id, game_mode
     ));
-    cont.rooms.reindex(false);
+    cont.rooms.reindex();
 
     return Json(RoomIdResponse { room_id });
 }

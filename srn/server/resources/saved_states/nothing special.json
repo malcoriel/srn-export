@@ -1,0 +1,4681 @@
+{
+  "id": "94cc28ec-249c-4b3e-8943-f7f29e37b15c",
+  "version": 3,
+  "mode": "Sandbox",
+  "tag": null,
+  "seed": "1234",
+  "my_id": "8116a43a-7cfd-458a-9d6d-22ff66dc2644",
+  "start_time_ticks": 1629245696108,
+  "players": [
+    {
+      "id": "0eea4d23-6d9c-45e0-9ecc-1ad6dbdebff8",
+      "is_bot": false,
+      "ship_id": "d7bdcdb2-65ee-433e-9098-918d258bc35a",
+      "name": "Malcoriel",
+      "quest": {
+        "id": "47a971c5-83d3-4c5e-96dc-71aa42f46996",
+        "from_id": "9f3b0361-5f6f-40de-9145-78253ad15bcc",
+        "to_id": "94c80bc7-5d05-4b3e-8c90-3be4dd7764ec",
+        "state": "Started",
+        "reward": 616
+      },
+      "money": 0,
+      "portrait_name": "9",
+      "respawn_ms_left": 0,
+      "long_actions": [],
+      "notifications": []
+    }
+  ],
+  "milliseconds_remaining": 5899268,
+  "paused": false,
+  "leaderboard": {
+    "rating": [
+      [
+        {
+          "id": "0eea4d23-6d9c-45e0-9ecc-1ad6dbdebff8",
+          "is_bot": false,
+          "ship_id": "d7bdcdb2-65ee-433e-9098-918d258bc35a",
+          "name": "Malcoriel",
+          "quest": {
+            "id": "47a971c5-83d3-4c5e-96dc-71aa42f46996",
+            "from_id": "9f3b0361-5f6f-40de-9145-78253ad15bcc",
+            "to_id": "94c80bc7-5d05-4b3e-8c90-3be4dd7764ec",
+            "state": "Started",
+            "reward": 616
+          },
+          "money": 0,
+          "portrait_name": "9",
+          "respawn_ms_left": 0,
+          "long_actions": [],
+          "notifications": []
+        },
+        0
+      ]
+    ],
+    "winner": "Malcoriel"
+  },
+  "ticks": 41783,
+  "disable_hp_effects": false,
+  "market": {
+    "wares": {
+      "a5dd18ee-07d3-4e0b-9bec-a1cb820f57ee": [
+        {
+          "id": "563e7b7e-142d-45a3-a847-668a47abf8e5",
+          "index": 0,
+          "quantity": 100,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "cf0df41b-ae74-4bcd-a21c-83d6caee36e6",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "35dab6eb-6698-4e96-9b70-2f7db4f4cd54",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "44b9587d-ad39-40e6-9d1b-3c081b1d21a8",
+          "index": 3,
+          "quantity": 200,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "07a050e3-6b17-47f0-a75a-b1b7f7fcc45b",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "f8e4b490-9d92-4df6-af0f-e7d3433aacb4",
+          "index": 5,
+          "quantity": 10,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ],
+      "54d3789f-035c-47bc-800e-1567a4cf92fc": [
+        {
+          "id": "cfd2b8bf-eb12-4b10-829c-e2967cf4ce2d",
+          "index": 0,
+          "quantity": 100,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "f3cdd9b2-9239-4832-bd88-2416b1d11d61",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "c109476b-0db3-4ca5-9ce9-617b9a3fdafd",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "ea58bb74-060f-4b7f-9031-829fe85abf30",
+          "index": 3,
+          "quantity": 200,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "dad2bc3b-3058-4fc4-9a91-88116959f12c",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "02e28141-0198-42df-8004-2667e7f7745e",
+          "index": 5,
+          "quantity": 10,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ],
+      "be6e5b33-5f42-453f-b166-e0038056abd7": [
+        {
+          "id": "34f8b825-6b6f-44c0-91fc-351a0a4c29ff",
+          "index": 0,
+          "quantity": 100,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "c74a8d55-2820-4bf1-a61e-5a9a9b47ab46",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "51ed1297-549e-446c-b8c5-8811f152c329",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "2dad357c-a00a-4116-8fdd-d0dcd286fe1a",
+          "index": 3,
+          "quantity": 200,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "7d891ff1-54aa-43b3-942d-2011eff8d3f3",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "0749303d-0833-4d46-973f-e84789adfa06",
+          "index": 5,
+          "quantity": 10,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ],
+      "91c871ef-0e68-46ec-beff-b2a84aa1ed9f": [
+        {
+          "id": "90c7c16d-c538-47ca-b8d5-1ec8dc344bd4",
+          "index": 0,
+          "quantity": 300,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "c7f294a1-93fb-4745-bc0a-b86f02eabe8e",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "bed36072-86ca-4b18-985a-0bc5f72ecdad",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "f00eba65-2e5d-4145-a876-b890a32c2fb7",
+          "index": 3,
+          "quantity": 200,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "c0909108-3600-41a4-ba01-fa131bf1302e",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "df2dabc1-d6f4-4c58-8dd7-4ccc0a167c36",
+          "index": 5,
+          "quantity": 15,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ],
+      "b9abac09-10c6-443d-84d3-516d14690c4b": [
+        {
+          "id": "4d9f8cf3-a909-405a-8128-a58f09f6af85",
+          "index": 0,
+          "quantity": 300,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "9750830d-49ec-42e7-ae79-05df320535fa",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "5d2fec09-4d49-4135-882c-8d1d528b175b",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "a93fc4f5-305b-4088-9a29-0d980cd2cb89",
+          "index": 3,
+          "quantity": 200,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "0535ad84-7422-4e25-91a9-057970e869ab",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "8f2bc0f8-3a16-4025-98d7-3f38f2fd9a22",
+          "index": 5,
+          "quantity": 15,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ],
+      "a54cdff5-385a-4214-a1f7-1025d61a9aee": [
+        {
+          "id": "6757d4f1-f7e7-4177-b0bd-f21c4669eb54",
+          "index": 0,
+          "quantity": 100,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "8484b213-5bdd-4c0f-a73f-9a82fadbc69b",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "1608ef5a-4ffe-46bc-947b-d6fa85156b53",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "09a5ae64-58ee-4f5e-9c6a-cbbef712958e",
+          "index": 3,
+          "quantity": 200,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "7690ce5d-1cdf-465e-b11e-df54d947930e",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "c1103bd6-0c6d-4df8-91ba-dff24fcd0408",
+          "index": 5,
+          "quantity": 10,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ],
+      "c7d7bba9-4cfb-425e-b3ad-45ce3f880100": [
+        {
+          "id": "6cf828f0-a6b7-4b8e-b9af-4f21650b75f4",
+          "index": 0,
+          "quantity": 100,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "47ed5ae6-91a6-4cc6-8d26-86e722d6ad6b",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "58cd7a4b-d09e-4486-888e-0917a640357c",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "497e2d75-2457-4955-b089-767951a2176b",
+          "index": 3,
+          "quantity": 200,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "cef5d8f1-adca-47cf-9198-fe4a4b47d0d2",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "b0f6fef7-3257-4464-994b-5831094c3f3e",
+          "index": 5,
+          "quantity": 10,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ],
+      "adfc066e-1db6-49b2-814f-573f87936fe2": [
+        {
+          "id": "9f1eb8c0-60bd-41cc-ad5f-6a479bced5f4",
+          "index": 0,
+          "quantity": 100,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "15fadeec-9e03-497e-b729-0df12297d9ea",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "bf12733a-58fc-4f47-a7c8-a42322157f44",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "87dd9eae-7924-4af1-a5cc-e4af62ad6513",
+          "index": 3,
+          "quantity": 200,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "baf3dfd1-2208-420b-b7f2-b958d1a61a36",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "616d0b56-32e5-4dc6-ba63-0a8319f85093",
+          "index": 5,
+          "quantity": 10,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ],
+      "982dddb0-91be-4ea8-9841-faacc3f85cea": [
+        {
+          "id": "9d88a54e-5b11-4026-97d1-083be885d40f",
+          "index": 0,
+          "quantity": 300,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "CommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "77734501-5803-4004-801e-d5503a568e65",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "d5358eea-3287-4af7-8f65-9633254c2719",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "8109aee4-610a-47bb-b13d-8026e5e068e2",
+          "index": 3,
+          "quantity": 200,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "dbc533cb-fb10-42b6-bfa7-42b1942e71c8",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "63f56238-8b09-4c62-8914-c650b9f11585",
+          "index": 5,
+          "quantity": 15,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ],
+      "f674be92-fbe8-40e7-ae58-aeb6a3fa3167": [
+        {
+          "id": "84e37486-a756-4560-8e99-7af993f29b3c",
+          "index": 1,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "UncommonMineral",
+          "quest_id": null
+        },
+        {
+          "id": "fcc2bca4-eb13-4016-bade-e4b058311e81",
+          "index": 2,
+          "quantity": 20,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "RareMineral",
+          "quest_id": null
+        },
+        {
+          "id": "07f1f77c-403f-4dbb-b127-fbb63e5fb843",
+          "index": 3,
+          "quantity": 120,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Food",
+          "quest_id": null
+        },
+        {
+          "id": "6e6c463c-ea7c-4250-870a-12b050fcb770",
+          "index": 4,
+          "quantity": 50,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "Medicament",
+          "quest_id": null
+        },
+        {
+          "id": "b3cba6bb-d26d-4dbe-b2f8-311727485231",
+          "index": 5,
+          "quantity": 15,
+          "value": 0,
+          "stackable": true,
+          "player_owned": false,
+          "item_type": "HandWeapon",
+          "quest_id": null
+        }
+      ]
+    },
+    "prices": {
+      "2c15c634-0d30-4112-a165-a2cfea485777": {
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        }
+      },
+      "d1d0c440-e69d-410b-9abf-4d0b9d1f7e98": {
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        }
+      },
+      "eb3e26f7-22f9-406e-8b33-154f5748ce34": {
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        }
+      },
+      "b9abac09-10c6-443d-84d3-516d14690c4b": {
+        "Food": {
+          "sell": 75,
+          "buy": 60
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "HandWeapon": {
+          "sell": 187,
+          "buy": 50
+        },
+        "CommonMineral": {
+          "sell": 82,
+          "buy": 22
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        }
+      },
+      "84253ba5-3fc4-49e5-8b8a-be09db9e3658": {
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        }
+      },
+      "adfc066e-1db6-49b2-814f-573f87936fe2": {
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        }
+      },
+      "c7d7bba9-4cfb-425e-b3ad-45ce3f880100": {
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        }
+      },
+      "ccff1dd8-7f6c-4680-be8b-d9fded23a025": {
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        }
+      },
+      "be6e5b33-5f42-453f-b166-e0038056abd7": {
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        }
+      },
+      "454cb700-cdbc-4012-9c74-442b34d42990": {
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        }
+      },
+      "b81ee9da-ee12-4e59-8f08-5b20527c07b6": {
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        }
+      },
+      "a4dbca0a-8416-4d5a-8c5c-29465fe9b3c8": {
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        }
+      },
+      "ddd61018-3b40-4871-be3a-82921c2bd903": {
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        }
+      },
+      "526002a0-44dc-4655-b4cd-d5e3390d95a4": {
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        }
+      },
+      "2df27fd3-ba26-4a02-a5c7-f107427c44c1": {
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        }
+      },
+      "6aa15892-516e-471f-a502-17893696e959": {
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        }
+      },
+      "96ed07a7-ed15-4688-aa66-b168f05a9fc9": {
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        }
+      },
+      "2861dc30-ffc4-4566-97c9-56bc4d1a0051": {
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        }
+      },
+      "982dddb0-91be-4ea8-9841-faacc3f85cea": {
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "CommonMineral": {
+          "sell": 82,
+          "buy": 22
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 75,
+          "buy": 60
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "HandWeapon": {
+          "sell": 187,
+          "buy": 50
+        }
+      },
+      "aea19d61-c78f-4cba-9cf7-9837cdb8f5ce": {
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        }
+      },
+      "2a2d80d2-8503-47be-9c0b-e6bcb5fd78fd": {
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        }
+      },
+      "aff1a174-3d26-49fc-a2d9-91b319fb730c": {
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        }
+      },
+      "dc47b9bd-4c84-4d71-ac28-0af6ddfe4d75": {
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        }
+      },
+      "a54cdff5-385a-4214-a1f7-1025d61a9aee": {
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        }
+      },
+      "91c871ef-0e68-46ec-beff-b2a84aa1ed9f": {
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 82,
+          "buy": 22
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "HandWeapon": {
+          "sell": 187,
+          "buy": 50
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Food": {
+          "sell": 75,
+          "buy": 60
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        }
+      },
+      "54d3789f-035c-47bc-800e-1567a4cf92fc": {
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        }
+      },
+      "f674be92-fbe8-40e7-ae58-aeb6a3fa3167": {
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "Medicament": {
+          "sell": 240,
+          "buy": 350
+        },
+        "Food": {
+          "sell": 75,
+          "buy": 100
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "CommonMineral": {
+          "sell": 55,
+          "buy": 45
+        },
+        "HandWeapon": {
+          "sell": 500,
+          "buy": 400
+        }
+      },
+      "c0500f8a-869e-4fe0-9101-341f36549bcd": {
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        }
+      },
+      "8ec03483-33d5-4c26-8d99-72f2fed21c17": {
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        }
+      },
+      "36a68993-0ca1-4e8b-b16e-4e661e46b38b": {
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        }
+      },
+      "bb6003db-21a9-4323-ab45-91491a55ffe7": {
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        }
+      },
+      "a5dd18ee-07d3-4e0b-9bec-a1cb820f57ee": {
+        "RareMineral": {
+          "sell": 540,
+          "buy": 460
+        },
+        "UncommonMineral": {
+          "sell": 220,
+          "buy": 180
+        },
+        "QuestCargo": {
+          "sell": 1000,
+          "buy": 0
+        },
+        "Medicament": {
+          "sell": 160,
+          "buy": 140
+        },
+        "CommonMineral": {
+          "sell": 110,
+          "buy": 90
+        },
+        "HandWeapon": {
+          "sell": 250,
+          "buy": 200
+        },
+        "Food": {
+          "sell": 50,
+          "buy": 40
+        },
+        "Unknown": {
+          "sell": 0,
+          "buy": 0
+        }
+      }
+    },
+    "time_before_next_shake": 19303000
+  },
+  "locations": [
+    {
+      "seed": "24a45b11748b47f6",
+      "id": "b3674700-75ef-4134-87c1-5c40b24c1ab3",
+      "star": {
+        "id": "7e448c6e-46e6-4a77-88af-7a9b4261b8a7",
+        "name": "Priacsip",
+        "x": 0,
+        "y": 0,
+        "radius": 52.23806606231501,
+        "rotation": 0,
+        "color": "#FFD384",
+        "corona_color": "#FFD384"
+      },
+      "planets": [
+        {
+          "id": "be6e5b33-5f42-453f-b166-e0038056abd7",
+          "name": "Synocon",
+          "x": -108.4202892176509,
+          "y": -64.84351143731806,
+          "rotation": 0,
+          "radius": 15.899981028878594,
+          "orbit_speed": 0.015714597634576877,
+          "anchor_id": "7e448c6e-46e6-4a77-88af-7a9b4261b8a7",
+          "anchor_tier": 1,
+          "color": "#01A6A0"
+        },
+        {
+          "id": "91c871ef-0e68-46ec-beff-b2a84aa1ed9f",
+          "name": "Dailla",
+          "x": 202.68197794758657,
+          "y": 253.5007896894894,
+          "rotation": 0,
+          "radius": 16.41520425988388,
+          "orbit_speed": 0.001917723672159897,
+          "anchor_id": "7e448c6e-46e6-4a77-88af-7a9b4261b8a7",
+          "anchor_tier": 1,
+          "color": "#F4A261"
+        },
+        {
+          "id": "a54cdff5-385a-4214-a1f7-1025d61a9aee",
+          "name": "Lenis",
+          "x": 426.80529311472867,
+          "y": -10.626009129406933,
+          "rotation": 0,
+          "radius": 9.272124389990195,
+          "orbit_speed": -0.0013396537239681644,
+          "anchor_id": "7e448c6e-46e6-4a77-88af-7a9b4261b8a7",
+          "anchor_tier": 1,
+          "color": "#F4A261"
+        },
+        {
+          "id": "b9abac09-10c6-443d-84d3-516d14690c4b",
+          "name": "Neptunus O-97",
+          "x": -73.82440598667765,
+          "y": -73.4226373129941,
+          "rotation": 0,
+          "radius": 2.5425554361458955,
+          "orbit_speed": -0.22078445403285826,
+          "anchor_id": "be6e5b33-5f42-453f-b166-e0038056abd7",
+          "anchor_tier": 2,
+          "color": "#DE4C0A"
+        },
+        {
+          "id": "adfc066e-1db6-49b2-814f-573f87936fe2",
+          "name": "Uranus K-551",
+          "x": -83.46825892464463,
+          "y": -101.94352219911008,
+          "rotation": 0,
+          "radius": 2.520862282946469,
+          "orbit_speed": 0.10883186398659889,
+          "anchor_id": "be6e5b33-5f42-453f-b166-e0038056abd7",
+          "anchor_tier": 2,
+          "color": "#8D948D"
+        },
+        {
+          "id": "982dddb0-91be-4ea8-9841-faacc3f85cea",
+          "name": "Jean U-52",
+          "x": -111.01558538311332,
+          "y": -120.65305628245912,
+          "rotation": 0,
+          "radius": 2.957083682619195,
+          "orbit_speed": -0.09982953423478162,
+          "anchor_id": "be6e5b33-5f42-453f-b166-e0038056abd7",
+          "anchor_tier": 2,
+          "color": "#DC890C"
+        },
+        {
+          "id": "f674be92-fbe8-40e7-ae58-aeb6a3fa3167",
+          "name": "Päike RV-65",
+          "x": 232.6903183612615,
+          "y": 232.52054852479398,
+          "rotation": 0,
+          "radius": 2.0200157057387838,
+          "orbit_speed": -0.27108196547915125,
+          "anchor_id": "91c871ef-0e68-46ec-beff-b2a84aa1ed9f",
+          "anchor_tier": 2,
+          "color": "#0D57AC"
+        },
+        {
+          "id": "a5dd18ee-07d3-4e0b-9bec-a1cb820f57ee",
+          "name": "Leo S-7",
+          "x": 244.8737189418298,
+          "y": 272.1857440572797,
+          "rotation": 0,
+          "radius": 2.4715223069589216,
+          "orbit_speed": 0.14089828844008914,
+          "anchor_id": "91c871ef-0e68-46ec-beff-b2a84aa1ed9f",
+          "anchor_tier": 2,
+          "color": "#5BBAA9"
+        },
+        {
+          "id": "c7d7bba9-4cfb-425e-b3ad-45ce3f880100",
+          "name": "Wenus GI-843",
+          "x": 162.0332142327192,
+          "y": 294.3743568863958,
+          "rotation": 0,
+          "radius": 2.686895985862827,
+          "orbit_speed": 0.072233490154127,
+          "anchor_id": "91c871ef-0e68-46ec-beff-b2a84aa1ed9f",
+          "anchor_tier": 2,
+          "color": "#F4A261"
+        },
+        {
+          "id": "54d3789f-035c-47bc-800e-1567a4cf92fc",
+          "name": "Qurra WI-39",
+          "x": 135.29958229272165,
+          "y": 241.4715829781334,
+          "rotation": 0,
+          "radius": 2.5970668253430755,
+          "orbit_speed": -0.07149701526276037,
+          "anchor_id": "91c871ef-0e68-46ec-beff-b2a84aa1ed9f",
+          "anchor_tier": 2,
+          "color": "#D8A47F"
+        }
+      ],
+      "asteroids": [],
+      "minerals": [
+        {
+          "x": -238.5716725575491,
+          "y": -15.631076785156557,
+          "id": "f71e7019-d592-47bb-b2d9-5984c0ea374c",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 66.23436318898044,
+          "y": -217.361500649341,
+          "id": "ffa0e816-2689-4234-9842-7dc9ba4a44c6",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -210.19667887855658,
+          "y": 111.80049588715386,
+          "id": "709d4ef8-bea2-4b27-b1cf-185fe3608f16",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 211.04021930848944,
+          "y": 78.00092445209529,
+          "id": "321ba0dc-c98d-4266-ad12-9e7f89d5d4fc",
+          "radius": 1,
+          "value": 300,
+          "rarity": "Rare",
+          "color": "#ffd700"
+        },
+        {
+          "x": 66.72359710499057,
+          "y": -219.92747488494743,
+          "id": "5d0eb7d2-f992-4474-91c8-7bf30a04798c",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": 157.75644372612553,
+          "y": 168.3114509644281,
+          "id": "aeff171f-c6d2-4506-94b1-d709467d1e17",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 27.87566798058554,
+          "y": -217.23475543808559,
+          "id": "128bbe2c-738b-4b33-9d0a-8247bc83e392",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": -186.59069031614453,
+          "y": 133.77448930397833,
+          "id": "53ee6436-028e-491d-a538-56124a61b2ed",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -75.29349732180398,
+          "y": 214.3254835019394,
+          "id": "971cac9e-8fab-46bc-ac2e-229e9af7fea8",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -40.524085574168744,
+          "y": 228.0229578471677,
+          "id": "3488cc49-35e3-491e-a866-25983ba887f6",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        }
+      ],
+      "containers": [
+        {
+          "id": "200b4cb8-edf7-4dc9-90ba-98e3ec8bb522",
+          "items": [
+            {
+              "id": "8df4ef39-3073-4734-a818-516234213ca6",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "e0f39a35-5732-42e0-937b-46e8a6cf4791",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 125.36175180277621,
+            "y": -81.54205342711617
+          },
+          "radius": 2
+        },
+        {
+          "id": "b54c22fd-ced2-4614-a173-2645204e9d1b",
+          "items": [
+            {
+              "id": "72c82d7e-ddea-4f54-837f-9b9f6360f32b",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "e79c83e8-d2a7-4425-af62-79f3497113e7",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -171.6989204528113,
+            "y": 205.77906844166824
+          },
+          "radius": 2
+        },
+        {
+          "id": "766696d2-835b-40a1-83cf-9796ed19dbfd",
+          "items": [
+            {
+              "id": "99e86477-0de3-493f-8418-baacd6ee950f",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "f342341e-4e98-49fe-b6df-06058ff61171",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "249fc29f-9d55-452d-affc-990196ab4deb",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -65.2573984092437,
+            "y": 44.4126558774409
+          },
+          "radius": 2.8
+        },
+        {
+          "id": "cd26802f-db13-4639-a20f-385003db4f62",
+          "items": [
+            {
+              "id": "79fc12cd-fa6e-4cc5-9fa5-c3ff220b3a56",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 184.54216378603206,
+            "y": -170.8889532404627
+          },
+          "radius": 2
+        },
+        {
+          "id": "83f37912-b812-4e4a-94e2-67347641679f",
+          "items": [
+            {
+              "id": "f7153e6f-19ad-4a69-806e-a57e8be87000",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -105.7843592484987,
+            "y": -25.655876506241583
+          },
+          "radius": 2
+        },
+        {
+          "id": "1800cf87-a822-413a-b08f-cc9d6ce3f16a",
+          "items": [
+            {
+              "id": "f3e137ca-8ce1-4e6e-90d7-bb07a0f4acfa",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "e96047bf-d61a-42e7-aeec-f72a69ec734a",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "0c09d449-f09d-4993-8b33-b94e5d94a4eb",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 194.04018917999275,
+            "y": -203.97652722659842
+          },
+          "radius": 2.2
+        },
+        {
+          "id": "427b86b4-70f4-4a92-a5c7-14c1ea7fb091",
+          "items": [
+            {
+              "id": "c8a16f00-9611-4e09-886f-f8a14c1423a6",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "cb0f860e-a68c-4b9c-b59a-65c53f10a261",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "16eb76c8-e54e-45ff-af06-747fb5787df7",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 241.4800457406139,
+            "y": 189.79200061804056
+          },
+          "radius": 2
+        },
+        {
+          "id": "b132dc42-5db3-4ccb-865f-59f6ddbf84dd",
+          "items": [
+            {
+              "id": "b5c5c2ff-a5b5-4be8-bbd8-9c049d5c5707",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 149.70404559498672,
+            "y": 199.97932063201142
+          },
+          "radius": 2
+        },
+        {
+          "id": "37745556-53b9-4b22-a23e-2f09ef5f9d89",
+          "items": [
+            {
+              "id": "f7c168a5-5433-4294-bda4-e8f5e61db510",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "7f25cf37-2df1-406a-acca-8440a1e4da86",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -139.75301425544973,
+            "y": -229.9243688736662
+          },
+          "radius": 2
+        }
+      ],
+      "position": {
+        "x": 114.42495957705987,
+        "y": 0
+      },
+      "asteroid_belts": [
+        {
+          "id": "0f5ba1c6-623a-411a-aecc-6c48ee3251af",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.2443920000000112,
+          "radius": 227.3864383950003,
+          "width": 15.331292318990336,
+          "count": 200,
+          "orbit_speed": 0.006,
+          "anchor_id": "7e448c6e-46e6-4a77-88af-7a9b4261b8a7",
+          "anchor_tier": 0,
+          "scale_mod": 1
+        },
+        {
+          "id": "6146fb99-a5a7-407a-982f-f6cd7d8fa8e6",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.16292800000000557,
+          "radius": 224.3864383950003,
+          "width": 14.331292318990336,
+          "count": 100,
+          "orbit_speed": 0.004,
+          "anchor_id": "7e448c6e-46e6-4a77-88af-7a9b4261b8a7",
+          "anchor_tier": 0,
+          "scale_mod": 2
+        },
+        {
+          "id": "b12b3de3-d5e2-48c4-be61-adcfc00448f5",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.32585600000001114,
+          "radius": 232.3864383950003,
+          "width": 13.66462565232367,
+          "count": 400,
+          "orbit_speed": 0.008,
+          "anchor_id": "7e448c6e-46e6-4a77-88af-7a9b4261b8a7",
+          "anchor_tier": 0,
+          "scale_mod": 0.5
+        }
+      ],
+      "ships": [
+        {
+          "id": "d7bdcdb2-65ee-433e-9098-918d258bc35a",
+          "x": 95.96666666666668,
+          "y": 77.53333333333335,
+          "acc_periodic_dmg": 0,
+          "acc_periodic_heal": 0,
+          "rotation": -2.3411705789470076,
+          "radius": 2,
+          "color": "#D8A47F",
+          "docked_at": null,
+          "tractor_target": null,
+          "navigate_target": null,
+          "dock_target": null,
+          "trajectory": [],
+          "inventory": [],
+          "abilities": [
+            {
+              "tag": "Shoot",
+              "cooldown_ticks_remaining": 0
+            }
+          ],
+          "auto_focus": null,
+          "movement": {
+            "gas": null,
+            "turn": null
+          },
+          "health": {
+            "current": 100,
+            "max": 100
+          },
+          "local_effects": [],
+          "long_actions": []
+        }
+      ],
+      "adjacent_location_ids": [
+        "5175dfa3-b40c-41ed-8712-c1192b9660a5",
+        "432e620d-b744-44f5-97eb-fcd3cbdc062d",
+        "7941416f-4451-43b6-b112-d4cac568b8c3"
+      ]
+    },
+    {
+      "seed": "0d5b8eb8ff5fa154",
+      "id": "5175dfa3-b40c-41ed-8712-c1192b9660a5",
+      "star": {
+        "id": "5041391d-d1a1-403f-9e8b-f28e0f693477",
+        "name": "Ochap",
+        "x": 0,
+        "y": 0,
+        "radius": 63.53660144658534,
+        "rotation": 0,
+        "color": "#80B7FF",
+        "corona_color": "#80B7FF"
+      },
+      "planets": [
+        {
+          "id": "2c15c634-0d30-4112-a165-a2cfea485777",
+          "name": "Polyku",
+          "x": 77.14429108448537,
+          "y": 121.33824791049247,
+          "rotation": 0,
+          "radius": 15.821626967931042,
+          "orbit_speed": -0.005476547065326318,
+          "anchor_id": "5041391d-d1a1-403f-9e8b-f28e0f693477",
+          "anchor_tier": 1,
+          "color": "#008FA9"
+        },
+        {
+          "id": "ccff1dd8-7f6c-4680-be8b-d9fded23a025",
+          "name": "Harutlis",
+          "x": -268.1490513625893,
+          "y": 229.10946755103237,
+          "rotation": 0,
+          "radius": 8.957822764875441,
+          "orbit_speed": 0.009807291663071285,
+          "anchor_id": "5041391d-d1a1-403f-9e8b-f28e0f693477",
+          "anchor_tier": 1,
+          "color": "#FD151B"
+        },
+        {
+          "id": "dc47b9bd-4c84-4d71-ac28-0af6ddfe4d75",
+          "name": "Vênus W-3",
+          "x": 79.68722318314693,
+          "y": 84.24233882593029,
+          "rotation": 0,
+          "radius": 2.4781007664733616,
+          "orbit_speed": 0.29479808897000437,
+          "anchor_id": "2c15c634-0d30-4112-a165-a2cfea485777",
+          "anchor_tier": 2,
+          "color": "#1D334A"
+        },
+        {
+          "id": "84253ba5-3fc4-49e5-8b8a-be09db9e3658",
+          "name": "Ierde O-84",
+          "x": 116.76346565348402,
+          "y": 150.01494129431217,
+          "rotation": 0,
+          "radius": 2.6225985880699403,
+          "orbit_speed": -0.12288852510843462,
+          "anchor_id": "2c15c634-0d30-4112-a165-a2cfea485777",
+          "anchor_tier": 2,
+          "color": "#01A6A0"
+        }
+      ],
+      "asteroids": [],
+      "minerals": [
+        {
+          "x": 145.3335654902609,
+          "y": 204.84170732176133,
+          "id": "bdfd1b4a-9200-49a7-acf2-e61e8fdc866a",
+          "radius": 1,
+          "value": 300,
+          "rarity": "Rare",
+          "color": "#ffd700"
+        },
+        {
+          "x": 240.9155601696302,
+          "y": -96.27270637042541,
+          "id": "0d30fc88-1c8b-4f9a-8bba-196bbc5efd05",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 239.1331945878682,
+          "y": 59.21213194216926,
+          "id": "d76bcf25-1ba6-4eb0-8133-ac74308e6aaf",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -209.83145925189922,
+          "y": -124.5462940173,
+          "id": "7790a126-2078-47f9-ba59-faad49d0556d",
+          "radius": 1,
+          "value": 300,
+          "rarity": "Rare",
+          "color": "#ffd700"
+        },
+        {
+          "x": 227.928482075599,
+          "y": 76.16480088275696,
+          "id": "38c9d819-8536-4d11-b079-096cdead1cee",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": 228.25833239208868,
+          "y": 119.409047095157,
+          "id": "95986890-64e3-4a35-be9e-f03f2e8d6499",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 135.76431534586595,
+          "y": 208.5819598794326,
+          "id": "fd49dd00-c429-447a-a79f-75f4d24466e4",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 234.00160331121194,
+          "y": -117.33189911648614,
+          "id": "cdbc4ae1-f975-486f-8fd6-59f22cb8d771",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 55.654141869490616,
+          "y": -243.79538061994376,
+          "id": "c7216139-4f59-4405-bfa7-c7de2cac2599",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -68.03163152371093,
+          "y": 243.8762691836718,
+          "id": "9d4df6db-97f3-47c1-a3ca-ab0b87449d42",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        }
+      ],
+      "containers": [
+        {
+          "id": "6185cc45-8d09-42bb-97b8-f48077458486",
+          "items": [
+            {
+              "id": "2726d736-f9a8-4fb3-b0da-d810129da3d7",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "00c21363-5fad-4b3f-9842-14e2221d04e1",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "2ea333d3-3ac5-4a59-b455-3e8618a08c50",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "01fcad70-c2ea-40f4-a96c-eb58fe46ef3e",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -133.63028668147604,
+            "y": -211.7133774138945
+          },
+          "radius": 2.8
+        },
+        {
+          "id": "fe56d891-6017-4892-a1c9-68a3a555492a",
+          "items": [
+            {
+              "id": "09efcd52-beeb-45ea-81ef-9caa22370d18",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "1523df2f-d985-413a-8a18-d50a95c6be6e",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "10e07046-f872-4b89-a24e-62f342225ddd",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 192.5553730816635,
+            "y": -181.5688462509524
+          },
+          "radius": 2
+        },
+        {
+          "id": "a61f9e6a-a0e1-4c22-b649-5debc2ef8527",
+          "items": [
+            {
+              "id": "1250c44e-d90e-40b5-bb61-bacab51eed7d",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 54.896519238945984,
+            "y": -71.15796798739638
+          },
+          "radius": 2
+        },
+        {
+          "id": "71d81e74-7b18-4a26-bd6a-8e3d3ee93a11",
+          "items": [
+            {
+              "id": "25cb4c36-3398-4b0a-a8cf-5405ba4c38e0",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "af26df42-8044-4fef-a16c-557ac2b8ebb1",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "e9bb828e-0e69-4540-b717-8fd573dd1b5c",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -143.03828836564225,
+            "y": -126.81654450283241
+          },
+          "radius": 2
+        },
+        {
+          "id": "72516ae8-5af6-40c2-95f7-cc0bb5680e91",
+          "items": [
+            {
+              "id": "7c9c2604-a138-428a-be3b-026ebd52818e",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "ad376545-b954-4004-965f-7bf345a8d942",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "22fb8650-a94e-4a8d-94f1-ecbdfa0a6de7",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "86d17c1d-4c39-4d83-8418-eda8af1ad92c",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -65.31744136035479,
+            "y": -148.42351268039556
+          },
+          "radius": 3
+        },
+        {
+          "id": "2438b0df-aeb6-4d02-b2f5-4f7eb89cf0be",
+          "items": [
+            {
+              "id": "ac8633e8-4cbb-4b5e-b062-4b692dff0532",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "012ac094-88df-4684-bbd2-67b6b6cd423e",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "2371f686-8bc8-401a-8ce0-d109f9d2dcb2",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -36.096208030250494,
+            "y": -41.046087409732365
+          },
+          "radius": 2
+        },
+        {
+          "id": "da880735-eccb-462a-8b57-d91a30ec9c98",
+          "items": [
+            {
+              "id": "856f36bf-4a64-43b4-b59d-8708d783d628",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "9460e022-5dcd-418f-b9cf-04558fd4869d",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "2d34578b-ab15-4e95-80ea-44f3dbcbf3e0",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -55.217222581966496,
+            "y": 78.81233832669653
+          },
+          "radius": 2
+        },
+        {
+          "id": "8f1732b7-836d-4b8c-b7d4-d74cbe858dcf",
+          "items": [
+            {
+              "id": "c7af7d28-daa7-47e5-a555-f0ac0283939c",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 87.43658583014314,
+            "y": -45.869357054885825
+          },
+          "radius": 2
+        },
+        {
+          "id": "2078b89a-66a9-4b20-9237-8d849d007e5a",
+          "items": [
+            {
+              "id": "6b5576c4-71a3-4e2c-b3de-390707b027ba",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "5f4b5c46-5706-4a1e-9a2d-ef3e5b7a1d23",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 117.79494305941574,
+            "y": 186.54322052348715
+          },
+          "radius": 2
+        }
+      ],
+      "position": {
+        "x": 52.578228890328354,
+        "y": 159.55274147032776
+      },
+      "asteroid_belts": [
+        {
+          "id": "da735c91-9c91-4d93-8959-82cee8b9562d",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.2443920000000112,
+          "radius": 251.0419443672155,
+          "width": 16.909729377570617,
+          "count": 200,
+          "orbit_speed": 0.006,
+          "anchor_id": "5041391d-d1a1-403f-9e8b-f28e0f693477",
+          "anchor_tier": 0,
+          "scale_mod": 1
+        },
+        {
+          "id": "eb2355be-e93f-4c33-9d23-a25e6b37d005",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.16292800000000557,
+          "radius": 248.0419443672155,
+          "width": 15.909729377570615,
+          "count": 100,
+          "orbit_speed": 0.004,
+          "anchor_id": "5041391d-d1a1-403f-9e8b-f28e0f693477",
+          "anchor_tier": 0,
+          "scale_mod": 2
+        },
+        {
+          "id": "4f6dc9ad-26e6-4c3b-b7e0-e51c7d803ffd",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.32585600000001114,
+          "radius": 256.0419443672155,
+          "width": 15.24306271090395,
+          "count": 400,
+          "orbit_speed": 0.008,
+          "anchor_id": "5041391d-d1a1-403f-9e8b-f28e0f693477",
+          "anchor_tier": 0,
+          "scale_mod": 0.5
+        }
+      ],
+      "ships": [],
+      "adjacent_location_ids": [
+        "b3674700-75ef-4134-87c1-5c40b24c1ab3",
+        "e7613ff9-cce8-4992-89a7-63d329b74679"
+      ]
+    },
+    {
+      "seed": "1692a1fb07c7e803",
+      "id": "e7613ff9-cce8-4992-89a7-63d329b74679",
+      "star": {
+        "id": "ac005407-3d7d-4a33-b9d9-b2994b06efa7",
+        "name": "Gux",
+        "x": 0,
+        "y": 0,
+        "radius": 43.08991457737918,
+        "rotation": 0,
+        "color": "#C64F10",
+        "corona_color": "#C64F10"
+      },
+      "planets": [
+        {
+          "id": "454cb700-cdbc-4012-9c74-442b34d42990",
+          "name": "Synocon",
+          "x": 118.40850586940181,
+          "y": -4.872226670858091,
+          "rotation": 0,
+          "radius": 12.874047429418319,
+          "orbit_speed": 0.01812561262187115,
+          "anchor_id": "ac005407-3d7d-4a33-b9d9-b2994b06efa7",
+          "anchor_tier": 1,
+          "color": "#F68923"
+        },
+        {
+          "id": "aff1a174-3d26-49fc-a2d9-91b319fb730c",
+          "name": "Mois",
+          "x": -255.44204840345142,
+          "y": 189.3957232202921,
+          "rotation": 0,
+          "radius": 15.101248280717641,
+          "orbit_speed": 0.007786447330640824,
+          "anchor_id": "ac005407-3d7d-4a33-b9d9-b2994b06efa7",
+          "anchor_tier": 1,
+          "color": "#D8A47F"
+        },
+        {
+          "id": "a4dbca0a-8416-4d5a-8c5c-29465fe9b3c8",
+          "name": "Whimox",
+          "x": -43.15063421193284,
+          "y": 421.12866219531327,
+          "rotation": 0,
+          "radius": 17.40442601422412,
+          "orbit_speed": -0.002192164885332389,
+          "anchor_id": "ac005407-3d7d-4a33-b9d9-b2994b06efa7",
+          "anchor_tier": 1,
+          "color": "#EF8354"
+        },
+        {
+          "id": "36a68993-0ca1-4e8b-b16e-4e661e46b38b",
+          "name": "Culpeper L-1",
+          "x": 103.99688101995754,
+          "y": -36.36537780462253,
+          "rotation": 0,
+          "radius": 2.4271096861999784,
+          "orbit_speed": -0.29308166666200486,
+          "anchor_id": "454cb700-cdbc-4012-9c74-442b34d42990",
+          "anchor_tier": 2,
+          "color": "#F68923"
+        },
+        {
+          "id": "d1d0c440-e69d-410b-9abf-4d0b9d1f7e98",
+          "name": "Wenus GI-843",
+          "x": -291.59455328197464,
+          "y": 182.11720212597209,
+          "rotation": 0,
+          "radius": 2.3337468902377925,
+          "orbit_speed": -0.2755308783682783,
+          "anchor_id": "aff1a174-3d26-49fc-a2d9-91b319fb730c",
+          "anchor_tier": 2,
+          "color": "#955802"
+        },
+        {
+          "id": "96ed07a7-ed15-4688-aa66-b168f05a9fc9",
+          "name": "Shuixing A-5",
+          "x": -258.18781626196704,
+          "y": 234.40295584351375,
+          "rotation": 0,
+          "radius": 2.5106464317395236,
+          "orbit_speed": -0.11359971050009827,
+          "anchor_id": "aff1a174-3d26-49fc-a2d9-91b319fb730c",
+          "anchor_tier": 2,
+          "color": "#F5B0A1"
+        },
+        {
+          "id": "eb3e26f7-22f9-406e-8b33-154f5748ce34",
+          "name": "Utarid A-93",
+          "x": -312.02235188587815,
+          "y": 184.25612160079245,
+          "rotation": 0,
+          "radius": 2.502977780547066,
+          "orbit_speed": 0.08623390664195392,
+          "anchor_id": "aff1a174-3d26-49fc-a2d9-91b319fb730c",
+          "anchor_tier": 2,
+          "color": "#F5B0A1"
+        }
+      ],
+      "asteroids": [],
+      "minerals": [
+        {
+          "x": -180.53471437114402,
+          "y": 113.19596123975887,
+          "id": "99644783-7961-48bc-8378-094bea763a30",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": -67.68500887207102,
+          "y": 208.68345772258942,
+          "id": "77df58ec-8a95-48e2-9b6e-39311e3ce18b",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -174.6305758354207,
+          "y": 123.36715878268919,
+          "id": "723ca4ad-5d28-4702-a953-cda554949c46",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": -86.11816607245945,
+          "y": 204.97596873973077,
+          "id": "4990712d-f76c-42fb-8e72-a3b20b49b2c3",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -150.84744610848855,
+          "y": 164.65440591560622,
+          "id": "63284967-0683-4d5b-912c-bee14cb22570",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": -122.0660316587941,
+          "y": 174.1912492534057,
+          "id": "84a4263b-430a-4e66-b4f7-32772a42c558",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -120.97763499615547,
+          "y": -179.41446299826038,
+          "id": "5de30535-fb2e-4f99-b21d-568942268434",
+          "radius": 1,
+          "value": 300,
+          "rarity": "Rare",
+          "color": "#ffd700"
+        },
+        {
+          "x": -195.77825809191972,
+          "y": -98.32675558789028,
+          "id": "316282dc-0e03-404e-bee3-d7aea438bc8c",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 150.93085734512283,
+          "y": -169.6035239063273,
+          "id": "957c7eb6-6ba7-4f25-b3f0-84ec1d7ca1c9",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -160.8037655392534,
+          "y": 146.6896772033895,
+          "id": "7c914a84-f3ed-4107-a6f0-528f6b76518a",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        }
+      ],
+      "containers": [
+        {
+          "id": "10df96bc-2d4c-4ba6-acf9-965c3f1b8900",
+          "items": [
+            {
+              "id": "3ef188b8-88ac-4fcb-bf31-d4fd9dc4a6c7",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "33a6ca93-1084-44d3-ad6a-b9c47c6feff3",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "04d601de-a45c-4e2a-b01a-80ba595220c0",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "cbf85796-efec-4f0c-81c1-9a06e1c34689",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -28.46762272350233,
+            "y": -247.03703758862517
+          },
+          "radius": 2.6
+        },
+        {
+          "id": "86bca77b-bee4-4185-ac49-9ebae78d566e",
+          "items": [
+            {
+              "id": "7757dddb-7f69-465a-b9a5-e5a7b402beaa",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "38352d49-cc03-4bbb-b6f2-018bc6465d1f",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "dbe0c49f-2f99-472a-aa94-c958933395c9",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "46519984-8215-446f-bd2c-53bac6656e77",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -67.11590407540103,
+            "y": -120.38178274420665
+          },
+          "radius": 3
+        },
+        {
+          "id": "54a42e4e-bcd3-4ffb-8cd8-bc175302a740",
+          "items": [
+            {
+              "id": "3d6cde81-e39e-462f-8e1d-3c3a8094c3d8",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "9eed9097-b8e3-4bfa-a7cd-9d16680166a7",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "c484074a-8828-4930-9453-bc5149b77300",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "696be6b2-2b7d-4f76-aca4-9742c3a7f265",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -130.47436104356512,
+            "y": -125.25118789141243
+          },
+          "radius": 3
+        },
+        {
+          "id": "5536d38d-5d71-4beb-bf15-7ad33ac4e53a",
+          "items": [
+            {
+              "id": "512a4c11-cb23-4f13-9cd7-c608a6e06d4b",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -55.677181535046316,
+            "y": 55.84110164529886
+          },
+          "radius": 2
+        },
+        {
+          "id": "427d5574-f8ff-4d3e-b334-f494e3187f03",
+          "items": [
+            {
+              "id": "1fc4af9b-b2a2-4e81-bd4b-f9bc95b7868b",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "96651306-5854-4c3c-ad0d-3bec5ae90996",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "ed21057f-cb81-4543-8239-f99734071030",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "577e93be-b008-4996-92a4-35d3afb50cb6",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -201.71437903840496,
+            "y": -77.42164818897479
+          },
+          "radius": 2.4
+        },
+        {
+          "id": "55e38a59-c065-478e-b5c2-c7a7a09f052f",
+          "items": [
+            {
+              "id": "e7f0d939-a356-49d9-bbcd-1488dce578ce",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "55b6d157-738a-4a1b-abcf-13da3340163b",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "f18b480b-c241-4ff4-98d6-1d675730f9c1",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 177.40063273535355,
+            "y": -127.80781714885214
+          },
+          "radius": 2
+        },
+        {
+          "id": "c9c58881-30ff-4ed4-a5ac-b40359b02d32",
+          "items": [
+            {
+              "id": "cfd6850e-caff-46d5-a838-f533a9740ce7",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "a0969959-5702-4051-a5c8-5c7c8aee7da7",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "7cb869e2-deee-4f5a-872c-f75eb61c2fc8",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -22.62146324097037,
+            "y": 181.05782755593015
+          },
+          "radius": 2
+        },
+        {
+          "id": "cfa636c4-89c4-48c8-be0b-f5fd43aa198b",
+          "items": [
+            {
+              "id": "06a3c2a5-e0e5-41ca-8863-8e678b897d35",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "4be62260-c81c-48c6-b5c1-9758dd4b2b05",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "349ddbc6-39f4-41b7-bb20-460d3134793f",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -242.4783567942621,
+            "y": -150.40128203906167
+          },
+          "radius": 2.2
+        },
+        {
+          "id": "2be49fe8-9013-4099-ac06-7c5fb608da5c",
+          "items": [
+            {
+              "id": "84914e7e-719a-447c-a44d-8baf7bcf1c7c",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 197.81846105289293,
+            "y": 103.04427583507504
+          },
+          "radius": 2
+        },
+        {
+          "id": "f71ea2a5-8c99-49d5-8153-7e0386afd8f0",
+          "items": [
+            {
+              "id": "93ac6648-d475-4143-ab2b-78649adda091",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "b28f8a73-a9dd-4d21-88a8-a5ac2de8133b",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 120.0366143394487,
+            "y": 228.63401175078292
+          },
+          "radius": 2
+        }
+      ],
+      "position": {
+        "x": -135.6312990631406,
+        "y": 61.35015408417829
+      },
+      "asteroid_belts": [
+        {
+          "id": "19ae1a0f-300d-4482-98bf-40662acfd54b",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.2443920000000112,
+          "radius": 218.63996392002772,
+          "width": 16.2998756047965,
+          "count": 200,
+          "orbit_speed": 0.006,
+          "anchor_id": "ac005407-3d7d-4a33-b9d9-b2994b06efa7",
+          "anchor_tier": 0,
+          "scale_mod": 1
+        },
+        {
+          "id": "c5f86305-a701-4684-85ec-676489b4d13d",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.16292800000000557,
+          "radius": 215.63996392002772,
+          "width": 15.2998756047965,
+          "count": 100,
+          "orbit_speed": 0.004,
+          "anchor_id": "ac005407-3d7d-4a33-b9d9-b2994b06efa7",
+          "anchor_tier": 0,
+          "scale_mod": 2
+        },
+        {
+          "id": "974f8146-e9e6-4d50-a3f6-e7f54c78e494",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.32585600000001114,
+          "radius": 223.63996392002772,
+          "width": 14.633208938129833,
+          "count": 400,
+          "orbit_speed": 0.008,
+          "anchor_id": "ac005407-3d7d-4a33-b9d9-b2994b06efa7",
+          "anchor_tier": 0,
+          "scale_mod": 0.5
+        }
+      ],
+      "ships": [],
+      "adjacent_location_ids": [
+        "5175dfa3-b40c-41ed-8712-c1192b9660a5",
+        "432e620d-b744-44f5-97eb-fcd3cbdc062d"
+      ]
+    },
+    {
+      "seed": "4a196cd24d75323a",
+      "id": "432e620d-b744-44f5-97eb-fcd3cbdc062d",
+      "star": {
+        "id": "ba922a68-52ae-4d3b-a0a2-f939cba63692",
+        "name": "Srea",
+        "x": 0,
+        "y": 0,
+        "radius": 28.086556491115804,
+        "rotation": 0,
+        "color": "#E3FFFA",
+        "corona_color": "#E3FFFA"
+      },
+      "planets": [
+        {
+          "id": "8ec03483-33d5-4c26-8d99-72f2fed21c17",
+          "name": "Depes",
+          "x": 26.40277335476186,
+          "y": 95.74972064164339,
+          "rotation": 0,
+          "radius": 13.784056415690372,
+          "orbit_speed": -0.015575643173657845,
+          "anchor_id": "ba922a68-52ae-4d3b-a0a2-f939cba63692",
+          "anchor_tier": 1,
+          "color": "#EF8354"
+        },
+        {
+          "id": "aea19d61-c78f-4cba-9cf7-9837cdb8f5ce",
+          "name": "Ceonine",
+          "x": -28.714696882415332,
+          "y": -294.4169367200474,
+          "rotation": 0,
+          "radius": 15.585058347008005,
+          "orbit_speed": 0.006889737137314629,
+          "anchor_id": "ba922a68-52ae-4d3b-a0a2-f939cba63692",
+          "anchor_tier": 1,
+          "color": "#0D57AC"
+        },
+        {
+          "id": "6aa15892-516e-471f-a502-17893696e959",
+          "name": "Lenis",
+          "x": 314.59290361966896,
+          "y": -239.27566641124574,
+          "rotation": 0,
+          "radius": 9.244617878556706,
+          "orbit_speed": 0.0027540827327433622,
+          "anchor_id": "ba922a68-52ae-4d3b-a0a2-f939cba63692",
+          "anchor_tier": 1,
+          "color": "#ADBEA3"
+        },
+        {
+          "id": "c0500f8a-869e-4fe0-9101-341f36549bcd",
+          "name": "Einstein A-87",
+          "x": -1.7135104629903672,
+          "y": 78.55257978269785,
+          "rotation": 0,
+          "radius": 2.484922996211643,
+          "orbit_speed": -0.2252315711943654,
+          "anchor_id": "8ec03483-33d5-4c26-8d99-72f2fed21c17",
+          "anchor_tier": 2,
+          "color": "#382C4F"
+        },
+        {
+          "id": "526002a0-44dc-4655-b4cd-d5e3390d95a4",
+          "name": "Guru LE-1",
+          "x": -2.939842124607466,
+          "y": -270.82151302235985,
+          "rotation": 0,
+          "radius": 2.4692262971519128,
+          "orbit_speed": -0.2161915072040075,
+          "anchor_id": "aea19d61-c78f-4cba-9cf7-9837cdb8f5ce",
+          "anchor_tier": 2,
+          "color": "#DC890C"
+        },
+        {
+          "id": "2861dc30-ffc4-4566-97c9-56bc4d1a0051",
+          "name": "Lune J-2",
+          "x": -62.94736018384477,
+          "y": -263.00588594847216,
+          "rotation": 0,
+          "radius": 2.1508266598658707,
+          "orbit_speed": 0.1333038292848595,
+          "anchor_id": "aea19d61-c78f-4cba-9cf7-9837cdb8f5ce",
+          "anchor_tier": 2,
+          "color": "#01A6A0"
+        }
+      ],
+      "asteroids": [],
+      "minerals": [
+        {
+          "x": -42.44107005162274,
+          "y": -182.08818253484012,
+          "id": "e9576cc0-4ce7-4e0b-97cf-370c9cb82c44",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": -64.02174988870323,
+          "y": -200.9270418856722,
+          "id": "df1eaa87-df20-4240-9676-af8beae0b33e",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -152.37395779533642,
+          "y": -114.41687159924105,
+          "id": "dfd2cfc2-fc50-4da2-997e-e4dd16fc4583",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -201.1462309824507,
+          "y": -28.839592103733427,
+          "id": "c4bd37ae-2fb5-4e3c-81d7-190094e02182",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": 80.93609848364132,
+          "y": 171.49353332966987,
+          "id": "6ce4f8d8-d7ad-4d52-b394-635b359440b0",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 180.0374761772404,
+          "y": -59.9297133837258,
+          "id": "f95e2579-bdba-44a7-b145-8fe116d7e3e1",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -199.19196673253398,
+          "y": -9.055082927146298,
+          "id": "1bbccee2-8b7c-4b86-b695-d61f8b1f0432",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -91.35367412689911,
+          "y": -164.63321866466137,
+          "id": "a00290c9-a49a-492f-9c09-b0d189a0fbb7",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 109.66982611515245,
+          "y": 167.85397263581746,
+          "id": "09182680-9cca-4fb2-9ac0-65b70135fed0",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 58.43249358357642,
+          "y": -188.28768561196065,
+          "id": "9c015845-6bc6-4132-af58-b0574572f972",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        }
+      ],
+      "containers": [
+        {
+          "id": "0e0ccf01-d8dc-46d8-8288-286293f9f96e",
+          "items": [
+            {
+              "id": "c7112d01-77b4-4028-84f6-31159f7dc7b6",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "8b06ed45-a493-415a-988c-b4746178e2cf",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "6b66aecd-9a24-4946-a917-c1ff80d8da00",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -180.5787763612483,
+            "y": -71.16481952431053
+          },
+          "radius": 2.2
+        },
+        {
+          "id": "c4f5ca39-e5f3-492f-8b3c-0688e9e3d86c",
+          "items": [
+            {
+              "id": "77a7c735-f156-4443-97a9-15c12bd5779c",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "6da35299-ce4b-4417-b12a-c5dc742163a9",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "e5048460-1e8d-49d5-bb6b-93401c314ac1",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "38b17775-51ca-4639-99a0-b6dfaca58692",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 13.850147263036888,
+            "y": 219.5649824197784
+          },
+          "radius": 2.2
+        },
+        {
+          "id": "4626b073-7cf5-4b1a-80e8-cc229b0b2142",
+          "items": [
+            {
+              "id": "7e6089db-fbfa-40d7-b771-c8d43c3526ea",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "29ea8570-f279-4141-b819-b4787e9827e0",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "d81ba2f0-0b10-4cec-ba0e-bdb1362da051",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "f71f16bf-fe85-4018-8810-13faa926efc1",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 6.838573664326589,
+            "y": 179.88359035648227
+          },
+          "radius": 2.8
+        },
+        {
+          "id": "eafaead3-4d6d-485f-bfa3-664c39ec0f7c",
+          "items": [
+            {
+              "id": "b6e7af16-5383-42bb-98e1-f71c9db874ee",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -84.83650495157903,
+            "y": -99.74458315594947
+          },
+          "radius": 2
+        },
+        {
+          "id": "e5d85ad7-5069-408a-aa7d-9330147e6fb8",
+          "items": [
+            {
+              "id": "4912aa89-1097-4ee6-9362-359d6b618856",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "6c7453c8-9cf4-4800-a77a-cb42d94ae274",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -53.907657483615026,
+            "y": 84.65683053707653
+          },
+          "radius": 2
+        },
+        {
+          "id": "b00ea1f1-241b-4ddc-ac84-e9ff058ce99c",
+          "items": [
+            {
+              "id": "40df1ae0-7c53-49b8-82b5-fe538d03129b",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "aac9757c-eed7-492f-8ea8-d0da85e2aa02",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "e34334f3-95bc-4f4d-87c6-9a44e3ed0bcd",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 58.97180610680522,
+            "y": -83.96316500524205
+          },
+          "radius": 2
+        },
+        {
+          "id": "c1b92097-7463-4dc4-b1c0-ae9eef9a443b",
+          "items": [
+            {
+              "id": "76065200-a831-49a3-bedb-5022effa4cc0",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "9d252987-06f4-4b3c-9a28-811620d99980",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "d8dc068d-82a3-4dae-911b-58904988b883",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 152.42921483882975,
+            "y": -160.55826736297618
+          },
+          "radius": 2.2
+        },
+        {
+          "id": "19a71499-c33f-49e2-8550-7aa5a3b2b7e4",
+          "items": [
+            {
+              "id": "6766a79b-018d-40bb-a3d9-6514a52cad1f",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "4128108e-4aa8-4e2a-89e8-f54944f8c072",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "019f3d87-83f0-4433-af49-46fc4f160f7f",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 120.15310632893073,
+            "y": 183.09370609960786
+          },
+          "radius": 2
+        }
+      ],
+      "position": {
+        "x": -103.6096022617376,
+        "y": -89.40265485097686
+      },
+      "asteroid_belts": [
+        {
+          "id": "417fead8-415d-4f32-b967-a8ab819c6285",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.2443920000000112,
+          "radius": 197.81055094379698,
+          "width": 17.984288744990124,
+          "count": 200,
+          "orbit_speed": 0.006,
+          "anchor_id": "ba922a68-52ae-4d3b-a0a2-f939cba63692",
+          "anchor_tier": 0,
+          "scale_mod": 1
+        },
+        {
+          "id": "f4bb2fb0-4398-4de7-b89c-2d59716808a4",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.16292800000000557,
+          "radius": 194.81055094379698,
+          "width": 16.984288744990124,
+          "count": 100,
+          "orbit_speed": 0.004,
+          "anchor_id": "ba922a68-52ae-4d3b-a0a2-f939cba63692",
+          "anchor_tier": 0,
+          "scale_mod": 2
+        },
+        {
+          "id": "b11f0096-31bf-4451-8c48-9cc990ff7d42",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.32585600000001114,
+          "radius": 202.81055094379698,
+          "width": 16.317622078323456,
+          "count": 400,
+          "orbit_speed": 0.008,
+          "anchor_id": "ba922a68-52ae-4d3b-a0a2-f939cba63692",
+          "anchor_tier": 0,
+          "scale_mod": 0.5
+        }
+      ],
+      "ships": [],
+      "adjacent_location_ids": [
+        "b3674700-75ef-4134-87c1-5c40b24c1ab3",
+        "e7613ff9-cce8-4992-89a7-63d329b74679",
+        "7941416f-4451-43b6-b112-d4cac568b8c3"
+      ]
+    },
+    {
+      "seed": "a30fee0f614d63fe",
+      "id": "7941416f-4451-43b6-b112-d4cac568b8c3",
+      "star": {
+        "id": "33084a54-b451-4244-ad20-ad6b57ce078d",
+        "name": "Voatsalt",
+        "x": 0,
+        "y": 0,
+        "radius": 60.39671222094722,
+        "rotation": 0,
+        "color": "#FDFFD3",
+        "corona_color": "#FDFFD3"
+      },
+      "planets": [
+        {
+          "id": "b81ee9da-ee12-4e59-8f08-5b20527c07b6",
+          "name": "Valyti",
+          "x": 45.310006982752974,
+          "y": -125.04057100098476,
+          "rotation": 0,
+          "radius": 8.625546828265486,
+          "orbit_speed": -0.017319409171640158,
+          "anchor_id": "33084a54-b451-4244-ad20-ad6b57ce078d",
+          "anchor_tier": 1,
+          "color": "#955802"
+        },
+        {
+          "id": "2df27fd3-ba26-4a02-a5c7-f107427c44c1",
+          "name": "Synocon",
+          "x": 6.864757869892279,
+          "y": 335.0643378003172,
+          "rotation": 0,
+          "radius": 11.690119190880234,
+          "orbit_speed": 0.006545961982129006,
+          "anchor_id": "33084a54-b451-4244-ad20-ad6b57ce078d",
+          "anchor_tier": 1,
+          "color": "#849324"
+        },
+        {
+          "id": "2a2d80d2-8503-47be-9c0b-e6bcb5fd78fd",
+          "name": "Tapella",
+          "x": -310.7765552542138,
+          "y": -306.49292901103195,
+          "rotation": 0,
+          "radius": 11.682923813179766,
+          "orbit_speed": -0.004445669149075694,
+          "anchor_id": "33084a54-b451-4244-ad20-ad6b57ce078d",
+          "anchor_tier": 1,
+          "color": "#E76F51"
+        },
+        {
+          "id": "bb6003db-21a9-4323-ab45-91491a55ffe7",
+          "name": "Hëna A-9",
+          "x": 21.269169165643504,
+          "y": -111.18855496282677,
+          "rotation": 0,
+          "radius": 2.3505233257223717,
+          "orbit_speed": 0.25543080438353294,
+          "anchor_id": "b81ee9da-ee12-4e59-8f08-5b20527c07b6",
+          "anchor_tier": 2,
+          "color": "#9D91A1"
+        },
+        {
+          "id": "ddd61018-3b40-4871-be3a-82921c2bd903",
+          "name": "Vênus W-3",
+          "x": -17.63495387763528,
+          "y": 313.05379106907884,
+          "rotation": 0,
+          "radius": 2.9045764081358074,
+          "orbit_speed": -0.28162824645170526,
+          "anchor_id": "2df27fd3-ba26-4a02-a5c7-f107427c44c1",
+          "anchor_tier": 2,
+          "color": "#D8A47F"
+        }
+      ],
+      "asteroids": [],
+      "minerals": [
+        {
+          "x": 236.0257003305278,
+          "y": 9.00493675584086,
+          "id": "116ddd0f-eab7-4f7d-b0eb-be9d203f6da8",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": -6.043182762366471,
+          "y": 234.19739823714536,
+          "id": "b7afaa7d-62d6-4152-bfb3-796222309aaa",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": -222.38925949448748,
+          "y": -42.73037268079534,
+          "id": "577b5753-632e-4025-b396-72319c844e06",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 9.591992869686631,
+          "y": -242.08752357283538,
+          "id": "edc77b12-ae8c-423f-a6f1-65c3248e58bc",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 214.487572279376,
+          "y": 65.34449617372485,
+          "id": "25513f7e-8404-4d4d-9753-35cd5e007488",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": -108.05382498276872,
+          "y": 196.38604208784292,
+          "id": "862f5a03-e946-473b-8936-9974d64f8fa5",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        },
+        {
+          "x": 201.69621601614665,
+          "y": 122.09573084596428,
+          "id": "68e58f4e-0053-43e3-aed8-8e4cfc82b015",
+          "radius": 1,
+          "value": 300,
+          "rarity": "Rare",
+          "color": "#ffd700"
+        },
+        {
+          "x": 47.970557783491344,
+          "y": -235.2136093512717,
+          "id": "30fb139c-1792-47e9-97c5-f2d48642e8f2",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": 164.67065586817455,
+          "y": 166.59861563690387,
+          "id": "25808119-4619-4005-8332-01e5da075543",
+          "radius": 1.5,
+          "value": 200,
+          "rarity": "Uncommon",
+          "color": "#c0c0c0"
+        },
+        {
+          "x": 231.78572154205133,
+          "y": -65.00658768781395,
+          "id": "056f8004-dae5-442f-9947-30b430866dc8",
+          "radius": 2,
+          "value": 100,
+          "rarity": "Common",
+          "color": "#b87333"
+        }
+      ],
+      "containers": [
+        {
+          "id": "7f2ee038-8fd5-4748-a275-a321bec0eb33",
+          "items": [
+            {
+              "id": "b2b66ce8-ef8d-412f-8882-72f2cfa466b7",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "53141473-1c90-49bd-a7a2-878afc473118",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "a9056a23-a479-4612-b1b9-83c560bcab59",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -35.52155526919964,
+            "y": 151.68211825219913
+          },
+          "radius": 2
+        },
+        {
+          "id": "44737db8-3b95-45ff-9bd3-f72232fd7d20",
+          "items": [
+            {
+              "id": "860b8f47-656a-4216-a521-aba9e1842b06",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "d956b62a-19a7-47b6-b997-14728233eecb",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "1a609d59-d703-4401-9955-c0e8da82dfe5",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "74719015-4555-4d20-a2c8-749bd5ae9afd",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -171.44408435521075,
+            "y": 13.66409581641858
+          },
+          "radius": 2.2
+        },
+        {
+          "id": "d46df022-340f-4f88-9cb9-39c9749cc002",
+          "items": [
+            {
+              "id": "16355762-3932-4c7f-b831-f2e20ba159a2",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "4aecc4df-2f45-406f-b2a6-7913dd88714b",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            },
+            {
+              "id": "eaa17154-f9d1-4215-93ee-a1c94a026765",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -107.68032557233741,
+            "y": 29.525816106751734
+          },
+          "radius": 2.2
+        },
+        {
+          "id": "ae93ef92-b990-450e-94c4-e57865afae89",
+          "items": [
+            {
+              "id": "512db44d-30e6-4190-a426-3b29d86ae35f",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "e3a300af-abc0-45c7-8683-ef9db34895e0",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -119.69302353480748,
+            "y": -154.4794664503023
+          },
+          "radius": 2
+        },
+        {
+          "id": "913beee8-88dd-4a49-845d-8c7390366915",
+          "items": [
+            {
+              "id": "a22abf0d-3f5e-421f-8b25-a2d0b65a73d9",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Medicament",
+              "quest_id": null
+            },
+            {
+              "id": "6f6094a7-98d7-4a93-a82b-1fdf6b3daf37",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "f1044cf0-4f2e-41c3-8d5c-4bc22a323ccf",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "08bfb0a6-fdd3-4212-bdae-c06b2fb0960d",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 167.83897092953958,
+            "y": 163.09799789542825
+          },
+          "radius": 2
+        },
+        {
+          "id": "1d2081d0-db28-4fa7-8c2e-e44b34ef495d",
+          "items": [
+            {
+              "id": "fe6d05af-5346-46d4-927c-f17ecccd9877",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "Food",
+              "quest_id": null
+            },
+            {
+              "id": "789a27a2-4fff-419a-aa41-17fa2f95ef99",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -45.05722657996992,
+            "y": -106.15173144711764
+          },
+          "radius": 2
+        },
+        {
+          "id": "d3f1ef36-7927-4a46-9aef-6a8a6a35d1c4",
+          "items": [
+            {
+              "id": "ab430ad4-8f86-4e98-9370-1a18891397ff",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "f6ad62ef-68c2-476a-a95d-0ae10b0518a0",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "fe448f52-2ef0-433d-8ed4-d453dc7bf19c",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            },
+            {
+              "id": "2bf2b9d6-6ad1-453c-891a-d29e656b5b56",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -168.9994115506468,
+            "y": 133.62650731555823
+          },
+          "radius": 2
+        },
+        {
+          "id": "031a4acd-be6a-451b-b4db-a09404c9675a",
+          "items": [
+            {
+              "id": "94adca89-f92d-46d3-9cf9-c878a41950b1",
+              "index": 0,
+              "quantity": 2,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "d9b3495b-c10b-4189-ad10-df013f04b34a",
+              "index": 0,
+              "quantity": 1,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "373fb433-0072-4b9c-865a-19d5a9cae810",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "HandWeapon",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 130.62407627253327,
+            "y": 140.33958925413538
+          },
+          "radius": 2
+        },
+        {
+          "id": "89d4e8ae-0b5c-4c1a-b9b0-79b4229ead06",
+          "items": [
+            {
+              "id": "f77fed12-a7f3-41d6-8205-8f88d043fca7",
+              "index": 0,
+              "quantity": 5,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "CommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "73c45064-860a-41a1-8316-2a7afd78b189",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": -107.06653882720562,
+            "y": -194.13880276704464
+          },
+          "radius": 2
+        },
+        {
+          "id": "69421937-e448-42f1-a522-dcd337a768cf",
+          "items": [
+            {
+              "id": "6ed2567c-011c-47e2-950e-25397587032e",
+              "index": 0,
+              "quantity": 3,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "UncommonMineral",
+              "quest_id": null
+            },
+            {
+              "id": "247f4d56-5855-4ef3-a066-3ee0e2d149f2",
+              "index": 0,
+              "quantity": 4,
+              "value": 0,
+              "stackable": true,
+              "player_owned": false,
+              "item_type": "RareMineral",
+              "quest_id": null
+            }
+          ],
+          "position": {
+            "x": 21.80680701090887,
+            "y": -195.42049431557763
+          },
+          "radius": 2
+        }
+      ],
+      "position": {
+        "x": 45.98448958779735,
+        "y": -170.06113642278035
+      },
+      "asteroid_belts": [
+        {
+          "id": "b9866edb-9014-4278-95a7-d2e2839b39d6",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.2443920000000112,
+          "radius": 234.22213793891103,
+          "width": 16.721197131403358,
+          "count": 200,
+          "orbit_speed": 0.006,
+          "anchor_id": "33084a54-b451-4244-ad20-ad6b57ce078d",
+          "anchor_tier": 0,
+          "scale_mod": 1
+        },
+        {
+          "id": "71c25928-ed35-47a0-baa6-e46d6a812e79",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.16292800000000557,
+          "radius": 231.22213793891103,
+          "width": 15.721197131403358,
+          "count": 100,
+          "orbit_speed": 0.004,
+          "anchor_id": "33084a54-b451-4244-ad20-ad6b57ce078d",
+          "anchor_tier": 0,
+          "scale_mod": 2
+        },
+        {
+          "id": "1ed216a3-84f8-440c-982b-349ce48fab97",
+          "x": 0,
+          "y": 0,
+          "rotation": 0.32585600000001114,
+          "radius": 239.22213793891103,
+          "width": 15.054530464736692,
+          "count": 400,
+          "orbit_speed": 0.008,
+          "anchor_id": "33084a54-b451-4244-ad20-ad6b57ce078d",
+          "anchor_tier": 0,
+          "scale_mod": 0.5
+        }
+      ],
+      "ships": [],
+      "adjacent_location_ids": [
+        "b3674700-75ef-4134-87c1-5c40b24c1ab3",
+        "432e620d-b744-44f5-97eb-fcd3cbdc062d"
+      ]
+    }
+  ]
+}

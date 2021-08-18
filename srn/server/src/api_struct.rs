@@ -49,7 +49,7 @@ impl RoomsState {
             .and_then(|r| Some(&r.state))
     }
 
-    pub fn reindex(&mut self, debug: bool) {
+    pub fn reindex(&mut self) {
         let rooms_clone = self.values.clone();
         for i in 0..rooms_clone.len() {
             let room = rooms_clone.get(i).unwrap();

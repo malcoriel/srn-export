@@ -71,12 +71,12 @@ pub fn get_rooms_iter_read<'a>(cont: &'a RwLockReadGuard<StateContainer>) -> Ite
 
 pub fn update_rooms(cont: &mut RwLockWriteGuard<StateContainer>, val: Vec<Room>) {
     cont.rooms.values = val;
-    cont.rooms.reindex(false);
+    cont.rooms.reindex();
 }
 
 pub fn add_room(cont: &mut RwLockWriteGuard<StateContainer>, room: Room) {
     cont.rooms.values.push(room);
-    cont.rooms.reindex(false);
+    cont.rooms.reindex();
 }
 
 pub fn select_state<'a, 'b>(
@@ -117,12 +117,17 @@ pub fn select_state_v2<'a, 'b>(
     return if state_id == state_cont.state.id {
         &state_cont.state
     } else if room_state_id.is_some() {
-        state_cont
-            .rooms
-            .get_state_by_id(&room_state_id.unwrap())
-            .unwrap()
+        if let Some(state) = state_cont.rooms.get_state_by_id(&room_state_id.unwrap()) {
+            state
+        } else {
+            &state_cont.state
+        }
     } else {
-        state_cont.rooms.get_state_by_id(&state_id).unwrap()
+        if let Some(state) = state_cont.rooms.get_state_by_id(&state_id) {
+            state
+        } else {
+            &state_cont.state
+        }
     };
 }
 
