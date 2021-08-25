@@ -26,6 +26,27 @@ pub fn get_rooms() -> Json<Vec<Room>> {
     Json(rooms)
 }
 
+#[get("/<game_mode>")]
+pub fn get_rooms_for_mode(game_mode: String) -> Json<Vec<Room>> {
+    let mode =
+        serde_json::from_str::<crate::world::GameMode>(format!("\"{}\"", game_mode).as_str());
+    if mode.is_err() {
+        return Json(vec![]);
+    }
+
+    let mode = mode.unwrap();
+    let cont = STATE.read().unwrap();
+    let rooms = cont
+        .rooms
+        .values
+        .clone()
+        .into_iter()
+        .filter(|r| r.state.mode == mode)
+        .collect::<Vec<Room>>();
+
+    Json(rooms)
+}
+
 #[post("/create/<game_mode>")]
 pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
     let mode =

@@ -367,6 +367,7 @@ pub fn seed_room_state(mode: &GameMode, seed: String) -> GameState {
             let mut state = system_gen(seed);
             init_all_planets_market(&mut state);
             state.id = new_id();
+            state.mode = GameMode::CargoRush;
             state
         }
         GameMode::Tutorial => make_tutorial_state(),

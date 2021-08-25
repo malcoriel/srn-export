@@ -1,5 +1,5 @@
 import { GameMode } from '../../../world/pkg/world.extra';
-import { RoomIdResponse } from '../../../world/pkg/world';
+import { Room, RoomIdResponse } from '../../../world/pkg/world';
 import useSWR, { mutate } from 'swr';
 
 const patchParams = (url: string, params: Record<string, string>) => {
@@ -67,6 +67,17 @@ export const api = {
     );
   },
 
+  getRoomsList: async (mode: GameMode): Promise<Room[]> => {
+    const res = await fetch(
+      patchParams(`${api.getRoomsApiUrl()}/<mode>`, {
+        mode,
+      }),
+      { method: 'GET' }
+    );
+    let rawResponse = await res.json();
+    return rawResponse as Room[];
+  },
+
   createRoom: async (mode: string): Promise<string> => {
     const res = await fetch(
       patchParams(`${api.getRoomsApiUrl()}/create/<mode>`, {
@@ -74,9 +85,20 @@ export const api = {
       }),
       { method: 'POST' }
     );
-    let rawResponse = await res.json();
-    console.log('create room response', rawResponse);
+    const rawResponse = await res.json();
     return (rawResponse as RoomIdResponse).room_id;
+  },
+
+  getRoomToJoin: async (mode: GameMode): Promise<string> => {
+    if (mode !== GameMode.CargoRush) {
+      return api.createRoom(mode);
+    }
+    const rooms = await api.getRoomsList(mode);
+    console.log('rooms list to join is', rooms);
+    if (rooms.length <= 0) {
+      return api.createRoom(mode);
+    }
+    return rooms[0].id;
   },
 
   loadCleanState: async (player_id: string) => {

@@ -285,7 +285,11 @@ fn rocket() -> rocket::Rocket {
         )
         .mount(
             "/api/rooms",
-            routes![rooms_api::get_rooms, rooms_api::create_room,],
+            routes![
+                rooms_api::get_rooms,
+                rooms_api::create_room,
+                rooms_api::get_rooms_for_mode
+            ],
         )
 }
 
