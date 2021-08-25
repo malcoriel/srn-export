@@ -110,6 +110,7 @@ fn replace_player_state(player_id: Uuid, mut new_state: GameState) {
         let player = room.state.players[0].clone();
         let ship = room.state.locations[0].ships[0].clone();
         room.state = new_state;
+        room.state.players = vec![];
         room.state.players.push(player);
         room.state.mode = GameMode::Sandbox;
         room.state.milliseconds_remaining = 99 * 60 * 1000;
