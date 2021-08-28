@@ -3,7 +3,7 @@ import { useProgress } from '@react-three/drei';
 
 const expectedResources = [
   // minimal set of resources to load the game
-  'resources/ship.stl',
+  'resources/models/ship.stl',
 ];
 
 export const useResourcesLoading = (onDone: () => void) => {
@@ -15,6 +15,7 @@ export const useResourcesLoading = (onDone: () => void) => {
   }, [item]);
   const missingResources = new Set(expectedResources);
   for (const res of attemptedResources) {
+    console.log('deleting', res);
     missingResources.delete(res);
   }
   const isLoading = Math.abs(threeLoaderProgress - 100) > 1e-9;

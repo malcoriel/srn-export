@@ -42,7 +42,10 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
   }) => {
     const tractorRef = useRef<Mesh>();
     // @ts-ignore
-    const shipModel = useLoader<Geometry>(STLLoader, 'resources/ship.stl');
+    const shipModel = useLoader<Geometry>(
+      STLLoader,
+      'resources/models/ship.stl'
+    );
 
     const tractorBeamParams = useMemo(() => {
       if (!tractorTargetPosition) {
