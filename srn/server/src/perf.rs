@@ -244,7 +244,7 @@ pub enum SamplerMarks {
     UpdateShipsRespawn = 17,
     UpdatePlanets1 = 18,
     UpdatePlanets2 = 19,
-    PersonalStates = 20,
+    UpdateRooms = 20,
     UpdateMarket = 21,
     UpdateTickLongActions = 22,
     UpdateTractoredContainers = 23,

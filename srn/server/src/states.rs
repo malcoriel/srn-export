@@ -146,7 +146,7 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId) {
             })
     };
 
-    let mut player = player.unwrap_or(Player::new(new_id(), &GameMode::Sandbox));
+    let mut player = player.unwrap_or(Player::new(client_id, &GameMode::Sandbox));
     player.notifications = vec![];
 
     let new_state_id = {

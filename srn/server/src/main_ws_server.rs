@@ -22,9 +22,7 @@ use crate::net::{
     TagConfirm, Wrapper,
 };
 use crate::ship_action::ShipActionRust;
-use crate::states::{
-    get_state_id_cont, select_default_state, select_state, select_state_mut, STATE,
-};
+use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
 use crate::world::{GameEvent, GameState, Player, Ship};
 use crate::xcast::XCast;
 use crate::{
@@ -89,12 +87,6 @@ fn handle_request(request: WSRequest) {
 
     let client_id = Uuid::new_v4();
     println!("Connection from {}, id={}", ip, client_id);
-
-    {
-        // TODO do we even have to create a player on connection immediately? probably not
-        let mut cont = STATE.write().unwrap();
-        crate::make_new_human_player(client_id, select_default_state(&mut cont));
-    }
 
     let (public_client_sender, public_client_receiver) = bounded::<ServerToClientMessage>(128);
     CLIENT_SENDERS

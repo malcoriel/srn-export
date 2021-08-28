@@ -43,7 +43,7 @@ use net::{
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
 use perf::SamplerMarks;
-use states::{get_rooms_iter, select_default_state, update_rooms, StateContainer, STATE};
+use states::{get_rooms_iter, update_rooms, StateContainer, STATE};
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
@@ -367,26 +367,8 @@ fn main_thread() {
         let elapsed = now - last;
         last = now;
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
-        let update_id = sampler.start(SamplerMarks::Update as u32);
-        let (updated_state, updated_sampler) = world::update_world(
-            select_default_state(&mut cont).clone(),
-            elapsed_micro,
-            false,
-            sampler,
-            UpdateOptions {
-                disable_hp_effects: false,
-                limit_area: AABB::maxed(),
-            },
-        );
-        sampler = updated_sampler;
-        update_default_state(&mut cont, updated_state);
 
-        if sampler.end_top(update_id) < 0 {
-            shortcut_frame += 1;
-            continue;
-        }
-
-        let personal_id = sampler.start(SamplerMarks::PersonalStates as u32);
+        let update_rooms_id = sampler.start(SamplerMarks::UpdateRooms as u32);
         let updated_rooms = get_rooms_iter(&cont)
             .filter_map(|room| {
                 // if state.players.len() == 0 {
@@ -412,7 +394,7 @@ fn main_thread() {
             })
             .collect();
         update_rooms(&mut cont, updated_rooms);
-        if sampler.end_top(personal_id) < 0 {
+        if sampler.end_top(update_rooms_id) < 0 {
             shortcut_frame += 1;
             continue;
         }
@@ -461,23 +443,27 @@ fn main_thread() {
         }
 
         let cleanup_mark = sampler.start(SamplerMarks::ShipCleanup as u32);
-        let existing_player_ships = select_default_state(&mut cont)
-            .players
-            .iter()
-            .map(|p| p.ship_id.clone())
-            .filter(|s| s.is_some())
-            .map(|s| s.unwrap())
-            .collect::<Vec<_>>();
+        for room in cont.rooms.values.iter_mut() {
+            let existing_player_ships = room
+                .state
+                .players
+                .iter()
+                .map(|p| p.ship_id.clone())
+                .filter(|s| s.is_some())
+                .map(|s| s.unwrap())
+                .collect::<Vec<_>>();
 
-        let len = select_default_state(&mut cont).locations.len();
-        for idx in 0..len {
-            sampler = cleanup_nonexistent_ships(
-                select_default_state(&mut cont),
-                &existing_player_ships,
-                idx,
-                sampler,
-            );
+            let len = room.state.locations.len();
+            for idx in 0..len {
+                sampler = cleanup_nonexistent_ships(
+                    &mut room.state,
+                    &existing_player_ships,
+                    idx,
+                    sampler,
+                );
+            }
         }
+
         if sampler.end_top(cleanup_mark) < 0 {
             shortcut_frame += 1;
             continue;
@@ -511,8 +497,6 @@ fn main_thread() {
 }
 
 fn broadcast_all_states(cont: &mut RwLockWriteGuard<StateContainer>) {
-    let read_state = select_default_state(cont);
-    main_ws_server::x_cast_state(read_state.clone(), XCast::Broadcast(read_state.id));
     for room in get_rooms_iter(cont) {
         main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(room.state.id));
     }
