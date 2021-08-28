@@ -29,6 +29,8 @@ import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 
 export type Vector3Arr = [number, number, number];
+import * as THREE from 'three';
+THREE.Cache.enabled = true;
 
 const seedToNumber = (seed: string) => {
   try {

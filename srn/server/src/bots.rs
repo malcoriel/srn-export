@@ -159,7 +159,6 @@ fn add_bot(room: &mut Room, bot: Bot) {
     let mut prng = SmallRng::seed_from_u64(rng.next_u64());
     world::add_player(&mut room.state, id, true, Some(gen_bot_name(&mut prng)));
     world::spawn_ship(&mut room.state, id, None);
-    eprintln!("room {} now has {} bots", room.id, room.bots.len());
 }
 
 pub fn bot_init(room: &mut Room) {
