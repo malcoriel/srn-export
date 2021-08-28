@@ -1,14 +1,14 @@
-use std::collections::HashMap;
-use std::sync::{mpsc, Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
-use std::thread;
-use std::time::Duration;
-
 use chrono::Local;
 use lazy_static::lazy_static;
 use rand::rngs::SmallRng;
 use rand::{thread_rng, Rng, RngCore, SeedableRng};
+use std::collections::HashMap;
+use std::sync::{mpsc, Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
+use std::thread;
+use std::time::Duration;
 use uuid::Uuid;
 
+use crate::api_struct::Room;
 use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
@@ -23,10 +23,6 @@ use crate::world;
 use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship};
 use crate::DIALOGUE_STATES;
 use crate::STATE;
-
-lazy_static! {
-    pub static ref BOTS: Arc<Mutex<Vec<Bot>>> = Arc::new(Mutex::new(vec![]));
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Bot {
@@ -156,21 +152,21 @@ impl Bot {
     }
 }
 
-fn add_bot(state: &mut GameState, bot: Bot, bots: &mut Vec<Bot>) -> Uuid {
+fn add_bot(room: &mut Room, bot: Bot) {
     let id = bot.id.clone();
-    bots.push(bot);
+    room.bots.push(bot);
     let mut rng = thread_rng();
     let mut prng = SmallRng::seed_from_u64(rng.next_u64());
-    world::add_player(state, id, true, Some(gen_bot_name(&mut prng)));
-    world::spawn_ship(state, id, None);
-    id
+    world::add_player(&mut room.state, id, true, Some(gen_bot_name(&mut prng)));
+    world::spawn_ship(&mut room.state, id, None);
+    eprintln!("room {} now has {} bots", room.id, room.bots.len());
 }
 
-pub fn bot_init(bots: &mut Vec<Bot>, state: &mut GameState) {
-    add_bot(state, Bot::new(), bots);
-    add_bot(state, Bot::new(), bots);
-    add_bot(state, Bot::new(), bots);
-    add_bot(state, Bot::new(), bots);
+pub fn bot_init(room: &mut Room) {
+    add_bot(room, Bot::new());
+    add_bot(room, Bot::new());
+    add_bot(room, Bot::new());
+    add_bot(room, Bot::new());
 }
 
 pub fn format_d_states(
@@ -191,8 +187,7 @@ pub fn format_d_states(
 }
 
 pub fn do_bot_actions(
-    state: &mut GameState,
-    bots: &mut Vec<Bot>,
+    room: &mut Room,
     d_states: &mut DialogueStates,
     d_table: &DialogueTable,
     elapsed_micro: i64,
@@ -200,12 +195,13 @@ pub fn do_bot_actions(
     let mut ship_updates: HashMap<Uuid, Vec<ShipActionRust>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
 
-    for orig_bot in bots.iter_mut() {
+    for orig_bot in room.bots.iter_mut() {
         let id: Uuid = orig_bot.id;
         let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
-        let (bot, bot_acts) = orig_bot
-            .clone()
-            .act(&state, elapsed_micro, &d_table, &bot_d_states);
+        let (bot, bot_acts) =
+            orig_bot
+                .clone()
+                .act(&room.state, elapsed_micro, &d_table, &bot_d_states);
         *orig_bot = bot;
 
         let mut acts = vec![];
@@ -233,9 +229,9 @@ pub fn do_bot_actions(
 
     for (bot_id, acts) in ship_updates.into_iter() {
         for act in acts {
-            let updated_ship = apply_ship_action(act.clone(), state, bot_id, false);
+            let updated_ship = apply_ship_action(act.clone(), &mut room.state, bot_id, false);
             if let Some(updated_ship) = updated_ship {
-                world::try_replace_ship(state, &updated_ship, bot_id);
+                world::try_replace_ship(&mut room.state, &updated_ship, bot_id);
             }
         }
     }
@@ -243,7 +239,7 @@ pub fn do_bot_actions(
     for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
         for act in dialogue_update {
             // eprintln!("executing {:?}", act);
-            execute_dialog_option(bot_id, state, act.clone(), d_states, &d_table);
+            execute_dialog_option(bot_id, &mut room.state, act.clone(), d_states, &d_table);
         }
     }
 }

@@ -326,11 +326,6 @@ fn main_thread() {
     let mut prng = world::gen_rng();
     let mut d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
-    {
-        let mut bots = bots::BOTS.lock().unwrap();
-        let mut cont = STATE.write().unwrap();
-        bot_init(&mut *bots, select_default_state(&mut cont));
-    }
     let mut marks_holder = vec![];
     for mark in SamplerMarks::iter() {
         marks_holder.push(mark.to_string());
@@ -363,7 +358,6 @@ fn main_thread() {
         let locks_id = sampler.start(SamplerMarks::Locks as u32);
         let mut cont = STATE.write().unwrap();
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
-        let mut bots = bots::BOTS.lock().unwrap();
         if sampler.end_top(locks_id) < 0 {
             shortcut_frame += 1;
             continue;
@@ -412,6 +406,7 @@ fn main_thread() {
                     id: room.id,
                     name: room.name.clone(),
                     state: new_state,
+                    bots: room.bots.clone(),
                 };
                 Some(room_clone)
             })
@@ -423,7 +418,9 @@ fn main_thread() {
         }
 
         let quests_mark = sampler.start(SamplerMarks::Quests as u32);
-        update_quests(select_default_state(&mut cont), &mut prng);
+        for room in cont.rooms.values.iter_mut() {
+            update_quests(&mut room.state, &mut prng);
+        }
         if sampler.end_top(quests_mark) < 0 {
             shortcut_frame += 1;
             continue;
@@ -431,12 +428,11 @@ fn main_thread() {
 
         let d_states = &mut **d_states;
         {
-            let mut_state_bots = select_default_state(&mut cont);
-
             if bot_action_elapsed > BOT_ACTION_TIME {
                 let bots_mark = sampler.start(SamplerMarks::Bots as u32);
-                let bots = &mut *bots;
-                do_bot_actions(mut_state_bots, bots, d_states, &d_table, bot_action_elapsed);
+                for room in cont.rooms.values.iter_mut() {
+                    do_bot_actions(room, d_states, &d_table, bot_action_elapsed);
+                }
                 bot_action_elapsed = 0;
                 if sampler.end_top(bots_mark) < 0 {
                     shortcut_frame += 1;

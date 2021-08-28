@@ -12,9 +12,10 @@ use uuid::Uuid;
 use state::Storage;
 
 use crate::api_struct::*;
+use crate::bots::bot_init;
 use crate::events::fire_event;
 use crate::states::{StateContainer, STATE};
-use crate::world::{GameEvent, PlayerId};
+use crate::world::{GameEvent, GameMode, PlayerId};
 use crate::{new_id, system_gen, world};
 use std::thread;
 use std::time::Duration;
@@ -62,14 +63,20 @@ pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
     let room_name = format!("{} - {}", mode, room_id);
     let state = system_gen::seed_room_state(&mode, world::random_hex_seed());
     let state_id = state.id.clone();
-    cont.rooms.values.push(Room {
+    let mut room = Room {
         id: room_id,
         name: room_name,
         state,
-    });
+        bots: vec![],
+    };
+    if mode == GameMode::CargoRush {
+        bot_init(&mut room);
+    }
+    let bot_len = room.bots.len();
+    cont.rooms.values.push(room);
     log!(format!(
-        "created room {} with state {} for mode {}",
-        room_id, state_id, game_mode
+        "created room {} with state {} for mode {} and {} bots",
+        room_id, state_id, game_mode, bot_len
     ));
     cont.rooms.reindex();
 

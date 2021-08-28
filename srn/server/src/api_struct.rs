@@ -1,3 +1,4 @@
+use crate::bots::Bot;
 use crate::world::{GameMode, GameState, PlayerId};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -73,4 +74,5 @@ pub struct Room {
     pub id: RoomId,
     pub name: String,
     pub state: GameState,
+    pub bots: Vec<Bot>,
 }
