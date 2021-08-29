@@ -31,6 +31,11 @@ pub fn save_current_state(player_id: String, name: String) {
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
     let mut current = crate::STATE.write().unwrap();
     let state = select_state_mut(&mut current, player_id);
+    if state.is_none() {
+        warn!("attempt to save non-existent state");
+        return;
+    }
+    let state = state.unwrap();
     if state.id != player_id {
         warn!("attempt to save non-personal state");
         return;
@@ -66,6 +71,11 @@ pub fn load_clean_state(player_id: String) {
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
     let current_state = select_state_mut(&mut current, Uuid::from_u128(player_id.as_u128()));
+    if current_state.is_none() {
+        warn!("attempt to load into non-existent state");
+        return;
+    }
+    let current_state = current_state.unwrap();
     if current_state.id != player_id {
         warn!("attempt to load into non-personal state");
         return;
@@ -80,7 +90,7 @@ pub fn save_state_into_json(player_id: String) -> Json<Option<GameState>> {
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
     let current_state = select_state_mut(&mut cont, player_id);
-    Json(Some(current_state.clone()))
+    Json(current_state.map(|s| s.clone()))
 }
 
 #[post("/saved_states/load_random/<player_id>")]

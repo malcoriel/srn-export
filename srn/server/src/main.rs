@@ -58,10 +58,7 @@ use crate::perf::Sampler;
 use crate::rooms_api::find_room_state_id_by_player_id;
 use crate::sandbox::mutate_state;
 use crate::ship_action::ShipActionRust;
-use crate::states::{
-    get_state_id_cont, get_state_id_cont_mut, select_default_state_read, select_state,
-    select_state_mut, update_default_state,
-};
+use crate::states::{get_state_id_cont, get_state_id_cont_mut, select_state, select_state_mut};
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
@@ -166,9 +163,9 @@ pub struct DialogueRequest {
     planet_id: Uuid,
 }
 
-fn get_state_clone_read(client_id: Uuid) -> GameState {
+fn get_state_clone_read(client_id: Uuid) -> Option<GameState> {
     let cont = STATE.read().unwrap();
-    return states::select_state(&cont, client_id).clone();
+    return states::select_state(&cont, client_id).map(|s| s.clone());
 }
 
 fn personalize_player(state: &mut GameState, conn_id: Uuid, update: PersonalizeUpdate) {
@@ -424,7 +421,13 @@ fn main_thread() {
             let res = events::handle_events(&mut d_table, receiver, &mut cont, d_states);
             for (client_id, dialogue) in res {
                 let corresponding_state_id = get_state_id_cont_mut(&mut cont, client_id);
-                main_ws_server::unicast_dialogue_state(client_id, dialogue, corresponding_state_id);
+                corresponding_state_id.map(|corresponding_state_id| {
+                    main_ws_server::unicast_dialogue_state(
+                        client_id,
+                        dialogue,
+                        corresponding_state_id,
+                    )
+                });
             }
             if sampler.end_top(events_mark) < 0 {
                 shortcut_frame += 1;

@@ -21,21 +21,19 @@ lazy_static! {
         let mut state = world::seed_state(true, true);
         state.mode = world::GameMode::CargoRush;
         RwLock::new(StateContainer {
-            state,
             rooms: RoomsState::new(),
         })
     };
 }
 
 pub struct StateContainer {
-    pub state: GameState,
     pub rooms: RoomsState,
 }
 
 pub fn select_state_mut<'a>(
     state_cont: &'a mut RwLockWriteGuard<StateContainer>,
     player_id: Uuid,
-) -> &'a mut GameState {
+) -> Option<&'a mut GameState> {
     return select_mut_state_v2(state_cont, player_id);
 }
 
@@ -45,20 +43,6 @@ pub fn select_room_mut<'a>(
     player_id: Uuid,
 ) -> Option<&'a mut Room> {
     return find_room_by_player_id_mut(cont_st, player_id);
-}
-
-pub fn select_default_state<'a>(
-    cont: &'a mut RwLockWriteGuard<StateContainer>,
-) -> &'a mut GameState {
-    return &mut cont.state;
-}
-
-pub fn select_default_state_read<'a>(cont: &'a RwLockReadGuard<StateContainer>) -> &'a GameState {
-    return &cont.state;
-}
-
-pub fn update_default_state(cont: &mut RwLockWriteGuard<StateContainer>, val: GameState) {
-    cont.state = val;
 }
 
 pub fn get_rooms_iter<'a>(cont: &'a RwLockWriteGuard<StateContainer>) -> Iter<'a, Room> {
@@ -82,68 +66,60 @@ pub fn add_room(cont: &mut RwLockWriteGuard<StateContainer>, room: Room) {
 pub fn select_state<'a, 'b>(
     state_cont: &'a RwLockReadGuard<StateContainer>,
     player_id: Uuid,
-) -> &'a GameState {
+) -> Option<&'a GameState> {
     return select_state_v2(state_cont, player_id);
-}
-
-pub fn select_mut_state_v1<'a>(
-    cont: &'a mut RwLockWriteGuard<StateContainer>,
-    player_id: Uuid,
-) -> &'a mut GameState {
-    if cont.rooms.idx_by_id.contains_key(&player_id) {
-        cont.rooms.get_state_by_id_mut(&player_id).unwrap()
-    } else {
-        &mut cont.state
-    }
 }
 
 pub fn select_mut_state_v2<'a, 'b>(
     state_cont: &'a mut RwLockWriteGuard<StateContainer>,
     player_id: Uuid,
-) -> &'a mut GameState {
+) -> Option<&'a mut GameState> {
     if !state_cont.rooms.idx_by_player_id.contains_key(&player_id) {
-        return &mut state_cont.state;
+        return None;
     }
     let room = find_room_by_player_id_mut(state_cont, player_id).unwrap();
-    return &mut room.state;
+    return Some(&mut room.state);
 }
 
 pub fn select_state_v2<'a, 'b>(
     state_cont: &'a RwLockReadGuard<StateContainer>,
     player_id: Uuid,
-) -> &'a GameState {
+) -> Option<&'a GameState> {
     let state_id = get_state_id_cont(state_cont, player_id);
     let room_state_id = find_room_state_id_by_player_id(state_cont, player_id);
-    return if state_id == state_cont.state.id {
-        &state_cont.state
-    } else if room_state_id.is_some() {
+    return if room_state_id.is_some() {
         if let Some(state) = state_cont.rooms.get_state_by_id(&room_state_id.unwrap()) {
-            state
+            Some(state)
         } else {
-            &state_cont.state
+            None
         }
     } else {
-        if let Some(state) = state_cont.rooms.get_state_by_id(&state_id) {
-            state
+        if let Some(state_id) = state_id {
+            if let Some(state) = state_cont.rooms.get_state_by_id(&state_id) {
+                Some(state)
+            } else {
+                None
+            }
         } else {
-            &state_cont.state
+            None
         }
     };
 }
 
 pub fn move_player_to_room(client_id: Uuid, room_id: RoomId) {
-    let player = {
+    let player: Option<Player> = {
         let mut state_cont = STATE.write().unwrap();
         let old_player_state = select_state_mut(&mut state_cont, client_id);
-        old_player_state
-            .players
-            .iter()
-            .position(|p| p.id == client_id)
-            .map(|player_idx| {
-                // intentionally drop the result as the ship gets erased
-                find_and_extract_ship(old_player_state, client_id);
-                old_player_state.players.remove(player_idx)
-            })
+        old_player_state.and_then(|old| {
+            old.players
+                .iter()
+                .position(|p| p.id == client_id)
+                .and_then(|player_idx| {
+                    // intentionally drop the result as the ship gets erased
+                    find_and_extract_ship(old, client_id);
+                    Some(old.players.remove(player_idx))
+                })
+        })
     };
 
     let mut player = player.unwrap_or(Player::new(client_id, &GameMode::Sandbox));
@@ -170,40 +146,24 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId) {
     crate::main_ws_server::notify_state_changed(new_state_id, client_id);
 }
 
-pub fn get_state_id_cont(state_cont: &RwLockReadGuard<StateContainer>, client_id: Uuid) -> Uuid {
-    let in_personal = state_cont.rooms.idx_by_id.contains_key(&client_id);
-    let room_state = find_room_state_id_by_player_id(state_cont, client_id);
-    return if in_personal {
-        client_id
-    } else if room_state.is_some() {
-        room_state.unwrap()
-    } else {
-        state_cont.state.id.clone()
-    };
+pub fn get_state_id_cont(
+    state_cont: &RwLockReadGuard<StateContainer>,
+    client_id: Uuid,
+) -> Option<Uuid> {
+    return find_room_state_id_by_player_id(state_cont, client_id);
 }
 
 pub fn get_state_id_cont_mut(
     state_cont: &RwLockWriteGuard<StateContainer>,
     client_id: Uuid,
-) -> Uuid {
-    let in_personal = state_cont.rooms.idx_by_id.contains_key(&client_id);
-    let room_state = find_room_state_id_by_player_id_mut(state_cont, client_id);
-    return if in_personal {
-        client_id
-    } else if room_state.is_some() {
-        room_state.unwrap()
-    } else {
-        state_cont.state.id.clone()
-    };
+) -> Option<Uuid> {
+    return find_room_state_id_by_player_id_mut(state_cont, client_id);
 }
 
 pub fn select_state_by_id<'a>(
     cont: &'a RwLockReadGuard<StateContainer>,
     state_id: Uuid,
 ) -> Option<&'a GameState> {
-    if cont.state.id == state_id {
-        return Some(&cont.state);
-    }
     return cont.rooms.get_state_by_id(&state_id);
 }
 
@@ -211,8 +171,5 @@ pub fn select_state_by_id_mut<'a>(
     cont: &'a mut RwLockWriteGuard<StateContainer>,
     state_id: Uuid,
 ) -> Option<&'a mut GameState> {
-    if cont.state.id == state_id {
-        return Some(&mut cont.state);
-    }
     return cont.rooms.get_state_by_id_mut(&state_id);
 }

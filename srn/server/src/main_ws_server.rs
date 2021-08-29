@@ -183,7 +183,9 @@ fn on_message_to_send_to_client(
     }
     let cont = STATE.read().unwrap();
     let current_state_id = get_state_id_cont(&cont, client_id);
-    let should_send: bool = xcast::check_message_casting(client_id, &message, current_state_id);
+    let should_send: bool = current_state_id.map_or(false, |current_state_id| {
+        xcast::check_message_casting(client_id, &message, current_state_id)
+    });
     if should_send {
         let message = Message::text(message.clone().patch_for_client(client_id).serialize());
         sender
@@ -284,6 +286,11 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
 fn on_client_room_join(client_id: Uuid) {
     let mut cont = STATE.write().unwrap();
     let state = states::select_state_mut(&mut cont, client_id);
+    if state.is_none() {
+        warn!("room join in non-existent state");
+        return;
+    }
+    let state = state.unwrap();
     let player = find_my_player(&state, client_id);
     if let Some(player) = player {
         crate::fire_event(GameEvent::RoomJoined {
@@ -300,6 +307,11 @@ fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>)
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
             let state = states::select_state_mut(&mut cont, client_id);
+            if state.is_none() {
+                warn!("long action start in non-existent state");
+                return;
+            }
+            let state = state.unwrap();
             // let action_dbg = action.clone();
             if !long_actions::try_start_long_action(state, client_id, action, &mut world::gen_rng())
             {
@@ -324,6 +336,11 @@ fn on_client_notification_action(client_id: Uuid, data: &&str, tag: Option<&&str
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
             let state = states::select_state_mut(&mut cont, client_id);
+            if state.is_none() {
+                warn!("notification action start in non-existent state");
+                return;
+            }
+            let state = state.unwrap();
             notifications::apply_action(state, client_id, action);
             x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
@@ -360,6 +377,11 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
         Ok(up) => {
             let mut cont = STATE.write().unwrap();
             let state = select_state_mut(&mut cont, client_id);
+            if state.is_none() {
+                warn!("personalize in non-existent state");
+                return;
+            }
+            let state = state.unwrap();
             crate::personalize_player(state, client_id, up);
         }
         Err(_) => {}
@@ -381,15 +403,20 @@ fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str
     match parsed {
         Ok(res) => {
             let mut cont = STATE.write().unwrap();
-            let personal_state = states::select_state_mut(&mut cont, client_id);
-            if personal_state.mode != world::GameMode::Sandbox {
+            let state = states::select_state_mut(&mut cont, client_id);
+            if state.is_none() {
+                warn!("sandbox command in non-existent state");
+                return;
+            }
+            let state = state.unwrap();
+            if state.mode != world::GameMode::Sandbox {
                 warn!(format!(
                     "Attempt to send a sandbox command to non-sandbox state by client {}",
                     client_id
                 ));
                 return;
             }
-            sandbox::mutate_state(personal_state, client_id, res);
+            sandbox::mutate_state(state, client_id, res);
             send_tag_confirm(third.unwrap().to_string(), client_id);
         }
         Err(err) => {
@@ -404,6 +431,11 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
             let state = states::select_state_mut(&mut cont, client_id);
+            if state.is_none() {
+                warn!("trade action in non-existent state");
+                return;
+            }
+            let state = state.unwrap();
             market::attempt_trade(state, client_id, action);
             x_cast_state(state.clone(), XCast::Broadcast(state.id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
@@ -420,6 +452,11 @@ fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) 
         Ok(action) => {
             let mut cont = STATE.write().unwrap();
             let state = states::select_state_mut(&mut cont, client_id);
+            if state.is_none() {
+                warn!("inventory action in non-existent state");
+                return;
+            }
+            let state = state.unwrap();
             if let Some(ship) = indexing::find_my_ship_mut(state, client_id) {
                 inventory::apply_action(&mut ship.inventory, action);
             }
@@ -441,6 +478,11 @@ fn force_disconnect_client(client_id: Uuid) {
     }
     let mut cont = STATE.write().unwrap();
     let state = select_state_mut(&mut cont, client_id);
+    if state.is_none() {
+        warn!("force disconnect in non-existent state");
+        return;
+    }
+    let state = state.unwrap();
     crate::remove_player(client_id, state);
 }
 
@@ -501,12 +543,22 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
     index.map(|index| senders.remove(index));
     {
         let mut cont = STATE.write().unwrap();
-        let state_to_remove_client_from = select_state_mut(&mut cont, client_id);
-        crate::remove_player(client_id, state_to_remove_client_from);
+        let state = select_state_mut(&mut cont, client_id);
+        if state.is_none() {
+            warn!("remove player in non-existent state");
+            return;
+        }
+        let state = state.unwrap();
+        crate::remove_player(client_id, state);
     }
     println!("Client {} id {} disconnected", ip, client_id);
     let cont = STATE.read().unwrap();
     let state = select_state(&cont, client_id);
+    if state.is_none() {
+        warn!("xcast of non-existent state");
+        return;
+    }
+    let state = state.unwrap();
     let state_id = state.id.clone();
     x_cast_state(state.clone(), XCast::Broadcast(state_id));
 }
@@ -536,11 +588,16 @@ fn mutate_owned_ship(
     tag: Option<String>,
 ) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
-    let mut state = states::select_state_mut(&mut cont, client_id);
+    let state = states::select_state_mut(&mut cont, client_id);
+    if state.is_none() {
+        warn!("mutate owned ship in non-existent state");
+        return None;
+    }
+    let state = state.unwrap();
     if let Some(tag) = tag {
         send_tag_confirm(tag, client_id);
     }
-    let mutated = world::mutate_ship_no_lock(client_id, mutate_cmd, &mut state);
+    let mutated = world::mutate_ship_no_lock(client_id, mutate_cmd, state);
     if let Some(mutated) = mutated {
         multicast_ships_update_excluding(
             state.locations[mutated.1.location_idx as usize]
@@ -614,6 +671,11 @@ fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) 
         Ok(_action) => {
             let mut cont = STATE.write().unwrap();
             let state = states::select_state_mut(&mut cont, client_id);
+            if state.is_none() {
+                warn!("dialogue request in non-existent state");
+                return;
+            }
+            let state = state.unwrap();
             if let Some(player) = find_my_player(state, client_id) {
                 crate::fire_event(GameEvent::DialogueTriggerRequest {
                     dialogue_name: "basic_planet".to_string(),
@@ -635,6 +697,10 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
         let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
         let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
         let mut_state = states::select_state_mut(&mut cont, client_id);
+        if mut_state.is_none() {
+            warn!("attempt to handle dialogue option in non-existent state");
+        }
+        let mut_state = mut_state.unwrap();
         world::force_update_to_now(mut_state);
         let (new_dialogue_state, state_changed) = execute_dialog_option(
             client_id,
@@ -649,8 +715,10 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
     {
         if global_state_change {
             let state = crate::get_state_clone_read(client_id);
-            let state_id = state.id.clone();
-            x_cast_state(state, XCast::Broadcast(state_id));
+            state.map(|state| {
+                let state_id = state.id.clone();
+                x_cast_state(state, XCast::Broadcast(state_id));
+            });
         }
     }
 }
