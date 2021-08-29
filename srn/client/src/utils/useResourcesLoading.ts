@@ -15,7 +15,6 @@ export const useResourcesLoading = (onDone: () => void) => {
   }, [item]);
   const missingResources = new Set(expectedResources);
   for (const res of attemptedResources) {
-    console.log('deleting', res);
     missingResources.delete(res);
   }
   const isLoading = Math.abs(threeLoaderProgress - 100) > 1e-9;

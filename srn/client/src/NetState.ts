@@ -417,13 +417,6 @@ export default class NetState extends EventEmitter {
     this.socket.onopen = () => {
       this.connecting = false;
       this.visualState.boundCameraMovement = true;
-      this.send({
-        code: ClientOpCode.Name,
-        value: JSON.stringify({
-          name: this.playerName,
-          portrait_name: this.portraitName,
-        }),
-      });
 
       const switchRoomTag = uuid.v4();
       this.switchingRooms = true;
@@ -448,6 +441,17 @@ export default class NetState extends EventEmitter {
     };
   };
 
+  public sendName() {
+    console.log('sending name');
+    this.send({
+      code: ClientOpCode.Name,
+      value: JSON.stringify({
+        name: this.playerName,
+        portrait_name: this.portraitName,
+      }),
+    });
+  }
+
   private handleMessage(rawData: string) {
     try {
       const [messageCodeStr, data] = rawData.split('_%_');
@@ -461,6 +465,7 @@ export default class NetState extends EventEmitter {
           return;
         }
         this.switchingRooms = false;
+        this.sendName();
       }
 
       if (

@@ -186,15 +186,8 @@ fn personalize_player(state: &mut GameState, conn_id: Uuid, update: PersonalizeU
     }
 }
 
-fn make_new_human_player(conn_id: Uuid, state: &mut GameState) {
-    world::add_player(state, conn_id, false, None);
-    world::spawn_ship(state, conn_id, None);
-}
-
 fn remove_player(conn_id: Uuid, state: &mut GameState) {
     world::remove_player_from_state(conn_id, state);
-    // TODO remove empty personal state
-    // cont.states.remove(&conn_id);
 }
 
 pub fn new_id() -> Uuid {
