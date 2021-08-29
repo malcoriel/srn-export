@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.6.22 (2021-08-29)
+
+### New
+* Reworked room system. Now, whenever you join Cargo Rush mode, and nobody is playing, you will always join a new room.
+* Improved resource caching and loading speed.
+
+### Fixes
+* It is now impossible to start playing (to enter the play menu) if the server is down or is of a different version.
+
 ## Version 0.6.21 (2021-07-24)
 
 ### Fixes
