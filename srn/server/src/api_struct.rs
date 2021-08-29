@@ -1,10 +1,15 @@
-use crate::bots::Bot;
 use crate::world::{GameMode, GameState, PlayerId};
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Bot {
+    pub id: Uuid,
+    pub timer: Option<i64>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
 pub struct ClientMarker {
