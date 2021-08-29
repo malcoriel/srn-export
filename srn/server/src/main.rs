@@ -292,8 +292,11 @@ fn broadcast_state_thread() {
     loop {
         let diff = {
             let start = Local::now();
-            let mut cont = STATE.read().unwrap();
-            broadcast_all_states(&mut cont);
+            let rooms_clone = {
+                let cont = STATE.read().unwrap();
+                cont.rooms.values.clone()
+            };
+            broadcast_all_states_rooms(rooms_clone);
             (Local::now() - start).num_milliseconds()
         };
         // log!(format!("broadcast duration={}ms", diff));
@@ -501,6 +504,13 @@ fn main_thread() {
 fn broadcast_all_states(cont: &mut RwLockReadGuard<StateContainer>) {
     for room in get_rooms_iter_read(cont) {
         main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(room.state.id));
+    }
+}
+
+fn broadcast_all_states_rooms(rooms: Vec<Room>) {
+    for room in rooms.into_iter() {
+        let state_id = room.state.id;
+        main_ws_server::x_cast_state(room.state, XCast::Broadcast(state_id));
     }
 }
 
