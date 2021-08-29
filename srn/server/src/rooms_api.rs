@@ -157,6 +157,7 @@ pub fn cleanup_empty_rooms(cont: &mut RwLockWriteGuard<StateContainer>) {
             .collect::<Vec<Uuid>>()
             .into_iter(),
     );
+    let old_len = cont.rooms.values.len();
     cont.rooms.values.retain(|r| {
         let keep = !to_drop.contains(&r.id);
         if !keep {
@@ -167,4 +168,7 @@ pub fn cleanup_empty_rooms(cont: &mut RwLockWriteGuard<StateContainer>) {
         }
         keep
     });
+    if old_len != cont.rooms.values.len() {
+        cont.rooms.reindex();
+    }
 }
