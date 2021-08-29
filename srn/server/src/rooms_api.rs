@@ -23,8 +23,7 @@ use std::time::Duration;
 
 #[get("/")]
 pub fn get_rooms() -> Json<Vec<Room>> {
-    let cont = STATE.read().unwrap();
-    let rooms = cont.rooms.values.clone();
+    let rooms = crate::ROOMS_READ.iter().map(|r| r.val().clone()).collect();
     Json(rooms)
 }
 
@@ -37,11 +36,8 @@ pub fn get_rooms_for_mode(game_mode: String) -> Json<Vec<Room>> {
     }
 
     let mode = mode.unwrap();
-    let cont = STATE.read().unwrap();
-    let rooms = cont
-        .rooms
-        .values
-        .clone()
+    let rooms: Vec<Room> = crate::ROOMS_READ.iter().map(|r| r.val().clone()).collect();
+    let rooms = rooms
         .into_iter()
         .filter(|r| r.state.mode == mode)
         .collect::<Vec<Room>>();
@@ -133,42 +129,42 @@ pub fn find_room_by_player_id_mut<'a>(
 pub const ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS: i64 = 5 * 1000;
 
 pub fn cleanup_empty_rooms(cont: &mut RwLockWriteGuard<StateContainer>) {
-    let curr_millis = Local::now().timestamp_millis();
-    for room in cont.rooms.values.iter_mut() {
-        if room.last_players_mark.is_none() && room.state.players.len() == room.bots.len() {
-            room.last_players_mark = Some(curr_millis);
-        } else if room.last_players_mark.is_some() && room.state.players.len() > room.bots.len() {
-            room.last_players_mark = None;
-        }
-    }
-    let to_drop: HashSet<RoomId> = HashSet::from_iter(
-        cont.rooms
-            .values
-            .iter()
-            .filter_map(|room| {
-                room.last_players_mark.map_or(None, |mark| {
-                    if (mark - curr_millis).abs() > ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS {
-                        Some(room.id)
-                    } else {
-                        None
-                    }
-                })
-            })
-            .collect::<Vec<Uuid>>()
-            .into_iter(),
-    );
-    let old_len = cont.rooms.values.len();
-    cont.rooms.values.retain(|r| {
-        let keep = !to_drop.contains(&r.id);
-        if !keep {
-            log!(format!(
-                "dropping room {} without players after {}ms",
-                r.id, ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS
-            ));
-        }
-        keep
-    });
-    if old_len != cont.rooms.values.len() {
-        cont.rooms.reindex();
-    }
+    // let curr_millis = Local::now().timestamp_millis();
+    // for room in cont.rooms.values.iter_mut() {
+    //     if room.last_players_mark.is_none() && room.state.players.len() == room.bots.len() {
+    //         room.last_players_mark = Some(curr_millis);
+    //     } else if room.last_players_mark.is_some() && room.state.players.len() > room.bots.len() {
+    //         room.last_players_mark = None;
+    //     }
+    // }
+    // let to_drop: HashSet<RoomId> = HashSet::from_iter(
+    //     cont.rooms
+    //         .values
+    //         .iter()
+    //         .filter_map(|room| {
+    //             room.last_players_mark.map_or(None, |mark| {
+    //                 if (mark - curr_millis).abs() > ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS {
+    //                     Some(room.id)
+    //                 } else {
+    //                     None
+    //                 }
+    //             })
+    //         })
+    //         .collect::<Vec<Uuid>>()
+    //         .into_iter(),
+    // );
+    // if to_drop.len() > 0 {
+    //     log!(format!("to drop: {:?}", to_drop));
+    // }
+    // cont.rooms.values.retain(|r| {
+    //     let keep = !to_drop.contains(&r.id);
+    //     if !keep {
+    //         log!(format!(
+    //             "dropping room {} without players after {}ms",
+    //             r.id, ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS
+    //         ));
+    //     }
+    //     keep
+    // });
+    // cont.rooms.reindex();
 }

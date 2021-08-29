@@ -39,6 +39,7 @@ use websocket::{Message, OwnedMessage};
 use dialogue::{DialogueStates, DialogueTable};
 use dialogue_dto::Dialogue;
 use lockfree::map::Map as LockFreeMap;
+use lockfree::set::Set as LockFreeSet;
 use net::{
     ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper,
     SwitchRoomPayload, TagConfirm, Wrapper,
@@ -151,7 +152,7 @@ lazy_static! {
 }
 
 lazy_static! {
-    static ref STATE_BROADCAST_MAP: LockFreeMap<Uuid, GameState> = LockFreeMap::new();
+    pub static ref ROOMS_READ: LockFreeMap<Uuid, Room> = LockFreeMap::new();
 }
 
 pub const ENABLE_PERF: bool = true;
@@ -294,10 +295,10 @@ fn broadcast_state_thread() {
     loop {
         let diff = {
             let start = Local::now();
-            for guard in STATE_BROADCAST_MAP.iter() {
+            for guard in ROOMS_READ.iter() {
                 main_ws_server::x_cast_state(
-                    guard.val().clone(),
-                    XCast::Broadcast(guard.key().clone()),
+                    guard.val().state.clone(),
+                    XCast::Broadcast(guard.val().state.id.clone()),
                 );
             }
             (Local::now() - start).num_milliseconds()
@@ -371,7 +372,7 @@ fn main_thread() {
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
 
         let update_rooms_id = sampler.start(SamplerMarks::Update as u32);
-        cleanup_empty_rooms(&mut cont);
+        // cleanup_empty_rooms(&mut cont);
         let mut updated_rooms = vec![];
         for room in get_rooms_iter(&cont) {
             // if state.players.len() == 0 {
@@ -395,7 +396,7 @@ fn main_thread() {
                 last_players_mark: room.last_players_mark,
                 bots: room.bots.clone(),
             };
-            STATE_BROADCAST_MAP.insert(room_clone.state.id, room_clone.state.clone());
+            ROOMS_READ.insert(room_clone.state.id, room_clone.clone());
             updated_rooms.push(room_clone);
         }
 
