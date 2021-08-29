@@ -1,32 +1,36 @@
 import React from 'react';
 import { Button } from './ui/Button';
+import { GameMode } from '../../../world/pkg/world.extra';
 
 export const PlayMenu: React.FC<{
-  startTutorial: () => void;
-  start: () => void;
-  startSandbox: () => void;
+  start: (gameMode: GameMode) => void;
   hide: () => void;
-}> = ({ startTutorial, start, hide, startSandbox }) => (
+}> = ({ start, hide }) => (
   <div className="play-menu">
     {/* eslint-disable-next-line react/no-unescaped-entities */}
-    <div>I recommend doing the tutorial if it's your first time here:</div>
+    <div>If it's your first time here, try tutorial to learn the basics:</div>
     <Button
       className="play"
-      onClick={startTutorial}
+      onClick={() => start(GameMode.Tutorial)}
       hotkey="t"
       text="TUTORIAL"
     />
     <div>
-      Right now, you can play the cargo rush mode, where you can compete with
-      bots (and other players, if any) to get the most amount of money in 3
-      minutes:
+      Play with bots or other players to earn the most money in 3 minutes:
     </div>
-    <Button className="play" onClick={start} hotkey="c" text="CARGO RUSH" />
-    <div>
-      There is a playground for building systems, press G to see the builder
-      menu:
-    </div>
-    <Button className="play" onClick={startSandbox} hotkey="S" text="SANDBOX" />
+    <Button
+      className="play"
+      onClick={() => start(GameMode.CargoRush)}
+      hotkey="c"
+      text="CARGO RUSH"
+    />
+    <div>Playground for building systems, press G to see the builder menu:</div>
+    <Button
+      className="play"
+      onClick={() => start(GameMode.Sandbox)}
+      hotkey="S"
+      text="SANDBOX"
+    />
     <div>Or you can just go to the main menu:</div>
     <Button className="play" onClick={hide} hotkey="b" text="BACK" />
   </div>

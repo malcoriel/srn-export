@@ -19,6 +19,7 @@ import { api } from '../utils/api';
 import { GlobalChat } from './GlobalChat';
 import { Changelog } from './Changelog';
 import { PlayMenu } from './PlayMenu';
+import { GameMode } from '../../../world/pkg/world.extra';
 
 // to only skip menu once
 let firstTime = true;
@@ -26,13 +27,11 @@ export const makePortraitPath = (portrait: string) =>
   `resources/chars/${portrait}.png`;
 
 export const StartMenu: React.FC<{
-  start: () => void;
-  startTutorial: () => void;
-  startSandbox: () => void;
+  start: (mode: GameMode) => void;
   quit: () => void;
   seed: string;
   locationSeed: string;
-}> = ({ start, quit, seed, startTutorial, startSandbox, locationSeed }) => {
+}> = ({ start, quit, seed, locationSeed }) => {
   const {
     musicEnabled,
     setMusicEnabled,
@@ -73,7 +72,7 @@ export const StartMenu: React.FC<{
 
   useEffect(() => {
     if (skipMenu && firstTime) {
-      start();
+      start(GameMode.CargoRush);
       firstTime = false;
     }
   }, [skipMenu, start]);
@@ -241,14 +240,7 @@ export const StartMenu: React.FC<{
           )}
         </div>
       )}
-      {playMenu && (
-        <PlayMenu
-          startSandbox={startSandbox}
-          startTutorial={startTutorial}
-          start={start}
-          hide={() => setPlayMenu(false)}
-        />
-      )}
+      {playMenu && <PlayMenu start={start} hide={() => setPlayMenu(false)} />}
       <div className="versions-status">
         <div>
           Client version:&nbsp;
@@ -266,9 +258,9 @@ export const StartMenu: React.FC<{
           &nbsp; news & talk
         </a>
         {/* eslint-disable-next-line react/no-unescaped-entities */}
-        <div className="copyright">Game by Valeriy 'Malcoriel' Kuzmin</div>
-        <div className="copyright">Character images by artbreeder.com</div>
-        <div className="copyright">Music powered by aiva.ai</div>
+        <div className="authorship">Game by Valeriy 'Malcoriel' Kuzmin</div>
+        <div className="authorship">Character images by artbreeder.com</div>
+        <div className="authorship">Music powered by aiva.ai</div>
       </div>
       {!playing && (
         <div className="changelog-container">

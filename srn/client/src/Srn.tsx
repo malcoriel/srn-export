@@ -264,10 +264,8 @@ const Srn = () => {
             <StartMenu
               seed={seed}
               locationSeed={locationSeed}
-              start={() => start(GameMode.CargoRush)}
+              start={start}
               quit={quit}
-              startTutorial={() => start(GameMode.Tutorial)}
-              startSandbox={() => start(GameMode.Sandbox)}
             />
           )}
           {!playing && <StartMenuBackground />}
