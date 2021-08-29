@@ -21,3 +21,13 @@ pub fn get_health() -> Status {
         Status::InternalServerError
     };
 }
+
+#[head("/health")]
+pub fn head_health() -> Status {
+    let is_ok = crate::STATE.read().is_ok();
+    return if is_ok {
+        Status::Ok
+    } else {
+        Status::InternalServerError
+    };
+}

@@ -8,7 +8,7 @@ use std::thread;
 use std::time::Duration;
 use uuid::Uuid;
 
-use crate::api_struct::{Room, Bot};
+use crate::api_struct::{Bot, Room};
 use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
@@ -23,7 +23,6 @@ use crate::world;
 use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship};
 use crate::DIALOGUE_STATES;
 use crate::STATE;
-
 
 const BOT_SLEEP_MS: u64 = 200;
 const BOT_QUEST_ACT_DELAY_MC: i64 = 2 * 1000 * 1000;

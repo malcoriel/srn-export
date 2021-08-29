@@ -58,7 +58,9 @@ use crate::perf::Sampler;
 use crate::rooms_api::find_room_state_id_by_player_id;
 use crate::sandbox::mutate_state;
 use crate::ship_action::ShipActionRust;
-use crate::states::{get_state_id_cont, get_state_id_cont_mut, select_state, select_state_mut};
+use crate::states::{
+    get_rooms_iter_read, get_state_id_cont, get_state_id_cont_mut, select_state, select_state_mut,
+};
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
@@ -147,8 +149,8 @@ lazy_static! {
         Arc::new(Mutex::new(Box::new(DialogueTable::new())));
 }
 
-pub const ENABLE_PERF: bool = false;
-const DEBUG_FRAME_STATS: bool = false;
+pub const ENABLE_PERF: bool = true;
+const DEBUG_FRAME_STATS: bool = true;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const BROADCAST_SLEEP_MS: u64 = 500;
 const MAX_ERRORS: u32 = 10;
@@ -260,7 +262,10 @@ fn rocket() -> rocket::Rocket {
     sandbox::init_saved_states();
     rocket::ignite()
         .attach(CORS())
-        .mount("/api", routes![api::get_version, api::get_health])
+        .mount(
+            "/api",
+            routes![api::get_version, api::get_health, api::head_health],
+        )
         .mount(
             "/api/sandbox",
             routes![
@@ -283,15 +288,11 @@ fn rocket() -> rocket::Rocket {
         )
 }
 
-fn make_thread(name: &str) -> std::thread::Builder {
-    std::thread::Builder::new().name(name.to_string())
-}
-
 fn broadcast_state_thread() {
     loop {
         let diff = {
             let start = Local::now();
-            let mut cont = STATE.write().unwrap();
+            let mut cont = STATE.read().unwrap();
             broadcast_all_states(&mut cont);
             (Local::now() - start).num_milliseconds()
         };
@@ -300,6 +301,10 @@ fn broadcast_state_thread() {
             (BROADCAST_SLEEP_MS as i64 - diff).max(0) as u64,
         ));
     }
+}
+
+fn make_thread(name: &str) -> std::thread::Builder {
+    std::thread::Builder::new().name(name.to_string())
 }
 
 const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
@@ -485,6 +490,7 @@ fn main_thread() {
             over_budget_frame += 1;
             log!(format!("Frame over budget by {}µs", -sampler.budget));
         }
+
         let sleep_remaining = sampler.budget.max(0);
         if sleep_remaining > MIN_SLEEP_TICKS {
             thread::sleep(Duration::from_micros(sleep_remaining as u64));
@@ -492,8 +498,8 @@ fn main_thread() {
     }
 }
 
-fn broadcast_all_states(cont: &mut RwLockWriteGuard<StateContainer>) {
-    for room in get_rooms_iter(cont) {
+fn broadcast_all_states(cont: &mut RwLockReadGuard<StateContainer>) {
+    for room in get_rooms_iter_read(cont) {
         main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(room.state.id));
     }
 }
