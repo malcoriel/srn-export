@@ -56,7 +56,7 @@ use crate::indexing::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
 };
 use crate::perf::Sampler;
-use crate::rooms_api::find_room_state_id_by_player_id;
+use crate::rooms_api::{cleanup_empty_rooms, find_room_state_id_by_player_id};
 use crate::sandbox::mutate_state;
 use crate::ship_action::ShipActionRust;
 use crate::states::{
@@ -260,9 +260,6 @@ fn rocket() -> rocket::Rocket {
     make_thread("websocket_server_cleanup")
         .spawn(|| main_ws_server::cleanup_bad_clients_thread())
         .ok();
-    // make_thread("rooms_api_cleanup")
-    //     .spawn(|| rooms_api::cleanup_empty_rooms())
-    //     .ok();
 
     sandbox::init_saved_states();
     rocket::ignite()
@@ -364,6 +361,7 @@ fn main_thread() {
         let mut d_states = DIALOGUE_STATES.lock().unwrap();
         if sampler.end_top(locks_id) < 0 {
             shortcut_frame += 1;
+            sampler.end(total_mark);
             continue;
         }
 
@@ -373,6 +371,7 @@ fn main_thread() {
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
 
         let update_rooms_id = sampler.start(SamplerMarks::Update as u32);
+        cleanup_empty_rooms(&mut cont);
         let mut updated_rooms = vec![];
         for room in get_rooms_iter(&cont) {
             // if state.players.len() == 0 {
@@ -393,6 +392,7 @@ fn main_thread() {
                 id: room.id,
                 name: room.name.clone(),
                 state: new_state,
+                last_players_mark: room.last_players_mark,
                 bots: room.bots.clone(),
             };
             STATE_BROADCAST_MAP.insert(room_clone.state.id, room_clone.state.clone());
@@ -402,6 +402,7 @@ fn main_thread() {
         update_rooms(&mut cont, updated_rooms);
         if sampler.end_top(update_rooms_id) < 0 {
             shortcut_frame += 1;
+            sampler.end(total_mark);
             continue;
         }
 
@@ -411,6 +412,7 @@ fn main_thread() {
         }
         if sampler.end_top(quests_mark) < 0 {
             shortcut_frame += 1;
+            sampler.end(total_mark);
             continue;
         }
 
@@ -424,6 +426,7 @@ fn main_thread() {
                 bot_action_elapsed = 0;
                 if sampler.end_top(bots_mark) < 0 {
                     shortcut_frame += 1;
+                    sampler.end(total_mark);
                     continue;
                 }
             } else {
@@ -447,6 +450,7 @@ fn main_thread() {
             }
             if sampler.end_top(events_mark) < 0 {
                 shortcut_frame += 1;
+                sampler.end(total_mark);
                 continue;
             }
             events_elapsed = 0;
@@ -456,6 +460,8 @@ fn main_thread() {
 
         let cleanup_mark = sampler.start(SamplerMarks::ShipCleanup as u32);
         for room in cont.rooms.values.iter_mut() {
+            let bot_ids = HashSet::from_iter(room.bots.iter().map(|b| b.id));
+            cleanup_orphaned_players(&mut room.state, &bot_ids);
             let existing_player_ships = room
                 .state
                 .players
@@ -467,17 +473,13 @@ fn main_thread() {
 
             let len = room.state.locations.len();
             for idx in 0..len {
-                sampler = cleanup_nonexistent_ships(
-                    &mut room.state,
-                    &existing_player_ships,
-                    idx,
-                    sampler,
-                );
+                cleanup_orphaned_ships(&mut room.state, &existing_player_ships, idx);
             }
         }
 
         if sampler.end_top(cleanup_mark) < 0 {
             shortcut_frame += 1;
+            sampler.end(total_mark);
             continue;
         }
 
@@ -522,32 +524,28 @@ fn broadcast_all_states_rooms(rooms: Vec<Room>) {
     }
 }
 
-pub fn cleanup_nonexistent_ships(
+pub fn cleanup_orphaned_ships(
     state: &mut GameState,
     existing_player_ships: &Vec<Uuid>,
     location_idx: usize,
-    mut sampler: Sampler,
-) -> Sampler {
+) {
     let new_ships = state.locations[location_idx]
         .ships
         .clone()
         .into_iter()
         .filter(|s| existing_player_ships.contains(&s.id))
         .collect::<Vec<_>>();
-    let old_ships_len = state.locations[location_idx].ships.len();
-    let new_ships_len = new_ships.len();
     state.locations[location_idx].ships = new_ships;
+}
 
-    if new_ships_len != old_ships_len {
-        let ship_cleanup_id = sampler.start(SamplerMarks::ShipCleanup as u32);
-        main_ws_server::multicast_ships_update_excluding(
-            state.locations[location_idx].ships.clone(),
-            None,
-            state.id,
-        );
-        sampler.end(ship_cleanup_id);
+pub fn cleanup_orphaned_players(state: &mut GameState, bot_ids: &HashSet<Uuid>) {
+    let mut to_drop = HashSet::new();
+    for player in state.players.iter() {
+        if !bot_ids.contains(&player.id) && main_ws_server::is_disconnected(player.id) {
+            to_drop.insert(player.id);
+        }
     }
-    sampler
+    state.players.retain(|p| !to_drop.contains(&p.id));
 }
 
 pub fn fire_event(ev: GameEvent) {

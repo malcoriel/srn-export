@@ -563,7 +563,7 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
     x_cast_state(state.clone(), XCast::Broadcast(state_id));
 }
 
-fn is_disconnected(client_id: Uuid) -> bool {
+pub fn is_disconnected(client_id: Uuid) -> bool {
     let senders = CLIENT_SENDERS.lock().unwrap();
     let index = senders.iter().position(|s| s.0 == client_id);
     if index.is_none() {

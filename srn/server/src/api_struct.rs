@@ -79,5 +79,6 @@ pub struct Room {
     pub id: RoomId,
     pub name: String,
     pub state: GameState,
+    pub last_players_mark: Option<i64>,
     pub bots: Vec<Bot>,
 }
