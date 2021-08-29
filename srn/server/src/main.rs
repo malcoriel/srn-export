@@ -372,32 +372,33 @@ fn main_thread() {
         last = now;
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
 
-        let update_rooms_id = sampler.start(SamplerMarks::UpdateRooms as u32);
-        let updated_rooms = get_rooms_iter(&cont)
-            .filter_map(|room| {
-                // if state.players.len() == 0 {
-                //     return None;
-                // }
-                let (new_state, _) = world::update_world(
-                    room.state.clone(),
-                    elapsed_micro,
-                    false,
-                    Sampler::empty(),
-                    UpdateOptions {
-                        disable_hp_effects: false,
-                        limit_area: AABB::maxed(),
-                    },
-                );
-                let room_clone = Room {
-                    id: room.id,
-                    name: room.name.clone(),
-                    state: new_state,
-                    bots: room.bots.clone(),
-                };
-                STATE_BROADCAST_MAP.insert(room_clone.state.id, room_clone.state.clone());
-                Some(room_clone)
-            })
-            .collect();
+        let update_rooms_id = sampler.start(SamplerMarks::Update as u32);
+        let mut updated_rooms = vec![];
+        for room in get_rooms_iter(&cont) {
+            // if state.players.len() == 0 {
+            //     return None;
+            // }
+            let (new_state, new_sampler) = world::update_world(
+                room.state.clone(),
+                elapsed_micro,
+                false,
+                sampler,
+                UpdateOptions {
+                    disable_hp_effects: false,
+                    limit_area: AABB::maxed(),
+                },
+            );
+            sampler = new_sampler;
+            let room_clone = Room {
+                id: room.id,
+                name: room.name.clone(),
+                state: new_state,
+                bots: room.bots.clone(),
+            };
+            STATE_BROADCAST_MAP.insert(room_clone.state.id, room_clone.state.clone());
+            updated_rooms.push(room_clone);
+        }
+
         update_rooms(&mut cont, updated_rooms);
         if sampler.end_top(update_rooms_id) < 0 {
             shortcut_frame += 1;
