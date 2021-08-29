@@ -38,6 +38,7 @@ use websocket::{Message, OwnedMessage};
 
 use dialogue::{DialogueStates, DialogueTable};
 use dialogue_dto::Dialogue;
+use lockfree::map::Map as LockFreeMap;
 use net::{
     ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper,
     SwitchRoomPayload, TagConfirm, Wrapper,
@@ -147,6 +148,10 @@ lazy_static! {
 lazy_static! {
     static ref DIALOGUE_TABLE: Arc<Mutex<Box<DialogueTable>>> =
         Arc::new(Mutex::new(Box::new(DialogueTable::new())));
+}
+
+lazy_static! {
+    static ref STATE_BROADCAST_MAP: LockFreeMap<Uuid, GameState> = LockFreeMap::new();
 }
 
 pub const ENABLE_PERF: bool = true;
@@ -292,11 +297,12 @@ fn broadcast_state_thread() {
     loop {
         let diff = {
             let start = Local::now();
-            let rooms_clone = {
-                let cont = STATE.read().unwrap();
-                cont.rooms.values.clone()
-            };
-            broadcast_all_states_rooms(rooms_clone);
+            for guard in STATE_BROADCAST_MAP.iter() {
+                main_ws_server::x_cast_state(
+                    guard.val().clone(),
+                    XCast::Broadcast(guard.key().clone()),
+                );
+            }
             (Local::now() - start).num_milliseconds()
         };
         // log!(format!("broadcast duration={}ms", diff));
@@ -388,6 +394,7 @@ fn main_thread() {
                     state: new_state,
                     bots: room.bots.clone(),
                 };
+                STATE_BROADCAST_MAP.insert(room_clone.state.id, room_clone.state.clone());
                 Some(room_clone)
             })
             .collect();

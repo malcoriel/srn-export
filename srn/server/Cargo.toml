@@ -30,6 +30,7 @@ typescript-definitions = "0.1.10"
 wasm-bindgen = "0.2.71"
 kdbush = "0.2.0"
 state = "0.5.2"
+lockfree = "0.5.1"
 
   [dependencies.rocket]
   git = "https://github.com/SergioBenitez/Rocket"
