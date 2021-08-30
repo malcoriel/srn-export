@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.6.23 (2021-08-31)
+
+### Fixes
+* Improved server performance.
+* Fixed several bugs that led to inability to join rooms after leaving them.
+* Fixed lack of time-passing after initial state generation, that also led to invalid and unplayable systems.
+
 ## Version 0.6.22 (2021-08-29)
 
 ### New
