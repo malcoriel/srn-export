@@ -18,8 +18,6 @@ use std::slice::Iter;
 
 lazy_static! {
     pub static ref STATE: RwLock<StateContainer> = {
-        let mut state = world::seed_state(true, true);
-        state.mode = world::GameMode::CargoRush;
         RwLock::new(StateContainer {
             rooms: RoomsState::new(),
         })

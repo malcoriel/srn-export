@@ -9,8 +9,8 @@ use crate::market::init_all_planets_market;
 use crate::sandbox::SavedState;
 use crate::sandbox::SAVED_STATES;
 use crate::states::{select_room_mut, select_state_mut};
-use crate::system_gen::seed_room_state;
-use crate::world::{gen_state_by_seed, random_hex_seed, seed_state, GameMode, GameState};
+use crate::system_gen::{gen_state, seed_room_state};
+use crate::world::{random_hex_seed, GameMode, GameState};
 
 #[get("/saved_states")]
 pub fn get_saved_states() -> Json<Vec<(String, Uuid)>> {
@@ -98,7 +98,7 @@ pub fn load_random_state(player_id: String) {
     {
         let player_id = Uuid::parse_str(player_id.as_str())
             .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-        replace_player_state(player_id, gen_state_by_seed(true, random_hex_seed()));
+        replace_player_state(player_id, gen_state(random_hex_seed()));
     }
 }
 
@@ -134,5 +134,5 @@ fn replace_player_state(player_id: Uuid, mut new_state: GameState) {
 pub fn load_seeded_state(player_id: String, seed: String) {
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-    replace_player_state(player_id, gen_state_by_seed(true, seed));
+    replace_player_state(player_id, gen_state(seed));
 }

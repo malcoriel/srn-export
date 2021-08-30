@@ -1,5 +1,17 @@
+use core::mem;
+use std::collections::hash_map::DefaultHasher;
+use std::collections::{HashMap, VecDeque};
+use std::f64::consts::PI;
+use std::hash::{Hash, Hasher};
+
+use chrono::Utc;
+use rand::rngs::SmallRng;
+use rand::{Rng, RngCore, SeedableRng};
+use serde_derive::{Deserialize, Serialize};
+use uuid::Uuid;
+
 use crate::market::{init_all_planets_market, Market};
-use crate::new_id;
+use crate::perf::Sampler;
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count,
     gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_color, gen_star_name,
@@ -8,18 +20,9 @@ use crate::random_stuff::{
 use crate::vec2::Vec2f64;
 use crate::world::{
     gen_rng, random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location,
-    Planet, Star, GAME_STATE_VERSION,
+    Planet, Star, AABB, GAME_STATE_VERSION,
 };
-use chrono::Utc;
-use core::mem;
-use rand::rngs::SmallRng;
-use rand::{Rng, RngCore, SeedableRng};
-use serde_derive::{Deserialize, Serialize};
-use std::collections::hash_map::DefaultHasher;
-use std::collections::{HashMap, VecDeque};
-use std::f64::consts::PI;
-use std::hash::{Hash, Hasher};
-use uuid::Uuid;
+use crate::{new_id, planet_movement, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlanetType {
@@ -85,7 +88,7 @@ pub fn wire_shake_locations(locations: &mut Vec<Location>, prng: &mut SmallRng) 
     }
 }
 
-pub fn system_gen(seed: String) -> GameState {
+fn system_gen_raw(seed: String) -> GameState {
     let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
 
     let mut locations = vec![];
@@ -97,7 +100,7 @@ pub fn system_gen(seed: String) -> GameState {
 
     wire_shake_locations(&mut locations, &mut prng);
     let now = Utc::now().timestamp_millis() as u64;
-    let state = GameState {
+    return GameState {
         id: new_id(),
         seed: seed.clone(),
         tag: None,
@@ -114,7 +117,6 @@ pub fn system_gen(seed: String) -> GameState {
         market: Market::new(),
         version: GAME_STATE_VERSION,
     };
-    state
 }
 
 pub const MIN_CONTAINER_DISTANCE: f64 = 50.0;
@@ -364,7 +366,7 @@ pub fn seed_room_state(mode: &GameMode, seed: String) -> GameState {
             panic!("Unknown mode to seed");
         }
         GameMode::CargoRush => {
-            let mut state = system_gen(seed);
+            let mut state = gen_state(seed);
             init_all_planets_market(&mut state);
             state.id = new_id();
             state.mode = GameMode::CargoRush;
@@ -464,3 +466,64 @@ pub fn make_sandbox_state() -> GameState {
         market: Market::new(),
     }
 }
+
+pub fn seed_state_test(_debug: bool, seed_and_validate: bool) -> GameState {
+    let seed = world::random_hex_seed();
+    log!(format!("Starting seeding state with seed={}", seed));
+    let mut state = gen_state(seed);
+    init_all_planets_market(&mut state);
+    log!(format!("Done."));
+    state
+}
+
+pub fn gen_state(seed: String) -> GameState {
+    let state = system_gen_raw(seed);
+
+    let mut state = validate_state(state);
+    for idx in 0..state.locations.len() {
+        let (planets, _sampler) = planet_movement::update_planets(
+            &state.locations[idx].planets,
+            &state.locations[idx].star,
+            SEED_TIME,
+            Sampler::empty(),
+            AABB::maxed(),
+        );
+        state.locations[idx].planets = planets;
+    }
+    let state = validate_state(state);
+    state
+}
+
+const SEED_TIME: i64 = 9321 * 1000 * 1000;
+
+pub fn validate_state(mut in_state: GameState) -> GameState {
+    for idx in 0..in_state.locations.len() {
+        in_state.locations[idx].planets = extract_valid_planets(&in_state, idx);
+    }
+    in_state
+}
+
+pub fn extract_valid_planets(in_state: &GameState, location_idx: usize) -> Vec<Planet> {
+    in_state.locations[location_idx]
+        .planets
+        .iter()
+        .filter(|p| {
+            let p_pos = Vec2f64 { x: p.x, y: p.y };
+            let check = p.x.is_finite()
+                && !p.x.is_nan()
+                && p.y.is_finite()
+                && !p.y.is_nan()
+                && p.rotation.is_finite()
+                && !p.rotation.is_nan()
+                && p_pos.euclidean_len() < MAX_ORBIT;
+
+            // if !check {
+            //     eprintln!("Validate state: removed planet {:?})", p);
+            // }
+            return check;
+        })
+        .map(|p| p.clone())
+        .collect::<Vec<_>>()
+}
+
+const MAX_ORBIT: f64 = 450.0;

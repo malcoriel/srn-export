@@ -1,11 +1,16 @@
 #[cfg(test)]
 mod world_test {
-    use crate::dialogue::{execute_dialog_option, DialogueScript, DialogueStates, DialogueTable, DialogueUpdate, read_from_resource, DialogueOptionSideEffect};
-    use crate::{world, dialogue, new_id};
-    use crate::world::GameState;
     use std::collections::HashMap;
     use std::str::FromStr;
+
     use uuid::Uuid;
+
+    use crate::dialogue::{
+        execute_dialog_option, read_from_resource, DialogueOptionSideEffect, DialogueScript,
+        DialogueStates, DialogueTable, DialogueUpdate,
+    };
+    use crate::world::GameState;
+    use crate::{dialogue, new_id, system_gen, world};
 
     // currently broken
     fn can_move_between_valid_states() {
@@ -15,8 +20,16 @@ mod world_test {
         let dialogue_id = script.id;
         let first_state_id = script.initial_state;
         let initial_options = script.options.get(&first_state_id).unwrap();
-        let go_next_id = initial_options.iter().find(|(_oid, name, _)| name == "Go to the marketplace to trade.").unwrap().0;
-        let exit_id = initial_options.iter().find(|(_oid, name, _)| name == "Undock and fly away").unwrap().0;
+        let go_next_id = initial_options
+            .iter()
+            .find(|(_oid, name, _)| name == "Go to the marketplace to trade.")
+            .unwrap()
+            .0;
+        let exit_id = initial_options
+            .iter()
+            .find(|(_oid, name, _)| name == "Undock and fly away")
+            .unwrap()
+            .0;
 
         let mut d_table: DialogueTable = DialogueTable::new();
         d_table.scripts.insert(dialogue_id, script);
@@ -29,7 +42,7 @@ mod world_test {
             .1
             .insert(dialogue_id, Box::new(Some(first_state_id)));
 
-        let mut state = world::seed_state(false, false);
+        let mut state = system_gen::seed_state_test(false, false);
 
         execute_dialog_option(
             player_id,

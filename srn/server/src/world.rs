@@ -3,16 +3,16 @@ use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 #[allow(deprecated)]
 use std::f64::{INFINITY, NEG_INFINITY};
+use std::fmt::{Display, Formatter};
 use std::iter::FromIterator;
 
 use chrono::Utc;
 use itertools::{Either, Itertools};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use uuid::*;
-
-use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
@@ -44,7 +44,7 @@ use crate::random_stuff::{
 };
 use crate::ship_action::{ShipActionRust, ShipMovement};
 use crate::substitutions::substitute_notification_texts;
-use crate::system_gen::{str_to_hash, system_gen};
+use crate::system_gen::{gen_state, str_to_hash};
 use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
@@ -52,14 +52,11 @@ use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
 use crate::{abilities, autofocus, indexing};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{new_id, DEBUG_PHYSICS};
-use std::fmt::{Display, Formatter};
 
 // speeds are per second
 const SHIP_SPEED: f64 = 20.0;
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
 const ORB_SPEED_MULT: f64 = 1.0;
-const SEED_TIME: i64 = 9321 * 1000 * 1000;
-const MAX_ORBIT: f64 = 450.0;
 const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
 const TRAJECTORY_MAX_ITER: i32 = 10;
 const TRAJECTORY_EPS: f64 = 0.1;
@@ -607,22 +604,6 @@ impl GameState {
     }
 }
 
-// b84413729214a182 - no inner planet, lol
-const FIXED_SEED: Option<&str> = None;
-
-pub fn seed_state(_debug: bool, seed_and_validate: bool) -> GameState {
-    let seed: String = if let Some(seed) = FIXED_SEED {
-        String::from(seed)
-    } else {
-        random_hex_seed()
-    };
-    log!(format!("Starting seeding state with seed={}", seed));
-    let mut state = gen_state_by_seed(seed_and_validate, seed);
-    init_all_planets_market(&mut state);
-    log!(format!("Done."));
-    state
-}
-
 pub fn random_hex_seed() -> String {
     let mut rng = thread_rng();
     let mut bytes: [u8; 8] = [0; 8];
@@ -634,29 +615,6 @@ pub fn random_hex_seed_seeded(prng: &mut SmallRng) -> String {
     let mut bytes: [u8; 8] = [0; 8];
     prng.fill_bytes(&mut bytes);
     hex::encode(bytes)
-}
-
-pub fn gen_state_by_seed(seed_and_validate: bool, seed: String) -> GameState {
-    let state = system_gen(seed);
-
-    let state = if seed_and_validate {
-        let mut state = validate_state(state);
-        for idx in 0..state.locations.len() {
-            let (planets, _sampler) = planet_movement::update_planets(
-                &state.locations[idx].planets,
-                &state.locations[idx].star,
-                SEED_TIME,
-                Sampler::empty(),
-                AABB::maxed(),
-            );
-            state.locations[idx].planets = planets;
-        }
-        let state = validate_state(state);
-        state
-    } else {
-        state
-    };
-    state
 }
 
 fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
@@ -680,36 +638,6 @@ fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
         cur_angle += angle_step;
     }
     res
-}
-
-pub fn validate_state(mut in_state: GameState) -> GameState {
-    for idx in 0..in_state.locations.len() {
-        in_state.locations[idx].planets = extract_valid_planets(&in_state, idx);
-    }
-    in_state
-}
-
-pub fn extract_valid_planets(in_state: &GameState, location_idx: usize) -> Vec<Planet> {
-    in_state.locations[location_idx]
-        .planets
-        .iter()
-        .filter(|p| {
-            let p_pos = Vec2f64 { x: p.x, y: p.y };
-            let check = p.x.is_finite()
-                && !p.x.is_nan()
-                && p.y.is_finite()
-                && !p.y.is_nan()
-                && p.rotation.is_finite()
-                && !p.rotation.is_nan()
-                && p_pos.euclidean_len() < MAX_ORBIT;
-
-            // if !check {
-            //     eprintln!("Validate state: removed planet {:?})", p);
-            // }
-            return check;
-        })
-        .map(|p| p.clone())
-        .collect::<Vec<_>>()
 }
 
 pub fn force_update_to_now(state: &mut GameState) {
@@ -840,7 +768,7 @@ pub fn update_world(
                         p
                     })
                     .collect::<Vec<_>>();
-                state = seed_state(false, true);
+                state = gen_state(random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
                     spawn_ship(&mut state, player.id, None);

@@ -155,8 +155,8 @@ lazy_static! {
     pub static ref ROOMS_READ: LockFreeMap<Uuid, Room> = LockFreeMap::new();
 }
 
-pub const ENABLE_PERF: bool = true;
-const DEBUG_FRAME_STATS: bool = true;
+pub const ENABLE_PERF: bool = false;
+const DEBUG_FRAME_STATS: bool = false;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const BROADCAST_SLEEP_MS: u64 = 500;
 const MAX_ERRORS: u32 = 10;
