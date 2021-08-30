@@ -1,6 +1,7 @@
 import { GameMode } from '../../../world/pkg/world.extra';
 import { Room, RoomIdResponse } from '../../../world/pkg/world';
 import useSWR, { mutate } from 'swr';
+import pWaitFor from 'p-wait-for';
 
 const patchParams = (url: string, params: Record<string, string>) => {
   let res = url;
@@ -67,14 +68,19 @@ export const api = {
     );
   },
 
-  getRoomsList: async (mode: GameMode): Promise<Room[]> => {
-    const res = await fetch(
-      patchParams(`${api.getRoomsApiUrl()}/<mode>`, {
-        mode,
-      }),
-      { method: 'GET' }
-    );
-    let rawResponse = await res.json();
+  getRoomsList: async (mode?: GameMode): Promise<Room[]> => {
+    let res: Response;
+    if (mode) {
+      res = await fetch(
+        patchParams(`${api.getRoomsApiUrl()}/<mode>`, {
+          mode,
+        }),
+        { method: 'GET' }
+      );
+    } else {
+      res = await fetch(api.getRoomsApiUrl(), { method: 'GET' });
+    }
+    const rawResponse = await res.json();
     return rawResponse as Room[];
   },
 
@@ -86,7 +92,9 @@ export const api = {
       { method: 'POST' }
     );
     const rawResponse = await res.json();
-    return (rawResponse as RoomIdResponse).room_id;
+    const { room_id: roomId } = rawResponse as RoomIdResponse;
+    await api.waitUntilRoomExists(roomId);
+    return roomId;
   },
 
   getRoomToJoin: async (mode: GameMode): Promise<string> => {
@@ -94,7 +102,6 @@ export const api = {
       return api.createRoom(mode);
     }
     const rooms = await api.getRoomsList(mode);
-    console.log('rooms list to join is', rooms);
     if (rooms.length <= 0) {
       return api.createRoom(mode);
     }
@@ -122,6 +129,16 @@ export const api = {
         }
       ),
       { method: 'POST' }
+    );
+  },
+
+  waitUntilRoomExists: async (roomId: string): Promise<void> => {
+    return await pWaitFor(
+      async () => {
+        const rooms = await api.getRoomsList();
+        return !!rooms.find((r) => r.id === roomId);
+      },
+      { interval: 500, timeout: 2000 }
     );
   },
 

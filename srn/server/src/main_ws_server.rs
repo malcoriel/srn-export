@@ -7,6 +7,7 @@ use std::time::Duration;
 use chrono::Utc;
 use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
+use lockfree::set::Set as LockFreeSet;
 use num_traits::FromPrimitive;
 use uuid::Uuid;
 use websocket::client::sync::Writer;
@@ -45,6 +46,10 @@ lazy_static! {
 lazy_static! {
     static ref CLIENT_SENDERS: Arc<Mutex<Vec<(Uuid, Sender<ServerToClientMessage>)>>> =
         Arc::new(Mutex::new(vec![]));
+}
+
+lazy_static! {
+    static ref CLIENT_SENDERS_SET: LockFreeSet<Uuid> = LockFreeSet::new();
 }
 
 lazy_static! {
@@ -93,6 +98,9 @@ fn handle_request(request: WSRequest) {
         .lock()
         .unwrap()
         .push((client_id, public_client_sender));
+    if let Err(err) = CLIENT_SENDERS_SET.insert(client_id) {
+        warn!(format!("error reindexing clients on connect: {:?}", err));
+    }
 
     let (mut socket_receiver, mut socket_sender) = client.split().unwrap();
     let (inner_client_sender, inner_incoming_client_receiver) = bounded::<OwnedMessage>(128);
@@ -471,6 +479,7 @@ fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) 
 
 fn force_disconnect_client(client_id: Uuid) {
     let mut senders = CLIENT_SENDERS.lock().unwrap();
+    CLIENT_SENDERS_SET.remove(&client_id);
     let bad_sender_index = senders.iter().position(|c| c.0 == client_id);
     if let Some(index) = bad_sender_index {
         eprintln!("force disconnecting client: {}", client_id);
@@ -539,6 +548,7 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
     let message = Message::close();
     sender.send_message(&message).ok();
     let mut senders = CLIENT_SENDERS.lock().unwrap();
+    CLIENT_SENDERS_SET.remove(&client_id);
     let index = senders.iter().position(|s| s.0 == client_id);
     index.map(|index| senders.remove(index));
     {
@@ -564,13 +574,7 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
 }
 
 pub fn is_disconnected(client_id: Uuid) -> bool {
-    let senders = CLIENT_SENDERS.lock().unwrap();
-    let index = senders.iter().position(|s| s.0 == client_id);
-    if index.is_none() {
-        // client disconnected
-        return true;
-    }
-    return false;
+    return !CLIENT_SENDERS_SET.contains(&client_id);
 }
 
 fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipActionRust, tag: Option<String>) {

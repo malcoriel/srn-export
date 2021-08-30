@@ -442,7 +442,6 @@ export default class NetState extends EventEmitter {
   };
 
   public sendName() {
-    console.log('sending name');
     this.send({
       code: ClientOpCode.Name,
       value: JSON.stringify({

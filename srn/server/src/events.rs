@@ -11,6 +11,7 @@ use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
 use crate::indexing;
 use crate::perf::Sampler;
+use crate::rooms_api::create_room_impl;
 use crate::states::StateContainer;
 use crate::substitutions::substitute_notification_texts;
 use crate::world;
@@ -33,136 +34,148 @@ pub fn handle_events(
     cont: &mut RwLockWriteGuard<StateContainer>,
     d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
 ) -> Vec<(Uuid, Option<Dialogue>)> {
-    let mut res = vec![];
+    let mut dialogue_changes = vec![];
     let mut prng = world::gen_rng();
 
     loop {
-        if let Ok(event) = receiver.try_recv() {
-            match event.clone() {
-                GameEvent::ShipSpawned { player, .. } => {
-                    let state = crate::states::select_state_mut(cont, player.id);
-                    if state.is_none() {
-                        warn!("event in non-existent state");
-                        continue;
+        let result = receiver.try_recv();
+        match result {
+            Ok(event) => {
+                match event.clone() {
+                    GameEvent::ShipSpawned { player, .. } => {
+                        let state = crate::states::select_state_mut(cont, player.id);
+                        if state.is_none() {
+                            warn!("event in non-existent state");
+                            continue;
+                        }
+                        let state = state.unwrap();
+                        crate::main_ws_server::send_event_to_client(
+                            event.clone(),
+                            XCast::Unicast(player.id, state.id),
+                        );
                     }
-                    let state = state.unwrap();
-                    crate::main_ws_server::send_event_to_client(
-                        event.clone(),
-                        XCast::Unicast(player.id, state.id),
-                    );
-                }
-                GameEvent::RoomJoined {
-                    player,
-                    personal,
-                    mode,
-                    ..
-                } => {
-                    if personal && mode == GameMode::Tutorial {
-                        fire_event(GameEvent::DialogueTriggerRequest {
-                            dialogue_name: "tutorial_start".to_owned(),
-                            player: player.clone(),
-                        });
+                    GameEvent::RoomJoined {
+                        player,
+                        personal,
+                        mode,
+                        ..
+                    } => {
+                        if personal && mode == GameMode::Tutorial {
+                            fire_event(GameEvent::DialogueTriggerRequest {
+                                dialogue_name: "tutorial_start".to_owned(),
+                                player: player.clone(),
+                            });
+                        }
                     }
-                }
-                GameEvent::ShipDied { player, .. } => {
-                    let state = crate::states::select_state_mut(cont, player.id);
-                    if state.is_none() {
-                        warn!("event in non-existent state");
-                        continue;
+                    GameEvent::ShipDied { player, .. } => {
+                        let state = crate::states::select_state_mut(cont, player.id);
+                        if state.is_none() {
+                            warn!("event in non-existent state");
+                            continue;
+                        }
+                        let state = state.unwrap();
+                        crate::main_ws_server::send_event_to_client(
+                            event.clone(),
+                            XCast::Broadcast(state.id),
+                        );
                     }
-                    let state = state.unwrap();
-                    crate::main_ws_server::send_event_to_client(
-                        event.clone(),
-                        XCast::Broadcast(state.id),
-                    );
-                }
-                GameEvent::GameEnded { state_id } => {
-                    crate::main_ws_server::send_event_to_client(
-                        event.clone(),
-                        XCast::Broadcast(state_id),
-                    );
-                }
-                GameEvent::GameStarted { state_id } => {
-                    crate::main_ws_server::send_event_to_client(
-                        event.clone(),
-                        XCast::Broadcast(state_id),
-                    );
-                }
-                GameEvent::Unknown => {
-                    // intentionally do nothing
-                }
-                GameEvent::ShipDocked { player, .. } => {
-                    let state = crate::states::select_state_mut(cont, player.id);
-                    if state.is_none() {
-                        warn!("event in non-existent state");
-                        continue;
+                    GameEvent::GameEnded { state_id } => {
+                        crate::main_ws_server::send_event_to_client(
+                            event.clone(),
+                            XCast::Broadcast(state_id),
+                        );
                     }
-                    let state = state.unwrap();
-                    if state.mode != GameMode::Tutorial {
-                        fire_event(GameEvent::DialogueTriggerRequest {
-                            dialogue_name: "basic_planet".to_owned(),
-                            player: player.clone(),
-                        });
+                    GameEvent::GameStarted { state_id } => {
+                        crate::main_ws_server::send_event_to_client(
+                            event.clone(),
+                            XCast::Broadcast(state_id),
+                        );
                     }
-                }
-                GameEvent::ShipUndocked { .. } => {
-                    // intentionally do nothing
-                }
-                GameEvent::DialogueTriggerRequest {
-                    dialogue_name,
-                    player,
-                } => {
-                    let state = crate::states::select_state_mut(cont, player.id);
-                    if state.is_none() {
-                        warn!("event in non-existent state");
-                        continue;
+                    GameEvent::Unknown => {
+                        // intentionally do nothing
                     }
-                    let state = state.unwrap();
-                    if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
-                        let d_states = DialogueTable::get_player_d_states(d_states, &player);
-                        d_table.trigger_dialogue(script, &mut res, &player, d_states, state)
-                    } else {
-                        eprintln!("No dialogue found by name {}", dialogue_name)
+                    GameEvent::ShipDocked { player, .. } => {
+                        let state = crate::states::select_state_mut(cont, player.id);
+                        if state.is_none() {
+                            warn!("event in non-existent state");
+                            continue;
+                        }
+                        let state = state.unwrap();
+                        if state.mode != GameMode::Tutorial {
+                            fire_event(GameEvent::DialogueTriggerRequest {
+                                dialogue_name: "basic_planet".to_owned(),
+                                player: player.clone(),
+                            });
+                        }
                     }
-                }
-                GameEvent::CargoQuestTriggerRequest { player } => {
-                    let state = crate::states::select_state_mut(cont, player.id);
-                    if state.is_none() {
-                        warn!("event in non-existent state");
-                        continue;
+                    GameEvent::ShipUndocked { .. } => {
+                        // intentionally do nothing
                     }
-                    let state = state.unwrap();
-                    let planets = state.locations[0].planets.clone();
-                    if let Some(player) = indexing::find_my_player_mut(state, player.id) {
-                        world::generate_random_quest(player, &planets.clone(), None, &mut prng);
+                    GameEvent::DialogueTriggerRequest {
+                        dialogue_name,
+                        player,
+                    } => {
+                        let state = crate::states::select_state_mut(cont, player.id);
+                        if state.is_none() {
+                            warn!("event in non-existent state");
+                            continue;
+                        }
+                        let state = state.unwrap();
+                        if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
+                            let d_states = DialogueTable::get_player_d_states(d_states, &player);
+                            d_table.trigger_dialogue(
+                                script,
+                                &mut dialogue_changes,
+                                &player,
+                                d_states,
+                                state,
+                            )
+                        } else {
+                            eprintln!("No dialogue found by name {}", dialogue_name)
+                        }
                     }
-                    substitute_notification_texts(state, HashSet::from_iter(vec![player.id]));
-                }
-                GameEvent::TradeTriggerRequest { player, .. } => {
-                    let state = crate::states::select_state_mut(cont, player.id);
-                    if state.is_none() {
-                        warn!("event in non-existent state");
-                        continue;
+                    GameEvent::CargoQuestTriggerRequest { player } => {
+                        let state = crate::states::select_state_mut(cont, player.id);
+                        if state.is_none() {
+                            warn!("event in non-existent state");
+                            continue;
+                        }
+                        let state = state.unwrap();
+                        let planets = state.locations[0].planets.clone();
+                        if let Some(player) = indexing::find_my_player_mut(state, player.id) {
+                            world::generate_random_quest(player, &planets.clone(), None, &mut prng);
+                        }
+                        substitute_notification_texts(state, HashSet::from_iter(vec![player.id]));
                     }
-                    let state = state.unwrap();
+                    GameEvent::TradeTriggerRequest { player, .. } => {
+                        let state = crate::states::select_state_mut(cont, player.id);
+                        if state.is_none() {
+                            warn!("event in non-existent state");
+                            continue;
+                        }
+                        let state = state.unwrap();
 
-                    crate::main_ws_server::send_event_to_client(
-                        event.clone(),
-                        XCast::Unicast(state.id, player.id),
-                    );
+                        crate::main_ws_server::send_event_to_client(
+                            event.clone(),
+                            XCast::Unicast(state.id, player.id),
+                        );
+                    }
+                    GameEvent::CreateRoomRequest { mode, room_id } => {
+                        create_room_impl(cont, &mode, room_id);
+                    }
                 }
             }
-        } else {
-            break;
+            Err(_) => {
+                break;
+            }
         }
     }
-    res
+    dialogue_changes
 }
 
 pub fn fire_event(ev: GameEvent) {
     let sender = &mut EVENTS.0.lock().unwrap();
-    if let Err(e) = sender.send(ev.clone()) {
+    if let Err(e) = sender.try_send(ev.clone()) {
         eprintln!("Failed to send event {:?}, err {}", ev, e);
-    } else {
     }
 }

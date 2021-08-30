@@ -14,7 +14,7 @@ use state::Storage;
 use crate::api_struct::*;
 use crate::bots::bot_init;
 use crate::events::fire_event;
-use crate::states::{StateContainer, STATE};
+use crate::states::StateContainer;
 use crate::world::{GameEvent, GameMode, PlayerId};
 use crate::{new_id, system_gen, world};
 use chrono::Local;
@@ -54,9 +54,18 @@ pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
             room_id: Uuid::default(),
         });
     }
-    let mut cont = STATE.write().unwrap();
     let mode = mode.ok().unwrap();
     let room_id = new_id();
+    fire_event(GameEvent::CreateRoomRequest { mode, room_id });
+
+    return Json(RoomIdResponse { room_id });
+}
+
+pub fn create_room_impl(
+    cont: &mut RwLockWriteGuard<StateContainer>,
+    mode: &GameMode,
+    room_id: Uuid,
+) {
     let room_name = format!("{} - {}", mode, room_id);
     let state = system_gen::seed_room_state(&mode, world::random_hex_seed());
     let state_id = state.id.clone();
@@ -67,18 +76,16 @@ pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
         last_players_mark: None,
         bots: vec![],
     };
-    if mode == GameMode::CargoRush {
+    if *mode == GameMode::CargoRush {
         bot_init(&mut room);
     }
     let bot_len = room.bots.len();
     cont.rooms.values.push(room);
     log!(format!(
         "created room {} with state {} for mode {} and {} bots",
-        room_id, state_id, game_mode, bot_len
+        room_id, state_id, mode, bot_len
     ));
     cont.rooms.reindex();
-
-    return Json(RoomIdResponse { room_id });
 }
 
 pub fn find_room_state_id_by_player_id(
@@ -129,42 +136,39 @@ pub fn find_room_by_player_id_mut<'a>(
 pub const ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS: i64 = 5 * 1000;
 
 pub fn cleanup_empty_rooms(cont: &mut RwLockWriteGuard<StateContainer>) {
-    // let curr_millis = Local::now().timestamp_millis();
-    // for room in cont.rooms.values.iter_mut() {
-    //     if room.last_players_mark.is_none() && room.state.players.len() == room.bots.len() {
-    //         room.last_players_mark = Some(curr_millis);
-    //     } else if room.last_players_mark.is_some() && room.state.players.len() > room.bots.len() {
-    //         room.last_players_mark = None;
-    //     }
-    // }
-    // let to_drop: HashSet<RoomId> = HashSet::from_iter(
-    //     cont.rooms
-    //         .values
-    //         .iter()
-    //         .filter_map(|room| {
-    //             room.last_players_mark.map_or(None, |mark| {
-    //                 if (mark - curr_millis).abs() > ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS {
-    //                     Some(room.id)
-    //                 } else {
-    //                     None
-    //                 }
-    //             })
-    //         })
-    //         .collect::<Vec<Uuid>>()
-    //         .into_iter(),
-    // );
-    // if to_drop.len() > 0 {
-    //     log!(format!("to drop: {:?}", to_drop));
-    // }
-    // cont.rooms.values.retain(|r| {
-    //     let keep = !to_drop.contains(&r.id);
-    //     if !keep {
-    //         log!(format!(
-    //             "dropping room {} without players after {}ms",
-    //             r.id, ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS
-    //         ));
-    //     }
-    //     keep
-    // });
-    // cont.rooms.reindex();
+    let curr_millis = Local::now().timestamp_millis();
+    for room in cont.rooms.values.iter_mut() {
+        if room.last_players_mark.is_none() && room.state.players.len() == room.bots.len() {
+            room.last_players_mark = Some(curr_millis);
+        } else if room.last_players_mark.is_some() && room.state.players.len() > room.bots.len() {
+            room.last_players_mark = None;
+        }
+    }
+    let to_drop: HashSet<RoomId> = HashSet::from_iter(
+        cont.rooms
+            .values
+            .iter()
+            .filter_map(|room| {
+                room.last_players_mark.map_or(None, |mark| {
+                    if (mark - curr_millis).abs() > ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS {
+                        Some(room.id)
+                    } else {
+                        None
+                    }
+                })
+            })
+            .collect::<Vec<Uuid>>()
+            .into_iter(),
+    );
+    cont.rooms.values.retain(|r| {
+        let keep = !to_drop.contains(&r.id);
+        if !keep {
+            log!(format!(
+                "dropping room {} of mode {} without players after {}ms",
+                r.id, r.state.mode, ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS
+            ));
+        }
+        keep
+    });
+    cont.rooms.reindex();
 }

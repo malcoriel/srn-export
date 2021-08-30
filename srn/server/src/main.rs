@@ -372,7 +372,7 @@ fn main_thread() {
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
 
         let update_rooms_id = sampler.start(SamplerMarks::Update as u32);
-        // cleanup_empty_rooms(&mut cont);
+        cleanup_empty_rooms(&mut cont);
         let mut updated_rooms = vec![];
         for room in get_rooms_iter(&cont) {
             // if state.players.len() == 0 {
@@ -545,6 +545,9 @@ pub fn cleanup_orphaned_players(state: &mut GameState, bot_ids: &HashSet<Uuid>) 
         if !bot_ids.contains(&player.id) && main_ws_server::is_disconnected(player.id) {
             to_drop.insert(player.id);
         }
+    }
+    if to_drop.len() > 0 {
+        log!(format!("will drop orphaned players {:?}", to_drop));
     }
     state.players.retain(|p| !to_drop.contains(&p.id));
 }
