@@ -8,12 +8,13 @@ use uuid::Uuid;
 
 use crate::rooms_api::{
     find_room_by_id_mut, find_room_by_player_id_mut, find_room_state_id_by_player_id,
-    find_room_state_id_by_player_id_mut, find_room_state_id_by_room_id_mut,
+    find_room_state_id_by_player_id_mut, find_room_state_id_by_room_id_mut, reindex_rooms,
 };
 use crate::world::GameState;
 use crate::xcast::XCast;
 use crate::{new_id, system_gen, world};
 use lazy_static::lazy_static;
+use lockfree::map::Map as LockFreeMap;
 use std::slice::Iter;
 
 lazy_static! {
@@ -22,6 +23,10 @@ lazy_static! {
             rooms: RoomsState::new(),
         })
     };
+}
+
+lazy_static! {
+    pub static ref ROOMS_READ: LockFreeMap<Uuid, Room> = LockFreeMap::new();
 }
 
 pub struct StateContainer {
@@ -53,12 +58,12 @@ pub fn get_rooms_iter_read<'a>(cont: &'a RwLockReadGuard<StateContainer>) -> Ite
 
 pub fn update_rooms(cont: &mut RwLockWriteGuard<StateContainer>, val: Vec<Room>) {
     cont.rooms.values = val;
-    cont.rooms.reindex();
+    reindex_rooms(&mut cont.rooms);
 }
 
 pub fn add_room(cont: &mut RwLockWriteGuard<StateContainer>, room: Room) {
     cont.rooms.values.push(room);
-    cont.rooms.reindex();
+    reindex_rooms(&mut cont.rooms);
 }
 
 pub fn select_state<'a, 'b>(

@@ -45,7 +45,7 @@ use net::{
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
 use perf::SamplerMarks;
-use states::{get_rooms_iter, update_rooms, StateContainer, STATE};
+use states::{get_rooms_iter, update_rooms, StateContainer, ROOMS_READ, STATE};
 use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
@@ -149,10 +149,6 @@ lazy_static! {
 lazy_static! {
     static ref DIALOGUE_TABLE: Arc<Mutex<Box<DialogueTable>>> =
         Arc::new(Mutex::new(Box::new(DialogueTable::new())));
-}
-
-lazy_static! {
-    pub static ref ROOMS_READ: LockFreeMap<Uuid, Room> = LockFreeMap::new();
 }
 
 pub const ENABLE_PERF: bool = false;
@@ -396,7 +392,6 @@ fn main_thread() {
                 last_players_mark: room.last_players_mark,
                 bots: room.bots.clone(),
             };
-            ROOMS_READ.insert(room_clone.state.id, room_clone.clone());
             updated_rooms.push(room_clone);
         }
 

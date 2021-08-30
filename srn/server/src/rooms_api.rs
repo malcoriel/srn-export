@@ -1,25 +1,26 @@
+use std::collections::{HashMap, HashSet};
+use std::iter::FromIterator;
+use std::sync::RwLock;
+use std::sync::{RwLockReadGuard, RwLockWriteGuard};
+use std::thread;
+use std::time::Duration;
+
+use chrono::Local;
 use rocket::http::Status;
 use rocket::response::Responder;
 use rocket::Request;
 use rocket_contrib::json::Json;
 use serde_derive::{Deserialize, Serialize};
-use std::collections::HashSet;
-use std::iter::FromIterator;
-use std::sync::RwLock;
-use std::sync::{RwLockReadGuard, RwLockWriteGuard};
+use state::Storage;
 use uuid::Uuid;
 
-use state::Storage;
-
+use crate::api_struct::RoomsState;
 use crate::api_struct::*;
 use crate::bots::bot_init;
 use crate::events::fire_event;
-use crate::states::StateContainer;
-use crate::world::{GameEvent, GameMode, PlayerId};
+use crate::states::{StateContainer, ROOMS_READ};
+use crate::world::{GameEvent, GameMode, GameState, PlayerId};
 use crate::{new_id, system_gen, world};
-use chrono::Local;
-use std::thread;
-use std::time::Duration;
 
 #[get("/")]
 pub fn get_rooms() -> Json<Vec<Room>> {
@@ -85,7 +86,7 @@ pub fn create_room_impl(
         "created room {} with state {} for mode {} and {} bots",
         room_id, state_id, mode, bot_len
     ));
-    cont.rooms.reindex();
+    reindex_rooms(&mut cont.rooms);
 }
 
 pub fn find_room_state_id_by_player_id(
@@ -170,5 +171,23 @@ pub fn cleanup_empty_rooms(cont: &mut RwLockWriteGuard<StateContainer>) {
         }
         keep
     });
-    cont.rooms.reindex();
+    reindex_rooms(&mut cont.rooms);
+}
+
+pub fn reindex_rooms(state: &mut RoomsState) {
+    let ids: Vec<Uuid> = ROOMS_READ.iter().map(|g| g.key().clone()).collect();
+    for id in ids.into_iter() {
+        ROOMS_READ.remove(&id);
+    }
+    let rooms_clone = state.clone().values;
+    for i in 0..rooms_clone.len() {
+        let room = rooms_clone.get(i).unwrap();
+        ROOMS_READ.insert(room.state.id, room.clone());
+        for player in room.state.players.iter() {
+            state.state_id_by_player_id.insert(player.id, room.state.id);
+            state.idx_by_player_id.insert(player.id, i);
+        }
+        state.state_id_by_id.insert(room.id, room.state.id);
+        state.idx_by_id.insert(room.id, i);
+    }
 }

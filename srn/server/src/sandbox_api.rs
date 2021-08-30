@@ -6,6 +6,7 @@ use rocket_contrib::json::Json;
 use uuid::Uuid;
 
 use crate::market::init_all_planets_market;
+use crate::rooms_api::reindex_rooms;
 use crate::sandbox::SavedState;
 use crate::sandbox::SAVED_STATES;
 use crate::states::{select_room_mut, select_state_mut};
@@ -103,9 +104,9 @@ pub fn load_random_state(player_id: String) {
 }
 
 fn replace_player_state(player_id: Uuid, mut new_state: GameState) {
-    let mut state_cont = crate::STATE.write().unwrap();
+    let mut cont = crate::STATE.write().unwrap();
     {
-        let room = select_room_mut(&mut state_cont, player_id);
+        let room = select_room_mut(&mut cont, player_id);
         if room.is_none() {
             warn!("attempt to load state for non-existent room");
             return;
@@ -127,7 +128,7 @@ fn replace_player_state(player_id: Uuid, mut new_state: GameState) {
         let loc = &mut room.state.locations[0];
         loc.ships.push(ship);
     }
-    state_cont.rooms.reindex();
+    reindex_rooms(&mut cont.rooms);
 }
 
 #[post("/saved_states/load_seeded/<player_id>/<seed>")]

@@ -467,7 +467,7 @@ pub fn make_sandbox_state() -> GameState {
     }
 }
 
-pub fn seed_state_test(_debug: bool, seed_and_validate: bool) -> GameState {
+pub fn seed_state_test(_debug: bool) -> GameState {
     let seed = world::random_hex_seed();
     log!(format!("Starting seeding state with seed={}", seed));
     let mut state = gen_state(seed);

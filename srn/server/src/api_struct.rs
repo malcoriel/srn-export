@@ -1,9 +1,11 @@
-use crate::world::{GameMode, GameState, PlayerId};
-use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
+
+use crate::world::{GameMode, GameState, PlayerId};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Bot {
@@ -26,6 +28,20 @@ pub struct RoomsState {
     pub state_id_by_id: HashMap<RoomId, Uuid>,
     pub idx_by_id: HashMap<RoomId, usize>,
     pub idx_by_player_id: HashMap<PlayerId, usize>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
+pub struct RoomIdResponse {
+    pub room_id: Uuid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
+pub struct Room {
+    pub id: RoomId,
+    pub name: String,
+    pub state: GameState,
+    pub last_players_mark: Option<i64>,
+    pub bots: Vec<Bot>,
 }
 
 impl RoomsState {
@@ -54,31 +70,4 @@ impl RoomsState {
             .and_then(move |idx| self.values.get(idx))
             .and_then(|r| Some(&r.state))
     }
-
-    pub fn reindex(&mut self) {
-        let rooms_clone = self.values.clone();
-        for i in 0..rooms_clone.len() {
-            let room = rooms_clone.get(i).unwrap();
-            for player in room.state.players.iter() {
-                self.state_id_by_player_id.insert(player.id, room.state.id);
-                self.idx_by_player_id.insert(player.id, i);
-            }
-            self.state_id_by_id.insert(room.id, room.state.id);
-            self.idx_by_id.insert(room.id, i);
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
-pub struct RoomIdResponse {
-    pub room_id: Uuid,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
-pub struct Room {
-    pub id: RoomId,
-    pub name: String,
-    pub state: GameState,
-    pub last_players_mark: Option<i64>,
-    pub bots: Vec<Bot>,
 }
