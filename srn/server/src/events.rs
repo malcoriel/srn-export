@@ -163,6 +163,9 @@ pub fn handle_events(
                     GameEvent::CreateRoomRequest { mode, room_id } => {
                         create_room_impl(cont, &mode, room_id);
                     }
+                    GameEvent::PirateSpawn { .. } => {
+                        log!("pirate spawn");
+                    }
                 }
             }
             Err(_) => {

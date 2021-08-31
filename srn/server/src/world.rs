@@ -297,11 +297,13 @@ pub enum GameEvent {
         dialogue_name: String,
         player: Player,
     },
+    PirateSpawn {
+        at: Vec2f64,
+    },
     CreateRoomRequest {
         mode: GameMode,
         room_id: Uuid,
-    }, // primarily needed for QuitDialogue effect, where we cannot force-quit
-       // the player directly
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -571,10 +573,11 @@ pub struct GameState {
     pub milliseconds_remaining: i32,
     pub paused: bool,
     pub leaderboard: Option<Leaderboard>,
-    pub ticks: u32,
+    pub millis: u32,
     pub disable_hp_effects: bool,
     pub market: Market,
     pub locations: Vec<Location>,
+    pub interval_data: HashMap<TimeMarks, u32>,
 }
 
 pub const GAME_STATE_VERSION: u32 = 3;
@@ -593,7 +596,7 @@ impl GameState {
             milliseconds_remaining: 0,
             paused: false,
             leaderboard: None,
-            ticks: 0,
+            millis: 0,
             disable_hp_effects: false,
             market: Market {
                 wares: Default::default(),
@@ -601,6 +604,7 @@ impl GameState {
                 time_before_next_shake: 0,
             },
             locations: vec![],
+            interval_data: Default::default(),
         }
     }
 }
@@ -643,7 +647,7 @@ fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
 
 pub fn force_update_to_now(state: &mut GameState) {
     let now = Utc::now().timestamp_millis() as u64;
-    state.ticks = (now - state.start_time_ticks) as u32;
+    state.millis = (now - state.start_time_ticks) as u32;
 }
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
@@ -749,7 +753,7 @@ pub fn update_world(
     sampler: Sampler,
     update_options: UpdateOptions,
 ) -> (GameState, Sampler) {
-    state.ticks += elapsed as u32 / 1000;
+    state.millis += elapsed as u32 / 1000;
     if !client && state.seed != "tutorial".to_owned() {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
     }
@@ -912,7 +916,7 @@ pub fn update_location(
     update_ships_manual_movement(
         &mut state.locations[location_idx].ships,
         elapsed,
-        state.ticks,
+        state.millis,
     );
     sampler.end(update_ship_manual_movement_id);
 
@@ -960,7 +964,7 @@ pub fn update_location(
 
     if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(SamplerMarks::UpdateShipHpEffects as u32);
-        update_ship_hp_effects(state, location_idx, elapsed, state.ticks);
+        update_ship_hp_effects(state, location_idx, elapsed, state.millis);
         sampler.end(hp_effects_id);
 
         let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
@@ -1219,7 +1223,7 @@ fn apply_tractored_items_consumption(
     consume_updates: Vec<(Uuid, Box<dyn IMovable>)>,
 ) {
     for pup in consume_updates {
-        let ticks = state.ticks.clone();
+        let ticks = state.millis.clone();
         let pair = indexing::find_player_and_ship_mut(&mut state, pup.0);
         let picked_items = InventoryItem::from(pup.1);
         if let Some(ship) = pair.1 {
@@ -1744,6 +1748,27 @@ pub struct ShipIdx {
     pub ship_idx: usize,
 }
 
+#[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
+pub enum TimeMarks {
+    PirateSpawn,
+}
+
+pub fn every(interval_ticks: u32, current_ticks: u32, last_trigger: Option<u32>) -> bool {
+    let last_trigger = last_trigger.unwrap_or(0);
+    let diff = current_ticks - last_trigger;
+    return diff > interval_ticks;
+}
+
+const PIRATE_SPAWN_DIST: f64 = 100.0;
+pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
+    let angle = gen_rng().gen_range(0.0, PI * 2.0);
+    let vec = Vec2f64 { x: 1.0, y: 0.0 };
+    vec.rotate(angle).add(&Vec2f64 {
+        x: planet.x,
+        y: planet.y,
+    })
+}
+
 pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler: &mut Sampler) {
     let sampler_mark_type = match state.mode {
         GameMode::Unknown => None,
@@ -1762,7 +1787,21 @@ pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler
         }
         GameMode::Tutorial => {}
         GameMode::Sandbox => {}
-        GameMode::PirateDefence => {}
+        GameMode::PirateDefence => {
+            let current_ticks = state.millis * 1000;
+            if every(
+                10 * 1000 * 1000,
+                current_ticks,
+                state.interval_data.get(&TimeMarks::PirateSpawn).map(|m| *m),
+            ) {
+                state
+                    .interval_data
+                    .insert(TimeMarks::PirateSpawn, current_ticks);
+                fire_event(GameEvent::PirateSpawn {
+                    at: gen_pirate_spawn(&state.locations[0].planets.get(0).unwrap()),
+                });
+            }
+        }
     }
     mark_id.map(|mark_id| sampler.end(mark_id));
 }

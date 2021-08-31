@@ -106,7 +106,7 @@ pub fn apply_ship_action(
             let mut ship = old_ship.clone();
             ship.movement.gas = Some(MoveAxisParam {
                 forward: true,
-                last_tick: state.ticks,
+                last_tick: state.millis,
             });
             ship.navigate_target = None;
             ship.dock_target = None;
@@ -117,7 +117,7 @@ pub fn apply_ship_action(
             let mut ship = old_ship.clone();
             ship.movement.gas = Some(MoveAxisParam {
                 forward: false,
-                last_tick: state.ticks,
+                last_tick: state.millis,
             });
             ship.navigate_target = None;
             ship.dock_target = None;
@@ -128,7 +128,7 @@ pub fn apply_ship_action(
             let mut ship = old_ship.clone();
             ship.movement.turn = Some(MoveAxisParam {
                 forward: true,
-                last_tick: state.ticks,
+                last_tick: state.millis,
             });
             ship.navigate_target = None;
             ship.dock_target = None;
@@ -139,7 +139,7 @@ pub fn apply_ship_action(
             let mut ship = old_ship.clone();
             ship.movement.turn = Some(MoveAxisParam {
                 forward: false,
-                last_tick: state.ticks,
+                last_tick: state.millis,
             });
             ship.navigate_target = None;
             ship.dock_target = None;

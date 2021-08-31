@@ -423,9 +423,10 @@ fn make_tutorial_state() -> GameState {
         milliseconds_remaining: 60 * 1000,
         paused: false,
         leaderboard: None,
-        ticks: 0,
+        millis: 0,
         disable_hp_effects: false,
         market: Market::new(),
+        interval_data: Default::default(),
     }
 }
 
@@ -446,9 +447,10 @@ pub fn make_sandbox_state() -> GameState {
         milliseconds_remaining: 99 * 60 * 1000,
         paused: false,
         leaderboard: None,
-        ticks: 0,
+        millis: 0,
         disable_hp_effects: true,
         market: Market::new(),
+        interval_data: Default::default(),
     }
 }
 
@@ -494,7 +496,7 @@ fn gen_state(seed: String, opts: GenStateOpts) -> GameState {
         milliseconds_remaining: 3 * 60 * 1000,
         paused: false,
         my_id: new_id(),
-        ticks: 0,
+        millis: 0,
         locations,
         players: vec![],
         leaderboard: None,
@@ -503,6 +505,7 @@ fn gen_state(seed: String, opts: GenStateOpts) -> GameState {
         disable_hp_effects: false,
         market: Market::new(),
         version: GAME_STATE_VERSION,
+        interval_data: Default::default(),
     };
 
     let mut state = validate_state(state);

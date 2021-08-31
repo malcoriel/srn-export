@@ -280,11 +280,12 @@ export default class NetState extends EventEmitter {
         },
       ],
       players: [],
-      ticks: 0,
+      millis: 0,
       my_id: uuid.v4(),
       start_time_ticks: 0,
       milliseconds_remaining: 0,
       paused: true,
+      interval_data: {},
     };
     this.reindex();
   }
@@ -408,7 +409,7 @@ export default class NetState extends EventEmitter {
         this.emit('network');
       }
       this.socket = null;
-      this.state.ticks = 0;
+      this.state.millis = 0;
       this.reconnectTimeout = setTimeout(() => {
         this.connecting = true;
         this.connect();
@@ -479,19 +480,19 @@ export default class NetState extends EventEmitter {
         // 2. However, when the state resets and ticks go back to 0,
         // this protection will lead to a freeze. Hence, that check for big diff
         if (
-          parsed.ticks < this.lastReceivedServerTicks &&
-          Math.abs(parsed.ticks - this.lastReceivedServerTicks) < 100000
+          parsed.millis < this.lastReceivedServerTicks &&
+          Math.abs(parsed.millis - this.lastReceivedServerTicks) < 100000
         ) {
           console.log(
             'drop out-of-order xcast_state',
-            parsed.ticks,
+            parsed.millis,
             this.lastReceivedServerTicks
           );
           return;
         }
-        this.lastReceivedServerTicks = parsed.ticks;
+        this.lastReceivedServerTicks = parsed.millis;
 
-        this.desync = parsed.ticks - this.state.ticks;
+        this.desync = parsed.millis - this.state.millis;
 
         const myOldShip = findMyShip(this.state);
         this.state = parsed;
@@ -519,7 +520,7 @@ export default class NetState extends EventEmitter {
         const toDrop = new Set();
         // noinspection JSUnusedLocalSymbols
         for (const [tag, actions, ticks] of this.pendingActions) {
-          const age = Math.abs(ticks - this.state.ticks);
+          const age = Math.abs(ticks - this.state.millis);
           if (age > MAX_PENDING_TICKS) {
             console.warn(
               `dropping pending action ${tag} with age ${age}>${MAX_PENDING_TICKS}`
@@ -712,7 +713,7 @@ export default class NetState extends EventEmitter {
         }
       }
       const tag = uuid.v4();
-      this.pendingActions.push([tag, [action], this.state.ticks]);
+      this.pendingActions.push([tag, [action], this.state.millis]);
       this.updateShipOnServer(tag, action);
     }
 

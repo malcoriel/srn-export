@@ -254,9 +254,9 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
             let guard = timers.read().unwrap();
             guard.last_perf_flush_at_ticks
         } as i32;
-        let diff = (new_state.ticks as i32 - last_flush).abs();
+        let diff = (new_state.millis as i32 - last_flush).abs();
         if diff > PERF_CONSUME_TIME_MS {
-            timers.write().unwrap().last_perf_flush_at_ticks = new_state.ticks;
+            timers.write().unwrap().last_perf_flush_at_ticks = new_state.millis;
             let (sampler_out, metrics) = global_sampler.write().unwrap().clone().consume();
             mem::replace(global_sampler.write().unwrap().deref_mut(), sampler_out);
             log!(format!(

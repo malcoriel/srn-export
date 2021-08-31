@@ -77,7 +77,7 @@ mod world_test {
             milliseconds_remaining: 0,
             paused: false,
             leaderboard: None,
-            ticks: 0,
+            millis: 0,
             disable_hp_effects: false,
             market: Market {
                 wares: Default::default(),
@@ -187,7 +187,7 @@ mod world_test {
             milliseconds_remaining: 0,
             paused: false,
             leaderboard: None,
-            ticks: 0,
+            millis: 0,
             disable_hp_effects: false,
             market: Market {
                 wares: Default::default(),
@@ -279,7 +279,7 @@ mod world_test {
             milliseconds_remaining: 0,
             paused: false,
             leaderboard: None,
-            ticks: 0,
+            millis: 0,
             disable_hp_effects: false,
             market: Market {
                 wares: Default::default(),

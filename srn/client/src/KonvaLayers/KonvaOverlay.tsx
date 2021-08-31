@@ -1,6 +1,5 @@
 import React from 'react';
 import { Circle, Layer, Text } from 'react-konva';
-import _ from 'lodash';
 import Prando from 'prando';
 import { GameState, TRACTOR_DIST } from '../world';
 import NetState, { findMyShip, useNSForceChange } from '../NetState';
@@ -39,7 +38,7 @@ const extractEffectsPositions = (
           if (e.tag === 'Unknown') {
             return null;
           }
-          const age = Math.abs(state.ticks - e.tick);
+          const age = Math.abs(state.millis - e.tick);
           const opacity =
             age > EFFECT_VISUAL_DURATION_MS
               ? 0.0

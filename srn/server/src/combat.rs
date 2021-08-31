@@ -118,7 +118,7 @@ pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget
                         id: new_id(),
                         hp: dmg as i32,
                         ship_id,
-                        tick: state.ticks,
+                        tick: state.millis,
                     };
 
                     target_ship.local_effects.push(effect.clone())
