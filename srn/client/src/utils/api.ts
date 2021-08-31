@@ -98,7 +98,7 @@ export const api = {
   },
 
   getRoomToJoin: async (mode: GameMode): Promise<string> => {
-    if (mode !== GameMode.CargoRush) {
+    if (mode !== GameMode.CargoRush && mode !== GameMode.PirateDefence) {
       return api.createRoom(mode);
     }
     const rooms = await api.getRoomsList(mode);

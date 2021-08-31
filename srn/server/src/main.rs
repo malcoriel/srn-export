@@ -64,9 +64,8 @@ use crate::states::{
     get_rooms_iter_read, get_state_id_cont, get_state_id_cont_mut, select_state, select_state_mut,
 };
 use crate::substitutions::substitute_notification_texts;
-use crate::system_gen::make_tutorial_state;
 use crate::vec2::Vec2f64;
-use crate::world::{spawn_ship, update_quests, GameEvent, UpdateOptions, AABB};
+use crate::world::{spawn_ship, update_rule_specifics, GameEvent, UpdateOptions, AABB};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -402,11 +401,11 @@ fn main_thread() {
             continue;
         }
 
-        let quests_mark = sampler.start(SamplerMarks::Quests as u32);
+        let rules_id = sampler.start(SamplerMarks::Rules as u32);
         for room in cont.rooms.values.iter_mut() {
-            update_quests(&mut room.state, &mut prng);
+            update_rule_specifics(&mut room.state, &mut prng, &mut sampler);
         }
-        if sampler.end_top(quests_mark) < 0 {
+        if sampler.end_top(rules_id) < 0 {
             shortcut_frame += 1;
             sampler.end(total_mark);
             continue;

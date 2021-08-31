@@ -88,41 +88,10 @@ pub fn wire_shake_locations(locations: &mut Vec<Location>, prng: &mut SmallRng) 
     }
 }
 
-fn system_gen_raw(seed: String) -> GameState {
-    let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
-
-    let mut locations = vec![];
-    for _i in 0..LOCATION_COUNT {
-        let loc_seed = random_hex_seed_seeded(&mut prng);
-        let location = gen_star_system_location(&loc_seed);
-        locations.push(location);
-    }
-
-    wire_shake_locations(&mut locations, &mut prng);
-    let now = Utc::now().timestamp_millis() as u64;
-    return GameState {
-        id: new_id(),
-        seed: seed.clone(),
-        tag: None,
-        milliseconds_remaining: 3 * 60 * 1000,
-        paused: false,
-        my_id: new_id(),
-        ticks: 0,
-        locations,
-        players: vec![],
-        leaderboard: None,
-        start_time_ticks: now,
-        mode: GameMode::Unknown,
-        disable_hp_effects: false,
-        market: Market::new(),
-        version: GAME_STATE_VERSION,
-    };
-}
-
 pub const MIN_CONTAINER_DISTANCE: f64 = 50.0;
 pub const CONTAINER_COUNT: i32 = 10;
 
-fn gen_star_system_location(seed: &String) -> Location {
+fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
     let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
     let star_id = crate::new_id();
     // the world is 1000x1000 for now,
@@ -153,6 +122,9 @@ fn gen_star_system_location(seed: &String) -> Location {
         current += width;
 
         if current >= max {
+            break;
+        }
+        if zones.len() as u32 > opts.max_planets_in_system + 1 {
             break;
         }
     }
@@ -202,7 +174,9 @@ fn gen_star_system_location(seed: &String) -> Location {
                     planets.push(planet);
 
                     let mut current_sat_x = planet_center_x + planet_radius + 10.0;
-                    for j in 0..gen_sat_count(planet_radius, &mut prng) {
+                    for j in 0..(gen_sat_count(planet_radius, &mut prng)
+                        .min(opts.max_satellites_for_planet))
+                    {
                         let name = sat_name_pool.get(&mut prng).to_string();
                         current_sat_x += gen_sat_gap(&mut prng);
                         planets.push(Planet {
@@ -366,7 +340,7 @@ pub fn seed_state(mode: &GameMode, seed: String) -> GameState {
             panic!("Unknown mode to seed");
         }
         GameMode::CargoRush => {
-            let mut state = gen_state(seed);
+            let mut state = gen_state(seed, GenStateOpts::default());
             init_all_planets_market(&mut state);
             state.id = new_id();
             state.mode = GameMode::CargoRush;
@@ -374,10 +348,21 @@ pub fn seed_state(mode: &GameMode, seed: String) -> GameState {
         }
         GameMode::Tutorial => make_tutorial_state(),
         GameMode::Sandbox => make_sandbox_state(),
+        GameMode::PirateDefence => make_pirate_defence_state(seed),
     }
 }
 
-pub fn make_tutorial_state() -> GameState {
+fn make_pirate_defence_state(seed: String) -> GameState {
+    let mut gen_opts = GenStateOpts::default();
+    gen_opts.max_planets_in_system = 1;
+    gen_opts.max_satellites_for_planet = 0;
+    let mut state = gen_state(seed, gen_opts);
+    state.milliseconds_remaining = 5 * 1000 * 60;
+    state.mode = GameMode::PirateDefence;
+    state
+}
+
+fn make_tutorial_state() -> GameState {
     let seed = "tutorial".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
@@ -470,14 +455,55 @@ pub fn make_sandbox_state() -> GameState {
 pub fn seed_state_test(_debug: bool) -> GameState {
     let seed = world::random_hex_seed();
     log!(format!("Starting seeding state with seed={}", seed));
-    let mut state = gen_state(seed);
+    let mut state = gen_state(seed, GenStateOpts::default());
     init_all_planets_market(&mut state);
     log!(format!("Done."));
     state
 }
 
-fn gen_state(seed: String) -> GameState {
-    let state = system_gen_raw(seed);
+struct GenStateOpts {
+    system_count: u32,
+    max_planets_in_system: u32,
+    max_satellites_for_planet: u32,
+}
+
+impl Default for GenStateOpts {
+    fn default() -> Self {
+        GenStateOpts {
+            system_count: 1,
+            max_planets_in_system: 10,
+            max_satellites_for_planet: 3,
+        }
+    }
+}
+
+fn gen_state(seed: String, opts: GenStateOpts) -> GameState {
+    let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
+    let mut locations = vec![];
+    for _i in 0..opts.system_count {
+        let loc_seed = random_hex_seed_seeded(&mut prng);
+        let location = gen_star_system_location(&loc_seed, &opts);
+        locations.push(location);
+    }
+    wire_shake_locations(&mut locations, &mut prng);
+    let now = Utc::now().timestamp_millis() as u64;
+    let state = GameState {
+        id: new_id(),
+        seed: seed.clone(),
+        tag: None,
+        milliseconds_remaining: 3 * 60 * 1000,
+        paused: false,
+        my_id: new_id(),
+        ticks: 0,
+        locations,
+        players: vec![],
+        leaderboard: None,
+        start_time_ticks: now,
+        mode: GameMode::Unknown,
+        disable_hp_effects: false,
+        market: Market::new(),
+        version: GAME_STATE_VERSION,
+    };
 
     let mut state = validate_state(state);
     for idx in 0..state.locations.len() {

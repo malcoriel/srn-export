@@ -255,6 +255,10 @@ pub enum SamplerMarks {
     UpdateInterpolateDockingShips = 28,
     UpdateTickLongActionsShips = 29,
     StateBroadcast = 30,
+    Rules = 31,
+    RulesCargoRush = 32,
+    RulesCargoRushQuests = 33,
+    RulesPirateDefence = 34,
 }
 
 impl Display for SamplerMarks {

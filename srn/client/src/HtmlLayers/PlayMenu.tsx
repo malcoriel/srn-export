@@ -24,6 +24,13 @@ export const PlayMenu: React.FC<{
       hotkey="c"
       text="CARGO RUSH"
     />
+    <div>Defend a planet against hordes of invader ships:</div>
+    <Button
+      className="play"
+      onClick={() => start(GameMode.PirateDefence)}
+      hotkey="d"
+      text="PIRATE DEFENCE"
+    />
     <div>Playground for building systems, press G to see the builder menu:</div>
     <Button
       className="play"

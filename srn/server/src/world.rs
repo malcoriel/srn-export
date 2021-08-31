@@ -73,6 +73,7 @@ pub enum GameMode {
     CargoRush,
     Tutorial,
     Sandbox,
+    PirateDefence,
 }
 impl Display for GameMode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -1743,7 +1744,30 @@ pub struct ShipIdx {
     pub ship_idx: usize,
 }
 
-pub fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
+pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler: &mut Sampler) {
+    let sampler_mark_type = match state.mode {
+        GameMode::Unknown => None,
+        GameMode::CargoRush => Some(SamplerMarks::RulesCargoRush as u32),
+        GameMode::Tutorial => None,
+        GameMode::Sandbox => None,
+        GameMode::PirateDefence => Some(SamplerMarks::RulesPirateDefence as u32),
+    };
+    let mark_id = sampler_mark_type.map(|sampler_mark_type| sampler.start(sampler_mark_type));
+    match state.mode {
+        GameMode::Unknown => {}
+        GameMode::CargoRush => {
+            let quests_id = sampler.start(SamplerMarks::RulesCargoRushQuests as u32);
+            update_quests(state, prng);
+            sampler.end(quests_id);
+        }
+        GameMode::Tutorial => {}
+        GameMode::Sandbox => {}
+        GameMode::PirateDefence => {}
+    }
+    mark_id.map(|mark_id| sampler.end(mark_id));
+}
+
+fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
     let quest_planets = state.locations[0].planets.clone();
     let mut any_new_quests = vec![];
     let player_ids = state.players.iter().map(|p| p.id).collect::<Vec<_>>();

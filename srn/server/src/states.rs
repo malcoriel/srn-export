@@ -80,8 +80,7 @@ pub fn select_mut_state_v2<'a, 'b>(
     if !state_cont.rooms.idx_by_player_id.contains_key(&player_id) {
         return None;
     }
-    let room = find_room_by_player_id_mut(state_cont, player_id).unwrap();
-    return Some(&mut room.state);
+    return find_room_by_player_id_mut(state_cont, player_id).map(|r| &mut r.state);
 }
 
 pub fn select_state_v2<'a, 'b>(
