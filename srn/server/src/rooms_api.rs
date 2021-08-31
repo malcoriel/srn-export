@@ -68,7 +68,7 @@ pub fn create_room_impl(
     room_id: Uuid,
 ) {
     let room_name = format!("{} - {}", mode, room_id);
-    let state = system_gen::seed_room_state(&mode, world::random_hex_seed());
+    let state = system_gen::seed_state(&mode, world::random_hex_seed());
     let state_id = state.id.clone();
     let mut room = Room {
         id: room_id,

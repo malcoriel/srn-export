@@ -360,7 +360,7 @@ pub fn gen_star(star_id: Uuid, mut prng: &mut SmallRng, radius: f64, pos: Vec2f6
     }
 }
 
-pub fn seed_room_state(mode: &GameMode, seed: String) -> GameState {
+pub fn seed_state(mode: &GameMode, seed: String) -> GameState {
     match mode {
         GameMode::Unknown => {
             panic!("Unknown mode to seed");
@@ -476,7 +476,7 @@ pub fn seed_state_test(_debug: bool) -> GameState {
     state
 }
 
-pub fn gen_state(seed: String) -> GameState {
+fn gen_state(seed: String) -> GameState {
     let state = system_gen_raw(seed);
 
     let mut state = validate_state(state);

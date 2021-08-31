@@ -44,7 +44,7 @@ use crate::random_stuff::{
 };
 use crate::ship_action::{ShipActionRust, ShipMovement};
 use crate::substitutions::substitute_notification_texts;
-use crate::system_gen::{gen_state, str_to_hash};
+use crate::system_gen::{seed_state, str_to_hash};
 use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
@@ -768,7 +768,7 @@ pub fn update_world(
                         p
                     })
                     .collect::<Vec<_>>();
-                state = gen_state(random_hex_seed());
+                state = seed_state(&state.mode, random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
                     spawn_ship(&mut state, player.id, None);

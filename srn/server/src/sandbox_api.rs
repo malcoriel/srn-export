@@ -10,7 +10,7 @@ use crate::rooms_api::reindex_rooms;
 use crate::sandbox::SavedState;
 use crate::sandbox::SAVED_STATES;
 use crate::states::{select_room_mut, select_state_mut};
-use crate::system_gen::{gen_state, seed_room_state};
+use crate::system_gen::seed_state;
 use crate::world::{random_hex_seed, GameMode, GameState};
 
 #[get("/saved_states")]
@@ -81,7 +81,7 @@ pub fn load_clean_state(player_id: String) {
         warn!("attempt to load into non-personal state");
         return;
     }
-    let mut clean_state = seed_room_state(&GameMode::Sandbox, "clean".to_string());
+    let mut clean_state = seed_state(&GameMode::Sandbox, "clean".to_string());
     mem::swap(current_state, &mut clean_state);
 }
 
@@ -99,7 +99,10 @@ pub fn load_random_state(player_id: String) {
     {
         let player_id = Uuid::parse_str(player_id.as_str())
             .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-        replace_player_state(player_id, gen_state(random_hex_seed()));
+        replace_player_state(
+            player_id,
+            seed_state(&GameMode::CargoRush, random_hex_seed()),
+        );
     }
 }
 
@@ -135,5 +138,5 @@ fn replace_player_state(player_id: Uuid, mut new_state: GameState) {
 pub fn load_seeded_state(player_id: String, seed: String) {
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-    replace_player_state(player_id, gen_state(seed));
+    replace_player_state(player_id, seed_state(&GameMode::CargoRush, seed));
 }
