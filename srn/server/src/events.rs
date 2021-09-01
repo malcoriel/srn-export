@@ -15,7 +15,7 @@ use crate::rooms_api::create_room_impl;
 use crate::states::StateContainer;
 use crate::substitutions::substitute_notification_texts;
 use crate::world;
-use crate::world::{GameEvent, GameMode, GameState, Player};
+use crate::world::{spawn_ship, GameEvent, GameMode, GameState, Player};
 use crate::xcast::XCast;
 
 lazy_static! {
@@ -43,6 +43,11 @@ pub fn handle_events(
             Ok(event) => {
                 match event.clone() {
                     GameEvent::ShipSpawned { player, .. } => {
+                        if player.is_none() {
+                            // the event handler here is only used for player ship spawn
+                            continue;
+                        }
+                        let player = player.unwrap();
                         let state = crate::states::select_state_mut(cont, player.id);
                         if state.is_none() {
                             warn!("event in non-existent state");
@@ -163,8 +168,14 @@ pub fn handle_events(
                     GameEvent::CreateRoomRequest { mode, room_id } => {
                         create_room_impl(cont, &mode, room_id);
                     }
-                    GameEvent::PirateSpawn { .. } => {
-                        log!("pirate spawn");
+                    GameEvent::PirateSpawn { at, state_id } => {
+                        let state = crate::states::select_state_by_id_mut(cont, state_id);
+                        if state.is_none() {
+                            warn!("pirate spawn in non-existent state");
+                            continue;
+                        }
+                        let state = state.unwrap();
+                        spawn_ship(state, None, Some(at));
                     }
                 }
             }

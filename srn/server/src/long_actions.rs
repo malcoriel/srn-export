@@ -400,7 +400,7 @@ pub fn finish_long_act_player(
         }
         LongActionPlayer::Respawn { .. } => {
             if !client {
-                spawn_ship(state, player_id, None);
+                spawn_ship(state, Some(player_id), None);
             }
         }
     }

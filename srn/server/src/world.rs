@@ -269,7 +269,7 @@ pub enum GameEvent {
     },
     ShipSpawned {
         ship: Ship,
-        player: Player,
+        player: Option<Player>,
     },
     RoomJoined {
         personal: bool,
@@ -299,6 +299,7 @@ pub enum GameEvent {
     },
     PirateSpawn {
         at: Vec2f64,
+        state_id: Uuid,
     },
     CreateRoomRequest {
         mode: GameMode,
@@ -776,7 +777,7 @@ pub fn update_world(
                 state = seed_state(&state.mode, random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
-                    spawn_ship(&mut state, player.id, None);
+                    spawn_ship(&mut state, Some(player.id), None);
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
             } else {
@@ -1465,7 +1466,7 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
     state.players.push(player);
 }
 
-pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -> &Ship {
+pub fn spawn_ship(state: &mut GameState, player_id: Option<Uuid>, at: Option<Vec2f64>) -> &Ship {
     let mut small_rng = gen_rng();
     let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
     let mut at = at;
@@ -1477,17 +1478,27 @@ pub fn spawn_ship(state: &mut GameState, player_id: Uuid, at: Option<Vec2f64>) -
         })
     }
     let ship = Ship::new(&mut small_rng, &mut at);
-    state
-        .players
-        .iter_mut()
-        .find(|p| p.id == player_id)
-        .map(|p| {
-            p.ship_id = Some(ship.id);
+    player_id.map_or_else(
+        || {
             fire_event(GameEvent::ShipSpawned {
                 ship: ship.clone(),
-                player: p.clone(),
-            });
-        });
+                player: None,
+            })
+        },
+        |player_id| {
+            state
+                .players
+                .iter_mut()
+                .find(|p| p.id == player_id)
+                .map(|p| {
+                    p.ship_id = Some(ship.id);
+                    fire_event(GameEvent::ShipSpawned {
+                        ship: ship.clone(),
+                        player: Some(p.clone()),
+                    });
+                });
+        },
+    );
     state.locations[0].ships.push(ship);
     &state.locations[0].ships[state.locations[0].ships.len() - 1]
 }
@@ -1772,16 +1783,16 @@ pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
 pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler: &mut Sampler) {
     let sampler_mark_type = match state.mode {
         GameMode::Unknown => None,
-        GameMode::CargoRush => Some(SamplerMarks::RulesCargoRush as u32),
+        GameMode::CargoRush => Some(SamplerMarks::ModeCargoRush as u32),
         GameMode::Tutorial => None,
         GameMode::Sandbox => None,
-        GameMode::PirateDefence => Some(SamplerMarks::RulesPirateDefence as u32),
+        GameMode::PirateDefence => Some(SamplerMarks::ModePirateDefence as u32),
     };
     let mark_id = sampler_mark_type.map(|sampler_mark_type| sampler.start(sampler_mark_type));
     match state.mode {
         GameMode::Unknown => {}
         GameMode::CargoRush => {
-            let quests_id = sampler.start(SamplerMarks::RulesCargoRushQuests as u32);
+            let quests_id = sampler.start(SamplerMarks::ModeCargoRushQuests as u32);
             update_quests(state, prng);
             sampler.end(quests_id);
         }
@@ -1798,6 +1809,7 @@ pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler
                     .interval_data
                     .insert(TimeMarks::PirateSpawn, current_ticks);
                 fire_event(GameEvent::PirateSpawn {
+                    state_id: state.id,
                     at: gen_pirate_spawn(&state.locations[0].planets.get(0).unwrap()),
                 });
             }

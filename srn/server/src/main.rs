@@ -401,7 +401,7 @@ fn main_thread() {
             continue;
         }
 
-        let rules_id = sampler.start(SamplerMarks::Rules as u32);
+        let rules_id = sampler.start(SamplerMarks::Modes as u32);
         for room in cont.rooms.values.iter_mut() {
             update_rule_specifics(&mut room.state, &mut prng, &mut sampler);
         }

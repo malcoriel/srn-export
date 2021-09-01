@@ -90,14 +90,17 @@ pub fn select_state_v2<'a, 'b>(
     let state_id = get_state_id_cont(state_cont, player_id);
     let room_state_id = find_room_state_id_by_player_id(state_cont, player_id);
     return if room_state_id.is_some() {
-        if let Some(state) = state_cont.rooms.get_state_by_id(&room_state_id.unwrap()) {
+        if let Some(state) = state_cont
+            .rooms
+            .get_state_by_room_id(&room_state_id.unwrap())
+        {
             Some(state)
         } else {
             None
         }
     } else {
         if let Some(state_id) = state_id {
-            if let Some(state) = state_cont.rooms.get_state_by_id(&state_id) {
+            if let Some(state) = state_cont.rooms.get_state_by_room_id(&state_id) {
                 Some(state)
             } else {
                 None
@@ -141,7 +144,7 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId) {
             new_state
         };
         new_state.players.push(player);
-        spawn_ship(new_state, client_id, None);
+        spawn_ship(new_state, Some(client_id), None);
         new_state.id
     };
 
@@ -166,12 +169,12 @@ pub fn select_state_by_id<'a>(
     cont: &'a RwLockReadGuard<StateContainer>,
     state_id: Uuid,
 ) -> Option<&'a GameState> {
-    return cont.rooms.get_state_by_id(&state_id);
+    return cont.rooms.get_state_by_room_id(&state_id);
 }
 
 pub fn select_state_by_id_mut<'a>(
     cont: &'a mut RwLockWriteGuard<StateContainer>,
     state_id: Uuid,
 ) -> Option<&'a mut GameState> {
-    return cont.rooms.get_state_by_id_mut(&state_id);
+    return cont.rooms.get_state_by_state_id_mut(&state_id);
 }

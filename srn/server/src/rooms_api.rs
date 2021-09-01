@@ -93,23 +93,30 @@ pub fn find_room_state_id_by_player_id(
     cont: &RwLockReadGuard<StateContainer>,
     client_id: Uuid,
 ) -> Option<Uuid> {
-    let players_to_rooms = cont.rooms.state_id_by_player_id.clone();
-    players_to_rooms.get(&client_id).map(|id| id.clone())
+    cont.rooms
+        .state_id_by_player_id
+        .get(&client_id)
+        .map(|id| id.clone())
 }
 
 pub fn find_room_state_id_by_player_id_mut(
     cont: &RwLockWriteGuard<StateContainer>,
     client_id: Uuid,
 ) -> Option<Uuid> {
-    let players_to_rooms = cont.rooms.state_id_by_player_id.clone();
-    players_to_rooms.get(&client_id).map(|id| id.clone())
+    cont.rooms
+        .state_id_by_player_id
+        .get(&client_id)
+        .map(|id| id.clone())
 }
 
 pub fn find_room_state_id_by_room_id_mut(
     cont: &mut RwLockWriteGuard<StateContainer>,
     room_id: RoomId,
 ) -> Option<Uuid> {
-    cont.rooms.state_id_by_id.get(&room_id).map(|id| id.clone())
+    cont.rooms
+        .state_id_by_room_id
+        .get(&room_id)
+        .map(|id| id.clone())
 }
 
 pub fn find_room_by_id_mut<'a>(
@@ -117,7 +124,7 @@ pub fn find_room_by_id_mut<'a>(
     room_id: RoomId,
 ) -> Option<&'a mut Room> {
     cont.rooms
-        .idx_by_id
+        .idx_by_room_id
         .get(&room_id)
         .map(|idx| idx.clone())
         .and_then(move |idx| cont.rooms.values.get_mut(idx))
@@ -187,7 +194,8 @@ pub fn reindex_rooms(state: &mut RoomsState) {
             state.state_id_by_player_id.insert(player.id, room.state.id);
             state.idx_by_player_id.insert(player.id, i);
         }
-        state.state_id_by_id.insert(room.id, room.state.id);
-        state.idx_by_id.insert(room.id, i);
+        state.state_id_by_room_id.insert(room.id, room.state.id);
+        state.idx_by_room_id.insert(room.id, i);
+        state.idx_by_state_id.insert(room.state.id, i);
     }
 }
