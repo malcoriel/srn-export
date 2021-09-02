@@ -323,17 +323,13 @@ pub struct Ship {
     pub dock_target: Option<Uuid>,
     pub trajectory: Vec<Vec2f64>,
     pub inventory: Vec<InventoryItem>,
-    #[serde(default)]
     pub abilities: Vec<Ability>,
     pub auto_focus: Option<ObjectSpecifier>,
-    #[serde(default)]
     pub movement: ShipMovement,
-    #[serde(default)]
     pub health: Health,
-    #[serde(default)]
     pub local_effects: Vec<LocalEffect>,
-    #[serde(default)]
     pub long_actions: Vec<LongAction>,
+    pub is_npc: bool,
 }
 
 impl Ship {
@@ -361,6 +357,7 @@ impl Ship {
             health: Health::new(100.0),
             local_effects: vec![],
             long_actions: vec![],
+            is_npc: false,
         }
     }
 }
@@ -777,7 +774,7 @@ pub fn update_world(
                 state = seed_state(&state.mode, random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
-                    spawn_ship(&mut state, Some(player.id), None);
+                    spawn_ship(&mut state, Some(player.id), None, false);
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
             } else {
@@ -895,7 +892,6 @@ pub fn update_location(
     state.locations[location_idx].ships = update_ships_navigation(
         &state.locations[location_idx].ships,
         &state.locations[location_idx].planets,
-        &state.players,
         &state.locations[location_idx].star,
         elapsed,
         my_ship_id,
@@ -1466,7 +1462,12 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
     state.players.push(player);
 }
 
-pub fn spawn_ship(state: &mut GameState, player_id: Option<Uuid>, at: Option<Vec2f64>) -> &Ship {
+pub fn spawn_ship(
+    state: &mut GameState,
+    player_id: Option<Uuid>,
+    at: Option<Vec2f64>,
+    is_npc: bool,
+) -> &Ship {
     let mut small_rng = gen_rng();
     let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
     let mut at = at;
@@ -1477,7 +1478,8 @@ pub fn spawn_ship(state: &mut GameState, player_id: Option<Uuid>, at: Option<Vec
             y: p.y.clone(),
         })
     }
-    let ship = Ship::new(&mut small_rng, &mut at);
+    let mut ship = Ship::new(&mut small_rng, &mut at);
+    ship.is_npc = is_npc;
     player_id.map_or_else(
         || {
             fire_event(GameEvent::ShipSpawned {
@@ -1506,7 +1508,6 @@ pub fn spawn_ship(state: &mut GameState, player_id: Option<Uuid>, at: Option<Vec
 pub fn update_ships_navigation(
     ships: &Vec<Ship>,
     planets: &Vec<Planet>,
-    players: &Vec<Player>,
     star: &Option<Star>,
     elapsed_micro: i64,
     _my_ship_id: Option<Uuid>,
@@ -1516,7 +1517,6 @@ pub fn update_ships_navigation(
     let mut res = vec![];
     let planets_with_star = make_bodies_from_planets(&planets, star);
     let bodies_by_id = index_bodies_by_id(planets_with_star);
-    let players_by_ship_id = indexing::index_players_by_ship_id(players);
     let docking_ship_ids: HashSet<Uuid> = HashSet::from_iter(ships.iter().filter_map(|s| {
         let long_act = s
             .long_actions
@@ -1557,11 +1557,6 @@ pub fn update_ships_navigation(
         {
             ship.trajectory = vec![];
             res.push(ship);
-            continue;
-        }
-        let player = players_by_ship_id.get(&ship.id);
-        if player.is_none() {
-            eprintln!("Cannot update ship {} without owner", ship.id);
             continue;
         }
         if !ship.docked_at.is_some() {

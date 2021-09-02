@@ -260,7 +260,7 @@ export default class NetState extends EventEmitter {
         wares: {},
         time_before_next_shake: 0,
       },
-      mode: undefined,
+      mode: GameMode.Unknown,
       seed: '',
       tag: '',
       version: 0,

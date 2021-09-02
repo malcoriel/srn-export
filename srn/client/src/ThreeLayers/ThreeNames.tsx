@@ -1,10 +1,9 @@
-import NetState from '../NetState';
+import NetState, { NetStateIndexes } from '../NetState';
 import { GameState } from '../../../world/pkg';
 import React from 'react';
 import { Text } from '@react-three/drei';
 import { vecToThreePos } from './ThreeLayer';
 import Vector, { IVector, VectorF } from '../utils/Vector';
-import _ from 'lodash';
 import { teal } from '../utils/palette';
 
 interface ThreeShipNamesParams {
@@ -19,7 +18,10 @@ type NameWithPos = {
   radius: number;
 };
 
-const getNamesWithPos = (state: GameState): NameWithPos[] => {
+const getNamesWithPos = (
+  state: GameState,
+  indexes: NetStateIndexes
+): NameWithPos[] => {
   const res: NameWithPos[] = [];
   for (const planet of state.locations[0].planets) {
     res.push({
@@ -40,19 +42,15 @@ const getNamesWithPos = (state: GameState): NameWithPos[] => {
     });
   }
 
-  const shipsById = _.keyBy(state.locations[0].ships, 'id');
-
-  for (const player of state.players) {
-    if (!player.ship_id) {
+  for (const ship of state.locations[0].ships) {
+    if (ship.docked_at) {
       continue;
     }
-    const ship = shipsById[player.ship_id];
-    if (!ship || ship.docked_at) {
-      continue;
-    }
+    const player = indexes.playersByShipId.get(ship.id);
+    const name = player ? player.name : 'NPC';
     res.push({
       id: ship.id,
-      name: player.name,
+      name,
       pos: Vector.fromIVector(ship),
       radius: ship.radius,
     });
@@ -64,10 +62,11 @@ export const ThreeNames: React.FC<ThreeShipNamesParams> = ({
   netState,
   visMap,
 }: ThreeShipNamesParams) => {
-  const names = getNamesWithPos(netState.state);
+  const names = getNamesWithPos(netState.state, netState.indexes);
   return (
     <>
       {names.map((nameWithPos: NameWithPos) => {
+        // noinspection RequiredAttributes
         return (
           <Text
             visible={visMap[nameWithPos.id]}

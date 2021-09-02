@@ -175,7 +175,7 @@ pub fn handle_events(
                             continue;
                         }
                         let state = state.unwrap();
-                        spawn_ship(state, None, Some(at));
+                        spawn_ship(state, None, Some(at), true);
                     }
                 }
             }

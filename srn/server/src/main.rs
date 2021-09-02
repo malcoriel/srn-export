@@ -528,7 +528,7 @@ pub fn cleanup_orphaned_ships(
         .ships
         .clone()
         .into_iter()
-        .filter(|s| existing_player_ships.contains(&s.id))
+        .filter(|s| existing_player_ships.contains(&s.id) || s.is_npc)
         .collect::<Vec<_>>();
     state.locations[location_idx].ships = new_ships;
 }

@@ -320,7 +320,7 @@ mod world_test {
             let mut state = seed_state_test(false, false);
             let player_id = crate::new_id();
             add_player(&mut state, player_id, false, None);
-            spawn_ship(&mut state, player_id, Some(Vec2f64::zero()));
+            spawn_ship(&mut state, player_id, Some(Vec2f64::zero()), false);
             let location = &mut state.locations[0];
             let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
@@ -381,7 +381,7 @@ mod world_test {
             let mut state = seed_state_test(false, false);
             let player_id = crate::new_id();
             add_player(&mut state, player_id, false, None);
-            spawn_ship(&mut state, player_id, Some(Vec2f64::zero()));
+            spawn_ship(&mut state, player_id, Some(Vec2f64::zero()), false);
             let location = &mut state.locations[0];
             let mut ship = &mut location.ships[0];
             ship.navigate_target = Some(Vec2f64 { x: dist, y: dist });
@@ -464,7 +464,7 @@ mod world_test {
             let mut state = seed_state_test(false, false);
             let player_id = crate::new_id();
             add_player(&mut state, player_id, false, None);
-            spawn_ship(&mut state, player_id, Some(Vec2f64::zero()));
+            spawn_ship(&mut state, player_id, Some(Vec2f64::zero()), false);
             let location = &mut state.locations[0];
             let star = location.star.clone().unwrap();
             let planet_id = new_id();

@@ -18,7 +18,12 @@ mod autofocus_test {
             .push(Player::new(player_id, &GameMode::CargoRush));
         let loc = Location::new_empty();
         state.locations.push(loc);
-        spawn_ship(&mut state, player_id, Some(Vec2f64 { x: 0.0, y: 0.0 }));
+        spawn_ship(
+            &mut state,
+            player_id,
+            Some(Vec2f64 { x: 0.0, y: 0.0 }),
+            false,
+        );
         let mut closest = Planet::new();
         closest.id = new_id();
         closest.x = 5.0;

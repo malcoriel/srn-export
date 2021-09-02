@@ -680,33 +680,34 @@ module.exports = function (webpackEnv) {
       //     // See https://github.com/cra-template/pwa/issues/13#issuecomment-722667270
       //     maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       //   }),
-      new GenerateSW({
-        clientsClaim: true,
-        skipWaiting: true,
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
-        runtimeCaching: [
-          {
-            urlPattern: /resources\/models\/.+(?:stl|gltf|glb)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'models',
-              expiration: {
-                maxEntries: 16,
+      isEnvProduction &&
+        new GenerateSW({
+          clientsClaim: true,
+          skipWaiting: true,
+          maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+          runtimeCaching: [
+            {
+              urlPattern: /resources\/models\/.+(?:stl|gltf|glb)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'models',
+                expiration: {
+                  maxEntries: 16,
+                },
               },
             },
-          },
-          {
-            urlPattern: /resources\/textures\/.+(?:png|jpg)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'textures',
-              expiration: {
-                maxEntries: 128,
+            {
+              urlPattern: /resources\/textures\/.+(?:png|jpg)$/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'textures',
+                expiration: {
+                  maxEntries: 128,
+                },
               },
             },
-          },
-        ],
-      }),
+          ],
+        }),
       // TypeScript type checking
       useTypeScript &&
         new ForkTsCheckerWebpackPlugin({

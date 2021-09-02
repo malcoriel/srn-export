@@ -5,14 +5,22 @@ import Vector from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
 import { NetStateIndexes } from '../NetState';
 import { LongActionDock, LongActionUndock } from '../../../world/pkg';
+import _ from 'lodash';
 
 export const ThreeShipsLayer: React.FC<{
   visMap: Record<string, boolean>;
   state: GameState;
   indexes: NetStateIndexes;
-}> = ({ visMap, state, indexes }) => {
+}> = ({ visMap, state }) => {
   if (!state) return null;
   const { ships } = state.locations[0];
+  // const shipIds = ships.map((s) => s.id);
+  // const res = {};
+  // for (const sid of shipIds) {
+  //   // @ts-ignore
+  //   res[sid] = visMap[sid];
+  // }
+  // console.log('visMap', res);
 
   return (
     <group>
@@ -29,15 +37,12 @@ export const ThreeShipsLayer: React.FC<{
           }
         }
 
-        let dockingLongAction;
-        let undockingLongAction;
-        dockingLongAction = ship.long_actions.find(
+        const dockingLongAction = ship.long_actions.find(
           (a) => a.tag === 'Dock'
         ) as LongActionDock;
-        undockingLongAction = ship.long_actions.find(
+        const undockingLongAction = ship.long_actions.find(
           (a) => a.tag === 'Undock'
         ) as LongActionUndock;
-
         let opacity: number;
         if (dockingLongAction) {
           opacity = 1 - dockingLongAction.percentage / 100;
