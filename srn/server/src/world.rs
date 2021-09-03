@@ -1769,10 +1769,12 @@ const PIRATE_SPAWN_DIST: f64 = 100.0;
 pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
     let angle = gen_rng().gen_range(0.0, PI * 2.0);
     let vec = Vec2f64 { x: 1.0, y: 0.0 };
-    vec.rotate(angle).add(&Vec2f64 {
-        x: planet.x,
-        y: planet.y,
-    })
+    vec.rotate(angle)
+        .scalar_mul(PIRATE_SPAWN_DIST)
+        .add(&Vec2f64 {
+            x: planet.x,
+            y: planet.y,
+        })
 }
 
 pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler: &mut Sampler) {
