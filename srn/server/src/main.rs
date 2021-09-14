@@ -50,7 +50,7 @@ use world::{GameMode, GameState, Player, Ship};
 use xcast::XCast;
 
 use crate::api_struct::Room;
-use crate::bots::{bot_init, do_bot_actions};
+use crate::bots::{bot_init, do_bot_npcs_actions, do_bot_players_actions};
 use crate::chat::chat_server;
 use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
 use crate::indexing::{
@@ -415,15 +415,22 @@ fn main_thread() {
         {
             if bot_action_elapsed > BOT_ACTION_TIME {
                 let bots_mark = sampler.start(SamplerMarks::Bots as u32);
+                let bot_players_mark = sampler.start(SamplerMarks::BotsPlayers as u32);
                 for room in cont.rooms.values.iter_mut() {
-                    do_bot_actions(room, d_states, &d_table, bot_action_elapsed);
+                    do_bot_players_actions(&room, d_states, &d_table, bot_action_elapsed);
                 }
-                bot_action_elapsed = 0;
+                sampler.end(bot_players_mark);
+                let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);
+                for room in cont.rooms.values.iter_mut() {
+                    do_bot_npcs_actions(&room, bot_action_elapsed);
+                }
+                sampler.end(npcs_mark);
                 if sampler.end_top(bots_mark) < 0 {
                     shortcut_frame += 1;
                     sampler.end(total_mark);
                     continue;
                 }
+                bot_action_elapsed = 0;
             } else {
                 bot_action_elapsed += elapsed_micro;
             }
@@ -528,7 +535,7 @@ pub fn cleanup_orphaned_ships(
         .ships
         .clone()
         .into_iter()
-        .filter(|s| existing_player_ships.contains(&s.id) || s.is_npc)
+        .filter(|s| existing_player_ships.contains(&s.id) || s.npc.is_some())
         .collect::<Vec<_>>();
     state.locations[location_idx].ships = new_ships;
 }

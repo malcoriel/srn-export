@@ -16,7 +16,8 @@ use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
-use crate::api_struct::RoomId;
+use crate::api_struct::{Bot, RoomId};
+use crate::bots::new_bot;
 use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
@@ -260,12 +261,12 @@ pub enum GameEvent {
     ShipDocked {
         ship: Ship,
         planet: Planet,
-        player: Player,
+        player: Option<Player>,
     },
     ShipUndocked {
         ship: Ship,
         planet: Planet,
-        player: Player,
+        player: Option<Player>,
     },
     ShipSpawned {
         ship: Ship,
@@ -278,7 +279,7 @@ pub enum GameEvent {
     },
     ShipDied {
         ship: Ship,
-        player: Player,
+        player: Option<Player>,
     },
     GameEnded {
         state_id: Uuid,
@@ -329,7 +330,7 @@ pub struct Ship {
     pub health: Health,
     pub local_effects: Vec<LocalEffect>,
     pub long_actions: Vec<LongAction>,
-    pub is_npc: bool,
+    pub npc: Option<Bot>,
 }
 
 impl Ship {
@@ -357,7 +358,7 @@ impl Ship {
             health: Health::new(100.0),
             local_effects: vec![],
             long_actions: vec![],
-            is_npc: false,
+            npc: None,
         }
     }
 }
@@ -1439,20 +1440,21 @@ pub fn update_ship_hp_effects(
         })
         .collect::<Vec<_>>();
     for (pid, ship_clone) in player_ids_to_die.into_iter().filter_map(|o| o) {
-        if let Some(player) = indexing::find_my_player_mut(state, pid) {
-            apply_ship_death(ship_clone, player);
-        }
+        let player = indexing::find_my_player_mut(state, pid);
+        apply_ship_death(ship_clone, player);
     }
 }
 
-fn apply_ship_death(ship: Ship, player: &mut Player) {
-    player.ship_id = None;
+fn apply_ship_death(ship: Ship, player: Option<&mut Player>) {
+    player.map(|player| {
+        player.ship_id = None;
+        player.money -= 1000;
+        player.money = player.money.max(0);
+    });
     fire_event(GameEvent::ShipDied {
         ship: ship.clone(),
-        player: player.clone(),
+        player: player.map(|p| p.clone()),
     });
-    player.money -= 1000;
-    player.money = player.money.max(0);
 }
 
 pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
@@ -1479,7 +1481,7 @@ pub fn spawn_ship(
         })
     }
     let mut ship = Ship::new(&mut small_rng, &mut at);
-    ship.is_npc = is_npc;
+    ship.npc = if is_npc { Some(new_bot()) } else { None };
     player_id.map_or_else(
         || {
             fire_event(GameEvent::ShipSpawned {
@@ -1615,22 +1617,26 @@ pub fn update_ships_navigation(
     res
 }
 
-pub fn dock_ship(mut ship: &mut Ship, player: &Player, planet: &Box<dyn IBody>) {
+pub fn dock_ship(mut ship: &mut Ship, player: Option<&Player>, planet: &Box<dyn IBody>) {
     ship.docked_at = Some(planet.get_id());
     ship.dock_target = None;
     ship.x = planet.get_x();
     ship.y = planet.get_y();
     ship.trajectory = vec![];
-    let planet = planet.clone().clone();
-    let player = player.clone().clone();
+    let planet = planet.clone();
     fire_event(GameEvent::ShipDocked {
         ship: ship.clone(),
         planet: Planet::from(planet),
-        player,
+        player: player.map(|p| p.clone()),
     });
 }
 
-pub fn undock_ship(state: &mut GameState, ship_idx: ShipIdx, player_id: Uuid, client: bool) {
+pub fn undock_ship(
+    state: &mut GameState,
+    ship_idx: ShipIdx,
+    client: bool,
+    player: Option<&Player>,
+) {
     let state_read = state.clone();
     let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
     if let Some(planet_id) = ship.docked_at {
@@ -1640,22 +1646,19 @@ pub fn undock_ship(state: &mut GameState, ship_idx: ShipIdx, player_id: Uuid, cl
             ship.x = planet.x;
             ship.y = planet.y;
             if !client {
-                if let Some(player) = find_my_player(&state_read, player_id) {
-                    let player = player.clone();
-                    fire_event(GameEvent::ShipUndocked {
-                        ship: ship.clone(),
-                        planet,
-                        player,
-                    });
-                    try_start_long_action(
-                        state,
-                        player_id,
-                        LongActionStart::Undock {
-                            from_planet: planet_id,
-                        },
-                        &mut gen_rng(),
-                    );
-                }
+                fire_event(GameEvent::ShipUndocked {
+                    ship: ship.clone(),
+                    planet,
+                    player: player.map(|p| p.clone()),
+                });
+                try_start_long_action_ship(
+                    state,
+                    player_id,
+                    LongActionStart::Undock {
+                        from_planet: planet_id,
+                    },
+                    &mut gen_rng(),
+                );
             }
         }
     }
@@ -1868,6 +1871,25 @@ pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: U
     };
 }
 
+pub fn try_replace_ship_npc(
+    state: &mut GameState,
+    updated_ship: &Ship,
+    old_ship_index: Option<ShipIdx>,
+) -> bool {
+    return if let Some(old_ship_index) = old_ship_index {
+        state.locations[old_ship_index.location_idx]
+            .ships
+            .remove(old_ship_index.ship_idx);
+        state.locations[old_ship_index.location_idx]
+            .ships
+            .push(updated_ship.clone());
+        true
+    } else {
+        eprintln!("couldn't replace ship");
+        false
+    };
+}
+
 pub fn mutate_ship_no_lock(
     client_id: Uuid,
     mutate_cmd: ShipActionRust,
@@ -1879,7 +1901,7 @@ pub fn mutate_ship_no_lock(
         return None;
     }
     force_update_to_now(state);
-    let updated_ship = ship_action::apply_ship_action(mutate_cmd, &state, client_id, false);
+    let updated_ship = ship_action::apply_ship_action(mutate_cmd, &state, old_ship_index, false);
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {

@@ -180,6 +180,14 @@ pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<ShipIdx>
     }
     return if found { Some(idx) } else { None };
 }
+pub fn find_player_by_ship_id(state: &GameState, ship_id: Uuid) -> Option<&Player> {
+    for player in state.players.iter() {
+        if player.ship_id.map_or(false, |sid| sid == ship_id) {
+            return Some(&player);
+        }
+    }
+    return None;
+}
 
 pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<&'a Planet> {
     for loc in state.locations.iter() {

@@ -7,7 +7,10 @@ use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
 use crate::combat::ShootTarget;
-use crate::indexing::{find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut};
+use crate::indexing::{
+    find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
+    find_player_by_ship_id,
+};
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, PLAYER_RESPAWN_TIME_MC};
@@ -371,18 +374,19 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, 
             }
         }
         LongAction::Dock { to_planet, .. } => {
-            let player = indexing::find_my_player(state, player_id).map(|p| p.clone());
+            let player = indexing::find_my_player(state, player_id);
             let planet = indexing::find_planet(state, &to_planet).map(|p| p.clone());
             let ship = indexing::find_my_ship_mut(state, player_id);
-            if let (Some(ship), Some(player), Some(planet)) = (ship, player, planet) {
+            if let (Some(ship), player, Some(planet)) = (ship, player, planet) {
                 let body = Box::new(planet) as Box<dyn IBody>;
-                world::dock_ship(ship, &player, &body);
+                world::dock_ship(ship, player, &body);
             }
         }
         LongAction::Undock { .. } => {
             let ship = indexing::find_my_ship_index(state, player_id);
             if let Some(ship) = ship {
-                world::undock_ship(state, ship, player_id, client)
+                let ship_id = ship.id;
+                world::undock_ship(state, ship, client, find_player_by_ship_id(state, ship_id));
             }
         }
     }

@@ -2,10 +2,10 @@ use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::combat::ShootTarget;
-use crate::indexing::find_my_ship_index;
+use crate::indexing::{find_my_ship_index, find_player_by_ship_id};
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
-use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship};
+use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship, ShipIdx};
 use crate::{combat, fire_event, indexing, tractoring, world};
 use core::mem;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -31,10 +31,9 @@ pub enum ShipActionRust {
 pub fn apply_ship_action(
     ship_action: ShipActionRust,
     state: &GameState,
-    player_id: Uuid,
+    ship_idx: Option<ShipIdx>,
     client: bool,
 ) -> Option<Ship> {
-    let ship_idx = indexing::find_my_ship_index(state, player_id);
     if ship_idx.is_none() {
         warn!("No ship");
         return None;
@@ -61,7 +60,7 @@ pub fn apply_ship_action(
                 x: ship.x,
                 y: ship.y,
             };
-            undock_ship_via_clone(state, player_id, &mut ship, client);
+            undock_ship_via_clone(state, &ship_idx, &mut ship, client);
             ship.dock_target = None;
             ship.navigate_target = Some(target);
             ship.trajectory = world::build_trajectory_to_point(ship_pos, &target);
@@ -159,10 +158,14 @@ pub fn apply_ship_action(
     }
 }
 
-fn undock_ship_via_clone(state: &GameState, player_id: Uuid, mut ship: &mut Ship, client: bool) {
+fn undock_ship_via_clone(state: &GameState, ship_idx: &ShipIdx, mut ship: &mut Ship, client: bool) {
     let mut state_mut_clone = state.clone();
-    let ship_idx = find_my_ship_index(&state_mut_clone, player_id).unwrap();
-    undock_ship(&mut state_mut_clone, ship_idx.clone(), player_id, client);
+    undock_ship(
+        &mut state_mut_clone,
+        ship_idx.clone(),
+        client,
+        find_player_by_ship_id(state, ship.id),
+    );
     let mut mutated_ship =
         state_mut_clone.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].clone();
     mem::swap(&mut mutated_ship, &mut ship);
