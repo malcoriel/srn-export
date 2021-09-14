@@ -79,7 +79,7 @@ pub fn apply_ship_action(
                     x: planet.x,
                     y: planet.y,
                 };
-                undock_ship_via_clone(state, player_id, &mut ship, client);
+                undock_ship_via_clone(state, &ship_idx, &mut ship, client);
                 ship.navigate_target = None;
                 ship.dock_target = None;
                 ship.dock_target = Some(target);

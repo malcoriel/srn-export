@@ -19,7 +19,7 @@ use crate::random_stuff::gen_bot_name;
 use crate::ship_action::{apply_ship_action, ShipActionRust};
 use crate::states::StateContainer;
 use crate::world;
-use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship};
+use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship, ShipIdx};
 use crate::DIALOGUE_STATES;
 use crate::STATE;
 use crate::{indexing, new_id};
@@ -219,7 +219,7 @@ pub fn do_bot_players_actions(
 
     for (bot_id, acts) in ship_updates.into_iter() {
         for act in acts {
-            let ship_idx = indexing::find_my_ship_index(state, player_id);
+            let ship_idx = indexing::find_my_ship_index(&room.state, bot_id);
             let updated_ship = apply_ship_action(act.clone(), &mut room.state, ship_idx, false);
             if let Some(updated_ship) = updated_ship {
                 world::try_replace_ship(&mut room.state, &updated_ship, bot_id);
@@ -238,11 +238,23 @@ pub fn do_bot_players_actions(
 pub fn do_bot_npcs_actions(room: &&mut Room, elapsed_micro: i64) {
     let mut ship_updates: HashMap<Uuid, (Vec<ShipActionRust>, ShipIdx)> = HashMap::new();
 
-    for loc in room.state.locations.iter_mut() {
-        for ship in loc.ships.iter_mut() {
+    for i in 0..room.state.locations.len() {
+        let ship_len = room.state.locations[i].ships.len();
+        let loc = &mut room.state.locations[i];
+        for j in 0..ship_len {
+            let ship = &mut loc.ships[j];
             ship.npc = ship.npc.map(|npc| {
                 let (npc, bot_acts) = npc_act(npc, &room.state, elapsed_micro);
-                ship_updates.insert(ship.id, (bot_acts, idx));
+                ship_updates.insert(
+                    ship.id,
+                    (
+                        bot_acts,
+                        ShipIdx {
+                            location_idx: i,
+                            ship_idx: j,
+                        },
+                    ),
+                );
                 npc
             })
         }
@@ -250,10 +262,15 @@ pub fn do_bot_npcs_actions(room: &&mut Room, elapsed_micro: i64) {
 
     for (ship_id, (acts, idx)) in ship_updates.into_iter() {
         for act in acts {
-            let updated_ship = apply_ship_action(act.clone(), &mut room.state, idx, false);
+            let updated_ship =
+                apply_ship_action(act.clone(), &mut room.state, Some(idx.clone()), false);
             if let Some(updated_ship) = updated_ship {
-                world::try_replace_ship_npc(&mut room.state, &updated_ship, idx);
+                world::try_replace_ship_npc(&mut room.state, &updated_ship, Some(idx.clone()));
             }
         }
     }
+}
+
+fn npc_act(bot: Bot, state: &GameState, elapsed_micro: i64) -> (Bot, Vec<ShipActionRust>) {
+    todo!()
 }

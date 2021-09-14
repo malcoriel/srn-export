@@ -13,7 +13,7 @@ use crate::indexing::{
 };
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
-use crate::world::{spawn_ship, GameState, PLAYER_RESPAWN_TIME_MC};
+use crate::world::{spawn_ship, GameState, ShipIdx, PLAYER_RESPAWN_TIME_MC};
 use crate::{combat, indexing, locations, new_id, world};
 use rand::prelude::SmallRng;
 use rand::Rng;
