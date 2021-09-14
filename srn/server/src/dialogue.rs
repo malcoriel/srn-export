@@ -448,13 +448,17 @@ fn apply_side_effects(
     player_id: PlayerId,
 ) -> bool {
     let mut state_changed = false;
+    let player = find_my_player(state, player_id);
+    if player.is_none() {
+        warn!("side effects without player");
+    }
     for side_effect in side_effects {
         match side_effect {
             DialogueOptionSideEffect::Nothing => {}
             DialogueOptionSideEffect::Undock => {
                 let my_ship_idx = find_my_ship_index(state, player_id);
                 if let Some(my_ship_idx) = my_ship_idx {
-                    world::undock_ship(state, my_ship_idx, player_id, false);
+                    world::undock_ship(state, my_ship_idx, false, player);
                     state_changed = true;
                 }
             }

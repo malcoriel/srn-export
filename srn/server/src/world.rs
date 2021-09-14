@@ -28,8 +28,8 @@ use crate::inventory::{
 };
 use crate::long_actions::{
     cancel_all_long_actions_of_type, finish_long_act, finish_long_act_player, tick_long_act,
-    tick_long_act_player, try_start_long_action, LongAction, LongActionPlayer, LongActionStart,
-    MIN_SHIP_DOCKING_RADIUS, SHIP_DOCKING_RADIUS_COEFF,
+    tick_long_act_player, try_start_long_action, try_start_long_action_ship, LongAction,
+    LongActionPlayer, LongActionStart, MIN_SHIP_DOCKING_RADIUS, SHIP_DOCKING_RADIUS_COEFF,
 };
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
@@ -259,16 +259,19 @@ pub struct Star {
 pub enum GameEvent {
     Unknown,
     ShipDocked {
+        state_id: Uuid,
         ship: Ship,
         planet: Planet,
         player: Option<Player>,
     },
     ShipUndocked {
+        state_id: Uuid,
         ship: Ship,
         planet: Planet,
         player: Option<Player>,
     },
     ShipSpawned {
+        state_id: Uuid,
         ship: Ship,
         player: Option<Player>,
     },
@@ -278,6 +281,7 @@ pub enum GameEvent {
         player: Player,
     },
     ShipDied {
+        state_id: Uuid,
         ship: Ship,
         player: Option<Player>,
     },
@@ -1441,17 +1445,18 @@ pub fn update_ship_hp_effects(
         .collect::<Vec<_>>();
     for (pid, ship_clone) in player_ids_to_die.into_iter().filter_map(|o| o) {
         let player = indexing::find_my_player_mut(state, pid);
-        apply_ship_death(ship_clone, player);
+        apply_ship_death(ship_clone, player, state.id);
     }
 }
 
-fn apply_ship_death(ship: Ship, player: Option<&mut Player>) {
+fn apply_ship_death(ship: Ship, player: Option<&mut Player>, state_id: Uuid) {
     player.map(|player| {
         player.ship_id = None;
         player.money -= 1000;
         player.money = player.money.max(0);
     });
     fire_event(GameEvent::ShipDied {
+        state_id,
         ship: ship.clone(),
         player: player.map(|p| p.clone()),
     });
@@ -1485,6 +1490,7 @@ pub fn spawn_ship(
     player_id.map_or_else(
         || {
             fire_event(GameEvent::ShipSpawned {
+                state_id: state.id,
                 ship: ship.clone(),
                 player: None,
             })
@@ -1497,6 +1503,7 @@ pub fn spawn_ship(
                 .map(|p| {
                     p.ship_id = Some(ship.id);
                     fire_event(GameEvent::ShipSpawned {
+                        state_id: state.id,
                         ship: ship.clone(),
                         player: Some(p.clone()),
                     });
@@ -1617,7 +1624,12 @@ pub fn update_ships_navigation(
     res
 }
 
-pub fn dock_ship(mut ship: &mut Ship, player: Option<&Player>, planet: &Box<dyn IBody>) {
+pub fn dock_ship(
+    mut ship: &mut Ship,
+    player: Option<&Player>,
+    planet: &Box<dyn IBody>,
+    state_id: Uuid,
+) {
     ship.docked_at = Some(planet.get_id());
     ship.dock_target = None;
     ship.x = planet.get_x();
@@ -1628,6 +1640,7 @@ pub fn dock_ship(mut ship: &mut Ship, player: Option<&Player>, planet: &Box<dyn 
         ship: ship.clone(),
         planet: Planet::from(planet),
         player: player.map(|p| p.clone()),
+        state_id,
     });
 }
 
@@ -1647,13 +1660,14 @@ pub fn undock_ship(
             ship.y = planet.y;
             if !client {
                 fire_event(GameEvent::ShipUndocked {
+                    state_id: state.id,
                     ship: ship.clone(),
                     planet,
                     player: player.map(|p| p.clone()),
                 });
                 try_start_long_action_ship(
                     state,
-                    player_id,
+                    &ship_idx,
                     LongActionStart::Undock {
                         from_planet: planet_id,
                     },

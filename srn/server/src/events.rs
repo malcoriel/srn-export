@@ -72,8 +72,10 @@ pub fn handle_events(
                             });
                         }
                     }
-                    GameEvent::ShipDied { player, .. } => {
-                        let state = crate::states::select_state_mut(cont, player.id);
+                    GameEvent::ShipDied {
+                        player, state_id, ..
+                    } => {
+                        let state = crate::states::select_state_by_id_mut(cont, state_id);
                         if state.is_none() {
                             warn!("event in non-existent state");
                             continue;
@@ -99,18 +101,22 @@ pub fn handle_events(
                     GameEvent::Unknown => {
                         // intentionally do nothing
                     }
-                    GameEvent::ShipDocked { player, .. } => {
-                        let state = crate::states::select_state_mut(cont, player.id);
+                    GameEvent::ShipDocked {
+                        player, state_id, ..
+                    } => {
+                        let state = crate::states::select_state_by_id_mut(cont, state_id);
                         if state.is_none() {
                             warn!("event in non-existent state");
                             continue;
                         }
                         let state = state.unwrap();
                         if state.mode != GameMode::Tutorial {
-                            fire_event(GameEvent::DialogueTriggerRequest {
-                                dialogue_name: "basic_planet".to_owned(),
-                                player: player.clone(),
-                            });
+                            if let Some(player) = player {
+                                fire_event(GameEvent::DialogueTriggerRequest {
+                                    dialogue_name: "basic_planet".to_owned(),
+                                    player,
+                                });
+                            }
                         }
                     }
                     GameEvent::ShipUndocked { .. } => {

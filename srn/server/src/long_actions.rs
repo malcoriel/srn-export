@@ -131,6 +131,15 @@ pub fn cancel_all_long_actions_of_type(la: &mut Vec<LongAction>, template: LongA
     mem::swap(la, &mut new_la);
 }
 
+pub fn try_start_long_action_ship(
+    state: &mut GameState,
+    ship_idx: &ShipIdx,
+    action: LongActionStart,
+    prng: &mut SmallRng,
+) -> bool {
+    unimplemented!();
+}
+
 pub fn try_start_long_action(
     state: &mut GameState,
     player_id: Uuid,
@@ -379,14 +388,19 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, 
             let ship = indexing::find_my_ship_mut(state, player_id);
             if let (Some(ship), player, Some(planet)) = (ship, player, planet) {
                 let body = Box::new(planet) as Box<dyn IBody>;
-                world::dock_ship(ship, player, &body);
+                world::dock_ship(ship, player, &body, state.id);
             }
         }
         LongAction::Undock { .. } => {
             let ship = indexing::find_my_ship_index(state, player_id);
-            if let Some(ship) = ship {
-                let ship_id = ship.id;
-                world::undock_ship(state, ship, client, find_player_by_ship_id(state, ship_id));
+            if let Some(ship_idx) = ship {
+                let ship_id = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].id;
+                world::undock_ship(
+                    state,
+                    ship_idx,
+                    client,
+                    find_player_by_ship_id(state, ship_id),
+                );
             }
         }
     }
