@@ -1450,6 +1450,7 @@ pub fn update_ship_hp_effects(
 }
 
 fn apply_ship_death(ship: Ship, player: Option<&mut Player>, state_id: Uuid) {
+    let p_clone = player.map(|p| p.clone());
     player.map(|player| {
         player.ship_id = None;
         player.money -= 1000;
@@ -1458,7 +1459,7 @@ fn apply_ship_death(ship: Ship, player: Option<&mut Player>, state_id: Uuid) {
     fire_event(GameEvent::ShipDied {
         state_id,
         ship: ship.clone(),
-        player: player.map(|p| p.clone()),
+        player: p_clone,
     });
 }
 
@@ -1487,15 +1488,15 @@ pub fn spawn_ship(
     }
     let mut ship = Ship::new(&mut small_rng, &mut at);
     ship.npc = if is_npc { Some(new_bot()) } else { None };
-    player_id.map_or_else(
-        || {
-            fire_event(GameEvent::ShipSpawned {
-                state_id: state.id,
-                ship: ship.clone(),
-                player: None,
-            })
-        },
-        |player_id| {
+    let state_id = state.id;
+
+    match player_id {
+        None => fire_event(GameEvent::ShipSpawned {
+            state_id: state.id,
+            ship: ship.clone(),
+            player: None,
+        }),
+        Some(player_id) => {
             state
                 .players
                 .iter_mut()
@@ -1503,13 +1504,13 @@ pub fn spawn_ship(
                 .map(|p| {
                     p.ship_id = Some(ship.id);
                     fire_event(GameEvent::ShipSpawned {
-                        state_id: state.id,
+                        state_id,
                         ship: ship.clone(),
                         player: Some(p.clone()),
                     });
                 });
-        },
-    );
+        }
+    }
     state.locations[0].ships.push(ship);
     &state.locations[0].ships[state.locations[0].ships.len() - 1]
 }
@@ -1915,7 +1916,8 @@ pub fn mutate_ship_no_lock(
         return None;
     }
     force_update_to_now(state);
-    let updated_ship = ship_action::apply_ship_action(mutate_cmd, &state, old_ship_index, false);
+    let updated_ship =
+        ship_action::apply_ship_action(mutate_cmd, &state, old_ship_index.clone(), false);
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {
