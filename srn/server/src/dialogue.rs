@@ -11,7 +11,8 @@ use uuid::Uuid;
 use crate::dialogue_dto::{Dialogue, DialogueElem, Substitution, SubstitutionType};
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_index, find_my_ship_mut,
-    find_planet, find_player_and_ship, find_player_and_ship_mut, index_planets_by_id,
+    find_planet, find_player_and_ship, find_player_and_ship_mut, find_player_idx,
+    index_planets_by_id,
 };
 use crate::inventory::{
     add_item, consume_items_of_types, count_items_of_types, remove_quest_item,
@@ -452,13 +453,14 @@ fn apply_side_effects(
     if player.is_none() {
         warn!("side effects without player");
     }
+    let player_idx = find_player_idx(state, player_id);
     for side_effect in side_effects {
         match side_effect {
             DialogueOptionSideEffect::Nothing => {}
             DialogueOptionSideEffect::Undock => {
                 let my_ship_idx = find_my_ship_index(state, player_id);
                 if let Some(my_ship_idx) = my_ship_idx {
-                    world::undock_ship(state, my_ship_idx, false, player);
+                    world::undock_ship(state, my_ship_idx, false, player_idx);
                     state_changed = true;
                 }
             }

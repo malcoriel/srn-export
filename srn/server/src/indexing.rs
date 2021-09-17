@@ -189,6 +189,15 @@ pub fn find_player_by_ship_id(state: &GameState, ship_id: Uuid) -> Option<&Playe
     return None;
 }
 
+pub fn find_player_idx_by_ship_id(state: &GameState, ship_id: Uuid) -> Option<usize> {
+    for i in 0..state.players.len() {
+        if state.players[i].ship_id.map_or(false, |sid| sid == ship_id) {
+            return Some(i);
+        }
+    }
+    return None;
+}
+
 pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<&'a Planet> {
     for loc in state.locations.iter() {
         if let Some(planet) = loc.planets.iter().find(|p| p.id == *planet_id) {
@@ -200,6 +209,15 @@ pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<
 
 pub fn find_my_player(state: &GameState, player_id: Uuid) -> Option<&Player> {
     state.players.iter().find(|p| p.id == player_id)
+}
+
+pub fn find_player_idx(state: &GameState, player_id: Uuid) -> Option<usize> {
+    for i in 0..state.players.len() {
+        if state.players[i].id == player_id {
+            return Some(i);
+        }
+    }
+    return None;
 }
 
 pub fn find_my_player_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut Player> {

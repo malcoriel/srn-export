@@ -1350,6 +1350,7 @@ pub fn update_ship_hp_effects(
     elapsed_micro: i64,
     current_tick: u32,
 ) {
+    let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
     if let Some(star) = state.locations[location_idx].star.clone() {
         let star_center = Vec2f64 {
@@ -1445,22 +1446,30 @@ pub fn update_ship_hp_effects(
         .collect::<Vec<_>>();
     for (pid, ship_clone) in player_ids_to_die.into_iter().filter_map(|o| o) {
         let player = indexing::find_my_player_mut(state, pid);
-        apply_ship_death(ship_clone, player, state.id);
+        apply_ship_death(ship_clone, player, state_id);
     }
 }
 
 fn apply_ship_death(ship: Ship, player: Option<&mut Player>, state_id: Uuid) {
-    let p_clone = player.map(|p| p.clone());
-    player.map(|player| {
-        player.ship_id = None;
-        player.money -= 1000;
-        player.money = player.money.max(0);
-    });
-    fire_event(GameEvent::ShipDied {
-        state_id,
-        ship: ship.clone(),
-        player: p_clone,
-    });
+    match player {
+        None => {
+            fire_event(GameEvent::ShipDied {
+                state_id,
+                ship: ship.clone(),
+                player: None,
+            });
+        }
+        Some(player) => {
+            player.ship_id = None;
+            player.money -= 1000;
+            player.money = player.money.max(0);
+            fire_event(GameEvent::ShipDied {
+                state_id,
+                ship: ship.clone(),
+                player: Some(player.clone()),
+            });
+        }
+    }
 }
 
 pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
@@ -1626,22 +1635,22 @@ pub fn update_ships_navigation(
 }
 
 pub fn dock_ship(
-    mut ship: &mut Ship,
-    player: Option<&Player>,
-    planet: &Box<dyn IBody>,
-    state_id: Uuid,
+    state: &mut GameState,
+    ship_idx: ShipIdx,
+    player_idx: Option<usize>,
+    body: Box<dyn IBody>,
 ) {
-    ship.docked_at = Some(planet.get_id());
+    let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+    ship.docked_at = Some(body.get_id());
     ship.dock_target = None;
-    ship.x = planet.get_x();
-    ship.y = planet.get_y();
+    ship.x = body.get_x();
+    ship.y = body.get_y();
     ship.trajectory = vec![];
-    let planet = planet.clone();
     fire_event(GameEvent::ShipDocked {
         ship: ship.clone(),
-        planet: Planet::from(planet),
-        player: player.map(|p| p.clone()),
-        state_id,
+        planet: Planet::from(body),
+        player: player_idx.map(|idx| state.players[idx].clone()),
+        state_id: state.id,
     });
 }
 
@@ -1649,7 +1658,7 @@ pub fn undock_ship(
     state: &mut GameState,
     ship_idx: ShipIdx,
     client: bool,
-    player: Option<&Player>,
+    player_idx: Option<usize>,
 ) {
     let state_read = state.clone();
     let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
@@ -1664,7 +1673,7 @@ pub fn undock_ship(
                     state_id: state.id,
                     ship: ship.clone(),
                     planet,
-                    player: player.map(|p| p.clone()),
+                    player: player_idx.map(|player_idx| state.players[player_idx].clone()),
                 });
                 try_start_long_action_ship(
                     state,

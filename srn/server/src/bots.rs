@@ -174,7 +174,7 @@ pub fn format_d_states(
 }
 
 pub fn do_bot_players_actions(
-    room: &&mut Room,
+    room: &mut Room,
     d_states: &mut DialogueStates,
     d_table: &DialogueTable,
     elapsed_micro: i64,
@@ -235,28 +235,27 @@ pub fn do_bot_players_actions(
     }
 }
 
-pub fn do_bot_npcs_actions(room: &&mut Room, elapsed_micro: i64) {
+pub fn do_bot_npcs_actions(room: &mut Room, elapsed_micro: i64) {
     let mut ship_updates: HashMap<Uuid, (Vec<ShipActionRust>, ShipIdx)> = HashMap::new();
 
     for i in 0..room.state.locations.len() {
+        let room_state_clone = room.state.clone();
         let ship_len = room.state.locations[i].ships.len();
         let loc = &mut room.state.locations[i];
         for j in 0..ship_len {
             let ship = &mut loc.ships[j];
-            ship.npc = ship.npc.map(|npc| {
-                let (npc, bot_acts) = npc_act(npc, &room.state, elapsed_micro);
-                ship_updates.insert(
-                    ship.id,
-                    (
-                        bot_acts,
-                        ShipIdx {
-                            location_idx: i,
-                            ship_idx: j,
-                        },
-                    ),
-                );
-                npc
-            })
+            let (npc, bot_acts) = npc_act(ship.npc.clone(), &room_state_clone, elapsed_micro);
+            ship.npc = npc;
+            ship_updates.insert(
+                ship.id,
+                (
+                    bot_acts,
+                    ShipIdx {
+                        location_idx: i,
+                        ship_idx: j,
+                    },
+                ),
+            );
         }
     }
 
@@ -271,6 +270,10 @@ pub fn do_bot_npcs_actions(room: &&mut Room, elapsed_micro: i64) {
     }
 }
 
-fn npc_act(bot: Bot, state: &GameState, elapsed_micro: i64) -> (Bot, Vec<ShipActionRust>) {
+fn npc_act(
+    bot: Option<Bot>,
+    state: &GameState,
+    elapsed_micro: i64,
+) -> (Option<Bot>, Vec<ShipActionRust>) {
     todo!()
 }

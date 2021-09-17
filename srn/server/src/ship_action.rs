@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::combat::ShootTarget;
-use crate::indexing::{find_my_ship_index, find_player_by_ship_id};
+use crate::indexing::{find_my_ship_index, find_player_by_ship_id, find_player_idx_by_ship_id};
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
 use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship, ShipIdx};
@@ -164,7 +164,7 @@ fn undock_ship_via_clone(state: &GameState, ship_idx: &ShipIdx, mut ship: &mut S
         &mut state_mut_clone,
         ship_idx.clone(),
         client,
-        find_player_by_ship_id(state, ship.id),
+        find_player_idx_by_ship_id(state, ship.id),
     );
     let mut mutated_ship =
         state_mut_clone.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].clone();

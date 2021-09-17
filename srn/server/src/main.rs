@@ -417,12 +417,12 @@ fn main_thread() {
                 let bots_mark = sampler.start(SamplerMarks::Bots as u32);
                 let bot_players_mark = sampler.start(SamplerMarks::BotsPlayers as u32);
                 for room in cont.rooms.values.iter_mut() {
-                    do_bot_players_actions(&room, d_states, &d_table, bot_action_elapsed);
+                    do_bot_players_actions(room, d_states, &d_table, bot_action_elapsed);
                 }
                 sampler.end(bot_players_mark);
                 let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);
                 for room in cont.rooms.values.iter_mut() {
-                    do_bot_npcs_actions(&room, bot_action_elapsed);
+                    do_bot_npcs_actions(room, bot_action_elapsed);
                 }
                 sampler.end(npcs_mark);
                 if sampler.end_top(bots_mark) < 0 {

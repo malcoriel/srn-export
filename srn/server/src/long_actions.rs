@@ -9,7 +9,7 @@ use crate::abilities::Ability;
 use crate::combat::ShootTarget;
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
-    find_player_by_ship_id,
+    find_player_by_ship_id, find_player_idx_by_ship_id,
 };
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
@@ -368,6 +368,7 @@ pub const SHIP_DOCKING_RADIUS_COEFF: f64 = 2.0;
 pub const MIN_SHIP_DOCKING_RADIUS: f64 = 5.0;
 
 pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, client: bool) {
+    let state_id = state.id;
     match act {
         LongAction::Unknown { .. } => {
             // nothing to do
@@ -383,24 +384,20 @@ pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, 
             }
         }
         LongAction::Dock { to_planet, .. } => {
-            let player = indexing::find_my_player(state, player_id);
             let planet = indexing::find_planet(state, &to_planet).map(|p| p.clone());
-            let ship = indexing::find_my_ship_mut(state, player_id);
-            if let (Some(ship), player, Some(planet)) = (ship, player, planet) {
+            let ship_idx = indexing::find_my_ship_index(state, player_id);
+            let player_idx = indexing::find_player_idx(state, player_id);
+            if let (Some(ship_idx), Some(planet)) = (ship_idx, planet) {
                 let body = Box::new(planet) as Box<dyn IBody>;
-                world::dock_ship(ship, player, &body, state.id);
+                world::dock_ship(state, ship_idx, player_idx, body);
             }
         }
         LongAction::Undock { .. } => {
-            let ship = indexing::find_my_ship_index(state, player_id);
+            let ship = indexing::find_my_ship_index(state, player_id).clone();
             if let Some(ship_idx) = ship {
                 let ship_id = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].id;
-                world::undock_ship(
-                    state,
-                    ship_idx,
-                    client,
-                    find_player_by_ship_id(state, ship_id),
-                );
+                let player = find_player_idx_by_ship_id(state, ship_id).map(|p| p.clone());
+                world::undock_ship(state, ship_idx, client, player);
             }
         }
     }
