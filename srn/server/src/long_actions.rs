@@ -137,7 +137,25 @@ pub fn try_start_long_action_ship(
     action: LongActionStart,
     prng: &mut SmallRng,
 ) -> bool {
-    unimplemented!();
+    match action {
+        LongActionStart::Shoot { target, .. } => {
+            try_start_shoot(state, target, Some(ship_idx.clone()));
+            true
+        }
+        LongActionStart::Dock { to_planet, .. } => {
+            try_start_dock(state, to_planet, ship_idx.clone())
+        }
+        LongActionStart::Undock { from_planet, .. } => {
+            try_start_undock(state, prng, from_planet, ship_idx.clone())
+        }
+        _ => {
+            warn!(format!(
+                "Impossible ship action start for action {:?}",
+                action
+            ));
+            false
+        }
+    }
 }
 
 pub fn try_start_long_action(
@@ -189,34 +207,7 @@ pub fn try_start_long_action(
             if ship_idx.is_none() {
                 return false;
             }
-            let ship_idx = ship_idx.unwrap();
-            if !combat::validate_shoot(
-                target.clone(),
-                &state.locations[ship_idx.location_idx],
-                &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
-            ) {
-                return false;
-            }
-
-            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
-            ship.long_actions.push(LongAction::Shoot {
-                id: new_id(),
-                target,
-                micro_left: Ability::Shoot {
-                    cooldown_ticks_remaining: 0,
-                }
-                .get_cooldown(),
-                percentage: 0,
-            });
-            revalidate(&mut ship.long_actions);
-            for ability in ship.abilities.iter_mut() {
-                match ability {
-                    Ability::Unknown => {}
-                    Ability::Shoot { .. } => {
-                        ability.set_max_cooldown();
-                    }
-                }
-            }
+            return try_start_shoot(state, target, ship_idx);
         }
         LongActionStart::Dock { to_planet, .. } => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -224,41 +215,7 @@ pub fn try_start_long_action(
                 return false;
             }
             let ship_idx = ship_idx.unwrap();
-            let ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
-            let planet = &state.locations[ship_idx.location_idx]
-                .planets
-                .iter()
-                .find(|p| p.id == to_planet);
-            if planet.is_none() {
-                return false;
-            }
-            let planet = planet.unwrap();
-            // currently, docking can only be initiated in the planet radius
-            let ship_pos = Vec2f64 {
-                x: ship.x,
-                y: ship.y,
-            };
-            let planet_pos = Vec2f64 {
-                x: planet.x,
-                y: planet.y,
-            };
-            if planet_pos.euclidean_distance(&ship_pos)
-                > (planet.radius * SHIP_DOCKING_RADIUS_COEFF).max(MIN_SHIP_DOCKING_RADIUS)
-            {
-                return false;
-            }
-            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
-            let act = LongAction::Dock {
-                id: new_id(),
-                to_planet,
-                start_pos: ship_pos,
-                micro_left: SHIP_DOCK_TIME_TICKS,
-                percentage: 0,
-            };
-            ship.long_actions.push(act);
-            ship.trajectory = vec![];
-            ship.dock_target = None;
-            ship.navigate_target = None;
+            return try_start_dock(state, to_planet, ship_idx);
         }
         LongActionStart::Undock { from_planet } => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -266,34 +223,115 @@ pub fn try_start_long_action(
                 return false;
             }
             let ship_idx = ship_idx.unwrap();
-            let planet = &state.locations[ship_idx.location_idx]
-                .planets
-                .iter()
-                .find(|p| p.id == from_planet);
-            if planet.is_none() {
-                return false;
+            return try_start_undock(state, prng, from_planet, ship_idx);
+        }
+    }
+    return true;
+}
+
+fn try_start_undock(
+    state: &mut GameState,
+    prng: &mut SmallRng,
+    from_planet: Uuid,
+    ship_idx: ShipIdx,
+) -> bool {
+    let planet = &state.locations[ship_idx.location_idx]
+        .planets
+        .iter()
+        .find(|p| p.id == from_planet);
+    if planet.is_none() {
+        return false;
+    }
+    let planet = planet.unwrap();
+    let random_angle = prng.gen_range(0.0, PI * 2.0);
+    let dist = (planet.radius * 1.2).max(MIN_SHIP_DOCKING_RADIUS);
+    let planet_pos = Vec2f64 {
+        x: planet.x,
+        y: planet.y,
+    };
+    let vec = Vec2f64 { x: 1.0, y: 0.0 }
+        .rotate(random_angle)
+        .scalar_mul(dist)
+        .add(&planet_pos);
+    let act = LongAction::Undock {
+        id: new_id(),
+        from_planet,
+        start_pos: planet_pos,
+        end_pos: Vec2f64 { x: vec.x, y: vec.y },
+        micro_left: SHIP_DOCK_TIME_TICKS,
+        percentage: 0,
+    };
+    let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+    ship.long_actions.push(act);
+    return true;
+}
+
+fn try_start_dock(state: &mut GameState, to_planet: Uuid, ship_idx: ShipIdx) -> bool {
+    let ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+    let planet = &state.locations[ship_idx.location_idx]
+        .planets
+        .iter()
+        .find(|p| p.id == to_planet);
+    if planet.is_none() {
+        return false;
+    }
+    let planet = planet.unwrap();
+    // currently, docking can only be initiated in the planet radius
+    let ship_pos = Vec2f64 {
+        x: ship.x,
+        y: ship.y,
+    };
+    let planet_pos = Vec2f64 {
+        x: planet.x,
+        y: planet.y,
+    };
+    if planet_pos.euclidean_distance(&ship_pos)
+        > (planet.radius * SHIP_DOCKING_RADIUS_COEFF).max(MIN_SHIP_DOCKING_RADIUS)
+    {
+        return false;
+    }
+    let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+    let act = LongAction::Dock {
+        id: new_id(),
+        to_planet,
+        start_pos: ship_pos,
+        micro_left: SHIP_DOCK_TIME_TICKS,
+        percentage: 0,
+    };
+    ship.long_actions.push(act);
+    ship.trajectory = vec![];
+    ship.dock_target = None;
+    ship.navigate_target = None;
+    return true;
+}
+
+fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<ShipIdx>) -> bool {
+    let ship_idx = ship_idx.unwrap();
+    if !combat::validate_shoot(
+        target.clone(),
+        &state.locations[ship_idx.location_idx],
+        &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
+    ) {
+        return false;
+    }
+
+    let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+    ship.long_actions.push(LongAction::Shoot {
+        id: new_id(),
+        target,
+        micro_left: Ability::Shoot {
+            cooldown_ticks_remaining: 0,
+        }
+        .get_cooldown(),
+        percentage: 0,
+    });
+    revalidate(&mut ship.long_actions);
+    for ability in ship.abilities.iter_mut() {
+        match ability {
+            Ability::Unknown => {}
+            Ability::Shoot { .. } => {
+                ability.set_max_cooldown();
             }
-            let planet = planet.unwrap();
-            let random_angle = prng.gen_range(0.0, PI * 2.0);
-            let dist = (planet.radius * 1.2).max(MIN_SHIP_DOCKING_RADIUS);
-            let planet_pos = Vec2f64 {
-                x: planet.x,
-                y: planet.y,
-            };
-            let vec = Vec2f64 { x: 1.0, y: 0.0 }
-                .rotate(random_angle)
-                .scalar_mul(dist)
-                .add(&planet_pos);
-            let act = LongAction::Undock {
-                id: new_id(),
-                from_planet,
-                start_pos: planet_pos,
-                end_pos: Vec2f64 { x: vec.x, y: vec.y },
-                micro_left: SHIP_DOCK_TIME_TICKS,
-                percentage: 0,
-            };
-            let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
-            ship.long_actions.push(act);
         }
     }
     return true;
@@ -368,7 +406,6 @@ pub const SHIP_DOCKING_RADIUS_COEFF: f64 = 2.0;
 pub const MIN_SHIP_DOCKING_RADIUS: f64 = 5.0;
 
 pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, client: bool) {
-    let state_id = state.id;
     match act {
         LongAction::Unknown { .. } => {
             // nothing to do
