@@ -16,8 +16,8 @@ use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
-use crate::api_struct::{Bot, RoomId};
-use crate::bots::new_bot;
+use crate::api_struct::{new_bot, Bot, RoomId};
+use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
@@ -749,12 +749,17 @@ pub fn split_bodies_by_area(
     return (picked, dropped);
 }
 
+pub struct SpatialIndexes {
+    pub values: HashMap<usize, SpatialIndex>,
+}
+
 pub fn update_world(
     mut state: GameState,
     elapsed: i64,
     client: bool,
     sampler: Sampler,
     update_options: UpdateOptions,
+    spatial_indexes: &mut SpatialIndexes,
 ) -> (GameState, Sampler) {
     state.millis += elapsed as u32 / 1000;
     if !client && state.seed != "tutorial".to_owned() {
@@ -854,6 +859,7 @@ pub fn update_world(
                     &update_options,
                     sampler,
                     location_idx,
+                    spatial_indexes,
                 )
             }
         };
@@ -868,7 +874,17 @@ pub fn update_location(
     update_options: &UpdateOptions,
     mut sampler: Sampler,
     location_idx: usize,
+    spatial_indexes: &mut SpatialIndexes,
 ) -> Sampler {
+    let spatial_index_id = sampler.start(SamplerMarks::GenSpatialIndexOnDemand as u32);
+    let spatial_index = spatial_indexes
+        .values
+        .entry(location_idx)
+        .or_insert(build_spatial_index(
+            &state.locations[location_idx],
+            location_idx,
+        ));
+    sampler.end(spatial_index_id);
     let update_planets_id = sampler.start(SamplerMarks::UpdatePlanetMovement as u32);
     let (planets, sampler_out) = planet_movement::update_planets(
         &state.locations[location_idx].planets,
@@ -980,7 +996,7 @@ pub fn update_location(
         sampler.end(respawn_id);
     }
     let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
-    autofocus::update_location_autofocus(location_idx, &mut state.locations[location_idx]);
+    autofocus::update_location_autofocus(&mut state.locations[location_idx], &spatial_index);
     sampler.end(autofocus_id);
 
     let long_act_ticks = sampler.start(SamplerMarks::UpdateTickLongActionsShips as u32);

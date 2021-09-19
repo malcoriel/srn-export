@@ -261,6 +261,8 @@ pub enum SamplerMarks {
     ModePirateDefence = 34,
     BotsPlayers = 35,
     BotsNPCs = 36,
+    GenFullSpatialIndexes = 37,
+    GenSpatialIndexOnDemand = 38,
 }
 
 impl Display for SamplerMarks {

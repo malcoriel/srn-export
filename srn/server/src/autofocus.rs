@@ -1,6 +1,6 @@
 use crate::indexing::{GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier};
 use crate::vec2::Vec2f64;
-use crate::world::{GameState, Location};
+use crate::world::{GameState, Location, SpatialIndexes};
 use itertools::sorted;
 use kdbush::KDBush;
 use std::cmp::Ordering;
@@ -106,7 +106,7 @@ impl SpatialIndex {
     }
 }
 
-fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
+pub fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
     let count = loc.planets.len() + loc.ships.len() + loc.minerals.len() + loc.containers.len() + 1;
     let mut refs = Vec::with_capacity(count);
     let mut points = Vec::with_capacity(count);
@@ -136,18 +136,21 @@ fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
 
 pub const AUTOFOCUS_RADIUS: f64 = 30.0;
 
-pub fn update_autofocus_full(state: &mut GameState) {
+pub fn update_autofocus_full(state: &mut GameState, spatial_indexes: &mut SpatialIndexes) {
     for i in 0..state.locations.len() {
         let loc = &mut state.locations[i];
-        update_location_autofocus(i, loc)
+        let spatial_index = spatial_indexes
+            .values
+            .entry(i)
+            .or_insert(build_spatial_index(loc, i));
+        update_location_autofocus(loc, &spatial_index)
     }
 }
 
-pub fn update_location_autofocus(i: usize, loc: &mut Location) {
+pub fn update_location_autofocus(loc: &mut Location, index: &SpatialIndex) {
     if loc.planets.len() + loc.ships.len() + loc.minerals.len() + loc.containers.len() == 0 {
         return;
     }
-    let index = build_spatial_index(&loc, i);
     let mut ship_mods = vec![];
     for ship in loc.ships.iter() {
         let ship_pos = Vec2f64 {

@@ -1,14 +1,15 @@
+use crate::vec2::Vec2f64;
 use chrono::Local;
 use lazy_static::lazy_static;
 use rand::rngs::SmallRng;
 use rand::{thread_rng, Rng, RngCore, SeedableRng};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{mpsc, Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
 use std::thread;
 use std::time::Duration;
 use uuid::Uuid;
 
-use crate::api_struct::{Bot, Room};
+use crate::api_struct::{new_bot, AiTrait, Bot, Room};
 use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
@@ -19,10 +20,11 @@ use crate::random_stuff::gen_bot_name;
 use crate::ship_action::{apply_ship_action, ShipActionRust};
 use crate::states::StateContainer;
 use crate::world;
-use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship, ShipIdx};
+use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship, ShipIdx, SpatialIndexes};
 use crate::DIALOGUE_STATES;
 use crate::STATE;
 use crate::{indexing, new_id};
+use std::iter::FromIterator;
 
 const BOT_SLEEP_MS: u64 = 200;
 const BOT_QUEST_ACT_DELAY_MC: i64 = 2 * 1000 * 1000;
@@ -32,12 +34,6 @@ pub enum BotAct {
     Act(ShipActionRust),
 }
 
-pub fn new_bot() -> Bot {
-    Bot {
-        id: new_id(),
-        timer: Some(0),
-    }
-}
 pub fn bot_act(
     mut bot: Bot,
     state: &GameState,
@@ -235,7 +231,7 @@ pub fn do_bot_players_actions(
     }
 }
 
-pub fn do_bot_npcs_actions(room: &mut Room, elapsed_micro: i64) {
+pub fn do_bot_npcs_actions(room: &mut Room, elapsed_micro: i64, spatial_indexes: &SpatialIndexes) {
     let mut ship_updates: HashMap<Uuid, (Vec<ShipActionRust>, ShipIdx)> = HashMap::new();
 
     for i in 0..room.state.locations.len() {
@@ -243,23 +239,24 @@ pub fn do_bot_npcs_actions(room: &mut Room, elapsed_micro: i64) {
         let ship_len = room.state.locations[i].ships.len();
         let loc = &mut room.state.locations[i];
         for j in 0..ship_len {
+            let ship_idx = ShipIdx {
+                location_idx: i,
+                ship_idx: j,
+            };
             let ship = &mut loc.ships[j];
-            let (npc, bot_acts) = npc_act(ship.npc.clone(), &room_state_clone, elapsed_micro);
-            ship.npc = npc;
-            ship_updates.insert(
-                ship.id,
-                (
-                    bot_acts,
-                    ShipIdx {
-                        location_idx: i,
-                        ship_idx: j,
-                    },
-                ),
+            let (npc, bot_acts) = npc_act(
+                &ship.clone(),
+                &room_state_clone,
+                elapsed_micro,
+                &ship_idx,
+                spatial_indexes,
             );
+            ship.npc = npc;
+            ship_updates.insert(ship.id, (bot_acts, ship_idx));
         }
     }
 
-    for (ship_id, (acts, idx)) in ship_updates.into_iter() {
+    for (_ship_id, (acts, idx)) in ship_updates.into_iter() {
         for act in acts {
             let updated_ship =
                 apply_ship_action(act.clone(), &mut room.state, Some(idx.clone()), false);
@@ -271,9 +268,45 @@ pub fn do_bot_npcs_actions(room: &mut Room, elapsed_micro: i64) {
 }
 
 fn npc_act(
-    bot: Option<Bot>,
+    ship: &Ship,
     state: &GameState,
-    elapsed_micro: i64,
+    _elapsed_micro: i64,
+    ship_idx: &ShipIdx,
+    spatial_indexes: &SpatialIndexes,
 ) -> (Option<Bot>, Vec<ShipActionRust>) {
-    todo!()
+    if ship.npc.is_none() {
+        return (None, vec![]);
+    }
+    let bot = ship.npc.clone().unwrap();
+    let mut res = vec![];
+    let trait_set: HashSet<AiTrait> = HashSet::from_iter(bot.traits.clone().into_iter());
+    if trait_set.contains(&AiTrait::ImmediatePlanetLand) {
+        let closest_planet = find_closest_planet(
+            Vec2f64 {
+                x: ship.x,
+                y: ship.y,
+            },
+            state,
+            ship_idx.location_idx,
+            spatial_indexes,
+        );
+        if let Some(cp) = closest_planet {
+            res.push(ShipActionRust::DockNavigate { target: cp })
+        }
+    }
+
+    return (Some(bot), res);
+}
+
+pub const MAX_CLOSEST_PLANET_SEARCH : f64 : 500.0;
+
+fn find_closest_planet(
+    position: Vec2f64,
+    state: &GameState,
+    location_idx: usize,
+    spatial_indexes: &SpatialIndexes,
+) -> Option<Uuid> {
+    let index = spatial_indexes.values.get(&location_idx).unwrap();
+    let objects = index.rad_search(&position, MAX_CLOSEST_PLANET_SEARCH);
+
 }

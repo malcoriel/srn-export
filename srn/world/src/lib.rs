@@ -189,6 +189,7 @@ pub fn parse_state(serialized_args: &str) -> String {
     return serde_json::to_string(&args).unwrap_or(DEFAULT_ERR.to_string());
 }
 
+use crate::indexing::find_my_ship_index;
 use mut_static::MutStatic;
 use std::mem;
 use std::ops::DerefMut;
@@ -285,7 +286,7 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
         return return_result.unwrap();
     }
     let args = args.ok().unwrap();
-    let new_ship =
-        ship_action::apply_ship_action(args.ship_action, &args.state, args.player_id, true);
+    let ship_idx = find_my_ship_index(&args.state, args.player_id);
+    let new_ship = ship_action::apply_ship_action(args.ship_action, &args.state, ship_idx, true);
     return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
 }

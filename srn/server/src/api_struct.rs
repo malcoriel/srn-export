@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -7,10 +7,25 @@ use wasm_bindgen::prelude::*;
 
 use crate::world::{GameMode, GameState, PlayerId};
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum AiTrait {
+    Unknown,
+    ImmediatePlanetLand,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Bot {
     pub id: Uuid,
+    pub traits: Vec<AiTrait>,
     pub timer: Option<i64>,
+}
+
+pub fn new_bot() -> Bot {
+    Bot {
+        id: crate::new_id(),
+        traits: vec![],
+        timer: Some(0),
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]

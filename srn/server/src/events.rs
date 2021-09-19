@@ -72,9 +72,7 @@ pub fn handle_events(
                             });
                         }
                     }
-                    GameEvent::ShipDied {
-                        player, state_id, ..
-                    } => {
+                    GameEvent::ShipDied { state_id, .. } => {
                         let state = crate::states::select_state_by_id_mut(cont, state_id);
                         if state.is_none() {
                             warn!("event in non-existent state");
