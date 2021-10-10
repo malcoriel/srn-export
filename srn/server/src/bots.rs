@@ -298,7 +298,7 @@ fn npc_act(
     return (Some(bot), res);
 }
 
-pub const MAX_CLOSEST_PLANET_SEARCH : f64 : 500.0;
+pub const MAX_CLOSEST_PLANET_SEARCH: f64 = 500.0;
 
 fn find_closest_planet(
     position: Vec2f64,
@@ -308,5 +308,5 @@ fn find_closest_planet(
 ) -> Option<Uuid> {
     let index = spatial_indexes.values.get(&location_idx).unwrap();
     let objects = index.rad_search(&position, MAX_CLOSEST_PLANET_SEARCH);
-
+    return None;
 }
