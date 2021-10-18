@@ -10,6 +10,7 @@ use std::time::Duration;
 use uuid::Uuid;
 
 use crate::api_struct::{new_bot, AiTrait, Bot, Room};
+use crate::autofocus::object_index_into_object_pos;
 use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
@@ -282,7 +283,7 @@ fn npc_act(
     let trait_set: HashSet<AiTrait> = HashSet::from_iter(bot.traits.clone().into_iter());
     if trait_set.contains(&AiTrait::ImmediatePlanetLand) {
         let closest_planet = find_closest_planet(
-            Vec2f64 {
+            &Vec2f64 {
                 x: ship.x,
                 y: ship.y,
             },
@@ -301,12 +302,22 @@ fn npc_act(
 pub const MAX_CLOSEST_PLANET_SEARCH: f64 = 500.0;
 
 fn find_closest_planet(
-    position: Vec2f64,
+    position: &Vec2f64,
     state: &GameState,
     location_idx: usize,
     spatial_indexes: &SpatialIndexes,
 ) -> Option<Uuid> {
     let index = spatial_indexes.values.get(&location_idx).unwrap();
     let objects = index.rad_search(&position, MAX_CLOSEST_PLANET_SEARCH);
+    let dists = objects
+        .iter()
+        .filter_map(|ois| {
+            if !matches!(ois, ObjectIndexSpecifier::Planet { .. }) {
+                return None;
+            }
+            let pos = object_index_into_object_pos(ois, &state.locations[location_idx]).unwrap();
+            return Some((pos.euclidean_distance(position), ois));
+        })
+        .collect::<Vec<_>>();
     return None;
 }

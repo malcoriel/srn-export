@@ -227,6 +227,25 @@ fn object_index_into_object_id(
     }
 }
 
+pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) -> Option<Vec2f64> {
+    match ois {
+        ObjectIndexSpecifier::Unknown => None,
+        ObjectIndexSpecifier::Mineral { idx } => {
+            loc.minerals.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
+        }
+        ObjectIndexSpecifier::Container { idx } => {
+            loc.containers.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
+        }
+        ObjectIndexSpecifier::Planet { idx } => {
+            loc.planets.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
+        }
+        ObjectIndexSpecifier::Ship { idx } => {
+            loc.ships.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
+        }
+        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|s| Vec2f64 { x: o.x, y: o.y }),
+    }
+}
+
 fn get_position(loc: &Location, sp: &ObjectIndexSpecifier) -> Option<Vec2f64> {
     match sp {
         ObjectIndexSpecifier::Unknown => None,
