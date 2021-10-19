@@ -161,3 +161,6 @@ Cargo.lock
 # git-filter-repo mailmap
 .mailmap
 log.txt
+
+# mkdkr
+.tmp

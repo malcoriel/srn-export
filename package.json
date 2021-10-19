@@ -18,7 +18,8 @@
     "typescript": "^4.2.3"
   },
   "scripts": {
-    "full-install": "node full-install.js"
+    "full-install": "node full-install.js",
+    "gen-gitlab-ci":  "node gen-gitlab-ci.js"
   },
   "prettier": {
     "trailingComma": "es5",
