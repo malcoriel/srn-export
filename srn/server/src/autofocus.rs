@@ -234,7 +234,7 @@ pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) 
             loc.minerals.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
         }
         ObjectIndexSpecifier::Container { idx } => {
-            loc.containers.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
+            loc.containers.get(*idx).map(|o| o.position.clone())
         }
         ObjectIndexSpecifier::Planet { idx } => {
             loc.planets.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
@@ -242,7 +242,7 @@ pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) 
         ObjectIndexSpecifier::Ship { idx } => {
             loc.ships.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
         }
-        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|s| Vec2f64 { x: o.x, y: o.y }),
+        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|o| Vec2f64 { x: o.x, y: o.y }),
     }
 }
 

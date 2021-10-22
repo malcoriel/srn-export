@@ -54,7 +54,12 @@ pub fn init_saved_states() {
 
     for path in paths {
         let current_file = path.unwrap();
-        let json = fs::read_to_string(current_file.path().display().to_string()).unwrap();
+        let unwrapped = current_file.path().display().to_string();
+
+        if unwrapped.ends_with(".gitkeep") {
+            continue;
+        }
+        let json = fs::read_to_string(unwrapped).unwrap();
         let result = serde_json::from_str::<GameState>(json.as_str());
         if result.is_err() {
             panic!(

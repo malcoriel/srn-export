@@ -16,7 +16,7 @@ use crate::dialogue::{
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
 };
 use crate::events::fire_event;
-use crate::indexing::{find_my_player, find_my_ship, find_planet};
+use crate::indexing::{find_my_player, find_my_ship, find_planet, ObjectIndexSpecifier};
 use crate::random_stuff::gen_bot_name;
 use crate::ship_action::{apply_ship_action, ShipActionRust};
 use crate::states::StateContainer;

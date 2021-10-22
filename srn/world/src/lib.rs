@@ -1,6 +1,8 @@
 #![feature(exclusive_range_pattern)]
 #![allow(dead_code)]
 #![allow(warnings)]
+
+use std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 #[wasm_bindgen]
@@ -233,6 +235,9 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     let args = args.ok().unwrap();
 
     // log!(format!("{:?}", args.limit_area));
+    let mut indexes = world::SpatialIndexes {
+        values: HashMap::new()
+    };
     let (new_state, sampler) = world::update_world(
         args.state,
         elapsed_micro,
@@ -246,6 +251,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
             disable_hp_effects: false,
             limit_area: args.limit_area,
         },
+        &mut indexes
     );
 
     if ENABLE_PERF {
