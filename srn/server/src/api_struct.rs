@@ -20,10 +20,10 @@ pub struct Bot {
     pub timer: Option<i64>,
 }
 
-pub fn new_bot() -> Bot {
+pub fn new_bot(traits: Option<Vec<AiTrait>>) -> Bot {
     Bot {
         id: crate::new_id(),
-        traits: vec![],
+        traits: traits.unwrap_or(vec![]),
         timer: Some(0),
     }
 }

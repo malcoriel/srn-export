@@ -198,7 +198,7 @@ pub fn update_location_autofocus(loc: &mut Location, index: &SpatialIndex) {
     }
 }
 
-fn object_index_into_object_id(
+pub fn object_index_into_object_id(
     ois: &ObjectIndexSpecifier,
     loc: &Location,
 ) -> Option<ObjectSpecifier> {

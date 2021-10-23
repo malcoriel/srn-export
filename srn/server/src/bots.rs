@@ -10,13 +10,13 @@ use std::time::Duration;
 use uuid::Uuid;
 
 use crate::api_struct::{new_bot, AiTrait, Bot, Room};
-use crate::autofocus::object_index_into_object_pos;
+use crate::autofocus::{object_index_into_object_pos, object_index_into_object_id};
 use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
 };
 use crate::events::fire_event;
-use crate::indexing::{find_my_player, find_my_ship, find_planet, ObjectIndexSpecifier};
+use crate::indexing::{find_my_player, find_my_ship, find_planet, ObjectIndexSpecifier, ObjectSpecifier};
 use crate::random_stuff::gen_bot_name;
 use crate::ship_action::{apply_ship_action, ShipActionRust};
 use crate::states::StateContainer;
@@ -124,8 +124,7 @@ fn make_dialogue_act(
                     "Bot {:?} is stuck without dialogue option in dialogue {} state {:?}",
                     bot, current_dialogue_name, current_d_state
                 ))
-            } else {
-            }
+            } else {}
             option
         })
         .and_then(|opt| {
@@ -143,14 +142,14 @@ fn add_bot(room: &mut Room, bot: Bot) {
     let mut rng = thread_rng();
     let mut prng = SmallRng::seed_from_u64(rng.next_u64());
     world::add_player(&mut room.state, id, true, Some(gen_bot_name(&mut prng)));
-    world::spawn_ship(&mut room.state, Some(id), None, false);
+    world::spawn_ship(&mut room.state, Some(id), None, None);
 }
 
 pub fn bot_init(room: &mut Room) {
-    add_bot(room, new_bot());
-    add_bot(room, new_bot());
-    add_bot(room, new_bot());
-    add_bot(room, new_bot());
+    add_bot(room, new_bot(None));
+    add_bot(room, new_bot(None));
+    add_bot(room, new_bot(None));
+    add_bot(room, new_bot(None));
 }
 
 pub fn format_d_states(
@@ -245,15 +244,17 @@ pub fn do_bot_npcs_actions(room: &mut Room, elapsed_micro: i64, spatial_indexes:
                 ship_idx: j,
             };
             let ship = &mut loc.ships[j];
-            let (npc, bot_acts) = npc_act(
-                &ship.clone(),
-                &room_state_clone,
-                elapsed_micro,
-                &ship_idx,
-                spatial_indexes,
-            );
-            ship.npc = npc;
-            ship_updates.insert(ship.id, (bot_acts, ship_idx));
+            if ship.npc.is_some() {
+                let (npc, bot_acts) = npc_act(
+                    &ship.clone(),
+                    &room_state_clone,
+                    elapsed_micro,
+                    &ship_idx,
+                    spatial_indexes,
+                );
+                ship.npc = npc;
+                ship_updates.insert(ship.id, (bot_acts, ship_idx));
+            }
         }
     }
 
@@ -281,7 +282,7 @@ fn npc_act(
     let bot = ship.npc.clone().unwrap();
     let mut res = vec![];
     let trait_set: HashSet<AiTrait> = HashSet::from_iter(bot.traits.clone().into_iter());
-    if trait_set.contains(&AiTrait::ImmediatePlanetLand) {
+    if trait_set.contains(&AiTrait::ImmediatePlanetLand) && ship.dock_target.is_none() {
         let closest_planet = find_closest_planet(
             &Vec2f64 {
                 x: ship.x,
@@ -309,7 +310,7 @@ fn find_closest_planet(
 ) -> Option<Uuid> {
     let index = spatial_indexes.values.get(&location_idx).unwrap();
     let objects = index.rad_search(&position, MAX_CLOSEST_PLANET_SEARCH);
-    let dists = objects
+    let distances = objects
         .iter()
         .filter_map(|ois| {
             if !matches!(ois, ObjectIndexSpecifier::Planet { .. }) {
@@ -319,5 +320,27 @@ fn find_closest_planet(
             return Some((pos.euclidean_distance(position), ois));
         })
         .collect::<Vec<_>>();
+
+    let mut min_dist = 9999.0;
+    let mut min_oid = None;
+    for (dist, oid) in distances {
+        if dist < min_dist {
+            min_dist = dist;
+            min_oid = Some(oid);
+        }
+    }
+
+    if let Some(min_oid) = min_oid {
+        return object_index_into_object_id(min_oid, &state.locations[location_idx]).and_then(|oid| {
+            return match oid {
+                ObjectSpecifier::Planet { id } => {
+                    Some(id)
+                }
+                _ => {
+                    None
+                }
+            };
+        });
+    }
     return None;
 }

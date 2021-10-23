@@ -144,7 +144,7 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId) {
             new_state
         };
         new_state.players.push(player);
-        spawn_ship(new_state, Some(client_id), None, false);
+        spawn_ship(new_state, Some(client_id), None, None);
         new_state.id
     };
 

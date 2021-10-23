@@ -452,7 +452,7 @@ pub fn finish_long_act_player(
         }
         LongActionPlayer::Respawn { .. } => {
             if !client {
-                spawn_ship(state, Some(player_id), None, false);
+                spawn_ship(state, Some(player_id), None, None);
             }
         }
     }

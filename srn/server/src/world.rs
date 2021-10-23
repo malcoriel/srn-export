@@ -16,7 +16,7 @@ use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
-use crate::api_struct::{new_bot, Bot, RoomId};
+use crate::api_struct::{new_bot, Bot, RoomId, AiTrait};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
@@ -784,7 +784,7 @@ pub fn update_world(
                 state = seed_state(&state.mode, random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
-                    spawn_ship(&mut state, Some(player.id), None, false);
+                    spawn_ship(&mut state, Some(player.id), None, None);
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
             } else {
@@ -1499,7 +1499,7 @@ pub fn spawn_ship(
     state: &mut GameState,
     player_id: Option<Uuid>,
     at: Option<Vec2f64>,
-    is_npc: bool,
+    npc_traits: Option<Vec<AiTrait>>,
 ) -> &Ship {
     let mut small_rng = gen_rng();
     let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
@@ -1512,7 +1512,7 @@ pub fn spawn_ship(
         })
     }
     let mut ship = Ship::new(&mut small_rng, &mut at);
-    ship.npc = if is_npc { Some(new_bot()) } else { None };
+    ship.npc = if npc_traits.is_some() { Some(new_bot(npc_traits)) } else { None };
     let state_id = state.id;
 
     match player_id {

@@ -6,6 +6,7 @@ use std::sync::{MutexGuard, RwLockWriteGuard};
 use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use uuid::Uuid;
+use crate::api_struct::AiTrait;
 
 use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
@@ -179,7 +180,7 @@ pub fn handle_events(
                             continue;
                         }
                         let state = state.unwrap();
-                        spawn_ship(state, None, Some(at), true);
+                        spawn_ship(state, None, Some(at), Some(vec![AiTrait::ImmediatePlanetLand]));
                     }
                 }
             }
