@@ -151,32 +151,42 @@ pub fn update_location_autofocus(loc: &mut Location, index: &SpatialIndex) {
     if loc.planets.len() + loc.ships.len() + loc.minerals.len() + loc.containers.len() == 0 {
         return;
     }
-    let mut ship_mods = vec![];
-    for ship in loc.ships.iter() {
+    let mut ship_mods_neutral = vec![];
+    let mut ship_mods_hostile = vec![];
+    for i in 0..loc.ships.len() {
+        let ship = &loc.ships[i];
         let ship_pos = Vec2f64 {
             x: ship.x,
             y: ship.y,
         };
         let around_unfiltered = index.rad_search(&ship_pos, AUTOFOCUS_RADIUS);
-        let mut around = around_unfiltered
-            .iter()
-            .filter(|sp| {
-                return match sp {
-                    ObjectIndexSpecifier::Ship { .. } => {
+        let mut around_neutral = vec![];
+        let mut around_hostile = vec![];
+
+        for sp in around_unfiltered.iter() {
+            match sp {
+                ObjectIndexSpecifier::Ship { .. } => {
+                    let should_pick_ship = {
                         if let Some(osp) = object_index_into_object_id(&sp, loc) {
                             match osp {
                                 ObjectSpecifier::Ship { id } => id != ship.id,
                                 _ => true,
                             }
                         } else {
-                            true
+                            // potentially impossible
+                            false
                         }
+                    };
+                    if should_pick_ship {
+                        around_hostile.push(sp);
                     }
-                    _ => true,
-                };
-            })
-            .collect::<Vec<_>>();
-        around.sort_by(|a, b| {
+                }
+                _ => {
+                    around_neutral.push(sp);
+                },
+            };
+        }
+        let sorter = |a, b| {
             let a_pos = get_position(&loc, a);
             let a_dist = a_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
             let b_pos = get_position(&loc, b);
@@ -185,16 +195,32 @@ pub fn update_location_autofocus(loc: &mut Location, index: &SpatialIndex) {
                 return Ordering::Equal;
             }
             a_dist.partial_cmp(&b_dist).unwrap()
-        });
-        ship_mods.push(
-            around
+        };
+        around_neutral.sort_by(|a, b| sorter(a, b));
+        around_hostile.sort_by(|a, b| sorter(a, b));
+        ship_mods_neutral.push(
+            (
+            around_neutral
                 .get(0)
                 .and_then(|ois| object_index_into_object_id(ois, &loc)),
-        )
+                i,
+            )
+        );
+        ship_mods_hostile.push(
+            (around_hostile
+                .get(0)
+                .and_then(|ois| object_index_into_object_id(ois, &loc)),
+                i
+            )
+        );
     }
-    for i in 0..loc.ships.len() {
+    for (new_val, i) in ship_mods_neutral.into_iter() {
         let ship = &mut loc.ships[i];
-        ship.auto_focus = ship_mods[i].clone();
+        ship.auto_focus = new_val.clone();
+    }
+    for (new_val, i) in ship_mods_hostile.into_iter() {
+        let ship = &mut loc.ships[i];
+        ship.hostile_auto_focus = new_val.clone();
     }
 }
 
