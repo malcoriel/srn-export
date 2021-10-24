@@ -322,7 +322,7 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
         micro_left: Ability::Shoot {
             cooldown_ticks_remaining: 0,
         }
-        .get_cooldown(),
+            .get_cooldown(),
         percentage: 0,
     });
     revalidate(&mut ship.long_actions);
@@ -405,37 +405,34 @@ const SHIP_UNDOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
 pub const SHIP_DOCKING_RADIUS_COEFF: f64 = 2.0;
 pub const MIN_SHIP_DOCKING_RADIUS: f64 = 5.0;
 
-pub fn finish_long_act(state: &mut GameState, player_id: Uuid, act: LongAction, client: bool) {
+pub fn finish_long_act(state: &mut GameState, player_id: Option<Uuid>, act: LongAction, client: bool, ship_idx: ShipIdx) {
     match act {
         LongAction::Unknown { .. } => {
             // nothing to do
         }
         LongAction::TransSystemJump { to, .. } => {
-            if !client {
-                locations::try_move_player_ship(state, player_id, to);
+            if !client && player_id.is_some() {
+                locations::try_move_player_ship(state, player_id.unwrap(), to);
             }
         }
         LongAction::Shoot { target, .. } => {
-            if !client {
-                combat::resolve_shoot(state, player_id, target);
+            if !client && player_id.is_some() {
+                combat::resolve_shoot(state, player_id.unwrap(), target);
             }
         }
         LongAction::Dock { to_planet, .. } => {
             let planet = indexing::find_planet(state, &to_planet).map(|p| p.clone());
-            let ship_idx = indexing::find_my_ship_index(state, player_id);
-            let player_idx = indexing::find_player_idx(state, player_id);
-            if let (Some(ship_idx), Some(planet)) = (ship_idx, planet) {
+            let ship_id = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].id;
+            let player_idx = find_player_idx_by_ship_id(state, ship_id);
+            if let Some(planet) = planet {
                 let body = Box::new(planet) as Box<dyn IBody>;
                 world::dock_ship(state, ship_idx, player_idx, body);
             }
         }
         LongAction::Undock { .. } => {
-            let ship = indexing::find_my_ship_index(state, player_id).clone();
-            if let Some(ship_idx) = ship {
-                let ship_id = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].id;
-                let player = find_player_idx_by_ship_id(state, ship_id).map(|p| p.clone());
-                world::undock_ship(state, ship_idx, client, player);
-            }
+            let ship_id = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].id;
+            let player = find_player_idx_by_ship_id(state, ship_id).map(|p| p.clone());
+            world::undock_ship(state, ship_idx, client, player);
         }
     }
 }
@@ -493,7 +490,7 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                         Ability::Shoot {
                             cooldown_ticks_remaining: 0,
                         }
-                        .get_duration(),
+                            .get_duration(),
                     ),
                 },
                 left > 0,

@@ -1004,7 +1004,8 @@ pub fn update_location(
     let players_by_ship_id_read = index_players_by_ship_id(&players_read);
     let mut to_finish = vec![];
 
-    for ship in state.locations[location_idx].ships.iter_mut() {
+    for i in 0..state.locations[location_idx].ships.len() {
+        let ship = &mut state.locations[location_idx].ships[i];
         ship.long_actions = ship
             .long_actions
             .clone()
@@ -1012,16 +1013,18 @@ pub fn update_location(
             .filter_map(|la| {
                 let (new_la, keep_ticking) = tick_long_act(la, elapsed);
                 if !keep_ticking {
-                    if let Some(player) = players_by_ship_id_read.get(&ship.id) {
-                        to_finish.push((new_la.clone(), player.id));
-                    }
+                    let player = players_by_ship_id_read.get(&ship.id);
+                    to_finish.push((new_la.clone(), player.map(|p| p.id), ShipIdx {
+                        ship_idx: i,
+                        location_idx
+                    }));
                 }
                 return if keep_ticking { Some(new_la) } else { None };
             })
             .collect();
     }
-    for (act, player_id) in to_finish.into_iter() {
-        finish_long_act(&mut state, player_id, act, client);
+    for (act, player_id, ship_idx) in to_finish.into_iter() {
+        finish_long_act(&mut state, player_id, act, client, ship_idx);
     }
 
     sampler.end(long_act_ticks);

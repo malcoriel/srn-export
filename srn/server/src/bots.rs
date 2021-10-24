@@ -284,7 +284,7 @@ fn npc_act(
     let mut res = vec![];
     let trait_set: HashSet<AiTrait> = HashSet::from_iter(bot.traits.clone().into_iter());
     let not_landing = ship.long_actions.iter().filter(|la| matches!(la, LongAction::Dock { .. })).count() == 0;
-    if trait_set.contains(&AiTrait::ImmediatePlanetLand) && ship.dock_target.is_none() && not_landing {
+    if trait_set.contains(&AiTrait::ImmediatePlanetLand) && ship.dock_target.is_none() && not_landing && ship.docked_at.is_none() {
         let closest_planet = find_closest_planet(
             &Vec2f64 {
                 x: ship.x,
