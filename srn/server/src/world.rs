@@ -67,7 +67,7 @@ const ASTEROID_BELT_RANGE: f64 = 100.0;
 pub type PlayerId = Uuid;
 
 #[derive(
-    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
+Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
 )]
 pub enum GameMode {
     Unknown,
@@ -76,6 +76,7 @@ pub enum GameMode {
     Sandbox,
     PirateDefence,
 }
+
 impl Display for GameMode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
@@ -787,8 +788,7 @@ pub fn update_world(
                     spawn_ship(&mut state, Some(player.id), None, None);
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
-            } else {
-            }
+            } else {}
         }
     } else {
         if !client {
@@ -1141,42 +1141,42 @@ fn update_initiate_ship_docking_by_navigation(
 ) {
     let ships = &state.locations[location_idx].ships;
     let planets_by_id = index_planets_by_id(&state.locations[location_idx].planets);
-    let players_by_ship_id = index_players_by_ship_id(&state.players);
     let mut to_dock = vec![];
     for i in 0..ships.len() {
         let ship = &ships[i];
         if let Some(t) = ship.dock_target {
             if let Some(planet) = planets_by_id.get(&t) {
-                if let Some(player) = players_by_ship_id.get(&ship.id) {
-                    let planet_pos = Vec2f64 {
-                        x: planet.x,
-                        y: planet.y,
-                    };
-                    let ship_pos = Vec2f64 {
-                        x: ship.x,
-                        y: ship.y,
-                    };
-                    if planet_pos.euclidean_distance(&ship_pos)
-                        < (planet.radius * planet.radius * SHIP_DOCKING_RADIUS_COEFF)
-                            .max(MIN_SHIP_DOCKING_RADIUS)
-                    {
-                        let docks_in_progress = ship
-                            .long_actions
-                            .iter()
-                            .any(|a| matches!(a, LongAction::Dock { .. }));
+                let planet_pos = Vec2f64 {
+                    x: planet.x,
+                    y: planet.y,
+                };
+                let ship_pos = Vec2f64 {
+                    x: ship.x,
+                    y: ship.y,
+                };
+                if planet_pos.euclidean_distance(&ship_pos)
+                    < (planet.radius * planet.radius * SHIP_DOCKING_RADIUS_COEFF)
+                    .max(MIN_SHIP_DOCKING_RADIUS)
+                {
+                    let docks_in_progress = ship
+                        .long_actions
+                        .iter()
+                        .any(|a| matches!(a, LongAction::Dock { .. }));
 
-                        if !docks_in_progress {
-                            to_dock.push((player.id, planet.id))
-                        }
+                    if !docks_in_progress {
+                        to_dock.push((ShipIdx {
+                            location_idx,
+                            ship_idx: i
+                        }, planet.id))
                     }
                 }
             }
         }
     }
-    for (player_id, planet_id) in to_dock {
-        try_start_long_action(
+    for (ship_idx, planet_id) in to_dock {
+        try_start_long_action_ship(
             state,
-            player_id,
+            &ship_idx,
             LongActionStart::Dock {
                 to_planet: planet_id,
             },
@@ -1205,7 +1205,7 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
                     x: ship.x,
                     y: ship.y,
                 }
-                .add(&shift);
+                    .add(&shift);
                 (Some(params.clone()), Some(new_pos))
             }
         } else {
@@ -1586,9 +1586,9 @@ pub fn update_ships_navigation(
         if docking_ship_ids.contains(&ship.id)
             || undocking_ship_ids.contains(&ship.id)
             || !update_options.limit_area.contains_vec(&Vec2f64 {
-                x: ship.x,
-                y: ship.y,
-            })
+            x: ship.x,
+            y: ship.y,
+        })
         {
             ship.trajectory = vec![];
             res.push(ship);
@@ -1809,6 +1809,7 @@ pub fn every(interval_ticks: u32, current_ticks: u32, last_trigger: Option<u32>)
 }
 
 const PIRATE_SPAWN_DIST: f64 = 100.0;
+
 pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
     let angle = gen_rng().gen_range(0.0, PI * 2.0);
     let vec = Vec2f64 { x: 1.0, y: 0.0 };

@@ -15,6 +15,7 @@ use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
 };
+use crate::long_actions::{LongAction};
 use crate::events::fire_event;
 use crate::indexing::{find_my_player, find_my_ship, find_planet, ObjectIndexSpecifier, ObjectSpecifier};
 use crate::random_stuff::gen_bot_name;
@@ -282,7 +283,8 @@ fn npc_act(
     let bot = ship.npc.clone().unwrap();
     let mut res = vec![];
     let trait_set: HashSet<AiTrait> = HashSet::from_iter(bot.traits.clone().into_iter());
-    if trait_set.contains(&AiTrait::ImmediatePlanetLand) && ship.dock_target.is_none() {
+    let not_landing = ship.long_actions.iter().filter(|la| matches!(la, LongAction::Dock { .. })).count() == 0;
+    if trait_set.contains(&AiTrait::ImmediatePlanetLand) && ship.dock_target.is_none() && not_landing {
         let closest_planet = find_closest_planet(
             &Vec2f64 {
                 x: ship.x,

@@ -507,13 +507,14 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
             ..
         } => {
             let left = micro_left - micro_passed as i32;
+            let i = calc_percentage(left, SHIP_DOCK_TIME_TICKS);
             (
                 LongAction::Dock {
                     id,
                     micro_left: left,
                     to_planet,
                     start_pos,
-                    percentage: calc_percentage(left, SHIP_DOCK_TIME_TICKS),
+                    percentage: i,
                 },
                 left > 0,
             )
