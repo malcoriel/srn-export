@@ -31,11 +31,13 @@ describe('substitution functions', () => {
         s_type: SubstitutionType.PlanetName,
         id: '1',
         text: 'PLANET',
+        target_id: null,
       },
       {
         s_type: SubstitutionType.Generic,
         id: '2',
         text: 'GENERIC',
+        target_id: null,
       },
     ]);
     expect(res).toEqual([
@@ -45,6 +47,8 @@ describe('substitution functions', () => {
         tagName: 'span',
         tagChildren: 'PLANET',
         className: 'sub-planet found',
+        targetId: null,
+        clickable: true,
       },
       ' ww ',
       {
@@ -52,6 +56,7 @@ describe('substitution functions', () => {
         tagName: 'span',
         tagChildren: 'GENERIC',
         className: 'sub-generic',
+        targetId: null,
       },
     ]);
   });
@@ -62,11 +67,13 @@ describe('substitution functions', () => {
         s_type: SubstitutionType.PlanetName,
         id: '1',
         text: 'PLANET',
+        target_id: null,
       },
       {
         s_type: SubstitutionType.Generic,
         id: '2',
         text: 'GENERIC',
+        target_id: null,
       },
     ]);
     expect(res).toEqual([
@@ -76,6 +83,8 @@ describe('substitution functions', () => {
         id: '1',
         tagChildren: 'PLANET',
         className: 'sub-planet found',
+        targetId: null,
+        clickable: true,
       },
       { tagName: 'br' },
       'ww ',
@@ -84,6 +93,7 @@ describe('substitution functions', () => {
         id: '2',
         tagChildren: 'GENERIC',
         className: 'sub-generic',
+        targetId: null,
       },
       ' ',
       {
@@ -99,22 +109,60 @@ describe('substitution functions', () => {
         s_type: SubstitutionType.PlanetName,
         id: '1',
         text: 'PLANET',
+        target_id: null,
       },
       {
         s_type: SubstitutionType.Generic,
         id: '2',
         text: 'GENERIC',
+        target_id: null,
       },
     ]);
-    expect(res).toEqual([
-      <span>qq </span>,
-      <span className="sub-planet found">PLANET</span>,
-      <br />,
-      <span>ww </span>,
-      <span className="sub-generic">GENERIC</span>,
-      <span> </span>,
-      <br />,
-      <span>{' 12s_3'}</span>,
-    ]);
+    expect(res).toMatchInlineSnapshot(
+      [
+        <span>qq </span>,
+        <span className="sub-planet found">PLANET</span>,
+        <br />,
+        <span>ww </span>,
+        <span className="sub-generic">GENERIC</span>,
+        <span> </span>,
+        <br />,
+        <span>{' 12s_3'}</span>,
+      ],
+      `
+      Array [
+        <span>
+          qq 
+        </span>,
+        <span
+          className="sub-planet found"
+          onClick={[Function]}
+        >
+          PLANET
+        </span>,
+        <br
+          onClick={[Function]}
+        />,
+        <span>
+          ww 
+        </span>,
+        <span
+          className="sub-generic"
+          onClick={[Function]}
+        >
+          GENERIC
+        </span>,
+        <span>
+           
+        </span>,
+        <br
+          onClick={[Function]}
+        />,
+        <span>
+           12s_3
+        </span>,
+      ]
+    `
+    );
   });
 });
