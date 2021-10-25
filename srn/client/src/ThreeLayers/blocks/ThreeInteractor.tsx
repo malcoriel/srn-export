@@ -80,24 +80,41 @@ const ThreeInteractorImpl = ({
     setActive(false);
   };
 
-  const setActiveInteractorId = useStore(
-    (state) => state.setActiveInteractorId
-  );
-  const activeInteractorId = useStore((state) => state.activeInteractorId);
-  const autofocusSpecifier = useStore((state) => state.autoFocusSpecifier);
+  const {
+    activeInteractorId,
+    activeHostileInteractorId,
+    autoFocusSpecifier,
+    hostileAutoFocusSpecifier,
+    setActiveInteractorId,
+    setActiveHostileInteractorId,
+  } = useStore((state) => ({
+    activeInteractorId: state.activeInteractorId,
+    activeHostileInteractorId: state.activeHostileInteractorId,
+    autoFocusSpecifier: state.autoFocusSpecifier,
+    hostileAutoFocusSpecifier: state.hostileAutoFocusSpecifier,
+    setActiveInteractorId: state.setActiveInteractorId,
+    setActiveHostileInteractorId: state.setActiveHostileInteractorId,
+  }));
 
-  const isAutoFocused = (() => {
+  const isAutoFocusedNeutral = (() => {
     if (
-      !autofocusSpecifier ||
-      autofocusSpecifier.tag === 'Unknown' ||
-      autofocusSpecifier.tag === 'Star'
+      !autoFocusSpecifier ||
+      autoFocusSpecifier.tag === 'Unknown' ||
+      autoFocusSpecifier.tag === 'Star' ||
+      autoFocusSpecifier.tag === 'Ship'
     )
       return false;
-    return autofocusSpecifier?.id === objectId;
+    return autoFocusSpecifier?.id === objectId;
+  })();
+
+  const isAutoFocusedHostile = (() => {
+    if (!hostileAutoFocusSpecifier || hostileAutoFocusSpecifier.tag !== 'Ship')
+      return false;
+    return hostileAutoFocusSpecifier?.id === objectId;
   })();
 
   useEffect(() => {
-    if (active && !isAutoFocused) {
+    if (active && !isAutoFocusedNeutral) {
       setActiveInteractorId(objectId);
     } else if (activeInteractorId === objectId) {
       setActiveInteractorId(undefined);
@@ -107,10 +124,10 @@ const ThreeInteractorImpl = ({
     setActiveInteractorId,
     objectId,
     activeInteractorId,
-    isAutoFocused,
+    isAutoFocusedNeutral,
   ]);
 
-  const tempAutoFocusActive = !activeInteractorId && isAutoFocused;
+  const tempAutoFocusActive = !activeInteractorId && isAutoFocusedNeutral;
 
   const onLeftClick = (e?: ThreeEvent<MouseEvent>) => {
     if (e) {

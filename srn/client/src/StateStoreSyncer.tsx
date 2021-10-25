@@ -4,9 +4,16 @@ import { useStore } from './store';
 import { getSpecifierId } from './world';
 
 export const StateStoreSyncer: React.FC = () => {
-  const { autoFocusSpecifier, setAutoFocusSpecifier } = useStore((state) => ({
+  const {
+    autoFocusSpecifier,
+    setAutoFocusSpecifier,
+    hostileAutoFocusSpecifier,
+    setHostileAutoFocusSpecifier,
+  } = useStore((state) => ({
     autoFocusSpecifier: state.autoFocusSpecifier,
     setAutoFocusSpecifier: state.setAutoFocusSpecifier,
+    hostileAutoFocusSpecifier: state.hostileAutoFocusSpecifier,
+    setHostileAutoFocusSpecifier: state.setHostileAutoFocusSpecifier,
   }));
   const ns = useNSForceChange('StateStoreSyncer', true);
   if (!ns) {
@@ -17,10 +24,17 @@ export const StateStoreSyncer: React.FC = () => {
   useEffect(() => {
     const { indexes } = ns;
     const myShipAutofocus = indexes.myShip?.auto_focus;
+    const myShipHostileAutofocus = indexes.myShip?.hostile_auto_focus;
     if (
       getSpecifierId(myShipAutofocus) !== getSpecifierId(autoFocusSpecifier)
     ) {
       setAutoFocusSpecifier(myShipAutofocus);
+    }
+    if (
+      getSpecifierId(myShipHostileAutofocus) !==
+      getSpecifierId(hostileAutoFocusSpecifier)
+    ) {
+      setHostileAutoFocusSpecifier(myShipAutofocus);
     }
   });
 

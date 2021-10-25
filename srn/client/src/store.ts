@@ -92,8 +92,12 @@ export type SrnState = {
   setTestMenuMode: (val: TestMenuMode) => void;
   activeInteractorId?: string;
   setActiveInteractorId: (id?: string) => void;
+  activeHostileInteractorId?: string;
+  setActiveHostileInteractorId: (id?: string) => void;
   autoFocusSpecifier?: ObjectSpecifier | null;
   setAutoFocusSpecifier: (sp?: ObjectSpecifier | null) => void;
+  hostileAutoFocusSpecifier?: ObjectSpecifier | null;
+  setHostileAutoFocusSpecifier: (sp?: ObjectSpecifier | null) => void;
 };
 
 export enum TestMenuMode {
@@ -151,6 +155,7 @@ export const useStore = create<SrnState>((set) => ({
   contextMenuItems: [],
   contextMenuRef: { current: null },
   autoFocusSpecifier: undefined,
+  hostileAutoFocusSpecifier: undefined,
 
   setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
   setMapWindow: (val: WindowState) => set({ mapWindow: val }),
@@ -262,7 +267,12 @@ export const useStore = create<SrnState>((set) => ({
       return { portraitIndex, portrait };
     }),
   activeInteractorId: undefined,
+  activeHostileInteractorId: undefined,
   setActiveInteractorId: (id: string | undefined) =>
     set(() => ({ activeInteractorId: id })),
+  setActiveHostileInteractorId: (id: string | undefined) =>
+    set(() => ({ activeHostileInteractorId: id })),
   setAutoFocusSpecifier: (sp) => set(() => ({ autoFocusSpecifier: sp })),
+  setHostileAutoFocusSpecifier: (sp) =>
+    set(() => ({ hostileAutoFocusSpecifier: sp })),
 }));
