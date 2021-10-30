@@ -14,7 +14,7 @@ describe('ThreeInteractor', () => {
           objectId="1"
           perfId="1"
           interactor={{ defaultAction: InteractorActionType.Tractor }}
-          disableHtml
+          testCompatibleMode
         />
       </StoryCanvasInternals>
     );

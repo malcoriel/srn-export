@@ -57,7 +57,7 @@ const KbAction: React.FC<{
 const ThreeInteractorImpl = ({
   objectId,
   radius,
-  disableHtml,
+  testCompatibleMode,
   interactor: {
     outlineThickness = DEFAULT_OUTLINE_THICKNESS,
     outlineColor = DEFAULT_OUTLINE_COLOR,
@@ -70,7 +70,7 @@ const ThreeInteractorImpl = ({
   perfId: string;
   objectId: string;
   radius: number;
-  disableHtml: boolean;
+  testCompatibleMode: boolean;
   interactor: ThreeInteractorProps;
 }) => {
   const [active, setActive] = useState(false);
@@ -131,8 +131,6 @@ const ThreeInteractorImpl = ({
 
   const tempAutoFocusActive = !activeInteractorId && isAutoFocusedNeutral;
 
-  console.log({ tempAutoFocusActive });
-
   const onLeftClick = (e?: ThreeEvent<MouseEvent>) => {
     if (e) {
       e.stopPropagation();
@@ -188,7 +186,9 @@ const ThreeInteractorImpl = ({
             objectId={objectId}
             hotkey="e"
           />
-          {!disableHtml && (
+          {testCompatibleMode ? (
+            <mesh name={`Press E to ${mapActionToText(defaultAction)}`} />
+          ) : (
             <Text
               visible
               position={vecToThreePos(VectorF(0, -(radius + 6)))}
@@ -206,7 +206,7 @@ const ThreeInteractorImpl = ({
           )}
         </>
       )}
-      {!disableHtml && (
+      {!testCompatibleMode && (
         <Html>{active && hint && <HintWindow windowContent={hint} />}</Html>
       )}
       <mesh name="ring">
