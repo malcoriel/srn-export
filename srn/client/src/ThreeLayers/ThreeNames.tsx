@@ -2,9 +2,9 @@ import NetState, { NetStateIndexes } from '../NetState';
 import { GameState } from '../../../world/pkg';
 import React from 'react';
 import { Text } from '@react-three/drei';
-import { vecToThreePos } from './ThreeLayer';
 import Vector, { IVector, VectorF } from '../utils/Vector';
 import { teal } from '../utils/palette';
+import { vecToThreePos } from './util';
 
 interface ThreeShipNamesParams {
   netState: NetState;

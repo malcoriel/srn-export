@@ -1,6 +1,6 @@
 // http://shaderfrog.com/view/4985
 // forked from http://shaderfrog.com/view/3373
-import { Vector3 } from 'three/src/math/Vector3';
+import { Vector3 } from 'three';
 import { FloatUniformValue, Vector3UniformValue } from './uniformTypes';
 
 export const fragmentShader = `

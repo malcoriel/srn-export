@@ -6,7 +6,6 @@ import '@szhsin/react-menu/dist/index.css';
 import { HintWindow } from '../../HtmlLayers/HintWindow';
 import { useHotkeys } from 'react-hotkeys-hook';
 import './ThreeInteractor.scss';
-import { vecToThreePos } from '../ThreeLayer';
 import { VectorF } from '../../utils/Vector';
 import { teal } from '../../utils/palette';
 import {
@@ -14,6 +13,7 @@ import {
   UpdateStrategyBuilder,
 } from '../../utils/UpdateStrategy';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
+import { vecToThreePos } from '../util';
 
 export enum InteractorActionType {
   Unknown,

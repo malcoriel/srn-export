@@ -1,5 +1,5 @@
 // forked from https://www.shadertoy.com/view/MtByRh (MIT)
-import { Vector3 } from 'three/src/math/Vector3';
+import { Vector3 } from 'three';
 import {
   FloatUniformValue,
   Vector2UniformValue,

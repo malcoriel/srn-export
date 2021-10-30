@@ -4,7 +4,7 @@ import { Mesh, BufferGeometry, Matrix4, Quaternion, Euler } from 'three';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils';
 import Prando from 'prando';
-import { Vector3 } from 'three/src/math/Vector3';
+import { Vector3 } from 'three';
 import { posToThreePos, Vector3Arr } from './ThreeLayer';
 const model_fix_coeff = 1;
 const anti_model_fix_coeff = 1;

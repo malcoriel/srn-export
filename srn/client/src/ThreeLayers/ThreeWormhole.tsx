@@ -1,6 +1,6 @@
 // @ts-ignore
 import React, { useMemo, useRef, useState } from 'react';
-import { Vector3 } from 'three/src/math/Vector3';
+import { Vector3 } from 'three';
 import { fragmentShader, vertexShader, uniforms } from './shaders/lensing';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, RawShaderMaterial } from 'three';

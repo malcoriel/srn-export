@@ -3,6 +3,16 @@ import { Canvas } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 
+export const StoryCanvasInternals: React.FC = ({ children }) => {
+  return (
+    <Suspense fallback={<mesh />}>
+      <ambientLight />
+      <pointLight position={[0, 0, CAMERA_HEIGHT]} />
+      <group position={[0, 0, 0]}>{children}</group>
+    </Suspense>
+  );
+};
+
 export const StoryCanvas: React.FC<{ styles?: any }> = ({
   children,
   styles,
@@ -23,11 +33,7 @@ export const StoryCanvas: React.FC<{ styles?: any }> = ({
         ...styles,
       }}
     >
-      <Suspense fallback={<mesh />}>
-        <ambientLight />
-        <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-        <group position={[0, 0, 0]}>{children}</group>
-      </Suspense>
+      <StoryCanvasInternals>{children}</StoryCanvasInternals>
     </Canvas>
   );
 };

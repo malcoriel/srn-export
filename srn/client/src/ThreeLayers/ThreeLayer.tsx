@@ -1,4 +1,5 @@
 import { Canvas } from '@react-three/fiber';
+import * as THREE from 'three';
 import { Vector3 } from 'three';
 import React, { Suspense } from 'react';
 import classnames from 'classnames';
@@ -14,7 +15,7 @@ import {
 } from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState, { useNSForceChange } from '../NetState';
-import Vector, { IVector } from '../utils/Vector';
+import Vector from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { useStore } from '../store';
@@ -27,9 +28,9 @@ import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 //import { ThreeWormhole } from './ThreeWormhole';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
+import { threeVectorToVector } from './util';
 
 export type Vector3Arr = [number, number, number];
-import * as THREE from 'three';
 THREE.Cache.enabled = true;
 
 const seedToNumber = (seed: string) => {
@@ -47,28 +48,6 @@ export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
   -y,
   z || 0,
 ];
-
-export const vecToThreePos = (v: IVector, lift = 0): Vector3Arr => [
-  v.x,
-  -v.y,
-  lift,
-];
-
-// noinspection JSUnusedGlobalSymbols
-export const threePosToVector = (x: number, y: number, _z: number): Vector =>
-  new Vector(x, -y);
-
-// noinspection JSUnusedLocalSymbols
-export const threeVectorToVector = ({
-  x,
-  y,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  z,
-}: {
-  x: number;
-  y: number;
-  z: number;
-}): Vector => new Vector(x, -y);
 
 const ResourceLoader = () => {
   return <primitive object={{}} />;
@@ -163,11 +142,3 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
     </Canvas>
   );
 };
-
-export const liftThreePos = (zShift: number) => (
-  threeArrVec: [number, number, number]
-): [number, number, number] => [
-  threeArrVec[0],
-  threeArrVec[1],
-  threeArrVec[2] + zShift,
-];

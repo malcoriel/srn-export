@@ -2,13 +2,13 @@ import React from 'react';
 import { findMyPlayer, findMyShip, VisualState } from '../NetState';
 import { GameState } from '../../../world/pkg';
 import { Line } from '@react-three/drei';
-import { liftThreePos, vecToThreePos } from './ThreeLayer';
 import Vector from '../utils/Vector';
 import { CargoDeliveryQuestState, findPlanet } from '../world';
 import { degToRad, size } from '../coord';
 import { teal, yellow } from '../utils/palette';
 import { ThreeLine } from './blocks/ThreeLine';
 import { Vector2 } from 'three';
+import { liftThreePos, vecToThreePos } from './util';
 
 interface ThreeQuestDirectionImplParams {
   arrowPoints: Vector[];

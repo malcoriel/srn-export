@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import Vector, { VectorF } from '../../utils/Vector';
-import { vecToThreePos } from '../ThreeLayer';
 import { EasingFunctions } from './EasingFunctions';
+import { vecToThreePos } from '../util';
 
 export const calcBeamParams = (start: Vector, end: Vector) => {
   const vector = end.subtract(start);

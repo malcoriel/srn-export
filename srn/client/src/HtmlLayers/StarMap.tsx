@@ -1,11 +1,7 @@
-import {
-  posToThreePos,
-  Vector3Arr,
-  vecToThreePos,
-} from '../ThreeLayers/ThreeLayer';
+import { posToThreePos, Vector3Arr } from '../ThreeLayers/ThreeLayer';
 import { ThreeSpaceBackground } from '../ThreeLayers/ThreeSpaceBackground';
 import { ThreeStar } from '../ThreeLayers/ThreeStar';
-import { Vector3 } from 'three/src/math/Vector3';
+import { Vector3 } from 'three';
 import Vector, { VectorF } from '../utils/Vector';
 import { Text } from '@react-three/drei';
 import { darkGreen, tiffanyBlue, yellow } from '../utils/palette';
@@ -14,6 +10,7 @@ import { Vector2 } from 'three';
 import React from 'react';
 import _ from 'lodash';
 import { Location, LocationLink } from '../../../world/pkg';
+import { vecToThreePos } from '../ThreeLayers/util';
 
 export interface StarMapProps {
   systems: Location[];

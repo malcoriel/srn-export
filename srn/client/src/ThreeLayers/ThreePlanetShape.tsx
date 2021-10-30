@@ -5,7 +5,6 @@ import { useFrame } from '@react-three/fiber';
 import _ from 'lodash';
 import { normalizeColor } from '../utils/palette';
 import { size, unitsToPixels_min } from '../coord';
-import { vecToThreePos } from './ThreeLayer';
 import { shallowEqual } from '../utils/shallowCompare';
 import { useRepeatWrappedTextureLoader } from './ThreeStar';
 import {
@@ -19,6 +18,7 @@ import {
   ThreeInteractor,
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
+import { vecToThreePos } from './util';
 
 export const ThreePlanetShape: React.FC<{
   gid: string;
