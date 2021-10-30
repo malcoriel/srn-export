@@ -17,7 +17,6 @@ const create = (createState: any) => {
 
 // Reset all stores after each test run
 afterEach(() => {
-  console.log('mocked after each');
   act(() => storeResetFns.forEach((resetFn: any) => resetFn()));
 });
 
