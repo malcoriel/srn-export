@@ -276,3 +276,5 @@ export const useStore = create<SrnState>((set) => ({
   setHostileAutoFocusSpecifier: (sp) =>
     set(() => ({ hostileAutoFocusSpecifier: sp })),
 }));
+
+export const store = useStore;

@@ -123,15 +123,15 @@
     "zustand": "^3.3.0"
   },
   "scripts": {
-    "start": "cross-env REACT_EDITOR=none BROWSER=chrome node scripts/start.js",
-    "build": "node scripts/build.js",
+    "start": "cross-env REACT_EDITOR=none BROWSER=chrome BROWSERSLIST_IGNORE_OLD_DATA=1 node scripts/start.js",
+    "build": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 node scripts/build.js",
     "test": "node scripts/test.js",
     "touch-client": "touch package.json",
     "eslint": "../../node_modules/.bin/eslint",
     "eslint-all": "../../node_modules/.bin/eslint src/**/*.ts*",
     "prettier": "../../node_modules/.bin/prettier",
     "up-version": "cd .. && yarn up-version",
-    "storybook": "cross-env BROWSER=chrome start-storybook -p 6006 -s ./public",
+    "storybook": "cross-env BROWSER=chrome BROWSERSLIST_IGNORE_OLD_DATA=1 start-storybook -p 6006 -s ./public",
     "build-storybook": "build-storybook"
   },
   "browserslist": {
