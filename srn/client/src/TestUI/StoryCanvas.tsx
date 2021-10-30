@@ -8,7 +8,9 @@ export const StoryCanvasInternals: React.FC = ({ children }) => {
     <Suspense fallback={<mesh />}>
       <ambientLight />
       <pointLight position={[0, 0, CAMERA_HEIGHT]} />
-      <group position={[0, 0, 0]}>{children}</group>
+      <group name="story-canvas-internals-main" position={[0, 0, 0]}>
+        {children}
+      </group>
     </Suspense>
   );
 };

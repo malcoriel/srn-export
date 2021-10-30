@@ -1,19 +1,26 @@
-import { ThreeInteractor } from './ThreeInteractor';
+import { InteractorActionType, ThreeInteractor } from './ThreeInteractor';
 import { StoryCanvasInternals } from '../../TestUI/StoryCanvas';
 import ReactThreeTestRenderer from '@react-three/test-renderer';
 
-const render = ReactThreeTestRenderer.create;
 import React from 'react';
+import { useStore as store } from '../../store';
+import * as util from 'util';
 describe('ThreeInteractor', () => {
   it('can render with mock store', async () => {
-    await render(
+    const renderer = await ReactThreeTestRenderer.create(
       <StoryCanvasInternals>
-        <mesh>
-          <ringGeometry args={[1, 1, 1]} />
-          <meshBasicMaterial opacity={0.5} transparent color="red" />
-        </mesh>
-        {/*<ThreeInteractor radius={5} objectId="1" perfId="1" interactor={{}} />*/}
+        <ThreeInteractor
+          radius={5}
+          objectId="1"
+          perfId="1"
+          interactor={{ defaultAction: InteractorActionType.Tractor }}
+          disableHtml
+        />
       </StoryCanvasInternals>
     );
+    await ReactThreeTestRenderer.act(async () => {
+      store.setState({ autoFocusSpecifier: { tag: 'Mineral', id: '1' } });
+    });
+    console.log(util.inspect(renderer.toGraph(), false, 8));
   });
 });

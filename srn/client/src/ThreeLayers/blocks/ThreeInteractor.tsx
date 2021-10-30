@@ -57,6 +57,7 @@ const KbAction: React.FC<{
 const ThreeInteractorImpl = ({
   objectId,
   radius,
+  disableHtml,
   interactor: {
     outlineThickness = DEFAULT_OUTLINE_THICKNESS,
     outlineColor = DEFAULT_OUTLINE_COLOR,
@@ -69,6 +70,7 @@ const ThreeInteractorImpl = ({
   perfId: string;
   objectId: string;
   radius: number;
+  disableHtml: boolean;
   interactor: ThreeInteractorProps;
 }) => {
   const [active, setActive] = useState(false);
@@ -129,6 +131,8 @@ const ThreeInteractorImpl = ({
 
   const tempAutoFocusActive = !activeInteractorId && isAutoFocusedNeutral;
 
+  console.log({ tempAutoFocusActive });
+
   const onLeftClick = (e?: ThreeEvent<MouseEvent>) => {
     if (e) {
       e.stopPropagation();
@@ -167,8 +171,13 @@ const ThreeInteractorImpl = ({
       onClick={onLeftClick}
       position={[0, 0, radius]}
       onContextMenu={onContextMenu}
+      name="three-interactor-main"
     >
-      <mesh onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
+      <mesh
+        onPointerOver={onPointerOver}
+        onPointerOut={onPointerOut}
+        name="hover-detector"
+      >
         <circleBufferGeometry args={[radius, 16]} />
         <meshBasicMaterial opacity={0.0} transparent />
       </mesh>
@@ -179,24 +188,28 @@ const ThreeInteractorImpl = ({
             objectId={objectId}
             hotkey="e"
           />
-          <Text
-            visible
-            position={vecToThreePos(VectorF(0, -(radius + 6)))}
-            color={teal}
-            fontSize={1.5}
-            maxWidth={20}
-            lineHeight={1}
-            letterSpacing={0.02}
-            textAlign="left"
-            anchorX="center"
-            anchorY="bottom"
-          >
-            Press E to {mapActionToText(defaultAction)}
-          </Text>
+          {!disableHtml && (
+            <Text
+              visible
+              position={vecToThreePos(VectorF(0, -(radius + 6)))}
+              color={teal}
+              fontSize={1.5}
+              maxWidth={20}
+              lineHeight={1}
+              letterSpacing={0.02}
+              textAlign="left"
+              anchorX="center"
+              anchorY="bottom"
+            >
+              Press E to {mapActionToText(defaultAction)}
+            </Text>
+          )}
         </>
       )}
-      <Html>{active && hint && <HintWindow windowContent={hint} />}</Html>
-      <mesh>
+      {!disableHtml && (
+        <Html>{active && hint && <HintWindow windowContent={hint} />}</Html>
+      )}
+      <mesh name="ring">
         <ringGeometry
           args={[
             radius - outlineThickness,
