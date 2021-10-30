@@ -47,7 +47,6 @@
     "css-loader": "4.3.0",
     "dotenv": "8.2.0",
     "dotenv-expand": "5.1.0",
-    "enzyme": "^3.11.0",
     "file-loader": "6.1.1",
     "file-saver": "^2.0.5",
     "fs-extra": "^9.0.1",
@@ -123,16 +122,17 @@
     "zustand": "^3.3.0"
   },
   "scripts": {
-    "start": "cross-env REACT_EDITOR=none BROWSER=chrome BROWSERSLIST_IGNORE_OLD_DATA=1 node scripts/start.js",
-    "build": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1 node scripts/build.js",
-    "test": "node scripts/test.js",
+    "env": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1",
+    "start": "yarn env cross-env REACT_EDITOR=none BROWSER=chrome node scripts/start.js",
+    "build": "yarn env node scripts/build.js",
+    "test": "yarn env node scripts/test.js",
     "touch-client": "touch package.json",
     "eslint": "../../node_modules/.bin/eslint",
     "eslint-all": "../../node_modules/.bin/eslint src/**/*.ts*",
     "prettier": "../../node_modules/.bin/prettier",
     "up-version": "cd .. && yarn up-version",
-    "storybook": "cross-env BROWSER=chrome BROWSERSLIST_IGNORE_OLD_DATA=1 start-storybook -p 6006 -s ./public",
-    "build-storybook": "build-storybook"
+    "storybook": "yarn env cross-env BROWSER=chrome start-storybook -p 6006 -s ./public",
+    "build-storybook": "yarn env build-storybook"
   },
   "browserslist": {
     "production": [
