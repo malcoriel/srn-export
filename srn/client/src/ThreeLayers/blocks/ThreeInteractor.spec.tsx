@@ -4,7 +4,6 @@ import ReactThreeTestRenderer from '@react-three/test-renderer';
 
 import React from 'react';
 import { store } from '../../store';
-import * as util from 'util';
 import { ObjectSpecifierBuilder } from '../../../../world/pkg/world.extra';
 
 // must stay function due to ts quirk
@@ -14,7 +13,7 @@ export function invariant(condition: any, message?: string): asserts condition {
   }
 }
 
-const findNested = (
+const findAll = (
   obj: Record<string, any>,
   keyToFind: string,
   valueToFind: string | RegExp
@@ -32,10 +31,19 @@ const findNested = (
       }
     }
     if (typeof value === 'object') {
-      return acc.concat(findNested(value, keyToFind, valueToFind));
+      return acc.concat(findAll(value, keyToFind, valueToFind));
     }
     return acc;
   }, []);
+
+const findOne = (
+  obj: Record<string, any>,
+  keyToFind: string,
+  valueToFind: string | RegExp
+): any => {
+  const res = findAll(obj, keyToFind, valueToFind);
+  return res[0];
+};
 
 describe('ThreeInteractor', () => {
   it('can render and change state with mock store', async () => {
@@ -57,12 +65,9 @@ describe('ThreeInteractor', () => {
         }),
       });
     });
-    const graph = renderer.toGraph();
     const tree = renderer.toTree();
-    invariant(graph && tree);
-    console.log(util.inspect(graph, false, 8));
-    console.log({
-      found: findNested(tree, 'name', /main/),
-    });
+    invariant(tree);
+    const hint = findOne(tree, 'name', /text-action-hint/);
+    expect(hint).not.toBeFalsy();
   });
 });

@@ -187,7 +187,7 @@ const ThreeInteractorImpl = ({
             hotkey="e"
           />
           {testCompatibleMode ? (
-            <mesh name={`Press E to ${mapActionToText(defaultAction)}`} />
+            <mesh name={`text-action-hint=${mapActionToText(defaultAction)}`} />
           ) : (
             <Text
               visible
