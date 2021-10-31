@@ -45,18 +45,20 @@ const findOne = (
   return res[0];
 };
 
+const renderInteractor = (id: string) => (
+  <ThreeInteractor
+    radius={5}
+    objectId={id}
+    perfId={id}
+    interactor={{ defaultAction: InteractorActionType.Tractor }}
+    testCompatibleMode
+  />
+);
+
 describe('ThreeInteractor', () => {
   it('can render and change state with mock store', async () => {
     const renderer = await ReactThreeTestRenderer.create(
-      <StoryCanvasInternals>
-        <ThreeInteractor
-          radius={5}
-          objectId="1"
-          perfId="1"
-          interactor={{ defaultAction: InteractorActionType.Tractor }}
-          testCompatibleMode
-        />
-      </StoryCanvasInternals>
+      <StoryCanvasInternals>{renderInteractor('1')}</StoryCanvasInternals>
     );
     await ReactThreeTestRenderer.act(async () => {
       store.setState({
@@ -69,5 +71,25 @@ describe('ThreeInteractor', () => {
     invariant(tree);
     const hint = findOne(tree, 'name', /text-action-hint/);
     expect(hint).not.toBeFalsy();
+  });
+
+  it('can render 2 neutral interactors, but only one will be lit', async () => {
+    const renderer = await ReactThreeTestRenderer.create(
+      <StoryCanvasInternals>
+        {renderInteractor('1')}
+        {renderInteractor('2')}
+      </StoryCanvasInternals>
+    );
+    await ReactThreeTestRenderer.act(async () => {
+      store.setState({
+        autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
+          id: '1',
+        }),
+      });
+    });
+    const tree = renderer.toTree();
+    invariant(tree);
+    const hints = findAll(tree, 'name', /text-action-hint/);
+    expect(hints.length).toEqual(1);
   });
 });
