@@ -85,4 +85,9 @@ DoubleNeutral.args = {
     { id: '2', position: [30, 30, 10] },
   ],
   hostile: [],
+  storeState: {
+    autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
+      id: '1',
+    }),
+  },
 };
