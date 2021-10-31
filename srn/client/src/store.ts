@@ -142,7 +142,6 @@ export const useStore = create<SrnState>((set) => ({
   volume: lsMusicVolume,
   questWindow: WindowState.Hidden,
   promptWindow: WindowState.Hidden,
-  promptWindowParams: ['', () => {}, () => {}],
   chatWindow: WindowState.Minimized,
   dialogueWindow: WindowState.Hidden,
   inventoryWindow: WindowState.Hidden,
@@ -157,10 +156,10 @@ export const useStore = create<SrnState>((set) => ({
   autoFocusSpecifier: undefined,
   hostileAutoFocusSpecifier: undefined,
 
+  promptWindowParams: ['', () => {}, () => {}],
   setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
   setMapWindow: (val: WindowState) => set({ mapWindow: val }),
   setShowTractorCircle: (val) => set({ showTractorCircle: val }),
-
   setPreferredName: (val: string) =>
     set(() => {
       setLSValue('preferredName', val);
@@ -278,3 +277,6 @@ export const useStore = create<SrnState>((set) => ({
 }));
 
 export const store = useStore;
+
+const initialState = store.getState();
+export const resetStore = () => store.setState(initialState, true);

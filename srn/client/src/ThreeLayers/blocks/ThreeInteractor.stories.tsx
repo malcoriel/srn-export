@@ -6,6 +6,8 @@ import { StoryCanvas } from '../../TestUI/StoryCanvas';
 import { ThreeSpaceBackground } from '../ThreeSpaceBackground';
 import { InteractorActionType, ThreeInteractor } from './ThreeInteractor';
 import { Vector3Arr } from '../util';
+import { resetStore, store } from '../../store';
+import { ObjectSpecifierBuilder } from '../../../../world/pkg/world.extra';
 
 export default {
   title: 'Three/ThreeInteractor',
@@ -14,6 +16,12 @@ export default {
 } as Meta;
 
 const Template: Story = (args) => {
+  setTimeout(() => {
+    resetStore();
+    if (args.storeState) {
+      store.setState(args.storeState);
+    }
+  });
   const [revision, setRevision] = useState(uuid.v4());
   useEffect(() => {
     setRevision((old) => old + 1);
@@ -25,7 +33,7 @@ const Template: Story = (args) => {
     id: string;
     position: Vector3Arr;
   }) => (
-    <group position={position}>
+    <group position={position} key={id}>
       <mesh position={[0, 0, 0]}>
         <circleBufferGeometry args={[10, 10]} />
         <meshBasicMaterial color="teal" />
@@ -38,7 +46,6 @@ const Template: Story = (args) => {
           defaultAction: InteractorActionType.Tractor,
           outlineThickness: 1,
         }}
-        testCompatibleMode
       />
     </group>
   );
@@ -59,6 +66,16 @@ export const SingleNeutral = Template.bind({});
 SingleNeutral.args = {
   neutral: [{ id: '1', position: [0, 0, 10] }],
   hostile: [],
+};
+
+export const SingleNeutralAutofocused = Template.bind({});
+SingleNeutralAutofocused.args = {
+  ...SingleNeutral.args,
+  storeState: {
+    autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
+      id: '1',
+    }),
+  },
 };
 
 export const DoubleNeutral = Template.bind({});
