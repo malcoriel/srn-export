@@ -1,6 +1,5 @@
 import React from 'react';
 import { ThreeFloatingObject } from './ThreeFloatingObject';
-import { posToThreePos } from './ThreeLayer';
 import { InteractorActionType } from './blocks/ThreeInteractor';
 import { Container } from '../../../world/pkg';
 import { actionsActive } from '../utils/ShipControls';
@@ -11,6 +10,7 @@ import {
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import { InteractorMap } from './InteractorMap';
+import { posToThreePos } from './util';
 
 export const containerActionsMap = new Map([
   [

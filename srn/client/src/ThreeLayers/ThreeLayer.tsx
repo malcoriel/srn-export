@@ -28,26 +28,9 @@ import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 //import { ThreeWormhole } from './ThreeWormhole';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
-import { threeVectorToVector } from './util';
+import { seedToNumber, threeVectorToVector } from './util';
 
-export type Vector3Arr = [number, number, number];
 THREE.Cache.enabled = true;
-
-const seedToNumber = (seed: string) => {
-  try {
-    return Number(`0x${seed}`) || 0;
-  } catch (e) {
-    return 0;
-  }
-};
-
-// x -> x, y -> -y to keep the axes orientation corresponding to the physics  (y down),
-// xy is visible plane, z towards camera
-export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
-  x,
-  -y,
-  z || 0,
-];
 
 const ResourceLoader = () => {
   return <primitive object={{}} />;

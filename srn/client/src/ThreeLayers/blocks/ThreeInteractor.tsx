@@ -57,7 +57,7 @@ const KbAction: React.FC<{
 const ThreeInteractorImpl = ({
   objectId,
   radius,
-  testCompatibleMode,
+  testCompatibleMode = false,
   interactor: {
     outlineThickness = DEFAULT_OUTLINE_THICKNESS,
     outlineColor = DEFAULT_OUTLINE_COLOR,
@@ -70,7 +70,7 @@ const ThreeInteractorImpl = ({
   perfId: string;
   objectId: string;
   radius: number;
-  testCompatibleMode: boolean;
+  testCompatibleMode?: boolean;
   interactor: ThreeInteractorProps;
 }) => {
   const [active, setActive] = useState(false);
@@ -174,7 +174,7 @@ const ThreeInteractorImpl = ({
       <mesh
         onPointerOver={onPointerOver}
         onPointerOut={onPointerOut}
-        name="hover-detector"
+        name={`hover-detector-${objectId}`}
       >
         <circleBufferGeometry args={[radius, 16]} />
         <meshBasicMaterial opacity={0.0} transparent />
@@ -225,6 +225,10 @@ const ThreeInteractorImpl = ({
       </mesh>
     </group>
   );
+};
+
+ThreeInteractorImpl.defaultProps = {
+  testCompatibleMode: false,
 };
 
 export const ThreeInteractor = UpdateStrategy(

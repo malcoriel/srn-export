@@ -52,6 +52,12 @@ Container.args = {
   modelName: 'container.glb',
   scale: 0.002,
 };
+export const Container2 = Template.bind({});
+Container2.args = {
+  meshes: ['0.children.0', '0.children.1', '0.children.2'],
+  modelName: 'container.glb',
+  scale: 0.002,
+};
 export const ContainerWithActions = Template.bind({});
 ContainerWithActions.args = {
   ...Container.args,

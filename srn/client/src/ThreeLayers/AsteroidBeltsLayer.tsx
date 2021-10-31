@@ -1,7 +1,7 @@
 import { AsteroidBelt } from '../../../world/pkg';
 import React from 'react';
 import { ThreeAsteroidBelt } from './ThreeAsteroidBelt';
-import { posToThreePos } from './ThreeLayer';
+import { posToThreePos } from './util';
 
 interface AsteroidBeltsLayerParams {
   asteroid_belts: AsteroidBelt[];

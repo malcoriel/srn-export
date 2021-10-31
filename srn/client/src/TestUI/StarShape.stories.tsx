@@ -4,8 +4,8 @@ import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
 import { ThreeStar } from '../ThreeLayers/ThreeStar';
 import _ from 'lodash';
-import { posToThreePos } from '../ThreeLayers/ThreeLayer';
 import Vector from '../utils/Vector';
+import { posToThreePos } from '../ThreeLayers/util';
 
 export default {
   title: 'Three/StarShape',

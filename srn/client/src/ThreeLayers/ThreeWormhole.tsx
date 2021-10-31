@@ -4,7 +4,7 @@ import { Vector3 } from 'three';
 import { fragmentShader, vertexShader, uniforms } from './shaders/lensing';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, RawShaderMaterial } from 'three';
-import { Vector3Arr } from './ThreeLayer';
+import { Vector3Arr } from './util';
 
 export const ThreeWormhole: React.FC<{
   position: Vector3 | Vector3Arr;

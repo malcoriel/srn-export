@@ -3,7 +3,6 @@ import { useFrame, useLoader } from '@react-three/fiber';
 import { Mesh, ShaderMaterial } from 'three';
 import * as THREE from 'three';
 import Vector, { VectorF } from '../utils/Vector';
-import { posToThreePos, Vector3Arr } from './ThreeLayer';
 import * as jellyfish from './shaders/jellyfish';
 import { shallowEqual } from '../utils/shallowCompare';
 import { Geometry } from 'three/examples/jsm/deprecated/Geometry';
@@ -11,7 +10,7 @@ import {
   ThreeInteractor,
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
-import { vecToThreePos } from './util';
+import { posToThreePos, Vector3Arr, vecToThreePos } from './util';
 
 const STLLoader = require('three-stl-loader')(THREE);
 

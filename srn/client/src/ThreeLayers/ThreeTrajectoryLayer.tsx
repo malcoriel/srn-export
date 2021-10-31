@@ -1,7 +1,7 @@
 import React from 'react';
 import { NetStateIndexes } from '../NetState';
 import { babyBlue } from '../utils/palette';
-import { posToThreePos } from './ThreeLayer';
+import { posToThreePos } from './util';
 
 export const ThreeTrajectoryLayer: React.FC<{ indexes: NetStateIndexes }> = ({
   indexes,

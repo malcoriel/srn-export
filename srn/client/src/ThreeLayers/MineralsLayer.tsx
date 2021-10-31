@@ -10,11 +10,11 @@ import {
 } from '../../../world/pkg/world.extra';
 import React from 'react';
 import { ThreeFloatingObject } from './ThreeFloatingObject';
-import { posToThreePos } from './ThreeLayer';
 import { common, rare, uncommon } from '../utils/palette';
 import { UnreachableCaseError } from 'ts-essentials';
 import { InteractorMap } from './InteractorMap';
 import _ from 'lodash';
+import { posToThreePos } from './util';
 
 export const mineralActionsMap = new Map([
   [
