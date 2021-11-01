@@ -134,5 +134,12 @@ describe('ThreeInteractor', () => {
       expectInteractorVisuallySelected(renderer, '1');
       expectInteractorVisuallySelected(renderer, '2');
     });
+
+    it.todo(
+      'if only neutral is autofocused, selecting other will keep both lit'
+    );
+    it.todo(
+      'if only hostile is autofocused, selecting other will keep both lit'
+    );
   });
 });
