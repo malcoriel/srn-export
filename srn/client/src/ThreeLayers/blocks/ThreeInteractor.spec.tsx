@@ -1,6 +1,7 @@
 import { InteractorActionType, ThreeInteractor } from './ThreeInteractor';
 import { StoryCanvasInternals } from '../../TestUI/StoryCanvas';
 import ReactThreeTestRenderer from '@react-three/test-renderer';
+import { Renderer } from '@react-three/test-renderer/dist/declarations/src/types/public';
 
 import React from 'react';
 import { store } from '../../store';
@@ -19,6 +20,23 @@ export const renderInteractor = (id: string) => (
     testCompatibleMode
   />
 );
+
+const expectInteractorVisuallySelected = (renderer: Renderer, id: string) => {
+  checkTree(renderer, (tree) => {
+    expect(
+      findOne(tree, 'name', new RegExp(`ring-${id}-visible`))
+    ).toBeTruthy();
+  });
+};
+
+const expectInteractorVisuallyNotSelected = (
+  renderer: Renderer,
+  id: string
+) => {
+  checkTree(renderer, (tree) => {
+    expect(findOne(tree, 'name', new RegExp(`ring-${id}-visible`))).toBeFalsy();
+  });
+};
 
 describe('ThreeInteractor', () => {
   it('can render and change state with mock store', async () => {
@@ -59,7 +77,7 @@ describe('ThreeInteractor', () => {
       });
     });
 
-    fit('selection can change with hovers', async () => {
+    it('selection can change with hovers', async () => {
       await ReactThreeTestRenderer.act(async () => {
         store.setState({
           autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
@@ -74,14 +92,12 @@ describe('ThreeInteractor', () => {
         </StoryCanvasInternals>
       );
       const hoverDetector2 = getTreeElem(renderer, 'name', 'hover-detector-2');
-      const hoverDetector1 = getTreeElem(renderer, 'name', 'hover-detector-1');
       await renderer.fireEvent(hoverDetector2, 'pointerOver', {});
+      expectInteractorVisuallySelected(renderer, '2');
+      expectInteractorVisuallyNotSelected(renderer, '1');
       await renderer.fireEvent(hoverDetector2, 'pointerOut', {});
-      // await renderer.advanceFrames(60, 1000);
-      checkTree(renderer, (tree) => {
-        const hints = findAll(tree, 'name', /ring/);
-        console.log(hints);
-      });
+      expectInteractorVisuallySelected(renderer, '1');
+      expectInteractorVisuallyNotSelected(renderer, '2');
     });
   });
 });
