@@ -27,6 +27,10 @@ const mapActionToText = (t: InteractorActionType) => {
   return InteractorActionType[t];
 };
 
+const mapActionToHotkey = (t: InteractorActionType) => {
+  return 'E';
+};
+
 export type InteractorActionFn = (objectId: string) => void;
 
 export interface ThreeInteractorProps {
@@ -84,39 +88,33 @@ const ThreeInteractorImpl = ({
 
   const {
     activeInteractorId,
-    activeHostileInteractorId,
     autoFocusSpecifier,
     hostileAutoFocusSpecifier,
     setActiveInteractorId,
-    setActiveHostileInteractorId,
   } = useStore((state) => ({
     activeInteractorId: state.activeInteractorId,
-    activeHostileInteractorId: state.activeHostileInteractorId,
     autoFocusSpecifier: state.autoFocusSpecifier,
     hostileAutoFocusSpecifier: state.hostileAutoFocusSpecifier,
     setActiveInteractorId: state.setActiveInteractorId,
-    setActiveHostileInteractorId: state.setActiveHostileInteractorId,
   }));
 
   const isAutoFocusedNeutral = (() => {
-    if (
-      !autoFocusSpecifier ||
-      autoFocusSpecifier.tag === 'Unknown' ||
-      autoFocusSpecifier.tag === 'Star' ||
-      autoFocusSpecifier.tag === 'Ship'
-    )
+    if (!autoFocusSpecifier || autoFocusSpecifier.tag === 'Unknown')
       return false;
     return autoFocusSpecifier?.id === objectId;
   })();
 
   const isAutoFocusedHostile = (() => {
-    if (!hostileAutoFocusSpecifier || hostileAutoFocusSpecifier.tag !== 'Ship')
+    if (
+      !hostileAutoFocusSpecifier ||
+      hostileAutoFocusSpecifier.tag === 'Unknown'
+    )
       return false;
     return hostileAutoFocusSpecifier?.id === objectId;
   })();
 
   useEffect(() => {
-    if (active && !isAutoFocusedNeutral) {
+    if (active && !isAutoFocusedNeutral && !isAutoFocusedHostile) {
       setActiveInteractorId(objectId);
     } else if (activeInteractorId === objectId) {
       setActiveInteractorId(undefined);
@@ -129,7 +127,8 @@ const ThreeInteractorImpl = ({
     isAutoFocusedNeutral,
   ]);
 
-  const tempAutoFocusActive = !activeInteractorId && isAutoFocusedNeutral;
+  const tempAutoFocusActive =
+    !activeInteractorId && (isAutoFocusedNeutral || isAutoFocusedHostile);
 
   const onLeftClick = (e?: ThreeEvent<MouseEvent>) => {
     if (e) {
@@ -189,25 +188,21 @@ const ThreeInteractorImpl = ({
           {testCompatibleMode ? (
             <mesh name={`text-action-hint=${mapActionToText(defaultAction)}`} />
           ) : (
-            (() => {
-              console.log('hacky-hacky');
-              return true;
-            })() && (
-              <Text
-                visible
-                position={vecToThreePos(VectorF(0, -(radius + 6)))}
-                color={teal}
-                fontSize={1.5}
-                maxWidth={20}
-                lineHeight={1}
-                letterSpacing={0.02}
-                textAlign="left"
-                anchorX="center"
-                anchorY="bottom"
-              >
-                Press E to {mapActionToText(defaultAction)}
-              </Text>
-            )
+            <Text
+              visible
+              position={vecToThreePos(VectorF(0, -(radius + 6)))}
+              color={teal}
+              fontSize={1.5}
+              maxWidth={20}
+              lineHeight={1}
+              letterSpacing={0.02}
+              textAlign="left"
+              anchorX="center"
+              anchorY="bottom"
+            >
+              Press {mapActionToHotkey(defaultAction)} to{' '}
+              {mapActionToText(defaultAction)}
+            </Text>
           )}
         </>
       )}

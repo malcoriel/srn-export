@@ -27,29 +27,37 @@ const Template: Story = (args) => {
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
-  const renderInteractable = ({
-    id,
-    position,
-    hostile,
-  }: {
-    id: string;
-    position: Vector3Arr;
-  }) => (
-    <group position={position} key={id}>
-      <mesh position={[0, 0, 0]}>
-        <circleBufferGeometry args={[1, 16]} />
-        <meshBasicMaterial color="teal" />
-      </mesh>
-      <ThreeInteractor
-        radius={1.5}
-        objectId={id}
-        perfId={id}
-        interactor={{
-          defaultAction: InteractorActionType.Tractor,
-        }}
-      />
-    </group>
-  );
+  const renderInteractable = (
+    {
+      id,
+      position,
+    }: {
+      id: string;
+      position: Vector3Arr;
+    },
+    hostile: boolean
+  ) => {
+    const color = hostile ? 'red' : 'teal';
+    return (
+      <group position={position} key={id}>
+        <mesh position={[0, 0, 0]}>
+          <circleBufferGeometry args={[1, 16]} />
+          <meshBasicMaterial color={color} />
+        </mesh>
+        <ThreeInteractor
+          radius={1.5}
+          objectId={id}
+          perfId={id}
+          interactor={{
+            defaultAction: hostile
+              ? InteractorActionType.Shoot
+              : InteractorActionType.Tractor,
+            outlineColor: color,
+          }}
+        />
+      </group>
+    );
+  };
 
   return (
     <div>
@@ -57,8 +65,8 @@ const Template: Story = (args) => {
       <StoryCanvas zoom={10.0}>
         <ThreeSpaceBackground size={256} shaderShift={0} />
         <group key={revision}>
-          {args.neutral.map((n: any) => renderInteractable(n))}
-          {args.hostile.map((n: any) => renderInteractable(n))}
+          {args.neutral.map((n: any) => renderInteractable(n, false))}
+          {args.hostile.map((n: any) => renderInteractable(n, true))}
         </group>
       </StoryCanvas>
     </div>
@@ -72,17 +80,17 @@ SingleNeutral.args = {
 };
 
 export const SingleHostile = Template.bind({});
-SingleNeutral.args = {
+SingleHostile.args = {
   neutral: [],
   hostile: [{ id: '1', position: [0, 0, 10] }],
 };
 
 export const SingleHostileAutofocused = Template.bind({});
-SingleNeutral.args = {
+SingleHostileAutofocused.args = {
   neutral: [],
   hostile: [{ id: '1', position: [0, 0, 10] }],
   storeState: {
-    hostileAutoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
+    hostileAutoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierShip({
       id: '1',
     }),
   },
@@ -115,4 +123,10 @@ DoubleNeutralWithAutofocus.args = {
       id: '1',
     }),
   },
+};
+
+export const HostileAndNeutralWithoutAutofocus = Template.bind({});
+HostileAndNeutralWithoutAutofocus.args = {
+  neutral: [{ id: '1', position: [-3, -3, 10] }],
+  hostile: [{ id: '2', position: [3, 3, 10] }],
 };
