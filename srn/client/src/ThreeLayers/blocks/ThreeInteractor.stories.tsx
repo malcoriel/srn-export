@@ -35,16 +35,15 @@ const Template: Story = (args) => {
   }) => (
     <group position={position} key={id}>
       <mesh position={[0, 0, 0]}>
-        <circleBufferGeometry args={[10, 10]} />
+        <circleBufferGeometry args={[1, 16]} />
         <meshBasicMaterial color="teal" />
       </mesh>
       <ThreeInteractor
-        radius={15}
+        radius={1.5}
         objectId={id}
         perfId={id}
         interactor={{
           defaultAction: InteractorActionType.Tractor,
-          outlineThickness: 1,
         }}
       />
     </group>
@@ -52,7 +51,8 @@ const Template: Story = (args) => {
 
   return (
     <div>
-      <StoryCanvas>
+      {/* interactor text for some reason depends on the camera zoom, probably some bug or lack of compensation in Text elem */}
+      <StoryCanvas zoom={10.0}>
         <ThreeSpaceBackground size={256} shaderShift={0} />
         <group key={revision}>
           {args.neutral.map((n: any) => renderInteractable(n))}
@@ -81,8 +81,8 @@ SingleNeutralAutofocused.args = {
 export const DoubleNeutral = Template.bind({});
 DoubleNeutral.args = {
   neutral: [
-    { id: '1', position: [-30, -30, 10] },
-    { id: '2', position: [30, 30, 10] },
+    { id: '1', position: [-3, -3, 10] },
+    { id: '2', position: [3, 3, 10] },
   ],
   hostile: [],
   storeState: {

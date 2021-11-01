@@ -15,9 +15,10 @@ export const StoryCanvasInternals: React.FC = ({ children }) => {
   );
 };
 
-export const StoryCanvas: React.FC<{ styles?: any }> = ({
+export const StoryCanvas: React.FC<{ styles?: any; zoom?: number }> = ({
   children,
   styles,
+  zoom = 1.0,
 }) => {
   return (
     <Canvas
@@ -25,7 +26,7 @@ export const StoryCanvas: React.FC<{ styles?: any }> = ({
       gl={{ preserveDrawingBuffer: true }}
       camera={{
         position: new Vector3(0, 0, CAMERA_HEIGHT + 100),
-        zoom: 1.0,
+        zoom,
         far: 1000,
       }}
       style={{

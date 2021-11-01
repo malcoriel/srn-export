@@ -7,6 +7,9 @@ import { store } from '../../store';
 import { ObjectSpecifierBuilder } from '../../../../world/pkg/world.extra';
 import { checkTree, findAll, findOne, getTreeElem } from './testHelpers';
 
+// @ts-ignore
+global.reactAct = ReactThreeTestRenderer.act;
+
 export const renderInteractor = (id: string) => (
   <ThreeInteractor
     radius={5}
@@ -56,7 +59,7 @@ describe('ThreeInteractor', () => {
       });
     });
 
-    it('selection can change with hovers', async () => {
+    fit('selection can change with hovers', async () => {
       await ReactThreeTestRenderer.act(async () => {
         store.setState({
           autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
@@ -71,9 +74,12 @@ describe('ThreeInteractor', () => {
         </StoryCanvasInternals>
       );
       const hoverDetector2 = getTreeElem(renderer, 'name', 'hover-detector-2');
+      const hoverDetector1 = getTreeElem(renderer, 'name', 'hover-detector-1');
       await renderer.fireEvent(hoverDetector2, 'pointerOver', {});
+      await renderer.fireEvent(hoverDetector2, 'pointerOut', {});
+      // await renderer.advanceFrames(60, 1000);
       checkTree(renderer, (tree) => {
-        const hints = findAll(tree, 'name', /text-action-hint/);
+        const hints = findAll(tree, 'name', /ring/);
         console.log(hints);
       });
     });

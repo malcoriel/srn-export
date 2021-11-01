@@ -189,27 +189,32 @@ const ThreeInteractorImpl = ({
           {testCompatibleMode ? (
             <mesh name={`text-action-hint=${mapActionToText(defaultAction)}`} />
           ) : (
-            <Text
-              visible
-              position={vecToThreePos(VectorF(0, -(radius + 6)))}
-              color={teal}
-              fontSize={1.5}
-              maxWidth={20}
-              lineHeight={1}
-              letterSpacing={0.02}
-              textAlign="left"
-              anchorX="center"
-              anchorY="bottom"
-            >
-              Press E to {mapActionToText(defaultAction)}
-            </Text>
+            (() => {
+              console.log('hacky-hacky');
+              return true;
+            })() && (
+              <Text
+                visible
+                position={vecToThreePos(VectorF(0, -(radius + 6)))}
+                color={teal}
+                fontSize={1.5}
+                maxWidth={20}
+                lineHeight={1}
+                letterSpacing={0.02}
+                textAlign="left"
+                anchorX="center"
+                anchorY="bottom"
+              >
+                Press E to {mapActionToText(defaultAction)}
+              </Text>
+            )
           )}
         </>
       )}
       {!testCompatibleMode && (
         <Html>{active && hint && <HintWindow windowContent={hint} />}</Html>
       )}
-      <mesh name="ring">
+      <mesh name={`ring-${objectId}-${outlineVisible ? 'visible' : 'hidden'}`}>
         <ringGeometry
           args={[
             radius - outlineThickness,

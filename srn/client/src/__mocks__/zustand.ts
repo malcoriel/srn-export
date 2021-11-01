@@ -6,7 +6,9 @@ import actualCreate from 'zustand';
 
 // Reset all stores after each test run
 afterEach(() => {
-  act(resetAllStores);
+  // @ts-ignore
+  const actFn = global.reactAct || act; // react will throw a fit if different acts are used. when testing three, a different renderer is used, so a different act fn too
+  actFn(resetAllStores);
 });
 
 const create = createMaker(actualCreate);
