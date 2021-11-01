@@ -7,6 +7,7 @@ import React from 'react';
 import { store } from '../../store';
 import { ObjectSpecifierBuilder } from '../../../../world/pkg/world.extra';
 import { checkTree, findAll, findOne, getTreeElem } from './testHelpers';
+import * as util from 'util';
 
 // @ts-ignore
 global.reactAct = ReactThreeTestRenderer.act;
@@ -39,10 +40,19 @@ const expectInteractorVisuallyNotSelected = (
 };
 
 describe('ThreeInteractor', () => {
-  it('can render and change state with mock store', async () => {
-    const renderer = await ReactThreeTestRenderer.create(
+  let renderer: Renderer;
+
+  afterEach(async () => {
+    if (renderer) {
+      await renderer.unmount();
+    }
+  });
+
+  xit('can render and change state with mock store', async () => {
+    renderer = await ReactThreeTestRenderer.create(
       <StoryCanvasInternals>{renderInteractor('1')}</StoryCanvasInternals>
     );
+
     await ReactThreeTestRenderer.act(async () => {
       store.setState({
         autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
@@ -58,7 +68,7 @@ describe('ThreeInteractor', () => {
 
   describe('can render 2 neutral interactors', () => {
     it('but only one will be lit', async () => {
-      const renderer = await ReactThreeTestRenderer.create(
+      renderer = await ReactThreeTestRenderer.create(
         <StoryCanvasInternals>
           {renderInteractor('1')}
           {renderInteractor('2')}
@@ -85,7 +95,7 @@ describe('ThreeInteractor', () => {
           }),
         });
       });
-      const renderer = await ReactThreeTestRenderer.create(
+      renderer = await ReactThreeTestRenderer.create(
         <StoryCanvasInternals>
           {renderInteractor('1')}
           {renderInteractor('2')}
@@ -98,6 +108,31 @@ describe('ThreeInteractor', () => {
       await renderer.fireEvent(hoverDetector2, 'pointerOut', {});
       expectInteractorVisuallySelected(renderer, '1');
       expectInteractorVisuallyNotSelected(renderer, '2');
+    });
+  });
+
+  describe('can render neutral and hostile interactor at the same time', () => {
+    it('if both are autofocused, both are lit', async () => {
+      renderer = await ReactThreeTestRenderer.create(
+        <StoryCanvasInternals>
+          {renderInteractor('1')}
+          {renderInteractor('2')}
+        </StoryCanvasInternals>
+      );
+      await ReactThreeTestRenderer.act(async () => {
+        store.setState({
+          autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
+            id: '1',
+          }),
+          hostileAutoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral(
+            {
+              id: '2',
+            }
+          ),
+        });
+      });
+      expectInteractorVisuallySelected(renderer, '1');
+      expectInteractorVisuallySelected(renderer, '2');
     });
   });
 });
