@@ -120,21 +120,24 @@ const ThreeInteractorImpl = ({
   })();
 
   useEffect(() => {
-    if (!hostile) {
-      if (hovered && !isAutoFocusedNeutral) {
-        setActiveInteractorId(objectId);
-      } else if (activeInteractorId === objectId) {
-        console.log('unset neutral', objectId);
-        setActiveInteractorId(undefined);
-      }
-    } else {
+    // sync global state with local hover state
+    // important thing here is to only 'touch' the group it belongs to, so focusing hostile
+    // interactor would not touch neutral autofocus, and vice-versa
+    if (hostile) {
       if (hovered && !isAutoFocusedHostile) {
         setActiveHostileInteractorId(objectId);
       } else if (activeHostileInteractorId === objectId) {
         setActiveHostileInteractorId(undefined);
       }
+    } else {
+      if (hovered && !isAutoFocusedNeutral) {
+        setActiveInteractorId(objectId);
+      } else if (activeInteractorId === objectId) {
+        setActiveInteractorId(undefined);
+      }
     }
   }, [
+    hostile,
     hovered,
     setActiveInteractorId,
     objectId,

@@ -141,3 +141,13 @@ HostileAndNeutralWithNeutralAutofocus.args = {
     }),
   },
 };
+
+export const HostileAndNeutralWithHostileAutofocus = Template.bind({});
+HostileAndNeutralWithHostileAutofocus.args = {
+  ...HostileAndNeutralWithoutAutofocus.args,
+  storeState: {
+    autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierShip({
+      id: '2',
+    }),
+  },
+};
