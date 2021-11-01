@@ -49,6 +49,7 @@ const Template: Story = (args) => {
           objectId={id}
           perfId={id}
           interactor={{
+            hostile,
             defaultAction: hostile
               ? InteractorActionType.Shoot
               : InteractorActionType.Tractor,

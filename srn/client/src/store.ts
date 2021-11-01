@@ -92,6 +92,8 @@ export type SrnState = {
   setTestMenuMode: (val: TestMenuMode) => void;
   activeInteractorId?: string;
   setActiveInteractorId: (id?: string) => void;
+  activeHostileInteractorId?: string;
+  setActiveHostileInteractorId: (id?: string) => void;
   autoFocusSpecifier?: ObjectSpecifier | null;
   setAutoFocusSpecifier: (sp?: ObjectSpecifier | null) => void;
   hostileAutoFocusSpecifier?: ObjectSpecifier | null;
@@ -264,8 +266,11 @@ export const useStore = create<SrnState>((set) => ({
       return { portraitIndex, portrait };
     }),
   activeInteractorId: undefined,
+  activeHostileInteractorId: undefined,
   setActiveInteractorId: (id: string | undefined) =>
     set(() => ({ activeInteractorId: id })),
+  setActiveHostileInteractorId: (id: string | undefined) =>
+    set(() => ({ activeHostileInteractorId: id })),
   setAutoFocusSpecifier: (sp) => set(() => ({ autoFocusSpecifier: sp })),
   setHostileAutoFocusSpecifier: (sp) =>
     set(() => ({ hostileAutoFocusSpecifier: sp })),

@@ -7,17 +7,22 @@ import React from 'react';
 import { store } from '../../store';
 import { ObjectSpecifierBuilder } from '../../../../world/pkg/world.extra';
 import { checkTree, findAll, findOne, getTreeElem } from './testHelpers';
-import * as util from 'util';
+// import * as util from 'util';
 
 // @ts-ignore
 global.reactAct = ReactThreeTestRenderer.act;
 
-export const renderInteractor = (id: string) => (
+export const renderInteractor = (id: string, hostile: boolean) => (
   <ThreeInteractor
     radius={5}
     objectId={id}
     perfId={id}
-    interactor={{ defaultAction: InteractorActionType.Tractor }}
+    interactor={{
+      defaultAction: hostile
+        ? InteractorActionType.Shoot
+        : InteractorActionType.Tractor,
+      hostile,
+    }}
     testCompatibleMode
   />
 );
@@ -50,7 +55,9 @@ describe('ThreeInteractor', () => {
 
   xit('can render and change state with mock store', async () => {
     renderer = await ReactThreeTestRenderer.create(
-      <StoryCanvasInternals>{renderInteractor('1')}</StoryCanvasInternals>
+      <StoryCanvasInternals>
+        {renderInteractor('1', false)}
+      </StoryCanvasInternals>
     );
 
     await ReactThreeTestRenderer.act(async () => {
@@ -70,8 +77,8 @@ describe('ThreeInteractor', () => {
     it('but only one will be lit', async () => {
       renderer = await ReactThreeTestRenderer.create(
         <StoryCanvasInternals>
-          {renderInteractor('1')}
-          {renderInteractor('2')}
+          {renderInteractor('1', false)}
+          {renderInteractor('2', false)}
         </StoryCanvasInternals>
       );
       await ReactThreeTestRenderer.act(async () => {
@@ -97,8 +104,8 @@ describe('ThreeInteractor', () => {
       });
       renderer = await ReactThreeTestRenderer.create(
         <StoryCanvasInternals>
-          {renderInteractor('1')}
-          {renderInteractor('2')}
+          {renderInteractor('1', false)}
+          {renderInteractor('2', false)}
         </StoryCanvasInternals>
       );
       const hoverDetector2 = getTreeElem(renderer, 'name', 'hover-detector-2');
@@ -115,8 +122,8 @@ describe('ThreeInteractor', () => {
     it('if both are autofocused, both are lit', async () => {
       renderer = await ReactThreeTestRenderer.create(
         <StoryCanvasInternals>
-          {renderInteractor('1')}
-          {renderInteractor('2')}
+          {renderInteractor('1', false)}
+          {renderInteractor('2', true)}
         </StoryCanvasInternals>
       );
       await ReactThreeTestRenderer.act(async () => {
@@ -138,8 +145,8 @@ describe('ThreeInteractor', () => {
     it('if only neutral is autofocused, selecting other will keep both lit', async () => {
       renderer = await ReactThreeTestRenderer.create(
         <StoryCanvasInternals>
-          {renderInteractor('1')}
-          {renderInteractor('2')}
+          {renderInteractor('1', false)}
+          {renderInteractor('2', true)}
         </StoryCanvasInternals>
       );
       await ReactThreeTestRenderer.act(async () => {

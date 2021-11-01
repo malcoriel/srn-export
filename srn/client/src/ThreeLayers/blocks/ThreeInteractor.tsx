@@ -39,6 +39,7 @@ export interface ThreeInteractorProps {
   outlineThickness?: number;
   outlineColor?: string;
   defaultAction?: InteractorActionType;
+  hostile?: boolean;
 }
 
 const DEFAULT_OUTLINE_THICKNESS = 0.1;
@@ -68,6 +69,7 @@ const ThreeInteractorImpl = ({
     actions,
     hint,
     defaultAction,
+    hostile,
   },
 }: {
   // eslint-disable-next-line react/no-unused-prop-types
@@ -77,25 +79,29 @@ const ThreeInteractorImpl = ({
   testCompatibleMode?: boolean;
   interactor: ThreeInteractorProps;
 }) => {
-  const [active, setActive] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [menuShown, setMenuShown] = useState(false);
   const onPointerOver = () => {
-    setActive(true);
+    setHovered(true);
   };
   const onPointerOut = () => {
-    setActive(false);
+    setHovered(false);
   };
 
   const {
     activeInteractorId,
+    activeHostileInteractorId,
     autoFocusSpecifier,
     hostileAutoFocusSpecifier,
     setActiveInteractorId,
+    setActiveHostileInteractorId,
   } = useStore((state) => ({
     activeInteractorId: state.activeInteractorId,
+    activeHostileInteractorId: state.activeHostileInteractorId,
     autoFocusSpecifier: state.autoFocusSpecifier,
     hostileAutoFocusSpecifier: state.hostileAutoFocusSpecifier,
     setActiveInteractorId: state.setActiveInteractorId,
+    setActiveHostileInteractorId: state.setActiveHostileInteractorId,
   }));
 
   const isAutoFocusedNeutral = (() => {
@@ -114,17 +120,29 @@ const ThreeInteractorImpl = ({
   })();
 
   useEffect(() => {
-    if (active && !isAutoFocusedNeutral && !isAutoFocusedHostile) {
-      setActiveInteractorId(objectId);
-    } else if (activeInteractorId === objectId) {
-      setActiveInteractorId(undefined);
+    if (!hostile) {
+      if (hovered && !isAutoFocusedNeutral) {
+        setActiveInteractorId(objectId);
+      } else if (activeInteractorId === objectId) {
+        console.log('unset neutral', objectId);
+        setActiveInteractorId(undefined);
+      }
+    } else {
+      if (hovered && !isAutoFocusedHostile) {
+        setActiveHostileInteractorId(objectId);
+      } else if (activeHostileInteractorId === objectId) {
+        setActiveHostileInteractorId(undefined);
+      }
     }
   }, [
-    active,
+    hovered,
     setActiveInteractorId,
     objectId,
     activeInteractorId,
     isAutoFocusedNeutral,
+    setActiveHostileInteractorId,
+    activeHostileInteractorId,
+    isAutoFocusedHostile,
   ]);
 
   const tempAutoFocusActive =
@@ -151,16 +169,16 @@ const ThreeInteractorImpl = ({
     return false;
   };
 
-  const visuallyActive = tempAutoFocusActive || active;
+  const visuallyActive = tempAutoFocusActive || hovered;
 
   const memoizedColor = useMemo(() => new Color(outlineColor), [outlineColor]);
   const outlineVisible = visuallyActive ? 1.0 : 0.0;
   const setShowTractorCircle = useStore((state) => state.setShowTractorCircle);
   useEffect(() => {
     if (defaultAction === InteractorActionType.Tractor) {
-      setShowTractorCircle(active);
+      setShowTractorCircle(hovered);
     }
-  }, [defaultAction, active, setShowTractorCircle]);
+  }, [defaultAction, hovered, setShowTractorCircle]);
 
   // noinspection RequiredAttributes
   return (
@@ -207,7 +225,7 @@ const ThreeInteractorImpl = ({
         </>
       )}
       {!testCompatibleMode && (
-        <Html>{active && hint && <HintWindow windowContent={hint} />}</Html>
+        <Html>{hovered && hint && <HintWindow windowContent={hint} />}</Html>
       )}
       <mesh name={`ring-${objectId}-${outlineVisible ? 'visible' : 'hidden'}`}>
         <ringGeometry
