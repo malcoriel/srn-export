@@ -8,6 +8,7 @@ import { InteractorActionType, ThreeInteractor } from './ThreeInteractor';
 import { Vector3Arr } from '../util';
 import { resetStore, store } from '../../store';
 import { ObjectSpecifierBuilder } from '../../../../world/pkg/world.extra';
+import _ from 'lodash';
 
 export default {
   title: 'Three/ThreeInteractor',
@@ -29,6 +30,7 @@ const Template: Story = (args) => {
   const renderInteractable = ({
     id,
     position,
+    hostile,
   }: {
     id: string;
     position: Vector3Arr;
@@ -56,6 +58,7 @@ const Template: Story = (args) => {
         <ThreeSpaceBackground size={256} shaderShift={0} />
         <group key={revision}>
           {args.neutral.map((n: any) => renderInteractable(n))}
+          {args.hostile.map((n: any) => renderInteractable(n))}
         </group>
       </StoryCanvas>
     </div>
@@ -66,6 +69,23 @@ export const SingleNeutral = Template.bind({});
 SingleNeutral.args = {
   neutral: [{ id: '1', position: [0, 0, 10] }],
   hostile: [],
+};
+
+export const SingleHostile = Template.bind({});
+SingleNeutral.args = {
+  neutral: [],
+  hostile: [{ id: '1', position: [0, 0, 10] }],
+};
+
+export const SingleHostileAutofocused = Template.bind({});
+SingleNeutral.args = {
+  neutral: [],
+  hostile: [{ id: '1', position: [0, 0, 10] }],
+  storeState: {
+    hostileAutoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
+      id: '1',
+    }),
+  },
 };
 
 export const SingleNeutralAutofocused = Template.bind({});
@@ -85,6 +105,11 @@ DoubleNeutral.args = {
     { id: '2', position: [3, 3, 10] },
   ],
   hostile: [],
+};
+
+export const DoubleNeutralWithAutofocus = Template.bind({});
+DoubleNeutralWithAutofocus.args = {
+  ..._.cloneDeep(DoubleNeutral.args),
   storeState: {
     autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
       id: '1',
