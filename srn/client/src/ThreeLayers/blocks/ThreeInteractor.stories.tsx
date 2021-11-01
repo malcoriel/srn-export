@@ -130,3 +130,13 @@ HostileAndNeutralWithoutAutofocus.args = {
   neutral: [{ id: '1', position: [-3, -3, 10] }],
   hostile: [{ id: '2', position: [3, 3, 10] }],
 };
+
+export const HostileAndNeutralWithNeutralAutofocus = Template.bind({});
+HostileAndNeutralWithNeutralAutofocus.args = {
+  ...HostileAndNeutralWithoutAutofocus.args,
+  storeState: {
+    autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
+      id: '1',
+    }),
+  },
+};

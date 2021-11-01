@@ -135,9 +135,25 @@ describe('ThreeInteractor', () => {
       expectInteractorVisuallySelected(renderer, '2');
     });
 
-    it.todo(
-      'if only neutral is autofocused, selecting other will keep both lit'
-    );
+    it('if only neutral is autofocused, selecting other will keep both lit', async () => {
+      renderer = await ReactThreeTestRenderer.create(
+        <StoryCanvasInternals>
+          {renderInteractor('1')}
+          {renderInteractor('2')}
+        </StoryCanvasInternals>
+      );
+      await ReactThreeTestRenderer.act(async () => {
+        store.setState({
+          autoFocusSpecifier: ObjectSpecifierBuilder.ObjectSpecifierMineral({
+            id: '1',
+          }),
+        });
+      });
+      const hoverDetector2 = getTreeElem(renderer, 'name', 'hover-detector-2');
+      await renderer.fireEvent(hoverDetector2, 'pointerOver', {});
+      expectInteractorVisuallySelected(renderer, '1');
+      expectInteractorVisuallySelected(renderer, '2');
+    });
     it.todo(
       'if only hostile is autofocused, selecting other will keep both lit'
     );
