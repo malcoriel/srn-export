@@ -83,6 +83,7 @@ export const InteractorMap: Record<
       defaultAction: InteractorActionType.Shoot,
       outlineColor: common,
       actions: shipActionMap,
+      // hostile: true,
     }),
     (m) => m.id
   ),

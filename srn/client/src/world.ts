@@ -429,11 +429,9 @@ export const findObjectPositionById = (
   return Vector.fromIVector(getObjectPosition(object));
 };
 
-export const getSpecifierId = (
-  os?: ObjectSpecifier | null
-): string | undefined => {
-  if (!os || os.tag === 'Unknown') return undefined;
-  return os.id;
+export const getSpecifierId = (os?: ObjectSpecifier | null): string | null => {
+  if (!os || os.tag === 'Unknown') return null;
+  return os.id || null;
 };
 
 export type ManualMovementActionTags =

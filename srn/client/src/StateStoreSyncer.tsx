@@ -24,17 +24,18 @@ export const StateStoreSyncer: React.FC = () => {
   useEffect(() => {
     const { indexes } = ns;
     const myShipAutofocus = indexes.myShip?.auto_focus;
-    const myShipHostileAutofocus = indexes.myShip?.hostile_auto_focus;
-    if (
-      getSpecifierId(myShipAutofocus) !== getSpecifierId(autoFocusSpecifier)
-    ) {
+    const currentAutofocus = getSpecifierId(myShipAutofocus);
+    const oldAutofocus = getSpecifierId(autoFocusSpecifier);
+    if (currentAutofocus !== oldAutofocus) {
       setAutoFocusSpecifier(myShipAutofocus);
     }
-    if (
-      getSpecifierId(myShipHostileAutofocus) !==
-      getSpecifierId(hostileAutoFocusSpecifier)
-    ) {
-      setHostileAutoFocusSpecifier(myShipAutofocus);
+
+    const myShipHostileAutofocus = indexes.myShip?.hostile_auto_focus;
+    const currentHostileAutofocus = getSpecifierId(myShipHostileAutofocus);
+    const oldHostileAutofocus = getSpecifierId(hostileAutoFocusSpecifier);
+    if (currentHostileAutofocus !== oldHostileAutofocus) {
+      setHostileAutoFocusSpecifier(myShipHostileAutofocus);
+      console.log('force set', myShipHostileAutofocus);
     }
   });
 

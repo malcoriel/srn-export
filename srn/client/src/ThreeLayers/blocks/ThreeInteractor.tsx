@@ -28,6 +28,9 @@ const mapActionToText = (t: InteractorActionType) => {
 };
 
 const mapActionToHotkey = (t: InteractorActionType) => {
+  if (t === InteractorActionType.Shoot) {
+    return '1';
+  }
   return 'E';
 };
 
@@ -206,7 +209,7 @@ const ThreeInteractorImpl = ({
           <KbAction
             action={actions && actions.get(defaultAction)}
             objectId={objectId}
-            hotkey="e"
+            hotkey={mapActionToHotkey(defaultAction).toLowerCase()}
           />
           {testCompatibleMode ? (
             <mesh name={`text-action-hint=${mapActionToText(defaultAction)}`} />

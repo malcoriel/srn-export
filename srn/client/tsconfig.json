@@ -23,5 +23,10 @@
   "include": [
     "src",
     "../world/pkg"
+  ],
+
+  "exclude": [
+    "**/src/utils/setupTests.ts",
+    "**/*.spec.ts"
   ]
 }
