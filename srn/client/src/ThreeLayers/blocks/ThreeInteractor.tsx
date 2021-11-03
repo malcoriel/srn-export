@@ -130,6 +130,7 @@ const ThreeInteractorImpl = ({
         setActiveHostileInteractorId(undefined);
       }
     } else {
+      // eslint-disable-next-line no-lonely-if
       if (hovered && !isAutoFocusedNeutral) {
         setActiveInteractorId(objectId);
       } else if (activeInteractorId === objectId) {
@@ -149,7 +150,8 @@ const ThreeInteractorImpl = ({
   ]);
 
   const tempAutoFocusActive =
-    !activeInteractorId && (isAutoFocusedNeutral || isAutoFocusedHostile);
+    (!activeInteractorId && isAutoFocusedNeutral) ||
+    (!activeHostileInteractorId && isAutoFocusedHostile);
 
   const onLeftClick = (e?: ThreeEvent<MouseEvent>) => {
     if (e) {
