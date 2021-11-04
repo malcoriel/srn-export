@@ -787,7 +787,7 @@ pub fn update_world(
                 state = seed_state(&state.mode, random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
-                    spawn_ship(&mut state, Some(player.id), None, None);
+                    spawn_ship(&mut state, Some(player.id), None, None, None);
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
             } else {}
@@ -1505,6 +1505,7 @@ pub fn spawn_ship(
     player_id: Option<Uuid>,
     at: Option<Vec2f64>,
     npc_traits: Option<Vec<AiTrait>>,
+    abilities: Option<Vec<Ability>>
 ) -> &Ship {
     let mut small_rng = gen_rng();
     let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
@@ -1517,6 +1518,7 @@ pub fn spawn_ship(
         })
     }
     let mut ship = Ship::new(&mut small_rng, &mut at);
+    abilities.map(|abilities| ship.abilities.extend(abilities));
     ship.npc = if npc_traits.is_some() { Some(new_bot(npc_traits)) } else { None };
     let state_id = state.id;
 

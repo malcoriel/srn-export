@@ -10,6 +10,7 @@ use wasm_bindgen::prelude::*;
 pub enum Ability {
     Unknown,
     Shoot { cooldown_ticks_remaining: i32 },
+    BlowUpOnLand,
 }
 
 impl Ability {
@@ -17,6 +18,7 @@ impl Ability {
         match self {
             Ability::Unknown => 0,
             Ability::Shoot { .. } => 100 * 1000,
+            Ability::BlowUpOnLand => 0
         }
     }
 
@@ -28,6 +30,7 @@ impl Ability {
         match self {
             Ability::Unknown => 0,
             Ability::Shoot { .. } => 200 * 1000,
+            Ability::BlowUpOnLand => 0
         }
     }
 
@@ -35,6 +38,7 @@ impl Ability {
         match self {
             Ability::Unknown => 0.0,
             Ability::Shoot { .. } => 50.0,
+            Ability::BlowUpOnLand => 0.0
         }
     }
 
@@ -44,6 +48,7 @@ impl Ability {
             Ability::Shoot {
                 cooldown_ticks_remaining,
             } => *cooldown_ticks_remaining,
+            Ability::BlowUpOnLand => 0,
         };
     }
 
@@ -55,6 +60,7 @@ impl Ability {
             } => {
                 *cooldown_ticks_remaining = val;
             }
+            Ability::BlowUpOnLand => {}
         };
     }
 
@@ -67,6 +73,7 @@ impl Ability {
                 *cooldown_ticks_remaining =
                     (*cooldown_ticks_remaining - ticks_elapsed as i32).max(0);
             }
+            Ability::BlowUpOnLand => {}
         };
     }
 }

@@ -332,6 +332,7 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
             Ability::Shoot { .. } => {
                 ability.set_max_cooldown();
             }
+            Ability::BlowUpOnLand => {}
         }
     }
     return true;
@@ -449,7 +450,7 @@ pub fn finish_long_act_player(
         }
         LongActionPlayer::Respawn { .. } => {
             if !client {
-                spawn_ship(state, Some(player_id), None, None);
+                spawn_ship(state, Some(player_id), None, None, None);
             }
         }
     }

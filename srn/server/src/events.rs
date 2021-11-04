@@ -8,6 +8,7 @@ use lazy_static::lazy_static;
 use uuid::Uuid;
 use crate::api_struct::AiTrait;
 
+use crate::abilities::{*};
 use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
 use crate::indexing;
@@ -101,7 +102,7 @@ pub fn handle_events(
                         // intentionally do nothing
                     }
                     GameEvent::ShipDocked {
-                        player, state_id, ..
+                        player, state_id, ship, ..
                     } => {
                         let state = crate::states::select_state_by_id_mut(cont, state_id);
                         if state.is_none() {
@@ -116,6 +117,10 @@ pub fn handle_events(
                                     player,
                                 });
                             }
+                        }
+                        if ship.abilities.iter().any(|a| matches!(a, Ability::BlowUpOnLand)) {
+                            // remove ship immediately
+                            indexing::find_and_extract_ship_by_id(state, ship.id);
                         }
                     }
                     GameEvent::ShipUndocked { .. } => {
@@ -180,7 +185,7 @@ pub fn handle_events(
                             continue;
                         }
                         let state = state.unwrap();
-                        spawn_ship(state, None, Some(at), Some(vec![AiTrait::ImmediatePlanetLand]));
+                        spawn_ship(state, None, Some(at), Some(vec![AiTrait::ImmediatePlanetLand]), Some(vec![Ability::BlowUpOnLand]));
                     }
                 }
             }
