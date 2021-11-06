@@ -190,6 +190,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor_id: planet_id,
                             anchor_tier: 2,
                             color: gen_color(&mut prng).to_string(),
+                            health: None
                         })
                     }
                 } else {
@@ -292,6 +293,7 @@ pub fn gen_planet(
         anchor_id,
         anchor_tier: 1,
         color: gen_color(&mut prng).to_string(),
+        health: None
     }
 }
 
@@ -307,6 +309,7 @@ pub fn gen_planet_typed(p_type: PlanetType) -> Planet {
         anchor_id: Default::default(),
         anchor_tier: 0,
         color: get_planet_type_color(p_type),
+        health: None
     }
 }
 
@@ -396,6 +399,7 @@ fn make_tutorial_state() -> GameState {
             anchor_id: star_id.clone(),
             anchor_tier: 1,
             color: "#008FA9".to_string(),
+            health: None
         },
         Planet {
             id: new_id(),
@@ -408,6 +412,7 @@ fn make_tutorial_state() -> GameState {
             anchor_id: planet_id.clone(),
             anchor_tier: 2,
             color: "#1D334A".to_string(),
+            health: None
         },
     ];
     GameState {

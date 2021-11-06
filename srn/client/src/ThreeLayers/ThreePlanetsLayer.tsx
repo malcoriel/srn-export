@@ -2,6 +2,7 @@ import { Planet } from '../../../world/pkg';
 import React from 'react';
 import { ThreePlanetShape } from './ThreePlanetShape';
 import { InteractorMap } from './InteractorMap';
+import { normalizeHealth } from '../world';
 
 export const possibleGasGiantColors = [
   '#0D57AC',
@@ -65,6 +66,7 @@ export const ThreePlanetsLayer: React.FC<ThreePlanetsLayerParams> = ({
           atmosphereColor={p.color}
           visible={visMap[p.id]}
           interactor={InteractorMap.planet(p)}
+          hpNormalized={normalizeHealth(p.health)}
         />
       );
     })}

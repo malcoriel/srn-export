@@ -12,6 +12,7 @@ use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::world::{split_bodies_by_area, Asteroid, Planet, Star, AABB};
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
+use crate::combat::Health;
 
 #[clonable]
 pub trait IBody: Clone {
@@ -27,6 +28,7 @@ pub trait IBody: Clone {
     fn get_name(&self) -> String;
     fn get_color(&self) -> String;
     fn as_vec(&self) -> Vec2f64;
+    fn get_health(&self) -> Option<Health>;
 }
 
 impl IBody for Asteroid {
@@ -80,6 +82,10 @@ impl IBody for Asteroid {
             y: self.y,
         }
     }
+
+    fn get_health(&self) -> Option<Health> {
+        None
+    }
 }
 
 impl IBody for Planet {
@@ -129,6 +135,10 @@ impl IBody for Planet {
 
     fn as_vec(&self) -> Vec2f64 {
         vec2::AsVec2f64::as_vec(self)
+    }
+
+    fn get_health(&self) -> Option<Health> {
+        self.health.clone()
     }
 }
 
@@ -183,6 +193,10 @@ impl IBody for Star {
             y: self.y,
         }
     }
+
+    fn get_health(&self) -> Option<Health> {
+        None
+    }
 }
 
 impl From<Box<dyn IBody>> for Planet {
@@ -198,6 +212,7 @@ impl From<Box<dyn IBody>> for Planet {
             anchor_id: val.get_anchor_id(),
             anchor_tier: val.get_anchor_tier(),
             color: val.get_color(),
+            health: val.get_health()
         }
     }
 }

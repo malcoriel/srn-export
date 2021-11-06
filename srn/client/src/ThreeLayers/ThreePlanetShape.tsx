@@ -3,7 +3,7 @@ import { IVector } from '../utils/Vector';
 import { Mesh, ShaderMaterial, Texture, Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
 import _ from 'lodash';
-import { normalizeColor } from '../utils/palette';
+import { common, darkGreen, normalizeColor } from '../utils/palette';
 import { size, unitsToPixels_min } from '../coord';
 import { shallowEqual } from '../utils/shallowCompare';
 import { useRepeatWrappedTextureLoader } from './ThreeStar';
@@ -19,6 +19,7 @@ import {
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
 import { vecToThreePos } from './util';
+import { ThreeProgressbar } from './blocks/ThreeProgressbar';
 
 export const ThreePlanetShape: React.FC<{
   gid: string;
@@ -37,6 +38,7 @@ export const ThreePlanetShape: React.FC<{
   visible: boolean;
   texture?: Texture;
   interactor?: ThreeInteractorProps;
+  hpNormalized?: number;
 }> = React.memo(
   ({
     gid,
@@ -55,6 +57,7 @@ export const ThreePlanetShape: React.FC<{
     atmospherePercent,
     texture,
     interactor,
+    hpNormalized,
   }) => {
     const shaderProps = useMemo(() => {
       return _.assign(
@@ -158,6 +161,17 @@ export const ThreePlanetShape: React.FC<{
             uniforms={uniforms2}
           />
         </mesh>
+        {!_.isNil(hpNormalized) && (
+          <ThreeProgressbar
+            position={[0, -radius - 1.0, 0]}
+            length={radius * 2}
+            girth={radius / 5}
+            completionNormalized={hpNormalized}
+            fillColor={darkGreen}
+            backgroundColor={common}
+            hideWhenFull
+          />
+        )}
       </group>
     );
   },

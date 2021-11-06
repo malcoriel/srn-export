@@ -189,6 +189,7 @@ pub struct Planet {
     pub anchor_id: Uuid,
     pub anchor_tier: u32,
     pub color: String,
+    pub health: Option<Health>,
 }
 
 impl Planet {
@@ -204,6 +205,7 @@ impl Planet {
             anchor_id: Default::default(),
             anchor_tier: 1,
             color: "".to_string(),
+            health: None
         }
     }
 }

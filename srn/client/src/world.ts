@@ -28,6 +28,7 @@ import {
   ShipActionRustTurnRight,
   ShipActionRustTurnLeft,
   FullObjectSpecifier,
+  Health,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -455,4 +456,10 @@ export const isManualMovement = (
     act.tag === 'TurnRight' ||
     act.tag === 'TurnLeft'
   );
+};
+
+export const normalizeHealth = (
+  h: Health | null | undefined
+): number | undefined => {
+  return h ? h.current / h.max : undefined;
 };
