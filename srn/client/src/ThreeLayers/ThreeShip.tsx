@@ -25,6 +25,7 @@ type ThreeShipProps = {
   radius: number;
   visible: boolean;
   opacity: number;
+  hpNormalized: number;
   interactor?: ThreeInteractorProps;
 };
 
@@ -41,6 +42,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     radius,
     gid,
     opacity,
+    hpNormalized,
   }) => {
     const tractorRef = useRef<Mesh>();
     // @ts-ignore
@@ -118,9 +120,10 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           position={[0, -radius - 1.0, 0]}
           length={radius * 2}
           girth={radius / 5}
-          completion={0.75}
+          completionNormalized={hpNormalized}
           fillColor={darkGreen}
           backgroundColor={common}
+          hideWhenFull
         />
       </group>
     );

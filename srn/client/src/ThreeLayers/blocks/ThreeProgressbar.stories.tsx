@@ -22,7 +22,7 @@ const Template: Story = (args) => {
     <StoryCanvas key={revision}>
       <ThreeSpaceBackground size={256} shaderShift={0} />
       <ThreeProgressbar
-        completion={0.75}
+        completionNormalized={0.75}
         girth={5}
         length={50}
         fillColor="red"

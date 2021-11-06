@@ -63,6 +63,7 @@ export const ThreeShipsLayer: React.FC<{
             color={ship.color}
             opacity={opacity}
             interactor={InteractorMap.ship(ship)}
+            hpNormalized={ship.health.current / ship.health.max}
           />
         );
       })}
