@@ -1,6 +1,7 @@
 #![feature(exclusive_range_pattern)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
+#![allow(unused_macros)]
 #[macro_use]
 extern crate serde_derive;
 
@@ -87,6 +88,21 @@ macro_rules! err {
     }
 }
 
+macro_rules! cast {
+        ($target: expr, $pat: path) => {
+            {
+                if let $pat(a) = $target { // #1
+                    a
+                } else {
+                    panic!(
+                        "mismatch variant when cast to {}",
+                        stringify!($pat)); // #2
+                }
+            }
+        };
+    }
+
+
 #[macro_use]
 extern crate rocket;
 extern crate websocket;
@@ -133,6 +149,8 @@ mod vec2_test;
 pub mod world;
 mod world_test;
 mod xcast;
+mod pirate_defence;
+mod tutorial;
 
 struct LastCheck {
     time: DateTime<Utc>,

@@ -440,6 +440,7 @@ fn make_tutorial_state() -> GameState {
         disable_hp_effects: false,
         market: Market::new(),
         interval_data: Default::default(),
+        game_over: None
     }
 }
 
@@ -464,6 +465,7 @@ pub fn make_sandbox_state() -> GameState {
         disable_hp_effects: true,
         market: Market::new(),
         interval_data: Default::default(),
+        game_over: None
     }
 }
 
@@ -519,6 +521,7 @@ fn gen_state(seed: String, opts: GenStateOpts) -> GameState {
         market: Market::new(),
         version: GAME_STATE_VERSION,
         interval_data: Default::default(),
+        game_over: None
     };
 
     let mut state = validate_state(state);

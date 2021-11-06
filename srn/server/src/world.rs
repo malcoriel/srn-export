@@ -205,7 +205,7 @@ impl Planet {
             anchor_id: Default::default(),
             anchor_tier: 1,
             color: "".to_string(),
-            health: None
+            health: None,
         }
     }
 }
@@ -586,6 +586,12 @@ pub struct GameState {
     pub market: Market,
     pub locations: Vec<Location>,
     pub interval_data: HashMap<TimeMarks, u32>,
+    pub game_over: Option<GameOver>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct GameOver {
+    pub reason: String,
 }
 
 pub const GAME_STATE_VERSION: u32 = 3;
@@ -613,6 +619,7 @@ impl GameState {
             },
             locations: vec![],
             interval_data: Default::default(),
+            game_over: None,
         }
     }
 }
@@ -1020,7 +1027,7 @@ pub fn update_location(
                     let player = players_by_ship_id_read.get(&ship.id);
                     to_finish.push((new_la.clone(), player.map(|p| p.id), ShipIdx {
                         ship_idx: i,
-                        location_idx
+                        location_idx,
                     }));
                 }
                 return if keep_ticking { Some(new_la) } else { None };
@@ -1173,7 +1180,7 @@ fn update_initiate_ship_docking_by_navigation(
                     if !docks_in_progress {
                         to_dock.push((ShipIdx {
                             location_idx,
-                            ship_idx: i
+                            ship_idx: i,
                         }, planet.id))
                     }
                 }
@@ -1507,7 +1514,7 @@ pub fn spawn_ship(
     player_id: Option<Uuid>,
     at: Option<Vec2f64>,
     npc_traits: Option<Vec<AiTrait>>,
-    abilities: Option<Vec<Ability>>
+    abilities: Option<Vec<Ability>>,
 ) -> &Ship {
     let mut small_rng = gen_rng();
     let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);

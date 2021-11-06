@@ -127,6 +127,9 @@ mod autofocus;
 #[path = "../../server/src/api_struct.rs"]
 mod api_struct;
 
+#[path = "../../server/src/pirate_defence.rs"]
+mod pirate_defence;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize as Deserializable;

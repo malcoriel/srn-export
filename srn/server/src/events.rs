@@ -11,7 +11,7 @@ use crate::api_struct::AiTrait;
 use crate::abilities::{*};
 use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
-use crate::indexing;
+use crate::{indexing, pirate_defence, tutorial};
 use crate::perf::Sampler;
 use crate::rooms_api::create_room_impl;
 use crate::states::StateContainer;
@@ -28,6 +28,20 @@ lazy_static! {
         let (sender, receiver) = bounded::<GameEvent>(128);
         (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
     };
+}
+
+pub fn get_ev_state<'a, 'b> (ev: &'b GameEvent, cont: &'a mut RwLockWriteGuard<StateContainer>) -> Option<&'a mut GameState> {
+    let res = match ev {
+        GameEvent::ShipDocked { state_id, .. } => {
+            let state = crate::states::select_state_by_id_mut(cont, state_id.clone());
+            state
+        }
+        _ => None
+    };
+    if res.is_none() {
+        warn!("Event {:?} in non-existent state");
+    }
+    return res;
 }
 
 pub fn handle_events(
@@ -102,28 +116,19 @@ pub fn handle_events(
                         // intentionally do nothing
                     }
                     GameEvent::ShipDocked {
-                        player, state_id, ship, planet
+                        player, ship, planet, ..
                     } => {
-                        let state = crate::states::select_state_by_id_mut(cont, state_id);
-                        if state.is_none() {
-                            warn!("event in non-existent state");
-                            continue;
-                        }
-                        let state = state.unwrap();
-                        if state.mode != GameMode::Tutorial {
-                            if let Some(player) = player {
-                                fire_event(GameEvent::DialogueTriggerRequest {
-                                    dialogue_name: "basic_planet".to_owned(),
-                                    player,
-                                });
-                            }
-                        }
-                        if ship.abilities.iter().any(|a| matches!(a, Ability::BlowUpOnLand)) {
-                            // remove ship immediately
-                            indexing::find_and_extract_ship_by_id(state, ship.id);
-                            if let Some(planet) = indexing::find_planet_mut(state, &planet.id) {
-                                if let Some(health) = &mut planet.health {
-                                    health.current = (health.current - health.max * 0.1).max(0.0);
+                        if let Some(state) = get_ev_state( &event, cont)
+                        {
+                            match state.mode {
+                                GameMode::Unknown => {}
+                                GameMode::CargoRush => {}
+                                GameMode::Tutorial => {
+                                    tutorial::on_ship_docked(state, player);
+                                }
+                                GameMode::Sandbox => {}
+                                GameMode::PirateDefence => {
+                                    pirate_defence::on_ship_land(state, ship,planet);
                                 }
                             }
                         }
@@ -190,7 +195,8 @@ pub fn handle_events(
                             continue;
                         }
                         let state = state.unwrap();
-                        spawn_ship(state, None, Some(at), Some(vec![AiTrait::ImmediatePlanetLand]), Some(vec![Ability::BlowUpOnLand]));
+
+                        pirate_defence::on_pirate_spawn(state, at);
                     }
                 }
             }
