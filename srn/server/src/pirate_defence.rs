@@ -2,13 +2,13 @@ use crate::abilities::Ability;
 use crate::vec2::Vec2f64;
 use crate::{fire_event, indexing, world};
 use crate::api_struct::AiTrait;
-use crate::world::{GameState, Ship, GameEvent, GameOver};
+use crate::world::{GameState, Ship, GameEvent, GameOver, Planet};
 
 pub fn on_pirate_spawn(state: &mut GameState, at: Vec2f64) {
       world::spawn_ship(state, None, Some(at), Some(vec![AiTrait::ImmediatePlanetLand]), Some(vec![Ability::BlowUpOnLand]));
 }
 
-pub fn on_ship_land(state: &mut GamesState, ship: Ship, planet: Planet) {
+pub fn on_ship_land(state: &mut GameState, ship: Ship, planet: Planet) {
     if ship.abilities.iter().any(|a| matches!(a, Ability::BlowUpOnLand)) {
         // remove ship immediately
         indexing::find_and_extract_ship_by_id(state, ship.id);
