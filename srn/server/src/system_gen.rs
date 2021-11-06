@@ -23,6 +23,7 @@ use crate::world::{
     Planet, Star, AABB, GAME_STATE_VERSION,
 };
 use crate::{new_id, planet_movement, world};
+use crate::combat::Health;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlanetType {
@@ -355,11 +356,18 @@ pub fn seed_state(mode: &GameMode, seed: String) -> GameState {
     }
 }
 
+fn assign_health_to_planets (planets: &mut Vec<Planet>, health: Health) {
+    for mut planet in planets.into_iter() {
+        planet.health = Some(health.clone())
+    }
+}
+
 fn make_pirate_defence_state(seed: String) -> GameState {
     let mut gen_opts = GenStateOpts::default();
     gen_opts.max_planets_in_system = 1;
     gen_opts.max_satellites_for_planet = 0;
     let mut state = gen_state(seed, gen_opts);
+    assign_health_to_planets(&mut state.locations[0].planets, Health::new(100.0));
     state.milliseconds_remaining = 5 * 1000 * 60;
     state.mode = GameMode::PirateDefence;
     state

@@ -164,8 +164,8 @@ export const ThreePlanetShape: React.FC<{
         {!_.isNil(hpNormalized) && (
           <ThreeProgressbar
             position={[0, -radius - 1.0, 0]}
-            length={radius * 2}
-            girth={radius / 5}
+            length={radius}
+            girth={radius / 20}
             completionNormalized={hpNormalized}
             fillColor={darkGreen}
             backgroundColor={common}

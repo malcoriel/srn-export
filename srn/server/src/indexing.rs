@@ -233,6 +233,15 @@ pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<
     return None;
 }
 
+pub fn find_planet_mut<'a, 'b>(state: &'a mut GameState, planet_id: &'b Uuid) -> Option<&'a mut Planet> {
+    for loc in state.locations.iter_mut() {
+        if let Some(planet) = loc.planets.iter_mut().find(|p| p.id == *planet_id) {
+            return Some(planet);
+        }
+    }
+    return None;
+}
+
 pub fn find_my_player(state: &GameState, player_id: Uuid) -> Option<&Player> {
     state.players.iter().find(|p| p.id == player_id)
 }

@@ -102,7 +102,7 @@ pub fn handle_events(
                         // intentionally do nothing
                     }
                     GameEvent::ShipDocked {
-                        player, state_id, ship, ..
+                        player, state_id, ship, planet
                     } => {
                         let state = crate::states::select_state_by_id_mut(cont, state_id);
                         if state.is_none() {
@@ -121,6 +121,11 @@ pub fn handle_events(
                         if ship.abilities.iter().any(|a| matches!(a, Ability::BlowUpOnLand)) {
                             // remove ship immediately
                             indexing::find_and_extract_ship_by_id(state, ship.id);
+                            if let Some(planet) = indexing::find_planet_mut(state, &planet.id) {
+                                if let Some(health) = &mut planet.health {
+                                    health.current = (health.current - health.max * 0.1).max(0.0);
+                                }
+                            }
                         }
                     }
                     GameEvent::ShipUndocked { .. } => {

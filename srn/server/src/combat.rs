@@ -25,7 +25,7 @@ impl Default for ShootTarget {
 }
 
 #[derive(
-    Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy, Default,
+    Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Default,
 )]
 pub struct Health {
     pub current: f64,
