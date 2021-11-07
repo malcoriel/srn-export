@@ -774,7 +774,7 @@ pub fn update_world(
     spatial_indexes: &mut SpatialIndexes,
 ) -> (GameState, Sampler) {
     state.millis += elapsed as u32 / 1000;
-    if !client && state.seed != "tutorial".to_owned() {
+    if !client && state.mode != GameMode::Tutorial {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
     }
 
@@ -782,7 +782,7 @@ pub fn update_world(
     if state.paused {
         if !client {
             if state.milliseconds_remaining <= 500 {
-                eprintln!("resetting game");
+                log!("resetting game");
                 let players = state
                     .players
                     .clone()
@@ -850,8 +850,14 @@ pub fn update_world(
 
         sampler.end(long_act_ticks);
 
-        if state.milliseconds_remaining <= 0 {
-            eprintln!("game end");
+        let time_end = state.milliseconds_remaining <= 0;
+        let game_over_end = state.game_over.is_some();
+        if time_end || game_over_end {
+            if time_end {
+                log!("Game ended due to time limit");
+            } else if game_over_end {
+                log!("Game ended due to game over trigger");
+            }
             state.paused = true;
             state.milliseconds_remaining = 10 * 1000;
             fire_event(GameEvent::GameEnded { state_id: state.id });

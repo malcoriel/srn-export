@@ -17,7 +17,7 @@ pub fn on_ship_land(state: &mut GameState, ship: Ship, planet: Planet) {
                 health.current = (health.current - health.max * 0.1).max(0.0);
                 if health.current <= 0.0 {
                     state.game_over = Some(GameOver {
-                        reason: "Your planet was captured by pirates. All is lost, and you have been defeated.".to_owned(),
+                        reason: format!("Your planet {} was captured by pirates. All is lost, and you have been defeated.", planet.name),
                     })
                 }
             }

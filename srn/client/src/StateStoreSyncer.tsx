@@ -35,7 +35,6 @@ export const StateStoreSyncer: React.FC = () => {
     const oldHostileAutofocus = getSpecifierId(hostileAutoFocusSpecifier);
     if (currentHostileAutofocus !== oldHostileAutofocus) {
       setHostileAutoFocusSpecifier(myShipHostileAutofocus);
-      console.log('force set', myShipHostileAutofocus);
     }
   });
 
