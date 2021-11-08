@@ -1,5 +1,6 @@
 FROM alpine
 WORKDIR /root
+RUN chmod -R /home/rust
 COPY resources resources
 COPY Cargo.toml Cargo.toml
 COPY Rocket.toml Rocket.toml
