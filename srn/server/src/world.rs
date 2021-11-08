@@ -46,7 +46,7 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::ship_action::{ShipActionRust, ShipMovement};
+use crate::ship_action::{ShipActionRust, ShipMovementMarkers};
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{seed_state, str_to_hash};
 use crate::tractoring::{
@@ -334,7 +334,8 @@ pub struct Ship {
     pub abilities: Vec<Ability>,
     pub auto_focus: Option<ObjectSpecifier>,
     pub hostile_auto_focus: Option<ObjectSpecifier>,
-    pub movement: ShipMovement,
+    pub movement: ShipMovementMarkers,
+    pub movement2: Movement,
     pub health: Health,
     pub local_effects: Vec<LocalEffect>,
     pub long_actions: Vec<LongAction>,
@@ -365,6 +366,7 @@ impl Ship {
             auto_focus: None,
             hostile_auto_focus: None,
             movement: Default::default(),
+            movement2: Movement::Unknown,
             health: Health::new(100.0),
             local_effects: vec![],
             long_actions: vec![],
@@ -798,7 +800,7 @@ pub fn update_world(
                 state = seed_state(&state.mode, random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
-                    spawn_ship(&mut state, Some(player.id), SpawnShipTemplate::player(None));
+                    spawn_ship(&mut state, Some(player.id), ShipTemplate::player(None));
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
             } else {}
@@ -1517,32 +1519,54 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
     state.players.push(player);
 }
 
-pub struct SpawnShipTemplate {
+
+#[derive(
+Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify,
+)]
+#[serde(tag = "tag")]
+pub enum Movement {
+    Unknown,
+    Monotonous {
+        move_speed: f64,
+        turn_speed: f64
+    },
+    Accelerated {
+        max_move_speed: f64,
+        acc_move: f64,
+        max_turn_speed: f64,
+        acc_turn: f64
+    },
+}
+
+pub struct ShipTemplate {
     at: Option<Vec2f64>,
     npc_traits: Option<Vec<AiTrait>>,
     abilities: Option<Vec<Ability>>,
     name: Option<String>,
-    health: Option<Health>
+    health: Option<Health>,
+    movement: Option<Movement>
 }
 
-impl SpawnShipTemplate {
-    pub fn pirate(at: Option<Vec2f64>) -> SpawnShipTemplate {
-        SpawnShipTemplate {
+impl ShipTemplate {
+    pub fn pirate(at: Option<Vec2f64>) -> ShipTemplate {
+        ShipTemplate {
             at,
             npc_traits: Some(vec![AiTrait::ImmediatePlanetLand]),
             abilities: Some(vec![Ability::BlowUpOnLand]),
             name: Some("Pirate".to_string()),
             health: Some(Health::new(40.0)),
+            movement: Some(Movement::Monotonous { move_speed: 10.0 / 1000.0 / 1000.0, turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0 })
         }
     }
 
-    pub fn player(at: Option<Vec2f64>) -> SpawnShipTemplate {
-        SpawnShipTemplate {
+    pub fn player(at: Option<Vec2f64>) -> ShipTemplate {
+        ShipTemplate {
             at,
             npc_traits: None,
             abilities: None,
             name: None,
-            health: Some(Health::new_regen(100.0, SHIP_REGEN_PER_SEC / 1000.0 / 1000.0))
+            health: Some(Health::new_regen(100.0, SHIP_REGEN_PER_SEC / 1000.0 / 1000.0)),
+            movement: Some(Movement::Monotonous { move_speed: SHIP_SPEED / 1000.0 / 1000.0, turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0 })
         }
     }
 }
@@ -1550,7 +1574,7 @@ impl SpawnShipTemplate {
 pub fn spawn_ship(
     state: &mut GameState,
     player_id: Option<Uuid>,
-    template: SpawnShipTemplate
+    template: ShipTemplate
 ) -> &Ship {
     let mut small_rng = gen_rng();
     let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
@@ -1566,6 +1590,7 @@ pub fn spawn_ship(
     template.abilities.map(|abilities| ship.abilities.extend(abilities));
     ship.npc = if template.npc_traits.is_some() { Some(new_bot(template.npc_traits)) } else { None };
     ship.name = template.name;
+    template.movement.map(|m| ship.movement2 = m);
     template.health.map(|health| ship.health = health);
     let state_id = state.id;
 

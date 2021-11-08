@@ -6,10 +6,10 @@ use crate::{fire_event, indexing, world};
 use crate::abilities::Ability;
 use crate::api_struct::AiTrait;
 use crate::vec2::Vec2f64;
-use crate::world::{GameEvent, GameOver, GameState, Planet, Ship, SpawnShipTemplate, TimeMarks};
+use crate::world::{GameEvent, GameOver, GameState, Planet, Ship, ShipTemplate, TimeMarks};
 
 pub fn on_pirate_spawn(state: &mut GameState, at: Vec2f64) {
-      world::spawn_ship(state, None, SpawnShipTemplate::pirate(Some(at)));
+      world::spawn_ship(state, None, ShipTemplate::pirate(Some(at)));
 }
 
 const SHIP_PLANET_HIT_NORMALIZED : f64 = 0.1;

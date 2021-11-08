@@ -178,12 +178,12 @@ pub struct MoveAxisParam {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct ShipMovement {
+pub struct ShipMovementMarkers {
     pub gas: Option<MoveAxisParam>,
     pub turn: Option<MoveAxisParam>,
 }
 
-impl ShipMovement {
+impl ShipMovementMarkers {
     pub fn new() -> Self {
         Self {
             gas: None,
@@ -192,8 +192,8 @@ impl ShipMovement {
     }
 }
 
-impl Default for ShipMovement {
+impl Default for ShipMovementMarkers {
     fn default() -> Self {
-        ShipMovement::new()
+        ShipMovementMarkers::new()
     }
 }

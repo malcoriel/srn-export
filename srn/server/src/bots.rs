@@ -22,7 +22,7 @@ use crate::random_stuff::gen_bot_name;
 use crate::ship_action::{apply_ship_action, ShipActionRust};
 use crate::states::StateContainer;
 use crate::world;
-use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship, ShipIdx, SpatialIndexes, SpawnShipTemplate};
+use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship, ShipIdx, SpatialIndexes, ShipTemplate};
 use crate::DIALOGUE_STATES;
 use crate::STATE;
 use crate::{indexing, new_id};
@@ -143,7 +143,7 @@ fn add_bot(room: &mut Room, bot: Bot) {
     let mut rng = thread_rng();
     let mut prng = SmallRng::seed_from_u64(rng.next_u64());
     world::add_player(&mut room.state, id, true, Some(gen_bot_name(&mut prng)));
-    world::spawn_ship(&mut room.state, Some(id), SpawnShipTemplate::player(None));
+    world::spawn_ship(&mut room.state, Some(id), ShipTemplate::player(None));
 }
 
 pub fn bot_init(room: &mut Room) {
