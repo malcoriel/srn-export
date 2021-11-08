@@ -1,14 +1,21 @@
-use crate::abilities::Ability;
-use crate::vec2::Vec2f64;
+use std::f64::consts::PI;
+
+use rand::Rng;
+
 use crate::{fire_event, indexing, world};
+use crate::abilities::Ability;
 use crate::api_struct::AiTrait;
-use crate::world::{GameState, Ship, GameEvent, GameOver, Planet, SpawnShipTemplate};
+use crate::vec2::Vec2f64;
+use crate::world::{GameEvent, GameOver, GameState, Planet, Ship, SpawnShipTemplate, TimeMarks};
 
 pub fn on_pirate_spawn(state: &mut GameState, at: Vec2f64) {
       world::spawn_ship(state, None, SpawnShipTemplate::pirate(Some(at)));
 }
 
 const SHIP_PLANET_HIT_NORMALIZED : f64 = 0.1;
+const PIRATE_SPAWN_DIST: f64 = 100.0;
+const PIRATE_SPAWN_COUNT: usize = 2;
+const PIRATE_SPAWN_INTERVAL_TICKS: u32 = 10 * 1000 * 1000;
 
 pub fn on_ship_land(state: &mut GameState, ship: Ship, planet: Planet) {
     if ship.abilities.iter().any(|a| matches!(a, Ability::BlowUpOnLand)) {
@@ -25,4 +32,35 @@ pub fn on_ship_land(state: &mut GameState, ship: Ship, planet: Planet) {
             }
         }
     }
+}
+
+pub fn update_state_pirate_defence(state: &mut GameState) {
+    let current_ticks = state.millis * 1000;
+    if world::every(
+        PIRATE_SPAWN_INTERVAL_TICKS,
+        current_ticks,
+        state.interval_data.get(&TimeMarks::PirateSpawn).map(|m| *m),
+    ) {
+        state
+            .interval_data
+            .insert(TimeMarks::PirateSpawn, current_ticks);
+        for _i in 0..PIRATE_SPAWN_COUNT {
+            fire_event(GameEvent::PirateSpawn {
+                state_id: state.id,
+                at: gen_pirate_spawn(&state.locations[0].planets.get(0).unwrap()),
+            });
+        }
+
+    }
+}
+
+pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
+    let angle = world::gen_rng().gen_range(0.0, PI * 2.0);
+    let vec = Vec2f64 { x: 1.0, y: 0.0 };
+    vec.rotate(angle)
+        .scalar_mul(PIRATE_SPAWN_DIST)
+        .add(&Vec2f64 {
+            x: planet.x,
+            y: planet.y,
+        })
 }

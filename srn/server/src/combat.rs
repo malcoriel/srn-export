@@ -30,11 +30,16 @@ impl Default for ShootTarget {
 pub struct Health {
     pub current: f64,
     pub max: f64,
+    pub regen_per_tick: Option<f64>
 }
 
 impl Health {
     pub fn new(max: f64) -> Health {
-        Health { current: max, max }
+        Health { current: max, max, regen_per_tick: None }
+    }
+
+    pub fn new_regen(max: f64, regen_per_tick: f64) -> Health {
+        Health { current: max, max, regen_per_tick: Some(regen_per_tick) }
     }
 }
 

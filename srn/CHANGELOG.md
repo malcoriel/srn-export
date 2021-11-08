@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.7.0 (2021-11-08)
+## Version 0.7.1 (2021-11-08)
 ### Fixes
 * Auxiliary release due to infrastructure failure
 

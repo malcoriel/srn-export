@@ -1,8 +1,8 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::{HashMap, HashSet};
-use std::f64::consts::PI;
 #[allow(deprecated)]
 use std::f64::{INFINITY, NEG_INFINITY};
+use std::f64::consts::PI;
 use std::fmt::{Display, Formatter};
 use std::iter::FromIterator;
 
@@ -10,13 +10,16 @@ use chrono::Utc;
 use itertools::{Either, Itertools};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
-use typescript_definitions::{TypeScriptify, TypescriptDefinition};
-use uuid::Uuid;
+use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use uuid::*;
+use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
+use crate::{abilities, autofocus, indexing, pirate_defence};
+use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
+use crate::{DEBUG_PHYSICS, new_id};
 use crate::abilities::Ability;
-use crate::api_struct::{new_bot, Bot, RoomId, AiTrait};
+use crate::api_struct::{AiTrait, Bot, new_bot, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
@@ -24,18 +27,18 @@ use crate::indexing::{
     index_planets_by_id, index_players_by_ship_id, index_ships_by_id, ObjectSpecifier,
 };
 use crate::inventory::{
-    add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
+    add_item, add_items, has_quest_item, InventoryItem, InventoryItemType, shake_items,
 };
 use crate::long_actions::{
-    cancel_all_long_actions_of_type, finish_long_act, finish_long_act_player, tick_long_act,
-    tick_long_act_player, try_start_long_action, try_start_long_action_ship, LongAction,
+    cancel_all_long_actions_of_type, finish_long_act, finish_long_act_player, LongAction,
     LongActionPlayer, LongActionStart, MIN_SHIP_DOCKING_RADIUS, SHIP_DOCKING_RADIUS_COEFF,
+    tick_long_act, tick_long_act_player, try_start_long_action, try_start_long_action_ship,
 };
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::planet_movement::{
-    build_anchors_from_bodies, index_bodies_by_id, make_bodies_from_planets, IBody,
+    build_anchors_from_bodies, IBody, index_bodies_by_id, make_bodies_from_planets,
 };
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
@@ -49,10 +52,7 @@ use crate::system_gen::{seed_state, str_to_hash};
 use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
-use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
-use crate::{abilities, autofocus, indexing};
-use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
-use crate::{new_id, DEBUG_PHYSICS};
+use crate::vec2::{AsVec2f64, deg_to_rad, Precision, Vec2f64};
 
 // speeds are per second
 const SHIP_SPEED: f64 = 20.0;
@@ -1429,8 +1429,8 @@ pub fn update_ship_hp_effects(
                 });
             }
 
-            if star_damage <= 0.0 && ship.health.current < ship.health.max {
-                let regen = SHIP_REGEN_PER_SEC * elapsed_micro as f64 / 1000.0 / 1000.0;
+            if star_damage <= 0.0 && ship.health.current < ship.health.max && ship.health.regen_per_tick.is_some() {
+                let regen = ship.health.regen_per_tick.unwrap_or(0.0) * elapsed_micro as f64;
                 ship.acc_periodic_heal += regen;
             }
 
@@ -1521,7 +1521,8 @@ pub struct SpawnShipTemplate {
     at: Option<Vec2f64>,
     npc_traits: Option<Vec<AiTrait>>,
     abilities: Option<Vec<Ability>>,
-    name: Option<String>
+    name: Option<String>,
+    health: Option<Health>
 }
 
 impl SpawnShipTemplate {
@@ -1530,7 +1531,8 @@ impl SpawnShipTemplate {
             at,
             npc_traits: Some(vec![AiTrait::ImmediatePlanetLand]),
             abilities: Some(vec![Ability::BlowUpOnLand]),
-            name: Some("Pirate".to_string())
+            name: Some("Pirate".to_string()),
+            health: Some(Health::new(40.0)),
         }
     }
 
@@ -1539,7 +1541,8 @@ impl SpawnShipTemplate {
             at,
             npc_traits: None,
             abilities: None,
-            name: None
+            name: None,
+            health: Some(Health::new_regen(100.0, SHIP_REGEN_PER_SEC / 1000.0 / 1000.0))
         }
     }
 }
@@ -1563,6 +1566,7 @@ pub fn spawn_ship(
     template.abilities.map(|abilities| ship.abilities.extend(abilities));
     ship.npc = if template.npc_traits.is_some() { Some(new_bot(template.npc_traits)) } else { None };
     ship.name = template.name;
+    template.health.map(|health| ship.health = health);
     let state_id = state.id;
 
     match player_id {
@@ -1858,18 +1862,6 @@ pub fn every(interval_ticks: u32, current_ticks: u32, last_trigger: Option<u32>)
     return diff > interval_ticks;
 }
 
-const PIRATE_SPAWN_DIST: f64 = 100.0;
-
-pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
-    let angle = gen_rng().gen_range(0.0, PI * 2.0);
-    let vec = Vec2f64 { x: 1.0, y: 0.0 };
-    vec.rotate(angle)
-        .scalar_mul(PIRATE_SPAWN_DIST)
-        .add(&Vec2f64 {
-            x: planet.x,
-            y: planet.y,
-        })
-}
 
 pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler: &mut Sampler) {
     let sampler_mark_type = match state.mode {
@@ -1890,20 +1882,7 @@ pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler
         GameMode::Tutorial => {}
         GameMode::Sandbox => {}
         GameMode::PirateDefence => {
-            let current_ticks = state.millis * 1000;
-            if every(
-                10 * 1000 * 1000,
-                current_ticks,
-                state.interval_data.get(&TimeMarks::PirateSpawn).map(|m| *m),
-            ) {
-                state
-                    .interval_data
-                    .insert(TimeMarks::PirateSpawn, current_ticks);
-                fire_event(GameEvent::PirateSpawn {
-                    state_id: state.id,
-                    at: gen_pirate_spawn(&state.locations[0].planets.get(0).unwrap()),
-                });
-            }
+            pirate_defence::update_state_pirate_defence(state);
         }
     }
     mark_id.map(|mark_id| sampler.end(mark_id));
