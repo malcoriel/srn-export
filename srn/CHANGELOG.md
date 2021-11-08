@@ -1,6 +1,10 @@
 # Changelog
 
 ## Version 0.7.0 (2021-11-08)
+### Fixes
+* Auxiliary release due to infrastructure failure
+
+## Version 0.7.0 (2021-11-08)
 ### New
 * New game mode - pirate defence. Try to shoot down some pirate ships that are going to capture your home planet.
 * Separate autofocusing mechanic for hostile ships (and a separate hotkey to shoot)
