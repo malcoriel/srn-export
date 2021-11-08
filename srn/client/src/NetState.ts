@@ -286,6 +286,7 @@ export default class NetState extends EventEmitter {
       milliseconds_remaining: 0,
       paused: true,
       interval_data: {},
+      game_over: null,
     };
     this.reindex();
   }

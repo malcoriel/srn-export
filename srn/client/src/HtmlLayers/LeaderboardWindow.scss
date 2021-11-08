@@ -22,6 +22,20 @@
     margin-bottom: 24px;
   }
 
+  .game-over {
+    font-size: 24px;
+    padding: 12px;
+
+    .game-over-text {
+      text-align: center;
+      padding: 12px 0;
+    }
+
+    .game-over-reason {
+      font-size: 18px;
+    }
+  }
+
   .countdown {
     line-height: 20px;
     color: #fbe7c6;

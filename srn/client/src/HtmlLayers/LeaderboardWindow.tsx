@@ -27,11 +27,13 @@ export const LeaderboardWindow: React.FC = () => {
   useNSForceChange('LeaderboardWindow', false, (prevState, nextState) => {
     return (
       JSON.stringify(prevState.leaderboard) !==
-      JSON.stringify(nextState.leaderboard)
+        JSON.stringify(nextState.leaderboard) ||
+      JSON.stringify(prevState.game_over) !==
+        JSON.stringify(nextState.game_over)
     );
   });
 
-  const { leaderboard, paused, my_id } = ns.state;
+  const { leaderboard, paused, my_id, game_over } = ns.state;
   if (!leaderboard) {
     return null;
   }
@@ -67,7 +69,17 @@ export const LeaderboardWindow: React.FC = () => {
           &nbsp; news & talk
         </a>
       </div>
-      {paused && <div className="winner">Winner:{leaderboard.winner}</div>}
+      {paused && game_over && (
+        <div className="game-over">
+          <div className="game-over-text">Game over:</div>
+          <div className="game-over-text game-over-reason">
+            {game_over.reason}
+          </div>
+        </div>
+      )}
+      {paused && !game_over && (
+        <div className="winner">Winner:{leaderboard.winner}</div>
+      )}
       <div className="header">Leaderboard:</div>
       {leaderboard.rating.map(([p, s], i) => (
         <div className="line" key={p.id}>
