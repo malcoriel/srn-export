@@ -3,7 +3,7 @@ use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::api_struct::{Room, RoomId, RoomsState};
 use crate::indexing::find_and_extract_ship;
-use crate::world::{spawn_ship, GameMode, Player};
+use crate::world::{spawn_ship, GameMode, Player, SpawnShipTemplate};
 use uuid::Uuid;
 
 use crate::rooms_api::{
@@ -144,7 +144,7 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId) {
             new_state
         };
         new_state.players.push(player);
-        spawn_ship(new_state, Some(client_id), None, None, None);
+        spawn_ship(new_state, Some(client_id), SpawnShipTemplate::player(None));
         new_state.id
     };
 

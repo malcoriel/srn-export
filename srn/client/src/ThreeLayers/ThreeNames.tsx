@@ -47,7 +47,8 @@ const getNamesWithPos = (
       continue;
     }
     const player = indexes.playersByShipId.get(ship.id);
-    const name = player ? player.name : 'NPC';
+    const ship_name = ship.name ? ship.name : 'Unidentified';
+    const name = player ? player.name : ship_name;
     res.push({
       id: ship.id,
       name,

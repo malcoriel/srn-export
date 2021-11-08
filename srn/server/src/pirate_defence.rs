@@ -2,10 +2,10 @@ use crate::abilities::Ability;
 use crate::vec2::Vec2f64;
 use crate::{fire_event, indexing, world};
 use crate::api_struct::AiTrait;
-use crate::world::{GameState, Ship, GameEvent, GameOver, Planet};
+use crate::world::{GameState, Ship, GameEvent, GameOver, Planet, SpawnShipTemplate};
 
 pub fn on_pirate_spawn(state: &mut GameState, at: Vec2f64) {
-      world::spawn_ship(state, None, Some(at), Some(vec![AiTrait::ImmediatePlanetLand]), Some(vec![Ability::BlowUpOnLand]));
+      world::spawn_ship(state, None, SpawnShipTemplate::pirate(Some(at)));
 }
 
 const SHIP_PLANET_HIT_NORMALIZED : f64 = 0.1;

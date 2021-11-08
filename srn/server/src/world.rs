@@ -339,6 +339,7 @@ pub struct Ship {
     pub local_effects: Vec<LocalEffect>,
     pub long_actions: Vec<LongAction>,
     pub npc: Option<Bot>,
+    pub name: Option<String>,
 }
 
 impl Ship {
@@ -368,6 +369,7 @@ impl Ship {
             local_effects: vec![],
             long_actions: vec![],
             npc: None,
+            name: None
         }
     }
 }
@@ -796,7 +798,7 @@ pub fn update_world(
                 state = seed_state(&state.mode, random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
-                    spawn_ship(&mut state, Some(player.id), None, None, None);
+                    spawn_ship(&mut state, Some(player.id), SpawnShipTemplate::player(None));
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
             } else {}
@@ -1515,16 +1517,41 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
     state.players.push(player);
 }
 
-pub fn spawn_ship(
-    state: &mut GameState,
-    player_id: Option<Uuid>,
+pub struct SpawnShipTemplate {
     at: Option<Vec2f64>,
     npc_traits: Option<Vec<AiTrait>>,
     abilities: Option<Vec<Ability>>,
+    name: Option<String>
+}
+
+impl SpawnShipTemplate {
+    pub fn pirate(at: Option<Vec2f64>) -> SpawnShipTemplate {
+        SpawnShipTemplate {
+            at,
+            npc_traits: Some(vec![AiTrait::ImmediatePlanetLand]),
+            abilities: Some(vec![Ability::BlowUpOnLand]),
+            name: Some("Pirate".to_string())
+        }
+    }
+
+    pub fn player(at: Option<Vec2f64>) -> SpawnShipTemplate {
+        SpawnShipTemplate {
+            at,
+            npc_traits: None,
+            abilities: None,
+            name: None
+        }
+    }
+}
+
+pub fn spawn_ship(
+    state: &mut GameState,
+    player_id: Option<Uuid>,
+    template: SpawnShipTemplate
 ) -> &Ship {
     let mut small_rng = gen_rng();
     let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
-    let mut at = at;
+    let mut at = template.at;
     if rand_planet.is_some() && at.is_none() {
         let p = rand_planet.unwrap();
         at = Some(Vec2f64 {
@@ -1533,8 +1560,9 @@ pub fn spawn_ship(
         })
     }
     let mut ship = Ship::new(&mut small_rng, &mut at);
-    abilities.map(|abilities| ship.abilities.extend(abilities));
-    ship.npc = if npc_traits.is_some() { Some(new_bot(npc_traits)) } else { None };
+    template.abilities.map(|abilities| ship.abilities.extend(abilities));
+    ship.npc = if template.npc_traits.is_some() { Some(new_bot(template.npc_traits)) } else { None };
+    ship.name = template.name;
     let state_id = state.id;
 
     match player_id {
