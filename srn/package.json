@@ -5,13 +5,15 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "wasm-pack": "node scripts/wasm-build.js",
+    "env": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1",
+    "wasm-pack": "yarn env node scripts/wasm-build.js",
     "start-client": "cd client && yarn start",
     "start-storybook": "cd client && yarn storybook",
     "touch-client": "cd client && touch package.json",
     "start-server": "cd server && (killall -9 srn-server || true) && cargo run",
-    "deploy": "node scripts/deploy.js",
-    "up-version": "node scripts/up-version.js"
+    "watch-server": "cd server && (killall -9 srn-server || true) && cargo-watch -x run",
+    "deploy": "yarn env node scripts/deploy.js",
+    "up-version": "yarn env node scripts/up-version.js"
   },
   "dependencies": {
     "@babel/core": "^7.7.7",

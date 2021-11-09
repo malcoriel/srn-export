@@ -63,9 +63,9 @@ pub fn apply_ship_action(
             undock_ship_via_clone(state, &ship_idx, &mut ship, client);
             ship.dock_target = None;
             ship.navigate_target = Some(target);
-            ship.trajectory = world::build_trajectory_to_point(ship_pos, &target);
-            ship.movement.gas = None;
-            ship.movement.turn = None;
+            ship.trajectory = world::build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
+            ship.movement_markers.gas = None;
+            ship.movement_markers.turn = None;
             Some(ship)
         }
         ShipActionRust::DockNavigate { target } => {
@@ -83,9 +83,9 @@ pub fn apply_ship_action(
                 ship.navigate_target = None;
                 ship.dock_target = None;
                 ship.dock_target = Some(target);
-                ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos);
-                ship.movement.gas = None;
-                ship.movement.turn = None;
+                ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos, &ship.movement_definition);
+                ship.movement_markers.gas = None;
+                ship.movement_markers.turn = None;
                 Some(ship)
             } else {
                 None
@@ -103,7 +103,7 @@ pub fn apply_ship_action(
         }
         ShipActionRust::Gas => {
             let mut ship = old_ship.clone();
-            ship.movement.gas = Some(MoveAxisParam {
+            ship.movement_markers.gas = Some(MoveAxisParam {
                 forward: true,
                 last_tick: state.millis,
             });
@@ -114,7 +114,7 @@ pub fn apply_ship_action(
         }
         ShipActionRust::Reverse => {
             let mut ship = old_ship.clone();
-            ship.movement.gas = Some(MoveAxisParam {
+            ship.movement_markers.gas = Some(MoveAxisParam {
                 forward: false,
                 last_tick: state.millis,
             });
@@ -125,7 +125,7 @@ pub fn apply_ship_action(
         }
         ShipActionRust::TurnRight => {
             let mut ship = old_ship.clone();
-            ship.movement.turn = Some(MoveAxisParam {
+            ship.movement_markers.turn = Some(MoveAxisParam {
                 forward: true,
                 last_tick: state.millis,
             });
@@ -136,7 +136,7 @@ pub fn apply_ship_action(
         }
         ShipActionRust::TurnLeft => {
             let mut ship = old_ship.clone();
-            ship.movement.turn = Some(MoveAxisParam {
+            ship.movement_markers.turn = Some(MoveAxisParam {
                 forward: false,
                 last_tick: state.millis,
             });
@@ -147,12 +147,12 @@ pub fn apply_ship_action(
         }
         ShipActionRust::StopGas => {
             let mut ship = old_ship.clone();
-            ship.movement.gas = None;
+            ship.movement_markers.gas = None;
             Some(ship)
         }
         ShipActionRust::StopTurn => {
             let mut ship = old_ship.clone();
-            ship.movement.turn = None;
+            ship.movement_markers.turn = None;
             Some(ship)
         }
     }

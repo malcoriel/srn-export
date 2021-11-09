@@ -54,8 +54,6 @@ use crate::tractoring::{
 };
 use crate::vec2::{AsVec2f64, deg_to_rad, Precision, Vec2f64};
 
-// speeds are per second
-const SHIP_SPEED: f64 = 20.0;
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
 const ORB_SPEED_MULT: f64 = 1.0;
 const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
@@ -315,6 +313,7 @@ pub enum GameEvent {
     },
 }
 
+
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Ship {
     pub id: Uuid,
@@ -334,8 +333,8 @@ pub struct Ship {
     pub abilities: Vec<Ability>,
     pub auto_focus: Option<ObjectSpecifier>,
     pub hostile_auto_focus: Option<ObjectSpecifier>,
-    pub movement: ShipMovementMarkers,
-    pub movement2: Movement,
+    pub movement_markers: ShipMovementMarkers,
+    pub movement_definition: MovementDefinition,
     pub health: Health,
     pub local_effects: Vec<LocalEffect>,
     pub long_actions: Vec<LongAction>,
@@ -365,13 +364,13 @@ impl Ship {
             }],
             auto_focus: None,
             hostile_auto_focus: None,
-            movement: Default::default(),
-            movement2: Movement::Unknown,
+            movement_markers: Default::default(),
+            movement_definition: MovementDefinition::Unknown,
             health: Health::new(100.0),
             local_effects: vec![],
             long_actions: vec![],
             npc: None,
-            name: None
+            name: None,
         }
     }
 }
@@ -1214,14 +1213,14 @@ const MANUAL_MOVEMENT_INACTIVITY_DROP_MS: i32 = 500;
 
 fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, current_tick: u32) {
     for ship in ships.iter_mut() {
-        let (new_move, new_pos) = if let Some(params) = &mut ship.movement.gas {
+        let (new_move, new_pos) = if let Some(params) = &mut ship.movement_markers.gas {
             if (params.last_tick as i32 - current_tick as i32).abs()
                 > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
             {
                 (None, None)
             } else {
                 let sign = if params.forward { 1.0 } else { -1.0 };
-                let distance = SHIP_SPEED * elapsed_micro as f64 / 1000.0 / 1000.0 * sign;
+                let distance = ship.movement_definition.get_current_move_speed() * elapsed_micro as f64 / 1000.0 / 1000.0 * sign;
                 let shift = Vec2f64 { x: 0.0, y: 1.0 }
                     .rotate(ship.rotation)
                     .scalar_mul(distance);
@@ -1235,11 +1234,11 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
         } else {
             (None, None)
         };
-        ship.movement.gas = new_move;
+        ship.movement_markers.gas = new_move;
         if let Some(new_pos) = new_pos {
             ship.set_from(&new_pos);
         }
-        let (new_move, new_rotation) = if let Some(params) = &ship.movement.turn {
+        let (new_move, new_rotation) = if let Some(params) = &ship.movement_markers.turn {
             if (params.last_tick as i32 - current_tick as i32).abs()
                 > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
             {
@@ -1253,7 +1252,7 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
         } else {
             (None, None)
         };
-        ship.movement.turn = new_move;
+        ship.movement_markers.turn = new_move;
         if let Some(new_rotation) = new_rotation {
             ship.rotation = new_rotation;
         }
@@ -1524,18 +1523,38 @@ pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Op
 Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify,
 )]
 #[serde(tag = "tag")]
-pub enum Movement {
+pub enum MovementDefinition {
     Unknown,
-    Monotonous {
+    ShipMonotonous {
         move_speed: f64,
-        turn_speed: f64
+        turn_speed: f64,
+        current_move_speed: f64,
+        current_turn_speed: f64,
     },
-    Accelerated {
+    ShipAccelerated {
         max_move_speed: f64,
+        current_move_speed: f64,
+        current_turn_speed: f64,
         acc_move: f64,
         max_turn_speed: f64,
-        acc_turn: f64
+        acc_turn: f64,
     },
+}
+
+impl MovementDefinition {
+    pub fn get_current_move_speed(&self) -> f64 {
+        match self {
+            MovementDefinition::Unknown => { 0.0 }
+            MovementDefinition::ShipMonotonous { move_speed, .. } => {
+                // This is kind of incorrect for a stopped ship, but to get it we need
+                // to unify movement markers with movement definition
+                *move_speed
+            }
+            MovementDefinition::ShipAccelerated { current_move_speed, .. } => {
+                *current_move_speed
+            }
+        }
+    }
 }
 
 pub struct ShipTemplate {
@@ -1544,7 +1563,7 @@ pub struct ShipTemplate {
     abilities: Option<Vec<Ability>>,
     name: Option<String>,
     health: Option<Health>,
-    movement: Option<Movement>
+    movement: Option<MovementDefinition>,
 }
 
 impl ShipTemplate {
@@ -1555,7 +1574,12 @@ impl ShipTemplate {
             abilities: Some(vec![Ability::BlowUpOnLand]),
             name: Some("Pirate".to_string()),
             health: Some(Health::new(40.0)),
-            movement: Some(Movement::Monotonous { move_speed: 10.0 / 1000.0 / 1000.0, turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0 })
+            movement: Some(MovementDefinition::ShipMonotonous {
+                move_speed: 10.0 / 1000.0 / 1000.0,
+                turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0,
+                current_move_speed: 0.0,
+                current_turn_speed: 0.0,
+            }),
         }
     }
 
@@ -1566,7 +1590,12 @@ impl ShipTemplate {
             abilities: None,
             name: None,
             health: Some(Health::new_regen(100.0, SHIP_REGEN_PER_SEC / 1000.0 / 1000.0)),
-            movement: Some(Movement::Monotonous { move_speed: SHIP_SPEED / 1000.0 / 1000.0, turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0 })
+            movement: Some(MovementDefinition::ShipMonotonous {
+                move_speed: 20.0 / 1000.0 / 1000.0,
+                turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0,
+                current_move_speed: 0.0,
+                current_turn_speed: 0.0,
+            }),
         }
     }
 }
@@ -1574,7 +1603,7 @@ impl ShipTemplate {
 pub fn spawn_ship(
     state: &mut GameState,
     player_id: Option<Uuid>,
-    template: ShipTemplate
+    template: ShipTemplate,
 ) -> &Ship {
     let mut small_rng = gen_rng();
     let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
@@ -1590,7 +1619,7 @@ pub fn spawn_ship(
     template.abilities.map(|abilities| ship.abilities.extend(abilities));
     ship.npc = if template.npc_traits.is_some() { Some(new_bot(template.npc_traits)) } else { None };
     ship.name = template.name;
-    template.movement.map(|m| ship.movement2 = m);
+    template.movement.map(|m| ship.movement_definition = m);
     template.health.map(|health| ship.health = health);
     let state_id = state.id;
 
@@ -1674,7 +1703,7 @@ pub fn update_ships_navigation(
             continue;
         }
         if !ship.docked_at.is_some() {
-            let max_shift = SHIP_SPEED * elapsed_micro as f64 / 1000.0 / 1000.0;
+            let max_shift = ship.movement_definition.get_current_move_speed() * elapsed_micro as f64 / 1000.0 / 1000.0;
 
             if let Some(target) = ship.navigate_target {
                 let ship_pos = Vec2f64 {
@@ -1688,7 +1717,7 @@ pub fn update_ships_navigation(
                     ship.rotation = -ship.rotation;
                 }
                 if dist > 0.0 {
-                    ship.trajectory = build_trajectory_to_point(ship_pos, &target);
+                    ship.trajectory = build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
                     if dist > max_shift {
                         let new_pos = move_ship(&target, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
@@ -1706,7 +1735,7 @@ pub fn update_ships_navigation(
                         y: ship.y,
                     };
                     let planet_anchor = bodies_by_id.get(&planet.get_anchor_id()).unwrap();
-                    ship.trajectory = build_trajectory_to_body(ship_pos, &planet, planet_anchor);
+                    ship.trajectory = build_trajectory_to_body(ship_pos, &planet, planet_anchor, &ship.movement_definition);
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
                         ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
@@ -1796,6 +1825,7 @@ fn build_trajectory_to_body(
     from: Vec2f64,
     to: &Box<dyn IBody>,
     to_anchor: &Box<dyn IBody>,
+    for_movement: &MovementDefinition,
 ) -> Vec<Vec2f64> {
     // let start = Utc::now();
     let mut anchors =
@@ -1805,7 +1835,7 @@ fn build_trajectory_to_body(
     let mut current_target = Planet::from(to.clone());
     let mut current_from = from.clone();
     let mut result = vec![];
-    let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * SHIP_SPEED;
+    let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * for_movement.get_current_move_speed();
     loop {
         let current_target_pos = Vec2f64 {
             x: current_target.x,
@@ -1847,12 +1877,12 @@ fn build_trajectory_to_body(
     result
 }
 
-pub fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64) -> Vec<Vec2f64> {
+pub fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64, for_movement: &MovementDefinition) -> Vec<Vec2f64> {
     let mut counter = 0;
     let current_target = to.clone();
     let mut current_from = from.clone();
     let mut result = vec![];
-    let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * SHIP_SPEED;
+    let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * for_movement.get_current_move_speed();
     loop {
         let target_pos = Vec2f64 {
             x: current_target.x,
