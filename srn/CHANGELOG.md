@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.7.2 (2021-11-09)
+### New
+* Different configuration of ships for pirate defence - more ships, faster spawn, but they are slower and more brittle.
+
 ## Version 0.7.1 (2021-11-08)
 ### Fixes
 * Auxiliary release due to infrastructure failure
