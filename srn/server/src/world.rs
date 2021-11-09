@@ -1220,7 +1220,7 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
                 (None, None)
             } else {
                 let sign = if params.forward { 1.0 } else { -1.0 };
-                let distance = ship.movement_definition.get_current_move_speed() * elapsed_micro as f64 / 1000.0 / 1000.0 * sign;
+                let distance = ship.movement_definition.get_current_move_speed_per_tick() * elapsed_micro as f64 * sign;
                 let shift = Vec2f64 { x: 0.0, y: 1.0 }
                     .rotate(ship.rotation)
                     .scalar_mul(distance);
@@ -1542,7 +1542,7 @@ pub enum MovementDefinition {
 }
 
 impl MovementDefinition {
-    pub fn get_current_move_speed(&self) -> f64 {
+    pub fn get_current_move_speed_per_tick(&self) -> f64 {
         match self {
             MovementDefinition::Unknown => { 0.0 }
             MovementDefinition::ShipMonotonous { move_speed, .. } => {
@@ -1703,7 +1703,7 @@ pub fn update_ships_navigation(
             continue;
         }
         if !ship.docked_at.is_some() {
-            let max_shift = ship.movement_definition.get_current_move_speed() * elapsed_micro as f64 / 1000.0 / 1000.0;
+            let max_shift = ship.movement_definition.get_current_move_speed_per_tick() * elapsed_micro as f64;
 
             if let Some(target) = ship.navigate_target {
                 let ship_pos = Vec2f64 {
@@ -1835,7 +1835,7 @@ fn build_trajectory_to_body(
     let mut current_target = Planet::from(to.clone());
     let mut current_from = from.clone();
     let mut result = vec![];
-    let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * for_movement.get_current_move_speed();
+    let max_shift = TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_move_speed_per_tick();
     loop {
         let current_target_pos = Vec2f64 {
             x: current_target.x,
@@ -1882,7 +1882,7 @@ pub fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64, for_movement: &Mov
     let current_target = to.clone();
     let mut current_from = from.clone();
     let mut result = vec![];
-    let max_shift = TRAJECTORY_STEP_MICRO as f64 / 1000.0 / 1000.0 * for_movement.get_current_move_speed();
+    let max_shift = TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_move_speed_per_tick();
     loop {
         let target_pos = Vec2f64 {
             x: current_target.x,
