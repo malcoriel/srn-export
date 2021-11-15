@@ -8,11 +8,7 @@ import {
   Vector3UniformValue,
 } from './uniformTypes';
 import { size } from '../../coord';
-import {
-  fractalNoise,
-  simplexNoise2,
-  simplexNoise3,
-} from '../../TestUI/shaderFunctions';
+import { fractalNoise, simplexNoise2, simplexNoise3 } from './shaderFunctions';
 
 export const defaultUniformValues = {
   detailOctaves: 5,
