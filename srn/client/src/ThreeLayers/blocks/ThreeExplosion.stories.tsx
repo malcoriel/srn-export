@@ -18,15 +18,9 @@ const Template: Story = (args) => {
     setRevision((old) => old + 1);
   }, []);
   return (
-    <StoryCanvas key={revision}>
-      <ThreeSpaceBackground size={256} shaderShift={0} />
-      <ThreeExplosion
-        completionNormalized={0.75}
-        girth={5}
-        length={50}
-        fillColor="red"
-        backgroundColor="green"
-      />
+    <StoryCanvas key={revision} scale={2.0}>
+      <ThreeSpaceBackground size={512} shaderShift={0} />
+      <ThreeExplosion foo="bar" />
     </StoryCanvas>
   );
 };

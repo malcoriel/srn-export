@@ -24,7 +24,7 @@ export const ThreeExplosion: React.FC<ExplosionProps> = () => {
 
   return (
     <mesh ref={mesh}>
-      <planeBufferGeometry args={[200, 200]} />
+      <planeBufferGeometry args={[500, 500]} />
       {/*<sphereBufferGeometry args={[100, 256, 256]} />*/}
       <meshBasicMaterial color="black" />
       <rawShaderMaterial

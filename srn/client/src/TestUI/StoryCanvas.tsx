@@ -15,11 +15,11 @@ export const StoryCanvasInternals: React.FC = ({ children }) => {
   );
 };
 
-export const StoryCanvas: React.FC<{ styles?: any; zoom?: number }> = ({
-  children,
-  styles,
-  zoom = 1.0,
-}) => {
+export const StoryCanvas: React.FC<{
+  styles?: any;
+  zoom?: number;
+  scale?: number;
+}> = ({ children, styles, zoom = 1.0, scale = 1.0 }) => {
   return (
     <Canvas
       orthographic
@@ -31,8 +31,8 @@ export const StoryCanvas: React.FC<{ styles?: any; zoom?: number }> = ({
       }}
       style={{
         display: 'inline-block',
-        width: 256,
-        height: 256,
+        width: 256 * scale,
+        height: 256 * scale,
         ...styles,
       }}
     >

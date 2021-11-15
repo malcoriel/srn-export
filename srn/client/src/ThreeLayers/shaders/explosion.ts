@@ -42,8 +42,28 @@ uniform float compressX;
 ${simplexNoise3}
 ${fractalNoise}
 
+float plot(vec2 st, float pct){
+  return  step( pct-0.005, st.y) -
+          step( pct+0.005, st.y);
+}
+
+
+float wave(float x, float t, float amplShift) {
+  return log(fractal_noise(vec3(x * amplShift - t * 2.0, 0.0, 0.0), 1, 1.0, 1.0) + 1.0) / 2.0 + 0.5;
+}
+
+float final_wave(float noise1, float noise2) {
+  return noise1 * noise2 * 2.0 - 0.27;
+}
+
+bool limiter(vec2 croc) {
+  // return abs(croc.x - croc.y) < 0.1;
+  return true;
+}
+
 void main( void ) {
     vec2 roc = relativeObjectCoord;
+    float t = time;
     roc.x *= compressX;
     vec2 croc = roc.xy - 0.5;
 
@@ -53,12 +73,27 @@ void main( void ) {
     // } else {
     //   FragColor.x = 0.5 n;
     // }
-    if (croc.y < 0.1 && croc.y > -0.1) {
-      float noise1 = fractal_noise(vec3(croc.x * 10.0 - time, 0.0, 0.0), 1, 1.0, 1.0);
-      float noise2 = fractal_noise(vec3(croc.x * 3.41 - time, 0.0, 0.0), 1, 1.0, 1.0);
-      FragColor.x = noise1 * noise2;
+    // t = 10.0;
 
+    float noise1x = wave(croc.x, t, 10.0);
+    float noise2x = wave(croc.x, t, 3.41);
+    float noise1y = wave(croc.y, t, 10.0);
+    float noise2y = wave(croc.y, t, 3.41);
+    float finalX = final_wave(noise1x, noise2x);
+    float finalY = final_wave(noise1y, noise2y);
+    float value = (finalX + finalY) / 2.0;
+    // float value = final_wave(noise1x, noise2x);
+
+    if (value < 0.5) {
+      value = 0.0;
     }
+
+    if (limiter(croc)) {
+      FragColor.x = value;
+    }
+
+    float y = value;
+    // FragColor.y = plot(roc,y);
     FragColor.a = 1.0;
 }
 
