@@ -47,13 +47,17 @@ float plot(vec2 st, float pct){
           step( pct+0.005, st.y);
 }
 
-
-float wave(float x, float t, float amplShift) {
+float wave(float x, float t, float amplShift, float cutter) {
+  float partN = floor(x / cutter);
+  float rem = mod(partN, 2.0);
+  if (rem == 1.0) {
+    return 0.0;
+  }
   return log(fractal_noise(vec3(x * amplShift - t * 2.0, 0.0, 0.0), 1, 1.0, 1.0) + 1.0) / 2.0 + 0.5;
 }
 
 float final_wave(float noise1, float noise2) {
-  return noise1 * noise2 * 2.0 - 0.27;
+  return sin(noise1 * noise2 * 2.0 - 0.27);
 }
 
 bool limiter(vec2 croc) {
@@ -75,14 +79,14 @@ void main( void ) {
     // }
     // t = 10.0;
 
-    float noise1x = wave(croc.x, t, 10.0);
-    float noise2x = wave(croc.x, t, 3.41);
-    float noise1y = wave(croc.y, t, 10.0);
-    float noise2y = wave(croc.y, t, 3.41);
+    float noise1x = wave(croc.x, t, 10.0, 0.05);
+    float noise2x = wave(croc.x, t, 3.41, 0.05);
+    float noise1y = wave(croc.y, t, 10.0, 0.05);
+    float noise2y = wave(croc.y, t, 3.41, 0.05);
     float finalX = final_wave(noise1x, noise2x);
     float finalY = final_wave(noise1y, noise2y);
     float value = (finalX + finalY) / 2.0;
-    // float value = final_wave(noise1x, noise2x);
+    // float value = finalX;
 
     if (value < 0.5) {
       value = 0.0;
