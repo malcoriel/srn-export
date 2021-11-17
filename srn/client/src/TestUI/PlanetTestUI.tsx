@@ -12,10 +12,8 @@ import Vector from '../utils/Vector';
 import Prando from 'prando';
 import * as uuid from 'uuid';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
-import {
-  gasGiantShaderRandomProps,
-  variateNormal,
-} from '../ThreeLayers/shaders/gasGiant';
+import { gasGiantShaderRandomProps } from '../ThreeLayers/shaders/gasGiant';
+import { variateNormal } from '../ThreeLayers/shaders/randUtils';
 
 const BackgroundPlane = () => (
   <mesh position={[0, 0, 0]}>

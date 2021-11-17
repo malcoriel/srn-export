@@ -1,6 +1,9 @@
 import { Vector3 } from 'three';
-import { FloatUniformValue, Vector3UniformValue } from './uniformTypes';
-import { fractalNoise, simplexNoise3 } from './shaderFunctions';
+import {
+  FloatUniformValue,
+  TextureUniformValue,
+  Vector3UniformValue,
+} from './uniformTypes';
 import { GLN } from './gln';
 
 export const vertexShader = `#version 300 es
@@ -37,11 +40,9 @@ uniform vec3 color;
 uniform float time;
 uniform float speed;
 uniform float compressX;
+uniform sampler2D iChannel0;
 
 #define PI 3.141592653589793238462643383279
-
-${GLN.common}
-${GLN.simplex}
 
 float plot(vec2 st, float pct){
   return  step( pct-0.005, st.y) -
@@ -74,34 +75,26 @@ void main( void ) {
     vec2 croc = roc.xy - 0.5;
     float uSeed = 1.0;
 
-    // smoothnes = persistance
-    // detail = lacunatiry
-    //
-    // seed, persistance, lacunatiry, scale, distribution
-    gln_tFBMOpts opts = gln_tFBMOpts(uSeed, 0.5, 2.0, 500.0, 0.1, 5, false, false);
-
-
-    FragColor.x = gln_sfbm(croc.xy + t, opts);
-    FragColor.y = 0.2;
+    float red = texture(iChannel0, vec2(100.0, 100.0)).x;
+    if (red > 0.1) {
+      FragColor.y = 0.5;
+    }
+    FragColor.y = 0.0;
     FragColor.a = 1.0;
 }
 
 `;
 
 export const uniforms: {
-  speed: FloatUniformValue;
-  brightness: FloatUniformValue;
-  time: FloatUniformValue;
-  distfading: FloatUniformValue;
-  twinkleSpeed: FloatUniformValue;
-  compressX: FloatUniformValue;
+  iChannel0: TextureUniformValue;
   color: Vector3UniformValue;
+  time: FloatUniformValue;
 } = {
-  brightness: { value: 0.001 },
-  distfading: { value: 0.5 },
-  speed: { value: 0.000005 },
-  twinkleSpeed: { value: 128 },
-  time: { value: 100 },
+  iChannel0: {
+    value: null,
+  },
+  time: {
+    value: 0,
+  },
   color: { value: new Vector3(0.8, 0.9, 0.8) },
-  compressX: { value: 1.0 },
 };
