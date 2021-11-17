@@ -1,6 +1,7 @@
 import { Vector3 } from 'three';
 import { FloatUniformValue, Vector3UniformValue } from './uniformTypes';
 import { fractalNoise, simplexNoise3 } from './shaderFunctions';
+import { GLN } from './gln';
 
 export const vertexShader = `#version 300 es
 precision highp float;
@@ -39,8 +40,8 @@ uniform float compressX;
 
 #define PI 3.141592653589793238462643383279
 
-${simplexNoise3}
-${fractalNoise}
+${GLN.common}
+${GLN.simplex}
 
 float plot(vec2 st, float pct){
   return  step( pct-0.005, st.y) -
@@ -53,7 +54,8 @@ float wave(float x, float t, float amplShift, float cutter) {
   if (rem == 1.0) {
     return 0.0;
   }
-  return log(fractal_noise(vec3(x * amplShift - t * 2.0, 0.0, 0.0), 1, 1.0, 1.0) + 1.0) / 2.0 + 0.5;
+  return 0.0;
+  //return log(fractal_noise(vec3(x * amplShift - t * 2.0, 0.0, 0.0), 1, 1.0, 1.0) + 1.0) / 2.0 + 0.5;
 }
 
 float final_wave(float noise1, float noise2) {
@@ -70,34 +72,17 @@ void main( void ) {
     float t = time;
     roc.x *= compressX;
     vec2 croc = roc.xy - 0.5;
+    float uSeed = 1.0;
 
-    float len = length(croc);
-    // if (len > 0.5) {
-    //   FragColor.x = 0.0;
-    // } else {
-    //   FragColor.x = 0.5 n;
-    // }
-    // t = 10.0;
+    // smoothnes = persistance
+    // detail = lacunatiry
+    //
+    // seed, persistance, lacunatiry, scale, distribution
+    gln_tFBMOpts opts = gln_tFBMOpts(uSeed, 0.5, 2.0, 500.0, 0.1, 5, false, false);
 
-    float noise1x = wave(croc.x, t, 10.0, 0.05);
-    float noise2x = wave(croc.x, t, 3.41, 0.05);
-    float noise1y = wave(croc.y, t, 10.0, 0.05);
-    float noise2y = wave(croc.y, t, 3.41, 0.05);
-    float finalX = final_wave(noise1x, noise2x);
-    float finalY = final_wave(noise1y, noise2y);
-    float value = (finalX + finalY) / 2.0;
-    // float value = finalX;
 
-    if (value < 0.5) {
-      value = 0.0;
-    }
-
-    if (limiter(croc)) {
-      FragColor.x = value;
-    }
-
-    float y = value;
-    // FragColor.y = plot(roc,y);
+    FragColor.x = gln_sfbm(croc.xy + t, opts);
+    FragColor.y = 0.2;
     FragColor.a = 1.0;
 }
 
