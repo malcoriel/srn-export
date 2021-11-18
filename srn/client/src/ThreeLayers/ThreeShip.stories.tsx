@@ -19,6 +19,7 @@ const MainTemplate: Story = (args) => {
   return (
     <StoryCanvas key={revision + JSON.stringify(args)} withBackground>
       <ThreeShip
+        blow={args.blow}
         color="red"
         gid="1"
         hpNormalized={1.0}
@@ -34,5 +35,5 @@ const MainTemplate: Story = (args) => {
 
 export const Main = MainTemplate.bind({});
 Main.args = {
-  foo: 'bar',
+  blow: false,
 };

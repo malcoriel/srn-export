@@ -1,6 +1,6 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
-import { Mesh, ShaderMaterial } from 'three';
+import { Group, Mesh, ShaderMaterial } from 'three';
 import * as THREE from 'three';
 import Vector, { VectorF } from '../utils/Vector';
 import * as jellyfish from './shaders/jellyfish';
@@ -13,6 +13,7 @@ import {
 import { posToThreePos, Vector3Arr, vecToThreePos } from './util';
 import { ThreeProgressbar } from './blocks/ThreeProgressbar';
 import { common, darkGreen, mint } from '../utils/palette';
+import { ThreeExplosion } from './blocks/ThreeExplosion';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -27,9 +28,11 @@ type ThreeShipProps = {
   opacity: number;
   hpNormalized: number;
   interactor?: ThreeInteractorProps;
+  blow?: boolean;
 };
 
 const BEAM_WIDTH = 0.3;
+const BLOW_FRAMES = 60;
 
 export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
   ({
@@ -43,8 +46,11 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     gid,
     opacity,
     hpNormalized,
+    blow,
   }) => {
     const tractorRef = useRef<Mesh>();
+    const mainRef = useRef<Group>();
+    const [showExplosion, setShowExplosion] = useState(false);
     // @ts-ignore
     const shipModel = useLoader<Geometry>(
       STLLoader,
@@ -74,6 +80,20 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           material.uniforms.time.value += 0.004;
         }
       }
+      if (mainRef.current) {
+        mainRef.current.userData = mainRef.current.userData || {};
+        let displayExplosionCalculated = false;
+        if (blow) {
+          mainRef.current.userData.blowFrames =
+            mainRef.current.userData.blowFrames || 0;
+          mainRef.current.userData.blowFrames += 1;
+          displayExplosionCalculated =
+            mainRef.current.userData.blowFrames <= BLOW_FRAMES;
+        }
+        if (showExplosion !== displayExplosionCalculated) {
+          setShowExplosion(displayExplosionCalculated);
+        }
+      }
     });
 
     const memoScale = useMemo(
@@ -81,7 +101,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
       [radius]
     );
     return (
-      <group position={posToThreePos(position.x, position.y, 50)}>
+      <group position={posToThreePos(position.x, position.y, 50)} ref={mainRef}>
         {interactor && (
           <ThreeInteractor
             perfId={`ship-${gid}`}
@@ -125,6 +145,9 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           backgroundColor={common}
           hideWhenFull
         />
+        {showExplosion && (
+          <ThreeExplosion seed={gid} position={[0, 0, radius + 10]} />
+        )}
       </group>
     );
   },
