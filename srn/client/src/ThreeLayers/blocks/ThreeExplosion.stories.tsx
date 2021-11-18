@@ -18,8 +18,7 @@ const NodeTemplate: Story = (args) => {
     setRevision((old) => old + 1);
   }, []);
   return (
-    <StoryCanvas key={revision + JSON.stringify(args)} scale={2.0}>
-      <ThreeSpaceBackground size={512} shaderShift={0} />
+    <StoryCanvas key={revision + JSON.stringify(args)} withBackground>
       <ThreeExplosionNode maxScale={10.0} initialSize={5.0} scaleSpeed={1.05} />
     </StoryCanvas>
   );

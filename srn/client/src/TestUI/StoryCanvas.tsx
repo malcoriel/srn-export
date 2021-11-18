@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Vector3 } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
+import { ThreeSpaceBackground } from '../ThreeLayers/ThreeSpaceBackground';
 
 export const StoryCanvasInternals: React.FC = ({ children }) => {
   return (
@@ -19,7 +20,8 @@ export const StoryCanvas: React.FC<{
   styles?: any;
   zoom?: number;
   scale?: number;
-}> = ({ children, styles, zoom = 1.0, scale = 1.0 }) => {
+  withBackground?: boolean;
+}> = ({ children, styles, zoom = 1.0, scale = 1.0, withBackground }) => {
   return (
     <Canvas
       orthographic
@@ -36,7 +38,12 @@ export const StoryCanvas: React.FC<{
         ...styles,
       }}
     >
-      <StoryCanvasInternals>{children}</StoryCanvasInternals>
+      <StoryCanvasInternals>
+        {withBackground && (
+          <ThreeSpaceBackground size={256 * scale} shaderShift={0} />
+        )}
+        {children}
+      </StoryCanvasInternals>
     </Canvas>
   );
 };
