@@ -7,6 +7,7 @@ import { Vector3Arr } from '../util';
 export type ThreeExplosionProps = {
   seed: string;
   position?: Vector3Arr;
+  radius?: number;
 };
 type NodeParams = {
   id: string;
@@ -20,6 +21,7 @@ type NodeParams = {
 export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
   seed,
   position,
+  radius = 40,
 }) => {
   function genNode(
     maxDist: number,
@@ -57,16 +59,32 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     );
     const nodes: NodeParams[] = [];
     for (let i = 0; i < outerWaveCount; i++) {
-      const node = genNode(40, 3.0, 10, prando, outerWaveCount, i, 1);
+      const node = genNode(
+        radius,
+        radius / 10,
+        10,
+        prando,
+        outerWaveCount,
+        i,
+        1
+      );
       nodes.push(node);
     }
     for (let i = 0; i < innerWaveCount; i++) {
-      const node = genNode(20, 2.0, 0, prando, outerWaveCount, i, 2);
+      const node = genNode(
+        radius / 2,
+        radius / 20,
+        0,
+        prando,
+        outerWaveCount,
+        i,
+        2
+      );
       nodes.push(node);
     }
 
     return nodes;
-  }, [seed]);
+  }, [seed, radius]);
   return (
     <group position={position}>
       {nodes.map((node) => {

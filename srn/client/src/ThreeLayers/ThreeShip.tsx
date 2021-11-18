@@ -146,7 +146,11 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           hideWhenFull
         />
         {showExplosion && (
-          <ThreeExplosion seed={gid} position={[0, 0, radius + 10]} />
+          <ThreeExplosion
+            seed={gid}
+            position={[0, 0, radius + 10]}
+            radius={radius * 1.5}
+          />
         )}
       </group>
     );
