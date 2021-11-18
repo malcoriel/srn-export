@@ -8,7 +8,7 @@
     "env": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1",
     "wasm-pack": "yarn env node scripts/wasm-build.js",
     "start-client": "cd client && yarn start",
-    "start-storybook": "cd client && yarn storybook",
+    "storybook": "cd client && yarn storybook",
     "touch-client": "cd client && touch package.json",
     "start-server": "cd server && (killall -9 srn-server || true) && cargo run",
     "watch-server": "cd server && (killall -9 srn-server || true) && cargo-watch -x run",
