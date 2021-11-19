@@ -2,6 +2,8 @@ import React, { useRef } from 'react';
 import { Color, Mesh, MeshBasicMaterial } from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Vector3Arr } from '../util';
+import { Text } from '@react-three/drei';
+import { teal } from '../../utils/palette';
 
 type ExplosionProps = {
   maxScale: number;
@@ -9,6 +11,7 @@ type ExplosionProps = {
   scaleSpeed: number;
   delay?: number;
   position?: Vector3Arr;
+  progressNormalized: number;
 };
 
 const colors = [
@@ -37,6 +40,7 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
   scaleSpeed,
   position,
   delay,
+  progressNormalized = 1.0,
 }) => {
   const blastMesh = useRef<Mesh>();
   const smokeMesh = useRef<Mesh>();
@@ -54,15 +58,12 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
         shouldRender = blastMesh.current.userData.framesPassed > delay;
       }
 
-      if (blastMesh.current.scale.x > maxScale) {
+      if (progressNormalized > 1 || progressNormalized <= 0) {
         shouldRender = false;
       }
 
       if (shouldRender) {
         blastMesh.current.visible = true;
-        blastMesh.current.scale.x *= scaleSpeed;
-        blastMesh.current.scale.y *= scaleSpeed;
-        blastMesh.current.scale.z *= scaleSpeed;
         const blastColorIndex =
           Math.floor((blastMesh.current.scale.x / maxScale) * colors.length) -
           1;
@@ -77,9 +78,6 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
 
         if (shouldRenderSmoke) {
           smokeMesh.current.visible = true;
-          smokeMesh.current.scale.x *= scaleSpeed * 1.05;
-          smokeMesh.current.scale.y *= scaleSpeed * 1.05;
-          smokeMesh.current.scale.z *= scaleSpeed * 1.05;
           const smokeColorIndex = Math.min(
             Math.floor((smokeMesh.current.scale.x / maxScale) * colors.length) -
               1 +
@@ -98,19 +96,40 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
     }
   });
 
+  const SMOKE_DECAY_START_PROGRESS = 0.5;
   return (
     <group position={position}>
       {/* blast */}
-      <mesh ref={blastMesh}>
+      <mesh ref={blastMesh} scale={scaleSpeed ** (60 * progressNormalized)}>
         <circleBufferGeometry args={[initialSize, 256]} />
         {/*<sphereBufferGeometry args={[100, 256, 256]} />*/}
         <meshBasicMaterial color={colors[0]} />
       </mesh>
       {/* smoke */}
-      <mesh ref={smokeMesh} visible={false}>
+      <mesh
+        ref={smokeMesh}
+        visible={false}
+        scale={
+          (scaleSpeed * 1.05) **
+          (60 * (progressNormalized - SMOKE_DECAY_START_PROGRESS))
+        }
+      >
         <circleBufferGeometry args={[initialSize, 256]} />
         <meshBasicMaterial color={colors[smokeStartColorIndex]} />
       </mesh>
+      <Text
+        position={[50, 50, 0]}
+        color={teal}
+        fontSize={10}
+        maxWidth={20}
+        lineHeight={1}
+        letterSpacing={0.02}
+        textAlign="center"
+        anchorX="center"
+        anchorY="bottom" // default
+      >
+        {progressNormalized.toFixed(2)}
+      </Text>
     </group>
   );
 };

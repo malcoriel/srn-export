@@ -9,7 +9,16 @@ import { ThreeExplosion } from './ThreeExplosion';
 export default {
   title: 'Three/Explosion',
   component: ThreeExplosionNode,
-  argTypes: {},
+  argTypes: {
+    progressNormalized: {
+      control: {
+        type: 'range',
+        min: 0.0,
+        max: 1.0,
+        step: 0.01,
+      },
+    },
+  },
 } as Meta;
 
 const NodeTemplate: Story = (args) => {
@@ -18,15 +27,22 @@ const NodeTemplate: Story = (args) => {
     setRevision((old) => old + 1);
   }, []);
   return (
-    <StoryCanvas key={revision + JSON.stringify(args)} withBackground>
-      <ThreeExplosionNode maxScale={10.0} initialSize={5.0} scaleSpeed={1.05} />
+    <StoryCanvas withBackground>
+      <ThreeExplosionNode
+        key={revision + JSON.stringify(args)}
+        progressNormalized={args.progressNormalized}
+        maxScale={10.0}
+        initialSize={5.0}
+        scaleSpeed={1.05}
+      />
     </StoryCanvas>
   );
 };
 
 export const Node = NodeTemplate.bind({});
 Node.args = {
-  foo: 'bar',
+  autoplay: true,
+  progressNormalized: 0.0,
 };
 
 const FullTemplate: Story = (args) => {
