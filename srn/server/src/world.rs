@@ -380,6 +380,12 @@ impl Ship {
         self.x = pos.x;
         self.y = pos.y;
     }
+    pub fn get_position(&self) -> Vec2f64 {
+        Vec2f64 {
+            x: self.x,
+            y: self.y
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, TypescriptDefinition, TypeScriptify)]
@@ -515,12 +521,20 @@ impl Container {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct Wreck {
+    pub position: Vec2f64,
+    pub decay_normalized: f64,
+    pub decay_ticks: i32
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Location {
     pub seed: String,
     pub id: Uuid,
     pub star: Option<Star>,
     pub planets: Vec<Planet>,
     pub asteroids: Vec<Asteroid>,
+    pub wrecks: Vec<Wreck>,
     pub minerals: Vec<NatSpawnMineral>,
     pub containers: Vec<Container>,
     pub position: Vec2f64,
@@ -537,6 +551,7 @@ impl Location {
             star: None,
             planets: vec![],
             asteroids: vec![],
+            wrecks: vec![],
             minerals: vec![],
             containers: vec![],
             position: Default::default(),
@@ -554,6 +569,7 @@ impl Location {
             star: None,
             planets: vec![],
             asteroids: vec![],
+            wrecks: vec![],
             minerals: vec![],
             containers: vec![],
             position: Vec2f64 { x: 0.0, y: 0.0 },
@@ -1381,6 +1397,8 @@ const STAR_FAR_RADIUS: f64 = 1.1;
 const MAX_LOCAL_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
+
+const WRECK_DECAY_TICKS : i32 = 3 * 1000 * 1000;
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
 
 pub fn update_ship_hp_effects(
@@ -1466,7 +1484,7 @@ pub fn update_ship_hp_effects(
         }
     }
 
-    let mut player_ids_to_die = vec![];
+    let mut ships_to_die = vec![];
     state.locations[location_idx].ships = state.locations[location_idx]
         .ships
         .iter()
@@ -1474,34 +1492,50 @@ pub fn update_ship_hp_effects(
             if ship.health.current > 0.0 {
                 Some(ship.clone())
             } else {
-                player_ids_to_die.push(
-                    players_by_ship_id
-                        .get(&ship.id)
-                        .map(|p| (p.id, ship.clone())),
+                ships_to_die.push(
+                    (
+                        ship.clone(),
+                        players_by_ship_id
+                            .get(&ship.id)
+                            .map(|p| p.id),
+                    )
                 );
                 None
             }
         })
         .collect::<Vec<_>>();
-    for (pid, ship_clone) in player_ids_to_die.into_iter().filter_map(|o| o) {
-        let player = indexing::find_my_player_mut(state, pid);
-        apply_ship_death(ship_clone, player, state_id);
-    }
-}
-
-fn apply_ship_death(ship: Ship, player: Option<&mut Player>, state_id: Uuid) {
-    match player {
-        None => {
-            fire_event(GameEvent::ShipDied {
-                state_id,
-                ship: ship.clone(),
-                player: None,
-            });
-        }
-        Some(player) => {
+    for (ship_clone, pid) in ships_to_die.into_iter() {
+        state.locations[location_idx].wrecks.push(Wreck {
+            position: ship_clone.get_position(),
+            decay_normalized: 0.0,
+            decay_ticks: WRECK_DECAY_TICKS
+        });
+        if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)){
             player.ship_id = None;
             player.money -= 1000;
             player.money = player.money.max(0);
+            fire_event(GameEvent::ShipDied {
+                state_id,
+                ship: ship_clone,
+                player: Some(player.clone()),
+            });
+        }
+        else {
+            fire_event(GameEvent::ShipDied {
+                state_id,
+                ship: ship_clone,
+                player: None,
+            });
+        }
+    }
+}
+
+fn apply_players_ship_death(ship: Ship, player: Option<&mut Player>, state_id: Uuid) {
+    match player {
+        None => {
+        }
+        Some(player) => {
+
             fire_event(GameEvent::ShipDied {
                 state_id,
                 ship: ship.clone(),
