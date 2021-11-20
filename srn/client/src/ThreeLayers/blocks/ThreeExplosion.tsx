@@ -1,13 +1,17 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { ThreeExplosionNode } from './ThreeExplosionNode';
 import Prando from 'prando';
 import { variateNormal } from '../shaders/randUtils';
 import { Vector3Arr } from '../util';
 import _ from 'lodash';
+import { useFrame } from '@react-three/fiber';
+import { Group } from 'three';
 
 export type ThreeExplosionProps = {
   seed: string;
+  autoPlay?: boolean;
   progressNormalized: number;
+  explosionTimeFrames: number;
   position?: Vector3Arr;
   radius?: number;
 };
@@ -25,9 +29,11 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
   seed,
   position,
   radius = 40,
+  explosionTimeFrames = 240,
   progressNormalized: globalProgressNormalized,
+  autoPlay,
 }) => {
-  function genNode(
+  const genNode = (
     maxDist: number,
     maxSize: number,
     minDelay: number,
@@ -35,7 +41,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     count: number,
     i: number,
     wave: number
-  ): NodeParams {
+  ): NodeParams => {
     const r = variateNormal(0, maxDist, 5, prando);
     const theta =
       ((2 * Math.PI) / count) * (i + variateNormal(-1.0, 1.0, 0.5, prando));
@@ -67,7 +73,9 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
       initialProgressNormalized: progressShift,
       explosionTimeFrames,
     };
-  }
+  };
+
+  const group = useRef<Group>();
 
   const nodes = useMemo(() => {
     const prando = new Prando(seed);
@@ -106,15 +114,39 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     return nodes;
   }, [seed, radius]);
 
-  const [progresses, setProgresses] = useState(
-    nodes.map((n) => n.initialProgressNormalized + globalProgressNormalized)
+  const initialProgresses = useMemo(
+    () =>
+      nodes.map((n) => n.initialProgressNormalized + globalProgressNormalized),
+    [globalProgressNormalized, nodes]
   );
+  const [progresses, setProgresses] = useState(initialProgresses);
+
+  useFrame(() => {
+    if (autoPlay) {
+      if (group.current) {
+        group.current.userData.framesPassed =
+          group.current.userData.framesPassed || 0;
+        if (group.current.userData.framesPassed > explosionTimeFrames) {
+          setProgresses(_.clone(initialProgresses));
+          group.current.userData.framesPassed = 0;
+        } else {
+          group.current.userData.framesPassed += 1;
+          const adjustedProgresses = _.clone(progresses);
+          for (let i = 0; i < adjustedProgresses.length; i++) {
+            adjustedProgresses[i] +=
+              group.current.userData.framesPassed / 60 / explosionTimeFrames;
+          }
+          setProgresses(adjustedProgresses);
+        }
+      }
+    }
+  });
 
   if (globalProgressNormalized >= 1.0) {
     return null;
   }
   return (
-    <group position={position}>
+    <group position={position} ref={group}>
       {nodes.map((node, i) => {
         return (
           <ThreeExplosionNode

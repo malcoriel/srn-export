@@ -62,6 +62,7 @@ const FullTemplate: Story = (args) => {
   return (
     <StoryCanvas scale={1.0} withBackground>
       <ThreeExplosion
+        autoPlay={args.autoPlay}
         radius={100}
         seed={args.seed}
         key={revision + JSON.stringify(args)}
@@ -74,6 +75,7 @@ const FullTemplate: Story = (args) => {
 export const Full = FullTemplate.bind({});
 Full.args = {
   progressNormalized: 0.0,
+  autoPlay: true,
   seed: 'abc',
   explosionTimeFrames: 60,
 };
