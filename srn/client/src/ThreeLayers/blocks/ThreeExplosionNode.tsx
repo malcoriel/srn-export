@@ -1,15 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Color, Mesh, MeshBasicMaterial } from 'three';
-import { useFrame } from '@react-three/fiber';
 import { Vector3Arr } from '../util';
 import { Text } from '@react-three/drei';
 import { teal } from '../../utils/palette';
+import { useFrame } from '@react-three/fiber';
 
 type ExplosionProps = {
   initialSize: number;
   scaleSpeed: number;
   position?: Vector3Arr;
   progressNormalized: number;
+  autoPlay?: boolean;
 };
 
 const colors = [
@@ -34,14 +35,37 @@ const smokeStartColorIndex = 10;
 const withinColors = (index: number) =>
   Math.max(Math.min(index, colors.length - 1), 0);
 
+const AUTOPLAY_FRAMES = 180; // 60fps over 3s assumed
+
 export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
   initialSize,
   scaleSpeed,
   position,
-  progressNormalized = 0.0,
+  progressNormalized: progressNormalizedExt = 0.0,
+  autoPlay = false,
 }) => {
   const blastMesh = useRef<Mesh>();
   const smokeMesh = useRef<Mesh>();
+  const [progressNormalized, setProgressNormalized] = useState(
+    progressNormalizedExt
+  );
+  useFrame(() => {
+    if (autoPlay) {
+      if (blastMesh.current) {
+        blastMesh.current.userData.framesPassed =
+          blastMesh.current.userData.framesPassed || 0;
+        if (blastMesh.current.userData.framesPassed > AUTOPLAY_FRAMES) {
+          setProgressNormalized(0);
+          blastMesh.current.userData.framesPassed = 0;
+        } else {
+          blastMesh.current.userData.framesPassed += 1;
+          setProgressNormalized(
+            blastMesh.current.userData.framesPassed / AUTOPLAY_FRAMES
+          );
+        }
+      }
+    }
+  });
 
   const SMOKE_DECAY_START_PROGRESS = 0.5;
   const blastColorIndex = withinColors(
@@ -92,19 +116,6 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
             .lerp(colors[nextSmokeColorIndex], smokeColorLerpRatio)}
         />
       </mesh>
-      <Text
-        position={[50, 50, 0]}
-        color={teal}
-        fontSize={10}
-        maxWidth={20}
-        lineHeight={1}
-        letterSpacing={0.02}
-        textAlign="center"
-        anchorX="center"
-        anchorY="bottom" // default
-      >
-        {progressNormalized.toFixed(2)}
-      </Text>
     </group>
   );
 };

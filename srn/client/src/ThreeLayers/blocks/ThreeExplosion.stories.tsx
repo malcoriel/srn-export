@@ -31,9 +31,9 @@ const NodeTemplate: Story = (args) => {
       <ThreeExplosionNode
         key={revision + JSON.stringify(args)}
         progressNormalized={args.progressNormalized}
-        maxScale={10.0}
         initialSize={5.0}
         scaleSpeed={1.05}
+        autoPlay={args.autoPlay}
       />
     </StoryCanvas>
   );
@@ -41,7 +41,7 @@ const NodeTemplate: Story = (args) => {
 
 export const Node = NodeTemplate.bind({});
 Node.args = {
-  autoplay: true,
+  autoPlay: true,
   progressNormalized: 0.0,
 };
 
