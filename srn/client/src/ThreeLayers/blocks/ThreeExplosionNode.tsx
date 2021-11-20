@@ -6,10 +6,8 @@ import { Text } from '@react-three/drei';
 import { teal } from '../../utils/palette';
 
 type ExplosionProps = {
-  maxScale: number;
   initialSize: number;
   scaleSpeed: number;
-  delay?: number;
   position?: Vector3Arr;
   progressNormalized: number;
 };
@@ -32,90 +30,67 @@ const colors = [
 ].map((s) => new Color(s));
 
 const smokeStartColorIndex = 10;
-const blastStartSmokeColorIndex = 4;
+
+const withinColors = (index: number) =>
+  Math.max(Math.min(index, colors.length - 1), 0);
 
 export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
-  maxScale,
   initialSize,
   scaleSpeed,
   position,
-  delay,
-  progressNormalized = 1.0,
+  progressNormalized = 0.0,
 }) => {
   const blastMesh = useRef<Mesh>();
   const smokeMesh = useRef<Mesh>();
-  useFrame(() => {
-    if (blastMesh && blastMesh.current && smokeMesh && smokeMesh.current) {
-      blastMesh.current.userData = blastMesh.current.userData || {};
-      blastMesh.current.userData.framesPassed =
-        blastMesh.current.userData.framesPassed || 0;
-      blastMesh.current.userData.framesPassed += 1;
-
-      let shouldRender;
-      if (!delay) {
-        shouldRender = true;
-      } else {
-        shouldRender = blastMesh.current.userData.framesPassed > delay;
-      }
-
-      if (progressNormalized > 1 || progressNormalized <= 0) {
-        shouldRender = false;
-      }
-
-      if (shouldRender) {
-        blastMesh.current.visible = true;
-        const blastColorIndex =
-          Math.floor((blastMesh.current.scale.x / maxScale) * colors.length) -
-          1;
-        (blastMesh.current.material as MeshBasicMaterial).color =
-          colors[blastColorIndex];
-
-        let shouldRenderSmoke;
-        shouldRenderSmoke = blastColorIndex >= blastStartSmokeColorIndex;
-        if (smokeMesh.current.scale.x >= blastMesh.current.scale.x) {
-          shouldRenderSmoke = false;
-        }
-
-        if (shouldRenderSmoke) {
-          smokeMesh.current.visible = true;
-          const smokeColorIndex = Math.min(
-            Math.floor((smokeMesh.current.scale.x / maxScale) * colors.length) -
-              1 +
-              smokeStartColorIndex,
-            colors.length
-          );
-          (smokeMesh.current.material as MeshBasicMaterial).color =
-            colors[smokeColorIndex];
-        } else {
-          smokeMesh.current.visible = false;
-        }
-      } else {
-        blastMesh.current.visible = false;
-        smokeMesh.current.visible = false;
-      }
-    }
-  });
 
   const SMOKE_DECAY_START_PROGRESS = 0.5;
+  const blastColorIndex = withinColors(
+    Math.floor(progressNormalized * colors.length) - 1
+  );
+  const nextBlastColorIndex = Math.min(blastColorIndex + 1, colors.length - 1);
+  const blastColorLerpRatio = (progressNormalized * colors.length) % 1;
+
+  const smokeColorIndex = withinColors(
+    Math.floor(
+      (progressNormalized - SMOKE_DECAY_START_PROGRESS) * colors.length
+    ) -
+      1 +
+      smokeStartColorIndex
+  );
+  const nextSmokeColorIndex = Math.min(smokeColorIndex + 1, colors.length - 1);
+  const smokeColorLerpRatio =
+    ((progressNormalized - SMOKE_DECAY_START_PROGRESS) * colors.length) % 1;
+
   return (
-    <group position={position}>
+    <group
+      position={position}
+      visible={progressNormalized <= 1 && progressNormalized > 0}
+    >
       {/* blast */}
       <mesh ref={blastMesh} scale={scaleSpeed ** (60 * progressNormalized)}>
         <circleBufferGeometry args={[initialSize, 256]} />
         {/*<sphereBufferGeometry args={[100, 256, 256]} />*/}
-        <meshBasicMaterial color={colors[0]} />
+        <meshBasicMaterial
+          color={colors[blastColorIndex]
+            .clone()
+            .lerp(colors[nextBlastColorIndex], blastColorLerpRatio)}
+        />
       </mesh>
       {/* smoke */}
       <mesh
         ref={smokeMesh}
-        visible={false}
+        visible={progressNormalized >= SMOKE_DECAY_START_PROGRESS}
         scale={
           (scaleSpeed * 1.05) **
           (60 * (progressNormalized - SMOKE_DECAY_START_PROGRESS))
         }
       >
         <circleBufferGeometry args={[initialSize, 256]} />
-        <meshBasicMaterial color={colors[smokeStartColorIndex]} />
+        <meshBasicMaterial
+          color={colors[smokeColorIndex]
+            .clone()
+            .lerp(colors[nextSmokeColorIndex], smokeColorLerpRatio)}
+        />
       </mesh>
       <Text
         position={[50, 50, 0]}
