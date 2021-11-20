@@ -2,7 +2,6 @@ import { StoryCanvas } from '../../TestUI/StoryCanvas';
 import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
-import { ThreeSpaceBackground } from '../ThreeSpaceBackground';
 import { ThreeExplosionNode } from './ThreeExplosionNode';
 import { ThreeExplosion } from './ThreeExplosion';
 
@@ -61,9 +60,9 @@ const FullTemplate: Story = (args) => {
     setRevision((old) => old + 1);
   }, []);
   return (
-    <StoryCanvas>
-      <ThreeSpaceBackground size={256} shaderShift={0} />
+    <StoryCanvas scale={1.0} withBackground>
       <ThreeExplosion
+        radius={100}
         seed={args.seed}
         key={revision + JSON.stringify(args)}
         progressNormalized={args.progressNormalized}

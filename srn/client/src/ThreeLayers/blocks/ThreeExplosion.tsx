@@ -3,6 +3,7 @@ import { ThreeExplosionNode } from './ThreeExplosionNode';
 import Prando from 'prando';
 import { variateNormal } from '../shaders/randUtils';
 import { Vector3Arr } from '../util';
+import _ from 'lodash';
 
 export type ThreeExplosionProps = {
   seed: string;
@@ -54,7 +55,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     const explosionTimeFrames =
       Math.log(desiredMaxScale) / Math.log(scaleSpeed);
     const desiredDelayFrames =
-      minDelay + Math.max(0, variateNormal(-5, 20, 5, prando));
+      minDelay + Math.max(0, variateNormal(-60, 20, 10, prando));
     const progressShift = -desiredDelayFrames / explosionTimeFrames;
 
     return {
@@ -109,8 +110,9 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     nodes.map((n) => n.initialProgressNormalized + globalProgressNormalized)
   );
 
-  console.log(progresses);
-
+  if (globalProgressNormalized >= 1.0) {
+    return null;
+  }
   return (
     <group position={position}>
       {nodes.map((node, i) => {
@@ -121,7 +123,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
             scaleSpeed={node.scaleSpeed}
             position={node.position}
             explosionTimeFrames={node.explosionTimeFrames}
-            progressNormalized={progresses[i]}
+            progressNormalized={progresses[i] * (60 / node.explosionTimeFrames)}
           />
         );
       })}
