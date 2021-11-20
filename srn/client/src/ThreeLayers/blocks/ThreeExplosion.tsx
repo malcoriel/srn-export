@@ -16,6 +16,7 @@ type NodeParams = {
   scaleSpeed: number;
   initialProgressNormalized: number;
   desiredMaxScale: number;
+  explosionTimeFrames: number;
   position: Vector3Arr;
 };
 
@@ -40,26 +41,30 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     const x = r * Math.cos(theta);
     const y = r * Math.sin(theta);
 
-    const desiredDelay =
-      minDelay + Math.max(0, variateNormal(-20, 60, 5, prando));
     const desiredMaxScale = variateNormal(3.0, 6.0, 1.0, prando);
     const initialSize = variateNormal(1.0, maxSize, 0.5, prando);
-    const scaleRange = desiredMaxScale - 1.0;
-    const scaleSpeed = variateNormal(1.0, 1.2, 0.1, prando);
-    const linearScaleSpeed = 1.0;
-    // scale is exponential with scaleSpeed as exponent base
-    // scale = scaleSpeed ** (60 * progressNormalized)
-    // so maxScale = scaleSpeed ** (60 * 1.0)
-    // so the time to reach max scale
+    const scaleSpeed = variateNormal(1.02, 1.08, 0.1, prando);
 
-    console.log(scaleSpeed);
+    // scale is exponential with scaleSpeed as exponent base
+    // scale = scaleSpeed ** (explosionTimeFrames * progressNormalized)
+    // so maxScale = scaleSpeed ** (explosionTimeFrames * 1.0)
+    // so the time to reach max scale should be
+    // log(maxScale) base scaleSpeed
+
+    const explosionTimeFrames =
+      Math.log(desiredMaxScale) / Math.log(scaleSpeed);
+    const desiredDelayFrames =
+      minDelay + Math.max(0, variateNormal(-5, 20, 5, prando));
+    const progressShift = -desiredDelayFrames / explosionTimeFrames;
+
     return {
       id: `${wave}_${i}`,
       initialSize,
       position: [x, y, 0],
       scaleSpeed,
       desiredMaxScale,
-      initialProgressNormalized: 0.0,
+      initialProgressNormalized: progressShift,
+      explosionTimeFrames,
     };
   }
 
@@ -104,6 +109,8 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     nodes.map((n) => n.initialProgressNormalized + globalProgressNormalized)
   );
 
+  console.log(progresses);
+
   return (
     <group position={position}>
       {nodes.map((node, i) => {
@@ -113,6 +120,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
             initialSize={node.initialSize}
             scaleSpeed={node.scaleSpeed}
             position={node.position}
+            explosionTimeFrames={node.explosionTimeFrames}
             progressNormalized={progresses[i]}
           />
         );

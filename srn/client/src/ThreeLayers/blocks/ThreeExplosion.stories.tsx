@@ -76,4 +76,5 @@ export const Full = FullTemplate.bind({});
 Full.args = {
   progressNormalized: 0.0,
   seed: 'abc',
+  explosionTimeFrames: 60,
 };
