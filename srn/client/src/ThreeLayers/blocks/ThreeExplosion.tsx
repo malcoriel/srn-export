@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ThreeExplosionNode } from './ThreeExplosionNode';
 import Prando from 'prando';
 import { variateNormal } from '../shaders/randUtils';
@@ -6,15 +6,16 @@ import { Vector3Arr } from '../util';
 
 export type ThreeExplosionProps = {
   seed: string;
+  progressNormalized: number;
   position?: Vector3Arr;
   radius?: number;
 };
 type NodeParams = {
   id: string;
-  delay: number;
-  maxScale: number;
   initialSize: number;
   scaleSpeed: number;
+  initialProgressNormalized: number;
+  desiredMaxScale: number;
   position: Vector3Arr;
 };
 
@@ -22,6 +23,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
   seed,
   position,
   radius = 40,
+  progressNormalized: globalProgressNormalized,
 }) => {
   function genNode(
     maxDist: number,
@@ -31,22 +33,34 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     count: number,
     i: number,
     wave: number
-  ) {
+  ): NodeParams {
     const r = variateNormal(0, maxDist, 5, prando);
     const theta =
       ((2 * Math.PI) / count) * (i + variateNormal(-1.0, 1.0, 0.5, prando));
     const x = r * Math.cos(theta);
     const y = r * Math.sin(theta);
 
-    const node: NodeParams = {
-      delay: minDelay + Math.max(0, variateNormal(-20, 60, 5, prando)),
+    const desiredDelay =
+      minDelay + Math.max(0, variateNormal(-20, 60, 5, prando));
+    const desiredMaxScale = variateNormal(3.0, 6.0, 1.0, prando);
+    const initialSize = variateNormal(1.0, maxSize, 0.5, prando);
+    const scaleRange = desiredMaxScale - 1.0;
+    const scaleSpeed = variateNormal(1.0, 1.2, 0.1, prando);
+    const linearScaleSpeed = 1.0;
+    // scale is exponential with scaleSpeed as exponent base
+    // scale = scaleSpeed ** (60 * progressNormalized)
+    // so maxScale = scaleSpeed ** (60 * 1.0)
+    // so the time to reach max scale
+
+    console.log(scaleSpeed);
+    return {
       id: `${wave}_${i}`,
-      initialSize: variateNormal(1.0, maxSize, 0.5, prando),
-      maxScale: variateNormal(3.0, 6.0, 1.0, prando),
+      initialSize,
       position: [x, y, 0],
-      scaleSpeed: 1.1,
+      scaleSpeed,
+      desiredMaxScale,
+      initialProgressNormalized: 0.0,
     };
-    return node;
   }
 
   const nodes = useMemo(() => {
@@ -85,17 +99,21 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
 
     return nodes;
   }, [seed, radius]);
+
+  const [progresses, setProgresses] = useState(
+    nodes.map((n) => n.initialProgressNormalized + globalProgressNormalized)
+  );
+
   return (
     <group position={position}>
-      {nodes.map((node) => {
+      {nodes.map((node, i) => {
         return (
           <ThreeExplosionNode
             key={node.id}
-            delay={node.delay}
-            maxScale={node.maxScale}
             initialSize={node.initialSize}
             scaleSpeed={node.scaleSpeed}
             position={node.position}
+            progressNormalized={progresses[i]}
           />
         );
       })}

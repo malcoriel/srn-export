@@ -1,8 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Color, Mesh, MeshBasicMaterial } from 'three';
 import { Vector3Arr } from '../util';
-import { Text } from '@react-three/drei';
-import { teal } from '../../utils/palette';
 import { useFrame } from '@react-three/fiber';
 
 type ExplosionProps = {
@@ -11,6 +9,7 @@ type ExplosionProps = {
   position?: Vector3Arr;
   progressNormalized: number;
   autoPlay?: boolean;
+  explosionTimeFrames?: number;
 };
 
 const colors = [
@@ -35,14 +34,13 @@ const smokeStartColorIndex = 10;
 const withinColors = (index: number) =>
   Math.max(Math.min(index, colors.length - 1), 0);
 
-const AUTOPLAY_FRAMES = 180; // 60fps over 3s assumed
-
 export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
   initialSize,
   scaleSpeed,
   position,
   progressNormalized: progressNormalizedExt = 0.0,
   autoPlay = false,
+  explosionTimeFrames = 60,
 }) => {
   const blastMesh = useRef<Mesh>();
   const smokeMesh = useRef<Mesh>();
@@ -54,20 +52,22 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
       if (blastMesh.current) {
         blastMesh.current.userData.framesPassed =
           blastMesh.current.userData.framesPassed || 0;
-        if (blastMesh.current.userData.framesPassed > AUTOPLAY_FRAMES) {
+        if (blastMesh.current.userData.framesPassed > explosionTimeFrames) {
           setProgressNormalized(0);
           blastMesh.current.userData.framesPassed = 0;
         } else {
           blastMesh.current.userData.framesPassed += 1;
           setProgressNormalized(
-            blastMesh.current.userData.framesPassed / AUTOPLAY_FRAMES
+            blastMesh.current.userData.framesPassed / explosionTimeFrames
           );
         }
       }
     }
   });
 
-  const SMOKE_DECAY_START_PROGRESS = 0.5;
+  const SMOKE_DECAY_START_PROGRESS = 0.5; // when explosion is 50% through
+  const SMOKE_DECAY_INITIAL_SIZE_RATIO = 0.3; // create a smoke decay with currentSize * ratio
+  const SMOKE_DECAY_SPEED_MULTIPLIER = 1.05; // that has base exponent multiplied by that
   const blastColorIndex = withinColors(
     Math.floor(progressNormalized * colors.length) - 1
   );
@@ -85,13 +85,37 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
   const smokeColorLerpRatio =
     ((progressNormalized - SMOKE_DECAY_START_PROGRESS) * colors.length) % 1;
 
+  const initialSmokeDecaySize =
+    initialSize *
+    scaleSpeed ** (explosionTimeFrames * SMOKE_DECAY_START_PROGRESS) *
+    SMOKE_DECAY_INITIAL_SIZE_RATIO;
+
+  const blastCurrentScale =
+    scaleSpeed ** (explosionTimeFrames * progressNormalized);
+  const blastCurrentSize = initialSize * blastCurrentScale;
+  let smokeDecayCurrentScale =
+    (scaleSpeed * SMOKE_DECAY_SPEED_MULTIPLIER) **
+    (explosionTimeFrames * (progressNormalized - SMOKE_DECAY_START_PROGRESS));
+  const smokeDecayCurrentSize = initialSmokeDecaySize * smokeDecayCurrentScale;
+  // smoke decay cannot go higher than the explosion itself, so we have to adjust the scale
+  // based on invariant smokeDecayCurrentSize <= blastCurrentSize
+
+  if (smokeDecayCurrentSize > blastCurrentSize) {
+    // if i1 * s1 < i2 * s2, then i1 * s1 = i2 * s2 * (some x)
+    // so to make them equal, we just have to find what is x and multiply by it
+    const x =
+      (initialSize * blastCurrentScale) /
+      (initialSmokeDecaySize * smokeDecayCurrentScale);
+    smokeDecayCurrentScale *= x;
+  }
+
   return (
     <group
       position={position}
       visible={progressNormalized <= 1 && progressNormalized > 0}
     >
       {/* blast */}
-      <mesh ref={blastMesh} scale={scaleSpeed ** (60 * progressNormalized)}>
+      <mesh ref={blastMesh} scale={blastCurrentScale}>
         <circleBufferGeometry args={[initialSize, 256]} />
         {/*<sphereBufferGeometry args={[100, 256, 256]} />*/}
         <meshBasicMaterial
@@ -104,12 +128,9 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
       <mesh
         ref={smokeMesh}
         visible={progressNormalized >= SMOKE_DECAY_START_PROGRESS}
-        scale={
-          (scaleSpeed * 1.05) **
-          (60 * (progressNormalized - SMOKE_DECAY_START_PROGRESS))
-        }
+        scale={smokeDecayCurrentScale}
       >
-        <circleBufferGeometry args={[initialSize, 256]} />
+        <circleBufferGeometry args={[initialSmokeDecaySize, 256]} />
         <meshBasicMaterial
           color={colors[smokeColorIndex]
             .clone()
