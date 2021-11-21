@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.7.4 (2021-11-21)
+### Fixes
+* Improved the ship model positioning to make model weight center closer to the object center
+* Adjusted explosion parameters to be a bit bigger and noticeable
+
 ## Version 0.7.3 (2021-11-21)
 ### New
 * Ship explosions and wrecks added for more fun! For now, very modest and simple.
