@@ -1069,7 +1069,23 @@ pub fn update_location(
 
     sampler.end(long_act_ticks);
 
+    if !client {
+        let wreck_decay_id = sampler.start(SamplerMarks::UpdateWreckDecay as u32);
+        update_wreck_decay(state, location_idx, elapsed);
+        sampler.end(wreck_decay_id);
+    }
     sampler
+}
+
+fn update_wreck_decay(state: &mut GameState, location_idx: usize, elapsed_ticks: i64) {
+    let mut to_delete = HashSet::new();
+    for wreck in state.locations[location_idx].wrecks.iter_mut() {
+        wreck.decay_ticks = wreck.decay_ticks - elapsed_ticks as i32;
+        if wreck.decay_ticks <= 0 {
+            to_delete.insert(wreck.id);
+        }
+    }
+    state.locations[location_idx].wrecks.retain(|w| !to_delete.contains(&w.id));
 }
 
 fn interpolate(from: f64, to: f64, percentage: f64) -> f64 {

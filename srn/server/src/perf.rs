@@ -263,6 +263,7 @@ pub enum SamplerMarks {
     BotsNPCs = 36,
     GenFullSpatialIndexes = 37,
     GenSpatialIndexOnDemand = 38,
+    UpdateWreckDecay = 39,
 }
 
 impl Display for SamplerMarks {

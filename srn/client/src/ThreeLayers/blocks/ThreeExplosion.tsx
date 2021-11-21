@@ -133,6 +133,9 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
           const adjustedProgresses = _.clone(progresses);
           const diff = deltaSeconds / explosionTimeSeconds;
           for (let i = 0; i < adjustedProgresses.length; i++) {
+            if (!nodes[i] || !adjustedProgresses[i]) {
+              continue;
+            }
             adjustedProgresses[i] += diff * nodes[i].progressSpeedMultiplier;
           }
 
