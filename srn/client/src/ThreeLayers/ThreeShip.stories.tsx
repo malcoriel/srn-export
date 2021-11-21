@@ -17,7 +17,7 @@ const MainTemplate: Story = (args) => {
     setRevision((old) => old + 1);
   }, []);
   return (
-    <StoryCanvas key={revision + JSON.stringify(args)} withBackground>
+    <StoryCanvas key={revision + JSON.stringify(args)} withBackground withRuler>
       <ThreeShip
         blow={args.blow}
         color="red"

@@ -10,7 +10,7 @@ import { Group } from 'three';
 export type ThreeExplosionProps = {
   seed: string;
   autoPlay?: boolean;
-  progressNormalized: number;
+  progressNormalized?: number;
   explosionTimeSeconds: number;
   position?: Vector3Arr;
   radius?: number;
@@ -29,7 +29,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
   position,
   radius = 40,
   explosionTimeSeconds = 4,
-  progressNormalized: globalProgressNormalized,
+  progressNormalized: globalProgressNormalized = 0.0,
   autoPlay,
 }) => {
   const genNode = useCallback(

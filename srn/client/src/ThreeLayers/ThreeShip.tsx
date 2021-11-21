@@ -150,6 +150,8 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
             seed={gid}
             position={[0, 0, radius + 10]}
             radius={radius * 1.5}
+            explosionTimeSeconds={4.0}
+            autoPlay
           />
         )}
       </group>

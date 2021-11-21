@@ -21,7 +21,15 @@ export const StoryCanvas: React.FC<{
   zoom?: number;
   scale?: number;
   withBackground?: boolean;
-}> = ({ children, styles, zoom = 1.0, scale = 1.0, withBackground }) => {
+  withRuler?: boolean;
+}> = ({
+  children,
+  withRuler,
+  styles,
+  zoom = 1.0,
+  scale = 1.0,
+  withBackground,
+}) => {
   return (
     <Canvas
       orthographic
@@ -41,6 +49,13 @@ export const StoryCanvas: React.FC<{
       <StoryCanvasInternals>
         {withBackground && (
           <ThreeSpaceBackground size={256 * scale} shaderShift={0} />
+        )}
+        {withRuler && (
+          <gridHelper
+            args={[256, 16]}
+            rotation={[Math.PI / 2, 0, 0]}
+            position={[0, 0, 5]}
+          />
         )}
         {children}
       </StoryCanvasInternals>
