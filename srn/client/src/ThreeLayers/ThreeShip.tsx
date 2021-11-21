@@ -25,6 +25,7 @@ type ThreeShipProps = {
   rotation: number;
   radius: number;
   visible: boolean;
+  tractorBeamWidth?: number;
   opacity: number;
   hpNormalized: number;
   interactor?: ThreeInteractorProps;
@@ -33,6 +34,12 @@ type ThreeShipProps = {
 
 const BEAM_WIDTH = 0.3;
 const BLOW_FRAMES = 60;
+// ships are always 'above' the stuff
+const SHIP_FIXED_Z = 50;
+
+export const ThreeShipBase = () => {
+  return null;
+};
 
 export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
   ({
@@ -47,6 +54,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     opacity,
     hpNormalized,
     blow,
+    tractorBeamWidth = BEAM_WIDTH,
   }) => {
     const tractorRef = useRef<Mesh>();
     const mainRef = useRef<Group>();
@@ -100,8 +108,47 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
       () => [0.15, 0.2, 0.25].map((v: number) => v * radius) as Vector3Arr,
       [radius]
     );
+    const tractorBeam = (
+      <>
+        {tractorBeamParams && (
+          <mesh
+            ref={tractorRef}
+            position={tractorBeamParams.position}
+            rotation={[0, 0, -tractorBeamParams.rotation]}
+          >
+            <cylinderBufferGeometry
+              args={[
+                tractorBeamWidth,
+                tractorBeamWidth,
+                tractorBeamParams.length,
+                4,
+              ]}
+            />
+            <rawShaderMaterial
+              transparent
+              {...jellyfish}
+              // uniforms={tractorBeamParams.patchedUniforms}
+            />
+          </mesh>
+        )}
+      </>
+    );
+    const healthBar = (
+      <ThreeProgressbar
+        position={[0, -radius - 1.0, 0]}
+        length={radius * 2}
+        girth={radius / 5}
+        completionNormalized={hpNormalized}
+        fillColor={darkGreen}
+        backgroundColor={common}
+        hideWhenFull
+      />
+    );
     return (
-      <group position={posToThreePos(position.x, position.y, 50)} ref={mainRef}>
+      <group
+        position={posToThreePos(position.x, position.y, SHIP_FIXED_Z)}
+        ref={mainRef}
+      >
         {interactor && (
           <ThreeInteractor
             perfId={`ship-${gid}`}
@@ -120,31 +167,8 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         >
           <meshBasicMaterial color={color} opacity={opacity} transparent />
         </mesh>
-        {tractorBeamParams && (
-          <mesh
-            ref={tractorRef}
-            position={tractorBeamParams.position}
-            rotation={[0, 0, -tractorBeamParams.rotation]}
-          >
-            <cylinderBufferGeometry
-              args={[BEAM_WIDTH, BEAM_WIDTH, tractorBeamParams.length, 4]}
-            />
-            <rawShaderMaterial
-              transparent
-              {...jellyfish}
-              // uniforms={tractorBeamParams.patchedUniforms}
-            />
-          </mesh>
-        )}
-        <ThreeProgressbar
-          position={[0, -radius - 1.0, 0]}
-          length={radius * 2}
-          girth={radius / 5}
-          completionNormalized={hpNormalized}
-          fillColor={darkGreen}
-          backgroundColor={common}
-          hideWhenFull
-        />
+        {tractorBeam}
+        {healthBar}
         {showExplosion && (
           <ThreeExplosion
             seed={gid}
