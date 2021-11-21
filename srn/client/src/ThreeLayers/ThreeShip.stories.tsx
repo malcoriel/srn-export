@@ -4,6 +4,7 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { ThreeShip } from './ThreeShip';
 import { VectorF } from '../utils/Vector';
+import { InteractorMap } from './InteractorMap';
 
 export default {
   title: 'Three/Ship',
@@ -26,7 +27,7 @@ const MainTemplate: Story = (args) => {
     setRevision((old) => old + 1);
   }, []);
   return (
-    <StoryCanvas withBackground>
+    <StoryCanvas withBackground zoom={10.0}>
       <ThreeShip
         key={revision + JSON.stringify(args)}
         blow={args.blow}
@@ -34,12 +35,12 @@ const MainTemplate: Story = (args) => {
         gid="1"
         hpNormalized={args.hpNormalized}
         position={VectorF(0, 0)}
-        radius={50.0}
+        interactor={InteractorMap.ship({})}
+        radius={5.0}
         opacity={1.0}
         rotation={0.0}
         visible
-        tractorTargetPosition={args.tractoring ? VectorF(250, 250) : null}
-        tractorBeamWidth={5.0}
+        tractorTargetPosition={args.tractoring ? VectorF(25, 25) : null}
       />
     </StoryCanvas>
   );

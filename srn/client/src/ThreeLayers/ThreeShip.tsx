@@ -41,6 +41,57 @@ export const ThreeShipBase = () => {
   return null;
 };
 
+type ShipShapeProps = {
+  radius: number;
+  position: Vector;
+  rotation: number;
+  color: string;
+  opacity: number;
+};
+const ShipShape: React.FC<ShipShapeProps> = ({
+  radius,
+  position,
+  rotation,
+  color,
+  opacity,
+  children,
+}) => {
+  // @ts-ignore
+  const shipModel = useLoader<Geometry>(STLLoader, 'resources/models/ship.stl');
+
+  const memoScale = useMemo(
+    () => [0.15, 0.2, 0.25].map((v: number) => v * radius) as Vector3Arr,
+    [radius]
+  );
+
+  return (
+    <group position={posToThreePos(position.x, position.y, SHIP_FIXED_Z)}>
+      <mesh
+        position={[0, 0, 0]}
+        scale={memoScale}
+        rotation={[Math.PI, 0, rotation]}
+        // @ts-ignore
+        geometry={shipModel}
+      >
+        <meshBasicMaterial color={color} opacity={opacity} transparent />
+      </mesh>
+      {children}
+      {/*{showExplosion && (*/}
+      {/*  <ThreeExplosion*/}
+      {/*    seed={gid}*/}
+      {/*    position={[0, 0, radius + 10]}*/}
+      {/*    radius={radius * 1.5}*/}
+      {/*    explosionTimeSeconds={4.0}*/}
+      {/*    autoPlay*/}
+      {/*  />*/}
+      {/*)}*/}
+      {/*{interactorElem}*/}
+      {/*{tractorBeam}*/}
+      {/*{healthBar}*/}
+    </group>
+  );
+};
+
 export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
   ({
     tractorTargetPosition,
@@ -57,14 +108,6 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     tractorBeamWidth = BEAM_WIDTH,
   }) => {
     const tractorRef = useRef<Mesh>();
-    const mainRef = useRef<Group>();
-    const [showExplosion, setShowExplosion] = useState(false);
-    // @ts-ignore
-    const shipModel = useLoader<Geometry>(
-      STLLoader,
-      'resources/models/ship.stl'
-    );
-
     const tractorBeamParams = useMemo(() => {
       if (!tractorTargetPosition) {
         return null;
@@ -88,26 +131,22 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           material.uniforms.time.value += 0.004;
         }
       }
-      if (mainRef.current) {
-        mainRef.current.userData = mainRef.current.userData || {};
-        let displayExplosionCalculated = false;
-        if (blow) {
-          mainRef.current.userData.blowFrames =
-            mainRef.current.userData.blowFrames || 0;
-          mainRef.current.userData.blowFrames += 1;
-          displayExplosionCalculated =
-            mainRef.current.userData.blowFrames <= BLOW_FRAMES;
-        }
-        if (showExplosion !== displayExplosionCalculated) {
-          setShowExplosion(displayExplosionCalculated);
-        }
-      }
+      // if (mainRef.current) {
+      //   mainRef.current.userData = mainRef.current.userData || {};
+      //   let displayExplosionCalculated = false;
+      //   if (blow) {
+      //     mainRef.current.userData.blowFrames =
+      //       mainRef.current.userData.blowFrames || 0;
+      //     mainRef.current.userData.blowFrames += 1;
+      //     displayExplosionCalculated =
+      //       mainRef.current.userData.blowFrames <= BLOW_FRAMES;
+      //   }
+      //   if (showExplosion !== displayExplosionCalculated) {
+      //     setShowExplosion(displayExplosionCalculated);
+      //   }
+      // }
     });
 
-    const memoScale = useMemo(
-      () => [0.15, 0.2, 0.25].map((v: number) => v * radius) as Vector3Arr,
-      [radius]
-    );
     const tractorBeam = (
       <>
         {tractorBeamParams && (
@@ -144,11 +183,8 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         hideWhenFull
       />
     );
-    return (
-      <group
-        position={posToThreePos(position.x, position.y, SHIP_FIXED_Z)}
-        ref={mainRef}
-      >
+    const interactorElem = (
+      <>
         {interactor && (
           <ThreeInteractor
             perfId={`ship-${gid}`}
@@ -157,28 +193,15 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
             interactor={interactor}
           />
         )}
-        <mesh
-          position={[0, 0, 0]}
-          ref={tractorRef}
-          scale={memoScale}
-          rotation={[Math.PI, 0, rotation]}
-          // @ts-ignore
-          geometry={shipModel}
-        >
-          <meshBasicMaterial color={color} opacity={opacity} transparent />
-        </mesh>
-        {tractorBeam}
+      </>
+    );
+
+    return (
+      <ShipShape {...{ radius, position, rotation, color, opacity }}>
         {healthBar}
-        {showExplosion && (
-          <ThreeExplosion
-            seed={gid}
-            position={[0, 0, radius + 10]}
-            radius={radius * 1.5}
-            explosionTimeSeconds={4.0}
-            autoPlay
-          />
-        )}
-      </group>
+        {interactorElem}
+        {tractorBeam}
+      </ShipShape>
     );
   },
   (prevProps, nextProps) => {
