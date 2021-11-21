@@ -9,7 +9,10 @@ type ExplosionProps = {
   position?: Vector3Arr;
   progressNormalized: number;
   autoPlay?: boolean;
-  explosionTimeFrames?: number;
+  // this will only control autoPlay!
+  // the explosions 'fastness' is controlled by the
+  // way progressNormalized is increased
+  explosionTimeSeconds?: number;
 };
 
 const colors = [
@@ -34,32 +37,35 @@ const smokeStartColorIndex = 10;
 const withinColors = (index: number) =>
   Math.max(Math.min(index, colors.length - 1), 0);
 
+// this is some magic constant I initially used for scaling, seems necessary
+const ADJ = 60;
+
 export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
   initialSize,
   scaleSpeed,
   position,
   progressNormalized: progressNormalizedExt = 0.0,
   autoPlay = false,
-  explosionTimeFrames = 60,
+  explosionTimeSeconds = 4,
 }) => {
   const blastMesh = useRef<Mesh>();
   const smokeMesh = useRef<Mesh>();
   const [progressNormalized, setProgressNormalized] = useState(
     progressNormalizedExt
   );
-  useFrame(() => {
+  useFrame((_state, deltaSeconds) => {
     if (autoPlay) {
       if (blastMesh.current) {
-        blastMesh.current.userData.framesPassed =
-          blastMesh.current.userData.framesPassed || 0;
-        if (blastMesh.current.userData.framesPassed > explosionTimeFrames) {
+        blastMesh.current.userData.secondsPassed =
+          blastMesh.current.userData.secondsPassed || 0;
+        if (blastMesh.current.userData.secondsPassed > explosionTimeSeconds) {
           setProgressNormalized(0);
-          blastMesh.current.userData.framesPassed = 0;
+          blastMesh.current.userData.secondsPassed = 0;
         } else {
-          blastMesh.current.userData.framesPassed += 1;
-          setProgressNormalized(
-            blastMesh.current.userData.framesPassed / explosionTimeFrames
-          );
+          blastMesh.current.userData.secondsPassed += deltaSeconds;
+          const newProgress =
+            blastMesh.current.userData.secondsPassed / explosionTimeSeconds;
+          setProgressNormalized(newProgress);
         }
       }
     } else {
@@ -89,15 +95,14 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
 
   const initialSmokeDecaySize =
     initialSize *
-    scaleSpeed ** (explosionTimeFrames * SMOKE_DECAY_START_PROGRESS) *
+    scaleSpeed ** (1 + SMOKE_DECAY_START_PROGRESS * ADJ) *
     SMOKE_DECAY_INITIAL_SIZE_RATIO;
 
-  const blastCurrentScale =
-    scaleSpeed ** (explosionTimeFrames * progressNormalized);
+  const blastCurrentScale = scaleSpeed ** (1 + progressNormalized * ADJ);
   const blastCurrentSize = initialSize * blastCurrentScale;
   let smokeDecayCurrentScale =
     (scaleSpeed * SMOKE_DECAY_SPEED_MULTIPLIER) **
-    (explosionTimeFrames * (progressNormalized - SMOKE_DECAY_START_PROGRESS));
+    (1 + (progressNormalized - SMOKE_DECAY_START_PROGRESS) * ADJ);
   const smokeDecayCurrentSize = initialSmokeDecaySize * smokeDecayCurrentScale;
   // smoke decay cannot go higher than the explosion itself, so we have to adjust the scale
   // based on invariant smokeDecayCurrentSize <= blastCurrentSize

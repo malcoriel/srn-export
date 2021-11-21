@@ -5,6 +5,7 @@ import * as uuid from 'uuid';
 import { ThreeExplosionNode } from './ThreeExplosionNode';
 import { ThreeExplosion } from './ThreeExplosion';
 
+// noinspection JSUnusedGlobalSymbols
 export default {
   title: 'Three/Explosion',
   component: ThreeExplosionNode,
@@ -17,12 +18,12 @@ export default {
         step: 0.01,
       },
     },
-    explosionTimeFrames: {
+    explosionTimeSeconds: {
       control: {
         type: 'range',
-        min: 15.0,
-        max: 240.0,
-        step: 5,
+        min: 0.5,
+        max: 10.0,
+        step: 0.5,
       },
     },
   },
@@ -40,7 +41,7 @@ const NodeTemplate: Story = (args) => {
         progressNormalized={args.progressNormalized}
         initialSize={5.0}
         scaleSpeed={1.05}
-        explosionTimeFrames={args.explosionTimeFrames}
+        explosionTimeSeconds={args.explosionTimeSeconds}
         autoPlay={args.autoPlay}
       />
     </StoryCanvas>
@@ -51,7 +52,7 @@ export const Node = NodeTemplate.bind({});
 Node.args = {
   autoPlay: true,
   progressNormalized: 0.0,
-  explosionTimeFrames: 60,
+  explosionTimeSeconds: 2,
 };
 
 const FullTemplate: Story = (args) => {
@@ -67,6 +68,7 @@ const FullTemplate: Story = (args) => {
         seed={args.seed}
         key={revision + JSON.stringify(args)}
         progressNormalized={args.progressNormalized}
+        explosionTimeSeconds={args.explosionTimeSeconds}
       />
     </StoryCanvas>
   );
@@ -77,5 +79,5 @@ Full.args = {
   progressNormalized: 0.0,
   autoPlay: true,
   seed: 'abc',
-  explosionTimeFrames: 60,
+  explosionTimeSeconds: 2,
 };

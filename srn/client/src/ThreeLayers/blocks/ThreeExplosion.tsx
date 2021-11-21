@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ThreeExplosionNode } from './ThreeExplosionNode';
 import Prando from 'prando';
 import { variateNormal } from '../shaders/randUtils';
@@ -11,7 +11,7 @@ export type ThreeExplosionProps = {
   seed: string;
   autoPlay?: boolean;
   progressNormalized: number;
-  explosionTimeFrames: number;
+  explosionTimeSeconds: number;
   position?: Vector3Arr;
   radius?: number;
 };
@@ -20,60 +20,60 @@ type NodeParams = {
   initialSize: number;
   scaleSpeed: number;
   initialProgressNormalized: number;
-  desiredMaxScale: number;
-  explosionTimeFrames: number;
   position: Vector3Arr;
+  progressSpeedMultiplier: number;
 };
 
 export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
   seed,
   position,
   radius = 40,
-  explosionTimeFrames = 240,
+  explosionTimeSeconds = 4,
   progressNormalized: globalProgressNormalized,
   autoPlay,
 }) => {
-  const genNode = (
-    maxDist: number,
-    maxSize: number,
-    minDelay: number,
-    prando: Prando,
-    count: number,
-    i: number,
-    wave: number
-  ): NodeParams => {
-    const r = variateNormal(0, maxDist, 5, prando);
-    const theta =
-      ((2 * Math.PI) / count) * (i + variateNormal(-1.0, 1.0, 0.5, prando));
-    const x = r * Math.cos(theta);
-    const y = r * Math.sin(theta);
+  const genNode = useCallback(
+    (
+      maxDist: number,
+      initialSizeMultiplier: number,
+      minDelay: number,
+      prando: Prando,
+      count: number,
+      i: number,
+      wave: number
+    ): NodeParams => {
+      const r = variateNormal(0, maxDist, 5, prando);
+      const theta =
+        ((2 * Math.PI) / count) * (i + variateNormal(-1.0, 1.0, 0.5, prando));
+      const x = r * Math.cos(theta);
+      const y = r * Math.sin(theta);
 
-    const desiredMaxScale = variateNormal(3.0, 6.0, 1.0, prando);
-    const initialSize = variateNormal(1.0, maxSize, 0.5, prando);
-    const scaleSpeed = variateNormal(1.02, 1.08, 0.1, prando);
+      const scaleSpeed = variateNormal(1.02, 1.04, 0.03, prando);
 
-    // scale is exponential with scaleSpeed as exponent base
-    // scale = scaleSpeed ** (explosionTimeFrames * progressNormalized)
-    // so maxScale = scaleSpeed ** (explosionTimeFrames * 1.0)
-    // so the time to reach max scale should be
-    // log(maxScale) base scaleSpeed
+      // scale is exponential with scaleSpeed as exponent base
+      // scale = scaleSpeed ** (explosionTimeSeconds * progressNormalized)
+      // so maxScale = scaleSpeed ** (explosionTimeSeconds * 1.0)
+      // so the time to reach max scale should be
+      // log(maxScale) base scaleSpeed
 
-    const explosionTimeFrames =
-      Math.log(desiredMaxScale) / Math.log(scaleSpeed);
-    const desiredDelayFrames =
-      minDelay + Math.max(0, variateNormal(-60, 20, 10, prando));
-    const progressShift = -desiredDelayFrames / explosionTimeFrames;
+      const initialSize =
+        variateNormal(0.5, 1.5, 0.5, prando) * radius * initialSizeMultiplier;
 
-    return {
-      id: `${wave}_${i}`,
-      initialSize,
-      position: [x, y, 0],
-      scaleSpeed,
-      desiredMaxScale,
-      initialProgressNormalized: progressShift,
-      explosionTimeFrames,
-    };
-  };
+      const desiredDelaySeconds =
+        minDelay + variateNormal(-0.5, 0.5, 0.1, prando) * explosionTimeSeconds;
+      const progressShift = -desiredDelaySeconds / explosionTimeSeconds;
+
+      return {
+        id: `${wave}_${i}`,
+        initialSize,
+        position: [x, y, 0],
+        scaleSpeed,
+        initialProgressNormalized: progressShift,
+        progressSpeedMultiplier: variateNormal(1.0, 3.0, 0.5, prando),
+      };
+    },
+    [explosionTimeSeconds, radius]
+  );
 
   const group = useRef<Group>();
 
@@ -89,8 +89,8 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     for (let i = 0; i < outerWaveCount; i++) {
       const node = genNode(
         radius,
-        radius / 10,
-        10,
+        0.04,
+        0.5 * explosionTimeSeconds,
         prando,
         outerWaveCount,
         i,
@@ -99,20 +99,12 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
       nodes.push(node);
     }
     for (let i = 0; i < innerWaveCount; i++) {
-      const node = genNode(
-        radius / 2,
-        radius / 20,
-        0,
-        prando,
-        outerWaveCount,
-        i,
-        2
-      );
+      const node = genNode(radius / 2, 0.02, 0, prando, outerWaveCount, i, 2);
       nodes.push(node);
     }
 
     return nodes;
-  }, [seed, radius]);
+  }, [seed, radius, explosionTimeSeconds, genNode]);
 
   const initialProgresses = useMemo(
     () =>
@@ -121,21 +113,22 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
   );
   const [progresses, setProgresses] = useState(initialProgresses);
 
-  useFrame(() => {
+  useFrame((_state, deltaSeconds) => {
     if (autoPlay) {
       if (group.current) {
-        group.current.userData.framesPassed =
-          group.current.userData.framesPassed || 0;
-        if (group.current.userData.framesPassed > explosionTimeFrames) {
+        group.current.userData.secondsPassed =
+          group.current.userData.secondsPassed || 0;
+        if (group.current.userData.secondsPassed > explosionTimeSeconds) {
           setProgresses(_.clone(initialProgresses));
-          group.current.userData.framesPassed = 0;
+          group.current.userData.secondsPassed = 0;
         } else {
-          group.current.userData.framesPassed += 1;
+          group.current.userData.secondsPassed += deltaSeconds;
           const adjustedProgresses = _.clone(progresses);
+          const diff = deltaSeconds / explosionTimeSeconds;
           for (let i = 0; i < adjustedProgresses.length; i++) {
-            adjustedProgresses[i] +=
-              group.current.userData.framesPassed / 60 / explosionTimeFrames;
+            adjustedProgresses[i] += diff * nodes[i].progressSpeedMultiplier;
           }
+
           setProgresses(adjustedProgresses);
         }
       }
@@ -154,8 +147,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
             initialSize={node.initialSize}
             scaleSpeed={node.scaleSpeed}
             position={node.position}
-            explosionTimeFrames={node.explosionTimeFrames}
-            progressNormalized={progresses[i] * (60 / node.explosionTimeFrames)}
+            progressNormalized={progresses[i]}
           />
         );
       })}
