@@ -10,6 +10,7 @@ import { Group } from 'three';
 export type ThreeExplosionProps = {
   seed: string;
   autoPlay?: boolean;
+  playOnce?: boolean;
   progressNormalized?: number;
   explosionTimeSeconds: number;
   position?: Vector3Arr;
@@ -31,6 +32,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
   explosionTimeSeconds = 4,
   progressNormalized: globalProgressNormalized = 0.0,
   autoPlay,
+  playOnce,
 }) => {
   const genNode = useCallback(
     (
@@ -119,8 +121,13 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
         group.current.userData.secondsPassed =
           group.current.userData.secondsPassed || 0;
         if (group.current.userData.secondsPassed > explosionTimeSeconds) {
-          setProgresses(_.clone(initialProgresses));
-          group.current.userData.secondsPassed = 0;
+          if (!playOnce) {
+            setProgresses(_.clone(initialProgresses));
+            group.current.userData.secondsPassed = 0;
+          } else {
+            // make sure no node is stuck in incomplete mode
+            setProgresses(_.times(nodes.length, () => 1.1));
+          }
         } else {
           group.current.userData.secondsPassed += deltaSeconds;
           const adjustedProgresses = _.clone(progresses);

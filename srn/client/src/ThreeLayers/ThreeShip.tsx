@@ -14,6 +14,7 @@ import { posToThreePos, Vector3Arr, vecToThreePos } from './util';
 import { ThreeProgressbar } from './blocks/ThreeProgressbar';
 import { common, darkGreen, mint } from '../utils/palette';
 import { ThreeExplosion } from './blocks/ThreeExplosion';
+import Color from 'color';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -29,11 +30,9 @@ type ThreeShipProps = {
   opacity: number;
   hpNormalized: number;
   interactor?: ThreeInteractorProps;
-  blow?: boolean;
 };
 
 const BEAM_WIDTH = 0.3;
-const BLOW_FRAMES = 60;
 // ships are always 'above' the stuff
 const SHIP_FIXED_Z = 50;
 
@@ -76,21 +75,31 @@ const ShipShape: React.FC<ShipShapeProps> = ({
         <meshBasicMaterial color={color} opacity={opacity} transparent />
       </mesh>
       {children}
-      {/*{showExplosion && (*/}
-      {/*  <ThreeExplosion*/}
-      {/*    seed={gid}*/}
-      {/*    position={[0, 0, radius + 10]}*/}
-      {/*    radius={radius * 1.5}*/}
-      {/*    explosionTimeSeconds={4.0}*/}
-      {/*    autoPlay*/}
-      {/*  />*/}
-      {/*)}*/}
-      {/*{interactorElem}*/}
-      {/*{tractorBeam}*/}
-      {/*{healthBar}*/}
     </group>
   );
 };
+
+export type ThreeShipHuskProps = ShipShapeProps & { gid: string };
+
+export const ThreeShipWreck: React.FC<ThreeShipHuskProps> = React.memo(
+  (props) => {
+    return (
+      <ShipShape
+        {...props}
+        color={new Color(props.color).darken(0.5).toString()}
+      >
+        <ThreeExplosion
+          seed={props.gid}
+          position={[0, 0, props.radius + 10]}
+          radius={props.radius * 1.5}
+          explosionTimeSeconds={2.0}
+          autoPlay
+          playOnce
+        />
+      </ShipShape>
+    );
+  }
+);
 
 export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
   ({
@@ -104,7 +113,6 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     gid,
     opacity,
     hpNormalized,
-    blow,
     tractorBeamWidth = BEAM_WIDTH,
   }) => {
     const tractorRef = useRef<Mesh>();

@@ -277,6 +277,7 @@ export default class NetState extends EventEmitter {
           adjacent_location_ids: [],
           star: null,
           position: new Vector(0, 0),
+          wrecks: [],
         },
       ],
       players: [],

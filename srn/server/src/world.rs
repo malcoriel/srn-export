@@ -523,6 +523,10 @@ impl Container {
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Wreck {
     pub position: Vec2f64,
+    pub id: Uuid,
+    pub rotation: f64,
+    pub radius: f64,
+    pub color: String,
     pub decay_normalized: f64,
     pub decay_ticks: i32
 }
@@ -1398,7 +1402,7 @@ const MAX_LOCAL_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
 
-const WRECK_DECAY_TICKS : i32 = 3 * 1000 * 1000;
+const WRECK_DECAY_TICKS : i32 = 10 * 1000 * 1000;
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
 
 pub fn update_ship_hp_effects(
@@ -1507,6 +1511,10 @@ pub fn update_ship_hp_effects(
     for (ship_clone, pid) in ships_to_die.into_iter() {
         state.locations[location_idx].wrecks.push(Wreck {
             position: ship_clone.get_position(),
+            id: new_id(),
+            rotation: ship_clone.rotation,
+            radius: ship_clone.radius,
+            color: ship_clone.color.clone(),
             decay_normalized: 0.0,
             decay_ticks: WRECK_DECAY_TICKS
         });

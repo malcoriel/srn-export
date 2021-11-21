@@ -1,6 +1,6 @@
 import React from 'react';
 import { findContainer, findMineral, GameState, Ship } from '../world';
-import { ThreeShip } from './ThreeShip';
+import { ThreeShip, ThreeShipWreck } from './ThreeShip';
 import Vector from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
 import { NetStateIndexes } from '../NetState';
@@ -13,7 +13,7 @@ export const ThreeShipsLayer: React.FC<{
   indexes: NetStateIndexes;
 }> = ({ visMap, state }) => {
   if (!state) return null;
-  const { ships } = state.locations[0];
+  const { ships, wrecks } = state.locations[0];
   // const shipIds = ships.map((s) => s.id);
   // const res = {};
   // for (const sid of shipIds) {
@@ -64,6 +64,18 @@ export const ThreeShipsLayer: React.FC<{
             opacity={opacity}
             interactor={InteractorMap.ship(ship)}
             hpNormalized={ship.health.current / ship.health.max}
+          />
+        );
+      })}
+      {wrecks.map((w) => {
+        return (
+          <ThreeShipWreck
+            color={w.color}
+            gid={w.id}
+            opacity={1.0}
+            position={Vector.fromIVector(w.position)}
+            radius={w.radius}
+            rotation={w.rotation}
           />
         );
       })}
