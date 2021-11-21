@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.7.3 (2021-11-21)
+### New
+* Ship explosions and wrecks added for more fun! For now, very modest and simple.
+
 ## Version 0.7.2 (2021-11-09)
 ### New
 * Different configuration of ships for pirate defence - more ships, faster spawn, but they are slower and more brittle.
