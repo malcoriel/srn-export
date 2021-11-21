@@ -50,7 +50,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
       const x = r * Math.cos(theta);
       const y = r * Math.sin(theta);
 
-      const scaleSpeed = variateNormal(1.02, 1.04, 0.03, prando);
+      const scaleSpeed = variateNormal(1.03, 1.05, 0.03, prando);
 
       // scale is exponential with scaleSpeed as exponent base
       // scale = scaleSpeed ** (explosionTimeSeconds * progressNormalized)
@@ -90,7 +90,7 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     const nodes: NodeParams[] = [];
     for (let i = 0; i < outerWaveCount; i++) {
       const node = genNode(
-        radius,
+        radius / 1.5,
         0.04,
         0.5 * explosionTimeSeconds,
         prando,

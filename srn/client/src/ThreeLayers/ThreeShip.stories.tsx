@@ -18,6 +18,14 @@ export default {
         step: 0.1,
       },
     },
+    rotation: {
+      control: {
+        type: 'range',
+        min: -Math.PI,
+        max: Math.PI,
+        step: 0.01,
+      },
+    },
   },
 } as Meta;
 
@@ -27,7 +35,7 @@ const MainTemplate: Story = (args) => {
     setRevision((old) => old + 1);
   }, []);
   return (
-    <StoryCanvas withBackground zoom={10.0}>
+    <StoryCanvas withBackground zoom={15.0}>
       {!args.blow ? (
         <ThreeShip
           key={revision + JSON.stringify(args)}
@@ -36,9 +44,9 @@ const MainTemplate: Story = (args) => {
           hpNormalized={args.hpNormalized}
           position={VectorF(0, 0)}
           interactor={InteractorMap.ship({})}
-          radius={5.0}
+          radius={2.0}
           opacity={1.0}
-          rotation={0.0}
+          rotation={args.rotation}
           visible
           tractorTargetPosition={args.tractoring ? VectorF(25, 25) : null}
         />
@@ -46,10 +54,10 @@ const MainTemplate: Story = (args) => {
         <ThreeShipWreck
           key={revision + JSON.stringify(args)}
           color="red"
-          gid="1"
-          radius={5.0}
+          gid="11231231231232"
+          radius={2.0}
           opacity={1.0}
-          rotation={0.0}
+          rotation={args.rotation}
           position={VectorF(0, 0)}
         />
       )}
@@ -62,4 +70,5 @@ Main.args = {
   blow: false,
   hpNormalized: 1.0,
   tractoring: false,
+  rotation: 0.0,
 };

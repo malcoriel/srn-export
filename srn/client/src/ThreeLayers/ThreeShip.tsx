@@ -63,10 +63,14 @@ const ShipShape: React.FC<ShipShapeProps> = ({
     [radius]
   );
 
+  // that's a hack to shift model 'forward' a little bit due
+  // to shifted weight center
+  const shift = VectorF(0, radius / 5.0).turnCounterClockwise(rotation);
+
   return (
     <group position={posToThreePos(position.x, position.y, SHIP_FIXED_Z)}>
       <mesh
-        position={[0, 0, 0]}
+        position={[-shift.x, shift.y, 0]}
         scale={memoScale}
         rotation={[Math.PI, 0, rotation]}
         // @ts-ignore
