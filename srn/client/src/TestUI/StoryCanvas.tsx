@@ -1,6 +1,6 @@
-import React, { Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { Vector3 } from 'three';
+import React, { Suspense, useEffect, useState } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
+import { Vector3, AudioListener } from 'three';
 import { CAMERA_HEIGHT } from '../ThreeLayers/CameraControls';
 import { ThreeSpaceBackground } from '../ThreeLayers/ThreeSpaceBackground';
 
@@ -14,6 +14,18 @@ export const StoryCanvasInternals: React.FC = ({ children }) => {
       </group>
     </Suspense>
   );
+};
+
+export const CameraAttachedListener: React.FC = () => {
+  const { camera } = useThree();
+  const [listener] = useState(() => new AudioListener());
+  useEffect(() => {
+    camera.add(listener);
+    return () => {
+      camera.remove(listener);
+    };
+  }, [camera, listener]);
+  return null;
 };
 
 export const StoryCanvas: React.FC<{
@@ -46,6 +58,7 @@ export const StoryCanvas: React.FC<{
         ...styles,
       }}
     >
+      <CameraAttachedListener />
       <StoryCanvasInternals>
         {withBackground && (
           <ThreeSpaceBackground size={256 * scale} shaderShift={0} />

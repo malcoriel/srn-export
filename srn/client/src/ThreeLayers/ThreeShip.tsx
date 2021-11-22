@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { Group, Mesh, ShaderMaterial } from 'three';
 import * as THREE from 'three';
@@ -15,6 +15,7 @@ import { ThreeProgressbar } from './blocks/ThreeProgressbar';
 import { common, darkGreen, mint } from '../utils/palette';
 import { ThreeExplosion } from './blocks/ThreeExplosion';
 import Color from 'color';
+import { PositionalAudio } from '@react-three/drei';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -85,13 +86,42 @@ const ShipShape: React.FC<ShipShapeProps> = ({
 
 export type ThreeShipHuskProps = ShipShapeProps & { gid: string };
 
+export type UseSoundOnMountProps = {
+  path: string;
+  distance?: number;
+};
+
+const useSoundOnMount = ({ path, distance = 99999 }: UseSoundOnMountProps) => {
+  const soundRef = useRef<any>();
+
+  useEffect(() => {
+    if (!soundRef.current) {
+      return;
+    }
+    soundRef.current.play();
+  }, [soundRef]);
+  return (
+    <PositionalAudio
+      ref={soundRef}
+      url={`/resources/${path}`}
+      distance={distance}
+      loop={false}
+    />
+  );
+};
+
 export const ThreeShipWreck: React.FC<ThreeShipHuskProps> = React.memo(
   (props) => {
+    const sound = useSoundOnMount({
+      path: 'sfx/Explosion3.mp3',
+      distance: 3,
+    });
     return (
       <ShipShape
         {...props}
         color={new Color(props.color).darken(0.5).toString()}
       >
+        {sound}
         <ThreeExplosion
           seed={props.gid}
           position={[0, 0, props.radius + 10]}
