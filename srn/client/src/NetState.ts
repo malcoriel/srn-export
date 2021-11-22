@@ -477,21 +477,21 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
-        // 1. try to deal with out-of-order packets by rejecting
-        // the ones that are older than already received ones
-        // 2. However, when the state resets and ticks go back to 0,
-        // this protection will lead to a freeze. Hence, that check for big diff
-        if (
-          parsed.millis < this.lastReceivedServerTicks &&
-          Math.abs(parsed.millis - this.lastReceivedServerTicks) < 100000
-        ) {
-          console.log(
-            'drop out-of-order xcast_state',
-            parsed.millis,
-            this.lastReceivedServerTicks
-          );
-          return;
-        }
+        // // 1. try to deal with out-of-order packets by rejecting
+        // // the ones that are older than already received ones
+        // // 2. However, when the state resets and ticks go back to 0,
+        // // this protection will lead to a freeze. Hence, that check for big diff
+        // if (
+        //   parsed.millis < this.lastReceivedServerTicks &&
+        //
+        // ) {
+        //   console.log(
+        //     'drop out-of-order xcast_state',
+        //     parsed.millis,
+        //     this.lastReceivedServerTicks
+        //   );
+        //   return;
+        // }
         this.lastReceivedServerTicks = parsed.millis;
 
         this.desync = parsed.millis - this.state.millis;

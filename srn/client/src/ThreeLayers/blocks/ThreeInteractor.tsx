@@ -172,7 +172,9 @@ const ThreeInteractorImpl = ({
     return false;
   };
   const onContextMenu = (e: ThreeEvent<MouseEvent>) => {
-    e.preventDefault();
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
     setMenuShown(!menuShown);
     return false;
   };
