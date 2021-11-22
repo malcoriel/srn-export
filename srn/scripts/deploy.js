@@ -44,6 +44,9 @@ const doBuildServer = async () => {
   console.log('cleaning target...');
   await fs.remove('server/target/x86_64-unknown-linux-musl');
 
+  console.log('fixing permissions...');
+  await spawnWatched('chmod 777 server/Cargo.lock');
+
   console.log('building the binary...');
   await spawnWatched('docker rm -f rust-builder || true');
   await spawnWatched(
@@ -220,6 +223,7 @@ const tryAndLog = (fn) => () => {
     fn();
   } catch (e) {
     console.error(e);
+    process.exit(1);
   }
 };
 
