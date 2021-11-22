@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.7.5 (2021-11-23)
+### New
+* Explosion sounds!
+
+### Fixes
+* Fixed a client freeze bug that happened either after rejoining a room or finishing pirate mode
+
 ## Version 0.7.4 (2021-11-21)
 ### Fixes
 * Improved the ship model positioning to make model weight center closer to the object center
