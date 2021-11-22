@@ -1,0 +1,1 @@
+for i in *.wav; do test -f "${i%.wav}.mp3" || lame -b 320 -h "${i}" "${i%.wav}.mp3"; done
