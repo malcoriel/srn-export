@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
-import { Group, Mesh, ShaderMaterial } from 'three';
 import * as THREE from 'three';
+import { Mesh, ShaderMaterial } from 'three';
 import Vector, { VectorF } from '../utils/Vector';
 import * as jellyfish from './shaders/jellyfish';
 import { shallowEqual } from '../utils/shallowCompare';
@@ -12,10 +12,10 @@ import {
 } from './blocks/ThreeInteractor';
 import { posToThreePos, Vector3Arr, vecToThreePos } from './util';
 import { ThreeProgressbar } from './blocks/ThreeProgressbar';
-import { common, darkGreen, mint } from '../utils/palette';
-import { ThreeExplosion } from './blocks/ThreeExplosion';
+import { common, darkGreen } from '../utils/palette';
+import { genExplosionSfxPath, ThreeExplosion } from './blocks/ThreeExplosion';
 import Color from 'color';
-import { PositionalAudio } from '@react-three/drei';
+import { useSoundOnMount } from './UseSoundOnMount';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -91,29 +91,14 @@ export type UseSoundOnMountProps = {
   distance?: number;
 };
 
-const useSoundOnMount = ({ path, distance = 99999 }: UseSoundOnMountProps) => {
-  const soundRef = useRef<any>();
-
-  useEffect(() => {
-    if (!soundRef.current) {
-      return;
-    }
-    soundRef.current.play();
-  }, [soundRef]);
-  return (
-    <PositionalAudio
-      ref={soundRef}
-      url={`/resources/${path}`}
-      distance={distance}
-      loop={false}
-    />
-  );
-};
-
 export const ThreeShipWreck: React.FC<ThreeShipHuskProps> = React.memo(
   (props) => {
+    const explosionPath = useMemo(() => {
+      return genExplosionSfxPath(props.gid + new Date().toString());
+    }, [props.gid]);
+
     const sound = useSoundOnMount({
-      path: 'sfx/Explosion3.mp3',
+      path: explosionPath,
       distance: 3,
     });
     return (

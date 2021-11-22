@@ -164,3 +164,16 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
     </group>
   );
 };
+
+export const explosionSfx = [
+  'sfx/Explosion3.mp3',
+  'sfx/Explosion6.mp3',
+  'sfx/Explosion8.mp3',
+  'sfx/Explosion9.mp3',
+];
+
+export const genExplosionSfxPath = (seed: string) => {
+  const prando = new Prando(seed);
+  const i = prando.nextInt(0, explosionSfx.length - 1);
+  return explosionSfx[i];
+};
