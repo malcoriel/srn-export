@@ -165,12 +165,14 @@ export const ThreeExplosion: React.FC<ThreeExplosionProps> = ({
   );
 };
 
-export const explosionSfx = [
+const explosionSfx = [
   'sfx/Explosion3.mp3',
   'sfx/Explosion6.mp3',
   'sfx/Explosion8.mp3',
   'sfx/Explosion9.mp3',
 ];
+
+export const explosionSfxFull = explosionSfx.map((p) => `resources/${p}`);
 
 export const genExplosionSfxPath = (seed: string) => {
   const prando = new Prando(seed);

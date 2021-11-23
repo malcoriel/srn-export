@@ -12,7 +12,7 @@ import { NetworkStatus } from './HtmlLayers/NetworkStatus';
 import { Measure, Perf, StatsPanel } from './HtmlLayers/Perf';
 import { StartMenu } from './HtmlLayers/StartMenu';
 import { LeaderboardWindow } from './HtmlLayers/LeaderboardWindow';
-import { ThreeLayer } from './ThreeLayers/ThreeLayer';
+import { preloadPaths, ThreeLayer, usePreload } from './ThreeLayers/ThreeLayer';
 import { KonvaOverlay } from './KonvaLayers/KonvaOverlay';
 import { HelpWindow } from './HtmlLayers/HelpWindow';
 import './HtmlLayers/Panel.scss';

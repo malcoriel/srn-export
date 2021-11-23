@@ -1,7 +1,7 @@
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Vector3 } from 'three';
-import React, { Suspense } from 'react';
+import { FileLoader, Vector3 } from 'three';
+import React, { Suspense, useEffect } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
 import { max_x, min_x } from '../world';
@@ -29,6 +29,8 @@ import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 //import { ThreeWormhole } from './ThreeWormhole';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { seedToNumber, threeVectorToVector } from './util';
+import pMap from 'p-map';
+import { explosionSfxFull } from './blocks/ThreeExplosion';
 
 THREE.Cache.enabled = true;
 
@@ -48,6 +50,73 @@ export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
   return viewPortMaxDimension * SAFE_ENLARGE_BACKGROUND * cameraZoomFactor;
 };
 
+const promisify = <TArgs extends Array<any>, TRes>(
+  fn: (...args: TArgs) => TRes,
+  thisArg?: any,
+  threeLoaderInterface?: boolean
+) => (...args: TArgs) =>
+  new Promise<TRes>((res, rej) => {
+    const nodeStyleCallback = (err: any, ...results: any[]) => {
+      if (err) {
+        rej(err);
+        return;
+      }
+      if (results.length && results.length === 1) {
+        res(results[0] as TRes);
+      } else {
+        res((results as any) as TRes);
+      }
+    };
+    const threeStyleCallbacks = [
+      // onLoad
+      (data: any) => {
+        res(data);
+      },
+      // onProgress
+      undefined,
+      (error: any) => {
+        rej(error);
+      },
+    ];
+    if (!threeLoaderInterface) {
+      args.push(nodeStyleCallback);
+    } else {
+      args.push(...threeStyleCallbacks);
+    }
+    fn.apply(thisArg, args);
+  });
+
+export const PRELOAD_CONCURRENCY = 4;
+
+export const usePreload = (paths: string[]) => {
+  useEffect(() => {
+    (async () => {
+      THREE.Cache.enabled = true;
+      const loader = new FileLoader();
+      const pLoad = promisify(loader.load, loader, true);
+      await pMap(
+        paths,
+        async (path) => {
+          try {
+            console.log(`preloading ${path}...`);
+            await pLoad(path);
+            console.log(`done preloading ${path}.`);
+          } catch (e: any) {
+            let atStack = '';
+            if (e.stack) {
+              atStack += ` at ${e.stack}`;
+            }
+            console.error(`error preloading ${path}: ${e}${atStack}`);
+          }
+        },
+        { concurrency: PRELOAD_CONCURRENCY }
+      );
+    })();
+  }, [paths]);
+};
+
+export const preloadPaths = [...explosionSfxFull];
+
 export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -56,6 +125,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const showCoords = shown;
 
   useNSForceChange('ThreeLayer', true);
+  usePreload(preloadPaths);
 
   const hoverOnGrabbable = useStore((state) => state.showTractorCircle);
 
