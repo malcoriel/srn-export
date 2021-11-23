@@ -74,9 +74,6 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
       {/* green is second  coord (y) */}
       {/* blue is third coord (z) */}
       <Suspense fallback={<mesh />}>
-        <Preloader />
-      </Suspense>
-      <Suspense fallback={<mesh />}>
         <group
           visible={visible}
           onClick={(evt: ThreeEvent<MouseEvent>) => {

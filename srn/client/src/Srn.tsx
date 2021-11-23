@@ -38,7 +38,15 @@ import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 import { LongActionsDisplay } from './HtmlLayers/LongActionsDisplay';
 import { StartMenuBackground } from './StartMenuBackground';
 import { StateStoreSyncer } from './StateStoreSyncer';
-import { preloadPaths, usePreload } from './ThreeLayers/Preload';
+import {
+  Preloader,
+  preloadPaths,
+  SuspendedHtmlPreloader,
+  usePreload,
+} from './ThreeLayers/Preload';
+import { useLoader } from '@react-three/fiber';
+import { AudioLoader } from 'three';
+import { explosionSfxFull } from './ThreeLayers/blocks/ThreeExplosion';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -205,6 +213,7 @@ const Srn = () => {
   return (
     <>
       <Suspense fallback={<div />}>
+        <SuspendedHtmlPreloader />
         <div
           className="main-container"
           style={{
@@ -216,16 +225,7 @@ const Srn = () => {
           {playing && (
             <>
               <ThreeLayer visible={!resourcesAreLoading} />
-              {resourcesAreLoading && (
-                <div className="three-loader">
-                  <div className="loader ball-clip-rotate-multiple">
-                    <div />
-                    <div />
-                  </div>
-                  <div className="text">Loading: {formattedProgress}</div>
-                </div>
-              )}
-              {!resourcesAreLoading && (
+              {playing && (
                 <Stage
                   width={size.width_px}
                   height={size.height_px}
@@ -234,7 +234,7 @@ const Srn = () => {
                   <KonvaOverlay />
                 </Stage>
               )}
-              {!resourcesAreLoading && (
+              {playing && (
                 <>
                   <MinimapPanel />
                   <ShipControls />

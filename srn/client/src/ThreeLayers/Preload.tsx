@@ -1,6 +1,6 @@
 import { Preload } from '@react-three/drei';
-import { useLoader } from '@react-three/fiber';
-import React, { useEffect } from 'react';
+import { Canvas, useLoader } from '@react-three/fiber';
+import React, { Suspense, useEffect } from 'react';
 import * as THREE from 'three';
 import { AudioLoader, FileLoader } from 'three';
 import { explosionSfxFull } from './blocks/ThreeExplosion';
@@ -75,6 +75,25 @@ export const Preloader: React.FC = () => {
   // use drei's eager loading
   return <Preload all />;
 };
+
+export const SuspendedHtmlPreloader: React.FC = () => {
+  return (
+    <Canvas
+      style={{
+        visibility: 'hidden',
+        position: 'absolute',
+        zIndex: -100,
+        width: 1,
+        height: 1,
+      }}
+    >
+      <Suspense fallback={<mesh />}>
+        <Preloader />
+      </Suspense>
+    </Canvas>
+  );
+};
+
 export const PRELOAD_CONCURRENCY = 4;
 export type loaderFn = () => Promise<ArrayBuffer>;
 const makeLoaderFn = (path: string): loaderFn => {
