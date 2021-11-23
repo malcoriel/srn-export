@@ -1,4 +1,10 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, {
+  MutableRefObject,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.scss';
@@ -127,6 +133,7 @@ const Srn = () => {
     ns.disconnecting = false;
     setMode(mode);
     ns.init(mode);
+    ns.sendRoomJoin();
     ns.on('disconnect', () => {
       setPlaying(false);
       setMenu(true);
@@ -184,14 +191,6 @@ const Srn = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [resourcesAreLoading, formattedProgress] = useResourcesLoading(() => {
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    if (ns) {
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      ns.sendRoomJoin();
-    }
-  });
-
   const quit = () => {
     const ns = NetState.get();
     if (!ns) return;
@@ -210,11 +209,18 @@ const Srn = () => {
     }
   }
 
+  const mainContainerRef = useRef<HTMLElement>(
+    null
+  ) as MutableRefObject<HTMLElement>;
+
   return (
     <>
       <Suspense fallback={<div />}>
         <SuspendedHtmlPreloader />
         <div
+          id="main-container"
+          // @ts-ignore
+          ref={mainContainerRef}
           className="main-container"
           style={{
             position: 'relative',
@@ -224,7 +230,7 @@ const Srn = () => {
         >
           {playing && (
             <>
-              <ThreeLayer visible={!resourcesAreLoading} />
+              <ThreeLayer visible mainContainerRef={mainContainerRef} />
               {playing && (
                 <Stage
                   width={size.width_px}

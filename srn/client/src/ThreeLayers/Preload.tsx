@@ -1,9 +1,10 @@
-import { Preload } from '@react-three/drei';
+import { Billboard, Html, Preload } from '@react-three/drei';
 import { Canvas, useLoader } from '@react-three/fiber';
-import React, { Suspense, useEffect } from 'react';
+import React, { MutableRefObject, Suspense, useEffect } from 'react';
 import * as THREE from 'three';
 import { AudioLoader, FileLoader } from 'three';
 import { explosionSfxFull } from './blocks/ThreeExplosion';
+import { useResourcesLoading } from '../utils/useResourcesLoading';
 
 THREE.Cache.enabled = true;
 
@@ -91,6 +92,35 @@ export const SuspendedHtmlPreloader: React.FC = () => {
         <Preloader />
       </Suspense>
     </Canvas>
+  );
+};
+
+export const SuspendedThreeLoader: React.FC<{
+  portal: MutableRefObject<HTMLElement>;
+}> = ({ portal }) => {
+  const [
+    resourcesAreLoading,
+    formattedProgress,
+  ] = useResourcesLoading(() => {});
+  if (!portal.current) {
+    return null;
+  }
+  console.log({ portal });
+  return (
+    <Suspense fallback={<mesh />}>
+      <Preloader />
+      {true && (
+        <Html portal={portal}>
+          <div className="three-loader">
+            <div className="loader ball-clip-rotate-multiple">
+              <div />
+              <div />
+            </div>
+            <div className="text">Loading: {formattedProgress}</div>
+          </div>
+        </Html>
+      )}
+    </Suspense>
   );
 };
 

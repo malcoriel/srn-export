@@ -1,7 +1,7 @@
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Vector3 } from 'three';
-import React, { Suspense } from 'react';
+import React, { MutableRefObject, Suspense } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
 import { max_x, min_x } from '../world';
@@ -28,7 +28,8 @@ import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { seedToNumber, threeVectorToVector } from './util';
-import { Preloader } from './Preload';
+import { Preloader, SuspendedThreeLoader } from './Preload';
+import { Billboard, Html } from '@react-three/drei';
 
 THREE.Cache.enabled = true;
 
@@ -44,7 +45,10 @@ export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
   return viewPortMaxDimension * SAFE_ENLARGE_BACKGROUND * cameraZoomFactor;
 };
 
-export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
+export const ThreeLayer: React.FC<{
+  visible: boolean;
+  mainContainerRef: MutableRefObject<HTMLElement>;
+}> = ({ visible, mainContainerRef }) => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state, visMap, visualState, indexes } = ns;
@@ -74,6 +78,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
       {/* green is second  coord (y) */}
       {/* blue is third coord (z) */}
       <Suspense fallback={<mesh />}>
+        <SuspendedThreeLoader portal={mainContainerRef} />
         <group
           visible={visible}
           onClick={(evt: ThreeEvent<MouseEvent>) => {
