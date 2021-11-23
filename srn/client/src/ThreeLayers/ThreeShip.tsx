@@ -104,7 +104,7 @@ export const ThreeShipWreck: React.FC<ThreeShipHuskProps> = React.memo(
     return (
       <ShipShape
         {...props}
-        color={new Color(props.color).darken(0.5).toString()}
+        color={new Color(props.color).darken(0.5).hex().toString()}
       >
         {sound}
         <ThreeExplosion

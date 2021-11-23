@@ -1,6 +1,6 @@
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
-import { FileLoader, Vector3 } from 'three';
+import { AudioLoader, FileLoader, Loader, Vector3 } from 'three';
 import React, { Suspense, useEffect } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
@@ -88,29 +88,43 @@ const promisify = <TArgs extends Array<any>, TRes>(
 
 export const PRELOAD_CONCURRENCY = 4;
 
+// @ts-ignore
+window.threeCache = THREE.Cache;
+
+export type loaderFn = () => Promise<ArrayBuffer>;
+
+const makeLoaderFn = (path: string): loaderFn => {
+  return async () => {
+    const loader = new FileLoader();
+    loader.setMimeType(navigator.mimeTypes['application/octet-stream' as any]);
+    const content = await loader.loadAsync(path);
+    return content as ArrayBuffer;
+  };
+};
+
 export const usePreload = (paths: string[]) => {
   useEffect(() => {
     (async () => {
       THREE.Cache.enabled = true;
-      const loader = new FileLoader();
-      const pLoad = promisify(loader.load, loader, true);
-      await pMap(
-        paths,
-        async (path) => {
-          try {
-            console.log(`preloading ${path}...`);
-            await pLoad(path);
-            console.log(`done preloading ${path}.`);
-          } catch (e: any) {
-            let atStack = '';
-            if (e.stack) {
-              atStack += ` at ${e.stack}`;
-            }
-            console.error(`error preloading ${path}: ${e}${atStack}`);
-          }
-        },
-        { concurrency: PRELOAD_CONCURRENCY }
-      );
+      // await pMap(
+      //   paths,
+      //   async (path) => {
+      //     try {
+      //       const loader = makeLoaderFn(path);
+      //       console.log(`preloading ${path}...`);
+      //       const content = await loader();
+      //       console.log(`done preloading ${path}.`);
+      //       THREE.Cache.add(`/${path}`, content);
+      //     } catch (e: any) {
+      //       let atStack = '';
+      //       if (e.stack) {
+      //         atStack += ` at ${e.stack}`;
+      //       }
+      //       console.error(`error preloading ${path}: ${e}${atStack}`);
+      //     }
+      //   },
+      //   { concurrency: PRELOAD_CONCURRENCY }
+      // );
     })();
   }, [paths]);
 };
