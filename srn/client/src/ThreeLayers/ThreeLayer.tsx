@@ -1,7 +1,7 @@
-import { Canvas, useLoader } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
-import { AudioLoader, FileLoader, Loader, Vector3 } from 'three';
-import React, { Suspense, useEffect } from 'react';
+import { Vector3 } from 'three';
+import React, { Suspense } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
 import { max_x, min_x } from '../world';
@@ -26,17 +26,11 @@ import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
 import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
-//import { ThreeWormhole } from './ThreeWormhole';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { seedToNumber, threeVectorToVector } from './util';
-import pMap from 'p-map';
-import { explosionSfxFull } from './blocks/ThreeExplosion';
+import { Preloader } from './Preload';
 
 THREE.Cache.enabled = true;
-
-const ResourceLoader = () => {
-  return <primitive object={{}} />;
-};
 
 const SAFE_ENLARGE_BACKGROUND = 5.0;
 
@@ -50,87 +44,6 @@ export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
   return viewPortMaxDimension * SAFE_ENLARGE_BACKGROUND * cameraZoomFactor;
 };
 
-const promisify = <TArgs extends Array<any>, TRes>(
-  fn: (...args: TArgs) => TRes,
-  thisArg?: any,
-  threeLoaderInterface?: boolean
-) => (...args: TArgs) =>
-  new Promise<TRes>((res, rej) => {
-    const nodeStyleCallback = (err: any, ...results: any[]) => {
-      if (err) {
-        rej(err);
-        return;
-      }
-      if (results.length && results.length === 1) {
-        res(results[0] as TRes);
-      } else {
-        res((results as any) as TRes);
-      }
-    };
-    const threeStyleCallbacks = [
-      // onLoad
-      (data: any) => {
-        res(data);
-      },
-      // onProgress
-      undefined,
-      (error: any) => {
-        rej(error);
-      },
-    ];
-    if (!threeLoaderInterface) {
-      args.push(nodeStyleCallback);
-    } else {
-      args.push(...threeStyleCallbacks);
-    }
-    fn.apply(thisArg, args);
-  });
-
-export const PRELOAD_CONCURRENCY = 4;
-
-// @ts-ignore
-window.threeCache = THREE.Cache;
-
-export type loaderFn = () => Promise<ArrayBuffer>;
-
-const makeLoaderFn = (path: string): loaderFn => {
-  return async () => {
-    const loader = new FileLoader();
-    loader.setMimeType(navigator.mimeTypes['application/octet-stream' as any]);
-    const content = await loader.loadAsync(path);
-    return content as ArrayBuffer;
-  };
-};
-
-export const usePreload = (paths: string[]) => {
-  useEffect(() => {
-    (async () => {
-      THREE.Cache.enabled = true;
-      // await pMap(
-      //   paths,
-      //   async (path) => {
-      //     try {
-      //       const loader = makeLoaderFn(path);
-      //       console.log(`preloading ${path}...`);
-      //       const content = await loader();
-      //       console.log(`done preloading ${path}.`);
-      //       THREE.Cache.add(`/${path}`, content);
-      //     } catch (e: any) {
-      //       let atStack = '';
-      //       if (e.stack) {
-      //         atStack += ` at ${e.stack}`;
-      //       }
-      //       console.error(`error preloading ${path}: ${e}${atStack}`);
-      //     }
-      //   },
-      //   { concurrency: PRELOAD_CONCURRENCY }
-      // );
-    })();
-  }, [paths]);
-};
-
-export const preloadPaths = [...explosionSfxFull];
-
 export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const ns = NetState.get();
   if (!ns) return null;
@@ -139,7 +52,6 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
   const showCoords = shown;
 
   useNSForceChange('ThreeLayer', true);
-  usePreload(preloadPaths);
 
   const hoverOnGrabbable = useStore((state) => state.showTractorCircle);
 
@@ -162,7 +74,7 @@ export const ThreeLayer: React.FC<{ visible: boolean }> = ({ visible }) => {
       {/* green is second  coord (y) */}
       {/* blue is third coord (z) */}
       <Suspense fallback={<mesh />}>
-        <ResourceLoader />
+        <Preloader />
       </Suspense>
       <Suspense fallback={<mesh />}>
         <group

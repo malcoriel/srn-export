@@ -12,7 +12,7 @@ import { NetworkStatus } from './HtmlLayers/NetworkStatus';
 import { Measure, Perf, StatsPanel } from './HtmlLayers/Perf';
 import { StartMenu } from './HtmlLayers/StartMenu';
 import { LeaderboardWindow } from './HtmlLayers/LeaderboardWindow';
-import { preloadPaths, ThreeLayer, usePreload } from './ThreeLayers/ThreeLayer';
+import { ThreeLayer } from './ThreeLayers/ThreeLayer';
 import { KonvaOverlay } from './KonvaLayers/KonvaOverlay';
 import { HelpWindow } from './HtmlLayers/HelpWindow';
 import './HtmlLayers/Panel.scss';
@@ -38,6 +38,7 @@ import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 import { LongActionsDisplay } from './HtmlLayers/LongActionsDisplay';
 import { StartMenuBackground } from './StartMenuBackground';
 import { StateStoreSyncer } from './StateStoreSyncer';
+import { preloadPaths, usePreload } from './ThreeLayers/Preload';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;

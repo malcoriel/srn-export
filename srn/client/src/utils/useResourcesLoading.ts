@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useProgress } from '@react-three/drei';
+import * as THREE from 'three';
 
 const expectedResources = [
   // minimal set of resources to load the game
@@ -18,7 +19,10 @@ export const useResourcesLoading = (onDone: () => void) => {
     missingResources.delete(res);
   }
   const isLoading = Math.abs(threeLoaderProgress - 100) > 1e-9;
-  const areLoading = isLoading || missingResources.size > 0;
+  let areLoading = isLoading || missingResources.size > 0;
+  if (THREE.Cache.files[item]) {
+    areLoading = false;
+  }
   const formattedProgress = `${Math.floor((loaded / total) * 100 || 0).toFixed(
     0
   )}% (${loaded}/${total})`;

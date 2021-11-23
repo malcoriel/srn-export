@@ -70,6 +70,7 @@ export const ThreeShipsLayer: React.FC<{
       {wrecks.map((w) => {
         return (
           <ThreeShipWreck
+            key={w.id}
             color={w.color}
             gid={w.id}
             opacity={1.0}

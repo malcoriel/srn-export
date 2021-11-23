@@ -172,7 +172,7 @@ const explosionSfx = [
   'sfx/Explosion9.mp3',
 ];
 
-export const explosionSfxFull = explosionSfx.map((p) => `resources/${p}`);
+export const explosionSfxFull = explosionSfx.map((p) => `/resources/${p}`);
 
 export const genExplosionSfxPath = (seed: string) => {
   const prando = new Prando(seed);
