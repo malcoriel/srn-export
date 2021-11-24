@@ -112,7 +112,6 @@ export const SuspendedThreeLoader: React.FC<{ playing: boolean }> = React.memo(
       basicResourcesLoaded,
     ] = useResourcesLoading();
 
-    console.log({ resourcesAreLoading, basicResourcesLoaded });
     const mountpoint = document.getElementById('main-container');
     if (!mountpoint) return null;
     return (
