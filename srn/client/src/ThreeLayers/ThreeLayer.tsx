@@ -28,8 +28,7 @@ import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { seedToNumber, threeVectorToVector } from './util';
-import { Preloader, SuspendedThreeLoader } from './Preload';
-import { Billboard, Html } from '@react-three/drei';
+import { SuspendedThreeLoader } from './Preload';
 
 THREE.Cache.enabled = true;
 
@@ -47,8 +46,8 @@ export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
 
 export const ThreeLayer: React.FC<{
   visible: boolean;
-  mainContainerRef: MutableRefObject<HTMLElement>;
-}> = ({ visible, mainContainerRef }) => {
+  playing: boolean;
+}> = ({ visible, playing }) => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state, visMap, visualState, indexes } = ns;
@@ -78,7 +77,7 @@ export const ThreeLayer: React.FC<{
       {/* green is second  coord (y) */}
       {/* blue is third coord (z) */}
       <Suspense fallback={<mesh />}>
-        <SuspendedThreeLoader portal={mainContainerRef} />
+        <SuspendedThreeLoader playing={playing} />
         <group
           visible={visible}
           onClick={(evt: ThreeEvent<MouseEvent>) => {

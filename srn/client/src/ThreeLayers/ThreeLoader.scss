@@ -1,5 +1,7 @@
+@import "../utils/palette";
 .three-loader {
   color: white;
+  background: black;
   height: 100%;
   width: 100%;
   position: absolute;
@@ -15,5 +17,35 @@
   .text {
     padding-top: 40px;
     text-align: center;
+  }
+}
+
+.three-loader.playing {
+  background: transparent;
+  right: 0;
+  top: 0;
+  left: auto;
+  width: 30px;
+  height: 30px;
+  padding-right: 4px;
+
+  .loader {
+    transform: scale(0.5);
+    :first-child {
+      border-color: $teal;
+      border-bottom-color: transparent;
+      border-top-color: transparent;
+    }
+    :nth-child(2) {
+      border-color: $teal;
+      border-right-color: transparent;
+      border-left-color: transparent;
+    }
+    margin-top: 50%;
+    margin-left: 50%;
+  }
+
+  .text {
+    display: none;
   }
 }

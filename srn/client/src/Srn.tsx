@@ -39,20 +39,11 @@ import { GameMode } from './world';
 import { SandboxQuickMenu } from './HtmlLayers/SandboxQuickMenu';
 import { TradeWindow } from './HtmlLayers/TradeWindow';
 import { PromptWindow } from './HtmlLayers/PromptWindow';
-import { useResourcesLoading } from './utils/useResourcesLoading';
 import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 import { LongActionsDisplay } from './HtmlLayers/LongActionsDisplay';
 import { StartMenuBackground } from './StartMenuBackground';
 import { StateStoreSyncer } from './StateStoreSyncer';
-import {
-  Preloader,
-  preloadPaths,
-  SuspendedHtmlPreloader,
-  usePreload,
-} from './ThreeLayers/Preload';
-import { useLoader } from '@react-three/fiber';
-import { AudioLoader } from 'three';
-import { explosionSfxFull } from './ThreeLayers/blocks/ThreeExplosion';
+import { SuspendedHtmlPreloader } from './ThreeLayers/Preload';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -209,18 +200,12 @@ const Srn = () => {
     }
   }
 
-  const mainContainerRef = useRef<HTMLElement>(
-    null
-  ) as MutableRefObject<HTMLElement>;
-
   return (
     <>
       <Suspense fallback={<div />}>
         <SuspendedHtmlPreloader />
         <div
           id="main-container"
-          // @ts-ignore
-          ref={mainContainerRef}
           className="main-container"
           style={{
             position: 'relative',
@@ -230,7 +215,7 @@ const Srn = () => {
         >
           {playing && (
             <>
-              <ThreeLayer visible mainContainerRef={mainContainerRef} />
+              <ThreeLayer visible playing={playing} />
               {playing && (
                 <Stage
                   width={size.width_px}

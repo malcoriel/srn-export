@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import { AudioLoader, FileLoader } from 'three';
 import { explosionSfxFull } from './blocks/ThreeExplosion';
 import { useResourcesLoading } from '../utils/useResourcesLoading';
+import ReactDOM from 'react-dom';
+import classNames from 'classnames';
 
 THREE.Cache.enabled = true;
 
@@ -95,34 +97,41 @@ export const SuspendedHtmlPreloader: React.FC = () => {
   );
 };
 
-export const SuspendedThreeLoader: React.FC<{
-  portal: MutableRefObject<HTMLElement>;
-}> = ({ portal }) => {
-  const [
-    resourcesAreLoading,
-    formattedProgress,
-  ] = useResourcesLoading(() => {});
-  if (!portal.current) {
-    return null;
+export const SuspendedThreeLoader: React.FC<{ playing: boolean }> = React.memo(
+  ({ playing }) => {
+    const [
+      resourcesAreLoading,
+      formattedProgress,
+    ] = useResourcesLoading(() => {});
+
+    const mountpoint = document.getElementById('main-container');
+    if (!mountpoint) return null;
+    return (
+      <Suspense fallback={<mesh />}>
+        <Preloader />
+        {resourcesAreLoading && (
+          <Html>
+            {ReactDOM.createPortal(
+              <div
+                className={classNames({
+                  'three-loader': true,
+                  playing,
+                })}
+              >
+                <div className="loader ball-clip-rotate-multiple">
+                  <div />
+                  <div />
+                </div>
+                <div className="text">Loading: {formattedProgress}</div>
+              </div>,
+              mountpoint
+            )}
+          </Html>
+        )}
+      </Suspense>
+    );
   }
-  console.log({ portal });
-  return (
-    <Suspense fallback={<mesh />}>
-      <Preloader />
-      {true && (
-        <Html portal={portal}>
-          <div className="three-loader">
-            <div className="loader ball-clip-rotate-multiple">
-              <div />
-              <div />
-            </div>
-            <div className="text">Loading: {formattedProgress}</div>
-          </div>
-        </Html>
-      )}
-    </Suspense>
-  );
-};
+);
 
 export const PRELOAD_CONCURRENCY = 4;
 export type loaderFn = () => Promise<ArrayBuffer>;
