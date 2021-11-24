@@ -2,11 +2,13 @@ import { Billboard, Html, Preload } from '@react-three/drei';
 import { Canvas, useLoader } from '@react-three/fiber';
 import React, { MutableRefObject, Suspense, useEffect } from 'react';
 import * as THREE from 'three';
-import { AudioLoader, FileLoader } from 'three';
+import { AudioLoader, FileLoader, TextureLoader } from 'three';
 import { explosionSfxFull } from './blocks/ThreeExplosion';
 import { useResourcesLoading } from '../utils/useResourcesLoading';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+const STLLoader = require('three-stl-loader')(THREE);
 
 THREE.Cache.enabled = true;
 
@@ -73,6 +75,11 @@ const promisify = <TArgs extends Array<any>, TRes>(
 
 export const Preloader: React.FC = () => {
   useLoader(AudioLoader, explosionSfxFull);
+  useLoader(STLLoader, 'resources/models/ship.stl');
+  useLoader(TextureLoader, [
+    'resources/bowling_grass.jpg',
+    'resources/lavatile.png',
+  ]);
   // @ts-ignore
   window.threeCache = THREE.Cache;
   // use drei's eager loading
@@ -102,8 +109,10 @@ export const SuspendedThreeLoader: React.FC<{ playing: boolean }> = React.memo(
     const [
       resourcesAreLoading,
       formattedProgress,
-    ] = useResourcesLoading(() => {});
+      basicResourcesLoaded,
+    ] = useResourcesLoading();
 
+    console.log({ resourcesAreLoading, basicResourcesLoaded });
     const mountpoint = document.getElementById('main-container');
     if (!mountpoint) return null;
     return (
@@ -115,7 +124,7 @@ export const SuspendedThreeLoader: React.FC<{ playing: boolean }> = React.memo(
               <div
                 className={classNames({
                   'three-loader': true,
-                  playing,
+                  playing: basicResourcesLoaded,
                 })}
               >
                 <div className="loader ball-clip-rotate-multiple">
@@ -143,4 +152,9 @@ const makeLoaderFn = (path: string): loaderFn => {
     return content as ArrayBuffer;
   };
 };
-export const preloadPaths = [...explosionSfxFull];
+export const preloadPaths = [
+  'resources/models/ship.stl',
+  'resources/bowling_grass.jpg',
+  'resources/lavatile.png',
+  ...explosionSfxFull,
+];

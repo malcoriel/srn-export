@@ -1,16 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useProgress } from '@react-three/drei';
 import * as THREE from 'three';
+import { explosionSfxFull } from '../ThreeLayers/blocks/ThreeExplosion';
 
 const expectedResources = [
   // minimal set of resources to load the game
   'resources/models/ship.stl',
+  'resources/bowling_grass.jpg',
+  'resources/lavatile.png',
+  ...explosionSfxFull,
+  // all of these MUST be preloaded because if a map doesn't have the
+  // assets that use them, loading will be forever stuck
 ];
 
-export const useResourcesLoading = (onDone: () => void) => {
+export const useResourcesLoading = () => {
   const [attemptedResources, setAttemptedResources] = useState([] as string[]);
-  const [delayed, setDelayed] = useState(true);
-  const { progress: threeLoaderProgress, item, total, loaded } = useProgress();
+  const { item, total, loaded, active } = useProgress();
   useEffect(() => {
     setAttemptedResources((old) => [...old, item]);
   }, [item]);
@@ -18,24 +23,16 @@ export const useResourcesLoading = (onDone: () => void) => {
   for (const res of attemptedResources) {
     missingResources.delete(res);
   }
-  const isLoading = Math.abs(threeLoaderProgress - 100) > 1e-9;
-  let areLoading = isLoading || missingResources.size > 0;
+  const basicResourcesMissing = missingResources.size > 0;
+  let areLoading = active || basicResourcesMissing;
+  let cached = false;
   if (THREE.Cache.files[item]) {
+    cached = true;
     areLoading = false;
   }
   const formattedProgress = `${Math.floor((loaded / total) * 100 || 0).toFixed(
     0
   )}% (${loaded}/${total})`;
-  useEffect(() => {
-    if (!areLoading) {
-      // artificial delay to show 100%
-      setTimeout(() => {
-        setDelayed(false);
-        if (onDone) {
-          onDone();
-        }
-      }, 100);
-    }
-  }, [areLoading, onDone]);
-  return [areLoading || delayed, formattedProgress];
+  // console.log(areLoading, cached, item, formattedProgress);
+  return [areLoading, formattedProgress, !basicResourcesMissing];
 };
