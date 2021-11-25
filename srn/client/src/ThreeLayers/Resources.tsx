@@ -7,6 +7,8 @@ import { explosionSfxFull } from './blocks/ThreeExplosion';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { useNSForceChange } from '../NetState';
+import { useRepeatWrappedTextureLoader } from './ThreeStar';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -20,7 +22,50 @@ const allGltfModels = [
   'resources/models/asteroid.glb',
 ];
 
-const allTextures = ['resources/bowling_grass.jpg', 'resources/lavatile.png'];
+export const possibleGasGiantColors = [
+  '#0D57AC',
+  '#AE213D',
+  '#DE4C0A',
+  '#05680D',
+  '#01A6A0',
+  '#9D91A1',
+  '#AA6478',
+  '#4D56A5',
+  '#382C4F',
+  '#AC54AD',
+  '#8D948D',
+  '#A0B472',
+  '#C7B4A6',
+  '#1D334A',
+  '#5BBAA9',
+  '#008FA9',
+  '#ADBEA3',
+  '#F5B0A1',
+  '#A1A70B',
+  '#025669',
+  '#AE2460',
+  '#955802',
+  '#9C46B8',
+  '#DE019B',
+  '#DC890C',
+  '#F68923',
+  '#F4A261',
+  '#E76F51',
+  '#849324',
+  '#FD151B',
+  '#D8A47F',
+  '#EF8354',
+];
+
+const allTextures = [
+  'resources/bowling_grass.jpg',
+  'resources/lavatile.png',
+  ...possibleGasGiantColors.map((color) => {
+    const key = color.replace('#', '').toUpperCase();
+
+    return `resources/textures/gas-giants/${key}.png`;
+  }),
+];
 
 const preloadPaths = [...allStlModels, ...allTextures, ...allSounds];
 
@@ -85,6 +130,18 @@ function renderLoadingIndicator(miniMode: boolean, formattedProgress: string) {
   );
 }
 
+const useConnectingState = () => {
+  const {
+    state: { id },
+  } = useNSForceChange(
+    'ThreeLoadingIndicator',
+    false,
+    (prev, next) => prev.id !== next.id
+  ) || { state: {} };
+  const connecting = id === '';
+  return connecting;
+};
+
 export const ThreeLoadingIndicator: React.FC<{ playing: boolean }> = React.memo(
   ({ playing }) => {
     const [
@@ -92,16 +149,20 @@ export const ThreeLoadingIndicator: React.FC<{ playing: boolean }> = React.memo(
       formattedProgress,
       basicResourcesLoaded,
     ] = useResourcesLoading();
-
+    const connecting = useConnectingState();
     const mountpoint = document.getElementById('main-container');
     if (!mountpoint) return null;
+
+    console.log({ resourcesAreLoading, basicResourcesLoaded, connecting });
+
+    const text = resourcesAreLoading ? formattedProgress : 'Connecting...';
     return (
       <Suspense fallback={<mesh />}>
         <PreloaderImpl />
-        {resourcesAreLoading && (
+        {(resourcesAreLoading || connecting) && (
           <Html>
             {ReactDOM.createPortal(
-              renderLoadingIndicator(basicResourcesLoaded, formattedProgress),
+              renderLoadingIndicator(basicResourcesLoaded, text),
               mountpoint
             )}
           </Html>

@@ -21,8 +21,6 @@ import { Changelog } from './Changelog';
 import { PlayMenu } from './PlayMenu';
 import { GameMode } from '../../../world/pkg/world.extra';
 
-// to only skip menu once
-let firstTime = true;
 export const makePortraitPath = (portrait: string) =>
   `resources/chars/${portrait}.png`;
 
@@ -43,8 +41,6 @@ export const StartMenu: React.FC<{
     portrait,
     playing,
     setMenu,
-    skipMenu,
-    setSkipMenu,
     makeRandomPortrait,
     volume,
     setVolume,
@@ -60,8 +56,6 @@ export const StartMenu: React.FC<{
     setMenu: state.setMenu,
     playing: state.playing,
     portrait: state.portrait,
-    skipMenu: state.skipMenu,
-    setSkipMenu: state.setSkipMenu,
     makeRandomPortrait: state.makeRandomPortrait,
     volume: state.volume,
     setVolume: state.setVolume,
@@ -70,19 +64,12 @@ export const StartMenu: React.FC<{
 
   const hide = () => setMenu(false);
 
-  useEffect(() => {
-    if (skipMenu && firstTime) {
-      start(GameMode.CargoRush);
-      firstTime = false;
-    }
-  }, [skipMenu, start]);
-
   const [playMenu, setPlayMenu] = useState(false);
 
   const serverVersion = useSWR('/api/version', async () => api.getVersion());
 
   let serverVersionFormatted;
-  let serverIsDownOrDiffVersion = false;
+  let serverIsDownOrDiffVersion;
   if (serverVersion.error) {
     serverVersionFormatted = 'server is down';
     serverIsDownOrDiffVersion = true;
@@ -198,16 +185,6 @@ export const StartMenu: React.FC<{
                     onChange={setVolume}
                   />
                 </span>
-              </div>
-              <div className="autostart-toggle">
-                <Label>Skip menu</Label>
-
-                <Button onClick={() => setSkipMenu(true)} toggled={skipMenu}>
-                  ON
-                </Button>
-                <Button onClick={() => setSkipMenu(false)} toggled={!skipMenu}>
-                  OFF
-                </Button>
               </div>
             </>
           )}

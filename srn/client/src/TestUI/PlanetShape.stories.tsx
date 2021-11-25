@@ -4,8 +4,8 @@ import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
-import { possibleGasGiantColors } from '../ThreeLayers/ThreePlanetsLayer';
 import { gasGiantShaderRandomProps } from '../ThreeLayers/shaders/gasGiant';
+import { possibleGasGiantColors } from '../ThreeLayers/Resources';
 
 // noinspection JSUnusedGlobalSymbols
 export default {
