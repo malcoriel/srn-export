@@ -1,5 +1,5 @@
 import { PositionalAudio } from '@react-three/drei';
-import React from 'react';
+import React, { Suspense } from 'react';
 
 export type UseSoundOnMountProps = {
   path: string;
@@ -10,13 +10,13 @@ export const useSoundOnMount = ({
   distance = 99999,
 }: UseSoundOnMountProps) => {
   return (
-    <React.Suspense fallback={<mesh />}>
+    <Suspense fallback={<mesh />}>
       <PositionalAudio
         url={`/resources/${path}`}
         distance={distance}
         loop={false}
         autoplay
       />
-    </React.Suspense>
+    </Suspense>
   );
 };

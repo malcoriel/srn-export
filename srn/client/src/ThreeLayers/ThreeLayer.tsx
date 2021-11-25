@@ -28,7 +28,7 @@ import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { seedToNumber, threeVectorToVector } from './util';
-import { SuspendedThreeLoader } from './Preload';
+import { SuspendedThreeLoader } from './Resources';
 
 THREE.Cache.enabled = true;
 

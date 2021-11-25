@@ -5,7 +5,6 @@ import * as uuid from 'uuid';
 import { ThreeShip } from './ThreeShip';
 import { VectorF } from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
-import { Preloader } from './Preload';
 import { ThreeShipWreck } from './ThreeShipWreck';
 
 export default {
@@ -38,7 +37,6 @@ const MainTemplate: Story = (args) => {
   }, []);
   return (
     <StoryCanvas withBackground zoom={15.0}>
-      <Preloader />
       {!args.blow ? (
         <ThreeShip
           key={revision + JSON.stringify(args)}

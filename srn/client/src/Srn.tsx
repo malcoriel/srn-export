@@ -43,7 +43,7 @@ import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 import { LongActionsDisplay } from './HtmlLayers/LongActionsDisplay';
 import { StartMenuBackground } from './StartMenuBackground';
 import { StateStoreSyncer } from './StateStoreSyncer';
-import { SuspendedHtmlPreloader } from './ThreeLayers/Preload';
+import { SuspendedPreloader } from './ThreeLayers/Resources';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -203,7 +203,7 @@ const Srn = () => {
   return (
     <>
       <Suspense fallback={<div />}>
-        <SuspendedHtmlPreloader />
+        <SuspendedPreloader />
         <div
           id="main-container"
           className="main-container"
