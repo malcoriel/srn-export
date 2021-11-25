@@ -43,7 +43,10 @@ import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 import { LongActionsDisplay } from './HtmlLayers/LongActionsDisplay';
 import { StartMenuBackground } from './StartMenuBackground';
 import { StateStoreSyncer } from './StateStoreSyncer';
-import { SuspendedPreloader } from './ThreeLayers/Resources';
+import {
+  MenuLoadingIndicator,
+  SuspendedPreloader,
+} from './ThreeLayers/Resources';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -202,67 +205,66 @@ const Srn = () => {
 
   return (
     <>
-      <Suspense fallback={<div />}>
-        <SuspendedPreloader />
-        <div
-          id="main-container"
-          className="main-container"
-          style={{
-            position: 'relative',
-            width: size.width_px,
-            height: size.height_px,
-          }}
-        >
-          {playing && (
-            <>
-              <ThreeLayer visible playing={playing} />
-              {playing && (
-                <Stage
-                  width={size.width_px}
-                  height={size.height_px}
-                  style={{ pointerEvents: 'none' }}
-                >
-                  <KonvaOverlay />
-                </Stage>
-              )}
-              {playing && (
-                <>
-                  <MinimapPanel />
-                  <ShipControls />
-                  <NetworkStatus />
-                  <LeaderboardWindow />
-                  <DialogueWindow />
-                  <QuestWindow />
-                  <ChatWindow />
-                  <DebugStateLayer />
-                  <StatsPanel />
-                  <ControlPanel />
-                  <WindowContainers />
-                  <OverheadPanel />
-                  <HelpWindow />
-                  <InventoryWindow />
-                  <LongActionsDisplay />
-                  <StarMapWindow />
-                  <TradeWindow />
-                  <PromptWindow />
-                  <StateStoreSyncer />
-                  {playing && <SandboxQuickMenu />}
-                </>
-              )}
-            </>
-          )}
-          {musicEnabled && <MusicControls />}
-          {menu && (
-            <StartMenu
-              seed={seed}
-              locationSeed={locationSeed}
-              start={start}
-              quit={quit}
-            />
-          )}
-          {!playing && <StartMenuBackground />}
-        </div>
-      </Suspense>
+      <SuspendedPreloader />
+      <div
+        id="main-container"
+        className="main-container"
+        style={{
+          position: 'relative',
+          width: size.width_px,
+          height: size.height_px,
+        }}
+      >
+        {playing && (
+          <>
+            <ThreeLayer visible playing={playing} />
+            {playing && (
+              <Stage
+                width={size.width_px}
+                height={size.height_px}
+                style={{ pointerEvents: 'none' }}
+              >
+                <KonvaOverlay />
+              </Stage>
+            )}
+            {playing && (
+              <>
+                <MinimapPanel />
+                <ShipControls />
+                <NetworkStatus />
+                <LeaderboardWindow />
+                <DialogueWindow />
+                <QuestWindow />
+                <ChatWindow />
+                <DebugStateLayer />
+                <StatsPanel />
+                <ControlPanel />
+                <WindowContainers />
+                <OverheadPanel />
+                <HelpWindow />
+                <InventoryWindow />
+                <LongActionsDisplay />
+                <StarMapWindow />
+                <TradeWindow />
+                <PromptWindow />
+                <StateStoreSyncer />
+                {playing && <SandboxQuickMenu />}
+              </>
+            )}
+          </>
+        )}
+        {musicEnabled && <MusicControls />}
+        {menu && (
+          <StartMenu
+            seed={seed}
+            locationSeed={locationSeed}
+            start={start}
+            quit={quit}
+          />
+        )}
+        {!playing && <StartMenuBackground />}
+        {!playing && <MenuLoadingIndicator />}
+      </div>
     </>
   );
 };

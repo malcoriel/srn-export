@@ -6,6 +6,7 @@ import { AudioLoader, TextureLoader } from 'three';
 import { explosionSfxFull } from './blocks/ThreeExplosion';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -14,6 +15,10 @@ THREE.Cache.enabled = true;
 const allSounds = [...explosionSfxFull];
 
 const allStlModels = ['resources/models/ship.stl'];
+const allGltfModels = [
+  'resources/models/container.glb',
+  'resources/models/asteroid.glb',
+];
 
 const allTextures = ['resources/bowling_grass.jpg', 'resources/lavatile.png'];
 
@@ -23,9 +28,10 @@ const PreloaderImpl: React.FC = () => {
   useLoader(AudioLoader, allSounds);
   useLoader(STLLoader, allStlModels);
   useLoader(TextureLoader, allTextures);
+  useLoader(GLTFLoader, allGltfModels);
   // @ts-ignore
   window.threeCache = THREE.Cache;
-  // use drei's eager loading
+  // use drei's eager in-memory loading
   return <Preload all />;
 };
 
@@ -47,7 +53,7 @@ export const SuspendedPreloader: React.FC = () => {
   );
 };
 
-export const useResourcesLoading = () => {
+export const useResourcesLoading = (): [boolean, string, boolean] => {
   const { total, loaded, active } = useProgress();
   const missingResources = new Set(preloadPaths);
   for (const res of Object.keys(THREE.Cache.files)) {
@@ -61,7 +67,25 @@ export const useResourcesLoading = () => {
   )}% (${loaded}/${total})`;
   return [areLoading, formattedProgress, !basicResourcesMissing];
 };
-export const SuspendedThreeLoader: React.FC<{ playing: boolean }> = React.memo(
+
+function renderLoadingIndicator(miniMode: boolean, formattedProgress: string) {
+  return (
+    <div
+      className={classNames({
+        'three-loader': true,
+        playing: miniMode,
+      })}
+    >
+      <div className="loader ball-clip-rotate-multiple">
+        <div />
+        <div />
+      </div>
+      <div className="text">Loading: {formattedProgress}</div>
+    </div>
+  );
+}
+
+export const ThreeLoadingIndicator: React.FC<{ playing: boolean }> = React.memo(
   ({ playing }) => {
     const [
       resourcesAreLoading,
@@ -77,18 +101,7 @@ export const SuspendedThreeLoader: React.FC<{ playing: boolean }> = React.memo(
         {resourcesAreLoading && (
           <Html>
             {ReactDOM.createPortal(
-              <div
-                className={classNames({
-                  'three-loader': true,
-                  playing: basicResourcesLoaded,
-                })}
-              >
-                <div className="loader ball-clip-rotate-multiple">
-                  <div />
-                  <div />
-                </div>
-                <div className="text">Loading: {formattedProgress}</div>
-              </div>,
+              renderLoadingIndicator(basicResourcesLoaded, formattedProgress),
               mountpoint
             )}
           </Html>
@@ -97,3 +110,10 @@ export const SuspendedThreeLoader: React.FC<{ playing: boolean }> = React.memo(
     );
   }
 );
+
+export const MenuLoadingIndicator: React.FC = () => {
+  const [resourcesAreLoading] = useResourcesLoading();
+  const mountpoint = document.getElementById('main-container');
+  if (!mountpoint || !resourcesAreLoading) return null;
+  return ReactDOM.createPortal(renderLoadingIndicator(true, ''), mountpoint);
+};

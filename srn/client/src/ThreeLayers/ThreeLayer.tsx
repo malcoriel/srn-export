@@ -28,7 +28,7 @@ import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { seedToNumber, threeVectorToVector } from './util';
-import { SuspendedThreeLoader } from './Resources';
+import { ThreeLoadingIndicator } from './Resources';
 
 THREE.Cache.enabled = true;
 
@@ -77,7 +77,7 @@ export const ThreeLayer: React.FC<{
       {/* green is second  coord (y) */}
       {/* blue is third coord (z) */}
       <Suspense fallback={<mesh />}>
-        <SuspendedThreeLoader playing={playing} />
+        <ThreeLoadingIndicator playing={playing} />
         <group
           visible={visible}
           onClick={(evt: ThreeEvent<MouseEvent>) => {
