@@ -1,25 +1,22 @@
-import React, { useEffect, useRef } from 'react';
 import { PositionalAudio } from '@react-three/drei';
-import { UseSoundOnMountProps } from './ThreeShip';
+import React from 'react';
 
+export type UseSoundOnMountProps = {
+  path: string;
+  distance?: number;
+};
 export const useSoundOnMount = ({
   path,
   distance = 99999,
 }: UseSoundOnMountProps) => {
-  const soundRef = useRef<any>();
-
-  useEffect(() => {
-    if (!soundRef.current) {
-      return;
-    }
-    soundRef.current.play();
-  }, [soundRef]);
   return (
-    <PositionalAudio
-      ref={soundRef}
-      url={`/resources/${path}`}
-      distance={distance}
-      loop={false}
-    />
+    <React.Suspense fallback={<mesh />}>
+      <PositionalAudio
+        url={`/resources/${path}`}
+        distance={distance}
+        loop={false}
+        autoplay
+      />
+    </React.Suspense>
   );
 };

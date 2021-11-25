@@ -2,10 +2,11 @@ import { StoryCanvas } from '../TestUI/StoryCanvas';
 import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
-import { ThreeShip, ThreeShipWreck } from './ThreeShip';
+import { ThreeShip } from './ThreeShip';
 import { VectorF } from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
 import { Preloader } from './Preload';
+import { ThreeShipWreck } from './ThreeShipWreck';
 
 export default {
   title: 'Three/Ship',

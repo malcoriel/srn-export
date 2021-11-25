@@ -1,124 +1,16 @@
 import React, { useMemo, useRef } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
 import { Mesh, ShaderMaterial } from 'three';
-import Vector, { VectorF } from '../utils/Vector';
+import { VectorF } from '../utils/Vector';
 import * as jellyfish from './shaders/jellyfish';
 import { shallowEqual } from '../utils/shallowCompare';
-import { Geometry } from 'three/examples/jsm/deprecated/Geometry';
-import {
-  ThreeInteractor,
-  ThreeInteractorProps,
-} from './blocks/ThreeInteractor';
-import { posToThreePos, Vector3Arr, vecToThreePos } from './util';
+import { ThreeInteractor } from './blocks/ThreeInteractor';
+import { vecToThreePos } from './util';
 import { ThreeProgressbar } from './blocks/ThreeProgressbar';
 import { common, darkGreen } from '../utils/palette';
-import { genExplosionSfxPath, ThreeExplosion } from './blocks/ThreeExplosion';
-import Color from 'color';
-import { useSoundOnMount } from './UseSoundOnMount';
+import { ShipShape, ThreeShipProps } from './ShipShape';
 
-const STLLoader = require('three-stl-loader')(THREE);
-
-type ThreeShipProps = {
-  gid: string;
-  position: Vector;
-  tractorTargetPosition?: Vector;
-  color: string;
-  rotation: number;
-  radius: number;
-  visible: boolean;
-  tractorBeamWidth?: number;
-  opacity: number;
-  hpNormalized: number;
-  interactor?: ThreeInteractorProps;
-};
-
-const BEAM_WIDTH = 0.3;
-// ships are always 'above' the stuff
-const SHIP_FIXED_Z = 50;
-
-export const ThreeShipBase = () => {
-  return null;
-};
-
-type ShipShapeProps = {
-  radius: number;
-  position: Vector;
-  rotation: number;
-  color: string;
-  opacity: number;
-};
-const ShipShape: React.FC<ShipShapeProps> = ({
-  radius,
-  position,
-  rotation,
-  color,
-  opacity,
-  children,
-}) => {
-  // @ts-ignore
-  const shipModel = useLoader<Geometry>(STLLoader, 'resources/models/ship.stl');
-
-  const memoScale = useMemo(
-    () => [0.15, 0.2, 0.25].map((v: number) => v * radius) as Vector3Arr,
-    [radius]
-  );
-
-  // that's a hack to shift model 'forward' a little bit due
-  // to shifted weight center
-  const shift = VectorF(0, radius / 5.0).turnCounterClockwise(rotation);
-
-  return (
-    <group position={posToThreePos(position.x, position.y, SHIP_FIXED_Z)}>
-      <mesh
-        position={[-shift.x, shift.y, 0]}
-        scale={memoScale}
-        rotation={[Math.PI, 0, rotation]}
-        // @ts-ignore
-        geometry={shipModel}
-      >
-        <meshBasicMaterial color={color} opacity={opacity} transparent />
-      </mesh>
-      {children}
-    </group>
-  );
-};
-
-export type ThreeShipHuskProps = ShipShapeProps & { gid: string };
-
-export type UseSoundOnMountProps = {
-  path: string;
-  distance?: number;
-};
-
-export const ThreeShipWreck: React.FC<ThreeShipHuskProps> = React.memo(
-  (props) => {
-    const explosionPath = useMemo(() => {
-      return genExplosionSfxPath(props.gid + new Date().toString());
-    }, [props.gid]);
-
-    const sound = useSoundOnMount({
-      path: explosionPath,
-      distance: 3,
-    });
-    return (
-      <ShipShape
-        {...props}
-        color={new Color(props.color).darken(0.5).hex().toString()}
-      >
-        {sound}
-        <ThreeExplosion
-          seed={props.gid}
-          position={[0, 0, props.radius + 10]}
-          radius={props.radius * 1.5}
-          explosionTimeSeconds={2.0}
-          autoPlay
-          playOnce
-        />
-      </ShipShape>
-    );
-  }
-);
+export const BEAM_WIDTH = 0.3;
 
 export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
   ({

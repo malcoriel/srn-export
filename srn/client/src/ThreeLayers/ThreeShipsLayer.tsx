@@ -1,11 +1,12 @@
 import React from 'react';
 import { findContainer, findMineral, GameState, Ship } from '../world';
-import { ThreeShip, ThreeShipWreck } from './ThreeShip';
+import { ThreeShip } from './ThreeShip';
 import Vector from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
 import { NetStateIndexes } from '../NetState';
 import { LongActionDock, LongActionUndock } from '../../../world/pkg';
 import _ from 'lodash';
+import { ThreeShipWreck } from './ThreeShipWreck';
 
 export const ThreeShipsLayer: React.FC<{
   visMap: Record<string, boolean>;
