@@ -1,78 +1,91 @@
 import React, { useMemo } from 'react';
 import { Text } from '@react-three/drei';
 import _ from 'lodash';
-import { ThreeVectorArr, Vector3Arr } from './util';
+import { Vector3Arr, vecToThreePosInv } from './util';
 import Vector, {
-  VectorF,
-  getCounterClockwiseAngleGraphics,
   getCounterClockwiseAngleMath,
+  getRadialCoordsMath,
+  IVector,
+  VectorF,
 } from '../utils/Vector';
 import { Vector3 } from 'three';
 import { ThreeLaserBeam } from './combat/ThreeLaserBeam';
-import { radToDeg } from '../coord';
 import { yellow } from '../utils/palette';
+import { LongAction } from '../../../world/pkg';
 
 export interface ThreeShipTurretsProps {
   radius: number;
-  count: number;
+  turretIds: string[];
   rotation: number;
   beamWidth: number;
-  position?: ThreeVectorArr;
-  shootTarget: Vector;
+  position?: IVector;
+  shootTarget: IVector;
   color: string;
+  longActions: LongAction[];
+  findObjectPositionByIdBound: (id: string) => Vector | null;
 }
-
-// Y looks up!
-export const getRadialCoordsMath = (
-  radius: number,
-  count: number,
-  i: number
-) => {
-  const theta = ((2 * Math.PI) / count) * i;
-  const x = radius * Math.cos(theta);
-  const y = radius * Math.sin(theta);
-  return VectorF(x, y);
-};
-
-// Y looks down
-export const getRadialCoordsGraphics = (
-  radius: number,
-  count: number,
-  i: number
-) => {
-  const theta = ((2 * Math.PI) / count) * i;
-  const x = radius * Math.cos(theta);
-  const y = radius * Math.sin(theta);
-  return VectorF(x, -y);
-};
 
 export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
   radius,
-  count,
+  turretIds,
   rotation,
   shootTarget,
   beamWidth,
-  position,
+  position = VectorF(0, 0),
+  longActions,
+  findObjectPositionByIdBound,
 }) => {
-  console.log('target', shootTarget.toFix());
+  const shootTargetV = useMemo(() => Vector.fromIVector(shootTarget), [
+    shootTarget,
+  ]);
+
+  const shoots: Record<string, any> = useMemo(
+    () =>
+      _.keyBy(
+        longActions
+          .map((shootLongAct: LongAction) => {
+            if (shootLongAct.tag !== 'Shoot') {
+              return null;
+            }
+
+            if (shootLongAct.target.tag === 'Unknown') {
+              return null;
+            }
+
+            const end = findObjectPositionByIdBound(shootLongAct.target.id);
+            if (!end) {
+              return null;
+            }
+            return {
+              startTurretId: (shootLongAct as any).turretId,
+              end,
+              progression: shootLongAct.percentage,
+            };
+          })
+          .filter((v) => !!v),
+        'startTurretId'
+      ),
+    [longActions, findObjectPositionByIdBound]
+  );
   const nodes = useMemo(() => {
-    return _.times(count, (i) => {
-      const coords = getRadialCoordsMath(radius / 1.5, count, i);
-      const vector = shootTarget.subtract(coords);
+    return _.map(turretIds, (tid, i) => {
+      const coords = getRadialCoordsMath(radius / 1.5, turretIds.length, i);
+      const vector = shootTargetV.subtract(coords);
       const angle = getCounterClockwiseAngleMath(VectorF(0, 1), vector);
 
       return {
-        key: i,
+        key: tid,
         position: [coords.x, coords.y, 0] as Vector3Arr,
         vPosition: coords,
         tRotation: angle,
       };
     });
-  }, [radius, count, shootTarget]);
+  }, [radius, turretIds, shootTargetV]);
   return (
-    <group rotation={[0, 0, rotation]} position={position}>
+    <group rotation={[0, 0, rotation]} position={vecToThreePosInv(position)}>
       {nodes.map(({ position, key, vPosition, tRotation }) => {
         const r = radius / 5.0;
+        const shootProps = shoots[key];
         return (
           <group key={key}>
             <group position={position} rotation={[0, 0, tRotation]}>
@@ -95,13 +108,15 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
                 {key}
               </Text>
             </group>
-            <ThreeLaserBeam
-              start={vPosition}
-              end={shootTarget}
-              progression={0.5}
-              width={beamWidth}
-              color="red"
-            />
+            {shootProps && (
+              <ThreeLaserBeam
+                start={vPosition}
+                end={shootProps.end}
+                progression={shootProps.progression}
+                width={beamWidth}
+                color="red"
+              />
+            )}
           </group>
         );
       })}

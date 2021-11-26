@@ -246,3 +246,26 @@ export const getCounterClockwiseAngleGraphics = (
   if (sin < 0) angle = -angle;
   return angle;
 };
+
+// Y looks up!
+export const getRadialCoordsMath = (
+  radius: number,
+  count: number,
+  i: number
+) => {
+  const theta = ((2 * Math.PI) / count) * i;
+  const x = radius * Math.cos(theta);
+  const y = radius * Math.sin(theta);
+  return VectorF(x, y);
+};
+// Y looks down
+export const getRadialCoordsGraphics = (
+  radius: number,
+  count: number,
+  i: number
+) => {
+  const theta = ((2 * Math.PI) / count) * i;
+  const x = radius * Math.cos(theta);
+  const y = radius * Math.sin(theta);
+  return VectorF(x, -y);
+};
