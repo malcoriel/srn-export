@@ -71,5 +71,6 @@ Main.args = {
   blow: false,
   hpNormalized: 1.0,
   tractoring: false,
+  shooting: false,
   rotation: 0.0,
 };

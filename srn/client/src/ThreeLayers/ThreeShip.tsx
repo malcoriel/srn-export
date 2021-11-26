@@ -9,6 +9,7 @@ import { vecToThreePos } from './util';
 import { ThreeProgressbar } from './blocks/ThreeProgressbar';
 import { common, darkGreen } from '../utils/palette';
 import { ShipShape, ThreeShipProps } from './ShipShape';
+import { ThreeShipTurrets } from './ThreeShipTurrets';
 
 export const BEAM_WIDTH = 0.3;
 
@@ -120,6 +121,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         {healthBar}
         {interactorElem}
         {tractorBeam}
+        <ThreeShipTurrets radius={radius} color={color} />
       </ShipShape>
     );
   },

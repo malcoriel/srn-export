@@ -1,6 +1,7 @@
 import Vector, { IVector } from '../utils/Vector';
 
 export type Vector3Arr = [number, number, number];
+export type ThreeVectorArr = Vector3Arr;
 export const vecToThreePos = (v: IVector, lift = 0): Vector3Arr => [
   v.x,
   -v.y,
