@@ -4,7 +4,7 @@ import { Vector3 } from 'three';
 import React, { MutableRefObject, Suspense } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
-import { max_x, min_x } from '../world';
+import { GameMode, max_x, min_x } from '../world';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
   BoundCameraMover,
@@ -46,8 +46,8 @@ export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
 
 export const ThreeLayer: React.FC<{
   visible: boolean;
-  playing: boolean;
-}> = ({ visible, playing }) => {
+  desiredMode: GameMode;
+}> = ({ visible, desiredMode }) => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state, visMap, visualState, indexes } = ns;
@@ -77,7 +77,7 @@ export const ThreeLayer: React.FC<{
       {/* green is second  coord (y) */}
       {/* blue is third coord (z) */}
       <Suspense fallback={<mesh />}>
-        <ThreeLoadingIndicator playing={playing} />
+        <ThreeLoadingIndicator desiredMode={desiredMode} />
         <group
           visible={visible}
           onClick={(evt: ThreeEvent<MouseEvent>) => {

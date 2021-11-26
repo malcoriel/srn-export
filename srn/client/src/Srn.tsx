@@ -217,7 +217,7 @@ const Srn = () => {
       >
         {playing && (
           <>
-            <ThreeLayer visible playing={playing} />
+            <ThreeLayer visible desiredMode={mode} />
             {playing && (
               <Stage
                 width={size.width_px}

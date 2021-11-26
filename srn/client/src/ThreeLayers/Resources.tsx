@@ -8,7 +8,7 @@ import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { useNSForceChange } from '../NetState';
-import { useRepeatWrappedTextureLoader } from './ThreeStar';
+import { GameMode } from '../../../world/pkg/world.extra';
 
 const STLLoader = require('three-stl-loader')(THREE);
 
@@ -113,7 +113,7 @@ export const useResourcesLoading = (): [boolean, string, boolean] => {
   return [areLoading, formattedProgress, !basicResourcesMissing];
 };
 
-function renderLoadingIndicator(miniMode: boolean, formattedProgress: string) {
+function renderLoadingIndicator(miniMode: boolean, text: string) {
   return (
     <div
       className={classNames({
@@ -125,52 +125,55 @@ function renderLoadingIndicator(miniMode: boolean, formattedProgress: string) {
         <div />
         <div />
       </div>
-      <div className="text">Loading: {formattedProgress}</div>
+      <div className="text">{text}</div>
     </div>
   );
 }
 
-const useConnectingState = () => {
+const useConnectingState = (desiredMode: GameMode) => {
   const {
-    state: { id },
+    state: { id, mode },
   } = useNSForceChange(
     'ThreeLoadingIndicator',
     false,
     (prev, next) => prev.id !== next.id
   ) || { state: {} };
-  const connecting = id === '';
+  const connecting = id === '' || mode !== desiredMode;
   return connecting;
 };
 
-export const ThreeLoadingIndicator: React.FC<{ playing: boolean }> = React.memo(
-  ({ playing }) => {
-    const [
-      resourcesAreLoading,
-      formattedProgress,
-      basicResourcesLoaded,
-    ] = useResourcesLoading();
-    const connecting = useConnectingState();
-    const mountpoint = document.getElementById('main-container');
-    if (!mountpoint) return null;
+export const ThreeLoadingIndicator: React.FC<{
+  desiredMode: GameMode;
+}> = React.memo(({ desiredMode }) => {
+  const [
+    resourcesAreLoading,
+    formattedProgress,
+    basicResourcesLoaded,
+  ] = useResourcesLoading();
+  const connecting = useConnectingState(desiredMode);
+  const mountpoint = document.getElementById('main-container');
+  if (!mountpoint) return null;
 
-    console.log({ resourcesAreLoading, basicResourcesLoaded, connecting });
+  console.log({ resourcesAreLoading, basicResourcesLoaded, connecting });
 
-    const text = resourcesAreLoading ? formattedProgress : 'Connecting...';
-    return (
-      <Suspense fallback={<mesh />}>
-        <PreloaderImpl />
-        {(resourcesAreLoading || connecting) && (
-          <Html>
-            {ReactDOM.createPortal(
-              renderLoadingIndicator(basicResourcesLoaded, text),
-              mountpoint
-            )}
-          </Html>
-        )}
-      </Suspense>
-    );
-  }
-);
+  const text = resourcesAreLoading
+    ? `Loading: ${formattedProgress}`
+    : `Connecting to server...`;
+  const miniMode = basicResourcesLoaded && !connecting;
+  return (
+    <Suspense fallback={<mesh />}>
+      <PreloaderImpl />
+      {(resourcesAreLoading || connecting) && (
+        <Html>
+          {ReactDOM.createPortal(
+            renderLoadingIndicator(miniMode, text),
+            mountpoint
+          )}
+        </Html>
+      )}
+    </Suspense>
+  );
+});
 
 export const MenuLoadingIndicator: React.FC = () => {
   const [resourcesAreLoading] = useResourcesLoading();
