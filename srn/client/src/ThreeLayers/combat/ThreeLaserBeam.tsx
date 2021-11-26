@@ -1,16 +1,28 @@
 import React, { useMemo } from 'react';
-import Vector, { VectorF } from '../../utils/Vector';
+import Vector, {
+  getCounterClockwiseAngleMath,
+  VectorF,
+} from '../../utils/Vector';
 import { EasingFunctions } from './EasingFunctions';
-import { vecToThreePos } from '../util';
+import { vecToThreePos, vecToThreePosInv } from '../util';
+
+const getAngleFromEndToStart = (
+  end: Vector,
+  start: Vector
+): { vector: Vector; rotation: number } => {
+  const vector = end.subtract(start);
+  const angle = getCounterClockwiseAngleMath(VectorF(0, 1), vector);
+  return { vector, rotation: angle };
+};
 
 export const calcBeamParams = (start: Vector, end: Vector) => {
-  const vector = end.subtract(start);
-  const angle = VectorF(0, 1).angleRad(vector);
+  const { vector, rotation } = getAngleFromEndToStart(end, start);
+
   const medianPoint = new Vector(start.x + end.x, start.y + end.y).scale(0.5);
   return {
     length: vector.length(),
-    rotation: vector.x < 0 ? angle : -angle,
-    position: vecToThreePos(medianPoint),
+    rotation,
+    position: vecToThreePosInv(medianPoint),
   };
 };
 
@@ -23,10 +35,7 @@ export const ThreeLaserBeam: React.FC<{
 }> = ({ start, end, progression, width = 1, color = 'red' }) => {
   const beamParams = useMemo(() => calcBeamParams(start, end), [start, end]);
   return (
-    <mesh
-      position={beamParams.position}
-      rotation={[0, 0, -beamParams.rotation]}
-    >
+    <mesh position={beamParams.position} rotation={[0, 0, beamParams.rotation]}>
       <planeGeometry args={[width, beamParams.length, 1]} />
       <meshBasicMaterial
         color={color}

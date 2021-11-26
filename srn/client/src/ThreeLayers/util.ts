@@ -8,6 +8,12 @@ export const vecToThreePos = (v: IVector, lift = 0): Vector3Arr => [
   lift,
 ];
 
+export const vecToThreePosInv = (v: IVector, lift = 0): Vector3Arr => [
+  v.x,
+  v.y,
+  lift,
+];
+
 // noinspection JSUnusedGlobalSymbols
 export const threePosToVector = (x: number, y: number, _z: number): Vector =>
   new Vector(x, -y);

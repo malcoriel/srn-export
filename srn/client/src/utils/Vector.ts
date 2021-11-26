@@ -132,6 +132,9 @@ export default class Vector implements IVector {
     return a.x * b.x + a.y * b.y;
   }
 
+  /*
+   * @deprecated
+   * */
   angleRad(b: Vector): number {
     return Math.acos(this.scalarMultiply(b) / this.length() / b.length());
   }
@@ -215,4 +218,31 @@ const degToRad = (r: number): number => {
 
 export const isIVector = (smth: any): smth is IVector => {
   return typeof smth.x === 'number' && typeof smth.y === 'number';
+};
+
+// assuming Y is pointing up and X right,
+// what angle do we need counterclockwise to turn from a to b ?
+export const getCounterClockwiseAngleMath = (a: Vector, b: Vector): number => {
+  const cos = a.scalarMultiply(b) / a.length() / b.length();
+  let angle = Math.acos(cos);
+  const cross_product = a.x * b.y - a.y * b.x;
+
+  const sin = cross_product / a.length() / b.length();
+  if (sin < 0) angle = Math.PI * 2 - angle;
+  return angle;
+};
+
+// assuming Y is pointing down and X right,
+// what angle do we need counterclockwise to turn from a to b ?
+export const getCounterClockwiseAngleGraphics = (
+  a: Vector,
+  b: Vector
+): number => {
+  const cos = a.scalarMultiply(b) / a.length() / b.length();
+  let angle = Math.acos(cos);
+  const cross_product = a.x * b.y + a.y * b.x;
+
+  const sin = cross_product / a.length() / b.length();
+  if (sin < 0) angle = -angle;
+  return angle;
 };
