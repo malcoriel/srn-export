@@ -7,6 +7,7 @@ import Vector, { VectorF } from '../utils/Vector';
 import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
 import { LongActionBuilder } from '../../../world/pkg/world.extra';
+import { cycle } from '../utils/cycle';
 
 enum ShootMode {
   Simultaneous,
@@ -49,13 +50,6 @@ export default {
     },
   },
 } as Meta;
-
-export const cycle = (val: number, min: number, max: number) => {
-  if (val > max) {
-    return min;
-  }
-  return val;
-};
 
 const targets = {
   top: VectorF(0.0, 5),
@@ -125,13 +119,17 @@ const MainTemplate: Story = (args) => {
   return (
     <StoryCanvas withBackground zoom={15.0}>
       <ThreeShipTurrets
-        shootTarget={target}
         beamWidth={0.2}
-        turretIds={['1', '2', '3', '4']}
+        turrets={[{ id: '1' }, { id: '2' }, { id: '3' }, { id: '4' }]}
         rotation={args.rotation}
         radius={2.0}
         color="red"
-        key={JSON.stringify(args) + revision}
+        key={(() => {
+          const patchedArgs = _.cloneDeep(args);
+          delete patchedArgs.shootTarget;
+          delete patchedArgs.progressNormalized;
+          return JSON.stringify(patchedArgs) + revision;
+        })()}
         findObjectPositionByIdBound={() => target}
         longActions={longActions}
       />

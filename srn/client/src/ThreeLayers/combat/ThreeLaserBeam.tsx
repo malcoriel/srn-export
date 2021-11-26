@@ -31,6 +31,7 @@ export const ThreeLaserBeam: React.FC<{
   end: Vector;
   width?: number;
   color?: string;
+  // 0-100
   progression: number;
 }> = ({ start, end, progression, width = 1, color = 'red' }) => {
   const beamParams = useMemo(() => calcBeamParams(start, end), [start, end]);
