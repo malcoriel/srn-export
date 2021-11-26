@@ -11,6 +11,7 @@ import { LongActionBuilder } from '../../../world/pkg/world.extra';
 enum ShootMode {
   Simultaneous,
   PartialSimultaneous,
+  Alternating,
 }
 
 export default {
@@ -49,6 +50,13 @@ export default {
   },
 } as Meta;
 
+export const cycle = (val: number, min: number, max: number) => {
+  if (val > max) {
+    return min;
+  }
+  return val;
+};
+
 const targets = {
   top: VectorF(0.0, 5),
   right: VectorF(5, 0.0),
@@ -70,6 +78,13 @@ function genLongAct(percentage: number, turretId: string) {
 
 const genLongActions = (shootMode: ShootMode, percentage: number) => {
   switch (shootMode) {
+    case ShootMode.Alternating:
+      return [
+        genLongAct(cycle(percentage + 50, 0, 100), '1'),
+        genLongAct(cycle(percentage + 17, 0, 100), '2'),
+        genLongAct(percentage, '3'),
+        genLongAct(cycle(percentage + 66, 0, 100), '4'),
+      ];
     case ShootMode.PartialSimultaneous:
       return [genLongAct(percentage, '1'), genLongAct(percentage, '3')];
     case ShootMode.Simultaneous:
@@ -99,11 +114,7 @@ const MainTemplate: Story = (args) => {
       if (args.autoPlay) {
         setProgressNormalized((old: number) => {
           const val = old + 0.05;
-          // console.log(val);
-          if (val > 1.0) {
-            return 0.0;
-          }
-          return val;
+          return cycle(val, 0, 1);
         });
       }
     }, 100);
