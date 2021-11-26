@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.7.6 (2021-11-26)
+### New
+* Reworked the resources loading system
+* Implemented resource preloading during menu stage, so now joining games is faster
+### Fixes
+* Fixed a bug with annoying screen flickering when a ship was exploding for a first time
+* Removed already-buggy 'skip menu' option
+
 ## Version 0.7.5 (2021-11-23)
 ### New
 * Explosion sounds!
