@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.7.7 (2021-11-27)
+### New
+* Turrets on ships! Only visual so far, but now ships do not shoot out of their center.
+
 ## Version 0.7.6 (2021-11-26)
 ### New
 * Reworked the resources loading system
