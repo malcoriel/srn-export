@@ -88,6 +88,7 @@ const MainTemplate: Story = (args) => {
         })()}
         findObjectPositionByIdBound={() => target}
         longActions={longActions}
+        ownRadius={1.0}
       />
     </StoryCanvas>
   );

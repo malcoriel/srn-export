@@ -9,7 +9,6 @@ import {
 import Vector, {
   getCounterClockwiseAngleMath,
   getRadialCoordsMath,
-  IVector,
   VectorF,
 } from '../utils/Vector';
 import { Vector3 } from 'three';
@@ -85,7 +84,7 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
           .filter((v) => !!v),
         'startTurretId'
       ),
-    [longActions, findObjectPositionByIdBound, parentPosition]
+    [longActions, findObjectPositionByIdBound, parentPosition, rotation]
   );
   const nodes = useMemo(() => {
     return _.map(turrets, (turretProps, i) => {

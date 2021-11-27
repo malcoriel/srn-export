@@ -1,5 +1,11 @@
 import React from 'react';
-import { findContainer, findMineral, GameState, Ship } from '../world';
+import {
+  findContainer,
+  findMineral,
+  findObjectPositionById,
+  GameState,
+  Ship,
+} from '../world';
 import { ThreeShip } from './ThreeShip';
 import Vector from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
@@ -83,6 +89,13 @@ export const ThreeShipsLayer: React.FC<{
             interactor={InteractorMap.ship(ship)}
             hpNormalized={ship.health.current / ship.health.max}
             longActions={mapLongActions(ship.long_actions)}
+            findObjectPositionByIdBound={(id) => {
+              const pos = findObjectPositionById(state, id);
+              if (pos) {
+                pos.y = -pos.y;
+              }
+              return pos;
+            }}
             turrets={STATIC_TURRETS}
           />
         );

@@ -154,11 +154,9 @@ export const ThreeLoadingIndicator: React.FC<{
   const mountpoint = document.getElementById('main-container');
   if (!mountpoint) return null;
 
-  console.log({ resourcesAreLoading, basicResourcesLoaded, connecting });
-
   const text = resourcesAreLoading
     ? `Loading: ${formattedProgress}`
-    : `Connecting to server...`;
+    : 'Connecting to server...';
   const miniMode = basicResourcesLoaded && !connecting;
   return (
     <Suspense fallback={<mesh />}>
