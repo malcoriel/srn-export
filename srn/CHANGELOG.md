@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 0.7.8 (2021-11-27)
+### New
+* More pirate ships per wave in the pirate defence mode, but the planet now regenerates health
+
+### Fixes
+* Fixed server crash in sandbox mode
+* Fixed non-blocked context menu
+* Now it's impossible to shoot your own ship
+* It's impossible now to land on the planet in the pirate defence mode
+
 ## Version 0.7.7 (2021-11-27)
 ### New
 * Turrets on ships! Only visual so far, but now ships do not shoot out of their center.
