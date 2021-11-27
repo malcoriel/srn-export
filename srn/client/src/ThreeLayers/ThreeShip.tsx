@@ -8,12 +8,13 @@ import {
   ThreeInteractor,
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
-import { vecToThreePos } from './util';
+import { vecToThreePos, vecToThreePosInv } from './util';
 import { ThreeProgressbar } from './blocks/ThreeProgressbar';
 import { common, darkGreen } from '../utils/palette';
 import { ShipShape } from './ShipShape';
 import { ThreeShipTurrets, TurretProps } from './ThreeShipTurrets';
 import { LongAction } from '../../../world/pkg';
+import Color from 'color';
 
 export const BEAM_WIDTH = 0.3;
 
@@ -75,20 +76,6 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           material.uniforms.time.value += 0.004;
         }
       }
-      // if (mainRef.current) {
-      //   mainRef.current.userData = mainRef.current.userData || {};
-      //   let displayExplosionCalculated = false;
-      //   if (blow) {
-      //     mainRef.current.userData.blowFrames =
-      //       mainRef.current.userData.blowFrames || 0;
-      //     mainRef.current.userData.blowFrames += 1;
-      //     displayExplosionCalculated =
-      //       mainRef.current.userData.blowFrames <= BLOW_FRAMES;
-      //   }
-      //   if (showExplosion !== displayExplosionCalculated) {
-      //     setShowExplosion(displayExplosionCalculated);
-      //   }
-      // }
     });
 
     const tractorBeam = (
@@ -149,12 +136,13 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           position={[0, 0, 10]}
           positionRadius={radius / 1.9}
           ownRadius={radius / 7.0}
-          color={color}
+          color={new Color(color).lighten(0.5).hex().toString()}
           beamWidth={radius / 20.0}
           longActions={longActions}
           findObjectPositionByIdBound={findObjectPositionByIdBound}
           rotation={-rotation}
           turrets={turrets}
+          parentPosition={[-position.x, position.y, 0]}
         />
       </ShipShape>
     );

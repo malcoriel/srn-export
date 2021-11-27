@@ -4,9 +4,33 @@ import { ThreeShip } from './ThreeShip';
 import Vector from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
 import { NetStateIndexes } from '../NetState';
-import { LongActionDock, LongActionUndock } from '../../../world/pkg';
-import _ from 'lodash';
+import {
+  LongAction,
+  LongActionDock,
+  LongActionUndock,
+} from '../../../world/pkg';
 import { ThreeShipWreck } from './ThreeShipWreck';
+import _ from 'lodash';
+
+// Right now, there's no server-side support for actual separate shooting
+// So this mapping is for visual effect only
+const mapLongActions = (long_actions: LongAction[]) => {
+  return long_actions
+    .map((la) => {
+      if (la.tag !== 'Shoot') {
+        return null;
+      }
+      const la1: any = _.clone(la);
+      la1.turretId = '1';
+      const la2: any = _.clone(la);
+      la2.turretId = '2';
+      return [la1, la2];
+    })
+    .filter((la) => !!la)
+    .flat() as LongAction[];
+};
+
+const STATIC_TURRETS = [{ id: '1' }, { id: '2' }];
 
 export const ThreeShipsLayer: React.FC<{
   visMap: Record<string, boolean>;
@@ -15,13 +39,6 @@ export const ThreeShipsLayer: React.FC<{
 }> = ({ visMap, state }) => {
   if (!state) return null;
   const { ships, wrecks } = state.locations[0];
-  // const shipIds = ships.map((s) => s.id);
-  // const res = {};
-  // for (const sid of shipIds) {
-  //   // @ts-ignore
-  //   res[sid] = visMap[sid];
-  // }
-  // console.log('visMap', res);
 
   return (
     <group>
@@ -65,6 +82,8 @@ export const ThreeShipsLayer: React.FC<{
             opacity={opacity}
             interactor={InteractorMap.ship(ship)}
             hpNormalized={ship.health.current / ship.health.max}
+            longActions={mapLongActions(ship.long_actions)}
+            turrets={STATIC_TURRETS}
           />
         );
       })}

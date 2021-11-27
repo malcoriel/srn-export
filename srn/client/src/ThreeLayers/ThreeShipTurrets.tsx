@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
-import { ThreeVectorArr, Vector3Arr, vecToThreePosInv } from './util';
+import {
+  threePosToVectorInv,
+  ThreeVectorArr,
+  Vector3Arr,
+  vecToThreePosInv,
+} from './util';
 import Vector, {
   getCounterClockwiseAngleMath,
   getRadialCoordsMath,
@@ -22,6 +27,7 @@ export interface ThreeShipTurretsProps {
   rotation: number;
   beamWidth: number;
   position?: ThreeVectorArr;
+  parentPosition?: ThreeVectorArr;
   color: string;
   ownRadius: number;
   longActions: LongAction[];
@@ -38,10 +44,12 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
   turrets,
   rotation,
   beamWidth,
-  position = VectorF(0, 0),
+  position = [0, 0, 0],
+  parentPosition = [0, 0, 0],
   longActions,
   findObjectPositionByIdBound,
   ownRadius,
+  color,
 }) => {
   // const [rotationStates, setRotationStates] = useState(
   //   turrets.reduce((acc, curr) => ({ [curr.id]: 0 }), {}) as Record<
@@ -67,16 +75,17 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
             if (!end) {
               return null;
             }
+            const endShift = threePosToVectorInv(...parentPosition);
             return {
               startTurretId: (shootLongAct as any).turretId,
-              end,
+              end: end.add(endShift).turnCounterClockwise(-rotation),
               progression: shootLongAct.percentage,
             };
           })
           .filter((v) => !!v),
         'startTurretId'
       ),
-    [longActions, findObjectPositionByIdBound]
+    [longActions, findObjectPositionByIdBound, parentPosition]
   );
   const nodes = useMemo(() => {
     return _.map(turrets, (turretProps, i) => {
@@ -142,11 +151,11 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
             <group position={position} rotation={[0, 0, tRotation]}>
               <mesh rotation={[0, 0, 0]}>
                 <circleBufferGeometry args={[r, 16]} />
-                <meshBasicMaterial color="white" />
+                <meshBasicMaterial color={color} />
               </mesh>
               <mesh position={new Vector3(0, r / 2, 0)} rotation={[0, 0, 0]}>
                 <planeBufferGeometry args={[r / 2, r * 3]} />
-                <meshBasicMaterial color="white" />
+                <meshBasicMaterial color={color} />
               </mesh>
             </group>
             {shootProps && (

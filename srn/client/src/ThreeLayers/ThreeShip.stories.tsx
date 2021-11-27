@@ -67,7 +67,7 @@ const MainTemplate: Story = (args) => {
           color="red"
           gid="1"
           hpNormalized={args.hpNormalized}
-          position={VectorF(0, 0)}
+          position={VectorF(-4, 5)}
           interactor={InteractorMap.ship({})}
           radius={2.0}
           opacity={1.0}
