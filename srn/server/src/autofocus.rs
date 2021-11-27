@@ -130,6 +130,8 @@ pub fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
         refs.push(ObjectIndexSpecifier::Container { idx: i });
         points.push((c.position.x, c.position.y));
     }
+    // in case of no objects (e.g. sandbox) kdbush will crash
+    points.push((0.0, 0.0));
     let index = KDBush::create(points, kdbush::DEFAULT_NODE_SIZE);
     SpatialIndex::new(loc_idx, index, refs)
 }
