@@ -14,6 +14,7 @@ import {
 } from '../../utils/UpdateStrategy';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { vecToThreePos } from '../util';
+import { suppressEvent } from '../suppressEvent';
 
 export enum InteractorActionType {
   Unknown,
@@ -157,24 +158,22 @@ const ThreeInteractorImpl = ({
     (!activeHostileInteractorId && isAutoFocusedHostile);
 
   const onLeftClick = (e?: ThreeEvent<MouseEvent>) => {
-    if (e) {
-      e.stopPropagation();
-      if (e.preventDefault) {
-        e.preventDefault();
-      }
-    }
     if (actions && defaultAction) {
       const fn = actions.get(defaultAction);
       if (fn) {
         fn(objectId);
+        if (e) {
+          e.stopPropagation();
+          if (e.preventDefault) {
+            e.preventDefault();
+          }
+        }
       }
     }
     return false;
   };
   const onContextMenu = (e: ThreeEvent<MouseEvent>) => {
-    if (e.preventDefault) {
-      e.preventDefault();
-    }
+    suppressEvent(e);
     setMenuShown(!menuShown);
     return false;
   };

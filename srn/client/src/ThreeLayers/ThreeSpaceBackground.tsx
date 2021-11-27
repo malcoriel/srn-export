@@ -8,6 +8,7 @@ import { CAMERA_DEFAULT_ZOOM, CAMERA_HEIGHT } from './CameraControls';
 import { getBackgroundSize } from './ThreeLayer';
 import Vector, { IVector, VectorFzero } from '../utils/Vector';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
+import { suppressEvent } from './suppressEvent';
 
 const uniforms: {
   shift: FloatUniformValue;
@@ -192,12 +193,7 @@ export const ThreeSpaceBackground: React.FC<{
 
   const backgroundPlaneMesh = (
     <mesh
-      onContextMenu={(e: ThreeEvent<MouseEvent>) => {
-        e.stopPropagation();
-        if (e.preventDefault) {
-          e.preventDefault();
-        }
-      }}
+      onContextMenu={suppressEvent}
       onClick={onClick}
       position={[0, 0, meshZ]}
       ref={mesh}
