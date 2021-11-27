@@ -146,12 +146,14 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         {interactorElem}
         {tractorBeam}
         <ThreeShipTurrets
-          radius={radius}
+          position={[0, 0, 10]}
+          positionRadius={radius / 1.9}
+          ownRadius={radius / 7.0}
           color={color}
-          beamWidth={BEAM_WIDTH}
+          beamWidth={radius / 20.0}
           longActions={longActions}
           findObjectPositionByIdBound={findObjectPositionByIdBound}
-          rotation={rotation}
+          rotation={-rotation}
           turrets={turrets}
         />
       </ShipShape>

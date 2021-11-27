@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
-import { Vector3Arr, vecToThreePosInv } from './util';
+import { ThreeVectorArr, Vector3Arr, vecToThreePosInv } from './util';
 import Vector, {
   getCounterClockwiseAngleMath,
   getRadialCoordsMath,
@@ -17,12 +17,13 @@ export interface TurretProps {
 }
 
 export interface ThreeShipTurretsProps {
-  radius: number;
+  positionRadius: number;
   turrets: TurretProps[];
   rotation: number;
   beamWidth: number;
-  position?: IVector;
+  position?: ThreeVectorArr;
   color: string;
+  ownRadius: number;
   longActions: LongAction[];
   findObjectPositionByIdBound: (id: string) => Vector | null;
 }
@@ -33,13 +34,14 @@ const circularLerp = (a: number, b: number, pct: number) => {
 };
 
 export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
-  radius,
+  positionRadius,
   turrets,
   rotation,
   beamWidth,
   position = VectorF(0, 0),
   longActions,
   findObjectPositionByIdBound,
+  ownRadius,
 }) => {
   // const [rotationStates, setRotationStates] = useState(
   //   turrets.reduce((acc, curr) => ({ [curr.id]: 0 }), {}) as Record<
@@ -78,7 +80,11 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
   );
   const nodes = useMemo(() => {
     return _.map(turrets, (turretProps, i) => {
-      const coords = getRadialCoordsMath(radius / 1.5, turrets.length, i);
+      const coords = getRadialCoordsMath(
+        positionRadius / 1.5,
+        turrets.length,
+        i
+      );
       const shootProps = shoots[turretProps.id];
       let shootTargetV: Vector | null = null;
       if (shootProps) {
@@ -107,7 +113,7 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
         progression: shootProps?.progression,
       };
     });
-  }, [radius, turrets, shoots, findObjectPositionByIdBound]);
+  }, [positionRadius, turrets, shoots, findObjectPositionByIdBound]);
   // useEffect(() => {
   //   const rotationStatesClone = _.clone(rotationStates);
   //   for (const node of nodes) {
@@ -127,9 +133,9 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
   //   setRotationStates(rotationStatesClone);
   // }, [nodes, setRotationStates]);
   return (
-    <group rotation={[0, 0, rotation]} position={vecToThreePosInv(position)}>
+    <group rotation={[0, 0, rotation]} position={position}>
       {nodes.map(({ position, key, vPosition, tRotation }) => {
-        const r = radius / 5.0;
+        const r = ownRadius;
         const shootProps = shoots[key];
         return (
           <group key={key}>

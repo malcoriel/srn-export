@@ -3,9 +3,16 @@ import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { ThreeShip } from './ThreeShip';
-import { VectorF } from '../utils/Vector';
+import Vector, { VectorF } from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
 import { ThreeShipWreck } from './ThreeShipWreck';
+import {
+  genLongActions,
+  genTurrets,
+  ShootMode,
+  shootTargets,
+} from './TurretStoriesHelpers';
+import { cycle } from '../utils/cycle';
 
 export default {
   title: 'Three/Ship',
@@ -35,6 +42,23 @@ const MainTemplate: Story = (args) => {
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
+
+  const target: Vector = shootTargets.top;
+  const [progressNormalized, setProgressNormalized] = useState(0);
+  useEffect(() => {
+    const int = setInterval(() => {
+      setProgressNormalized((old: number) => {
+        const val = old + 0.05;
+        return cycle(val, 0, 1);
+      });
+    }, 100);
+    return () => clearInterval(int);
+  }, [args.autoPlay, setProgressNormalized]);
+  const longActions = genLongActions(
+    ShootMode.Simultaneous,
+    progressNormalized * 100
+  );
+
   return (
     <StoryCanvas withBackground zoom={15.0}>
       {!args.blow ? (
@@ -50,6 +74,9 @@ const MainTemplate: Story = (args) => {
           rotation={args.rotation}
           visible
           tractorTargetPosition={args.tractoring ? VectorF(25, 25) : null}
+          longActions={longActions}
+          turrets={args.shooting ? genTurrets(2) : []}
+          findObjectPositionByIdBound={() => target}
         />
       ) : (
         <ThreeShipWreck
@@ -71,6 +98,6 @@ Main.args = {
   blow: false,
   hpNormalized: 1.0,
   tractoring: false,
-  shooting: false,
+  shooting: true,
   rotation: 0.0,
 };
