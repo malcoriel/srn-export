@@ -1,17 +1,38 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, ShaderMaterial } from 'three';
-import { VectorF } from '../utils/Vector';
+import Vector, { VectorF } from '../utils/Vector';
 import * as jellyfish from './shaders/jellyfish';
 import { shallowEqual } from '../utils/shallowCompare';
-import { ThreeInteractor } from './blocks/ThreeInteractor';
+import {
+  ThreeInteractor,
+  ThreeInteractorProps,
+} from './blocks/ThreeInteractor';
 import { vecToThreePos } from './util';
 import { ThreeProgressbar } from './blocks/ThreeProgressbar';
 import { common, darkGreen } from '../utils/palette';
-import { ShipShape, ThreeShipProps } from './ShipShape';
-import { ThreeShipTurrets } from './ThreeShipTurrets';
+import { ShipShape } from './ShipShape';
+import { ThreeShipTurrets, TurretProps } from './ThreeShipTurrets';
+import { LongAction } from '../../../world/pkg';
 
 export const BEAM_WIDTH = 0.3;
+
+export type ThreeShipProps = {
+  gid: string;
+  position: Vector;
+  tractorTargetPosition?: Vector;
+  color: string;
+  rotation: number;
+  radius: number;
+  visible: boolean;
+  tractorBeamWidth?: number;
+  opacity: number;
+  hpNormalized: number;
+  interactor?: ThreeInteractorProps;
+  longActions?: LongAction[];
+  turrets?: TurretProps[];
+  findObjectPositionByIdBound?: (id: string) => Vector | null;
+};
 
 export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
   ({
@@ -26,6 +47,9 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     opacity,
     hpNormalized,
     tractorBeamWidth = BEAM_WIDTH,
+    longActions = [],
+    turrets = [],
+    findObjectPositionByIdBound = () => null,
   }) => {
     const tractorRef = useRef<Mesh>();
     const tractorBeamParams = useMemo(() => {
@@ -125,9 +149,10 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           radius={radius}
           color={color}
           beamWidth={BEAM_WIDTH}
-          longActions={[]}
+          longActions={longActions}
           findObjectPositionByIdBound={findObjectPositionByIdBound}
           rotation={rotation}
+          turrets={turrets}
         />
       </ShipShape>
     );

@@ -11,7 +11,7 @@ import { Vector3 } from 'three';
 import { ThreeLaserBeam } from './combat/ThreeLaserBeam';
 import { LongAction, ObjectSpecifier } from '../../../world/pkg';
 
-interface TurretProps {
+export interface TurretProps {
   id: string;
   lockedObject?: ObjectSpecifier;
 }
@@ -28,11 +28,7 @@ export interface ThreeShipTurretsProps {
 }
 
 const circularLerp = (a: number, b: number, pct: number) => {
-  let sign = 1;
-  if (b - a > Math.PI / 2) {
-    b += Math.PI * 2;
-  }
-  let newVal = (b - a) * pct + a;
+  const newVal = (b - a) * pct + a;
   return newVal > Math.PI * 2 ? newVal - Math.PI * 2 : newVal;
 };
 
@@ -45,11 +41,6 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
   longActions,
   findObjectPositionByIdBound,
 }) => {
-  useEffect(() => {
-    console.log('mount');
-    return () => console.log('unmount');
-  }, []);
-
   // const [rotationStates, setRotationStates] = useState(
   //   turrets.reduce((acc, curr) => ({ [curr.id]: 0 }), {}) as Record<
   //     string,

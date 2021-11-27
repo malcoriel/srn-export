@@ -4,22 +4,8 @@ import { Geometry } from 'three/examples/jsm/deprecated/Geometry';
 import { posToThreePos, Vector3Arr } from './util';
 import Vector, { VectorF } from '../utils/Vector';
 import * as THREE from 'three';
-import { ThreeInteractorProps } from './blocks/ThreeInteractor';
 
 const STLLoader = require('three-stl-loader')(THREE);
-export type ThreeShipProps = {
-  gid: string;
-  position: Vector;
-  tractorTargetPosition?: Vector;
-  color: string;
-  rotation: number;
-  radius: number;
-  visible: boolean;
-  tractorBeamWidth?: number;
-  opacity: number;
-  hpNormalized: number;
-  interactor?: ThreeInteractorProps;
-};
 // ships are always 'above' the stuff
 export const SHIP_FIXED_Z = 50;
 export type ShipShapeProps = {
