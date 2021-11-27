@@ -42,10 +42,11 @@ export const ThreeShipsLayer: React.FC<{
   visMap: Record<string, boolean>;
   state: GameState;
   indexes: NetStateIndexes;
-}> = ({ visMap, state }) => {
+}> = ({ visMap, state, indexes }) => {
   if (!state) return null;
   const { ships, wrecks } = state.locations[0];
 
+  const myShipId = indexes.myShip?.id;
   return (
     <group>
       {ships.map((ship: Ship, i: number) => {
@@ -86,7 +87,11 @@ export const ThreeShipsLayer: React.FC<{
             rotation={ship.rotation}
             color={ship.color}
             opacity={opacity}
-            interactor={InteractorMap.ship(ship)}
+            interactor={
+              ship.id === myShipId
+                ? InteractorMap.myShip(ship)
+                : InteractorMap.ship(ship)
+            }
             hpNormalized={ship.health.current / ship.health.max}
             longActions={mapLongActions(ship.long_actions)}
             findObjectPositionByIdBound={(id) => {

@@ -87,4 +87,14 @@ export const InteractorMap: Record<
     }),
     (m) => m.id
   ),
+  myShip: _.memoize(
+    (_p) => ({
+      hint: null,
+      defaultAction: undefined,
+      outlineColor: common,
+      actions: new Map(),
+      // hostile: true,
+    }),
+    (m) => m.id
+  ),
 };
