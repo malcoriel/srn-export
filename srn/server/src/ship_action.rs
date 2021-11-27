@@ -5,11 +5,12 @@ use crate::combat::ShootTarget;
 use crate::indexing::{find_my_ship_index, find_player_by_ship_id, find_player_idx_by_ship_id};
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
-use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship, ShipIdx};
+use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship, ShipIdx, ObjectTag};
 use crate::{combat, fire_event, indexing, tractoring, world};
 use core::mem;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
+use crate::abilities::Ability;
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
@@ -71,22 +72,28 @@ pub fn apply_ship_action(
         ShipActionRust::DockNavigate { target } => {
             let mut ship = old_ship.clone();
             if let Some(planet) = indexing::find_planet(state, &target) {
-                let ship_pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                };
-                let planet_pos = Vec2f64 {
-                    x: planet.x,
-                    y: planet.y,
-                };
-                undock_ship_via_clone(state, &ship_idx, &mut ship, client);
-                ship.navigate_target = None;
-                ship.dock_target = None;
-                ship.dock_target = Some(target);
-                ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos, &ship.movement_definition);
-                ship.movement_markers.gas = None;
-                ship.movement_markers.turn = None;
-                Some(ship)
+                if planet.tags.contains(&ObjectTag::Unlandable) && !ship.abilities.contains(&Ability::BlowUpOnLand) {
+                    warn!(format!("Attempt to land on unlandable planet {} by ship {}, ignoring.", planet.id, ship.id));
+                    None
+                }
+                else {
+                    let ship_pos = Vec2f64 {
+                        x: ship.x,
+                        y: ship.y,
+                    };
+                    let planet_pos = Vec2f64 {
+                        x: planet.x,
+                        y: planet.y,
+                    };
+                    undock_ship_via_clone(state, &ship_idx, &mut ship, client);
+                    ship.navigate_target = None;
+                    ship.dock_target = None;
+                    ship.dock_target = Some(target);
+                    ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos, &ship.movement_definition);
+                    ship.movement_markers.gas = None;
+                    ship.movement_markers.turn = None;
+                    Some(ship)
+                }
             } else {
                 None
             }

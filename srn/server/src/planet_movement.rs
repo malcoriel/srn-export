@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 
 use itertools::chain;
@@ -9,7 +9,7 @@ use crate::indexing::index_planets_by_id;
 use crate::perf::Sampler;
 use crate::perf::SamplerMarks;
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::world::{split_bodies_by_area, Asteroid, Planet, Star, AABB};
+use crate::world::{split_bodies_by_area, Asteroid, Planet, Star, AABB, ObjectTag};
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
 use crate::combat::Health;
@@ -29,6 +29,7 @@ pub trait IBody: Clone {
     fn get_color(&self) -> String;
     fn as_vec(&self) -> Vec2f64;
     fn get_health(&self) -> Option<Health>;
+    fn get_tags(&self) -> HashSet<ObjectTag>;
 }
 
 impl IBody for Asteroid {
@@ -86,6 +87,10 @@ impl IBody for Asteroid {
     fn get_health(&self) -> Option<Health> {
         None
     }
+
+    fn get_tags(&self) -> HashSet<ObjectTag> {
+        HashSet::new()
+    }
 }
 
 impl IBody for Planet {
@@ -139,6 +144,10 @@ impl IBody for Planet {
 
     fn get_health(&self) -> Option<Health> {
         self.health.clone()
+    }
+
+    fn get_tags(&self) -> HashSet<ObjectTag> {
+        self.tags.clone()
     }
 }
 
@@ -197,6 +206,10 @@ impl IBody for Star {
     fn get_health(&self) -> Option<Health> {
         None
     }
+
+    fn get_tags(&self) -> HashSet<ObjectTag> {
+        HashSet::new()
+    }
 }
 
 impl From<Box<dyn IBody>> for Planet {
@@ -212,7 +225,8 @@ impl From<Box<dyn IBody>> for Planet {
             anchor_id: val.get_anchor_id(),
             anchor_tier: val.get_anchor_tier(),
             color: val.get_color(),
-            health: val.get_health()
+            health: val.get_health(),
+            tags: val.get_tags()
         }
     }
 }

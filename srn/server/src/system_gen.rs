@@ -18,10 +18,7 @@ use crate::random_stuff::{
     gen_star_radius, PLANET_NAMES, SAT_NAMES,
 };
 use crate::vec2::Vec2f64;
-use crate::world::{
-    gen_rng, random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location,
-    Planet, Star, AABB, GAME_STATE_VERSION,
-};
+use crate::world::{gen_rng, random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star, AABB, GAME_STATE_VERSION, ObjectTag};
 use crate::{new_id, planet_movement, world};
 use crate::combat::Health;
 
@@ -191,7 +188,8 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor_id: planet_id,
                             anchor_tier: 2,
                             color: gen_color(&mut prng).to_string(),
-                            health: None
+                            health: None,
+                            tags: Default::default()
                         })
                     }
                 } else {
@@ -294,7 +292,8 @@ pub fn gen_planet(
         anchor_id,
         anchor_tier: 1,
         color: gen_color(&mut prng).to_string(),
-        health: None
+        health: None,
+        tags: Default::default()
     }
 }
 
@@ -310,7 +309,8 @@ pub fn gen_planet_typed(p_type: PlanetType) -> Planet {
         anchor_id: Default::default(),
         anchor_tier: 0,
         color: get_planet_type_color(p_type),
-        health: None
+        health: None,
+        tags: Default::default()
     }
 }
 
@@ -368,6 +368,7 @@ fn make_pirate_defence_state(seed: String) -> GameState {
     gen_opts.max_satellites_for_planet = 0;
     let mut state = gen_state(seed, gen_opts);
     assign_health_to_planets(&mut state.locations[0].planets, Health::new(100.0));
+    state.locations[0].planets[0].tags.insert(ObjectTag::Unlandable);
     state.milliseconds_remaining = 5 * 1000 * 60;
     state.mode = GameMode::PirateDefence;
     state
@@ -407,7 +408,8 @@ fn make_tutorial_state() -> GameState {
             anchor_id: star_id.clone(),
             anchor_tier: 1,
             color: "#008FA9".to_string(),
-            health: None
+            health: None,
+            tags: Default::default()
         },
         Planet {
             id: new_id(),
@@ -420,7 +422,8 @@ fn make_tutorial_state() -> GameState {
             anchor_id: planet_id.clone(),
             anchor_tier: 2,
             color: "#1D334A".to_string(),
-            health: None
+            health: None,
+            tags: Default::default()
         },
     ];
     GameState {

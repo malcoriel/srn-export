@@ -175,6 +175,13 @@ fn get_random_planet<'a>(
     Some(from)
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash)]
+#[serde(tag = "tag")]
+pub enum ObjectTag {
+    Unknown,
+    Unlandable
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Planet {
     pub id: Uuid,
@@ -188,6 +195,7 @@ pub struct Planet {
     pub anchor_tier: u32,
     pub color: String,
     pub health: Option<Health>,
+    pub tags: HashSet<ObjectTag>,
 }
 
 impl Planet {
@@ -204,6 +212,7 @@ impl Planet {
             anchor_tier: 1,
             color: "".to_string(),
             health: None,
+            tags: Default::default()
         }
     }
 }

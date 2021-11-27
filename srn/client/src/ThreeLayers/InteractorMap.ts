@@ -17,6 +17,7 @@ import {
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import NetState from '../NetState';
+import { Planet } from '../../../world/pkg';
 
 const planetActionMap = new Map([
   [
@@ -28,6 +29,8 @@ const planetActionMap = new Map([
     },
   ],
 ]);
+
+const unlandablePlanetActionMap = new Map();
 
 const shipActionMap = new Map([
   [
@@ -69,12 +72,15 @@ export const InteractorMap: Record<
     (m) => m.id
   ),
   planet: _.memoize(
-    (_p) => ({
-      hint: null,
-      defaultAction: InteractorActionType.Dock,
-      outlineColor: common,
-      actions: planetActionMap,
-    }),
+    (p: Planet) => {
+      const isUnlandable = p.tags.find((v) => v.tag === 'Unlandable');
+      return {
+        hint: null,
+        defaultAction: isUnlandable ? undefined : InteractorActionType.Dock,
+        outlineColor: common,
+        actions: isUnlandable ? planetActionMap : unlandablePlanetActionMap,
+      };
+    },
     (m) => m.id
   ),
   ship: _.memoize(

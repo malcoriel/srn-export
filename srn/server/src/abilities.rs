@@ -5,7 +5,7 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy, PartialEq, Eq, Hash)]
 #[serde(tag = "tag")]
 pub enum Ability {
     Unknown,
