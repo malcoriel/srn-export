@@ -1030,8 +1030,8 @@ pub fn update_location(
     sampler.end(update_containers_id);
 
     if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
-        let hp_effects_id = sampler.start(SamplerMarks::UpdateShipHpEffects as u32);
-        update_ship_hp_effects(state, location_idx, elapsed, state.millis);
+        let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
+        update_hp_effects(state, location_idx, elapsed, state.millis);
         sampler.end(hp_effects_id);
 
         let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
@@ -1429,8 +1429,9 @@ const HEAL_EFFECT_MIN: f64 = 5.0;
 
 const WRECK_DECAY_TICKS : i32 = 10 * 1000 * 1000;
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
+pub const PLANET_HEALTH_REGEN_PER_TICK: f64 = 1.0 / 1000.0 / 1000.0;
 
-pub fn update_ship_hp_effects(
+pub fn update_hp_effects(
     state: &mut GameState,
     location_idx: usize,
     elapsed_micro: i64,
@@ -1559,6 +1560,15 @@ pub fn update_ship_hp_effects(
                 ship: ship_clone,
                 player: None,
             });
+        }
+    }
+
+    for planet in state.locations[location_idx].planets.iter_mut() {
+        if let Some(health) = &mut planet.health {
+            if health.current < health.max {
+                health.current += PLANET_HEALTH_REGEN_PER_TICK * elapsed_micro as f64;
+                health.current = health.current.min(health.max);
+            }
         }
     }
 }

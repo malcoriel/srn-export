@@ -239,7 +239,7 @@ pub enum SamplerMarks {
     UpdateShipsNavigation = 12,
     UpdateShipsTractoring = 13,
     UpdateTractoredMinerals = 14,
-    UpdateShipHpEffects = 15,
+    UpdateHpEffects = 15,
     UpdateMineralsRespawn = 16,
     UpdateShipsRespawn = 17,
     UpdatePlanets1 = 18,
