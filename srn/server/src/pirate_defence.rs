@@ -44,7 +44,7 @@ pub fn update_state_pirate_defence(state: &mut GameState) {
         state
             .interval_data
             .insert(TimeMarks::PirateSpawn, current_ticks);
-        for _i in 0..PIRATE_SPAWN_COUNT {
+        for _i in 0..PIRATE_SPAWN_COUNT * state.players.len() {
             fire_event(GameEvent::PirateSpawn {
                 state_id: state.id,
                 at: gen_pirate_spawn(&state.locations[0].planets.get(0).unwrap()),

@@ -6,7 +6,7 @@
 
 ### Fixes
 * Fixed server crash in sandbox mode
-* Fixed non-blocked context menu
+* Fixed non-blocked context menu (no more browser menu on right click)
 * Now it's impossible to shoot your own ship
 * It's impossible now to land on the planet in the pirate defence mode
 
