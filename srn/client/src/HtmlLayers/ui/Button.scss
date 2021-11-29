@@ -24,6 +24,8 @@
     bottom: 3px;
     right: 3px;
   }
+
+  -webkit-backface-visibility: hidden;
 }
 
 .ui-button.toggled {
@@ -41,9 +43,9 @@
   color: black;
   cursor: pointer;
 
-  transform: scale(1.02);
+  transform: scale(1.03);
 
-  transition: transform .25s;
+  transition: transform .1s;
 
   .hotkey-letter {
     color: black;
