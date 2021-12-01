@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { ReactElement, useState } from 'react';
 import './Button.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';
@@ -51,6 +51,7 @@ export const Button: React.FC<{
   text?: string;
   round?: boolean;
   thin?: boolean;
+  forceHotkeyAsHint?: boolean;
   noInlineHotkey?: boolean;
   noHotkeyHint?: boolean;
 }> = ({
@@ -65,6 +66,7 @@ export const Button: React.FC<{
   toggled,
   thin,
   disabled,
+  forceHotkeyAsHint,
 }) => {
   const targetHotKey = hotkey || '🤣';
   const [pseudoActive, setPseudoActive] = useState(false);
@@ -96,6 +98,22 @@ export const Button: React.FC<{
     { keydown: true },
     [onClick, targetHotKey, pseudoActive]
   );
+  let textElem: null | ReactElement;
+
+  if (text) {
+    if (forceHotkeyAsHint) {
+      textElem = (
+        <>
+          {formatText(text, '', noInlineHotkey)}
+          {renderHotkeyHint(hotkey, noHotkeyHint)}
+        </>
+      );
+    } else {
+      textElem = formatText(text, hotkey, noInlineHotkey);
+    }
+  } else {
+    textElem = renderHotkeyHint(hotkey, noHotkeyHint);
+  }
   return (
     <span
       className={classNames({
@@ -110,9 +128,7 @@ export const Button: React.FC<{
       onClick={disabled ? () => {} : timedOutClick}
     >
       {children}
-      {text
-        ? formatText(text, hotkey, noInlineHotkey)
-        : renderHotkeyHint(hotkey, noHotkeyHint)}
+      {textElem}
     </span>
   );
 };
