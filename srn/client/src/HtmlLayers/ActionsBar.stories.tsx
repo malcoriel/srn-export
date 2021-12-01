@@ -27,14 +27,17 @@ const Template: Story = (args) => {
             {
               text: 'qq',
               action: () => console.log('qq'),
+              hotkey: 'q',
             },
             {
-              icon: <FaBullseye />,
+              icon: <FaBullseye size={20} />,
               action: () => console.log('icon'),
+              hotkey: 'i',
             },
             {
               text: 'ww',
               action: () => console.log('ww'),
+              hotkey: 'w',
             },
           ]}
         />
