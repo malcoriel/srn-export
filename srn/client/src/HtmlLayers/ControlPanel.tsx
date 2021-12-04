@@ -53,9 +53,6 @@ const MoneyAndHp = () => {
   }
   const myPlayer = findMyPlayer(ns.state);
   const myShip = findMyShip(ns.state);
-  if (!myPlayer || !myShip) {
-    return null;
-  }
   return (
     <div className="money-and-hp">
       {myPlayer && (
@@ -64,7 +61,7 @@ const MoneyAndHp = () => {
           <span className="text">{myPlayer.money} SB</span>
         </div>
       )}
-      <HpDisplay myShip={myShip} />
+      {myShip && <HpDisplay myShip={myShip} />}
     </div>
   );
 };
