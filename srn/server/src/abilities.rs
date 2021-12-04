@@ -9,7 +9,8 @@ use wasm_bindgen::prelude::*;
 #[serde(tag = "tag")]
 pub enum Ability {
     Unknown,
-    Shoot { cooldown_ticks_remaining: i32 },
+    Shoot { cooldown_ticks_remaining: i32, turret_id: Uuid },
+    ShootAll,
     BlowUpOnLand,
 }
 
@@ -18,19 +19,21 @@ impl Ability {
         match self {
             Ability::Unknown => 0,
             Ability::Shoot { .. } => 100 * 1000,
-            Ability::BlowUpOnLand => 0
+            Ability::BlowUpOnLand => 0,
+            Ability::ShootAll => 0
         }
     }
 
     pub fn set_max_cooldown(&mut self) {
-        self.set_current_cooldown(self.get_cooldown());
+        self.set_current_cooldown(self.get_cooldown_ticks());
     }
 
-    pub fn get_cooldown(&self) -> i32 {
+    pub fn get_cooldown_ticks(&self) -> i32 {
         match self {
             Ability::Unknown => 0,
             Ability::Shoot { .. } => 200 * 1000,
-            Ability::BlowUpOnLand => 0
+            Ability::BlowUpOnLand => 0,
+            Ability::ShootAll => 0
         }
     }
 
@@ -38,7 +41,8 @@ impl Ability {
         match self {
             Ability::Unknown => 0.0,
             Ability::Shoot { .. } => 50.0,
-            Ability::BlowUpOnLand => 0.0
+            Ability::BlowUpOnLand => 0.0,
+            Ability::ShootAll => 0.0
         }
     }
 
@@ -47,8 +51,10 @@ impl Ability {
             Ability::Unknown => 0,
             Ability::Shoot {
                 cooldown_ticks_remaining,
+                ..
             } => *cooldown_ticks_remaining,
             Ability::BlowUpOnLand => 0,
+            Ability::ShootAll => 0
         };
     }
 
@@ -57,10 +63,12 @@ impl Ability {
             Ability::Unknown => {}
             Ability::Shoot {
                 cooldown_ticks_remaining,
+                ..
             } => {
                 *cooldown_ticks_remaining = val;
             }
             Ability::BlowUpOnLand => {}
+            Ability::ShootAll => {}
         };
     }
 
@@ -69,11 +77,13 @@ impl Ability {
             Ability::Unknown => {}
             Ability::Shoot {
                 cooldown_ticks_remaining,
+                ..
             } => {
                 *cooldown_ticks_remaining =
                     (*cooldown_ticks_remaining - ticks_elapsed as i32).max(0);
             }
             Ability::BlowUpOnLand => {}
+            Ability::ShootAll => {}
         };
     }
 }

@@ -321,8 +321,9 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
         target,
         micro_left: Ability::Shoot {
             cooldown_ticks_remaining: 0,
+            turret_id: Default::default()
         }
-            .get_cooldown(),
+            .get_cooldown_ticks(),
         percentage: 0,
     });
     revalidate(&mut ship.long_actions);
@@ -333,6 +334,7 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
                 ability.set_max_cooldown();
             }
             Ability::BlowUpOnLand => {}
+            Ability::ShootAll => {}
         }
     }
     return true;
@@ -490,6 +492,7 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                         left,
                         Ability::Shoot {
                             cooldown_ticks_remaining: 0,
+                            turret_id: Default::default()
                         }
                             .get_duration(),
                     ),

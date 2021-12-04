@@ -179,7 +179,7 @@ fn get_random_planet<'a>(
 #[serde(tag = "tag")]
 pub enum ObjectTag {
     Unknown,
-    Unlandable
+    Unlandable,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -212,7 +212,7 @@ impl Planet {
             anchor_tier: 1,
             color: "".to_string(),
             health: None,
-            tags: Default::default()
+            tags: Default::default(),
         }
     }
 }
@@ -322,6 +322,10 @@ pub enum GameEvent {
     },
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct ShipTurret {
+    id: Uuid,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Ship {
@@ -349,10 +353,26 @@ pub struct Ship {
     pub long_actions: Vec<LongAction>,
     pub npc: Option<Bot>,
     pub name: Option<String>,
+    pub turrets: Vec<ShipTurret>,
+}
+
+pub fn gen_turrets(count: usize) -> Vec<(Ability, ShipTurret)> {
+    let mut res = vec![];
+    for _i in 0..count {
+        let id = new_id();
+        res.push((Ability::Shoot {
+            cooldown_ticks_remaining: 0,
+            turret_id: id,
+        }, ShipTurret {
+            id
+        }))
+    }
+    res
 }
 
 impl Ship {
     pub fn new(mut small_rng: &mut SmallRng, at: &mut Option<Vec2f64>) -> Ship {
+        let turrets = gen_turrets(2);
         Ship {
             id: crate::new_id(),
             color: gen_color(&mut small_rng).to_string(),
@@ -368,9 +388,8 @@ impl Ship {
             dock_target: None,
             trajectory: vec![],
             inventory: vec![],
-            abilities: vec![Ability::Shoot {
-                cooldown_ticks_remaining: 0,
-            }],
+            abilities: turrets.iter().map(|(a, t)| a.clone()).collect(),
+            turrets: turrets.iter().map(|(a, t)| t.clone()).collect(),
             auto_focus: None,
             hostile_auto_focus: None,
             movement_markers: Default::default(),
@@ -392,7 +411,7 @@ impl Ship {
     pub fn get_position(&self) -> Vec2f64 {
         Vec2f64 {
             x: self.x,
-            y: self.y
+            y: self.y,
         }
     }
 }
@@ -537,7 +556,7 @@ pub struct Wreck {
     pub radius: f64,
     pub color: String,
     pub decay_normalized: f64,
-    pub decay_ticks: i32
+    pub decay_ticks: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -1427,7 +1446,7 @@ const MAX_LOCAL_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
 
-const WRECK_DECAY_TICKS : i32 = 10 * 1000 * 1000;
+const WRECK_DECAY_TICKS: i32 = 10 * 1000 * 1000;
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
 pub const PLANET_HEALTH_REGEN_PER_TICK: f64 = 1.0 / 1000.0 / 1000.0;
 
@@ -1542,9 +1561,9 @@ pub fn update_hp_effects(
             radius: ship_clone.radius,
             color: ship_clone.color.clone(),
             decay_normalized: 0.0,
-            decay_ticks: WRECK_DECAY_TICKS
+            decay_ticks: WRECK_DECAY_TICKS,
         });
-        if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)){
+        if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)) {
             player.ship_id = None;
             player.money -= 1000;
             player.money = player.money.max(0);
@@ -1553,8 +1572,7 @@ pub fn update_hp_effects(
                 ship: ship_clone,
                 player: Some(player.clone()),
             });
-        }
-        else {
+        } else {
             fire_event(GameEvent::ShipDied {
                 state_id,
                 ship: ship_clone,
@@ -1575,10 +1593,8 @@ pub fn update_hp_effects(
 
 fn apply_players_ship_death(ship: Ship, player: Option<&mut Player>, state_id: Uuid) {
     match player {
-        None => {
-        }
+        None => {}
         Some(player) => {
-
             fire_event(GameEvent::ShipDied {
                 state_id,
                 ship: ship.clone(),
