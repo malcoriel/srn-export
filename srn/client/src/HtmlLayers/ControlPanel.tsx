@@ -20,6 +20,7 @@ import { makePortraitPath } from './StartMenu';
 import { findObjectById, getObjectPosition, Ship } from '../world';
 import { NotificationPanel } from './NotifcationPanel';
 import { NotificationAction } from '../../../world/pkg';
+import { ActionsBar } from './ActionsBar';
 
 const BUTTON_SIZE = 53;
 const BUTTON_COUNT = 7;
@@ -27,26 +28,20 @@ const THICKNESS = 9;
 
 const HpDisplay = ({ myShip }: { myShip: Ship }) => {
   return (
-    <StyledRect
-      height={26}
-      width={200}
-      line="thin"
-      thickness={4}
-      halfThick
-      noLeft
-      noBottom
-      className="hp-bar"
-    >
-      <div className="text">
-        {Math.floor(myShip.health.current)}/{Math.floor(myShip.health.max)}
+    <div className="hp-bar">
+      <div className="content">
+        <div className="prefix-text">Ship integrity:&nbsp;</div>
+        <div className="text">
+          {Math.floor(myShip.health.current)}/{Math.floor(myShip.health.max)}
+        </div>
+        <div
+          className="filler"
+          style={{
+            width: `${(myShip.health.current / myShip.health.max) * 100}%`,
+          }}
+        />
       </div>
-      <div
-        className="filler"
-        style={{
-          width: `${(myShip.health.current / myShip.health.max) * 100}%`,
-        }}
-      />
-    </StyledRect>
+    </div>
   );
 };
 
@@ -64,19 +59,10 @@ const MoneyAndHp = () => {
   return (
     <div className="money-and-hp">
       {myPlayer && (
-        <StyledRect
-          line="thin"
-          thickness={4}
-          contentClassName="money"
-          halfThick
-          noLeft
-          noBottom
-          width={100}
-          height={24}
-        >
+        <div className="money">
           <span className="money-icon" />
           <span className="text">{myPlayer.money} SB</span>
-        </StyledRect>
+        </div>
       )}
       <HpDisplay myShip={myShip} />
     </div>
@@ -140,45 +126,68 @@ export const ControlPanel = () => {
   return (
     <div className="control-panel">
       <StyledRect
-        contentClassName="rect"
-        height={60}
+        contentClassName="system-actions"
+        height={90}
         width={BUTTON_SIZE * BUTTON_COUNT + THICKNESS * 2}
         thickness={THICKNESS}
         line="thin"
         noLeft
         noBottom
       >
-        <Button>
-          <img
-            className="portrait"
-            src={makePortraitPath(myPlayerPortraitName || 'question')}
-            alt="p"
-          />
-        </Button>
-        <Button
-          onClick={() => {
-            setMenu(true);
-          }}
-        >
-          <CgScreen />
-        </Button>
-        <Button onClick={toggleQuestWindow} hotkey="o">
-          <FaBullseye />
-        </Button>
-        <Button onClick={toggleLeaderboardWindow} hotkey="l">
-          <AiOutlineSolution />
-        </Button>
-        <Button onClick={toggleChatWindow} hotkey="v">
-          <BsFillChatDotsFill />
-        </Button>
-        <Button onClick={toggleInventoryWindow} hotkey="i">
-          <FiBox />
-        </Button>
-        <Button onClick={toggleMapWindow} hotkey="m">
-          <FcMindMap />
-        </Button>
+        <MoneyAndHp />
+        <div className="rect">
+          <Button>
+            <img
+              className="portrait"
+              src={makePortraitPath(myPlayerPortraitName || 'question')}
+              alt="p"
+            />
+          </Button>
+          <Button
+            onClick={() => {
+              setMenu(true);
+            }}
+          >
+            <CgScreen />
+          </Button>
+          <Button onClick={toggleQuestWindow} hotkey="o">
+            <FaBullseye />
+          </Button>
+          <Button onClick={toggleLeaderboardWindow} hotkey="l">
+            <AiOutlineSolution />
+          </Button>
+          <Button onClick={toggleChatWindow} hotkey="v">
+            <BsFillChatDotsFill />
+          </Button>
+          <Button onClick={toggleInventoryWindow} hotkey="i">
+            <FiBox />
+          </Button>
+          <Button onClick={toggleMapWindow} hotkey="m">
+            <FcMindMap />
+          </Button>
+        </div>
       </StyledRect>
-      <MoneyAndHp />
+      <ActionsBar
+        className="control-panel-actions-bar"
+        indexByNumbers
+        actions={[
+          {
+            text: 'qq',
+            action: () => console.log('qq'),
+            hotkey: 'q',
+          },
+          {
+            icon: <FaBullseye size={20} />,
+            action: () => console.log('icon'),
+            hotkey: 'i',
+          },
+          {
+            text: 'ww',
+            action: () => console.log('ww'),
+            hotkey: 'w',
+          },
+        ]}
+      />
       <Notifications />
     </div>
   );

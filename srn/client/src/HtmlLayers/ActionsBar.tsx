@@ -12,13 +12,15 @@ export interface ActionBarAction {
 export interface ActionsBarProps {
   actions: ActionBarAction[];
   indexByNumbers?: boolean;
+  className?: string;
 }
 export const ActionsBar: React.FC<ActionsBarProps> = ({
   actions,
   indexByNumbers,
+  className = '',
 }) => {
   return (
-    <div className="actions-bar">
+    <div className={`actions-bar ${className}`}>
       <div className="background" />
       {actions.map(({ icon, text, hotkey, action }, i) => {
         return (
