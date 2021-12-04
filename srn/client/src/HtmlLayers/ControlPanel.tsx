@@ -20,7 +20,7 @@ import { makePortraitPath } from './StartMenu';
 import { findObjectById, getObjectPosition, Ship } from '../world';
 import { NotificationPanel } from './NotifcationPanel';
 import { NotificationAction } from '../../../world/pkg';
-import { ActionsBar } from './ActionsBar';
+import { PlayerActionsBar } from './PlayerActionsBar';
 
 const BUTTON_SIZE = 53;
 const BUTTON_COUNT = 7;
@@ -164,27 +164,7 @@ export const ControlPanel = () => {
           </Button>
         </div>
       </StyledRect>
-      <ActionsBar
-        className="control-panel-actions-bar"
-        indexByNumbers
-        actions={[
-          {
-            text: 'qq',
-            action: () => console.log('qq'),
-            hotkey: 'q',
-          },
-          {
-            icon: <FaBullseye size={20} />,
-            action: () => console.log('icon'),
-            hotkey: 'i',
-          },
-          {
-            text: 'ww',
-            action: () => console.log('ww'),
-            hotkey: 'w',
-          },
-        ]}
-      />
+      <PlayerActionsBar />
       <Notifications />
     </div>
   );
