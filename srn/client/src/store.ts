@@ -148,7 +148,7 @@ export const useStore = create<SrnState>((set) => ({
   tradeWindow: WindowState.Hidden,
   helpWindow: WindowState.Hidden,
   mapWindow: WindowState.Hidden,
-  leaderboardWindow: WindowState.Minimized,
+  leaderboardWindow: WindowState.Hidden,
   showTractorCircle: undefined,
   selectedObjectId: undefined,
   contextMenuItems: [],

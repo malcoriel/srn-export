@@ -137,7 +137,7 @@ const Srn = () => {
       setLeaderboardWindow(WindowState.Hidden);
     } else {
       setChatWindow(WindowState.Minimized);
-      setLeaderboardWindow(WindowState.Minimized);
+      setLeaderboardWindow(WindowState.Hidden);
     }
   };
 

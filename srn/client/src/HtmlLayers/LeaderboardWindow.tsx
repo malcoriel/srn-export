@@ -15,7 +15,7 @@ export const LeaderboardWindow: React.FC = () => {
       if (ev.GameEnded) {
         setLeaderboardWindow(WindowState.Shown);
       } else if (ev.GameStarted) {
-        setLeaderboardWindow(WindowState.Minimized);
+        setLeaderboardWindow(WindowState.Hidden);
       }
     };
     ns.on('gameEvent', onGameStartEnd);
