@@ -22,6 +22,8 @@ const mapShipAbility = (sa: Ability): ActionBarAction | null => {
       };
     case 'BlowUpOnLand':
       return null;
+    case 'ShootAll':
+      return null;
     default:
       throw new UnreachableCaseError(sa);
   }

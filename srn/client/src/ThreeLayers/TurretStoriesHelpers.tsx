@@ -23,6 +23,7 @@ const genLongAct = (percentage: number, turretId: string) => {
     micro_left: 500,
     percentage,
     target: '1',
+    turret_id: '1',
   });
   longActionShoot.turretId = turretId;
   return longActionShoot;

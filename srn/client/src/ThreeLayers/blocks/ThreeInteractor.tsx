@@ -15,6 +15,8 @@ import {
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { vecToThreePos } from '../util';
 import { suppressEvent } from '../suppressEvent';
+// eslint-disable-next-line import/named
+import { Ability } from '../../../../world/pkg/world';
 
 export enum InteractorActionType {
   Unknown,
@@ -35,7 +37,7 @@ const mapActionToHotkey = (t: InteractorActionType) => {
   return 'E';
 };
 
-export type InteractorActionFn = (objectId: string) => void;
+export type InteractorActionFn = (objectId: string, ability?: Ability) => void;
 
 export interface ThreeInteractorProps {
   actions?: Map<InteractorActionType, InteractorActionFn>;

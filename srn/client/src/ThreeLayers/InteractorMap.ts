@@ -7,9 +7,8 @@ import {
   mineralHintContent,
 } from '../HtmlLayers/HintWindow';
 import { common, rare } from '../utils/palette';
-import { containerActionsMap } from './ContainersLayer';
 import _ from 'lodash';
-import { mineralActionsMap, rarityToColor } from './MineralsLayer';
+import { rarityToColor } from './MineralsLayer';
 import { actionsActive } from '../utils/ShipControls';
 import {
   LongActionStartBuilder,
@@ -17,7 +16,7 @@ import {
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import NetState from '../NetState';
-import { Planet } from '../../../world/pkg';
+import { Ability, Planet } from '../../../world/pkg';
 
 const planetActionMap = new Map([
   [
@@ -35,20 +34,70 @@ const unlandablePlanetActionMap = new Map();
 const shipActionMap = new Map([
   [
     InteractorActionType.Shoot,
-    (id: string) => {
+    (id: string, ability?: Ability) => {
       const ns = NetState.get();
-      if (!ns) {
+      if (!ns || !ability || ability.tag !== 'Shoot') {
         return;
       }
       ns.startLongAction(
         LongActionStartBuilder.LongActionStartShoot({
           target: ShootTargetBuilder.ShootTargetShip({ id }),
+          turret_id: ability.turret_id,
         })
       );
     },
   ],
 ]);
 
+export const containerActionsMap = new Map([
+  [
+    InteractorActionType.Tractor,
+    (objectId: string) => {
+      actionsActive.Tractor = ShipActionRustBuilder.ShipActionRustTractor({
+        target: objectId,
+      });
+    },
+  ],
+  [
+    InteractorActionType.Shoot,
+    (objectId: string, ability?: Ability) => {
+      const ns = NetState.get();
+      if (ns && ability && ability.tag === 'Shoot') {
+        ns.startLongAction(
+          LongActionStartBuilder.LongActionStartShoot({
+            target: ShootTargetBuilder.ShootTargetContainer({ id: objectId }),
+            turret_id: ability.turret_id,
+          })
+        );
+      }
+    },
+  ],
+]);
+
+export const mineralActionsMap = new Map([
+  [
+    InteractorActionType.Tractor,
+    (objectId: string) => {
+      actionsActive.Tractor = ShipActionRustBuilder.ShipActionRustTractor({
+        target: objectId,
+      });
+    },
+  ],
+  [
+    InteractorActionType.Shoot,
+    (objectId: string, ability?: Ability) => {
+      const ns = NetState.get();
+      if (ns && ability && ability.tag === 'Shoot') {
+        ns.startLongAction(
+          LongActionStartBuilder.LongActionStartShoot({
+            target: ShootTargetBuilder.ShootTargetMineral({ id: objectId }),
+            turret_id: ability.turret_id,
+          })
+        );
+      }
+    },
+  ],
+]);
 export const InteractorMap: Record<
   string,
   (obj: any) => ThreeInteractorProps

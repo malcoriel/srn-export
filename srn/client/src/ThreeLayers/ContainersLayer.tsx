@@ -1,40 +1,8 @@
 import React from 'react';
 import { ThreeFloatingObject } from './ThreeFloatingObject';
-import { InteractorActionType } from './blocks/ThreeInteractor';
 import { Container } from '../../../world/pkg';
-import { actionsActive } from '../utils/ShipControls';
-import NetState from '../NetState';
-import {
-  LongActionStartBuilder,
-  ShipActionRustBuilder,
-  ShootTargetBuilder,
-} from '../../../world/pkg/world.extra';
 import { InteractorMap } from './InteractorMap';
 import { posToThreePos } from './util';
-
-export const containerActionsMap = new Map([
-  [
-    InteractorActionType.Tractor,
-    (objectId: string) => {
-      actionsActive.Tractor = ShipActionRustBuilder.ShipActionRustTractor({
-        target: objectId,
-      });
-    },
-  ],
-  [
-    InteractorActionType.Shoot,
-    (objectId: string) => {
-      const ns = NetState.get();
-      if (ns) {
-        ns.startLongAction(
-          LongActionStartBuilder.LongActionStartShoot({
-            target: ShootTargetBuilder.ShootTargetContainer({ id: objectId }),
-          })
-        );
-      }
-    },
-  ],
-]);
 
 interface ContainersLayerParams {
   containers: Container[];

@@ -1,13 +1,5 @@
-import { InteractorActionType } from './blocks/ThreeInteractor';
-import { actionsActive } from '../utils/ShipControls';
 import { NatSpawnMineral } from '../world';
-import NetState from '../NetState';
-import {
-  LongActionStartBuilder,
-  Rarity,
-  ShipActionRustBuilder,
-  ShootTargetBuilder,
-} from '../../../world/pkg/world.extra';
+import { Rarity } from '../../../world/pkg/world.extra';
 import React from 'react';
 import { ThreeFloatingObject } from './ThreeFloatingObject';
 import { common, rare, uncommon } from '../utils/palette';
@@ -15,30 +7,6 @@ import { UnreachableCaseError } from 'ts-essentials';
 import { InteractorMap } from './InteractorMap';
 import _ from 'lodash';
 import { posToThreePos } from './util';
-
-export const mineralActionsMap = new Map([
-  [
-    InteractorActionType.Tractor,
-    (objectId: string) => {
-      actionsActive.Tractor = ShipActionRustBuilder.ShipActionRustTractor({
-        target: objectId,
-      });
-    },
-  ],
-  [
-    InteractorActionType.Shoot,
-    (objectId: string) => {
-      const ns = NetState.get();
-      if (ns) {
-        ns.startLongAction(
-          LongActionStartBuilder.LongActionStartShoot({
-            target: ShootTargetBuilder.ShootTargetMineral({ id: objectId }),
-          })
-        );
-      }
-    },
-  ],
-]);
 
 export const rarityToColor = _.memoize((rarity: Rarity): string => {
   switch (rarity) {

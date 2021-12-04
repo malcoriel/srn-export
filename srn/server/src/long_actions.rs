@@ -25,7 +25,7 @@ pub enum LongActionStart {
     Unknown,
     TransSystemJump { to: Uuid },
     Respawn,
-    Shoot { target: ShootTarget },
+    Shoot { target: ShootTarget, turret_id: Uuid },
     Dock { to_planet: Uuid },
     Undock { from_planet: Uuid },
 }
@@ -60,6 +60,7 @@ pub enum LongAction {
         target: ShootTarget,
         micro_left: i32,
         percentage: u32,
+        turret_id: Uuid
     },
     Dock {
         id: Uuid,
@@ -94,6 +95,7 @@ pub fn erase_details(la: LongAction) -> LongAction {
             target: Default::default(),
             micro_left: 0,
             percentage: 0,
+            turret_id: Default::default()
         },
         LongAction::Dock { .. } => LongAction::Dock {
             id: Default::default(),
@@ -138,8 +140,8 @@ pub fn try_start_long_action_ship(
     prng: &mut SmallRng,
 ) -> bool {
     match action {
-        LongActionStart::Shoot { target, .. } => {
-            try_start_shoot(state, target, Some(ship_idx.clone()));
+        LongActionStart::Shoot { target, turret_id, .. } => {
+            try_start_shoot(state, target, Some(ship_idx.clone()), turret_id);
             true
         }
         LongActionStart::Dock { to_planet, .. } => {
@@ -202,12 +204,12 @@ pub fn try_start_long_action(
             });
             revalidate_player(&mut player.long_actions);
         }
-        LongActionStart::Shoot { target } => {
+        LongActionStart::Shoot { target, turret_id } => {
             let ship_idx = find_my_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
             }
-            return try_start_shoot(state, target, ship_idx);
+            return try_start_shoot(state, target, ship_idx, turret_id);
         }
         LongActionStart::Dock { to_planet, .. } => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -305,7 +307,7 @@ fn try_start_dock(state: &mut GameState, to_planet: Uuid, ship_idx: ShipIdx) -> 
     return true;
 }
 
-fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<ShipIdx>) -> bool {
+fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<ShipIdx>, shooting_turret_id: Uuid) -> bool {
     let ship_idx = ship_idx.unwrap();
     if !combat::validate_shoot(
         target.clone(),
@@ -325,13 +327,16 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
         }
             .get_cooldown_ticks(),
         percentage: 0,
+        turret_id: Default::default()
     });
     revalidate(&mut ship.long_actions);
     for ability in ship.abilities.iter_mut() {
         match ability {
             Ability::Unknown => {}
-            Ability::Shoot { .. } => {
-                ability.set_max_cooldown();
+            Ability::Shoot { turret_id, .. } => {
+                if *turret_id == shooting_turret_id {
+                    ability.set_max_cooldown();
+                }
             }
             Ability::BlowUpOnLand => {}
             Ability::ShootAll => {}
@@ -480,6 +485,7 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
             micro_left,
             id,
             target,
+            turret_id,
             ..
         } => {
             let left = micro_left - micro_passed as i32;
@@ -496,6 +502,7 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                         }
                             .get_duration(),
                     ),
+                    turret_id,
                 },
                 left > 0,
             )
