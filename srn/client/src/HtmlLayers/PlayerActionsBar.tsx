@@ -6,8 +6,10 @@ import NetState, {
 } from '../NetState';
 import { ActionBarAction, ActionsBar } from './ActionsBar';
 import { Player, Ship } from '../world';
+// eslint-disable-next-line import/named
 import { Ability } from '../../../world/pkg/world';
 import { FaBullseye } from 'react-icons/all';
+import { UnreachableCaseError } from 'ts-essentials';
 
 const mapShipAbility = (sa: Ability): ActionBarAction | null => {
   switch (sa.tag) {
@@ -20,6 +22,8 @@ const mapShipAbility = (sa: Ability): ActionBarAction | null => {
       };
     case 'BlowUpOnLand':
       return null;
+    default:
+      throw new UnreachableCaseError(sa);
   }
 };
 
