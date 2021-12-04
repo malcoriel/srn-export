@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.7.9 (2021-12-04)
+### New
+* Changed the layout of the UI, money & health are not on top of the system actions panel.
+* Leaderboard window is now hidden by default
+* New actions bar, currently the only action is shooting
+* The amount of pirate ships is now scaled by the amount of players
+
+### Fixes
+* No more annoying visual flickering when hovering on buttons in Chrome
+
+
 ## Version 0.7.8 (2021-11-27)
 ### New
 * More pirate ships per wave in the pirate defence mode, but the planet now regenerates health

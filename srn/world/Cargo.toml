@@ -1,6 +1,6 @@
 [package]
 name = "world"
-version = "0.7.8"
+version = "0.7.9"
 authors = [ "Valeriy Kuzmin <malcoriel@gmail.com>" ]
 edition = "2018"
 
