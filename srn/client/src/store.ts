@@ -11,6 +11,7 @@ import {
   setLSValue,
 } from './utils/useLocalStorage';
 import { ObjectSpecifier } from '../../world/pkg';
+import _ from 'lodash';
 
 export function genRandomName() {
   return uniqueNamesGenerator({
@@ -280,3 +281,25 @@ export const store = useStore;
 
 const initialState = store.getState();
 export const resetStore = () => store.setState(initialState, true);
+
+// this is a fully derived value, hence special selector/hook
+export const useActiveInteractors = (): {
+  neutralId?: string;
+  hostileId?: string;
+} => {
+  const {
+    activeHostileInteractorId,
+    activeInteractorId,
+    autoFocusSpecifier,
+    hostileAutoFocusSpecifier,
+  } = useStore();
+
+  const neutralId = activeInteractorId || _.get(autoFocusSpecifier, 'id');
+  const hostileId =
+    activeHostileInteractorId || _.get(hostileAutoFocusSpecifier, 'id');
+
+  return {
+    neutralId,
+    hostileId,
+  };
+};

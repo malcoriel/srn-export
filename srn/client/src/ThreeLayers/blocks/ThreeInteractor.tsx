@@ -164,12 +164,7 @@ const ThreeInteractorImpl = ({
       const fn = actions.get(defaultAction);
       if (fn) {
         fn(objectId);
-        if (e) {
-          e.stopPropagation();
-          if (e.preventDefault) {
-            e.preventDefault();
-          }
-        }
+        suppressEvent(e);
       }
     }
     return false;

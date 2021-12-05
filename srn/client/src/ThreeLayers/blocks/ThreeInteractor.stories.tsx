@@ -9,6 +9,7 @@ import { Vector3Arr } from '../util';
 import { resetStore, store } from '../../store';
 import { ObjectSpecifierBuilder } from '../../../../world/pkg/world.extra';
 import _ from 'lodash';
+import { ZustandStateListener } from './StoryHelpers';
 
 export default {
   title: 'Three/ThreeInteractor',
@@ -61,7 +62,7 @@ const Template: Story = (args) => {
   };
 
   return (
-    <div>
+    <div style={{ display: 'flex' }}>
       {/* interactor text for some reason depends on the camera zoom, probably some bug or lack of compensation in Text elem */}
       <StoryCanvas zoom={10.0}>
         <ThreeSpaceBackground size={256} shaderShift={0} />
@@ -70,6 +71,12 @@ const Template: Story = (args) => {
           {args.hostile.map((n: any) => renderInteractable(n, true))}
         </group>
       </StoryCanvas>
+      <div>
+        <ZustandStateListener
+          fields={['activeHostileInteractorId', 'activeInteractorId']}
+          hooks={['useActiveInteractors']}
+        />
+      </div>
     </div>
   );
 };
