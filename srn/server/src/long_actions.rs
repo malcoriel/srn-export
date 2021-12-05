@@ -327,7 +327,7 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
         }
             .get_cooldown_ticks(),
         percentage: 0,
-        turret_id: Default::default()
+        turret_id: shooting_turret_id
     });
     revalidate(&mut ship.long_actions);
     for ability in ship.abilities.iter_mut() {

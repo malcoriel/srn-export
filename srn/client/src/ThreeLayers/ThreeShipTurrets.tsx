@@ -76,7 +76,7 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
             }
             const endShift = threePosToVectorInv(...parentPosition);
             return {
-              startTurretId: (shootLongAct as any).turretId,
+              startTurretId: shootLongAct.turret_id,
               end: end.add(endShift).turnCounterClockwise(-rotation),
               progression: shootLongAct.percentage,
             };

@@ -26,17 +26,11 @@ const mapLongActions = (long_actions: LongAction[]) => {
       if (la.tag !== 'Shoot') {
         return null;
       }
-      const la1: any = _.clone(la);
-      la1.turretId = '1';
-      const la2: any = _.clone(la);
-      la2.turretId = '2';
-      return [la1, la2];
+      return la;
     })
     .filter((la) => !!la)
     .flat() as LongAction[];
 };
-
-const STATIC_TURRETS = [{ id: '1' }, { id: '2' }];
 
 export const ThreeShipsLayer: React.FC<{
   visMap: Record<string, boolean>;
@@ -101,7 +95,7 @@ export const ThreeShipsLayer: React.FC<{
               }
               return pos;
             }}
-            turrets={STATIC_TURRETS}
+            turrets={ship.turrets}
           />
         );
       })}
