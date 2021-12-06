@@ -42,7 +42,7 @@ const renderHotkeyHint = (
   return <div className="hotkey-hint">{hotkey}</div>;
 };
 
-export const Button: React.FC<{
+export type ButtonProps = {
   onClick?: () => void;
   className?: string;
   disabled?: boolean;
@@ -54,7 +54,11 @@ export const Button: React.FC<{
   forceHotkeyAsHint?: boolean;
   noInlineHotkey?: boolean;
   noHotkeyHint?: boolean;
-}> = ({
+  cooldownNormalized?: number;
+  buttonWidth?: number;
+  buttonHeight?: number;
+};
+export const Button: React.FC<ButtonProps> = ({
   hotkey,
   noHotkeyHint,
   noInlineHotkey,
@@ -67,6 +71,9 @@ export const Button: React.FC<{
   thin,
   disabled,
   forceHotkeyAsHint,
+  cooldownNormalized = 0.0,
+  buttonWidth = 0.0,
+  buttonHeight = 0.0,
 }) => {
   const targetHotKey = hotkey || '🤣';
   const [pseudoActive, setPseudoActive] = useState(false);
@@ -114,21 +121,56 @@ export const Button: React.FC<{
   } else {
     textElem = renderHotkeyHint(hotkey, noHotkeyHint);
   }
-  return (
-    <span
-      className={classNames({
-        'ui-button ': true,
-        'pseudo-active': pseudoActive,
-        thin,
-        [className as string]: !!className,
-        toggled,
-        round,
-        disabled,
-      })}
-      onClick={disabled ? () => {} : timedOutClick}
-    >
-      {children}
-      {textElem}
-    </span>
+
+  const buttonRadius = (buttonWidth ** 2 + buttonHeight ** 2) ** 0.5 / 2.0;
+
+  const transparent = (1 - cooldownNormalized) * 100;
+  const covered = cooldownNormalized * 100;
+
+  const cooldownElem = cooldownNormalized && (
+    <div
+      className="ui-button-cooldown"
+      style={{
+        width: buttonRadius * 2,
+        height: buttonRadius * 2,
+        marginLeft: -(buttonRadius - buttonWidth / 2),
+        marginTop: -(buttonRadius - buttonHeight / 2),
+        backgroundImage: `conic-gradient(transparent ${transparent}%, rgba(0, 0, 0, 0.5) ${covered}%, rgba(0, 0, 0, 0.5))`,
+        borderRadius: '50%',
+      }}
+    />
   );
+  const mainButtonElem = (
+    <>
+      <span
+        className={classNames({
+          'ui-button ': true,
+          'pseudo-active': pseudoActive,
+          thin,
+          [className as string]: !!className,
+          toggled,
+          round,
+          disabled,
+        })}
+        onClick={disabled ? () => {} : timedOutClick}
+      >
+        {children}
+        {textElem}
+      </span>
+    </>
+  );
+
+  let result: ReactElement;
+  if (cooldownElem) {
+    result = (
+      <span className="ui-button-with-cooldown">
+        {cooldownElem}
+        {mainButtonElem}
+      </span>
+    );
+  } else {
+    result = mainButtonElem;
+  }
+
+  return result;
 };

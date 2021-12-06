@@ -92,3 +92,11 @@
     color: $gray;
   }
 }
+
+.ui-button-with-cooldown {
+  position: relative;
+}
+
+.ui-button-cooldown {
+  position: absolute;
+}

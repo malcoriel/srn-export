@@ -20,7 +20,13 @@ const Template: Story = (args) => {
           height: 200,
         }}
       >
-        <Button text={args.text} hotkey={args.hotkey} />
+        <Button
+          text={args.text}
+          hotkey={args.hotkey}
+          cooldownNormalized={args.cooldownNormalized}
+          buttonWidth={68}
+          buttonHeight={45}
+        />
       </div>
     </div>
   );
@@ -32,8 +38,24 @@ Main.args = {
   hotkey: 'w',
 };
 
+export const WithCooldown = Template.bind({});
+Main.args = {
+  text: 'qq',
+  hotkey: 'w',
+  cooldownNormalized: 0.5,
+};
+
 export default {
   title: 'UI/Button',
   component: Button,
-  argTypes: {},
+  argTypes: {
+    cooldownNormalized: {
+      control: {
+        type: 'range',
+        min: 0.0,
+        max: 1.0,
+        step: 0.01,
+      },
+    },
+  },
 } as Meta;
