@@ -36,13 +36,14 @@ export const Main = Template.bind({});
 Main.args = {
   text: 'qq',
   hotkey: 'w',
+  cooldownNormalized: 0.0,
 };
 
 export const WithCooldown = Template.bind({});
-Main.args = {
+WithCooldown.args = {
   text: 'qq',
   hotkey: 'w',
-  cooldownNormalized: 0.5,
+  cooldownNormalized: 0.7,
 };
 
 export default {

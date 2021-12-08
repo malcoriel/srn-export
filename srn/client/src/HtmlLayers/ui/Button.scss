@@ -1,13 +1,13 @@
 @import "../../utils/palette";
 
-.ui-button  {
+.ui-button {
   opacity: 0.8;
   color: $teal;
   padding: 10px;
-  border-radius:5px;
+  border-radius: 5px;
   border: solid $teal 3px;
   display: flex;
-  flex-direction:column;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
@@ -34,11 +34,11 @@
   color: black;
 
   .hotkey-letter {
-    color:black;
+    color: black;
   }
 }
 
-.ui-button:hover,.pseudo-active {
+.ui-button:hover, .pseudo-active {
   opacity: 0.9;
   background-color: darken($teal, 0.9);
   color: black;
@@ -53,7 +53,7 @@
   }
 }
 
-.ui-button:active,.pseudo-active {
+.ui-button:active, .pseudo-active {
   transition: transform .02s;
   transform: scale(0.98);
 }
@@ -95,8 +95,53 @@
 
 .ui-button-with-cooldown {
   position: relative;
+  //overflow: hidden;
+  border-radius: 5px;
 }
 
 .ui-button-cooldown {
   position: absolute;
+
+}
+
+.pie {
+  transform: scale(-1, 1);
+  border-radius: 100%;
+  height: calc(var(--size, 200) * 1px);
+  overflow: hidden;
+  position: relative;
+  width: calc(var(--size, 200) * 1px);
+}
+
+.pie__segment {
+  --a: calc(var(--over50, 0) * -100%);
+  --b: calc((1 + var(--over50, 0)) * 100%);
+  --degrees: calc((var(--offset, 0) / 100) * 360);
+  //noinspection CssInvalidFunction
+  clip-path: polygon(var(--a) var(--a), var(--b) var(--a), var(--b) var(--b), var(--a) var(--b));
+  height: 100%;
+  position: absolute;
+  transform: translate(0, -50%) rotate(90deg) rotate(calc(var(--degrees) * 1deg));
+  transform-origin: 50% 100%;
+  width: 100%;
+  z-index: calc(1 + var(--over50));
+}
+
+.pie__segment:after,
+.pie__segment:before {
+  background: var(--bg, #e74c3c);
+  content: '';
+  height: 100%;
+  position: absolute;
+  width: 100%;
+}
+
+.pie__segment:before {
+  --degrees: calc((var(--value, 45) / 100) * 360);
+  transform: translate(0, 100%) rotate(calc(var(--degrees) * 1deg));
+  transform-origin: 50% 0%;
+}
+
+.pie__segment:after {
+  opacity: var(--over50, 0);
 }

@@ -2,6 +2,14 @@ import React, { ReactElement, useState } from 'react';
 import './Button.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';
+import {
+  babyBlue,
+  crimson,
+  gray,
+  semiTransparentGray,
+  teal,
+  transparentGray,
+} from '../../utils/palette';
 
 const formatText = (
   text: string,
@@ -124,8 +132,20 @@ export const Button: React.FC<ButtonProps> = ({
 
   const buttonRadius = (buttonWidth ** 2 + buttonHeight ** 2) ** 0.5 / 2.0;
 
-  const transparent = (1 - cooldownNormalized) * 100;
-  const covered = cooldownNormalized * 100;
+  const coveredTrueValue = cooldownNormalized * 100;
+  const coveredBefore50 = Math.min(coveredTrueValue, 50);
+  const coveredAfter50 = Math.max(50, coveredTrueValue) - 50;
+
+  const before50StyleCovered = {
+    '--offset': 0,
+    '--value': coveredBefore50,
+    '--bg': semiTransparentGray,
+  } as any;
+  const after50StyleCovered = {
+    '--offset': 50,
+    '--value': coveredAfter50,
+    '--bg': semiTransparentGray,
+  } as any;
 
   const cooldownElem = cooldownNormalized && (
     <div
@@ -135,10 +155,13 @@ export const Button: React.FC<ButtonProps> = ({
         height: buttonRadius * 2,
         marginLeft: -(buttonRadius - buttonWidth / 2),
         marginTop: -(buttonRadius - buttonHeight / 2),
-        backgroundImage: `conic-gradient(transparent ${transparent}%, rgba(0, 0, 0, 0.5) ${covered}%, rgba(0, 0, 0, 0.5))`,
-        borderRadius: '50%',
       }}
-    />
+    >
+      <div className="pie">
+        <div className="pie__segment" style={before50StyleCovered} />
+        <div className="pie__segment" style={after50StyleCovered} />
+      </div>
+    </div>
   );
   const mainButtonElem = (
     <>
