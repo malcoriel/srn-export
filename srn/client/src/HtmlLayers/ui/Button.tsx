@@ -6,6 +6,7 @@ import {
   babyBlue,
   crimson,
   gray,
+  semiTransparentBlack,
   semiTransparentGray,
   teal,
   transparentGray,
@@ -139,12 +140,12 @@ export const Button: React.FC<ButtonProps> = ({
   const before50StyleCovered = {
     '--offset': 0,
     '--value': coveredBefore50,
-    '--bg': semiTransparentGray,
+    '--bg': semiTransparentBlack,
   } as any;
   const after50StyleCovered = {
     '--offset': 50,
     '--value': coveredAfter50,
-    '--bg': semiTransparentGray,
+    '--bg': semiTransparentBlack,
   } as any;
 
   const cooldownElem = cooldownNormalized && (
