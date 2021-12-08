@@ -2,12 +2,27 @@ import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import { Button } from './Button';
 import { gray } from '../../utils/palette';
+import { useInterval } from 'usehooks-ts';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
+  const [cooldown, setCooldown] = useState<number>(0);
+  const [isCountingDown, setIsCountingDown] = useState<boolean>(false);
+
+  useInterval(
+    () => {
+      const newVal = cooldown - 0.1;
+      setCooldown(newVal);
+      if (newVal <= 0) {
+        setIsCountingDown(false);
+      }
+    },
+    isCountingDown ? 100 : null
+  );
+
   return (
     <div key={`${revision}+${JSON.stringify(args)}`}>
       <div
@@ -21,9 +36,17 @@ const Template: Story = (args) => {
         }}
       >
         <Button
+          onClick={() => {
+            if (!args.controlledCooldown) {
+              setCooldown(1);
+              setIsCountingDown(true);
+            }
+          }}
           text={args.text}
           hotkey={args.hotkey}
-          cooldownNormalized={args.cooldownNormalized}
+          cooldownNormalized={
+            args.controlledCooldown ? args.cooldownNormalized : cooldown
+          }
           cooldownAreaWidth={68}
           cooldownAreaHeight={45}
         />
@@ -36,13 +59,15 @@ export const Main = Template.bind({});
 Main.args = {
   text: 'qq',
   hotkey: 'w',
+  controlledCooldown: false,
   cooldownNormalized: 0.0,
 };
 
-export const WithCooldown = Template.bind({});
-WithCooldown.args = {
+export const ControlledCooldown = Template.bind({});
+ControlledCooldown.args = {
   text: 'qq',
   hotkey: 'w',
+  controlledCooldown: true,
   cooldownNormalized: 0.7,
 };
 

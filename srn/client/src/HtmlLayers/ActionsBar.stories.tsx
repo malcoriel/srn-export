@@ -11,9 +11,7 @@ const Template: Story = (args) => {
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
-  // The counter
   const [cooldown, setCooldown] = useState<number>(0);
-  // ON/OFF
   const [isCountingDown, setIsCountingDown] = useState<boolean>(false);
 
   useInterval(
