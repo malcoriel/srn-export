@@ -4,12 +4,29 @@ import * as uuid from 'uuid';
 import { gray } from '../utils/palette';
 import { ActionsBar } from './ActionsBar';
 import { FaBullseye } from 'react-icons/all';
+import { useInterval } from 'usehooks-ts';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
   useEffect(() => {
     setRevision((old) => old + 1);
   }, []);
+  // The counter
+  const [cooldown, setCooldown] = useState<number>(0);
+  // ON/OFF
+  const [isCountingDown, setIsCountingDown] = useState<boolean>(false);
+
+  useInterval(
+    () => {
+      const newVal = cooldown - 0.1;
+      setCooldown(newVal);
+      if (newVal <= 0) {
+        setIsCountingDown(false);
+      }
+    },
+    isCountingDown ? 100 : null
+  );
+
   return (
     <div
       key={`${revision}+${JSON.stringify(args)}`}
@@ -26,7 +43,12 @@ const Template: Story = (args) => {
           actions={[
             {
               text: 'qq',
-              action: () => console.log('qq'),
+              action: () => {
+                console.log('qq');
+                setCooldown(1.0);
+                setIsCountingDown(true);
+              },
+              cooldownNormalized: cooldown,
               hotkey: 'q',
             },
             {

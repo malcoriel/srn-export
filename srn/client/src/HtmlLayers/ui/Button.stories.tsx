@@ -24,8 +24,8 @@ const Template: Story = (args) => {
           text={args.text}
           hotkey={args.hotkey}
           cooldownNormalized={args.cooldownNormalized}
-          buttonWidth={68}
-          buttonHeight={45}
+          cooldownAreaWidth={68}
+          cooldownAreaHeight={45}
         />
       </div>
     </div>

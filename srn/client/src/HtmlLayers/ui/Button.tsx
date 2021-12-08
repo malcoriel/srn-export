@@ -2,15 +2,7 @@ import React, { ReactElement, useState } from 'react';
 import './Button.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';
-import {
-  babyBlue,
-  crimson,
-  gray,
-  semiTransparentBlack,
-  semiTransparentGray,
-  teal,
-  transparentGray,
-} from '../../utils/palette';
+import { semiTransparentBlack } from '../../utils/palette';
 
 const formatText = (
   text: string,
@@ -64,8 +56,8 @@ export type ButtonProps = {
   noInlineHotkey?: boolean;
   noHotkeyHint?: boolean;
   cooldownNormalized?: number;
-  buttonWidth?: number;
-  buttonHeight?: number;
+  cooldownAreaWidth?: number;
+  cooldownAreaHeight?: number;
 };
 export const Button: React.FC<ButtonProps> = ({
   hotkey,
@@ -81,9 +73,13 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   forceHotkeyAsHint,
   cooldownNormalized = 0.0,
-  buttonWidth = 0.0,
-  buttonHeight = 0.0,
+  cooldownAreaWidth,
+  cooldownAreaHeight,
 }) => {
+  if (cooldownNormalized < 0.0) {
+    // eslint-disable-next-line no-param-reassign
+    cooldownNormalized = 0.0;
+  }
   const targetHotKey = hotkey || '🤣';
   const [pseudoActive, setPseudoActive] = useState(false);
   const timedOutClick = () => {
@@ -131,7 +127,10 @@ export const Button: React.FC<ButtonProps> = ({
     textElem = renderHotkeyHint(hotkey, noHotkeyHint);
   }
 
-  const buttonRadius = (buttonWidth ** 2 + buttonHeight ** 2) ** 0.5 / 2.0;
+  const buttonRadius =
+    cooldownAreaWidth && cooldownAreaHeight
+      ? (cooldownAreaWidth ** 2 + cooldownAreaHeight ** 2) ** 0.5 / 2.0
+      : 0.0;
 
   const coveredTrueValue = cooldownNormalized * 100;
   const coveredBefore50 = Math.min(coveredTrueValue, 50);
@@ -148,22 +147,24 @@ export const Button: React.FC<ButtonProps> = ({
     '--bg': semiTransparentBlack,
   } as any;
 
-  const cooldownElem = cooldownNormalized && (
-    <div
-      className="ui-button-cooldown"
-      style={{
-        width: buttonRadius * 2,
-        height: buttonRadius * 2,
-        marginLeft: -(buttonRadius - buttonWidth / 2),
-        marginTop: -(buttonRadius - buttonHeight / 2),
-      }}
-    >
-      <div className="pie">
-        <div className="pie__segment" style={before50StyleCovered} />
-        <div className="pie__segment" style={after50StyleCovered} />
+  const cooldownElem = cooldownNormalized &&
+    cooldownAreaWidth &&
+    cooldownAreaHeight && (
+      <div
+        className="ui-button-cooldown"
+        style={{
+          width: buttonRadius * 2,
+          height: buttonRadius * 2,
+          marginLeft: -(buttonRadius - cooldownAreaWidth / 2),
+          marginTop: -(buttonRadius - cooldownAreaHeight / 2),
+        }}
+      >
+        <div className="pie">
+          <div className="pie__segment" style={before50StyleCovered} />
+          <div className="pie__segment" style={after50StyleCovered} />
+        </div>
       </div>
-    </div>
-  );
+    );
   const mainButtonElem = (
     <>
       <span

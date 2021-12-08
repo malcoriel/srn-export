@@ -2,10 +2,13 @@ import React, { ReactElement } from 'react';
 import './ActionsBar.scss';
 import { Button } from './ui/Button';
 
+const actionSize = 48;
+
 export interface ActionBarAction {
   icon?: ReactElement;
   text?: string;
   hotkey?: string;
+  cooldownNormalized?: number;
   action: () => void;
 }
 
@@ -22,7 +25,7 @@ export const ActionsBar: React.FC<ActionsBarProps> = ({
   return (
     <div className={`actions-bar ${className}`}>
       <div className="background" />
-      {actions.map(({ icon, text, hotkey, action }, i) => {
+      {actions.map(({ icon, text, hotkey, cooldownNormalized, action }, i) => {
         return (
           <div key={i} className="action">
             <Button
@@ -31,6 +34,9 @@ export const ActionsBar: React.FC<ActionsBarProps> = ({
               text={text}
               hotkey={indexByNumbers ? String(i + 1) : hotkey}
               onClick={action}
+              cooldownAreaHeight={actionSize}
+              cooldownAreaWidth={actionSize}
+              cooldownNormalized={cooldownNormalized}
             >
               {icon}
             </Button>
