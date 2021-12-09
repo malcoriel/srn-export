@@ -145,18 +145,16 @@ export const Button: React.FC<ButtonProps> = ({
     '--offset': 50,
     '--value': coveredAfter50,
     '--bg': semiTransparentBlack,
+    borderWidth: 0,
   } as any;
 
-  const cooldownElem = cooldownNormalized &&
-    cooldownAreaWidth &&
-    cooldownAreaHeight && (
+  const cooldownElem =
+    cooldownNormalized && cooldownAreaWidth && cooldownAreaHeight ? (
       <div
         className="ui-button-cooldown"
         style={{
           width: buttonRadius * 2,
           height: buttonRadius * 2,
-          marginLeft: -(buttonRadius - cooldownAreaWidth / 2),
-          marginTop: -(buttonRadius - cooldownAreaHeight / 2),
         }}
       >
         <div className="pie">
@@ -164,38 +162,23 @@ export const Button: React.FC<ButtonProps> = ({
           <div className="pie__segment" style={after50StyleCovered} />
         </div>
       </div>
-    );
-  const mainButtonElem = (
-    <>
-      <span
-        className={classNames({
-          'ui-button ': true,
-          'pseudo-active': pseudoActive,
-          thin,
-          [className as string]: !!className,
-          toggled,
-          round,
-          disabled,
-        })}
-        onClick={disabled ? () => {} : timedOutClick}
-      >
-        {children}
-        {textElem}
-      </span>
-    </>
+    ) : null;
+  return (
+    <span
+      className={classNames({
+        'ui-button': true,
+        'pseudo-active': pseudoActive,
+        thin,
+        [className as string]: !!className,
+        toggled,
+        round,
+        disabled,
+      })}
+      onClick={disabled ? () => {} : timedOutClick}
+    >
+      {cooldownElem}
+      {children}
+      {textElem}
+    </span>
   );
-
-  let result: ReactElement;
-  if (cooldownElem) {
-    result = (
-      <span className="ui-button-with-cooldown">
-        {cooldownElem}
-        {mainButtonElem}
-      </span>
-    );
-  } else {
-    result = mainButtonElem;
-  }
-
-  return result;
 };

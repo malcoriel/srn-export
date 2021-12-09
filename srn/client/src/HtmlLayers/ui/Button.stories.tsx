@@ -42,6 +42,7 @@ const Template: Story = (args) => {
               setIsCountingDown(true);
             }
           }}
+          forceHotkeyAsHint
           text={args.text}
           hotkey={args.hotkey}
           cooldownNormalized={
@@ -58,7 +59,7 @@ const Template: Story = (args) => {
 export const Main = Template.bind({});
 Main.args = {
   text: 'qq',
-  hotkey: 'w',
+  hotkey: '1',
   controlledCooldown: false,
   cooldownNormalized: 0.0,
 };
@@ -66,7 +67,7 @@ Main.args = {
 export const ControlledCooldown = Template.bind({});
 ControlledCooldown.args = {
   text: 'qq',
-  hotkey: 'w',
+  hotkey: '1',
   controlledCooldown: true,
   cooldownNormalized: 0.7,
 };

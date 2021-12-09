@@ -13,6 +13,7 @@
   text-align: center;
   position: relative;
   user-select: none;
+  overflow: hidden;
 
   .hotkey-letter {
     color: $mint;
@@ -44,7 +45,7 @@
   color: black;
   cursor: pointer;
 
-  transform: scale(1.03);
+  //transform: scale(1.03);
 
   transition: transform .1s;
 
@@ -55,7 +56,7 @@
 
 .ui-button:active, .pseudo-active {
   transition: transform .02s;
-  transform: scale(0.98);
+  //transform: scale(0.98);
 }
 
 .round {
@@ -93,16 +94,14 @@
   }
 }
 
-.ui-button-with-cooldown {
-  position: relative;
-  overflow: hidden;
-  border-radius: 5px;
-  box-sizing: border-box;
-}
-
 .ui-button-cooldown {
   position: absolute;
   z-index: 10;
+  width: 100%;
+  height: 100%;
+  display: block;
+  text-align: initial;
+  font-size: 0.001px;
 }
 
 .pie {
@@ -130,11 +129,14 @@
 
 .pie__segment:after,
 .pie__segment:before {
-  background: var(--bg, #e74c3c);
+  font-size: 0;
+  background: var(--bg, #00000000);
   content: '';
   height: 100%;
   position: absolute;
   width: 100%;
+  // super-strange hack that disables weird overlap between 2 pies
+  border: solid #00000000 0.01px;
 }
 
 .pie__segment:before {
@@ -145,4 +147,10 @@
 
 .pie__segment:after {
   opacity: var(--over50, 0);
+}
+
+.overflow-hack-hide-border {
+  overflow: hidden;
+  width: 30%;
+  height: 100%;
 }
