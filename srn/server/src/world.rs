@@ -18,7 +18,7 @@ use wasm_bindgen::prelude::*;
 use crate::{abilities, autofocus, indexing, pirate_defence};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{DEBUG_PHYSICS, new_id};
-use crate::abilities::Ability;
+use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::api_struct::{AiTrait, Bot, new_bot, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::combat::{Health, ShootTarget};
@@ -363,6 +363,8 @@ pub fn gen_turrets(count: usize) -> Vec<(Ability, ShipTurret)> {
         res.push((Ability::Shoot {
             cooldown_ticks_remaining: 0,
             turret_id: id,
+            cooldown_normalized: 0.0,
+            cooldown_ticks_max: SHOOT_COOLDOWN_TICKS
         }, ShipTurret {
             id
         }))

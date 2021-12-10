@@ -5,7 +5,7 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::abilities::Ability;
+use crate::abilities::{Ability, SHOOT_ABILITY_DURATION, SHOOT_COOLDOWN_TICKS};
 use crate::combat::ShootTarget;
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
@@ -321,11 +321,7 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
     ship.long_actions.push(LongAction::Shoot {
         id: new_id(),
         target,
-        micro_left: Ability::Shoot {
-            cooldown_ticks_remaining: 0,
-            turret_id: Default::default()
-        }
-            .get_cooldown_ticks(),
+        micro_left: SHOOT_COOLDOWN_TICKS,
         percentage: 0,
         turret_id: shooting_turret_id
     });
@@ -496,11 +492,7 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                     target,
                     percentage: calc_percentage(
                         left,
-                        Ability::Shoot {
-                            cooldown_ticks_remaining: 0,
-                            turret_id: Default::default()
-                        }
-                            .get_duration(),
+                        SHOOT_ABILITY_DURATION,
                     ),
                     turret_id,
                 },

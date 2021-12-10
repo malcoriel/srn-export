@@ -39,6 +39,7 @@ const mapShipAbility = (interactorIds: InteractorIds) => (
             })
           );
         },
+        cooldownNormalized: ability.cooldown_normalized,
         icon: <FaBullseye />,
       };
     case 'BlowUpOnLand':
