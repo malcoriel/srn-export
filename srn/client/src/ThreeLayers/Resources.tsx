@@ -2,7 +2,7 @@ import { Html, Preload, useProgress } from '@react-three/drei';
 import { Canvas, useLoader } from '@react-three/fiber';
 import React, { Suspense } from 'react';
 import * as THREE from 'three';
-import { AudioLoader, TextureLoader } from 'three';
+import { AudioLoader, DefaultLoadingManager, TextureLoader } from 'three';
 import { explosionSfxFull } from './blocks/ThreeExplosion';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
@@ -98,8 +98,37 @@ export const SuspendedPreloader: React.FC = () => {
   );
 };
 
+/*
+ * The drei/useLoader is buggy, and the authors refuse to fix it: https://github.com/pmndrs/drei/issues/314
+ * As a workaround, I've discovered that if I force-async (via setTimeout(0)) execute their hooks,
+ * the bug will disappear. It seems that it should've been an effect, but they failed to write it correctly
+ * */
+const patchUseProgressBug = () => {
+  const originalMethods: Record<string, any> = {};
+
+  function patchMethod(methodName: string) {
+    // @ts-ignore
+    originalMethods[methodName] = THREE.DefaultLoadingManager[methodName];
+    // @ts-ignore
+    THREE.DefaultLoadingManager[methodName] = (...args: any[]) => {
+      setTimeout(() => {
+        if (originalMethods[methodName]) {
+          // @ts-ignore
+          originalMethods[methodName].apply(THREE.DefaultLoadingManager, args);
+        }
+      }, 0);
+    };
+  }
+
+  patchMethod('onStart');
+  patchMethod('onError');
+  patchMethod('onLoad');
+  patchMethod('onProgress');
+};
+
 export const useResourcesLoading = (): [boolean, string, boolean] => {
   const { total, loaded, active } = useProgress();
+  patchUseProgressBug();
   const missingResources = new Set(preloadPaths);
   for (const res of Object.keys(THREE.Cache.files)) {
     missingResources.delete(res);

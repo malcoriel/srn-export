@@ -5,12 +5,13 @@ import './NetworkStatus.scss';
 import { FaWaveSquare, GiSplitArrows, RiFilmFill } from 'react-icons/all';
 import { Stat, statsHeap } from './Perf';
 import _ from 'lodash';
+import { useIsMounted } from 'usehooks-ts';
 
 export const NetworkStatus: React.FC = () => {
   const ns = NetState.get();
   if (!ns) return null;
   const [, forceUpdateNetworkStatus] = useState(false);
-
+  const isMounted = useIsMounted();
   useEffect(() => {
     ns.on('network', () => {
       forceUpdateNetworkStatus((i) => !i);
@@ -20,7 +21,9 @@ export const NetworkStatus: React.FC = () => {
     ns.on(
       'slowchange',
       _.throttle(() => {
-        forceUpdateNetworkStatus((i) => !i);
+        if (isMounted()) {
+          forceUpdateNetworkStatus((i) => !i);
+        }
       }, 1000)
     );
   }, [ns, ns.id]);

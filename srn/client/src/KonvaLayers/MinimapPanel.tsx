@@ -18,6 +18,7 @@ import {
   viewPortSizeMeters,
 } from '../coord';
 import { getOnWheel } from '../ThreeLayers/CameraControls';
+import { useIsMounted } from 'usehooks-ts';
 
 export const minimap_proportion = 0.2;
 export const get_minimap_size_x = () => size.getMinSize() * minimap_proportion;
@@ -47,6 +48,7 @@ const StaticEntitiesLayer = React.memo(
 
     const { state } = ns;
 
+    const isMounted = useIsMounted();
     const [, forceUpdate] = useState(false);
     useEffect(() => {
       // somehow I wasn't able to render this component only once,
@@ -54,7 +56,9 @@ const StaticEntitiesLayer = React.memo(
       ns.on(
         'slowchange',
         _.throttle(() => {
-          forceUpdate((i) => !i);
+          if (isMounted()) {
+            forceUpdate((i) => !i);
+          }
         }, 1000)
       );
     }, [ns, ns.id]);
