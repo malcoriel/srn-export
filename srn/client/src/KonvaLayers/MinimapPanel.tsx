@@ -19,7 +19,7 @@ import {
 } from '../coord';
 import { getOnWheel } from '../ThreeLayers/CameraControls';
 
-export const minimap_proportion = 0.3;
+export const minimap_proportion = 0.2;
 export const get_minimap_size_x = () => size.getMinSize() * minimap_proportion;
 export const get_minimap_size_y = () => size.getMinSize() * minimap_proportion;
 
