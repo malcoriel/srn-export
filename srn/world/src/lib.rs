@@ -237,7 +237,6 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     }
     let args = args.ok().unwrap();
 
-    // log!(format!("{:?}", args.limit_area));
     let mut indexes = world::SpatialIndexes {
         values: HashMap::new()
     };
