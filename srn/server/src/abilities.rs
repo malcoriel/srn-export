@@ -5,8 +5,8 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-pub const SHOOT_COOLDOWN_TICKS: i32 = 1000 * 1000;
-pub const SHOOT_ABILITY_DURATION: i32 = 100 * 1000;
+pub const SHOOT_COOLDOWN_TICKS: i32 = 500 * 1000;
+pub const SHOOT_ABILITY_DURATION: i32 = 25 * 1000;
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy, PartialEq)]
 #[serde(tag = "tag")]
