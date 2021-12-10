@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.7.10 (2021-12-10)
+### New
+* Added actions bar for more complex ship & player actions
+* Added support for shooting with different ship turrets via different abilities
+* Implemented showing of the shoot cooldown on those action bar buttons
+
 ## Version 0.7.9 (2021-12-04)
 ### New
 * Changed the layout of the UI, money & health are not on top of the system actions panel.
