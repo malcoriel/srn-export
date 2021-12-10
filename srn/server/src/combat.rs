@@ -43,11 +43,8 @@ impl Health {
     }
 }
 
-pub fn validate_shoot(target: ShootTarget, loc: &world::Location, ship: &Ship) -> bool {
-    let shoot_ability = ship
-        .abilities
-        .iter()
-        .find(|a| matches!(a, Ability::Shoot { .. }));
+pub fn validate_shoot(target: ShootTarget, loc: &world::Location, ship: &Ship, active_turret_id: Uuid) -> bool {
+    let shoot_ability = find_shoot_ability(ship, active_turret_id);
     if shoot_ability.is_none() {
         return false;
     }
@@ -82,6 +79,18 @@ pub fn validate_shoot(target: ShootTarget, loc: &world::Location, ship: &Ship) -
     return true;
 }
 
+fn find_shoot_ability(ship: &Ship, active_turret_id: Uuid) -> Option<&Ability> {
+    ship
+        .abilities
+        .iter()
+        .find(|a| match a {
+            Ability::Shoot { turret_id, .. } => {
+                *turret_id == active_turret_id
+            }
+            _ => false
+        })
+}
+
 fn check_distance(ship: &Ship, shoot_ability: &Ability, min_pos: Vec2f64) -> bool {
     let ship_pos = Vec2f64 {
         x: ship.x,
@@ -95,15 +104,12 @@ fn check_distance(ship: &Ship, shoot_ability: &Ability, min_pos: Vec2f64) -> boo
 
 pub const SHIP_SHOOT_STRENGTH: f64 = 20.0;
 
-pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget) {
+pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget, active_turret_id: Uuid) {
     if let Some(ship_loc) = find_my_ship_index(state, player_id) {
         let loc = &state.locations[ship_loc.location_idx];
         let ship = &loc.ships[ship_loc.ship_idx];
 
-        let shoot_ability = ship
-            .abilities
-            .iter()
-            .find(|a| matches!(a, Ability::Shoot { .. }));
+        let shoot_ability = find_shoot_ability(ship, active_turret_id);
         if shoot_ability.is_none() {
             return;
         }

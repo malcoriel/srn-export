@@ -313,6 +313,7 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
         target.clone(),
         &state.locations[ship_idx.location_idx],
         &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
+        shooting_turret_id
     ) {
         return false;
     }
@@ -419,9 +420,9 @@ pub fn finish_long_act(state: &mut GameState, player_id: Option<Uuid>, act: Long
                 locations::try_move_player_ship(state, player_id.unwrap(), to);
             }
         }
-        LongAction::Shoot { target, .. } => {
+        LongAction::Shoot { target, turret_id, .. } => {
             if !client && player_id.is_some() {
-                combat::resolve_shoot(state, player_id.unwrap(), target);
+                combat::resolve_shoot(state, player_id.unwrap(), target, turret_id);
             }
         }
         LongAction::Dock { to_planet, .. } => {

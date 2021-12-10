@@ -2,7 +2,10 @@ import React, { ReactElement, useState } from 'react';
 import './Button.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';
-import { semiTransparentBlack } from '../../utils/palette';
+import {
+  semiTransparentBlack,
+  semiTransparentWhite,
+} from '../../utils/palette';
 
 const formatText = (
   text: string,
@@ -139,12 +142,12 @@ export const Button: React.FC<ButtonProps> = ({
   const before50StyleCovered = {
     '--offset': 0,
     '--value': coveredBefore50,
-    '--bg': semiTransparentBlack,
+    '--bg': semiTransparentWhite,
   } as any;
   const after50StyleCovered = {
     '--offset': 50,
     '--value': coveredAfter50,
-    '--bg': semiTransparentBlack,
+    '--bg': semiTransparentWhite,
     borderWidth: 0,
   } as any;
 

@@ -15,6 +15,7 @@ export const gray = '#555';
 export const transparentGray = '#80808010';
 export const semiTransparentGray = '#80808050';
 export const semiTransparentBlack = '#00000050';
+export const semiTransparentWhite = '#ffffff50';
 export const tiffanyBlue = '#a0e7e5';
 export const mint = '#b4f8c8';
 export const yellow = '#fbe7c6';
