@@ -360,9 +360,6 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                 Some(a)
             }
             LongAction::Shoot { .. } => {
-                if has_shoot {
-                    return None;
-                }
                 has_shoot = true;
                 Some(a)
             }
