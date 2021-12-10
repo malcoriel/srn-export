@@ -57,7 +57,7 @@ const StaticEntitiesLayer = React.memo(
           forceUpdate((i) => !i);
         }, 1000)
       );
-    }, [ns.id]);
+    }, [ns, ns.id]);
 
     return (
       <Layer>
@@ -85,8 +85,7 @@ const StaticEntitiesLayer = React.memo(
         )}
       </Layer>
     );
-  },
-  () => true
+  }
 );
 
 interface SlowBodiesLayerParams {
@@ -181,8 +180,7 @@ const SlowEntitiesLayer = React.memo(
           })}
       </Layer>
     );
-  },
-  () => true
+  }
 );
 
 interface FastEntitiesLayerParams {
@@ -230,8 +228,7 @@ const FastEntitiesLayer = React.memo(
         })}
       </Layer>
     );
-  },
-  () => true
+  }
 );
 
 export const MinimapPanel = React.memo(() => {
