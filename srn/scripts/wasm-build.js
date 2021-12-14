@@ -1,8 +1,10 @@
 const { spawnWatched } = require('../../core/util/shellspawn');
 const fs = require('fs-extra');
 const isWin = process.platform === 'win32';
-(async function () {
-  console.log('Fixing typescript definitions...');
+const yargs = require('yargs');
+
+async function buildForWeb() {
+  console.log('Building rust code for extracting TS definitions...');
   await spawnWatched(
     'yarn cross-env-shell WASM32=1 "cd world && cargo +nightly build --target wasm32-unknown-unknown"',
     {
@@ -59,5 +61,59 @@ const isWin = process.platform === 'win32';
   const builders = `type Uuid = string; \n${extractedBuilders.join('\n\n')}`;
   const enums = extractedEnums.join('\n\n');
   await fs.writeFile('world/pkg/world.extra.ts', `${enums}\n\n${builders}`);
-  console.log('Done, ts definitions are ready!');
+  console.log('Done, ts definitions + wasm binary are ready!');
+}
+
+async function buildForTests() {
+  console.log('Building rust code...');
+  await spawnWatched(
+    'yarn cross-env-shell WASM32=1 "cd world && cargo +nightly build --target wasm32-unknown-unknown"',
+    {
+      spawnOptions: {
+        cwd: 'world',
+      },
+    }
+  );
+  const mainBuildCommand =
+    'wasm-bindgen target/wasm32-unknown-unknown/debug/world.wasm --no-modules --out-dir pkg-nomodule';
+  await fs.remove('world/pkg-nomodule');
+  await spawnWatched(
+    isWin ? mainBuildCommand : `bash -c "${mainBuildCommand}"`,
+    {
+      spawnOptions: {
+        cwd: 'world',
+      },
+    }
+  );
+  console.log('Patching code...');
+  let file = (await fs.readFile('world/pkg-nomodule/world.js')).toString();
+  file = file.replace(`let wasm_bindgen;`, 'export let wasm_bindgen;');
+  const prependData = '// This file is auto-generated and patched';
+  const appendData = `
+// this function is needed because of strange loading pattern of the wasm module
+// that overrides already exported wasm_bindgen, which is first a function,
+// and then an object with extra fields
+export const getBindgen = () => {
+  return wasm_bindgen;
+}
+  `;
+  const patchedFile = `${prependData}\n${file}\n${appendData}`;
+  await fs.writeFile('world/pkg-nomodule/world.js', patchedFile);
+
+  console.log('Done, file is ready!');
+}
+
+(async function () {
+  yargs
+    .command('$0', 'default command - build for web', async () => {
+      await buildForWeb();
+    })
+    .command(
+      'forTests',
+      'build no-module version with some extras for jest consumption',
+      async () => {
+        await buildForTests();
+      }
+    )
+    .parse();
 })();

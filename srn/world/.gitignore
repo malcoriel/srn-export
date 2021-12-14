@@ -7,3 +7,4 @@ wasm-pack.log
 pkg-bindgen/
 world.d.ts.tmp
 experiment/
+pkg-nomodule/
