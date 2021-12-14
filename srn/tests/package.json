@@ -8,9 +8,11 @@
   "dependencies": {
     "@types/jest": "^27.0.3",
     "babel-jest": "^27.4.5",
-    "jest": "^27.4.5"
+    "jest": "^27.4.5",
+    "react-app-polyfill": "^2.0.0"
   },
   "scripts": {
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "jest",
+    "wasm-pack": "cd .. && yarn wasm-pack"
   }
 }

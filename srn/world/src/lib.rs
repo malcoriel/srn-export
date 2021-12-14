@@ -198,6 +198,8 @@ use crate::indexing::find_my_ship_index;
 use mut_static::MutStatic;
 use std::mem;
 use std::ops::DerefMut;
+use crate::system_gen::seed_state;
+use crate::world::GameMode;
 
 lazy_static! {
     pub static ref global_sampler: MutStatic<perf::Sampler> = {
@@ -297,4 +299,22 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
     let ship_idx = find_my_ship_index(&args.state, args.player_id);
     let new_ship = ship_action::apply_ship_action(args.ship_action, &args.state, ship_idx, true);
     return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct SeedWorldArgs {
+    seed: String,
+    mode: GameMode
+}
+
+
+#[wasm_bindgen]
+pub fn seed_world(serialized_args: &str) -> String {
+    let (args, return_result) = extract_args::<SeedWorldArgs>(serialized_args);
+    if return_result.is_some() {
+        return return_result.unwrap();
+    }
+    let args = args.ok().unwrap();
+    let seeded_world = seed_state(&args.mode, args.seed);
+    return serde_json::to_string(&seeded_world).unwrap_or(DEFAULT_ERR.to_string());
 }

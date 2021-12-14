@@ -6,7 +6,7 @@ module.exports = (request, options) => {
       if (pkg.name === 'world') {
         return {
           ...pkg,
-          main: 'world.d.ts',
+          main: 'world.js',
         };
       }
       return {
