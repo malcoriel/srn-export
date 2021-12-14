@@ -18,6 +18,11 @@ const clientVersionJson = {
   type: 'json',
 };
 
+const testsPackageJson = {
+  filename: 'tests/package.json',
+  type: 'json',
+};
+
 const serverCargoToml = {
   filename: 'server/Cargo.toml',
   updater: {
@@ -67,13 +72,13 @@ const worldCargoToml = {
           const changedFilesCount = gitStatus.files.length;
           if (changedFilesCount && !force) {
             console.error(
-              `${changedFilesCount} modified files found. Please commit them first!`,
+              `${changedFilesCount} modified files found. Please commit them first!`
             );
             return;
           }
           if (gitStatus.current !== 'master' && !force) {
             console.error(
-              `Current branch ${gitStatus.current} is not master. Upping version is forbidden here`,
+              `Current branch ${gitStatus.current} is not master. Upping version is forbidden here`
             );
             return;
           }
@@ -88,6 +93,7 @@ const worldCargoToml = {
             bumpFiles: [
               mainPackageJson,
               clientPackageJson,
+              testsPackageJson,
               clientVersionJson,
               serverCargoToml,
               worldCargoToml,
@@ -96,11 +102,12 @@ const worldCargoToml = {
               mainPackageJson,
               clientPackageJson,
               clientVersionJson,
+              testsPackageJson,
               serverCargoToml,
               worldCargoToml,
             ],
           });
-        },
+        }
       )
       .help()
       .version(false)

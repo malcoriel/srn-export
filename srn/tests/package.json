@@ -1,0 +1,16 @@
+{
+  "name": "tests",
+  "version": "0.7.10",
+  "main": "index.js",
+  "author": "Valeriy Kuzmin",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@types/jest": "^27.0.3",
+    "babel-jest": "^27.4.5",
+    "jest": "^27.4.5"
+  },
+  "scripts": {
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+  }
+}
