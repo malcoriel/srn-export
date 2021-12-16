@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 #![allow(warnings)]
 
+extern crate uuid;
 use std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -24,12 +25,6 @@ use wasm_bindgen::prelude::*;
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-extern crate uuid;
-
-pub fn new_id() -> Uuid {
-    // technically, should never be needed on client as entity generation is a privileged thing
-    Default::default()
-}
 
 #[wasm_bindgen]
 extern "C" {
@@ -137,7 +132,21 @@ use serde_derive::{Deserialize, Serialize};
 use serde_json::Error;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use uuid::Uuid;
+use uuid::*;
+
+pub fn new_id() -> Uuid {
+    let mut bytes = [0u8; 16];
+    getrandom::getrandom(&mut bytes).unwrap_or_else(|err| {
+        panic!("could not retreive random bytes for uuid: {}", err)
+    });
+
+    crate::Builder::from_bytes(bytes)
+        .set_variant(Variant::RFC4122)
+        .set_version(Version::Random)
+        .build()
+}
+
+
 
 static DEFAULT_ERR: &str = "";
 

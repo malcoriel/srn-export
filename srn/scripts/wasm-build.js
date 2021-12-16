@@ -87,7 +87,12 @@ async function buildForTests() {
   );
   console.log('Patching code...');
   let file = (await fs.readFile('world/pkg-nomodule/world.js')).toString();
-  file = file.replace(`let wasm_bindgen;`, 'export let wasm_bindgen;');
+  file = file.replace('let wasm_bindgen;', 'export let wasm_bindgen;');
+  // module.require is broken for some reason form wasm-bindgen, and it fails rust/getrandom requiring global crypto api
+  file = file.replace(
+    'module.require(getStringFromWasm0(arg0, arg1));',
+    'require(getStringFromWasm0(arg0, arg1));'
+  );
   const prependData = '// This file is auto-generated and patched';
   const appendData = `
 // this function is needed because of strange loading pattern of the wasm module

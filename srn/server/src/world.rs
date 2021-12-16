@@ -827,7 +827,7 @@ pub fn update_world(
     spatial_indexes: &mut SpatialIndexes,
 ) -> (GameState, Sampler) {
     state.millis += elapsed as u32 / 1000;
-    if !client && state.mode != GameMode::Tutorial {
+    if state.mode != GameMode::Tutorial {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
     }
 
@@ -855,6 +855,7 @@ pub fn update_world(
             } else {}
         }
     } else {
+        log!("not paused");
         if !client {
             let update_leaderboard_id = sampler.start(SamplerMarks::UpdateLeaderboard as u32);
             state.leaderboard = make_leaderboard(&state.players);

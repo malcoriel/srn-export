@@ -36,7 +36,7 @@ mut_static = "5.0.0"
 
   [dependencies.uuid]
   version = "0.8.1"
-  features = [ "serde", "v4" ]
+  features = [ "serde" ]
 
   [dependencies.console_error_panic_hook]
   version = "0.1.6"
@@ -46,10 +46,12 @@ mut_static = "5.0.0"
   version = "0.4.5"
   optional = true
 
-  [dependencies.rand]
-  version = "0.6.5"
+[dependencies.rand]
+version = "0.6.5"
+features = [ "wasm-bindgen" ]
 
-  [dependencies.chrono]
+
+[dependencies.chrono]
   version = "0.4.19"
   features = [ "wasmbind" ]
 
