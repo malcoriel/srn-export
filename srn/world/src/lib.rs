@@ -238,6 +238,7 @@ lazy_static! {
 pub struct UpdateWorldArgs {
     state: world::GameState,
     limit_area: world::AABB,
+    client: Option<bool>,
 }
 
 #[wasm_bindgen]
@@ -254,7 +255,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     let (new_state, sampler) = world::update_world(
         args.state,
         elapsed_micro,
-        true,
+        args.client.unwrap_or(true),
         if ENABLE_PERF {
             global_sampler.read().unwrap().clone()
         } else {

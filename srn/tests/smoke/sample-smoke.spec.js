@@ -23,7 +23,7 @@ const loadWasm = async function () {
   return wasmFunctions;
 };
 
-const updateWholeWorld = (world, millis) => {
+const updateWholeWorld = (world, millis, isServer = true) => {
   return updateWorld(
     {
       state: world,
@@ -37,6 +37,7 @@ const updateWholeWorld = (world, millis) => {
           y: 1000,
         },
       },
+      client: !isServer,
     },
     BigInt(millis * 1000)
   );
@@ -57,10 +58,8 @@ describe('sample smoke test', () => {
     let world = seedWorld({ mode: 'PirateDefence', seed: '123' });
     expect(world.mode).toEqual('PirateDefence');
     expect(world.seed).toEqual('123');
-    console.log(world.locations[0].planets[0]);
     const oldX = world.locations[0].planets[0].x;
     world = updateWholeWorld(world, 1000);
-    console.log(world.locations[0].planets[0]);
     expect(world.locations[0].planets[0].x).not.toBeCloseTo(oldX);
   });
 });

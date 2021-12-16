@@ -855,7 +855,6 @@ pub fn update_world(
             } else {}
         }
     } else {
-        log!("not paused");
         if !client {
             let update_leaderboard_id = sampler.start(SamplerMarks::UpdateLeaderboard as u32);
             state.leaderboard = make_leaderboard(&state.players);
