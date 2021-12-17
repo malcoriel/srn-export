@@ -12,6 +12,7 @@
     "touch-client": "cd client && touch package.json",
     "start-server": "cd server && (killall -9 srn-server || true) && cargo run",
     "watch-server": "cd server && (killall -9 srn-server || true) && cargo-watch -x run",
+    "watch-wasm-tests": "cargo-watch -C world -w ../server -s 'yarn wasm-pack forTests'",
     "deploy": "yarn env node scripts/deploy.js",
     "up-version": "yarn env node scripts/up-version.js"
   },

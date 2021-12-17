@@ -1,8 +1,8 @@
 import { loadWasm, updateWholeWorld, wasm } from '../util';
 import * as uuid from 'uuid';
 
-const mockShip = {
-  id: uuid.v4(),
+const mockShip = (id) => ({
+  id,
   x: 0,
   y: 0,
   rotation: 0,
@@ -24,15 +24,18 @@ const mockShip = {
   local_effects: [],
   long_actions: [],
   turrets: [],
-};
+});
 
 describe('sample smoke test', () => {
   beforeAll(loadWasm);
 
   it('can blow up ship', async () => {
     let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
-    world.locations[0].ships.push(mockShip);
+    const shipId = uuid.v4();
+    world.locations[0].ships.push(mockShip(shipId));
     world = updateWholeWorld(world, 10 * 1000);
     expect(world.locations[0].ships.length).toEqual(0);
+    const shipDiedEvent = world.events.find((e) => e.tag === 'ShipDied');
+    expect(shipDiedEvent.ship.id).toEqual(shipId);
   });
 });

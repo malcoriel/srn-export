@@ -266,6 +266,7 @@ pub struct Star {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "tag")]
 pub enum GameEvent {
     Unknown,
     ShipDocked {
@@ -640,6 +641,7 @@ pub struct GameState {
     pub locations: Vec<Location>,
     pub interval_data: HashMap<TimeMarks, u32>,
     pub game_over: Option<GameOver>,
+    pub events: Vec<GameEvent>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -673,6 +675,7 @@ impl GameState {
             locations: vec![],
             interval_data: Default::default(),
             game_over: None,
+            events: vec![]
         }
     }
 }
@@ -1433,6 +1436,11 @@ fn update_ships_respawn(state: &mut GameState, prng: &mut SmallRng) {
     }
 }
 
+pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
+    state.events.push(event.clone());
+    fire_event(event);
+}
+
 const SHIP_REGEN_PER_SEC: f64 = 5.0;
 const STAR_INSIDE_DAMAGE_PER_SEC: f64 = 50.0;
 const STAR_DAMAGE_PER_SEC_NEAR: f64 = 25.0;
@@ -1561,22 +1569,23 @@ pub fn update_hp_effects(
             decay_normalized: 0.0,
             decay_ticks: WRECK_DECAY_TICKS,
         });
-        if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)) {
+        let event = if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)) {
             player.ship_id = None;
             player.money -= 1000;
             player.money = player.money.max(0);
-            fire_event(GameEvent::ShipDied {
+            GameEvent::ShipDied {
                 state_id,
                 ship: ship_clone,
                 player: Some(player.clone()),
-            });
+            }
         } else {
-            fire_event(GameEvent::ShipDied {
+            GameEvent::ShipDied {
                 state_id,
                 ship: ship_clone,
                 player: None,
-            });
-        }
+            }
+        };
+        fire_saved_event(state, event);
     }
 
     for planet in state.locations[location_idx].planets.iter_mut() {
