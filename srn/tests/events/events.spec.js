@@ -26,7 +26,11 @@ const mockShip = (id) => ({
   turrets: [],
 });
 
-describe('sample smoke test', () => {
+function findFirstEvent(world, eventName) {
+  return world.events.find((e) => e.tag === eventName);
+}
+
+describe('game events logic', () => {
   beforeAll(loadWasm);
 
   it('can blow up ship', async () => {
@@ -35,7 +39,14 @@ describe('sample smoke test', () => {
     world.locations[0].ships.push(mockShip(shipId));
     world = updateWholeWorld(world, 10 * 1000);
     expect(world.locations[0].ships.length).toEqual(0);
-    const shipDiedEvent = world.events.find((e) => e.tag === 'ShipDied');
+    const shipDiedEvent = findFirstEvent(world, 'ShipDied');
     expect(shipDiedEvent.ship.id).toEqual(shipId);
+  });
+
+  it('can spawn pirates', async () => {
+    let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
+    world = updateWholeWorld(world, 10 * 1000);
+    const pirateSpawnEvent = findFirstEvent(world, 'PirateSpawn');
+    expect(pirateSpawnEvent.state_id).toEqual(world.id);
   });
 });
