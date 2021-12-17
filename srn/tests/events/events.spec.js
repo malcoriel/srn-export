@@ -45,7 +45,7 @@ describe('game events logic', () => {
 
   it('can spawn pirates', async () => {
     let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
-    world = updateWholeWorld(world, 10 * 1000);
+    world = updateWholeWorld(world, 15 * 1000);
     const pirateSpawnEvent = findFirstEvent(world, 'PirateSpawn');
     expect(pirateSpawnEvent.state_id).toEqual(world.id);
   });

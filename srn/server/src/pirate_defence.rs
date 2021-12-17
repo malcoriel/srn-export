@@ -6,7 +6,7 @@ use crate::{fire_event, indexing, world};
 use crate::abilities::Ability;
 use crate::api_struct::AiTrait;
 use crate::vec2::Vec2f64;
-use crate::world::{GameEvent, GameOver, GameState, Planet, Ship, ShipTemplate, TimeMarks};
+use crate::world::{fire_saved_event, GameEvent, GameOver, GameState, Planet, Ship, ShipTemplate, TimeMarks};
 use crate::get_prng;
 
 pub fn on_pirate_spawn(state: &mut GameState, at: Vec2f64) {
@@ -42,11 +42,12 @@ pub fn update_state_pirate_defence(state: &mut GameState) {
         current_ticks,
         state.interval_data.get(&TimeMarks::PirateSpawn).map(|m| *m),
     ) {
+        log!("pirate spawn trigger");
         state
             .interval_data
             .insert(TimeMarks::PirateSpawn, current_ticks);
         for _i in 0..PIRATE_SPAWN_COUNT * state.players.len() {
-            fire_event(GameEvent::PirateSpawn {
+            fire_saved_event(state, GameEvent::PirateSpawn {
                 state_id: state.id,
                 at: gen_pirate_spawn(&state.locations[0].planets.get(0).unwrap()),
             });
