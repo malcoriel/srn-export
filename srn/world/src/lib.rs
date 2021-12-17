@@ -277,7 +277,8 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
             disable_hp_effects: false,
             limit_area: args.limit_area,
         },
-        &mut indexes
+        &mut indexes,
+            &mut get_prng()
     );
 
     if ENABLE_PERF {

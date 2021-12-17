@@ -414,6 +414,7 @@ fn main_thread() {
                     limit_area: AABB::maxed(),
                 },
                 &mut spatial_indexes,
+                &mut prng,
             );
             sampler = new_sampler;
             let room_clone = Room {
@@ -429,16 +430,6 @@ fn main_thread() {
 
         update_rooms(&mut cont, updated_rooms);
         if sampler.end_top(update_rooms_id) < 0 {
-            shortcut_frame += 1;
-            sampler.end(total_mark);
-            continue;
-        }
-
-        let rules_id = sampler.start(SamplerMarks::Modes as u32);
-        for room in cont.rooms.values.iter_mut() {
-            update_rule_specifics(&mut room.state, &mut prng, &mut sampler);
-        }
-        if sampler.end_top(rules_id) < 0 {
             shortcut_frame += 1;
             sampler.end(total_mark);
             continue;

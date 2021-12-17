@@ -828,6 +828,7 @@ pub fn update_world(
     sampler: Sampler,
     update_options: UpdateOptions,
     spatial_indexes: &mut SpatialIndexes,
+    prng: &mut SmallRng,
 ) -> (GameState, Sampler) {
     state.millis += elapsed as u32 / 1000;
     if state.mode != GameMode::Tutorial {
@@ -835,6 +836,12 @@ pub fn update_world(
     }
 
     let mut sampler = sampler;
+
+    let rules_id = sampler.start(SamplerMarks::Modes as u32);
+
+        update_rule_specifics(&mut state, prng, &mut sampler, client);
+    sampler.end(rules_id);
+
     if state.paused {
         if !client {
             if state.milliseconds_remaining <= 500 {
@@ -2018,7 +2025,7 @@ pub fn every(interval_ticks: u32, current_ticks: u32, last_trigger: Option<u32>)
 }
 
 
-pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler: &mut Sampler) {
+pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler: &mut Sampler, _client: bool) {
     let sampler_mark_type = match state.mode {
         GameMode::Unknown => None,
         GameMode::CargoRush => Some(SamplerMarks::ModeCargoRush as u32),

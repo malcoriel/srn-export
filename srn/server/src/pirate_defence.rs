@@ -42,7 +42,6 @@ pub fn update_state_pirate_defence(state: &mut GameState) {
         current_ticks,
         state.interval_data.get(&TimeMarks::PirateSpawn).map(|m| *m),
     ) {
-        log!("pirate spawn trigger");
         state
             .interval_data
             .insert(TimeMarks::PirateSpawn, current_ticks);

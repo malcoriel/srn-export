@@ -30,6 +30,19 @@ function findFirstEvent(world, eventName) {
   return world.events.find((e) => e.tag === eventName);
 }
 
+function mockPlayer(player_id) {
+  return {
+    id: player_id,
+    name: 'test',
+    is_bot: false,
+    money: 0,
+    portrait_name: '1',
+    respawn_ms_left: 0,
+    long_actions: [],
+    notifications: [],
+  };
+}
+
 describe('game events logic', () => {
   beforeAll(loadWasm);
 
@@ -45,6 +58,8 @@ describe('game events logic', () => {
 
   it('can spawn pirates', async () => {
     let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
+    // pirates spawn only if there are players
+    world.players.push(mockPlayer(uuid.v4()));
     world = updateWholeWorld(world, 15 * 1000);
     const pirateSpawnEvent = findFirstEvent(world, 'PirateSpawn');
     expect(pirateSpawnEvent.state_id).toEqual(world.id);
