@@ -17,7 +17,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::{abilities, autofocus, indexing, pirate_defence};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
-use crate::{DEBUG_PHYSICS, new_id};
+use crate::{DEBUG_PHYSICS, new_id, get_prng};
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::api_struct::{AiTrait, Bot, new_bot, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
@@ -678,7 +678,7 @@ impl GameState {
 }
 
 pub fn random_hex_seed() -> String {
-    let mut rng = thread_rng();
+    let mut rng = get_prng();
     let mut bytes: [u8; 8] = [0; 8];
     rng.fill_bytes(&mut bytes);
     hex::encode(bytes)
@@ -993,7 +993,7 @@ pub fn update_location(
     if !client {
         let initiate_docking_id =
             sampler.start(SamplerMarks::UpdateInitiateShipsDockingByNavigation as u32);
-        update_initiate_ship_docking_by_navigation(state, location_idx, &mut gen_rng());
+        update_initiate_ship_docking_by_navigation(state, location_idx, &mut get_prng());
         sampler.end(initiate_docking_id);
     }
     let interpolate_docking_id = sampler.start(SamplerMarks::UpdateInterpolateDockingShips as u32);
@@ -1062,7 +1062,7 @@ pub fn update_location(
         );
         sampler.end(update_minerals_respawn_id);
         let respawn_id = sampler.start(SamplerMarks::UpdateShipsRespawn as u32);
-        update_ships_respawn(&mut state, &mut gen_rng());
+        update_ships_respawn(&mut state, &mut get_prng());
         sampler.end(respawn_id);
     }
     let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
@@ -1364,29 +1364,25 @@ fn update_state_minerals(
 }
 
 pub fn spawn_mineral(location: &mut Location, rarity: Rarity, pos: Vec2f64) {
-    let mut small_rng = gen_rng();
+    let mut small_rng = get_prng();
     let mut min = gen_mineral(&mut small_rng, pos);
     min.rarity = rarity;
     location.minerals.push(min)
 }
 
 pub fn spawn_container(loc: &mut Location, at: Vec2f64) {
-    let mut prng = gen_rng();
+    let mut prng = get_prng();
     let mut container = Container::random(&mut prng);
     container.position = at;
     loc.containers.push(container);
 }
 
 fn seed_mineral(belts: &Vec<AsteroidBelt>) -> NatSpawnMineral {
-    let mut small_rng = gen_rng();
+    let mut small_rng = get_prng();
     let picked = small_rng.gen_range(0, belts.len());
     let belt = &belts[picked];
     let pos_in_belt = gen_pos_in_belt(belt);
     gen_mineral(&mut small_rng, pos_in_belt)
-}
-
-pub fn gen_rng() -> SmallRng {
-    SmallRng::seed_from_u64(thread_rng().next_u64())
 }
 
 fn gen_mineral(mut small_rng: &mut SmallRng, pos: Vec2f64) -> NatSpawnMineral {
@@ -1403,7 +1399,7 @@ fn gen_mineral(mut small_rng: &mut SmallRng, pos: Vec2f64) -> NatSpawnMineral {
 }
 
 fn gen_pos_in_belt(belt: &AsteroidBelt) -> Vec2f64 {
-    let mut rng = thread_rng();
+    let mut rng = get_prng();
     let range = rng.gen_range(
         belt.radius - belt.width / 2.0,
         belt.radius + belt.width / 2.0,
@@ -1700,7 +1696,7 @@ pub fn spawn_ship(
     player_id: Option<Uuid>,
     template: ShipTemplate,
 ) -> &Ship {
-    let mut small_rng = gen_rng();
+    let mut small_rng = get_prng();
     let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
     let mut at = template.at;
     if rand_planet.is_some() && at.is_none() {
@@ -1900,7 +1896,7 @@ pub fn undock_ship(
                     LongActionStart::Undock {
                         from_planet: planet_id,
                     },
-                    &mut gen_rng(),
+                    &mut get_prng(),
                 );
             }
         }

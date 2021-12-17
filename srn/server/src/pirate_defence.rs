@@ -7,6 +7,7 @@ use crate::abilities::Ability;
 use crate::api_struct::AiTrait;
 use crate::vec2::Vec2f64;
 use crate::world::{GameEvent, GameOver, GameState, Planet, Ship, ShipTemplate, TimeMarks};
+use crate::get_prng;
 
 pub fn on_pirate_spawn(state: &mut GameState, at: Vec2f64) {
       world::spawn_ship(state, None, ShipTemplate::pirate(Some(at)));
@@ -55,7 +56,7 @@ pub fn update_state_pirate_defence(state: &mut GameState) {
 }
 
 pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
-    let angle = world::gen_rng().gen_range(0.0, PI * 2.0);
+    let angle = get_prng().gen_range(0.0, PI * 2.0);
     let vec = Vec2f64 { x: 1.0, y: 0.0 };
     vec.rotate(angle)
         .scalar_mul(PIRATE_SPAWN_DIST)

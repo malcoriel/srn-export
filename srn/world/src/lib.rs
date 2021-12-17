@@ -134,6 +134,16 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use uuid::*;
 
+
+pub fn get_prng() -> SmallRng {
+    let mut bytes = [0u8; 8];
+    getrandom::getrandom(&mut bytes);
+    let uint64: [u64; 1] = bytemuck::cast(bytes);
+    let prng = SmallRng::seed_from_u64(uint64[0]);
+    return prng;
+}
+
+
 pub fn new_id() -> Uuid {
     let mut bytes = [0u8; 16];
     getrandom::getrandom(&mut bytes).unwrap_or_else(|err| {
@@ -207,6 +217,8 @@ use crate::indexing::find_my_ship_index;
 use mut_static::MutStatic;
 use std::mem;
 use std::ops::DerefMut;
+use rand::prelude::SmallRng;
+use rand::SeedableRng;
 use crate::system_gen::seed_state;
 use crate::world::GameMode;
 

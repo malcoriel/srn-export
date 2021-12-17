@@ -1,5 +1,6 @@
 use rand::prelude::*;
 use crate::world::Rarity;
+use crate::{get_prng};
 
 pub const STAR_NAMES: [&str; 32] = [
     "Ithoins",
@@ -155,8 +156,7 @@ pub fn gen_planet_name(rng: &mut SmallRng) -> &'static str {
 }
 
 pub fn gen_random_character_name() -> &'static str {
-    let mut rng = thread_rng();
-    let mut prng = SmallRng::seed_from_u64(rng.next_u64());
+    let mut prng = get_prng();
     CHARACTER_NAMES[rand_32(&mut prng)]
 }
 

@@ -19,6 +19,7 @@ use crate::substitutions::substitute_notification_texts;
 use crate::world;
 use crate::world::{spawn_ship, GameEvent, GameMode, GameState, Player};
 use crate::xcast::XCast;
+use crate::get_prng;
 
 lazy_static! {
     pub static ref EVENTS: (
@@ -51,7 +52,7 @@ pub fn handle_events(
     d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
 ) -> Vec<(Uuid, Option<Dialogue>)> {
     let mut dialogue_changes = vec![];
-    let mut prng = world::gen_rng();
+    let mut prng = get_prng();
 
     loop {
         let result = receiver.try_recv();

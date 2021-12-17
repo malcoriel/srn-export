@@ -29,6 +29,7 @@ strum_macros = "0.20.1"
 strum = "0.20.0"
 kdbush = "0.2.0"
 mut_static = "5.0.0"
+bytemuck = "1.7.3"
 
   [dependencies.typescript-definitions]
   version = "0.1.10"

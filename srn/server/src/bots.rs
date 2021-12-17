@@ -21,7 +21,7 @@ use crate::indexing::{find_my_player, find_my_ship, find_planet, ObjectIndexSpec
 use crate::random_stuff::gen_bot_name;
 use crate::ship_action::{apply_ship_action, ShipActionRust};
 use crate::states::StateContainer;
-use crate::world;
+use crate::{get_prng, world};
 use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship, ShipIdx, SpatialIndexes, ShipTemplate};
 use crate::DIALOGUE_STATES;
 use crate::STATE;
@@ -65,7 +65,7 @@ pub fn bot_act(
     if bot_d_states.1.iter().count() > 0 {
         // stop all other actions when talking
         if bot.timer.is_none() {
-            let mut new_rng = thread_rng();
+            let mut new_rng = get_prng();
             bot.timer = Some(BOT_QUEST_ACT_DELAY_MC + new_rng.gen_range(-500, 500) * 1000);
         } else {
             bot.timer = Some(bot.timer.unwrap() - elapsed_micro);
@@ -140,9 +140,8 @@ fn make_dialogue_act(
 fn add_bot(room: &mut Room, bot: Bot) {
     let id = bot.id.clone();
     room.bots.push(bot);
-    let mut rng = thread_rng();
-    let mut prng = SmallRng::seed_from_u64(rng.next_u64());
-    world::add_player(&mut room.state, id, true, Some(gen_bot_name(&mut prng)));
+    let mut rng = get_prng();
+    world::add_player(&mut room.state, id, true, Some(gen_bot_name(&mut rng)));
     world::spawn_ship(&mut room.state, Some(id), ShipTemplate::player(None));
 }
 

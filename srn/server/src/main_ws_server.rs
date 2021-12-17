@@ -25,6 +25,7 @@ use crate::net::{
 use crate::ship_action::ShipActionRust;
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
 use crate::world::{GameEvent, GameState, Player, Ship};
+use crate::get_prng;
 use crate::xcast::XCast;
 use crate::{
     dialogue, indexing, inventory, long_actions, market, notifications, sandbox, ship_action,
@@ -321,7 +322,7 @@ fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>)
             }
             let state = state.unwrap();
             // let action_dbg = action.clone();
-            if !long_actions::try_start_long_action(state, client_id, action, &mut world::gen_rng())
+            if !long_actions::try_start_long_action(state, client_id, action, &mut get_prng())
             {
                 // invalid shooting produces too much noise
                 // warn!(format!(

@@ -41,6 +41,8 @@ use dialogue::{DialogueStates, DialogueTable};
 use dialogue_dto::Dialogue;
 use lockfree::map::Map as LockFreeMap;
 use lockfree::set::Set as LockFreeSet;
+use rand::prelude::SmallRng;
+use rand::{RngCore, SeedableRng, thread_rng};
 use net::{
     ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper,
     SwitchRoomPayload, TagConfirm, Wrapper,
@@ -209,6 +211,12 @@ fn remove_player(conn_id: Uuid, state: &mut GameState) {
     world::remove_player_from_state(conn_id, state);
 }
 
+pub fn get_prng() -> SmallRng {
+    let mut rng = thread_rng();
+    let prng = SmallRng::seed_from_u64(rng.next_u64());
+    return prng;
+}
+
 pub fn new_id() -> Uuid {
     Uuid::new_v4()
 }
@@ -339,7 +347,7 @@ lazy_static! {
 }
 
 fn main_thread() {
-    let mut prng = world::gen_rng();
+    let mut prng = get_prng();
     let mut d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
     let mut marks_holder = vec![];

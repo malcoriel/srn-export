@@ -18,7 +18,7 @@ use crate::random_stuff::{
     gen_star_radius, PLANET_NAMES, SAT_NAMES,
 };
 use crate::vec2::Vec2f64;
-use crate::world::{gen_rng, random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star, AABB, GAME_STATE_VERSION, ObjectTag};
+use crate::world::{random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star, AABB, GAME_STATE_VERSION, ObjectTag};
 use crate::{new_id, planet_movement, world};
 use crate::combat::Health;
 

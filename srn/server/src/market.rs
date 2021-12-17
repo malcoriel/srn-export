@@ -8,13 +8,14 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
+
 use crate::indexing::find_player_and_ship_mut;
 use crate::inventory::{add_item, consume_items_of_type};
 use crate::inventory::{
     add_items, cleanup_inventory_from_zeros, inventory_item_type_to_stackable, shake_items,
     InventoryItem, InventoryItemType,
 };
-use crate::new_id;
+use crate::{new_id, get_prng};
 use crate::world::{GameState, Planet};
 
 pub type Wares = HashMap<Uuid, Vec<InventoryItem>>;
@@ -238,7 +239,7 @@ pub fn get_default_value(it: &InventoryItemType) -> i32 {
 }
 
 pub fn gen_price_event() -> PriceEvent {
-    let mut rng = rand::thread_rng();
+    let mut rng = get_prng();
     let roll = rng.gen_range(0, 100);
     match roll {
         0..71 => PriceEvent::Normalize,
