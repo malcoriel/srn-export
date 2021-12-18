@@ -54,7 +54,7 @@ use xcast::XCast;
 
 use crate::api_struct::Room;
 use crate::autofocus::build_spatial_index;
-use crate::bots::{bot_init, do_bot_npcs_actions, do_bot_players_actions};
+use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
 use crate::chat::chat_server;
 use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
 use crate::indexing::{
@@ -153,6 +153,7 @@ mod world_test;
 mod xcast;
 mod pirate_defence;
 mod tutorial;
+mod cargo_rush;
 
 struct LastCheck {
     time: DateTime<Utc>,

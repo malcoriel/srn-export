@@ -321,6 +321,9 @@ pub enum GameEvent {
         mode: GameMode,
         room_id: Uuid,
     },
+    KickPlayerRequest {
+        player_id: Uuid
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -984,7 +987,7 @@ fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool) {
     state.processed_events.append(&mut processed_events);
 }
 
-fn world_update_handle_event(state: &mut GameState, prng: &mut SmallRng, event: &GameEvent) {
+fn world_update_handle_event(state: &mut GameState, _prng: &mut SmallRng, event: &GameEvent) {
     match event {
         GameEvent::PirateSpawn { at, .. }  => {
             pirate_defence::on_pirate_spawn(state, at);

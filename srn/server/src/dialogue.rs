@@ -513,7 +513,7 @@ fn apply_side_effects(
                 }
             }
             DialogueOptionSideEffect::QuitTutorial => {
-                crate::main_ws_server::kick_player(player_id);
+                fire_event(GameEvent::KickPlayerRequest { player_id })
             }
             DialogueOptionSideEffect::TriggerTutorialQuest => {
                 if let Some(player) = find_my_player(state, player_id) {

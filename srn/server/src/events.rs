@@ -189,9 +189,12 @@ pub fn handle_events(
                     GameEvent::CreateRoomRequest { mode, room_id } => {
                         create_room_impl(cont, &mode, room_id);
                     }
-                    GameEvent::PirateSpawn { at, state_id } => {
+                    GameEvent::PirateSpawn { .. } => {
                         log!("Pirate spawn handling should happen in world, there's some bug here");
 
+                    }
+                    GameEvent::KickPlayerRequest { player_id } => {
+                        crate::main_ws_server::kick_player(player_id);
                     }
                 }
             }

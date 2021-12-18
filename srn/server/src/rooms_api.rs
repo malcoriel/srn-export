@@ -16,11 +16,10 @@ use uuid::Uuid;
 
 use crate::api_struct::RoomsState;
 use crate::api_struct::*;
-use crate::bots::bot_init;
 use crate::events::fire_event;
 use crate::states::{StateContainer, ROOMS_READ};
 use crate::world::{GameEvent, GameMode, GameState, PlayerId};
-use crate::{new_id, system_gen, world};
+use crate::{cargo_rush, new_id, system_gen, world};
 
 #[get("/")]
 pub fn get_rooms() -> Json<Vec<Room>> {
@@ -78,7 +77,7 @@ pub fn create_room_impl(
         bots: vec![],
     };
     if *mode == GameMode::CargoRush {
-        bot_init(&mut room);
+        cargo_rush::setup_bots(&mut room);
     }
     let bot_len = room.bots.len();
     cont.rooms.values.push(room);

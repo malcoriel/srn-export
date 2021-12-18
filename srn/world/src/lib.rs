@@ -125,6 +125,15 @@ mod api_struct;
 #[path = "../../server/src/pirate_defence.rs"]
 mod pirate_defence;
 
+#[path = "../../server/src/cargo_rush.rs"]
+mod cargo_rush;
+
+#[path = "../../server/src/bots.rs"]
+mod bots;
+
+#[path = "../../server/src/dialogue.rs"]
+mod dialogue;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize as Deserializable;
