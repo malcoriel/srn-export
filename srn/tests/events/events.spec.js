@@ -30,6 +30,10 @@ function findFirstEvent(world, eventName) {
   return world.events.find((e) => e.tag === eventName);
 }
 
+function findFirstProcessedEvent(world, eventName) {
+  return world.processed_events.find((e) => e.tag === eventName);
+}
+
 function mockPlayer(player_id) {
   return {
     id: player_id,
@@ -63,5 +67,10 @@ describe('game events logic', () => {
     world = updateWholeWorld(world, 15 * 1000);
     const pirateSpawnEvent = findFirstEvent(world, 'PirateSpawn');
     expect(pirateSpawnEvent.state_id).toEqual(world.id);
+    world = updateWholeWorld(world, 1000);
+    const ships = world.locations[0].ships;
+    expect(ships.length).toBeGreaterThan(1);
+    const processedEvent = findFirstProcessedEvent(world, 'PirateSpawn');
+    expect(processedEvent.processed_at_ticks).toBeGreaterThan(15 * 1000 * 1000);
   });
 });

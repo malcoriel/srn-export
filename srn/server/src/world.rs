@@ -1,5 +1,5 @@
 use std::borrow::{Borrow, BorrowMut};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 #[allow(deprecated)]
 use std::f64::{INFINITY, NEG_INFINITY};
 use std::f64::consts::PI;
@@ -323,6 +323,13 @@ pub enum GameEvent {
     },
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "tag")]
+pub struct ProcessedGameEvent {
+    pub event: GameEvent,
+    pub processed_at_ticks: i64
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct ShipTurret {
     id: Uuid,
@@ -641,7 +648,8 @@ pub struct GameState {
     pub locations: Vec<Location>,
     pub interval_data: HashMap<TimeMarks, u32>,
     pub game_over: Option<GameOver>,
-    pub events: Vec<GameEvent>,
+    pub events: VecDeque<GameEvent>,
+    pub processed_events: Vec<ProcessedGameEvent>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -675,7 +683,9 @@ impl GameState {
             locations: vec![],
             interval_data: Default::default(),
             game_over: None,
-            events: vec![]
+
+            events: Default::default(),
+            processed_events: vec![]
         }
     }
 }
@@ -1444,7 +1454,7 @@ fn update_ships_respawn(state: &mut GameState, prng: &mut SmallRng) {
 }
 
 pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
-    state.events.push(event.clone());
+    state.events.push_back(event.clone());
     fire_event(event);
 }
 
