@@ -190,14 +190,8 @@ pub fn handle_events(
                         create_room_impl(cont, &mode, room_id);
                     }
                     GameEvent::PirateSpawn { at, state_id } => {
-                        let state = crate::states::select_state_by_id_mut(cont, state_id);
-                        if state.is_none() {
-                            warn!("pirate spawn in non-existent state");
-                            continue;
-                        }
-                        let state = state.unwrap();
+                        log!("Pirate spawn handling should happen in world, there's some bug here");
 
-                        pirate_defence::on_pirate_spawn(state, at);
                     }
                 }
             }

@@ -255,7 +255,7 @@ pub enum SamplerMarks {
     UpdateInterpolateDockingShips = 28,
     UpdateTickLongActionsShips = 29,
     StateBroadcast = 30,
-    Modes = 31,
+    UpdateRuleSpecific = 31,
     ModeCargoRush = 32,
     ModeCargoRushQuests = 33,
     ModePirateDefence = 34,
@@ -264,6 +264,7 @@ pub enum SamplerMarks {
     GenFullSpatialIndexes = 37,
     GenSpatialIndexOnDemand = 38,
     UpdateWreckDecay = 39,
+    UpdateEvents = 40
 }
 
 impl Display for SamplerMarks {

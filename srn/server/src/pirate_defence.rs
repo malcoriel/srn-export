@@ -9,8 +9,8 @@ use crate::vec2::Vec2f64;
 use crate::world::{fire_saved_event, GameEvent, GameOver, GameState, Planet, Ship, ShipTemplate, TimeMarks};
 use crate::get_prng;
 
-pub fn on_pirate_spawn(state: &mut GameState, at: Vec2f64) {
-      world::spawn_ship(state, None, ShipTemplate::pirate(Some(at)));
+pub fn on_pirate_spawn(state: &mut GameState, at: &Vec2f64) {
+      world::spawn_ship(state, None, ShipTemplate::pirate(Some(at.clone())));
 }
 
 const SHIP_PLANET_HIT_NORMALIZED : f64 = 0.1;

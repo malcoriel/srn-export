@@ -327,7 +327,7 @@ pub enum GameEvent {
 #[serde(tag = "tag")]
 pub struct ProcessedGameEvent {
     pub event: GameEvent,
-    pub processed_at_ticks: i64
+    pub processed_at_ticks: u64
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -643,6 +643,7 @@ pub struct GameState {
     pub paused: bool,
     pub leaderboard: Option<Leaderboard>,
     pub millis: u32,
+    pub ticks: u64,
     pub disable_hp_effects: bool,
     pub market: Market,
     pub locations: Vec<Location>,
@@ -674,6 +675,7 @@ impl GameState {
             paused: false,
             leaderboard: None,
             millis: 0,
+            ticks: 0,
             disable_hp_effects: false,
             market: Market {
                 wares: Default::default(),
@@ -841,21 +843,26 @@ pub fn update_world(
     prng: &mut SmallRng,
 ) -> (GameState, Sampler) {
     state.millis += elapsed as u32 / 1000;
+    state.ticks += elapsed as u64;
     if state.mode != GameMode::Tutorial {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
     }
 
     let mut sampler = sampler;
 
-    let rules_id = sampler.start(SamplerMarks::Modes as u32);
+    let events_id = sampler.start(SamplerMarks::UpdateEvents as u32);
+    update_events(&mut state, prng, client);
+    sampler.end(events_id);
 
-        update_rule_specifics(&mut state, prng, &mut sampler, client);
+
+    let rules_id = sampler.start(SamplerMarks::UpdateRuleSpecific as u32);
+    update_rule_specifics(&mut state, prng, &mut sampler, client);
     sampler.end(rules_id);
+
 
     if state.paused {
         if !client {
             if state.milliseconds_remaining <= 500 {
-                log!("resetting game");
                 let players = state
                     .players
                     .clone()
@@ -955,6 +962,35 @@ pub fn update_world(
         };
     };
     (state, sampler)
+}
+
+fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool) {
+    if client {
+        return;
+    }
+    let mut events_to_process = vec![];
+    while let Some(event) = state.events.pop_front() {
+        events_to_process.push(event);
+    }
+    let mut processed_events = vec![];
+    for event in events_to_process.into_iter() {
+        world_update_handle_event(state, prng, &event);
+        let processed_event = ProcessedGameEvent {
+            event,
+            processed_at_ticks: state.ticks
+        };
+        processed_events.push(processed_event);
+    }
+    state.processed_events.append(&mut processed_events);
+}
+
+fn world_update_handle_event(state: &mut GameState, prng: &mut SmallRng, event: &GameEvent) {
+    match event {
+        GameEvent::PirateSpawn { at, .. }  => {
+            pirate_defence::on_pirate_spawn(state, at);
+        }
+        _ => {}
+    }
 }
 
 pub fn update_location(
@@ -1455,7 +1491,9 @@ fn update_ships_respawn(state: &mut GameState, prng: &mut SmallRng) {
 
 pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
     state.events.push_back(event.clone());
-    fire_event(event);
+    if !matches!(event, GameEvent::PirateSpawn { .. }) {
+        fire_event(event);
+    }
 }
 
 const SHIP_REGEN_PER_SEC: f64 = 5.0;
