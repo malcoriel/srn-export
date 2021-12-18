@@ -1,14 +1,5 @@
-import {
-  findFirstEvent,
-  findFirstProcessedEvent,
-  loadWasm,
-  mockPlayer,
-  mockShip,
-  updateWholeWorld,
-  wasm,
-} from '../util';
+import { loadWasm, mockPlayer, updateWholeWorld, wasm } from '../util';
 import * as uuid from 'uuid';
-import * as _ from 'lodash';
 
 const getLoc0 = (world) => world.locations[0];
 
