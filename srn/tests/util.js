@@ -43,3 +43,48 @@ export const updateWholeWorld = (world, millis, isServer = true) => {
     BigInt(millis * 1000)
   );
 };
+export const mockShip = (id) => ({
+  id,
+  x: 0,
+  y: 0,
+  rotation: 0,
+  radius: 1,
+  acc_periodic_dmg: 0,
+  acc_periodic_heal: 0,
+  color: 'red',
+  trajectory: [],
+  inventory: [],
+  abilities: [],
+  movement_markers: {},
+  movement_definition: {
+    tag: 'Unknown',
+  },
+  health: {
+    current: 10,
+    max: 10,
+  },
+  local_effects: [],
+  long_actions: [],
+  turrets: [],
+});
+
+export function findFirstEvent(world, eventName) {
+  return world.events.find((e) => e.tag === eventName);
+}
+
+export function findFirstProcessedEvent(world, eventName) {
+  return world.processed_events.find((e) => e.event.tag === eventName);
+}
+
+export function mockPlayer(player_id) {
+  return {
+    id: player_id,
+    name: 'test',
+    is_bot: false,
+    money: 0,
+    portrait_name: '1',
+    respawn_ms_left: 0,
+    long_actions: [],
+    notifications: [],
+  };
+}
