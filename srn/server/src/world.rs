@@ -15,11 +15,11 @@ use uuid::*;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::{abilities, autofocus, indexing, pirate_defence};
+use crate::{abilities, autofocus, cargo_rush, indexing, pirate_defence, system_gen};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
-use crate::{DEBUG_PHYSICS, new_id, get_prng};
+use crate::{DEBUG_PHYSICS, get_prng, new_id};
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
-use crate::api_struct::{AiTrait, Bot, new_bot, RoomId};
+use crate::api_struct::{AiTrait, Bot, new_bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
@@ -2239,4 +2239,55 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
             state.locations[loc_idx].star = None;
         }
     }
+}
+
+pub fn make_room(mode: &GameMode, room_id: Uuid) -> (Uuid, Room) {
+    let room_name = format!("{} - {}", mode, room_id);
+    let state = system_gen::seed_state(&mode, random_hex_seed());
+    let state_id = state.id.clone();
+    let mut room = Room {
+        id: room_id,
+        name: room_name,
+        state,
+        last_players_mark: None,
+        bots: vec![],
+    };
+    if *mode == GameMode::CargoRush {
+        cargo_rush::setup_bots(&mut room);
+    }
+    (state_id, room)
+}
+
+pub fn build_full_spatial_indexes(state: &GameState) -> SpatialIndexes {
+    let mut values = HashMap::new();
+    for i in 0..state.locations.len() {
+        let loc = &state.locations[i];
+        values.insert(i, build_spatial_index(loc, i));
+    }
+    SpatialIndexes { values }
+}
+
+pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro: i64, room: &Room) -> (SpatialIndexes, Room, Sampler) {
+    let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
+    let mut spatial_indexes = build_full_spatial_indexes(&room.state);
+    sampler.end(spatial_indexes_id);
+    let (new_state, new_sampler) = update_world(
+        room.state.clone(),
+        elapsed_micro,
+        false,
+        sampler,
+        UpdateOptions {
+            disable_hp_effects: false,
+            limit_area: AABB::maxed(),
+        },
+        &mut spatial_indexes,
+        &mut prng,
+    );
+    (spatial_indexes, Room {
+        id: room.id,
+        name: room.name.clone(),
+        state: new_state,
+        last_players_mark: room.last_players_mark,
+        bots: room.bots.clone(),
+    }, new_sampler)
 }

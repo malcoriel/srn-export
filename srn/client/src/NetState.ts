@@ -3,16 +3,11 @@ import {
   AABB,
   applyShipActionWasm,
   Dialogue,
-  findObjectBySpecifier,
-  findObjectPosition,
   GameMode,
   GameState,
   isManualMovement,
   ManualMovementActionTags,
-  Planet,
-  Player,
   SandboxCommand,
-  Ship,
   TradeAction,
   updateWorld,
 } from './world';
@@ -32,7 +27,12 @@ import {
   NotificationAction,
   ShipActionRust,
 } from '../../world/pkg';
-import { ObjectSpecifierBuilder } from '../../world/pkg/world.extra';
+import {
+  buildClientStateIndexes,
+  ClientStateIndexes,
+  findMyShip,
+  findMyShipIndex,
+} from './ClientStateIndexing';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -60,26 +60,6 @@ interface Cmd {
 
 const AREA_BUFF_TO_COVER_SIZE = 1.5;
 const RECONNECT_INTERVAL = 1000;
-
-export const findMyPlayer = (state: GameState) =>
-  state.players.find((player) => player.id === state.my_id);
-
-export const findMyShipIndex = (state: GameState): number | null => {
-  const myPlayer = findMyPlayer(state);
-  if (!myPlayer) return null;
-
-  const foundShipIndex = state.locations[0].ships.findIndex(
-    (ship) => ship.id === myPlayer.ship_id
-  );
-  if (foundShipIndex === -1) return null;
-  return foundShipIndex;
-};
-
-export const findMyShip = (state: GameState): Ship | null => {
-  const index = findMyShipIndex(state);
-  if (index !== -1 && index !== null) return state.locations[0].ships[index];
-  return null;
-};
 
 export type VisualState = {
   boundCameraMovement: boolean;
@@ -130,20 +110,16 @@ const serializeSandboxCommand = (cmd: SandboxCommand) => {
   return JSON.stringify(cmd);
 };
 
-export interface NetStateIndexes {
-  myShip: Ship | null;
-  myShipPosition: Vector | null;
-  playersById: Map<string, Player>;
-  planetsById: Map<string, Planet>;
-  playersByShipId: Map<string, Player>;
-}
+export const reindexNetState = (netState: NetState) => {
+  netState.indexes = buildClientStateIndexes(netState.state);
+};
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
 
   state!: GameState;
 
-  indexes!: NetStateIndexes;
+  indexes!: ClientStateIndexes;
 
   dialogue?: Dialogue;
 
@@ -260,6 +236,7 @@ export default class NetState extends EventEmitter {
         wares: {},
         time_before_next_shake: 0,
       },
+      events: [],
       mode: GameMode.Unknown,
       seed: '',
       tag: '',
@@ -289,44 +266,7 @@ export default class NetState extends EventEmitter {
       interval_data: {},
       game_over: null,
     };
-    this.reindex();
-  }
-
-  private reindex() {
-    this.indexes = {
-      myShip: null,
-      myShipPosition: null,
-      playersById: new Map(),
-      planetsById: new Map(),
-      playersByShipId: new Map(),
-    };
-    const myShip = findMyShip(this.state);
-    this.indexes.myShip = myShip;
-    if (myShip) {
-      if (myShip.docked_at) {
-        const planet = findObjectBySpecifier(this.state, {
-          loc_idx: 0,
-          obj_spec: ObjectSpecifierBuilder.ObjectSpecifierPlanet({
-            id: myShip.docked_at,
-          }),
-        });
-        const myShipPosition = findObjectPosition(planet);
-        if (myShipPosition) {
-          this.indexes.myShipPosition = Vector.fromIVector(myShipPosition);
-        }
-      } else {
-        this.indexes.myShipPosition = Vector.fromIVector(myShip);
-      }
-    }
-    for (const player of this.state.players) {
-      this.indexes.playersById.set(player.id, player);
-      if (player.ship_id) {
-        this.indexes.playersByShipId.set(player.ship_id, player);
-      }
-    }
-    for (const planet of this.state.locations[0].planets) {
-      this.indexes.planetsById.set(planet.id, planet);
-    }
+    reindexNetState(this);
   }
 
   disconnectAndDestroy = () => {
@@ -584,7 +524,7 @@ export default class NetState extends EventEmitter {
         console.log('Received disconnect request from server');
         this.disconnectAndDestroy();
       }
-      this.reindex();
+      reindexNetState(this);
     } catch (e) {
       console.warn('error handling message', e);
     } finally {
@@ -684,7 +624,7 @@ export default class NetState extends EventEmitter {
     }
     this.state.locations[0].ships.splice(myShipIndex, 1);
     this.state.locations[0].ships.push(myShip);
-    this.reindex();
+    reindexNetState(this);
   };
 
   onPreferredNameChange = (newName: string) => {
@@ -704,13 +644,16 @@ export default class NetState extends EventEmitter {
       // prevent server DOS via gas action flooding, separated by action type
       if (isManualMovement(action)) {
         if (
+          // @ts-ignore
           this.lastSendOfManualMovementMap[action.tag] &&
           Math.abs(
+            // @ts-ignore
             this.lastSendOfManualMovementMap[action.tag] - performance.now()
           ) < MANUAL_MOVEMENT_SYNC_INTERVAL_MS
         ) {
           continue;
         } else {
+          // @ts-ignore
           this.lastSendOfManualMovementMap[action.tag] = performance.now();
         }
       }
@@ -730,7 +673,7 @@ export default class NetState extends EventEmitter {
     const result = updateWorld(this.state, simArea, elapsedMs);
     if (result) {
       this.state = result;
-      this.reindex();
+      reindexNetState(this);
       this.updateVisMap();
     }
   };

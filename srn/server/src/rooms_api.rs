@@ -17,7 +17,7 @@ use uuid::Uuid;
 use crate::api_struct::RoomsState;
 use crate::api_struct::*;
 use crate::events::fire_event;
-use crate::states::{StateContainer, ROOMS_READ};
+use crate::states::{ROOMS_READ, StateContainer};
 use crate::world::{GameEvent, GameMode, GameState, PlayerId};
 use crate::{cargo_rush, new_id, system_gen, world};
 
@@ -66,19 +66,7 @@ pub fn create_room_impl(
     mode: &GameMode,
     room_id: Uuid,
 ) {
-    let room_name = format!("{} - {}", mode, room_id);
-    let state = system_gen::seed_state(&mode, world::random_hex_seed());
-    let state_id = state.id.clone();
-    let mut room = Room {
-        id: room_id,
-        name: room_name,
-        state,
-        last_players_mark: None,
-        bots: vec![],
-    };
-    if *mode == GameMode::CargoRush {
-        cargo_rush::setup_bots(&mut room);
-    }
+    let (state_id, room) = world::make_room(&mode, room_id);
     let bot_len = room.bots.len();
     cont.rooms.values.push(room);
     log!(format!(

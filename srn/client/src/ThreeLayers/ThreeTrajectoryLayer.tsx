@@ -1,11 +1,11 @@
 import React from 'react';
-import { NetStateIndexes } from '../NetState';
 import { babyBlue } from '../utils/palette';
 import { posToThreePos } from './util';
+import { ClientStateIndexes } from '../ClientStateIndexing';
 
-export const ThreeTrajectoryLayer: React.FC<{ indexes: NetStateIndexes }> = ({
-  indexes,
-}) => {
+export const ThreeTrajectoryLayer: React.FC<{
+  indexes: ClientStateIndexes;
+}> = ({ indexes }) => {
   if (indexes.myShip) {
     const { myShip, planetsById } = indexes;
     const pointTarget = myShip.navigate_target;

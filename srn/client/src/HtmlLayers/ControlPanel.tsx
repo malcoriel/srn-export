@@ -11,16 +11,13 @@ import {
 import { StyledRect } from './ui/StyledRect';
 import { Button } from './ui/Button';
 import { useStore } from '../store';
-import NetState, {
-  findMyPlayer,
-  findMyShip,
-  useNSForceChange,
-} from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import { makePortraitPath } from './StartMenu';
 import { findObjectById, getObjectPosition, Ship } from '../world';
 import { NotificationPanel } from './NotifcationPanel';
 import { NotificationAction } from '../../../world/pkg';
 import { PlayerActionsBar } from './PlayerActionsBar';
+import { findMyPlayer, findMyShip } from '../ClientStateIndexing';
 
 const BUTTON_SIZE = 53;
 const BUTTON_COUNT = 7;

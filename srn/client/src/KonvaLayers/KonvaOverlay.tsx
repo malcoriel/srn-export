@@ -2,12 +2,13 @@ import React from 'react';
 import { Circle, Layer, Text } from 'react-konva';
 import Prando from 'prando';
 import { GameState, TRACTOR_DIST } from '../world';
-import NetState, { findMyShip, useNSForceChange } from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import Vector, { IVector } from '../utils/Vector';
 import { crimson, darkGreen, rare, teal } from '../utils/palette';
 import { useStore } from '../store';
 import { useRealToScreen } from '../coordHooks';
 import { UnreachableCaseError } from 'ts-essentials';
+import { findMyShip } from '../ClientStateIndexing';
 
 type VisLocalEffect = {
   id: string;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { findMyPlayer, findMyShip, VisualState } from '../NetState';
+import { VisualState } from '../NetState';
 import { GameState } from '../../../world/pkg';
 import { Line } from '@react-three/drei';
 import Vector from '../utils/Vector';
@@ -9,6 +9,7 @@ import { teal, yellow } from '../utils/palette';
 import { ThreeLine } from './blocks/ThreeLine';
 import { Vector2 } from 'three';
 import { liftThreePos, vecToThreePos } from './util';
+import { findMyPlayer, findMyShip } from '../ClientStateIndexing';
 
 interface ThreeQuestDirectionImplParams {
   arrowPoints: Vector[];

@@ -9,7 +9,6 @@ import {
 import { ThreeShip } from './ThreeShip';
 import Vector from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
-import { NetStateIndexes } from '../NetState';
 import {
   LongAction,
   LongActionDock,
@@ -17,6 +16,7 @@ import {
 } from '../../../world/pkg';
 import { ThreeShipWreck } from './ThreeShipWreck';
 import _ from 'lodash';
+import { ClientStateIndexes } from '../ClientStateIndexing';
 
 // Right now, there's no server-side support for actual separate shooting
 // So this mapping is for visual effect only
@@ -35,7 +35,7 @@ const mapLongActions = (long_actions: LongAction[]) => {
 export const ThreeShipsLayer: React.FC<{
   visMap: Record<string, boolean>;
   state: GameState;
-  indexes: NetStateIndexes;
+  indexes: ClientStateIndexes;
 }> = ({ visMap, state, indexes }) => {
   if (!state) return null;
   const { ships, wrecks } = state.locations[0];

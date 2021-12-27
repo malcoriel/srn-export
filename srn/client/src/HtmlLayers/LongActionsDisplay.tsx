@@ -1,15 +1,12 @@
 import React from 'react';
 import './LongActionsDisplay.scss';
-import NetState, {
-  findMyPlayer,
-  findMyShip,
-  useNSForceChange,
-} from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import _ from 'lodash';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { LongAction, LongActionPlayer } from '../../../world/pkg';
 import { UnreachableCaseError } from 'ts-essentials';
+import { findMyPlayer, findMyShip } from '../ClientStateIndexing';
 
 const getActionName = (a: LongAction): string | undefined => {
   switch (a.tag) {

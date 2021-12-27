@@ -4,6 +4,8 @@ const fs = require('fs');
 export const wasm = {
   updateWorld: () => {},
   seedWorld: () => {},
+  createRoom: () => {},
+  updateRoom: () => {},
 };
 const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
   const result = JSON.parse(fn(JSON.stringify(args), ...extraArgs));
@@ -22,6 +24,8 @@ export const loadWasm = async function () {
   }
   wasm.updateWorld = serializedWasmCaller(wasmFunctions.update_world);
   wasm.seedWorld = serializedWasmCaller(wasmFunctions.seed_world);
+  wasm.createRoom = wasmFunctions.create_room;
+  wasm.updateRoom = wasmFunctions.update_room;
   return wasmFunctions;
 };
 export const updateWholeWorld = (world, millis, isServer = true) => {
@@ -43,6 +47,11 @@ export const updateWholeWorld = (world, millis, isServer = true) => {
     BigInt(millis * 1000)
   );
 };
+
+export const updateRoom = (room, millis) => {
+  return wasm.updateRoom(room, BigInt(millis * 1000));
+};
+
 export const mockShip = (id) => ({
   id,
   x: 0,
@@ -88,3 +97,5 @@ export function mockPlayer(player_id) {
     notifications: [],
   };
 }
+
+const getLoc0 = (world) => world.locations[0];

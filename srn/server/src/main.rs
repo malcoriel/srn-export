@@ -48,7 +48,7 @@ use net::{
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
 use perf::SamplerMarks;
-use states::{get_rooms_iter, update_rooms, StateContainer, ROOMS_READ, STATE};
+use states::{get_rooms_iter, ROOMS_READ, STATE, StateContainer, update_rooms};
 use world::{GameMode, GameState, Player, Ship, SpatialIndexes};
 use xcast::XCast;
 
@@ -56,7 +56,7 @@ use crate::api_struct::Room;
 use crate::autofocus::build_spatial_index;
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
 use crate::chat::chat_server;
-use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
+use crate::dialogue::{DialogueId, DialogueScript, DialogueUpdate, execute_dialog_option};
 use crate::indexing::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
 };
@@ -69,7 +69,7 @@ use crate::states::{
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::vec2::Vec2f64;
-use crate::world::{spawn_ship, update_rule_specifics, GameEvent, UpdateOptions, AABB};
+use crate::world::{AABB, GameEvent, spawn_ship, update_rule_specifics, UpdateOptions};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -399,32 +399,8 @@ fn main_thread() {
         let mut updated_rooms = vec![];
         let mut spatial_indexes_by_room_id = HashMap::new();
         for room in get_rooms_iter(&cont) {
-            // if state.players.len() == 0 {
-            //     return None;
-            // }
-            let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
-            let mut spatial_indexes = build_full_spatial_indexes(&room.state);
-            sampler.end(spatial_indexes_id);
-            let (new_state, new_sampler) = world::update_world(
-                room.state.clone(),
-                elapsed_micro,
-                false,
-                sampler,
-                UpdateOptions {
-                    disable_hp_effects: false,
-                    limit_area: AABB::maxed(),
-                },
-                &mut spatial_indexes,
-                &mut prng,
-            );
+            let (spatial_indexes, room_clone, new_sampler) = world::update_room(&mut prng, sampler, elapsed_micro, &room);
             sampler = new_sampler;
-            let room_clone = Room {
-                id: room.id,
-                name: room.name.clone(),
-                state: new_state,
-                last_players_mark: room.last_players_mark,
-                bots: room.bots.clone(),
-            };
             updated_rooms.push(room_clone);
             spatial_indexes_by_room_id.insert(room.id, spatial_indexes);
         }
@@ -537,15 +513,6 @@ fn main_thread() {
             thread::sleep(Duration::from_micros(sleep_remaining as u64));
         }
     }
-}
-
-fn build_full_spatial_indexes(state: &GameState) -> SpatialIndexes {
-    let mut values = HashMap::new();
-    for i in 0..state.locations.len() {
-        let loc = &state.locations[i];
-        values.insert(i, build_spatial_index(loc, i));
-    }
-    SpatialIndexes { values }
 }
 
 fn broadcast_all_states(cont: &mut RwLockReadGuard<StateContainer>) {

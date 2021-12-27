@@ -1,10 +1,11 @@
-import NetState, { NetStateIndexes } from '../NetState';
+import NetState from '../NetState';
 import { GameState } from '../../../world/pkg';
 import React from 'react';
 import { Text } from '@react-three/drei';
 import Vector, { IVector, VectorF } from '../utils/Vector';
 import { teal } from '../utils/palette';
 import { vecToThreePos } from './util';
+import { ClientStateIndexes } from '../ClientStateIndexing';
 
 interface ThreeShipNamesParams {
   netState: NetState;
@@ -20,7 +21,7 @@ type NameWithPos = {
 
 const getNamesWithPos = (
   state: GameState,
-  indexes: NetStateIndexes
+  indexes: ClientStateIndexes
 ): NameWithPos[] => {
   const res: NameWithPos[] = [];
   for (const planet of state.locations[0].planets) {

@@ -2,12 +2,13 @@ import React from 'react';
 import _ from 'lodash';
 import { GameState } from '../world';
 import { ThreeStar } from './ThreeStar';
-import { findMyShip, NetStateIndexes, VisualState } from '../NetState';
+import { VisualState } from '../NetState';
 import { MineralsLayer } from './MineralsLayer';
 import { ContainersLayer } from './ContainersLayer';
 import { ThreePlanetsLayer } from './ThreePlanetsLayer';
 import { AsteroidBeltsLayer } from './AsteroidBeltsLayer';
 import { posToThreePos } from './util';
+import { ClientStateIndexes, findMyShip } from '../ClientStateIndexing';
 
 export const ThreeBodiesLayer: React.FC<{
   state: GameState;

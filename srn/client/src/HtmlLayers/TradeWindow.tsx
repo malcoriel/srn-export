@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
 import './TradeWindow.scss';
-import NetState, { findMyShip, useNSForceChange } from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import { GameState, Market, Player } from '../world';
 import { useStore, WindowState } from '../store';
 import _ from 'lodash';
 import { InventoryActionBuilder } from '../../../world/pkg/world.extra';
 import styleVars from './TradeWindow.vars.module.scss';
 import { pxToNumber } from '../utils/pxToNumber';
+import { findMyShip } from '../ClientStateIndexing';
 const BOTTOM_BAR_HEIGHT = Number(pxToNumber(styleVars.bottomBarHeight));
 const TOP_BAR_HEIGHT = Number(pxToNumber(styleVars.topBarHeight));
 

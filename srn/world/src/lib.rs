@@ -228,6 +228,8 @@ use std::mem;
 use std::ops::DerefMut;
 use rand::prelude::SmallRng;
 use rand::SeedableRng;
+use crate::api_struct::Room;
+use crate::perf::Sampler;
 use crate::system_gen::seed_state;
 use crate::world::GameMode;
 
@@ -277,17 +279,13 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
         args.state,
         elapsed_micro,
         args.client.unwrap_or(true),
-        if ENABLE_PERF {
-            global_sampler.read().unwrap().clone()
-        } else {
-            perf::Sampler::new(vec![])
-        },
+        get_sampler_clone(),
         world::UpdateOptions {
             disable_hp_effects: false,
             limit_area: args.limit_area,
         },
         &mut indexes,
-            &mut get_prng()
+        &mut get_prng()
     );
 
     if ENABLE_PERF {
@@ -311,6 +309,14 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     }
 
     return serde_json::to_string(&new_state).unwrap_or(DEFAULT_ERR.to_string());
+}
+
+fn get_sampler_clone() -> Sampler {
+    if ENABLE_PERF {
+        global_sampler.read().unwrap().clone()
+    } else {
+        perf::Sampler::new(vec![])
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -349,4 +355,23 @@ pub fn seed_world(serialized_args: &str) -> String {
     let args = args.ok().unwrap();
     let seeded_world = seed_state(&args.mode, args.seed);
     return serde_json::to_string(&seeded_world).unwrap_or(DEFAULT_ERR.to_string());
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct CreateRoomArgs {
+    mode: GameMode
+}
+
+#[wasm_bindgen]
+pub fn create_room(args: JsValue) -> Result<JsValue, JsValue> {
+    let args: CreateRoomArgs = serde_wasm_bindgen::from_value(args)?;
+    let (_, room) = world::make_room(&args.mode, new_id());
+    Ok(serde_wasm_bindgen::to_value(&room)?)
+}
+
+#[wasm_bindgen]
+pub fn update_room(room: JsValue, elapsed_micro: i64) -> Result<JsValue, JsValue> {
+    let room: Room = serde_wasm_bindgen::from_value(room)?;
+    let (_indexes, room, _sampler) = world::update_room(&mut get_prng(), get_sampler_clone(), elapsed_micro, &room);
+    Ok(serde_wasm_bindgen::to_value(&room)?)
 }

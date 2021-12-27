@@ -1,9 +1,5 @@
 import React from 'react';
-import NetState, {
-  findMyPlayer,
-  findMyShip,
-  useNSForceChange,
-} from '../NetState';
+import NetState, { useNSForceChange } from '../NetState';
 import { ActionBarAction, ActionsBar } from './ActionsBar';
 import { Player, Ship } from '../world';
 // eslint-disable-next-line import/named
@@ -15,6 +11,7 @@ import {
   LongActionStartBuilder,
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
+import { findMyPlayer, findMyShip } from '../ClientStateIndexing';
 
 const mapShipAbility = (interactorIds: InteractorIds) => (
   ability: Ability
