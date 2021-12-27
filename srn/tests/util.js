@@ -77,8 +77,19 @@ export const updateWholeWorld = (world, millis, isServer = true) => {
   );
 };
 
-export const updateRoom = (room, millis) => {
-  return wasm.updateRoom(room, BigInt(millis * 1000), wasm.dialogueTable);
+// default timeStep for tests is 100 * 1000mcs = 100ms
+export const updateRoom = (room, millis, timeStepTicks = 100n * 1000n) => {
+  let remaining = BigInt(millis * 1000);
+  let currentRoom = room;
+  while (remaining > 0) {
+    remaining -= timeStepTicks;
+    currentRoom = wasm.updateRoom(
+      currentRoom,
+      timeStepTicks,
+      wasm.dialogueTable
+    );
+  }
+  return currentRoom;
 };
 
 export const mockShip = (id) => ({
