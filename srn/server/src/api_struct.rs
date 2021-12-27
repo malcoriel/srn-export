@@ -56,6 +56,7 @@ pub struct Room {
     pub id: RoomId,
     pub name: String,
     pub state: GameState,
+    pub dialogue_states: crate::dialogue::DialogueStates,
     pub last_players_mark: Option<i64>,
     pub bots: Vec<Bot>,
 }

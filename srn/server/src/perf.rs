@@ -264,7 +264,10 @@ pub enum SamplerMarks {
     GenFullSpatialIndexes = 37,
     GenSpatialIndexOnDemand = 38,
     UpdateWreckDecay = 39,
-    UpdateEvents = 40
+    UpdateEvents = 40,
+    UpdateBots = 41,
+    UpdateBotsPlayers = 42,
+    UpdateBotsNPCs = 43,
 }
 
 impl Display for SamplerMarks {

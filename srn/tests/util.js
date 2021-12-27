@@ -1,6 +1,7 @@
 import { getBindgen, wasm_bindgen as init } from '../world/pkg-nomodule/world';
+import _ from 'lodash';
 
-const fs = require('fs');
+const fs = require('fs-extra');
 export const wasm = {
   updateWorld: () => {},
   seedWorld: () => {},
@@ -15,8 +16,33 @@ const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
   return result;
 };
 
+const loadAllJsonsAsRawStringsKeyByFilename = async (path) => {
+  const pairs = await Promise.all(
+    fs
+      .readdirSync(path)
+      .filter((f) => f.endsWith('.json'))
+      .map(async (f) => {
+        const contents = await fs.readFile(`${path}/${f}`);
+        return [f.replace(/\.json$/, ''), contents.toString()];
+      })
+  );
+  return _.fromPairs(pairs);
+};
+
+const loadResources = async (path) => {
+  const res = {};
+  res.dialogue_scripts = await loadAllJsonsAsRawStringsKeyByFilename(
+    `${path}/dialogue_scripts`
+  );
+  res.saved_states = await loadAllJsonsAsRawStringsKeyByFilename(
+    `${path}/saved_states`
+  );
+  return res;
+};
+
 export const loadWasm = async function () {
-  const wasmBytes = fs.readFileSync('../world/pkg-nomodule/world_bg.wasm');
+  const resources = await loadResources('../server/resources');
+  const wasmBytes = await fs.readFile('../world/pkg-nomodule/world_bg.wasm');
   await init(wasmBytes);
   const wasmFunctions = getBindgen();
   if (wasmFunctions && wasmFunctions.set_panic_hook) {
@@ -26,6 +52,9 @@ export const loadWasm = async function () {
   wasm.seedWorld = serializedWasmCaller(wasmFunctions.seed_world);
   wasm.createRoom = wasmFunctions.create_room;
   wasm.updateRoom = wasmFunctions.update_room;
+  wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
+  wasm.resources = resources;
+  wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);
   return wasmFunctions;
 };
 export const updateWholeWorld = (world, millis, isServer = true) => {
@@ -49,7 +78,7 @@ export const updateWholeWorld = (world, millis, isServer = true) => {
 };
 
 export const updateRoom = (room, millis) => {
-  return wasm.updateRoom(room, BigInt(millis * 1000));
+  return wasm.updateRoom(room, BigInt(millis * 1000), wasm.dialogueTable);
 };
 
 export const mockShip = (id) => ({

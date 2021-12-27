@@ -229,6 +229,7 @@ use std::ops::DerefMut;
 use rand::prelude::SmallRng;
 use rand::SeedableRng;
 use crate::api_struct::Room;
+use crate::dialogue::{DialogueTable, parse_dialogue_script_from_file};
 use crate::perf::Sampler;
 use crate::system_gen::seed_state;
 use crate::world::GameMode;
@@ -370,8 +371,27 @@ pub fn create_room(args: JsValue) -> Result<JsValue, JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn update_room(room: JsValue, elapsed_micro: i64) -> Result<JsValue, JsValue> {
+pub fn update_room(room: JsValue, elapsed_micro: i64, d_table: JsValue) -> Result<JsValue, JsValue> {
     let room: Room = serde_wasm_bindgen::from_value(room)?;
-    let (_indexes, room, _sampler) = world::update_room(&mut get_prng(), get_sampler_clone(), elapsed_micro, &room);
+    let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
+    let (_indexes, room, _sampler) = world::update_room(&mut get_prng(), get_sampler_clone(), elapsed_micro, &room, &d_table);
     Ok(serde_wasm_bindgen::to_value(&room)?)
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct DialogueDirContents {
+    basic_planet: String,
+}
+
+#[wasm_bindgen]
+pub fn make_dialogue_table(dir_contents: JsValue) -> Result<JsValue, JsValue> {
+    let mut res = vec![];
+    let dir_contents: DialogueDirContents = serde_wasm_bindgen::from_value(dir_contents)?;
+    res.push(parse_dialogue_script_from_file("basic_planet.json", dir_contents.basic_planet));
+    let mut d_table = DialogueTable::new();
+    for s in res {
+        d_table.scripts.insert(s.id, s);
+    }
+    Ok(serde_wasm_bindgen::to_value(&d_table)?)
+}
+

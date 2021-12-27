@@ -553,11 +553,16 @@ pub fn gen_scripts() -> Vec<DialogueScript> {
 pub fn read_from_resource(file: &str) -> DialogueScript {
     let json = fs::read_to_string(format!("resources/dialogue_scripts/{}.json", file))
         .expect("script not found");
-    let result = serde_json::from_str::<ShortScript>(json.as_str());
+    parse_dialogue_script_from_file(file, json)
+}
+
+
+pub fn parse_dialogue_script_from_file(file_name_for_debug: &str, json_contents: String) -> DialogueScript {
+    let result = serde_json::from_str::<ShortScript>(json_contents.as_str());
     if result.is_err() {
         panic!(
             "Failed to load dialogue script {}, err is {:?}",
-            file,
+            file_name_for_debug,
             result.err()
         );
     }

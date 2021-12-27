@@ -6,8 +6,10 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "@types/fs-extra": "^9.0.13",
     "@types/jest": "^27.0.3",
     "babel-jest": "^27.4.5",
+    "fs-extra": "^10.0.0",
     "jest": "^27.4.5",
     "lodash": "^4.17.21",
     "react-app-polyfill": "^2.0.0",

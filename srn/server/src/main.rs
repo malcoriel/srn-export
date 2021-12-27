@@ -69,7 +69,7 @@ use crate::states::{
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::vec2::Vec2f64;
-use crate::world::{AABB, GameEvent, spawn_ship, update_rule_specifics, UpdateOptions};
+use crate::world::{AABB, BOT_ACTION_TIME, GameEvent, spawn_ship, update_rule_specifics, UpdateOptions};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -338,7 +338,6 @@ fn make_thread(name: &str) -> std::thread::Builder {
 }
 
 const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
-const BOT_ACTION_TIME: i64 = 200 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 const FRAME_BUDGET_TICKS: i32 = 15 * 1000;
 const FRAME_STATS_COUNT: i32 = 2000;
@@ -399,7 +398,7 @@ fn main_thread() {
         let mut updated_rooms = vec![];
         let mut spatial_indexes_by_room_id = HashMap::new();
         for room in get_rooms_iter(&cont) {
-            let (spatial_indexes, room_clone, new_sampler) = world::update_room(&mut prng, sampler, elapsed_micro, &room);
+            let (spatial_indexes, room_clone, new_sampler) = world::update_room(&mut prng, sampler, elapsed_micro, &room, &d_table);
             sampler = new_sampler;
             updated_rooms.push(room_clone);
             spatial_indexes_by_room_id.insert(room.id, spatial_indexes);
@@ -412,13 +411,12 @@ fn main_thread() {
             continue;
         }
 
-        let d_states = &mut **d_states;
         {
             if bot_action_elapsed > BOT_ACTION_TIME {
                 let bots_mark = sampler.start(SamplerMarks::Bots as u32);
                 let bot_players_mark = sampler.start(SamplerMarks::BotsPlayers as u32);
                 for room in cont.rooms.values.iter_mut() {
-                    do_bot_players_actions(room, d_states, &d_table, bot_action_elapsed);
+                    do_bot_players_actions(room, &mut **d_states, &d_table, bot_action_elapsed);
                 }
                 sampler.end(bot_players_mark);
                 let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);
@@ -441,7 +439,7 @@ fn main_thread() {
         if events_elapsed > EVENT_TRIGGER_TIME {
             let events_mark = sampler.start(SamplerMarks::Events as u32);
             let receiver = &mut events::EVENTS.1.lock().unwrap();
-            let res = events::handle_events(&mut d_table, receiver, &mut cont, d_states);
+            let res = events::handle_events(&mut d_table, receiver, &mut cont, &mut **d_states);
             for (client_id, dialogue) in res {
                 let corresponding_state_id = get_state_id_cont_mut(&mut cont, client_id);
                 corresponding_state_id.map(|corresponding_state_id| {

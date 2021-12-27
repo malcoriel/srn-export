@@ -21,7 +21,9 @@ use crate::{DEBUG_PHYSICS, get_prng, new_id};
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::api_struct::{AiTrait, Bot, new_bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
+use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
 use crate::combat::{Health, ShootTarget};
+use crate::dialogue::DialogueTable;
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
     index_planets_by_id, index_players_by_ship_id, index_ships_by_id, ObjectSpecifier,
@@ -323,14 +325,14 @@ pub enum GameEvent {
     },
     KickPlayerRequest {
         player_id: Uuid
-    }
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
 pub struct ProcessedGameEvent {
     pub event: GameEvent,
-    pub processed_at_ticks: u64
+    pub processed_at_ticks: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -375,7 +377,7 @@ pub fn gen_turrets(count: usize) -> Vec<(Ability, ShipTurret)> {
             cooldown_ticks_remaining: 0,
             turret_id: id,
             cooldown_normalized: 0.0,
-            cooldown_ticks_max: SHOOT_COOLDOWN_TICKS
+            cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
         }, ShipTurret {
             id
         }))
@@ -690,7 +692,7 @@ impl GameState {
             game_over: None,
 
             events: Default::default(),
-            processed_events: vec![]
+            processed_events: vec![],
         }
     }
 }
@@ -980,7 +982,7 @@ fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool) {
         world_update_handle_event(state, prng, &event);
         let processed_event = ProcessedGameEvent {
             event,
-            processed_at_ticks: state.ticks
+            processed_at_ticks: state.ticks,
         };
         processed_events.push(processed_event);
     }
@@ -989,7 +991,7 @@ fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool) {
 
 fn world_update_handle_event(state: &mut GameState, _prng: &mut SmallRng, event: &GameEvent) {
     match event {
-        GameEvent::PirateSpawn { at, .. }  => {
+        GameEvent::PirateSpawn { at, .. } => {
             pirate_defence::on_pirate_spawn(state, at);
         }
         _ => {}
@@ -2067,12 +2069,22 @@ pub struct ShipIdx {
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash, Clone, Debug)]
 pub enum TimeMarks {
     PirateSpawn,
+    BotAction,
 }
 
 pub fn every(interval_ticks: u32, current_ticks: u32, last_trigger: Option<u32>) -> bool {
+    return every_diff(interval_ticks, current_ticks, last_trigger).is_some();
+}
+
+pub fn every_diff(interval_ticks: u32, current_ticks: u32, last_trigger: Option<u32>) -> Option<u32> {
     let last_trigger = last_trigger.unwrap_or(0);
     let diff = current_ticks - last_trigger;
-    return diff > interval_ticks;
+    let trigger = diff > interval_ticks;
+    if trigger {
+        return Some(diff);
+    } else {
+        return None;
+    }
 }
 
 
@@ -2249,6 +2261,7 @@ pub fn make_room(mode: &GameMode, room_id: Uuid) -> (Uuid, Room) {
         id: room_id,
         name: room_name,
         state,
+        dialogue_states: Default::default(),
         last_players_mark: None,
         bots: vec![],
     };
@@ -2267,11 +2280,13 @@ pub fn build_full_spatial_indexes(state: &GameState) -> SpatialIndexes {
     SpatialIndexes { values }
 }
 
-pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro: i64, room: &Room) -> (SpatialIndexes, Room, Sampler) {
+pub const BOT_ACTION_TIME: i64 = 200 * 1000;
+
+pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro: i64, room: &Room, d_table: &DialogueTable) -> (SpatialIndexes, Room, Sampler) {
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
     let mut spatial_indexes = build_full_spatial_indexes(&room.state);
     sampler.end(spatial_indexes_id);
-    let (new_state, new_sampler) = update_world(
+    let (new_state, mut sampler) = update_world(
         room.state.clone(),
         elapsed_micro,
         false,
@@ -2283,11 +2298,24 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
         &mut spatial_indexes,
         &mut prng,
     );
-    (spatial_indexes, Room {
-        id: room.id,
-        name: room.name.clone(),
-        state: new_state,
-        last_players_mark: room.last_players_mark,
-        bots: room.bots.clone(),
-    }, new_sampler)
+    let mut room = room.clone();
+    room.state = new_state;
+
+    if let Some(bot_action_elapsed ) = every_diff(
+        BOT_ACTION_TIME as u32,
+        room.state.ticks as u32,
+        room.state.interval_data.get(&TimeMarks::PirateSpawn).map(|m| *m),
+    ) {
+        let bots_mark = sampler.start(SamplerMarks::UpdateBots as u32);
+        let bot_players_mark = sampler.start(SamplerMarks::UpdateBotsPlayers as u32);
+        let mut d_states_clone = room.dialogue_states.clone();
+        do_bot_players_actions(&mut room, &mut d_states_clone, &d_table, bot_action_elapsed as i64);
+        room.dialogue_states = d_states_clone;
+        sampler.end(bot_players_mark);
+        let npcs_mark = sampler.start(SamplerMarks::UpdateBotsNPCs as u32);
+        do_bot_npcs_actions(&mut room, bot_action_elapsed as i64, &spatial_indexes);
+        sampler.end(npcs_mark);
+        sampler.end(bots_mark);
+    }
+    (spatial_indexes, room, sampler)
 }
