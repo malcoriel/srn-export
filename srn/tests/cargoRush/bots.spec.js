@@ -36,4 +36,11 @@ describe('cargo rush bots behavior', () => {
     );
     expect(oldShipPos.x).not.toBeCloseTo(newShipPos.x);
   });
+
+  it('bots earn some money', async () => {
+    let room = wasm.createRoom({ mode: 'CargoRush' });
+    room = updateRoom(room, 1000 * 60); // 60s should be enough for bots to complete a delivery
+    const player = room.state.players[0];
+    expect(player.money).toBeGreaterThan(0);
+  });
 });
