@@ -1,4 +1,4 @@
-import { loadWasm, updateRoom, wasm } from '../util';
+import { updateRoom, wasm, swapGlobalWasm } from '../util';
 import _ from 'lodash';
 // pretty hacky solution of importing specially-cooked client code here, but workable.
 // technically, it should be inside pkg, and code-generated (or provided together with it, rather)
@@ -15,8 +15,7 @@ const getShipByPlayerId = (world, playerId) => {
 };
 
 describe('cargo rush bots behavior', () => {
-  beforeAll(loadWasm);
-
+  beforeAll(swapGlobalWasm);
   it('can spawn some default bots', async () => {
     const room = wasm.createRoom({ mode: 'CargoRush' });
     const { state: world } = room;

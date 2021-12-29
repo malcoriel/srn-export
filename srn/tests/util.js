@@ -2,11 +2,21 @@ import { getBindgen, wasm_bindgen as init } from '../world/pkg-nomodule/world';
 import _ from 'lodash';
 
 const fs = require('fs-extra');
+const notLoadedError = 'wasm did not load, call await loadWasm() first';
+
 export const wasm = {
-  updateWorld: () => {},
-  seedWorld: () => {},
-  createRoom: () => {},
-  updateRoom: () => {},
+  updateWorld: () => {
+    throw new Error(notLoadedError);
+  },
+  seedWorld: () => {
+    throw new Error(notLoadedError);
+  },
+  createRoom: () => {
+    throw new Error(notLoadedError);
+  },
+  updateRoom: () => {
+    throw new Error(notLoadedError);
+  },
 };
 const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
   const result = JSON.parse(fn(JSON.stringify(args), ...extraArgs));
@@ -40,7 +50,14 @@ const loadResources = async (path) => {
   return res;
 };
 
+export const swapGlobalWasm = () => {
+  if (global.wasm) {
+    _.assign(wasm, global.wasm);
+  }
+};
+
 export const loadWasm = async function () {
+  console.time('wasm load');
   const resources = await loadResources('../server/resources');
   const wasmBytes = await fs.readFile('../world/pkg-nomodule/world_bg.wasm');
   await init(wasmBytes);
@@ -55,6 +72,7 @@ export const loadWasm = async function () {
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.resources = resources;
   wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);
+  console.timeEnd('wasm load');
   return wasmFunctions;
 };
 export const updateWholeWorld = (world, millis, isServer = true) => {

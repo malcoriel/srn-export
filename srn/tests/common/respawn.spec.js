@@ -1,10 +1,10 @@
-import { loadWasm, mockPlayer, updateWholeWorld, wasm } from '../util';
+import { mockPlayer, swapGlobalWasm, updateWholeWorld, wasm } from '../util';
 import * as uuid from 'uuid';
 
 const getLoc0 = (world) => world.locations[0];
 
 describe('respawn logic', () => {
-  beforeAll(loadWasm);
+  beforeAll(swapGlobalWasm);
 
   it("can respawn player's ship when there is none", async () => {
     let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
