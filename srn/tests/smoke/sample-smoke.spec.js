@@ -1,7 +1,7 @@
-import { swapGlobalWasm, updateWholeWorld, wasm } from '../util';
+import { swapGlobals, updateWholeWorld, wasm } from '../util';
 
 describe('sample smoke test', () => {
-  beforeAll(swapGlobalWasm);
+  beforeAll(swapGlobals);
 
   it('can seed and update world', async () => {
     let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });

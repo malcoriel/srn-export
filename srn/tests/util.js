@@ -1,8 +1,10 @@
 import { getBindgen, wasm_bindgen as init } from '../world/pkg-nomodule/world';
 import _ from 'lodash';
+import { timerifySync } from './perf';
 
 const fs = require('fs-extra');
 const notLoadedError = 'wasm did not load, call await loadWasm() first';
+const { timerify, perf, flushPerfStats } = require('./perf');
 
 export const wasm = {
   updateWorld: () => {
@@ -50,14 +52,13 @@ const loadResources = async (path) => {
   return res;
 };
 
-export const swapGlobalWasm = () => {
+export const swapGlobals = () => {
   if (global.wasm) {
     _.assign(wasm, global.wasm);
   }
 };
 
-export const loadWasm = async function () {
-  console.time('wasm load');
+export const loadWasm = timerify(async function loadWasm() {
   const resources = await loadResources('../server/resources');
   const wasmBytes = await fs.readFile('../world/pkg-nomodule/world_bg.wasm');
   await init(wasmBytes);
@@ -72,9 +73,8 @@ export const loadWasm = async function () {
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.resources = resources;
   wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);
-  console.timeEnd('wasm load');
   return wasmFunctions;
-};
+});
 export const updateWholeWorld = (world, millis, isServer = true) => {
   return wasm.updateWorld(
     {
@@ -96,18 +96,33 @@ export const updateWholeWorld = (world, millis, isServer = true) => {
 };
 
 // default timeStep for tests is 100 * 1000mcs = 100ms
-export const updateRoom = (room, millis, timeStepTicks = 100n * 1000n) => {
+export const updateRoom = timerifySync(function updateRoom(
+  room,
+  millis,
+  timeStepTicks = 100n * 1000n
+) {
   let remaining = BigInt(millis * 1000);
   let currentRoom = room;
   while (remaining > 0) {
+    perf.mark('updateRoomStep_start');
     remaining -= timeStepTicks;
     currentRoom = wasm.updateRoom(
       currentRoom,
       timeStepTicks,
       wasm.dialogueTable
     );
+    perf.mark('updateRoomStep_end');
+    perf.measure(
+      'updateRoomStep',
+      'updateRoomStep_start',
+      'updateRoomStep_end'
+    );
   }
   return currentRoom;
+});
+
+export const exposePerfStats = () => {
+  flushPerfStats();
 };
 
 export const mockShip = (id) => ({

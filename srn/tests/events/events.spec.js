@@ -3,7 +3,7 @@ import {
   findFirstProcessedEvent,
   mockPlayer,
   mockShip,
-  swapGlobalWasm,
+  swapGlobals,
   updateWholeWorld,
   wasm,
 } from '../util';
@@ -11,7 +11,7 @@ import * as uuid from 'uuid';
 import * as _ from 'lodash';
 
 describe('game events logic', () => {
-  beforeAll(swapGlobalWasm);
+  beforeAll(swapGlobals);
 
   it('can blow up ship', async () => {
     let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
