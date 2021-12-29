@@ -11,7 +11,6 @@ if (process.env.ENABLE_PERF) {
     entries.forEach(({ name, duration: durationMs, type }) => {
       const duration = Number(durationMs.toFixed(0));
       if (!storage.fnCalls[name]) {
-        console.log('init', name);
         storage.fnCalls[name] = {
           histogram: createHistogram(),
           callCount: 0,

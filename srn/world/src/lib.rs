@@ -378,6 +378,22 @@ pub fn update_room(room: JsValue, elapsed_micro: i64, d_table: JsValue) -> Resul
     Ok(serde_wasm_bindgen::to_value(&room)?)
 }
 
+#[wasm_bindgen]
+pub fn update_room_full(room: JsValue, total_ticks: i64, d_table: JsValue, step_ticks: i64) -> Result<JsValue, JsValue> {
+    let mut room: Room = serde_wasm_bindgen::from_value(room)?;
+    let mut sampler = get_sampler_clone();
+    let prng = &mut get_prng();
+    let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
+    let mut remaining = total_ticks;
+    while remaining > 0 {
+        remaining -= step_ticks;
+        let (_indexes, _room, _sampler) = world::update_room(prng, sampler, step_ticks, &room, &d_table);
+        sampler = _sampler;
+        room = _room;
+    }
+    Ok(serde_wasm_bindgen::to_value(&room)?)
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct DialogueDirContents {
     basic_planet: String,

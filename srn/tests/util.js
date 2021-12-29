@@ -19,6 +19,9 @@ export const wasm = {
   updateRoom: () => {
     throw new Error(notLoadedError);
   },
+  updateRoomFull: () => {
+    throw new Error(notLoadedError);
+  },
 };
 const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
   const result = JSON.parse(fn(JSON.stringify(args), ...extraArgs));
@@ -70,12 +73,13 @@ export const loadWasm = timerify(async function loadWasm() {
   wasm.seedWorld = serializedWasmCaller(wasmFunctions.seed_world);
   wasm.createRoom = wasmFunctions.create_room;
   wasm.updateRoom = wasmFunctions.update_room;
+  wasm.updateRoomFull = wasmFunctions.update_room_full;
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.resources = resources;
   wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);
   return wasmFunctions;
 });
-export const updateWholeWorld = (world, millis, isServer = true) => {
+export const updateWorld = (world, millis, isServer = true) => {
   return wasm.updateWorld(
     {
       state: world,
@@ -96,28 +100,18 @@ export const updateWholeWorld = (world, millis, isServer = true) => {
 };
 
 // default timeStep for tests is 100 * 1000mcs = 100ms
-export const updateRoom = timerifySync(function updateRoom(
+export const updateRoom = timerifySync(function updateRoomV2(
   room,
   millis,
   timeStepTicks = 100n * 1000n
 ) {
-  let remaining = BigInt(millis * 1000);
   let currentRoom = room;
-  while (remaining > 0) {
-    perf.mark('updateRoomStep_start');
-    remaining -= timeStepTicks;
-    currentRoom = wasm.updateRoom(
-      currentRoom,
-      timeStepTicks,
-      wasm.dialogueTable
-    );
-    perf.mark('updateRoomStep_end');
-    perf.measure(
-      'updateRoomStep',
-      'updateRoomStep_start',
-      'updateRoomStep_end'
-    );
-  }
+  currentRoom = wasm.updateRoomFull(
+    currentRoom,
+    BigInt(millis * 1000),
+    wasm.dialogueTable,
+    timeStepTicks
+  );
   return currentRoom;
 });
 
