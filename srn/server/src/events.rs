@@ -11,7 +11,7 @@ use crate::api_struct::AiTrait;
 use crate::abilities::{*};
 use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
-use crate::{indexing, pirate_defence, tutorial};
+use crate::{cargo_rush, indexing, pirate_defence, tutorial};
 use crate::perf::Sampler;
 use crate::rooms_api::create_room_impl;
 use crate::states::StateContainer;
@@ -123,7 +123,9 @@ pub fn handle_events(
                         {
                             match state.mode {
                                 GameMode::Unknown => {}
-                                GameMode::CargoRush => {}
+                                GameMode::CargoRush => {
+                                    cargo_rush::on_ship_docked(state, player);
+                                }
                                 GameMode::Tutorial => {
                                     tutorial::on_ship_docked(state, player);
                                 }
