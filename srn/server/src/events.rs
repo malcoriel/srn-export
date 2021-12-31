@@ -207,6 +207,7 @@ pub fn handle_events(
 }
 
 pub fn fire_event(ev: GameEvent) {
+    // log!(format!("fire event {:?}", ev));
     let sender = &mut EVENTS.0.lock().unwrap();
     if let Err(e) = sender.try_send(ev.clone()) {
         eprintln!("Failed to send event {:?}, err {}", ev, e);

@@ -127,7 +127,6 @@ const Srn = () => {
     ns.disconnecting = false;
     setMode(mode);
     ns.init(mode);
-    ns.sendRoomJoin();
     ns.on('disconnect', () => {
       setPlaying(false);
       setMenu(true);

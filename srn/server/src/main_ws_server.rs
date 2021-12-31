@@ -284,7 +284,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
             on_client_long_action_start(client_id, second, third);
         }
         ClientOpCode::RoomJoin => {
-            on_client_room_join(client_id);
+            eprintln!("Usage of obsolete opcode RoomJoin");
         }
         ClientOpCode::NotificationAction => {
             on_client_notification_action(client_id, second, third);
@@ -365,6 +365,7 @@ fn on_client_switch_room(client_id: Uuid, second: &&str) {
     match parsed {
         Ok(parsed) => {
             states::move_player_to_room(client_id, parsed.room_id);
+            on_client_room_join(client_id);
         }
         Err(err) => {
             warn!(format!("Bad switch room, err is {}", err));

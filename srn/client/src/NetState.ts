@@ -765,14 +765,6 @@ export default class NetState extends EventEmitter {
       tag: uuid.v4(),
     });
   }
-
-  public sendRoomJoin() {
-    this.send({
-      code: ClientOpCode.RoomJoin,
-      value: undefined,
-      tag: undefined,
-    });
-  }
 }
 
 export type ShouldUpdateStateChecker = (
