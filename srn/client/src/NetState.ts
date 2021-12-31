@@ -225,6 +225,8 @@ export default class NetState extends EventEmitter {
 
   private resetState() {
     this.state = {
+      processed_events: [],
+      ticks: 0,
       disable_hp_effects: false,
       id: '',
       leaderboard: {

@@ -39,7 +39,7 @@ describe('cargo rush bots behavior', () => {
 
   it('bots earn some money', async () => {
     let room = wasm.createRoom({ mode: 'CargoRush' });
-    room = updateRoom(room, 1000 * 60); // 60s should be enough for bots to complete a delivery
+    room = updateRoom(room, 1000 * 60 * 2); // 120s should be enough for bots to complete a delivery
     const player = room.state.players[0];
     expect(player.money).toBeGreaterThan(0);
   });

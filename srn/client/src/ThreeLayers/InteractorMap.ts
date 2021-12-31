@@ -127,7 +127,7 @@ export const InteractorMap: Record<
         hint: null,
         defaultAction: isUnlandable ? undefined : InteractorActionType.Dock,
         outlineColor: common,
-        actions: isUnlandable ? planetActionMap : unlandablePlanetActionMap,
+        actions: isUnlandable ? unlandablePlanetActionMap : planetActionMap,
       };
     },
     (m) => m.id

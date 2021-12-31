@@ -2,6 +2,7 @@ import React from 'react';
 import { babyBlue } from '../utils/palette';
 import { posToThreePos } from './util';
 import { ClientStateIndexes } from '../ClientStateIndexing';
+import { SHIP_FIXED_Z } from './ShipShape';
 
 export const ThreeTrajectoryLayer: React.FC<{
   indexes: ClientStateIndexes;
@@ -16,20 +17,31 @@ export const ThreeTrajectoryLayer: React.FC<{
       <>
         {myShip.trajectory.map((position, i) => {
           return (
-            <mesh key={i} position={posToThreePos(position.x, position.y)}>
+            <mesh
+              key={i}
+              position={posToThreePos(position.x, position.y, SHIP_FIXED_Z)}
+            >
               <circleBufferGeometry args={[0.25, 8]} />
               <meshBasicMaterial color={babyBlue} />
             </mesh>
           );
         })}
         {pointTarget && (
-          <mesh position={posToThreePos(pointTarget.x, pointTarget.y)}>
+          <mesh
+            position={posToThreePos(pointTarget.x, pointTarget.y, SHIP_FIXED_Z)}
+          >
             <circleBufferGeometry args={[0.5, 8]} />
             <meshBasicMaterial color={babyBlue} />
           </mesh>
         )}
         {planetTarget && (
-          <mesh position={posToThreePos(planetTarget.x, planetTarget.y)}>
+          <mesh
+            position={posToThreePos(
+              planetTarget.x,
+              planetTarget.y,
+              SHIP_FIXED_Z
+            )}
+          >
             <ringGeometry
               args={[
                 planetTarget.radius + 0.5,
