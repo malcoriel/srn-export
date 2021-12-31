@@ -134,6 +134,9 @@ mod bots;
 #[path = "../../server/src/dialogue.rs"]
 mod dialogue;
 
+#[path = "../../server/src/world_events.rs"]
+mod world_events;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize as Deserializable;
@@ -286,7 +289,10 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
             limit_area: args.limit_area,
         },
         &mut indexes,
-        &mut get_prng()
+        &mut get_prng(),
+        // these fields make sense only for full simulation, as they are part of the room now
+        &mut Default::default(),
+        &Default::default()
     );
 
     if ENABLE_PERF {

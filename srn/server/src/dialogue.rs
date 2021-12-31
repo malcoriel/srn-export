@@ -34,7 +34,7 @@ pub struct DialogueUpdate {
     pub option_id: Uuid,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct DialogueTable {
     pub scripts: HashMap<DialogueId, DialogueScript>,
 }

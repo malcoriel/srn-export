@@ -15,6 +15,10 @@ use uuid::*;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
+use crate::{world_events};
+use crate::DialogueTable;
+use crate::dialogue;
+use dialogue::{DialogueStates};
 use crate::{abilities, autofocus, cargo_rush, indexing, pirate_defence, system_gen};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{DEBUG_PHYSICS, get_prng, new_id};
@@ -23,7 +27,6 @@ use crate::api_struct::{AiTrait, Bot, new_bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
 use crate::combat::{Health, ShootTarget};
-use crate::dialogue::DialogueTable;
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
     index_planets_by_id, index_players_by_ship_id, index_ships_by_id, ObjectSpecifier,
@@ -55,6 +58,7 @@ use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
 use crate::vec2::{AsVec2f64, deg_to_rad, Precision, Vec2f64};
+use crate::world_events::world_update_handle_event;
 
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -846,6 +850,8 @@ pub fn update_world(
     update_options: UpdateOptions,
     spatial_indexes: &mut SpatialIndexes,
     prng: &mut SmallRng,
+    d_states: &mut DialogueStates,
+    d_table: &DialogueTable
 ) -> (GameState, Sampler) {
     state.millis += elapsed as u32 / 1000;
     state.ticks += elapsed as u64;
@@ -856,7 +862,7 @@ pub fn update_world(
     let mut sampler = sampler;
 
     let events_id = sampler.start(SamplerMarks::UpdateEvents as u32);
-    update_events(&mut state, prng, client);
+    update_events(&mut state, prng, client, d_states, d_table);
     sampler.end(events_id);
 
 
@@ -969,7 +975,7 @@ pub fn update_world(
     (state, sampler)
 }
 
-fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool) {
+fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool, d_states: &mut DialogueStates, d_table: &DialogueTable) {
     if client {
         return;
     }
@@ -979,7 +985,7 @@ fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool) {
     }
     let mut processed_events = vec![];
     for event in events_to_process.into_iter() {
-        world_update_handle_event(state, prng, &event);
+        world_update_handle_event(state, prng, &event, d_states, d_table);
         let processed_event = ProcessedGameEvent {
             event,
             processed_at_ticks: state.ticks,
@@ -987,15 +993,6 @@ fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool) {
         processed_events.push(processed_event);
     }
     state.processed_events.append(&mut processed_events);
-}
-
-fn world_update_handle_event(state: &mut GameState, _prng: &mut SmallRng, event: &GameEvent) {
-    match event {
-        GameEvent::PirateSpawn { at, .. } => {
-            pirate_defence::on_pirate_spawn(state, at);
-        }
-        _ => {}
-    }
 }
 
 pub fn update_location(
@@ -2286,6 +2283,7 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
     let mut spatial_indexes = build_full_spatial_indexes(&room.state);
     sampler.end(spatial_indexes_id);
+    let mut modified_dialogue_states = room.dialogue_states.clone();
     let (new_state, mut sampler) = update_world(
         room.state.clone(),
         elapsed_micro,
@@ -2297,9 +2295,12 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
         },
         &mut spatial_indexes,
         &mut prng,
+        &mut modified_dialogue_states,
+        &d_table
     );
     let mut room = room.clone();
     room.state = new_state;
+    room.dialogue_states = modified_dialogue_states;
 
     if let Some(bot_action_elapsed ) = every_diff(
         BOT_ACTION_TIME as u32,

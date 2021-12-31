@@ -154,6 +154,7 @@ mod xcast;
 mod pirate_defence;
 mod tutorial;
 mod cargo_rush;
+mod world_events;
 
 struct LastCheck {
     time: DateTime<Utc>,
