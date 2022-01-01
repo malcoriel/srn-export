@@ -99,11 +99,10 @@ export const updateWorld = (world, millis, isServer = true) => {
   );
 };
 
-// default timeStep for tests is 100 * 1000mcs = 100ms
 export const updateRoom = timerifySync(function updateRoomV2(
   room,
   millis,
-  timeStepTicks = 100n * 1000n
+  timeStepTicks = 100n * 1000n // 100ms. Much slower than the actual game, but ok for the testing performance
 ) {
   let currentRoom = room;
   currentRoom = wasm.updateRoomFull(

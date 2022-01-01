@@ -32,20 +32,6 @@ lazy_static! {
     };
 }
 
-pub fn get_ev_state<'a, 'b>(ev: &'b GameEvent, cont: &'a mut RwLockWriteGuard<StateContainer>) -> Option<&'a mut GameState> {
-    let res = match ev {
-        GameEvent::ShipDocked { state_id, .. } => {
-            let state = crate::states::select_state_by_id_mut(cont, state_id.clone());
-            state
-        }
-        _ => None
-    };
-    if res.is_none() {
-        warn!("Event {:?} in non-existent state");
-    }
-    return res;
-}
-
 pub fn handle_events(
     _d_table: &mut DialogueTable,
     receiver: &mut Receiver<GameEvent>,
@@ -121,7 +107,7 @@ pub fn handle_events(
                     GameEvent::ShipDocked {
                         ..
                     } => {
-                        log!("Ship docking triggering should happen in world, there's some bug here");
+                        warn!("Ship docking triggering should happen in world, there's some bug here");
                     }
                     GameEvent::ShipUndocked { .. } => {
                         // intentionally do nothing
@@ -129,7 +115,7 @@ pub fn handle_events(
                     GameEvent::DialogueTriggerRequest {
                         ..
                     } => {
-                        log!("Dialogue triggering should happen in world, there's some bug here");
+                        warn!("Dialogue triggering should happen in world, there's some bug here");
                     }
                     GameEvent::CargoQuestTriggerRequest { player } => {
                         let state = crate::states::select_state_mut(cont, player.id);
@@ -161,7 +147,7 @@ pub fn handle_events(
                         create_room_impl(cont, &mode, room_id);
                     }
                     GameEvent::PirateSpawn { .. } => {
-                        log!("Pirate spawn handling should happen in world, there's some bug here");
+                        warn!("Pirate spawn handling should happen in world, there's some bug here");
                     }
                     GameEvent::KickPlayerRequest { player_id } => {
                         crate::main_ws_server::kick_player(player_id);

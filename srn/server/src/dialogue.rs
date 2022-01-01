@@ -22,10 +22,7 @@ use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
-use crate::world::{
-    generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId,
-    Ship,
-};
+use crate::world::{generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId, Ship, fire_saved_event};
 use crate::{fire_event, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -251,7 +248,7 @@ impl DialogueTable {
 }
 
 pub fn execute_dialog_option(
-    client_id: Uuid,
+    player_id: Uuid,
     // for state mutation due to dialogue, e.g. updating quest. you need to return the second return arg
     state: &mut GameState,
     update: DialogueUpdate,
@@ -261,14 +258,14 @@ pub fn execute_dialog_option(
     // bool means "side effect happened, state changed"
     let mut return_value = (None, false);
     let mut should_drop = false;
-    if let Some(all_dialogues) = dialogue_states.get_mut(&client_id) {
+    if let Some(all_dialogues) = dialogue_states.get_mut(&player_id) {
         if let Some(dialogue_state) = all_dialogues.1.get_mut(&update.dialogue_id) {
             let (new_state, side_effect) = apply_dialogue_option(
                 dialogue_state.clone(),
                 &update,
                 dialogue_table,
                 state,
-                client_id,
+                player_id,
             );
             if new_state.is_none() {
                 should_drop = true;
@@ -279,7 +276,7 @@ pub fn execute_dialog_option(
                     update.dialogue_id,
                     dialogue_state,
                     dialogue_table,
-                    client_id,
+                    player_id,
                     state,
                 ),
                 side_effect,
@@ -428,7 +425,6 @@ fn apply_dialogue_option(
         if let Some(current_state) = current_state {
             // eprintln!("apply current_state update {:?}", (current_state, update));
             let next_state = script.transitions.get(&(current_state, update.option_id));
-            // eprintln!("apply next state {:?}", next_state);
             if let Some(next_state) = next_state {
                 let side_effect = apply_side_effects(state, next_state.1.clone(), player_id);
                 (Box::new(next_state.0.clone()), side_effect)
@@ -506,7 +502,7 @@ fn apply_side_effects(
             }
             DialogueOptionSideEffect::SwitchDialogue(name) => {
                 if let Some(player) = find_my_player(state, player_id) {
-                    fire_event(GameEvent::DialogueTriggerRequest {
+                    fire_saved_event(state,GameEvent::DialogueTriggerRequest {
                         dialogue_name: name,
                         player: player.clone(),
                     })

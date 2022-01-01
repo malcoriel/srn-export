@@ -403,16 +403,13 @@ pub fn update_room_full(room: JsValue, total_ticks: i64, d_table: JsValue, step_
     Ok(serde_wasm_bindgen::to_value(&room)?)
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-struct DialogueDirContents {
-    basic_planet: String,
-}
-
 #[wasm_bindgen]
 pub fn make_dialogue_table(dir_contents: JsValue) -> Result<JsValue, JsValue> {
     let mut res = vec![];
-    let dir_contents: DialogueDirContents = serde_wasm_bindgen::from_value(dir_contents)?;
-    res.push(parse_dialogue_script_from_file("basic_planet.json", dir_contents.basic_planet));
+    let dir_contents: HashMap<String, String> = serde_wasm_bindgen::from_value(dir_contents)?;
+    for (key, value) in dir_contents.into_iter() {
+        res.push(parse_dialogue_script_from_file(format!("{}.json", key).as_str(), value));
+    }
     let mut d_table = DialogueTable::new();
     for s in res {
         d_table.scripts.insert(s.id, s);

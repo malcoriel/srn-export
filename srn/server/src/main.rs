@@ -69,7 +69,7 @@ use crate::states::{
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::vec2::Vec2f64;
-use crate::world::{AABB, BOT_ACTION_TIME, GameEvent, spawn_ship, update_rule_specifics, UpdateOptions};
+use crate::world::{AABB, BOT_ACTION_TIME_TICKS, GameEvent, spawn_ship, update_rule_specifics, UpdateOptions};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -413,7 +413,7 @@ fn main_thread() {
         }
 
         {
-            if bot_action_elapsed > BOT_ACTION_TIME {
+            if bot_action_elapsed > BOT_ACTION_TIME_TICKS {
                 let bots_mark = sampler.start(SamplerMarks::Bots as u32);
                 let bot_players_mark = sampler.start(SamplerMarks::BotsPlayers as u32);
                 for room in cont.rooms.values.iter_mut() {

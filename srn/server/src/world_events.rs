@@ -24,7 +24,7 @@ pub fn world_update_handle_event(state: &mut GameState, _prng: &mut SmallRng, ev
                     state,
                 )
             } else {
-                eprintln!("No dialogue found by name {}", dialogue_name)
+                warn!(format!("No dialogue found by name {}", dialogue_name))
             }
         }
         GameEvent::ShipDocked { player, ship, planet, .. } => {

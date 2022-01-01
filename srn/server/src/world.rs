@@ -851,7 +851,7 @@ pub fn update_world(
     spatial_indexes: &mut SpatialIndexes,
     prng: &mut SmallRng,
     d_states: &mut DialogueStates,
-    d_table: &DialogueTable
+    d_table: &DialogueTable,
 ) -> (GameState, Sampler) {
     state.millis += elapsed as u32 / 1000;
     state.ticks += elapsed as u64;
@@ -1503,7 +1503,6 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
             fire_event(event);
         }
     }
-
 }
 
 const SHIP_REGEN_PER_SEC: f64 = 5.0;
@@ -1929,14 +1928,17 @@ pub fn dock_ship(
     player_idx: Option<usize>,
     body: Box<dyn IBody>,
 ) {
-    let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
-    ship.docked_at = Some(body.get_id());
-    ship.dock_target = None;
-    ship.x = body.get_x();
-    ship.y = body.get_y();
-    ship.trajectory = vec![];
-    fire_event(GameEvent::ShipDocked {
-        ship: ship.clone(),
+    let ship_clone = {
+        let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+        ship.docked_at = Some(body.get_id());
+        ship.dock_target = None;
+        ship.x = body.get_x();
+        ship.y = body.get_y();
+        ship.trajectory = vec![];
+        ship.clone()
+    };
+    fire_saved_event(state, GameEvent::ShipDocked {
+        ship: ship_clone,
         planet: Planet::from(body),
         player: player_idx.map(|idx| state.players[idx].clone()),
         state_id: state.id,
@@ -2285,7 +2287,7 @@ pub fn build_full_spatial_indexes(state: &GameState) -> SpatialIndexes {
     SpatialIndexes { values }
 }
 
-pub const BOT_ACTION_TIME: i64 = 200 * 1000;
+pub const BOT_ACTION_TIME_TICKS: i64 = 200 * 1000;
 
 pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro: i64, room: &Room, d_table: &DialogueTable) -> (SpatialIndexes, Room, Sampler) {
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
@@ -2304,20 +2306,22 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
         &mut spatial_indexes,
         &mut prng,
         &mut modified_dialogue_states,
-        &d_table
+        &d_table,
     );
     let mut room = room.clone();
     room.state = new_state;
     room.dialogue_states = modified_dialogue_states;
 
-    if let Some(bot_action_elapsed ) = every_diff(
-        BOT_ACTION_TIME as u32,
+    if let Some(bot_action_elapsed) = every_diff(
+        BOT_ACTION_TIME_TICKS as u32,
         room.state.ticks as u32,
-        room.state.interval_data.get(&TimeMarks::PirateSpawn).map(|m| *m),
+        room.state.interval_data.get(&TimeMarks::BotAction).map(|m| *m),
     ) {
+        room.state.interval_data.insert(TimeMarks::BotAction, room.state.ticks as u32);
         let bots_mark = sampler.start(SamplerMarks::UpdateBots as u32);
         let bot_players_mark = sampler.start(SamplerMarks::UpdateBotsPlayers as u32);
         let mut d_states_clone = room.dialogue_states.clone();
+        // log!(format!("global/bot/ticks: {}/{}/{}", elapsed_micro, bot_action_elapsed, room.state.ticks));
         do_bot_players_actions(&mut room, &mut d_states_clone, &d_table, bot_action_elapsed as i64);
         room.dialogue_states = d_states_clone;
         sampler.end(bot_players_mark);
@@ -2326,5 +2330,6 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
         sampler.end(npcs_mark);
         sampler.end(bots_mark);
     }
+
     (spatial_indexes, room, sampler)
 }

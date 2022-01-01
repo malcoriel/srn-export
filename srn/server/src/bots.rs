@@ -36,7 +36,7 @@ pub enum BotAct {
 pub fn bot_act(
     mut bot: Bot,
     state: &GameState,
-    elapsed_micro: i64,
+    bot_elapsed_micro: i64,
     d_table: &DialogueTable,
     bot_d_states: &DialogueStatesForPlayer,
 ) -> (Bot, Vec<BotAct>) {
@@ -66,7 +66,7 @@ pub fn bot_act(
             let mut new_rng = get_prng();
             bot.timer = Some(BOT_QUEST_ACT_DELAY_MC + new_rng.gen_range(-500, 500) * 1000);
         } else {
-            bot.timer = Some(bot.timer.unwrap() - elapsed_micro);
+            bot.timer = Some(bot.timer.unwrap() - bot_elapsed_micro);
             if bot.timer.unwrap() <= 0 {
                 bot.timer = Some(BOT_QUEST_ACT_DELAY_MC);
                 // time to act on all the dialogues
@@ -85,7 +85,7 @@ pub fn bot_act(
             && !conditions.contains(&TriggerCondition::CurrentPlanetIsPickup)
         {
             let desired_target = quest.from_id;
-            if !ship.dock_target.map_or(false, |id| id == desired_target) {
+            if not_already_there(ship, desired_target) {
                 result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
                     target: desired_target,
                 }));
@@ -94,7 +94,7 @@ pub fn bot_act(
             && !conditions.contains(&TriggerCondition::CurrentPlanetIsDropoff)
         {
             let desired_target = quest.to_id;
-            if !ship.dock_target.map_or(false, |id| id == desired_target) {
+            if not_already_there(ship, desired_target) {
                 result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
                     target: desired_target,
                 }));
@@ -103,6 +103,10 @@ pub fn bot_act(
     }
 
     return (bot, result_actions);
+}
+
+fn not_already_there(ship: &Ship, desired_target: Uuid) -> bool {
+    !ship.dock_target.map_or(false, |id| id == desired_target) && !ship.docked_at.map_or(false, |id| id == desired_target)
 }
 
 fn make_dialogue_act(
@@ -170,7 +174,7 @@ pub fn do_bot_players_actions(
     room: &mut Room,
     d_states: &mut DialogueStates,
     d_table: &DialogueTable,
-    elapsed_micro: i64,
+    bot_elapsed_micro: i64,
 ) {
     let mut ship_updates: HashMap<Uuid, Vec<ShipActionRust>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
@@ -178,10 +182,12 @@ pub fn do_bot_players_actions(
     for orig_bot in room.bots.iter_mut() {
         let id: Uuid = orig_bot.id;
         let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
+
+        // log!(format!("bot d states before act {:?}", bot_d_states));
         let (bot, bot_acts) = bot_act(
             orig_bot.clone(),
             &room.state,
-            elapsed_micro,
+            bot_elapsed_micro,
             &d_table,
             &bot_d_states,
         );
@@ -210,13 +216,6 @@ pub fn do_bot_players_actions(
         }
     }
 
-    if ship_updates.len() > 0 {
-        log!(format!("ticks={}", room.state.ticks));
-        log!("-----------------");
-        log!(format!("ship updates: {:?}", ship_updates));
-        log!("-----------------");
-    }
-
     for (bot_id, acts) in ship_updates.into_iter() {
         for act in acts {
             let ship_idx = indexing::find_my_ship_index(&room.state, bot_id);
@@ -227,10 +226,6 @@ pub fn do_bot_players_actions(
         }
     }
 
-    if dialogue_updates.len() > 0 {
-        log!(format!("dialogues updates: {:?}", dialogue_updates));
-        log!("-----------------");
-    }
     for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
         for act in dialogue_update {
             // eprintln!("executing {:?}", act);
