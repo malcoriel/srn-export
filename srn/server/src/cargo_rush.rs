@@ -8,9 +8,9 @@ use crate::world::fire_saved_event;
 
 pub fn setup_bots(room: &mut Room) {
     add_bot(room, new_bot(None));
-    // add_bot(room, new_bot(None));
-    // add_bot(room, new_bot(None));
-    // add_bot(room, new_bot(None));
+    add_bot(room, new_bot(None));
+    add_bot(room, new_bot(None));
+    add_bot(room, new_bot(None));
 }
 
 pub fn on_ship_docked(state: &mut GameState, player: Option<Player>) {
