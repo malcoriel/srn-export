@@ -32,7 +32,7 @@ lazy_static! {
     };
 }
 
-pub fn get_ev_state<'a, 'b> (ev: &'b GameEvent, cont: &'a mut RwLockWriteGuard<StateContainer>) -> Option<&'a mut GameState> {
+pub fn get_ev_state<'a, 'b>(ev: &'b GameEvent, cont: &'a mut RwLockWriteGuard<StateContainer>) -> Option<&'a mut GameState> {
     let res = match ev {
         GameEvent::ShipDocked { state_id, .. } => {
             let state = crate::states::select_state_by_id_mut(cont, state_id.clone());
@@ -119,24 +119,9 @@ pub fn handle_events(
                         // intentionally do nothing
                     }
                     GameEvent::ShipDocked {
-                        player, ship, planet, ..
+                        ..
                     } => {
-                        if let Some(state) = get_ev_state( &event, cont)
-                        {
-                            match state.mode {
-                                GameMode::Unknown => {}
-                                GameMode::CargoRush => {
-                                    cargo_rush::on_ship_docked(state, player);
-                                }
-                                GameMode::Tutorial => {
-                                    tutorial::on_ship_docked(state, player);
-                                }
-                                GameMode::Sandbox => {}
-                                GameMode::PirateDefence => {
-                                    pirate_defence::on_ship_land(state, ship,planet);
-                                }
-                            }
-                        }
+                        log!("Ship docking triggering should happen in world, there's some bug here");
                     }
                     GameEvent::ShipUndocked { .. } => {
                         // intentionally do nothing

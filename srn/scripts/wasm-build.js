@@ -111,13 +111,21 @@ export const getBindgen = () => {
 (async function () {
   yargs
     .command('$0', 'default command - build for web', async () => {
-      await buildForWeb();
+      try {
+        await buildForWeb();
+      } catch (e) {
+        process.exit(1);
+      }
     })
     .command(
       'forTests',
       'build no-module version with some extras for jest consumption',
       async () => {
-        await buildForTests();
+        try {
+          await buildForTests();
+        } catch (e) {
+          process.exit(1);
+        }
       }
     )
     .parse();

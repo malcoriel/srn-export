@@ -985,7 +985,7 @@ fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool, d_sta
     }
     let mut processed_events = vec![];
     for event in events_to_process.into_iter() {
-        world_update_handle_event(state, prng, &event, d_states, d_table);
+        world_update_handle_event(state, prng, event.clone(), d_states, d_table);
         let processed_event = ProcessedGameEvent {
             event,
             processed_at_ticks: state.ticks,
@@ -1493,9 +1493,17 @@ fn update_ships_respawn(state: &mut GameState, prng: &mut SmallRng) {
 
 pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
     state.events.push_back(event.clone());
-    if !matches!(event, GameEvent::PirateSpawn { .. }) {
-        fire_event(event);
+    match event {
+        // list of the events that should only be handled inside world events, and not
+        // as global events
+        GameEvent::ShipDocked { .. } => {}
+        GameEvent::DialogueTriggerRequest { .. } => {}
+        GameEvent::PirateSpawn { .. } => {}
+        _ => {
+            fire_event(event);
+        }
     }
+
 }
 
 const SHIP_REGEN_PER_SEC: f64 = 5.0;

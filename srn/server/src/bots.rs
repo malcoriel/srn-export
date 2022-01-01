@@ -50,6 +50,7 @@ pub fn bot_act(
     if ship.is_none() {
         return (bot, vec![]);
     }
+    let ship = ship.unwrap();
     let player = player.unwrap();
     let quest = player.quest.clone();
     if quest.is_none() {
@@ -83,15 +84,21 @@ pub fn bot_act(
         if quest.state == CargoDeliveryQuestState::Started
             && !conditions.contains(&TriggerCondition::CurrentPlanetIsPickup)
         {
-            result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
-                target: quest.from_id,
-            }));
+            let desired_target = quest.from_id;
+            if !ship.dock_target.map_or(false, |id| id == desired_target) {
+                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
+                    target: desired_target,
+                }));
+            }
         } else if quest.state == CargoDeliveryQuestState::Picked
             && !conditions.contains(&TriggerCondition::CurrentPlanetIsDropoff)
         {
-            result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
-                target: quest.to_id,
-            }));
+            let desired_target = quest.to_id;
+            if !ship.dock_target.map_or(false, |id| id == desired_target) {
+                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
+                    target: desired_target,
+                }));
+            }
         }
     }
 
@@ -203,6 +210,13 @@ pub fn do_bot_players_actions(
         }
     }
 
+    if ship_updates.len() > 0 {
+        log!(format!("ticks={}", room.state.ticks));
+        log!("-----------------");
+        log!(format!("ship updates: {:?}", ship_updates));
+        log!("-----------------");
+    }
+
     for (bot_id, acts) in ship_updates.into_iter() {
         for act in acts {
             let ship_idx = indexing::find_my_ship_index(&room.state, bot_id);
@@ -213,6 +227,10 @@ pub fn do_bot_players_actions(
         }
     }
 
+    if dialogue_updates.len() > 0 {
+        log!(format!("dialogues updates: {:?}", dialogue_updates));
+        log!("-----------------");
+    }
     for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
         for act in dialogue_update {
             // eprintln!("executing {:?}", act);
