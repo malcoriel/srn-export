@@ -6,7 +6,7 @@ use crate::bots::add_bot;
 use world::{GameEvent, Player};
 use crate::world::fire_saved_event;
 
-pub fn setup_bots(room: &mut Room) {
+pub fn on_create_room(room: &mut Room) {
     add_bot(room, new_bot(None));
     add_bot(room, new_bot(None));
     add_bot(room, new_bot(None));

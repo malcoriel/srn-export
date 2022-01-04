@@ -2272,8 +2272,18 @@ pub fn make_room(mode: &GameMode, room_id: Uuid) -> (Uuid, Room) {
         last_players_mark: None,
         bots: vec![],
     };
-    if *mode == GameMode::CargoRush {
-        cargo_rush::setup_bots(&mut room);
+    match mode {
+        GameMode::Unknown => {}
+        GameMode::CargoRush => {
+            cargo_rush::on_create_room(&mut room);
+        }
+        GameMode::Tutorial => {}
+        GameMode::Sandbox => {
+
+        }
+        GameMode::PirateDefence => {
+            pirate_defence::on_create_room(&mut room);
+        }
     }
     (state_id, room)
 }

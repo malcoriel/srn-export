@@ -2,6 +2,8 @@ use std::f64::consts::PI;
 
 use rand::Rng;
 
+use crate::api_struct::{new_bot, Room};
+use crate::bots::add_bot;
 use crate::{fire_event, indexing, world};
 use crate::abilities::Ability;
 use crate::api_struct::AiTrait;
@@ -64,4 +66,8 @@ pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
             x: planet.x,
             y: planet.y,
         })
+}
+
+pub fn on_create_room(room: &mut Room) {
+    add_bot(room, new_bot(Some(vec![AiTrait::PirateDefenceDefender])));
 }

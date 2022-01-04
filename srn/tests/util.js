@@ -4,7 +4,16 @@ import { timerifySync } from './perf';
 
 const fs = require('fs-extra');
 const notLoadedError = 'wasm did not load, call await loadWasm() first';
-const { timerify, perf, flushPerfStats } = require('./perf');
+const { timerify, flushPerfStats } = require('./perf');
+
+// pretty hacky solution of importing specially-cooked client code here, but workable.
+// technically, it should be inside pkg, and code-generated (or provided together with it, rather)
+// or even just be part of wasm itself, as it will eventually become to be fast enough,
+// e.g. when I will want the full spatial indexes on the client
+import {
+  buildClientStateIndexes,
+  findObjectPosition,
+} from '../client/src/ClientStateIndexing';
 
 export const wasm = {
   updateWorld: () => {
@@ -164,4 +173,10 @@ export function mockPlayer(player_id) {
   };
 }
 
-const getLoc0 = (world) => world.locations[0];
+export const getLoc0 = (world) => world.locations[0];
+export const getShipByPlayerId = (world, playerId) => {
+  const indexes = buildClientStateIndexes(world);
+  return indexes.shipByPlayerId.get(playerId);
+};
+
+export { findObjectPosition };
