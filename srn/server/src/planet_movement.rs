@@ -9,7 +9,7 @@ use crate::indexing::index_planets_by_id;
 use crate::perf::Sampler;
 use crate::perf::SamplerMarks;
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::world::{split_bodies_by_area, Asteroid, Planet, Star, AABB, ObjectTag};
+use crate::world::{split_bodies_by_area, Asteroid, Planet, Star, AABB, ObjectProperty};
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
 use crate::combat::Health;
@@ -29,7 +29,7 @@ pub trait IBody: Clone {
     fn get_color(&self) -> String;
     fn as_vec(&self) -> Vec2f64;
     fn get_health(&self) -> Option<Health>;
-    fn get_tags(&self) -> HashSet<ObjectTag>;
+    fn get_tags(&self) -> HashSet<ObjectProperty>;
 }
 
 impl IBody for Asteroid {
@@ -88,7 +88,7 @@ impl IBody for Asteroid {
         None
     }
 
-    fn get_tags(&self) -> HashSet<ObjectTag> {
+    fn get_tags(&self) -> HashSet<ObjectProperty> {
         HashSet::new()
     }
 }
@@ -146,7 +146,7 @@ impl IBody for Planet {
         self.health.clone()
     }
 
-    fn get_tags(&self) -> HashSet<ObjectTag> {
+    fn get_tags(&self) -> HashSet<ObjectProperty> {
         self.tags.clone()
     }
 }
@@ -207,7 +207,7 @@ impl IBody for Star {
         None
     }
 
-    fn get_tags(&self) -> HashSet<ObjectTag> {
+    fn get_tags(&self) -> HashSet<ObjectProperty> {
         HashSet::new()
     }
 }

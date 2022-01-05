@@ -1,16 +1,18 @@
-use crate::{fire_event, world};
+use crate::{fire_event, Room, world};
 use crate::bots;
 use world::GameState;
-use crate::api_struct::{new_bot, Room};
-use crate::bots::add_bot;
+
 use world::{GameEvent, Player};
+use crate::api_struct::{AiTrait, new_bot};
+use crate::bots::add_bot;
 use crate::world::fire_saved_event;
 
 pub fn on_create_room(room: &mut Room) {
-    add_bot(room, new_bot(None));
-    add_bot(room, new_bot(None));
-    add_bot(room, new_bot(None));
-    add_bot(room, new_bot(None));
+    let traits = Some(vec![AiTrait::CargoRushHauler]);
+    add_bot(room, new_bot(traits.clone()));
+    add_bot(room, new_bot(traits.clone()));
+    add_bot(room, new_bot(traits.clone()));
+    add_bot(room, new_bot(traits.clone()));
 }
 
 pub fn on_ship_docked(state: &mut GameState, player: Option<Player>) {

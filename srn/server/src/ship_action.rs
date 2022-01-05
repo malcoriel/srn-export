@@ -5,7 +5,7 @@ use crate::combat::ShootTarget;
 use crate::indexing::{find_my_ship_index, find_player_by_ship_id, find_player_idx_by_ship_id};
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
-use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship, ShipIdx, ObjectTag};
+use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship, ShipIdx, ObjectProperty};
 use crate::{combat, fire_event, indexing, tractoring, world};
 use core::mem;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -72,7 +72,7 @@ pub fn apply_ship_action(
         ShipActionRust::DockNavigate { target } => {
             let mut ship = old_ship.clone();
             if let Some(planet) = indexing::find_planet(state, &target) {
-                if planet.tags.contains(&ObjectTag::Unlandable) && !ship.abilities.contains(&Ability::BlowUpOnLand) {
+                if planet.tags.contains(&ObjectProperty::UnlandablePlanet) && !ship.abilities.contains(&Ability::BlowUpOnLand) {
                     warn!(format!("Attempt to land on unlandable planet {} by ship {}, ignoring.", planet.id, ship.id));
                     None
                 }

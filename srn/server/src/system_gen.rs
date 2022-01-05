@@ -18,7 +18,7 @@ use crate::random_stuff::{
     gen_star_radius, PLANET_NAMES, SAT_NAMES,
 };
 use crate::vec2::Vec2f64;
-use crate::world::{random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star, AABB, GAME_STATE_VERSION, ObjectTag};
+use crate::world::{random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star, AABB, GAME_STATE_VERSION, ObjectProperty};
 use crate::{new_id, planet_movement, world};
 use crate::combat::Health;
 
@@ -368,7 +368,7 @@ fn make_pirate_defence_state(seed: String) -> GameState {
     gen_opts.max_satellites_for_planet = 0;
     let mut state = gen_state(seed, gen_opts);
     assign_health_to_planets(&mut state.locations[0].planets, Health::new(100.0));
-    state.locations[0].planets[0].tags.insert(ObjectTag::Unlandable);
+    state.locations[0].planets[0].tags.insert(ObjectProperty::UnlandablePlanet);
     state.milliseconds_remaining = 5 * 1000 * 60;
     state.mode = GameMode::PirateDefence;
     state

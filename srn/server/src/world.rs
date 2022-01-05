@@ -183,9 +183,12 @@ fn get_random_planet<'a>(
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash)]
 #[serde(tag = "tag")]
-pub enum ObjectTag {
+pub enum ObjectProperty {
     Unknown,
-    Unlandable,
+    UnlandablePlanet,
+    MoneyOnKill {
+        amount: i32
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -201,7 +204,7 @@ pub struct Planet {
     pub anchor_tier: u32,
     pub color: String,
     pub health: Option<Health>,
-    pub tags: HashSet<ObjectTag>,
+    pub tags: HashSet<ObjectProperty>,
 }
 
 impl Planet {
@@ -1728,10 +1731,12 @@ pub struct ShipTemplate {
     name: Option<String>,
     health: Option<Health>,
     movement: Option<MovementDefinition>,
+    properties: Option<HashSet<ObjectProperty>>,
 }
 
 impl ShipTemplate {
     pub fn pirate(at: Option<Vec2f64>) -> ShipTemplate {
+        let prop = ObjectProperty::MoneyOnKill { amount : 100};
         ShipTemplate {
             at,
             npc_traits: Some(vec![AiTrait::ImmediatePlanetLand]),
@@ -1744,6 +1749,7 @@ impl ShipTemplate {
                 current_move_speed: 0.0,
                 current_turn_speed: 0.0,
             }),
+            properties: Some(HashSet::from_iter(vec![prop]))
         }
     }
 
@@ -1760,6 +1766,7 @@ impl ShipTemplate {
                 current_move_speed: 0.0,
                 current_turn_speed: 0.0,
             }),
+            properties: None
         }
     }
 }
@@ -1994,9 +2001,9 @@ fn build_trajectory_to_body(
     to_anchor: &Box<dyn IBody>,
     for_movement: &MovementDefinition,
 ) -> Vec<Vec2f64> {
-    // let start = Utc::now();
+    let bodies: Vec<Box<dyn IBody>> = vec![to.clone(), to_anchor.clone()];
     let mut anchors =
-        planet_movement::build_anchors_from_bodies(vec![to.clone(), to_anchor.clone()]);
+        planet_movement::build_anchors_from_bodies(bodies);
     let mut shifts = HashMap::new();
     let mut counter = 0;
     let mut current_target = Planet::from(to.clone());

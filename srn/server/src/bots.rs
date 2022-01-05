@@ -40,10 +40,17 @@ pub fn bot_act(
     d_table: &DialogueTable,
     bot_d_states: &DialogueStatesForPlayer,
 ) -> (Bot, Vec<BotAct>) {
+    if bot.traits.iter().any(|t| matches!(t, AiTrait::CargoRushHauler {..})) {
+        return bot_cargo_rush_hauler_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states);
+    }
+    return (bot, vec![]);
+}
+
+fn bot_cargo_rush_hauler_act(mut bot: Bot, state: &&GameState, bot_elapsed_micro: i64, d_table: &DialogueTable, bot_d_states: &DialogueStatesForPlayer) -> (Bot, Vec<BotAct>) {
     let player = find_my_player(&state, bot.id);
     let conditions = check_trigger_conditions(state, bot.id);
     if player.is_none() {
-        eprintln!("{} no player", bot.id);
+        warn!(format!("{} no player", bot.id));
         return (bot, vec![]);
     }
     let ship = find_my_ship(&state, bot.id);
