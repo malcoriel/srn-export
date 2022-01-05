@@ -1,4 +1,4 @@
-import { updateRoom, wasm, swapGlobals } from '../util';
+import { updateRoom, wasm, swapGlobals, getLoc0 } from '../util';
 import _ from 'lodash';
 
 describe('pirate defence bots behavior', () => {
@@ -10,7 +10,16 @@ describe('pirate defence bots behavior', () => {
     expect(_.every(world.players, (p) => p.is_bot)).toBeTruthy();
   });
 
-  it('npcs damage the planets after some time', async () => {});
+  it('npcs damage the planets after some time', async () => {
+    let room = wasm.createRoom({ mode: 'PirateDefence' });
+    room = updateRoom(room, 30 * 1000);
+    const planet = getLoc0(room.state).planets[0];
+    expect(planet.health.current).toBeLessThan(planet.health.max);
+  });
 
-  it('bots shoot npcs', () => {});
+  it('bots shoot npcs and earn money', () => {
+    let room = wasm.createRoom({ mode: 'PirateDefence' });
+    room = updateRoom(room, 30 * 1000);
+    expect(room.state.players[0].money).toBeGreaterThan(0);
+  });
 });
