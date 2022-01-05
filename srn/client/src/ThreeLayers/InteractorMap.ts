@@ -122,7 +122,7 @@ export const InteractorMap: Record<
   ),
   planet: _.memoize(
     (p: Planet) => {
-      const isUnlandable = p.tags.find((v) => v.tag === 'Unlandable');
+      const isUnlandable = p.tags.find((v) => v.tag === 'UnlandablePlanet');
       return {
         hint: null,
         defaultAction: isUnlandable ? undefined : InteractorActionType.Dock,

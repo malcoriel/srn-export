@@ -38,7 +38,18 @@ pub fn world_update_handle_event(state: &mut GameState, _prng: &mut SmallRng, ev
                 }
                 GameMode::Sandbox => {}
                 GameMode::PirateDefence => {
-                    pirate_defence::on_ship_land(state, ship, planet);
+                    pirate_defence::on_ship_docked(state, ship, planet);
+                }
+            }
+        }
+        GameEvent::ShipDied { ship, ..} => {
+            match state.mode {
+                GameMode::Unknown => {}
+                GameMode::CargoRush => {}
+                GameMode::Tutorial => {}
+                GameMode::Sandbox => {}
+                GameMode::PirateDefence => {
+                    pirate_defence::on_ship_died(state, ship)
                 }
             }
         }

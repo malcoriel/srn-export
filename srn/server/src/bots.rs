@@ -34,7 +34,7 @@ pub enum BotAct {
 }
 
 pub fn bot_act(
-    mut bot: Bot,
+    bot: Bot,
     state: &GameState,
     bot_elapsed_micro: i64,
     d_table: &DialogueTable,

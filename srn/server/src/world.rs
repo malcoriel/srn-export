@@ -374,6 +374,7 @@ pub struct Ship {
     pub npc: Option<Bot>,
     pub name: Option<String>,
     pub turrets: Vec<ShipTurret>,
+    pub properties: HashSet<ObjectProperty>,
 }
 
 pub fn gen_turrets(count: usize) -> Vec<(Ability, ShipTurret)> {
@@ -421,6 +422,7 @@ impl Ship {
             long_actions: vec![],
             npc: None,
             name: None,
+            properties: Default::default()
         }
     }
 }
@@ -1502,6 +1504,7 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
         GameEvent::ShipDocked { .. } => {}
         GameEvent::DialogueTriggerRequest { .. } => {}
         GameEvent::PirateSpawn { .. } => {}
+        GameEvent::ShipDied { .. } => { }
         _ => {
             fire_event(event);
         }
@@ -1790,6 +1793,7 @@ pub fn spawn_ship(
     template.abilities.map(|abilities| ship.abilities.extend(abilities));
     ship.npc = if template.npc_traits.is_some() { Some(new_bot(template.npc_traits)) } else { None };
     ship.name = template.name;
+    ship.properties = template.properties.unwrap_or(Default::default());
     template.movement.map(|m| ship.movement_definition = m);
     template.health.map(|health| ship.health = health);
     let state_id = state.id;

@@ -30,16 +30,17 @@ impl Default for ShootTarget {
 pub struct Health {
     pub current: f64,
     pub max: f64,
-    pub regen_per_tick: Option<f64>
+    pub regen_per_tick: Option<f64>,
+    pub last_damage_dealer: Option<ObjectSpecifier>,
 }
 
 impl Health {
     pub fn new(max: f64) -> Health {
-        Health { current: max, max, regen_per_tick: None }
+        Health { current: max, max, regen_per_tick: None, last_damage_dealer: None }
     }
 
     pub fn new_regen(max: f64, regen_per_tick: f64) -> Health {
-        Health { current: max, max, regen_per_tick: Some(regen_per_tick) }
+        Health { current: max, max, regen_per_tick: Some(regen_per_tick), last_damage_dealer: None }
     }
 }
 
@@ -104,12 +105,12 @@ fn check_distance(ship: &Ship, shoot_ability: &Ability, min_pos: Vec2f64) -> boo
 
 pub const SHIP_SHOOT_STRENGTH: f64 = 20.0;
 
-pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget, active_turret_id: Uuid) {
-    if let Some(ship_loc) = find_my_ship_index(state, player_id) {
+pub fn resolve_shoot(state: &mut GameState, player_shooting: Uuid, target: ShootTarget, active_turret_id: Uuid) {
+    if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &state.locations[ship_loc.location_idx];
-        let ship = &loc.ships[ship_loc.ship_idx];
-
-        let shoot_ability = find_shoot_ability(ship, active_turret_id);
+        let shooting_ship = &loc.ships[ship_loc.ship_idx];
+        let shooting_ship_id = shooting_ship.id;
+        let shoot_ability = find_shoot_ability(shooting_ship, active_turret_id);
         if shoot_ability.is_none() {
             return;
         }
@@ -117,18 +118,21 @@ pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget
 
         match target {
             ShootTarget::Unknown => {}
-            ShootTarget::Ship { id: ship_id } => {
+            ShootTarget::Ship { id: target_ship_id } => {
                 let dmg = SHIP_SHOOT_STRENGTH;
                 let target_ship = state.locations[ship_loc.location_idx]
                     .ships
                     .iter_mut()
-                    .find(|s| s.id == ship_id);
+                    .find(|s| s.id == target_ship_id);
                 if let Some(target_ship) = target_ship {
                     target_ship.health.current -= dmg;
+                    target_ship.health.last_damage_dealer = Some(ObjectSpecifier::Ship {
+                        id: shooting_ship_id
+                    });
                     let effect = LocalEffect::DmgDone {
                         id: new_id(),
                         hp: dmg as i32,
-                        ship_id,
+                        ship_id: target_ship_id,
                         tick: state.millis,
                     };
 
@@ -138,7 +142,7 @@ pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget
             ShootTarget::Mineral { id } => {
                 if let Some(min) = indexing::find_mineral(loc, id) {
                     let min_pos = Vec2f64 { x: min.x, y: min.y };
-                    if !check_distance(ship, shoot_ability, min_pos) {
+                    if !check_distance(shooting_ship, shoot_ability, min_pos) {
                         return;
                     }
                     remove_object(
@@ -152,7 +156,7 @@ pub fn resolve_shoot(state: &mut GameState, player_id: Uuid, target: ShootTarget
             }
             ShootTarget::Container { id } => {
                 if let Some(cont) = indexing::find_container(loc, id) {
-                    if !check_distance(ship, shoot_ability, cont.position) {
+                    if !check_distance(shooting_ship, shoot_ability, cont.position) {
                         return;
                     }
                     remove_object(

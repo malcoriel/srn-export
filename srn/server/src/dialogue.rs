@@ -501,10 +501,16 @@ fn apply_side_effects(
                 }
             }
             DialogueOptionSideEffect::SwitchDialogue(name) => {
-                if let Some(player) = find_my_player(state, player_id) {
+                // this pattern leads to `warn(mutable_borrow_reservation_conflict)`, hence strange separation
+                let player_clone = if let Some(player) = find_my_player(state, player_id) {
+                    Some(player.clone())
+                } else {
+                    None
+                };
+                if let Some(player_clone) = player_clone {
                     fire_saved_event(state,GameEvent::DialogueTriggerRequest {
                         dialogue_name: name,
-                        player: player.clone(),
+                        player: player_clone,
                     })
                 }
             }
