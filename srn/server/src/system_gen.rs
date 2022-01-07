@@ -447,7 +447,9 @@ fn make_tutorial_state() -> GameState {
         interval_data: Default::default(),
         game_over: None,
         events: Default::default(),
-        processed_events: vec![]
+        player_actions: Default::default(),
+        processed_events: vec![],
+        processed_player_actions: vec![]
     }
 }
 
@@ -475,7 +477,9 @@ pub fn make_sandbox_state() -> GameState {
         interval_data: Default::default(),
         game_over: None,
         events: Default::default(),
-        processed_events: vec![]
+        player_actions: Default::default(),
+        processed_events: vec![],
+        processed_player_actions: vec![]
     }
 }
 
@@ -533,8 +537,10 @@ fn gen_state(seed: String, opts: GenStateOpts) -> GameState {
         interval_data: Default::default(),
         game_over: None,
         events: Default::default(),
+        player_actions: Default::default(),
         processed_events: vec![],
-        ticks: 0
+        ticks: 0,
+        processed_player_actions: vec![]
     };
 
     let mut state = validate_state(state);

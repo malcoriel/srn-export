@@ -51,7 +51,7 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::ship_action::{ShipActionRust, ShipMovementMarkers};
+use crate::ship_action::{PlayerActionRust, ShipMovementMarkers};
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{seed_state, str_to_hash};
 use crate::tractoring::{
@@ -341,6 +341,15 @@ pub struct ProcessedGameEvent {
     pub event: GameEvent,
     pub processed_at_ticks: u64,
 }
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "tag")]
+pub struct ProcessedPlayerAction {
+    pub action: PlayerActionRust,
+    pub processed_at_ticks: u64,
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct ShipTurret {
@@ -664,7 +673,9 @@ pub struct GameState {
     pub interval_data: HashMap<TimeMarks, u32>,
     pub game_over: Option<GameOver>,
     pub events: VecDeque<GameEvent>,
+    pub player_actions: VecDeque<PlayerActionRust>,
     pub processed_events: Vec<ProcessedGameEvent>,
+    pub processed_player_actions: Vec<ProcessedPlayerAction>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -701,8 +712,9 @@ impl GameState {
             game_over: None,
 
             events: Default::default(),
+            player_actions: Default::default(),
             processed_events: vec![],
-        }
+            processed_player_actions: vec![]        }
     }
 }
 
@@ -2205,7 +2217,7 @@ pub fn try_replace_ship_npc(
 
 pub fn mutate_ship_no_lock(
     client_id: Uuid,
-    mutate_cmd: ShipActionRust,
+    mutate_cmd: PlayerActionRust,
     state: &mut GameState,
 ) -> Option<(Ship, ShipIdx)> {
     let old_ship_index = indexing::find_my_ship_index(&state, client_id);
@@ -2215,7 +2227,7 @@ pub fn mutate_ship_no_lock(
     }
     force_update_to_now(state);
     let updated_ship =
-        ship_action::apply_ship_action(mutate_cmd, &state, old_ship_index.clone(), false);
+        ship_action::apply_player_action(mutate_cmd, &state, old_ship_index.clone(), false);
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {

@@ -72,6 +72,10 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
             .filter_map(|l| if l.id != current_id { Some(l) } else { None })
             .collect::<Vec<_>>(),
     );
+    state.events = Default::default();
+    state.processed_events = Default::default();
+    state.player_actions = Default::default();
+    state.processed_player_actions = Default::default();
     return state;
 }
 

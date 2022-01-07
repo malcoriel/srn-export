@@ -11,7 +11,7 @@ use crate::world::{GameMode, GameState, PlayerId};
 pub enum AiTrait {
     Unknown,
     ImmediatePlanetLand,
-    PirateDefenceDefender,
+    PirateDefencePlanetDefender,
     CargoRushHauler
 }
 

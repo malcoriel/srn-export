@@ -14,7 +14,7 @@ use crate::abilities::Ability;
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
-pub enum ShipActionRust {
+pub enum PlayerActionRust {
     Unknown,
     Move { update: ManualMoveUpdate },
     Gas,
@@ -29,8 +29,8 @@ pub enum ShipActionRust {
     Tractor { target: Uuid },
 }
 
-pub fn apply_ship_action(
-    ship_action: ShipActionRust,
+pub fn apply_player_action(
+    player_action: PlayerActionRust,
     state: &GameState,
     ship_idx: Option<ShipIdx>,
     client: bool,
@@ -42,20 +42,20 @@ pub fn apply_ship_action(
     let ship_idx = ship_idx.unwrap();
     let old_ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
 
-    match ship_action {
-        ShipActionRust::Unknown => {
+    match player_action {
+        PlayerActionRust::Unknown => {
             warn!("Unknown ship action");
             None
         }
-        ShipActionRust::Move { .. } => {
+        PlayerActionRust::Move { .. } => {
             warn!("Move ship action is obsolete");
             Some(old_ship.clone())
         }
-        ShipActionRust::Dock => {
+        PlayerActionRust::Dock => {
             warn!("Dock ship action is obsolete");
             Some(old_ship.clone())
         }
-        ShipActionRust::Navigate { target } => {
+        PlayerActionRust::Navigate { target } => {
             let mut ship = old_ship.clone();
             let ship_pos = Vec2f64 {
                 x: ship.x,
@@ -69,7 +69,7 @@ pub fn apply_ship_action(
             ship.movement_markers.turn = None;
             Some(ship)
         }
-        ShipActionRust::DockNavigate { target } => {
+        PlayerActionRust::DockNavigate { target } => {
             let mut ship = old_ship.clone();
             if let Some(planet) = indexing::find_planet(state, &target) {
                 if planet.tags.contains(&ObjectProperty::UnlandablePlanet) && !ship.abilities.contains(&Ability::BlowUpOnLand) {
@@ -98,7 +98,7 @@ pub fn apply_ship_action(
                 None
             }
         }
-        ShipActionRust::Tractor { target } => {
+        PlayerActionRust::Tractor { target } => {
             let mut ship = old_ship.clone();
             tractoring::update_ship_tractor(
                 target,
@@ -108,7 +108,7 @@ pub fn apply_ship_action(
             );
             Some(ship)
         }
-        ShipActionRust::Gas => {
+        PlayerActionRust::Gas => {
             let mut ship = old_ship.clone();
             ship.movement_markers.gas = Some(MoveAxisParam {
                 forward: true,
@@ -119,7 +119,7 @@ pub fn apply_ship_action(
             ship.trajectory = vec![];
             Some(ship)
         }
-        ShipActionRust::Reverse => {
+        PlayerActionRust::Reverse => {
             let mut ship = old_ship.clone();
             ship.movement_markers.gas = Some(MoveAxisParam {
                 forward: false,
@@ -130,7 +130,7 @@ pub fn apply_ship_action(
             ship.trajectory = vec![];
             Some(ship)
         }
-        ShipActionRust::TurnRight => {
+        PlayerActionRust::TurnRight => {
             let mut ship = old_ship.clone();
             ship.movement_markers.turn = Some(MoveAxisParam {
                 forward: true,
@@ -141,7 +141,7 @@ pub fn apply_ship_action(
             ship.trajectory = vec![];
             Some(ship)
         }
-        ShipActionRust::TurnLeft => {
+        PlayerActionRust::TurnLeft => {
             let mut ship = old_ship.clone();
             ship.movement_markers.turn = Some(MoveAxisParam {
                 forward: false,
@@ -152,12 +152,12 @@ pub fn apply_ship_action(
             ship.trajectory = vec![];
             Some(ship)
         }
-        ShipActionRust::StopGas => {
+        PlayerActionRust::StopGas => {
             let mut ship = old_ship.clone();
             ship.movement_markers.gas = None;
             Some(ship)
         }
-        ShipActionRust::StopTurn => {
+        PlayerActionRust::StopTurn => {
             let mut ship = old_ship.clone();
             ship.movement_markers.turn = None;
             Some(ship)

@@ -332,7 +332,7 @@ fn get_sampler_clone() -> Sampler {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct ApplyShipActionArgs {
     state: world::GameState,
-    ship_action: ship_action::ShipActionRust,
+    ship_action: ship_action::PlayerActionRust,
     player_id: Uuid,
 }
 

@@ -2,11 +2,12 @@ use std::f64::consts::PI;
 
 use rand::Rng;
 
-use crate::api_struct::{new_bot, Room};
-use crate::bots::add_bot;
-use crate::{fire_event, indexing, world};
+use crate::api_struct::{Bot, new_bot, Room};
+use crate::bots::{add_bot, BotAct};
+use crate::{DialogueTable, fire_event, indexing, world};
 use crate::abilities::Ability;
 use crate::api_struct::AiTrait;
+use crate::dialogue::DialogueStatesForPlayer;
 use crate::vec2::Vec2f64;
 use crate::world::{fire_saved_event, GameEvent, GameOver, GameState, ObjectProperty, Planet, Ship, ShipTemplate, TimeMarks};
 use crate::get_prng;
@@ -101,5 +102,10 @@ pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
 }
 
 pub fn on_create_room(room: &mut Room) {
-    add_bot(room, new_bot(Some(vec![AiTrait::PirateDefenceDefender])));
+    add_bot(room, new_bot(Some(vec![AiTrait::PirateDefencePlanetDefender])));
+}
+
+pub fn bot_planet_defender_act(bot: Bot, state: &GameState, bot_elapsed_micro: i64, d_table: &DialogueTable, bot_d_states: &DialogueStatesForPlayer) -> (Bot, Vec<BotAct>) {
+    let nothing = (bot, vec![]);
+    return nothing;
 }

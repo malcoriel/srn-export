@@ -16,10 +16,10 @@ use crate::dialogue::{
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
 };
 use crate::long_actions::{LongAction};
-use crate::fire_event;
+use crate::{fire_event, pirate_defence};
 use crate::indexing::{find_my_player, find_my_ship, find_planet, ObjectIndexSpecifier, ObjectSpecifier};
 use crate::random_stuff::gen_bot_name;
-use crate::ship_action::{apply_ship_action, ShipActionRust};
+use crate::ship_action::{apply_player_action, PlayerActionRust};
 use crate::{get_prng, world};
 use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship, ShipIdx, SpatialIndexes, ShipTemplate};
 use crate::{indexing, new_id};
@@ -30,7 +30,7 @@ const BOT_QUEST_ACT_DELAY_MC: i64 = 2 * 1000 * 1000;
 
 pub enum BotAct {
     Speak(DialogueUpdate),
-    Act(ShipActionRust),
+    Act(PlayerActionRust),
 }
 
 pub fn bot_act(
@@ -42,6 +42,9 @@ pub fn bot_act(
 ) -> (Bot, Vec<BotAct>) {
     if bot.traits.iter().any(|t| matches!(t, AiTrait::CargoRushHauler {..})) {
         return bot_cargo_rush_hauler_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states);
+    }
+    if bot.traits.iter().any(|t| matches!(t, AiTrait::PirateDefencePlanetDefender {..})) {
+        return pirate_defence::bot_planet_defender_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states);
     }
     return (bot, vec![]);
 }
@@ -93,7 +96,7 @@ fn bot_cargo_rush_hauler_act(mut bot: Bot, state: &&GameState, bot_elapsed_micro
         {
             let desired_target = quest.from_id;
             if not_already_there(ship, desired_target) {
-                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
+                result_actions.push(BotAct::Act(PlayerActionRust::DockNavigate {
                     target: desired_target,
                 }));
             }
@@ -102,7 +105,7 @@ fn bot_cargo_rush_hauler_act(mut bot: Bot, state: &&GameState, bot_elapsed_micro
         {
             let desired_target = quest.to_id;
             if not_already_there(ship, desired_target) {
-                result_actions.push(BotAct::Act(ShipActionRust::DockNavigate {
+                result_actions.push(BotAct::Act(PlayerActionRust::DockNavigate {
                     target: desired_target,
                 }));
             }
@@ -183,7 +186,7 @@ pub fn do_bot_players_actions(
     d_table: &DialogueTable,
     bot_elapsed_micro: i64,
 ) {
-    let mut ship_updates: HashMap<Uuid, Vec<ShipActionRust>> = HashMap::new();
+    let mut ship_updates: HashMap<Uuid, Vec<PlayerActionRust>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
 
     for orig_bot in room.bots.iter_mut() {
@@ -226,7 +229,7 @@ pub fn do_bot_players_actions(
     for (bot_id, acts) in ship_updates.into_iter() {
         for act in acts {
             let ship_idx = indexing::find_my_ship_index(&room.state, bot_id);
-            let updated_ship = apply_ship_action(act.clone(), &mut room.state, ship_idx, false);
+            let updated_ship = apply_player_action(act.clone(), &mut room.state, ship_idx, false);
             if let Some(updated_ship) = updated_ship {
                 world::try_replace_ship(&mut room.state, &updated_ship, bot_id);
             }
@@ -242,7 +245,7 @@ pub fn do_bot_players_actions(
 }
 
 pub fn do_bot_npcs_actions(room: &mut Room, elapsed_micro: i64, spatial_indexes: &SpatialIndexes) {
-    let mut ship_updates: HashMap<Uuid, (Vec<ShipActionRust>, ShipIdx)> = HashMap::new();
+    let mut ship_updates: HashMap<Uuid, (Vec<PlayerActionRust>, ShipIdx)> = HashMap::new();
 
     for i in 0..room.state.locations.len() {
         let room_state_clone = room.state.clone();
@@ -271,7 +274,7 @@ pub fn do_bot_npcs_actions(room: &mut Room, elapsed_micro: i64, spatial_indexes:
     for (_ship_id, (acts, idx)) in ship_updates.into_iter() {
         for act in acts {
             let updated_ship =
-                apply_ship_action(act.clone(), &mut room.state, Some(idx.clone()), false);
+                apply_player_action(act.clone(), &mut room.state, Some(idx.clone()), false);
             if let Some(updated_ship) = updated_ship {
                 world::try_replace_ship_npc(&mut room.state, &updated_ship, Some(idx.clone()));
             }
@@ -285,7 +288,7 @@ fn npc_act(
     _elapsed_micro: i64,
     ship_idx: &ShipIdx,
     spatial_indexes: &SpatialIndexes,
-) -> (Option<Bot>, Vec<ShipActionRust>) {
+) -> (Option<Bot>, Vec<PlayerActionRust>) {
     if ship.npc.is_none() {
         return (None, vec![]);
     }
@@ -304,7 +307,7 @@ fn npc_act(
             spatial_indexes,
         );
         if let Some(cp) = closest_planet {
-            res.push(ShipActionRust::DockNavigate { target: cp })
+            res.push(PlayerActionRust::DockNavigate { target: cp })
         }
     }
 

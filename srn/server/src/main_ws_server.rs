@@ -22,7 +22,7 @@ use crate::net::{
     ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
     TagConfirm, Wrapper,
 };
-use crate::ship_action::ShipActionRust;
+use crate::ship_action::PlayerActionRust;
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
 use crate::world::{GameEvent, GameState, Player, Ship};
 use crate::get_prng;
@@ -399,7 +399,7 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
 }
 
 fn on_client_mutate_ship(client_id: Uuid, second: &&str, third: Option<&&str>) {
-    let parsed = serde_json::from_str::<ShipActionRust>(second);
+    let parsed = serde_json::from_str::<PlayerActionRust>(second);
     match parsed {
         Ok(res) => mutate_owned_ship_wrapped(client_id, res, third.map(|s| s.to_string())),
         Err(err) => {
@@ -579,7 +579,7 @@ pub fn is_disconnected(client_id: Uuid) -> bool {
     return !CLIENT_SENDERS_SET.contains(&client_id);
 }
 
-fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipActionRust, tag: Option<String>) {
+fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: PlayerActionRust, tag: Option<String>) {
     let res = mutate_owned_ship(client_id, mutate_cmd, tag);
     if res.is_none() {
         warn!("error mutating owned ship");
@@ -590,7 +590,7 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: ShipActionRust, tag: O
 
 fn mutate_owned_ship(
     client_id: Uuid,
-    mutate_cmd: ShipActionRust,
+    mutate_cmd: PlayerActionRust,
     tag: Option<String>,
 ) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
