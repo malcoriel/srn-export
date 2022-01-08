@@ -27,10 +27,7 @@ use crate::api_struct::{AiTrait, Bot, new_bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
 use crate::combat::{Health, ShootTarget};
-use crate::indexing::{
-    find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
-    index_planets_by_id, index_players_by_ship_id, index_ships_by_id, ObjectSpecifier,
-};
+use crate::indexing::{find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut, index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, ObjectSpecifier};
 use crate::inventory::{
     add_item, add_items, has_quest_item, InventoryItem, InventoryItemType, shake_items,
 };
@@ -59,6 +56,7 @@ use crate::tractoring::{
 };
 use crate::vec2::{AsVec2f64, deg_to_rad, Precision, Vec2f64};
 use crate::world_events::world_update_handle_event;
+use crate::world_player_actions::world_update_handle_player_action;
 
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -882,6 +880,10 @@ pub fn update_world(
     update_events(&mut state, prng, client, d_states, d_table);
     sampler.end(events_id);
 
+    let player_actions_id = sampler.start(SamplerMarks::UpdatePlayerActions as u32);
+    update_player_actions(&mut state, prng, client);
+    sampler.end(player_actions_id);
+
 
     let rules_id = sampler.start(SamplerMarks::UpdateRuleSpecific as u32);
     update_rule_specifics(&mut state, prng, &mut sampler, client);
@@ -990,6 +992,27 @@ pub fn update_world(
         };
     };
     (state, sampler)
+}
+
+fn update_player_actions(state: &mut GameState, prng: &mut SmallRng, client: bool) {
+    if client {
+        return;
+    }
+    let mut actions_to_process = vec![];
+    while let Some(event) = state.player_actions.pop_front() {
+        actions_to_process.push(event);
+    }
+    let mut processed_actions = vec![];
+    for action in actions_to_process.into_iter() {
+        world_update_handle_player_action(state, action.clone(), prng);
+        let processed_action = ProcessedPlayerAction {
+            action,
+            processed_at_ticks: state.ticks,
+        };
+        processed_actions.push(processed_action);
+    }
+    state.processed_player_actions.append(&mut processed_actions);
+
 }
 
 fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool, d_states: &mut DialogueStates, d_table: &DialogueTable) {
@@ -2345,6 +2368,8 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
     room.state = new_state;
     room.dialogue_states = modified_dialogue_states;
 
+    spatial_indexes = build_full_spatial_indexes(&room.state);
+
     if let Some(bot_action_elapsed) = every_diff(
         BOT_ACTION_TIME_TICKS as u32,
         room.state.ticks as u32,
@@ -2354,8 +2379,7 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
         let bots_mark = sampler.start(SamplerMarks::UpdateBots as u32);
         let bot_players_mark = sampler.start(SamplerMarks::UpdateBotsPlayers as u32);
         let mut d_states_clone = room.dialogue_states.clone();
-        // log!(format!("global/bot/ticks: {}/{}/{}", elapsed_micro, bot_action_elapsed, room.state.ticks));
-        do_bot_players_actions(&mut room, &mut d_states_clone, &d_table, bot_action_elapsed as i64);
+        do_bot_players_actions(&mut room, &mut d_states_clone, &d_table, bot_action_elapsed as i64, &spatial_indexes);
         room.dialogue_states = d_states_clone;
         sampler.end(bot_players_mark);
         let npcs_mark = sampler.start(SamplerMarks::UpdateBotsNPCs as u32);

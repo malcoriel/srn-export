@@ -33,6 +33,8 @@ use crate::{
     DIALOGUE_TABLE, MAX_ERRORS, MAX_ERRORS_SAMPLE_INTERVAL, MAX_MESSAGES_PER_INTERVAL,
     MAX_MESSAGE_SAMPLE_INTERVAL_MS,
 };
+use typescript_definitions::{TypescriptDefinition, TypeScriptify};
+
 
 lazy_static! {
     pub static ref DISPATCHER: (
@@ -280,14 +282,18 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::InventoryAction => {
             on_client_inventory_action(client_id, second, third);
         }
-        ClientOpCode::LongActionStart => {
+        ClientOpCode::ObsoleteLongActionStart => {
+            warn!(format!("usage of obsolete opcode LongActionStart"));
             on_client_long_action_start(client_id, second, third);
         }
-        ClientOpCode::RoomJoin => {
-            eprintln!("Usage of obsolete opcode RoomJoin");
+        ClientOpCode::ObsoleteRoomJoin => {
+            eprintln!("usage of obsolete opcode RoomJoin");
         }
         ClientOpCode::NotificationAction => {
             on_client_notification_action(client_id, second, third);
+        }
+        ClientOpCode::SchedulePlayerAction => {
+            on_client_schedule_player_action(client_id, second, third);
         }
     };
 }
@@ -346,7 +352,7 @@ fn on_client_notification_action(client_id: Uuid, data: &&str, tag: Option<&&str
             let mut cont = STATE.write().unwrap();
             let state = states::select_state_mut(&mut cont, client_id);
             if state.is_none() {
-                warn!("notification action start in non-existent state");
+                warn!("notification action in non-existent state");
                 return;
             }
             let state = state.unwrap();
@@ -356,6 +362,38 @@ fn on_client_notification_action(client_id: Uuid, data: &&str, tag: Option<&&str
         }
         Err(err) => {
             eprintln!("couldn't parse notification action {}, err {}", data, err);
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
+pub struct SchedulePlayerAction {
+    action: PlayerActionRust
+}
+
+fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
+    let parsed = serde_json::from_str::<SchedulePlayerAction>(data);
+    match parsed {
+        Ok(action) => {
+            let mut cont = STATE.write().unwrap();
+            let state = states::select_state_mut(&mut cont, client_id);
+            if state.is_none() {
+                warn!("schedule player action in non-existent state");
+                return;
+            }
+            let state = state.unwrap();
+            match action.action {
+                PlayerActionRust::LongActionStart { .. } => {
+                    state.player_actions.push_back(action.action);
+                }
+                _ => {
+                    warn!(format!("schedule player action does not support that player action: {:?}", action.action));
+                }
+            }
+            send_tag_confirm(tag.unwrap().to_string(), client_id);
+        }
+        Err(err) => {
+            warn!(format!("couldn't schedule player action {}, err {}", data, err));
         }
     }
 }

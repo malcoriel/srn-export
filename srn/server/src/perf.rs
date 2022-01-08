@@ -268,6 +268,7 @@ pub enum SamplerMarks {
     UpdateBots = 41,
     UpdateBotsPlayers = 42,
     UpdateBotsNPCs = 43,
+    UpdatePlayerActions = 44
 }
 
 impl Display for SamplerMarks {

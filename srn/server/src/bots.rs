@@ -17,7 +17,7 @@ use crate::dialogue::{
 };
 use crate::long_actions::{LongAction};
 use crate::{fire_event, pirate_defence};
-use crate::indexing::{find_my_player, find_my_ship, find_planet, ObjectIndexSpecifier, ObjectSpecifier};
+use crate::indexing::{find_my_player, find_my_ship, find_planet, GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier};
 use crate::random_stuff::gen_bot_name;
 use crate::ship_action::{apply_player_action, PlayerActionRust};
 use crate::{get_prng, world};
@@ -39,12 +39,13 @@ pub fn bot_act(
     bot_elapsed_micro: i64,
     d_table: &DialogueTable,
     bot_d_states: &DialogueStatesForPlayer,
+    spatial_indexes: &SpatialIndexes
 ) -> (Bot, Vec<BotAct>) {
     if bot.traits.iter().any(|t| matches!(t, AiTrait::CargoRushHauler {..})) {
         return bot_cargo_rush_hauler_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states);
     }
     if bot.traits.iter().any(|t| matches!(t, AiTrait::PirateDefencePlanetDefender {..})) {
-        return pirate_defence::bot_planet_defender_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states);
+        return pirate_defence::bot_planet_defender_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states, spatial_indexes);
     }
     return (bot, vec![]);
 }
@@ -185,6 +186,7 @@ pub fn do_bot_players_actions(
     d_states: &mut DialogueStates,
     d_table: &DialogueTable,
     bot_elapsed_micro: i64,
+    spatial_indexes: &SpatialIndexes
 ) {
     let mut ship_updates: HashMap<Uuid, Vec<PlayerActionRust>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
@@ -200,6 +202,7 @@ pub fn do_bot_players_actions(
             bot_elapsed_micro,
             &d_table,
             &bot_d_states,
+            spatial_indexes
         );
         *orig_bot = bot;
 

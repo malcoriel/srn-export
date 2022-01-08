@@ -155,6 +155,7 @@ mod pirate_defence;
 mod tutorial;
 mod cargo_rush;
 mod world_events;
+mod world_player_actions;
 
 struct LastCheck {
     time: DateTime<Utc>,
@@ -417,7 +418,7 @@ fn main_thread() {
                 let bots_mark = sampler.start(SamplerMarks::Bots as u32);
                 let bot_players_mark = sampler.start(SamplerMarks::BotsPlayers as u32);
                 for room in cont.rooms.values.iter_mut() {
-                    do_bot_players_actions(room, &mut **d_states, &d_table, bot_action_elapsed);
+                    do_bot_players_actions(room, &mut **d_states, &d_table, bot_action_elapsed, );
                 }
                 sampler.end(bot_players_mark);
                 let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);

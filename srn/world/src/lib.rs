@@ -140,6 +140,9 @@ mod dialogue;
 #[path = "../../server/src/world_events.rs"]
 mod world_events;
 
+#[path = "../../server/src/world_player_actions.rs"]
+mod world_player_actions;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize as Deserializable;
@@ -345,7 +348,7 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
     }
     let args = args.ok().unwrap();
     let ship_idx = find_my_ship_index(&args.state, args.player_id);
-    let new_ship = ship_action::apply_ship_action(args.ship_action, &args.state, ship_idx, true);
+    let new_ship = ship_action::apply_player_action(args.ship_action, &args.state, ship_idx, true);
     return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
 }
 

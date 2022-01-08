@@ -7,6 +7,8 @@ use wasm_bindgen::prelude::*;
 
 pub const SHOOT_COOLDOWN_TICKS: i32 = 500 * 1000;
 pub const SHOOT_ABILITY_DURATION: i32 = 25 * 1000;
+pub const SHOOT_DEFAULT_DISTANCE: f64 = 50.0;
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy, PartialEq)]
 #[serde(tag = "tag")]
@@ -34,7 +36,7 @@ impl Ability {
     pub fn get_distance(&self) -> f64 {
         match self {
             Ability::Unknown => 0.0,
-            Ability::Shoot { .. } => 50.0,
+            Ability::Shoot { .. } => SHOOT_DEFAULT_DISTANCE,
             Ability::BlowUpOnLand => 0.0,
             Ability::ShootAll => 0.0
         }

@@ -161,7 +161,8 @@ pub enum ClientOpCode {
     TradeAction = 7,
     DialogueRequest = 8,
     InventoryAction = 9,
-    LongActionStart = 10,
-    RoomJoin = 11,
+    ObsoleteLongActionStart = 10,
+    ObsoleteRoomJoin = 11,
     NotificationAction = 12,
+    SchedulePlayerAction = 13,
 }

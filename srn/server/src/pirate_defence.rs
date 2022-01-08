@@ -1,23 +1,29 @@
 use std::f64::consts::PI;
+use itertools::Itertools;
 
 use rand::Rng;
 
 use crate::api_struct::{Bot, new_bot, Room};
 use crate::bots::{add_bot, BotAct};
-use crate::{DialogueTable, fire_event, indexing, world};
-use crate::abilities::Ability;
+use crate::{DialogueTable, find_my_ship_index, fire_event, indexing, world};
+use crate::abilities::{Ability, SHOOT_DEFAULT_DISTANCE};
 use crate::api_struct::AiTrait;
+use crate::combat::ShootTarget;
 use crate::dialogue::DialogueStatesForPlayer;
 use crate::vec2::Vec2f64;
-use crate::world::{fire_saved_event, GameEvent, GameOver, GameState, ObjectProperty, Planet, Ship, ShipTemplate, TimeMarks};
+use crate::world::{fire_saved_event, GameEvent, GameOver, GameState, ObjectProperty, Planet, Ship, ShipTemplate, SpatialIndexes, TimeMarks};
 use crate::get_prng;
-use crate::indexing::{index_players_by_ship_id, ObjectSpecifier};
+use crate::indexing::{GameStateIndexes, index_players_by_ship_id, index_state, ObjectIndexSpecifier, ObjectSpecifier};
+use crate::long_actions::LongActionStart;
+use crate::ship_action::PlayerActionRust;
+use crate::world::TimeMarks::BotAction;
+
 
 pub fn on_pirate_spawn(state: &mut GameState, at: &Vec2f64) {
-      world::spawn_ship(state, None, ShipTemplate::pirate(Some(at.clone())));
+    world::spawn_ship(state, None, ShipTemplate::pirate(Some(at.clone())));
 }
 
-const SHIP_PLANET_HIT_NORMALIZED : f64 = 0.1;
+const SHIP_PLANET_HIT_NORMALIZED: f64 = 0.1;
 const PIRATE_SPAWN_DIST: f64 = 100.0;
 const PIRATE_SPAWN_COUNT: usize = 3;
 const PIRATE_SPAWN_INTERVAL_TICKS: u32 = 10 * 1000 * 1000;
@@ -66,7 +72,6 @@ pub fn on_ship_died(state: &mut GameState, ship: Ship) {
             }
             _ => {}
         }
-
     }
 }
 
@@ -86,7 +91,6 @@ pub fn update_state_pirate_defence(state: &mut GameState) {
                 at: gen_pirate_spawn(&state.locations[0].planets.get(0).unwrap()),
             });
         }
-
     }
 }
 
@@ -105,7 +109,57 @@ pub fn on_create_room(room: &mut Room) {
     add_bot(room, new_bot(Some(vec![AiTrait::PirateDefencePlanetDefender])));
 }
 
-pub fn bot_planet_defender_act(bot: Bot, state: &GameState, bot_elapsed_micro: i64, d_table: &DialogueTable, bot_d_states: &DialogueStatesForPlayer) -> (Bot, Vec<BotAct>) {
-    let nothing = (bot, vec![]);
+pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: i64, _d_table: &DialogueTable, _bot_d_states: &DialogueStatesForPlayer, spatial_indexes: &SpatialIndexes) -> (Bot, Vec<BotAct>) {
+    let bot_id = bot.id;
+    let nothing = (bot.clone(), vec![]);
+    let ship_loc = find_my_ship_index(state, bot.id);
+    if let Some(ship_loc) = ship_loc {
+        if let Some(loc_sp_idx) = spatial_indexes.values.get(&ship_loc.location_idx) {
+            let my_ship = &state.locations[ship_loc.location_idx].ships[ship_loc.ship_idx];
+            let valid_targets = loc_sp_idx.rad_search(&my_ship.get_position(), SHOOT_DEFAULT_DISTANCE);
+            let foe_ships = valid_targets.iter().filter_map(|sp| {
+                match sp {
+                    ObjectIndexSpecifier::Ship { idx } => {
+                        let target_ship = &state.locations[ship_loc.location_idx].ships[*idx];
+                        let is_foe = target_ship.npc.clone().map(|n| n.traits.iter().any(|t| matches!(t, AiTrait::ImmediatePlanetLand))).map_or(false, |t| t);
+                        if is_foe {
+                            Some(target_ship)
+                        } else {
+                            None
+                        }
+
+                    }
+                    _ => {
+                        None
+                    }
+                }
+            }).collect::<Vec<_>>();
+            if let Some(first) = foe_ships.first() {
+                let mut all_acts = vec![];
+                for turret_ab in my_ship.abilities.iter().filter(|a| matches!(a, Ability::Shoot { .. })) {
+                    if turret_ab.get_current_cooldown() == 0 {
+                        let act = PlayerActionRust::LongActionStart {
+                            long_action_start: LongActionStart::Shoot {
+                                target: ShootTarget::Ship {
+                                    id: first.id
+                                },
+                                turret_id: match turret_ab {
+                                    Ability::Shoot { turret_id, .. } => {
+                                        turret_id.clone()
+                                    },
+                                    _ => Default::default()
+                                }
+                            },
+                            player_id: bot_id
+                        };
+                        all_acts.push(BotAct::Act(act));
+                    }
+                }
+
+                return (bot, all_acts)
+            }
+        }
+    }
+
     return nothing;
 }

@@ -379,6 +379,7 @@ pub struct FullObjectSpecifier {
     pub obj_spec: ObjectSpecifier,
 }
 
+#[derive(Clone)]
 pub struct GameStateIndexes<'a> {
     pub planets_by_id: HashMap<Uuid, &'a Planet>,
     pub players_by_id: HashMap<Uuid, &'a Player>,

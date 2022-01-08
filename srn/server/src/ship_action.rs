@@ -11,6 +11,7 @@ use core::mem;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
 use crate::abilities::Ability;
+use crate::long_actions::LongActionStart;
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
@@ -27,6 +28,10 @@ pub enum PlayerActionRust {
     Navigate { target: Vec2f64 },
     DockNavigate { target: Uuid },
     Tractor { target: Uuid },
+    LongActionStart {
+        long_action_start: LongActionStart,
+        player_id: Uuid
+    }
 }
 
 pub fn apply_player_action(
@@ -161,6 +166,10 @@ pub fn apply_player_action(
             let mut ship = old_ship.clone();
             ship.movement_markers.turn = None;
             Some(ship)
+        }
+        PlayerActionRust::LongActionStart { .. } => {
+            warn!("player action LongActionStart cannot be handled by apply_player_action");
+            None
         }
     }
 }
