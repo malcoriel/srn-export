@@ -232,9 +232,13 @@ pub fn do_bot_players_actions(
     for (bot_id, acts) in ship_updates.into_iter() {
         for act in acts {
             let ship_idx = indexing::find_my_ship_index(&room.state, bot_id);
-            let updated_ship = apply_player_action(act.clone(), &mut room.state, ship_idx, false);
-            if let Some(updated_ship) = updated_ship {
-                world::try_replace_ship(&mut room.state, &updated_ship, bot_id);
+            if !matches!(act, PlayerActionRust::LongActionStart { .. }) {
+                let updated_ship = apply_player_action(act.clone(), &mut room.state, ship_idx, false);
+                if let Some(updated_ship) = updated_ship {
+                    world::try_replace_ship(&mut room.state, &updated_ship, bot_id);
+                }
+            } else {
+                room.state.player_actions.push_back(act);
             }
         }
     }

@@ -5,7 +5,7 @@ use rand::Rng;
 
 use crate::api_struct::{Bot, new_bot, Room};
 use crate::bots::{add_bot, BotAct};
-use crate::{DialogueTable, find_my_ship_index, fire_event, indexing, world};
+use crate::{DialogueTable, fire_event, indexing, world};
 use crate::abilities::{Ability, SHOOT_DEFAULT_DISTANCE};
 use crate::api_struct::AiTrait;
 use crate::combat::ShootTarget;
@@ -13,7 +13,7 @@ use crate::dialogue::DialogueStatesForPlayer;
 use crate::vec2::Vec2f64;
 use crate::world::{fire_saved_event, GameEvent, GameOver, GameState, ObjectProperty, Planet, Ship, ShipTemplate, SpatialIndexes, TimeMarks};
 use crate::get_prng;
-use crate::indexing::{GameStateIndexes, index_players_by_ship_id, index_state, ObjectIndexSpecifier, ObjectSpecifier};
+use crate::indexing::{GameStateIndexes, index_players_by_ship_id, index_state, ObjectIndexSpecifier, ObjectSpecifier, find_my_ship_index};
 use crate::long_actions::LongActionStart;
 use crate::ship_action::PlayerActionRust;
 use crate::world::TimeMarks::BotAction;

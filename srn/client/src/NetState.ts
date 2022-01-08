@@ -25,7 +25,7 @@ import {
   InventoryAction,
   LongActionStart,
   NotificationAction,
-  ShipActionRust,
+  PlayerActionRust,
 } from '../../world/pkg';
 import {
   buildClientStateIndexes,
@@ -225,7 +225,6 @@ export default class NetState extends EventEmitter {
 
   private resetState() {
     this.state = {
-      processed_events: [],
       ticks: 0,
       disable_hp_effects: false,
       id: '',
@@ -238,7 +237,6 @@ export default class NetState extends EventEmitter {
         wares: {},
         time_before_next_shake: 0,
       },
-      events: [],
       mode: GameMode.Unknown,
       seed: '',
       tag: '',
@@ -267,6 +265,10 @@ export default class NetState extends EventEmitter {
       paused: true,
       interval_data: {},
       game_over: null,
+      events: [],
+      processed_events: [],
+      player_actions: [],
+      processed_player_actions: [],
     };
     reindexNetState(this);
   }
@@ -612,9 +614,9 @@ export default class NetState extends EventEmitter {
   }
 
   // [tag, action, ticks], the order is the order of appearance
-  private pendingActions: [string, ShipActionRust[], number][] = [];
+  private pendingActions: [string, PlayerActionRust[], number][] = [];
 
-  private mutate_ship = (commands: ShipActionRust[]) => {
+  private mutate_ship = (commands: PlayerActionRust[]) => {
     const myShipIndex = findMyShipIndex(this.state);
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.locations[0].ships[myShipIndex];
@@ -640,7 +642,7 @@ export default class NetState extends EventEmitter {
     }
 
     const actions = Object.values(actionsActive).filter((a) => !!a);
-    const actionsToSync = actions.filter((a) => !!a) as ShipActionRust[];
+    const actionsToSync = actions.filter((a) => !!a) as PlayerActionRust[];
 
     for (const action of actionsToSync) {
       // prevent server DOS via gas action flooding, separated by action type
@@ -664,7 +666,7 @@ export default class NetState extends EventEmitter {
       this.updateShipOnServer(tag, action);
     }
 
-    this.mutate_ship(actions as ShipActionRust[]);
+    this.mutate_ship(actions as PlayerActionRust[]);
 
     if (actionsActive.Move) {
       this.visualState.boundCameraMovement = true;
@@ -680,7 +682,7 @@ export default class NetState extends EventEmitter {
     }
   };
 
-  private updateShipOnServer = (tag: string, action: ShipActionRust) => {
+  private updateShipOnServer = (tag: string, action: PlayerActionRust) => {
     if (this.state && !this.state.paused) {
       this.send({
         code: ClientOpCode.MutateMyShip,

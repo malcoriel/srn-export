@@ -20,11 +20,11 @@ import {
   Price,
   Quest,
   Ship,
-  ShipActionRust,
-  ShipActionRustGas,
-  ShipActionRustReverse,
-  ShipActionRustTurnLeft,
-  ShipActionRustTurnRight,
+  PlayerActionRust,
+  PlayerActionRustGas,
+  PlayerActionRustReverse,
+  PlayerActionRustTurnLeft,
+  PlayerActionRustTurnRight,
   Star,
   Substitution,
   TradeAction,
@@ -270,7 +270,7 @@ export const validateState = (inState: GameState): boolean => {
 
 export const applyShipActionWasm = (
   state: GameState,
-  ship_action: ShipActionRust
+  ship_action: PlayerActionRust
 ): Ship | undefined => {
   return doWasmCall<Ship>(
     'apply_ship_action',
@@ -396,13 +396,13 @@ export type ManualMovementActionTags =
   | 'TurnLeft';
 
 export type ManualMovementAction =
-  | ShipActionRustGas
-  | ShipActionRustReverse
-  | ShipActionRustTurnRight
-  | ShipActionRustTurnLeft;
+  | PlayerActionRustGas
+  | PlayerActionRustReverse
+  | PlayerActionRustTurnRight
+  | PlayerActionRustTurnLeft;
 
 export const isManualMovement = (
-  act: ShipActionRust
+  act: PlayerActionRust
 ): act is ManualMovementAction => {
   return (
     act.tag === 'Gas' ||

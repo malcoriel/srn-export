@@ -12,7 +12,7 @@ import { rarityToColor } from './MineralsLayer';
 import { actionsActive } from '../utils/ShipControls';
 import {
   LongActionStartBuilder,
-  ShipActionRustBuilder,
+  PlayerActionRustBuilder,
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import NetState from '../NetState';
@@ -22,7 +22,7 @@ const planetActionMap = new Map([
   [
     InteractorActionType.Dock,
     (objectId: string) => {
-      actionsActive.Navigate = ShipActionRustBuilder.ShipActionRustDockNavigate(
+      actionsActive.Navigate = PlayerActionRustBuilder.PlayerActionRustDockNavigate(
         { target: objectId }
       );
     },
@@ -53,7 +53,7 @@ export const containerActionsMap = new Map([
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
-      actionsActive.Tractor = ShipActionRustBuilder.ShipActionRustTractor({
+      actionsActive.Tractor = PlayerActionRustBuilder.PlayerActionRustTractor({
         target: objectId,
       });
     },
@@ -78,7 +78,7 @@ export const mineralActionsMap = new Map([
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
-      actionsActive.Tractor = ShipActionRustBuilder.ShipActionRustTractor({
+      actionsActive.Tractor = PlayerActionRustBuilder.PlayerActionRustTractor({
         target: objectId,
       });
     },

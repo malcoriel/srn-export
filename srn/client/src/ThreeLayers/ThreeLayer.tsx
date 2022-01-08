@@ -1,7 +1,7 @@
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Vector3 } from 'three';
-import React, { MutableRefObject, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
 import { GameMode, max_x, min_x } from '../world';
@@ -24,7 +24,7 @@ import { ThreeQuestDirection } from './ThreeQuestDirection';
 import { ThreeNames } from './ThreeNames';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
-import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
+import { PlayerActionRustBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { seedToNumber, threeVectorToVector } from './util';
@@ -82,7 +82,7 @@ export const ThreeLayer: React.FC<{
           visible={visible}
           onClick={(evt: ThreeEvent<MouseEvent>) => {
             const pos = threeVectorToVector(evt.point);
-            actionsActive.Navigate = ShipActionRustBuilder.ShipActionRustNavigate(
+            actionsActive.Navigate = PlayerActionRustBuilder.PlayerActionRustNavigate(
               { target: Vector.fromIVector(pos) }
             );
           }}

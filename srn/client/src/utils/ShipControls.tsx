@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { ShipActionRust } from '../../../world/pkg';
-import { ShipActionRustBuilder } from '../../../world/pkg/world.extra';
+import { PlayerActionRust } from '../../../world/pkg';
+import { PlayerActionRustBuilder } from '../../../world/pkg/world.extra';
 
-export const actionsActive: Record<string, ShipActionRust | undefined> = {
+export const actionsActive: Record<string, PlayerActionRust | undefined> = {
   Gas: undefined,
   TurnRight: undefined,
   TurnLeft: undefined,
@@ -19,31 +19,31 @@ const keysActive: Record<string, boolean> = {};
 
 const refreshActiveActions = () => {
   if (!keysActive.KeyW && keysActive.KeyS) {
-    actionsActive.Reverse = ShipActionRustBuilder.ShipActionRustReverse();
+    actionsActive.Reverse = PlayerActionRustBuilder.PlayerActionRustReverse();
     actionsActive.Gas = undefined;
     actionsActive.StopGas = undefined;
   } else if (keysActive.KeyW && !keysActive.KeyS) {
-    actionsActive.Gas = ShipActionRustBuilder.ShipActionRustGas();
+    actionsActive.Gas = PlayerActionRustBuilder.PlayerActionRustGas();
     actionsActive.Reverse = undefined;
     actionsActive.StopGas = undefined;
   } else if (actionsActive.Gas || actionsActive.Reverse) {
     actionsActive.Reverse = undefined;
     actionsActive.Gas = undefined;
-    actionsActive.StopGas = ShipActionRustBuilder.ShipActionRustStopGas();
+    actionsActive.StopGas = PlayerActionRustBuilder.PlayerActionRustStopGas();
   }
 
   if (!keysActive.KeyA && keysActive.KeyD) {
-    actionsActive.TurnRight = ShipActionRustBuilder.ShipActionRustTurnRight();
+    actionsActive.TurnRight = PlayerActionRustBuilder.PlayerActionRustTurnRight();
     actionsActive.TurnLeft = undefined;
     actionsActive.StopTurn = undefined;
   } else if (keysActive.KeyA && !keysActive.KeyD) {
     actionsActive.TurnRight = undefined;
-    actionsActive.TurnLeft = ShipActionRustBuilder.ShipActionRustTurnLeft();
+    actionsActive.TurnLeft = PlayerActionRustBuilder.PlayerActionRustTurnLeft();
     actionsActive.StopTurn = undefined;
   } else if (actionsActive.TurnRight || actionsActive.TurnLeft) {
     actionsActive.TurnRight = undefined;
     actionsActive.TurnLeft = undefined;
-    actionsActive.StopTurn = ShipActionRustBuilder.ShipActionRustStopTurn();
+    actionsActive.StopTurn = PlayerActionRustBuilder.PlayerActionRustStopTurn();
   }
 };
 
