@@ -180,7 +180,12 @@ lazy_static! {
     };
 }
 
-const DEBUG_FRAME_STATS: bool = false;
+lazy_static! {
+    pub static ref DEBUG_FRAME_STATS: bool = {
+        env::var("DEBUG_FRAME_STATS").is_ok()
+    };
+}
+
 const DEFAULT_SLEEP_MS: u64 = 1;
 const BROADCAST_SLEEP_MS: u64 = 500;
 const MAX_ERRORS: u32 = 10;
@@ -374,7 +379,7 @@ fn main_thread() {
         if frame_count >= FRAME_STATS_COUNT {
             let over_budget_pct = over_budget_frame as f32 / frame_count as f32 * 100.0;
             let shortcut_pct = shortcut_frame as f32 / frame_count as f32 * 100.0;
-            if DEBUG_FRAME_STATS {
+            if *DEBUG_FRAME_STATS {
                 log!(format!(
                     "Frame stats: shortcut {:.2}%, over-budget {:.2}% for {}",
                     shortcut_pct, over_budget_pct, frame_count
@@ -424,12 +429,12 @@ fn main_thread() {
                 let bot_players_mark = sampler.start(SamplerMarks::BotsPlayers as u32);
                 for room in cont.rooms.values.iter_mut() {
                     let spatial_indexes = spatial_indexes_by_room_id.get(&room.id).unwrap();
-
                     do_bot_players_actions(room, &mut **d_states, &d_table, bot_action_elapsed, spatial_indexes);
                 }
                 sampler.end(bot_players_mark);
                 let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);
                 for room in cont.rooms.values.iter_mut() {
+                    warn!("room npc update");
                     let spatial_indexes = spatial_indexes_by_room_id.get(&room.id).unwrap();
                     do_bot_npcs_actions(room, bot_action_elapsed, spatial_indexes);
                 }

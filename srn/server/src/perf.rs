@@ -18,6 +18,12 @@ pub struct Sampler {
     pub budget: i32,
 }
 
+// This is important, since there are a lot of performance marks, at one
+// point the .mark itself will become the performance problem due to re-allocation
+// so this number MUST be higher than the maximum amount of marks an app can produce
+// over PERF_CONSUME_TIME
+pub const ENTRY_CAPACITY: usize = 1024 * 8 * 8;
+
 impl Sampler {
     pub fn new(labels: Vec<String>) -> Sampler {
         let mut buckets = HashMap::new();
@@ -26,7 +32,7 @@ impl Sampler {
             budget: 0,
             labels,
             buckets,
-            marks: HashMap::new(),
+            marks: HashMap::with_capacity(ENTRY_CAPACITY),
             empty: false,
         }
     }
@@ -36,7 +42,7 @@ impl Sampler {
             budget: 0,
             labels: vec![],
             buckets: HashMap::new(),
-            marks: HashMap::new(),
+            marks: HashMap::with_capacity(ENTRY_CAPACITY),
             empty: true,
         }
     }
