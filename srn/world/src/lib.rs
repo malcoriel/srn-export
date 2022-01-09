@@ -1,11 +1,14 @@
 #![feature(exclusive_range_pattern)]
+#![feature(extern_types)]
 #![allow(dead_code)]
 #![allow(warnings)]
 
 extern crate uuid;
+
 use std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+
 #[wasm_bindgen]
 pub fn set_panic_hook() {
     // When the `console_error_panic_hook` feature is enabled, we can call the
@@ -15,7 +18,7 @@ pub fn set_panic_hook() {
     // For more details see
     // https://github.com/rustwasm/console_error_panic_hook#readme
     #[cfg(feature = "console_error_panic_hook")]
-    console_error_panic_hook::set_once();
+        console_error_panic_hook::set_once();
 }
 
 use wasm_bindgen::prelude::*;
@@ -36,6 +39,7 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = console)]
     pub fn error(s: &str);
+
 }
 
 macro_rules! log {
@@ -175,7 +179,6 @@ pub fn new_id() -> Uuid {
 }
 
 
-
 static DEFAULT_ERR: &str = "";
 
 #[derive(Serialize)]
@@ -214,7 +217,7 @@ fn deserialize_err_or_def(reason: &Error) -> String {
     serde_json::to_string(&ErrJson {
         message: format!("err deserializing {}", reason.to_string()),
     })
-    .unwrap_or(DEFAULT_ERR.to_string())
+        .unwrap_or(DEFAULT_ERR.to_string())
 }
 
 #[wasm_bindgen]
@@ -233,7 +236,7 @@ pub fn parse_state(serialized_args: &str) -> String {
 
 use crate::indexing::find_my_ship_index;
 use mut_static::MutStatic;
-use std::mem;
+use std::{env, mem};
 use std::ops::DerefMut;
 use rand::prelude::SmallRng;
 use rand::SeedableRng;
@@ -257,8 +260,20 @@ pub struct InternalTimers {
     last_perf_flush_at_ticks: u32,
 }
 
+lazy_static! {
+    pub static ref ENABLE_PERF_HACK_INIT: MutStatic<bool> = {
+        MutStatic::from(false)
+    };
+}
+
+
 pub const DEBUG_PHYSICS: bool = false;
-pub const ENABLE_PERF: bool = false;
+lazy_static! {
+    pub static ref ENABLE_PERF: bool = {
+        *ENABLE_PERF_HACK_INIT.read().unwrap()
+    };
+}
+
 const PERF_CONSUME_TIME_MS: i32 = 30 * 1000;
 
 lazy_static! {
@@ -273,6 +288,8 @@ pub struct UpdateWorldArgs {
     limit_area: world::AABB,
     client: Option<bool>,
 }
+
+use wasm_bindgen::{JsCast};
 
 #[wasm_bindgen]
 pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
@@ -298,10 +315,10 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
         &mut get_prng(),
         // these fields make sense only for full simulation, as they are part of the room now
         &mut Default::default(),
-        &Default::default()
+        &Default::default(),
     );
 
-    if ENABLE_PERF {
+    if *ENABLE_PERF {
         mem::replace(global_sampler.write().unwrap().deref_mut(), sampler);
 
         let last_flush = {
@@ -311,21 +328,28 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
         let diff = (new_state.millis as i32 - last_flush).abs();
         if diff > PERF_CONSUME_TIME_MS {
             timers.write().unwrap().last_perf_flush_at_ticks = new_state.millis;
-            let (sampler_out, metrics) = global_sampler.write().unwrap().clone().consume();
-            mem::replace(global_sampler.write().unwrap().deref_mut(), sampler_out);
-            log!(format!(
-                "performance stats over {} sec \n{}",
-                PERF_CONSUME_TIME_MS / 1000 / 1000,
-                metrics.join("\n")
-            ));
+            flush_sampler_stats();
         }
     }
 
     return serde_json::to_string(&new_state).unwrap_or(DEFAULT_ERR.to_string());
 }
 
+#[wasm_bindgen]
+pub fn flush_sampler_stats() {
+    if *ENABLE_PERF {
+        let (sampler_out, metrics) = global_sampler.write().unwrap().clone().consume();
+        mem::replace(global_sampler.write().unwrap().deref_mut(), sampler_out);
+        log!(format!(
+                "performance stats over {} sec \n{}",
+                PERF_CONSUME_TIME_MS / 1000 / 1000,
+                metrics.join("\n")
+            ));
+    }
+}
+
 fn get_sampler_clone() -> Sampler {
-    if ENABLE_PERF {
+    if *ENABLE_PERF {
         global_sampler.read().unwrap().clone()
     } else {
         perf::Sampler::new(vec![])
@@ -355,7 +379,7 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct SeedWorldArgs {
     seed: String,
-    mode: GameMode
+    mode: GameMode,
 }
 
 
@@ -372,7 +396,7 @@ pub fn seed_world(serialized_args: &str) -> String {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct CreateRoomArgs {
-    mode: GameMode
+    mode: GameMode,
 }
 
 #[wasm_bindgen]
@@ -420,3 +444,11 @@ pub fn make_dialogue_table(dir_contents: JsValue) -> Result<JsValue, JsValue> {
     Ok(serde_wasm_bindgen::to_value(&d_table)?)
 }
 
+// mega-ugly hack to keep ENABLE_PERF as a global static boolean (and not something more complex)
+// since it's lazy_static, then it'll init on the first access. meaning, if this function is called before,
+// the init code can consume whatever set here
+#[wasm_bindgen]
+pub fn set_enable_perf(value: bool) {
+    *ENABLE_PERF_HACK_INIT.write().unwrap() = value;
+    log!(format!("ENABLE_PERF was set to {}", value))
+}

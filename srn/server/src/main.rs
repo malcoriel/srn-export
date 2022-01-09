@@ -12,7 +12,7 @@ use std::iter::FromIterator;
 use std::net::{SocketAddr, TcpStream};
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::time::Duration;
-use std::{fmt, thread};
+use std::{env, fmt, thread};
 
 use chrono::{DateTime, Local, Utc};
 use crossbeam::channel::{bounded, Receiver, Sender};
@@ -174,7 +174,12 @@ lazy_static! {
         Arc::new(Mutex::new(Box::new(DialogueTable::new())));
 }
 
-pub const ENABLE_PERF: bool = false;
+lazy_static! {
+    pub static ref ENABLE_PERF: bool = {
+        env::var("ENABLE_PERF").is_ok()
+    };
+}
+
 const DEBUG_FRAME_STATS: bool = false;
 const DEFAULT_SLEEP_MS: u64 = 1;
 const BROADCAST_SLEEP_MS: u64 = 500;
@@ -496,7 +501,7 @@ fn main_thread() {
             sampler_consume_elapsed = 0;
             let (sampler_out, metrics) = sampler.consume();
             sampler = sampler_out;
-            if ENABLE_PERF {
+            if *ENABLE_PERF {
                 log!(format!(
                     "performance stats over {} sec \n{}",
                     PERF_CONSUME_TIME / 1000 / 1000,

@@ -75,14 +75,14 @@ export const loadWasm = timerify(async function loadWasm() {
   const wasmBytes = await fs.readFile('../world/pkg-nomodule/world_bg.wasm');
   await init(wasmBytes);
   const wasmFunctions = getBindgen();
-  if (wasmFunctions && wasmFunctions.set_panic_hook) {
-    wasmFunctions.set_panic_hook();
-  }
+  wasmFunctions.set_panic_hook();
+  wasmFunctions.set_enable_perf(!!process.env.ENABLE_PERF);
   wasm.updateWorld = serializedWasmCaller(wasmFunctions.update_world);
   wasm.seedWorld = serializedWasmCaller(wasmFunctions.seed_world);
   wasm.createRoom = wasmFunctions.create_room;
   wasm.updateRoom = wasmFunctions.update_room;
   wasm.updateRoomFull = wasmFunctions.update_room_full;
+  wasm.flushSamplerStats = wasmFunctions.flush_sampler_stats;
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.resources = resources;
   wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);
@@ -125,6 +125,7 @@ export const updateRoom = timerifySync(function updateRoomV2(
 
 export const exposePerfStats = () => {
   flushPerfStats();
+  wasm.flushSamplerStats();
 };
 
 export const mockShip = (id) => ({

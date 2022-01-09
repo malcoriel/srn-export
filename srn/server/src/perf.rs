@@ -48,7 +48,7 @@ impl Sampler {
     }
 
     pub fn add(&mut self, label_idx: u32, val: u64) {
-        if self.empty || !crate::ENABLE_PERF {
+        if self.empty || !*crate::ENABLE_PERF {
             return;
         }
         if let Some(bucket) = self.buckets.get_mut(&label_idx) {
@@ -141,7 +141,7 @@ impl Sampler {
     where
         F: Fn() -> T,
     {
-        if crate::ENABLE_PERF && !self.empty {
+        if *crate::ENABLE_PERF && !self.empty {
             let start = Local::now();
             let res = target_fn();
             let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
@@ -162,7 +162,7 @@ impl Sampler {
     where
         F: FnMut() -> T,
     {
-        if crate::ENABLE_PERF && !self.empty {
+        if *crate::ENABLE_PERF && !self.empty {
             let start = Local::now();
             let res = target_fn();
             let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
@@ -184,7 +184,7 @@ pub fn measure_mut<T, F>(target_fn: &mut F, label: &str) -> T
 where
     F: FnMut() -> T,
 {
-    if crate::ENABLE_PERF {
+    if *crate::ENABLE_PERF {
         let start = Local::now();
         let res = target_fn();
         let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
@@ -198,7 +198,7 @@ pub fn measure<T, F>(target_fn: &F, label: &str) -> T
 where
     F: Fn() -> T,
 {
-    if crate::ENABLE_PERF {
+    if *crate::ENABLE_PERF {
         let start = Local::now();
         let res = target_fn();
         let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
