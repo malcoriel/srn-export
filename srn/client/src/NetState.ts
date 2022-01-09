@@ -52,6 +52,7 @@ enum ClientOpCode {
   LongActionStart,
   RoomJoin,
   NotificationAction,
+  SchedulePlayerAction,
 }
 
 interface Cmd {
@@ -613,6 +614,12 @@ export default class NetState extends EventEmitter {
           this.socket.send(`${cmd.code}_%_noop`);
           break;
         }
+        case ClientOpCode.SchedulePlayerAction: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
         default:
           throw new UnreachableCaseError(cmd.code);
       }
@@ -707,6 +714,15 @@ export default class NetState extends EventEmitter {
     });
   }
 
+  private sendSchedulePlayerAction(action: PlayerActionRust) {
+    const tag = uuid.v4();
+    this.send({
+      code: ClientOpCode.SchedulePlayerAction,
+      value: { action },
+      tag,
+    });
+  }
+
   private getSimulationArea(): AABB {
     const viewportSize = viewPortSizeMeters()
       .scale(1 / this.visualState.zoomShift)
@@ -766,13 +782,12 @@ export default class NetState extends EventEmitter {
         tag: uuid.v4(),
       });
     } else {
-      this.state.player_actions.push(
-        PlayerActionRustBuilder.PlayerActionRustLongActionStart({
-          long_action_start: longAction,
-          player_id: this.state.my_id,
-        })
-      );
-      console.log(this.state.player_actions);
+      const act = PlayerActionRustBuilder.PlayerActionRustLongActionStart({
+        long_action_start: longAction,
+        player_id: this.state.my_id,
+      });
+      this.state.player_actions.push(act);
+      this.sendSchedulePlayerAction(act);
     }
   }
 
