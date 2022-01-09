@@ -753,11 +753,15 @@ export default class NetState extends EventEmitter {
   }
 
   public startLongAction(longAction: LongActionStart) {
-    this.send({
-      code: ClientOpCode.LongActionStart,
-      value: longAction,
-      tag: uuid.v4(),
-    });
+    if (longAction.tag !== 'Shoot') {
+      this.send({
+        code: ClientOpCode.LongActionStart,
+        value: longAction,
+        tag: uuid.v4(),
+      });
+    } else {
+      console.log('shoot');
+    }
   }
 
   public sendNotificationAction(notAction: NotificationAction) {
