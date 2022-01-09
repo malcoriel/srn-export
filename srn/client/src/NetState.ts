@@ -26,6 +26,7 @@ import {
   LongActionStart,
   NotificationAction,
   PlayerActionRust,
+  PlayerActionRustLongActionStart,
 } from '../../world/pkg';
 import {
   buildClientStateIndexes,
@@ -33,6 +34,7 @@ import {
   findMyShip,
   findMyShipIndex,
 } from './ClientStateIndexing';
+import { PlayerActionRustBuilder } from '../../world/pkg/world.extra';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -441,7 +443,11 @@ export default class NetState extends EventEmitter {
         this.desync = parsed.millis - this.state.millis;
 
         const myOldShip = findMyShip(this.state);
+        // the client should only hanlde its own player actions,
+        // and the server will not send any anyway
+        const oldPlayerActions = this.state.player_actions;
         this.state = parsed;
+        this.state.player_actions = oldPlayerActions;
         // compensate for ping since the state we got is already outdated by that value
         // 1. primarily work on planets - something that is adjusted deterministically
         this.updateLocalState(this.ping);
@@ -478,7 +484,7 @@ export default class NetState extends EventEmitter {
             //     (a) => a.type
             //   )}`
             // );
-            this.mutate_ship(actions);
+            this.mutateShip(actions);
           }
         }
         this.pendingActions = this.pendingActions.filter(
@@ -616,7 +622,7 @@ export default class NetState extends EventEmitter {
   // [tag, action, ticks], the order is the order of appearance
   private pendingActions: [string, PlayerActionRust[], number][] = [];
 
-  private mutate_ship = (commands: PlayerActionRust[]) => {
+  private mutateShip = (commands: PlayerActionRust[]) => {
     const myShipIndex = findMyShipIndex(this.state);
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.locations[0].ships[myShipIndex];
@@ -666,7 +672,7 @@ export default class NetState extends EventEmitter {
       this.updateShipOnServer(tag, action);
     }
 
-    this.mutate_ship(actions as PlayerActionRust[]);
+    this.mutateShip(actions as PlayerActionRust[]);
 
     if (actionsActive.Move) {
       this.visualState.boundCameraMovement = true;
@@ -760,7 +766,13 @@ export default class NetState extends EventEmitter {
         tag: uuid.v4(),
       });
     } else {
-      console.log('shoot');
+      this.state.player_actions.push(
+        PlayerActionRustBuilder.PlayerActionRustLongActionStart({
+          long_action_start: longAction,
+          player_id: this.state.my_id,
+        })
+      );
+      console.log(this.state.player_actions);
     }
   }
 

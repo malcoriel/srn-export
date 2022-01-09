@@ -881,7 +881,7 @@ pub fn update_world(
     sampler.end(events_id);
 
     let player_actions_id = sampler.start(SamplerMarks::UpdatePlayerActions as u32);
-    update_player_actions(&mut state, prng, client);
+    update_player_actions(&mut state, prng);
     sampler.end(player_actions_id);
 
 
@@ -994,10 +994,7 @@ pub fn update_world(
     (state, sampler)
 }
 
-fn update_player_actions(state: &mut GameState, prng: &mut SmallRng, client: bool) {
-    if client {
-        return;
-    }
+fn update_player_actions(state: &mut GameState, prng: &mut SmallRng) {
     let mut actions_to_process = vec![];
     while let Some(event) = state.player_actions.pop_front() {
         actions_to_process.push(event);

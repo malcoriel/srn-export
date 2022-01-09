@@ -418,7 +418,7 @@ pub fn finish_long_act(state: &mut GameState, player_id: Option<Uuid>, act: Long
             }
         }
         LongAction::Shoot { target, turret_id, .. } => {
-            if !client && player_id.is_some() {
+            if player_id.is_some() {
                 combat::resolve_shoot(state, player_id.unwrap(), target, turret_id);
             }
         }
