@@ -82,10 +82,11 @@ export const PlayerActionsBar: React.FC = () => {
       JSON.stringify(myShipNext?.abilities)
     );
   });
-  const { neutralId, hostileId } = useActiveInteractors();
   if (!ns) {
     return null;
   }
+
+  const { neutralId, hostileId } = useActiveInteractors();
   const interactorIds: InteractorIds = {
     neutralId,
     hostileId,
