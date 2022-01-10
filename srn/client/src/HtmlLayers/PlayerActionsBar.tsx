@@ -72,7 +72,16 @@ type InteractorIds = {
   hostileId: string | undefined;
 };
 export const PlayerActionsBar: React.FC = () => {
-  const ns = useNSForceChange('MoneyAndHp');
+  const ns = useNSForceChange('PlayerActionsBar', false, (prev, next) => {
+    const myPlayerPrev = findMyPlayer(prev);
+    const myShipPrev = findMyShip(prev);
+    const myPlayerNext = findMyPlayer(next);
+    const myShipNext = findMyShip(next);
+    return (
+      JSON.stringify(myPlayerPrev) !== JSON.stringify(myPlayerNext) &&
+      JSON.stringify(myShipPrev) !== JSON.stringify(myShipNext)
+    );
+  });
   const { neutralId, hostileId } = useActiveInteractors();
   if (!ns) {
     return null;
