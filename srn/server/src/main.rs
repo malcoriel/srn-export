@@ -349,7 +349,7 @@ fn make_thread(name: &str) -> std::thread::Builder {
     std::thread::Builder::new().name(name.to_string())
 }
 
-const PERF_CONSUME_TIME: i64 = 30 * 1000 * 1000;
+const PERF_CONSUME_TIME: i64 = 15 * 1000 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 const FRAME_BUDGET_TICKS: i32 = 15 * 1000;
 const FRAME_STATS_COUNT: i32 = 2000;
@@ -434,7 +434,6 @@ fn main_thread() {
                 sampler.end(bot_players_mark);
                 let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);
                 for room in cont.rooms.values.iter_mut() {
-                    warn!("room npc update");
                     let spatial_indexes = spatial_indexes_by_room_id.get(&room.id).unwrap();
                     do_bot_npcs_actions(room, bot_action_elapsed, spatial_indexes);
                 }

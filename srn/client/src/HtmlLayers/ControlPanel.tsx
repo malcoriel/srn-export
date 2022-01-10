@@ -15,7 +15,7 @@ import NetState, { useNSForceChange } from '../NetState';
 import { makePortraitPath } from './StartMenu';
 import { findObjectById, getObjectPosition, Ship } from '../world';
 import { NotificationPanel } from './NotifcationPanel';
-import { NotificationAction } from '../../../world/pkg';
+import { GameState, NotificationAction } from '../../../world/pkg';
 import { PlayerActionsBar } from './PlayerActionsBar';
 import { findMyPlayer, findMyShip } from '../ClientStateIndexing';
 
@@ -42,9 +42,40 @@ const HpDisplay = ({ myShip }: { myShip: Ship }) => {
   );
 };
 
+function shouldUpdateByHealth(prev: GameState, next: GameState) {
+  const myShipOld = findMyShip(prev);
+  const myShipNew = findMyShip(next);
+  if (myShipOld && !myShipNew) {
+    return true;
+  }
+  if (!myShipOld && myShipNew) {
+    return true;
+  }
+  if (!myShipOld && !myShipNew) {
+    return false;
+  }
+  if (myShipOld && myShipNew) {
+    return myShipOld.health.current !== myShipNew.health.current;
+  }
+  return false;
+}
+
+function shouldUpdateByMoney(prev: GameState, next: GameState): boolean {
+  const myPlayerPrev = findMyPlayer(prev);
+  const myPlayerNext = findMyPlayer(next);
+  if (myPlayerPrev && myPlayerNext) {
+    return myPlayerPrev.money !== myPlayerNext.money;
+  }
+  if (!myPlayerPrev && !myPlayerNext) {
+    return false;
+  }
+  return true;
+}
+
 const MoneyAndHp = () => {
-  useNSForceChange('MoneyAndHp');
-  const ns = NetState.get();
+  const ns = useNSForceChange('MoneyAndHp', false, (prev, next) => {
+    return shouldUpdateByHealth(prev, next) || shouldUpdateByMoney(prev, next);
+  });
   if (!ns) {
     return null;
   }
@@ -64,8 +95,14 @@ const MoneyAndHp = () => {
 };
 
 const Notifications = () => {
-  useNSForceChange('MoneyAndHp');
-  const ns = NetState.get();
+  const ns = useNSForceChange('Notifications', false, (prev, next) => {
+    const myPlayerPrev = findMyPlayer(prev);
+    const myPlayerNext = findMyPlayer(next);
+    return (
+      JSON.stringify(myPlayerPrev?.notifications) !==
+      JSON.stringify(myPlayerNext?.notifications)
+    );
+  });
   if (!ns) {
     return null;
   }
