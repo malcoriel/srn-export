@@ -15,6 +15,7 @@ pub struct Sampler {
     labels: Vec<String>,
     marks: HashMap<Uuid, (u32, DateTime<Local>)>,
     empty: bool,
+    initial_budget: i32,
     pub budget: i32,
 }
 
@@ -34,6 +35,7 @@ impl Sampler {
             buckets,
             marks: HashMap::with_capacity(ENTRY_CAPACITY),
             empty: false,
+            initial_budget: 0
         }
     }
 
@@ -44,6 +46,7 @@ impl Sampler {
             buckets: HashMap::new(),
             marks: HashMap::with_capacity(ENTRY_CAPACITY),
             empty: true,
+            initial_budget: 0
         }
     }
 
@@ -137,10 +140,28 @@ impl Sampler {
                 if top_level {
                     self.budget -= (diff / 1000.0) as i32;
                 }
+                if self.budget <= 0 {
+                    self.try_finalize_budget();
+                }
                 return self.budget;
             }
         }
         return res;
+    }
+
+    pub fn init_budget(&mut self, value: i32) {
+        self.add(SamplerMarks::FrameBudgetTicks as u32, (value * 1000) as u64);
+        self.budget = value;
+        self.initial_budget = value;
+    }
+
+    pub fn try_finalize_budget(&mut self) {
+        if self.initial_budget == 0 {
+            return;
+        }
+        let idle = (self.budget as f64) / (self.initial_budget as f64);
+        self.add(SamplerMarks::FrameIdlePct as u32, (idle * 100.0 * 1000.0) as u64);
+        self.initial_budget = 0;
     }
 
     pub fn measure<T, F>(&mut self, target_fn: &F, label_idx: u32) -> T
@@ -274,7 +295,9 @@ pub enum SamplerMarks {
     UpdateBots = 41,
     UpdateBotsPlayers = 42,
     UpdateBotsNPCs = 43,
-    UpdatePlayerActions = 44
+    UpdatePlayerActions = 44,
+    FrameIdlePct = 45,
+    FrameBudgetTicks = 46,
 }
 
 impl Display for SamplerMarks {

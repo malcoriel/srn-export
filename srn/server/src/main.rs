@@ -186,7 +186,7 @@ lazy_static! {
     };
 }
 
-const DEFAULT_SLEEP_MS: u64 = 1;
+const DEFAULT_SLEEP_MS: u64 = 2;
 const BROADCAST_SLEEP_MS: u64 = 500;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
@@ -389,7 +389,7 @@ fn main_thread() {
             over_budget_frame = 0;
             shortcut_frame = 0;
         }
-        sampler.budget = FRAME_BUDGET_TICKS;
+        sampler.init_budget(FRAME_BUDGET_TICKS);
         let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
         let locks_id = sampler.start(SamplerMarks::Locks as u32);
         let mut cont = STATE.write().unwrap();
@@ -514,12 +514,14 @@ fn main_thread() {
             }
         }
 
-        if sampler.budget < 0 {
+        if sampler.budget <= 0 {
             over_budget_frame += 1;
             log!(format!("Frame over budget by {}µs", -sampler.budget));
         }
 
         let sleep_remaining = sampler.budget.max(0);
+        sampler.try_finalize_budget();
+
         if sleep_remaining > MIN_SLEEP_TICKS {
             thread::sleep(Duration::from_micros(sleep_remaining as u64));
         }
