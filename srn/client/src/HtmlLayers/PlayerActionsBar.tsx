@@ -73,13 +73,13 @@ type InteractorIds = {
 };
 export const PlayerActionsBar: React.FC = () => {
   const ns = useNSForceChange('PlayerActionsBar', false, (prev, next) => {
-    const myPlayerPrev = findMyPlayer(prev);
+    // const myPlayerPrev = findMyPlayer(prev);
     const myShipPrev = findMyShip(prev);
-    const myPlayerNext = findMyPlayer(next);
+    // const myPlayerNext = findMyPlayer(next);
     const myShipNext = findMyShip(next);
     return (
-      JSON.stringify(myPlayerPrev) !== JSON.stringify(myPlayerNext) &&
-      JSON.stringify(myShipPrev) !== JSON.stringify(myShipNext)
+      JSON.stringify(myShipPrev?.abilities) !==
+      JSON.stringify(myShipNext?.abilities)
     );
   });
   const { neutralId, hostileId } = useActiveInteractors();
