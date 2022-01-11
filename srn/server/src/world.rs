@@ -222,6 +222,13 @@ impl Planet {
             tags: Default::default(),
         }
     }
+
+    pub fn get_position(&self) -> Vec2f64 {
+        return Vec2f64 {
+            x: self.x,
+            y: self.y
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

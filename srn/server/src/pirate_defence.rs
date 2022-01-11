@@ -117,6 +117,9 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
         if let Some(loc_sp_idx) = spatial_indexes.values.get(&ship_loc.location_idx) {
             let my_ship = &state.locations[ship_loc.location_idx].ships[ship_loc.ship_idx];
             let valid_targets = loc_sp_idx.rad_search(&my_ship.get_position(), SHOOT_DEFAULT_DISTANCE);
+            let mut all_acts = vec![];
+
+
             let foe_ships = valid_targets.iter().filter_map(|sp| {
                 match sp {
                     ObjectIndexSpecifier::Ship { idx } => {
@@ -135,7 +138,6 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
                 }
             }).collect::<Vec<_>>();
             if let Some(first) = foe_ships.first() {
-                let mut all_acts = vec![];
                 for turret_ab in my_ship.abilities.iter().filter(|a| matches!(a, Ability::Shoot { .. })) {
                     if turret_ab.get_current_cooldown() == 0 {
                         let act = PlayerActionRust::LongActionStart {
@@ -155,9 +157,12 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
                         all_acts.push(BotAct::Act(act));
                     }
                 }
-
-                return (bot, all_acts)
             }
+            let def_planet = &state.locations[0].planets[0];
+            if my_ship.get_position().euclidean_distance(&def_planet.get_position()) > 10.0 {
+                all_acts.push(BotAct::Act(PlayerActionRust::Navigate { target: def_planet.get_position()}));
+            }
+            return (bot, all_acts)
         }
     }
 

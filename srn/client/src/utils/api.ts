@@ -138,7 +138,7 @@ export const api = {
         const rooms = await api.getRoomsList();
         return !!rooms.find((r) => r.id === roomId);
       },
-      { interval: 500, timeout: 2000 }
+      { interval: 500, timeout: 5000 }
     );
   },
 
