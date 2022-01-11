@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 0.8.0 (2022-01-12)
+### New
+* Added a bot in pirate defence mode that can follow the planet and shoot the pirates.
+* Added earning money for killing pirates in pirate defence
+
+### Fixes
+* Fixed broken landing on planets in cargo rush mode
+* Fixed broken tutorial dialogues
+* Fixed various annoying browser errors
+* Fixed a bug where minimap object positioning was incorrect after window resize
+* Made minimap smaller
+* Fixed amount of bots in cargo rush mode
+* Optimized performance of the client code added in 0.7.x
+
 ## Version 0.7.10 (2021-12-10)
 ### New
 * Added actions bar for more complex ship & player actions

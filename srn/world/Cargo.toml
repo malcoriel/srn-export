@@ -1,6 +1,6 @@
 [package]
 name = "world"
-version = "0.7.10"
+version = "0.8.0"
 authors = [ "Valeriy Kuzmin <malcoriel@gmail.com>" ]
 edition = "2018"
 
@@ -48,12 +48,11 @@ serde-wasm-bindgen = "0.3.1"
   version = "0.4.5"
   optional = true
 
-[dependencies.rand]
-version = "0.6.5"
-features = [ "wasm-bindgen" ]
+  [dependencies.rand]
+  version = "0.6.5"
+  features = [ "wasm-bindgen" ]
 
-
-[dependencies.chrono]
+  [dependencies.chrono]
   version = "0.4.19"
   features = [ "wasmbind" ]
 
