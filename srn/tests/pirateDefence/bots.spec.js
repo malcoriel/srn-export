@@ -34,25 +34,15 @@ describe('pirate defence bots behavior', () => {
   fit('bots follow the planet', () => {
     let room = wasm.createRoom({ mode: 'PirateDefence' });
     const firstBotPlayerId = room.bots[0].id;
-    const oldShipPos = findObjectPosition(
-      getShipByPlayerId(room.state, firstBotPlayerId)
-    );
-    const oldPlanetPos = findObjectPosition(getLoc0(room.state).planets[0]);
     room = updateRoom(room, 50 * 1000);
     const newShipPos = findObjectPosition(
       getShipByPlayerId(room.state, firstBotPlayerId)
     );
-    const newPlanetPos = findObjectPosition(getLoc0(room.state).planets[0]);
+    const planet = getLoc0(room.state).planets[0];
+    const newPlanetPos = findObjectPosition(planet);
     const distance = Vector.fromIVector(newShipPos).euDistTo(
       Vector.fromIVector(newPlanetPos)
     );
-    console.log({
-      distance,
-      oldShipPos,
-      newShipPos,
-      oldPlanetPos,
-      newPlanetPos,
-    });
-    expect(distance).toBeLessThan(15);
+    expect(distance).toBeLessThan(planet.radius * 2);
   });
 });

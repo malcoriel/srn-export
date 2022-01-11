@@ -2383,7 +2383,7 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
         let bots_mark = sampler.start(SamplerMarks::UpdateBots as u32);
         let bot_players_mark = sampler.start(SamplerMarks::UpdateBotsPlayers as u32);
         let mut d_states_clone = room.dialogue_states.clone();
-        do_bot_players_actions(&mut room, &mut d_states_clone, &d_table, bot_action_elapsed as i64, &spatial_indexes);
+        do_bot_players_actions(&mut room, &mut d_states_clone, &d_table, bot_action_elapsed as i64, &spatial_indexes, prng);
         room.dialogue_states = d_states_clone;
         sampler.end(bot_players_mark);
         let npcs_mark = sampler.start(SamplerMarks::UpdateBotsNPCs as u32);

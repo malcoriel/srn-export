@@ -39,13 +39,14 @@ pub fn bot_act(
     bot_elapsed_micro: i64,
     d_table: &DialogueTable,
     bot_d_states: &DialogueStatesForPlayer,
-    spatial_indexes: &SpatialIndexes
+    spatial_indexes: &SpatialIndexes,
+    prng: &mut SmallRng
 ) -> (Bot, Vec<BotAct>) {
     if bot.traits.iter().any(|t| matches!(t, AiTrait::CargoRushHauler {..})) {
         return bot_cargo_rush_hauler_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states);
     }
     if bot.traits.iter().any(|t| matches!(t, AiTrait::PirateDefencePlanetDefender {..})) {
-        return pirate_defence::bot_planet_defender_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states, spatial_indexes);
+        return pirate_defence::bot_planet_defender_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states, spatial_indexes, prng);
     }
     return (bot, vec![]);
 }
@@ -186,7 +187,8 @@ pub fn do_bot_players_actions(
     d_states: &mut DialogueStates,
     d_table: &DialogueTable,
     bot_elapsed_micro: i64,
-    spatial_indexes: &SpatialIndexes
+    spatial_indexes: &SpatialIndexes,
+    prng: &mut SmallRng
 ) {
     let mut ship_updates: HashMap<Uuid, Vec<PlayerActionRust>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
@@ -202,7 +204,8 @@ pub fn do_bot_players_actions(
             bot_elapsed_micro,
             &d_table,
             &bot_d_states,
-            spatial_indexes
+            spatial_indexes,
+            prng,
         );
         *orig_bot = bot;
 

@@ -429,7 +429,7 @@ fn main_thread() {
                 let bot_players_mark = sampler.start(SamplerMarks::BotsPlayers as u32);
                 for room in cont.rooms.values.iter_mut() {
                     let spatial_indexes = spatial_indexes_by_room_id.get(&room.id).unwrap();
-                    do_bot_players_actions(room, &mut **d_states, &d_table, bot_action_elapsed, spatial_indexes);
+                    do_bot_players_actions(room, &mut **d_states, &d_table, bot_action_elapsed, spatial_indexes, &mut prng);
                 }
                 sampler.end(bot_players_mark);
                 let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);

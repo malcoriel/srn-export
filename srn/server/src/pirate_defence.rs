@@ -1,5 +1,6 @@
 use std::f64::consts::PI;
 use itertools::Itertools;
+use rand::prelude::SmallRng;
 
 use rand::Rng;
 
@@ -109,7 +110,7 @@ pub fn on_create_room(room: &mut Room) {
     add_bot(room, new_bot(Some(vec![AiTrait::PirateDefencePlanetDefender])));
 }
 
-pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: i64, _d_table: &DialogueTable, _bot_d_states: &DialogueStatesForPlayer, spatial_indexes: &SpatialIndexes) -> (Bot, Vec<BotAct>) {
+pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: i64, _d_table: &DialogueTable, _bot_d_states: &DialogueStatesForPlayer, spatial_indexes: &SpatialIndexes, prng: &mut SmallRng) -> (Bot, Vec<BotAct>) {
     let bot_id = bot.id;
     let nothing = (bot.clone(), vec![]);
     let ship_loc = find_my_ship_index(state, bot.id);
@@ -159,8 +160,11 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
                 }
             }
             let def_planet = &state.locations[0].planets[0];
-            if my_ship.get_position().euclidean_distance(&def_planet.get_position()) > 10.0 {
-                all_acts.push(BotAct::Act(PlayerActionRust::Navigate { target: def_planet.get_position()}));
+            let rad = def_planet.radius;
+            if my_ship.get_position().euclidean_distance(&def_planet.get_position()) > rad * 1.5 && my_ship.trajectory.len() == 0 {
+                let random_shift_x = prng.gen_range(-rad, rad);
+                let random_shift_y = prng.gen_range(-rad, rad);
+                all_acts.push(BotAct::Act(PlayerActionRust::Navigate { target: def_planet.get_position().add(&Vec2f64 {x: random_shift_x, y: random_shift_y})}));
             }
             return (bot, all_acts)
         }
