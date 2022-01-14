@@ -138,6 +138,9 @@ mod tutorial;
 #[path = "../../server/src/bots.rs"]
 mod bots;
 
+#[path = "../../server/src/fof.rs"]
+mod fof;
+
 #[path = "../../server/src/dialogue.rs"]
 mod dialogue;
 
@@ -244,7 +247,7 @@ use crate::api_struct::Room;
 use crate::dialogue::{DialogueTable, parse_dialogue_script_from_file};
 use crate::perf::Sampler;
 use crate::system_gen::seed_state;
-use crate::world::GameMode;
+use crate::world::{GameMode, GameState};
 
 lazy_static! {
     pub static ref global_sampler: MutStatic<perf::Sampler> = {
@@ -452,3 +455,11 @@ pub fn set_enable_perf(value: bool) {
     *ENABLE_PERF_HACK_INIT.write().unwrap() = value;
     log!(format!("ENABLE_PERF was set to {}", value))
 }
+
+#[wasm_bindgen]
+pub fn friend_or_foe_p2p(state: JsValue, player_id_a: JsValue, player_id_b: JsValue) -> Result<JsValue, JsValue> {
+    let mut state: GameState = serde_wasm_bindgen::from_value(state)?;
+    let res = fof::friend_or_foe_p2p(&state, serde_wasm_bindgen::from_value::<Uuid>(player_id_a)?, serde_wasm_bindgen::from_value::<Uuid>(player_id_b)?);
+    Ok(serde_wasm_bindgen::to_value(&res)?)
+}
+

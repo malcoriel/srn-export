@@ -31,6 +31,9 @@ export const wasm = {
   updateRoomFull: () => {
     throw new Error(notLoadedError);
   },
+  friendOrFoeP2p: () => {
+    throw new Error(notLoadedError);
+  },
 };
 const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
   const result = JSON.parse(fn(JSON.stringify(args), ...extraArgs));
@@ -82,6 +85,7 @@ export const loadWasm = timerify(async function loadWasm() {
   wasm.createRoom = wasmFunctions.create_room;
   wasm.updateRoom = wasmFunctions.update_room;
   wasm.updateRoomFull = wasmFunctions.update_room_full;
+  wasm.friendOrFoeP2p = wasmFunctions.friend_or_foe_p2p;
   wasm.flushSamplerStats = wasmFunctions.flush_sampler_stats;
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.resources = resources;

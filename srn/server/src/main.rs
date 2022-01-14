@@ -123,6 +123,7 @@ mod dialogue;
 mod dialogue_dto;
 mod dialogue_test;
 mod events;
+mod fof;
 mod indexing;
 mod inventory;
 mod inventory_test;

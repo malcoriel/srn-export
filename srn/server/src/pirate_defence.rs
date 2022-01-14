@@ -3,6 +3,7 @@ use itertools::Itertools;
 use rand::prelude::SmallRng;
 
 use rand::Rng;
+use uuid::Uuid;
 
 use crate::api_struct::{Bot, new_bot, Room};
 use crate::bots::{add_bot, BotAct};
@@ -11,6 +12,7 @@ use crate::abilities::{Ability, SHOOT_DEFAULT_DISTANCE};
 use crate::api_struct::AiTrait;
 use crate::combat::ShootTarget;
 use crate::dialogue::DialogueStatesForPlayer;
+use crate::fof::FriendOrFoe;
 use crate::vec2::Vec2f64;
 use crate::world::{fire_saved_event, GameEvent, GameOver, GameState, ObjectProperty, Planet, Ship, ShipTemplate, SpatialIndexes, TimeMarks};
 use crate::get_prng;
@@ -108,6 +110,7 @@ pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
 
 pub fn on_create_room(room: &mut Room) {
     add_bot(room, new_bot(Some(vec![AiTrait::PirateDefencePlanetDefender])));
+    add_bot(room, new_bot(Some(vec![AiTrait::PirateDefencePlanetDefender])));
 }
 
 pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: i64, _d_table: &DialogueTable, _bot_d_states: &DialogueStatesForPlayer, spatial_indexes: &SpatialIndexes, prng: &mut SmallRng) -> (Bot, Vec<BotAct>) {
@@ -171,4 +174,8 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
     }
 
     return nothing;
+}
+
+pub fn friend_or_foe_p2p(state: &GameState, p1: Uuid, p2: Uuid) -> FriendOrFoe {
+    return FriendOrFoe::Friend;
 }

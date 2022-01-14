@@ -31,7 +31,7 @@ describe('pirate defence bots behavior', () => {
     room = updateRoom(room, 30 * 1000);
     expect(room.state.players[0].money).toBeGreaterThan(0);
   });
-  fit('bots follow the planet', () => {
+  it('bots follow the planet', () => {
     let room = wasm.createRoom({ mode: 'PirateDefence' });
     const firstBotPlayerId = room.bots[0].id;
     room = updateRoom(room, 50 * 1000);
