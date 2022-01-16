@@ -1,11 +1,7 @@
+// noinspection ES6CheckImport
 import { getBindgen, wasm_bindgen as init } from '../world/pkg-nomodule/world';
 import _ from 'lodash';
 import { timerifySync } from './perf';
-
-const fs = require('fs-extra');
-const notLoadedError = 'wasm did not load, call await loadWasm() first';
-const { timerify, flushPerfStats } = require('./perf');
-
 // pretty hacky solution of importing specially-cooked client code here, but workable.
 // technically, it should be inside pkg, and code-generated (or provided together with it, rather)
 // or even just be part of wasm itself, as it will eventually become to be fast enough,
@@ -14,6 +10,10 @@ import {
   buildClientStateIndexes,
   findObjectPosition,
 } from '../client/src/ClientStateIndexing';
+
+const fs = require('fs-extra');
+const notLoadedError = 'wasm did not load, call await loadWasm() first';
+const { timerify, flushPerfStats } = require('./perf');
 
 export const wasm = {
   updateWorld: () => {
@@ -186,3 +186,43 @@ export const getShipByPlayerId = (world, playerId) => {
 };
 
 export { findObjectPosition };
+export const objSpecShip = (id) => ({
+  tag: 'Ship',
+  id,
+});
+export const objSpecPlanet = (id) => ({
+  tag: 'Planet',
+  id,
+});
+export const fofActorPlayer = (id) => ({
+  tag: 'Player',
+  id,
+});
+export const fofActorShip = (id) => ({
+  tag: 'Object',
+  spec: objSpecShip(id),
+});
+export const fofActorPlanet = (id) => ({
+  tag: 'Object',
+  spec: objSpecPlanet(id),
+});
+export const findAPirateShip = (loc) =>
+  loc.ships.find((s) => {
+    return _.some(s.properties, (p) => p.tag === 'PirateShip');
+  });
+export const updatePirateDefenceUntilPiratesAppear = (
+  room,
+  intervalMs = 3000,
+  timeoutMs = 30_000
+) => {
+  let currRoom = room;
+  let timePassed = 0;
+  while (timePassed <= timeoutMs) {
+    timePassed += intervalMs;
+    currRoom = updateRoom(currRoom, intervalMs);
+    if (findAPirateShip(getLoc0(currRoom.state))) {
+      return currRoom;
+    }
+  }
+  throw new Error('Timeout updating room until pirates appear');
+};
