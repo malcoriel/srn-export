@@ -21,6 +21,7 @@ describe('pirate defence bots behavior', () => {
   it('npcs damage the planets after some time', async () => {
     let room = wasm.createRoom({ mode: 'PirateDefence' });
     room.bots = [];
+    room.state.locations[0].ships = [];
     room = updateRoom(room, 30 * 1000);
     const planet = getLoc0(room.state).planets[0];
     expect(planet.health.current).toBeLessThan(planet.health.max);
@@ -31,6 +32,7 @@ describe('pirate defence bots behavior', () => {
     room = updateRoom(room, 30 * 1000);
     expect(room.state.players[0].money).toBeGreaterThan(0);
   });
+
   it('bots follow the planet', () => {
     let room = wasm.createRoom({ mode: 'PirateDefence' });
     const firstBotPlayerId = room.bots[0].id;

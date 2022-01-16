@@ -7,12 +7,13 @@ use uuid::Uuid;
 
 use crate::api_struct::{Bot, new_bot, Room};
 use crate::bots::{add_bot, BotAct};
-use crate::{DialogueTable, fire_event, indexing, world};
+use crate::{DialogueTable, fire_event, fof, indexing, world};
 use crate::abilities::{Ability, SHOOT_DEFAULT_DISTANCE};
 use crate::api_struct::AiTrait;
 use crate::combat::ShootTarget;
 use crate::dialogue::DialogueStatesForPlayer;
-use crate::fof::FriendOrFoe;
+use crate::fof::{FofActor, FriendOrFoe, resolve_player_id};
+use crate::fof::FriendOrFoe::Friend;
 use crate::vec2::Vec2f64;
 use crate::world::{fire_saved_event, GameEvent, GameOver, GameState, ObjectProperty, Planet, Ship, ShipTemplate, SpatialIndexes, TimeMarks};
 use crate::get_prng;
@@ -176,6 +177,31 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
     return nothing;
 }
 
-pub fn friend_or_foe_p2p(state: &GameState, p1: Uuid, p2: Uuid) -> FriendOrFoe {
-    return FriendOrFoe::Friend;
+pub fn friend_or_foe_p2o(state: &GameState, player_id: Uuid, object_b: ObjectSpecifier) -> FriendOrFoe {
+    FriendOrFoe::Foe
+}
+
+pub fn friend_or_foe(state: &GameState, actor_a: FofActor, actor_b: FofActor) -> FriendOrFoe {
+    // turn ships into players
+    let player_a = fof::resolve_player_id(&actor_a, state);
+    let player_b = fof::resolve_player_id(&actor_b, state);
+    // all players & their ships are friendly
+    if player_a.is_some() && player_b.is_some() {
+        return FriendOrFoe::Friend;
+    }
+
+    // all other stuff is neutral to each other
+    if player_a.is_none() && player_b.is_none() {
+
+    }
+    // p2o or o2p -> p2o
+    let mut player_a = player_a;
+    let mut player_b = player_b;
+    if player_b.is_some() {
+        return friend_or_foe_p2o(state,player_b.unwrap(), actor_a.get_object());
+    } else if player_a.is_some() {
+        return friend_or_foe_p2o(state,player_a.unwrap(), actor_b.get_object());
+    } else {
+        panic!("pirate_defence::friend_or_foe - Impossible combination of data")
+    }
 }

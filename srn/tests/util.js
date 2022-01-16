@@ -31,7 +31,7 @@ export const wasm = {
   updateRoomFull: () => {
     throw new Error(notLoadedError);
   },
-  friendOrFoeP2p: () => {
+  friendOrFoe: () => {
     throw new Error(notLoadedError);
   },
 };
@@ -85,7 +85,7 @@ export const loadWasm = timerify(async function loadWasm() {
   wasm.createRoom = wasmFunctions.create_room;
   wasm.updateRoom = wasmFunctions.update_room;
   wasm.updateRoomFull = wasmFunctions.update_room_full;
-  wasm.friendOrFoeP2p = wasmFunctions.friend_or_foe_p2p;
+  wasm.friendOrFoe = wasmFunctions.friend_or_foe;
   wasm.flushSamplerStats = wasmFunctions.flush_sampler_stats;
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.resources = resources;

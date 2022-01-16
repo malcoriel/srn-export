@@ -184,9 +184,10 @@ fn get_random_planet<'a>(
 pub enum ObjectProperty {
     Unknown,
     UnlandablePlanet,
+    PirateShip,
     MoneyOnKill {
         amount: i32
-    }
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -226,8 +227,8 @@ impl Planet {
     pub fn get_position(&self) -> Vec2f64 {
         return Vec2f64 {
             x: self.x,
-            y: self.y
-        }
+            y: self.y,
+        };
     }
 }
 
@@ -436,7 +437,7 @@ impl Ship {
             long_actions: vec![],
             npc: None,
             name: None,
-            properties: Default::default()
+            properties: Default::default(),
         }
     }
 }
@@ -719,7 +720,8 @@ impl GameState {
             events: Default::default(),
             player_actions: Default::default(),
             processed_events: vec![],
-            processed_player_actions: vec![]        }
+            processed_player_actions: vec![],
+        }
     }
 }
 
@@ -1016,7 +1018,6 @@ fn update_player_actions(state: &mut GameState, prng: &mut SmallRng) {
         processed_actions.push(processed_action);
     }
     state.processed_player_actions.append(&mut processed_actions);
-
 }
 
 fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool, d_states: &mut DialogueStates, d_table: &DialogueTable) {
@@ -1543,7 +1544,7 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
         GameEvent::ShipDocked { .. } => {}
         GameEvent::DialogueTriggerRequest { .. } => {}
         GameEvent::PirateSpawn { .. } => {}
-        GameEvent::ShipDied { .. } => { }
+        GameEvent::ShipDied { .. } => {}
         _ => {
             fire_event(event);
         }
@@ -1778,7 +1779,6 @@ pub struct ShipTemplate {
 
 impl ShipTemplate {
     pub fn pirate(at: Option<Vec2f64>) -> ShipTemplate {
-        let prop = ObjectProperty::MoneyOnKill { amount : 100};
         ShipTemplate {
             at,
             npc_traits: Some(vec![AiTrait::ImmediatePlanetLand]),
@@ -1791,7 +1791,7 @@ impl ShipTemplate {
                 current_move_speed: 0.0,
                 current_turn_speed: 0.0,
             }),
-            properties: Some(HashSet::from_iter(vec![prop]))
+            properties: Some(HashSet::from_iter(vec![ObjectProperty::MoneyOnKill { amount: 100 }, ObjectProperty::PirateShip])),
         }
     }
 
@@ -1808,7 +1808,7 @@ impl ShipTemplate {
                 current_move_speed: 0.0,
                 current_turn_speed: 0.0,
             }),
-            properties: None
+            properties: None,
         }
     }
 }
@@ -2328,9 +2328,7 @@ pub fn make_room(mode: &GameMode, room_id: Uuid) -> (Uuid, Room) {
             cargo_rush::on_create_room(&mut room);
         }
         GameMode::Tutorial => {}
-        GameMode::Sandbox => {
-
-        }
+        GameMode::Sandbox => {}
         GameMode::PirateDefence => {
             pirate_defence::on_create_room(&mut room);
         }

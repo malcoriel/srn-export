@@ -237,7 +237,7 @@ pub fn parse_state(serialized_args: &str) -> String {
     return serde_json::to_string(&args).unwrap_or(DEFAULT_ERR.to_string());
 }
 
-use crate::indexing::find_my_ship_index;
+use crate::indexing::{find_my_ship_index, ObjectSpecifier};
 use mut_static::MutStatic;
 use std::{env, mem};
 use std::ops::DerefMut;
@@ -293,6 +293,7 @@ pub struct UpdateWorldArgs {
 }
 
 use wasm_bindgen::{JsCast};
+use crate::fof::FofActor;
 
 #[wasm_bindgen]
 pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
@@ -457,9 +458,10 @@ pub fn set_enable_perf(value: bool) {
 }
 
 #[wasm_bindgen]
-pub fn friend_or_foe_p2p(state: JsValue, player_id_a: JsValue, player_id_b: JsValue) -> Result<JsValue, JsValue> {
+pub fn friend_or_foe(state: JsValue, actor_a: JsValue, actor_b: JsValue) -> Result<JsValue, JsValue> {
     let mut state: GameState = serde_wasm_bindgen::from_value(state)?;
-    let res = fof::friend_or_foe_p2p(&state, serde_wasm_bindgen::from_value::<Uuid>(player_id_a)?, serde_wasm_bindgen::from_value::<Uuid>(player_id_b)?);
+    let res = fof::friend_or_foe(&state, serde_wasm_bindgen::from_value::<FofActor>(actor_a)?, serde_wasm_bindgen::from_value::<FofActor>(actor_b)?);
     Ok(serde_wasm_bindgen::to_value(&res)?)
 }
+
 
