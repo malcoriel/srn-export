@@ -7,8 +7,8 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
-use crate::{fof, FofActor};
-use crate::fof::FriendOrFoe;
+use crate::{fof};
+use crate::fof::{FofActor, FriendOrFoe};
 
 // pub struct DistPair {
 //     pub from: ObjectSpecifier,

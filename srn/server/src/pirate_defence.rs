@@ -204,9 +204,6 @@ pub fn friend_or_foe(state: &GameState, actor_a: FofActor, actor_b: FofActor) ->
     if player_a.is_none() && player_b.is_none() {
         return FriendOrFoe::Neutral;
     }
-    // p2o or o2p -> p2o
-    let mut player_a = player_a;
-    let mut player_b = player_b;
     if player_b.is_some() {
         return friend_or_foe_p2o(state,player_b.unwrap(), actor_a.get_object());
     } else if player_a.is_some() {
