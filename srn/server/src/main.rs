@@ -115,7 +115,6 @@ mod abilities;
 mod api;
 mod api_struct;
 mod autofocus;
-mod autofocus_test;
 mod bots;
 mod chat;
 mod combat;
