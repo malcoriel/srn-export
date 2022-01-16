@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.8.1 (2022-01-12)
+### New
+* 2 bots in pirate mode by default
+
+### Fixes
+* Friendly bot ships in pirate defence mode are no longer auto-focusable for attack purposes.
+
 ## Version 0.8.0 (2022-01-12)
 ### New
 * Added a bot in pirate defence mode that can follow the planet and shoot the pirates.
