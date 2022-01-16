@@ -77,7 +77,7 @@ pub fn apply_player_action(
         PlayerActionRust::DockNavigate { target } => {
             let mut ship = old_ship.clone();
             if let Some(planet) = indexing::find_planet(state, &target) {
-                if planet.tags.contains(&ObjectProperty::UnlandablePlanet) && !ship.abilities.contains(&Ability::BlowUpOnLand) {
+                if planet.properties.contains(&ObjectProperty::UnlandablePlanet) && !ship.abilities.contains(&Ability::BlowUpOnLand) {
                     warn!(format!("Attempt to land on unlandable planet {} by ship {}, ignoring.", planet.id, ship.id));
                     None
                 }

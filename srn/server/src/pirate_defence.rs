@@ -177,8 +177,18 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
     return nothing;
 }
 
-pub fn friend_or_foe_p2o(state: &GameState, player_id: Uuid, object_b: ObjectSpecifier) -> FriendOrFoe {
-    FriendOrFoe::Foe
+pub fn friend_or_foe_p2o(_state: &GameState, _player_id: Uuid, object_b: ObjectSpecifier) -> FriendOrFoe {
+    match object_b {
+        ObjectSpecifier::Planet { .. } => {
+            // all players friendly by default, although I've made a property PirateDefencePlayersHomePlanet for distinguishing
+            FriendOrFoe::Friend
+        },
+        ObjectSpecifier::Ship { .. } => {
+            // if we are here, then it's not a player's ship, therefore hostile
+            FriendOrFoe::Foe
+        },
+        _ => FriendOrFoe::Neutral
+    }
 }
 
 pub fn friend_or_foe(state: &GameState, actor_a: FofActor, actor_b: FofActor) -> FriendOrFoe {
@@ -192,7 +202,7 @@ pub fn friend_or_foe(state: &GameState, actor_a: FofActor, actor_b: FofActor) ->
 
     // all other stuff is neutral to each other
     if player_a.is_none() && player_b.is_none() {
-
+        return FriendOrFoe::Neutral;
     }
     // p2o or o2p -> p2o
     let mut player_a = player_a;

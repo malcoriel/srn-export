@@ -184,6 +184,7 @@ fn get_random_planet<'a>(
 pub enum ObjectProperty {
     Unknown,
     UnlandablePlanet,
+    PirateDefencePlayersHomePlanet,
     PirateShip,
     MoneyOnKill {
         amount: i32
@@ -203,7 +204,7 @@ pub struct Planet {
     pub anchor_tier: u32,
     pub color: String,
     pub health: Option<Health>,
-    pub tags: HashSet<ObjectProperty>,
+    pub properties: HashSet<ObjectProperty>,
 }
 
 impl Planet {
@@ -220,7 +221,7 @@ impl Planet {
             anchor_tier: 1,
             color: "".to_string(),
             health: None,
-            tags: Default::default(),
+            properties: Default::default(),
         }
     }
 

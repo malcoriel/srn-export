@@ -189,7 +189,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor_tier: 2,
                             color: gen_color(&mut prng).to_string(),
                             health: None,
-                            tags: Default::default()
+                            properties: Default::default()
                         })
                     }
                 } else {
@@ -293,7 +293,7 @@ pub fn gen_planet(
         anchor_tier: 1,
         color: gen_color(&mut prng).to_string(),
         health: None,
-        tags: Default::default()
+        properties: Default::default()
     }
 }
 
@@ -310,7 +310,7 @@ pub fn gen_planet_typed(p_type: PlanetType) -> Planet {
         anchor_tier: 0,
         color: get_planet_type_color(p_type),
         health: None,
-        tags: Default::default()
+        properties: Default::default()
     }
 }
 
@@ -362,13 +362,14 @@ fn assign_health_to_planets (planets: &mut Vec<Planet>, health: Health) {
     }
 }
 
-fn make_pirate_defence_state(seed: String) -> GameState {
+pub fn make_pirate_defence_state(seed: String) -> GameState {
     let mut gen_opts = GenStateOpts::default();
     gen_opts.max_planets_in_system = 1;
     gen_opts.max_satellites_for_planet = 0;
     let mut state = gen_state(seed, gen_opts);
     assign_health_to_planets(&mut state.locations[0].planets, Health::new(100.0));
-    state.locations[0].planets[0].tags.insert(ObjectProperty::UnlandablePlanet);
+    state.locations[0].planets[0].properties.insert(ObjectProperty::UnlandablePlanet);
+    state.locations[0].planets[0].properties.insert(ObjectProperty::PirateDefencePlayersHomePlanet);
     state.milliseconds_remaining = 5 * 1000 * 60;
     state.mode = GameMode::PirateDefence;
     state
@@ -409,7 +410,7 @@ fn make_tutorial_state() -> GameState {
             anchor_tier: 1,
             color: "#008FA9".to_string(),
             health: None,
-            tags: Default::default()
+            properties: Default::default()
         },
         Planet {
             id: new_id(),
@@ -423,7 +424,7 @@ fn make_tutorial_state() -> GameState {
             anchor_tier: 2,
             color: "#1D334A".to_string(),
             health: None,
-            tags: Default::default()
+            properties: Default::default()
         },
     ];
 

@@ -147,7 +147,7 @@ impl IBody for Planet {
     }
 
     fn get_tags(&self) -> HashSet<ObjectProperty> {
-        self.tags.clone()
+        self.properties.clone()
     }
 }
 
@@ -226,7 +226,7 @@ impl From<Box<dyn IBody>> for Planet {
             anchor_tier: val.get_anchor_tier(),
             color: val.get_color(),
             health: val.get_health(),
-            tags: val.get_tags()
+            properties: val.get_tags()
         }
     }
 }
