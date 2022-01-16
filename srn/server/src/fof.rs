@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{GameMode, GameState, pirate_defence};
 use crate::indexing::ObjectSpecifier;
 
-#[derive(Debug, Clone, TypescriptDefinition, TypeScriptify, Serialize, Deserialize)]
+#[derive(Debug, Clone, TypescriptDefinition, TypeScriptify, Serialize, Deserialize, PartialEq, Eq)]
 pub enum FriendOrFoe {
     Neutral,
     Friend,

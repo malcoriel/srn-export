@@ -7,6 +7,8 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
+use crate::{fof, FofActor};
+use crate::fof::FriendOrFoe;
 
 // pub struct DistPair {
 //     pub from: ObjectSpecifier,
@@ -145,21 +147,29 @@ pub fn update_autofocus_full(state: &mut GameState, spatial_indexes: &mut Spatia
             .values
             .entry(i)
             .or_insert(build_spatial_index(loc, i));
-        update_location_autofocus(loc, &spatial_index)
+        update_location_autofocus(state, i, &spatial_index)
     }
 }
 
-pub fn update_location_autofocus(loc: &mut Location, index: &SpatialIndex) {
-    if loc.planets.len() + loc.ships.len() + loc.minerals.len() + loc.containers.len() == 0 {
+pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &SpatialIndex) {
+    let loc_clone = state.locations[loc_idx].clone();
+    let loc_clone_ref = &loc_clone;
+    if loc_clone_ref.planets.len() + loc_clone_ref.ships.len() + loc_clone_ref.minerals.len() + loc_clone_ref.containers.len() == 0 {
         return;
     }
     let mut ship_mods_neutral = vec![];
     let mut ship_mods_hostile = vec![];
-    for i in 0..loc.ships.len() {
-        let ship = &loc.ships[i];
+    for i in 0..loc_clone_ref.ships.len() {
+        let current_ship = &loc_clone_ref.ships[i];
+        let current_ship_fof_actor = FofActor::Object {
+            spec: ObjectSpecifier::Ship {
+                id: current_ship.id
+            }
+        };
+
         let ship_pos = Vec2f64 {
-            x: ship.x,
-            y: ship.y,
+            x: current_ship.x,
+            y: current_ship.y,
         };
         let around_unfiltered = index.rad_search(&ship_pos, AUTOFOCUS_RADIUS);
         let mut around_neutral = vec![];
@@ -169,11 +179,10 @@ pub fn update_location_autofocus(loc: &mut Location, index: &SpatialIndex) {
             match sp {
                 ObjectIndexSpecifier::Ship { .. } => {
                     let should_pick_ship = {
-                        if let Some(osp) = object_index_into_object_id(&sp, loc) {
-                            match osp {
-                                ObjectSpecifier::Ship { id } => id != ship.id,
-                                _ => true,
-                            }
+                        if let Some(osp) = object_index_into_object_id(&sp, loc_clone_ref) {
+                            fof::friend_or_foe(state, current_ship_fof_actor.clone(), FofActor::Object {
+                                spec: osp
+                            }) == FriendOrFoe::Foe
                         } else {
                             // potentially impossible
                             false
@@ -189,9 +198,9 @@ pub fn update_location_autofocus(loc: &mut Location, index: &SpatialIndex) {
             };
         }
         let sorter = |a, b| {
-            let a_pos = get_position(&loc, a);
+            let a_pos = get_position(&loc_clone_ref, a);
             let a_dist = a_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
-            let b_pos = get_position(&loc, b);
+            let b_pos = get_position(&loc_clone_ref, b);
             let b_dist = b_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
             if !b_dist.is_finite() || !a_dist.is_finite() {
                 return Ordering::Equal;
@@ -202,27 +211,27 @@ pub fn update_location_autofocus(loc: &mut Location, index: &SpatialIndex) {
         around_hostile.sort_by(|a, b| sorter(a, b));
         ship_mods_neutral.push(
             (
-            around_neutral
+                around_neutral
                 .get(0)
-                .and_then(|ois| object_index_into_object_id(ois, &loc)),
+                .and_then(|ois| object_index_into_object_id(ois, &loc_clone_ref)),
                 i,
             )
         );
         ship_mods_hostile.push(
             (around_hostile
                 .get(0)
-                .and_then(|ois| object_index_into_object_id(ois, &loc)),
-                i
+                .and_then(|ois| object_index_into_object_id(ois, &loc_clone_ref)),
+             i
             )
         );
     }
     for (new_val, i) in ship_mods_neutral.into_iter() {
-        let ship = &mut loc.ships[i];
-        ship.auto_focus = new_val.clone();
+        let ship = &mut state.locations[loc_idx].ships[i];
+        ship.auto_focus = new_val;
     }
     for (new_val, i) in ship_mods_hostile.into_iter() {
-        let ship = &mut loc.ships[i];
-        ship.hostile_auto_focus = new_val.clone();
+        let ship = &mut state.locations[loc_idx].ships[i];
+        ship.hostile_auto_focus = new_val;
     }
 }
 

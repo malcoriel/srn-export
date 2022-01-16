@@ -1170,7 +1170,7 @@ pub fn update_location(
         sampler.end(respawn_id);
     }
     let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
-    autofocus::update_location_autofocus(&mut state.locations[location_idx], &spatial_index);
+    autofocus::update_location_autofocus(&mut state, location_idx, &spatial_index);
     sampler.end(autofocus_id);
 
     let long_act_ticks = sampler.start(SamplerMarks::UpdateTickLongActionsShips as u32);

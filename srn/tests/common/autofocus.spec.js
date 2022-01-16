@@ -19,6 +19,17 @@ describe('autofocus behavior', () => {
     expect(botShip1.hostile_auto_focus?.id).not.toEqual(botShip2.id);
   });
 
+  it('in pirate defence, pirate npc ships are in hostile autofocus of bot ships', async () => {
+    const room = updateRoom(wasm.createRoom({ mode: 'PirateDefence' }), 100);
+
+    const { state } = room;
+    const bot1 = room.bots[0].id;
+    const bot2 = room.bots[1].id;
+    const botShip1 = getShipByPlayerId(state, bot1);
+    const botShip2 = getShipByPlayerId(state, bot2);
+    expect(botShip1.hostile_auto_focus?.id).not.toEqual(botShip2.id);
+  });
+
   it('can autofocus closest planet in cargo rush mode', async () => {
     let room = wasm.createRoom({ mode: 'CargoRush' });
     const firstBotId = room.bots[0].id;
