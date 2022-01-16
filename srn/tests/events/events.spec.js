@@ -8,7 +8,6 @@ import {
   wasm,
 } from '../util';
 import * as uuid from 'uuid';
-import * as _ from 'lodash';
 
 describe('game events logic', () => {
   beforeAll(swapGlobals);

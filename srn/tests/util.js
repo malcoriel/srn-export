@@ -155,6 +155,7 @@ export const mockShip = (id) => ({
   local_effects: [],
   long_actions: [],
   turrets: [],
+  properties: [],
 });
 
 export function findFirstEvent(world, eventName) {
