@@ -15,7 +15,7 @@ use uuid::*;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::{world_events};
+use crate::{prng_id, world_events};
 use crate::DialogueTable;
 use crate::dialogue;
 use dialogue::{DialogueStates};
@@ -556,9 +556,9 @@ pub struct Container {
 }
 
 impl Container {
-    pub fn new() -> Self {
+    pub fn new(id: Uuid) -> Self {
         Container {
-            id: new_id(),
+            id,
             items: vec![],
             position: Default::default(),
             radius: Self::calc_radius(&vec![]),
@@ -575,7 +575,7 @@ impl Container {
     }
 
     pub fn random(prng: &mut SmallRng) -> Self {
-        let mut cont = Container::new();
+        let mut cont = Container::new(prng_id(prng));
         for _i in 0..prng.gen_range(1, 5) {
             cont.items.push(InventoryItem::random(prng))
         }
@@ -938,7 +938,7 @@ pub fn update_world(
                     .iter()
                     .map(|p| p.clone())
                     .collect::<Vec<_>>();
-                market::shake_market(planets, &mut wares, &mut prices);
+                market::shake_market(planets, &mut wares, &mut prices, prng);
                 state.market = Market {
                     wares,
                     prices,

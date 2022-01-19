@@ -230,6 +230,11 @@ pub fn get_prng() -> SmallRng {
     return prng;
 }
 
+pub fn seed_prng(seed: String) -> SmallRng {
+    return SmallRng::seed_from_u64(system_gen::str_to_hash(seed));
+}
+
+
 pub fn new_id() -> Uuid {
     Uuid::new_v4()
 }

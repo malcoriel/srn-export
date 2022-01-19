@@ -10,7 +10,7 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::new_id;
+use crate::{new_id, prng_id};
 use crate::tractoring::{IMovable, IMovableType};
 use crate::world::{Container, NatSpawnMineral, Rarity};
 use itertools::Itertools;
@@ -121,9 +121,9 @@ impl InventoryItem {
             }
         };
     }
-    pub fn new(iit: InventoryItemType, quantity: i32) -> InventoryItem {
+    pub fn new(iit: InventoryItemType, quantity: i32, id: Uuid) -> InventoryItem {
         InventoryItem {
-            id: new_id(),
+            id,
             index: 0,
             quantity,
             value: 0,
@@ -144,7 +144,7 @@ impl InventoryItem {
             InventoryItemType::HandWeapon,
         ];
         let index = prng.gen_range(0, possible.len());
-        return InventoryItem::new(possible[index].clone(), prng.gen_range(1, 6));
+        return InventoryItem::new(possible[index].clone(), prng.gen_range(1, 6), prng_id(prng));
     }
 
     pub fn quest_pickup(quest_id: Uuid) -> InventoryItem {

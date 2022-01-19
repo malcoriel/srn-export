@@ -168,11 +168,18 @@ pub fn get_prng() -> SmallRng {
     return prng;
 }
 
+pub fn seed_prng(seed: String) -> SmallRng {
+    return SmallRng::seed_from_u64(system_gen::str_to_hash(seed));
+}
+
+lazy_static! {
+    pub static ref SEED: String = String::from("");
+}
 
 pub fn new_id() -> Uuid {
     let mut bytes = [0u8; 16];
     getrandom::getrandom(&mut bytes).unwrap_or_else(|err| {
-        panic!("could not retreive random bytes for uuid: {}", err)
+        panic!("could not retrieve random bytes for uuid: {}", err)
     });
 
     crate::Builder::from_bytes(bytes)
@@ -181,6 +188,15 @@ pub fn new_id() -> Uuid {
         .build()
 }
 
+pub fn prng_id(rng: &mut SmallRng) -> Uuid {
+    let mut bytes = [0u8; 16];
+    rng.fill_bytes(&mut bytes);
+
+    crate::Builder::from_bytes(bytes)
+        .set_variant(Variant::RFC4122)
+        .set_version(Version::Random)
+        .build()
+}
 
 static DEFAULT_ERR: &str = "";
 
@@ -242,7 +258,7 @@ use mut_static::MutStatic;
 use std::{env, mem};
 use std::ops::DerefMut;
 use rand::prelude::SmallRng;
-use rand::SeedableRng;
+use rand::{RngCore, SeedableRng};
 use crate::api_struct::Room;
 use crate::dialogue::{DialogueTable, parse_dialogue_script_from_file};
 use crate::perf::Sampler;
@@ -388,7 +404,7 @@ struct SeedWorldArgs {
 
 
 use serde_wasm_bindgen::*;
-pub fn to_value_map_as_objects<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
+pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
     let ser = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
     let res = arg.serialize(&ser).map_err(|e| JsValue::from_str(e.to_string().as_str()));
     res
@@ -398,8 +414,7 @@ pub fn to_value_map_as_objects<T: Serialize>(arg: &T) -> Result<JsValue, JsValue
 pub fn seed_world(args: JsValue) -> Result<JsValue, JsValue> {
     let args: SeedWorldArgs = serde_wasm_bindgen::from_value(args)?;
     let state = system_gen::seed_state(&args.mode, args.seed);
-
-    Ok(to_value_map_as_objects(&state)?)
+    Ok(custom_serialize(&state)?)
 }
 
 #[derive(Clone, Debug, derive_deserialize, derive_serialize)]
@@ -460,6 +475,7 @@ pub fn set_enable_perf(value: bool) {
     *ENABLE_PERF_HACK_INIT.write().unwrap() = value;
     log!(format!("ENABLE_PERF was set to {}", value))
 }
+
 
 #[wasm_bindgen]
 pub fn friend_or_foe(state: JsValue, actor_a: JsValue, actor_b: JsValue) -> Result<JsValue, JsValue> {

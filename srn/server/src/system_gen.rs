@@ -19,7 +19,7 @@ use crate::random_stuff::{
 };
 use crate::vec2::Vec2f64;
 use crate::world::{random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star, AABB, GAME_STATE_VERSION, ObjectProperty};
-use crate::{new_id, planet_movement, world};
+use crate::{get_prng, new_id, planet_movement, prng_id, seed_prng, world};
 use crate::combat::Health;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -91,7 +91,7 @@ pub const CONTAINER_COUNT: i32 = 10;
 
 fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
     let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
-    let star_id = crate::new_id();
+    let star_id = prng_id(&mut prng);
     // the world is 1000x1000 for now,
     // so we have to divide 500 units between all zones
 
@@ -155,7 +155,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
             if !is_gap {
                 // too lazy to count correctly the index
                 if index != asteroid_index {
-                    let planet_id = new_id();
+                    let planet_id = prng_id(&mut prng);
                     let name = planet_name_pool.get(&mut prng).to_string();
 
                     let planet_radius = gen_planet_radius(&mut prng);
@@ -178,7 +178,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                         let name = sat_name_pool.get(&mut prng).to_string();
                         current_sat_x += gen_sat_gap(&mut prng);
                         planets.push(Planet {
-                            id: new_id(),
+                            id: prng_id(&mut prng),
                             name,
                             x: current_sat_x,
                             y: 0.0,
@@ -195,7 +195,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                 } else {
                     let middle = current_x + width / 2.0;
                     asteroid_belts.push(AsteroidBelt {
-                        id: new_id(),
+                        id: prng_id(&mut prng),
                         x: 0.0,
                         y: 0.0,
                         rotation: 0.0,
@@ -208,7 +208,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                         scale_mod: 1.0,
                     });
                     asteroid_belts.push(AsteroidBelt {
-                        id: new_id(),
+                        id: prng_id(&mut prng),
                         x: 0.0,
                         y: 0.0,
                         rotation: 0.0,
@@ -221,7 +221,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                         scale_mod: 2.0,
                     });
                     asteroid_belts.push(AsteroidBelt {
-                        id: new_id(),
+                        id: prng_id(&mut prng),
                         x: 0.0,
                         y: 0.0,
                         rotation: 0.0,
@@ -339,21 +339,24 @@ pub fn gen_star(star_id: Uuid, mut prng: &mut SmallRng, radius: f64, pos: Vec2f6
 }
 
 pub fn seed_state(mode: &GameMode, seed: String) -> GameState {
+    let mut prng = seed_prng(seed.clone());
     match mode {
         GameMode::Unknown => {
             panic!("Unknown mode to seed");
         }
-        GameMode::CargoRush => {
-            let mut state = gen_state(seed, GenStateOpts::default());
-            init_all_planets_market(&mut state);
-            state.id = new_id();
-            state.mode = GameMode::CargoRush;
-            state
-        }
-        GameMode::Tutorial => make_tutorial_state(),
-        GameMode::Sandbox => make_sandbox_state(),
-        GameMode::PirateDefence => make_pirate_defence_state(seed),
+        GameMode::CargoRush => make_cargo_rush_state(seed, &mut prng),
+        GameMode::Tutorial => make_tutorial_state(&mut prng),
+        GameMode::Sandbox => make_sandbox_state(&mut prng),
+        GameMode::PirateDefence => make_pirate_defence_state(seed, &mut prng),
     }
+}
+
+fn make_cargo_rush_state(seed: String, mut prng: &mut SmallRng) -> GameState {
+    let mut state = gen_state(seed, GenStateOpts::default(), &mut prng);
+    init_all_planets_market(&mut state);
+    state.id = prng_id(&mut prng);
+    state.mode = GameMode::CargoRush;
+    state
 }
 
 fn assign_health_to_planets (planets: &mut Vec<Planet>, health: Health) {
@@ -362,11 +365,11 @@ fn assign_health_to_planets (planets: &mut Vec<Planet>, health: Health) {
     }
 }
 
-pub fn make_pirate_defence_state(seed: String) -> GameState {
+pub fn make_pirate_defence_state(seed: String, prng: &mut SmallRng) -> GameState {
     let mut gen_opts = GenStateOpts::default();
     gen_opts.max_planets_in_system = 1;
     gen_opts.max_satellites_for_planet = 0;
-    let mut state = gen_state(seed, gen_opts);
+    let mut state = gen_state(seed, gen_opts, prng);
     assign_health_to_planets(&mut state.locations[0].planets, Health::new(100.0));
     state.locations[0].planets[0].properties.insert(ObjectProperty::UnlandablePlanet);
     state.locations[0].planets[0].properties.insert(ObjectProperty::PirateDefencePlayersHomePlanet);
@@ -375,7 +378,7 @@ pub fn make_pirate_defence_state(seed: String) -> GameState {
     state
 }
 
-fn make_tutorial_state() -> GameState {
+fn make_tutorial_state(_prng: &mut SmallRng) -> GameState {
     let seed = "tutorial".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
@@ -454,7 +457,7 @@ fn make_tutorial_state() -> GameState {
     }
 }
 
-pub fn make_sandbox_state() -> GameState {
+pub fn make_sandbox_state(_prng: &mut SmallRng) -> GameState {
     let seed = "sandbox".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
@@ -484,15 +487,6 @@ pub fn make_sandbox_state() -> GameState {
     }
 }
 
-pub fn seed_state_test(_debug: bool) -> GameState {
-    let seed = world::random_hex_seed();
-    log!(format!("Starting seeding state with seed={}", seed));
-    let mut state = gen_state(seed, GenStateOpts::default());
-    init_all_planets_market(&mut state);
-    log!(format!("Done."));
-    state
-}
-
 struct GenStateOpts {
     system_count: u32,
     max_planets_in_system: u32,
@@ -509,23 +503,22 @@ impl Default for GenStateOpts {
     }
 }
 
-fn gen_state(seed: String, opts: GenStateOpts) -> GameState {
-    let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
+fn gen_state(seed: String, opts: GenStateOpts, prng: &mut SmallRng) -> GameState {
     let mut locations = vec![];
     for _i in 0..opts.system_count {
-        let loc_seed = random_hex_seed_seeded(&mut prng);
+        let loc_seed = random_hex_seed_seeded(prng);
         let location = gen_star_system_location(&loc_seed, &opts);
         locations.push(location);
     }
-    wire_shake_locations(&mut locations, &mut prng);
+    wire_shake_locations(&mut locations, prng);
     let now = Utc::now().timestamp_millis() as u64;
     let state = GameState {
-        id: new_id(),
+        id: prng_id(prng),
         seed: seed.clone(),
         tag: None,
         milliseconds_remaining: 3 * 60 * 1000,
         paused: false,
-        my_id: new_id(),
+        my_id: Default::default(),
         millis: 0,
         locations,
         players: vec![],
