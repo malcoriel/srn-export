@@ -3,6 +3,7 @@ import {
   getShipByPlayerId,
   swapGlobals,
   updateRoom,
+  updateWorld,
   wasm,
 } from '../util';
 
@@ -34,9 +35,21 @@ describe('update determinism', () => {
       });
     });
 
-    describe('normal world update', () => {
-      it.todo('can achieve double-run');
-      it.todo('can achieve skip-step');
+    describe('normal world update in silence', () => {
+      it('can achieve double-run', () => {
+        const state = wasm.seedWorld({ mode, seed: 'world update' });
+        const stateA = updateWorld(state, 10000);
+        const stateB = updateWorld(state, 10000);
+        const stateC = updateWorld(state, 10001);
+        expect(cementFields(stateA)).toEqual(cementFields(stateB));
+        expect(cementFields(stateA)).not.toEqual(cementFields(stateC));
+      });
+      it('can achieve skip-step', () => {
+        const state = wasm.seedWorld({ mode, seed: 'world update' });
+        const stateA = updateWorld(state, 10000);
+        const stateB = updateWorld(updateWorld(state, 5000), 5000);
+        expect(cementFields(stateA)).toEqual(cementFields(stateB));
+      });
     });
 
     describe('action-based world update', () => {
