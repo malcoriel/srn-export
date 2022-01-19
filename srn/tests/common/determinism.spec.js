@@ -17,6 +17,7 @@ import {
 // some fields are intentionally non-deterministic, since they are rather auxiliary (e.g. current date)
 const cementFields = (state) => {
   state.start_time_ticks = 0;
+  return state;
 };
 
 describe('update determinism', () => {
@@ -29,12 +30,17 @@ describe('update determinism', () => {
         const stateB = wasm.seedWorld({ mode, seed: 'state gen' });
         const stateC = wasm.seedWorld({ mode, seed: 'state gen1' });
         expect(cementFields(stateA)).toEqual(cementFields(stateB));
-        // expect(stateA).not.toEqual(stateC);
+        expect(cementFields(stateA)).not.toEqual(cementFields(stateC));
       });
     });
 
-    describe('world update', () => {
+    describe('normal world update', () => {
       it.todo('can achieve double-run');
+      it.todo('can achieve skip-step');
+    });
+
+    describe('action-based world update', () => {
+      it.todo('every player action handling is deterministic');
     });
 
     describe('room update', () => {
