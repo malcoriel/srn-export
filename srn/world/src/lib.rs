@@ -152,13 +152,13 @@ mod world_player_actions;
 
 use lazy_static::lazy_static;
 use regex::Regex;
-use serde::Deserialize as Deserializable;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize as derive_deserialize, Serialize as derive_serialize};
 use serde_json::Error;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use uuid::*;
-
+use serde_wasm_bindgen::*;
 
 pub fn get_prng() -> SmallRng {
     let mut bytes = [0u8; 8];
@@ -184,7 +184,7 @@ pub fn new_id() -> Uuid {
 
 static DEFAULT_ERR: &str = "";
 
-#[derive(Serialize)]
+#[derive(derive_serialize)]
 struct ErrJson {
     message: String,
 }
@@ -202,7 +202,7 @@ pub fn kick_player(_p: Uuid) {
     // no support for removing players on client
 }
 
-fn extract_args<'a, T: Deserializable<'a>>(
+fn extract_args<'a, T: Deserialize<'a>>(
     serialized_args: &'a str,
 ) -> (Result<T, Error>, Option<String>) {
     let args = serde_json::from_str::<T>(serialized_args);
@@ -285,7 +285,7 @@ lazy_static! {
     });
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Debug, derive_deserialize, derive_serialize)]
 pub struct UpdateWorldArgs {
     state: world::GameState,
     limit_area: world::AABB,
@@ -360,7 +360,7 @@ fn get_sampler_clone() -> Sampler {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, derive_deserialize, derive_serialize)]
 struct ApplyShipActionArgs {
     state: world::GameState,
     ship_action: ship_action::PlayerActionRust,
@@ -380,25 +380,29 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
     return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, derive_serialize, derive_deserialize)]
 struct SeedWorldArgs {
     seed: String,
     mode: GameMode,
 }
 
 
-#[wasm_bindgen]
-pub fn seed_world(serialized_args: &str) -> String {
-    let (args, return_result) = extract_args::<SeedWorldArgs>(serialized_args);
-    if return_result.is_some() {
-        return return_result.unwrap();
-    }
-    let args = args.ok().unwrap();
-    let seeded_world = seed_state(&args.mode, args.seed);
-    return serde_json::to_string(&seeded_world).unwrap_or(DEFAULT_ERR.to_string());
+use serde_wasm_bindgen::*;
+pub fn to_value_map_as_objects<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
+    let ser = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
+    let res = arg.serialize(&ser).map_err(|e| JsValue::from_str(e.to_string().as_str()));
+    res
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[wasm_bindgen]
+pub fn seed_world(args: JsValue) -> Result<JsValue, JsValue> {
+    let args: SeedWorldArgs = serde_wasm_bindgen::from_value(args)?;
+    let state = system_gen::seed_state(&args.mode, args.seed);
+
+    Ok(to_value_map_as_objects(&state)?)
+}
+
+#[derive(Clone, Debug, derive_deserialize, derive_serialize)]
 struct CreateRoomArgs {
     mode: GameMode,
 }

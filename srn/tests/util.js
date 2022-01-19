@@ -81,7 +81,7 @@ export const loadWasm = timerify(async function loadWasm() {
   wasmFunctions.set_panic_hook();
   wasmFunctions.set_enable_perf(!!process.env.ENABLE_PERF);
   wasm.updateWorld = serializedWasmCaller(wasmFunctions.update_world);
-  wasm.seedWorld = serializedWasmCaller(wasmFunctions.seed_world);
+  wasm.seedWorld = wasmFunctions.seed_world;
   wasm.createRoom = wasmFunctions.create_room;
   wasm.updateRoom = wasmFunctions.update_room;
   wasm.updateRoomFull = wasmFunctions.update_room_full;

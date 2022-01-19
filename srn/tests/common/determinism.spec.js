@@ -21,6 +21,7 @@ describe('update determinism', () => {
     describe('state-gen', () => {
       it('can achieve double-run', () => {
         const stateA = wasm.seedWorld({ mode, seed: 'state gen' });
+        console.log(stateA);
         const stateB = wasm.seedWorld({ mode, seed: 'state gen' });
         const stateC = wasm.seedWorld({ mode, seed: 'state gen1' });
         expect(stateA).toEqual(stateB);
