@@ -240,7 +240,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
             break;
         }
     }
-    let mut location = Location::new_empty();
+    let mut location = Location::new_empty(prng_id(&mut prng));
     location.seed = seed.clone();
     location.star = Some(star.clone());
     location.planets = planets;
@@ -397,7 +397,7 @@ fn make_tutorial_state(_prng: &mut SmallRng) -> GameState {
     };
 
     let planet_id = new_id();
-    let mut location = Location::new_empty();
+    let mut location = Location::new_empty(prng_id(&mut prng));
     location.seed = seed.clone();
     location.star = Some(star);
     location.planets = vec![
@@ -457,7 +457,7 @@ fn make_tutorial_state(_prng: &mut SmallRng) -> GameState {
     }
 }
 
-pub fn make_sandbox_state(_prng: &mut SmallRng) -> GameState {
+pub fn make_sandbox_state(prng: &mut SmallRng) -> GameState {
     let seed = "sandbox".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
@@ -469,7 +469,7 @@ pub fn make_sandbox_state(_prng: &mut SmallRng) -> GameState {
         seed: seed.clone(),
         my_id: Default::default(),
         start_time_ticks: now,
-        locations: vec![Location::new_empty()],
+        locations: vec![Location::new_empty(prng_id( prng))],
         players: vec![],
         milliseconds_remaining: 99 * 60 * 1000,
         paused: false,

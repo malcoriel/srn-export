@@ -616,10 +616,10 @@ pub struct Location {
 }
 
 impl Location {
-    pub fn new_empty() -> Self {
+    pub fn new_empty(id: Uuid) -> Self {
         Location {
             seed: "".to_string(),
-            id: new_id(),
+            id,
             star: None,
             planets: vec![],
             asteroids: vec![],
@@ -633,9 +633,9 @@ impl Location {
         }
     }
 
-    pub fn new_star_system() -> Location {
+    pub fn new_star_system(id: Uuid) -> Location {
         Location {
-            id: new_id(),
+            id,
             adjacent_location_ids: vec![],
             seed: "empty".to_string(),
             star: None,
