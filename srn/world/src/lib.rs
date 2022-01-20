@@ -322,6 +322,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     let mut indexes = world::SpatialIndexes {
         values: HashMap::new()
     };
+    let prng_seed = args.state.seed.clone();
     let (new_state, sampler) = world::update_world(
         args.state,
         elapsed_micro,
@@ -332,7 +333,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
             limit_area: args.limit_area,
         },
         &mut indexes,
-        &mut get_prng(),
+        &mut seed_prng(prng_seed),
         // these fields make sense only for full simulation, as they are part of the room now
         &mut Default::default(),
         &Default::default(),

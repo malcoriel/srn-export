@@ -997,6 +997,7 @@ pub fn update_world(
                     sampler,
                     location_idx,
                     spatial_indexes,
+                    prng
                 )
             }
         };
@@ -1049,6 +1050,7 @@ pub fn update_location(
     mut sampler: Sampler,
     location_idx: usize,
     spatial_indexes: &mut SpatialIndexes,
+    prng: &mut SmallRng
 ) -> Sampler {
     let spatial_index_id = sampler.start(SamplerMarks::GenSpatialIndexOnDemand as u32);
     let spatial_index = spatial_indexes
@@ -1097,7 +1099,7 @@ pub fn update_location(
     if !client {
         let initiate_docking_id =
             sampler.start(SamplerMarks::UpdateInitiateShipsDockingByNavigation as u32);
-        update_initiate_ship_docking_by_navigation(state, location_idx, &mut get_prng());
+        update_initiate_ship_docking_by_navigation(state, location_idx, prng);
         sampler.end(initiate_docking_id);
     }
     let interpolate_docking_id = sampler.start(SamplerMarks::UpdateInterpolateDockingShips as u32);
@@ -1163,10 +1165,11 @@ pub fn update_location(
         state.locations[location_idx].minerals = update_state_minerals(
             &state.locations[location_idx].minerals,
             &state.locations[location_idx].asteroid_belts,
+            prng
         );
         sampler.end(update_minerals_respawn_id);
         let respawn_id = sampler.start(SamplerMarks::UpdateShipsRespawn as u32);
-        update_ships_respawn(&mut state, &mut get_prng());
+        update_ships_respawn(&mut state, prng);
         sampler.end(respawn_id);
     }
     let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
@@ -1454,6 +1457,7 @@ const MAX_NAT_SPAWN_MINERALS: u32 = 10;
 fn update_state_minerals(
     existing: &Vec<NatSpawnMineral>,
     belts: &Vec<AsteroidBelt>,
+    prng: &mut SmallRng,
 ) -> Vec<NatSpawnMineral> {
     let mut res = existing.clone();
     if belts.len() > 0 {
@@ -1461,7 +1465,7 @@ fn update_state_minerals(
             if res.len() as u32 >= MAX_NAT_SPAWN_MINERALS {
                 break;
             }
-            res.push(seed_mineral(belts));
+            res.push(seed_mineral(belts, prng));
         }
     }
     res
@@ -1481,20 +1485,19 @@ pub fn spawn_container(loc: &mut Location, at: Vec2f64) {
     loc.containers.push(container);
 }
 
-fn seed_mineral(belts: &Vec<AsteroidBelt>) -> NatSpawnMineral {
-    let mut small_rng = get_prng();
-    let picked = small_rng.gen_range(0, belts.len());
+fn seed_mineral(belts: &Vec<AsteroidBelt>, prng: &mut SmallRng) -> NatSpawnMineral {
+    let picked = prng.gen_range(0, belts.len());
     let belt = &belts[picked];
-    let pos_in_belt = gen_pos_in_belt(belt);
-    gen_mineral(&mut small_rng, pos_in_belt)
+    let pos_in_belt = gen_pos_in_belt(belt, prng);
+    gen_mineral(prng, pos_in_belt)
 }
 
-fn gen_mineral(mut small_rng: &mut SmallRng, pos: Vec2f64) -> NatSpawnMineral {
-    let mineral_props = gen_mineral_props(&mut small_rng);
+fn gen_mineral(prng: &mut SmallRng, pos: Vec2f64) -> NatSpawnMineral {
+    let mineral_props = gen_mineral_props(prng);
     NatSpawnMineral {
         x: pos.x,
         y: pos.y,
-        id: new_id(),
+        id: prng_id(prng),
         radius: mineral_props.0,
         value: mineral_props.1,
         rarity: mineral_props.3,
@@ -1502,13 +1505,12 @@ fn gen_mineral(mut small_rng: &mut SmallRng, pos: Vec2f64) -> NatSpawnMineral {
     }
 }
 
-fn gen_pos_in_belt(belt: &AsteroidBelt) -> Vec2f64 {
-    let mut rng = get_prng();
-    let range = rng.gen_range(
+fn gen_pos_in_belt(belt: &AsteroidBelt, prng: &mut SmallRng) -> Vec2f64 {
+    let range = prng.gen_range(
         belt.radius - belt.width / 2.0,
         belt.radius + belt.width / 2.0,
     );
-    let angle_rad = rng.gen_range(0.0, PI * 2.0);
+    let angle_rad = prng.gen_range(0.0, PI * 2.0);
     let x = angle_rad.cos() * range;
     let y = angle_rad.sin() * range;
     Vec2f64 { x, y }
@@ -2045,11 +2047,13 @@ fn build_trajectory_to_body(
     to_anchor: &Box<dyn IBody>,
     for_movement: &MovementDefinition,
 ) -> Vec<Vec2f64> {
+    //noinspection RsTypeCheck
     let bodies: Vec<Box<dyn IBody>> = vec![to.clone(), to_anchor.clone()];
     let mut anchors =
         planet_movement::build_anchors_from_bodies(bodies);
     let mut shifts = HashMap::new();
     let mut counter = 0;
+    //noinspection RsTypeCheck
     let mut current_target = Planet::from(to.clone());
     let mut current_from = from.clone();
     let mut result = vec![];
