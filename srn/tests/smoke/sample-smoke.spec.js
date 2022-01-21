@@ -8,7 +8,7 @@ describe('sample smoke test', () => {
     expect(world.mode).toEqual('PirateDefence');
     expect(world.seed).toEqual('123');
     world = updateWorld(world, 100);
-    expect(world.millis).toEqual(100);
+    expect(world.millis).toEqual(96);
   });
 
   it('can rotate planet', async () => {

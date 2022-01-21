@@ -484,7 +484,7 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
                 return;
             }
             let state = state.unwrap();
-            market::attempt_trade(state, client_id, action);
+            market::attempt_trade(state, client_id, action, &mut get_prng());
             x_cast_state(state.clone(), XCast::Broadcast(state.id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
         }

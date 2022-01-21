@@ -16,13 +16,13 @@ use crate::inventory::{
     add_items, cleanup_inventory_from_zeros, inventory_item_type_to_stackable, shake_items,
     InventoryItem, InventoryItemType,
 };
-use crate::{new_id, get_prng, prng_id};
+use crate::{prng_id};
 use crate::world::{GameState, Planet};
 
 pub type Wares = HashMap<Uuid, Vec<InventoryItem>>;
 pub type Prices = HashMap<Uuid, HashMap<InventoryItemType, Price>>;
 
-pub const SHAKE_MARKET_FREQUENCY_MCS: i64 = 60 * 1000 * 1000;
+pub const SHAKE_MARKET_EVERY_TICKS: i64 = 60 * 1000 * 1000;
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Market {
@@ -73,7 +73,7 @@ pub fn init_all_planets_market(state: &mut GameState) {
     }
 }
 
-pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
+pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction, prng: &mut SmallRng) {
     let mut planet_inventory = state
         .market
         .wares
@@ -105,7 +105,7 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
                 let mut target_stack = target_items_ship.into_iter().nth(0).unwrap();
                 if target_stack.quantity >= sell.1 && sell.1 > 0 {
                     let mut cloned_stack = target_stack.clone();
-                    cloned_stack.id = new_id();
+                    cloned_stack.id = prng_id(prng);
                     target_stack.quantity -= sell.1;
                     cloned_stack.quantity = sell.1;
                     if target_stack.quantity > 0 {
@@ -118,7 +118,7 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
                         "not enough quantity or negative sell, {} requested, {} available",
                         sell.1, target_stack.quantity
                     ));
-                    target_stack.id = new_id();
+                    target_stack.id = prng_id(prng);
                     add_item(&mut ship.inventory, target_stack);
                 }
             } else {
@@ -142,7 +142,7 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
                     if player.money >= total_price {
                         let mut cloned_stack = target_stack.clone();
                         target_stack.quantity -= buy.1;
-                        cloned_stack.id = new_id();
+                        cloned_stack.id = prng_id(prng);
                         cloned_stack.quantity = buy.1;
                         if target_stack.quantity > 0 {
                             add_item(&mut planet_inventory, target_stack);
@@ -154,7 +154,7 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction) {
                             "not enough money on player, {} needed, {} available",
                             total_price, player.money
                         ));
-                        target_stack.id = new_id();
+                        target_stack.id = prng_id(prng);
                         add_item(&mut planet_inventory, target_stack);
                     }
                 } else {
@@ -239,8 +239,7 @@ pub fn get_default_value(it: &InventoryItemType) -> i32 {
     }
 }
 
-pub fn gen_price_event() -> PriceEvent {
-    let mut rng = get_prng();
+pub fn gen_price_event(rng: &mut SmallRng) -> PriceEvent {
     let roll = rng.gen_range(0, 100);
     match roll {
         0..71 => PriceEvent::Normalize,
@@ -266,7 +265,7 @@ pub fn shift_market(
     _planet_name: String,
     prng: &mut SmallRng
 ) {
-    let event = gen_price_event();
+    let event = gen_price_event(prng);
     // log!(format!("Market event {:?} on {}", event, planet_name));
     apply_price_event(prices, event, wares, prng);
 }

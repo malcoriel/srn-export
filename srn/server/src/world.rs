@@ -970,7 +970,7 @@ fn update_world_iter(
                 state.market = Market {
                     wares,
                     prices,
-                    time_before_next_shake: market::SHAKE_MARKET_FREQUENCY_MCS,
+                    time_before_next_shake: market::SHAKE_MARKET_EVERY_TICKS,
                 };
                 sampler.end(market_update_start);
             }
