@@ -378,6 +378,8 @@ pub fn make_pirate_defence_state(seed: String, prng: &mut SmallRng) -> GameState
     state
 }
 
+pub const DEFAULT_WORLD_UPDATE_EVERY_TICKS: u64 = 16 * 1000; // standard 60fps
+
 fn make_tutorial_state(_prng: &mut SmallRng) -> GameState {
     let seed = "tutorial".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
@@ -453,7 +455,9 @@ fn make_tutorial_state(_prng: &mut SmallRng) -> GameState {
         events: Default::default(),
         player_actions: Default::default(),
         processed_events: vec![],
-        processed_player_actions: vec![]
+        processed_player_actions: vec![],
+        update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
+        accumulated_not_updated_ticks: 0
     }
 }
 
@@ -483,7 +487,9 @@ pub fn make_sandbox_state(prng: &mut SmallRng) -> GameState {
         events: Default::default(),
         player_actions: Default::default(),
         processed_events: vec![],
-        processed_player_actions: vec![]
+        processed_player_actions: vec![],
+        update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
+        accumulated_not_updated_ticks: 0
     }
 }
 
@@ -534,7 +540,9 @@ fn gen_state(seed: String, opts: GenStateOpts, prng: &mut SmallRng) -> GameState
         player_actions: Default::default(),
         processed_events: vec![],
         ticks: 0,
-        processed_player_actions: vec![]
+        processed_player_actions: vec![],
+        update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
+        accumulated_not_updated_ticks: 0
     };
 
     let mut state = validate_state(state);

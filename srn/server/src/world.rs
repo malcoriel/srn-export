@@ -50,7 +50,7 @@ use crate::random_stuff::{
 };
 use crate::ship_action::{PlayerActionRust, ShipMovementMarkers};
 use crate::substitutions::substitute_notification_texts;
-use crate::system_gen::{seed_state, str_to_hash};
+use crate::system_gen::{DEFAULT_WORLD_UPDATE_EVERY_TICKS, seed_state, str_to_hash};
 use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
@@ -683,6 +683,8 @@ pub struct GameState {
     pub player_actions: VecDeque<PlayerActionRust>,
     pub processed_events: Vec<ProcessedGameEvent>,
     pub processed_player_actions: Vec<ProcessedPlayerAction>,
+    pub update_every_ticks: u64,
+    pub accumulated_not_updated_ticks: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -722,6 +724,8 @@ impl GameState {
             player_actions: Default::default(),
             processed_events: vec![],
             processed_player_actions: vec![],
+            update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
+            accumulated_not_updated_ticks: 0
         }
     }
 }
@@ -868,6 +872,30 @@ pub struct SpatialIndexes {
 }
 
 pub fn update_world(
+    mut state: GameState,
+    elapsed: i64,
+    client: bool,
+    sampler: Sampler,
+    update_options: UpdateOptions,
+    spatial_indexes: &mut SpatialIndexes,
+    prng: &mut SmallRng,
+    d_states: &mut DialogueStates,
+    d_table: &DialogueTable,
+) -> (GameState, Sampler) {
+    let mut remaining = elapsed + state.accumulated_not_updated_ticks as i64;
+    let update_interval = state.update_every_ticks as i64;
+    let (mut curr_state, mut curr_sampler) = (state, sampler);
+    while remaining > update_interval {
+        let pair = update_world_iter(curr_state, update_interval, client, curr_sampler, update_options.clone(), spatial_indexes, prng, d_states, d_table);
+        remaining -= update_interval;
+        curr_state = pair.0;
+        curr_sampler = pair.1;
+    }
+    curr_state.accumulated_not_updated_ticks = remaining as u32;
+    (curr_state, curr_sampler)
+}
+
+fn update_world_iter(
     mut state: GameState,
     elapsed: i64,
     client: bool,
