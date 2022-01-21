@@ -1516,7 +1516,8 @@ pub fn spawn_container(loc: &mut Location, at: Vec2f64) {
 fn seed_mineral(belts: &Vec<AsteroidBelt>, prng: &mut SmallRng) -> NatSpawnMineral {
     let picked = prng.gen_range(0, belts.len());
     let belt = &belts[picked];
-    let pos_in_belt = gen_pos_in_belt(belt, prng);
+    let mut pos_in_belt = gen_pos_in_belt(belt, prng);
+    pos_in_belt.reduce_precision();
     gen_mineral(prng, pos_in_belt)
 }
 

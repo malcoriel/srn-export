@@ -62,6 +62,15 @@ pub enum Precision {
     P8,
 }
 
+
+// due to some serialization-deserialization between rust and js, it's possible to get a precision mismatch just
+// by transferring data through the wasm boundary. I'm trying to deal with it by reducing f64 precision
+// The mismatch can happen around last significant digit, so I'm just cutting stuff short here
+pub fn reduce_precision(num: f64) -> f64 {
+    let twelve_digits = 1000000000000.0;
+    f64::trunc(num * twelve_digits) / twelve_digits
+}
+
 impl Vec2f64 {
     pub fn as_key(&self, precision: Precision) -> String {
         match precision {
@@ -73,6 +82,11 @@ impl Vec2f64 {
 
     pub fn zero() -> Vec2f64 {
         Vec2f64 { x: 0.0, y: 0.0 }
+    }
+
+    pub fn reduce_precision(&mut self) {
+        self.x = reduce_precision(self.x);
+        self.y = reduce_precision(self.y);
     }
 }
 
