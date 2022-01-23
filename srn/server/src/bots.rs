@@ -157,12 +157,11 @@ fn make_dialogue_act(
         })
 }
 
-pub fn add_bot(room: &mut Room, bot: Bot) {
+pub fn add_bot(room: &mut Room, bot: Bot, prng: &mut SmallRng) {
     let id = bot.id.clone();
     room.bots.push(bot);
-    let mut rng = get_prng();
-    world::add_player(&mut room.state, id, true, Some(gen_bot_name(&mut rng)));
-    world::spawn_ship(&mut room.state, Some(id), ShipTemplate::player(None));
+    world::add_player(&mut room.state, id, true, Some(gen_bot_name(prng)));
+    world::spawn_ship(&mut room.state, Some(id), ShipTemplate::player(None), prng);
 }
 
 pub fn format_d_states(

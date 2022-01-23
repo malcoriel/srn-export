@@ -944,7 +944,7 @@ fn update_world_iter(
                 state = seed_state(&state.mode, random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
-                    spawn_ship(&mut state, Some(player.id), ShipTemplate::player(None));
+                    spawn_ship(&mut state, Some(player.id), ShipTemplate::player(None), prng);
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
             } else {}
@@ -1845,13 +1845,13 @@ impl ShipTemplate {
     }
 }
 
-pub fn spawn_ship(
-    state: &mut GameState,
+pub fn spawn_ship<'a>(
+    state: &'a mut GameState,
     player_id: Option<Uuid>,
     template: ShipTemplate,
-) -> &Ship {
-    let mut small_rng = get_prng();
-    let rand_planet = get_random_planet(&state.locations[0].planets, None, &mut small_rng);
+    prng: &mut SmallRng,
+) -> &'a Ship {
+    let rand_planet = get_random_planet(&state.locations[0].planets, None, prng);
     let mut at = template.at;
     if rand_planet.is_some() && at.is_none() {
         let p = rand_planet.unwrap();
@@ -1860,9 +1860,9 @@ pub fn spawn_ship(
             y: p.y.clone(),
         })
     }
-    let mut ship = Ship::new(&mut small_rng, &mut at);
+    let mut ship = Ship::new(prng, &mut at);
     template.abilities.map(|abilities| ship.abilities.extend(abilities));
-    ship.npc = if template.npc_traits.is_some() { Some(new_bot(template.npc_traits)) } else { None };
+    ship.npc = if template.npc_traits.is_some() { Some(new_bot(template.npc_traits, prng_id(prng))) } else { None };
     ship.name = template.name;
     ship.properties = template.properties.unwrap_or(Default::default());
     template.movement.map(|m| ship.movement_definition = m);
@@ -2344,9 +2344,9 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
     }
 }
 
-pub fn make_room(mode: &GameMode, room_id: Uuid) -> (Uuid, Room) {
+pub fn make_room(mode: &GameMode, room_id: Uuid, prng: &mut SmallRng) -> (Uuid, Room) {
     let room_name = format!("{} - {}", mode, room_id);
-    let state = system_gen::seed_state(&mode, random_hex_seed());
+    let state = system_gen::seed_state(&mode, random_hex_seed_seeded(prng));
     let state_id = state.id.clone();
     let mut room = Room {
         id: room_id,
@@ -2359,12 +2359,12 @@ pub fn make_room(mode: &GameMode, room_id: Uuid) -> (Uuid, Room) {
     match mode {
         GameMode::Unknown => {}
         GameMode::CargoRush => {
-            cargo_rush::on_create_room(&mut room);
+            cargo_rush::on_create_room(&mut room, prng);
         }
         GameMode::Tutorial => {}
         GameMode::Sandbox => {}
         GameMode::PirateDefence => {
-            pirate_defence::on_create_room(&mut room);
+            pirate_defence::on_create_room(&mut room, prng);
         }
     }
     (state_id, room)

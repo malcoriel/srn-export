@@ -421,12 +421,14 @@ pub fn seed_world(args: JsValue) -> Result<JsValue, JsValue> {
 #[derive(Clone, Debug, derive_deserialize, derive_serialize)]
 struct CreateRoomArgs {
     mode: GameMode,
+    seed: String
 }
 
 #[wasm_bindgen]
 pub fn create_room(args: JsValue) -> Result<JsValue, JsValue> {
     let args: CreateRoomArgs = serde_wasm_bindgen::from_value(args)?;
-    let (_, room) = world::make_room(&args.mode, new_id());
+    let mut prng = seed_prng(args.seed);
+    let (_, room) = world::make_room(&args.mode, prng_id(&mut prng), &mut prng);
     Ok(serde_wasm_bindgen::to_value(&room)?)
 }
 
@@ -435,7 +437,7 @@ pub fn update_room(room: JsValue, elapsed_micro: i64, d_table: JsValue) -> Resul
     let room: Room = serde_wasm_bindgen::from_value(room)?;
     let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
     let (_indexes, room, _sampler) = world::update_room(&mut get_prng(), get_sampler_clone(), elapsed_micro, &room, &d_table);
-    Ok(serde_wasm_bindgen::to_value(&room)?)
+    Ok(custom_serialize(&room)?)
 }
 
 #[wasm_bindgen]
@@ -451,7 +453,7 @@ pub fn update_room_full(room: JsValue, total_ticks: i64, d_table: JsValue, step_
         sampler = _sampler;
         room = _room;
     }
-    Ok(serde_wasm_bindgen::to_value(&room)?)
+    Ok(custom_serialize(&room)?)
 }
 
 #[wasm_bindgen]

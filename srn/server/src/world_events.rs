@@ -6,10 +6,10 @@ use crate::pirate_defence;
 use world::{GameEvent, GameState};
 use crate::dialogue::DialogueStates;
 
-pub fn world_update_handle_event(state: &mut GameState, _prng: &mut SmallRng, event: GameEvent, d_states: &mut DialogueStates, d_table: &DialogueTable) {
+pub fn world_update_handle_event(state: &mut GameState, prng: &mut SmallRng, event: GameEvent, d_states: &mut DialogueStates, d_table: &DialogueTable) {
     match event {
         GameEvent::PirateSpawn { at, .. } => {
-            pirate_defence::on_pirate_spawn(state, &at);
+            pirate_defence::on_pirate_spawn(state, &at, prng);
         }
         GameEvent::DialogueTriggerRequest { dialogue_name, player } => {
             if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {

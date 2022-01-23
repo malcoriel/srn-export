@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::api_struct::{Bot, new_bot, Room};
 use crate::bots::{add_bot, BotAct};
-use crate::{DialogueTable, fire_event, fof, indexing, world};
+use crate::{DialogueTable, fire_event, fof, indexing, prng_id, world};
 use crate::abilities::{Ability, SHOOT_DEFAULT_DISTANCE};
 use crate::api_struct::AiTrait;
 use crate::combat::ShootTarget;
@@ -23,8 +23,8 @@ use crate::ship_action::PlayerActionRust;
 use crate::world::TimeMarks::BotAction;
 
 
-pub fn on_pirate_spawn(state: &mut GameState, at: &Vec2f64) {
-    world::spawn_ship(state, None, ShipTemplate::pirate(Some(at.clone())));
+pub fn on_pirate_spawn(state: &mut GameState, at: &Vec2f64, prng: &mut SmallRng) {
+    world::spawn_ship(state, None, ShipTemplate::pirate(Some(at.clone())), prng);
 }
 
 const SHIP_PLANET_HIT_NORMALIZED: f64 = 0.1;
@@ -109,9 +109,10 @@ pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
         })
 }
 
-pub fn on_create_room(room: &mut Room) {
-    add_bot(room, new_bot(Some(vec![AiTrait::PirateDefencePlanetDefender])));
-    add_bot(room, new_bot(Some(vec![AiTrait::PirateDefencePlanetDefender])));
+pub fn on_create_room(room: &mut Room, prng: &mut SmallRng) {
+    let traits = Some(vec![AiTrait::PirateDefencePlanetDefender]);
+    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
+    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
 }
 
 pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: i64, _d_table: &DialogueTable, _bot_d_states: &DialogueStatesForPlayer, spatial_indexes: &SpatialIndexes, prng: &mut SmallRng) -> (Bot, Vec<BotAct>) {
@@ -135,7 +136,6 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
                         } else {
                             None
                         }
-
                     }
                     _ => {
                         None
@@ -153,11 +153,11 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
                                 turret_id: match turret_ab {
                                     Ability::Shoot { turret_id, .. } => {
                                         turret_id.clone()
-                                    },
+                                    }
                                     _ => Default::default()
-                                }
+                                },
                             },
-                            player_id: bot_id
+                            player_id: bot_id,
                         };
                         all_acts.push(BotAct::Act(act));
                     }
@@ -168,9 +168,9 @@ pub fn bot_planet_defender_act(bot: Bot, state: &GameState, _bot_elapsed_micro: 
             if my_ship.get_position().euclidean_distance(&def_planet.get_position()) > rad * 1.5 && my_ship.trajectory.len() == 0 {
                 let random_shift_x = prng.gen_range(-rad, rad);
                 let random_shift_y = prng.gen_range(-rad, rad);
-                all_acts.push(BotAct::Act(PlayerActionRust::Navigate { target: def_planet.get_position().add(&Vec2f64 {x: random_shift_x, y: random_shift_y})}));
+                all_acts.push(BotAct::Act(PlayerActionRust::Navigate { target: def_planet.get_position().add(&Vec2f64 { x: random_shift_x, y: random_shift_y }) }));
             }
-            return (bot, all_acts)
+            return (bot, all_acts);
         }
     }
 
@@ -182,11 +182,11 @@ pub fn friend_or_foe_p2o(_state: &GameState, _player_id: Uuid, object_b: ObjectS
         ObjectSpecifier::Planet { .. } => {
             // all players friendly by default, although I've made a property PirateDefencePlayersHomePlanet for distinguishing
             FriendOrFoe::Friend
-        },
+        }
         ObjectSpecifier::Ship { .. } => {
             // if we are here, then it's not a player's ship, therefore hostile
             FriendOrFoe::Foe
-        },
+        }
         _ => FriendOrFoe::Neutral
     }
 }
@@ -205,9 +205,9 @@ pub fn friend_or_foe(state: &GameState, actor_a: FofActor, actor_b: FofActor) ->
         return FriendOrFoe::Neutral;
     }
     if player_b.is_some() {
-        return friend_or_foe_p2o(state,player_b.unwrap(), actor_a.get_object());
+        return friend_or_foe_p2o(state, player_b.unwrap(), actor_a.get_object());
     } else if player_a.is_some() {
-        return friend_or_foe_p2o(state,player_a.unwrap(), actor_b.get_object());
+        return friend_or_foe_p2o(state, player_a.unwrap(), actor_b.get_object());
     } else {
         panic!("pirate_defence::friend_or_foe - Impossible combination of data")
     }
