@@ -436,7 +436,9 @@ pub fn create_room(args: JsValue) -> Result<JsValue, JsValue> {
 pub fn update_room(room: JsValue, elapsed_micro: i64, d_table: JsValue) -> Result<JsValue, JsValue> {
     let room: Room = serde_wasm_bindgen::from_value(room)?;
     let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
-    let (_indexes, room, _sampler) = world::update_room(&mut get_prng(), get_sampler_clone(), elapsed_micro, &room, &d_table);
+    let seed = room.state.seed.clone();
+    let mut prng = seed_prng(seed);
+    let (_indexes, room, _sampler) = world::update_room(&mut prng, get_sampler_clone(), elapsed_micro, &room, &d_table);
     Ok(custom_serialize(&room)?)
 }
 
@@ -444,12 +446,13 @@ pub fn update_room(room: JsValue, elapsed_micro: i64, d_table: JsValue) -> Resul
 pub fn update_room_full(room: JsValue, total_ticks: i64, d_table: JsValue, step_ticks: i64) -> Result<JsValue, JsValue> {
     let mut room: Room = serde_wasm_bindgen::from_value(room)?;
     let mut sampler = get_sampler_clone();
-    let prng = &mut get_prng();
+    let seed = room.state.seed.clone();
+    let mut prng = seed_prng(seed);
     let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
     let mut remaining = total_ticks;
     while remaining > 0 {
         remaining -= step_ticks;
-        let (_indexes, _room, _sampler) = world::update_room(prng, sampler, step_ticks, &room, &d_table);
+        let (_indexes, _room, _sampler) = world::update_room(&mut prng, sampler, step_ticks, &room, &d_table);
         sampler = _sampler;
         room = _room;
     }

@@ -160,7 +160,7 @@ fn make_dialogue_act(
 pub fn add_bot(room: &mut Room, bot: Bot, prng: &mut SmallRng) {
     let id = bot.id.clone();
     room.bots.push(bot);
-    world::add_player(&mut room.state, id, true, Some(gen_bot_name(prng)));
+    world::add_player(&mut room.state, id, true, Some(gen_bot_name(prng)), prng);
     world::spawn_ship(&mut room.state, Some(id), ShipTemplate::player(None), prng);
 }
 

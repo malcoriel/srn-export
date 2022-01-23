@@ -15,15 +15,16 @@ use crate::indexing::{
     index_planets_by_id,
 };
 use crate::inventory::{
-    add_item, consume_items_of_types, count_items_of_types, remove_quest_item,
-    value_items_of_types, InventoryItem, InventoryItemType, MINERAL_TYPES,
+    add_item, consume_items_of_types, count_items_of_types, InventoryItem,
+    InventoryItemType, MINERAL_TYPES, remove_quest_item, value_items_of_types,
 };
 use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
-use crate::world::{generate_random_quest, CargoDeliveryQuestState, GameEvent, GameState, Planet, Player, PlayerId, Ship, fire_saved_event};
+use crate::world::{CargoDeliveryQuestState, fire_saved_event, GameEvent, GameState, Planet, Player, PlayerId, Ship};
 use crate::{fire_event, world};
+use crate::cargo_rush::generate_random_quest;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueUpdate {

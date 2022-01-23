@@ -15,11 +15,10 @@ use uuid::*;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::{prng_id, world_events};
 use crate::DialogueTable;
 use crate::dialogue;
-use dialogue::{DialogueStates};
-use crate::{abilities, autofocus, cargo_rush, indexing, pirate_defence, system_gen};
+use dialogue::DialogueStates;
+use crate::{abilities, autofocus, cargo_rush, indexing, pirate_defence, system_gen, prng_id, world_events};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{DEBUG_PHYSICS, get_prng, new_id};
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
@@ -132,38 +131,7 @@ fn get_player_score(p: &Player) -> u32 {
     p.money as u32
 }
 
-pub fn generate_random_quest(
-    player: &mut Player,
-    planets: &Vec<Planet>,
-    docked_at: Option<Uuid>,
-    prng: &mut SmallRng,
-) {
-    if planets.len() <= 0 {
-        return;
-    }
-    let from = get_random_planet(planets, docked_at, prng);
-    if from.is_none() {
-        return;
-    }
-    let from = from.unwrap();
-    let delivery = planets
-        .into_iter()
-        .filter(|p| p.id != from.id)
-        .collect::<Vec<_>>();
-    let to = &delivery[prng.gen_range(0, delivery.len())];
-    let reward = prng.gen_range(500, 1001);
-    let quest = Quest {
-        id: new_id(),
-        from_id: from.id,
-        to_id: to.id,
-        state: CargoDeliveryQuestState::Started,
-        reward,
-    };
-    player.quest = Some(quest);
-    notifications::update_quest_notifications(player);
-}
-
-fn get_random_planet<'a>(
+pub(crate) fn get_random_planet<'a>(
     planets: &'a Vec<Planet>,
     docked_at: Option<Uuid>,
     rng: &mut SmallRng,
@@ -474,7 +442,7 @@ pub struct Quest {
 }
 
 impl Quest {
-    pub fn as_notification(&self) -> Notification {
+    pub fn as_notification(&self, prng: &mut SmallRng) -> Notification {
         let text = format!("You've been tasked with delivering a cargo from one planet to another. Here's what you need:\n\n1. Pick up the cargo at s_cargo_source_planet.\n2. Drop off the cargo at s_cargo_destination_planet.\n\nYour employer, who wished to remain anonymous, will reward you: {} SB", self.reward);
         Notification::Task {
             header: "Delivery quest".to_string(),
@@ -483,7 +451,7 @@ impl Quest {
                 substituted: false,
                 substitutions: vec![],
             },
-            id: new_id(),
+            id: prng_id(prng),
         }
     }
 }
@@ -503,7 +471,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(id: Uuid, mode: &GameMode) -> Self {
+    pub fn new(id: Uuid, mode: &GameMode, prng: &mut SmallRng) -> Self {
         Player {
             id,
             is_bot: false,
@@ -514,7 +482,7 @@ impl Player {
             portrait_name: "".to_string(),
             respawn_ms_left: 0,
             long_actions: vec![],
-            notifications: get_new_player_notifications(mode),
+            notifications: get_new_player_notifications(mode, prng),
         }
     }
     pub fn set_quest(&mut self, q: Option<Quest>) {
@@ -1753,8 +1721,8 @@ fn apply_players_ship_death(ship: Ship, player: Option<&mut Player>, state_id: U
     }
 }
 
-pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>) {
-    let mut player = Player::new(player_id, &state.mode);
+pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>, prng: &mut SmallRng) {
+    let mut player = Player::new(player_id, &state.mode, prng);
     player.is_bot = is_bot;
     player.name = name.unwrap_or(player_id.to_string());
     state.players.push(player);
@@ -2212,7 +2180,7 @@ fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
         if let (Some(mut player), Some(ship)) = indexing::find_player_and_ship_mut(state, player_id)
         {
             if player.quest.is_none() {
-                generate_random_quest(player, &quest_planets, ship.docked_at, prng);
+                cargo_rush::generate_random_quest(player, &quest_planets, ship.docked_at, prng);
                 any_new_quests.push(player_id);
             } else {
                 let quest_id = player.quest.as_ref().map(|q| q.id).unwrap();

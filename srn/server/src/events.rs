@@ -7,6 +7,7 @@ use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use uuid::Uuid;
 use rand::prelude::SmallRng;
+use world::cargo_rush;
 use crate::api_struct::AiTrait;
 
 use crate::abilities::{*};
@@ -126,7 +127,7 @@ pub fn handle_events(
                         let state = state.unwrap();
                         let planets = state.locations[0].planets.clone();
                         if let Some(player) = indexing::find_my_player_mut(state, player.id) {
-                            world::generate_random_quest(player, &planets.clone(), None, &mut prng);
+                            cargo_rush::generate_random_quest(player, &planets.clone(), None, &mut prng);
                         }
                         substitute_notification_texts(state, HashSet::from_iter(vec![player.id]));
                     }

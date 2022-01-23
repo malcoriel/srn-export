@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use rand::prelude::SmallRng;
 
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -11,7 +12,7 @@ use crate::indexing::{find_my_player_mut, index_planets_by_id};
 use crate::inventory::{count_items_of_types, value_items_of_types, MINERAL_TYPES};
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{GameMode, GameState, Planet, Player, Ship};
-use crate::{new_id, substitutions};
+use crate::{prng_id, substitutions};
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
@@ -60,7 +61,7 @@ pub struct NotificationText {
     pub substitutions: Vec<Substitution>,
 }
 
-pub fn get_new_player_notifications(_mode: &GameMode) -> Vec<Notification> {
+pub fn get_new_player_notifications(_mode: &GameMode, prng: &mut SmallRng) -> Vec<Notification> {
     return vec![
         Notification::Help {
             header: "How to play".to_string(),
@@ -69,7 +70,7 @@ pub fn get_new_player_notifications(_mode: &GameMode) -> Vec<Notification> {
                 substituted: true,
                 substitutions: vec![],
             },
-            id: new_id(),
+            id: prng_id(prng),
         },
         Notification::Help {
             header: "Basic controls".to_string(),
@@ -78,7 +79,7 @@ pub fn get_new_player_notifications(_mode: &GameMode) -> Vec<Notification> {
                 substituted: true,
                 substitutions: vec![],
             },
-            id: new_id(),
+            id: prng_id(prng),
         },
         Notification::Help {
             header: "What to do".to_string(),
@@ -87,7 +88,7 @@ pub fn get_new_player_notifications(_mode: &GameMode) -> Vec<Notification> {
                 substituted: true,
                 substitutions: vec![],
             },
-            id: new_id(),
+            id: prng_id(prng),
         }
     ];
 }
@@ -109,12 +110,12 @@ pub fn apply_action(state: &mut GameState, player_id: Uuid, action: Notification
 //     return false;
 // }
 
-pub fn update_quest_notifications(player: &mut Player) {
+pub fn update_quest_notifications(player: &mut Player, prng: &mut SmallRng) {
     player.notifications.retain(|n| match n {
         Notification::Task { .. } => false,
         _ => true,
     });
     if let Some(quest) = player.quest.clone() {
-        player.notifications.push(quest.as_notification());
+        player.notifications.push(quest.as_notification(prng));
     }
 }
