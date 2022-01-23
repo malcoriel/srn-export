@@ -371,8 +371,8 @@ pub fn make_pirate_defence_state(seed: String, prng: &mut SmallRng) -> GameState
     gen_opts.max_satellites_for_planet = 0;
     let mut state = gen_state(seed, gen_opts, prng);
     assign_health_to_planets(&mut state.locations[0].planets, Health::new(100.0));
-    state.locations[0].planets[0].properties.insert(ObjectProperty::UnlandablePlanet);
-    state.locations[0].planets[0].properties.insert(ObjectProperty::PirateDefencePlayersHomePlanet);
+    state.locations[0].planets[0].properties.push(ObjectProperty::UnlandablePlanet);
+    state.locations[0].planets[0].properties.push(ObjectProperty::PirateDefencePlayersHomePlanet);
     state.milliseconds_remaining = 5 * 1000 * 60;
     state.mode = GameMode::PirateDefence;
     state

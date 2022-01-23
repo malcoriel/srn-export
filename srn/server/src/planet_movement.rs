@@ -29,7 +29,7 @@ pub trait IBody: Clone {
     fn get_color(&self) -> String;
     fn as_vec(&self) -> Vec2f64;
     fn get_health(&self) -> Option<Health>;
-    fn get_tags(&self) -> HashSet<ObjectProperty>;
+    fn get_properties(&self) -> Vec<ObjectProperty>;
 }
 
 impl IBody for Asteroid {
@@ -88,8 +88,8 @@ impl IBody for Asteroid {
         None
     }
 
-    fn get_tags(&self) -> HashSet<ObjectProperty> {
-        HashSet::new()
+    fn get_properties(&self) -> Vec<ObjectProperty> {
+        vec![]
     }
 }
 
@@ -146,7 +146,7 @@ impl IBody for Planet {
         self.health.clone()
     }
 
-    fn get_tags(&self) -> HashSet<ObjectProperty> {
+    fn get_properties(&self) -> Vec<ObjectProperty> {
         self.properties.clone()
     }
 }
@@ -207,8 +207,8 @@ impl IBody for Star {
         None
     }
 
-    fn get_tags(&self) -> HashSet<ObjectProperty> {
-        HashSet::new()
+    fn get_properties(&self) -> Vec<ObjectProperty> {
+        vec![]
     }
 }
 
@@ -226,7 +226,7 @@ impl From<Box<dyn IBody>> for Planet {
             anchor_tier: val.get_anchor_tier(),
             color: val.get_color(),
             health: val.get_health(),
-            properties: val.get_tags()
+            properties: val.get_properties()
         }
     }
 }

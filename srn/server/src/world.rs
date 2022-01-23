@@ -172,7 +172,7 @@ pub struct Planet {
     pub anchor_tier: u32,
     pub color: String,
     pub health: Option<Health>,
-    pub properties: HashSet<ObjectProperty>,
+    pub properties: Vec<ObjectProperty>,
 }
 
 impl Planet {
