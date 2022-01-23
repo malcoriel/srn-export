@@ -4,6 +4,7 @@ use std::fs;
 use std::slice::Iter;
 
 use itertools::Itertools;
+use rand::prelude::SmallRng;
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -255,6 +256,7 @@ pub fn execute_dialog_option(
     update: DialogueUpdate,
     dialogue_states: &mut DialogueStates,
     dialogue_table: &DialogueTable,
+    prng: &mut SmallRng,
 ) -> (Option<Dialogue>, bool) {
     // bool means "side effect happened, state changed"
     let mut return_value = (None, false);
@@ -267,6 +269,7 @@ pub fn execute_dialog_option(
                 dialogue_table,
                 state,
                 player_id,
+                prng,
             );
             if new_state.is_none() {
                 should_drop = true;
@@ -417,6 +420,7 @@ fn apply_dialogue_option(
     dialogue_table: &DialogueTable,
     state: &mut GameState,
     player_id: PlayerId,
+    prng: &mut SmallRng,
 ) -> (Box<Option<StateId>>, bool) {
     // eprintln!("apply start");
 
@@ -427,7 +431,7 @@ fn apply_dialogue_option(
             // eprintln!("apply current_state update {:?}", (current_state, update));
             let next_state = script.transitions.get(&(current_state, update.option_id));
             if let Some(next_state) = next_state {
-                let side_effect = apply_side_effects(state, next_state.1.clone(), player_id);
+                let side_effect = apply_side_effects(state, next_state.1.clone(), player_id, prng);
                 (Box::new(next_state.0.clone()), side_effect)
             } else {
                 (Box::new(None), false)
@@ -444,6 +448,7 @@ fn apply_side_effects(
     state: &mut GameState,
     side_effects: Vec<DialogueOptionSideEffect>,
     player_id: PlayerId,
+    prng: &mut SmallRng,
 ) -> bool {
     let mut state_changed = false;
     let player = find_my_player(state, player_id);
@@ -457,7 +462,7 @@ fn apply_side_effects(
             DialogueOptionSideEffect::Undock => {
                 let my_ship_idx = find_my_ship_index(state, player_id);
                 if let Some(my_ship_idx) = my_ship_idx {
-                    world::undock_ship(state, my_ship_idx, false, player_idx);
+                    world::undock_ship(state, my_ship_idx, false, player_idx, prng);
                     state_changed = true;
                 }
             }

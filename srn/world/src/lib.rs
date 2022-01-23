@@ -393,7 +393,8 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
     }
     let args = args.ok().unwrap();
     let ship_idx = find_my_ship_index(&args.state, args.player_id);
-    let new_ship = ship_action::apply_player_action(args.ship_action, &args.state, ship_idx, true);
+    let mut prng = seed_prng(args.state.seed.clone());
+    let new_ship = ship_action::apply_player_action(args.ship_action, &args.state, ship_idx, true, &mut prng);
     return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
 }
 

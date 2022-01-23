@@ -19,7 +19,7 @@ use crate::random_stuff::{
 };
 use crate::vec2::Vec2f64;
 use crate::world::{random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star, AABB, GAME_STATE_VERSION, ObjectProperty};
-use crate::{get_prng, new_id, planet_movement, prng_id, seed_prng, world};
+use crate::{new_id, planet_movement, prng_id, seed_prng, world};
 use crate::combat::Health;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

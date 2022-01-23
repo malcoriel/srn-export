@@ -8,6 +8,7 @@ use crate::vec2::Vec2f64;
 use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship, ShipIdx, ObjectProperty};
 use crate::{combat, fire_event, indexing, tractoring, world};
 use core::mem;
+use rand::prelude::SmallRng;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
 use crate::abilities::Ability;
@@ -39,6 +40,7 @@ pub fn apply_player_action(
     state: &GameState,
     ship_idx: Option<ShipIdx>,
     client: bool,
+    prng: &mut SmallRng
 ) -> Option<Ship> {
     if ship_idx.is_none() {
         warn!("No ship");
@@ -66,7 +68,7 @@ pub fn apply_player_action(
                 x: ship.x,
                 y: ship.y,
             };
-            undock_ship_via_clone(state, &ship_idx, &mut ship, client);
+            undock_ship_via_clone(state, &ship_idx, &mut ship, client, prng);
             ship.dock_target = None;
             ship.navigate_target = Some(target);
             ship.trajectory = world::build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
@@ -90,7 +92,7 @@ pub fn apply_player_action(
                         x: planet.x,
                         y: planet.y,
                     };
-                    undock_ship_via_clone(state, &ship_idx, &mut ship, client);
+                    undock_ship_via_clone(state, &ship_idx, &mut ship, client, prng);
                     ship.navigate_target = None;
                     ship.dock_target = None;
                     ship.dock_target = Some(target);
@@ -174,13 +176,14 @@ pub fn apply_player_action(
     }
 }
 
-fn undock_ship_via_clone(state: &GameState, ship_idx: &ShipIdx, mut ship: &mut Ship, client: bool) {
+fn undock_ship_via_clone(state: &GameState, ship_idx: &ShipIdx, mut ship: &mut Ship, client: bool, prng: &mut SmallRng) {
     let mut state_mut_clone = state.clone();
     undock_ship(
         &mut state_mut_clone,
         ship_idx.clone(),
         client,
         find_player_idx_by_ship_id(state, ship.id),
+        prng,
     );
     let mut mutated_ship =
         state_mut_clone.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].clone();

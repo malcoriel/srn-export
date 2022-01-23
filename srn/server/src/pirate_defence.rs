@@ -16,7 +16,6 @@ use crate::fof::{FofActor, FriendOrFoe, resolve_player_id};
 use crate::fof::FriendOrFoe::Friend;
 use crate::vec2::Vec2f64;
 use crate::world::{fire_saved_event, GameEvent, GameOver, GameState, ObjectProperty, Planet, Ship, ShipTemplate, SpatialIndexes, TimeMarks};
-use crate::get_prng;
 use crate::indexing::{GameStateIndexes, index_players_by_ship_id, index_state, ObjectIndexSpecifier, ObjectSpecifier, find_my_ship_index};
 use crate::long_actions::LongActionStart;
 use crate::ship_action::PlayerActionRust;
@@ -79,7 +78,7 @@ pub fn on_ship_died(state: &mut GameState, ship: Ship) {
     }
 }
 
-pub fn update_state_pirate_defence(state: &mut GameState) {
+pub fn update_state_pirate_defence(state: &mut GameState, prng: &mut SmallRng) {
     let current_ticks = state.millis * 1000;
     if world::every(
         PIRATE_SPAWN_INTERVAL_TICKS,
@@ -92,14 +91,14 @@ pub fn update_state_pirate_defence(state: &mut GameState) {
         for _i in 0..PIRATE_SPAWN_COUNT * state.players.len() {
             fire_saved_event(state, GameEvent::PirateSpawn {
                 state_id: state.id,
-                at: gen_pirate_spawn(&state.locations[0].planets.get(0).unwrap()),
+                at: gen_pirate_spawn(&state.locations[0].planets.get(0).unwrap(), prng),
             });
         }
     }
 }
 
-pub fn gen_pirate_spawn(planet: &Planet) -> Vec2f64 {
-    let angle = get_prng().gen_range(0.0, PI * 2.0);
+pub fn gen_pirate_spawn(planet: &Planet, prng: &mut SmallRng) -> Vec2f64 {
+    let angle = prng.gen_range(0.0, PI * 2.0);
     let vec = Vec2f64 { x: 1.0, y: 0.0 };
     vec.rotate(angle)
         .scalar_mul(PIRATE_SPAWN_DIST)

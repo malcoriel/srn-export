@@ -14,7 +14,7 @@ use crate::indexing::{
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, ShipIdx, PLAYER_RESPAWN_TIME_MC, ShipTemplate};
-use crate::{combat, get_prng, indexing, locations, new_id, world};
+use crate::{combat, indexing, locations, prng_id, world};
 use rand::prelude::SmallRng;
 use rand::Rng;
 use std::f64::consts::PI;
@@ -141,11 +141,11 @@ pub fn try_start_long_action_ship(
 ) -> bool {
     match action {
         LongActionStart::Shoot { target, turret_id, .. } => {
-            try_start_shoot(state, target, Some(ship_idx.clone()), turret_id);
+            try_start_shoot(state, target, Some(ship_idx.clone()), turret_id, prng);
             true
         }
         LongActionStart::Dock { to_planet, .. } => {
-            try_start_dock(state, to_planet, ship_idx.clone())
+            try_start_dock(state, to_planet, ship_idx.clone(), prng)
         }
         LongActionStart::Undock { from_planet, .. } => {
             try_start_undock(state, prng, from_planet, ship_idx.clone())
@@ -180,7 +180,7 @@ pub fn try_start_long_action(
             }
             let ship = ship.unwrap();
             ship.long_actions.push(LongAction::TransSystemJump {
-                id: new_id(),
+                id: prng_id(prng),
                 to,
                 micro_left: TRANS_SYSTEM_JUMP_TIME,
                 percentage: 0,
@@ -198,7 +198,7 @@ pub fn try_start_long_action(
             }
             let player = player.unwrap();
             player.long_actions.push(LongActionPlayer::Respawn {
-                id: new_id(),
+                id: prng_id(prng),
                 micro_left: PLAYER_RESPAWN_TIME_MC,
                 percentage: 0,
             });
@@ -209,7 +209,7 @@ pub fn try_start_long_action(
             if ship_idx.is_none() {
                 return false;
             }
-            return try_start_shoot(state, target, ship_idx, turret_id);
+            return try_start_shoot(state, target, ship_idx, turret_id, prng);
         }
         LongActionStart::Dock { to_planet, .. } => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -217,7 +217,7 @@ pub fn try_start_long_action(
                 return false;
             }
             let ship_idx = ship_idx.unwrap();
-            return try_start_dock(state, to_planet, ship_idx);
+            return try_start_dock(state, to_planet, ship_idx, prng);
         }
         LongActionStart::Undock { from_planet } => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -256,7 +256,7 @@ fn try_start_undock(
         .scalar_mul(dist)
         .add(&planet_pos);
     let act = LongAction::Undock {
-        id: new_id(),
+        id: prng_id(prng),
         from_planet,
         start_pos: planet_pos,
         end_pos: Vec2f64 { x: vec.x, y: vec.y },
@@ -268,7 +268,7 @@ fn try_start_undock(
     return true;
 }
 
-fn try_start_dock(state: &mut GameState, to_planet: Uuid, ship_idx: ShipIdx) -> bool {
+fn try_start_dock(state: &mut GameState, to_planet: Uuid, ship_idx: ShipIdx, prng: &mut SmallRng) -> bool {
     let ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
     let planet = &state.locations[ship_idx.location_idx]
         .planets
@@ -294,7 +294,7 @@ fn try_start_dock(state: &mut GameState, to_planet: Uuid, ship_idx: ShipIdx) -> 
     }
     let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
     let act = LongAction::Dock {
-        id: new_id(),
+        id: prng_id(prng),
         to_planet,
         start_pos: ship_pos,
         micro_left: SHIP_DOCK_TIME_TICKS,
@@ -307,7 +307,7 @@ fn try_start_dock(state: &mut GameState, to_planet: Uuid, ship_idx: ShipIdx) -> 
     return true;
 }
 
-fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<ShipIdx>, shooting_turret_id: Uuid) -> bool {
+fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<ShipIdx>, shooting_turret_id: Uuid, prng: &mut SmallRng) -> bool {
     let ship_idx = ship_idx.unwrap();
     if !combat::validate_shoot(
         target.clone(),
@@ -320,7 +320,7 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
 
     let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
     ship.long_actions.push(LongAction::Shoot {
-        id: new_id(),
+        id: prng_id(prng),
         target,
         micro_left: SHOOT_COOLDOWN_TICKS,
         percentage: 0,
@@ -407,7 +407,7 @@ const SHIP_UNDOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
 pub const SHIP_DOCKING_RADIUS_COEFF: f64 = 2.0;
 pub const MIN_SHIP_DOCKING_RADIUS: f64 = 5.0;
 
-pub fn finish_long_act(state: &mut GameState, player_id: Option<Uuid>, act: LongAction, client: bool, ship_idx: ShipIdx) {
+pub fn finish_long_act(state: &mut GameState, player_id: Option<Uuid>, act: LongAction, client: bool, ship_idx: ShipIdx, prng: &mut SmallRng) {
     match act {
         LongAction::Unknown { .. } => {
             // nothing to do
@@ -434,7 +434,7 @@ pub fn finish_long_act(state: &mut GameState, player_id: Option<Uuid>, act: Long
         LongAction::Undock { .. } => {
             let ship_id = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].id;
             let player = find_player_idx_by_ship_id(state, ship_id).map(|p| p.clone());
-            world::undock_ship(state, ship_idx, client, player);
+            world::undock_ship(state, ship_idx, client, player, prng);
         }
     }
 }
@@ -444,6 +444,7 @@ pub fn finish_long_act_player(
     player_id: Uuid,
     act: LongActionPlayer,
     client: bool,
+    prng: &mut SmallRng
 ) {
     match act {
         LongActionPlayer::Unknown { .. } => {
@@ -451,7 +452,7 @@ pub fn finish_long_act_player(
         }
         LongActionPlayer::Respawn { .. } => {
             if !client {
-                spawn_ship(state, Some(player_id), ShipTemplate::player(None), &mut get_prng());
+                spawn_ship(state, Some(player_id), ShipTemplate::player(None), prng);
             }
         }
     }

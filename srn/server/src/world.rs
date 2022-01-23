@@ -961,7 +961,7 @@ fn update_world_iter(
                 .collect();
         }
         for (act, player_id) in to_finish.into_iter() {
-            finish_long_act_player(&mut state, player_id, act, client);
+            finish_long_act_player(&mut state, player_id, act, client, prng);
         }
 
         sampler.end(long_act_ticks);
@@ -1197,7 +1197,7 @@ pub fn update_location(
             .collect();
     }
     for (act, player_id, ship_idx) in to_finish.into_iter() {
-        finish_long_act(&mut state, player_id, act, client, ship_idx);
+        finish_long_act(&mut state, player_id, act, client, ship_idx, prng);
     }
 
     sampler.end(long_act_ticks);
@@ -1467,9 +1467,8 @@ fn update_state_minerals(
     res
 }
 
-pub fn spawn_mineral(location: &mut Location, rarity: Rarity, pos: Vec2f64) {
-    let mut small_rng = get_prng();
-    let mut min = gen_mineral(&mut small_rng, pos);
+pub fn spawn_mineral(location: &mut Location, rarity: Rarity, pos: Vec2f64, prng: &mut SmallRng) {
+    let mut min = gen_mineral(prng, pos);
     min.rarity = rarity;
     location.minerals.push(min)
 }
@@ -2000,6 +1999,7 @@ pub fn undock_ship(
     ship_idx: ShipIdx,
     client: bool,
     player_idx: Option<usize>,
+    prng: &mut SmallRng,
 ) {
     let state_read = state.clone();
     let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
@@ -2022,7 +2022,7 @@ pub fn undock_ship(
                     LongActionStart::Undock {
                         from_planet: planet_id,
                     },
-                    &mut get_prng(),
+                    prng,
                 );
             }
         }
@@ -2166,7 +2166,7 @@ pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler
         GameMode::Tutorial => {}
         GameMode::Sandbox => {}
         GameMode::PirateDefence => {
-            pirate_defence::update_state_pirate_defence(state);
+            pirate_defence::update_state_pirate_defence(state, prng);
         }
     }
     mark_id.map(|mark_id| sampler.end(mark_id));
@@ -2248,6 +2248,7 @@ pub fn mutate_ship_no_lock(
     client_id: Uuid,
     mutate_cmd: PlayerActionRust,
     state: &mut GameState,
+    prng: &mut SmallRng,
 ) -> Option<(Ship, ShipIdx)> {
     let old_ship_index = indexing::find_my_ship_index(&state, client_id);
     if old_ship_index.is_none() {
@@ -2256,7 +2257,7 @@ pub fn mutate_ship_no_lock(
     }
     force_update_to_now(state);
     let updated_ship =
-        ship_action::apply_player_action(mutate_cmd, &state, old_ship_index.clone(), false);
+        ship_action::apply_player_action(mutate_cmd, &state, old_ship_index.clone(), false, prng);
     if let Some(updated_ship) = updated_ship {
         let replaced = try_replace_ship(state, &updated_ship, client_id);
         if replaced {
@@ -2387,7 +2388,7 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
         room.dialogue_states = d_states_clone;
         sampler.end(bot_players_mark);
         let npcs_mark = sampler.start(SamplerMarks::UpdateBotsNPCs as u32);
-        do_bot_npcs_actions(&mut room, bot_action_elapsed as i64, &spatial_indexes);
+        do_bot_npcs_actions(&mut room, bot_action_elapsed as i64, &spatial_indexes, prng);
         sampler.end(npcs_mark);
         sampler.end(bots_mark);
     }
