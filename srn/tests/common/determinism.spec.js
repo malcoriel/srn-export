@@ -1,11 +1,4 @@
-import {
-  getLoc0,
-  getShipByPlayerId,
-  swapGlobals,
-  updateRoom,
-  updateWorld,
-  wasm,
-} from '../util';
+import { swapGlobals, updateRoom, updateWorld, wasm } from '../util';
 
 /*
 *
@@ -18,11 +11,6 @@ import {
 // some fields are intentionally non-deterministic, since they are rather auxiliary (e.g. current date)
 const cementStateFields = (state) => {
   state.start_time_ticks = 0;
-  for (const player of state.players) {
-    player.notifications = [];
-  }
-  state.processed_events = [];
-  state.events = [];
   return state;
 };
 
@@ -35,7 +23,7 @@ const cementRoomFields = (room) => {
 describe('update determinism', () => {
   beforeAll(swapGlobals);
 
-  describe.each(['CargoRush'])('in %s mode', (mode) => {
+  describe.each(['CargoRush', 'Tutorial', 'Sandbox'])('in %s mode', (mode) => {
     describe('state-gen', () => {
       it('can achieve double-run', () => {
         const stateA = wasm.seedWorld({ mode, seed: 'state gen' });

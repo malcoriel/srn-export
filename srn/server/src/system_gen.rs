@@ -19,7 +19,7 @@ use crate::random_stuff::{
 };
 use crate::vec2::Vec2f64;
 use crate::world::{random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star, AABB, GAME_STATE_VERSION, ObjectProperty};
-use crate::{new_id, planet_movement, prng_id, seed_prng, world};
+use crate::{planet_movement, prng_id, seed_prng, world};
 use crate::combat::Health;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -297,9 +297,9 @@ pub fn gen_planet(
     }
 }
 
-pub fn gen_planet_typed(p_type: PlanetType) -> Planet {
+pub fn gen_planet_typed(p_type: PlanetType, id: Uuid) -> Planet {
     Planet {
-        id: new_id(),
+        id,
         name: "".to_string(),
         x: 0.0,
         y: 0.0,
@@ -380,26 +380,25 @@ pub fn make_pirate_defence_state(seed: String, prng: &mut SmallRng) -> GameState
 
 pub const DEFAULT_WORLD_UPDATE_EVERY_TICKS: u64 = 16 * 1000; // standard 60fps
 
-fn make_tutorial_state(_prng: &mut SmallRng) -> GameState {
+fn make_tutorial_state(prng: &mut SmallRng) -> GameState {
     let seed = "tutorial".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
-    let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
-    let star_id = new_id();
+    let star_id = prng_id(prng);
 
     let star = Star {
         color: "rgb(100, 200, 85)".to_string(),
         corona_color: "rgb(100, 200, 85)".to_string(),
         id: star_id.clone(),
-        name: gen_star_name(&mut prng).to_string(),
+        name: gen_star_name(prng).to_string(),
         x: 0.0,
         y: 0.0,
         rotation: 0.0,
         radius: 30.0,
     };
 
-    let planet_id = new_id();
-    let mut location = Location::new_empty(prng_id(&mut prng));
+    let planet_id = prng_id(prng);
+    let mut location = Location::new_empty(prng_id(prng));
     location.seed = seed.clone();
     location.star = Some(star);
     location.planets = vec![
@@ -418,7 +417,7 @@ fn make_tutorial_state(_prng: &mut SmallRng) -> GameState {
             properties: Default::default()
         },
         Planet {
-            id: new_id(),
+            id: prng_id(prng),
             name: "Sat".to_string(),
             x: 120.0,
             y: 0.0,
@@ -434,7 +433,7 @@ fn make_tutorial_state(_prng: &mut SmallRng) -> GameState {
     ];
 
     GameState {
-        id: new_id(),
+        id: prng_id(prng),
         version: GAME_STATE_VERSION,
         mode: GameMode::Tutorial,
         tag: None,
@@ -466,7 +465,7 @@ pub fn make_sandbox_state(prng: &mut SmallRng) -> GameState {
     let now = Utc::now().timestamp_millis() as u64;
 
     GameState {
-        id: new_id(),
+        id: prng_id(prng),
         version: GAME_STATE_VERSION,
         mode: GameMode::Sandbox,
         tag: None,
