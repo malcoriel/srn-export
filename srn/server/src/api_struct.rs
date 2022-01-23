@@ -61,6 +61,7 @@ pub struct Room {
     pub dialogue_states: crate::dialogue::DialogueStates,
     pub last_players_mark: Option<i64>,
     pub bots: Vec<Bot>,
+    pub bots_seed: Option<String>
 }
 
 impl RoomsState {

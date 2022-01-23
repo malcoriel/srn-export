@@ -422,14 +422,15 @@ pub fn seed_world(args: JsValue) -> Result<JsValue, JsValue> {
 #[derive(Clone, Debug, derive_deserialize, derive_serialize)]
 struct CreateRoomArgs {
     mode: GameMode,
-    seed: String
+    seed: String,
+    bots_seed: Option<String>
 }
 
 #[wasm_bindgen]
 pub fn create_room(args: JsValue) -> Result<JsValue, JsValue> {
     let args: CreateRoomArgs = serde_wasm_bindgen::from_value(args)?;
     let mut prng = seed_prng(args.seed);
-    let (_, room) = world::make_room(&args.mode, prng_id(&mut prng), &mut prng);
+    let (_, room) = world::make_room(&args.mode, prng_id(&mut prng), &mut prng, args.bots_seed);
     Ok(serde_wasm_bindgen::to_value(&room)?)
 }
 

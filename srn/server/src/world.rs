@@ -15,7 +15,7 @@ use uuid::*;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::DialogueTable;
+use crate::{DialogueTable, seed_prng};
 use crate::dialogue;
 use dialogue::DialogueStates;
 use crate::{abilities, autofocus, cargo_rush, indexing, pirate_defence, system_gen, prng_id, world_events};
@@ -2313,7 +2313,7 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
     }
 }
 
-pub fn make_room(mode: &GameMode, room_id: Uuid, prng: &mut SmallRng) -> (Uuid, Room) {
+pub fn make_room(mode: &GameMode, room_id: Uuid, prng: &mut SmallRng, bots_seed: Option<String>) -> (Uuid, Room) {
     let room_name = format!("{} - {}", mode, room_id);
     let state = system_gen::seed_state(&mode, random_hex_seed_seeded(prng));
     let state_id = state.id.clone();
@@ -2324,6 +2324,7 @@ pub fn make_room(mode: &GameMode, room_id: Uuid, prng: &mut SmallRng) -> (Uuid, 
         dialogue_states: Default::default(),
         last_players_mark: None,
         bots: vec![],
+        bots_seed
     };
     match mode {
         GameMode::Unknown => {}
@@ -2375,6 +2376,9 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
 
     spatial_indexes = build_full_spatial_indexes(&room.state);
 
+    // by default, bot behavior is non-deterministic, unless we explicitly requested it in room setup
+    let mut bot_prng = room.bots_seed.clone().map_or(get_prng(), |s| seed_prng(s));
+
     if let Some(bot_action_elapsed) = every_diff(
         BOT_ACTION_TIME_TICKS as u32,
         room.state.ticks as u32,
@@ -2384,11 +2388,11 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
         let bots_mark = sampler.start(SamplerMarks::UpdateBots as u32);
         let bot_players_mark = sampler.start(SamplerMarks::UpdateBotsPlayers as u32);
         let mut d_states_clone = room.dialogue_states.clone();
-        do_bot_players_actions(&mut room, &mut d_states_clone, &d_table, bot_action_elapsed as i64, &spatial_indexes, prng);
+        do_bot_players_actions(&mut room, &mut d_states_clone, &d_table, bot_action_elapsed as i64, &spatial_indexes, &mut bot_prng);
         room.dialogue_states = d_states_clone;
         sampler.end(bot_players_mark);
         let npcs_mark = sampler.start(SamplerMarks::UpdateBotsNPCs as u32);
-        do_bot_npcs_actions(&mut room, bot_action_elapsed as i64, &spatial_indexes, prng);
+        do_bot_npcs_actions(&mut room, bot_action_elapsed as i64, &spatial_indexes, &mut bot_prng);
         sampler.end(npcs_mark);
         sampler.end(bots_mark);
     }

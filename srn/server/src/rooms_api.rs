@@ -65,8 +65,9 @@ pub fn create_room_impl(
     cont: &mut RwLockWriteGuard<StateContainer>,
     mode: &GameMode,
     room_id: Uuid,
+    bots_seed: Option<String>
 ) {
-    let (state_id, room) = world::make_room(&mode, room_id);
+    let (state_id, room) = world::make_room(&mode, room_id, bot_seed);
     let bot_len = room.bots.len();
     cont.rooms.values.push(room);
     log!(format!(
