@@ -18,11 +18,17 @@ import {
 // some fields are intentionally non-deterministic, since they are rather auxiliary (e.g. current date)
 const cementStateFields = (state) => {
   state.start_time_ticks = 0;
+  for (const player of state.players) {
+    player.notifications = [];
+  }
+  state.processed_events = [];
+  state.events = [];
   return state;
 };
 
 const cementRoomFields = (room) => {
   room.state = cementStateFields(room.state);
+  room.bots = [];
   return room;
 };
 
