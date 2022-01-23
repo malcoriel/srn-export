@@ -361,10 +361,10 @@ pub struct Ship {
     pub properties: HashSet<ObjectProperty>,
 }
 
-pub fn gen_turrets(count: usize) -> Vec<(Ability, ShipTurret)> {
+pub fn gen_turrets(count: usize, prng: &mut SmallRng) -> Vec<(Ability, ShipTurret)> {
     let mut res = vec![];
     for _i in 0..count {
-        let id = new_id();
+        let id = prng_id(prng);
         res.push((Ability::Shoot {
             cooldown_ticks_remaining: 0,
             turret_id: id,
@@ -378,11 +378,11 @@ pub fn gen_turrets(count: usize) -> Vec<(Ability, ShipTurret)> {
 }
 
 impl Ship {
-    pub fn new(mut small_rng: &mut SmallRng, at: &mut Option<Vec2f64>) -> Ship {
-        let turrets = gen_turrets(2);
+    pub fn new(prng: &mut SmallRng, at: &mut Option<Vec2f64>) -> Ship {
+        let turrets = gen_turrets(2, prng);
         Ship {
-            id: crate::new_id(),
-            color: gen_color(&mut small_rng).to_string(),
+            id: prng_id(prng),
+            color: gen_color(prng).to_string(),
             x: if at.is_some() { at.unwrap().x } else { 100.0 },
             y: if at.is_some() { at.unwrap().y } else { 100.0 },
             acc_periodic_dmg: 0.0,
