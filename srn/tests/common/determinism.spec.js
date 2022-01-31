@@ -1,4 +1,5 @@
 import { swapGlobals, updateRoom, updateWorld, wasm } from '../util';
+import _ from 'lodash';
 
 /*
 *
@@ -28,9 +29,18 @@ describe('update determinism', () => {
     (mode) => {
       describe('state-gen', () => {
         it('can achieve double-run', () => {
-          const stateA = wasm.seedWorld({ mode, seed: 'state gen' });
-          const stateB = wasm.seedWorld({ mode, seed: 'state gen' });
-          const stateC = wasm.seedWorld({ mode, seed: 'state gen1' });
+          const stateA = wasm.seedWorld({
+            mode,
+            seed: 'state gen',
+          });
+          const stateB = wasm.seedWorld({
+            mode,
+            seed: 'state gen',
+          });
+          const stateC = wasm.seedWorld({
+            mode,
+            seed: 'state gen1',
+          });
           expect(cementStateFields(stateA)).toEqual(cementStateFields(stateB));
           expect(cementStateFields(stateA)).not.toEqual(
             cementStateFields(stateC)
@@ -40,7 +50,10 @@ describe('update determinism', () => {
 
       describe('normal world update in silence', () => {
         it('can achieve double-run', () => {
-          const state = wasm.seedWorld({ mode, seed: 'world update' });
+          const state = wasm.seedWorld({
+            mode,
+            seed: 'world update',
+          });
           const stateA = updateWorld(state, 10000);
           const stateB = updateWorld(state, 10000);
           const stateC = updateWorld(state, 10001);
@@ -50,7 +63,10 @@ describe('update determinism', () => {
           );
         });
         it('can achieve skip-step', () => {
-          const state = wasm.seedWorld({ mode, seed: 'world update' });
+          const state = wasm.seedWorld({
+            mode,
+            seed: 'world update',
+          });
           const stateA = updateWorld(state, 10000);
           const stateB = updateWorld(updateWorld(state, 5000), 5000);
           expect(cementStateFields(stateA)).toEqual(cementStateFields(stateB));
@@ -59,30 +75,40 @@ describe('update determinism', () => {
     }
   );
 
-  describe.each(['CargoRush', 'PirateDefence'])(
-    'room updates in %s mode',
-    (mode) => {
-      describe('room update', () => {
-        it('can make bots deterministic if necessary', () => {
-          const room = wasm.createRoom({
-            mode,
-            seed: 'world update',
-            bots_seed: 'deterministic',
-          });
-          const roomA = updateRoom(room, 10000);
-          const roomB = updateRoom(room, 10000);
-          expect(cementRoomFields(roomA)).toEqual(cementRoomFields(roomB));
-        });
-        xit('non-deterministic bots by default', () => {
-          const room = wasm.createRoom({
-            mode,
-            seed: 'world update',
-          });
-          const roomA = updateRoom(room, 10000);
-          const roomB = updateRoom(room, 10000);
-          expect(cementRoomFields(roomA)).not.toEqual(cementRoomFields(roomB));
-        });
-      });
+  const serialUpdateAndCompare = (room, updates) => {
+    let currentA = _.clone(room);
+    let currentB = _.clone(room);
+    let i = 0;
+    for (const update of updates) {
+      currentA = updateRoom(currentA, update);
+      currentB = updateRoom(currentB, update);
+      expect(
+        cementRoomFields(currentA),
+        `failed on serial compare #${i}`
+      ).toEqual(cementRoomFields(currentB));
+      i++;
     }
-  );
+  };
+
+  describe.each(['PirateDefence'])('room updates in %s mode', (mode) => {
+    describe('room update', () => {
+      fit('can make bots deterministic if necessary', () => {
+        const room = wasm.createRoom({
+          mode,
+          seed: 'world update',
+          bots_seed: 'deterministic',
+        });
+        serialUpdateAndCompare(room, [5000, 5000, 10000, 10000]);
+      });
+      it('non-deterministic bots by default', () => {
+        const room = wasm.createRoom({
+          mode,
+          seed: 'world update',
+        });
+        const roomA = updateRoom(room, 30000);
+        const roomB = updateRoom(room, 30000);
+        expect(cementRoomFields(roomA)).not.toEqual(cementRoomFields(roomB));
+      });
+    });
+  });
 });

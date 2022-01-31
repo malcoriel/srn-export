@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@alex_neo/jest-expect-message@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@alex_neo/jest-expect-message/-/jest-expect-message-1.0.5.tgz#bdc96f5764cb42ab677941c1ac86b2e4bea96fa7"
+  integrity sha512-1eBykZCd0pPGl5qKtV6Z5ARA6yuhXzHsVN2h5GH5/H6svYa37Jr7vMio5OFpiw1LBHtscrZs7amSkZkcwm0cvQ==
+
 "@babel/code-frame@^7.12.13", "@babel/code-frame@^7.16.0":
   version "7.16.0"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.16.0.tgz#0dfc80309beec8411e65e706461c408b0bb9b431"
@@ -781,6 +786,21 @@
   integrity sha512-c3mAZEuK0lvBp8tmuL74XRKn1+y2dcwOUpH7x4WrF6gk1GIgiluDRgMYQtw2OFcBvAJWlt6ASU3tSqxp0Uu0Aw==
   dependencies:
     "@types/istanbul-lib-report" "*"
+
+"@types/jest-expect-message@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@types/jest-expect-message/-/jest-expect-message-1.0.3.tgz#433ad89565c871acefafedeb957d0a8ec2a977a0"
+  integrity sha512-sp70Lc8POkOcXHEcLERpX/7B/BtQiqIYz3AvC9ZMNKSaiDttr8hKvz9DljIn7N6WJi3ioVoTtB1utDAX46oPlg==
+  dependencies:
+    "@types/jest" "*"
+
+"@types/jest@*":
+  version "27.4.0"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-27.4.0.tgz#037ab8b872067cae842a320841693080f9cb84ed"
+  integrity sha512-gHl8XuC1RZ8H2j5sHv/JqsaxXkDDM9iDOgu0Wp8sjs4u/snb2PVehyWXJPr+ORA0RPpgw231mnutWI1+0hgjIQ==
+  dependencies:
+    jest-diff "^27.0.0"
+    pretty-format "^27.0.0"
 
 "@types/jest@^27.0.3":
   version "27.0.3"
@@ -1750,6 +1770,11 @@ jest-environment-node@^27.4.6:
     "@types/node" "*"
     jest-mock "^27.4.6"
     jest-util "^27.4.2"
+
+jest-expect-message@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/jest-expect-message/-/jest-expect-message-1.0.2.tgz#6d67cdf093457a607d231038a3b84aa3a076bcba"
+  integrity sha512-WFiXMgwS2lOqQZt1iJMI/hOXpUm32X+ApsuzYcQpW5m16Pv6/Gd9kgC+Q+Q1YVNU04kYcAOv9NXMnjg6kKUy6Q==
 
 jest-get-type@^27.4.0:
   version "27.4.0"

@@ -4,3 +4,5 @@ import 'regenerator-runtime/runtime';
 import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+// jest expect message
+import '@alex_neo/jest-expect-message';

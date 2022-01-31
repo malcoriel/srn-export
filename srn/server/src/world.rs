@@ -358,7 +358,7 @@ pub struct Ship {
     pub npc: Option<Bot>,
     pub name: Option<String>,
     pub turrets: Vec<ShipTurret>,
-    pub properties: HashSet<ObjectProperty>,
+    pub properties: Vec<ObjectProperty>,
 }
 
 pub fn gen_turrets(count: usize, prng: &mut SmallRng) -> Vec<(Ability, ShipTurret)> {
@@ -720,7 +720,7 @@ fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
         let y: f64 = cur_angle.sin() * ASTEROID_BELT_RANGE;
         let shift = gen_asteroid_shift(rng);
         res.push(Asteroid {
-            id: new_id(),
+            id: prng_id(rng),
             x: x + shift.0,
             y: y + shift.1,
             rotation: 0.0,
@@ -1154,7 +1154,7 @@ pub fn update_location(
 
     if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
-        update_hp_effects(state, location_idx, elapsed, state.millis);
+        update_hp_effects(state, location_idx, elapsed, state.millis, prng);
         sampler.end(hp_effects_id);
 
         let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
@@ -1570,6 +1570,7 @@ pub fn update_hp_effects(
     location_idx: usize,
     elapsed_micro: i64,
     current_tick: u32,
+    prng: &mut SmallRng,
 ) {
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
@@ -1605,7 +1606,7 @@ pub fn update_hp_effects(
                 ship.acc_periodic_dmg = 0.0;
                 ship.health.current = (ship.health.current - dmg_done as f64).max(0.0);
                 ship.local_effects.push(LocalEffect::DmgDone {
-                    id: new_id(),
+                    id: prng_id(prng),
                     hp: -dmg_done,
                     tick: current_tick,
                     ship_id: ship.id,
@@ -1622,7 +1623,7 @@ pub fn update_hp_effects(
                 ship.acc_periodic_heal = 0.0;
                 ship.health.current = ship.health.max.min(ship.health.current + heal as f64);
                 ship.local_effects.push(LocalEffect::Heal {
-                    id: new_id(),
+                    id: prng_id(prng),
                     hp: heal as i32,
                     tick: current_tick,
                     ship_id: ship.id,
@@ -1671,7 +1672,7 @@ pub fn update_hp_effects(
     for (ship_clone, pid) in ships_to_die.into_iter() {
         state.locations[location_idx].wrecks.push(Wreck {
             position: ship_clone.get_position(),
-            id: new_id(),
+            id: prng_id(prng),
             rotation: ship_clone.rotation,
             radius: ship_clone.radius,
             color: ship_clone.color.clone(),
@@ -1773,7 +1774,7 @@ pub struct ShipTemplate {
     name: Option<String>,
     health: Option<Health>,
     movement: Option<MovementDefinition>,
-    properties: Option<HashSet<ObjectProperty>>,
+    properties: Option<Vec<ObjectProperty>>,
 }
 
 impl ShipTemplate {
@@ -1790,7 +1791,7 @@ impl ShipTemplate {
                 current_move_speed: 0.0,
                 current_turn_speed: 0.0,
             }),
-            properties: Some(HashSet::from_iter(vec![ObjectProperty::MoneyOnKill { amount: 100 }, ObjectProperty::PirateShip])),
+            properties: Some(vec![ObjectProperty::MoneyOnKill { amount: 100 }, ObjectProperty::PirateShip]),
         }
     }
 
