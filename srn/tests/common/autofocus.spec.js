@@ -8,9 +8,11 @@ import {
 
 describe('autofocus behavior', () => {
   beforeAll(swapGlobals);
-  it('in pirate defence, bot ships are not in hostile autofocus of each other', async () => {
-    const room = updateRoom(wasm.createRoom({ mode: 'PirateDefence' }), 100);
-
+  fit('in pirate defence, bot ships are not in hostile autofocus of each other', async () => {
+    const room = updateRoom(
+      wasm.createRoom({ mode: 'PirateDefence', seed: 'autofocus' }),
+      100
+    );
     const { state } = room;
     const bot1 = room.bots[0].id;
     const bot2 = room.bots[1].id;
@@ -20,7 +22,10 @@ describe('autofocus behavior', () => {
   });
 
   it('in pirate defence, pirate npc ships are in hostile autofocus of bot ships', async () => {
-    const room = updateRoom(wasm.createRoom({ mode: 'PirateDefence' }), 100);
+    const room = updateRoom(
+      wasm.createRoom({ mode: 'PirateDefence', seed: 'autofocus' }),
+      100
+    );
 
     const { state } = room;
     const bot1 = room.bots[0].id;
@@ -31,7 +36,7 @@ describe('autofocus behavior', () => {
   });
 
   it('can autofocus closest planet in cargo rush mode', async () => {
-    let room = wasm.createRoom({ mode: 'CargoRush' });
+    let room = wasm.createRoom({ mode: 'CargoRush', seed: 'autofocus' });
     const firstBotId = room.bots[0].id;
     const botShipBeforeUpdate = getShipByPlayerId(room.state, firstBotId);
     const planet = getLoc0(room.state).planets[0];

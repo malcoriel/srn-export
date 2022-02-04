@@ -13,7 +13,7 @@ import {
 describe('pirate defence friend-or-foe behavior', () => {
   beforeAll(swapGlobals);
   it('considers bots friendly to each other', async () => {
-    const room = wasm.createRoom({ mode: 'PirateDefence' });
+    const room = wasm.createRoom({ mode: 'PirateDefence', seed: 'fof' });
     const { state } = room;
     const bot1 = room.bots[0].id;
     const bot2 = room.bots[1].id;
@@ -23,7 +23,7 @@ describe('pirate defence friend-or-foe behavior', () => {
   });
 
   it('considers bots friendly to themselves', async () => {
-    const room = wasm.createRoom({ mode: 'PirateDefence' });
+    const room = wasm.createRoom({ mode: 'PirateDefence', seed: 'fof' });
     const { state } = room;
     const bot1 = room.bots[0].id;
     expect(
@@ -32,7 +32,7 @@ describe('pirate defence friend-or-foe behavior', () => {
   });
 
   it("considers bots' ships friendly to each other", async () => {
-    const room = wasm.createRoom({ mode: 'PirateDefence' });
+    const room = wasm.createRoom({ mode: 'PirateDefence', seed: 'fof' });
     const { state } = room;
     const bot1 = room.bots[0].id;
     const bot2 = room.bots[1].id;
@@ -48,7 +48,7 @@ describe('pirate defence friend-or-foe behavior', () => {
   });
 
   it('considers ships friendly to planet', async () => {
-    const room = wasm.createRoom({ mode: 'PirateDefence' });
+    const room = wasm.createRoom({ mode: 'PirateDefence', seed: 'fof' });
     const { state } = room;
     const bot1 = room.bots[0].id;
     const botShip1 = getShipByPlayerId(state, bot1);
@@ -63,7 +63,7 @@ describe('pirate defence friend-or-foe behavior', () => {
   });
 
   it('considers bot players and ships hostile to npcs', async () => {
-    let room = wasm.createRoom({ mode: 'PirateDefence' });
+    let room = wasm.createRoom({ mode: 'PirateDefence', seed: 'fof' });
     room = updatePirateDefenceUntilPiratesAppear(room);
     const { state } = room;
     const pirate = findAPirateShip(getLoc0(state));
