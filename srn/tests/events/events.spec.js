@@ -1,5 +1,4 @@
 import {
-  findFirstEvent,
   findFirstProcessedEvent,
   mockPlayer,
   mockShip,
@@ -18,8 +17,9 @@ describe('game events logic', () => {
     world.locations[0].ships.push(mockShip(shipId));
     world = updateWorld(world, 10 * 1000);
     expect(world.locations[0].ships.length).toEqual(0);
-    const shipDiedEvent = findFirstEvent(world, 'ShipDied');
-    expect(shipDiedEvent.ship.id).toEqual(shipId);
+    const shipDiedEvent = findFirstProcessedEvent(world, 'ShipDied');
+    expect(shipDiedEvent).toBeTruthy();
+    expect(shipDiedEvent.event.ship.id).toEqual(shipId);
   });
 
   it('can spawn pirates', async () => {
@@ -27,12 +27,9 @@ describe('game events logic', () => {
     // pirates spawn only if there are players
     world.players.push(mockPlayer(uuid.v4()));
     world = updateWorld(world, 15 * 1000);
-    const pirateSpawnEvent = findFirstEvent(world, 'PirateSpawn');
-    expect(pirateSpawnEvent.state_id).toEqual(world.id);
-    world = updateWorld(world, 1000);
+    const pirateSpawnEvent = findFirstProcessedEvent(world, 'PirateSpawn');
+    expect(pirateSpawnEvent.event.state_id).toEqual(world.id);
     const ships = world.locations[0].ships;
     expect(ships.length).toBeGreaterThan(1);
-    const processedEvent = findFirstProcessedEvent(world, 'PirateSpawn');
-    expect(processedEvent.processed_at_ticks).toBeGreaterThan(15 * 1000 * 1000);
   });
 });
