@@ -2045,13 +2045,11 @@ fn build_trajectory_to_body(
     to_anchor: &Box<dyn IBody>,
     for_movement: &MovementDefinition,
 ) -> Vec<Vec2f64> {
-    //noinspection RsTypeCheck
     let bodies: Vec<Box<dyn IBody>> = vec![to.clone(), to_anchor.clone()];
     let mut anchors =
         planet_movement::build_anchors_from_bodies(bodies);
     let mut shifts = HashMap::new();
     let mut counter = 0;
-    //noinspection RsTypeCheck
     let mut current_target = Planet::from(to.clone());
     let mut current_from = from.clone();
     let mut result = vec![];

@@ -2,7 +2,7 @@ use crate::vec2::Vec2f64;
 use chrono::Local;
 use lazy_static::lazy_static;
 use rand::rngs::SmallRng;
-use rand::{thread_rng, Rng, RngCore, SeedableRng};
+use rand::{Rng, RngCore, SeedableRng};
 use std::collections::{HashMap, HashSet};
 use std::sync::{mpsc, Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
 use std::thread;
