@@ -156,6 +156,7 @@ mod tutorial;
 mod cargo_rush;
 mod world_events;
 mod world_player_actions;
+mod replay;
 
 struct LastCheck {
     time: DateTime<Utc>,
@@ -234,6 +235,15 @@ pub fn seed_prng(seed: String) -> SmallRng {
     return SmallRng::seed_from_u64(system_gen::str_to_hash(seed));
 }
 
+pub fn prng_id(rng: &mut SmallRng) -> Uuid {
+    let mut bytes = [0u8; 16];
+    rng.fill_bytes(&mut bytes);
+
+    crate::Builder::from_bytes(bytes)
+        .set_variant(Variant::RFC4122)
+        .set_version(Version::Random)
+        .build()
+}
 
 pub fn new_id() -> Uuid {
     Uuid::new_v4()
@@ -440,7 +450,7 @@ fn main_thread() {
                 let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);
                 for room in cont.rooms.values.iter_mut() {
                     let spatial_indexes = spatial_indexes_by_room_id.get(&room.id).unwrap();
-                    do_bot_npcs_actions(room, bot_action_elapsed, spatial_indexes);
+                    do_bot_npcs_actions(room, bot_action_elapsed, spatial_indexes, &mut prng);
                 }
                 sampler.end(npcs_mark);
                 if sampler.end_top(bots_mark) < 0 {

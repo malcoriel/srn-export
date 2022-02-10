@@ -8,7 +8,7 @@ use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use uuid::Uuid;
 
-use crate::indexing;
+use crate::{indexing, prng_id};
 use crate::indexing::{find_my_ship, find_my_ship_mut};
 
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
@@ -109,7 +109,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     options: Vec::from(PLANET_NAMES),
                 };
                 let name = planet_name_pool.get(&mut prng).to_string();
-                let mut planet = gen_planet_typed(p_type);
+                let mut planet = gen_planet_typed(p_type, prng_id(&mut prng));
                 planet.name = name;
                 planet.radius = radius;
                 planet.orbit_speed = orbit_speed;
@@ -146,7 +146,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     y: ship.y,
                 };
                 let location = &mut state.locations[loc.location_idx];
-                world::spawn_mineral(location, world::Rarity::Common, pos);
+                world::spawn_mineral(location, world::Rarity::Common, pos, &mut prng);
             }
         }
         SandboxCommand::AddContainer => {

@@ -7,7 +7,6 @@ use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use uuid::Uuid;
 use rand::prelude::SmallRng;
-use world::cargo_rush;
 use crate::api_struct::AiTrait;
 
 use crate::abilities::{*};
@@ -144,8 +143,8 @@ pub fn handle_events(
                             XCast::Unicast(state.id, player.id),
                         );
                     }
-                    GameEvent::CreateRoomRequest { mode, room_id } => {
-                        create_room_impl(cont, &mode, room_id);
+                    GameEvent::CreateRoomRequest { mode, room_id, bots_seed } => {
+                        create_room_impl(cont, &mode, room_id, bots_seed);
                     }
                     GameEvent::PirateSpawn { .. } => {
                         warn!("Pirate spawn handling should happen in world, there's some bug here");

@@ -12,7 +12,7 @@ use crate::rooms_api::{
 };
 use crate::world::GameState;
 use crate::xcast::XCast;
-use crate::{new_id, system_gen, world};
+use crate::{get_prng, new_id, system_gen, world};
 use lazy_static::lazy_static;
 use lockfree::map::Map as LockFreeMap;
 use std::slice::Iter;
@@ -127,7 +127,8 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId) {
         })
     };
 
-    let mut player = player.unwrap_or(Player::new(client_id, &GameMode::Sandbox));
+    let prng = &mut get_prng();
+    let mut player = player.unwrap_or(Player::new(client_id, &GameMode::Sandbox, prng));
     player.notifications = vec![];
 
     let new_state_id = {
@@ -144,7 +145,7 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId) {
             new_state
         };
         new_state.players.push(player);
-        spawn_ship(new_state, Some(client_id), ShipTemplate::player(None));
+        spawn_ship(new_state, Some(client_id), ShipTemplate::player(None), prng);
         new_state.id
     };
 

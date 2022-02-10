@@ -641,7 +641,7 @@ fn mutate_owned_ship(
     if let Some(tag) = tag {
         send_tag_confirm(tag, client_id);
     }
-    let mutated = world::mutate_ship_no_lock(client_id, mutate_cmd, state);
+    let mutated = world::mutate_ship_no_lock(client_id, mutate_cmd, state, &mut get_prng());
     if let Some(mutated) = mutated {
         multicast_ships_update_excluding(
             state.locations[mutated.1.location_idx as usize]
@@ -752,6 +752,7 @@ fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag
             dialogue_update,
             &mut *dialogue_cont,
             &*dialogue_table,
+            &mut get_prng(),
         );
         unicast_dialogue_state(client_id.clone(), new_dialogue_state, mut_state.id);
         global_state_change = state_changed;

@@ -19,7 +19,7 @@ use crate::api_struct::*;
 use crate::events::fire_event;
 use crate::states::{ROOMS_READ, StateContainer};
 use crate::world::{GameEvent, GameMode, GameState, PlayerId};
-use crate::{cargo_rush, new_id, system_gen, world};
+use crate::{cargo_rush, get_prng, new_id, system_gen, world};
 
 #[get("/")]
 pub fn get_rooms() -> Json<Vec<Room>> {
@@ -56,7 +56,7 @@ pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
     }
     let mode = mode.ok().unwrap();
     let room_id = new_id();
-    fire_event(GameEvent::CreateRoomRequest { mode, room_id });
+    fire_event(GameEvent::CreateRoomRequest { mode, room_id, bots_seed: None });
 
     return Json(RoomIdResponse { room_id });
 }
@@ -67,7 +67,7 @@ pub fn create_room_impl(
     room_id: Uuid,
     bots_seed: Option<String>
 ) {
-    let (state_id, room) = world::make_room(&mode, room_id, bot_seed);
+    let (state_id, room) = world::make_room(&mode, room_id, &mut get_prng(), bots_seed);
     let bot_len = room.bots.len();
     cont.rooms.values.push(room);
     log!(format!(

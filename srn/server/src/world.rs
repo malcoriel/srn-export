@@ -65,6 +65,7 @@ const TRAJECTORY_EPS: f64 = 0.1;
 const ASTEROID_COUNT: u32 = 200;
 const ASTEROID_BELT_RANGE: f64 = 100.0;
 
+
 pub type PlayerId = Uuid;
 
 #[derive(
@@ -304,6 +305,7 @@ pub enum GameEvent {
     CreateRoomRequest {
         mode: GameMode,
         room_id: Uuid,
+        bots_seed: Option<String>
     },
     KickPlayerRequest {
         player_id: Uuid
@@ -840,7 +842,7 @@ pub struct SpatialIndexes {
 }
 
 pub fn update_world(
-    mut state: GameState,
+    state: GameState,
     elapsed: i64,
     client: bool,
     sampler: Sampler,
