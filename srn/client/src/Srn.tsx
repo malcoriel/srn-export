@@ -48,8 +48,8 @@ let monitorSizeInterval: Timeout | undefined;
 const Srn = () => {
   Perf.markEvent(Measure.RootComponentRender);
   const {
-    playing,
-    setPlaying,
+    mainUiState,
+    setMainUiState,
     menu,
     setMenu,
     toggleMenu,
@@ -61,8 +61,8 @@ const Srn = () => {
     setLeaderboardWindow,
   } = useStore(
     (state: SrnState) => ({
-      playing: state.playing,
-      setPlaying: state.setPlaying,
+      mainUiState: state.mainUiState,
+      setMainUiState: state.setMainUiState,
       menu: state.menu,
       setMenu: state.setMenu,
       toggleMenu: state.toggleMenu,
@@ -92,14 +92,14 @@ const Srn = () => {
     'esc',
     () => {
       try {
-        if (playing) {
+        if (mainUiState) {
           toggleMenu();
         }
       } catch (e) {
         console.error(e);
       }
     },
-    [playing, toggleMenu]
+    [mainUiState, toggleMenu]
   );
 
   const [mode, setMode] = useState(GameMode.CargoRush);
@@ -114,7 +114,7 @@ const Srn = () => {
       return;
     }
 
-    setPlaying(MainUiState.Playing);
+    setMainUiState(MainUiState.Playing);
     setMenu(false);
     ns.playerName = preferredName;
     ns.portraitName = portrait; // portrait files are 1-based
@@ -122,7 +122,7 @@ const Srn = () => {
     setMode(mode);
     ns.init(mode);
     ns.on('disconnect', () => {
-      setPlaying(MainUiState.Idle);
+      setMainUiState(MainUiState.Idle);
       setMenu(true);
     });
     if (mode === GameMode.Tutorial) {
@@ -153,7 +153,7 @@ const Srn = () => {
     updateSize();
     monitorSizeInterval = setInterval(updateSize, MONITOR_SIZE_INTERVAL);
 
-    if (playing) {
+    if (mainUiState === MainUiState.Playing) {
       console.log('remount start');
       start(mode);
       // this will force re-subscription to useNSForceChange
@@ -182,7 +182,7 @@ const Srn = () => {
     const ns = NetState.get();
     if (!ns) return;
     ns.disconnectAndDestroy();
-    setPlaying(MainUiState.Idle);
+    setMainUiState(MainUiState.Idle);
   };
 
   const ns = NetState.get();
@@ -208,44 +208,41 @@ const Srn = () => {
           height: size.height_px,
         }}
       >
-        {playing && (
+        {mainUiState === MainUiState.Playing ? (
           <>
             <ThreeLayer visible desiredMode={mode} />
-            {playing && (
-              <Stage
-                width={size.width_px}
-                height={size.height_px}
-                style={{ pointerEvents: 'none' }}
-              >
-                <KonvaOverlay />
-              </Stage>
-            )}
-            {playing && (
-              <>
-                <MinimapPanel />
-                <ShipControls />
-                <NetworkStatus />
-                <LeaderboardWindow />
-                <DialogueWindow />
-                <QuestWindow />
-                <ChatWindow />
-                <DebugStateLayer />
-                <StatsPanel />
-                <ControlPanel />
-                <WindowContainers />
-                <OverheadPanel />
-                <HelpWindow />
-                <InventoryWindow />
-                <LongActionsDisplay />
-                <StarMapWindow />
-                <TradeWindow />
-                <PromptWindow />
-                <StateStoreSyncer />
-                {playing && <SandboxQuickMenu />}
-              </>
-            )}
+
+            <Stage
+              width={size.width_px}
+              height={size.height_px}
+              style={{ pointerEvents: 'none' }}
+            >
+              <KonvaOverlay />
+            </Stage>
+            <>
+              <MinimapPanel />
+              <ShipControls />
+              <NetworkStatus />
+              <LeaderboardWindow />
+              <DialogueWindow />
+              <QuestWindow />
+              <ChatWindow />
+              <DebugStateLayer />
+              <StatsPanel />
+              <ControlPanel />
+              <WindowContainers />
+              <OverheadPanel />
+              <HelpWindow />
+              <InventoryWindow />
+              <LongActionsDisplay />
+              <StarMapWindow />
+              <TradeWindow />
+              <PromptWindow />
+              <StateStoreSyncer />
+              <SandboxQuickMenu />
+            </>
           </>
-        )}
+        ) : null}
         {musicEnabled && <MusicControls />}
         {menu && (
           <StartMenu
@@ -255,8 +252,8 @@ const Srn = () => {
             quit={quit}
           />
         )}
-        {!playing && <StartMenuBackground />}
-        {!playing && <MenuLoadingIndicator />}
+        {mainUiState === MainUiState.Idle && <StartMenuBackground />}
+        {mainUiState === MainUiState.Idle && <MenuLoadingIndicator />}
       </div>
     </>
   );

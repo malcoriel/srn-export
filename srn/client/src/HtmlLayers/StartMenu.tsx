@@ -46,7 +46,7 @@ export const StartMenu: React.FC<{
     setPreferredName,
     makeRandomName,
     portrait,
-    playing,
+    mainUiState,
     setMenu,
     makeRandomPortrait,
     volume,
@@ -61,7 +61,7 @@ export const StartMenu: React.FC<{
     setPreferredName: state.setPreferredName,
     makeRandomName: state.makeRandomName,
     setMenu: state.setMenu,
-    playing: state.playing,
+    mainUiState: state.mainUiState,
     portrait: state.portrait,
     makeRandomPortrait: state.makeRandomPortrait,
     volume: state.volume,
@@ -96,7 +96,7 @@ export const StartMenu: React.FC<{
 
   return (
     <div className="start-menu">
-      {playing === MainUiState.Idle ? (
+      {mainUiState === MainUiState.Idle ? (
         <div className="global-chat-container">
           <GlobalChat />
         </div>
@@ -104,7 +104,7 @@ export const StartMenu: React.FC<{
       {menuState === StartMenuState.MainStartScreen && (
         <div className="start-hud">
           <div className="title">Star Rangers Network</div>
-          {playing === MainUiState.Idle ? (
+          {mainUiState === MainUiState.Idle ? (
             <>
               {/* eslint-disable-next-line react/no-unescaped-entities */}
               <Label>So, what's your name, ranger?</Label>
@@ -172,7 +172,7 @@ export const StartMenu: React.FC<{
               text="OFF"
             />
           </div>
-          {playing === MainUiState.Playing ? (
+          {mainUiState === MainUiState.Playing ? (
             <>
               <div className="music-volume">
                 <Label className="music-volume-label">Music volume</Label>
@@ -197,7 +197,7 @@ export const StartMenu: React.FC<{
               </div>
             </>
           ) : null}
-          {playing === MainUiState.Idle && (
+          {mainUiState === MainUiState.Idle && (
             <>
               {menuState === StartMenuState.MainStartScreen && (
                 <Button
@@ -220,13 +220,13 @@ export const StartMenu: React.FC<{
             </>
           )}
 
-          {playing === MainUiState.Playing && (
+          {mainUiState === MainUiState.Playing && (
             <>
               <Button className="play" onClick={hide} text="BACK" hotkey="b" />
               <Button className="quit" onClick={quit} hotkey="Q" text="QUIT" />
             </>
           )}
-          {playing === MainUiState.Playing && (
+          {mainUiState === MainUiState.Playing && (
             <div className="game-seeds">
               <div>Game seeds:</div>
               <div>
@@ -240,7 +240,7 @@ export const StartMenu: React.FC<{
           )}
         </div>
       )}
-      {playing === MainUiState.Idle ? (
+      {mainUiState === MainUiState.Idle ? (
         <>
           {menuState === StartMenuState.Play && (
             <PlayMenu
@@ -277,7 +277,7 @@ export const StartMenu: React.FC<{
         <div className="authorship">Character images by artbreeder.com</div>
         <div className="authorship">Music powered by aiva.ai</div>
       </div>
-      {playing === MainUiState.Idle && (
+      {mainUiState === MainUiState.Idle && (
         <div className="changelog-container">
           <Changelog />
         </div>
