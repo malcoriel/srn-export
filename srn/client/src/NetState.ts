@@ -272,6 +272,8 @@ export default class NetState extends EventEmitter {
       processed_events: [],
       player_actions: [],
       processed_player_actions: [],
+      update_every_ticks: 9999,
+      accumulated_not_updated_ticks: 0,
     };
     reindexNetState(this);
   }
