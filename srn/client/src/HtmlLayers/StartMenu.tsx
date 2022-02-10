@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import './StartMenu.scss';
 import {
   FaAngleLeft,
@@ -11,7 +11,7 @@ import useSWR from 'swr';
 import { Button } from './ui/Button';
 import { Label } from './ui/Label';
 import { Input } from './ui/Input';
-import { TestMenuMode, useStore } from '../store';
+import { MainUiState, TestMenuMode, useStore } from '../store';
 import 'rc-slider/assets/index.css';
 import { teal } from '../utils/palette';
 import versionJson from '../../version.json';
@@ -20,9 +20,16 @@ import { GlobalChat } from './GlobalChat';
 import { Changelog } from './Changelog';
 import { PlayMenu } from './PlayMenu';
 import { GameMode } from '../../../world/pkg/world.extra';
+import { WatchMenu } from './WatchMenu';
 
 export const makePortraitPath = (portrait: string) =>
   `resources/chars/${portrait}.png`;
+
+enum StartMenuState {
+  MainStartScreen = 0,
+  Play = 1,
+  Watch = 2,
+}
 
 export const StartMenu: React.FC<{
   start: (mode: GameMode) => void;
@@ -64,7 +71,9 @@ export const StartMenu: React.FC<{
 
   const hide = () => setMenu(false);
 
-  const [playMenu, setPlayMenu] = useState(false);
+  const [menuState, setMenuState] = useState<StartMenuState>(
+    StartMenuState.MainStartScreen
+  );
 
   const serverVersion = useSWR('/api/version', async () => api.getVersion());
 
@@ -87,15 +96,15 @@ export const StartMenu: React.FC<{
 
   return (
     <div className="start-menu">
-      {!playing && (
+      {playing === MainUiState.Idle ? (
         <div className="global-chat-container">
           <GlobalChat />
         </div>
-      )}
-      {!playMenu && (
+      ) : null}
+      {menuState === StartMenuState.MainStartScreen && (
         <div className="start-hud">
           <div className="title">Star Rangers Network</div>
-          {!playing && (
+          {playing === MainUiState.Idle ? (
             <>
               {/* eslint-disable-next-line react/no-unescaped-entities */}
               <Label>So, what's your name, ranger?</Label>
@@ -142,7 +151,7 @@ export const StartMenu: React.FC<{
                 </Button>
               </div>
             </>
-          )}
+          ) : null}
           <div className="music-toggle">
             <Label>Music</Label>
 
@@ -163,7 +172,7 @@ export const StartMenu: React.FC<{
               text="OFF"
             />
           </div>
-          {playing && (
+          {playing === MainUiState.Playing ? (
             <>
               <div className="music-volume">
                 <Label className="music-volume-label">Music volume</Label>
@@ -187,23 +196,37 @@ export const StartMenu: React.FC<{
                 </span>
               </div>
             </>
+          ) : null}
+          {playing === MainUiState.Idle && (
+            <>
+              {menuState === StartMenuState.MainStartScreen && (
+                <Button
+                  className="play"
+                  onClick={() => setMenuState(StartMenuState.Play)}
+                  text="PLAY"
+                  hotkey="P"
+                  disabled={serverIsDownOrDiffVersion}
+                />
+              )}
+              {menuState === StartMenuState.MainStartScreen && (
+                <Button
+                  className="play"
+                  onClick={() => setMenuState(StartMenuState.Watch)}
+                  text="WATCH"
+                  hotkey="W"
+                  disabled={serverIsDownOrDiffVersion}
+                />
+              )}
+            </>
           )}
-          {!playing && (
-            <Button
-              className="play"
-              onClick={() => setPlayMenu(true)}
-              text="PLAY"
-              hotkey="P"
-              disabled={serverIsDownOrDiffVersion}
-            />
-          )}
-          {playing && (
+
+          {playing === MainUiState.Playing && (
             <>
               <Button className="play" onClick={hide} text="BACK" hotkey="b" />
               <Button className="quit" onClick={quit} hotkey="Q" text="QUIT" />
             </>
           )}
-          {playing && (
+          {playing === MainUiState.Playing && (
             <div className="game-seeds">
               <div>Game seeds:</div>
               <div>
@@ -217,7 +240,22 @@ export const StartMenu: React.FC<{
           )}
         </div>
       )}
-      {playMenu && <PlayMenu start={start} hide={() => setPlayMenu(false)} />}
+      {playing === MainUiState.Idle ? (
+        <>
+          {menuState === StartMenuState.Play && (
+            <PlayMenu
+              start={start}
+              hide={() => setMenuState(StartMenuState.MainStartScreen)}
+            />
+          )}
+          {menuState === StartMenuState.Watch && (
+            <WatchMenu
+              hide={() => setMenuState(StartMenuState.MainStartScreen)}
+            />
+          )}
+        </>
+      ) : null}
+
       <div className="versions-status">
         <div>
           Client version:&nbsp;
@@ -239,7 +277,7 @@ export const StartMenu: React.FC<{
         <div className="authorship">Character images by artbreeder.com</div>
         <div className="authorship">Music powered by aiva.ai</div>
       </div>
-      {!playing && (
+      {playing === MainUiState.Idle && (
         <div className="changelog-container">
           <Changelog />
         </div>

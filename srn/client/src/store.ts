@@ -33,9 +33,15 @@ export enum WindowState {
   Minimized,
 }
 
+export enum MainUiState {
+  Idle = 0,
+  Playing = 1,
+  Watching = 2,
+}
+
 export type SrnState = {
-  playing: boolean;
-  setPlaying: (value: boolean) => void;
+  playing: MainUiState;
+  setPlaying: (value: MainUiState) => void;
   menu: boolean;
   skipMenu: boolean;
   setSkipMenu: (value: boolean) => void;
@@ -132,7 +138,7 @@ function toggleWindowState(old: WindowState, hasMinimized = false) {
 }
 
 export const useStore = create<SrnState>((set) => ({
-  playing: false,
+  playing: MainUiState.Idle,
   testMenuMode: TestMenuMode.Hidden,
   menu: true,
   skipMenu: lsSkipMenu,
@@ -228,7 +234,7 @@ export const useStore = create<SrnState>((set) => ({
     }),
   setPortrait: (val: string) => set({ portrait: val }),
   forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
-  setPlaying: (val: boolean) => set({ playing: val }),
+  setPlaying: (val: MainUiState) => set({ playing: val }),
 
   nextPortrait: () =>
     set((state) => {

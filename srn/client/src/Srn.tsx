@@ -1,10 +1,4 @@
-import React, {
-  MutableRefObject,
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stage } from 'react-konva';
 import 'reset-css';
 import './index.scss';
@@ -25,7 +19,7 @@ import './HtmlLayers/Panel.scss';
 import { MinimapPanel } from './KonvaLayers/MinimapPanel';
 import 'react-jinke-music-player/assets/index.css';
 import { MusicControls } from './MusicControls';
-import { SrnState, useStore, WindowState } from './store';
+import { MainUiState, SrnState, useStore, WindowState } from './store';
 import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
 import { WindowContainers } from './HtmlLayers/WindowContainers';
@@ -120,7 +114,7 @@ const Srn = () => {
       return;
     }
 
-    setPlaying(true);
+    setPlaying(MainUiState.Playing);
     setMenu(false);
     ns.playerName = preferredName;
     ns.portraitName = portrait; // portrait files are 1-based
@@ -128,7 +122,7 @@ const Srn = () => {
     setMode(mode);
     ns.init(mode);
     ns.on('disconnect', () => {
-      setPlaying(false);
+      setPlaying(MainUiState.Idle);
       setMenu(true);
     });
     if (mode === GameMode.Tutorial) {
@@ -188,7 +182,7 @@ const Srn = () => {
     const ns = NetState.get();
     if (!ns) return;
     ns.disconnectAndDestroy();
-    setPlaying(false);
+    setPlaying(MainUiState.Idle);
   };
 
   const ns = NetState.get();
