@@ -157,6 +157,7 @@ mod cargo_rush;
 mod world_events;
 mod world_player_actions;
 mod replay;
+mod replays_api;
 
 struct LastCheck {
     time: DateTime<Utc>,
@@ -328,8 +329,14 @@ fn rocket() -> rocket::Rocket {
                 sandbox_api::load_random_state,
                 sandbox_api::load_seeded_state,
                 sandbox_api::save_state_into_json,
-                sandbox_api::load_clean_state
+                sandbox_api::load_clean_state,
             ],
+        )
+        .mount(
+            "/api/replays",
+            routes![
+                replays_api::get_saved_replays,
+            ]
         )
         .mount(
             "/api/rooms",

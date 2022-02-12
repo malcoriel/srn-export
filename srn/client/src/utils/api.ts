@@ -1,6 +1,7 @@
 import { GameMode } from '../../../world/pkg/world.extra';
-import { Room, RoomIdResponse } from '../../../world/pkg/world';
 import useSWR, { mutate } from 'swr';
+// eslint-disable-next-line import/named
+import { Room, RoomIdResponse } from '../../../world/pkg/world';
 import pWaitFor from 'p-wait-for';
 
 const patchParams = (url: string, params: Record<string, string>) => {
@@ -22,6 +23,7 @@ export const api = {
   },
   useSavedStates: () =>
     useSWR(`${api.getSandboxApiUrl()}/saved_states`).data || [],
+  useSavedReplays: () => useSWR(`${api.getReplaysApiUrl()}`).data || [],
   saveSavedState: async (player_id: string, name: string) => {
     const resp = await fetch(
       patchParams(
@@ -52,6 +54,14 @@ export const api = {
     const res = await fetch(
       patchParams(`${api.getSandboxApiUrl()}/saved_states/json/<player_id>`, {
         player_id,
+      })
+    );
+    return await res.json();
+  },
+  downloadReplayJson: async (replay_id: string): Promise<unknown> => {
+    const res = await fetch(
+      patchParams(`${api.getReplaysApiUrl()}/json/<replay_id>`, {
+        replay_id,
       })
     );
     return await res.json();
@@ -156,6 +166,10 @@ export const api = {
 
   getSandboxApiUrl() {
     return `${api.getMainApiUrl()}/sandbox`;
+  },
+
+  getReplaysApiUrl() {
+    return `${api.getMainApiUrl()}/replays`;
   },
 
   getRoomsApiUrl() {

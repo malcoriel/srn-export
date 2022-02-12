@@ -134,6 +134,27 @@ const Srn = () => {
     }
   };
 
+  const startWatch = (replayId: string) => {
+    if (!NetState.get()) {
+      NetState.make();
+    }
+    const ns = NetState.get();
+
+    if (!ns) {
+      return;
+    }
+
+    setMainUiState(MainUiState.Watching);
+    setMenu(false);
+    ns.disconnecting = false;
+    setMode(mode);
+    ns.init(mode);
+    ns.on('disconnect', () => {
+      setMainUiState(MainUiState.Idle);
+      setMenu(true);
+    });
+  };
+
   useEffect(() => {
     if (!NetState.get()) {
       NetState.make();
@@ -249,6 +270,7 @@ const Srn = () => {
             seed={seed}
             locationSeed={locationSeed}
             start={start}
+            startWatch={startWatch}
             quit={quit}
           />
         )}

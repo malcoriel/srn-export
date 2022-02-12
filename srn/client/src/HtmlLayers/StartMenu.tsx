@@ -33,10 +33,11 @@ enum StartMenuState {
 
 export const StartMenu: React.FC<{
   start: (mode: GameMode) => void;
+  startWatch: (replayId: string) => void;
   quit: () => void;
   seed: string;
   locationSeed: string;
-}> = ({ start, quit, seed, locationSeed }) => {
+}> = ({ start, quit, seed, locationSeed, startWatch }) => {
   const {
     musicEnabled,
     setMusicEnabled,
@@ -250,6 +251,7 @@ export const StartMenu: React.FC<{
           )}
           {menuState === StartMenuState.Watch && (
             <WatchMenu
+              startWatch={startWatch}
               hide={() => setMenuState(StartMenuState.MainStartScreen)}
             />
           )}

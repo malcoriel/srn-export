@@ -2,10 +2,7 @@ import React, { ReactElement, useState } from 'react';
 import './Button.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';
-import {
-  semiTransparentBlack,
-  semiTransparentWhite,
-} from '../../utils/palette';
+import { semiTransparentWhite } from '../../utils/palette';
 
 const formatText = (
   text: string,
