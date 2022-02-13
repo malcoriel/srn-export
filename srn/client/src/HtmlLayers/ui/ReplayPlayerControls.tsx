@@ -1,5 +1,5 @@
 import './ReplayPlayerControls.scss';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
 import { teal } from '../../utils/palette';
@@ -29,11 +29,29 @@ export const ReplayPlayerControls: React.FC<ReplayPlayerControlsProps> = ({
   onPause,
   playing,
 }) => {
+  const prevPlaying = useRef(false);
   useEffect(() => {
-    if (value > maxTimeMs && playing) {
+    // when paused at the end, play should start replay
+    console.log({
+      playing,
+      value,
+      maxTimeMs,
+      prevPlaying: prevPlaying.current,
+    });
+    if (playing && value >= maxTimeMs && !prevPlaying.current) {
+      onChange(0);
+      // that's a dirty trick to avoid property synchronization
+      setTimeout(() => onPlay(), 0);
+    }
+  }, [value, maxTimeMs, onPlay, playing, onChange]);
+  useEffect(() => {
+    prevPlaying.current = playing;
+  }, [playing]);
+  useEffect(() => {
+    if (value >= maxTimeMs && playing) {
       onPause();
     }
-  }, [onPause, value, maxTimeMs, playing]);
+  }, [onPause, value, maxTimeMs, playing, onPlay]);
   return (
     <div className="replay-player-controls">
       <div className="buttons">
