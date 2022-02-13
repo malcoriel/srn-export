@@ -35,12 +35,6 @@ export const ReplayPlayerControls: React.FC<ReplayPlayerControlsProps> = ({
   const prevPlaying = useRef(false);
   useEffect(() => {
     // when paused at the end, play should start replay
-    console.log({
-      playing,
-      value,
-      maxTimeMs,
-      prevPlaying: prevPlaying.current,
-    });
     if (playing && value >= maxTimeMs && !prevPlaying.current) {
       onChange(0);
       // that's a dirty trick to avoid property synchronization
