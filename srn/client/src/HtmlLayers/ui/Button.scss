@@ -80,6 +80,11 @@
   }
 }
 
+.ui-button.borderless {
+  padding: 0;
+  border: none;
+}
+
 .ui-button.disabled {
   color: $gray;
   border-color: $gray;

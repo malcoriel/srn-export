@@ -52,6 +52,7 @@ export type ButtonProps = {
   text?: string;
   round?: boolean;
   thin?: boolean;
+  borderless?: boolean;
   forceHotkeyAsHint?: boolean;
   noInlineHotkey?: boolean;
   noHotkeyHint?: boolean;
@@ -70,6 +71,7 @@ export const Button: React.FC<ButtonProps> = ({
   className,
   toggled,
   thin,
+  borderless,
   disabled,
   forceHotkeyAsHint,
   cooldownNormalized = 0.0,
@@ -169,6 +171,7 @@ export const Button: React.FC<ButtonProps> = ({
         'ui-button': true,
         'pseudo-active': pseudoActive,
         thin,
+        borderless,
         [className as string]: !!className,
         toggled,
         round,

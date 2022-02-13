@@ -1,0 +1,46 @@
+@import "../../utils/palette";
+.replay-player-controls {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  .slider {
+    padding: 1px 10px 0 10px;
+    flex: 1 0;
+    position: relative;
+
+    .marks {
+      position: absolute;
+      pointer-events: none;
+      top: 0;
+      left: 9.5px;
+      width: calc(100% - 20px);
+    }
+
+    .mark {
+      pointer-events: all;
+      width: 4px;
+      height: 4px;
+      background: $rare;
+      position: absolute;
+      cursor: pointer;
+      top: 6px;
+    }
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction:row;
+    justify-content: center;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 24px;
+
+    .ui-button {
+      padding: 0;
+    }
+  }
+}
