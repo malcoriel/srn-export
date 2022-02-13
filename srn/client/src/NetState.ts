@@ -166,7 +166,9 @@ export default class NetState extends EventEmitter {
 
   private switchingRooms = false;
 
-  private replay: any;
+  public replay: any;
+
+  public playingReplay = false;
 
   public static make() {
     NetState.instance = new NetState();
@@ -344,8 +346,9 @@ export default class NetState extends EventEmitter {
     this.connect();
   };
 
-  goToReplayMs = (_markInMs: number) => {
-    // TODO rewind to the closest state near the mark
+  rewindReplayToMs = (markInMs: number) => {
+    this.replay.current_state = _.cloneDeep(this.replay.initial_state);
+    this.replay.current_state.millis = markInMs;
   };
 
   initReplay = (replayJson: any) => {
@@ -364,10 +367,11 @@ export default class NetState extends EventEmitter {
           if (this.connecting) {
             return;
           }
-          if (this.switchingRooms) {
+          if (!this.playingReplay) {
             return;
           }
-          ns.goToReplayMs(this.state.millis + elapsedMs);
+          console.log('updating');
+          ns.rewindReplayToMs(this.state.millis + elapsedMs);
         });
       },
       () => {
@@ -852,6 +856,15 @@ export default class NetState extends EventEmitter {
       tag: uuid.v4(),
     });
   }
+
+  pauseReplay = () => {
+    this.playingReplay = false;
+  };
+
+  resumeReplay = () => {
+    console.log('resume');
+    this.playingReplay = true;
+  };
 }
 
 export type ShouldUpdateStateChecker = (

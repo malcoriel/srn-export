@@ -5,6 +5,7 @@ import 'rc-slider/assets/index.css';
 import { teal } from '../../utils/palette';
 import { Button } from './Button';
 import { BsFillPlayFill, BsPauseFill } from 'react-icons/bs';
+import classNames from 'classnames';
 
 export type ReplayPlayerMark = {
   id: string | number;
@@ -18,6 +19,7 @@ export type ReplayPlayerControlsProps = {
   onPlay: () => void;
   onPause: () => void;
   playing: boolean;
+  bottom?: boolean;
   marks?: ReplayPlayerMark[];
 };
 export const ReplayPlayerControls: React.FC<ReplayPlayerControlsProps> = ({
@@ -27,6 +29,7 @@ export const ReplayPlayerControls: React.FC<ReplayPlayerControlsProps> = ({
   marks = [],
   onPlay,
   onPause,
+  bottom,
   playing,
 }) => {
   const prevPlaying = useRef(false);
@@ -53,7 +56,7 @@ export const ReplayPlayerControls: React.FC<ReplayPlayerControlsProps> = ({
     }
   }, [onPause, value, maxTimeMs, playing, onPlay]);
   return (
-    <div className="replay-player-controls">
+    <div className={classNames({ 'replay-player-controls': true, bottom })}>
       <div className="buttons">
         {!playing ? (
           <Button borderless onClick={onPlay}>
