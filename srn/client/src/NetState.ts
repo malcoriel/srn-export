@@ -352,12 +352,16 @@ export default class NetState extends EventEmitter {
       this.replay.current_state = this.replay.frames[closestMark].state;
       this.state = this.replay.current_state;
       this.replay.current_millis = markInMs;
+      this.updateVisMap();
+      reindexNetState(this);
     } else {
       console.warn(`No best mark for ${markInMs}`);
       this.replay.current_state = this.replay.initial_state;
       this.state = this.replay.current_state;
       this.playingReplay = false;
       this.replay.current_millis = this.replay.current_state.millis;
+      this.updateVisMap();
+      reindexNetState(this);
     }
     this.emit('change');
   };
