@@ -35,24 +35,7 @@ const Template: Story = (args) => {
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
           playing={playing}
-          marks={[
-            {
-              id: 1,
-              timeMs: 500,
-            },
-            {
-              id: 2,
-              timeMs: 250,
-            },
-            {
-              id: 3,
-              timeMs: 0,
-            },
-            {
-              id: 4,
-              timeMs: 1000,
-            },
-          ]}
+          marks={[0, 250, 500, 1000]}
         />
       </div>
     </div>

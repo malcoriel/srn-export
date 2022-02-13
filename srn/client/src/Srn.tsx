@@ -6,7 +6,7 @@ import './ThreeLayers/ThreeLoader.scss';
 import shallow from 'zustand/shallow';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { DebugStateLayer } from './HtmlLayers/DebugStateLayer';
-import NetState, { Timeout, useNSForceChange } from './NetState';
+import NetState, { Timeout } from './NetState';
 import { ShipControls } from './utils/ShipControls';
 import { NetworkStatus } from './HtmlLayers/NetworkStatus';
 import { Measure, Perf, StatsPanel } from './HtmlLayers/Perf';
@@ -42,7 +42,7 @@ import {
   SuspendedPreloader,
 } from './ThreeLayers/Resources';
 import { api } from './utils/api';
-import { ReplayPlayerControls } from './HtmlLayers/ui/ReplayPlayerControls';
+import { ReplayControlsSrnContainer } from './ReplayControlsSrnContainer';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -83,28 +83,6 @@ const renderPlayingElements = (mode: GameMode) => (
   </>
 );
 
-const ReplayControlsContainer = () => {
-  const ns = useNSForceChange(
-    'ReplayControlsContainer',
-    false,
-    (_a, _b) => true
-  );
-  if (!ns) {
-    return null;
-  }
-  return (
-    <ReplayPlayerControls
-      bottom
-      maxTimeMs={ns?.replay?.maxTimeMs || 1000}
-      onChange={ns.rewindReplayToMs}
-      value={ns?.replay?.current_state?.millis || 0}
-      onPause={ns.pauseReplay}
-      onPlay={ns.resumeReplay}
-      playing={ns.playingReplay}
-    />
-  );
-};
-
 const renderWatchingElements = (mode: GameMode) => (
   <>
     <ThreeLayer visible desiredMode={mode} />
@@ -123,7 +101,7 @@ const renderWatchingElements = (mode: GameMode) => (
       <WindowContainers />
       <OverheadPanel />
       <StateStoreSyncer />
-      <ReplayControlsContainer />
+      <ReplayControlsSrnContainer />
     </>
   </>
 );

@@ -7,11 +7,6 @@ import { Button } from './Button';
 import { BsFillPlayFill, BsPauseFill } from 'react-icons/bs';
 import classNames from 'classnames';
 
-export type ReplayPlayerMark = {
-  id: string | number;
-  timeMs: number;
-};
-
 export type ReplayPlayerControlsProps = {
   maxTimeMs: number;
   value: number;
@@ -20,7 +15,7 @@ export type ReplayPlayerControlsProps = {
   onPause: () => void;
   playing: boolean;
   bottom?: boolean;
-  marks?: ReplayPlayerMark[];
+  marks?: number[];
 };
 export const ReplayPlayerControls: React.FC<ReplayPlayerControlsProps> = ({
   maxTimeMs,
@@ -79,12 +74,12 @@ export const ReplayPlayerControls: React.FC<ReplayPlayerControlsProps> = ({
           onChange={onChange}
         />
         <div className="marks">
-          {marks.map(({ id, timeMs }) => (
+          {marks.map((time) => (
             <div
               className="mark"
-              key={id}
-              style={{ left: `calc(${(timeMs / maxTimeMs) * 100}% - 1px)` }}
-              onClick={() => onChange(timeMs)}
+              key={time}
+              style={{ left: `calc(${(time / maxTimeMs) * 100}% - 1px)` }}
+              onClick={() => onChange(time)}
             />
           ))}
         </div>

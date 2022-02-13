@@ -841,6 +841,14 @@ pub struct SpatialIndexes {
     pub values: HashMap<usize, SpatialIndex>,
 }
 
+impl SpatialIndexes {
+    pub fn new() -> Self {
+        SpatialIndexes {
+            values: Default::default()
+        }
+    }
+}
+
 pub fn update_world(
     state: GameState,
     elapsed: i64,

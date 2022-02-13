@@ -347,8 +347,19 @@ export default class NetState extends EventEmitter {
   };
 
   rewindReplayToMs = (markInMs: number) => {
-    this.replay.current_state = _.cloneDeep(this.replay.initial_state);
-    this.replay.current_state.millis = markInMs;
+    const closestMark = this.findClosestMark(this.replay.marks, markInMs);
+    if (closestMark !== null) {
+      this.replay.current_state = this.replay.frames[closestMark].state;
+      this.state = this.replay.current_state;
+      this.replay.current_millis = markInMs;
+    } else {
+      console.warn(`No best mark for ${markInMs}`);
+      this.replay.current_state = this.replay.initial_state;
+      this.state = this.replay.current_state;
+      this.playingReplay = false;
+      this.replay.current_millis = this.replay.current_state.millis;
+    }
+    this.emit('change');
   };
 
   initReplay = (replayJson: any) => {
@@ -370,8 +381,8 @@ export default class NetState extends EventEmitter {
           if (!this.playingReplay) {
             return;
           }
-          console.log('updating');
-          ns.rewindReplayToMs(this.state.millis + elapsedMs);
+          const markInMs = this.replay.current_millis + elapsedMs;
+          ns.rewindReplayToMs(markInMs);
         });
       },
       () => {
@@ -862,9 +873,23 @@ export default class NetState extends EventEmitter {
   };
 
   resumeReplay = () => {
-    console.log('resume');
     this.playingReplay = true;
   };
+
+  private findClosestMark(keys: number[], markInMs: number): number | null {
+    const markInTicks = markInMs * 1000;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const key = keys[i];
+      const nextKey = keys[i + 1];
+      if (key <= markInTicks && nextKey > markInTicks) {
+        return key;
+      }
+      if (!nextKey && key <= markInTicks) {
+        return keys.length - 1;
+      }
+    }
+    return null;
+  }
 }
 
 export type ShouldUpdateStateChecker = (
