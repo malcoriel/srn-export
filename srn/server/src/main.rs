@@ -336,6 +336,7 @@ fn rocket() -> rocket::Rocket {
             "/api/replays",
             routes![
                 replays_api::get_saved_replays,
+                replays_api::get_replay_by_id,
             ]
         )
         .mount(

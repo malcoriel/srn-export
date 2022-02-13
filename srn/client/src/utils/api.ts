@@ -60,7 +60,7 @@ export const api = {
   },
   downloadReplayJson: async (replay_id: string): Promise<unknown> => {
     const res = await fetch(
-      patchParams(`${api.getReplaysApiUrl()}/json/<replay_id>`, {
+      patchParams(`${api.getReplaysApiUrl()}/<replay_id>`, {
         replay_id,
       })
     );

@@ -26,7 +26,6 @@ import {
   LongActionStart,
   NotificationAction,
   PlayerActionRust,
-  PlayerActionRustLongActionStart,
 } from '../../world/pkg';
 import {
   buildClientStateIndexes,
@@ -166,6 +165,8 @@ export default class NetState extends EventEmitter {
   private mode!: GameMode;
 
   private switchingRooms = false;
+
+  private replay: any;
 
   public static make() {
     NetState.instance = new NetState();
@@ -341,6 +342,57 @@ export default class NetState extends EventEmitter {
       () => {}
     );
     this.connect();
+  };
+
+  goToReplayMs = (_markInMs: number) => {
+    // TODO rewind to the closest state near the mark
+  };
+
+  initReplay = (replayJson: any) => {
+    this.mode = replayJson.initial_state.mode;
+    console.log(`initializing replay NS ${this.id}`);
+    this.connecting = false;
+    this.replay = replayJson;
+    this.state = this.replay.initial_state;
+    Perf.start();
+    this.time.setInterval(
+      (elapsedMs) => {
+        Perf.markEvent(Measure.PhysicsFrameEvent);
+        Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
+          const ns = NetState.get();
+          if (!ns) return;
+          if (this.connecting) {
+            return;
+          }
+          if (this.switchingRooms) {
+            return;
+          }
+          ns.goToReplayMs(this.state.millis + elapsedMs);
+        });
+      },
+      () => {
+        Perf.markEvent(Measure.RenderFrameEvent);
+        Perf.usingMeasure(Measure.RenderFrameTime, () => {
+          const ns = NetState.get();
+          if (!ns) return;
+
+          ns.emit('change');
+        });
+      }
+    );
+    this.slowTime.setInterval(
+      () => {
+        const ns = NetState.get();
+        if (!ns) return;
+
+        Perf.markEvent(Measure.SlowUpdateFrameEvent);
+        Perf.usingMeasure(Measure.SlowUpdateFrameTime, () => {
+          ns.emit('slowchange', this.lastSlowChangedState, this.state);
+          this.lastSlowChangedState = _.clone(this.state);
+        });
+      },
+      () => {}
+    );
   };
 
   connect = () => {

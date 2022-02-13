@@ -41,9 +41,67 @@ import {
   MenuLoadingIndicator,
   SuspendedPreloader,
 } from './ThreeLayers/Resources';
+import { api } from './utils/api';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
+
+const renderPlayingElements = (mode: GameMode) => (
+  <>
+    <ThreeLayer visible desiredMode={mode} />
+
+    <Stage
+      width={size.width_px}
+      height={size.height_px}
+      style={{ pointerEvents: 'none' }}
+    >
+      <KonvaOverlay />
+    </Stage>
+    <>
+      <MinimapPanel />
+      <ShipControls />
+      <NetworkStatus />
+      <LeaderboardWindow />
+      <DialogueWindow />
+      <QuestWindow />
+      <ChatWindow />
+      <DebugStateLayer />
+      <StatsPanel />
+      <ControlPanel />
+      <WindowContainers />
+      <OverheadPanel />
+      <HelpWindow />
+      <InventoryWindow />
+      <LongActionsDisplay />
+      <StarMapWindow />
+      <TradeWindow />
+      <PromptWindow />
+      <StateStoreSyncer />
+      <SandboxQuickMenu />
+    </>
+  </>
+);
+const renderWatchingElements = (mode: GameMode) => (
+  <>
+    <ThreeLayer visible desiredMode={mode} />
+    <Stage
+      width={size.width_px}
+      height={size.height_px}
+      style={{ pointerEvents: 'none' }}
+    >
+      <KonvaOverlay />
+    </Stage>
+    <>
+      <MinimapPanel />
+      <NetworkStatus />
+      <DebugStateLayer />
+      <StatsPanel />
+      <WindowContainers />
+      <OverheadPanel />
+      <StateStoreSyncer />
+    </>
+  </>
+);
 
 const Srn = () => {
   Perf.markEvent(Measure.RootComponentRender);
@@ -134,7 +192,7 @@ const Srn = () => {
     }
   };
 
-  const startWatch = (replayId: string) => {
+  const startWatch = async (replayId: string) => {
     if (!NetState.get()) {
       NetState.make();
     }
@@ -144,11 +202,14 @@ const Srn = () => {
       return;
     }
 
+    const replayJson: any = await api.downloadReplayJson(replayId);
+
     setMainUiState(MainUiState.Watching);
     setMenu(false);
     ns.disconnecting = false;
+    const mode = replayJson.initial_state.mode;
     setMode(mode);
-    ns.init(mode);
+    ns.initReplay(replayJson);
     ns.on('disconnect', () => {
       setMainUiState(MainUiState.Idle);
       setMenu(true);
@@ -229,41 +290,12 @@ const Srn = () => {
           height: size.height_px,
         }}
       >
-        {mainUiState === MainUiState.Playing ? (
-          <>
-            <ThreeLayer visible desiredMode={mode} />
-
-            <Stage
-              width={size.width_px}
-              height={size.height_px}
-              style={{ pointerEvents: 'none' }}
-            >
-              <KonvaOverlay />
-            </Stage>
-            <>
-              <MinimapPanel />
-              <ShipControls />
-              <NetworkStatus />
-              <LeaderboardWindow />
-              <DialogueWindow />
-              <QuestWindow />
-              <ChatWindow />
-              <DebugStateLayer />
-              <StatsPanel />
-              <ControlPanel />
-              <WindowContainers />
-              <OverheadPanel />
-              <HelpWindow />
-              <InventoryWindow />
-              <LongActionsDisplay />
-              <StarMapWindow />
-              <TradeWindow />
-              <PromptWindow />
-              <StateStoreSyncer />
-              <SandboxQuickMenu />
-            </>
-          </>
-        ) : null}
+        {mainUiState === MainUiState.Playing
+          ? renderPlayingElements(mode)
+          : null}
+        {mainUiState === MainUiState.Watching
+          ? renderWatchingElements(mode)
+          : null}
         {musicEnabled && <MusicControls />}
         {menu && (
           <StartMenu
