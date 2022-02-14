@@ -356,12 +356,7 @@ export default class NetState extends EventEmitter {
       reindexNetState(this);
     } else {
       console.warn(`No best mark for ${markInMs}`);
-      this.replay.current_state = this.replay.initial_state;
-      this.state = this.replay.current_state;
-      this.playingReplay = false;
-      this.replay.current_millis = this.replay.current_state.millis;
-      this.updateVisMap();
-      reindexNetState(this);
+      this.pauseReplay();
     }
     this.emit('change');
   };
@@ -891,9 +886,9 @@ export default class NetState extends EventEmitter {
       if (key <= markInTicks && nextKey > markInTicks) {
         return key;
       }
-      if (!nextKey && key <= markInTicks) {
-        return keys.length - 1;
-      }
+    }
+    if (keys[keys.length - 1] <= markInTicks) {
+      return keys[keys.length - 1];
     }
     return null;
   }
