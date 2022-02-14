@@ -76,7 +76,11 @@ pub fn get_replay_by_id(replay_id: String) -> Json<Option<Replay>> {
 fn make_test_replay() -> Replay {
     let mut state = seed_state(&GameMode::CargoRush, "123".to_string());
     let mut frames = vec![];
-    for i in 0..100 {
+    frames.push(ReplayFrame {
+        ticks: 0,
+        state: state.clone()
+    });
+    for _i in 0..100 {
         let (frame_state, _) = world::update_world(state.clone(), 1600 * 1000 + 1, false, Sampler::empty(), UpdateOptions::new(),
                                                    &mut SpatialIndexes::new(), &mut get_prng(), &mut HashMap::new(), &DialogueTable {
                 scripts: HashMap::new()
