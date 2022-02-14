@@ -173,7 +173,7 @@ export const StartMenu: React.FC<{
               text="OFF"
             />
           </div>
-          {mainUiState === MainUiState.Playing ? (
+          {mainUiState !== MainUiState.Idle ? (
             <>
               <div className="music-volume">
                 <Label className="music-volume-label">Music volume</Label>
@@ -221,13 +221,13 @@ export const StartMenu: React.FC<{
             </>
           )}
 
-          {mainUiState === MainUiState.Playing && (
+          {mainUiState !== MainUiState.Idle && (
             <>
               <Button className="play" onClick={hide} text="BACK" hotkey="b" />
               <Button className="quit" onClick={quit} hotkey="Q" text="QUIT" />
             </>
           )}
-          {mainUiState === MainUiState.Playing && (
+          {mainUiState !== MainUiState.Idle && (
             <div className="game-seeds">
               <div>Game seeds:</div>
               <div>

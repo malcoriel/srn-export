@@ -366,10 +366,13 @@ export default class NetState extends EventEmitter {
     this.emit('change');
   };
 
-  initReplay = (replayJson: any) => {
-    this.mode = replayJson.initial_state.mode;
-    console.log(`initializing replay NS ${this.id}`);
+  initReplay = async (replayId: string) => {
+    console.log(`initializing replay NS ${this.id} for replay ${replayId}`);
+    this.connecting = true;
+    const replayJson: any = await api.downloadReplayJson(replayId);
+    console.log('replay downloaded');
     this.connecting = false;
+    this.mode = replayJson.initial_state.mode;
     this.replay = replayJson;
     this.state = this.replay.initial_state;
     Perf.start();

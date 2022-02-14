@@ -195,7 +195,7 @@ const Srn = () => {
     }
   };
 
-  const startWatch = async (replayId: string) => {
+  const startWatch = (replayId: string) => {
     if (!NetState.get()) {
       NetState.make();
     }
@@ -205,14 +205,11 @@ const Srn = () => {
       return;
     }
 
-    const replayJson: any = await api.downloadReplayJson(replayId);
-
     setMainUiState(MainUiState.Watching);
     setMenu(false);
     ns.disconnecting = false;
-    const mode = replayJson.initial_state.mode;
-    setMode(mode);
-    ns.initReplay(replayJson);
+    setMode(GameMode.Unknown);
+    ns.initReplay(replayId);
     ns.on('disconnect', () => {
       setMainUiState(MainUiState.Idle);
       setMenu(true);

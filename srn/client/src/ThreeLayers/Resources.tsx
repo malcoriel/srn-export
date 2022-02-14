@@ -162,12 +162,18 @@ function renderLoadingIndicator(miniMode: boolean, text: string) {
 const useConnectingState = (desiredMode: GameMode) => {
   const {
     state: { id, mode },
+    replay,
   } = useNSForceChange(
     'ThreeLoadingIndicator',
     false,
     (prev, next) => prev.id !== next.id
   ) || { state: {} };
-  const connecting = id === '' || mode !== desiredMode;
+  let connecting: boolean;
+  if (!replay) {
+    connecting = id === '' || mode !== desiredMode;
+  } else {
+    connecting = id === '';
+  }
   return connecting;
 };
 
