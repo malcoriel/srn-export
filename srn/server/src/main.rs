@@ -158,6 +158,7 @@ mod world_events;
 mod world_player_actions;
 mod replay;
 mod replays_api;
+mod resources;
 
 struct LastCheck {
     time: DateTime<Utc>,
@@ -311,6 +312,9 @@ fn rocket() -> rocket::Rocket {
 
     make_thread("websocket_server_cleanup")
         .spawn(|| main_ws_server::cleanup_bad_clients_thread())
+        .ok();
+    make_thread("watch_replay_folder")
+        .spawn(|| replays_api::watch_replay_folder())
         .ok();
 
     sandbox::init_saved_states();
