@@ -17,15 +17,8 @@ use mut_static::MutStatic;
 use crate::resources::{get_jsons_from_res_dir, read_json, read_json_from_res_dir};
 
 lazy_static! {
-    pub static ref TEST_REPLAY: Replay = make_test_replay();
-}
-
-lazy_static! {
     pub static ref REPLAYS_STORE: MutStatic<HashMap<Uuid, Replay>> = {
-        let mut store = HashMap::new();
-        let test_r: Replay = (*TEST_REPLAY).clone();
-        store.insert(test_r.id, test_r);
-        MutStatic::from(store)
+        MutStatic::from(store = HashMap::new())
     };
 }
 
@@ -36,6 +29,7 @@ fn check_for_new_replays() {
     let mut to_pick: Vec<Replay> = vec![];
     for file in files {
         if !existing_keys_set.contains(&file) {
+            log!(format!("found a new replay {}", file));
             to_pick.push(read_json_from_res_dir("replays", file));
         }
     }

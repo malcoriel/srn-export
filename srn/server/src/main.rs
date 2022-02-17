@@ -1,4 +1,5 @@
 #![feature(exclusive_range_pattern)]
+#![feature(path_file_prefix)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_macros)]
