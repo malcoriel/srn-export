@@ -18,7 +18,7 @@ use crate::resources::{get_jsons_from_res_dir, read_json, read_json_from_res_dir
 
 lazy_static! {
     pub static ref REPLAYS_STORE: MutStatic<HashMap<Uuid, Replay>> = {
-        MutStatic::from(store = HashMap::new())
+        MutStatic::from(HashMap::new())
     };
 }
 

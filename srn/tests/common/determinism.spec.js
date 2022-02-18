@@ -1,5 +1,7 @@
 import { swapGlobals, updateRoom, updateWorld, wasm } from '../util';
 import _ from 'lodash';
+import * as uuid from 'uuid';
+import fs from 'fs-extra';
 
 /*
 *
@@ -24,6 +26,51 @@ const cementRoomFields = (room) => {
   room.state = cementStateFields(room.state);
   room.bots = [];
   return room;
+};
+
+/*
+*
+* #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ReplayFrame {
+    pub ticks: u64,
+    pub state: GameState,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Replay {
+    pub id: Uuid,
+    pub name: String,
+    pub initial_state: GameState,
+    pub current_state: Option<GameState>,
+    pub frames: HashMap<u64, ReplayFrame>,
+    pub max_time_ms: u64,
+    pub current_millis: u64,
+    pub marks: Vec<u64>,
+}
+* */
+
+const packReplay = async (states, name) => {
+  const replay = {
+    id: uuid.v4(),
+    name,
+    initial_state: states[0],
+    frames: _.fromPairs(
+      states.map((s) => [
+        s.ticks,
+        {
+          ticks: s.ticks,
+          state: s,
+        },
+      ])
+    ),
+    current_state: null,
+    max_time_ms: states[states.length - 1].millis,
+    current_millis: 0,
+    marks: states.map((s) => s.ticks),
+  };
+  await fs.writeJson(`../server/resources/replays/${replay.id}.json`, replay, {
+    spaces: 2,
+  });
 };
 
 describe('update determinism', () => {
@@ -80,40 +127,45 @@ describe('update determinism', () => {
     }
   );
 
-  const serialUpdateAndCompare = (room, updates) => {
-    let currentA = _.clone(room);
-    let currentB = _.clone(room);
+  const serialUpdateAndCompare = async (room, updates, testName) => {
+    let currentA = _.cloneDeep(room);
+    const historyA = [_.cloneDeep(currentA.state)];
+    let currentB = _.cloneDeep(room);
+    const historyB = [_.cloneDeep(currentB.state)];
     let i = 0;
     for (const update of updates) {
       currentA = updateRoom(currentA, update);
+      historyA.push(_.cloneDeep(currentA.state));
       currentB = updateRoom(currentB, update);
-      expect(
-        cementRoomFields(currentA),
-        `failed on serial compare #${i}`
-      ).toEqual(cementRoomFields(currentB));
+      historyB.push(_.cloneDeep(currentB.state));
+      try {
+        expect(
+          cementRoomFields(currentA),
+          `failed on serial compare #${i}`
+        ).toEqual(cementRoomFields(currentB));
+      } catch (e) {
+        console.warn('failed on serial update:', e.message);
+        await packReplay(historyA, `${testName}-historyA`);
+        await packReplay(historyB, `${testName}-historyB`);
+        throw e;
+      }
       i++;
     }
   };
 
   describe.each(['PirateDefence'])('room updates in %s mode', (mode) => {
     describe('room update', () => {
-      xit('can make bots deterministic if necessary', () => {
+      fit('can make bots deterministic if necessary', () => {
         const room = wasm.createRoom({
           mode,
           seed: 'world update',
           bots_seed: 'deterministic',
         });
-        serialUpdateAndCompare(room, [
-          10000,
-          250,
-          250,
-          250,
-          1000,
-          1000,
-          1000,
-          10000,
-          10000,
-        ]);
+        serialUpdateAndCompare(
+          room,
+          [10000, 250, 250, 250, 1000, 1000, 1000, 10000, 10000],
+          'deterministic bots test'
+        );
       });
       it('non-deterministic bots by default', () => {
         const room = wasm.createRoom({
