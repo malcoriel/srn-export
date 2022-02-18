@@ -1,7 +1,11 @@
-import { swapGlobals, updateRoom, updateWorld, wasm } from '../util';
+import {
+  packAndWriteReplay,
+  swapGlobals,
+  updateRoom,
+  updateWorld,
+  wasm,
+} from '../util';
 import _ from 'lodash';
-import * as uuid from 'uuid';
-import fs from 'fs-extra';
 
 /*
 *
@@ -26,51 +30,6 @@ const cementRoomFields = (room) => {
   room.state = cementStateFields(room.state);
   room.bots = [];
   return room;
-};
-
-/*
-*
-* #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ReplayFrame {
-    pub ticks: u64,
-    pub state: GameState,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Replay {
-    pub id: Uuid,
-    pub name: String,
-    pub initial_state: GameState,
-    pub current_state: Option<GameState>,
-    pub frames: HashMap<u64, ReplayFrame>,
-    pub max_time_ms: u64,
-    pub current_millis: u64,
-    pub marks: Vec<u64>,
-}
-* */
-
-const packReplay = async (states, name) => {
-  const replay = {
-    id: uuid.v4(),
-    name,
-    initial_state: states[0],
-    frames: _.fromPairs(
-      states.map((s) => [
-        s.ticks,
-        {
-          ticks: s.ticks,
-          state: s,
-        },
-      ])
-    ),
-    current_state: null,
-    max_time_ms: states[states.length - 1].millis,
-    current_millis: 0,
-    marks: states.map((s) => s.ticks),
-  };
-  await fs.writeJson(`../server/resources/replays/${replay.id}.json`, replay, {
-    spaces: 2,
-  });
 };
 
 describe('update determinism', () => {
@@ -145,8 +104,8 @@ describe('update determinism', () => {
         ).toEqual(cementRoomFields(currentB));
       } catch (e) {
         console.warn('failed on serial update:', e.message);
-        await packReplay(historyA, `${testName}-historyA`);
-        await packReplay(historyB, `${testName}-historyB`);
+        await packAndWriteReplay(historyA, `${testName}-historyA`);
+        await packAndWriteReplay(historyB, `${testName}-historyB`);
         throw e;
       }
       i++;
@@ -155,7 +114,7 @@ describe('update determinism', () => {
 
   describe.each(['PirateDefence'])('room updates in %s mode', (mode) => {
     describe('room update', () => {
-      fit('can make bots deterministic if necessary', () => {
+      xit('can make bots deterministic if necessary', () => {
         const room = wasm.createRoom({
           mode,
           seed: 'world update',

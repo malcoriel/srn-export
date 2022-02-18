@@ -150,6 +150,9 @@ mod world_events;
 #[path = "../../server/src/world_player_actions.rs"]
 mod world_player_actions;
 
+#[path = "../../server/src/replay.rs"]
+mod replay;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -406,6 +409,8 @@ struct SeedWorldArgs {
 
 
 use serde_wasm_bindgen::*;
+use crate::replay::ReplayRaw;
+
 pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
     let ser = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
     let res = arg.serialize(&ser).map_err(|e| JsValue::from_str(e.to_string().as_str()));
@@ -490,6 +495,19 @@ pub fn friend_or_foe(state: JsValue, actor_a: JsValue, actor_b: JsValue) -> Resu
     let mut state: GameState = serde_wasm_bindgen::from_value(state)?;
     let res = fof::friend_or_foe(&state, serde_wasm_bindgen::from_value::<FofActor>(actor_a)?, serde_wasm_bindgen::from_value::<FofActor>(actor_b)?);
     Ok(serde_wasm_bindgen::to_value(&res)?)
+}
+
+
+
+#[wasm_bindgen]
+pub fn pack_replay(states: Vec<JsValue>, name: String) -> Result<JsValue, JsValue> {
+    let mut replay = ReplayRaw::new(new_id());
+    replay.name = name;
+    for state in states.into_iter() {
+        let mut state: GameState = serde_wasm_bindgen::from_value(state)?;
+        replay.add(state);
+    }
+    Ok(serde_wasm_bindgen::to_value(&replay)?)
 }
 
 

@@ -10,6 +10,7 @@ import {
   buildClientStateIndexes,
   findObjectPosition,
 } from '../client/src/ClientStateIndexing';
+import * as uuid from 'uuid';
 
 const fs = require('fs-extra');
 const notLoadedError = 'wasm did not load, call await loadWasm() first';
@@ -32,6 +33,12 @@ export const wasm = {
     throw new Error(notLoadedError);
   },
   friendOrFoe: () => {
+    throw new Error(notLoadedError);
+  },
+  packReplay: () => {
+    throw new Error(notLoadedError);
+  },
+  addToReplay: () => {
     throw new Error(notLoadedError);
   },
 };
@@ -88,6 +95,8 @@ export const loadWasm = timerify(async function loadWasm() {
   wasm.friendOrFoe = wasmFunctions.friend_or_foe;
   wasm.flushSamplerStats = wasmFunctions.flush_sampler_stats;
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
+  wasm.packReplay = wasmFunctions.pack_replay;
+  wasm.addToReplay = wasmFunctions.add_to_replay;
   wasm.resources = resources;
   wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);
   return wasmFunctions;
@@ -225,4 +234,32 @@ export const updatePirateDefenceUntilPiratesAppear = (
     }
   }
   throw new Error('Timeout updating room until pirates appear');
+};
+
+export const writeReplay = async (replay) => {
+  await fs.writeJson(`../server/resources/replays/${replay.id}.json`, replay, {
+    spaces: 2,
+  });
+};
+
+export const packAndWriteReplay = async (states, name) => {
+  const replay = {
+    id: uuid.v4(),
+    name,
+    initial_state: states[0],
+    frames: _.fromPairs(
+      states.map((s) => [
+        s.ticks,
+        {
+          ticks: s.ticks,
+          state: s,
+        },
+      ])
+    ),
+    current_state: null,
+    max_time_ms: states[states.length - 1].millis,
+    current_millis: 0,
+    marks: states.map((s) => s.ticks),
+  };
+  await writeReplay(replay);
 };
