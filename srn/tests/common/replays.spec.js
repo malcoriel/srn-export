@@ -10,7 +10,7 @@ import _ from 'lodash';
 jest.setTimeout(50000);
 
 function simulate() {
-  const COUNT = 25;
+  const COUNT = 3;
   const STEP_MS = 1000;
 
   const states = [];

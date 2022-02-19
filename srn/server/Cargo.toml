@@ -32,6 +32,7 @@ kdbush = "0.2.0"
 state = "0.5.2"
 lockfree = "0.5.1"
 mut_static = "5.0.0"
+json-patch = "0.2.4"
 
 [dependencies.treediff]
 version = "4.0.2"

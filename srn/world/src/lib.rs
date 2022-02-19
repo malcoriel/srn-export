@@ -409,7 +409,7 @@ struct SeedWorldArgs {
 
 
 use serde_wasm_bindgen::*;
-use crate::replay::ReplayRaw;
+use crate::replay::{ReplayDiffed, ReplayRaw};
 
 pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
     let ser = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
@@ -501,7 +501,7 @@ pub fn friend_or_foe(state: JsValue, actor_a: JsValue, actor_b: JsValue) -> Resu
 
 #[wasm_bindgen]
 pub fn pack_replay(states: Vec<JsValue>, name: String) -> Result<JsValue, JsValue> {
-    let mut replay = ReplayRaw::new(new_id());
+    let mut replay = ReplayDiffed::new(new_id());
     replay.name = name;
     for state in states.into_iter() {
         let mut state: GameState = serde_wasm_bindgen::from_value(state)?;
