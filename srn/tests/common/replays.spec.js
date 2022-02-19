@@ -4,6 +4,7 @@ import {
   updateRoom,
   wasm,
   writeReplay,
+  writeTmpJson,
 } from '../util';
 import _ from 'lodash';
 
@@ -34,9 +35,27 @@ describe('replay system', () => {
     await packAndWriteReplay(states, 'stress-test');
   });
 
-  it('can pack whole replay via wasm', async () => {
+  xit('can pack whole replay via wasm', async () => {
     const states = simulate();
-    const replay = await wasm.packReplay(states, 'stress-test');
+    const replay = await wasm.packReplay(states, 'stress-test', false);
     await writeReplay(replay);
+  });
+
+  xit('can pack diff replay via wasm', async () => {
+    const states = simulate();
+    const replay = await wasm.packReplay(states, 'stress-test', true);
+    await writeReplay(replay);
+  });
+
+  it('can compare replays', async () => {
+    const states = simulate();
+    const replayDiff = await wasm.packReplay(states, 'test', true);
+    const replayRaw = await wasm.packReplay(states, 'test', false);
+    const endStateDiff = replayDiff.current_state;
+    const marksTick = replayRaw.marks_ticks[replayRaw.marks_ticks.length - 1];
+    const endStateRaw = replayRaw.frames.get(marksTick).state;
+    await writeTmpJson('diff', endStateDiff);
+    await writeTmpJson('raw', endStateRaw);
+    expect(endStateDiff).toEqual(endStateRaw);
   });
 });

@@ -242,6 +242,13 @@ export const writeReplay = async (replay) => {
   });
 };
 
+export const writeTmpJson = async (tmp, data) => {
+  await fs.mkdirp('./.tmp');
+  await fs.writeJson(`./.tmp/${tmp}.json`, data, {
+    spaces: 2,
+  });
+};
+
 export const packAndWriteReplay = async (states, name) => {
   const replay = {
     id: uuid.v4(),

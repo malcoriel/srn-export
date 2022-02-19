@@ -71,11 +71,11 @@ fn deserialize_key<'de, D>(deserializer: D) -> std::result::Result<Key, D::Error
 
 
 pub fn to_patch_path(path: Vec<ValueKey>) -> String {
-    return format!("/{}",path.into_iter().map(|k| k.0.to_string()).join("/"));
+    return format!("/{}", path.into_iter().map(|k| k.0.to_string()).join("/"));
 }
 
 pub fn to_patch_path_k(path: Vec<Key>) -> String {
-    return format!("/{}",path.into_iter().map(|k| k.to_string()).join("/"));
+    return format!("/{}", path.into_iter().map(|k| k.to_string()).join("/"));
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -169,23 +169,26 @@ impl ReplayDiffed {
     pub fn add(&mut self, state: GameState) {
         let millis = state.millis.clone();
         let ticks = state.ticks.clone();
-        self.build_current();
+        if self.current_state.is_none() {
+            self.current_state = Some(self.initial_state.clone());
+        }
         let new_diff = ReplayDiffed::calc_diff_batch(&self.current_state.clone().unwrap(), &state);
+        self.updateCurrent(&new_diff);
         self.diffs.push(new_diff);
         self.max_time_ms = millis as u64;
         self.marks_ticks.push(ticks);
     }
 
-    fn build_current(&mut self) {
-        self.current_state = self.current_state.or(Some(ReplayDiffed::apply_diffs(&self.initial_state, &self.diffs)));
+    fn updateCurrent(&mut self, new_diff: &Vec<ValueDiff>) {
+        if let Some(current_state) = &self.current_state {
+            self.current_state = Some(ReplayDiffed::apply_diffs(&current_state, new_diff));
+        }
     }
 
-    fn apply_diffs(from: &GameState, batches: &Vec<Vec<ValueDiff>>) -> GameState {
+    fn apply_diffs(from: &GameState, batch: &Vec<ValueDiff>) -> GameState {
         let mut current = from.clone();
-        for batch in batches {
-            for diff in batch.iter() {
-                current = ReplayDiffed::apply_diff(current, diff);
-            }
+        for diff in batch.iter() {
+            current = ReplayDiffed::apply_diff(current, diff);
         }
         current
     }
@@ -217,7 +220,7 @@ impl ReplayDiffed {
                 warn!(format!("Err {} Couldn't apply patch={:?} to state={:?}", err, p, current_backup));
                 serde_json::from_value::<GameState>(current_backup).expect("Couldn't restore typing")
             }
-        }
+        };
     }
 
     fn calc_diff_batch<'a>(from: &'a GameState, to: &'a GameState) -> Vec<ValueDiff> {
@@ -228,9 +231,9 @@ impl ReplayDiffed {
         let diffs = d.calls.iter().filter_map(|c| {
             let diff = ValueDiff::from_change_type(c);
             if matches!(diff, ValueDiff::Unchanged) {
-                return None
+                return None;
             }
-            return Some(diff)
+            return Some(diff);
         }).collect();
         diffs
     }
