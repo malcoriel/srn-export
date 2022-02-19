@@ -41,6 +41,9 @@ export const wasm = {
   addToReplay: () => {
     throw new Error(notLoadedError);
   },
+  getDiffReplayStateAt: () => {
+    throw new Error(notLoadedError);
+  },
 };
 const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
   const result = JSON.parse(fn(JSON.stringify(args), ...extraArgs));
@@ -97,6 +100,7 @@ export const loadWasm = timerify(async function loadWasm() {
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.packReplay = wasmFunctions.pack_replay;
   wasm.addToReplay = wasmFunctions.add_to_replay;
+  wasm.getDiffReplayStateAt = wasmFunctions.get_diff_replay_state_at;
   wasm.resources = resources;
   wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);
   return wasmFunctions;

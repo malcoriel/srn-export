@@ -27,7 +27,7 @@ pub struct ReplayListItem {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReplayFrame {
-    pub ticks: u64,
+    pub ticks: u32,
     pub state: GameState,
 }
 
@@ -37,10 +37,10 @@ pub struct ReplayRaw {
     pub name: String,
     pub initial_state: GameState,
     pub current_state: Option<GameState>,
-    pub frames: HashMap<u64, ReplayFrame>,
-    pub max_time_ms: u64,
-    pub current_millis: u64,
-    pub marks_ticks: Vec<u64>,
+    pub frames: Vec<ReplayFrame>,
+    pub max_time_ms: u32,
+    pub current_millis: u32,
+    pub marks_ticks: Vec<u32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -117,9 +117,9 @@ pub struct ReplayDiffed {
     pub initial_state: GameState,
     pub current_state: Option<GameState>,
     pub diffs: Vec<Vec<ValueDiff>>,
-    pub max_time_ms: u64,
-    pub current_millis: u64,
-    pub marks_ticks: Vec<u64>,
+    pub max_time_ms: u32,
+    pub current_millis: u32,
+    pub marks_ticks: Vec<u32>,
 }
 
 
@@ -143,12 +143,12 @@ impl ReplayRaw {
         if self.frames.len() == 0 {
             self.initial_state = state.clone();
         }
-        self.frames.insert(state.ticks, ReplayFrame {
-            ticks: state.ticks,
+        self.frames.push( ReplayFrame {
+            ticks: state.ticks as u32,
             state,
         });
-        self.max_time_ms = millis as u64;
-        self.marks_ticks.push(ticks);
+        self.max_time_ms = millis as u32;
+        self.marks_ticks.push(ticks as u32);
     }
 }
 
@@ -175,8 +175,8 @@ impl ReplayDiffed {
         let new_diff = ReplayDiffed::calc_diff_batch(&self.current_state.clone().unwrap(), &state);
         self.updateCurrent(&new_diff);
         self.diffs.push(new_diff);
-        self.max_time_ms = millis as u64;
-        self.marks_ticks.push(ticks);
+        self.max_time_ms = millis as u32;
+        self.marks_ticks.push(ticks as u32);
     }
 
     fn updateCurrent(&mut self, new_diff: &Vec<ValueDiff>) {
@@ -236,6 +236,23 @@ impl ReplayDiffed {
             return Some(diff);
         }).collect();
         diffs
+    }
+
+    fn apply_n_diffs(&self, n: usize) -> GameState {
+        let diffs: Vec<Vec<ValueDiff>> = self.diffs.iter().take(n).map(|d| d.clone()).collect();
+        let mut current = self.initial_state.clone();
+        for batch in diffs {
+            current = Self::apply_diffs(&current, &batch);
+        }
+        current
+    }
+
+    pub fn get_state_at(&self, ticks: u32) -> Option<GameState> {
+        let index = self.marks_ticks.iter().position(|mark| *mark == ticks);
+        if let Some(index) = index {
+            return Some(self.apply_n_diffs(index));
+        }
+        return None;
     }
 }
 

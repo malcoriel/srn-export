@@ -49,13 +49,23 @@ describe('replay system', () => {
 
   it('can compare replays', async () => {
     const states = simulate();
+    console.log('pack1');
     const replayDiff = await wasm.packReplay(states, 'test', true);
+    console.log('pack2');
     const replayRaw = await wasm.packReplay(states, 'test', false);
+    console.log('pack3');
     const endStateDiff = replayDiff.current_state;
-    const marksTick = replayRaw.marks_ticks[replayRaw.marks_ticks.length - 1];
-    const endStateRaw = replayRaw.frames.get(marksTick).state;
+    const lastIndex = replayRaw.marks_ticks.length - 1;
+    const endStateRaw = replayRaw.frames[lastIndex].state;
     await writeTmpJson('diff', endStateDiff);
     await writeTmpJson('raw', endStateRaw);
+    const endStateRestored = wasm.getDiffReplayStateAt(
+      replayDiff,
+      replayRaw.marks_ticks[lastIndex]
+    );
+    await writeTmpJson('restored', endStateRestored);
+
     expect(endStateDiff).toEqual(endStateRaw);
+    expect(endStateDiff).toEqual(endStateRestored);
   });
 });
