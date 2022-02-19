@@ -3,14 +3,18 @@ use serde::ser::SerializeSeq;
 use uuid::Uuid;
 use std::collections::HashMap;
 use std::iter::FromIterator;
+use std::str::FromStr;
 use itertools::Itertools;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::{DialogueTable, GameMode, GameState, get_prng, new_id, world};
 use crate::system_gen::seed_state;
 use serde_derive::{Deserialize, Serialize};
-use treediff::tools::Recorder;
+use treediff::tools::{ChangeType, Recorder};
 use treediff::diff;
+use treediff::tools::ChangeType::{Added, Modified, Removed};
 use treediff::Value;
 use treediff::value::*;
+use serde_json::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct ReplayListItem {
@@ -36,10 +40,66 @@ pub struct ReplayRaw {
     pub current_millis: u64,
     pub marks_ticks: Vec<u64>,
 }
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ValueDiff {
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ValueKey(#[serde(serialize_with = "serialize_key", deserialize_with="deserialize_key")]Key);
+
+fn serialize_key<S>(value: &Key, serializer: S) -> std::result::Result<<S as Serializer>::Ok, <S as Serializer>::Error> where S: Serializer {
+    match value {
+        Key::Index(i) => {
+            serializer.serialize_u32((*i) as u32)
+        }
+        Key::String(str) => {
+            serializer.serialize_str(str.as_str())
+        }
+    }
 }
+
+fn deserialize_key<'de, D>(deserializer: D) -> std::result::Result<Key, D::Error>
+    where
+        D: Deserializer<'de>,
+{
+    let s: &str = Deserialize::deserialize(deserializer)?;
+    let res = usize::from_str(s);
+    if res.is_err() {
+        return Ok(Key::String(s.to_string()));
+    }
+    return Ok(Key::Index(res.unwrap()));
+}
+
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ValueDiff {
+    Unchanged,
+    Added(Vec<ValueKey>, serde_json::Value),
+    Modified(Vec<ValueKey>, serde_json::Value),
+    Removed(Vec<ValueKey>),
+}
+
+impl ValueDiff {
+    pub fn from_change_type(ct: &ChangeType<Key, serde_json::Value>) -> ValueDiff {
+        match ct {
+            Removed(k, _) => {
+                ValueDiff::Removed(Self::map_key(k.clone()))
+            }
+            Added(k, v) => {
+                ValueDiff::Added(Self::map_key(k.clone()), (*v).clone())
+            }
+            ChangeType::Unchanged(_, _) => {
+                ValueDiff::Unchanged
+            }
+            Modified(k, _, v) => {
+                ValueDiff::Modified(Self::map_key(k.clone()), (*v).clone())
+            }
+        }
+    }
+
+    fn map_key(k: Vec<Key>) -> Vec<ValueKey> {
+        k.into_iter().map(|k| ValueKey(k)).collect()
+    }
+}
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DiffBatch {
@@ -133,13 +193,14 @@ impl ReplayDiffed {
         todo!()
     }
 
-    fn calc_diff_batch(from: &GameState, to: &GameState) -> DiffBatch {
+    fn calc_diff_batch<'a>(from: & 'a GameState, to: & 'a GameState) -> DiffBatch {
         let from: serde_json::Value = serde_json::to_value(from).expect("Couldn't erase typing");
         let to: serde_json::Value = serde_json::to_value(to).expect("Couldn't erase typing");
         let mut d = Recorder::default();
         diff(&from, &to, &mut d);
+        let diffs = d.calls.iter().map(|c| ValueDiff::from_change_type(c)).collect();
         DiffBatch {
-            diffs: vec![]
+            diffs
         }
     }
 }
