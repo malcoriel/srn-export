@@ -14,11 +14,11 @@ use crate::{DialogueTable, GameMode, GameState, get_prng, new_id, Sampler, Spati
 use serde_derive::{Deserialize, Serialize};
 use crate::system_gen::seed_state;
 use mut_static::MutStatic;
-use crate::replay::{ReplayRaw, ReplayFrame, ReplayListItem};
+use crate::replay::{ReplayRaw, ReplayDiffed, ReplayFrame, ReplayListItem};
 use crate::resources::{get_jsons_from_res_dir, read_json, read_json_from_res_dir};
 
 lazy_static! {
-    pub static ref REPLAYS_STORE: MutStatic<HashMap<Uuid, Replay>> = {
+    pub static ref REPLAYS_STORE: MutStatic<HashMap<Uuid, ReplayDiffed>> = {
         MutStatic::from(HashMap::new())
     };
 }
@@ -27,7 +27,7 @@ fn check_for_new_replays() {
     let files = get_jsons_from_res_dir("replays");
     let existing_keys = REPLAYS_STORE.read().unwrap().keys().map(|k| k.to_string().clone()).collect::<Vec<String>>();
     let existing_keys_set : HashSet<String> = HashSet::from_iter(existing_keys);
-    let mut to_pick: Vec<ReplayRaw> = vec![];
+    let mut to_pick: Vec<ReplayDiffed> = vec![];
     for file in files {
         if !existing_keys_set.contains(&file) {
             log!(format!("found a new replay {}", file));
@@ -64,45 +64,11 @@ pub fn get_saved_replays() -> Json<Vec<ReplayListItem>> {
 }
 
 #[get("/<replay_id>")]
-pub fn get_replay_by_id(replay_id: String) -> Json<Option<ReplayRaw>> {
+pub fn get_replay_by_id(replay_id: String) -> Json<Option<ReplayDiffed>> {
     let item = {
         let store = REPLAYS_STORE.read().unwrap();
         let item = Uuid::from_str(replay_id.as_str()).ok().and_then(|id| store.get(&id).map(|r| r.clone()));
         item
     };
     Json(item)
-}
-
-fn make_test_replay() -> ReplayRaw {
-    let mut state = seed_state(&GameMode::CargoRush, "123".to_string());
-    let mut frames = vec![];
-    frames.push(ReplayFrame {
-        ticks: 0,
-        state: state.clone()
-    });
-    for _i in 0..100 {
-        let (frame_state, _) = world::update_world(state.clone(), 1600 * 1000 + 1, false, Sampler::empty(), UpdateOptions::new(),
-                                                   &mut SpatialIndexes::new(), &mut world::get_prng(), &mut HashMap::new(), &DialogueTable {
-                scripts: HashMap::new()
-            });
-        frames.push(ReplayFrame {
-            ticks: frame_state.ticks,
-            state: frame_state.clone(),
-        });
-        state = frame_state;
-    }
-    let max_time_ms = frames[frames.len() - 1].state.millis as u64;
-    let map = HashMap::from_iter(frames.into_iter().map(|f| (f.ticks, f)).collect::<Vec<(u64, ReplayFrame)>>());
-    let marks = map.keys().map(|k| k.clone()).collect::<Vec<u64>>().into_iter().sorted().collect();
-    let replay = ReplayRaw {
-        id: world::new_id(),
-        initial_state: state.clone(),
-        current_state: None,
-        frames: map,
-        max_time_ms,
-        current_millis: 0,
-        marks_ticks: marks,
-        name: "test".to_string(),
-    };
-    replay
 }

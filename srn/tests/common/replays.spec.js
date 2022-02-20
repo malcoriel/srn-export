@@ -11,7 +11,7 @@ import _ from 'lodash';
 jest.setTimeout(50000);
 
 function simulate() {
-  const COUNT = 3;
+  const COUNT = 10;
   const STEP_MS = 1000;
 
   const states = [];
@@ -35,25 +35,22 @@ describe('replay system', () => {
     await packAndWriteReplay(states, 'stress-test');
   });
 
-  xit('can pack whole replay via wasm', async () => {
+  it('can pack whole replay via wasm', async () => {
     const states = simulate();
     const replay = await wasm.packReplay(states, 'stress-test', false);
     await writeReplay(replay);
   });
 
-  xit('can pack diff replay via wasm', async () => {
+  it('can pack diff replay via wasm', async () => {
     const states = simulate();
     const replay = await wasm.packReplay(states, 'stress-test', true);
     await writeReplay(replay);
   });
 
-  it('can compare replays', async () => {
+  xit('can compare replays', async () => {
     const states = simulate();
-    console.log('pack1');
     const replayDiff = await wasm.packReplay(states, 'test', true);
-    console.log('pack2');
     const replayRaw = await wasm.packReplay(states, 'test', false);
-    console.log('pack3');
     const endStateDiff = replayDiff.current_state;
     const lastIndex = replayRaw.marks_ticks.length - 1;
     const endStateRaw = replayRaw.frames[lastIndex].state;

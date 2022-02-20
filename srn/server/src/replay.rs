@@ -173,13 +173,13 @@ impl ReplayDiffed {
             self.current_state = Some(self.initial_state.clone());
         }
         let new_diff = ReplayDiffed::calc_diff_batch(&self.current_state.clone().unwrap(), &state);
-        self.updateCurrent(&new_diff);
+        self.update_current(&new_diff);
         self.diffs.push(new_diff);
         self.max_time_ms = millis as u32;
         self.marks_ticks.push(ticks as u32);
     }
 
-    fn updateCurrent(&mut self, new_diff: &Vec<ValueDiff>) {
+    fn update_current(&mut self, new_diff: &Vec<ValueDiff>) {
         if let Some(current_state) = &self.current_state {
             self.current_state = Some(ReplayDiffed::apply_diffs(&current_state, new_diff));
         }
@@ -250,7 +250,7 @@ impl ReplayDiffed {
     pub fn get_state_at(&self, ticks: u32) -> Option<GameState> {
         let index = self.marks_ticks.iter().position(|mark| *mark == ticks);
         if let Some(index) = index {
-            return Some(self.apply_n_diffs(index));
+            return Some(self.apply_n_diffs(index + 1));
         }
         return None;
     }
