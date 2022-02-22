@@ -255,7 +255,7 @@ impl ReplayDiffed {
     pub fn get_state_at(&self, ticks: u32) -> Option<GameState> {
         let index = self.marks_ticks.iter().position(|mark| *mark == ticks);
         if let Some(index) = index {
-            return Some(self.apply_n_diffs(index + 1));
+            return Some(self.apply_n_diffs(index));
         }
         warn!(format!("failed to rewind replay to, {}mcs", ticks));
         return None;
