@@ -17,7 +17,7 @@ function simulate() {
   const states = [];
   const room = wasm.createRoom({
     mode: 'CargoRush',
-    seed: 'replay stress',
+    seed: 'simulate replay',
   });
   let current = _.cloneDeep(room);
 
@@ -35,7 +35,7 @@ describe('replay system', () => {
     await packAndWriteReplay(states, 'stress-test');
   });
 
-  it('can pack whole replay via wasm', async () => {
+  xit('can pack whole replay via wasm', async () => {
     const states = simulate();
     const replay = await wasm.packReplay(states, 'stress-test', false);
     await writeReplay(replay);

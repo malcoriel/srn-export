@@ -7,6 +7,7 @@ import {
   GameState,
   isManualMovement,
   ManualMovementActionTags,
+  restoreReplayFrame,
   SandboxCommand,
   TradeAction,
   updateWorld,
@@ -175,9 +176,6 @@ export default class NetState extends EventEmitter {
   }
 
   public static get(): NetState | undefined {
-    // if (!NetState.instance) {
-    //   NetState.instance = new NetState(false);
-    // }
     return NetState.instance;
   }
 
@@ -347,9 +345,10 @@ export default class NetState extends EventEmitter {
   };
 
   rewindReplayToMs = (markInMs: number) => {
-    const closestMark = this.findClosestMark(this.replay.marks, markInMs);
+    const closestMark = this.findClosestMark(this.replay.marks_ticks, markInMs);
     if (closestMark !== null) {
-      this.replay.current_state = this.replay.frames[closestMark].state;
+      this.replay.current_state = null;
+      this.replay.current_state = restoreReplayFrame(this.replay, closestMark);
       this.state = this.replay.current_state;
       this.replay.current_millis = markInMs;
       this.updateVisMap();

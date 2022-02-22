@@ -524,5 +524,6 @@ pub fn pack_replay(states: Vec<JsValue>, name: String, diff: bool) -> Result<JsV
 pub fn get_diff_replay_state_at(replay: JsValue, ticks: u32) -> Result<JsValue, JsValue> {
     let mut replay: ReplayDiffed = serde_wasm_bindgen::from_value(replay)?;
     let res = replay.get_state_at(ticks).ok_or(JsValue::from_str("failed to rewind"))?;
-    Ok(custom_serialize(&res)?)
+    let value = custom_serialize(&res)?;
+    Ok(value)
 }

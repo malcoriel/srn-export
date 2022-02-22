@@ -39,7 +39,7 @@ pub struct ReplayRaw {
     pub current_state: Option<GameState>,
     pub frames: Vec<ReplayFrame>,
     pub max_time_ms: u32,
-    pub current_millis: u32,
+    pub current_millis: f64,
     pub marks_ticks: Vec<u32>,
 }
 
@@ -118,7 +118,7 @@ pub struct ReplayDiffed {
     pub current_state: Option<GameState>,
     pub diffs: Vec<Vec<ValueDiff>>,
     pub max_time_ms: u32,
-    pub current_millis: u32,
+    pub current_millis: f64,
     pub marks_ticks: Vec<u32>,
 }
 
@@ -132,7 +132,7 @@ impl ReplayRaw {
             current_state: None,
             frames: Default::default(),
             max_time_ms: 0,
-            current_millis: 0,
+            current_millis: 0.0,
             marks_ticks: vec![],
         }
     }
@@ -161,12 +161,17 @@ impl ReplayDiffed {
             current_state: None,
             diffs: Default::default(),
             max_time_ms: 0,
-            current_millis: 0,
+            current_millis: 0.0,
             marks_ticks: vec![],
         }
     }
 
     pub fn add(&mut self, state: GameState) {
+        if self.initial_state.id == Uuid::default() {
+            self.marks_ticks.push(state.ticks as u32);
+            self.initial_state = state;
+            return;
+        }
         let millis = state.millis.clone();
         let ticks = state.ticks.clone();
         if self.current_state.is_none() {
@@ -252,6 +257,7 @@ impl ReplayDiffed {
         if let Some(index) = index {
             return Some(self.apply_n_diffs(index + 1));
         }
+        warn!(format!("failed to rewind replay to, {}mcs", ticks));
         return None;
     }
 }

@@ -5,6 +5,7 @@ import {
   Container,
   Dialogue,
   DialogueElem,
+  FullObjectSpecifier,
   GameState,
   Health,
   InventoryItem,
@@ -17,18 +18,17 @@ import {
   ObjectSpecifier,
   Planet,
   Player,
-  Price,
-  Quest,
-  Ship,
   PlayerActionRust,
   PlayerActionRustGas,
   PlayerActionRustReverse,
   PlayerActionRustTurnLeft,
   PlayerActionRustTurnRight,
+  Price,
+  Quest,
+  Ship,
   Star,
   Substitution,
   TradeAction,
-  FullObjectSpecifier,
 } from '../../world/pkg';
 import {
   CargoDeliveryQuestState,
@@ -266,6 +266,13 @@ const parseState = (inState: GameState): GameState | undefined => {
 export const validateState = (inState: GameState): boolean => {
   const parsed = parseState(inState);
   return !!parsed;
+};
+
+export const restoreReplayFrame = (
+  replay: any,
+  ticks: number
+): GameState | null => {
+  return wasmFunctions.get_diff_replay_state_at(replay, Math.round(ticks));
 };
 
 export const applyShipActionWasm = (

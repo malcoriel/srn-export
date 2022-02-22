@@ -17,7 +17,7 @@ export const ReplayControlsSrnContainer = () => {
       maxTimeMs={ns.replay?.max_time_ms || 0}
       onChange={ns.rewindReplayToMs}
       value={ns.replay?.current_millis || 0}
-      marks={ns.replay?.marks.map((m: number) => m / 1000)}
+      marks={ns.replay?.marks_ticks.map((m: number) => m / 1000)}
       onPause={ns.pauseReplay}
       onPlay={ns.resumeReplay}
       playing={ns.playingReplay}
