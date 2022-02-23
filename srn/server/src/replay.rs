@@ -6,7 +6,7 @@ use std::iter::FromIterator;
 use std::str::FromStr;
 use itertools::Itertools;
 use serde::{Deserializer, Serializer};
-use crate::{DialogueTable, GameMode, GameState, get_prng, new_id, world};
+use crate::{DialogueTable, GameMode, GameState, get_prng, new_id, Sampler, world};
 use crate::system_gen::seed_state;
 use serde_derive::{Deserialize, Serialize};
 use treediff::tools::{ChangeType, Recorder};
@@ -17,6 +17,7 @@ use treediff::value::*;
 use serde_json::*;
 use json_patch::{AddOperation, patch, Patch, PatchError, PatchOperation, RemoveOperation, ReplaceOperation};
 use serde_json::from_str;
+use crate::perf::SamplerMarks;
 
 #[derive(Serialize, Deserialize)]
 pub struct ReplayListItem {
@@ -186,16 +187,14 @@ impl ReplayDiffed {
 
     fn update_current(&mut self, new_diff: &Vec<ValueDiff>) {
         if let Some(current_state) = &self.current_state {
-            self.current_state = Some(ReplayDiffed::apply_diffs(&current_state, new_diff));
+            self.current_state = Some(ReplayDiffed::apply_diffs(&current_state, new_diff, &mut None));
         }
     }
 
-    fn apply_diffs(from: &GameState, batch: &Vec<ValueDiff>) -> GameState {
+    fn apply_diffs(from: &GameState, batch: &Vec<ValueDiff>, sampler: &mut Option<Sampler>) -> GameState {
         let mut current = from.clone();
         for diff in batch.iter() {
-
             current = ReplayDiffed::apply_diff(current, diff);
-
         }
         current
     }
@@ -252,20 +251,23 @@ impl ReplayDiffed {
         diffs
     }
 
-    fn apply_n_diffs(&self, n: usize) -> GameState {
+    fn apply_n_diffs(&self, n: usize, sampler: &mut Option<Sampler>) -> GameState {
         let diffs: Vec<Vec<ValueDiff>> = self.diffs.iter().take(n).map(|d| d.clone()).collect();
         let mut current = self.initial_state.clone();
+        let sid = sampler.as_mut().map(|s| {
+            s.start(SamplerMarks::ApplyReplayDiffBatch as u32)
+        });
         for batch in diffs {
-            current = Self::apply_diffs(&current, &batch);
+            current = Self::apply_diffs(&current, &batch, sampler);
         }
-
+        sampler.as_mut().zip(sid).map(|(s, i)| s.end(i));
         current
     }
 
-    pub fn get_state_at(&self, ticks: u32) -> Option<GameState> {
+    pub fn get_state_at(&self, ticks: u32, sampler: &mut Option<Sampler>) -> Option<GameState> {
         let index = self.marks_ticks.iter().position(|mark| *mark == ticks);
         if let Some(index) = index {
-            return Some(self.apply_n_diffs(index));
+            return Some(self.apply_n_diffs(index, sampler));
         }
         warn!(format!("failed to rewind replay to, {}mcs", ticks));
         return None;
