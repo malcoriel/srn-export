@@ -501,14 +501,15 @@ pub fn friend_or_foe(state: JsValue, actor_a: JsValue, actor_b: JsValue) -> Resu
 
 #[wasm_bindgen]
 pub fn pack_replay(states: Vec<JsValue>, name: String, diff: bool) -> Result<JsValue, JsValue> {
-    if diff {
+    return if diff {
         let mut replay = ReplayDiffed::new(new_id());
         replay.name = name;
         for state in states.into_iter() {
             let mut state: GameState = serde_wasm_bindgen::from_value(state)?;
             replay.add(state);
         }
-        return Ok(custom_serialize(&replay)?)
+        replay.current_state = None;
+        Ok(custom_serialize(&replay)?)
     } else {
         let mut replay = ReplayRaw::new(new_id());
         replay.name = name;
@@ -516,7 +517,8 @@ pub fn pack_replay(states: Vec<JsValue>, name: String, diff: bool) -> Result<JsV
             let mut state: GameState = serde_wasm_bindgen::from_value(state)?;
             replay.add(state);
         }
-        return Ok(custom_serialize(&replay)?)
+        replay.current_state = None;
+        Ok(custom_serialize(&replay)?)
     }
 }
 
