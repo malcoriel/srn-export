@@ -193,7 +193,9 @@ impl ReplayDiffed {
     fn apply_diffs(from: &GameState, batch: &Vec<ValueDiff>) -> GameState {
         let mut current = from.clone();
         for diff in batch.iter() {
+
             current = ReplayDiffed::apply_diff(current, diff);
+
         }
         current
     }
@@ -214,10 +216,15 @@ impl ReplayDiffed {
             }
         }
         let p = Patch(vec_diff);
+
         let mut current = serde_json::to_value(from).expect("Couldn't erase typing");
         let current_backup = current.clone();
+
+
         let result = patch(&mut current, &p);
-        return match result {
+
+
+        let res = match result {
             Ok(()) => {
                 serde_json::from_value::<GameState>(current).expect("Couldn't restore typing")
             }
@@ -226,6 +233,8 @@ impl ReplayDiffed {
                 serde_json::from_value::<GameState>(current_backup).expect("Couldn't restore typing")
             }
         };
+
+        return res;
     }
 
     fn calc_diff_batch<'a>(from: &'a GameState, to: &'a GameState) -> Vec<ValueDiff> {
@@ -249,6 +258,7 @@ impl ReplayDiffed {
         for batch in diffs {
             current = Self::apply_diffs(&current, &batch);
         }
+
         current
     }
 

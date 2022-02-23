@@ -100,7 +100,11 @@ export const loadWasm = timerify(async function loadWasm() {
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.packReplay = wasmFunctions.pack_replay;
   wasm.addToReplay = wasmFunctions.add_to_replay;
-  wasm.getDiffReplayStateAt = wasmFunctions.get_diff_replay_state_at;
+  wasm.getDiffReplayStateAt = timerifySync(function getDiffReplayStateAt(
+    ...args
+  ) {
+    return wasmFunctions.get_diff_replay_state_at(...args);
+  });
   wasm.resources = resources;
   wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);
   return wasmFunctions;

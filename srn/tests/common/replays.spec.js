@@ -38,7 +38,7 @@ describe('replay system', () => {
     await writeReplay(replay);
   });
 
-  fit('can pack diff replay via wasm', async () => {
+  it('can pack diff replay via wasm', async () => {
     const states = simulate();
     const replay = await wasm.packReplay(states, 'stress-test', true);
     await writeReplay(replay);
@@ -74,5 +74,11 @@ describe('replay system', () => {
     expect(wasm.getDiffReplayStateAt(replayDiff, 0)).toEqual(
       replayDiff.initial_state
     );
+  });
+
+  fit('can perform well with multiple get diffs', () => {
+    const states = simulate();
+    const replayDiff = wasm.packReplay(states, 'test', true);
+    wasm.getDiffReplayStateAt(replayDiff, replayDiff.marks_ticks[5]);
   });
 });
