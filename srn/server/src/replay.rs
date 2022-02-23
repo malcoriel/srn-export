@@ -187,38 +187,30 @@ impl ReplayDiffed {
 
     fn update_current(&mut self, new_diff: &Vec<ValueDiff>) {
         if let Some(current_state) = &self.current_state {
-            self.current_state = Some(ReplayDiffed::apply_diffs(&current_state, new_diff, &mut None));
+            self.current_state = Some(ReplayDiffed::apply_diff_batch(&current_state, new_diff, &mut None));
         }
-    }
-
-    fn apply_diffs(from: &GameState, batch: &Vec<ValueDiff>, sampler: &mut Option<Sampler>) -> GameState {
-        let mut current = from.clone();
-        for diff in batch.iter() {
-            current = ReplayDiffed::apply_diff(current, diff);
-        }
-        current
     }
 
     //noinspection RsTypeCheck
-    fn apply_diff(from: GameState, diff: &ValueDiff) -> GameState {
-        let mut vec_diff: Vec<PatchOperation> = vec![];
-        match diff {
-            ValueDiff::Unchanged => {}
+    fn apply_diff_batch(from: &GameState, batch: &Vec<ValueDiff>, sampler: &mut Option<Sampler>) -> GameState {
+        let transformed_diffs: Vec<PatchOperation> = batch.iter().filter_map(|diff| match diff {
+            ValueDiff::Unchanged => {
+                None
+            }
             ValueDiff::Added(path, v) => {
-                vec_diff.push(PatchOperation::Add(AddOperation { path: path.clone(), value: v.clone() }))
+                Some(PatchOperation::Add(AddOperation { path: path.clone(), value: v.clone() }))
             }
             ValueDiff::Modified(path, v) => {
-                vec_diff.push(PatchOperation::Replace(ReplaceOperation { path: path.clone(), value: v.clone() }))
+                Some(PatchOperation::Replace(ReplaceOperation { path: path.clone(), value: v.clone() }))
             }
             ValueDiff::Removed(path) => {
-                vec_diff.push(PatchOperation::Remove(RemoveOperation { path: path.clone() }))
+                Some(PatchOperation::Remove(RemoveOperation { path: path.clone() }))
             }
-        }
-        let p = Patch(vec_diff);
+        }).collect();
+        let p = Patch(transformed_diffs);
 
         let mut current = serde_json::to_value(from).expect("Couldn't erase typing");
         let current_backup = current.clone();
-
 
         let result = patch(&mut current, &p);
 
@@ -254,13 +246,13 @@ impl ReplayDiffed {
     fn apply_n_diffs(&self, n: usize, sampler: &mut Option<Sampler>) -> GameState {
         let diffs: Vec<Vec<ValueDiff>> = self.diffs.iter().take(n).map(|d| d.clone()).collect();
         let mut current = self.initial_state.clone();
-        let sid = sampler.as_mut().map(|s| {
-            s.start(SamplerMarks::ApplyReplayDiffBatch as u32)
-        });
         for batch in diffs {
-            current = Self::apply_diffs(&current, &batch, sampler);
+            let sid = sampler.as_mut().map(|s| {
+                s.start(SamplerMarks::ApplyReplayDiffBatch as u32)
+            });
+            current = Self::apply_diff_batch(&current, &batch, sampler);
+            sampler.as_mut().zip(sid).map(|(s, i)| s.end(i));
         }
-        sampler.as_mut().zip(sid).map(|(s, i)| s.end(i));
         current
     }
 
