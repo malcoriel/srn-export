@@ -4,6 +4,7 @@ use uuid::Uuid;
 use std::collections::HashMap;
 use std::iter::FromIterator;
 use std::str::FromStr;
+use std::result::Result;
 use itertools::Itertools;
 use serde::{Deserializer, Serializer};
 use crate::{DialogueTable, GameMode, GameState, get_prng, new_id, Sampler, world};
@@ -14,10 +15,16 @@ use treediff::diff;
 use treediff::tools::ChangeType::{Added, Modified, Removed};
 use treediff::Value;
 use treediff::value::*;
-use serde_json::*;
 use json_patch::{AddOperation, patch, Patch, PatchError, PatchOperation, RemoveOperation, ReplaceOperation};
 use serde_json::from_str;
 use crate::perf::SamplerMarks;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ReplayError {
+    Unknown,
+    BadPatch,
+    InvalidRewind(u32)
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct ReplayListItem {
@@ -167,11 +174,11 @@ impl ReplayDiffed {
         }
     }
 
-    pub fn add(&mut self, state: GameState) {
+    pub fn add(&mut self, state: GameState) -> Result<(), ReplayError> {
         if self.initial_state.id == Uuid::default() {
             self.marks_ticks.push(state.ticks as u32);
             self.initial_state = state;
-            return;
+            return Ok(());
         }
         let millis = state.millis.clone();
         let ticks = state.ticks.clone();
@@ -179,20 +186,37 @@ impl ReplayDiffed {
             self.current_state = Some(self.initial_state.clone());
         }
         let new_diff = ReplayDiffed::calc_diff_batch(&self.current_state.clone().unwrap(), &state);
-        self.update_current(&new_diff);
+        self.update_current(&new_diff)?;
         self.diffs.push(new_diff);
         self.max_time_ms = millis as u32;
         self.marks_ticks.push(ticks as u32);
+        Ok(())
     }
 
-    fn update_current(&mut self, new_diff: &Vec<ValueDiff>) {
+    fn update_current(&mut self, new_diff: &Vec<ValueDiff>) -> Result<(), ReplayError> {
         if let Some(current_state) = &self.current_state {
-            self.current_state = Some(ReplayDiffed::apply_diff_batch(&current_state, new_diff, &mut None));
+            self.current_state = Some(ReplayDiffed::apply_diff_batch(&current_state, new_diff)?);
         }
+        Ok(())
     }
 
     //noinspection RsTypeCheck
-    fn apply_diff_batch(from: &GameState, batch: &Vec<ValueDiff>, sampler: &mut Option<Sampler>) -> GameState {
+    pub fn debug_patch(state: &mut serde_json::Value, p: &Patch) {
+        warn!("Patching in ReplayDiffed has failed, attempting to find bad op...");
+        for i in 0..p.0.len() {
+            let mut current = state.clone();
+            let new_patch = Patch(p.0.iter().take(i + 1).map(|o| o.clone()).collect());
+            let last_op = new_patch.0.last().unwrap().clone();
+            if patch(&mut current, &new_patch).is_err() {
+                warn!(format!("Found bad op {:?}", last_op));
+                return;
+            }
+        }
+        warn!("No bad op found");
+    }
+
+    //noinspection RsTypeCheck
+    pub fn apply_diff_batch(from: &GameState, batch: &Vec<ValueDiff>) -> Result<GameState, ReplayError> {
         let transformed_diffs: Vec<PatchOperation> = batch.iter().filter_map(|diff| match diff {
             ValueDiff::Unchanged => {
                 None
@@ -210,22 +234,22 @@ impl ReplayDiffed {
         let p = Patch(transformed_diffs);
 
         let mut current = serde_json::to_value(from).expect("Couldn't erase typing");
-        let current_backup = current.clone();
 
         let result = patch(&mut current, &p);
+        if result.is_err() {
+            Self::debug_patch(&mut current, &p);
+        }
 
 
-        let res = match result {
+        return match result {
             Ok(()) => {
-                serde_json::from_value::<GameState>(current).expect("Couldn't restore typing")
+                Ok(serde_json::from_value::<GameState>(current).expect("Couldn't restore typing"))
             }
-            Err(err) => {
-                warn!(format!("Err {} Couldn't apply patch={:?} to state={:?}", err, p, current_backup));
-                serde_json::from_value::<GameState>(current_backup).expect("Couldn't restore typing")
+            Err(e) => {
+                warn!(format!("bad patch {:?}", e));
+                Err(ReplayError::BadPatch)
             }
         };
-
-        return res;
     }
 
     fn calc_diff_batch<'a>(from: &'a GameState, to: &'a GameState) -> Vec<ValueDiff> {
@@ -233,36 +257,78 @@ impl ReplayDiffed {
         let to: serde_json::Value = serde_json::to_value(to).expect("Couldn't erase typing");
         let mut d = Recorder::default();
         diff(&from, &to, &mut d);
-        let diffs = d.calls.iter().filter_map(|c| {
+        let mut diffs:Vec<ValueDiff> = d.calls.iter().filter_map(|c| {
             let diff = ValueDiff::from_change_type(c);
             if matches!(diff, ValueDiff::Unchanged) {
                 return None;
             }
             return Some(diff);
         }).collect();
+        // patch array removal that will break if removed in the order it was detected
+        // e.g. 7, 8, 9 will break on the 3rd removal, but 9, 8, 7 will not
+        let mut skip_till: i32 = -1;
+        let mut sequences:Vec<(usize, Vec<ValueDiff>)> = vec![];
+        for i in 0..diffs.len() {
+            if i as i32 <= skip_till {
+                continue;
+            }
+            if matches!(diffs[i], ValueDiff::Removed(_)) {
+                let mut accumulated = vec![diffs[i].clone()];
+                let mut main_key = match diffs[i].clone() {
+                    ValueDiff::Removed(path) => Some(path),
+                    _ => None
+                }.unwrap();
+                let parts = main_key.split("/").collect::<Vec<&str>>();
+                main_key = parts.iter().take(parts.len() - 1).join("/");
+                for j in (i + 1)..diffs.len() {
+                    match &diffs[j] {
+                        ValueDiff::Removed(path) => {
+                            if path.starts_with(&main_key) {
+                                accumulated.push(diffs[j].clone())
+                            } else {
+                                break;
+                            }
+                        },
+                        _ => {
+                            break;
+                        }
+                    }
+                    skip_till = j as i32;
+                }
+                if accumulated.len() > 1 {
+                    sequences.push((i, accumulated.into_iter().rev().collect()))
+                }
+            }
+        }
+        if !sequences.is_empty() {
+            for (i, accumulated) in sequences {
+                for j in 0..accumulated.len() {
+                    diffs[i + j] = accumulated[j].clone()
+                }
+            }
+        }
         diffs
     }
 
-    fn apply_n_diffs(&self, n: usize, sampler: &mut Option<Sampler>) -> GameState {
+    fn apply_n_diffs(&self, n: usize, sampler: &mut Option<Sampler>) -> Result<GameState, ReplayError> {
         let diffs: Vec<Vec<ValueDiff>> = self.diffs.iter().take(n).map(|d| d.clone()).collect();
         let mut current = self.initial_state.clone();
         for batch in diffs {
             let sid = sampler.as_mut().map(|s| {
                 s.start(SamplerMarks::ApplyReplayDiffBatch as u32)
             });
-            current = Self::apply_diff_batch(&current, &batch, sampler);
+            current = Self::apply_diff_batch(&current, &batch)?;
             sampler.as_mut().zip(sid).map(|(s, i)| s.end(i));
         }
-        current
+        Ok(current)
     }
 
-    pub fn get_state_at(&self, ticks: u32, sampler: &mut Option<Sampler>) -> Option<GameState> {
+    pub fn get_state_at(&self, ticks: u32, sampler: &mut Option<Sampler>) -> Result<GameState, ReplayError> {
         let index = self.marks_ticks.iter().position(|mark| *mark == ticks);
         if let Some(index) = index {
-            return Some(self.apply_n_diffs(index, sampler));
+            return Ok(self.apply_n_diffs(index, sampler)?);
         }
-        warn!(format!("failed to rewind replay to, {}mcs", ticks));
-        return None;
+        return Err(ReplayError::InvalidRewind(ticks));
     }
 }
 

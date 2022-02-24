@@ -53,7 +53,7 @@ macro_rules! log {
 macro_rules! warn {
     ($($t:tt)*) => {
         unsafe {
-            (crate::warn(&format_args!("wasm warn: {}", $($t)*).to_string()))
+            (crate::log(&format_args!("wasm warn: {}", $($t)*).to_string()))
             }
     }
 }
@@ -409,7 +409,7 @@ struct SeedWorldArgs {
 
 
 use serde_wasm_bindgen::*;
-use crate::replay::{ReplayDiffed, ReplayRaw};
+use crate::replay::{ReplayDiffed, ReplayRaw, ValueDiff};
 
 pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
     let ser = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
@@ -526,9 +526,17 @@ pub fn pack_replay(states: Vec<JsValue>, name: String, diff: bool) -> Result<JsV
 pub fn get_diff_replay_state_at(replay: JsValue, ticks: u32) -> Result<JsValue, JsValue> {
     let mut replay: ReplayDiffed = serde_wasm_bindgen::from_value(replay)?;
     let mut sampler = if *ENABLE_PERF { Some(global_sampler.write().unwrap().clone()) } else {None};
-    let res = replay.get_state_at(ticks, &mut sampler).ok_or(JsValue::from_str("failed to rewind"))?;
+    let res = replay.get_state_at(ticks, &mut sampler).map_err(|_| JsValue::from_str("failed to rewind"))?;
     if *ENABLE_PERF { mem::replace(global_sampler.write().unwrap().deref_mut(), sampler.unwrap()); };
     flush_sampler_stats();
     let value = custom_serialize(&res)?;
     Ok(value)
+}
+
+#[wasm_bindgen]
+pub fn apply_single_patch(state: JsValue, patch: JsValue) -> Result<JsValue, JsValue> {
+    let state: GameState = serde_wasm_bindgen::from_value(state)?;
+    let batch: Vec<ValueDiff> = serde_wasm_bindgen::from_value(patch)?;
+    let res = ReplayDiffed::apply_diff_batch(&state, &batch).map_err(|_| JsValue::from_str("failed to apply single patch"))?;
+    Ok(custom_serialize(&res)?)
 }
