@@ -1,6 +1,6 @@
 [package]
 name = "srn-server"
-version = "0.8.1"
+version = "0.8.2"
 authors = [ "Valeriy Kuzmin <malcoriel@gmail.com>" ]
 edition = "2018"
 
@@ -34,11 +34,11 @@ lockfree = "0.5.1"
 mut_static = "5.0.0"
 json-patch = "0.2.4"
 
-[dependencies.treediff]
-version = "4.0.2"
-features = ["with-serde-json"]
+  [dependencies.treediff]
+  version = "4.0.2"
+  features = [ "with-serde-json" ]
 
-[dependencies.rocket]
+  [dependencies.rocket]
   git = "https://github.com/SergioBenitez/Rocket"
   rev = "c24f15c18f02319be83af4f3c1951dc220b52c5e"
 

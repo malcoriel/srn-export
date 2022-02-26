@@ -1,5 +1,14 @@
 # Changelog
 
+
+## Version 0.8.2 (2022-02-27)
+### New
+* Very crude replay system, now only with a test replay
+
+### Fixes
+* Improved test coverage
+* Significantly improved determinism of all game rules
+
 ## Version 0.8.1 (2022-01-12)
 ### New
 * 2 bots in pirate mode by default
