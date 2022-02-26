@@ -4,7 +4,7 @@ import _ from 'lodash';
 jest.setTimeout(100000);
 
 function simulate() {
-  const COUNT = 100;
+  const COUNT = 20;
   const STEP_MS = 1000;
 
   const states = [];
@@ -31,7 +31,7 @@ describe('replay system', () => {
     await writeReplay(replay);
   });
 
-  fit('can pack diff replay via wasm', async () => {
+  xit('can pack diff replay via wasm', async () => {
     const states = simulate();
     const replay = await wasm.packReplay(states, 'stress-test', true);
     await writeReplay(replay);
@@ -75,9 +75,11 @@ describe('replay system', () => {
     );
   });
 
-  xit('can perform well with multiple get diffs', () => {
+  it('can do sequential restoration', () => {
     const states = simulate();
     const replayDiff = wasm.packReplay(states, 'test', true);
-    wasm.getDiffReplayStateAt(replayDiff, replayDiff.marks_ticks[5]);
+    for (const tick of replayDiff.marks_ticks) {
+      replayDiff.current_state = wasm.getDiffReplayStateAt(replayDiff, tick);
+    }
   });
 });

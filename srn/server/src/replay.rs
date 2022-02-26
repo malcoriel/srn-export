@@ -310,9 +310,9 @@ impl ReplayDiffed {
         diffs
     }
 
-    fn apply_n_diffs(&self, n: usize, sampler: &mut Option<Sampler>) -> Result<GameState, ReplayError> {
-        let diffs: Vec<Vec<ValueDiff>> = self.diffs.iter().take(n).map(|d| d.clone()).collect();
-        let mut current = self.initial_state.clone();
+    fn apply_n_diffs(&self, count: usize, sampler: &mut Option<Sampler>, from_idx: usize) -> Result<GameState, ReplayError> {
+        let diffs: Vec<Vec<ValueDiff>> = self.diffs.iter().skip(from_idx).take(count).map(|d| d.clone()).collect();
+        let mut current = self.current_state.as_ref().unwrap_or(&self.initial_state).clone();
         for batch in diffs {
             let sid = sampler.as_mut().map(|s| {
                 s.start(SamplerMarks::ApplyReplayDiffBatch as u32)
@@ -325,10 +325,12 @@ impl ReplayDiffed {
 
     pub fn get_state_at(&self, ticks: u32, sampler: &mut Option<Sampler>) -> Result<GameState, ReplayError> {
         let index = self.marks_ticks.iter().position(|mark| *mark == ticks);
+        let current_ticks =  self.current_state.as_ref().map_or(0, |s| s.ticks) as u32;
+        let current_index = self.marks_ticks.iter().position(|mark| *mark == current_ticks).unwrap_or(0);
         if let Some(index) = index {
-            return Ok(self.apply_n_diffs(index, sampler)?);
+            return Ok(self.apply_n_diffs(index - current_index, sampler,  current_index)?);
         }
-        return Err(ReplayError::InvalidRewind(ticks));
+        return Err(ReplayError::InvalidRewind(self.current_state.as_ref().map_or(0, |s| s.ticks as u32)));
     }
 }
 
