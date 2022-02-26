@@ -274,10 +274,11 @@ export const restoreReplayFrame = (
   replay: any,
   ticks: number
 ): GameState | null => {
-  memoizedRestore =
-    memoizedRestore ||
-    _.memoize(wasmFunctions.get_diff_replay_state_at, (_r, ticks) => ticks);
-  return memoizedRestore(replay, Math.round(ticks));
+  return wasmFunctions.get_diff_replay_state_at(replay, Math.round(ticks));
+  // memoizedRestore =
+  //   memoizedRestore ||
+  //   _.memoize(wasmFunctions.get_diff_replay_state_at, (_r, ticks) => ticks);
+  // return memoizedRestore(replay, Math.round(ticks));
 };
 
 export const applyShipActionWasm = (

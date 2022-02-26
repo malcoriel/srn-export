@@ -347,7 +347,6 @@ export default class NetState extends EventEmitter {
   rewindReplayToMs = (markInMs: number) => {
     const closestMark = this.findClosestMark(this.replay.marks_ticks, markInMs);
     if (closestMark !== null) {
-      this.replay.current_state = null;
       this.replay.current_state = restoreReplayFrame(this.replay, closestMark);
       this.state = this.replay.current_state;
       this.replay.current_millis = markInMs;
