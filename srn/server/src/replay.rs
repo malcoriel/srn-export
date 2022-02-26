@@ -23,7 +23,7 @@ use crate::perf::SamplerMarks;
 pub enum ReplayError {
     Unknown,
     BadPatch,
-    InvalidRewind(u32)
+    InvalidRewind(u32),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -151,7 +151,7 @@ impl ReplayRaw {
         if self.frames.len() == 0 {
             self.initial_state = state.clone();
         }
-        self.frames.push( ReplayFrame {
+        self.frames.push(ReplayFrame {
             ticks: state.ticks as u32,
             state,
         });
@@ -257,7 +257,7 @@ impl ReplayDiffed {
         let to: serde_json::Value = serde_json::to_value(to).expect("Couldn't erase typing");
         let mut d = Recorder::default();
         diff(&from, &to, &mut d);
-        let mut diffs:Vec<ValueDiff> = d.calls.iter().filter_map(|c| {
+        let mut diffs: Vec<ValueDiff> = d.calls.iter().filter_map(|c| {
             let diff = ValueDiff::from_change_type(c);
             if matches!(diff, ValueDiff::Unchanged) {
                 return None;
@@ -267,7 +267,7 @@ impl ReplayDiffed {
         // patch array removal that will break if removed in the order it was detected
         // e.g. 7, 8, 9 will break on the 3rd removal, but 9, 8, 7 will not
         let mut skip_till: i32 = -1;
-        let mut sequences:Vec<(usize, Vec<ValueDiff>)> = vec![];
+        let mut sequences: Vec<(usize, Vec<ValueDiff>)> = vec![];
         for i in 0..diffs.len() {
             if i as i32 <= skip_till {
                 continue;
@@ -288,7 +288,7 @@ impl ReplayDiffed {
                             } else {
                                 break;
                             }
-                        },
+                        }
                         _ => {
                             break;
                         }
@@ -312,7 +312,7 @@ impl ReplayDiffed {
 
     fn apply_n_diffs(&self, count: usize, sampler: &mut Option<Sampler>, from_idx: usize) -> Result<GameState, ReplayError> {
         let diffs: Vec<Vec<ValueDiff>> = self.diffs.iter().skip(from_idx).take(count).map(|d| d.clone()).collect();
-        let mut current = self.current_state.as_ref().unwrap_or(&self.initial_state).clone();
+        let mut current = if from_idx > 0 { self.current_state.as_ref().unwrap_or(&self.initial_state).clone() } else { self.initial_state.clone() };
         for batch in diffs {
             let sid = sampler.as_mut().map(|s| {
                 s.start(SamplerMarks::ApplyReplayDiffBatch as u32)
@@ -325,10 +325,16 @@ impl ReplayDiffed {
 
     pub fn get_state_at(&self, ticks: u32, sampler: &mut Option<Sampler>) -> Result<GameState, ReplayError> {
         let index = self.marks_ticks.iter().position(|mark| *mark == ticks);
-        let current_ticks =  self.current_state.as_ref().map_or(0, |s| s.ticks) as u32;
+        let current_ticks = self.current_state.as_ref().map_or(0, |s| s.ticks) as u32;
         let current_index = self.marks_ticks.iter().position(|mark| *mark == current_ticks).unwrap_or(0);
         if let Some(index) = index {
-            return Ok(self.apply_n_diffs(index - current_index, sampler,  current_index)?);
+            if current_index <= index {
+                // forwards, optimization will work
+                return Ok(self.apply_n_diffs(index - current_index, sampler, current_index)?);
+            } else {
+                // backwards, no optimization
+                return Ok(self.apply_n_diffs(index, sampler, 0)?);
+            }
         }
         return Err(ReplayError::InvalidRewind(self.current_state.as_ref().map_or(0, |s| s.ticks as u32)));
     }

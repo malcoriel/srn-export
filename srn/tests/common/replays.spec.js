@@ -81,5 +81,7 @@ describe('replay system', () => {
     for (const tick of replayDiff.marks_ticks) {
       replayDiff.current_state = wasm.getDiffReplayStateAt(replayDiff, tick);
     }
+    // validate that backwards search doesn't break it
+    replayDiff.current_state = wasm.getDiffReplayStateAt(replayDiff, 0);
   });
 });

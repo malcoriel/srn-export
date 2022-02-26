@@ -268,17 +268,11 @@ export const validateState = (inState: GameState): boolean => {
   return !!parsed;
 };
 
-let memoizedRestore: any;
-
 export const restoreReplayFrame = (
   replay: any,
   ticks: number
 ): GameState | null => {
   return wasmFunctions.get_diff_replay_state_at(replay, Math.round(ticks));
-  // memoizedRestore =
-  //   memoizedRestore ||
-  //   _.memoize(wasmFunctions.get_diff_replay_state_at, (_r, ticks) => ticks);
-  // return memoizedRestore(replay, Math.round(ticks));
 };
 
 export const applyShipActionWasm = (
