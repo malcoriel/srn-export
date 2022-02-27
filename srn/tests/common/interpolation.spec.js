@@ -1,4 +1,4 @@
-import { getShipByPlayerId, loadWasm, wasm } from '../util';
+import { getLoc0, getShipByPlayerId, loadWasm, wasm } from '../util';
 import _ from 'lodash';
 
 const lerp = (x, y, a) => x + (y - x) * a;
@@ -31,5 +31,21 @@ describe('state interpolation', () => {
     expect(shipD.y).toBeCloseTo(targetShipY_07);
   });
 
-  it.todo('can interpolate planet orbit movement');
+  it('can interpolate planet orbit movement', () => {
+    const roomA = wasm.createRoom({
+      mode: 'PirateDefence',
+      seed: 'interpolate',
+    });
+    const planetA = getLoc0(roomA.state).planets[0];
+    planetA.x = 100;
+    planetA.y = 0;
+    const roomB = _.cloneDeep(roomA);
+    const planetB = getLoc0(roomB.state).planets[0];
+    planetB.x = 100;
+    planetB.y = 0;
+    const stateC = wasm.interpolateStates(roomA.state, roomB.state, 0.5);
+    const planetC = getLoc0(stateC).planets[0];
+    expect(planetC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
+    expect(planetC.y).toBeCloseTo((Math.sqrt(2) / 2) * 100);
+  });
 });
