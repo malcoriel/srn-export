@@ -268,11 +268,12 @@ export const validateState = (inState: GameState): boolean => {
   return !!parsed;
 };
 
-export const restoreReplayFrame = (
-  replay: any,
-  ticks: number
-): GameState | null => {
-  return wasmFunctions.get_diff_replay_state_at(replay, Math.round(ticks));
+export const restoreReplayFrame = (ticks: number): GameState | null => {
+  return wasmFunctions.get_preloaded_diff_replay_state_at(Math.round(ticks));
+};
+
+export const loadReplayIntoWasm = (replay: any) => {
+  wasmFunctions.load_replay(replay);
 };
 
 export const applyShipActionWasm = (

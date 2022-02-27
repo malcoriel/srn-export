@@ -37,51 +37,67 @@ describe('replay system', () => {
     await writeReplay(replay);
   });
 
-  it('can validate diff replay against raw replay', async () => {
-    const states = simulate();
-    const replayDiff = await wasm.packReplay(states, 'test', true);
-    const replayRaw = await wasm.packReplay(states, 'test', false);
+  describe('can validate diff replay against raw replay', () => {
+    const test = async (getDiff, name, states, replayDiff) => {
+      const replayRaw = wasm.packReplay(states, `${name}-test`, false);
 
-    const lastIndex = replayRaw.marks_ticks.length - 1;
-    const endStateRaw = replayRaw.frames[lastIndex].state;
+      const lastIndex = replayRaw.marks_ticks.length - 1;
+      const endStateRaw = replayRaw.frames[lastIndex].state;
 
-    // await writeTmpJson('end-diff', endStateDiff);
-    // await writeTmpJson('end-raw', endStateRaw);
+      const endStateRestoredPrev = getDiff(
+        replayRaw.marks_ticks[lastIndex - 1]
+      );
+      await writeTmpJson(`${name}-restored-prev`, endStateRestoredPrev);
+      await writeTmpJson(
+        `${name}-patch-last`,
+        replayDiff.diffs[replayDiff.diffs.length - 1]
+      );
+      const endStateRestored = getDiff(replayRaw.marks_ticks[lastIndex]);
+      expect(endStateRestored).toEqual(endStateRaw);
 
-    const endStateRestoredPrev = wasm.getDiffReplayStateAt(
-      replayDiff,
-      replayRaw.marks_ticks[lastIndex - 1]
-    );
-    await writeTmpJson('restored-prev', endStateRestoredPrev);
-    await writeTmpJson(
-      'patch-last',
-      replayDiff.diffs[replayDiff.diffs.length - 1]
-    );
-    const endStateRestored = wasm.getDiffReplayStateAt(
-      replayDiff,
-      replayRaw.marks_ticks[lastIndex]
-    );
-    expect(endStateRestored).toEqual(endStateRaw);
+      expect(replayRaw.initial_state.millis).toEqual(0);
+      expect(replayRaw.marks_ticks[0]).toEqual(0);
+      expect(replayRaw.marks_ticks[replayRaw.marks_ticks.length - 1]).toEqual(
+        replayRaw.max_time_ms * 1000
+      );
+      expect(replayRaw.marks_ticks).toEqual(replayDiff.marks_ticks);
+      expect(replayRaw.initial_state).toEqual(replayDiff.initial_state);
+      expect(getDiff(0)).toEqual(replayDiff.initial_state);
+    };
 
-    expect(replayRaw.initial_state.millis).toEqual(0);
-    expect(replayRaw.marks_ticks[0]).toEqual(0);
-    expect(replayRaw.marks_ticks[replayRaw.marks_ticks.length - 1]).toEqual(
-      replayRaw.max_time_ms * 1000
-    );
-    expect(replayRaw.marks_ticks).toEqual(replayDiff.marks_ticks);
-    expect(replayRaw.initial_state).toEqual(replayDiff.initial_state);
-    expect(wasm.getDiffReplayStateAt(replayDiff, 0)).toEqual(
-      replayDiff.initial_state
-    );
+    it('works with non-preloaded replay', async () => {
+      const name = 'non-preloaded';
+      const states = simulate();
+      const replayDiff = wasm.packReplay(states, `${name}-test`, true);
+      await test(
+        (ticks) => wasm.getDiffReplayStateAt(replayDiff, ticks),
+        name,
+        states,
+        replayDiff
+      );
+    });
+    it('works with preloaded replay', async () => {
+      const name = 'non-preloaded';
+      const states = simulate();
+      const replayDiff = wasm.packReplay(states, `${name}-test`, true);
+      wasm.loadReplay(replayDiff);
+      await test(
+        (ticks) => wasm.getPreloadedDiffReplayStateAt(ticks),
+        name,
+        states,
+        replayDiff
+      );
+    });
   });
 
   it('can do sequential restoration', () => {
     const states = simulate();
     const replayDiff = wasm.packReplay(states, 'test', true);
+    wasm.loadReplay(replayDiff);
     for (const tick of replayDiff.marks_ticks) {
-      replayDiff.current_state = wasm.getDiffReplayStateAt(replayDiff, tick);
+      replayDiff.current_state = wasm.getPreloadedDiffReplayStateAt(tick);
     }
     // validate that backwards search doesn't break it
-    replayDiff.current_state = wasm.getDiffReplayStateAt(replayDiff, 0);
+    replayDiff.current_state = wasm.getPreloadedDiffReplayStateAt(0);
   });
 });

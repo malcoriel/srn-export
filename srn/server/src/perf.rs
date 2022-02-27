@@ -299,7 +299,9 @@ pub enum SamplerMarks {
     FrameIdlePct = 45,
     FrameBudgetTicks = 46,
     ApplyReplayDiffBatch = 47,
-    ApplyReplayDiff = 48
+    ApplyReplayDiff = 48,
+    GetDiffReplayStateAtFull = 49,
+    GetDiffReplayStateAtPreloaded = 50
 }
 
 impl Display for SamplerMarks {

@@ -44,7 +44,13 @@ export const wasm = {
   getDiffReplayStateAt: () => {
     throw new Error(notLoadedError);
   },
+  getPreloadedDiffReplayStateAt: () => {
+    throw new Error(notLoadedError);
+  },
   applySinglePatch: () => {
+    throw new Error(notLoadedError);
+  },
+  loadReplay: () => {
     throw new Error(notLoadedError);
   },
 };
@@ -103,11 +109,17 @@ export const loadWasm = timerify(async function loadWasm() {
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.packReplay = wasmFunctions.pack_replay;
   wasm.addToReplay = wasmFunctions.add_to_replay;
+  wasm.loadReplay = wasmFunctions.load_replay;
   wasm.getDiffReplayStateAt = timerifySync(function getDiffReplayStateAt(
     ...args
   ) {
     return wasmFunctions.get_diff_replay_state_at(...args);
   });
+  wasm.getPreloadedDiffReplayStateAt = timerifySync(
+    function getPreloadedDiffReplayStateAt(...args) {
+      return wasmFunctions.get_preloaded_diff_replay_state_at(...args);
+    }
+  );
   wasm.applySinglePatch = wasmFunctions.apply_single_patch;
   wasm.resources = resources;
   wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);

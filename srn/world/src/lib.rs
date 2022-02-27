@@ -264,7 +264,7 @@ use rand::prelude::SmallRng;
 use rand::{RngCore, SeedableRng};
 use crate::api_struct::Room;
 use crate::dialogue::{DialogueTable, parse_dialogue_script_from_file};
-use crate::perf::Sampler;
+use crate::perf::{Sampler, SamplerMarks};
 use crate::system_gen::seed_state;
 use crate::world::{GameMode, GameState};
 
@@ -275,6 +275,12 @@ lazy_static! {
             marks_holder.push(mark.to_string());
         }
         MutStatic::from(perf::Sampler::new(marks_holder))
+    };
+}
+
+lazy_static! {
+    pub static ref current_replay: MutStatic<Option<ReplayDiffed>> = {
+        MutStatic::from(None)
     };
 }
 
@@ -524,13 +530,44 @@ pub fn pack_replay(states: Vec<JsValue>, name: String, diff: bool) -> Result<JsV
 
 #[wasm_bindgen]
 pub fn get_diff_replay_state_at(replay: JsValue, ticks: u32) -> Result<JsValue, JsValue> {
+    let mut sampler = if *ENABLE_PERF { Some(global_sampler.write().unwrap().clone()) } else { None };
+    let full_id = sampler.as_mut().map(|s| s.start(SamplerMarks::GetDiffReplayStateAtFull as u32));
     let mut replay: ReplayDiffed = serde_wasm_bindgen::from_value(replay)?;
-    let mut sampler = if *ENABLE_PERF { Some(global_sampler.write().unwrap().clone()) } else {None};
     let res = replay.get_state_at(ticks, &mut sampler).map_err(|_| JsValue::from_str("failed to rewind"))?;
+    let value = custom_serialize(&res)?;
+    sampler.as_mut().map(|s| {
+        full_id.map(|fid| s.end(fid));
+    });
     if *ENABLE_PERF { mem::replace(global_sampler.write().unwrap().deref_mut(), sampler.unwrap()); };
     flush_sampler_stats();
-    let value = custom_serialize(&res)?;
     Ok(value)
+}
+
+#[wasm_bindgen]
+pub fn get_preloaded_diff_replay_state_at(ticks: u32) -> Result<JsValue, JsValue> {
+    let mut sampler = if *ENABLE_PERF { Some(global_sampler.write().unwrap().clone()) } else { None };
+    let full_id = sampler.as_mut().map(|s| s.start(SamplerMarks::GetDiffReplayStateAtPreloaded as u32));
+    let mut replay: ReplayDiffed = current_replay.read().unwrap().clone().unwrap();
+    let res = replay.get_state_at(ticks, &mut sampler).map_err(|_| JsValue::from_str("failed to rewind"))?;
+    sampler.as_mut().map(|s| {
+        full_id.map(|fid| s.end(fid));
+    });
+    current_replay.write().unwrap().as_mut().map(|r: &mut ReplayDiffed| {
+        r.current_state = Some(res.clone());
+    });
+    let value = custom_serialize(&res)?;
+    if *ENABLE_PERF { mem::replace(global_sampler.write().unwrap().deref_mut(), sampler.unwrap()); };
+    flush_sampler_stats();
+    Ok(value)
+}
+
+
+#[wasm_bindgen]
+pub fn load_replay(replay: JsValue) -> Result<(), JsValue> {
+    let replay: ReplayDiffed = serde_wasm_bindgen::from_value(replay)?;
+    let mut r = current_replay.write().unwrap();
+    *r = Some(replay);
+    Ok(())
 }
 
 #[wasm_bindgen]

@@ -6,6 +6,7 @@ import {
   GameMode,
   GameState,
   isManualMovement,
+  loadReplayIntoWasm,
   ManualMovementActionTags,
   restoreReplayFrame,
   SandboxCommand,
@@ -347,7 +348,7 @@ export default class NetState extends EventEmitter {
   rewindReplayToMs = (markInMs: number) => {
     const closestMark = this.findClosestMark(this.replay.marks_ticks, markInMs);
     if (closestMark !== null) {
-      this.replay.current_state = restoreReplayFrame(this.replay, closestMark);
+      this.replay.current_state = restoreReplayFrame(closestMark);
       this.state = this.replay.current_state;
       this.replay.current_millis = markInMs;
       this.updateVisMap();
@@ -367,6 +368,7 @@ export default class NetState extends EventEmitter {
     this.connecting = false;
     this.mode = replayJson.initial_state.mode;
     this.replay = replayJson;
+    loadReplayIntoWasm(replayJson);
     this.state = this.replay.initial_state;
     Perf.start();
     this.time.setInterval(
