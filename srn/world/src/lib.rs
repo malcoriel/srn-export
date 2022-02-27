@@ -571,6 +571,13 @@ pub fn load_replay(replay: JsValue) -> Result<(), JsValue> {
 }
 
 #[wasm_bindgen]
+pub fn interpolate_states(state_a: JsValue, state_b: JsValue) -> Result<JsValue, JsValue> {
+    let state_a: GameState = serde_wasm_bindgen::from_value(state_a)?;
+    let state_b: GameState = serde_wasm_bindgen::from_value(state_b)?;
+    Ok(custom_serialize(&state_a)?)
+}
+
+#[wasm_bindgen]
 pub fn apply_single_patch(state: JsValue, patch: JsValue) -> Result<JsValue, JsValue> {
     let state: GameState = serde_wasm_bindgen::from_value(state)?;
     let batch: Vec<ValueDiff> = serde_wasm_bindgen::from_value(patch)?;
