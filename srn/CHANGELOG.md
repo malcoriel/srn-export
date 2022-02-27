@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.8.3 (2022-02-27)
+### Fixes
+* Significantly improved replay playing performance
+* Restored buttons animation
 
 ## Version 0.8.2 (2022-02-27)
 ### New
