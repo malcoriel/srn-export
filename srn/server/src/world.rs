@@ -18,7 +18,7 @@ use wasm_bindgen::prelude::*;
 use crate::{DialogueTable, seed_prng};
 use crate::dialogue;
 use dialogue::DialogueStates;
-use crate::{abilities, autofocus, cargo_rush, indexing, pirate_defence, system_gen, prng_id, world_events};
+use crate::{abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, system_gen, world_events};
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{DEBUG_PHYSICS, get_prng, new_id};
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
@@ -1231,8 +1231,8 @@ fn update_wreck_decay(state: &mut GameState, location_idx: usize, elapsed_ticks:
     state.locations[location_idx].wrecks.retain(|w| !to_delete.contains(&w.id));
 }
 
-fn interpolate(from: f64, to: f64, percentage: f64) -> f64 {
-    return (to - from) * percentage + from;
+pub fn lerp(from: f64, to: f64, percentage: f64) -> f64 {
+    return (to - from) * (percentage.max(0.0).min(1.0)) + from;
 }
 
 // and undocking!
@@ -1297,8 +1297,8 @@ fn interpolate_docking_ships_position(
                             ship.rotation = -ship.rotation;
                         }
 
-                        ship.x = interpolate(start_pos.x, planet.x, *percentage as f64 / 100.0);
-                        ship.y = interpolate(start_pos.y, planet.y, *percentage as f64 / 100.0);
+                        ship.x = lerp(start_pos.x, planet.x, *percentage as f64 / 100.0);
+                        ship.y = lerp(start_pos.y, planet.y, *percentage as f64 / 100.0);
                     }
                 }
                 _ => {}
@@ -1326,8 +1326,8 @@ fn interpolate_docking_ships_position(
                             ship.rotation = -ship.rotation;
                         }
 
-                        ship.x = interpolate(from_pos.x, end_pos.x, *percentage as f64 / 100.0);
-                        ship.y = interpolate(from_pos.y, end_pos.y, *percentage as f64 / 100.0);
+                        ship.x = lerp(from_pos.x, end_pos.x, *percentage as f64 / 100.0);
+                        ship.y = lerp(from_pos.y, end_pos.y, *percentage as f64 / 100.0);
                     }
                 }
                 _ => {}

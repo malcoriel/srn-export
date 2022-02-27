@@ -153,6 +153,9 @@ mod world_player_actions;
 #[path = "../../server/src/replay.rs"]
 mod replay;
 
+#[path = "../../server/src/interpolation.rs"]
+mod interpolation;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -571,10 +574,10 @@ pub fn load_replay(replay: JsValue) -> Result<(), JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn interpolate_states(state_a: JsValue, state_b: JsValue) -> Result<JsValue, JsValue> {
+pub fn interpolate_states(state_a: JsValue, state_b: JsValue, value: f64) -> Result<JsValue, JsValue> {
     let state_a: GameState = serde_wasm_bindgen::from_value(state_a)?;
     let state_b: GameState = serde_wasm_bindgen::from_value(state_b)?;
-    Ok(custom_serialize(&state_a)?)
+    Ok(custom_serialize(&interpolation::interpolate_states(&state_a, &state_b, value))?)
 }
 
 #[wasm_bindgen]

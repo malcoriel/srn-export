@@ -22,7 +22,7 @@ describe('state interpolation', () => {
     // const stateD = wasm.interpolateStates(roomA.state, roomB.state, 0.7);
     const shipC = getShipByPlayerId(stateC, playerId);
     expect(shipC.x).toBeCloseTo(targetShipX_05);
-    expect(shipC.x).toBeCloseTo(targetShipY_05);
+    expect(shipC.y).toBeCloseTo(targetShipY_05);
     // const shipD = getShipByPlayerId(stateD, playerId);
   });
 

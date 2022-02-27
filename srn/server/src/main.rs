@@ -160,6 +160,7 @@ mod world_player_actions;
 mod replay;
 mod replays_api;
 mod resources;
+mod interpolation;
 
 struct LastCheck {
     time: DateTime<Utc>,
