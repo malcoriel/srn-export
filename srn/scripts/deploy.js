@@ -296,5 +296,6 @@ const tryAndLog = (fn) => () => {
       .parse();
   } catch (e) {
     console.error(e);
+    process.exit(1);
   }
 })();
