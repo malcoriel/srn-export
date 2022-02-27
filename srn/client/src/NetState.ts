@@ -346,13 +346,15 @@ export default class NetState extends EventEmitter {
   };
 
   rewindReplayToMs = (markInMs: number) => {
+    this.replay.current_millis = markInMs;
     const closestMark = this.findClosestMark(this.replay.marks_ticks, markInMs);
     if (closestMark !== null) {
-      this.replay.current_state = restoreReplayFrame(closestMark);
-      this.state = this.replay.current_state;
-      this.replay.current_millis = markInMs;
-      this.updateVisMap();
-      reindexNetState(this);
+      if (this.replay?.current_state?.ticks !== closestMark) {
+        this.replay.current_state = restoreReplayFrame(closestMark);
+        this.state = this.replay.current_state;
+        this.updateVisMap();
+        reindexNetState(this);
+      }
     } else {
       console.warn(`No best mark for ${markInMs}`);
       this.pauseReplay();
