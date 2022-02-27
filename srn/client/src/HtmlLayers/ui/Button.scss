@@ -45,9 +45,9 @@
   color: black;
   cursor: pointer;
 
-  //transform: scale(1.03);
+  transform: scale(1.03);
 
-  transition: transform .1s;
+  transition: transform .3s;
 
   .hotkey-letter {
     color: black;
@@ -55,8 +55,8 @@
 }
 
 .ui-button:active, .pseudo-active {
-  transition: transform .02s;
-  //transform: scale(0.98);
+  transition: transform .1s;
+  transform: scale(0.98);
 }
 
 .round {
