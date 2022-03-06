@@ -176,6 +176,77 @@ pub struct Planet {
     pub properties: Vec<ObjectProperty>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct Transform {
+    pub position: Vec2f64,
+    pub rotation_rad: f64,
+    pub radius: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct PlanetV2 {
+    pub id: Uuid,
+    pub name: String,
+    pub transform: Transform,
+    pub movement: MovementDefinition,
+    pub color: String,
+    pub health: Option<Health>,
+    pub properties: Vec<ObjectProperty>,
+}
+
+impl PlanetV2 {
+    pub fn from(p: &Planet, loc: &Location) -> Self {
+        let pos = Vec2f64 {
+            x: p.x,
+            y: p.y,
+        };
+
+        let (anchor, radius_to_anchor) = match p.anchor_tier {
+            1 => {
+                // planet
+                let star = loc.star.clone().expect(format!("No star found for anchor tier {} of planet {}", p.anchor_tier, p.id).as_str());
+                (ObjectSpecifier::Star {
+                    id: star.id,
+                }, pos.euclidean_distance(&Vec2f64 {
+                    x: star.x,
+                    y: star.y,
+                }))
+            }
+            2 => {
+                let parent_planet = loc.planets.iter().find(|par| par.id == p.anchor_id).expect(format!("No anchor planet found by id {} for planet {}", p.anchor_id, p.id).as_str());
+                (ObjectSpecifier::Planet {
+                    id: parent_planet.id,
+                }, pos.euclidean_distance(&Vec2f64 { x: parent_planet.x, y: parent_planet.y }))
+            }
+            _ => panic!(format!("Unsupported anchor tier {}", p.anchor_tier)),
+        };
+        Self {
+            id: p.id.clone(),
+            name: p.name.clone(),
+            transform: Transform {
+                position: pos,
+                rotation_rad: p.rotation,
+                radius: p.radius,
+            },
+            movement: MovementDefinition::RadialMonotonous {
+                angle_per_tick: p.orbit_speed / 1000.0 / 1000.0,
+                radius_to_anchor,
+                anchor,
+            },
+            color: p.color.clone(),
+            health: p.health.clone(),
+            properties: p.properties.clone(),
+        }
+    }
+}
+
+impl From<&PlanetV2> for Planet {
+    fn from(_: &PlanetV2) -> Self {
+        todo!()
+    }
+}
+
+
 impl Planet {
     pub fn new() -> Self {
         Self {
@@ -305,7 +376,7 @@ pub enum GameEvent {
     CreateRoomRequest {
         mode: GameMode,
         room_id: Uuid,
-        bots_seed: Option<String>
+        bots_seed: Option<String>,
     },
     KickPlayerRequest {
         player_id: Uuid
@@ -695,7 +766,7 @@ impl GameState {
             processed_events: vec![],
             processed_player_actions: vec![],
             update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
-            accumulated_not_updated_ticks: 0
+            accumulated_not_updated_ticks: 0,
         }
     }
 }
@@ -1003,7 +1074,7 @@ fn update_world_iter(
                     sampler,
                     location_idx,
                     spatial_indexes,
-                    prng
+                    prng,
                 )
             }
         };
@@ -1056,7 +1127,7 @@ pub fn update_location(
     mut sampler: Sampler,
     location_idx: usize,
     spatial_indexes: &mut SpatialIndexes,
-    prng: &mut SmallRng
+    prng: &mut SmallRng,
 ) -> Sampler {
     let spatial_index_id = sampler.start(SamplerMarks::GenSpatialIndexOnDemand as u32);
     let spatial_index = spatial_indexes
@@ -1171,7 +1242,7 @@ pub fn update_location(
         state.locations[location_idx].minerals = update_state_minerals(
             &state.locations[location_idx].minerals,
             &state.locations[location_idx].asteroid_belts,
-            prng
+            prng,
         );
         sampler.end(update_minerals_respawn_id);
         let respawn_id = sampler.start(SamplerMarks::UpdateShipsRespawn as u32);
@@ -1399,7 +1470,7 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
                 (None, None)
             } else {
                 let sign = if params.forward { 1.0 } else { -1.0 };
-                let distance = ship.movement_definition.get_current_move_speed_per_tick() * elapsed_micro as f64 * sign;
+                let distance = ship.movement_definition.get_current_linear_move_speed_per_tick() * elapsed_micro as f64 * sign;
                 let shift = Vec2f64 { x: 0.0, y: 1.0 }
                     .rotate(ship.rotation)
                     .scalar_mul(distance);
@@ -1759,10 +1830,16 @@ pub enum MovementDefinition {
         max_turn_speed: f64,
         acc_turn: f64,
     },
+    RadialMonotonous {
+        // positive => counterclockwise
+        angle_per_tick: f64,
+        radius_to_anchor: f64,
+        anchor: ObjectSpecifier,
+    },
 }
 
 impl MovementDefinition {
-    pub fn get_current_move_speed_per_tick(&self) -> f64 {
+    pub fn get_current_linear_move_speed_per_tick(&self) -> f64 {
         match self {
             MovementDefinition::Unknown => { 0.0 }
             MovementDefinition::ShipMonotonous { move_speed, .. } => {
@@ -1773,6 +1850,7 @@ impl MovementDefinition {
             MovementDefinition::ShipAccelerated { current_move_speed, .. } => {
                 *current_move_speed
             }
+            MovementDefinition::RadialMonotonous { .. } => { 0.0 }
         }
     }
 }
@@ -1927,7 +2005,7 @@ pub fn update_ships_navigation(
             continue;
         }
         if !ship.docked_at.is_some() {
-            let max_shift = ship.movement_definition.get_current_move_speed_per_tick() * elapsed_micro as f64;
+            let max_shift = ship.movement_definition.get_current_linear_move_speed_per_tick() * elapsed_micro as f64;
 
             if let Some(target) = ship.navigate_target {
                 let ship_pos = Vec2f64 {
@@ -2063,7 +2141,7 @@ fn build_trajectory_to_body(
     let mut current_target = Planet::from(to.clone());
     let mut current_from = from.clone();
     let mut result = vec![];
-    let max_shift = TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_move_speed_per_tick();
+    let max_shift = TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_linear_move_speed_per_tick();
     loop {
         let current_target_pos = Vec2f64 {
             x: current_target.x,
@@ -2110,7 +2188,7 @@ pub fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64, for_movement: &Mov
     let current_target = to.clone();
     let mut current_from = from.clone();
     let mut result = vec![];
-    let max_shift = TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_move_speed_per_tick();
+    let max_shift = TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_linear_move_speed_per_tick();
     loop {
         let target_pos = Vec2f64 {
             x: current_target.x,
@@ -2333,7 +2411,7 @@ pub fn make_room(mode: &GameMode, room_id: Uuid, prng: &mut SmallRng, bots_seed:
         dialogue_states: Default::default(),
         last_players_mark: None,
         bots: vec![],
-        bots_seed
+        bots_seed,
     };
     match mode {
         GameMode::Unknown => {}
