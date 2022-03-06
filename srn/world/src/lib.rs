@@ -1,4 +1,5 @@
 #![feature(exclusive_range_pattern)]
+#![feature(format_args_capture)]
 #![feature(extern_types)]
 #![allow(dead_code)]
 #![allow(warnings)]
@@ -18,7 +19,7 @@ pub fn set_panic_hook() {
     // For more details see
     // https://github.com/rustwasm/console_error_panic_hook#readme
     #[cfg(feature = "console_error_panic_hook")]
-        console_error_panic_hook::set_once();
+    console_error_panic_hook::set_once();
 }
 
 use wasm_bindgen::prelude::*;
@@ -161,10 +162,10 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_derive::{Deserialize as derive_deserialize, Serialize as derive_serialize};
 use serde_json::Error;
+use serde_wasm_bindgen::*;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use uuid::*;
-use serde_wasm_bindgen::*;
 
 pub fn get_prng() -> SmallRng {
     let mut bytes = [0u8; 8];
@@ -184,9 +185,8 @@ lazy_static! {
 
 pub fn new_id() -> Uuid {
     let mut bytes = [0u8; 16];
-    getrandom::getrandom(&mut bytes).unwrap_or_else(|err| {
-        panic!("could not retrieve random bytes for uuid: {}", err)
-    });
+    getrandom::getrandom(&mut bytes)
+        .unwrap_or_else(|err| panic!("could not retrieve random bytes for uuid: {}", err));
 
     crate::Builder::from_bytes(bytes)
         .set_variant(Variant::RFC4122)
@@ -242,7 +242,7 @@ fn deserialize_err_or_def(reason: &Error) -> String {
     serde_json::to_string(&ErrJson {
         message: format!("err deserializing {}", reason.to_string()),
     })
-        .unwrap_or(DEFAULT_ERR.to_string())
+    .unwrap_or(DEFAULT_ERR.to_string())
 }
 
 #[wasm_bindgen]
@@ -259,17 +259,17 @@ pub fn parse_state(serialized_args: &str) -> String {
     return serde_json::to_string(&args).unwrap_or(DEFAULT_ERR.to_string());
 }
 
-use crate::indexing::{find_my_ship_index, ObjectSpecifier};
-use mut_static::MutStatic;
-use std::{env, mem};
-use std::ops::DerefMut;
-use rand::prelude::SmallRng;
-use rand::{RngCore, SeedableRng};
 use crate::api_struct::Room;
-use crate::dialogue::{DialogueTable, parse_dialogue_script_from_file};
+use crate::dialogue::{parse_dialogue_script_from_file, DialogueTable};
+use crate::indexing::{find_my_ship_index, ObjectSpecifier};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::system_gen::seed_state;
 use crate::world::{GameMode, GameState};
+use mut_static::MutStatic;
+use rand::prelude::SmallRng;
+use rand::{RngCore, SeedableRng};
+use std::ops::DerefMut;
+use std::{env, mem};
 
 lazy_static! {
     pub static ref global_sampler: MutStatic<perf::Sampler> = {
@@ -282,9 +282,7 @@ lazy_static! {
 }
 
 lazy_static! {
-    pub static ref current_replay: MutStatic<Option<ReplayDiffed>> = {
-        MutStatic::from(None)
-    };
+    pub static ref current_replay: MutStatic<Option<ReplayDiffed>> = { MutStatic::from(None) };
 }
 
 pub struct InternalTimers {
@@ -292,17 +290,12 @@ pub struct InternalTimers {
 }
 
 lazy_static! {
-    pub static ref ENABLE_PERF_HACK_INIT: MutStatic<bool> = {
-        MutStatic::from(false)
-    };
+    pub static ref ENABLE_PERF_HACK_INIT: MutStatic<bool> = { MutStatic::from(false) };
 }
-
 
 pub const DEBUG_PHYSICS: bool = false;
 lazy_static! {
-    pub static ref ENABLE_PERF: bool = {
-        *ENABLE_PERF_HACK_INIT.read().unwrap()
-    };
+    pub static ref ENABLE_PERF: bool = { *ENABLE_PERF_HACK_INIT.read().unwrap() };
 }
 
 const PERF_CONSUME_TIME_MS: i32 = 30 * 1000;
@@ -320,8 +313,8 @@ pub struct UpdateWorldArgs {
     client: Option<bool>,
 }
 
-use wasm_bindgen::{JsCast};
 use crate::fof::FofActor;
+use wasm_bindgen::JsCast;
 
 #[wasm_bindgen]
 pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
@@ -332,7 +325,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     let args = args.ok().unwrap();
 
     let mut indexes = world::SpatialIndexes {
-        values: HashMap::new()
+        values: HashMap::new(),
     };
     let prng_seed = args.state.seed.clone();
     let (new_state, sampler) = world::update_world(
@@ -374,10 +367,10 @@ pub fn flush_sampler_stats() {
         let (sampler_out, metrics) = global_sampler.write().unwrap().clone().consume();
         mem::replace(global_sampler.write().unwrap().deref_mut(), sampler_out);
         log!(format!(
-                "performance stats over {} sec \n{}",
-                PERF_CONSUME_TIME_MS / 1000 / 1000,
-                metrics.join("\n")
-            ));
+            "performance stats over {} sec \n{}",
+            PERF_CONSUME_TIME_MS / 1000 / 1000,
+            metrics.join("\n")
+        ));
     }
 }
 
@@ -406,7 +399,8 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
     let args = args.ok().unwrap();
     let ship_idx = find_my_ship_index(&args.state, args.player_id);
     let mut prng = seed_prng(args.state.seed.clone());
-    let new_ship = ship_action::apply_player_action(args.ship_action, &args.state, ship_idx, true, &mut prng);
+    let new_ship =
+        ship_action::apply_player_action(args.ship_action, &args.state, ship_idx, true, &mut prng);
     return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
 }
 
@@ -416,13 +410,14 @@ struct SeedWorldArgs {
     mode: GameMode,
 }
 
-
-use serde_wasm_bindgen::*;
 use crate::replay::{ReplayDiffed, ReplayRaw, ValueDiff};
+use serde_wasm_bindgen::*;
 
 pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
     let ser = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
-    let res = arg.serialize(&ser).map_err(|e| JsValue::from_str(e.to_string().as_str()));
+    let res = arg
+        .serialize(&ser)
+        .map_err(|e| JsValue::from_str(e.to_string().as_str()));
     res
 }
 
@@ -437,7 +432,7 @@ pub fn seed_world(args: JsValue) -> Result<JsValue, JsValue> {
 struct CreateRoomArgs {
     mode: GameMode,
     seed: String,
-    bots_seed: Option<String>
+    bots_seed: Option<String>,
 }
 
 #[wasm_bindgen]
@@ -449,17 +444,32 @@ pub fn create_room(args: JsValue) -> Result<JsValue, JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn update_room(room: JsValue, elapsed_micro: i64, d_table: JsValue) -> Result<JsValue, JsValue> {
+pub fn update_room(
+    room: JsValue,
+    elapsed_micro: i64,
+    d_table: JsValue,
+) -> Result<JsValue, JsValue> {
     let room: Room = serde_wasm_bindgen::from_value(room)?;
     let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
     let seed = room.state.seed.clone();
     let mut prng = seed_prng(seed);
-    let (_indexes, room, _sampler) = world::update_room(&mut prng, get_sampler_clone(), elapsed_micro, &room, &d_table);
+    let (_indexes, room, _sampler) = world::update_room(
+        &mut prng,
+        get_sampler_clone(),
+        elapsed_micro,
+        &room,
+        &d_table,
+    );
     Ok(custom_serialize(&room)?)
 }
 
 #[wasm_bindgen]
-pub fn update_room_full(room: JsValue, total_ticks: i64, d_table: JsValue, step_ticks: i64) -> Result<JsValue, JsValue> {
+pub fn update_room_full(
+    room: JsValue,
+    total_ticks: i64,
+    d_table: JsValue,
+    step_ticks: i64,
+) -> Result<JsValue, JsValue> {
     let mut room: Room = serde_wasm_bindgen::from_value(room)?;
     let mut sampler = get_sampler_clone();
     let seed = room.state.seed.clone();
@@ -468,7 +478,8 @@ pub fn update_room_full(room: JsValue, total_ticks: i64, d_table: JsValue, step_
     let mut remaining = total_ticks;
     while remaining > 0 {
         remaining -= step_ticks;
-        let (_indexes, _room, _sampler) = world::update_room(&mut prng, sampler, step_ticks, &room, &d_table);
+        let (_indexes, _room, _sampler) =
+            world::update_room(&mut prng, sampler, step_ticks, &room, &d_table);
         sampler = _sampler;
         room = _room;
     }
@@ -480,7 +491,10 @@ pub fn make_dialogue_table(dir_contents: JsValue) -> Result<JsValue, JsValue> {
     let mut res = vec![];
     let dir_contents: HashMap<String, String> = serde_wasm_bindgen::from_value(dir_contents)?;
     for (key, value) in dir_contents.into_iter() {
-        res.push(parse_dialogue_script_from_file(format!("{}.json", key).as_str(), value));
+        res.push(parse_dialogue_script_from_file(
+            format!("{}.json", key).as_str(),
+            value,
+        ));
     }
     let mut d_table = DialogueTable::new();
     for s in res {
@@ -498,15 +512,20 @@ pub fn set_enable_perf(value: bool) {
     log!(format!("ENABLE_PERF was set to {}", value))
 }
 
-
 #[wasm_bindgen]
-pub fn friend_or_foe(state: JsValue, actor_a: JsValue, actor_b: JsValue) -> Result<JsValue, JsValue> {
+pub fn friend_or_foe(
+    state: JsValue,
+    actor_a: JsValue,
+    actor_b: JsValue,
+) -> Result<JsValue, JsValue> {
     let mut state: GameState = serde_wasm_bindgen::from_value(state)?;
-    let res = fof::friend_or_foe(&state, serde_wasm_bindgen::from_value::<FofActor>(actor_a)?, serde_wasm_bindgen::from_value::<FofActor>(actor_b)?);
+    let res = fof::friend_or_foe(
+        &state,
+        serde_wasm_bindgen::from_value::<FofActor>(actor_a)?,
+        serde_wasm_bindgen::from_value::<FofActor>(actor_b)?,
+    );
     Ok(custom_serialize(&res)?)
 }
-
-
 
 #[wasm_bindgen]
 pub fn pack_replay(states: Vec<JsValue>, name: String, diff: bool) -> Result<JsValue, JsValue> {
@@ -528,42 +547,71 @@ pub fn pack_replay(states: Vec<JsValue>, name: String, diff: bool) -> Result<JsV
         }
         replay.current_state = None;
         Ok(custom_serialize(&replay)?)
-    }
+    };
 }
 
 #[wasm_bindgen]
 pub fn get_diff_replay_state_at(replay: JsValue, ticks: u32) -> Result<JsValue, JsValue> {
-    let mut sampler = if *ENABLE_PERF { Some(global_sampler.write().unwrap().clone()) } else { None };
-    let full_id = sampler.as_mut().map(|s| s.start(SamplerMarks::GetDiffReplayStateAtFull as u32));
+    let mut sampler = if *ENABLE_PERF {
+        Some(global_sampler.write().unwrap().clone())
+    } else {
+        None
+    };
+    let full_id = sampler
+        .as_mut()
+        .map(|s| s.start(SamplerMarks::GetDiffReplayStateAtFull as u32));
     let mut replay: ReplayDiffed = serde_wasm_bindgen::from_value(replay)?;
-    let res = replay.get_state_at(ticks, &mut sampler).map_err(|_| JsValue::from_str("failed to rewind"))?;
+    let res = replay
+        .get_state_at(ticks, &mut sampler)
+        .map_err(|_| JsValue::from_str("failed to rewind"))?;
     let value = custom_serialize(&res)?;
     sampler.as_mut().map(|s| {
         full_id.map(|fid| s.end(fid));
     });
-    if *ENABLE_PERF { mem::replace(global_sampler.write().unwrap().deref_mut(), sampler.unwrap()); };
+    if *ENABLE_PERF {
+        mem::replace(
+            global_sampler.write().unwrap().deref_mut(),
+            sampler.unwrap(),
+        );
+    };
     flush_sampler_stats();
     Ok(value)
 }
 
 #[wasm_bindgen]
 pub fn get_preloaded_diff_replay_state_at(ticks: u32) -> Result<JsValue, JsValue> {
-    let mut sampler = if *ENABLE_PERF { Some(global_sampler.write().unwrap().clone()) } else { None };
-    let full_id = sampler.as_mut().map(|s| s.start(SamplerMarks::GetDiffReplayStateAtPreloaded as u32));
+    let mut sampler = if *ENABLE_PERF {
+        Some(global_sampler.write().unwrap().clone())
+    } else {
+        None
+    };
+    let full_id = sampler
+        .as_mut()
+        .map(|s| s.start(SamplerMarks::GetDiffReplayStateAtPreloaded as u32));
     let mut replay: ReplayDiffed = current_replay.read().unwrap().clone().unwrap();
-    let res = replay.get_state_at(ticks, &mut sampler).map_err(|_| JsValue::from_str("failed to rewind"))?;
+    let res = replay
+        .get_state_at(ticks, &mut sampler)
+        .map_err(|_| JsValue::from_str("failed to rewind"))?;
     sampler.as_mut().map(|s| {
         full_id.map(|fid| s.end(fid));
     });
-    current_replay.write().unwrap().as_mut().map(|r: &mut ReplayDiffed| {
-        r.current_state = Some(res.clone());
-    });
+    current_replay
+        .write()
+        .unwrap()
+        .as_mut()
+        .map(|r: &mut ReplayDiffed| {
+            r.current_state = Some(res.clone());
+        });
     let value = custom_serialize(&res)?;
-    if *ENABLE_PERF { mem::replace(global_sampler.write().unwrap().deref_mut(), sampler.unwrap()); };
+    if *ENABLE_PERF {
+        mem::replace(
+            global_sampler.write().unwrap().deref_mut(),
+            sampler.unwrap(),
+        );
+    };
     flush_sampler_stats();
     Ok(value)
 }
-
 
 #[wasm_bindgen]
 pub fn load_replay(replay: JsValue) -> Result<(), JsValue> {
@@ -574,16 +622,23 @@ pub fn load_replay(replay: JsValue) -> Result<(), JsValue> {
 }
 
 #[wasm_bindgen]
-pub fn interpolate_states(state_a: JsValue, state_b: JsValue, value: f64) -> Result<JsValue, JsValue> {
+pub fn interpolate_states(
+    state_a: JsValue,
+    state_b: JsValue,
+    value: f64,
+) -> Result<JsValue, JsValue> {
     let state_a: GameState = serde_wasm_bindgen::from_value(state_a)?;
     let state_b: GameState = serde_wasm_bindgen::from_value(state_b)?;
-    Ok(custom_serialize(&interpolation::interpolate_states(&state_a, &state_b, value))?)
+    Ok(custom_serialize(&interpolation::interpolate_states(
+        &state_a, &state_b, value,
+    ))?)
 }
 
 #[wasm_bindgen]
 pub fn apply_single_patch(state: JsValue, patch: JsValue) -> Result<JsValue, JsValue> {
     let state: GameState = serde_wasm_bindgen::from_value(state)?;
     let batch: Vec<ValueDiff> = serde_wasm_bindgen::from_value(patch)?;
-    let res = ReplayDiffed::apply_diff_batch(&state, &batch).map_err(|_| JsValue::from_str("failed to apply single patch"))?;
+    let res = ReplayDiffed::apply_diff_batch(&state, &batch)
+        .map_err(|_| JsValue::from_str("failed to apply single patch"))?;
     Ok(custom_serialize(&res)?)
 }

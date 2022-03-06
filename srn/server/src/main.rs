@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_macros)]
+#![feature(format_args_capture)]
 #[macro_use]
 extern crate serde_derive;
 
@@ -42,14 +43,14 @@ use dialogue::{DialogueStates, DialogueTable};
 use dialogue_dto::Dialogue;
 use lockfree::map::Map as LockFreeMap;
 use lockfree::set::Set as LockFreeSet;
-use rand::prelude::SmallRng;
-use rand::{RngCore, SeedableRng, thread_rng};
 use net::{
     ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper,
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
 use perf::SamplerMarks;
-use states::{get_rooms_iter, ROOMS_READ, STATE, StateContainer, update_rooms};
+use rand::prelude::SmallRng;
+use rand::{thread_rng, RngCore, SeedableRng};
+use states::{get_rooms_iter, update_rooms, StateContainer, ROOMS_READ, STATE};
 use world::{GameMode, GameState, Player, Ship, SpatialIndexes};
 use xcast::XCast;
 
@@ -57,7 +58,7 @@ use crate::api_struct::Room;
 use crate::autofocus::build_spatial_index;
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
 use crate::chat::chat_server;
-use crate::dialogue::{DialogueId, DialogueScript, DialogueUpdate, execute_dialog_option};
+use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, DialogueUpdate};
 use crate::indexing::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
 };
@@ -70,7 +71,9 @@ use crate::states::{
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::vec2::Vec2f64;
-use crate::world::{AABB, BOT_ACTION_TIME_TICKS, GameEvent, spawn_ship, update_rule_specifics, UpdateOptions};
+use crate::world::{
+    spawn_ship, update_rule_specifics, GameEvent, UpdateOptions, AABB, BOT_ACTION_TIME_TICKS,
+};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -92,19 +95,15 @@ macro_rules! err {
 }
 
 macro_rules! cast {
-        ($target: expr, $pat: path) => {
-            {
-                if let $pat(a) = $target { // #1
-                    a
-                } else {
-                    panic!(
-                        "mismatch variant when cast to {}",
-                        stringify!($pat)); // #2
-                }
-            }
-        };
-    }
-
+    ($target: expr, $pat: path) => {{
+        if let $pat(a) = $target {
+            // #1
+            a
+        } else {
+            panic!("mismatch variant when cast to {}", stringify!($pat)); // #2
+        }
+    }};
+}
 
 #[macro_use]
 extern crate rocket;
@@ -117,6 +116,7 @@ mod api;
 mod api_struct;
 mod autofocus;
 mod bots;
+mod cargo_rush;
 mod chat;
 mod combat;
 mod dialogue;
@@ -125,6 +125,7 @@ mod dialogue_test;
 mod events;
 mod fof;
 mod indexing;
+mod interpolation;
 mod inventory;
 mod inventory_test;
 mod locations;
@@ -134,9 +135,13 @@ mod market;
 mod net;
 mod notifications;
 mod perf;
+mod pirate_defence;
 mod planet_movement;
 mod planet_movement_test;
 mod random_stuff;
+mod replay;
+mod replays_api;
+mod resources;
 mod rooms_api;
 mod sandbox;
 mod sandbox_api;
@@ -146,28 +151,22 @@ mod substitutions;
 mod substitutions_test;
 mod system_gen;
 mod tractoring;
+mod tutorial;
 #[allow(dead_code)]
 mod vec2;
 mod vec2_test;
 pub mod world;
-mod world_test;
-mod xcast;
-mod pirate_defence;
-mod tutorial;
-mod cargo_rush;
 mod world_events;
 mod world_player_actions;
-mod replay;
-mod replays_api;
-mod resources;
-mod interpolation;
+mod world_test;
+mod xcast;
 
 struct LastCheck {
     time: DateTime<Utc>,
 }
 
 pub type WSRequest =
-WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
+    WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
 
 lazy_static! {
     static ref DIALOGUE_STATES: Arc<Mutex<Box<DialogueStates>>> =
@@ -180,15 +179,11 @@ lazy_static! {
 }
 
 lazy_static! {
-    pub static ref ENABLE_PERF: bool = {
-        env::var("ENABLE_PERF").is_ok()
-    };
+    pub static ref ENABLE_PERF: bool = { env::var("ENABLE_PERF").is_ok() };
 }
 
 lazy_static! {
-    pub static ref DEBUG_FRAME_STATS: bool = {
-        env::var("DEBUG_FRAME_STATS").is_ok()
-    };
+    pub static ref DEBUG_FRAME_STATS: bool = { env::var("DEBUG_FRAME_STATS").is_ok() };
 }
 
 const DEFAULT_SLEEP_MS: u64 = 2;
@@ -343,7 +338,7 @@ fn rocket() -> rocket::Rocket {
             routes![
                 replays_api::get_saved_replays,
                 replays_api::get_replay_by_id,
-            ]
+            ],
         )
         .mount(
             "/api/rooms",
@@ -439,7 +434,8 @@ fn main_thread() {
         let mut updated_rooms = vec![];
         let mut spatial_indexes_by_room_id = HashMap::new();
         for room in get_rooms_iter(&cont) {
-            let (spatial_indexes, room_clone, new_sampler) = world::update_room(&mut prng, sampler, elapsed_micro, &room, &d_table);
+            let (spatial_indexes, room_clone, new_sampler) =
+                world::update_room(&mut prng, sampler, elapsed_micro, &room, &d_table);
             sampler = new_sampler;
             updated_rooms.push(room_clone);
             spatial_indexes_by_room_id.insert(room.id, spatial_indexes);
@@ -458,7 +454,14 @@ fn main_thread() {
                 let bot_players_mark = sampler.start(SamplerMarks::BotsPlayers as u32);
                 for room in cont.rooms.values.iter_mut() {
                     let spatial_indexes = spatial_indexes_by_room_id.get(&room.id).unwrap();
-                    do_bot_players_actions(room, &mut **d_states, &d_table, bot_action_elapsed, spatial_indexes, &mut prng);
+                    do_bot_players_actions(
+                        room,
+                        &mut **d_states,
+                        &d_table,
+                        bot_action_elapsed,
+                        spatial_indexes,
+                        &mut prng,
+                    );
                 }
                 sampler.end(bot_players_mark);
                 let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);

@@ -1,8 +1,8 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::f64::consts::PI;
 #[allow(deprecated)]
 use std::f64::{INFINITY, NEG_INFINITY};
-use std::f64::consts::PI;
 use std::fmt::{Display, Formatter};
 use std::iter::FromIterator;
 
@@ -10,36 +10,34 @@ use chrono::Utc;
 use itertools::{Either, Itertools};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
-use uuid::*;
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
+use uuid::*;
 use wasm_bindgen::prelude::*;
 
-use crate::{DialogueTable, seed_prng};
-use crate::dialogue;
-use dialogue::DialogueStates;
-use crate::{abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, system_gen, world_events};
-use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
-use crate::{DEBUG_PHYSICS, get_prng, new_id};
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
-use crate::api_struct::{AiTrait, Bot, new_bot, Room, RoomId};
+use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
 use crate::combat::{Health, ShootTarget};
-use crate::indexing::{find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut, index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, ObjectSpecifier};
+use crate::dialogue;
+use crate::indexing::{
+    find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
+    index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, ObjectSpecifier,
+};
 use crate::inventory::{
-    add_item, add_items, has_quest_item, InventoryItem, InventoryItemType, shake_items,
+    add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
 };
 use crate::long_actions::{
-    cancel_all_long_actions_of_type, finish_long_act, finish_long_act_player, LongAction,
+    cancel_all_long_actions_of_type, finish_long_act, finish_long_act_player, tick_long_act,
+    tick_long_act_player, try_start_long_action, try_start_long_action_ship, LongAction,
     LongActionPlayer, LongActionStart, MIN_SHIP_DOCKING_RADIUS, SHIP_DOCKING_RADIUS_COEFF,
-    tick_long_act, tick_long_act_player, try_start_long_action, try_start_long_action_ship,
 };
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::planet_movement::{
-    build_anchors_from_bodies, IBody, index_bodies_by_id, make_bodies_from_planets,
+    build_anchors_from_bodies, index_bodies_by_id, make_bodies_from_planets, IBody,
 };
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
@@ -49,13 +47,20 @@ use crate::random_stuff::{
 };
 use crate::ship_action::{PlayerActionRust, ShipMovementMarkers};
 use crate::substitutions::substitute_notification_texts;
-use crate::system_gen::{DEFAULT_WORLD_UPDATE_EVERY_TICKS, seed_state, str_to_hash};
+use crate::system_gen::{seed_state, str_to_hash, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
 use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
-use crate::vec2::{AsVec2f64, deg_to_rad, Precision, Vec2f64};
+use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
 use crate::world_events::world_update_handle_event;
 use crate::world_player_actions::world_update_handle_player_action;
+use crate::{
+    abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, system_gen, world_events,
+};
+use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
+use crate::{get_prng, new_id, DEBUG_PHYSICS};
+use crate::{seed_prng, DialogueTable};
+use dialogue::DialogueStates;
 
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -65,11 +70,10 @@ const TRAJECTORY_EPS: f64 = 0.1;
 const ASTEROID_COUNT: u32 = 200;
 const ASTEROID_BELT_RANGE: f64 = 100.0;
 
-
 pub type PlayerId = Uuid;
 
 #[derive(
-Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
 )]
 pub enum GameMode {
     Unknown,
@@ -148,16 +152,16 @@ pub(crate) fn get_random_planet<'a>(
     Some(from)
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash,
+)]
 #[serde(tag = "tag")]
 pub enum ObjectProperty {
     Unknown,
     UnlandablePlanet,
     PirateDefencePlayersHomePlanet,
     PirateShip,
-    MoneyOnKill {
-        amount: i32
-    },
+    MoneyOnKill { amount: i32 },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -177,17 +181,18 @@ pub struct Planet {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct Transform {
+pub struct Transform<HINT: serde::Serialize + serde::Deserialize + std::fmt::Debug + Clone> {
     pub position: Vec2f64,
     pub rotation_rad: f64,
     pub radius: f64,
+    pub hint: Option<HINT>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct PlanetV2 {
     pub id: Uuid,
     pub name: String,
-    pub transform: Transform,
+    pub transform: Transform<usize>,
     pub movement: MovementDefinition,
     pub color: String,
     pub health: Option<Health>,
@@ -195,28 +200,67 @@ pub struct PlanetV2 {
 }
 
 impl PlanetV2 {
+    pub fn get_anchor_ref<'a>(&self, loc: &'a Location) -> Box<&'a dyn IBody> {
+        match &self.movement {
+            MovementDefinition::RadialMonotonous { anchor, .. } => Box::new(match anchor {
+                ObjectSpecifier::Planet { id } => loc
+                    .planets
+                    .iter()
+                    .find(|p| p.id == *id)
+                    .expect("no anchor found by id {id}"),
+                ObjectSpecifier::Star { id } => {
+                    loc.star.as_ref().expect("no anchor found by id {id}")
+                }
+                _ => panic!(
+                    "invalid anchor {anchor:?} for planet {}, cannot get ref to it",
+                    self.id
+                ),
+            }),
+            _ => panic!(
+                "invalid movement definition for planet {}, cannot get anchor",
+                self.id
+            ),
+        }
+    }
+
     pub fn from(p: &Planet, loc: &Location) -> Self {
-        let pos = Vec2f64 {
-            x: p.x,
-            y: p.y,
-        };
+        let pos = Vec2f64 { x: p.x, y: p.y };
 
         let (anchor, radius_to_anchor) = match p.anchor_tier {
             1 => {
                 // planet
-                let star = loc.star.clone().expect(format!("No star found for anchor tier {} of planet {}", p.anchor_tier, p.id).as_str());
-                (ObjectSpecifier::Star {
-                    id: star.id,
-                }, pos.euclidean_distance(&Vec2f64 {
-                    x: star.x,
-                    y: star.y,
-                }))
+                let star = loc.star.clone().expect(
+                    format!(
+                        "No star found for anchor tier {} of planet {}",
+                        p.anchor_tier, p.id
+                    )
+                    .as_str(),
+                );
+                (
+                    ObjectSpecifier::Star { id: star.id },
+                    pos.euclidean_distance(&Vec2f64 {
+                        x: star.x,
+                        y: star.y,
+                    }),
+                )
             }
             2 => {
-                let parent_planet = loc.planets.iter().find(|par| par.id == p.anchor_id).expect(format!("No anchor planet found by id {} for planet {}", p.anchor_id, p.id).as_str());
-                (ObjectSpecifier::Planet {
-                    id: parent_planet.id,
-                }, pos.euclidean_distance(&Vec2f64 { x: parent_planet.x, y: parent_planet.y }))
+                let parent_planet = loc.planets.iter().find(|par| par.id == p.anchor_id).expect(
+                    format!(
+                        "No anchor planet found by id {} for planet {}",
+                        p.anchor_id, p.id
+                    )
+                    .as_str(),
+                );
+                (
+                    ObjectSpecifier::Planet {
+                        id: parent_planet.id,
+                    },
+                    pos.euclidean_distance(&Vec2f64 {
+                        x: parent_planet.x,
+                        y: parent_planet.y,
+                    }),
+                )
             }
             _ => panic!(format!("Unsupported anchor tier {}", p.anchor_tier)),
         };
@@ -227,6 +271,7 @@ impl PlanetV2 {
                 position: pos,
                 rotation_rad: p.rotation,
                 radius: p.radius,
+                hint: None,
             },
             movement: MovementDefinition::RadialMonotonous {
                 angle_per_tick: p.orbit_speed / 1000.0 / 1000.0,
@@ -245,7 +290,6 @@ impl From<&PlanetV2> for Planet {
         todo!()
     }
 }
-
 
 impl Planet {
     pub fn new() -> Self {
@@ -379,7 +423,7 @@ pub enum GameEvent {
         bots_seed: Option<String>,
     },
     KickPlayerRequest {
-        player_id: Uuid
+        player_id: Uuid,
     },
 }
 
@@ -390,14 +434,12 @@ pub struct ProcessedGameEvent {
     pub processed_at_ticks: u64,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
 pub struct ProcessedPlayerAction {
     pub action: PlayerActionRust,
     pub processed_at_ticks: u64,
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct ShipTurret {
@@ -438,14 +480,15 @@ pub fn gen_turrets(count: usize, prng: &mut SmallRng) -> Vec<(Ability, ShipTurre
     let mut res = vec![];
     for _i in 0..count {
         let id = prng_id(prng);
-        res.push((Ability::Shoot {
-            cooldown_ticks_remaining: 0,
-            turret_id: id,
-            cooldown_normalized: 0.0,
-            cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
-        }, ShipTurret {
-            id
-        }))
+        res.push((
+            Ability::Shoot {
+                cooldown_ticks_remaining: 0,
+                turret_id: id,
+                cooldown_normalized: 0.0,
+                cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
+            },
+            ShipTurret { id },
+        ))
     }
     res
 }
@@ -915,7 +958,7 @@ pub struct SpatialIndexes {
 impl SpatialIndexes {
     pub fn new() -> Self {
         SpatialIndexes {
-            values: Default::default()
+            values: Default::default(),
         }
     }
 }
@@ -935,7 +978,17 @@ pub fn update_world(
     let update_interval = state.update_every_ticks as i64;
     let (mut curr_state, mut curr_sampler) = (state, sampler);
     while remaining > update_interval {
-        let pair = update_world_iter(curr_state, update_interval, client, curr_sampler, update_options.clone(), spatial_indexes, prng, d_states, d_table);
+        let pair = update_world_iter(
+            curr_state,
+            update_interval,
+            client,
+            curr_sampler,
+            update_options.clone(),
+            spatial_indexes,
+            prng,
+            d_states,
+            d_table,
+        );
         remaining -= update_interval;
         curr_state = pair.0;
         curr_sampler = pair.1;
@@ -971,11 +1024,9 @@ fn update_world_iter(
     update_player_actions(&mut state, prng);
     sampler.end(player_actions_id);
 
-
     let rules_id = sampler.start(SamplerMarks::UpdateRuleSpecific as u32);
     update_rule_specifics(&mut state, prng, &mut sampler, client);
     sampler.end(rules_id);
-
 
     if state.paused {
         if !client {
@@ -993,10 +1044,16 @@ fn update_world_iter(
                 state = seed_state(&state.mode, random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
-                    spawn_ship(&mut state, Some(player.id), ShipTemplate::player(None), prng);
+                    spawn_ship(
+                        &mut state,
+                        Some(player.id),
+                        ShipTemplate::player(None),
+                        prng,
+                    );
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
-            } else {}
+            } else {
+            }
         }
     } else {
         if !client {
@@ -1096,10 +1153,18 @@ fn update_player_actions(state: &mut GameState, prng: &mut SmallRng) {
         };
         processed_actions.push(processed_action);
     }
-    state.processed_player_actions.append(&mut processed_actions);
+    state
+        .processed_player_actions
+        .append(&mut processed_actions);
 }
 
-fn update_events(state: &mut GameState, prng: &mut SmallRng, client: bool, d_states: &mut DialogueStates, d_table: &DialogueTable) {
+fn update_events(
+    state: &mut GameState,
+    prng: &mut SmallRng,
+    client: bool,
+    d_states: &mut DialogueStates,
+    d_table: &DialogueTable,
+) {
     if client {
         return;
     }
@@ -1268,10 +1333,14 @@ pub fn update_location(
                 let (new_la, keep_ticking) = tick_long_act(la, elapsed);
                 if !keep_ticking {
                     let player = players_by_ship_id_read.get(&ship.id);
-                    to_finish.push((new_la.clone(), player.map(|p| p.id), ShipIdx {
-                        ship_idx: i,
-                        location_idx,
-                    }));
+                    to_finish.push((
+                        new_la.clone(),
+                        player.map(|p| p.id),
+                        ShipIdx {
+                            ship_idx: i,
+                            location_idx,
+                        },
+                    ));
                 }
                 return if keep_ticking { Some(new_la) } else { None };
             })
@@ -1299,7 +1368,9 @@ fn update_wreck_decay(state: &mut GameState, location_idx: usize, elapsed_ticks:
             to_delete.insert(wreck.id);
         }
     }
-    state.locations[location_idx].wrecks.retain(|w| !to_delete.contains(&w.id));
+    state.locations[location_idx]
+        .wrecks
+        .retain(|w| !to_delete.contains(&w.id));
 }
 
 pub fn lerp(from: f64, to: f64, percentage: f64) -> f64 {
@@ -1429,7 +1500,7 @@ fn update_initiate_ship_docking_by_navigation(
                 };
                 if planet_pos.euclidean_distance(&ship_pos)
                     < (planet.radius * planet.radius * SHIP_DOCKING_RADIUS_COEFF)
-                    .max(MIN_SHIP_DOCKING_RADIUS)
+                        .max(MIN_SHIP_DOCKING_RADIUS)
                 {
                     let docks_in_progress = ship
                         .long_actions
@@ -1437,10 +1508,13 @@ fn update_initiate_ship_docking_by_navigation(
                         .any(|a| matches!(a, LongAction::Dock { .. }));
 
                     if !docks_in_progress {
-                        to_dock.push((ShipIdx {
-                            location_idx,
-                            ship_idx: i,
-                        }, planet.id))
+                        to_dock.push((
+                            ShipIdx {
+                                location_idx,
+                                ship_idx: i,
+                            },
+                            planet.id,
+                        ))
                     }
                 }
             }
@@ -1470,7 +1544,11 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
                 (None, None)
             } else {
                 let sign = if params.forward { 1.0 } else { -1.0 };
-                let distance = ship.movement_definition.get_current_linear_move_speed_per_tick() * elapsed_micro as f64 * sign;
+                let distance = ship
+                    .movement_definition
+                    .get_current_linear_move_speed_per_tick()
+                    * elapsed_micro as f64
+                    * sign;
                 let shift = Vec2f64 { x: 0.0, y: 1.0 }
                     .rotate(ship.rotation)
                     .scalar_mul(distance);
@@ -1478,7 +1556,7 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
                     x: ship.x,
                     y: ship.y,
                 }
-                    .add(&shift);
+                .add(&shift);
                 (Some(params.clone()), Some(new_pos))
             }
         } else {
@@ -1694,7 +1772,10 @@ pub fn update_hp_effects(
                 });
             }
 
-            if star_damage <= 0.0 && ship.health.current < ship.health.max && ship.health.regen_per_tick.is_some() {
+            if star_damage <= 0.0
+                && ship.health.current < ship.health.max
+                && ship.health.regen_per_tick.is_some()
+            {
                 let regen = ship.health.regen_per_tick.unwrap_or(0.0) * elapsed_micro as f64;
                 ship.acc_periodic_heal += regen;
             }
@@ -1738,14 +1819,7 @@ pub fn update_hp_effects(
             if ship.health.current > 0.0 {
                 Some(ship.clone())
             } else {
-                ships_to_die.push(
-                    (
-                        ship.clone(),
-                        players_by_ship_id
-                            .get(&ship.id)
-                            .map(|p| p.id),
-                    )
-                );
+                ships_to_die.push((ship.clone(), players_by_ship_id.get(&ship.id).map(|p| p.id)));
                 None
             }
         })
@@ -1760,22 +1834,23 @@ pub fn update_hp_effects(
             decay_normalized: 0.0,
             decay_ticks: WRECK_DECAY_TICKS,
         });
-        let event = if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)) {
-            player.ship_id = None;
-            player.money -= 1000;
-            player.money = player.money.max(0);
-            GameEvent::ShipDied {
-                state_id,
-                ship: ship_clone,
-                player: Some(player.clone()),
-            }
-        } else {
-            GameEvent::ShipDied {
-                state_id,
-                ship: ship_clone,
-                player: None,
-            }
-        };
+        let event =
+            if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)) {
+                player.ship_id = None;
+                player.money -= 1000;
+                player.money = player.money.max(0);
+                GameEvent::ShipDied {
+                    state_id,
+                    ship: ship_clone,
+                    player: Some(player.clone()),
+                }
+            } else {
+                GameEvent::ShipDied {
+                    state_id,
+                    ship: ship_clone,
+                    player: None,
+                }
+            };
         fire_saved_event(state, event);
     }
 
@@ -1802,17 +1877,20 @@ fn apply_players_ship_death(ship: Ship, player: Option<&mut Player>, state_id: U
     }
 }
 
-pub fn add_player(state: &mut GameState, player_id: Uuid, is_bot: bool, name: Option<String>, prng: &mut SmallRng) {
+pub fn add_player(
+    state: &mut GameState,
+    player_id: Uuid,
+    is_bot: bool,
+    name: Option<String>,
+    prng: &mut SmallRng,
+) {
     let mut player = Player::new(player_id, &state.mode, prng);
     player.is_bot = is_bot;
     player.name = name.unwrap_or(player_id.to_string());
     state.players.push(player);
 }
 
-
-#[derive(
-Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
 pub enum MovementDefinition {
     Unknown,
@@ -1841,16 +1919,16 @@ pub enum MovementDefinition {
 impl MovementDefinition {
     pub fn get_current_linear_move_speed_per_tick(&self) -> f64 {
         match self {
-            MovementDefinition::Unknown => { 0.0 }
+            MovementDefinition::Unknown => 0.0,
             MovementDefinition::ShipMonotonous { move_speed, .. } => {
                 // This is kind of incorrect for a stopped ship, but to get it we need
                 // to unify movement markers with movement definition
                 *move_speed
             }
-            MovementDefinition::ShipAccelerated { current_move_speed, .. } => {
-                *current_move_speed
-            }
-            MovementDefinition::RadialMonotonous { .. } => { 0.0 }
+            MovementDefinition::ShipAccelerated {
+                current_move_speed, ..
+            } => *current_move_speed,
+            MovementDefinition::RadialMonotonous { .. } => 0.0,
         }
     }
 }
@@ -1879,7 +1957,10 @@ impl ShipTemplate {
                 current_move_speed: 0.0,
                 current_turn_speed: 0.0,
             }),
-            properties: Some(vec![ObjectProperty::MoneyOnKill { amount: 100 }, ObjectProperty::PirateShip]),
+            properties: Some(vec![
+                ObjectProperty::MoneyOnKill { amount: 100 },
+                ObjectProperty::PirateShip,
+            ]),
         }
     }
 
@@ -1889,7 +1970,10 @@ impl ShipTemplate {
             npc_traits: None,
             abilities: None,
             name: None,
-            health: Some(Health::new_regen(100.0, SHIP_REGEN_PER_SEC / 1000.0 / 1000.0)),
+            health: Some(Health::new_regen(
+                100.0,
+                SHIP_REGEN_PER_SEC / 1000.0 / 1000.0,
+            )),
             movement: Some(MovementDefinition::ShipMonotonous {
                 move_speed: 20.0 / 1000.0 / 1000.0,
                 turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0,
@@ -1917,8 +2001,14 @@ pub fn spawn_ship<'a>(
         })
     }
     let mut ship = Ship::new(prng, &mut at);
-    template.abilities.map(|abilities| ship.abilities.extend(abilities));
-    ship.npc = if template.npc_traits.is_some() { Some(new_bot(template.npc_traits, prng_id(prng))) } else { None };
+    template
+        .abilities
+        .map(|abilities| ship.abilities.extend(abilities));
+    ship.npc = if template.npc_traits.is_some() {
+        Some(new_bot(template.npc_traits, prng_id(prng)))
+    } else {
+        None
+    };
     ship.name = template.name;
     ship.properties = template.properties.unwrap_or(Default::default());
     template.movement.map(|m| ship.movement_definition = m);
@@ -1996,16 +2086,19 @@ pub fn update_ships_navigation(
         if docking_ship_ids.contains(&ship.id)
             || undocking_ship_ids.contains(&ship.id)
             || !update_options.limit_area.contains_vec(&Vec2f64 {
-            x: ship.x,
-            y: ship.y,
-        })
+                x: ship.x,
+                y: ship.y,
+            })
         {
             ship.trajectory = vec![];
             res.push(ship);
             continue;
         }
         if !ship.docked_at.is_some() {
-            let max_shift = ship.movement_definition.get_current_linear_move_speed_per_tick() * elapsed_micro as f64;
+            let max_shift = ship
+                .movement_definition
+                .get_current_linear_move_speed_per_tick()
+                * elapsed_micro as f64;
 
             if let Some(target) = ship.navigate_target {
                 let ship_pos = Vec2f64 {
@@ -2019,7 +2112,8 @@ pub fn update_ships_navigation(
                     ship.rotation = -ship.rotation;
                 }
                 if dist > 0.0 {
-                    ship.trajectory = build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
+                    ship.trajectory =
+                        build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
                     if dist > max_shift {
                         let new_pos = move_ship(&target, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
@@ -2037,7 +2131,12 @@ pub fn update_ships_navigation(
                         y: ship.y,
                     };
                     let planet_anchor = bodies_by_id.get(&planet.get_anchor_id()).unwrap();
-                    ship.trajectory = build_trajectory_to_body(ship_pos, &planet, planet_anchor, &ship.movement_definition);
+                    ship.trajectory = build_trajectory_to_body(
+                        ship_pos,
+                        &planet,
+                        planet_anchor,
+                        &ship.movement_definition,
+                    );
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
                         ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
@@ -2075,12 +2174,15 @@ pub fn dock_ship(
         ship.trajectory = vec![];
         ship.clone()
     };
-    fire_saved_event(state, GameEvent::ShipDocked {
-        ship: ship_clone,
-        planet: Planet::from(body),
-        player: player_idx.map(|idx| state.players[idx].clone()),
-        state_id: state.id,
-    });
+    fire_saved_event(
+        state,
+        GameEvent::ShipDocked {
+            ship: ship_clone,
+            planet: Planet::from(body),
+            player: player_idx.map(|idx| state.players[idx].clone()),
+            state_id: state.id,
+        },
+    );
 }
 
 pub fn undock_ship(
@@ -2134,14 +2236,14 @@ fn build_trajectory_to_body(
     for_movement: &MovementDefinition,
 ) -> Vec<Vec2f64> {
     let bodies: Vec<Box<dyn IBody>> = vec![to.clone(), to_anchor.clone()];
-    let mut anchors =
-        planet_movement::build_anchors_from_bodies(bodies);
+    let mut anchors = planet_movement::build_anchors_from_bodies(bodies);
     let mut shifts = HashMap::new();
     let mut counter = 0;
     let mut current_target = Planet::from(to.clone());
     let mut current_from = from.clone();
     let mut result = vec![];
-    let max_shift = TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_linear_move_speed_per_tick();
+    let max_shift =
+        TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_linear_move_speed_per_tick();
     loop {
         let current_target_pos = Vec2f64 {
             x: current_target.x,
@@ -2183,12 +2285,17 @@ fn build_trajectory_to_body(
     result
 }
 
-pub fn build_trajectory_to_point(from: Vec2f64, to: &Vec2f64, for_movement: &MovementDefinition) -> Vec<Vec2f64> {
+pub fn build_trajectory_to_point(
+    from: Vec2f64,
+    to: &Vec2f64,
+    for_movement: &MovementDefinition,
+) -> Vec<Vec2f64> {
     let mut counter = 0;
     let current_target = to.clone();
     let mut current_from = from.clone();
     let mut result = vec![];
-    let max_shift = TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_linear_move_speed_per_tick();
+    let max_shift =
+        TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_linear_move_speed_per_tick();
     loop {
         let target_pos = Vec2f64 {
             x: current_target.x,
@@ -2222,7 +2329,11 @@ pub fn every(interval_ticks: u32, current_ticks: u32, last_trigger: Option<u32>)
     return every_diff(interval_ticks, current_ticks, last_trigger).is_some();
 }
 
-pub fn every_diff(interval_ticks: u32, current_ticks: u32, last_trigger: Option<u32>) -> Option<u32> {
+pub fn every_diff(
+    interval_ticks: u32,
+    current_ticks: u32,
+    last_trigger: Option<u32>,
+) -> Option<u32> {
     let last_trigger = last_trigger.unwrap_or(0);
     let diff = current_ticks - last_trigger;
     let trigger = diff > interval_ticks;
@@ -2233,8 +2344,12 @@ pub fn every_diff(interval_ticks: u32, current_ticks: u32, last_trigger: Option<
     }
 }
 
-
-pub fn update_rule_specifics(state: &mut GameState, prng: &mut SmallRng, sampler: &mut Sampler, _client: bool) {
+pub fn update_rule_specifics(
+    state: &mut GameState,
+    prng: &mut SmallRng,
+    sampler: &mut Sampler,
+    _client: bool,
+) {
     let sampler_mark_type = match state.mode {
         GameMode::Unknown => None,
         GameMode::CargoRush => Some(SamplerMarks::ModeCargoRush as u32),
@@ -2400,7 +2515,12 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
     }
 }
 
-pub fn make_room(mode: &GameMode, room_id: Uuid, prng: &mut SmallRng, bots_seed: Option<String>) -> (Uuid, Room) {
+pub fn make_room(
+    mode: &GameMode,
+    room_id: Uuid,
+    prng: &mut SmallRng,
+    bots_seed: Option<String>,
+) -> (Uuid, Room) {
     let room_name = format!("{} - {}", mode, room_id);
     let state = system_gen::seed_state(&mode, random_hex_seed_seeded(prng));
     let state_id = state.id.clone();
@@ -2438,7 +2558,13 @@ pub fn build_full_spatial_indexes(state: &GameState) -> SpatialIndexes {
 
 pub const BOT_ACTION_TIME_TICKS: i64 = 200 * 1000;
 
-pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro: i64, room: &Room, d_table: &DialogueTable) -> (SpatialIndexes, Room, Sampler) {
+pub fn update_room(
+    mut prng: &mut SmallRng,
+    mut sampler: Sampler,
+    elapsed_micro: i64,
+    room: &Room,
+    d_table: &DialogueTable,
+) -> (SpatialIndexes, Room, Sampler) {
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
     let mut spatial_indexes = build_full_spatial_indexes(&room.state);
     sampler.end(spatial_indexes_id);
@@ -2469,17 +2595,34 @@ pub fn update_room(mut prng: &mut SmallRng, mut sampler: Sampler, elapsed_micro:
     if let Some(bot_action_elapsed) = every_diff(
         BOT_ACTION_TIME_TICKS as u32,
         room.state.ticks as u32,
-        room.state.interval_data.get(&TimeMarks::BotAction).map(|m| *m),
+        room.state
+            .interval_data
+            .get(&TimeMarks::BotAction)
+            .map(|m| *m),
     ) {
-        room.state.interval_data.insert(TimeMarks::BotAction, room.state.ticks as u32);
+        room.state
+            .interval_data
+            .insert(TimeMarks::BotAction, room.state.ticks as u32);
         let bots_mark = sampler.start(SamplerMarks::UpdateBots as u32);
         let bot_players_mark = sampler.start(SamplerMarks::UpdateBotsPlayers as u32);
         let mut d_states_clone = room.dialogue_states.clone();
-        do_bot_players_actions(&mut room, &mut d_states_clone, &d_table, bot_action_elapsed as i64, &spatial_indexes, &mut bot_prng);
+        do_bot_players_actions(
+            &mut room,
+            &mut d_states_clone,
+            &d_table,
+            bot_action_elapsed as i64,
+            &spatial_indexes,
+            &mut bot_prng,
+        );
         room.dialogue_states = d_states_clone;
         sampler.end(bot_players_mark);
         let npcs_mark = sampler.start(SamplerMarks::UpdateBotsNPCs as u32);
-        do_bot_npcs_actions(&mut room, bot_action_elapsed as i64, &spatial_indexes, &mut bot_prng);
+        do_bot_npcs_actions(
+            &mut room,
+            bot_action_elapsed as i64,
+            &spatial_indexes,
+            &mut bot_prng,
+        );
         sampler.end(npcs_mark);
         sampler.end(bots_mark);
     }
