@@ -55,7 +55,7 @@ fn interpolate_planet_v2(
         .hint
         .expect("no phase table hint for transform");
     let lerped_idx = lerp_usize(result_idx, target_idx, value);
-    result.transform.position = phase_table[lerped_idx];
+    result.transform.position = phase_table[lerped_idx].add(&anchor.get_position());
 }
 
 fn lerp_usize(from: usize, to: usize, value: f64) -> usize {
@@ -64,7 +64,9 @@ fn lerp_usize(from: usize, to: usize, value: f64) -> usize {
 }
 
 // this assumes that table is always sorted and is circular-positioned
-fn find_closest_phase_index(from: Vec2f64, table: &Vec<Vec2f64>) -> usize {}
+fn find_closest_phase_index(from: Vec2f64, table: &Vec<Vec2f64>) -> usize {
+    todo!()
+}
 
 fn get_rel_position_phase_table(p0: &MovementDefinition) -> Vec<Vecf264> {
     todo!()
