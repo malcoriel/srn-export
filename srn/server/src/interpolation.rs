@@ -1,4 +1,4 @@
-use crate::planet_movement::IBody;
+use crate::planet_movement::{IBody, IBodyV2};
 use crate::vec2::Vec2f64;
 use crate::world::{lerp, Location, MovementDefinition, Planet, PlanetV2, Ship};
 use crate::GameState;
@@ -48,20 +48,39 @@ fn interpolate_planet_v2(
     anchor: Box<&dyn IBody>,
 ) {
     let phase_table = get_rel_position_phase_table(&result.movement, result.id);
-    let result_idx = result
-        .transform
-        .hint
-        .expect("no phase table hint for transform");
-    let target_idx = target
-        .transform
-        .hint
-        .expect("no phase table hint for transform");
+    let result_idx = result.spatial.interpolation_hint.unwrap_or_else(|| {
+        calculate_hint(&phase_table, Box::new(result)).expect("could not calculate hint")
+    });
+    let target_idx = target.spatial.interpolation_hint.unwrap_or_else(|| {
+        calculate_hint(&phase_table, Box::new(target)).expect("could not calculate hint")
+    });
     let lerped_idx = lerp_usize(result_idx, target_idx, value);
     let pos = Vec2f64 {
         x: ((**anchor).get_x()),
         y: ((**anchor).get_y()),
     };
-    result.transform.position = phase_table[lerped_idx].add(&pos);
+    result.spatial.position = phase_table[lerped_idx].add(&pos);
+}
+
+// assume that the table is a set of sequential circle coordinates
+fn calculate_hint(table: &Vec<Vec2f64>, planet: Box<&dyn IBodyV2>) -> Option<usize> {
+    let pos = &planet.get_spatial().position;
+    // this can be further optimized by using binary search and not calculating every single distance
+    let mut current_distance = 9999.0;
+    let mut index = None;
+    for i in 0..table.len() {
+        let point = &table[i];
+        let dist = point.euclidean_distance(pos);
+        if dist < current_distance {
+            index = Some(i);
+            current_distance = dist;
+        } else {
+            // if distance started to increase, since it's a circle (and we are approximating a point somewhere around its line)
+            // then we won't find anything better - it's always a local minimum
+            break;
+        }
+    }
+    index
 }
 
 fn lerp_usize(from: usize, to: usize, value: f64) -> usize {

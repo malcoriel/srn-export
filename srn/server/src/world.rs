@@ -182,18 +182,18 @@ pub struct Planet {
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 // derive Serialize-Deserialize will add constraints itself, no need to explicitly mark them
-pub struct Transform<HINT: std::fmt::Debug + Clone> {
+pub struct SpatialProps<HINT: std::fmt::Debug + Clone> {
     pub position: Vec2f64,
     pub rotation_rad: f64,
     pub radius: f64,
-    pub hint: Option<HINT>,
+    pub interpolation_hint: Option<HINT>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct PlanetV2 {
     pub id: Uuid,
     pub name: String,
-    pub transform: Transform<usize>,
+    pub spatial: SpatialProps<usize>,
     pub movement: MovementDefinition,
     pub color: String,
     pub health: Option<Health>,
@@ -270,11 +270,11 @@ impl PlanetV2 {
         Self {
             id: p.id.clone(),
             name: p.name.clone(),
-            transform: Transform {
+            spatial: SpatialProps {
                 position: pos,
                 rotation_rad: p.rotation,
                 radius: p.radius,
-                hint: None,
+                interpolation_hint: None,
             },
             movement: MovementDefinition::RadialMonotonous {
                 full_period_ticks,
@@ -289,8 +289,32 @@ impl PlanetV2 {
 }
 
 impl From<&PlanetV2> for Planet {
-    fn from(_: &PlanetV2) -> Self {
-        todo!()
+    fn from(f: &PlanetV2) -> Self {
+        let (orbit_speed, anchor_id) = match &f.movement {
+            MovementDefinition::RadialMonotonous {
+                full_period_ticks,
+                anchor,
+                ..
+            } => (
+                std::f64::consts::PI * 2.0 / full_period_ticks,
+                anchor.get_id().unwrap(),
+            ),
+            _ => panic!("Unsupported movement {:?}", f.movement),
+        };
+        Self {
+            id: f.id,
+            name: f.name.clone(),
+            x: f.spatial.position.x,
+            y: f.spatial.position.y,
+            rotation: f.spatial.rotation_rad,
+            radius: f.spatial.radius,
+            orbit_speed,
+            anchor_id,
+            anchor_tier: 0,
+            color: "".to_string(),
+            health: None,
+            properties: vec![],
+        }
     }
 }
 

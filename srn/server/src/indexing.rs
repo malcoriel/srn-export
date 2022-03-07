@@ -233,7 +233,10 @@ pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<
     return None;
 }
 
-pub fn find_planet_mut<'a, 'b>(state: &'a mut GameState, planet_id: &'b Uuid) -> Option<&'a mut Planet> {
+pub fn find_planet_mut<'a, 'b>(
+    state: &'a mut GameState,
+    planet_id: &'b Uuid,
+) -> Option<&'a mut Planet> {
     for loc in state.locations.iter_mut() {
         if let Some(planet) = loc.planets.iter_mut().find(|p| p.id == *planet_id) {
             return Some(planet);
@@ -338,7 +341,7 @@ pub fn find_player_and_ship(
 }
 
 #[derive(
-Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
 )]
 #[serde(tag = "tag")]
 pub enum ObjectSpecifier {
@@ -350,8 +353,21 @@ pub enum ObjectSpecifier {
     Star { id: Uuid },
 }
 
+impl ObjectSpecifier {
+    pub fn get_id(&self) -> Option<Uuid> {
+        match self {
+            ObjectSpecifier::Unknown => None,
+            ObjectSpecifier::Mineral { id } => Some(*id),
+            ObjectSpecifier::Container { id } => Some(*id),
+            ObjectSpecifier::Planet { id } => Some(*id),
+            ObjectSpecifier::Ship { id } => Some(*id),
+            ObjectSpecifier::Star { id } => Some(*id),
+        }
+    }
+}
+
 #[derive(
-Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
 )]
 #[serde(tag = "tag")]
 pub enum ObjectIndexSpecifier {
@@ -364,7 +380,7 @@ pub enum ObjectIndexSpecifier {
 }
 
 #[derive(
-Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
 )]
 pub struct FullObjectIndexSpecifier {
     pub loc_idx: usize,
@@ -372,7 +388,7 @@ pub struct FullObjectIndexSpecifier {
 }
 
 #[derive(
-Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
 )]
 pub struct FullObjectSpecifier {
     pub loc_idx: usize,

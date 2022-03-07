@@ -5,14 +5,17 @@ use itertools::chain;
 use objekt_clonable::*;
 use uuid::Uuid;
 
+use crate::combat::Health;
 use crate::indexing::index_planets_by_id;
 use crate::perf::Sampler;
 use crate::perf::SamplerMarks;
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::world::{split_bodies_by_area, Asteroid, Planet, Star, AABB, ObjectProperty};
+use crate::world::{
+    split_bodies_by_area, Asteroid, MovementDefinition, ObjectProperty, Planet, PlanetV2,
+    SpatialProps, Star, AABB,
+};
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
-use crate::combat::Health;
 
 #[clonable]
 pub trait IBody: Clone {
@@ -30,6 +33,32 @@ pub trait IBody: Clone {
     fn as_vec(&self) -> Vec2f64;
     fn get_health(&self) -> Option<Health>;
     fn get_properties(&self) -> Vec<ObjectProperty>;
+}
+
+#[clonable]
+pub trait IBodyV2: Clone {
+    fn get_id(&self) -> Uuid;
+    fn get_spatial(&self) -> &SpatialProps<usize>;
+    fn get_movement(&self) -> &MovementDefinition;
+    fn set_spatial(&mut self, x: SpatialProps<usize>);
+}
+
+impl IBodyV2 for PlanetV2 {
+    fn get_id(&self) -> Uuid {
+        self.id
+    }
+
+    fn get_spatial(&self) -> &SpatialProps<usize> {
+        &self.spatial
+    }
+
+    fn get_movement(&self) -> &MovementDefinition {
+        &self.movement
+    }
+
+    fn set_spatial(&mut self, props: SpatialProps<usize>) {
+        self.spatial = props;
+    }
 }
 
 impl IBody for Asteroid {
@@ -226,7 +255,7 @@ impl From<Box<dyn IBody>> for Planet {
             anchor_tier: val.get_anchor_tier(),
             color: val.get_color(),
             health: val.get_health(),
-            properties: val.get_properties()
+            properties: val.get_properties(),
         }
     }
 }
