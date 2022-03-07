@@ -181,7 +181,8 @@ pub struct Planet {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct Transform<HINT: serde::Serialize + serde::Deserialize + std::fmt::Debug + Clone> {
+// derive Serialize-Deserialize will add constraints itself, no need to explicitly mark them
+pub struct Transform<HINT: std::fmt::Debug + Clone> {
     pub position: Vec2f64,
     pub rotation_rad: f64,
     pub radius: f64,
@@ -225,6 +226,8 @@ impl PlanetV2 {
 
     pub fn from(p: &Planet, loc: &Location) -> Self {
         let pos = Vec2f64 { x: p.x, y: p.y };
+        let speed_ticks_rad = p.orbit_speed / 1000.0 / 1000.0;
+        let full_period_ticks = (std::f64::consts::PI * 2.0 / speed_ticks_rad).floor();
 
         let (anchor, radius_to_anchor) = match p.anchor_tier {
             1 => {
@@ -274,7 +277,7 @@ impl PlanetV2 {
                 hint: None,
             },
             movement: MovementDefinition::RadialMonotonous {
-                angle_per_tick: p.orbit_speed / 1000.0 / 1000.0,
+                full_period_ticks,
                 radius_to_anchor,
                 anchor,
             },
@@ -1909,8 +1912,12 @@ pub enum MovementDefinition {
         acc_turn: f64,
     },
     RadialMonotonous {
-        // positive => counterclockwise
-        angle_per_tick: f64,
+        // instead of defining the speed, in order
+        // for interpolation optimization to work, we
+        // need to restrict possible locations of the planet
+        // so it's fully periodical, e.g. such P exists that position(t = P) = initial,
+        // position (t  = 2P) = initial, etc
+        full_period_ticks: f64,
         radius_to_anchor: f64,
         anchor: ObjectSpecifier,
     },

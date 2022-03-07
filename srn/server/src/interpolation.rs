@@ -2,7 +2,9 @@ use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
 use crate::world::{lerp, Location, MovementDefinition, Planet, PlanetV2, Ship};
 use crate::GameState;
+use std::f64::consts::PI;
 use std::mem;
+use uuid::Uuid;
 
 pub fn interpolate_states(state_a: &GameState, state_b: &GameState, value: f64) -> GameState {
     let mut result = state_a.clone();
@@ -45,7 +47,7 @@ fn interpolate_planet_v2(
     value: f64,
     anchor: Box<&dyn IBody>,
 ) {
-    let phase_table = get_rel_position_phase_table(result.movement.as_ref());
+    let phase_table = get_rel_position_phase_table(&result.movement, result.id);
     let result_idx = result
         .transform
         .hint
@@ -55,7 +57,11 @@ fn interpolate_planet_v2(
         .hint
         .expect("no phase table hint for transform");
     let lerped_idx = lerp_usize(result_idx, target_idx, value);
-    result.transform.position = phase_table[lerped_idx].add(&anchor.get_position());
+    let pos = Vec2f64 {
+        x: ((**anchor).get_x()),
+        y: ((**anchor).get_y()),
+    };
+    result.transform.position = phase_table[lerped_idx].add(&pos);
 }
 
 fn lerp_usize(from: usize, to: usize, value: f64) -> usize {
@@ -63,13 +69,49 @@ fn lerp_usize(from: usize, to: usize, value: f64) -> usize {
     double_val as usize
 }
 
-// this assumes that table is always sorted and is circular-positioned
-fn find_closest_phase_index(from: Vec2f64, table: &Vec<Vec2f64>) -> usize {
-    todo!()
-}
+pub const IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER: f64 = 100.0;
+pub const REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER: f64 = 32000.0;
 
-fn get_rel_position_phase_table(p0: &MovementDefinition) -> Vec<Vecf264> {
-    todo!()
+// build a list of coordinates of the linear (segment) approximation of the circle, where every point
+// is a vertex of the resulting polygon, in an assumption that precision is enough (subdivided to enough amount of points)
+// so lerp(A,B) =~ the real circle point with some precision, but at the same time as low as possible
+fn get_rel_position_phase_table(def: &MovementDefinition, for_id: Uuid) -> Vec<Vec2f64> {
+    match def {
+        MovementDefinition::RadialMonotonous {
+            full_period_ticks,
+            radius_to_anchor,
+            ..
+        } => {
+            let mut res = vec![];
+            let ideal_amount = (radius_to_anchor * IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER); // completely arbitrary for now, without targeting specific precision
+            let amount_from_period = *full_period_ticks; // every tick is a point. However, it's super-unlikely that I will ever have an update every tick, and even every cycle of 16ms is unnecessary
+            let realistic_amount =
+                amount_from_period / REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER; // precision with 1ms is probably fine-grained enough, equivalent to every 2 cycles of 16ms
+
+            let chosen_amount: usize = {
+                if ideal_amount < realistic_amount {
+                    // no need to be more precise than the heuristic
+                    ideal_amount as usize
+                } else {
+                    if realistic_amount < 0.5 * ideal_amount {
+                        // this is bad, and will lead to horrible visual artifacts likely
+                        warn!("radial monotonous period is too low {realistic_amount} for id={for_id} and will lead to artifacts");
+                    }
+                    // if realistic is between 0.5 and 1.0 of ideal, this is probably fine
+                    realistic_amount as usize
+                }
+            };
+            let angle_step_rad = PI * 2.0 / chosen_amount as f64;
+            for i in 0..chosen_amount {
+                let angle = i as f64 * angle_step_rad;
+                let x = angle.cos() * radius_to_anchor;
+                let y = angle.sin() * radius_to_anchor;
+                res.push(Vec2f64 { x, y });
+            }
+            res
+        }
+        _ => panic!("Unsupported movement definition {def}"),
+    }
 }
 
 fn interpolate_ship(result: &mut Ship, target: &Ship, value: f64) {
