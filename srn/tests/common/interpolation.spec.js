@@ -47,5 +47,8 @@ describe('state interpolation', () => {
     const planetC = getLoc0(stateC).planets[0];
     expect(planetC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
     expect(planetC.y).toBeCloseTo((Math.sqrt(2) / 2) * 100);
+    // extra call to check caching (manually)
+    // console.log('extra call to interpolate to check cache');
+    wasm.interpolateStates(roomA.state, roomB.state, 0.5);
   });
 });

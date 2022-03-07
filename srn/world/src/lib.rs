@@ -166,6 +166,7 @@ use serde_wasm_bindgen::*;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use uuid::*;
+use vec2::Vec2f64;
 
 pub fn get_prng() -> SmallRng {
     let mut bytes = [0u8; 8];
@@ -283,6 +284,11 @@ lazy_static! {
 
 lazy_static! {
     pub static ref current_replay: MutStatic<Option<ReplayDiffed>> = { MutStatic::from(None) };
+}
+
+lazy_static! {
+    pub static ref rel_orbit_cache: MutStatic<HashMap<u64, Vec<Vec2f64>>> =
+        { MutStatic::from(HashMap::new()) };
 }
 
 pub struct InternalTimers {
@@ -627,11 +633,11 @@ pub fn interpolate_states(
     state_b: JsValue,
     value: f64,
 ) -> Result<JsValue, JsValue> {
+    let mut cache = &mut (*rel_orbit_cache.write().unwrap());
     let state_a: GameState = serde_wasm_bindgen::from_value(state_a)?;
     let state_b: GameState = serde_wasm_bindgen::from_value(state_b)?;
-    Ok(custom_serialize(&interpolation::interpolate_states(
-        &state_a, &state_b, value,
-    ))?)
+    let result = interpolation::interpolate_states(&state_a, &state_b, value, cache);
+    Ok(custom_serialize(&result)?)
 }
 
 #[wasm_bindgen]
