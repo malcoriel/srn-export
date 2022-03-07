@@ -41,8 +41,8 @@ describe('state interpolation', () => {
     planetA.y = 0;
     const roomB = _.cloneDeep(roomA);
     const planetB = getLoc0(roomB.state).planets[0];
-    planetB.x = 100;
-    planetB.y = 0;
+    planetB.x = 0;
+    planetB.y = 100;
     const stateC = wasm.interpolateStates(roomA.state, roomB.state, 0.5);
     const planetC = getLoc0(stateC).planets[0];
     expect(planetC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
