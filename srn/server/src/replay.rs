@@ -421,11 +421,11 @@ impl ReplayDiffed {
         }
 
         // (1) no current and no next - complete miss
-        if self.current_state.is_none() && self.next_state.is_none() {
-            return self.get_state_at_interpolated_full_restore(
-                prev_ticks, next_ticks, value, sampler, cache,
-            );
-        }
+        // if self.current_state.is_none() && self.next_state.is_none() {
+        //     return self.get_state_at_interpolated_full_restore(
+        //         prev_ticks, next_ticks, value, sampler, cache,
+        //     );
+        // }
 
         // (2) no next, but there is current - the sequential optimization will make it fast
 
