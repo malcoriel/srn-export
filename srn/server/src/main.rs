@@ -137,7 +137,6 @@ mod notifications;
 mod perf;
 mod pirate_defence;
 mod planet_movement;
-mod planet_movement_test;
 mod random_stuff;
 mod replay;
 mod replays_api;
