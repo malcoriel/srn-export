@@ -277,7 +277,8 @@ impl PlanetV2 {
                 interpolation_hint: None,
             },
             movement: MovementDefinition::RadialMonotonous {
-                full_period_ticks,
+                full_period_ticks: full_period_ticks.abs(),
+                clockwise: full_period_ticks > 0.0,
                 radius_to_anchor,
                 anchor,
             },
@@ -1943,6 +1944,7 @@ pub enum MovementDefinition {
         // position (t  = 2P) = initial, etc
         full_period_ticks: f64,
         radius_to_anchor: f64,
+        clockwise: bool,
         anchor: ObjectSpecifier,
     },
 }

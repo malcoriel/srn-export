@@ -100,4 +100,22 @@ describe('replay system', () => {
     // validate that backwards search doesn't break it
     replayDiff.current_state = wasm.getPreloadedDiffReplayStateAt(0);
   });
+
+  fit("can restore interpolated state and it's equal to state interpolation", () => {
+    const states = simulate();
+    const replayDiff = wasm.packReplay(states, 'test', true);
+    wasm.loadReplay(replayDiff);
+    const prev = replayDiff.marks_ticks[0];
+    const next = replayDiff.marks_ticks[1];
+    const value = 0.5;
+    const interpolatedRestored = wasm.getPreloadedDiffReplayStateAtInterpolated(
+      prev,
+      next,
+      value
+    );
+    const interpolated = wasm.interpolateStates(states[0], states[1], value);
+    expect(interpolatedRestored).toEqual(interpolated);
+  });
+
+  it.todo('can do non-optimized interpolate restoration');
 });

@@ -620,6 +620,46 @@ pub fn get_preloaded_diff_replay_state_at(ticks: u32) -> Result<JsValue, JsValue
 }
 
 #[wasm_bindgen]
+pub fn get_preloaded_diff_replay_state_at_interpolated(
+    prev_ticks: u32,
+    next_ticks: u32,
+    value: f64,
+) -> Result<JsValue, JsValue> {
+    let mut sampler = if *ENABLE_PERF {
+        Some(global_sampler.write().unwrap().clone())
+    } else {
+        None
+    };
+    let full_id = sampler
+        .as_mut()
+        .map(|s| s.start(SamplerMarks::GetDiffReplayStateAtPreloadedInterpolated as u32));
+    let mut replay: ReplayDiffed = current_replay.read().unwrap().clone().unwrap();
+    let (prev, next, curr) = replay
+        .get_state_at_interpolated(prev_ticks, next_ticks, value, &mut sampler)
+        .map_err(|_| JsValue::from_str("failed to rewind"))?;
+    sampler.as_mut().map(|s| {
+        full_id.map(|fid| s.end(fid));
+    });
+    current_replay
+        .write()
+        .unwrap()
+        .as_mut()
+        .map(|r: &mut ReplayDiffed| {
+            r.current_state = Some(prev);
+            r.next_state = Some(next);
+        });
+    let value = custom_serialize(&curr)?;
+    if *ENABLE_PERF {
+        mem::replace(
+            global_sampler.write().unwrap().deref_mut(),
+            sampler.unwrap(),
+        );
+    };
+    flush_sampler_stats();
+    Ok(value)
+}
+
+#[wasm_bindgen]
 pub fn load_replay(replay: JsValue) -> Result<(), JsValue> {
     let replay: ReplayDiffed = serde_wasm_bindgen::from_value(replay)?;
     let mut r = current_replay.write().unwrap();

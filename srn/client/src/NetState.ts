@@ -347,10 +347,17 @@ export default class NetState extends EventEmitter {
 
   rewindReplayToMs = (markInMs: number) => {
     this.replay.current_millis = markInMs;
-    const closestMark = this.findClosestMark(this.replay.marks_ticks, markInMs);
+    const [closestMark, nextMark] = this.findClosestMarks(
+      this.replay.marks_ticks,
+      markInMs
+    );
     if (closestMark !== null) {
-      if (this.replay?.current_state?.ticks !== closestMark) {
-        this.replay.current_state = restoreReplayFrame(closestMark);
+      if (this.replay?.current_state?.ticks !== markInMs) {
+        this.replay.current_state = restoreReplayFrame(
+          closestMark,
+          nextMark,
+          markInMs
+        );
         this.state = this.replay.current_state;
         this.updateVisMap();
         reindexNetState(this);
@@ -880,19 +887,22 @@ export default class NetState extends EventEmitter {
     this.playingReplay = true;
   };
 
-  private findClosestMark(keys: number[], markInMs: number): number | null {
+  private findClosestMarks(
+    keys: number[],
+    markInMs: number
+  ): [number | null, number | null] {
     const markInTicks = markInMs * 1000;
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
       const nextKey = keys[i + 1];
       if (key <= markInTicks && nextKey > markInTicks) {
-        return key;
+        return [key, nextKey];
       }
     }
     if (keys[keys.length - 1] <= markInTicks) {
-      return keys[keys.length - 1];
+      return [keys[keys.length - 1], null];
     }
-    return null;
+    return [null, null];
   }
 }
 

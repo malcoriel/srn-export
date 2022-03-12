@@ -38,13 +38,13 @@ export const wasm = {
   packReplay: () => {
     throw new Error(notLoadedError);
   },
-  addToReplay: () => {
-    throw new Error(notLoadedError);
-  },
   getDiffReplayStateAt: () => {
     throw new Error(notLoadedError);
   },
   getPreloadedDiffReplayStateAt: () => {
+    throw new Error(notLoadedError);
+  },
+  getPreloadedDiffReplayStateAtInterpolated: () => {
     throw new Error(notLoadedError);
   },
   applySinglePatch: () => {
@@ -111,13 +111,14 @@ export const loadWasm = timerify(async function loadWasm() {
   wasm.flushSamplerStats = wasmFunctions.flush_sampler_stats;
   wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
   wasm.packReplay = wasmFunctions.pack_replay;
-  wasm.addToReplay = wasmFunctions.add_to_replay;
   wasm.loadReplay = wasmFunctions.load_replay;
   wasm.getDiffReplayStateAt = timerifySync(function getDiffReplayStateAt(
     ...args
   ) {
     return wasmFunctions.get_diff_replay_state_at(...args);
   });
+  wasm.getPreloadedDiffReplayStateAtInterpolated =
+    wasmFunctions.get_preloaded_diff_replay_state_at_interpolated;
   wasm.getPreloadedDiffReplayStateAt = timerifySync(
     function getPreloadedDiffReplayStateAt(...args) {
       return wasmFunctions.get_preloaded_diff_replay_state_at(...args);
@@ -195,6 +196,7 @@ export const mockShip = (id) => ({
   properties: [],
 });
 
+// noinspection JSUnusedGlobalSymbols
 export function findFirstEvent(world, eventName) {
   return world.events.find((e) => e.tag === eventName);
 }

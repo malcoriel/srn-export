@@ -129,6 +129,7 @@ fn get_rel_position_phase_table(def: &MovementDefinition, for_id: Uuid) -> Vec<V
         MovementDefinition::RadialMonotonous {
             full_period_ticks,
             radius_to_anchor,
+            clockwise,
             ..
         } => {
             let mut res = vec![];
@@ -151,10 +152,11 @@ fn get_rel_position_phase_table(def: &MovementDefinition, for_id: Uuid) -> Vec<V
                 }
             };
             let angle_step_rad = PI * 2.0 / chosen_amount as f64;
+            let sign = if *clockwise { -1.0 } else { 1.0 };
             for i in 0..chosen_amount {
                 let angle = i as f64 * angle_step_rad;
                 let x = angle.cos() * radius_to_anchor;
-                let y = angle.sin() * radius_to_anchor;
+                let y = angle.sin() * radius_to_anchor * sign;
                 res.push(Vec2f64 { x, y });
             }
             res

@@ -35,7 +35,7 @@ impl Sampler {
             buckets,
             marks: HashMap::with_capacity(ENTRY_CAPACITY),
             empty: false,
-            initial_budget: 0
+            initial_budget: 0,
         }
     }
 
@@ -46,7 +46,7 @@ impl Sampler {
             buckets: HashMap::new(),
             marks: HashMap::with_capacity(ENTRY_CAPACITY),
             empty: true,
-            initial_budget: 0
+            initial_budget: 0,
         }
     }
 
@@ -160,7 +160,10 @@ impl Sampler {
             return;
         }
         let idle = (self.budget as f64) / (self.initial_budget as f64);
-        self.add(SamplerMarks::FrameIdlePct as u32, (idle * 100.0 * 1000.0) as u64);
+        self.add(
+            SamplerMarks::FrameIdlePct as u32,
+            (idle * 100.0 * 1000.0) as u64,
+        );
         self.initial_budget = 0;
     }
 
@@ -301,7 +304,8 @@ pub enum SamplerMarks {
     ApplyReplayDiffBatch = 47,
     ApplyReplayDiff = 48,
     GetDiffReplayStateAtFull = 49,
-    GetDiffReplayStateAtPreloaded = 50
+    GetDiffReplayStateAtPreloaded = 50,
+    GetDiffReplayStateAtPreloadedInterpolated = 51,
 }
 
 impl Display for SamplerMarks {

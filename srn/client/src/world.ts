@@ -268,8 +268,21 @@ export const validateState = (inState: GameState): boolean => {
   return !!parsed;
 };
 
-export const restoreReplayFrame = (ticks: number): GameState | null => {
-  return wasmFunctions.get_preloaded_diff_replay_state_at(Math.round(ticks));
+export const restoreReplayFrame = (
+  prevTicks: number,
+  nextTicks: number | null,
+  currentTicks: number
+): GameState | null => {
+  if (nextTicks !== null) {
+    return wasmFunctions.get_preloaded_diff_replay_state_at_interpolated(
+      Math.round(prevTicks),
+      Math.round(nextTicks),
+      Math.round(currentTicks)
+    );
+  }
+  return wasmFunctions.get_preloaded_diff_replay_state_at(
+    Math.round(prevTicks)
+  );
 };
 
 export const loadReplayIntoWasm = (replay: any) => {
