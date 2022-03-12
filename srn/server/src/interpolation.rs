@@ -1,10 +1,11 @@
 use crate::planet_movement::{IBody, IBodyV2};
-use crate::vec2::Vec2f64;
+use crate::vec2::{Precision, Vec2f64};
 use crate::world::{lerp, Location, MovementDefinition, Planet, PlanetV2, Ship};
 use crate::GameState;
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::mem;
+use std::str::FromStr;
 use uuid::Uuid;
 
 pub fn interpolate_states(
@@ -75,7 +76,7 @@ fn interpolate_planet_v2(
         ),
     };
     let phase_table = rel_orbit_cache
-        .entry(radius_key as u64)
+        .entry((radius_key * 1.0e14) as u64)
         .or_insert_with(|| get_rel_position_phase_table(&result.movement, result.id));
     let result_idx = result.spatial.interpolation_hint.unwrap_or_else(|| {
         calculate_hint(&phase_table, Box::new(result)).expect("could not calculate hint")
@@ -103,10 +104,6 @@ fn calculate_hint(table: &Vec<Vec2f64>, planet: Box<&dyn IBodyV2>) -> Option<usi
         if dist < current_distance {
             index = Some(i);
             current_distance = dist;
-        } else {
-            // if distance started to increase, since it's a circle (and we are approximating a point somewhere around its line)
-            // then we won't find anything better - it's always a local minimum
-            break;
         }
     }
     index
@@ -162,7 +159,7 @@ fn get_rel_position_phase_table(def: &MovementDefinition, for_id: Uuid) -> Vec<V
             }
             res
         }
-        _ => panic!("Unsupported movement definition {def}"),
+        _ => panic!("Unsupported movement definition {def} for id {for_id}"),
     }
 }
 

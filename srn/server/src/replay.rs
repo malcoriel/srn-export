@@ -1,8 +1,8 @@
 use crate::perf::SamplerMarks;
 use crate::system_gen::seed_state;
 use crate::{
-    get_prng, interpolate_states, interpolation, new_id, world, DialogueTable, GameMode, GameState,
-    Sampler,
+    get_prng, interpolate_states, interpolation, new_id, rel_orbit_cache, world, DialogueTable,
+    GameMode, GameState, Sampler, Vec2f64,
 };
 use itertools::Itertools;
 use json_patch::{
@@ -387,10 +387,11 @@ impl ReplayDiffed {
         next_ticks: u32,
         value: f64,
         sampler: &mut Option<Sampler>,
+        cache: &mut HashMap<u64, Vec<Vec2f64>>,
     ) -> Result<(PrevState, NextState, CurrState), ReplayError> {
         let prev = self.get_state_at(prev_ticks, sampler)?;
         let next = self.get_state_at(next_ticks, sampler)?;
-        let curr = interpolation::interpolate_states(&prev, &next, value, &mut HashMap::new());
+        let curr = interpolation::interpolate_states(&prev, &next, value, cache);
         Ok((prev, next, curr))
     }
 
@@ -400,6 +401,7 @@ impl ReplayDiffed {
         next_ticks: u32,
         value: f64,
         sampler: &mut Option<Sampler>,
+        cache: &mut HashMap<u64, Vec<Vec2f64>>,
     ) -> Result<(PrevState, NextState, CurrState), ReplayError> {
         let prev_ticks_index = self
             .marks_ticks
@@ -420,8 +422,9 @@ impl ReplayDiffed {
 
         // (1) no current and no next - complete miss
         if self.current_state.is_none() && self.next_state.is_none() {
-            return self
-                .get_state_at_interpolated_full_restore(prev_ticks, next_ticks, value, sampler);
+            return self.get_state_at_interpolated_full_restore(
+                prev_ticks, next_ticks, value, sampler, cache,
+            );
         }
 
         // (2) no next, but there is current - the sequential optimization will make it fast
@@ -453,6 +456,7 @@ impl ReplayDiffed {
         // // case A, E - complete miss
 
         // fall back to full restore if every optimization check fails
-        return self.get_state_at_interpolated_full_restore(prev_ticks, next_ticks, value, sampler);
+        return self
+            .get_state_at_interpolated_full_restore(prev_ticks, next_ticks, value, sampler, cache);
     }
 }

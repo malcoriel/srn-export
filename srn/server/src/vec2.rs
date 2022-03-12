@@ -60,6 +60,9 @@ pub enum Precision {
     P0,
     P2,
     P8,
+    P10,
+    P12,
+    P14,
 }
 
 // due to some serialization-deserialization between rust and js, it's possible to get a precision mismatch just
@@ -76,6 +79,9 @@ impl Vec2f64 {
             Precision::P0 => String::from(format!("{:.0}/{:.0}", self.x, self.y)),
             Precision::P2 => String::from(format!("{:.2}/{:.2}", self.x, self.y)),
             Precision::P8 => String::from(format!("{:.8}/{:.8}", self.x, self.y)),
+            Precision::P10 => String::from(format!("{:.10}/{:.10}", self.x, self.y)),
+            Precision::P12 => String::from(format!("{:.12}/{:.12}", self.x, self.y)),
+            Precision::P14 => String::from(format!("{:.14}/{:.14}", self.x, self.y)),
         }
     }
 

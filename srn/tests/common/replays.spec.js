@@ -108,10 +108,13 @@ describe('replay system', () => {
 
     for (const [idxA, idxB, value] of [
       [0, 1, 0.5],
+      [2, 3, 0.5],
+      [5, 6, 0.5],
+      [8, 9, 0.5],
       [10, 11, 0.5],
       [10, 11, 0.3],
     ]) {
-      console.log({ idxA, idxB, value });
+      // console.log({ idxA, idxB, value });
       const prev = replayDiff.marks_ticks[idxA];
       const next = replayDiff.marks_ticks[idxB];
       const interpolatedRestored = wasm.getPreloadedDiffReplayStateAtInterpolated(

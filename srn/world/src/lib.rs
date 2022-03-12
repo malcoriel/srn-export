@@ -630,12 +630,13 @@ pub fn get_preloaded_diff_replay_state_at_interpolated(
     } else {
         None
     };
+    let mut cache = &mut (*rel_orbit_cache.write().unwrap());
     let full_id = sampler
         .as_mut()
         .map(|s| s.start(SamplerMarks::GetDiffReplayStateAtPreloadedInterpolated as u32));
     let mut replay: ReplayDiffed = current_replay.read().unwrap().clone().unwrap();
     let (prev, next, curr) = replay
-        .get_state_at_interpolated(prev_ticks, next_ticks, value, &mut sampler)
+        .get_state_at_interpolated(prev_ticks, next_ticks, value, &mut sampler, cache)
         .map_err(|_| JsValue::from_str("failed to rewind"))?;
     sampler.as_mut().map(|s| {
         full_id.map(|fid| s.end(fid));

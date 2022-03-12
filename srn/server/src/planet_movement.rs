@@ -38,6 +38,7 @@ pub trait IBody: Clone {
 #[clonable]
 pub trait IBodyV2: Clone {
     fn get_id(&self) -> Uuid;
+    fn get_name(&self) -> &String;
     fn get_spatial(&self) -> &SpatialProps<usize>;
     fn get_movement(&self) -> &MovementDefinition;
     fn set_spatial(&mut self, x: SpatialProps<usize>);
@@ -46,6 +47,10 @@ pub trait IBodyV2: Clone {
 impl IBodyV2 for PlanetV2 {
     fn get_id(&self) -> Uuid {
         self.id
+    }
+
+    fn get_name(&self) -> &String {
+        &self.name
     }
 
     fn get_spatial(&self) -> &SpatialProps<usize> {
