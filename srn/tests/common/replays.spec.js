@@ -105,16 +105,27 @@ describe('replay system', () => {
     const states = simulate();
     const replayDiff = wasm.packReplay(states, 'test', true);
     wasm.loadReplay(replayDiff);
-    const prev = replayDiff.marks_ticks[0];
-    const next = replayDiff.marks_ticks[1];
-    const value = 0.5;
-    const interpolatedRestored = wasm.getPreloadedDiffReplayStateAtInterpolated(
-      prev,
-      next,
-      value
-    );
-    const interpolated = wasm.interpolateStates(states[0], states[1], value);
-    expect(interpolatedRestored).toEqual(interpolated);
+
+    for (const [idxA, idxB, value] of [
+      [0, 1, 0.5],
+      [10, 11, 0.5],
+      [10, 11, 0.3],
+    ]) {
+      console.log({ idxA, idxB, value });
+      const prev = replayDiff.marks_ticks[idxA];
+      const next = replayDiff.marks_ticks[idxB];
+      const interpolatedRestored = wasm.getPreloadedDiffReplayStateAtInterpolated(
+        prev,
+        next,
+        value
+      );
+      const interpolated = wasm.interpolateStates(
+        states[idxA],
+        states[idxB],
+        value
+      );
+      expect(interpolatedRestored).toEqual(interpolated);
+    }
   });
 
   it.todo('can do non-optimized interpolate restoration');

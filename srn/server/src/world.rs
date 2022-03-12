@@ -20,7 +20,6 @@ use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
 use crate::combat::{Health, ShootTarget};
-use crate::dialogue;
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
     index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, ObjectSpecifier,
@@ -58,6 +57,7 @@ use crate::{
     abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, system_gen, world_events,
 };
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
+use crate::{dialogue, vec2};
 use crate::{get_prng, new_id, DEBUG_PHYSICS};
 use crate::{seed_prng, DialogueTable};
 use dialogue::DialogueStates;
@@ -1402,7 +1402,7 @@ fn update_wreck_decay(state: &mut GameState, location_idx: usize, elapsed_ticks:
 }
 
 pub fn lerp(from: f64, to: f64, percentage: f64) -> f64 {
-    return (to - from) * (percentage.max(0.0).min(1.0)) + from;
+    return vec2::reduce_precision((to - from) * (percentage.max(0.0).min(1.0)) + from);
 }
 
 // and undocking!

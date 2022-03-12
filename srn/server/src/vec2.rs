@@ -62,7 +62,6 @@ pub enum Precision {
     P8,
 }
 
-
 // due to some serialization-deserialization between rust and js, it's possible to get a precision mismatch just
 // by transferring data through the wasm boundary. I'm trying to deal with it by reducing f64 precision
 // The mismatch can happen around last significant digit, so I'm just cutting stuff short here
@@ -184,7 +183,7 @@ impl Vec2f64 {
                 PI
             } else {
                 0.0
-            }
+            };
         }
         val
     }
