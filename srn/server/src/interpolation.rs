@@ -144,11 +144,12 @@ fn get_rel_position_phase_table(def: &MovementDefinition, for_id: Uuid) -> Vec<V
                     ideal_amount as usize
                 } else {
                     if realistic_amount < 0.5 * ideal_amount {
-                        // this is bad, and will lead to horrible visual artifacts likely
-                        warn!(format!("radial monotonous period is too low {realistic_amount} for id={} and will lead to artifacts", for_id));
+                        // this is bad, and will lead to horrible visual artifacts likely, so will reuse the ideal * 0.5 instead
+                        (0.5 * ideal_amount) as usize
+                    } else {
+                        // if realistic is between 0.5 and 1.0 of ideal, this is probably fine
+                        realistic_amount as usize
                     }
-                    // if realistic is between 0.5 and 1.0 of ideal, this is probably fine
-                    realistic_amount as usize
                 }
             };
             let angle_step_rad = PI * 2.0 / chosen_amount as f64;
