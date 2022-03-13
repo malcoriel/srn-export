@@ -87,7 +87,7 @@ fn interpolate_planet_v2(
     let target_idx = target.spatial.interpolation_hint.unwrap_or_else(|| {
         calculate_hint(&phase_table, Box::new(target)).expect("could not calculate hint")
     });
-    let lerped_idx = lerp_usize(result_idx, target_idx, value);
+    let lerped_idx = lerp_usize_cycle(result_idx, target_idx, value, phase_table.len());
     let pos = Vec2f64 {
         x: ((**anchor).get_x()),
         y: ((**anchor).get_y()),
@@ -113,8 +113,15 @@ fn calculate_hint(table: &Vec<Vec2f64>, planet: Box<&dyn IBodyV2>) -> Option<usi
 }
 
 fn lerp_usize(from: usize, to: usize, value: f64) -> usize {
-    let double_val = lerp(from as f64, to as f64, value);
-    double_val as usize
+    lerp(from as f64, to as f64, value) as usize
+}
+
+fn lerp_usize_cycle(from: usize, to: usize, value: f64, max: usize) -> usize {
+    if (to as i32 - from as i32).abs() as usize > max / 2 {
+        (lerp((from + max) as f64, to as f64, value) as usize) % max
+    } else {
+        lerp(from as f64, to as f64, value) as usize
+    }
 }
 
 pub const IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER: f64 = 100.0;
