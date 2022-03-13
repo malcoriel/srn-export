@@ -265,7 +265,7 @@ impl PlanetV2 {
                     }),
                 )
             }
-            _ => panic!(format!("Unsupported anchor tier {}", p.anchor_tier)),
+            _ => panic!("Unsupported anchor tier {}", p.anchor_tier),
         };
         Self {
             id: p.id.clone(),

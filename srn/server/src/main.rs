@@ -178,11 +178,11 @@ lazy_static! {
 }
 
 lazy_static! {
-    pub static ref ENABLE_PERF: bool = { env::var("ENABLE_PERF").is_ok() };
+    pub static ref ENABLE_PERF: bool = env::var("ENABLE_PERF").is_ok();
 }
 
 lazy_static! {
-    pub static ref DEBUG_FRAME_STATS: bool = { env::var("DEBUG_FRAME_STATS").is_ok() };
+    pub static ref DEBUG_FRAME_STATS: bool = env::var("DEBUG_FRAME_STATS").is_ok();
 }
 
 const DEFAULT_SLEEP_MS: u64 = 2;

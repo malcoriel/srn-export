@@ -353,6 +353,10 @@ export default class NetState extends EventEmitter {
     );
     if (closestMark !== null) {
       if (this.replay?.current_state?.ticks !== markInMs) {
+        // technically, this is incorrect after the continuous restoration was implemented.
+        // it should be treated as 'previous solid snapshot' state, and the current, interpolated state,
+        // should be a different field. However, since the replay is preloaded and this data is never sent
+        // to wasm anymore, it's safe to abuse this field, for now at least
         this.replay.current_state = restoreReplayFrame(
           closestMark,
           nextMark,

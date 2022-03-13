@@ -130,7 +130,7 @@ fn get_rel_position_phase_table(def: &MovementDefinition, for_id: Uuid) -> Vec<V
             ..
         } => {
             let mut res = vec![];
-            let ideal_amount = (radius_to_anchor * IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER); // completely arbitrary for now, without targeting specific precision
+            let ideal_amount = radius_to_anchor * IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER; // completely arbitrary for now, without targeting specific precision
             let amount_from_period = *full_period_ticks; // every tick is a point. However, it's super-unlikely that I will ever have an update every tick, and even every cycle of 16ms is unnecessary
             let realistic_amount =
                 amount_from_period / REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER; // precision with 1ms is probably fine-grained enough, equivalent to every 2 cycles of 16ms
