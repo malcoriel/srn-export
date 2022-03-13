@@ -360,7 +360,7 @@ export default class NetState extends EventEmitter {
         this.replay.current_state = restoreReplayFrame(
           closestMark,
           nextMark,
-          markInMs
+          markInMs * 1000
         );
         this.state = this.replay.current_state;
         this.updateVisMap();

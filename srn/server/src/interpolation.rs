@@ -56,7 +56,10 @@ fn interpolate_planet(
     let tar_v2 = PlanetV2::from(target, loc);
     let anchor = tar_v2.get_anchor_ref(loc);
     interpolate_planet_v2(&mut res_v2, &tar_v2, value, anchor, rel_orbit_cache);
-    mem::swap(&mut Planet::from(&res_v2), result);
+    mem::swap(
+        &mut Planet::from_pv2(&res_v2, loc.star.as_ref().map(|s| s.id.clone()).unwrap()),
+        result,
+    );
 }
 
 fn interpolate_planet_v2(

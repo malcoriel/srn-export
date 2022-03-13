@@ -289,36 +289,6 @@ impl PlanetV2 {
     }
 }
 
-impl From<&PlanetV2> for Planet {
-    fn from(f: &PlanetV2) -> Self {
-        let (orbit_speed, anchor_id) = match &f.movement {
-            MovementDefinition::RadialMonotonous {
-                full_period_ticks,
-                anchor,
-                ..
-            } => (
-                std::f64::consts::PI * 2.0 / full_period_ticks,
-                anchor.get_id().unwrap(),
-            ),
-            _ => panic!("Unsupported movement {:?}", f.movement),
-        };
-        Self {
-            id: f.id,
-            name: f.name.clone(),
-            x: f.spatial.position.x,
-            y: f.spatial.position.y,
-            rotation: f.spatial.rotation_rad,
-            radius: f.spatial.radius,
-            orbit_speed,
-            anchor_id,
-            anchor_tier: 0,
-            color: "".to_string(),
-            health: None,
-            properties: vec![],
-        }
-    }
-}
-
 impl Planet {
     pub fn new() -> Self {
         Self {
@@ -342,6 +312,38 @@ impl Planet {
             x: self.x,
             y: self.y,
         };
+    }
+
+    pub fn from_pv2(f: &PlanetV2, star_id: Uuid) -> Self {
+        let (orbit_speed, anchor_id, anchor_tier) = match &f.movement {
+            MovementDefinition::RadialMonotonous {
+                full_period_ticks,
+                anchor,
+                ..
+            } => {
+                let anchor_id = anchor.get_id().unwrap();
+                (
+                    std::f64::consts::PI * 2.0 / full_period_ticks,
+                    anchor_id,
+                    if anchor_id == star_id { 1 } else { 2 },
+                )
+            }
+            _ => panic!("Unsupported movement {:?}", f.movement),
+        };
+        Self {
+            id: f.id,
+            name: f.name.clone(),
+            x: f.spatial.position.x,
+            y: f.spatial.position.y,
+            rotation: f.spatial.rotation_rad,
+            radius: f.spatial.radius,
+            orbit_speed,
+            anchor_id,
+            anchor_tier,
+            color: f.color.clone(),
+            health: f.health.clone(),
+            properties: f.properties.clone(),
+        }
     }
 }
 

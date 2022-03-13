@@ -277,7 +277,7 @@ export const restoreReplayFrame = (
     return wasmFunctions.get_preloaded_diff_replay_state_at_interpolated(
       Math.round(prevTicks),
       Math.round(nextTicks),
-      Math.round(currentTicks)
+      (currentTicks - prevTicks) / (nextTicks - prevTicks)
     );
   }
   return wasmFunctions.get_preloaded_diff_replay_state_at(

@@ -57,6 +57,8 @@ const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
           }
         } else if (memberValue.type === 'TSNumberKeyword') {
           newMemberValue = j.numberTypeAnnotation();
+        } else if (memberValue.type === 'TSBooleanKeyword') {
+          newMemberValue = j.booleanTypeAnnotation();
         } else if (memberValue.type === 'TSStringKeyword') {
           newMemberValue = j.stringTypeAnnotation();
         } else if (memberValue.type === 'TSLiteralType') {
