@@ -47,7 +47,7 @@ describe('state interpolation', () => {
     expect(shipD.y).toBeCloseTo(targetShipY_07);
   });
 
-  fit('can interpolate planet orbit movement', () => {
+  it('can interpolate planet orbit movement', () => {
     const roomA = wasm.createRoom({
       mode: 'PirateDefence',
       seed: 'interpolate',
@@ -68,7 +68,7 @@ describe('state interpolation', () => {
     // wasm.interpolateStates(roomA.state, roomB.state, 0.5);
   });
 
-  fit('interpolates via shortest path, even if the orbit indexes are not close', () => {
+  it('interpolates via shortest path, even if the orbit indexes are not close', () => {
     const roomA = wasm.createRoom({
       mode: 'PirateDefence',
       seed: 'interpolate',
