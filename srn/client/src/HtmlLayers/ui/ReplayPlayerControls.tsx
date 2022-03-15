@@ -78,6 +78,7 @@ export const ReplayPlayerControls: React.FC<ReplayPlayerControlsProps> = ({
             <div
               className="mark"
               key={time}
+              title={String(time)}
               style={{ left: `calc(${(time / maxTimeMs) * 100}% - 1px)` }}
               onClick={() => onChange(time)}
             />

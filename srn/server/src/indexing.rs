@@ -49,6 +49,14 @@ pub fn index_all_ships_by_id(locations: &Vec<Location>) -> HashMap<Uuid, &Ship> 
     by_id
 }
 
+pub fn index_ships_by_id(loc: &Location) -> HashMap<Uuid, &Ship> {
+    let mut by_id = HashMap::new();
+    for p in loc.ships.iter() {
+        by_id.entry(p.id).or_insert(p);
+    }
+    by_id
+}
+
 pub fn index_planets_by_id(planets: &Vec<Planet>) -> HashMap<Uuid, &Planet> {
     let mut by_id = HashMap::new();
     for p in planets.iter() {
@@ -70,14 +78,6 @@ pub fn index_all_planets_by_id(locations: &Vec<Location>) -> HashMap<Uuid, &Plan
 pub fn index_players_by_id(players: &Vec<Player>) -> HashMap<Uuid, &Player> {
     let mut by_id = HashMap::new();
     for p in players.iter() {
-        by_id.entry(p.id).or_insert(p);
-    }
-    by_id
-}
-
-pub fn index_ships_by_id(ships: &Vec<Ship>) -> HashMap<Uuid, &Ship> {
-    let mut by_id = HashMap::new();
-    for p in ships.iter() {
         by_id.entry(p.id).or_insert(p);
     }
     by_id

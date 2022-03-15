@@ -1,3 +1,4 @@
+use crate::indexing::{index_all_ships_by_id, index_ships_by_id};
 use crate::planet_movement::{IBody, IBodyV2};
 use crate::vec2::{Precision, Vec2f64};
 use crate::world::{lerp, Location, Movement, Planet, PlanetV2, Ship};
@@ -30,9 +31,10 @@ fn interpolate_location(
     value: f64,
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
 ) {
+    let ships_by_id_target = index_ships_by_id(target);
     for i in 0..result.ships.len() {
         let ship = &mut result.ships[i];
-        if let Some(target) = target.ships.get(i) {
+        if let Some(target) = ships_by_id_target.get(&ship.id) {
             interpolate_ship(ship, target, value);
         }
     }
