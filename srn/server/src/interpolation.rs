@@ -36,106 +36,111 @@ fn interpolate_location(
             interpolate_ship(ship, target, value);
         }
     }
-    // sequentially interpolate tiers of anchors 1-2, since the movement is relative
-    for anchor_tier in 1..3 {
-        // location has to be re-copied, since the interpolation needs the updated positions of
-        // the anchors from the previous tier
-        let read_loc_copy = result.clone();
+
+    let mut movements = vec![];
+    // in order to avoid tiers, instead calculate all relative positions via casting to v2
+    // ideally, this should not happen - but will only be possible once I migrate actual state to v2 and do
+    // the movement via same interpolation algorithm
+    for i in 0..result.planets.len() {
+        if let Some(target_p) = target.planets.get(i) {
+            movements.push((
+                PlanetV2::from(&result.planets[i], result).movement,
+                PlanetV2::from(target_p, target).movement,
+            ));
+        }
+    }
+
+    // then interpolate
+    for i in 0..movements.len() {
+        let (res_mov, tar_mov) = &mut movements[i];
+        interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache);
+    }
+    // then, sequentially (via tiers) restore absolute position
+    let mut anchor_pos_by_id = HashMap::new();
+    let star_clone = result.star.clone().unwrap();
+    anchor_pos_by_id.insert(star_clone.id, star_clone.as_vec());
+    for tier in 1..3 {
         for i in 0..result.planets.len() {
             let planet = &mut result.planets[i];
-            if planet.anchor_tier == anchor_tier {
-                if let Some(target) = target.planets.get(i) {
-                    interpolate_planet(planet, target, value, &read_loc_copy, rel_orbit_cache);
+            if planet.anchor_tier == tier {
+                let new_pos = match movements[i].0 {
+                    Movement::RadialMonotonous {
+                        relative_position, ..
+                    } => relative_position,
+                    _ => panic!("bad movement"),
                 }
+                .add(&anchor_pos_by_id.get(&planet.anchor_id).unwrap());
+                anchor_pos_by_id.insert(planet.id, new_pos.clone());
+                planet.x = new_pos.x;
+                planet.y = new_pos.y;
             }
         }
     }
 }
 
-fn interpolate_planet(
-    result: &mut Planet,
-    target: &Planet,
-    value: f64,
-    loc: &Location,
-    rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
-) {
-    let mut res_v2 = PlanetV2::from(result, loc);
-    let tar_v2 = PlanetV2::from(target, loc);
-    let anchor = tar_v2.get_anchor_ref(loc);
-    interpolate_planet_v2(&mut res_v2, &tar_v2, value, anchor, rel_orbit_cache);
-    mem::swap(
-        &mut Planet::from_pv2(&res_v2, loc.star.as_ref().map(|s| s.id.clone()).unwrap()),
-        result,
-    );
-}
+pub const REL_ORBIT_CACHE_KEY_PRECISION: f64 = 1.0e14;
 
-fn interpolate_planet_v2(
-    result: &mut PlanetV2,
-    target: &PlanetV2,
+fn interpolate_planet_relative_movement(
+    result: &mut Movement,
+    target: &Movement,
     value: f64,
-    anchor: Box<&dyn IBody>,
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
 ) {
-    let (radius_key, mut interpolation_hint_result) = match result.movement {
+    let res_clone = result.clone();
+    let (radius_key, mut interpolation_hint_result, result_pos) = match result {
         Movement::RadialMonotonous {
             radius_to_anchor,
             interpolation_hint,
+            relative_position,
             ..
-        } => (radius_to_anchor, interpolation_hint.map(|v| v as usize)),
-        _ => panic!(
-            "Cannot interpolate without radial movement for id {}, movement = {:?}",
-            result.id, result.movement
+        } => (
+            radius_to_anchor,
+            interpolation_hint.map(|v| v as usize),
+            relative_position,
         ),
+        _ => panic!("bad movement"),
     };
-    let mut interpolation_hint_target = match target.movement {
+    let (mut interpolation_hint_target, target_pos) = match target {
         Movement::RadialMonotonous {
-            interpolation_hint, ..
-        } => interpolation_hint.map(|v| v as usize),
-        _ => panic!(
-            "Cannot interpolate without radial movement for id {}, movement = {:?}",
-            target.id, target.movement
-        ),
+            interpolation_hint,
+            relative_position,
+            ..
+        } => (interpolation_hint.map(|v| v as usize), relative_position),
+        _ => panic!("bad movement"),
     };
 
     let phase_table = rel_orbit_cache
-        .entry((radius_key * 1.0e14) as u64)
-        .or_insert_with(|| get_rel_position_phase_table(&result.movement, result.id));
+        .entry((*radius_key * REL_ORBIT_CACHE_KEY_PRECISION) as u64)
+        .or_insert_with(|| get_rel_position_phase_table(&res_clone));
     let result_idx = interpolation_hint_result.unwrap_or_else(|| {
-        calculate_hint(&phase_table, Box::new(result), &anchor).expect("could not calculate hint")
+        calculate_hint(&phase_table, result_pos).expect("could not calculate hint")
     });
     let target_idx = interpolation_hint_target.unwrap_or_else(|| {
-        calculate_hint(&phase_table, Box::new(target), &anchor).expect("could not calculate hint")
+        calculate_hint(&phase_table, target_pos).expect("could not calculate hint")
     });
     let lerped_idx = lerp_usize_cycle(result_idx, target_idx, value, phase_table.len());
-    let anchor_pos = anchor.as_vec();
-    log!(format!(
-        "name {} anchor {} anch pos {} own rel pos after calculation {} lerped_idx/total {lerped_idx}/{} result/target idx {result_idx}/{target_idx}, result/target rel pos {}/{} result/target abs pos {}/{}",
-        result.name,
-        anchor.get_name(),
-        anchor_pos,
-        phase_table[lerped_idx],
-        phase_table.len(),
-        result.spatial.position.subtract(&anchor_pos),
-        target.spatial.position.subtract(&anchor_pos),
-        result.spatial.position,
-        target.spatial.position
-    ));
-    result.spatial.position = phase_table[lerped_idx].add(&anchor_pos);
+    // log!(format!(
+    //     "own rel pos after calculation {} lerped_idx/total {lerped_idx}/{} result/target idx {result_idx}/{target_idx}",
+    //     phase_table[lerped_idx],
+    //     phase_table.len(),
+    // ));
+    match result {
+        Movement::RadialMonotonous {
+            relative_position, ..
+        } => {
+            *relative_position = phase_table[lerped_idx];
+        }
+        _ => panic!("bad movement"),
+    }
 }
 
 // assume that the table is a set of sequential circle coordinates
-fn calculate_hint(
-    table: &Vec<Vec2f64>,
-    planet: Box<&dyn IBodyV2>,
-    anchor: &Box<&dyn IBody>,
-) -> Option<usize> {
-    let pos = &planet.get_spatial().position.subtract(&anchor.as_vec());
+fn calculate_hint(table: &Vec<Vec2f64>, pos: &Vec2f64) -> Option<usize> {
     // this can be further optimized by using binary search and not calculating every single distance
     let mut current_distance = 9999.0;
     let mut index = None;
     for i in 0..table.len() {
-        let point = &table[i];
-        let dist = point.euclidean_distance(pos);
+        let dist = table[i].euclidean_distance(pos);
         if dist < current_distance {
             index = Some(i);
             current_distance = dist;
@@ -162,8 +167,8 @@ pub const REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER: f64 = 32000.0;
 // build a list of coordinates of the linear (segment) approximation of the circle, where every point
 // is a vertex of the resulting polygon, in an assumption that precision is enough (subdivided to enough amount of points)
 // so lerp(A,B) =~ the real circle point with some precision, but at the same time as low as possible
-fn get_rel_position_phase_table(def: &Movement, for_id: Uuid) -> Vec<Vec2f64> {
-    log!(format!("calculate call {def:?} for id {for_id}"));
+fn get_rel_position_phase_table(def: &Movement) -> Vec<Vec2f64> {
+    // log!(format!("calculate call {def:?}"));
     match def {
         Movement::RadialMonotonous {
             full_period_ticks,
@@ -177,7 +182,7 @@ fn get_rel_position_phase_table(def: &Movement, for_id: Uuid) -> Vec<Vec2f64> {
             let realistic_amount =
                 amount_from_period / REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER; // precision with 1ms is probably fine-grained enough, equivalent to every 2 cycles of 16ms
 
-            let chosen_amount: usize = {
+            let mut chosen_amount: usize = {
                 if ideal_amount < realistic_amount {
                     // no need to be more precise than the heuristic
                     ideal_amount as usize
@@ -191,6 +196,9 @@ fn get_rel_position_phase_table(def: &Movement, for_id: Uuid) -> Vec<Vec2f64> {
                     }
                 }
             };
+            if chosen_amount % 2 > 0 {
+                chosen_amount += 1; // make even
+            }
             let angle_step_rad = PI * 2.0 / chosen_amount as f64;
             let sign = if *clockwise { -1.0 } else { 1.0 };
             for i in 0..chosen_amount {
@@ -201,7 +209,7 @@ fn get_rel_position_phase_table(def: &Movement, for_id: Uuid) -> Vec<Vec2f64> {
             }
             res
         }
-        _ => panic!("Unsupported movement definition {def:?} for id {}", for_id),
+        _ => panic!("bad movement"),
     }
 }
 

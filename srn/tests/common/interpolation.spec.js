@@ -86,7 +86,7 @@ describe('state interpolation', () => {
     expect(planetC.y).toBeCloseTo(-(Math.sqrt(2) / 2) * 100);
   });
 
-  fit('can interpolate moon orbit movement', () => {
+  it('can interpolate moon orbit movement', () => {
     const roomA = wasm.createRoom({
       mode: 'PirateDefence',
       seed: 'interpolate',
