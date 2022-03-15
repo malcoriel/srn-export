@@ -9,7 +9,7 @@ use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::cargo_rush::generate_random_quest;
+use crate::cargo_rush::{generate_random_quest, CargoDeliveryQuestState};
 use crate::dialogue_dto::{Dialogue, DialogueElem, Substitution, SubstitutionType};
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_index, find_my_ship_mut,
@@ -24,9 +24,7 @@ use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
-use crate::world::{
-    fire_saved_event, CargoDeliveryQuestState, GameState, Planet, Player, PlayerId, Ship,
-};
+use crate::world::{fire_saved_event, GameState, Planet, Player, PlayerId, Ship};
 use crate::world_events::GameEvent;
 use crate::{fire_event, world};
 

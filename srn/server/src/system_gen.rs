@@ -10,17 +10,20 @@ use rand::{Rng, RngCore, SeedableRng};
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::combat::Health;
 use crate::market::{init_all_planets_market, Market};
 use crate::perf::Sampler;
 use crate::random_stuff::{
     gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count,
     gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_color, gen_star_name,
-    gen_star_radius, PLANET_NAMES, SAT_NAMES,
+    gen_star_radius, random_hex_seed_seeded, PLANET_NAMES, SAT_NAMES,
 };
 use crate::vec2::Vec2f64;
-use crate::world::{random_hex_seed_seeded, AsteroidBelt, Container, GameMode, GameState, Location, Planet, Star, AABB, GAME_STATE_VERSION, ObjectProperty};
+use crate::world::{
+    AsteroidBelt, Container, GameMode, GameState, Location, ObjectProperty, Planet, Star, AABB,
+    GAME_STATE_VERSION,
+};
 use crate::{planet_movement, prng_id, seed_prng, world};
-use crate::combat::Health;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlanetType {
@@ -189,7 +192,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor_tier: 2,
                             color: gen_color(&mut prng).to_string(),
                             health: None,
-                            properties: Default::default()
+                            properties: Default::default(),
                         })
                     }
                 } else {
@@ -293,7 +296,7 @@ pub fn gen_planet(
         anchor_tier: 1,
         color: gen_color(&mut prng).to_string(),
         health: None,
-        properties: Default::default()
+        properties: Default::default(),
     }
 }
 
@@ -310,7 +313,7 @@ pub fn gen_planet_typed(p_type: PlanetType, id: Uuid) -> Planet {
         anchor_tier: 0,
         color: get_planet_type_color(p_type),
         health: None,
-        properties: Default::default()
+        properties: Default::default(),
     }
 }
 
@@ -359,7 +362,7 @@ fn make_cargo_rush_state(seed: String, mut prng: &mut SmallRng) -> GameState {
     state
 }
 
-fn assign_health_to_planets (planets: &mut Vec<Planet>, health: Health) {
+fn assign_health_to_planets(planets: &mut Vec<Planet>, health: Health) {
     for mut planet in planets.into_iter() {
         planet.health = Some(health.clone())
     }
@@ -371,8 +374,12 @@ pub fn make_pirate_defence_state(seed: String, prng: &mut SmallRng) -> GameState
     gen_opts.max_satellites_for_planet = 0;
     let mut state = gen_state(seed, gen_opts, prng);
     assign_health_to_planets(&mut state.locations[0].planets, Health::new(100.0));
-    state.locations[0].planets[0].properties.push(ObjectProperty::UnlandablePlanet);
-    state.locations[0].planets[0].properties.push(ObjectProperty::PirateDefencePlayersHomePlanet);
+    state.locations[0].planets[0]
+        .properties
+        .push(ObjectProperty::UnlandablePlanet);
+    state.locations[0].planets[0]
+        .properties
+        .push(ObjectProperty::PirateDefencePlayersHomePlanet);
     state.milliseconds_remaining = 5 * 1000 * 60;
     state.mode = GameMode::PirateDefence;
     state
@@ -414,7 +421,7 @@ fn make_tutorial_state(prng: &mut SmallRng) -> GameState {
             anchor_tier: 1,
             color: "#008FA9".to_string(),
             health: None,
-            properties: Default::default()
+            properties: Default::default(),
         },
         Planet {
             id: prng_id(prng),
@@ -428,7 +435,7 @@ fn make_tutorial_state(prng: &mut SmallRng) -> GameState {
             anchor_tier: 2,
             color: "#1D334A".to_string(),
             health: None,
-            properties: Default::default()
+            properties: Default::default(),
         },
     ];
 
@@ -456,7 +463,7 @@ fn make_tutorial_state(prng: &mut SmallRng) -> GameState {
         processed_events: vec![],
         processed_player_actions: vec![],
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
-        accumulated_not_updated_ticks: 0
+        accumulated_not_updated_ticks: 0,
     }
 }
 
@@ -472,7 +479,7 @@ pub fn make_sandbox_state(prng: &mut SmallRng) -> GameState {
         seed: seed.clone(),
         my_id: Default::default(),
         start_time_ticks: now,
-        locations: vec![Location::new_empty(prng_id( prng))],
+        locations: vec![Location::new_empty(prng_id(prng))],
         players: vec![],
         milliseconds_remaining: 99 * 60 * 1000,
         paused: false,
@@ -488,7 +495,7 @@ pub fn make_sandbox_state(prng: &mut SmallRng) -> GameState {
         processed_events: vec![],
         processed_player_actions: vec![],
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
-        accumulated_not_updated_ticks: 0
+        accumulated_not_updated_ticks: 0,
     }
 }
 
@@ -541,7 +548,7 @@ fn gen_state(seed: String, opts: GenStateOpts, prng: &mut SmallRng) -> GameState
         ticks: 0,
         processed_player_actions: vec![],
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
-        accumulated_not_updated_ticks: 0
+        accumulated_not_updated_ticks: 0,
     };
 
     let mut state = validate_state(state);

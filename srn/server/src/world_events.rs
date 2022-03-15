@@ -122,3 +122,10 @@ pub enum GameEvent {
         player_id: Uuid,
     },
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "tag")]
+pub struct ProcessedGameEvent {
+    pub event: GameEvent,
+    pub processed_at_ticks: u64,
+}

@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod substitution_test {
+    use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
     use crate::substitutions::substitute_text;
-    use crate::world::{CargoDeliveryQuestState, GameMode, Planet, Player, Quest};
+    use crate::world::{GameMode, Planet, Player};
     use std::collections::HashMap;
     use uuid::Uuid;
 

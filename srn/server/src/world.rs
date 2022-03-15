@@ -19,6 +19,7 @@ use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
+use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
 use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
@@ -51,10 +52,11 @@ use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
 use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
-use crate::world_events::{world_update_handle_event, GameEvent};
+use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEvent};
 use crate::world_player_actions::world_update_handle_player_action;
 use crate::{
-    abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, system_gen, world_events,
+    abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, random_stuff, system_gen,
+    world_events,
 };
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{dialogue, vec2};
@@ -119,24 +121,7 @@ pub enum LocalEffect {
     },
 }
 
-pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
-    let rating = all_players
-        .into_iter()
-        .sorted_by(|a, b| Ord::cmp(&b.money, &a.money))
-        .map(|p| (p.clone(), get_player_score(p)))
-        .collect::<Vec<_>>();
-    let winner: String = rating
-        .iter()
-        .nth(0)
-        .map_or("Nobody".to_string(), |p| p.0.name.clone());
-    Some(Leaderboard { rating, winner })
-}
-
-fn get_player_score(p: &Player) -> u32 {
-    p.money as u32
-}
-
-pub(crate) fn get_random_planet<'a>(
+pub fn get_random_planet<'a>(
     planets: &'a Vec<Planet>,
     docked_at: Option<Uuid>,
     rng: &mut SmallRng,
@@ -395,13 +380,6 @@ pub struct Star {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
-pub struct ProcessedGameEvent {
-    pub event: GameEvent,
-    pub processed_at_ticks: u64,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag = "tag")]
 pub struct ProcessedPlayerAction {
     pub action: PlayerActionRust,
     pub processed_at_ticks: u64,
@@ -502,38 +480,6 @@ impl Ship {
         Vec2f64 {
             x: self.x,
             y: self.y,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, TypescriptDefinition, TypeScriptify)]
-pub enum CargoDeliveryQuestState {
-    Unknown = 0,
-    Started = 1,
-    Picked = 2,
-    Delivered = 3,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct Quest {
-    pub id: Uuid,
-    pub from_id: Uuid,
-    pub to_id: Uuid,
-    pub state: CargoDeliveryQuestState,
-    pub reward: i32,
-}
-
-impl Quest {
-    pub fn as_notification(&self, prng: &mut SmallRng) -> Notification {
-        let text = format!("You've been tasked with delivering a cargo from one planet to another. Here's what you need:\n\n1. Pick up the cargo at s_cargo_source_planet.\n2. Drop off the cargo at s_cargo_destination_planet.\n\nYour employer, who wished to remain anonymous, will reward you: {} SB", self.reward);
-        Notification::Task {
-            header: "Delivery quest".to_string(),
-            text: NotificationText {
-                text,
-                substituted: false,
-                substitutions: vec![],
-            },
-            id: prng_id(prng),
         }
     }
 }
@@ -780,19 +726,6 @@ impl GameState {
     }
 }
 
-pub fn random_hex_seed() -> String {
-    let mut rng = get_prng();
-    let mut bytes: [u8; 8] = [0; 8];
-    rng.fill_bytes(&mut bytes);
-    hex::encode(bytes)
-}
-
-pub fn random_hex_seed_seeded(prng: &mut SmallRng) -> String {
-    let mut bytes: [u8; 8] = [0; 8];
-    prng.fill_bytes(&mut bytes);
-    hex::encode(bytes)
-}
-
 fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
     let mut res = vec![];
     let mut cur_angle: f64 = 0.0;
@@ -1007,7 +940,7 @@ fn update_world_iter(
                         p
                     })
                     .collect::<Vec<_>>();
-                state = seed_state(&state.mode, random_hex_seed());
+                state = seed_state(&state.mode, random_stuff::random_hex_seed());
                 state.players = players.clone();
                 for player in players.iter() {
                     spawn_ship(
@@ -1024,7 +957,7 @@ fn update_world_iter(
     } else {
         if !client {
             let update_leaderboard_id = sampler.start(SamplerMarks::UpdateLeaderboard as u32);
-            state.leaderboard = make_leaderboard(&state.players);
+            state.leaderboard = cargo_rush::make_leaderboard(&state.players);
             sampler.end(update_leaderboard_id);
 
             if state.market.time_before_next_shake > 0 {
@@ -2495,7 +2428,7 @@ pub fn make_room(
     bots_seed: Option<String>,
 ) -> (Uuid, Room) {
     let room_name = format!("{} - {}", mode, room_id);
-    let state = system_gen::seed_state(&mode, random_hex_seed_seeded(prng));
+    let state = system_gen::seed_state(&mode, random_stuff::random_hex_seed_seeded(prng));
     let state_id = state.id.clone();
     let mut room = Room {
         id: room_id,

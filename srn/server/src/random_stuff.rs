@@ -1,6 +1,6 @@
-use rand::prelude::*;
+use crate::get_prng;
 use crate::world::Rarity;
-use crate::{get_prng};
+use rand::prelude::*;
 
 pub const STAR_NAMES: [&str; 32] = [
     "Ithoins",
@@ -243,4 +243,17 @@ pub fn gen_mineral_props(rng: &mut SmallRng) -> (f64, i32, String, Rarity) {
     } else {
         (1.0, 300, "#ffd700".to_string(), Rarity::Rare)
     };
+}
+
+pub fn random_hex_seed() -> String {
+    let mut rng = get_prng();
+    let mut bytes: [u8; 8] = [0; 8];
+    rng.fill_bytes(&mut bytes);
+    hex::encode(bytes)
+}
+
+pub fn random_hex_seed_seeded(prng: &mut SmallRng) -> String {
+    let mut bytes: [u8; 8] = [0; 8];
+    prng.fill_bytes(&mut bytes);
+    hex::encode(bytes)
 }

@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use crate::api_struct::{new_bot, AiTrait, Bot, Room};
 use crate::autofocus::{object_index_into_object_id, object_index_into_object_pos};
+use crate::cargo_rush::CargoDeliveryQuestState;
 use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
@@ -24,9 +25,7 @@ use crate::long_actions::LongAction;
 use crate::random_stuff::gen_bot_name;
 use crate::ship_action::{apply_player_action, PlayerActionRust};
 use crate::world;
-use crate::world::{
-    CargoDeliveryQuestState, GameState, Ship, ShipIdx, ShipTemplate, SpatialIndexes,
-};
+use crate::world::{GameState, Ship, ShipIdx, ShipTemplate, SpatialIndexes};
 use crate::world_events::GameEvent;
 use crate::{fire_event, pirate_defence};
 use std::iter::FromIterator;
