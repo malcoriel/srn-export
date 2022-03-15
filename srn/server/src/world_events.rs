@@ -5,7 +5,9 @@ use crate::world::{Planet, Player, Ship};
 use crate::{cargo_rush, tutorial, world, GameMode, Vec2f64};
 use dialogue::DialogueTable;
 use rand::prelude::SmallRng;
+use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
+use wasm_bindgen::prelude::*;
 use world::GameState;
 
 pub fn world_update_handle_event(

@@ -11,6 +11,8 @@ use crate::bots::add_bot;
 use crate::notifications::{Notification, NotificationText};
 use crate::world::{fire_saved_event, Leaderboard, Planet};
 use crate::world_events::GameEvent;
+use serde_derive::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
 use world::Player;
 
 pub fn on_create_room(room: &mut Room, prng: &mut SmallRng) {
