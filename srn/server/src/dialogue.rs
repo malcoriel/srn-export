@@ -9,6 +9,7 @@ use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::cargo_rush::generate_random_quest;
 use crate::dialogue_dto::{Dialogue, DialogueElem, Substitution, SubstitutionType};
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_index, find_my_ship_mut,
@@ -16,16 +17,18 @@ use crate::indexing::{
     index_planets_by_id,
 };
 use crate::inventory::{
-    add_item, consume_items_of_types, count_items_of_types, InventoryItem,
-    InventoryItemType, MINERAL_TYPES, remove_quest_item, value_items_of_types,
+    add_item, consume_items_of_types, count_items_of_types, remove_quest_item,
+    value_items_of_types, InventoryItem, InventoryItemType, MINERAL_TYPES,
 };
 use crate::new_id;
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
-use crate::world::{CargoDeliveryQuestState, fire_saved_event, GameEvent, GameState, Planet, Player, PlayerId, Ship};
+use crate::world::{
+    fire_saved_event, CargoDeliveryQuestState, GameState, Planet, Player, PlayerId, Ship,
+};
+use crate::world_events::GameEvent;
 use crate::{fire_event, world};
-use crate::cargo_rush::generate_random_quest;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueUpdate {
@@ -227,24 +230,24 @@ impl DialogueTable {
         &self,
         script: &DialogueScript,
         res: &mut Vec<(Uuid, Option<Dialogue>)>,
-        player: &Player,
+        player_id: Uuid,
         player_d_states: &mut HashMap<Uuid, Box<Option<Uuid>>>,
         game_state: &GameState,
     ) {
         let value = Box::new(Some(script.initial_state));
         res.push((
-            player.id,
-            build_dialogue_from_state(script.id, &value, self, player.id, game_state),
+            player_id,
+            build_dialogue_from_state(script.id, &value, self, player_id, game_state),
         ));
         player_d_states.insert(script.id, value);
     }
 
-    pub fn get_player_d_states<'a, 'b>(
-        d_states: &'a mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
-        player: &'b Player,
-    ) -> &'a mut HashMap<Uuid, Box<Option<Uuid>>> {
+    pub fn get_player_d_states(
+        d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
+        player_id: Uuid,
+    ) -> &mut HashMap<Uuid, Box<Option<Uuid>>> {
         let (_current_player_dialogue, player_d_states) =
-            d_states.entry(player.id).or_insert((None, HashMap::new()));
+            d_states.entry(player_id).or_insert((None, HashMap::new()));
         player_d_states
     }
 }
@@ -514,10 +517,13 @@ fn apply_side_effects(
                     None
                 };
                 if let Some(player_clone) = player_clone {
-                    fire_saved_event(state,GameEvent::DialogueTriggerRequest {
-                        dialogue_name: name,
-                        player: player_clone,
-                    })
+                    fire_saved_event(
+                        state,
+                        GameEvent::DialogueTriggerRequest {
+                            dialogue_name: name,
+                            player_id: player_clone.id,
+                        },
+                    )
                 }
             }
             DialogueOptionSideEffect::QuitTutorial => {
@@ -526,7 +532,7 @@ fn apply_side_effects(
             DialogueOptionSideEffect::TriggerTutorialQuest => {
                 if let Some(player) = find_my_player(state, player_id) {
                     fire_event(GameEvent::CargoQuestTriggerRequest {
-                        player: player.clone(),
+                        player_id: player.id,
                     })
                 }
             }
@@ -564,8 +570,10 @@ pub fn read_from_resource(file: &str) -> DialogueScript {
     parse_dialogue_script_from_file(file, json)
 }
 
-
-pub fn parse_dialogue_script_from_file(file_name_for_debug: &str, json_contents: String) -> DialogueScript {
+pub fn parse_dialogue_script_from_file(
+    file_name_for_debug: &str,
+    json_contents: String,
+) -> DialogueScript {
     let result = serde_json::from_str::<ShortScript>(json_contents.as_str());
     if result.is_err() {
         panic!(

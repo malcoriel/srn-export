@@ -1,24 +1,29 @@
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::abilities::Ability;
 use crate::combat::ShootTarget;
 use crate::indexing::{find_my_ship_index, find_player_by_ship_id, find_player_idx_by_ship_id};
+use crate::long_actions::LongActionStart;
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
-use crate::world::{dock_ship, undock_ship, GameEvent, GameState, ManualMoveUpdate, Ship, ShipIdx, ObjectProperty};
+use crate::world::{
+    dock_ship, undock_ship, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipIdx,
+};
+use crate::world_events::GameEvent;
 use crate::{combat, fire_event, indexing, tractoring, world};
 use core::mem;
 use rand::prelude::SmallRng;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
-use crate::abilities::Ability;
-use crate::long_actions::LongActionStart;
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
 pub enum PlayerActionRust {
     Unknown,
-    Move { update: ManualMoveUpdate },
+    Move {
+        update: ManualMoveUpdate,
+    },
     Gas,
     StopGas,
     StopTurn,
@@ -26,13 +31,19 @@ pub enum PlayerActionRust {
     TurnRight,
     TurnLeft,
     Dock,
-    Navigate { target: Vec2f64 },
-    DockNavigate { target: Uuid },
-    Tractor { target: Uuid },
+    Navigate {
+        target: Vec2f64,
+    },
+    DockNavigate {
+        target: Uuid,
+    },
+    Tractor {
+        target: Uuid,
+    },
     LongActionStart {
         long_action_start: LongActionStart,
-        player_id: Uuid
-    }
+        player_id: Uuid,
+    },
 }
 
 pub fn apply_player_action(
@@ -40,7 +51,7 @@ pub fn apply_player_action(
     state: &GameState,
     ship_idx: Option<ShipIdx>,
     client: bool,
-    prng: &mut SmallRng
+    prng: &mut SmallRng,
 ) -> Option<Ship> {
     if ship_idx.is_none() {
         warn!("No ship");
@@ -71,7 +82,8 @@ pub fn apply_player_action(
             undock_ship_via_clone(state, &ship_idx, &mut ship, client, prng);
             ship.dock_target = None;
             ship.navigate_target = Some(target);
-            ship.trajectory = world::build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
+            ship.trajectory =
+                world::build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
             ship.movement_markers.gas = None;
             ship.movement_markers.turn = None;
             Some(ship)
@@ -79,11 +91,17 @@ pub fn apply_player_action(
         PlayerActionRust::DockNavigate { target } => {
             let mut ship = old_ship.clone();
             if let Some(planet) = indexing::find_planet(state, &target) {
-                if planet.properties.contains(&ObjectProperty::UnlandablePlanet) && !ship.abilities.contains(&Ability::BlowUpOnLand) {
-                    warn!(format!("Attempt to land on unlandable planet {} by ship {}, ignoring.", planet.id, ship.id));
+                if planet
+                    .properties
+                    .contains(&ObjectProperty::UnlandablePlanet)
+                    && !ship.abilities.contains(&Ability::BlowUpOnLand)
+                {
+                    warn!(format!(
+                        "Attempt to land on unlandable planet {} by ship {}, ignoring.",
+                        planet.id, ship.id
+                    ));
                     None
-                }
-                else {
+                } else {
                     let ship_pos = Vec2f64 {
                         x: ship.x,
                         y: ship.y,
@@ -96,7 +114,11 @@ pub fn apply_player_action(
                     ship.navigate_target = None;
                     ship.dock_target = None;
                     ship.dock_target = Some(target);
-                    ship.trajectory = world::build_trajectory_to_point(ship_pos, &planet_pos, &ship.movement_definition);
+                    ship.trajectory = world::build_trajectory_to_point(
+                        ship_pos,
+                        &planet_pos,
+                        &ship.movement_definition,
+                    );
                     ship.movement_markers.gas = None;
                     ship.movement_markers.turn = None;
                     Some(ship)
@@ -176,7 +198,13 @@ pub fn apply_player_action(
     }
 }
 
-fn undock_ship_via_clone(state: &GameState, ship_idx: &ShipIdx, mut ship: &mut Ship, client: bool, prng: &mut SmallRng) {
+fn undock_ship_via_clone(
+    state: &GameState,
+    ship_idx: &ShipIdx,
+    mut ship: &mut Ship,
+    client: bool,
+    prng: &mut SmallRng,
+) {
     let mut state_mut_clone = state.clone();
     undock_ship(
         &mut state_mut_clone,

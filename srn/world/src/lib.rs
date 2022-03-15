@@ -217,7 +217,7 @@ lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"").unwrap();
 }
 
-pub fn fire_event(_ev: world::GameEvent) {
+pub fn fire_event(_ev: world_events::GameEvent) {
     // no support for events on client
 }
 

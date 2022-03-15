@@ -10,19 +10,25 @@ use std::time::Duration;
 use uuid::Uuid;
 
 use crate::api_struct::{new_bot, AiTrait, Bot, Room};
-use crate::autofocus::{object_index_into_object_pos, object_index_into_object_id};
+use crate::autofocus::{object_index_into_object_id, object_index_into_object_pos};
 use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
 };
-use crate::long_actions::{LongAction};
-use crate::{fire_event, pirate_defence};
-use crate::indexing::{find_my_player, find_my_ship, find_planet, GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier};
+use crate::indexing;
+use crate::indexing::{
+    find_my_player, find_my_ship, find_planet, GameStateIndexes, ObjectIndexSpecifier,
+    ObjectSpecifier,
+};
+use crate::long_actions::LongAction;
 use crate::random_stuff::gen_bot_name;
 use crate::ship_action::{apply_player_action, PlayerActionRust};
-use crate::{world};
-use crate::world::{CargoDeliveryQuestState, GameEvent, GameState, Ship, ShipIdx, SpatialIndexes, ShipTemplate};
-use crate::{indexing};
+use crate::world;
+use crate::world::{
+    CargoDeliveryQuestState, GameState, Ship, ShipIdx, ShipTemplate, SpatialIndexes,
+};
+use crate::world_events::GameEvent;
+use crate::{fire_event, pirate_defence};
 use std::iter::FromIterator;
 
 const BOT_SLEEP_MS: u64 = 200;
@@ -40,18 +46,48 @@ pub fn bot_act(
     d_table: &DialogueTable,
     bot_d_states: &DialogueStatesForPlayer,
     spatial_indexes: &SpatialIndexes,
-    prng: &mut SmallRng
+    prng: &mut SmallRng,
 ) -> (Bot, Vec<BotAct>) {
-    if bot.traits.iter().any(|t| matches!(t, AiTrait::CargoRushHauler {..})) {
-        return bot_cargo_rush_hauler_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states, prng);
+    if bot
+        .traits
+        .iter()
+        .any(|t| matches!(t, AiTrait::CargoRushHauler { .. }))
+    {
+        return bot_cargo_rush_hauler_act(
+            bot,
+            &state,
+            bot_elapsed_micro,
+            d_table,
+            bot_d_states,
+            prng,
+        );
     }
-    if bot.traits.iter().any(|t| matches!(t, AiTrait::PirateDefencePlanetDefender {..})) {
-        return pirate_defence::bot_planet_defender_act(bot, &state, bot_elapsed_micro, d_table, bot_d_states, spatial_indexes, prng);
+    if bot
+        .traits
+        .iter()
+        .any(|t| matches!(t, AiTrait::PirateDefencePlanetDefender { .. }))
+    {
+        return pirate_defence::bot_planet_defender_act(
+            bot,
+            &state,
+            bot_elapsed_micro,
+            d_table,
+            bot_d_states,
+            spatial_indexes,
+            prng,
+        );
     }
     return (bot, vec![]);
 }
 
-fn bot_cargo_rush_hauler_act(mut bot: Bot, state: &&GameState, bot_elapsed_micro: i64, d_table: &DialogueTable, bot_d_states: &DialogueStatesForPlayer, prng: &mut SmallRng) -> (Bot, Vec<BotAct>) {
+fn bot_cargo_rush_hauler_act(
+    mut bot: Bot,
+    state: &&GameState,
+    bot_elapsed_micro: i64,
+    d_table: &DialogueTable,
+    bot_d_states: &DialogueStatesForPlayer,
+    prng: &mut SmallRng,
+) -> (Bot, Vec<BotAct>) {
     let player = find_my_player(&state, bot.id);
     let conditions = check_trigger_conditions(state, bot.id);
     if player.is_none() {
@@ -117,7 +153,8 @@ fn bot_cargo_rush_hauler_act(mut bot: Bot, state: &&GameState, bot_elapsed_micro
 }
 
 fn not_already_there(ship: &Ship, desired_target: Uuid) -> bool {
-    !ship.dock_target.map_or(false, |id| id == desired_target) && !ship.docked_at.map_or(false, |id| id == desired_target)
+    !ship.dock_target.map_or(false, |id| id == desired_target)
+        && !ship.docked_at.map_or(false, |id| id == desired_target)
 }
 
 fn make_dialogue_act(
@@ -144,7 +181,8 @@ fn make_dialogue_act(
                     "Bot {:?} is stuck without dialogue option in dialogue {} state {:?}",
                     bot, current_dialogue_name, current_d_state
                 ))
-            } else {}
+            } else {
+            }
             option
         })
         .and_then(|opt| {
@@ -186,7 +224,7 @@ pub fn do_bot_players_actions(
     d_table: &DialogueTable,
     bot_elapsed_micro: i64,
     spatial_indexes: &SpatialIndexes,
-    prng: &mut SmallRng
+    prng: &mut SmallRng,
 ) {
     let mut ship_updates: HashMap<Uuid, Vec<PlayerActionRust>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
@@ -234,7 +272,8 @@ pub fn do_bot_players_actions(
         for act in acts {
             let ship_idx = indexing::find_my_ship_index(&room.state, bot_id);
             if !matches!(act, PlayerActionRust::LongActionStart { .. }) {
-                let updated_ship = apply_player_action(act.clone(), &mut room.state, ship_idx, false, prng);
+                let updated_ship =
+                    apply_player_action(act.clone(), &mut room.state, ship_idx, false, prng);
                 if let Some(updated_ship) = updated_ship {
                     world::try_replace_ship(&mut room.state, &updated_ship, bot_id);
                 }
@@ -247,12 +286,24 @@ pub fn do_bot_players_actions(
     for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
         for act in dialogue_update {
             // eprintln!("executing {:?}", act);
-            execute_dialog_option(bot_id, &mut room.state, act.clone(), d_states, &d_table, prng);
+            execute_dialog_option(
+                bot_id,
+                &mut room.state,
+                act.clone(),
+                d_states,
+                &d_table,
+                prng,
+            );
         }
     }
 }
 
-pub fn do_bot_npcs_actions(room: &mut Room, elapsed_micro: i64, spatial_indexes: &SpatialIndexes, prng: &mut SmallRng) {
+pub fn do_bot_npcs_actions(
+    room: &mut Room,
+    elapsed_micro: i64,
+    spatial_indexes: &SpatialIndexes,
+    prng: &mut SmallRng,
+) {
     let mut ship_updates: HashMap<Uuid, (Vec<PlayerActionRust>, ShipIdx)> = HashMap::new();
 
     for i in 0..room.state.locations.len() {
@@ -303,8 +354,17 @@ fn npc_act(
     let bot = ship.npc.clone().unwrap();
     let mut res = vec![];
     let trait_set: HashSet<AiTrait> = HashSet::from_iter(bot.traits.clone().into_iter());
-    let not_landing = ship.long_actions.iter().filter(|la| matches!(la, LongAction::Dock { .. })).count() == 0;
-    if trait_set.contains(&AiTrait::ImmediatePlanetLand) && ship.dock_target.is_none() && not_landing && ship.docked_at.is_none() {
+    let not_landing = ship
+        .long_actions
+        .iter()
+        .filter(|la| matches!(la, LongAction::Dock { .. }))
+        .count()
+        == 0;
+    if trait_set.contains(&AiTrait::ImmediatePlanetLand)
+        && ship.dock_target.is_none()
+        && not_landing
+        && ship.docked_at.is_none()
+    {
         let closest_planet = find_closest_planet(
             &Vec2f64 {
                 x: ship.x,
@@ -353,16 +413,14 @@ fn find_closest_planet(
     }
 
     if let Some(min_oid) = min_oid {
-        return object_index_into_object_id(min_oid, &state.locations[location_idx]).and_then(|oid| {
-            return match oid {
-                ObjectSpecifier::Planet { id } => {
-                    Some(id)
-                }
-                _ => {
-                    None
-                }
-            };
-        });
+        return object_index_into_object_id(min_oid, &state.locations[location_idx]).and_then(
+            |oid| {
+                return match oid {
+                    ObjectSpecifier::Planet { id } => Some(id),
+                    _ => None,
+                };
+            },
+        );
     }
     return None;
 }

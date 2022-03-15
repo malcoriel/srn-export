@@ -1,26 +1,27 @@
 use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
-use std::sync::{Arc, mpsc, Mutex, RwLock};
+use std::sync::{mpsc, Arc, Mutex, RwLock};
 use std::sync::{MutexGuard, RwLockWriteGuard};
 
+use crate::api_struct::AiTrait;
+use crate::world_events::GameEvent;
 use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
-use uuid::Uuid;
 use rand::prelude::SmallRng;
-use crate::api_struct::AiTrait;
+use uuid::Uuid;
 
-use crate::abilities::{*};
+use crate::abilities::*;
 use crate::dialogue::DialogueTable;
 use crate::dialogue_dto::Dialogue;
-use crate::{cargo_rush, indexing, pirate_defence, tutorial};
+use crate::get_prng;
 use crate::perf::Sampler;
 use crate::rooms_api::create_room_impl;
 use crate::states::StateContainer;
 use crate::substitutions::substitute_notification_texts;
 use crate::world;
-use crate::world::{GameEvent, GameMode, GameState, Player, spawn_ship};
+use crate::world::{spawn_ship, GameMode, GameState, Player};
 use crate::xcast::XCast;
-use crate::get_prng;
+use crate::{cargo_rush, indexing, pirate_defence, tutorial};
 
 lazy_static! {
     pub static ref EVENTS: (
@@ -47,13 +48,13 @@ pub fn handle_events(
         match result {
             Ok(event) => {
                 match event.clone() {
-                    GameEvent::ShipSpawned { player, .. } => {
-                        if player.is_none() {
+                    GameEvent::ShipSpawned { player_id, .. } => {
+                        if player_id.is_none() {
                             // the event handler here is only used for player ship spawn
                             continue;
                         }
-                        let player = player.unwrap();
-                        let state = crate::states::select_state_mut(cont, player.id);
+                        let player_id = player_id.unwrap();
+                        let state = crate::states::select_state_mut(cont, player_id);
                         if state.is_none() {
                             warn!("event in non-existent state");
                             continue;
@@ -61,11 +62,11 @@ pub fn handle_events(
                         let state = state.unwrap();
                         crate::main_ws_server::send_event_to_client(
                             event.clone(),
-                            XCast::Unicast(player.id, state.id),
+                            XCast::Unicast(player_id, state.id),
                         );
                     }
                     GameEvent::RoomJoined {
-                        player,
+                        player_id,
                         personal,
                         mode,
                         ..
@@ -73,7 +74,7 @@ pub fn handle_events(
                         if personal && mode == GameMode::Tutorial {
                             fire_event(GameEvent::DialogueTriggerRequest {
                                 dialogue_name: "tutorial_start".to_owned(),
-                                player: player.clone(),
+                                player_id,
                             });
                         }
                     }
@@ -104,31 +105,34 @@ pub fn handle_events(
                     GameEvent::Unknown => {
                         // intentionally do nothing
                     }
-                    GameEvent::ShipDocked {
-                        ..
-                    } => {
-                        warn!("Ship docking triggering should happen in world, there's some bug here");
+                    GameEvent::ShipDocked { .. } => {
+                        warn!(
+                            "Ship docking triggering should happen in world, there's some bug here"
+                        );
                     }
                     GameEvent::ShipUndocked { .. } => {
                         // intentionally do nothing
                     }
-                    GameEvent::DialogueTriggerRequest {
-                        ..
-                    } => {
+                    GameEvent::DialogueTriggerRequest { .. } => {
                         warn!("Dialogue triggering should happen in world, there's some bug here");
                     }
-                    GameEvent::CargoQuestTriggerRequest { player } => {
-                        let state = crate::states::select_state_mut(cont, player.id);
+                    GameEvent::CargoQuestTriggerRequest { player_id } => {
+                        let state = crate::states::select_state_mut(cont, player_id);
                         if state.is_none() {
                             warn!("event in non-existent state");
                             continue;
                         }
                         let state = state.unwrap();
                         let planets = state.locations[0].planets.clone();
-                        if let Some(player) = indexing::find_my_player_mut(state, player.id) {
-                            cargo_rush::generate_random_quest(player, &planets.clone(), None, &mut prng);
+                        if let Some(player) = indexing::find_my_player_mut(state, player_id) {
+                            cargo_rush::generate_random_quest(
+                                player,
+                                &planets.clone(),
+                                None,
+                                &mut prng,
+                            );
                         }
-                        substitute_notification_texts(state, HashSet::from_iter(vec![player.id]));
+                        substitute_notification_texts(state, HashSet::from_iter(vec![player_id]));
                     }
                     GameEvent::TradeTriggerRequest { player, .. } => {
                         let state = crate::states::select_state_mut(cont, player.id);
@@ -143,11 +147,17 @@ pub fn handle_events(
                             XCast::Unicast(state.id, player.id),
                         );
                     }
-                    GameEvent::CreateRoomRequest { mode, room_id, bots_seed } => {
+                    GameEvent::CreateRoomRequest {
+                        mode,
+                        room_id,
+                        bots_seed,
+                    } => {
                         create_room_impl(cont, &mode, room_id, bots_seed);
                     }
                     GameEvent::PirateSpawn { .. } => {
-                        warn!("Pirate spawn handling should happen in world, there's some bug here");
+                        warn!(
+                            "Pirate spawn handling should happen in world, there's some bug here"
+                        );
                     }
                     GameEvent::KickPlayerRequest { player_id } => {
                         crate::main_ws_server::kick_player(player_id);

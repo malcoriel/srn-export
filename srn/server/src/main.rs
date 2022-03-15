@@ -52,6 +52,7 @@ use rand::prelude::SmallRng;
 use rand::{thread_rng, RngCore, SeedableRng};
 use states::{get_rooms_iter, update_rooms, StateContainer, ROOMS_READ, STATE};
 use world::{GameMode, GameState, Player, Ship, SpatialIndexes};
+use world_events::GameEvent;
 use xcast::XCast;
 
 use crate::api_struct::Room;
@@ -71,9 +72,7 @@ use crate::states::{
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::vec2::Vec2f64;
-use crate::world::{
-    spawn_ship, update_rule_specifics, GameEvent, UpdateOptions, AABB, BOT_ACTION_TIME_TICKS,
-};
+use crate::world::{spawn_ship, update_rule_specifics, UpdateOptions, AABB, BOT_ACTION_TIME_TICKS};
 
 macro_rules! log {
     ($($t:tt)*) => {

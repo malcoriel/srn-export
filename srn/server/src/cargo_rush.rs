@@ -1,29 +1,33 @@
-use rand::prelude::SmallRng;
-use uuid::Uuid;
-use rand::Rng;
-use crate::{fire_event, notifications, prng_id, Room, world};
 use crate::bots;
+use crate::{fire_event, notifications, prng_id, world, Room};
+use rand::prelude::SmallRng;
+use rand::Rng;
+use uuid::Uuid;
 use world::GameState;
 
-use world::{GameEvent, Player};
-use crate::api_struct::{AiTrait, new_bot};
+use crate::api_struct::{new_bot, AiTrait};
 use crate::bots::add_bot;
-use crate::world::{CargoDeliveryQuestState, fire_saved_event, Planet, Quest};
+use crate::world::{fire_saved_event, CargoDeliveryQuestState, Planet, Quest};
+use crate::world_events::GameEvent;
+use world::Player;
 
 pub fn on_create_room(room: &mut Room, prng: &mut SmallRng) {
     let traits = Some(vec![AiTrait::CargoRushHauler]);
     add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
     add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
-    add_bot(room, new_bot(traits.clone(),prng_id(prng)), prng);
-    add_bot(room, new_bot(traits.clone(),prng_id(prng)), prng);
+    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
+    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
 }
 
-pub fn on_ship_docked(state: &mut GameState, player: Option<Player>) {
-    if let Some(player) = player {
-        fire_saved_event(state, GameEvent::DialogueTriggerRequest {
-            dialogue_name: "basic_planet".to_owned(),
-            player,
-        });
+pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>) {
+    if let Some(player_id) = player_id {
+        fire_saved_event(
+            state,
+            GameEvent::DialogueTriggerRequest {
+                dialogue_name: "basic_planet".to_owned(),
+                player_id,
+            },
+        );
     }
 }
 

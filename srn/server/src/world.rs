@@ -51,7 +51,7 @@ use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
 use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
-use crate::world_events::world_update_handle_event;
+use crate::world_events::{world_update_handle_event, GameEvent};
 use crate::world_player_actions::world_update_handle_player_action;
 use crate::{
     abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, system_gen, world_events,
@@ -391,68 +391,6 @@ pub struct Star {
     pub rotation: f64,
     pub color: String,
     pub corona_color: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag = "tag")]
-pub enum GameEvent {
-    Unknown,
-    ShipDocked {
-        state_id: Uuid,
-        ship: Ship,
-        planet: Planet,
-        player: Option<Player>,
-    },
-    ShipUndocked {
-        state_id: Uuid,
-        ship: Ship,
-        planet: Planet,
-        player: Option<Player>,
-    },
-    ShipSpawned {
-        state_id: Uuid,
-        ship: Ship,
-        player: Option<Player>,
-    },
-    RoomJoined {
-        personal: bool,
-        mode: GameMode,
-        player: Player,
-    },
-    ShipDied {
-        state_id: Uuid,
-        ship: Ship,
-        player: Option<Player>,
-    },
-    GameEnded {
-        state_id: Uuid,
-    },
-    GameStarted {
-        state_id: Uuid,
-    },
-    CargoQuestTriggerRequest {
-        player: Player,
-    },
-    TradeTriggerRequest {
-        player: Player,
-        planet_id: Uuid,
-    },
-    DialogueTriggerRequest {
-        dialogue_name: String,
-        player: Player,
-    },
-    PirateSpawn {
-        at: Vec2f64,
-        state_id: Uuid,
-    },
-    CreateRoomRequest {
-        mode: GameMode,
-        room_id: Uuid,
-        bots_seed: Option<String>,
-    },
-    KickPlayerRequest {
-        player_id: Uuid,
-    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -1870,13 +1808,13 @@ pub fn update_hp_effects(
                 GameEvent::ShipDied {
                     state_id,
                     ship: ship_clone,
-                    player: Some(player.clone()),
+                    player_id: Some(player.id),
                 }
             } else {
                 GameEvent::ShipDied {
                     state_id,
                     ship: ship_clone,
-                    player: None,
+                    player_id: None,
                 }
             };
         fire_saved_event(state, event);
@@ -1899,7 +1837,7 @@ fn apply_players_ship_death(ship: Ship, player: Option<&mut Player>, state_id: U
             fire_event(GameEvent::ShipDied {
                 state_id,
                 ship: ship.clone(),
-                player: Some(player.clone()),
+                player_id: Some(player.id),
             });
         }
     }
@@ -2054,7 +1992,7 @@ pub fn spawn_ship<'a>(
         None => fire_event(GameEvent::ShipSpawned {
             state_id: state.id,
             ship: ship.clone(),
-            player: None,
+            player_id: None,
         }),
         Some(player_id) => {
             state
@@ -2066,7 +2004,7 @@ pub fn spawn_ship<'a>(
                     fire_event(GameEvent::ShipSpawned {
                         state_id,
                         ship: ship.clone(),
-                        player: Some(p.clone()),
+                        player_id: Some(p.id),
                     });
                 });
         }
@@ -2214,7 +2152,7 @@ pub fn dock_ship(
         GameEvent::ShipDocked {
             ship: ship_clone,
             planet: Planet::from(body),
-            player: player_idx.map(|idx| state.players[idx].clone()),
+            player_id: player_idx.map(|idx| state.players[idx].id),
             state_id: state.id,
         },
     );
@@ -2240,7 +2178,7 @@ pub fn undock_ship(
                     state_id: state.id,
                     ship: ship.clone(),
                     planet,
-                    player: player_idx.map(|player_idx| state.players[player_idx].clone()),
+                    player_id: player_idx.map(|player_idx| state.players[player_idx].id),
                 });
                 try_start_long_action_ship(
                     state,

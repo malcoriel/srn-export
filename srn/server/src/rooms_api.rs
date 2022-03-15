@@ -5,6 +5,7 @@ use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 use std::thread;
 use std::time::Duration;
 
+use crate::world_events::GameEvent;
 use chrono::Local;
 use rocket::http::Status;
 use rocket::response::Responder;
@@ -17,8 +18,8 @@ use uuid::Uuid;
 use crate::api_struct::RoomsState;
 use crate::api_struct::*;
 use crate::events::fire_event;
-use crate::states::{ROOMS_READ, StateContainer};
-use crate::world::{GameEvent, GameMode, GameState, PlayerId};
+use crate::states::{StateContainer, ROOMS_READ};
+use crate::world::{GameMode, GameState, PlayerId};
 use crate::{cargo_rush, get_prng, new_id, system_gen, world};
 
 #[get("/")]
@@ -56,7 +57,11 @@ pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
     }
     let mode = mode.ok().unwrap();
     let room_id = new_id();
-    fire_event(GameEvent::CreateRoomRequest { mode, room_id, bots_seed: None });
+    fire_event(GameEvent::CreateRoomRequest {
+        mode,
+        room_id,
+        bots_seed: None,
+    });
 
     return Json(RoomIdResponse { room_id });
 }
@@ -65,7 +70,7 @@ pub fn create_room_impl(
     cont: &mut RwLockWriteGuard<StateContainer>,
     mode: &GameMode,
     room_id: Uuid,
-    bots_seed: Option<String>
+    bots_seed: Option<String>,
 ) {
     let (state_id, room) = world::make_room(&mode, room_id, &mut get_prng(), bots_seed);
     let bot_len = room.bots.len();

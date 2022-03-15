@@ -17,6 +17,7 @@ use websocket::{Message, OwnedMessage};
 
 use crate::dialogue::{execute_dialog_option, DialogueUpdate};
 use crate::dialogue_dto::Dialogue;
+use crate::get_prng;
 use crate::indexing::find_my_player;
 use crate::net::{
     ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
@@ -24,8 +25,8 @@ use crate::net::{
 };
 use crate::ship_action::PlayerActionRust;
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
-use crate::world::{GameEvent, GameState, Player, Ship};
-use crate::get_prng;
+use crate::world::{GameState, Player, Ship};
+use crate::world_events::GameEvent;
 use crate::xcast::XCast;
 use crate::{
     dialogue, indexing, inventory, long_actions, market, notifications, sandbox, ship_action,
@@ -33,8 +34,7 @@ use crate::{
     DIALOGUE_TABLE, MAX_ERRORS, MAX_ERRORS_SAMPLE_INTERVAL, MAX_MESSAGES_PER_INTERVAL,
     MAX_MESSAGE_SAMPLE_INTERVAL_MS,
 };
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
-
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 
 lazy_static! {
     pub static ref DISPATCHER: (
@@ -311,7 +311,7 @@ fn on_client_room_join(client_id: Uuid) {
         crate::fire_event(GameEvent::RoomJoined {
             personal: true,
             mode: state.mode.clone(),
-            player: player.clone(),
+            player_id: player.id,
         });
     }
 }
@@ -328,8 +328,7 @@ fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>)
             }
             let state = state.unwrap();
             // let action_dbg = action.clone();
-            if !long_actions::try_start_long_action(state, client_id, action, &mut get_prng())
-            {
+            if !long_actions::try_start_long_action(state, client_id, action, &mut get_prng()) {
                 // invalid shooting produces too much noise
                 // warn!(format!(
                 //     "Impossible long action for client {}, action {:?}",
@@ -368,7 +367,7 @@ fn on_client_notification_action(client_id: Uuid, data: &&str, tag: Option<&&str
 
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
 pub struct SchedulePlayerAction {
-    action: PlayerActionRust
+    action: PlayerActionRust,
 }
 
 fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
@@ -387,13 +386,19 @@ fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&
                     state.player_actions.push_back(action.action);
                 }
                 _ => {
-                    warn!(format!("schedule player action does not support that player action: {:?}", action.action));
+                    warn!(format!(
+                        "schedule player action does not support that player action: {:?}",
+                        action.action
+                    ));
                 }
             }
             send_tag_confirm(tag.unwrap().to_string(), client_id);
         }
         Err(err) => {
-            warn!(format!("couldn't schedule player action {}, err {}", data, err));
+            warn!(format!(
+                "couldn't schedule player action {}, err {}",
+                data, err
+            ));
         }
     }
 }
@@ -723,7 +728,7 @@ fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) 
             if let Some(player) = find_my_player(state, client_id) {
                 crate::fire_event(GameEvent::DialogueTriggerRequest {
                     dialogue_name: "basic_planet".to_string(),
-                    player: player.clone(),
+                    player_id: player.id,
                 })
             }
             send_tag_confirm(tag.unwrap().to_string(), client_id);
