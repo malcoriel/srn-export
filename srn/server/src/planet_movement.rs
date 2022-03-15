@@ -11,8 +11,8 @@ use crate::perf::Sampler;
 use crate::perf::SamplerMarks;
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
 use crate::world::{
-    split_bodies_by_area, Asteroid, MovementDefinition, ObjectProperty, Planet, PlanetV2,
-    SpatialProps, Star, AABB,
+    split_bodies_by_area, Asteroid, Movement, ObjectProperty, Planet, PlanetV2, SpatialProps, Star,
+    AABB,
 };
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
@@ -39,9 +39,9 @@ pub trait IBody: Clone {
 pub trait IBodyV2: Clone {
     fn get_id(&self) -> Uuid;
     fn get_name(&self) -> &String;
-    fn get_spatial(&self) -> &SpatialProps<usize>;
-    fn get_movement(&self) -> &MovementDefinition;
-    fn set_spatial(&mut self, x: SpatialProps<usize>);
+    fn get_spatial(&self) -> &SpatialProps;
+    fn get_movement(&self) -> &Movement;
+    fn set_spatial(&mut self, x: SpatialProps);
 }
 
 impl IBodyV2 for PlanetV2 {
@@ -53,15 +53,15 @@ impl IBodyV2 for PlanetV2 {
         &self.name
     }
 
-    fn get_spatial(&self) -> &SpatialProps<usize> {
+    fn get_spatial(&self) -> &SpatialProps {
         &self.spatial
     }
 
-    fn get_movement(&self) -> &MovementDefinition {
+    fn get_movement(&self) -> &Movement {
         &self.movement
     }
 
-    fn set_spatial(&mut self, props: SpatialProps<usize>) {
+    fn set_spatial(&mut self, props: SpatialProps) {
         self.spatial = props;
     }
 }

@@ -182,19 +182,18 @@ pub struct Planet {
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 // derive Serialize-Deserialize will add constraints itself, no need to explicitly mark them
-pub struct SpatialProps<HINT: std::fmt::Debug + Clone> {
+pub struct SpatialProps {
     pub position: Vec2f64,
     pub rotation_rad: f64,
     pub radius: f64,
-    pub interpolation_hint: Option<HINT>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct PlanetV2 {
     pub id: Uuid,
     pub name: String,
-    pub spatial: SpatialProps<usize>,
-    pub movement: MovementDefinition,
+    pub spatial: SpatialProps,
+    pub movement: Movement,
     pub color: String,
     pub health: Option<Health>,
     pub properties: Vec<ObjectProperty>,
@@ -203,7 +202,7 @@ pub struct PlanetV2 {
 impl PlanetV2 {
     pub fn get_anchor_ref<'a>(&self, loc: &'a Location) -> Box<&'a dyn IBody> {
         match &self.movement {
-            MovementDefinition::RadialMonotonous { anchor, .. } => Box::new(match anchor {
+            Movement::RadialMonotonous { anchor, .. } => Box::new(match anchor {
                 ObjectSpecifier::Planet { id } => loc
                     .planets
                     .iter()
@@ -229,7 +228,7 @@ impl PlanetV2 {
         let speed_ticks_rad = p.orbit_speed / 1000.0 / 1000.0;
         let full_period_ticks = (std::f64::consts::PI * 2.0 / speed_ticks_rad).floor();
 
-        let (anchor, radius_to_anchor) = match p.anchor_tier {
+        let (anchor, radius_to_anchor, relative_position) = match p.anchor_tier {
             1 => {
                 // planet
                 let star = loc.star.clone().expect(
@@ -241,10 +240,8 @@ impl PlanetV2 {
                 );
                 (
                     ObjectSpecifier::Star { id: star.id },
-                    pos.euclidean_distance(&Vec2f64 {
-                        x: star.x,
-                        y: star.y,
-                    }),
+                    pos.euclidean_distance(&star.as_vec()),
+                    pos.subtract(&star.as_vec()),
                 )
             }
             2 => {
@@ -255,14 +252,13 @@ impl PlanetV2 {
                     )
                     .as_str(),
                 );
+                let parent_pos = AsVec2f64::as_vec(parent_planet);
                 (
                     ObjectSpecifier::Planet {
                         id: parent_planet.id,
                     },
-                    pos.euclidean_distance(&Vec2f64 {
-                        x: parent_planet.x,
-                        y: parent_planet.y,
-                    }),
+                    pos.euclidean_distance((&parent_pos)),
+                    pos.subtract(&parent_pos),
                 )
             }
             _ => panic!("Unsupported anchor tier {}", p.anchor_tier),
@@ -274,13 +270,14 @@ impl PlanetV2 {
                 position: pos,
                 rotation_rad: p.rotation,
                 radius: p.radius,
-                interpolation_hint: None,
             },
-            movement: MovementDefinition::RadialMonotonous {
+            movement: Movement::RadialMonotonous {
                 full_period_ticks: full_period_ticks.abs(),
-                clockwise: full_period_ticks > 0.0,
+                clockwise: full_period_ticks < 0.0,
                 radius_to_anchor,
                 anchor,
+                relative_position,
+                interpolation_hint: None,
             },
             color: p.color.clone(),
             health: p.health.clone(),
@@ -316,7 +313,7 @@ impl Planet {
 
     pub fn from_pv2(f: &PlanetV2, star_id: Uuid) -> Self {
         let (orbit_speed, anchor_id, anchor_tier) = match &f.movement {
-            MovementDefinition::RadialMonotonous {
+            Movement::RadialMonotonous {
                 full_period_ticks,
                 anchor,
                 ..
@@ -496,7 +493,7 @@ pub struct Ship {
     pub auto_focus: Option<ObjectSpecifier>,
     pub hostile_auto_focus: Option<ObjectSpecifier>,
     pub movement_markers: ShipMovementMarkers,
-    pub movement_definition: MovementDefinition,
+    pub movement_definition: Movement,
     pub health: Health,
     pub local_effects: Vec<LocalEffect>,
     pub long_actions: Vec<LongAction>,
@@ -546,7 +543,7 @@ impl Ship {
             auto_focus: None,
             hostile_auto_focus: None,
             movement_markers: Default::default(),
-            movement_definition: MovementDefinition::Unknown,
+            movement_definition: Movement::Unknown,
             health: Health::new(100.0),
             local_effects: vec![],
             long_actions: vec![],
@@ -1922,7 +1919,7 @@ pub fn add_player(
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
-pub enum MovementDefinition {
+pub enum Movement {
     Unknown,
     ShipMonotonous {
         move_speed: f64,
@@ -1948,22 +1945,24 @@ pub enum MovementDefinition {
         radius_to_anchor: f64,
         clockwise: bool,
         anchor: ObjectSpecifier,
+        relative_position: Vec2f64,
+        interpolation_hint: Option<u32>,
     },
 }
 
-impl MovementDefinition {
+impl Movement {
     pub fn get_current_linear_move_speed_per_tick(&self) -> f64 {
         match self {
-            MovementDefinition::Unknown => 0.0,
-            MovementDefinition::ShipMonotonous { move_speed, .. } => {
+            Movement::Unknown => 0.0,
+            Movement::ShipMonotonous { move_speed, .. } => {
                 // This is kind of incorrect for a stopped ship, but to get it we need
                 // to unify movement markers with movement definition
                 *move_speed
             }
-            MovementDefinition::ShipAccelerated {
+            Movement::ShipAccelerated {
                 current_move_speed, ..
             } => *current_move_speed,
-            MovementDefinition::RadialMonotonous { .. } => 0.0,
+            Movement::RadialMonotonous { .. } => 0.0,
         }
     }
 }
@@ -1974,7 +1973,7 @@ pub struct ShipTemplate {
     abilities: Option<Vec<Ability>>,
     name: Option<String>,
     health: Option<Health>,
-    movement: Option<MovementDefinition>,
+    movement: Option<Movement>,
     properties: Option<Vec<ObjectProperty>>,
 }
 
@@ -1986,7 +1985,7 @@ impl ShipTemplate {
             abilities: Some(vec![Ability::BlowUpOnLand]),
             name: Some("Pirate".to_string()),
             health: Some(Health::new(40.0)),
-            movement: Some(MovementDefinition::ShipMonotonous {
+            movement: Some(Movement::ShipMonotonous {
                 move_speed: 10.0 / 1000.0 / 1000.0,
                 turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0,
                 current_move_speed: 0.0,
@@ -2009,7 +2008,7 @@ impl ShipTemplate {
                 100.0,
                 SHIP_REGEN_PER_SEC / 1000.0 / 1000.0,
             )),
-            movement: Some(MovementDefinition::ShipMonotonous {
+            movement: Some(Movement::ShipMonotonous {
                 move_speed: 20.0 / 1000.0 / 1000.0,
                 turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0,
                 current_move_speed: 0.0,
@@ -2268,7 +2267,7 @@ fn build_trajectory_to_body(
     from: Vec2f64,
     to: &Box<dyn IBody>,
     to_anchor: &Box<dyn IBody>,
-    for_movement: &MovementDefinition,
+    for_movement: &Movement,
 ) -> Vec<Vec2f64> {
     let bodies: Vec<Box<dyn IBody>> = vec![to.clone(), to_anchor.clone()];
     let mut anchors = planet_movement::build_anchors_from_bodies(bodies);
@@ -2323,7 +2322,7 @@ fn build_trajectory_to_body(
 pub fn build_trajectory_to_point(
     from: Vec2f64,
     to: &Vec2f64,
-    for_movement: &MovementDefinition,
+    for_movement: &Movement,
 ) -> Vec<Vec2f64> {
     let mut counter = 0;
     let current_target = to.clone();
