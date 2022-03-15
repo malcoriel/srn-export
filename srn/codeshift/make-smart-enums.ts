@@ -23,6 +23,8 @@ import {
   isTSUnionType,
 } from './helpers';
 
+import util from 'util';
+
 const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
   if (t.type !== 'TSTypeLiteral') {
     throw new Error(`Unsupported ts type ${t.type}`);
@@ -68,10 +70,24 @@ const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
               memberValue.literal.value
             );
           }
+        } else if (memberValue.type === 'TSUnionType') {
+          // partial support for properties like number | null
+          const member = memberValue as namedTypes.TSUnionType;
+          const resultMapped = [];
+          for (const subMember of member.types) {
+            if (subMember.type === 'TSNumberKeyword') {
+              resultMapped.push(j.numberTypeAnnotation());
+            } else if (subMember.type === 'TSNullKeyword') {
+              resultMapped.push(j.nullTypeAnnotation());
+            }
+          }
+          newMemberValue = j.unionTypeAnnotation(resultMapped);
         }
 
         if (!newMemberValue) {
-          throw new Error(`Unsupported member value type: ${memberValue.type}`);
+          throw new Error(
+            `Unsupported member value type: ${memberValue.type} at ${memberValue.loc}`
+          );
         }
 
         return j.objectTypeProperty(
@@ -87,6 +103,7 @@ const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
 module.exports = function (file, api) {
   const j = api.jscodeshift;
   const nameToAliases = {};
+  // noinspection JSVoidFunctionReturnValueUsed,TypeScriptValidateJSTypes
   return j(file.source)
     .find(j.ExportNamedDeclaration)
     .replaceWith((ex: ASTPath<ExportNamedDeclaration>) => {

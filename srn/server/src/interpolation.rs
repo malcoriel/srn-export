@@ -87,7 +87,7 @@ fn interpolate_planet_relative_movement(
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
 ) {
     let res_clone = result.clone();
-    let (radius_key, mut interpolation_hint_result, result_pos) = match result {
+    let (radius_key, interpolation_hint_result, result_pos) = match result {
         Movement::RadialMonotonous {
             radius_to_anchor,
             interpolation_hint,
@@ -100,7 +100,7 @@ fn interpolate_planet_relative_movement(
         ),
         _ => panic!("bad movement"),
     };
-    let (mut interpolation_hint_target, target_pos) = match target {
+    let (interpolation_hint_target, target_pos) = match target {
         Movement::RadialMonotonous {
             interpolation_hint,
             relative_position,

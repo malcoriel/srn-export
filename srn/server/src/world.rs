@@ -208,9 +208,10 @@ impl PlanetV2 {
                     .iter()
                     .find(|p| p.id == *id)
                     .expect("no anchor found by id {id}"),
-                ObjectSpecifier::Star { id } => {
-                    loc.star.as_ref().expect("no anchor found by id {id}")
-                }
+                ObjectSpecifier::Star { id } => loc
+                    .star
+                    .as_ref()
+                    .expect(format!("no anchor found by id {}", id).as_str()),
                 _ => panic!(
                     "invalid anchor {anchor:?} for planet {}, cannot get ref to it",
                     self.id
@@ -257,7 +258,7 @@ impl PlanetV2 {
                     ObjectSpecifier::Planet {
                         id: parent_planet.id,
                     },
-                    pos.euclidean_distance((&parent_pos)),
+                    pos.euclidean_distance(&parent_pos),
                     pos.subtract(&parent_pos),
                 )
             }
