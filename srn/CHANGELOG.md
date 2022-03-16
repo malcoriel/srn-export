@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.8.4 (2022-03-16)
+### Fixes
+* Made replays much smoother-looking via interpolation
+* Reduced the size of replays
+
 ## Version 0.8.3 (2022-02-27)
 ### Fixes
 * Significantly improved replay playing performance
