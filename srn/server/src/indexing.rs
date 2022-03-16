@@ -1,3 +1,4 @@
+use crate::autofocus::build_spatial_index;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -7,7 +8,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::world;
 use crate::world::{
-    Container, GameState, Location, NatSpawnMineral, Planet, Player, Ship, ShipIdx,
+    Container, GameState, Location, NatSpawnMineral, Planet, Player, Ship, ShipIdx, SpatialIndexes,
 };
 
 pub fn find_mineral(loc: &world::Location, id: Uuid) -> Option<&NatSpawnMineral> {
@@ -412,4 +413,40 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
         players_by_id,
         ships_by_id,
     }
+}
+
+pub fn find_player_location_idx(state: &GameState, player_id: Uuid) -> Option<i32> {
+    let player = find_my_player(state, player_id);
+    if player.is_none() {
+        return None;
+    }
+    let player = player.unwrap();
+    if player.ship_id.is_none() {
+        return None;
+    }
+    let ship_id = player.ship_id.unwrap();
+    let mut idx = -1;
+    let mut found = false;
+    for loc in state.locations.iter() {
+        idx += 1;
+        for ship in loc.ships.iter() {
+            if ship.id == ship_id {
+                found = true;
+                break;
+            }
+        }
+        if found {
+            break;
+        }
+    }
+    return if !found { None } else { Some(idx) };
+}
+
+pub fn build_full_spatial_indexes(state: &GameState) -> SpatialIndexes {
+    let mut values = HashMap::new();
+    for i in 0..state.locations.len() {
+        let loc = &state.locations[i];
+        values.insert(i, build_spatial_index(loc, i));
+    }
+    SpatialIndexes { values }
 }

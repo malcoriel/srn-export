@@ -423,3 +423,5 @@ fn find_closest_planet(
     }
     return None;
 }
+
+pub const BOT_ACTION_TIME_TICKS: i64 = 200 * 1000;

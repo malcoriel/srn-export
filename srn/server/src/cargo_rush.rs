@@ -1,4 +1,4 @@
-use crate::{bots, fire_event, notifications, prng_id, world, Room};
+use crate::{bots, fire_event, indexing, notifications, prng_id, world, Room};
 use itertools::Itertools;
 use rand::prelude::SmallRng;
 use rand::Rng;
@@ -8,10 +8,14 @@ use world::GameState;
 
 use crate::api_struct::{new_bot, AiTrait};
 use crate::bots::add_bot;
+use crate::inventory::has_quest_item;
 use crate::notifications::{Notification, NotificationText};
+use crate::substitutions::substitute_notification_texts;
 use crate::world::{fire_saved_event, Leaderboard, Planet};
 use crate::world_events::GameEvent;
 use serde_derive::{Deserialize, Serialize};
+use std::collections::HashSet;
+use std::iter::FromIterator;
 use wasm_bindgen::prelude::*;
 use world::Player;
 
@@ -112,5 +116,34 @@ impl Quest {
             },
             id: prng_id(prng),
         }
+    }
+}
+
+pub fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
+    let quest_planets = state.locations[0].planets.clone();
+    let mut any_new_quests = vec![];
+    let player_ids = state.players.iter().map(|p| p.id).collect::<Vec<_>>();
+    for player_id in player_ids {
+        if let (Some(mut player), Some(ship)) = indexing::find_player_and_ship_mut(state, player_id)
+        {
+            if player.quest.is_none() {
+                generate_random_quest(player, &quest_planets, ship.docked_at, prng);
+                any_new_quests.push(player_id);
+            } else {
+                let quest_id = player.quest.as_ref().map(|q| q.id).unwrap();
+                if !has_quest_item(&ship.inventory, quest_id)
+                    && player.quest.as_ref().unwrap().state == CargoDeliveryQuestState::Picked
+                {
+                    player.quest = None;
+                    log!(format!(
+                        "Player {} has failed quest {} due to not having item",
+                        player_id, quest_id
+                    ));
+                }
+            }
+        }
+    }
+    if any_new_quests.len() > 0 {
+        substitute_notification_texts(state, HashSet::from_iter(any_new_quests));
     }
 }

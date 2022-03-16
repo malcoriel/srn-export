@@ -39,6 +39,7 @@ use websocket::server::upgrade::WsUpgrade;
 use websocket::sync::Server;
 use websocket::{Message, OwnedMessage};
 
+use bots::BOT_ACTION_TIME_TICKS;
 use dialogue::{DialogueStates, DialogueTable};
 use dialogue_dto::Dialogue;
 use lockfree::map::Map as LockFreeMap;
@@ -72,7 +73,7 @@ use crate::states::{
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::vec2::Vec2f64;
-use crate::world::{spawn_ship, update_rule_specifics, UpdateOptions, AABB, BOT_ACTION_TIME_TICKS};
+use crate::world::{spawn_ship, update_rule_specifics, UpdateOptions, AABB};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -149,6 +150,7 @@ mod substitutions;
 mod substitutions_test;
 mod system_gen;
 mod tractoring;
+mod trajectory;
 mod tutorial;
 #[allow(dead_code)]
 mod vec2;

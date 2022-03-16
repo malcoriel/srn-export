@@ -157,6 +157,9 @@ mod replay;
 #[path = "../../server/src/interpolation.rs"]
 mod interpolation;
 
+#[path = "../../server/src/trajectory.rs"]
+mod trajectory;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};

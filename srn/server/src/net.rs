@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::api_struct::RoomId;
 use crate::dialogue_dto::Dialogue;
-use crate::indexing::find_my_player;
-use crate::world::{find_player_location_idx, GameMode, GameState, Location, Ship};
+use crate::indexing::{find_my_player, find_player_location_idx};
+use crate::world::{GameMode, GameState, Location, Ship};
 use crate::world_events::GameEvent;
 use crate::xcast::XCast;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};

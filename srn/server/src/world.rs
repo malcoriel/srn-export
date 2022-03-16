@@ -18,7 +18,7 @@ use wasm_bindgen::prelude::*;
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
-use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
+use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
 use crate::combat::{Health, ShootTarget};
 use crate::indexing::{
@@ -56,7 +56,7 @@ use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEve
 use crate::world_player_actions::world_update_handle_player_action;
 use crate::{
     abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, random_stuff, system_gen,
-    world_events,
+    trajectory, world_events,
 };
 use crate::{combat, fire_event, market, notifications, planet_movement, ship_action, tractoring};
 use crate::{dialogue, vec2};
@@ -66,11 +66,6 @@ use dialogue::DialogueStates;
 
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
 const ORB_SPEED_MULT: f64 = 1.0;
-const TRAJECTORY_STEP_MICRO: i64 = 250 * 1000;
-const TRAJECTORY_MAX_ITER: i32 = 10;
-const TRAJECTORY_EPS: f64 = 0.1;
-const ASTEROID_COUNT: u32 = 200;
-const ASTEROID_BELT_RANGE: f64 = 100.0;
 
 pub type PlayerId = Uuid;
 
@@ -724,29 +719,6 @@ impl GameState {
             accumulated_not_updated_ticks: 0,
         }
     }
-}
-
-fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
-    let mut res = vec![];
-    let mut cur_angle: f64 = 0.0;
-    let angle_step = PI * 2.0 / ASTEROID_COUNT as f64;
-    for _i in 0..ASTEROID_COUNT {
-        let x: f64 = cur_angle.cos() * ASTEROID_BELT_RANGE;
-        let y: f64 = cur_angle.sin() * ASTEROID_BELT_RANGE;
-        let shift = gen_asteroid_shift(rng);
-        res.push(Asteroid {
-            id: prng_id(rng),
-            x: x + shift.0,
-            y: y + shift.1,
-            rotation: 0.0,
-            radius: gen_asteroid_radius(rng),
-            orbit_speed: 0.05,
-            anchor_id: star.id,
-            anchor_tier: 1,
-        });
-        cur_angle += angle_step;
-    }
-    res
 }
 
 pub fn force_update_to_now(state: &mut GameState) {
@@ -2018,8 +1990,11 @@ pub fn update_ships_navigation(
                     ship.rotation = -ship.rotation;
                 }
                 if dist > 0.0 {
-                    ship.trajectory =
-                        build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
+                    ship.trajectory = trajectory::build_trajectory_to_point(
+                        ship_pos,
+                        &target,
+                        &ship.movement_definition,
+                    );
                     if dist > max_shift {
                         let new_pos = move_ship(&target, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
@@ -2037,7 +2012,7 @@ pub fn update_ships_navigation(
                         y: ship.y,
                     };
                     let planet_anchor = bodies_by_id.get(&planet.get_anchor_id()).unwrap();
-                    ship.trajectory = build_trajectory_to_body(
+                    ship.trajectory = trajectory::build_trajectory_to_body(
                         ship_pos,
                         &planet,
                         planet_anchor,
@@ -2126,97 +2101,12 @@ pub fn undock_ship(
     }
 }
 
-fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
+pub fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
     let dir = target.subtract(&ship_pos).normalize();
 
     let shift = dir.scalar_mul(max_shift);
     let new_pos = ship_pos.add(&shift);
     new_pos
-}
-
-// TODO for some weird reason, it works for anchor_tier=2 too, however I do not support it here!
-fn build_trajectory_to_body(
-    from: Vec2f64,
-    to: &Box<dyn IBody>,
-    to_anchor: &Box<dyn IBody>,
-    for_movement: &Movement,
-) -> Vec<Vec2f64> {
-    let bodies: Vec<Box<dyn IBody>> = vec![to.clone(), to_anchor.clone()];
-    let mut anchors = planet_movement::build_anchors_from_bodies(bodies);
-    let mut shifts = HashMap::new();
-    let mut counter = 0;
-    let mut current_target = Planet::from(to.clone());
-    let mut current_from = from.clone();
-    let mut result = vec![];
-    let max_shift =
-        TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_linear_move_speed_per_tick();
-    loop {
-        let current_target_pos = Vec2f64 {
-            x: current_target.x,
-            y: current_target.y,
-        };
-        let distance = current_target_pos.euclidean_distance(&current_from);
-        let should_break =
-            counter >= TRAJECTORY_MAX_ITER || distance < to.get_radius() / 2.0 + TRAJECTORY_EPS;
-        if should_break {
-            break;
-        }
-        current_from = move_ship(&current_target_pos, &current_from, max_shift);
-        current_target = Planet::from(planet_movement::simulate_planet_movement(
-            TRAJECTORY_STEP_MICRO,
-            &mut anchors,
-            &mut shifts,
-            Box::new(current_target.clone()),
-        ));
-        result.push(current_from);
-        counter += 1;
-    }
-    let planet_pos = Vec2f64 {
-        x: current_target.x,
-        y: current_target.y,
-    };
-    // remove artifacts from the tail
-    let mut count = 2;
-    result = result
-        .into_iter()
-        .take_while(|p| {
-            let cond = p.euclidean_distance(&planet_pos) < to.get_radius();
-            if cond {
-                count -= 1;
-                return count > 0;
-            }
-            return true;
-        })
-        .collect::<Vec<_>>();
-    result
-}
-
-pub fn build_trajectory_to_point(
-    from: Vec2f64,
-    to: &Vec2f64,
-    for_movement: &Movement,
-) -> Vec<Vec2f64> {
-    let mut counter = 0;
-    let current_target = to.clone();
-    let mut current_from = from.clone();
-    let mut result = vec![];
-    let max_shift =
-        TRAJECTORY_STEP_MICRO as f64 * for_movement.get_current_linear_move_speed_per_tick();
-    loop {
-        let target_pos = Vec2f64 {
-            x: current_target.x,
-            y: current_target.y,
-        };
-        let distance = target_pos.euclidean_distance(&current_from);
-        let should_break = counter >= TRAJECTORY_MAX_ITER || distance < max_shift;
-        if should_break {
-            break;
-        }
-        current_from = move_ship(&target_pos, &current_from, max_shift);
-        result.push(current_from);
-        counter += 1;
-    }
-    result
 }
 
 #[derive(Clone)]
@@ -2268,7 +2158,7 @@ pub fn update_rule_specifics(
         GameMode::Unknown => {}
         GameMode::CargoRush => {
             let quests_id = sampler.start(SamplerMarks::ModeCargoRushQuests as u32);
-            update_quests(state, prng);
+            cargo_rush::update_quests(state, prng);
             sampler.end(quests_id);
         }
         GameMode::Tutorial => {}
@@ -2278,35 +2168,6 @@ pub fn update_rule_specifics(
         }
     }
     mark_id.map(|mark_id| sampler.end(mark_id));
-}
-
-fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
-    let quest_planets = state.locations[0].planets.clone();
-    let mut any_new_quests = vec![];
-    let player_ids = state.players.iter().map(|p| p.id).collect::<Vec<_>>();
-    for player_id in player_ids {
-        if let (Some(mut player), Some(ship)) = indexing::find_player_and_ship_mut(state, player_id)
-        {
-            if player.quest.is_none() {
-                cargo_rush::generate_random_quest(player, &quest_planets, ship.docked_at, prng);
-                any_new_quests.push(player_id);
-            } else {
-                let quest_id = player.quest.as_ref().map(|q| q.id).unwrap();
-                if !has_quest_item(&ship.inventory, quest_id)
-                    && player.quest.as_ref().unwrap().state == CargoDeliveryQuestState::Picked
-                {
-                    player.quest = None;
-                    log!(format!(
-                        "Player {} has failed quest {} due to not having item",
-                        player_id, quest_id
-                    ));
-                }
-            }
-        }
-    }
-    if any_new_quests.len() > 0 {
-        substitute_notification_texts(state, HashSet::from_iter(any_new_quests));
-    }
 }
 
 pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
@@ -2379,33 +2240,6 @@ pub fn mutate_ship_no_lock(
     return None;
 }
 
-pub fn find_player_location_idx(state: &GameState, player_id: Uuid) -> Option<i32> {
-    let player = indexing::find_my_player(state, player_id);
-    if player.is_none() {
-        return None;
-    }
-    let player = player.unwrap();
-    if player.ship_id.is_none() {
-        return None;
-    }
-    let ship_id = player.ship_id.unwrap();
-    let mut idx = -1;
-    let mut found = false;
-    for loc in state.locations.iter() {
-        idx += 1;
-        for ship in loc.ships.iter() {
-            if ship.id == ship_id {
-                found = true;
-                break;
-            }
-        }
-        if found {
-            break;
-        }
-    }
-    return if !found { None } else { Some(idx) };
-}
-
 pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecifier) {
     match remove {
         ObjectSpecifier::Unknown => {}
@@ -2453,17 +2287,6 @@ pub fn make_room(
     (state_id, room)
 }
 
-pub fn build_full_spatial_indexes(state: &GameState) -> SpatialIndexes {
-    let mut values = HashMap::new();
-    for i in 0..state.locations.len() {
-        let loc = &state.locations[i];
-        values.insert(i, build_spatial_index(loc, i));
-    }
-    SpatialIndexes { values }
-}
-
-pub const BOT_ACTION_TIME_TICKS: i64 = 200 * 1000;
-
 pub fn update_room(
     mut prng: &mut SmallRng,
     mut sampler: Sampler,
@@ -2472,7 +2295,7 @@ pub fn update_room(
     d_table: &DialogueTable,
 ) -> (SpatialIndexes, Room, Sampler) {
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
-    let mut spatial_indexes = build_full_spatial_indexes(&room.state);
+    let mut spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
     sampler.end(spatial_indexes_id);
     let mut modified_dialogue_states = room.dialogue_states.clone();
     let (new_state, mut sampler) = update_world(
@@ -2493,7 +2316,7 @@ pub fn update_room(
     room.state = new_state;
     room.dialogue_states = modified_dialogue_states;
 
-    spatial_indexes = build_full_spatial_indexes(&room.state);
+    spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
 
     // by default, bot behavior is non-deterministic, unless we explicitly requested it in room setup
     let mut bot_prng = room.bots_seed.clone().map_or(get_prng(), |s| seed_prng(s));

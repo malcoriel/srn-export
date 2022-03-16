@@ -1,6 +1,7 @@
-use crate::get_prng;
-use crate::world::Rarity;
+use crate::world::{Asteroid, Rarity, Star};
+use crate::{get_prng, prng_id};
 use rand::prelude::*;
+use std::f64::consts::PI;
 
 pub const STAR_NAMES: [&str; 32] = [
     "Ithoins",
@@ -256,4 +257,30 @@ pub fn random_hex_seed_seeded(prng: &mut SmallRng) -> String {
     let mut bytes: [u8; 8] = [0; 8];
     prng.fill_bytes(&mut bytes);
     hex::encode(bytes)
+}
+
+const ASTEROID_COUNT: u32 = 200;
+const ASTEROID_BELT_RANGE: f64 = 100.0;
+
+pub fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
+    let mut res = vec![];
+    let mut cur_angle: f64 = 0.0;
+    let angle_step = PI * 2.0 / ASTEROID_COUNT as f64;
+    for _i in 0..ASTEROID_COUNT {
+        let x: f64 = cur_angle.cos() * ASTEROID_BELT_RANGE;
+        let y: f64 = cur_angle.sin() * ASTEROID_BELT_RANGE;
+        let shift = gen_asteroid_shift(rng);
+        res.push(Asteroid {
+            id: prng_id(rng),
+            x: x + shift.0,
+            y: y + shift.1,
+            rotation: 0.0,
+            radius: gen_asteroid_radius(rng),
+            orbit_speed: 0.05,
+            anchor_id: star.id,
+            anchor_tier: 1,
+        });
+        cur_angle += angle_step;
+    }
+    res
 }

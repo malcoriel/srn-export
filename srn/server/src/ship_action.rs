@@ -11,7 +11,7 @@ use crate::world::{
     dock_ship, undock_ship, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipIdx,
 };
 use crate::world_events::GameEvent;
-use crate::{combat, fire_event, indexing, tractoring, world};
+use crate::{combat, fire_event, indexing, tractoring, trajectory, world};
 use core::mem;
 use rand::prelude::SmallRng;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -83,7 +83,7 @@ pub fn apply_player_action(
             ship.dock_target = None;
             ship.navigate_target = Some(target);
             ship.trajectory =
-                world::build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
+                trajectory::build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
             ship.movement_markers.gas = None;
             ship.movement_markers.turn = None;
             Some(ship)
@@ -114,7 +114,7 @@ pub fn apply_player_action(
                     ship.navigate_target = None;
                     ship.dock_target = None;
                     ship.dock_target = Some(target);
-                    ship.trajectory = world::build_trajectory_to_point(
+                    ship.trajectory = trajectory::build_trajectory_to_point(
                         ship_pos,
                         &planet_pos,
                         &ship.movement_definition,
