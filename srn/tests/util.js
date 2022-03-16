@@ -194,7 +194,11 @@ export const mockShip = (id) => ({
   abilities: [],
   movement_markers: {},
   movement_definition: {
-    tag: 'Unknown',
+    tag: 'ShipMonotonous',
+    move_speed: 10.0 / 1000 / 1000,
+    turn_speed: 1.0,
+    current_move_speed: 0.0,
+    current_turn_speed: 0.0,
   },
   health: {
     current: 10,

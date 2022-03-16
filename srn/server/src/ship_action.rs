@@ -24,7 +24,9 @@ pub enum PlayerActionRust {
     Move {
         update: ManualMoveUpdate,
     },
-    Gas,
+    Gas {
+        player_id: Uuid,
+    },
     StopGas,
     StopTurn,
     Reverse,
@@ -139,7 +141,7 @@ pub fn apply_player_action(
             );
             Some(ship)
         }
-        PlayerActionRust::Gas => {
+        PlayerActionRust::Gas { .. } => {
             let mut ship = old_ship.clone();
             ship.movement_markers.gas = Some(MoveAxisParam {
                 forward: true,

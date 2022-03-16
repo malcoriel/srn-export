@@ -1017,13 +1017,14 @@ fn update_world_iter(
 }
 
 fn update_player_actions(state: &mut GameState, prng: &mut SmallRng) {
+    let state_clone = state.clone();
     let mut actions_to_process = vec![];
     while let Some(event) = state.player_actions.pop_front() {
         actions_to_process.push(event);
     }
     let mut processed_actions = vec![];
     for action in actions_to_process.into_iter() {
-        world_update_handle_player_action(state, action.clone(), prng);
+        world_update_handle_player_action(state, action.clone(), prng, &state_clone);
         let processed_action = ProcessedPlayerAction {
             action,
             processed_at_ticks: state.ticks,
