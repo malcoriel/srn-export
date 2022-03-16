@@ -46,7 +46,7 @@ pub fn handle_events(
                 match event.clone() {
                     GameEvent::ShipSpawned { player_id, .. } => {
                         if player_id.is_none() {
-                            // the event handler here is only used for player ship spawn
+                            // the event handler here is only used for player ship spawn to notify client
                             continue;
                         }
                         let player_id = player_id.unwrap();
@@ -103,16 +103,17 @@ pub fn handle_events(
                     }
                     GameEvent::ShipDocked { .. } => {
                         warn!(
-                            "Ship docking triggering should happen in world, there's some bug here"
+                            "Ship docking triggering should only happen in world events, there's some bug here"
                         );
                     }
                     GameEvent::ShipUndocked { .. } => {
                         // intentionally do nothing
                     }
                     GameEvent::DialogueTriggerRequest { .. } => {
-                        warn!("Dialogue triggering should happen in world, there's some bug here");
+                        warn!("Dialogue triggering should happen in world events, there's some bug here");
                     }
                     GameEvent::CargoQuestTriggerRequest { player_id } => {
+                        // so far, used only in tutorial, so mostly irrelevant for world events and can be kept here
                         let state = crate::states::select_state_mut(cont, player_id);
                         if state.is_none() {
                             warn!("event in non-existent state");
@@ -130,8 +131,8 @@ pub fn handle_events(
                         }
                         substitute_notification_texts(state, HashSet::from_iter(vec![player_id]));
                     }
-                    GameEvent::TradeTriggerRequest { player, .. } => {
-                        let state = crate::states::select_state_mut(cont, player.id);
+                    GameEvent::TradeDialogueTriggerRequest { player_id, .. } => {
+                        let state = crate::states::select_state_mut(cont, player_id);
                         if state.is_none() {
                             warn!("event in non-existent state");
                             continue;
@@ -140,7 +141,7 @@ pub fn handle_events(
 
                         crate::main_ws_server::send_event_to_client(
                             event.clone(),
-                            XCast::Unicast(state.id, player.id),
+                            XCast::Unicast(state.id, player_id),
                         );
                     }
                     GameEvent::CreateRoomRequest {

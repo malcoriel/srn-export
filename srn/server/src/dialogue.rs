@@ -537,8 +537,8 @@ fn apply_side_effects(
             DialogueOptionSideEffect::TriggerTrade => {
                 if let (Some(player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
                     if ship.docked_at.is_some() {
-                        fire_event(GameEvent::TradeTriggerRequest {
-                            player: player.clone(),
+                        fire_event(GameEvent::TradeDialogueTriggerRequest {
+                            player_id: player.id,
                             planet_id: ship.docked_at.unwrap(),
                         })
                     }

@@ -1573,10 +1573,10 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
         GameEvent::ShipDocked { .. } => {}
         GameEvent::DialogueTriggerRequest { .. } => {}
         GameEvent::PirateSpawn { .. } => {}
-        GameEvent::ShipDied { .. } => {}
         // events that has to be duplicated to the system, e.g. both server and world can do
         // something on them. typically, server just does retransmitting them to the client
         GameEvent::ShipSpawned { .. } => fire_event(event),
+        GameEvent::ShipDied { .. } => fire_event(event),
         _ => fire_event(event),
     }
 }
@@ -2135,11 +2135,7 @@ pub fn every_diff(
     let last_trigger = last_trigger.unwrap_or(0);
     let diff = current_ticks - last_trigger;
     let trigger = diff > interval_ticks;
-    if trigger {
-        return Some(diff);
-    } else {
-        return None;
-    }
+    return if trigger { Some(diff) } else { None };
 }
 
 pub fn update_rule_specifics(

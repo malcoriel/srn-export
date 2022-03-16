@@ -103,8 +103,8 @@ pub enum GameEvent {
     CargoQuestTriggerRequest {
         player_id: Uuid,
     },
-    TradeTriggerRequest {
-        player: Player,
+    TradeDialogueTriggerRequest {
+        player_id: Uuid,
         planet_id: Uuid,
     },
     DialogueTriggerRequest {
