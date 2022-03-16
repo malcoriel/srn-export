@@ -1,4 +1,10 @@
-import { loadWasm, updateRoom, wasm, writeReplay, writeTmpJson } from '../util';
+import {
+  swapGlobals,
+  updateRoom,
+  wasm,
+  writeReplay,
+  writeTmpJson,
+} from '../util';
 import _ from 'lodash';
 
 jest.setTimeout(100000);
@@ -23,7 +29,7 @@ function simulate(overrideCount) {
 }
 
 describe('replay system', () => {
-  beforeAll(loadWasm);
+  beforeAll(swapGlobals);
 
   xit('can pack raw replay via wasm', async () => {
     const states = simulate();

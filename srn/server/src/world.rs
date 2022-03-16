@@ -1772,6 +1772,7 @@ pub enum Movement {
         current_move_speed: f64,
         current_turn_speed: f64,
     },
+    // no handling implemented for this one yet, it's just a design
     ShipAccelerated {
         max_move_speed: f64,
         current_move_speed: f64,

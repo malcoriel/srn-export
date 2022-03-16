@@ -1,4 +1,4 @@
-import { getLoc0, getShipByPlayerId, loadWasm, wasm } from '../util';
+import { getLoc0, getShipByPlayerId, swapGlobals, wasm } from '../util';
 import _ from 'lodash';
 import * as uuid from 'uuid';
 
@@ -20,7 +20,7 @@ export const mockPlanet = () => ({
 });
 
 describe('state interpolation', () => {
-  beforeAll(loadWasm);
+  beforeAll(swapGlobals);
   it('can interpolate ship direct movement', () => {
     const roomA = wasm.createRoom({
       mode: 'PirateDefence',

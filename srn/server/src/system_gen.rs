@@ -355,7 +355,9 @@ pub fn seed_state(mode: &GameMode, seed: String) -> GameState {
 }
 
 fn make_cargo_rush_state(seed: String, mut prng: &mut SmallRng) -> GameState {
-    let mut state = gen_state(seed, GenStateOpts::default(), &mut prng);
+    let mut opts = GenStateOpts::default();
+    opts.system_count = 5;
+    let mut state = gen_state(seed, opts, &mut prng);
     init_all_planets_market(&mut state);
     state.id = prng_id(&mut prng);
     state.mode = GameMode::CargoRush;

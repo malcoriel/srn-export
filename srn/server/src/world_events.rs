@@ -59,7 +59,38 @@ pub fn world_update_handle_event(
             GameMode::Sandbox => {}
             GameMode::PirateDefence => pirate_defence::on_ship_died(state, ship),
         },
-        _ => {}
+
+        GameEvent::Unknown => {
+            // intentionally do nothing
+        }
+        GameEvent::ShipUndocked { .. } => {
+            // do nothing for now, but may be game mode dependent
+        }
+        GameEvent::ShipSpawned { .. } => {
+            // do nothing for now, but may be game mode dependent
+        }
+        GameEvent::RoomJoined { .. } => {
+            // sever-only, do nothing
+        }
+        GameEvent::GameEnded { .. } => {
+            // do nothing for now, but may be game mode dependent
+        }
+        GameEvent::GameStarted { .. } => {
+            // do nothing for now, but may be game mode dependent
+        }
+        GameEvent::CargoQuestTriggerRequest { .. } => {
+            // sever-only, do nothing - only for tutorial purposes
+        }
+        GameEvent::TradeDialogueTriggerRequest { .. } => {
+            // sever-only, do nothing
+        }
+        GameEvent::CreateRoomRequest { .. } => {
+            // sever-only, do nothing
+        }
+        GameEvent::QuitPlayerRequest { .. } => {
+            // sever-only, do nothing
+            // side effect for tutorial dialogue mostly
+        }
     }
 }
 
