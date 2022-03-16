@@ -120,7 +120,7 @@ pub enum GameEvent {
         room_id: Uuid,
         bots_seed: Option<String>,
     },
-    KickPlayerRequest {
+    QuitPlayerRequest {
         player_id: Uuid,
     },
 }

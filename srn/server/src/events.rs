@@ -34,13 +34,9 @@ lazy_static! {
 }
 
 pub fn handle_events(
-    _d_table: &mut DialogueTable,
     receiver: &mut Receiver<GameEvent>,
     cont: &mut RwLockWriteGuard<StateContainer>,
-    _d_states: &mut HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
 ) -> Vec<(Uuid, Option<Dialogue>)> {
-    // not used now since dialogue changes got moved to world_events
-    let dialogue_changes = vec![];
     let mut prng = get_prng();
 
     loop {
@@ -159,7 +155,7 @@ pub fn handle_events(
                             "Pirate spawn handling should happen in world, there's some bug here"
                         );
                     }
-                    GameEvent::KickPlayerRequest { player_id } => {
+                    GameEvent::QuitPlayerRequest { player_id } => {
                         crate::main_ws_server::kick_player(player_id);
                     }
                 }

@@ -525,7 +525,7 @@ fn apply_side_effects(
                 }
             }
             DialogueOptionSideEffect::QuitTutorial => {
-                fire_event(GameEvent::KickPlayerRequest { player_id })
+                fire_event(GameEvent::QuitPlayerRequest { player_id })
             }
             DialogueOptionSideEffect::TriggerTutorialQuest => {
                 if let Some(player) = find_my_player(state, player_id) {

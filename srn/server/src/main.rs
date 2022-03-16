@@ -484,7 +484,7 @@ fn main_thread() {
         if events_elapsed > EVENT_TRIGGER_TIME {
             let events_mark = sampler.start(SamplerMarks::Events as u32);
             let receiver = &mut events::EVENTS.1.lock().unwrap();
-            let res = events::handle_events(&mut d_table, receiver, &mut cont, &mut **d_states);
+            let res = events::handle_events(receiver, &mut cont);
             for (client_id, dialogue) in res {
                 let corresponding_state_id = get_state_id_cont_mut(&mut cont, client_id);
                 corresponding_state_id.map(|corresponding_state_id| {
