@@ -8,7 +8,7 @@ import {
 
 describe('autofocus behavior', () => {
   beforeAll(swapGlobals);
-  fit('in pirate defence, bot ships are not in hostile autofocus of each other', async () => {
+  it('in pirate defence, bot ships are not in hostile autofocus of each other', async () => {
     const room = updateRoom(
       wasm.createRoom({ mode: 'PirateDefence', seed: 'autofocus' }),
       100

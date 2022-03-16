@@ -131,7 +131,7 @@ describe('replay system', () => {
     }
   });
 
-  fit('can do sequential continuous restoration', () => {
+  it('can do sequential continuous restoration', () => {
     const states = simulate();
     const replayDiff = wasm.packReplay(states, 'test', true);
     wasm.loadReplay(replayDiff);
