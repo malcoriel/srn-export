@@ -27,11 +27,21 @@ pub enum PlayerActionRust {
     Gas {
         player_id: Uuid,
     },
-    StopGas,
-    StopTurn,
-    Reverse,
-    TurnRight,
-    TurnLeft,
+    StopGas {
+        player_id: Uuid,
+    },
+    StopTurn {
+        player_id: Uuid,
+    },
+    Reverse {
+        player_id: Uuid,
+    },
+    TurnRight {
+        player_id: Uuid,
+    },
+    TurnLeft {
+        player_id: Uuid,
+    },
     Dock,
     Navigate {
         target: Vec2f64,
@@ -152,7 +162,7 @@ pub fn apply_player_action(
             ship.trajectory = vec![];
             Some(ship)
         }
-        PlayerActionRust::Reverse => {
+        PlayerActionRust::Reverse { .. } => {
             let mut ship = old_ship.clone();
             ship.movement_markers.gas = Some(MoveAxisParam {
                 forward: false,
@@ -163,7 +173,7 @@ pub fn apply_player_action(
             ship.trajectory = vec![];
             Some(ship)
         }
-        PlayerActionRust::TurnRight => {
+        PlayerActionRust::TurnRight { .. } => {
             let mut ship = old_ship.clone();
             ship.movement_markers.turn = Some(MoveAxisParam {
                 forward: true,
@@ -174,7 +184,7 @@ pub fn apply_player_action(
             ship.trajectory = vec![];
             Some(ship)
         }
-        PlayerActionRust::TurnLeft => {
+        PlayerActionRust::TurnLeft { .. } => {
             let mut ship = old_ship.clone();
             ship.movement_markers.turn = Some(MoveAxisParam {
                 forward: false,
@@ -185,12 +195,12 @@ pub fn apply_player_action(
             ship.trajectory = vec![];
             Some(ship)
         }
-        PlayerActionRust::StopGas => {
+        PlayerActionRust::StopGas { .. } => {
             let mut ship = old_ship.clone();
             ship.movement_markers.gas = None;
             Some(ship)
         }
-        PlayerActionRust::StopTurn => {
+        PlayerActionRust::StopTurn { .. } => {
             let mut ship = old_ship.clone();
             ship.movement_markers.turn = None;
             Some(ship)

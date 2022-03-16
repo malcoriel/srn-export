@@ -77,9 +77,14 @@ describe('player actions logic', () => {
       ship.rotation = 0.0;
       state.player_actions.push(mockPlayerActionMove('Gas', player.id));
       // movement inactivity is 500ms, so update has to be less than that
-      state = updateWorld(state, 450);
+      state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.y).toBeLessThan(100.0);
+      ship.y = 100.0;
+      state.player_actions.push(mockPlayerActionMove('StopGas', player.id));
+      state = updateWorld(state, 250);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.y).toBeCloseTo(100.0);
     });
     it.todo('can turn & stop');
     it.todo('can act in the past to prevent rollbacks');
