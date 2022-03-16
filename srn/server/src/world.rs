@@ -1574,9 +1574,10 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
         GameEvent::DialogueTriggerRequest { .. } => {}
         GameEvent::PirateSpawn { .. } => {}
         GameEvent::ShipDied { .. } => {}
-        _ => {
-            fire_event(event);
-        }
+        // events that has to be duplicated to the system, e.g. both server and world can do
+        // something on them. typically, server just does retransmitting them to the client
+        GameEvent::ShipSpawned { .. } => fire_event(event),
+        _ => fire_event(event),
     }
 }
 
@@ -1893,26 +1894,27 @@ pub fn spawn_ship<'a>(
     template.health.map(|health| ship.health = health);
     let state_id = state.id;
 
-    match player_id {
-        None => fire_event(GameEvent::ShipSpawned {
+    let event = match player_id {
+        None => Some(GameEvent::ShipSpawned {
             state_id: state.id,
             ship: ship.clone(),
             player_id: None,
         }),
-        Some(player_id) => {
-            state
-                .players
-                .iter_mut()
-                .find(|p| p.id == player_id)
-                .map(|p| {
-                    p.ship_id = Some(ship.id);
-                    fire_event(GameEvent::ShipSpawned {
-                        state_id,
-                        ship: ship.clone(),
-                        player_id: Some(p.id),
-                    });
-                });
-        }
+        Some(player_id) => state
+            .players
+            .iter_mut()
+            .find(|p| p.id == player_id)
+            .map(|p| {
+                p.ship_id = Some(ship.id);
+                GameEvent::ShipSpawned {
+                    state_id,
+                    ship: ship.clone(),
+                    player_id: Some(p.id),
+                }
+            }),
+    };
+    if let Some(event) = event {
+        fire_saved_event(state, event);
     }
     state.locations[0].ships.push(ship);
     &state.locations[0].ships[state.locations[0].ships.len() - 1]

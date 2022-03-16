@@ -122,7 +122,6 @@ mod combat;
 mod dialogue;
 mod dialogue_dto;
 mod dialogue_test;
-mod events;
 mod fof;
 mod indexing;
 mod interpolation;
@@ -144,6 +143,7 @@ mod resources;
 mod rooms_api;
 mod sandbox;
 mod sandbox_api;
+mod server_events;
 mod ship_action;
 mod states;
 mod substitutions;
@@ -483,8 +483,8 @@ fn main_thread() {
 
         if events_elapsed > EVENT_TRIGGER_TIME {
             let events_mark = sampler.start(SamplerMarks::Events as u32);
-            let receiver = &mut events::EVENTS.1.lock().unwrap();
-            let res = events::handle_events(receiver, &mut cont);
+            let receiver = &mut server_events::EVENTS.1.lock().unwrap();
+            let res = server_events::handle_events(receiver, &mut cont);
             for (client_id, dialogue) in res {
                 let corresponding_state_id = get_state_id_cont_mut(&mut cont, client_id);
                 corresponding_state_id.map(|corresponding_state_id| {
@@ -601,5 +601,5 @@ pub fn cleanup_orphaned_players(state: &mut GameState, bot_ids: &HashSet<Uuid>) 
 }
 
 pub fn fire_event(ev: GameEvent) {
-    events::fire_event(ev);
+    server_events::fire_event(ev);
 }
