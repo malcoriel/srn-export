@@ -13,7 +13,7 @@ use crate::indexing::{
 };
 use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
-use crate::world::{spawn_ship, GameState, ShipIdx, PLAYER_RESPAWN_TIME_MC, ShipTemplate};
+use crate::world::{spawn_ship, GameState, ShipIdx, ShipTemplate, PLAYER_RESPAWN_TIME_MC};
 use crate::{combat, indexing, locations, prng_id, world};
 use rand::prelude::SmallRng;
 use rand::Rng;
@@ -23,11 +23,20 @@ use std::f64::consts::PI;
 #[serde(tag = "tag")]
 pub enum LongActionStart {
     Unknown,
-    TransSystemJump { to: Uuid },
+    TransSystemJump {
+        to: Uuid,
+    },
     Respawn,
-    Shoot { target: ShootTarget, turret_id: Uuid },
-    Dock { to_planet: Uuid },
-    Undock { from_planet: Uuid },
+    Shoot {
+        target: ShootTarget,
+        turret_id: Uuid,
+    },
+    Dock {
+        to_planet: Uuid,
+    },
+    Undock {
+        from_planet: Uuid,
+    },
 }
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
@@ -60,7 +69,7 @@ pub enum LongAction {
         target: ShootTarget,
         micro_left: i32,
         percentage: u32,
-        turret_id: Uuid
+        turret_id: Uuid,
     },
     Dock {
         id: Uuid,
@@ -95,7 +104,7 @@ pub fn erase_details(la: LongAction) -> LongAction {
             target: Default::default(),
             micro_left: 0,
             percentage: 0,
-            turret_id: Default::default()
+            turret_id: Default::default(),
         },
         LongAction::Dock { .. } => LongAction::Dock {
             id: Default::default(),
@@ -140,7 +149,9 @@ pub fn try_start_long_action_ship(
     prng: &mut SmallRng,
 ) -> bool {
     match action {
-        LongActionStart::Shoot { target, turret_id, .. } => {
+        LongActionStart::Shoot {
+            target, turret_id, ..
+        } => {
             try_start_shoot(state, target, Some(ship_idx.clone()), turret_id, prng);
             true
         }
@@ -268,7 +279,12 @@ fn try_start_undock(
     return true;
 }
 
-fn try_start_dock(state: &mut GameState, to_planet: Uuid, ship_idx: ShipIdx, prng: &mut SmallRng) -> bool {
+fn try_start_dock(
+    state: &mut GameState,
+    to_planet: Uuid,
+    ship_idx: ShipIdx,
+    prng: &mut SmallRng,
+) -> bool {
     let ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
     let planet = &state.locations[ship_idx.location_idx]
         .planets
@@ -307,13 +323,19 @@ fn try_start_dock(state: &mut GameState, to_planet: Uuid, ship_idx: ShipIdx, prn
     return true;
 }
 
-fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<ShipIdx>, shooting_turret_id: Uuid, prng: &mut SmallRng) -> bool {
+fn try_start_shoot(
+    state: &mut GameState,
+    target: ShootTarget,
+    ship_idx: Option<ShipIdx>,
+    shooting_turret_id: Uuid,
+    prng: &mut SmallRng,
+) -> bool {
     let ship_idx = ship_idx.unwrap();
     if !combat::validate_shoot(
         target.clone(),
         &state.locations[ship_idx.location_idx],
         &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
-        shooting_turret_id
+        shooting_turret_id,
     ) {
         return false;
     }
@@ -324,7 +346,7 @@ fn try_start_shoot(state: &mut GameState, target: ShootTarget, ship_idx: Option<
         target,
         micro_left: SHOOT_COOLDOWN_TICKS,
         percentage: 0,
-        turret_id: shooting_turret_id
+        turret_id: shooting_turret_id,
     });
     revalidate(&mut ship.long_actions);
     for ability in ship.abilities.iter_mut() {
@@ -407,17 +429,28 @@ const SHIP_UNDOCK_TIME_TICKS: i32 = 1 * 1000 * 1000;
 pub const SHIP_DOCKING_RADIUS_COEFF: f64 = 2.0;
 pub const MIN_SHIP_DOCKING_RADIUS: f64 = 5.0;
 
-pub fn finish_long_act(state: &mut GameState, player_id: Option<Uuid>, act: LongAction, client: bool, ship_idx: ShipIdx, prng: &mut SmallRng) {
+pub fn finish_long_act(
+    state: &mut GameState,
+    player_id: Option<Uuid>,
+    act: LongAction,
+    client: bool,
+    ship_idx: ShipIdx,
+    prng: &mut SmallRng,
+) {
     match act {
         LongAction::Unknown { .. } => {
             // nothing to do
         }
         LongAction::TransSystemJump { to, .. } => {
+            log!("finish jump");
             if !client && player_id.is_some() {
-                locations::try_move_player_ship(state, player_id.unwrap(), to);
+                let res = locations::try_move_player_ship(state, player_id.unwrap(), to);
+                log!(format!("finish jump res {}", res));
             }
         }
-        LongAction::Shoot { target, turret_id, .. } => {
+        LongAction::Shoot {
+            target, turret_id, ..
+        } => {
             if player_id.is_some() {
                 combat::resolve_shoot(state, player_id.unwrap(), target, turret_id);
             }
@@ -444,7 +477,7 @@ pub fn finish_long_act_player(
     player_id: Uuid,
     act: LongActionPlayer,
     client: bool,
-    prng: &mut SmallRng
+    prng: &mut SmallRng,
 ) {
     match act {
         LongActionPlayer::Unknown { .. } => {
@@ -489,10 +522,7 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                     id,
                     micro_left: left,
                     target,
-                    percentage: calc_percentage(
-                        left,
-                        SHOOT_ABILITY_DURATION,
-                    ),
+                    percentage: calc_percentage(left, SHOOT_ABILITY_DURATION),
                     turret_id,
                 },
                 left > 0,

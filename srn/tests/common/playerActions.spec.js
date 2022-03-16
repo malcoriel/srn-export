@@ -29,9 +29,11 @@ describe('player actions logic', () => {
       const player = room.state.players[0];
       const playerShip = getShipByPlayerId(room.state, player.id);
       const shipId = playerShip.id;
-      console.log(room.state.locations.length);
+      // a hack to prevent ship docking
+      for (const planet of room.state.locations[0].planets) {
+        planet.properties.push({ tag: 'UnlandablePlanet' });
+      }
       const loc = room.state.locations[1];
-
       room.state.player_actions.push(
         mockPlayerActionTransSystemJump(loc.id, player.id)
       );
