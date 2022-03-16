@@ -1,4 +1,5 @@
 import {
+  genStateOpts,
   swapGlobals,
   updateRoom,
   wasm,
@@ -17,6 +18,7 @@ function simulate(overrideCount) {
   const room = wasm.createRoom({
     mode: 'CargoRush',
     seed: 'simulate replay',
+    gen_state_opts: genStateOpts({ system_count: 1 }),
   });
   let current = _.cloneDeep(room);
   states.push(_.cloneDeep(current.state));

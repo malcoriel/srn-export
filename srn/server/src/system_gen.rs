@@ -341,23 +341,27 @@ pub fn gen_star(star_id: Uuid, mut prng: &mut SmallRng, radius: f64, pos: Vec2f6
     }
 }
 
-pub fn seed_state(mode: &GameMode, seed: String) -> GameState {
+pub fn seed_state(mode: &GameMode, seed: String, opts: Option<GenStateOpts>) -> GameState {
     let mut prng = seed_prng(seed.clone());
     match mode {
         GameMode::Unknown => {
             panic!("Unknown mode to seed");
         }
-        GameMode::CargoRush => make_cargo_rush_state(seed, &mut prng),
-        GameMode::Tutorial => make_tutorial_state(&mut prng),
-        GameMode::Sandbox => make_sandbox_state(&mut prng),
-        GameMode::PirateDefence => make_pirate_defence_state(seed, &mut prng),
+        GameMode::CargoRush => make_cargo_rush_state(seed, &mut prng, opts),
+        GameMode::Tutorial => make_tutorial_state(&mut prng, opts),
+        GameMode::Sandbox => make_sandbox_state(&mut prng, opts),
+        GameMode::PirateDefence => make_pirate_defence_state(seed, &mut prng, opts),
     }
 }
 
-fn make_cargo_rush_state(seed: String, mut prng: &mut SmallRng) -> GameState {
-    let mut opts = GenStateOpts::default();
-    opts.system_count = 5;
-    let mut state = gen_state(seed, opts, &mut prng);
+fn make_cargo_rush_state(
+    seed: String,
+    mut prng: &mut SmallRng,
+    opts: Option<GenStateOpts>,
+) -> GameState {
+    let mut default_opts = GenStateOpts::default();
+    default_opts.system_count = 5;
+    let mut state = gen_state(seed, opts.unwrap_or(default_opts), &mut prng);
     init_all_planets_market(&mut state);
     state.id = prng_id(&mut prng);
     state.mode = GameMode::CargoRush;
@@ -370,11 +374,15 @@ fn assign_health_to_planets(planets: &mut Vec<Planet>, health: Health) {
     }
 }
 
-pub fn make_pirate_defence_state(seed: String, prng: &mut SmallRng) -> GameState {
+pub fn make_pirate_defence_state(
+    seed: String,
+    prng: &mut SmallRng,
+    opts: Option<GenStateOpts>,
+) -> GameState {
     let mut gen_opts = GenStateOpts::default();
     gen_opts.max_planets_in_system = 1;
     gen_opts.max_satellites_for_planet = 0;
-    let mut state = gen_state(seed, gen_opts, prng);
+    let mut state = gen_state(seed, opts.unwrap_or(gen_opts), prng);
     assign_health_to_planets(&mut state.locations[0].planets, Health::new(100.0));
     state.locations[0].planets[0]
         .properties
@@ -389,7 +397,7 @@ pub fn make_pirate_defence_state(seed: String, prng: &mut SmallRng) -> GameState
 
 pub const DEFAULT_WORLD_UPDATE_EVERY_TICKS: u64 = 16 * 1000; // standard 60fps
 
-fn make_tutorial_state(prng: &mut SmallRng) -> GameState {
+fn make_tutorial_state(prng: &mut SmallRng, opts: Option<GenStateOpts>) -> GameState {
     let seed = "tutorial".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
@@ -466,10 +474,11 @@ fn make_tutorial_state(prng: &mut SmallRng) -> GameState {
         processed_player_actions: vec![],
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
+        gen_opts: opts.unwrap_or_default(),
     }
 }
 
-pub fn make_sandbox_state(prng: &mut SmallRng) -> GameState {
+pub fn make_sandbox_state(prng: &mut SmallRng, opts: Option<GenStateOpts>) -> GameState {
     let seed = "sandbox".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
@@ -498,10 +507,12 @@ pub fn make_sandbox_state(prng: &mut SmallRng) -> GameState {
         processed_player_actions: vec![],
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
+        gen_opts: opts.unwrap_or_default(),
     }
 }
 
-struct GenStateOpts {
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GenStateOpts {
     system_count: u32,
     max_planets_in_system: u32,
     max_satellites_for_planet: u32,
@@ -551,6 +562,7 @@ fn gen_state(seed: String, opts: GenStateOpts, prng: &mut SmallRng) -> GameState
         processed_player_actions: vec![],
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
+        gen_opts: opts,
     };
 
     let mut state = validate_state(state);

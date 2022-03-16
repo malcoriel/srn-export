@@ -4,20 +4,29 @@ import {
   updateRoom,
   wasm,
   findObjectPosition,
+  genStateOpts,
 } from '../util';
 import _ from 'lodash';
 
 describe('cargo rush bots behavior', () => {
   beforeAll(swapGlobals);
   it('can spawn some default bots', async () => {
-    const room = wasm.createRoom({ mode: 'CargoRush', seed: 'bots' });
+    const room = wasm.createRoom({
+      mode: 'CargoRush',
+      seed: 'bots',
+      gen_state_opts: genStateOpts({ system_count: 1 }),
+    });
     const { state: world } = room;
     expect(world.players.length).toBeGreaterThan(0);
     expect(_.every(world.players, (p) => p.is_bot)).toBeTruthy();
   });
 
   it('bots ships start moving', async () => {
-    let room = wasm.createRoom({ mode: 'CargoRush', seed: 'bots' });
+    let room = wasm.createRoom({
+      mode: 'CargoRush',
+      seed: 'bots',
+      gen_state_opts: genStateOpts({ system_count: 1 }),
+    });
     const firstBotPlayerId = room.bots[0].id;
     expect(firstBotPlayerId).toBeTruthy();
     const oldShipPos = findObjectPosition(
@@ -31,7 +40,11 @@ describe('cargo rush bots behavior', () => {
   });
 
   it('bots earn some money', async () => {
-    let room = wasm.createRoom({ mode: 'CargoRush', seed: 'bots' });
+    let room = wasm.createRoom({
+      mode: 'CargoRush',
+      seed: 'bots',
+      gen_state_opts: genStateOpts({ system_count: 1 }),
+    });
     room = updateRoom(room, 1000 * 60 * 3);
     const player = room.state.players[0];
     expect(player.money).toBeGreaterThan(0);

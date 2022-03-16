@@ -1,4 +1,5 @@
 import {
+  genStateOpts,
   getShipByPlayerId,
   swapGlobals,
   updateRoom,
@@ -23,6 +24,7 @@ describe('player actions logic', () => {
       let room = wasm.createRoom({
         seed: 'long actions',
         mode: 'CargoRush',
+        gen_state_opts: genStateOpts({ system_count: 2 }),
       });
       const player = room.state.players[0];
       const playerShip = getShipByPlayerId(room.state, player.id);

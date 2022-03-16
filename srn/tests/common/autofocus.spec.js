@@ -1,4 +1,5 @@
 import {
+  genStateOpts,
   getLoc0,
   getShipByPlayerId,
   swapGlobals,
@@ -36,7 +37,11 @@ describe('autofocus behavior', () => {
   });
 
   it('can autofocus closest planet in cargo rush mode', async () => {
-    let room = wasm.createRoom({ mode: 'CargoRush', seed: 'autofocus' });
+    let room = wasm.createRoom({
+      mode: 'CargoRush',
+      seed: 'autofocus',
+      gen_state_opts: genStateOpts({ system_count: 1 }),
+    });
     const firstBotId = room.bots[0].id;
     const botShipBeforeUpdate = getShipByPlayerId(room.state, firstBotId);
     const planet = getLoc0(room.state).planets[0];

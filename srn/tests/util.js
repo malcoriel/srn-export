@@ -95,6 +95,16 @@ export const swapGlobals = () => {
   }
 };
 
+export const genStateOpts = (overrides) =>
+  _.merge(
+    {
+      system_count: 1,
+      max_planets_in_system: 10,
+      max_satellites_for_planet: 3,
+    },
+    overrides
+  );
+
 export const loadWasm = timerify(async function loadWasm() {
   const resources = await loadResources('../server/resources');
   const wasmBytes = await fs.readFile('../world/pkg-nomodule/world_bg.wasm');

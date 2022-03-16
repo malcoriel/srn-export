@@ -1,4 +1,5 @@
 import {
+  genStateOpts,
   packAndWriteReplay,
   swapGlobals,
   updateRoom,
@@ -119,6 +120,7 @@ describe('update determinism', () => {
           mode,
           seed: 'world update',
           bots_seed: 'deterministic',
+          gen_state_opts: genStateOpts({ system_count: 1 }),
         });
         serialUpdateAndCompare(
           room,
@@ -130,6 +132,7 @@ describe('update determinism', () => {
         const room = wasm.createRoom({
           mode,
           seed: 'world update',
+          gen_state_opts: genStateOpts({ system_count: 1 }),
         });
         const roomA = updateRoom(room, 30000);
         const roomB = updateRoom(room, 30000);

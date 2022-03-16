@@ -47,7 +47,7 @@ use crate::random_stuff::{
 };
 use crate::ship_action::{PlayerActionRust, ShipMovementMarkers};
 use crate::substitutions::substitute_notification_texts;
-use crate::system_gen::{seed_state, str_to_hash, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
+use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
 use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
@@ -676,6 +676,7 @@ pub struct GameState {
     pub processed_player_actions: Vec<ProcessedPlayerAction>,
     pub update_every_ticks: u64,
     pub accumulated_not_updated_ticks: u32,
+    pub gen_opts: GenStateOpts,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -717,6 +718,7 @@ impl GameState {
             processed_player_actions: vec![],
             update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
             accumulated_not_updated_ticks: 0,
+            gen_opts: Default::default(),
         }
     }
 }
@@ -912,7 +914,11 @@ fn update_world_iter(
                         p
                     })
                     .collect::<Vec<_>>();
-                state = seed_state(&state.mode, random_stuff::random_hex_seed());
+                state = seed_state(
+                    &state.mode,
+                    random_stuff::random_hex_seed(),
+                    Some(state.gen_opts),
+                );
                 state.players = players.clone();
                 for player in players.iter() {
                     spawn_ship(
@@ -2259,9 +2265,10 @@ pub fn make_room(
     room_id: Uuid,
     prng: &mut SmallRng,
     bots_seed: Option<String>,
+    opts: Option<GenStateOpts>,
 ) -> (Uuid, Room) {
     let room_name = format!("{} - {}", mode, room_id);
-    let state = system_gen::seed_state(&mode, random_stuff::random_hex_seed_seeded(prng));
+    let state = system_gen::seed_state(&mode, random_stuff::random_hex_seed_seeded(prng), opts);
     let state_id = state.id.clone();
     let mut room = Room {
         id: room_id,

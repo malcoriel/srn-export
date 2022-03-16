@@ -267,7 +267,7 @@ use crate::api_struct::Room;
 use crate::dialogue::{parse_dialogue_script_from_file, DialogueTable};
 use crate::indexing::{find_my_ship_index, ObjectSpecifier};
 use crate::perf::{Sampler, SamplerMarks};
-use crate::system_gen::seed_state;
+use crate::system_gen::{seed_state, GenStateOpts};
 use crate::world::{GameMode, GameState};
 use mut_static::MutStatic;
 use rand::prelude::SmallRng;
@@ -417,6 +417,7 @@ pub fn apply_ship_action(serialized_apply_args: &str) -> String {
 struct SeedWorldArgs {
     seed: String,
     mode: GameMode,
+    gen_state_opts: Option<GenStateOpts>,
 }
 
 use crate::replay::{ReplayDiffed, ReplayRaw, ValueDiff};
@@ -433,7 +434,7 @@ pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 pub fn seed_world(args: JsValue) -> Result<JsValue, JsValue> {
     let args: SeedWorldArgs = serde_wasm_bindgen::from_value(args)?;
-    let state = system_gen::seed_state(&args.mode, args.seed);
+    let state = system_gen::seed_state(&args.mode, args.seed, args.gen_state_opts);
     Ok(custom_serialize(&state)?)
 }
 
@@ -442,13 +443,20 @@ struct CreateRoomArgs {
     mode: GameMode,
     seed: String,
     bots_seed: Option<String>,
+    gen_state_opts: Option<GenStateOpts>,
 }
 
 #[wasm_bindgen]
 pub fn create_room(args: JsValue) -> Result<JsValue, JsValue> {
     let args: CreateRoomArgs = serde_wasm_bindgen::from_value(args)?;
     let mut prng = seed_prng(args.seed);
-    let (_, room) = world::make_room(&args.mode, prng_id(&mut prng), &mut prng, args.bots_seed);
+    let (_, room) = world::make_room(
+        &args.mode,
+        prng_id(&mut prng),
+        &mut prng,
+        args.bots_seed,
+        args.gen_state_opts,
+    );
     Ok(serde_wasm_bindgen::to_value(&room)?)
 }
 
