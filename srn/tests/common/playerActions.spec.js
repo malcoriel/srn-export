@@ -37,7 +37,7 @@ describe('player actions logic', () => {
       room.state.player_actions.push(
         mockPlayerActionTransSystemJump(loc.id, player.id)
       );
-      room = updateRoom(room, 20000);
+      room = updateRoom(room, 10000, 1000n * 1000n);
       const shipInLoc1 = room.state.locations[1].ships.find(
         (s) => s.id === shipId
       );

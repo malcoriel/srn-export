@@ -442,10 +442,8 @@ pub fn finish_long_act(
             // nothing to do
         }
         LongAction::TransSystemJump { to, .. } => {
-            log!("finish jump");
             if !client && player_id.is_some() {
-                let res = locations::try_move_player_ship(state, player_id.unwrap(), to);
-                log!(format!("finish jump res {}", res));
+                locations::try_move_player_ship(state, player_id.unwrap(), to);
             }
         }
         LongAction::Shoot {
