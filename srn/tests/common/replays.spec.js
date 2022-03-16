@@ -3,8 +3,8 @@ import _ from 'lodash';
 
 jest.setTimeout(100000);
 
-function simulate() {
-  const COUNT = 20;
+function simulate(overrideCount) {
+  const COUNT = overrideCount || 20;
   const STEP_MS = 1000;
 
   const states = [];
@@ -32,7 +32,7 @@ describe('replay system', () => {
   });
 
   xit('can pack diff replay via wasm', async () => {
-    const states = simulate();
+    const states = simulate(100);
     const replay = await wasm.packReplay(states, 'stress-test', true);
     await writeReplay(replay);
   });
