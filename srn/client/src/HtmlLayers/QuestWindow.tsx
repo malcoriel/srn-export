@@ -1,9 +1,10 @@
 import React from 'react';
 import './QuestWindow.scss';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import { findPlanet, Planet, Quest, CargoDeliveryQuestState } from '../world';
 import { Window } from './ui/Window';
 import { findMyPlayer } from '../ClientStateIndexing';
+import { useNSForceChange } from '../NetStateHooks';
 
 export const QuestWindow = () => {
   const ns = NetState.get();

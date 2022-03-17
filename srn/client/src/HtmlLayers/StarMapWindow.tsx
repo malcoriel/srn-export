@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import { Window } from './ui/Window';
 import './LeaderboardWindow.scss';
 import { Vector3 } from 'three';
@@ -8,6 +8,7 @@ import { Canvas } from '@react-three/fiber';
 import { StarMap } from './StarMap';
 import { LongActionStartBuilder } from '../../../world/pkg/world.extra';
 import { useStore, WindowState } from '../store';
+import { useNSForceChange } from '../NetStateHooks';
 
 export const StarMapWindow: React.FC = () => {
   const ns = NetState.get();

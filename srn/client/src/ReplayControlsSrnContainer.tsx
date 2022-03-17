@@ -1,6 +1,6 @@
-import { useNSForceChange } from './NetState';
 import { ReplayPlayerControls } from './HtmlLayers/ui/ReplayPlayerControls';
 import React from 'react';
+import { useNSForceChange } from './NetStateHooks';
 
 export const ReplayControlsSrnContainer = () => {
   const ns = useNSForceChange(

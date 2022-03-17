@@ -1,8 +1,9 @@
 import { StyledRect } from './ui/StyledRect';
 import './OverheadPanel.scss';
 import React from 'react';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import { isStateTutorial } from '../world';
+import { useNSForceChange } from '../NetStateHooks';
 
 function getSeconds(milliseconds_remaining: number) {
   return Math.floor(milliseconds_remaining / 1000);

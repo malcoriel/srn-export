@@ -7,8 +7,8 @@ import { explosionSfxFull } from './blocks/ThreeExplosion';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { useNSForceChange } from '../NetState';
 import { GameMode } from '../../../world/pkg/world.extra';
+import { useNSForceChange } from '../NetStateHooks';
 
 const STLLoader = require('three-stl-loader')(THREE);
 

@@ -1,9 +1,10 @@
 import { QuickMenu } from './ui/QuickMenu';
 import React from 'react';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import { ImFloppyDisk } from 'react-icons/all';
 import _ from 'lodash';
 import { LongActionStartBuilder } from '../../../world/pkg/world.extra';
+import { useNSForceChange } from '../NetStateHooks';
 
 export const NormalQuickMenu = () => {
   const ns = NetState.get();

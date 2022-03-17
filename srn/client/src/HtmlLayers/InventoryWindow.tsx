@@ -3,11 +3,12 @@ import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
 import styleVars from './InventoryWindow.vars.module.scss';
 import './InventoryWindow.scss';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import { InventoryActionBuilder } from '../../../world/pkg/world.extra';
 import _ from 'lodash';
 import { pxToNumber } from '../utils/pxToNumber';
 import { findMyShip } from '../ClientStateIndexing';
+import { useNSForceChange } from '../NetStateHooks';
 
 const BOTTOM_BAR_HEIGHT = Number(pxToNumber(styleVars.bottomBarHeight));
 const TOP_BAR_HEIGHT = Number(pxToNumber(styleVars.topBarHeight));

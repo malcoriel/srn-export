@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactJson from 'react-json-view';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import { PanelPosition, PanelWithHideButton } from './PanelWithHideButton';
+import { useNSForceChange } from '../NetStateHooks';
 
 const DebugInternals = () => {
   const ns = NetState.get();

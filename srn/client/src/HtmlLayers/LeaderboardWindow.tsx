@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import { Window } from './ui/Window';
 import './LeaderboardWindow.scss';
 import { useStore, WindowState } from '../store';
 import { FaTelegram } from 'react-icons/fa';
+import { useNSForceChange } from '../NetStateHooks';
 
 export const LeaderboardWindow: React.FC = () => {
   const ns = NetState.get();

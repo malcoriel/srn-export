@@ -5,7 +5,7 @@ import _ from 'lodash';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { crimson, dirtyGray, gray, mint, teal, yellow } from '../utils/palette';
 
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import { height_units, width_units } from '../world';
 import Vector, { IVector, VectorF, VectorFzero } from '../utils/Vector';
 import {
@@ -20,6 +20,7 @@ import {
 import { getOnWheel } from '../ThreeLayers/CameraControls';
 import { useIsMounted } from 'usehooks-ts';
 import { findMyShip } from '../ClientStateIndexing';
+import { useNSForceChange } from '../NetStateHooks';
 
 export const minimap_proportion = 0.2;
 export const get_minimap_size_x = () => size.getMinSize() * minimap_proportion;

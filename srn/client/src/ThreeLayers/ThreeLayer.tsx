@@ -14,7 +14,7 @@ import {
   ExternalCameraControl,
 } from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
-import NetState, { useNSForceChange } from '../NetState';
+import NetState from '../NetState';
 import Vector from '../utils/Vector';
 import { actionsActive } from '../utils/ShipControls';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
@@ -29,6 +29,7 @@ import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { seedToNumber, threeVectorToVector } from './util';
 import { ThreeLoadingIndicator } from './Resources';
+import { useNSForceChange } from '../NetStateHooks';
 
 THREE.Cache.enabled = true;
 

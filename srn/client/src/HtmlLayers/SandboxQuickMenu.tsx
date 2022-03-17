@@ -1,7 +1,7 @@
 import { saveAs } from 'file-saver';
 import { QuickMenu } from './ui/QuickMenu';
 import React, { useEffect, useState } from 'react';
-import NetState, { useNSForceChange, VisualState } from '../NetState';
+import NetState, { VisualState } from '../NetState';
 import {
   GameMode,
   GameState,
@@ -34,6 +34,7 @@ import { FaDiceD20 } from 'react-icons/fa';
 import { api } from '../utils/api';
 import { usePrompt } from './PromptWindow';
 import { findMyShip } from '../ClientStateIndexing';
+import { useNSForceChange } from '../NetStateHooks';
 
 const pickClosestObject = (
   state: GameState,

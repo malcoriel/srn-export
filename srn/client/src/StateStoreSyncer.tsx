@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { useNSForceChange } from './NetState';
 import { useStore } from './store';
 import { getSpecifierId } from './world';
+import { useNSForceChange } from './NetStateHooks';
 
 export const StateStoreSyncer: React.FC = () => {
   const {
