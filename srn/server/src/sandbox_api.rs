@@ -82,7 +82,7 @@ pub fn load_clean_state(player_id: String) {
         warn!("attempt to load into non-personal state");
         return;
     }
-    let mut clean_state = seed_state(&GameMode::Sandbox, "clean".to_string());
+    let mut clean_state = seed_state(&GameMode::Sandbox, "clean".to_string(), None);
     mem::swap(current_state, &mut clean_state);
 }
 
@@ -102,7 +102,7 @@ pub fn load_random_state(player_id: String) {
             .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
         replace_player_state(
             player_id,
-            seed_state(&GameMode::CargoRush, random_hex_seed()),
+            seed_state(&GameMode::CargoRush, random_hex_seed(), None),
         );
     }
 }
@@ -139,5 +139,5 @@ fn replace_player_state(player_id: Uuid, mut new_state: GameState) {
 pub fn load_seeded_state(player_id: String, seed: String) {
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-    replace_player_state(player_id, seed_state(&GameMode::CargoRush, seed));
+    replace_player_state(player_id, seed_state(&GameMode::CargoRush, seed, None));
 }

@@ -166,7 +166,7 @@ pub fn handle_events(
             }
         }
     }
-    dialogue_changes
+    vec![]
 }
 
 pub fn fire_event(ev: GameEvent) {

@@ -231,6 +231,11 @@ export default class NetState extends EventEmitter {
   private resetState() {
     this.state = {
       ticks: 0,
+      gen_opts: {
+        system_count: 0,
+        max_planets_in_system: 10,
+        max_satellites_for_planet: 3,
+      },
       disable_hp_effects: false,
       id: '',
       leaderboard: {
@@ -599,7 +604,7 @@ export default class NetState extends EventEmitter {
         this.state.locations[0].ships = ships;
         if (myOldShip) {
           this.state.locations[0].ships = this.state.locations[0].ships.map(
-            (s) => {
+            (s: any) => {
               if (s.id === myOldShip.id) {
                 return myOldShip;
               }
@@ -718,9 +723,13 @@ export default class NetState extends EventEmitter {
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.locations[0].ships[myShipIndex];
     for (const cmd of commands) {
-      const res = applyShipActionWasm(this.state, cmd);
-      if (res) {
-        myShip = res;
+      if (this.isWorldUpdatePlayerAction(cmd)) {
+        this.state.player_actions.push(cmd);
+      } else {
+        const res = applyShipActionWasm(this.state, cmd);
+        if (res) {
+          myShip = res;
+        }
       }
     }
     this.state.locations[0].ships.splice(myShipIndex, 1);
@@ -779,13 +788,22 @@ export default class NetState extends EventEmitter {
     }
   };
 
+  private isWorldUpdatePlayerAction(action: PlayerActionRust) {
+    if (action.tag === 'Gas') return true;
+    return false;
+  }
+
   private updateShipOnServer = (tag: string, action: PlayerActionRust) => {
     if (this.state && !this.state.paused) {
-      this.send({
-        code: ClientOpCode.MutateMyShip,
-        value: action,
-        tag,
-      });
+      if (!this.isWorldUpdatePlayerAction(action)) {
+        this.send({
+          code: ClientOpCode.MutateMyShip,
+          value: action,
+          tag,
+        });
+      } else {
+        this.sendSchedulePlayerAction(action);
+      }
     }
   };
 

@@ -24,6 +24,8 @@ use crate::world::{
     GAME_STATE_VERSION,
 };
 use crate::{planet_movement, prng_id, seed_prng, world};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlanetType {
@@ -511,7 +513,7 @@ pub fn make_sandbox_state(prng: &mut SmallRng, opts: Option<GenStateOpts>) -> Ga
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct GenStateOpts {
     system_count: u32,
     max_planets_in_system: u32,

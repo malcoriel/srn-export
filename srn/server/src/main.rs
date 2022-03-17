@@ -384,7 +384,7 @@ lazy_static! {
 
 fn main_thread() {
     let mut prng = get_prng();
-    let mut d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
+    let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
     let mut last = Local::now();
     let mut marks_holder = vec![];
     for mark in SamplerMarks::iter() {
