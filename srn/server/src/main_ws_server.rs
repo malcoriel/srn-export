@@ -382,7 +382,9 @@ fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&
             }
             let state = state.unwrap();
             match action.action {
-                PlayerActionRust::LongActionStart { .. } => {
+                PlayerActionRust::LongActionStart { .. }
+                | PlayerActionRust::Gas { .. }
+                | PlayerActionRust::StopGas { .. } => {
                     state.player_actions.push_back(action.action);
                 }
                 _ => {
