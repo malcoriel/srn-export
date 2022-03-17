@@ -1,4 +1,3 @@
-import EventEmitter from 'events';
 import {
   AABB,
   applyShipActionWasm,
@@ -13,6 +12,7 @@ import {
   TradeAction,
   updateWorld,
 } from './world';
+import EventEmitter from 'events';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
 import Vector, { IVector } from './utils/Vector';
@@ -35,8 +35,12 @@ import {
   findMyShipIndex,
 } from './ClientStateIndexing';
 import { PlayerActionRustBuilder } from '../../world/pkg/world.extra';
-
 export type Timeout = ReturnType<typeof setTimeout>;
+
+module?.hot?.dispose(() => {
+  // for some reason CRA's client doesn't reload the page itself on hot.decline
+  window.location.reload();
+});
 
 enum ClientOpCode {
   Unknown,
@@ -767,7 +771,9 @@ export default class NetState extends EventEmitter {
         }
       }
       const tag = uuid.v4();
-      this.pendingActions.push([tag, [action], this.state.millis]);
+      if (!this.isWorldUpdatePlayerAction(action)) {
+        this.pendingActions.push([tag, [action], this.state.millis]);
+      }
       this.updateShipOnServer(tag, action);
     }
 
@@ -788,7 +794,7 @@ export default class NetState extends EventEmitter {
   };
 
   private isWorldUpdatePlayerAction(action: PlayerActionRust) {
-    if (action.tag === 'Gas') return true;
+    if (action.tag === 'Gas' || action.tag === 'StopGas') return true;
     return false;
   }
 
