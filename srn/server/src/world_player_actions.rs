@@ -34,6 +34,17 @@ pub fn world_update_handle_player_action(
                 ship.movement_markers.gas = None;
             }
         }
+        PlayerActionRust::Reverse { player_id } => {
+            if let Some(ship) = find_my_ship_mut(state, player_id) {
+                ship.movement_markers.gas = Some(MoveAxisParam {
+                    forward: false,
+                    last_tick: state_clone.millis,
+                });
+                ship.navigate_target = None;
+                ship.dock_target = None;
+                ship.trajectory = vec![];
+            }
+        }
         _ => {
             warn!(format!(
                 "action {:?} cannot be handled by world_update_handle_player_action",

@@ -794,7 +794,12 @@ export default class NetState extends EventEmitter {
   };
 
   private isWorldUpdatePlayerAction(action: PlayerActionRust) {
-    if (action.tag === 'Gas' || action.tag === 'StopGas') return true;
+    if (
+      action.tag === 'Gas' ||
+      action.tag === 'StopGas' ||
+      action.tag === 'Reverse'
+    )
+      return true;
     return false;
   }
 

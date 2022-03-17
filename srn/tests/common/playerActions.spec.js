@@ -60,7 +60,7 @@ describe('player actions logic', () => {
   });
 
   describe('ship actions', () => {
-    fit('can gas & stop', () => {
+    fit('can gas & stop & reverse', () => {
       let state = wasm.seedWorld({
         seed: 'ship actions',
         mode: 'CargoRush',
@@ -74,17 +74,22 @@ describe('player actions logic', () => {
       loc.ships.push(ship);
       ship.x = 100.0;
       ship.y = 100.0;
-      ship.rotation = 0.0;
+      ship.rotation = Math.PI; // ships are apparently turned to (0, -1) by default with 0.0
       state.player_actions.push(mockPlayerActionMove('Gas', player.id));
       // movement inactivity is 500ms, so update has to be less than that
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.y).toBeLessThan(100.0);
+      expect(ship.y).toBeGreaterThan(100.0);
       ship.y = 100.0;
       state.player_actions.push(mockPlayerActionMove('StopGas', player.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.y).toBeCloseTo(100.0);
+      ship.y = 100.0;
+      state.player_actions.push(mockPlayerActionMove('Reverse', player.id));
+      state = updateWorld(state, 250);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.y).toBeLessThan(100.0);
     });
     it.todo('can turn & stop');
     it.todo('can act in the past to prevent rollbacks');

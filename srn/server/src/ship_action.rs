@@ -156,15 +156,8 @@ pub fn apply_player_action(
             None
         }
         PlayerActionRust::Reverse { .. } => {
-            let mut ship = old_ship.clone();
-            ship.movement_markers.gas = Some(MoveAxisParam {
-                forward: false,
-                last_tick: state.millis,
-            });
-            ship.navigate_target = None;
-            ship.dock_target = None;
-            ship.trajectory = vec![];
-            Some(ship)
+            warn!("player action Reverse must be handled through world player actions");
+            None
         }
         PlayerActionRust::TurnRight { .. } => {
             let mut ship = old_ship.clone();
