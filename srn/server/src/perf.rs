@@ -306,6 +306,7 @@ pub enum SamplerMarks {
     GetDiffReplayStateAtFull = 49,
     GetDiffReplayStateAtPreloaded = 50,
     GetDiffReplayStateAtPreloadedInterpolated = 51,
+    UpdateShipHistory = 52,
 }
 
 impl Display for SamplerMarks {

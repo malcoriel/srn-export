@@ -184,7 +184,7 @@ export const mockShip = (id) => ({
   id,
   x: 0,
   y: 0,
-  rotation: 0,
+  rotation: Math.PI, // orient towards positive y
   radius: 1,
   acc_periodic_dmg: 0,
   acc_periodic_heal: 0,

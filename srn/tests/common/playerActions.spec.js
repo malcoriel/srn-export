@@ -21,10 +21,30 @@ export const mockPlayerActionTransSystemJump = (toLocId, byPlayerId) => ({
   },
 });
 
-export const mockPlayerActionMove = (type, byPlayerId) => ({
+export const mockPlayerActionMove = (type, byPlayerId, atTicks = null) => ({
   tag: type, // Gas | StopGas | Turn | StopTurn | Reverse
   player_id: byPlayerId,
+  at_ticks: atTicks,
 });
+
+const createStateWithAShip = () => {
+  const state = wasm.seedWorld({
+    seed: 'player actions',
+    mode: 'CargoRush',
+    gen_state_opts: genStateOpts({ system_count: 1 }),
+  });
+  const player = mockPlayer(uuid.v4());
+  state.players.push(player);
+  const ship = mockShip(uuid.v4());
+  player.ship_id = ship.id;
+  const loc = getLoc0(state);
+  loc.ships.push(ship);
+  return {
+    state,
+    player,
+    ship,
+  };
+};
 
 describe('player actions logic', () => {
   beforeAll(swapGlobals);
@@ -61,20 +81,10 @@ describe('player actions logic', () => {
 
   describe('ship actions', () => {
     fit('can gas & stop & reverse', () => {
-      let state = wasm.seedWorld({
-        seed: 'ship actions',
-        mode: 'CargoRush',
-        gen_state_opts: genStateOpts({ system_count: 1 }),
-      });
-      const player = mockPlayer(uuid.v4());
-      state.players.push(player);
-      let ship = mockShip(uuid.v4());
-      player.ship_id = ship.id;
-      const loc = getLoc0(state);
-      loc.ships.push(ship);
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship } = createStateWithAShip();
       ship.x = 100.0;
       ship.y = 100.0;
-      ship.rotation = Math.PI; // ships are apparently turned to (0, -1) by default with 0.0
       state.player_actions.push(mockPlayerActionMove('Gas', player.id));
       // movement inactivity is 500ms, so update has to be less than that
       state = updateWorld(state, 250);
@@ -91,8 +101,25 @@ describe('player actions logic', () => {
       ship = getShipByPlayerId(state, player.id);
       expect(ship.y).toBeLessThan(100.0);
     });
+
+    fit('can act in the past to prevent rollbacks', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship } = createStateWithAShip();
+      ship.x = 100.0;
+      ship.y = 100.0;
+      // pass some time so ticks are > 0
+      state = updateWorld(state, 250);
+      // double the time that passes for that movement so after 250+250 it work for 500ms
+      state.player_actions.push(mockPlayerActionMove('Gas', player.id, 0));
+      state = updateWorld(state, 250);
+      ship = getShipByPlayerId(state, player.id);
+      const normalSpeedPerSec = 10;
+      const normalDist = (250 * normalSpeedPerSec) / 1000;
+      const doubleDist = normalDist * 2;
+      expect(ship.y).toBeGreaterThan(100 + doubleDist);
+    });
+
     it.todo('can turn & stop');
-    it.todo('can act in the past to prevent rollbacks');
     it.todo('does not allow to act too much in the past');
   });
 

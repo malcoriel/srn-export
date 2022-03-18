@@ -477,6 +477,7 @@ fn make_tutorial_state(prng: &mut SmallRng, opts: Option<GenStateOpts>) -> GameS
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
         gen_opts: opts.unwrap_or_default(),
+        ship_history: Default::default(),
     }
 }
 
@@ -510,6 +511,7 @@ pub fn make_sandbox_state(prng: &mut SmallRng, opts: Option<GenStateOpts>) -> Ga
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
         gen_opts: opts.unwrap_or_default(),
+        ship_history: Default::default(),
     }
 }
 
@@ -565,6 +567,7 @@ fn gen_state(seed: String, opts: GenStateOpts, prng: &mut SmallRng) -> GameState
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
         gen_opts: opts,
+        ship_history: Default::default(),
     };
 
     let mut state = validate_state(state);

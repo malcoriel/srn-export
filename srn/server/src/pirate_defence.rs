@@ -145,8 +145,7 @@ pub fn bot_planet_defender_act(
     if let Some(ship_loc) = ship_loc {
         if let Some(loc_sp_idx) = spatial_indexes.values.get(&ship_loc.location_idx) {
             let my_ship = &state.locations[ship_loc.location_idx].ships[ship_loc.ship_idx];
-            let valid_targets =
-                loc_sp_idx.rad_search(&my_ship.get_position(), SHOOT_DEFAULT_DISTANCE);
+            let valid_targets = loc_sp_idx.rad_search(&my_ship.as_vec(), SHOOT_DEFAULT_DISTANCE);
             let mut all_acts = vec![];
 
             let foe_ships = valid_targets
@@ -196,7 +195,7 @@ pub fn bot_planet_defender_act(
             let def_planet = &state.locations[0].planets[0];
             let rad = def_planet.radius;
             if my_ship
-                .get_position()
+                .as_vec()
                 .euclidean_distance(&def_planet.get_position())
                 > rad * 1.5
                 && my_ship.trajectory.len() == 0
