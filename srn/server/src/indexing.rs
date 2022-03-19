@@ -207,6 +207,30 @@ pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<ShipIdx>
     return if found { Some(idx) } else { None };
 }
 
+pub fn find_ship_index(state: &GameState, ship_id: Uuid) -> Option<ShipIdx> {
+    let mut idx = ShipIdx {
+        location_idx: 0,
+        ship_idx: 0,
+    };
+    let mut found = false;
+
+    for loc in state.locations.iter() {
+        idx.ship_idx = 0;
+        for ship in loc.ships.iter() {
+            if ship.id == ship_id {
+                found = true;
+                break;
+            }
+            idx.ship_idx += 1;
+        }
+        if found {
+            break;
+        }
+        idx.location_idx += 1;
+    }
+    return if found { Some(idx) } else { None };
+}
+
 pub fn find_player_by_ship_id(state: &GameState, ship_id: Uuid) -> Option<&Player> {
     for player in state.players.iter() {
         if player.ship_id.map_or(false, |sid| sid == ship_id) {

@@ -26,6 +26,12 @@ export const mockPlayerActionMove = (type, byPlayerId) => ({
   player_id: byPlayerId,
 });
 
+export const mockPlayerActionNavigate = (shipId, to) => ({
+  tag: 'Navigate',
+  ship_id: shipId,
+  target: to,
+});
+
 const createStateWithAShip = () => {
   const state = wasm.seedWorld({
     seed: 'player actions',
@@ -79,7 +85,7 @@ describe('player actions logic', () => {
   });
 
   describe('ship actions', () => {
-    fit('can gas & stop & reverse', () => {
+    it('can gas & stop & reverse', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
       ship.x = 100.0;
@@ -101,7 +107,7 @@ describe('player actions logic', () => {
       expect(ship.y).toBeLessThan(100.0);
     });
 
-    fit('can turn & stop', () => {
+    it('can turn & stop', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
       ship.x = 100.0;
@@ -122,6 +128,23 @@ describe('player actions logic', () => {
       ship = getShipByPlayerId(state, player.id);
       expect(ship.y).toBeGreaterThan(Math.PI);
     });
+  });
+
+  describe('navigation', () => {
+    it('can navigate to a point', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship } = createStateWithAShip();
+      ship.x = 100.0;
+      ship.y = 100.0;
+      state.player_actions.push(
+        mockPlayerActionNavigate(ship.id, { x: 110, y: 110 })
+      );
+      state = updateWorld(state, 1500);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.x).toBeCloseTo(110.0);
+      expect(ship.y).toBeCloseTo(110.0);
+    });
+    it.todo('can navigate and dock');
   });
 
   describe('tractoring', () => {

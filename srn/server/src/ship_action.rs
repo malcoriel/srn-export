@@ -44,6 +44,7 @@ pub enum PlayerActionRust {
     },
     Dock,
     Navigate {
+        ship_id: Uuid,
         target: Vec2f64,
     },
     DockNavigate {
@@ -85,20 +86,9 @@ pub fn apply_player_action(
             warn!("Dock ship action is obsolete");
             Some(old_ship.clone())
         }
-        PlayerActionRust::Navigate { target } => {
-            let mut ship = old_ship.clone();
-            let ship_pos = Vec2f64 {
-                x: ship.x,
-                y: ship.y,
-            };
-            undock_ship_via_clone(state, &ship_idx, &mut ship, client, prng);
-            ship.dock_target = None;
-            ship.navigate_target = Some(target);
-            ship.trajectory =
-                trajectory::build_trajectory_to_point(ship_pos, &target, &ship.movement_definition);
-            ship.movement_markers.gas = None;
-            ship.movement_markers.turn = None;
-            Some(ship)
+        PlayerActionRust::Navigate { .. } => {
+            warn!("player action Navigate must be handled through world player actions");
+            None
         }
         PlayerActionRust::DockNavigate { target } => {
             let mut ship = old_ship.clone();

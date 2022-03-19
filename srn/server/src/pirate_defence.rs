@@ -203,6 +203,7 @@ pub fn bot_planet_defender_act(
                 let random_shift_x = prng.gen_range(-rad, rad);
                 let random_shift_y = prng.gen_range(-rad, rad);
                 all_acts.push(BotAct::Act(PlayerActionRust::Navigate {
+                    ship_id: my_ship.id,
                     target: def_planet.get_position().add(&Vec2f64 {
                         x: random_shift_x,
                         y: random_shift_y,

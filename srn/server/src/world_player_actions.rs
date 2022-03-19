@@ -1,8 +1,10 @@
-use crate::indexing::{find_my_ship_mut, GameStateIndexes};
+use crate::indexing::{
+    find_my_ship_mut, find_player_idx_by_ship_id, find_ship_index, GameStateIndexes,
+};
 use crate::long_actions::try_start_long_action;
 use crate::ship_action::{MoveAxisParam, PlayerActionRust};
-use crate::world::{GameState, Ship, ShipWithTime};
-use crate::Vec2f64;
+use crate::world::{undock_ship, GameState, Ship, ShipWithTime};
+use crate::{trajectory, Vec2f64};
 use rand::prelude::*;
 use uuid::Uuid;
 
@@ -106,6 +108,29 @@ pub fn world_update_handle_player_action(
         }
         PlayerActionRust::StopTurn { player_id } => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
+                ship.movement_markers.turn = None;
+            }
+        }
+        PlayerActionRust::Navigate { ship_id, target } => {
+            if let Some(idx) = find_ship_index(state_clone, ship_id) {
+                undock_ship(
+                    state,
+                    idx.clone(),
+                    false, // technically this code is used on both server & client, but
+                    // I know that there are only fire-event side effects that do nothing on client
+                    find_player_idx_by_ship_id(state_clone, ship_id),
+                    prng,
+                );
+                let mut ship = &mut state.locations[idx.location_idx].ships[idx.ship_idx];
+                let ship_pos = ship.as_vec();
+                ship.dock_target = None;
+                ship.navigate_target = Some(target);
+                ship.trajectory = trajectory::build_trajectory_to_point(
+                    ship_pos,
+                    &target,
+                    &ship.movement_definition,
+                );
+                ship.movement_markers.gas = None;
                 ship.movement_markers.turn = None;
             }
         }
