@@ -83,9 +83,12 @@ export const ThreeLayer: React.FC<{
           visible={visible}
           onClick={(evt: ThreeEvent<MouseEvent>) => {
             const pos = threeVectorToVector(evt.point);
-            actionsActive.Navigate = PlayerActionRustBuilder.PlayerActionRustNavigate(
-              { target: Vector.fromIVector(pos) }
-            );
+            const shipId = indexes.myShip?.id;
+            if (shipId) {
+              actionsActive.Navigate = PlayerActionRustBuilder.PlayerActionRustNavigate(
+                { target: Vector.fromIVector(pos), ship_id: shipId }
+              );
+            }
           }}
         >
           {/*background plane serves to be a click helper, as otherwise

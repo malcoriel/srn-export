@@ -801,6 +801,7 @@ export default class NetState extends EventEmitter {
       action.tag === 'TurnRight' ||
       action.tag === 'TurnLeft' ||
       action.tag === 'StopTurn' ||
+      action.tag === 'Navigate' ||
       action.tag === 'Reverse'
     )
       return true;

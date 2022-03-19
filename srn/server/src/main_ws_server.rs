@@ -388,6 +388,7 @@ fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&
                 | PlayerActionRust::TurnRight { .. }
                 | PlayerActionRust::TurnLeft { .. }
                 | PlayerActionRust::StopTurn { .. }
+                | PlayerActionRust::Navigate { .. }
                 | PlayerActionRust::StopGas { .. } => {
                     state.player_actions.push_back(action.action);
                 }
