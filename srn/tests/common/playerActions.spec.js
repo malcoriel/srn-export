@@ -12,18 +12,23 @@ import {
 import * as uuid from 'uuid';
 import { result } from 'lodash/object';
 
-export const mockPlayerActionTransSystemJump = (toLocId, byPlayerId) => ({
+export const mockPlayerActionTransSystemJump = (
+  toLocId,
+  byPlayerId,
+  shipId
+) => ({
   tag: 'LongActionStart',
   player_id: byPlayerId,
+  ship_id: shipId,
   long_action_start: {
     tag: 'TransSystemJump',
     to: toLocId,
   },
 });
 
-export const mockPlayerActionMove = (type, byPlayerId) => ({
+export const mockPlayerActionMove = (type, shipId) => ({
   tag: type, // Gas | StopGas | Turn | StopTurn | Reverse
-  player_id: byPlayerId,
+  ship_id: shipId,
 });
 
 export const mockPlayerActionNavigate = (shipId, to) => ({
@@ -70,7 +75,7 @@ describe('player actions logic', () => {
       }
       const loc = room.state.locations[1];
       room.state.player_actions.push(
-        mockPlayerActionTransSystemJump(loc.id, player.id)
+        mockPlayerActionTransSystemJump(loc.id, player.id, shipId)
       );
       room = updateRoom(room, 10000, 1000n * 1000n);
       const shipInLoc1 = room.state.locations[1].ships.find(
@@ -90,18 +95,18 @@ describe('player actions logic', () => {
       let { state, player, ship } = createStateWithAShip();
       ship.x = 100.0;
       ship.y = 100.0;
-      state.player_actions.push(mockPlayerActionMove('Gas', player.id));
+      state.player_actions.push(mockPlayerActionMove('Gas', ship.id));
       // movement inactivity is 500ms, so update has to be less than that
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.y).toBeGreaterThan(100.0);
       ship.y = 100.0;
-      state.player_actions.push(mockPlayerActionMove('StopGas', player.id));
+      state.player_actions.push(mockPlayerActionMove('StopGas', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.y).toBeCloseTo(100.0);
       ship.y = 100.0;
-      state.player_actions.push(mockPlayerActionMove('Reverse', player.id));
+      state.player_actions.push(mockPlayerActionMove('Reverse', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.y).toBeLessThan(100.0);
@@ -113,17 +118,17 @@ describe('player actions logic', () => {
       ship.x = 100.0;
       ship.y = 100.0;
       ship.rotation = Math.PI;
-      state.player_actions.push(mockPlayerActionMove('TurnRight', player.id));
+      state.player_actions.push(mockPlayerActionMove('TurnRight', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.rotation).toBeLessThan(Math.PI);
       const result_rotation = ship.rotation;
-      state.player_actions.push(mockPlayerActionMove('StopTurn', player.id));
+      state.player_actions.push(mockPlayerActionMove('StopTurn', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.rotation).toBeCloseTo(result_rotation);
       ship.rotation = Math.PI;
-      state.player_actions.push(mockPlayerActionMove('TurnLeft', player.id));
+      state.player_actions.push(mockPlayerActionMove('TurnLeft', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.y).toBeGreaterThan(Math.PI);

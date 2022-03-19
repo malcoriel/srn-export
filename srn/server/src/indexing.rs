@@ -164,6 +164,15 @@ pub fn find_my_ship(state: &GameState, player_id: Uuid) -> Option<&Ship> {
     return None;
 }
 
+pub fn find_ship_mut(state: &mut GameState, ship_id: Uuid) -> Option<&mut Ship> {
+    for loc in state.locations.iter_mut() {
+        if let Some(ship) = loc.ships.iter_mut().find(|s| s.id == ship_id) {
+            return Some(ship);
+        }
+    }
+    return None;
+}
+
 pub fn find_my_ship_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut Ship> {
     let player = find_my_player(state, player_id);
     if player.is_none() {

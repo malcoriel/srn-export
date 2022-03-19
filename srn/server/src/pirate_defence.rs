@@ -186,7 +186,8 @@ pub fn bot_planet_defender_act(
                                     _ => Default::default(),
                                 },
                             },
-                            player_id: bot_id,
+                            player_id: Some(bot_id),
+                            ship_id: my_ship.id,
                         };
                         all_acts.push(BotAct::Act(act));
                     }

@@ -25,22 +25,22 @@ pub enum Action {
         update: ManualMoveUpdate,
     },
     Gas {
-        player_id: Uuid,
+        ship_id: Uuid,
     },
     StopGas {
-        player_id: Uuid,
+        ship_id: Uuid,
     },
     StopTurn {
-        player_id: Uuid,
+        ship_id: Uuid,
     },
     Reverse {
-        player_id: Uuid,
+        ship_id: Uuid,
     },
     TurnRight {
-        player_id: Uuid,
+        ship_id: Uuid,
     },
     TurnLeft {
-        player_id: Uuid,
+        ship_id: Uuid,
     },
     Dock,
     Navigate {
@@ -55,7 +55,8 @@ pub enum Action {
     },
     LongActionStart {
         long_action_start: LongActionStart,
-        player_id: Uuid,
+        player_id: Option<Uuid>,
+        ship_id: Uuid,
     },
 }
 
