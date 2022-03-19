@@ -10,7 +10,6 @@ import {
   wasm,
 } from '../util';
 import * as uuid from 'uuid';
-import _ from 'lodash';
 
 export const mockPlayerActionTransSystemJump = (toLocId, byPlayerId) => ({
   tag: 'LongActionStart',
@@ -100,23 +99,6 @@ describe('player actions logic', () => {
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.y).toBeLessThan(100.0);
-    });
-
-    fit('can act in the past to prevent rollbacks', () => {
-      // eslint-disable-next-line prefer-const
-      let { state, player, ship } = createStateWithAShip();
-      ship.x = 100.0;
-      ship.y = 100.0;
-      // pass some time so ticks are > 0
-      state = updateWorld(state, 250);
-      // double the time that passes for that movement so after 250+250 it work for 500ms
-      state.player_actions.push(mockPlayerActionMove('Gas', player.id, 0));
-      state = updateWorld(state, 250);
-      ship = getShipByPlayerId(state, player.id);
-      const normalSpeedPerSec = 10;
-      const normalDist = (250 * normalSpeedPerSec) / 1000;
-      const doubleDist = normalDist * 2;
-      expect(ship.y).toBeGreaterThan(100 + doubleDist);
     });
 
     it.todo('can turn & stop');

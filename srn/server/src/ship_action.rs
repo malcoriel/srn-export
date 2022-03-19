@@ -26,27 +26,21 @@ pub enum PlayerActionRust {
     },
     Gas {
         player_id: Uuid,
-        at_ticks: Option<u64>,
     },
     StopGas {
         player_id: Uuid,
-        at_ticks: Option<u64>,
     },
     StopTurn {
         player_id: Uuid,
-        at_ticks: Option<u64>,
     },
     Reverse {
         player_id: Uuid,
-        at_ticks: Option<u64>,
     },
     TurnRight {
         player_id: Uuid,
-        at_ticks: Option<u64>,
     },
     TurnLeft {
         player_id: Uuid,
-        at_ticks: Option<u64>,
     },
     Dock,
     Navigate {

@@ -1461,53 +1461,57 @@ const MANUAL_MOVEMENT_INACTIVITY_DROP_MS: i32 = 500;
 
 fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, current_tick: u32) {
     for ship in ships.iter_mut() {
-        let (new_move, new_pos) = if let Some(params) = &mut ship.movement_markers.gas {
-            if (params.last_tick as i32 - current_tick as i32).abs()
-                > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
-            {
-                (None, None)
-            } else {
-                let sign = if params.forward { 1.0 } else { -1.0 };
-                let distance = ship
-                    .movement_definition
-                    .get_current_linear_move_speed_per_tick()
-                    * elapsed_micro as f64
-                    * sign;
-                let shift = Vec2f64 { x: 0.0, y: 1.0 }
-                    .rotate(ship.rotation)
-                    .scalar_mul(distance);
-                let new_pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                }
-                .add(&shift);
-                (Some(params.clone()), Some(new_pos))
-            }
-        } else {
+        update_ship_manual_movement(elapsed_micro, current_tick, ship);
+    }
+}
+
+fn update_ship_manual_movement(elapsed_micro: i64, current_tick: u32, ship: &mut Ship) {
+    let (new_move, new_pos) = if let Some(params) = &mut ship.movement_markers.gas {
+        if (params.last_tick as i32 - current_tick as i32).abs()
+            > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
+        {
             (None, None)
-        };
-        ship.movement_markers.gas = new_move;
-        if let Some(new_pos) = new_pos {
-            ship.set_from(&new_pos);
-        }
-        let (new_move, new_rotation) = if let Some(params) = &ship.movement_markers.turn {
-            if (params.last_tick as i32 - current_tick as i32).abs()
-                > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
-            {
-                (None, None)
-            } else {
-                let sign = if params.forward { 1.0 } else { -1.0 };
-                let diff =
-                    deg_to_rad(SHIP_TURN_SPEED_DEG * elapsed_micro as f64 / 1000.0 / 1000.0 * sign);
-                (Some(params.clone()), Some(ship.rotation + diff))
-            }
         } else {
-            (None, None)
-        };
-        ship.movement_markers.turn = new_move;
-        if let Some(new_rotation) = new_rotation {
-            ship.rotation = new_rotation;
+            let sign = if params.forward { 1.0 } else { -1.0 };
+            let distance = ship
+                .movement_definition
+                .get_current_linear_move_speed_per_tick()
+                * elapsed_micro as f64
+                * sign;
+            let shift = Vec2f64 { x: 0.0, y: 1.0 }
+                .rotate(ship.rotation)
+                .scalar_mul(distance);
+            let new_pos = Vec2f64 {
+                x: ship.x,
+                y: ship.y,
+            }
+            .add(&shift);
+            (Some(params.clone()), Some(new_pos))
         }
+    } else {
+        (None, None)
+    };
+    ship.movement_markers.gas = new_move;
+    if let Some(new_pos) = new_pos {
+        ship.set_from(&new_pos);
+    }
+    let (new_move, new_rotation) = if let Some(params) = &ship.movement_markers.turn {
+        if (params.last_tick as i32 - current_tick as i32).abs()
+            > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
+        {
+            (None, None)
+        } else {
+            let sign = if params.forward { 1.0 } else { -1.0 };
+            let diff =
+                deg_to_rad(SHIP_TURN_SPEED_DEG * elapsed_micro as f64 / 1000.0 / 1000.0 * sign);
+            (Some(params.clone()), Some(ship.rotation + diff))
+        }
+    } else {
+        (None, None)
+    };
+    ship.movement_markers.turn = new_move;
+    if let Some(new_rotation) = new_rotation {
+        ship.rotation = new_rotation;
     }
 }
 
