@@ -82,6 +82,33 @@ pub fn world_update_handle_player_action(
                 ship.trajectory = vec![];
             }
         }
+        PlayerActionRust::TurnRight { player_id } => {
+            if let Some(ship) = find_my_ship_mut(state, player_id) {
+                ship.movement_markers.turn = Some(MoveAxisParam {
+                    forward: false,
+                    last_tick: state_clone.millis,
+                });
+                ship.navigate_target = None;
+                ship.dock_target = None;
+                ship.trajectory = vec![];
+            }
+        }
+        PlayerActionRust::TurnLeft { player_id } => {
+            if let Some(ship) = find_my_ship_mut(state, player_id) {
+                ship.movement_markers.turn = Some(MoveAxisParam {
+                    forward: true,
+                    last_tick: state_clone.millis,
+                });
+                ship.navigate_target = None;
+                ship.dock_target = None;
+                ship.trajectory = vec![];
+            }
+        }
+        PlayerActionRust::StopTurn { player_id } => {
+            if let Some(ship) = find_my_ship_mut(state, player_id) {
+                ship.movement_markers.turn = None;
+            }
+        }
         _ => {
             warn!(format!(
                 "action {:?} cannot be handled by world_update_handle_player_action",

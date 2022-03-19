@@ -160,35 +160,20 @@ pub fn apply_player_action(
             None
         }
         PlayerActionRust::TurnRight { .. } => {
-            let mut ship = old_ship.clone();
-            ship.movement_markers.turn = Some(MoveAxisParam {
-                forward: true,
-                last_tick: state.millis,
-            });
-            ship.navigate_target = None;
-            ship.dock_target = None;
-            ship.trajectory = vec![];
-            Some(ship)
+            warn!("player action TurnRight must be handled through world player actions");
+            None
         }
         PlayerActionRust::TurnLeft { .. } => {
-            let mut ship = old_ship.clone();
-            ship.movement_markers.turn = Some(MoveAxisParam {
-                forward: false,
-                last_tick: state.millis,
-            });
-            ship.navigate_target = None;
-            ship.dock_target = None;
-            ship.trajectory = vec![];
-            Some(ship)
+            warn!("player action TurnLeft must be handled through world player actions");
+            None
         }
         PlayerActionRust::StopGas { .. } => {
             warn!("player action StopGas must be handled through world player actions");
             None
         }
         PlayerActionRust::StopTurn { .. } => {
-            let mut ship = old_ship.clone();
-            ship.movement_markers.turn = None;
-            Some(ship)
+            warn!("player action StopTurn must be handled through world player actions");
+            None
         }
         PlayerActionRust::LongActionStart { .. } => {
             warn!("player action LongActionStart must be handled through world player actions");

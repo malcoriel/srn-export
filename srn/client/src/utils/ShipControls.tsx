@@ -29,14 +29,12 @@ const refreshActiveActions = () => {
   if (!keysActive.KeyW && keysActive.KeyS) {
     actionsActive.Reverse = PlayerActionRustBuilder.PlayerActionRustReverse({
       player_id: myId,
-      at_ticks: ns.state.ticks,
     });
     actionsActive.Gas = undefined;
     actionsActive.StopGas = undefined;
   } else if (keysActive.KeyW && !keysActive.KeyS) {
     actionsActive.Gas = PlayerActionRustBuilder.PlayerActionRustGas({
       player_id: myId,
-      at_ticks: ns.state.ticks,
     });
     actionsActive.Reverse = undefined;
     actionsActive.StopGas = undefined;
@@ -45,29 +43,30 @@ const refreshActiveActions = () => {
     actionsActive.Gas = undefined;
     actionsActive.StopGas = PlayerActionRustBuilder.PlayerActionRustStopGas({
       player_id: myId,
-      at_ticks: ns.state.ticks,
     });
   }
 
   if (!keysActive.KeyA && keysActive.KeyD) {
-    actionsActive.TurnRight = PlayerActionRustBuilder.PlayerActionRustTurnRight(
-      { player_id: myId, at_ticks: ns.state.ticks }
-    );
-    actionsActive.TurnLeft = undefined;
-    actionsActive.StopTurn = undefined;
-  } else if (keysActive.KeyA && !keysActive.KeyD) {
-    actionsActive.TurnRight = undefined;
+    // while it maybe counterituitive, it's not a mistake.
+    // due to Y-inversion, right or counterclockwise direction is clockwise/left in proper game logic
     actionsActive.TurnLeft = PlayerActionRustBuilder.PlayerActionRustTurnLeft({
       player_id: myId,
-      at_ticks: ns.state.ticks,
     });
+    actionsActive.TurnRight = undefined;
+    actionsActive.StopTurn = undefined;
+  } else if (keysActive.KeyA && !keysActive.KeyD) {
+    actionsActive.TurnLeft = undefined;
+    actionsActive.TurnRight = PlayerActionRustBuilder.PlayerActionRustTurnRight(
+      {
+        player_id: myId,
+      }
+    );
     actionsActive.StopTurn = undefined;
   } else if (actionsActive.TurnRight || actionsActive.TurnLeft) {
     actionsActive.TurnRight = undefined;
     actionsActive.TurnLeft = undefined;
     actionsActive.StopTurn = PlayerActionRustBuilder.PlayerActionRustStopTurn({
       player_id: myId,
-      at_ticks: ns.state.ticks,
     });
   }
 };

@@ -10,6 +10,7 @@ import {
   wasm,
 } from '../util';
 import * as uuid from 'uuid';
+import { result } from 'lodash/object';
 
 export const mockPlayerActionTransSystemJump = (toLocId, byPlayerId) => ({
   tag: 'LongActionStart',
@@ -20,10 +21,9 @@ export const mockPlayerActionTransSystemJump = (toLocId, byPlayerId) => ({
   },
 });
 
-export const mockPlayerActionMove = (type, byPlayerId, atTicks = null) => ({
+export const mockPlayerActionMove = (type, byPlayerId) => ({
   tag: type, // Gas | StopGas | Turn | StopTurn | Reverse
   player_id: byPlayerId,
-  at_ticks: atTicks,
 });
 
 const createStateWithAShip = () => {
@@ -101,8 +101,27 @@ describe('player actions logic', () => {
       expect(ship.y).toBeLessThan(100.0);
     });
 
-    it.todo('can turn & stop');
-    it.todo('does not allow to act too much in the past');
+    fit('can turn & stop', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship } = createStateWithAShip();
+      ship.x = 100.0;
+      ship.y = 100.0;
+      ship.rotation = Math.PI;
+      state.player_actions.push(mockPlayerActionMove('TurnRight', player.id));
+      state = updateWorld(state, 250);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.rotation).toBeLessThan(Math.PI);
+      const result_rotation = ship.rotation;
+      state.player_actions.push(mockPlayerActionMove('StopTurn', player.id));
+      state = updateWorld(state, 250);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.rotation).toBeCloseTo(result_rotation);
+      ship.rotation = Math.PI;
+      state.player_actions.push(mockPlayerActionMove('TurnLeft', player.id));
+      state = updateWorld(state, 250);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.y).toBeGreaterThan(Math.PI);
+    });
   });
 
   describe('tractoring', () => {
