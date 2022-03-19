@@ -148,8 +148,8 @@ mod dialogue;
 #[path = "../../server/src/world_events.rs"]
 mod world_events;
 
-#[path = "../../server/src/world_player_actions.rs"]
-mod world_player_actions;
+#[path = "../../server/src/world_actions.rs"]
+mod world_actions;
 
 #[path = "../../server/src/replay.rs"]
 mod replay;

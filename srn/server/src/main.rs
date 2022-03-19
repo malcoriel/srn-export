@@ -156,8 +156,8 @@ mod tutorial;
 mod vec2;
 mod vec2_test;
 pub mod world;
+mod world_actions;
 mod world_events;
-mod world_player_actions;
 mod world_test;
 mod xcast;
 

@@ -44,7 +44,7 @@ pub fn find_closest_ship_history(
     });
 }
 
-pub fn world_update_handle_player_action(
+pub fn world_update_handle_action(
     state: &mut GameState,
     action: Action,
     prng: &mut SmallRng,
@@ -141,17 +141,4 @@ pub fn world_update_handle_player_action(
             ))
         }
     }
-}
-
-fn find_earliest_ship_history_by(
-    ship_id: Uuid,
-    from_ticks: u64,
-    state: &GameState,
-    checker: fn(&Ship) -> bool,
-) -> Option<&ShipWithTime> {
-    state.ship_history.get(&ship_id).and_then(|items| {
-        items
-            .iter()
-            .find(|st| st.at_ticks >= from_ticks && checker(&st.ship))
-    })
 }

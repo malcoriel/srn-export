@@ -52,8 +52,8 @@ use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
 use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
+use crate::world_actions::*;
 use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEvent};
-use crate::world_player_actions::world_update_handle_player_action;
 use crate::{
     abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, random_stuff, system_gen,
     trajectory, world_events,
@@ -1070,7 +1070,7 @@ fn update_player_actions(state: &mut GameState, prng: &mut SmallRng) {
     }
     let mut processed_actions = vec![];
     for action in actions_to_process.into_iter() {
-        world_update_handle_player_action(state, action.clone(), prng, &state_clone);
+        world_update_handle_action(state, action.clone(), prng, &state_clone);
         let processed_action = ProcessedPlayerAction {
             action,
             processed_at_ticks: state.ticks,
