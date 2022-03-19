@@ -45,7 +45,7 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::ship_action::{PlayerActionRust, ShipMovementMarkers};
+use crate::ship_action::{Action, ShipMovementMarkers};
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
 use crate::tractoring::{
@@ -376,7 +376,7 @@ pub struct Star {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
 pub struct ProcessedPlayerAction {
-    pub action: PlayerActionRust,
+    pub action: Action,
     pub processed_at_ticks: u64,
 }
 
@@ -677,7 +677,7 @@ pub struct GameState {
     pub interval_data: HashMap<TimeMarks, u32>,
     pub game_over: Option<GameOver>,
     pub events: VecDeque<GameEvent>,
-    pub player_actions: VecDeque<PlayerActionRust>,
+    pub player_actions: VecDeque<Action>,
     pub processed_events: Vec<ProcessedGameEvent>,
     pub processed_player_actions: Vec<ProcessedPlayerAction>,
     pub update_every_ticks: u64,
@@ -2272,7 +2272,7 @@ pub fn try_replace_ship_npc(
 
 pub fn mutate_ship_no_lock(
     client_id: Uuid,
-    mutate_cmd: PlayerActionRust,
+    mutate_cmd: Action,
     state: &mut GameState,
     prng: &mut SmallRng,
 ) -> Option<(Ship, ShipIdx)> {

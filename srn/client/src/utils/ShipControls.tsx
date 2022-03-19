@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { PlayerActionRust } from '../../../world/pkg';
-import { PlayerActionRustBuilder } from '../../../world/pkg/world.extra';
+import { Action } from '../../../world/pkg';
+import { ActionBuilder } from '../../../world/pkg/world.extra';
 import NetState from '../NetState';
 
-export const actionsActive: Record<string, PlayerActionRust | undefined> = {
+export const actionsActive: Record<string, Action | undefined> = {
   Gas: undefined,
   TurnRight: undefined,
   TurnLeft: undefined,
@@ -27,13 +27,13 @@ const refreshActiveActions = () => {
   const myId = ns.state.my_id;
 
   if (!keysActive.KeyW && keysActive.KeyS) {
-    actionsActive.Reverse = PlayerActionRustBuilder.PlayerActionRustReverse({
+    actionsActive.Reverse = ActionBuilder.ActionReverse({
       player_id: myId,
     });
     actionsActive.Gas = undefined;
     actionsActive.StopGas = undefined;
   } else if (keysActive.KeyW && !keysActive.KeyS) {
-    actionsActive.Gas = PlayerActionRustBuilder.PlayerActionRustGas({
+    actionsActive.Gas = ActionBuilder.ActionGas({
       player_id: myId,
     });
     actionsActive.Reverse = undefined;
@@ -41,7 +41,7 @@ const refreshActiveActions = () => {
   } else if (actionsActive.Gas || actionsActive.Reverse) {
     actionsActive.Reverse = undefined;
     actionsActive.Gas = undefined;
-    actionsActive.StopGas = PlayerActionRustBuilder.PlayerActionRustStopGas({
+    actionsActive.StopGas = ActionBuilder.ActionStopGas({
       player_id: myId,
     });
   }
@@ -49,23 +49,21 @@ const refreshActiveActions = () => {
   if (!keysActive.KeyA && keysActive.KeyD) {
     // while it maybe counterituitive, it's not a mistake.
     // due to Y-inversion, right or counterclockwise direction is clockwise/left in proper game logic
-    actionsActive.TurnLeft = PlayerActionRustBuilder.PlayerActionRustTurnLeft({
+    actionsActive.TurnLeft = ActionBuilder.ActionTurnLeft({
       player_id: myId,
     });
     actionsActive.TurnRight = undefined;
     actionsActive.StopTurn = undefined;
   } else if (keysActive.KeyA && !keysActive.KeyD) {
     actionsActive.TurnLeft = undefined;
-    actionsActive.TurnRight = PlayerActionRustBuilder.PlayerActionRustTurnRight(
-      {
-        player_id: myId,
-      }
-    );
+    actionsActive.TurnRight = ActionBuilder.ActionTurnRight({
+      player_id: myId,
+    });
     actionsActive.StopTurn = undefined;
   } else if (actionsActive.TurnRight || actionsActive.TurnLeft) {
     actionsActive.TurnRight = undefined;
     actionsActive.TurnLeft = undefined;
-    actionsActive.StopTurn = PlayerActionRustBuilder.PlayerActionRustStopTurn({
+    actionsActive.StopTurn = ActionBuilder.ActionStopTurn({
       player_id: myId,
     });
   }

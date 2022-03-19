@@ -23,7 +23,7 @@ use crate::net::{
     ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
     TagConfirm, Wrapper,
 };
-use crate::ship_action::PlayerActionRust;
+use crate::ship_action::Action;
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
 use crate::world::{GameState, Player, Ship};
 use crate::world_events::GameEvent;
@@ -367,7 +367,7 @@ fn on_client_notification_action(client_id: Uuid, data: &&str, tag: Option<&&str
 
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
 pub struct SchedulePlayerAction {
-    action: PlayerActionRust,
+    action: Action,
 }
 
 fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
@@ -382,14 +382,14 @@ fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&
             }
             let state = state.unwrap();
             match action.action {
-                PlayerActionRust::LongActionStart { .. }
-                | PlayerActionRust::Gas { .. }
-                | PlayerActionRust::Reverse { .. }
-                | PlayerActionRust::TurnRight { .. }
-                | PlayerActionRust::TurnLeft { .. }
-                | PlayerActionRust::StopTurn { .. }
-                | PlayerActionRust::Navigate { .. }
-                | PlayerActionRust::StopGas { .. } => {
+                Action::LongActionStart { .. }
+                | Action::Gas { .. }
+                | Action::Reverse { .. }
+                | Action::TurnRight { .. }
+                | Action::TurnLeft { .. }
+                | Action::StopTurn { .. }
+                | Action::Navigate { .. }
+                | Action::StopGas { .. } => {
                     state.player_actions.push_back(action.action);
                 }
                 _ => {
@@ -449,7 +449,7 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
 }
 
 fn on_client_mutate_ship(client_id: Uuid, second: &&str, third: Option<&&str>) {
-    let parsed = serde_json::from_str::<PlayerActionRust>(second);
+    let parsed = serde_json::from_str::<Action>(second);
     match parsed {
         Ok(res) => mutate_owned_ship_wrapped(client_id, res, third.map(|s| s.to_string())),
         Err(err) => {
@@ -629,7 +629,7 @@ pub fn is_disconnected(client_id: Uuid) -> bool {
     return !CLIENT_SENDERS_SET.contains(&client_id);
 }
 
-fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: PlayerActionRust, tag: Option<String>) {
+fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: Action, tag: Option<String>) {
     let res = mutate_owned_ship(client_id, mutate_cmd, tag);
     if res.is_none() {
         warn!("error mutating owned ship");
@@ -638,11 +638,7 @@ fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: PlayerActionRust, tag:
     }
 }
 
-fn mutate_owned_ship(
-    client_id: Uuid,
-    mutate_cmd: PlayerActionRust,
-    tag: Option<String>,
-) -> Option<Ship> {
+fn mutate_owned_ship(client_id: Uuid, mutate_cmd: Action, tag: Option<String>) -> Option<Ship> {
     let mut cont = STATE.write().unwrap();
     let state = states::select_state_mut(&mut cont, client_id);
     if state.is_none() {

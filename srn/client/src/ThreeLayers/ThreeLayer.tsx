@@ -24,7 +24,7 @@ import { ThreeQuestDirection } from './ThreeQuestDirection';
 import { ThreeNames } from './ThreeNames';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
-import { PlayerActionRustBuilder } from '../../../world/pkg/world.extra';
+import { ActionBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
 import { seedToNumber, threeVectorToVector } from './util';
@@ -85,9 +85,10 @@ export const ThreeLayer: React.FC<{
             const pos = threeVectorToVector(evt.point);
             const shipId = indexes.myShip?.id;
             if (shipId) {
-              actionsActive.Navigate = PlayerActionRustBuilder.PlayerActionRustNavigate(
-                { target: Vector.fromIVector(pos), ship_id: shipId }
-              );
+              actionsActive.Navigate = ActionBuilder.ActionNavigate({
+                target: Vector.fromIVector(pos),
+                ship_id: shipId,
+              });
             }
           }}
         >

@@ -67,7 +67,7 @@ use crate::indexing::{
 use crate::perf::Sampler;
 use crate::rooms_api::{cleanup_empty_rooms, find_room_state_id_by_player_id};
 use crate::sandbox::mutate_state;
-use crate::ship_action::PlayerActionRust;
+use crate::ship_action::Action;
 use crate::states::{
     get_rooms_iter_read, get_state_id_cont, get_state_id_cont_mut, select_state, select_state_mut,
 };

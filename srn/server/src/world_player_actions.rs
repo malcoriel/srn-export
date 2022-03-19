@@ -2,7 +2,7 @@ use crate::indexing::{
     find_my_ship_mut, find_player_idx_by_ship_id, find_ship_index, GameStateIndexes,
 };
 use crate::long_actions::try_start_long_action;
-use crate::ship_action::{MoveAxisParam, PlayerActionRust};
+use crate::ship_action::{Action, MoveAxisParam};
 use crate::world::{undock_ship, GameState, Ship, ShipWithTime};
 use crate::{trajectory, Vec2f64};
 use rand::prelude::*;
@@ -46,18 +46,18 @@ pub fn find_closest_ship_history(
 
 pub fn world_update_handle_player_action(
     state: &mut GameState,
-    action: PlayerActionRust,
+    action: Action,
     prng: &mut SmallRng,
     state_clone: &GameState,
 ) {
     match action {
-        PlayerActionRust::LongActionStart {
+        Action::LongActionStart {
             long_action_start,
             player_id,
         } => {
             try_start_long_action(state, player_id, long_action_start, prng);
         }
-        PlayerActionRust::Gas { player_id, .. } => {
+        Action::Gas { player_id, .. } => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.movement_markers.gas = Some(MoveAxisParam {
                     forward: true,
@@ -68,12 +68,12 @@ pub fn world_update_handle_player_action(
                 ship.trajectory = vec![];
             }
         }
-        PlayerActionRust::StopGas { player_id } => {
+        Action::StopGas { player_id } => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.movement_markers.gas = None;
             }
         }
-        PlayerActionRust::Reverse { player_id } => {
+        Action::Reverse { player_id } => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.movement_markers.gas = Some(MoveAxisParam {
                     forward: false,
@@ -84,7 +84,7 @@ pub fn world_update_handle_player_action(
                 ship.trajectory = vec![];
             }
         }
-        PlayerActionRust::TurnRight { player_id } => {
+        Action::TurnRight { player_id } => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.movement_markers.turn = Some(MoveAxisParam {
                     forward: false,
@@ -95,7 +95,7 @@ pub fn world_update_handle_player_action(
                 ship.trajectory = vec![];
             }
         }
-        PlayerActionRust::TurnLeft { player_id } => {
+        Action::TurnLeft { player_id } => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.movement_markers.turn = Some(MoveAxisParam {
                     forward: true,
@@ -106,12 +106,12 @@ pub fn world_update_handle_player_action(
                 ship.trajectory = vec![];
             }
         }
-        PlayerActionRust::StopTurn { player_id } => {
+        Action::StopTurn { player_id } => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.movement_markers.turn = None;
             }
         }
-        PlayerActionRust::Navigate { ship_id, target } => {
+        Action::Navigate { ship_id, target } => {
             if let Some(idx) = find_ship_index(state_clone, ship_id) {
                 undock_ship(
                     state,

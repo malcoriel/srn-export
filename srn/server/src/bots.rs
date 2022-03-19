@@ -23,7 +23,7 @@ use crate::indexing::{
 };
 use crate::long_actions::LongAction;
 use crate::random_stuff::gen_bot_name;
-use crate::ship_action::{apply_player_action, PlayerActionRust};
+use crate::ship_action::{apply_player_action, Action};
 use crate::world;
 use crate::world::{GameState, Ship, ShipIdx, ShipTemplate, SpatialIndexes};
 use crate::world_events::GameEvent;
@@ -35,7 +35,7 @@ const BOT_QUEST_ACT_DELAY_MC: i64 = 2 * 1000 * 1000;
 
 pub enum BotAct {
     Speak(DialogueUpdate),
-    Act(PlayerActionRust),
+    Act(Action),
 }
 
 pub fn bot_act(
@@ -132,7 +132,7 @@ fn bot_cargo_rush_hauler_act(
         {
             let desired_target = quest.from_id;
             if not_already_there(ship, desired_target) {
-                result_actions.push(BotAct::Act(PlayerActionRust::DockNavigate {
+                result_actions.push(BotAct::Act(Action::DockNavigate {
                     target: desired_target,
                 }));
             }
@@ -141,7 +141,7 @@ fn bot_cargo_rush_hauler_act(
         {
             let desired_target = quest.to_id;
             if not_already_there(ship, desired_target) {
-                result_actions.push(BotAct::Act(PlayerActionRust::DockNavigate {
+                result_actions.push(BotAct::Act(Action::DockNavigate {
                     target: desired_target,
                 }));
             }
@@ -225,7 +225,7 @@ pub fn do_bot_players_actions(
     spatial_indexes: &SpatialIndexes,
     prng: &mut SmallRng,
 ) {
-    let mut ship_updates: HashMap<Uuid, Vec<PlayerActionRust>> = HashMap::new();
+    let mut ship_updates: HashMap<Uuid, Vec<Action>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
 
     for orig_bot in room.bots.iter_mut() {
@@ -270,7 +270,7 @@ pub fn do_bot_players_actions(
     for (bot_id, acts) in ship_updates.into_iter() {
         for act in acts {
             let ship_idx = indexing::find_my_ship_index(&room.state, bot_id);
-            if !matches!(act, PlayerActionRust::LongActionStart { .. }) {
+            if !matches!(act, Action::LongActionStart { .. }) {
                 let updated_ship =
                     apply_player_action(act.clone(), &mut room.state, ship_idx, false, prng);
                 if let Some(updated_ship) = updated_ship {
@@ -303,7 +303,7 @@ pub fn do_bot_npcs_actions(
     spatial_indexes: &SpatialIndexes,
     prng: &mut SmallRng,
 ) {
-    let mut ship_updates: HashMap<Uuid, (Vec<PlayerActionRust>, ShipIdx)> = HashMap::new();
+    let mut ship_updates: HashMap<Uuid, (Vec<Action>, ShipIdx)> = HashMap::new();
 
     for i in 0..room.state.locations.len() {
         let room_state_clone = room.state.clone();
@@ -346,7 +346,7 @@ fn npc_act(
     _elapsed_micro: i64,
     ship_idx: &ShipIdx,
     spatial_indexes: &SpatialIndexes,
-) -> (Option<Bot>, Vec<PlayerActionRust>) {
+) -> (Option<Bot>, Vec<Action>) {
     if ship.npc.is_none() {
         return (None, vec![]);
     }
@@ -374,7 +374,7 @@ fn npc_act(
             spatial_indexes,
         );
         if let Some(cp) = closest_planet {
-            res.push(PlayerActionRust::DockNavigate { target: cp })
+            res.push(Action::DockNavigate { target: cp })
         }
     }
 

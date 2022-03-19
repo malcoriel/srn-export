@@ -26,7 +26,7 @@ import {
   InventoryAction,
   LongActionStart,
   NotificationAction,
-  PlayerActionRust,
+  Action,
 } from '../../world/pkg';
 import {
   buildClientStateIndexes,
@@ -34,7 +34,7 @@ import {
   findMyShip,
   findMyShipIndex,
 } from './ClientStateIndexing';
-import { PlayerActionRustBuilder } from '../../world/pkg/world.extra';
+import { ActionBuilder } from '../../world/pkg/world.extra';
 export type Timeout = ReturnType<typeof setTimeout>;
 
 module?.hot?.dispose(() => {
@@ -720,9 +720,9 @@ export default class NetState extends EventEmitter {
   }
 
   // [tag, action, ticks], the order is the order of appearance
-  private pendingActions: [string, PlayerActionRust[], number][] = [];
+  private pendingActions: [string, Action[], number][] = [];
 
-  private mutateShip = (commands: PlayerActionRust[]) => {
+  private mutateShip = (commands: Action[]) => {
     const myShipIndex = findMyShipIndex(this.state);
     if (myShipIndex === -1 || myShipIndex === null) return;
     let myShip = this.state.locations[0].ships[myShipIndex];
@@ -752,7 +752,7 @@ export default class NetState extends EventEmitter {
     }
 
     const actions = Object.values(actionsActive).filter((a) => !!a);
-    const actionsToSync = actions.filter((a) => !!a) as PlayerActionRust[];
+    const actionsToSync = actions.filter((a) => !!a) as Action[];
 
     for (const action of actionsToSync) {
       // prevent server DOS via gas action flooding, separated by action type
@@ -778,7 +778,7 @@ export default class NetState extends EventEmitter {
       this.updateShipOnServer(tag, action);
     }
 
-    this.mutateShip(actions as PlayerActionRust[]);
+    this.mutateShip(actions as Action[]);
 
     if (actionsActive.Move) {
       this.visualState.boundCameraMovement = true;
@@ -794,7 +794,7 @@ export default class NetState extends EventEmitter {
     }
   };
 
-  private isWorldUpdatePlayerAction(action: PlayerActionRust) {
+  private isWorldUpdatePlayerAction(action: Action) {
     if (
       action.tag === 'Gas' ||
       action.tag === 'StopGas' ||
@@ -808,7 +808,7 @@ export default class NetState extends EventEmitter {
     return false;
   }
 
-  private updateShipOnServer = (tag: string, action: PlayerActionRust) => {
+  private updateShipOnServer = (tag: string, action: Action) => {
     if (this.state && !this.state.paused) {
       if (!this.isWorldUpdatePlayerAction(action)) {
         this.send({
@@ -831,7 +831,7 @@ export default class NetState extends EventEmitter {
     });
   }
 
-  private sendSchedulePlayerAction(action: PlayerActionRust) {
+  private sendSchedulePlayerAction(action: Action) {
     const tag = uuid.v4();
     this.send({
       code: ClientOpCode.SchedulePlayerAction,
@@ -899,7 +899,7 @@ export default class NetState extends EventEmitter {
         tag: uuid.v4(),
       });
     } else {
-      const act = PlayerActionRustBuilder.PlayerActionRustLongActionStart({
+      const act = ActionBuilder.ActionLongActionStart({
         long_action_start: longAction,
         player_id: this.state.my_id,
       });

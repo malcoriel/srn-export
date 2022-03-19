@@ -18,7 +18,7 @@ use crate::indexing::{
     ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::long_actions::LongActionStart;
-use crate::ship_action::PlayerActionRust;
+use crate::ship_action::Action;
 use crate::vec2::Vec2f64;
 use crate::world::TimeMarks::BotAction;
 use crate::world::{
@@ -178,7 +178,7 @@ pub fn bot_planet_defender_act(
                     .filter(|a| matches!(a, Ability::Shoot { .. }))
                 {
                     if turret_ab.get_current_cooldown() == 0 {
-                        let act = PlayerActionRust::LongActionStart {
+                        let act = Action::LongActionStart {
                             long_action_start: LongActionStart::Shoot {
                                 target: ShootTarget::Ship { id: first.id },
                                 turret_id: match turret_ab {
@@ -202,7 +202,7 @@ pub fn bot_planet_defender_act(
             {
                 let random_shift_x = prng.gen_range(-rad, rad);
                 let random_shift_y = prng.gen_range(-rad, rad);
-                all_acts.push(BotAct::Act(PlayerActionRust::Navigate {
+                all_acts.push(BotAct::Act(Action::Navigate {
                     ship_id: my_ship.id,
                     target: def_planet.get_position().add(&Vec2f64 {
                         x: random_shift_x,

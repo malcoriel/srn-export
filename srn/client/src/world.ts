@@ -1,5 +1,10 @@
 import Vector, { IVector } from './utils/Vector';
 import {
+  Action,
+  ActionGas,
+  ActionReverse,
+  ActionTurnLeft,
+  ActionTurnRight,
   Asteroid,
   AsteroidBelt,
   Container,
@@ -18,11 +23,6 @@ import {
   ObjectSpecifier,
   Planet,
   Player,
-  PlayerActionRust,
-  PlayerActionRustGas,
-  PlayerActionRustReverse,
-  PlayerActionRustTurnLeft,
-  PlayerActionRustTurnRight,
   Price,
   Quest,
   Ship,
@@ -77,8 +77,6 @@ export const max_y = height_units / 2;
 export const min_x = -max_x;
 // noinspection JSUnusedGlobalSymbols
 export const min_y = -max_y;
-
-export const SHIP_SPEED = 20.0;
 
 export type AABB = {
   top_left: Vector;
@@ -291,7 +289,7 @@ export const loadReplayIntoWasm = (replay: any) => {
 
 export const applyShipActionWasm = (
   state: GameState,
-  ship_action: PlayerActionRust
+  ship_action: Action
 ): Ship | undefined => {
   return doWasmCall<Ship>(
     'apply_ship_action',
@@ -417,14 +415,12 @@ export type ManualMovementActionTags =
   | 'TurnLeft';
 
 export type ManualMovementAction =
-  | PlayerActionRustGas
-  | PlayerActionRustReverse
-  | PlayerActionRustTurnRight
-  | PlayerActionRustTurnLeft;
+  | ActionGas
+  | ActionReverse
+  | ActionTurnRight
+  | ActionTurnLeft;
 
-export const isManualMovement = (
-  act: PlayerActionRust
-): act is ManualMovementAction => {
+export const isManualMovement = (act: Action): act is ManualMovementAction => {
   return (
     act.tag === 'Gas' ||
     act.tag === 'Reverse' ||

@@ -19,7 +19,7 @@ use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
-pub enum PlayerActionRust {
+pub enum Action {
     Unknown,
     Move {
         update: ManualMoveUpdate,
@@ -60,7 +60,7 @@ pub enum PlayerActionRust {
 }
 
 pub fn apply_player_action(
-    player_action: PlayerActionRust,
+    player_action: Action,
     state: &GameState,
     ship_idx: Option<ShipIdx>,
     client: bool,
@@ -74,23 +74,23 @@ pub fn apply_player_action(
     let old_ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
 
     match player_action {
-        PlayerActionRust::Unknown => {
+        Action::Unknown => {
             warn!("Unknown ship action");
             None
         }
-        PlayerActionRust::Move { .. } => {
+        Action::Move { .. } => {
             warn!("Move ship action is obsolete");
             Some(old_ship.clone())
         }
-        PlayerActionRust::Dock => {
+        Action::Dock => {
             warn!("Dock ship action is obsolete");
             Some(old_ship.clone())
         }
-        PlayerActionRust::Navigate { .. } => {
+        Action::Navigate { .. } => {
             warn!("player action Navigate must be handled through world player actions");
             None
         }
-        PlayerActionRust::DockNavigate { target } => {
+        Action::DockNavigate { target } => {
             let mut ship = old_ship.clone();
             if let Some(planet) = indexing::find_planet(state, &target) {
                 if planet
@@ -131,7 +131,7 @@ pub fn apply_player_action(
                 None
             }
         }
-        PlayerActionRust::Tractor { target } => {
+        Action::Tractor { target } => {
             let mut ship = old_ship.clone();
             tractoring::update_ship_tractor(
                 target,
@@ -141,31 +141,31 @@ pub fn apply_player_action(
             );
             Some(ship)
         }
-        PlayerActionRust::Gas { .. } => {
+        Action::Gas { .. } => {
             warn!("player action Gas must be handled through world player actions");
             None
         }
-        PlayerActionRust::Reverse { .. } => {
+        Action::Reverse { .. } => {
             warn!("player action Reverse must be handled through world player actions");
             None
         }
-        PlayerActionRust::TurnRight { .. } => {
+        Action::TurnRight { .. } => {
             warn!("player action TurnRight must be handled through world player actions");
             None
         }
-        PlayerActionRust::TurnLeft { .. } => {
+        Action::TurnLeft { .. } => {
             warn!("player action TurnLeft must be handled through world player actions");
             None
         }
-        PlayerActionRust::StopGas { .. } => {
+        Action::StopGas { .. } => {
             warn!("player action StopGas must be handled through world player actions");
             None
         }
-        PlayerActionRust::StopTurn { .. } => {
+        Action::StopTurn { .. } => {
             warn!("player action StopTurn must be handled through world player actions");
             None
         }
-        PlayerActionRust::LongActionStart { .. } => {
+        Action::LongActionStart { .. } => {
             warn!("player action LongActionStart must be handled through world player actions");
             None
         }
