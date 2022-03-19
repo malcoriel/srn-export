@@ -16,7 +16,6 @@ use crate::dialogue::{
     check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
     DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
 };
-use crate::indexing;
 use crate::indexing::{
     find_my_player, find_my_ship, find_planet, GameStateIndexes, ObjectIndexSpecifier,
     ObjectSpecifier,
@@ -28,6 +27,7 @@ use crate::world;
 use crate::world::{GameState, Ship, ShipIdx, ShipTemplate, SpatialIndexes};
 use crate::world_events::GameEvent;
 use crate::{fire_event, pirate_defence};
+use crate::{indexing, world_actions};
 use std::iter::FromIterator;
 
 const BOT_SLEEP_MS: u64 = 200;
@@ -270,7 +270,7 @@ pub fn do_bot_players_actions(
     for (bot_id, acts) in ship_updates.into_iter() {
         for act in acts {
             let ship_idx = indexing::find_my_ship_index(&room.state, bot_id);
-            if !matches!(act, Action::LongActionStart { .. }) {
+            if !world_actions::is_world_update_action(&act) {
                 let updated_ship =
                     apply_player_action(act.clone(), &mut room.state, ship_idx, false, prng);
                 if let Some(updated_ship) = updated_ship {

@@ -149,3 +149,17 @@ pub fn world_update_handle_action(
         }
     }
 }
+
+pub fn is_world_update_action(act: &Action) -> bool {
+    matches!(
+        act,
+        Action::LongActionStart { .. }
+            | Action::Navigate { .. }
+            | Action::Gas { .. }
+            | Action::StopGas { .. }
+            | Action::Reverse { .. }
+            | Action::TurnLeft { .. }
+            | Action::TurnRight { .. }
+            | Action::StopTurn { .. }
+    )
+}

@@ -21,20 +21,24 @@ const keysActive: Record<string, boolean> = {};
 const refreshActiveActions = () => {
   const ns = NetState.get();
   if (!ns) {
-    return null;
+    return;
   }
 
-  const myId = ns.state.my_id;
+  const myShipId = ns.indexes.myShip?.id;
+
+  if (!myShipId) {
+    return;
+  }
 
   if (!keysActive.KeyW && keysActive.KeyS) {
     actionsActive.Reverse = ActionBuilder.ActionReverse({
-      player_id: myId,
+      ship_id: myShipId,
     });
     actionsActive.Gas = undefined;
     actionsActive.StopGas = undefined;
   } else if (keysActive.KeyW && !keysActive.KeyS) {
     actionsActive.Gas = ActionBuilder.ActionGas({
-      player_id: myId,
+      ship_id: myShipId,
     });
     actionsActive.Reverse = undefined;
     actionsActive.StopGas = undefined;
@@ -42,29 +46,29 @@ const refreshActiveActions = () => {
     actionsActive.Reverse = undefined;
     actionsActive.Gas = undefined;
     actionsActive.StopGas = ActionBuilder.ActionStopGas({
-      player_id: myId,
+      ship_id: myShipId,
     });
   }
 
   if (!keysActive.KeyA && keysActive.KeyD) {
-    // while it maybe counterituitive, it's not a mistake.
-    // due to Y-inversion, right or counterclockwise direction is clockwise/left in proper game logic
+    // while it may be counterintuitive, it's not a mistake.
+    // due to Y-inversion (in the visual part), right or counterclockwise direction is clockwise/left in proper game logic
     actionsActive.TurnLeft = ActionBuilder.ActionTurnLeft({
-      player_id: myId,
+      ship_id: myShipId,
     });
     actionsActive.TurnRight = undefined;
     actionsActive.StopTurn = undefined;
   } else if (keysActive.KeyA && !keysActive.KeyD) {
     actionsActive.TurnLeft = undefined;
     actionsActive.TurnRight = ActionBuilder.ActionTurnRight({
-      player_id: myId,
+      ship_id: myShipId,
     });
     actionsActive.StopTurn = undefined;
   } else if (actionsActive.TurnRight || actionsActive.TurnLeft) {
     actionsActive.TurnRight = undefined;
     actionsActive.TurnLeft = undefined;
     actionsActive.StopTurn = ActionBuilder.ActionStopTurn({
-      player_id: myId,
+      ship_id: myShipId,
     });
   }
 };

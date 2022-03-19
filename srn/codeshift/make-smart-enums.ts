@@ -79,6 +79,12 @@ const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
               resultMapped.push(j.numberTypeAnnotation());
             } else if (subMember.type === 'TSNullKeyword') {
               resultMapped.push(j.nullTypeAnnotation());
+            } else if (subMember.type === 'TSStringKeyword') {
+              resultMapped.push(j.stringTypeAnnotation());
+            } else if (subMember.type === 'TSTypeReference') {
+              if (subMember.typeName.type === 'Identifier') {
+                resultMapped.push(j.typeParameter(subMember.typeName.name));
+              }
             }
           }
           newMemberValue = j.unionTypeAnnotation(resultMapped);

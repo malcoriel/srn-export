@@ -898,10 +898,11 @@ export default class NetState extends EventEmitter {
         value: longAction,
         tag: uuid.v4(),
       });
-    } else {
+    } else if (this.indexes.myShip) {
       const act = ActionBuilder.ActionLongActionStart({
         long_action_start: longAction,
         player_id: this.state.my_id,
+        ship_id: this.indexes.myShip.id,
       });
       this.state.player_actions.push(act);
       this.sendSchedulePlayerAction(act);
