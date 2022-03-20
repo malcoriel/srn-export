@@ -26,6 +26,7 @@ use crate::net::{
 use crate::ship_action::Action;
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
 use crate::world::{GameState, Player, Ship};
+use crate::world_actions::is_world_update_action;
 use crate::world_events::GameEvent;
 use crate::xcast::XCast;
 use crate::{
@@ -381,23 +382,13 @@ fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&
                 return;
             }
             let state = state.unwrap();
-            match action.action {
-                Action::LongActionStart { .. }
-                | Action::Gas { .. }
-                | Action::Reverse { .. }
-                | Action::TurnRight { .. }
-                | Action::TurnLeft { .. }
-                | Action::StopTurn { .. }
-                | Action::Navigate { .. }
-                | Action::StopGas { .. } => {
-                    state.player_actions.push_back(action.action);
-                }
-                _ => {
-                    warn!(format!(
-                        "schedule player action does not support that player action: {:?}",
-                        action.action
-                    ));
-                }
+            if is_world_update_action(action.action) {
+                state.player_actions.push_back(action.action);
+            } else {
+                warn!(format!(
+                    "schedule player action does not support that player action: {:?}",
+                    action.action
+                ));
             }
             send_tag_confirm(tag.unwrap().to_string(), client_id);
         }
