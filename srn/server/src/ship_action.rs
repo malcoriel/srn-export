@@ -93,45 +93,8 @@ pub fn apply_player_action(
             None
         }
         Action::DockNavigate { target, .. } => {
-            let mut ship = old_ship.clone();
-            if let Some(planet) = indexing::find_planet(state, &target) {
-                if planet
-                    .properties
-                    .contains(&ObjectProperty::UnlandablePlanet)
-                    && !ship.abilities.contains(&Ability::BlowUpOnLand)
-                {
-                    // technically some logic bug signifier, but it also conflicts with one of the test hacks
-                    // in 'can start long action TransSystemJump' test
-                    // warn!(format!(
-                    //     "Attempt to land on unlandable planet {} by ship {}, ignoring.",
-                    //     planet.id, ship.id
-                    // ));
-                    None
-                } else {
-                    let ship_pos = Vec2f64 {
-                        x: ship.x,
-                        y: ship.y,
-                    };
-                    let planet_pos = Vec2f64 {
-                        x: planet.x,
-                        y: planet.y,
-                    };
-                    undock_ship_via_clone(state, &ship_idx, &mut ship, client, prng);
-                    ship.navigate_target = None;
-                    ship.dock_target = None;
-                    ship.dock_target = Some(target);
-                    ship.trajectory = trajectory::build_trajectory_to_point(
-                        ship_pos,
-                        &planet_pos,
-                        &ship.movement_definition,
-                    );
-                    ship.movement_markers.gas = None;
-                    ship.movement_markers.turn = None;
-                    Some(ship)
-                }
-            } else {
-                None
-            }
+            warn!("player action DockNavigate must be handled through world player actions");
+            None
         }
         Action::Tractor { target } => {
             let mut ship = old_ship.clone();

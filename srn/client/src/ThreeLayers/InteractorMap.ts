@@ -22,9 +22,14 @@ const planetActionMap = new Map([
   [
     InteractorActionType.Dock,
     (objectId: string) => {
-      actionsActive.Navigate = ActionBuilder.ActionDockNavigate({
-        target: objectId,
-      });
+      const ns = NetState.get();
+      const shipId = ns?.indexes?.myShip?.id;
+      if (shipId) {
+        actionsActive.Navigate = ActionBuilder.ActionDockNavigate({
+          target: objectId,
+          ship_id: shipId,
+        });
+      }
     },
   ],
 ]);

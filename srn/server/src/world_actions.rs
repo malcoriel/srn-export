@@ -1,10 +1,11 @@
+use crate::abilities::Ability;
 use crate::indexing::{
     find_my_ship_mut, find_player_idx_by_ship_id, find_ship_index, find_ship_mut, GameStateIndexes,
 };
 use crate::long_actions::{try_start_long_action, try_start_long_action_ship};
 use crate::ship_action::{Action, MoveAxisParam};
-use crate::world::{undock_ship, GameState, Ship, ShipWithTime};
-use crate::{trajectory, Vec2f64};
+use crate::world::{undock_ship, GameState, ObjectProperty, Ship, ShipWithTime};
+use crate::{indexing, trajectory, Vec2f64};
 use rand::prelude::*;
 use uuid::Uuid;
 
@@ -107,6 +108,53 @@ pub fn world_update_handle_action(
                 ship.movement_markers.turn = None;
             }
         }
+        Action::DockNavigate { ship_id, target } => {
+            if let Some(ship_idx) = find_ship_index(state, ship_id) {
+                let ship = &state_clone.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+
+                if let Some(planet) = indexing::find_planet(state_clone, &target) {
+                    if planet
+                        .properties
+                        .contains(&ObjectProperty::UnlandablePlanet)
+                        && !ship.abilities.contains(&Ability::BlowUpOnLand)
+                    {
+                        // technically some logic bug signifier, but it also conflicts with one of the test hacks
+                        // in 'can start long action TransSystemJump' test
+                        // warn!(format!(
+                        //     "Attempt to land on unlandable planet {} by ship {}, ignoring.",
+                        //     planet.id, ship.id
+                        // ));
+                    } else {
+                        undock_ship(
+                            state,
+                            ship_idx.clone(),
+                            false, // same reasoning as with Navigate
+                            find_player_idx_by_ship_id(state_clone, ship.id),
+                            prng,
+                        );
+                        let ship =
+                            &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+
+                        let ship_pos = ship.as_vec();
+                        let planet_pos = Vec2f64 {
+                            x: planet.x,
+                            y: planet.y,
+                        };
+
+                        ship.navigate_target = None;
+                        ship.dock_target = None;
+                        ship.dock_target = Some(target);
+                        ship.trajectory = trajectory::build_trajectory_to_point(
+                            ship_pos,
+                            &planet_pos,
+                            &ship.movement_definition,
+                        );
+                        ship.movement_markers.gas = None;
+                        ship.movement_markers.turn = None;
+                    }
+                }
+            }
+        }
         _ => {
             warn!(format!(
                 "action {:?} cannot be handled by world_update_handle_player_action",
@@ -127,5 +175,6 @@ pub fn is_world_update_action(act: &Action) -> bool {
             | Action::TurnLeft { .. }
             | Action::TurnRight { .. }
             | Action::StopTurn { .. }
+            | Action::DockNavigate { .. }
     )
 }

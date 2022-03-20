@@ -284,7 +284,6 @@ export default class NetState extends EventEmitter {
       processed_player_actions: [],
       update_every_ticks: 9999,
       accumulated_not_updated_ticks: 0,
-      ship_history: {},
     };
     reindexNetState(this);
   }
@@ -802,6 +801,7 @@ export default class NetState extends EventEmitter {
       action.tag === 'TurnLeft' ||
       action.tag === 'StopTurn' ||
       action.tag === 'Navigate' ||
+      action.tag === 'DockNavigate' ||
       action.tag === 'Reverse'
     )
       return true;

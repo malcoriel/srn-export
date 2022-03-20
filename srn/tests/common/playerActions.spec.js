@@ -166,7 +166,7 @@ describe('player actions logic', () => {
       );
       state = updateWorld(state, 3000);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.docket_at).toEqual(planet.id);
+      expect(ship.docked_at).toEqual(planet.id);
     });
   });
 
