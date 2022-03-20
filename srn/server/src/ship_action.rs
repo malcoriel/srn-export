@@ -48,6 +48,7 @@ pub enum Action {
         target: Vec2f64,
     },
     DockNavigate {
+        ship_id: Uuid,
         target: Uuid,
     },
     Tractor {
@@ -91,7 +92,7 @@ pub fn apply_player_action(
             warn!("player action Navigate must be handled through world player actions");
             None
         }
-        Action::DockNavigate { target } => {
+        Action::DockNavigate { target, .. } => {
             let mut ship = old_ship.clone();
             if let Some(planet) = indexing::find_planet(state, &target) {
                 if planet

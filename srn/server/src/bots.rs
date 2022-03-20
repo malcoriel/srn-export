@@ -133,6 +133,7 @@ fn bot_cargo_rush_hauler_act(
             let desired_target = quest.from_id;
             if not_already_there(ship, desired_target) {
                 result_actions.push(BotAct::Act(Action::DockNavigate {
+                    ship_id: ship.id,
                     target: desired_target,
                 }));
             }
@@ -142,6 +143,7 @@ fn bot_cargo_rush_hauler_act(
             let desired_target = quest.to_id;
             if not_already_there(ship, desired_target) {
                 result_actions.push(BotAct::Act(Action::DockNavigate {
+                    ship_id: ship.id,
                     target: desired_target,
                 }));
             }
@@ -374,7 +376,10 @@ fn npc_act(
             spatial_indexes,
         );
         if let Some(cp) = closest_planet {
-            res.push(Action::DockNavigate { target: cp })
+            res.push(Action::DockNavigate {
+                target: cp,
+                ship_id: ship.id,
+            })
         }
     }
 

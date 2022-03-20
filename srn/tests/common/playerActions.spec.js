@@ -37,6 +37,12 @@ export const mockPlayerActionNavigate = (shipId, to) => ({
   target: to,
 });
 
+export const mockPlayerActionDockNavigate = (shipId, to) => ({
+  tag: 'DockNavigate',
+  ship_id: shipId,
+  target: to,
+});
+
 const createStateWithAShip = () => {
   const state = wasm.seedWorld({
     seed: 'player actions',
@@ -149,7 +155,19 @@ describe('player actions logic', () => {
       expect(ship.x).toBeCloseTo(110.0);
       expect(ship.y).toBeCloseTo(110.0);
     });
-    it.todo('can navigate and dock');
+    fit('can navigate and dock', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship } = createStateWithAShip();
+      const planet = getLoc0(state).planets[0];
+      ship.x = planet.x + planet.radius + 20.0;
+      ship.y = planet.y + planet.radius + 20.0;
+      state.player_actions.push(
+        mockPlayerActionDockNavigate(ship.id, planet.id)
+      );
+      state = updateWorld(state, 3000);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.docket_at).toEqual(planet.id);
+    });
   });
 
   describe('tractoring', () => {
