@@ -10,40 +10,6 @@ use uuid::Uuid;
 
 const MAX_ALLOWED_DISTANCE_TICKS: i64 = 10 * 1000 * 1000;
 
-pub fn find_closest_ship_history(
-    ship_id: Uuid,
-    at_ticks: u64,
-    state: &GameState,
-) -> Option<&ShipWithTime> {
-    if state.ticks < at_ticks {
-        // future lookups do not make sense, and the latest history item should be always
-        // (at most) SHIP_HISTORY_GAP_TICKS away from the current ticks
-        return None;
-    }
-    return state.ship_history.get(&ship_id).and_then(|items| {
-        // optimize for too far in the past, it's pointless to allow much desync for a lag-compensating tool
-        // no .abs() because this should only cover the 'too much in the past' case
-        if items.len() > 0
-            && (items[0].at_ticks as i64 - at_ticks as i64) > MAX_ALLOWED_DISTANCE_TICKS
-        {
-            return None;
-        }
-        // assume the amount of items is small (currently 10), so no tricks are necessary,
-        // e.g. writing custom 'closest' binary search
-        let mut min_distance_ticks = 1000 * 1000;
-        let mut found_index = 0;
-        for i in 0..items.len() {
-            let item = &items[i];
-            let diff = (item.at_ticks as i64 - at_ticks as i64).abs();
-            if diff < min_distance_ticks {
-                min_distance_ticks = diff;
-                found_index = i;
-            }
-        }
-        return Some(&items[found_index]);
-    });
-}
-
 pub fn world_update_handle_action(
     state: &mut GameState,
     action: Action,

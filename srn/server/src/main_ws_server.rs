@@ -382,7 +382,7 @@ fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&
                 return;
             }
             let state = state.unwrap();
-            if is_world_update_action(action.action) {
+            if is_world_update_action(&action.action) {
                 state.player_actions.push_back(action.action);
             } else {
                 warn!(format!(
