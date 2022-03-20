@@ -683,7 +683,6 @@ pub struct GameState {
     pub update_every_ticks: u64,
     pub accumulated_not_updated_ticks: u32,
     pub gen_opts: GenStateOpts,
-    pub ship_history: HashMap<Uuid, VecDeque<ShipWithTime>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -726,7 +725,6 @@ impl GameState {
             update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
             accumulated_not_updated_ticks: 0,
             gen_opts: Default::default(),
-            ship_history: Default::default(),
         }
     }
 }
@@ -1019,47 +1017,9 @@ fn update_world_iter(
                     prng,
                 )
             }
-
-            if !client {
-                if let Some(_ship_history_update_elapsed) = every_diff(
-                    SHIP_HISTORY_GAP_TICKS,
-                    state.ticks as u32,
-                    state
-                        .interval_data
-                        .get(&TimeMarks::UpdateShipHistory)
-                        .map(|m| *m),
-                ) {
-                    let id = sampler.start(SamplerMarks::UpdateShipHistory as u32);
-                    state
-                        .interval_data
-                        .insert(TimeMarks::UpdateShipHistory, state.ticks as u32);
-                    update_ship_history(&mut state);
-                    sampler.end(id);
-                }
-            }
         };
     };
     (state, sampler)
-}
-
-pub const SHIP_HISTORY_GAP_TICKS: u32 = 100 * 1000; // 100ms
-pub const MAX_SHIP_HISTORY: usize = 10; // 10 versions
-
-fn update_ship_history(state: &mut GameState) {
-    let mut history = state.ship_history.clone();
-    for loc in state.locations.iter() {
-        for ship in &loc.ships {
-            let items = history.entry(ship.id).or_insert(Default::default());
-            if items.len() > MAX_SHIP_HISTORY {
-                items.pop_front();
-            }
-            items.push_back(ShipWithTime {
-                ship: ship.clone(),
-                at_ticks: state.ticks,
-            })
-        }
-    }
-    state.ship_history = history;
 }
 
 fn update_player_actions(state: &mut GameState, prng: &mut SmallRng) {
