@@ -10,7 +10,6 @@ import {
   wasm,
 } from '../util';
 import * as uuid from 'uuid';
-import { result } from 'lodash/object';
 
 export const mockPlayerActionTransSystemJump = (
   toLocId,
@@ -26,6 +25,16 @@ export const mockPlayerActionTransSystemJump = (
   },
 });
 
+export const mockMineral = () => ({
+  id: uuid.v4(),
+  x: 0,
+  y: 0,
+  radius: 0.25,
+  value: 100,
+  rarity: 'Common',
+  color: '#ff00ff',
+});
+
 export const mockPlayerActionMove = (type, shipId) => ({
   tag: type, // Gas | StopGas | Turn | StopTurn | Reverse
   ship_id: shipId,
@@ -35,6 +44,12 @@ export const mockPlayerActionNavigate = (shipId, to) => ({
   tag: 'Navigate',
   ship_id: shipId,
   target: to,
+});
+
+export const mockPlayerActionTractor = (shipId, target) => ({
+  tag: 'Tractor',
+  ship_id: shipId,
+  target,
 });
 
 export const mockPlayerActionDockNavigate = (shipId, to) => ({
@@ -148,14 +163,17 @@ describe('player actions logic', () => {
       ship.x = 100.0;
       ship.y = 100.0;
       state.player_actions.push(
-        mockPlayerActionNavigate(ship.id, { x: 110, y: 110 })
+        mockPlayerActionNavigate(ship.id, {
+          x: 110,
+          y: 110,
+        })
       );
       state = updateWorld(state, 1500);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.x).toBeCloseTo(110.0);
       expect(ship.y).toBeCloseTo(110.0);
     });
-    fit('can navigate and dock', () => {
+    it('can navigate and dock', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
       const planet = getLoc0(state).planets[0];
@@ -171,9 +189,24 @@ describe('player actions logic', () => {
   });
 
   describe('tractoring', () => {
-    it.todo('can tractor a container');
-    it.todo('two ships can stall tractoring a container on equal distance');
-    it.todo('two ships can win tractoring a container on unequal distance');
+    it('can tractor a mineral', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship } = createStateWithAShip();
+      const mineral = mockMineral();
+      getLoc0(state).minerals.push(mineral);
+      mineral.x = 102.0;
+      mineral.y = 102.0;
+      ship.x = 100.0;
+      ship.y = 100.0;
+      state.player_actions.push(mockPlayerActionTractor(ship.id, mineral.id));
+      state = updateWorld(state, 3000);
+      ship = getShipByPlayerId(state, player.id);
+      const invItem = ship.inventory[0];
+      expect(invItem).toBeTruthy();
+      expect(invItem.item_type).toEqual('CommonMineral');
+    });
+    it.todo('two ships can stall tractoring a mineral on equal distance');
+    it.todo('two ships can win tractoring a mineral on unequal distance');
   });
 
   describe('dialogue actions', () => {

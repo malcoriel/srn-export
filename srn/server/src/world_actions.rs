@@ -5,7 +5,7 @@ use crate::indexing::{
 use crate::long_actions::{try_start_long_action, try_start_long_action_ship};
 use crate::ship_action::{Action, MoveAxisParam};
 use crate::world::{undock_ship, GameState, ObjectProperty, Ship, ShipWithTime};
-use crate::{indexing, trajectory, Vec2f64};
+use crate::{indexing, tractoring, trajectory, Vec2f64};
 use rand::prelude::*;
 use uuid::Uuid;
 
@@ -155,6 +155,17 @@ pub fn world_update_handle_action(
                 }
             }
         }
+        Action::Tractor { target, ship_id } => {
+            if let Some(ship_idx) = find_ship_index(state, ship_id) {
+                let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+                tractoring::update_ship_tractor(
+                    target,
+                    ship,
+                    &state_clone.locations[ship_idx.location_idx].minerals,
+                    &state_clone.locations[ship_idx.location_idx].containers,
+                );
+            }
+        }
         _ => {
             warn!(format!(
                 "action {:?} cannot be handled by world_update_handle_player_action",
@@ -176,5 +187,6 @@ pub fn is_world_update_action(act: &Action) -> bool {
             | Action::TurnRight { .. }
             | Action::StopTurn { .. }
             | Action::DockNavigate { .. }
+            | Action::Tractor { .. }
     )
 }

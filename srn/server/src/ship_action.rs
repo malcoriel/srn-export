@@ -52,6 +52,7 @@ pub enum Action {
         target: Uuid,
     },
     Tractor {
+        ship_id: Uuid,
         target: Uuid,
     },
     LongActionStart {
@@ -65,8 +66,8 @@ pub fn apply_player_action(
     player_action: Action,
     state: &GameState,
     ship_idx: Option<ShipIdx>,
-    client: bool,
-    prng: &mut SmallRng,
+    _client: bool,
+    _prng: &mut SmallRng,
 ) -> Option<Ship> {
     if ship_idx.is_none() {
         warn!("No ship");
@@ -92,19 +93,13 @@ pub fn apply_player_action(
             warn!("player action Navigate must be handled through world player actions");
             None
         }
-        Action::DockNavigate { target, .. } => {
+        Action::DockNavigate { .. } => {
             warn!("player action DockNavigate must be handled through world player actions");
             None
         }
-        Action::Tractor { target } => {
-            let mut ship = old_ship.clone();
-            tractoring::update_ship_tractor(
-                target,
-                &mut ship,
-                &state.locations[ship_idx.location_idx].minerals,
-                &state.locations[ship_idx.location_idx].containers,
-            );
-            Some(ship)
+        Action::Tractor { .. } => {
+            warn!("player action Tractor must be handled through world player actions");
+            None
         }
         Action::Gas { .. } => {
             warn!("player action Gas must be handled through world player actions");
@@ -135,26 +130,6 @@ pub fn apply_player_action(
             None
         }
     }
-}
-
-fn undock_ship_via_clone(
-    state: &GameState,
-    ship_idx: &ShipIdx,
-    mut ship: &mut Ship,
-    client: bool,
-    prng: &mut SmallRng,
-) {
-    let mut state_mut_clone = state.clone();
-    undock_ship(
-        &mut state_mut_clone,
-        ship_idx.clone(),
-        client,
-        find_player_idx_by_ship_id(state, ship.id),
-        prng,
-    );
-    let mut mutated_ship =
-        state_mut_clone.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].clone();
-    mem::swap(&mut mutated_ship, &mut ship);
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
