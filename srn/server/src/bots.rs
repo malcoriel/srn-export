@@ -22,7 +22,7 @@ use crate::indexing::{
 };
 use crate::long_actions::LongAction;
 use crate::random_stuff::gen_bot_name;
-use crate::ship_action::{apply_player_action, Action};
+use crate::ship_action::Action;
 use crate::world;
 use crate::world::{GameState, Ship, ShipIdx, ShipTemplate, SpatialIndexes};
 use crate::world_events::GameEvent;
@@ -269,18 +269,9 @@ pub fn do_bot_players_actions(
         }
     }
 
-    for (bot_id, acts) in ship_updates.into_iter() {
+    for (_, acts) in ship_updates.into_iter() {
         for act in acts {
-            let ship_idx = indexing::find_my_ship_index(&room.state, bot_id);
-            if !world_actions::is_world_update_action(&act) {
-                let updated_ship =
-                    apply_player_action(act.clone(), &mut room.state, ship_idx, false, prng);
-                if let Some(updated_ship) = updated_ship {
-                    world::try_replace_ship(&mut room.state, &updated_ship, bot_id);
-                }
-            } else {
-                room.state.player_actions.push_back(act);
-            }
+            room.state.player_actions.push_back(act);
         }
     }
 
@@ -303,7 +294,7 @@ pub fn do_bot_npcs_actions(
     room: &mut Room,
     elapsed_micro: i64,
     spatial_indexes: &SpatialIndexes,
-    prng: &mut SmallRng,
+    _prng: &mut SmallRng,
 ) {
     let mut ship_updates: HashMap<Uuid, (Vec<Action>, ShipIdx)> = HashMap::new();
 
@@ -331,13 +322,9 @@ pub fn do_bot_npcs_actions(
         }
     }
 
-    for (_ship_id, (acts, idx)) in ship_updates.into_iter() {
+    for (_ship_id, (acts, _idx)) in ship_updates.into_iter() {
         for act in acts {
-            let updated_ship =
-                apply_player_action(act.clone(), &mut room.state, Some(idx.clone()), false, prng);
-            if let Some(updated_ship) = updated_ship {
-                world::try_replace_ship_npc(&mut room.state, &updated_ship, Some(idx.clone()));
-            }
+            room.state.player_actions.push_back(act);
         }
     }
 }

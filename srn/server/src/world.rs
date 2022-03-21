@@ -2230,33 +2230,6 @@ pub fn try_replace_ship_npc(
     };
 }
 
-pub fn mutate_ship_no_lock(
-    client_id: Uuid,
-    mutate_cmd: Action,
-    state: &mut GameState,
-    prng: &mut SmallRng,
-) -> Option<(Ship, ShipIdx)> {
-    let old_ship_index = indexing::find_my_ship_index(&state, client_id);
-    if old_ship_index.is_none() {
-        warn!("No old instance of ship");
-        return None;
-    }
-    force_update_to_now(state);
-    let updated_ship =
-        ship_action::apply_player_action(mutate_cmd, &state, old_ship_index.clone(), false, prng);
-    if let Some(updated_ship) = updated_ship {
-        let replaced = try_replace_ship(state, &updated_ship, client_id);
-        if replaced {
-            return Some((updated_ship, old_ship_index.unwrap()));
-        }
-        warn!("Couldn't replace ship");
-        return None;
-    }
-    force_update_to_now(state);
-    warn!("Ship update was invalid");
-    return None;
-}
-
 pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecifier) {
     match remove {
         ObjectSpecifier::Unknown => {}

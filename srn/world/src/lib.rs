@@ -391,28 +391,6 @@ fn get_sampler_clone() -> Sampler {
     }
 }
 
-#[derive(Clone, Debug, derive_deserialize, derive_serialize)]
-struct ApplyShipActionArgs {
-    state: world::GameState,
-    ship_action: ship_action::Action,
-    player_id: Uuid,
-}
-
-// returns serialized ship
-#[wasm_bindgen]
-pub fn apply_ship_action(serialized_apply_args: &str) -> String {
-    let (args, return_result) = extract_args::<ApplyShipActionArgs>(serialized_apply_args);
-    if return_result.is_some() {
-        return return_result.unwrap();
-    }
-    let args = args.ok().unwrap();
-    let ship_idx = find_my_ship_index(&args.state, args.player_id);
-    let mut prng = seed_prng(args.state.seed.clone());
-    let new_ship =
-        ship_action::apply_player_action(args.ship_action, &args.state, ship_idx, true, &mut prng);
-    return serde_json::to_string(&new_ship).unwrap_or(DEFAULT_ERR.to_string());
-}
-
 #[derive(Clone, Debug, derive_serialize, derive_deserialize)]
 struct SeedWorldArgs {
     seed: String,
