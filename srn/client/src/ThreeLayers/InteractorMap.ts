@@ -58,9 +58,14 @@ export const containerActionsMap = new Map([
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
-      actionsActive.Tractor = ActionBuilder.ActionTractor({
-        target: objectId,
-      });
+      const ns = NetState.get();
+      const shipId = ns?.indexes?.myShip?.id;
+      if (shipId) {
+        actionsActive.Tractor = ActionBuilder.ActionTractor({
+          ship_id: shipId,
+          target: objectId,
+        });
+      }
     },
   ],
   [
@@ -83,9 +88,14 @@ export const mineralActionsMap = new Map([
   [
     InteractorActionType.Tractor,
     (objectId: string) => {
-      actionsActive.Tractor = ActionBuilder.ActionTractor({
-        target: objectId,
-      });
+      const ns = NetState.get();
+      const shipId = ns?.indexes?.myShip?.id;
+      if (shipId) {
+        actionsActive.Tractor = ActionBuilder.ActionTractor({
+          target: objectId,
+          ship_id: shipId,
+        });
+      }
     },
   ],
   [
