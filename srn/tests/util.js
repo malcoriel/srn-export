@@ -106,39 +106,46 @@ export const genStateOpts = (overrides) =>
   );
 
 export const loadWasm = timerify(async function loadWasm() {
-  const resources = await loadResources('../server/resources');
-  const wasmBytes = await fs.readFile('../world/pkg-nomodule/world_bg.wasm');
-  await init(wasmBytes);
-  const wasmFunctions = getBindgen();
-  wasmFunctions.set_panic_hook();
-  wasmFunctions.set_enable_perf(!!process.env.ENABLE_PERF);
-  wasm.updateWorld = serializedWasmCaller(wasmFunctions.update_world);
-  wasm.seedWorld = wasmFunctions.seed_world;
-  wasm.createRoom = wasmFunctions.create_room;
-  wasm.updateRoom = wasmFunctions.update_room;
-  wasm.updateRoomFull = wasmFunctions.update_room_full;
-  wasm.friendOrFoe = wasmFunctions.friend_or_foe;
-  wasm.flushSamplerStats = wasmFunctions.flush_sampler_stats;
-  wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
-  wasm.packReplay = wasmFunctions.pack_replay;
-  wasm.loadReplay = wasmFunctions.load_replay;
-  wasm.getDiffReplayStateAt = timerifySync(function getDiffReplayStateAt(
-    ...args
-  ) {
-    return wasmFunctions.get_diff_replay_state_at(...args);
-  });
-  wasm.getPreloadedDiffReplayStateAtInterpolated =
-    wasmFunctions.get_preloaded_diff_replay_state_at_interpolated;
-  wasm.getPreloadedDiffReplayStateAt = timerifySync(
-    function getPreloadedDiffReplayStateAt(...args) {
-      return wasmFunctions.get_preloaded_diff_replay_state_at(...args);
-    }
-  );
-  wasm.applySinglePatch = wasmFunctions.apply_single_patch;
-  wasm.interpolateStates = wasmFunctions.interpolate_states;
-  wasm.resources = resources;
-  wasm.dialogueTable = wasm.makeDialogueTable(wasm.resources.dialogue_scripts);
-  return wasmFunctions;
+  try {
+    const resources = await loadResources('../server/resources');
+    const wasmBytes = await fs.readFile('../world/pkg-nomodule/world_bg.wasm');
+    await init(wasmBytes);
+    const wasmFunctions = getBindgen();
+    wasmFunctions.set_panic_hook();
+    wasmFunctions.set_enable_perf(!!process.env.ENABLE_PERF);
+    wasm.updateWorld = serializedWasmCaller(wasmFunctions.update_world);
+    wasm.seedWorld = wasmFunctions.seed_world;
+    wasm.createRoom = wasmFunctions.create_room;
+    wasm.updateRoom = wasmFunctions.update_room;
+    wasm.updateRoomFull = wasmFunctions.update_room_full;
+    wasm.friendOrFoe = wasmFunctions.friend_or_foe;
+    wasm.flushSamplerStats = wasmFunctions.flush_sampler_stats;
+    wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
+    wasm.packReplay = wasmFunctions.pack_replay;
+    wasm.loadReplay = wasmFunctions.load_replay;
+    wasm.getDiffReplayStateAt = timerifySync(function getDiffReplayStateAt(
+      ...args
+    ) {
+      return wasmFunctions.get_diff_replay_state_at(...args);
+    });
+    wasm.getPreloadedDiffReplayStateAtInterpolated =
+      wasmFunctions.get_preloaded_diff_replay_state_at_interpolated;
+    wasm.getPreloadedDiffReplayStateAt = timerifySync(
+      function getPreloadedDiffReplayStateAt(...args) {
+        return wasmFunctions.get_preloaded_diff_replay_state_at(...args);
+      }
+    );
+    wasm.applySinglePatch = wasmFunctions.apply_single_patch;
+    wasm.interpolateStates = wasmFunctions.interpolate_states;
+    wasm.resources = resources;
+    wasm.dialogueTable = wasm.makeDialogueTable(
+      wasm.resources.dialogue_scripts
+    );
+    wasmFunctions.load_d_table(wasm.dialogueTable);
+    return wasmFunctions;
+  } catch (e) {
+    console.error('loading wasm failed', e);
+  }
 });
 export const updateWorld = (world, millis, isServer = true) => {
   return wasm.updateWorld(
@@ -169,7 +176,6 @@ export const updateRoom = timerifySync(function updateRoomV2(
   currentRoom = wasm.updateRoomFull(
     currentRoom,
     BigInt(millis * 1000),
-    wasm.dialogueTable,
     timeStepTicks
   );
   return currentRoom;

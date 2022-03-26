@@ -284,6 +284,10 @@ lazy_static! {
 }
 
 lazy_static! {
+    pub static ref current_d_table: MutStatic<Option<DialogueTable>> = { MutStatic::from(None) };
+}
+
+lazy_static! {
     pub static ref rel_orbit_cache: MutStatic<HashMap<u64, Vec<Vec2f64>>> =
         { MutStatic::from(HashMap::new()) };
 }
@@ -456,14 +460,13 @@ pub fn update_room(
 pub fn update_room_full(
     room: JsValue,
     total_ticks: i64,
-    d_table: JsValue,
     step_ticks: i64,
 ) -> Result<JsValue, JsValue> {
     let mut room: Room = serde_wasm_bindgen::from_value(room)?;
     let mut sampler = get_sampler_clone();
     let seed = room.state.seed.clone();
     let mut prng = seed_prng(seed);
-    let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
+    let d_table: DialogueTable = current_d_table.read().unwrap().clone().expect("no preloaded dialogue table, cannot update room. call .load_d_table first");
     let mut remaining = total_ticks;
     while remaining > 0 {
         remaining -= step_ticks;
@@ -648,6 +651,14 @@ pub fn load_replay(replay: JsValue) -> Result<(), JsValue> {
     let replay: ReplayDiffed = serde_wasm_bindgen::from_value(replay)?;
     let mut r = current_replay.write().unwrap();
     *r = Some(replay);
+    Ok(())
+}
+
+#[wasm_bindgen]
+pub fn load_d_table(d_table: JsValue) -> Result<(), JsValue> {
+    let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
+    let mut r = current_d_table.write().unwrap();
+    *r = Some(d_table);
     Ok(())
 }
 
