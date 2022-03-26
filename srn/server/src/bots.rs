@@ -22,7 +22,7 @@ use crate::indexing::{
 };
 use crate::long_actions::LongAction;
 use crate::random_stuff::gen_bot_name;
-use crate::ship_action::Action;
+use crate::world_actions::Action;
 use crate::world;
 use crate::world::{GameState, Ship, ShipIdx, ShipTemplate, SpatialIndexes};
 use crate::world_events::GameEvent;

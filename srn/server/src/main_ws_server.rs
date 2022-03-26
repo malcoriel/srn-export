@@ -23,14 +23,14 @@ use crate::net::{
     ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
     TagConfirm, Wrapper,
 };
-use crate::ship_action::Action;
+use crate::world_actions::Action;
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
 use crate::world::{GameState, Player, Ship};
 use crate::world_actions::is_world_update_action;
 use crate::world_events::GameEvent;
 use crate::xcast::XCast;
 use crate::{
-    dialogue, indexing, inventory, long_actions, market, notifications, sandbox, ship_action,
+    dialogue, indexing, inventory, long_actions, market, notifications, sandbox,
     states, world, xcast, DialogueRequest, LastCheck, WSRequest, DEFAULT_SLEEP_MS, DIALOGUE_STATES,
     DIALOGUE_TABLE, MAX_ERRORS, MAX_ERRORS_SAMPLE_INTERVAL, MAX_MESSAGES_PER_INTERVAL,
     MAX_MESSAGE_SAMPLE_INTERVAL_MS,
@@ -264,7 +264,9 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::Sync => {
             warn!("Unsupported client op code 'Sync'");
         }
-        ClientOpCode::MutateMyShip => on_client_mutate_ship(client_id, second, third),
+        ClientOpCode::MutateMyShip => {
+            warn!("Unsupported client op code 'MutateMyShip'");
+        },
         ClientOpCode::Name => on_client_personalize(client_id, second),
         ClientOpCode::DialogueOption => {
             on_client_dialogue(client_id, second, third);
@@ -439,16 +441,6 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
     }
 }
 
-fn on_client_mutate_ship(client_id: Uuid, second: &&str, third: Option<&&str>) {
-    let parsed = serde_json::from_str::<Action>(second);
-    match parsed {
-        Ok(res) => mutate_owned_ship_wrapped(client_id, res, third.map(|s| s.to_string())),
-        Err(err) => {
-            eprintln!("couldn't parse ship action {}, err {}", second, err);
-        }
-    }
-}
-
 fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str>) {
     let parsed = serde_json::from_str::<sandbox::SandboxCommand>(second);
     match parsed {
@@ -618,40 +610,6 @@ fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStrea
 
 pub fn is_disconnected(client_id: Uuid) -> bool {
     return !CLIENT_SENDERS_SET.contains(&client_id);
-}
-
-fn mutate_owned_ship_wrapped(client_id: Uuid, mutate_cmd: Action, tag: Option<String>) {
-    let res = mutate_owned_ship(client_id, mutate_cmd, tag);
-    if res.is_none() {
-        warn!("error mutating owned ship");
-        increment_client_errors(client_id);
-        disconnect_if_bad(client_id);
-    }
-}
-
-fn mutate_owned_ship(client_id: Uuid, mutate_cmd: Action, tag: Option<String>) -> Option<Ship> {
-    let mut cont = STATE.write().unwrap();
-    let state = states::select_state_mut(&mut cont, client_id);
-    if state.is_none() {
-        warn!("mutate owned ship in non-existent state");
-        return None;
-    }
-    let state = state.unwrap();
-    if let Some(tag) = tag {
-        send_tag_confirm(tag, client_id);
-    }
-    let mutated = world::mutate_ship_no_lock(client_id, mutate_cmd, state, &mut get_prng());
-    if let Some(mutated) = mutated {
-        multicast_ships_update_excluding(
-            state.locations[mutated.1.location_idx as usize]
-                .ships
-                .clone(),
-            Some(client_id),
-            state.id,
-        );
-        return Some(mutated.0);
-    }
-    return None;
 }
 
 pub fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {

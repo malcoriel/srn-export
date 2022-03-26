@@ -287,24 +287,6 @@ export const loadReplayIntoWasm = (replay: any) => {
   wasmFunctions.load_replay(replay);
 };
 
-export const applyShipActionWasm = (
-  state: GameState,
-  ship_action: Action
-): Ship | undefined => {
-  return doWasmCall<Ship>(
-    'apply_ship_action',
-    JSON.stringify(
-      {
-        state,
-        ship_action,
-        player_id: state.my_id,
-      },
-      null,
-      2
-    )
-  );
-};
-
 export const findPlanet = (
   state: GameState,
   id: string

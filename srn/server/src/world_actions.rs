@@ -2,12 +2,14 @@ use crate::abilities::Ability;
 use crate::indexing::{
     find_my_ship_mut, find_player_idx_by_ship_id, find_ship_index, find_ship_mut, GameStateIndexes,
 };
-use crate::long_actions::{try_start_long_action, try_start_long_action_ship};
-use crate::ship_action::{Action, MoveAxisParam};
-use crate::world::{undock_ship, GameState, ObjectProperty, Ship, ShipWithTime};
+use crate::long_actions::{LongActionStart, try_start_long_action, try_start_long_action_ship};
+use crate::world::{GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipWithTime, undock_ship};
 use crate::{indexing, tractoring, trajectory, Vec2f64};
 use rand::prelude::*;
 use uuid::Uuid;
+use serde_derive::{Deserialize, Serialize};
+use typescript_definitions::{TypescriptDefinition, TypeScriptify};
+use wasm_bindgen::prelude::*;
 
 const MAX_ALLOWED_DISTANCE_TICKS: i64 = 10 * 1000 * 1000;
 
@@ -189,4 +191,76 @@ pub fn is_world_update_action(act: &Action) -> bool {
             | Action::DockNavigate { .. }
             | Action::Tractor { .. }
     )
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[serde(tag = "tag")]
+pub enum Action {
+    Unknown,
+    Move {
+        update: ManualMoveUpdate,
+    },
+    Gas {
+        ship_id: Uuid,
+    },
+    StopGas {
+        ship_id: Uuid,
+    },
+    StopTurn {
+        ship_id: Uuid,
+    },
+    Reverse {
+        ship_id: Uuid,
+    },
+    TurnRight {
+        ship_id: Uuid,
+    },
+    TurnLeft {
+        ship_id: Uuid,
+    },
+    Dock,
+    Navigate {
+        ship_id: Uuid,
+        target: Vec2f64,
+    },
+    DockNavigate {
+        ship_id: Uuid,
+        target: Uuid,
+    },
+    Tractor {
+        ship_id: Uuid,
+        target: Uuid,
+    },
+    LongActionStart {
+        long_action_start: LongActionStart,
+        player_id: Option<Uuid>,
+        ship_id: Uuid,
+    },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct MoveAxisParam {
+    pub forward: bool,
+    pub last_tick: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct ShipMovementMarkers {
+    pub gas: Option<MoveAxisParam>,
+    pub turn: Option<MoveAxisParam>,
+}
+
+impl ShipMovementMarkers {
+    pub fn new() -> Self {
+        Self {
+            gas: None,
+            turn: None,
+        }
+    }
+}
+
+impl Default for ShipMovementMarkers {
+    fn default() -> Self {
+        ShipMovementMarkers::new()
+    }
 }

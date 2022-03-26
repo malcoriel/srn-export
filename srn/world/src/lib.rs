@@ -109,9 +109,6 @@ mod notifications;
 #[path = "../../server/src/substitutions.rs"]
 mod substitutions;
 
-#[path = "../../server/src/ship_action.rs"]
-mod ship_action;
-
 #[path = "../../server/src/combat.rs"]
 mod combat;
 
