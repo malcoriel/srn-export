@@ -210,8 +210,21 @@ describe('player actions logic', () => {
   });
 
   describe('dialogue actions', () => {
-    it.todo('can initiate dialogues');
-    it.todo('can select dialogue options');
+    fit('can receive new dialogues', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship } = createStateWithAShip();
+      const planet = getLoc0(state).planets[0];
+      ship.x = planet.x;
+      ship.y = planet.y;
+      state.player_actions.push(
+        mockPlayerActionDockNavigate(ship.id, planet.id)
+      );
+      state = updateWorld(state, 3000);
+      const { dialogue_states } = state;
+      const myState = dialogue_states[player.id];
+      expect(myState).toBeTruthy();
+    });
+    it('can select dialogue options', () => {});
   });
 
   describe('inventory and trade actions', () => {

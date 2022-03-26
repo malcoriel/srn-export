@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::dialogue;
 use crate::dialogue::DialogueStates;
 use crate::pirate_defence;
@@ -26,10 +27,13 @@ pub fn world_update_handle_event(
             player_id,
         } => {
             if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
-                let d_states = DialogueTable::get_player_d_states(d_states, player_id);
+                let (current_player_dialogue, player_d_states) =
+                    d_states.entry(player_id).or_insert((None, HashMap::new()));
                 // this variable is useless here, it was previously needed for unicasting the changes back to clients
                 let mut dialogue_changes = vec![];
-                d_table.trigger_dialogue(script, &mut dialogue_changes, player_id, d_states, state)
+                d_table.trigger_dialogue(script, &mut dialogue_changes, player_id, player_d_states, state);
+                // rewrite the player's dialogues with the updated version
+                state.dialogue_states.insert(player_id, (current_player_dialogue.clone(), player_d_states.clone()));
             } else {
                 warn!(format!("No dialogue found by name {}", dialogue_name))
             }

@@ -91,9 +91,6 @@ mod inventory;
 #[path = "../../server/src/market.rs"]
 mod market;
 
-#[path = "../../server/src/dialogue_dto.rs"]
-mod dialogue_dto;
-
 #[path = "../../server/src/long_actions.rs"]
 mod long_actions;
 

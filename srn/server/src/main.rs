@@ -118,7 +118,6 @@ mod cargo_rush;
 mod chat;
 mod combat;
 mod dialogue;
-mod dialogue_test;
 mod fof;
 mod indexing;
 mod interpolation;
