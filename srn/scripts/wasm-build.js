@@ -89,10 +89,23 @@ async function buildForTests() {
   let file = (await fs.readFile('world/pkg-nomodule/world.js')).toString();
   file = file.replace('let wasm_bindgen;', 'export let wasm_bindgen;');
   // module.require is broken for some reason form wasm-bindgen, and it fails rust/getrandom requiring global crypto api
+  // file = file.replace(
+  //   'module.require(getStringFromWasm0(arg0, arg1));',
+  //   'require(getStringFromWasm0(arg0, arg1));'
+  // );
+
+  // new version of require-patching for jest in wasm-bindgen 0.2.79 (may differ for other versions)
   file = file.replace(
-    'module.require(getStringFromWasm0(arg0, arg1));',
-    'require(getStringFromWasm0(arg0, arg1));'
+    'var ret = getObject(arg0).require(getStringFromWasm0(arg1, arg2));',
+    'var ret = require(getStringFromWasm0(arg1, arg2)); // patch for wasm-bindgen+jest'
   );
+
+  if (file.indexOf('patch for wasm-bindgen+jest') === -1) {
+    throw new Error(
+      "wasm-bindgen require patch has failed, the require calls from rust won't work!"
+    );
+  }
+
   const prependData = '// This file is auto-generated and patched';
   const appendData = `
 // this function is needed because of strange loading pattern of the wasm module
@@ -114,6 +127,7 @@ export const getBindgen = () => {
       try {
         await buildForWeb();
       } catch (e) {
+        console.error(e);
         process.exit(1);
       }
     })
@@ -124,6 +138,7 @@ export const getBindgen = () => {
         try {
           await buildForTests();
         } catch (e) {
+          console.error(e);
           process.exit(1);
         }
       }
