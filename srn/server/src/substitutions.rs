@@ -3,13 +3,13 @@ use std::mem;
 
 use regex::{Captures, Match};
 use uuid::Uuid;
+use crate::dialogue::{Substitution, SubstitutionType};
 
-use crate::dialogue_dto::{Substitution, SubstitutionType};
 use crate::indexing::{
     index_all_planets_by_id, index_all_ships_by_id, index_planets_by_id, index_players_by_id,
     index_ships_by_id,
 };
-use crate::inventory::{count_items_of_types, value_items_of_types, MINERAL_TYPES};
+use crate::inventory::{count_items_of_types, MINERAL_TYPES, value_items_of_types};
 use crate::new_id;
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{GameState, Planet, Player, Ship};

@@ -31,10 +31,12 @@ pub enum LongActionStart {
         target: ShootTarget,
         turret_id: Uuid,
     },
-    Dock {
+    // the process of docking itself after the ship is close enough via navigation
+    DockInternal {
         to_planet: Uuid,
     },
-    Undock {
+    // the process of undocking
+    UndockInternal {
         from_planet: Uuid,
     },
 }
@@ -155,10 +157,10 @@ pub fn try_start_long_action_ship(
             try_start_shoot(state, target, Some(ship_idx.clone()), turret_id, prng);
             true
         }
-        LongActionStart::Dock { to_planet, .. } => {
+        LongActionStart::DockInternal { to_planet, .. } => {
             try_start_dock(state, to_planet, ship_idx.clone(), prng)
         }
-        LongActionStart::Undock { from_planet, .. } => {
+        LongActionStart::UndockInternal { from_planet, .. } => {
             try_start_undock(state, prng, from_planet, ship_idx.clone())
         }
         _ => {
@@ -222,7 +224,7 @@ pub fn try_start_long_action(
             }
             return try_start_shoot(state, target, ship_idx, turret_id, prng);
         }
-        LongActionStart::Dock { to_planet, .. } => {
+        LongActionStart::DockInternal { to_planet, .. } => {
             let ship_idx = find_my_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
@@ -230,7 +232,7 @@ pub fn try_start_long_action(
             let ship_idx = ship_idx.unwrap();
             return try_start_dock(state, to_planet, ship_idx, prng);
         }
-        LongActionStart::Undock { from_planet } => {
+        LongActionStart::UndockInternal { from_planet } => {
             let ship_idx = find_my_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;

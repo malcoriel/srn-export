@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::api_struct::RoomId;
-use crate::dialogue_dto::Dialogue;
+use crate::dialogue::Dialogue;
 use crate::indexing::{find_my_player, find_player_location_idx};
 use crate::world::{GameMode, GameState, Location, Ship};
 use crate::world_events::GameEvent;
@@ -76,6 +76,7 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
     state.processed_events = Default::default();
     state.player_actions = Default::default();
     state.processed_player_actions = Default::default();
+    state.dialogue_states.retain(|k, _| *k == player_id);
     return state;
 }
 

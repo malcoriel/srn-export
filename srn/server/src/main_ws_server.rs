@@ -15,8 +15,7 @@ use websocket::server::sync::Server;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::{Message, OwnedMessage};
 
-use crate::dialogue::{execute_dialog_option, DialogueUpdate};
-use crate::dialogue_dto::Dialogue;
+use crate::dialogue::{execute_dialog_option, DialogueUpdate,Dialogue};
 use crate::get_prng;
 use crate::indexing::find_my_player;
 use crate::net::{

@@ -8,17 +8,17 @@ use rand::prelude::SmallRng;
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
-
-use crate::cargo_rush::{generate_random_quest, CargoDeliveryQuestState};
-use crate::dialogue_dto::{Dialogue, DialogueElem, Substitution, SubstitutionType};
+use typescript_definitions::{TypescriptDefinition, TypeScriptify};
+use wasm_bindgen::prelude::*;
+use crate::cargo_rush::{CargoDeliveryQuestState, generate_random_quest};
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_index, find_my_ship_mut,
     find_planet, find_player_and_ship, find_player_and_ship_mut, find_player_idx,
     index_planets_by_id,
 };
 use crate::inventory::{
-    add_item, consume_items_of_types, count_items_of_types, remove_quest_item,
-    value_items_of_types, InventoryItem, InventoryItemType, MINERAL_TYPES,
+    add_item, consume_items_of_types, count_items_of_types, InventoryItem,
+    InventoryItemType, MINERAL_TYPES, remove_quest_item, value_items_of_types,
 };
 use crate::new_id;
 use crate::perf::Sampler;
@@ -363,6 +363,7 @@ pub fn build_dialogue_from_state(
     return None;
 }
 
+//noinspection RsTypeCheck
 fn build_dialogue_options(
     player_id: Uuid,
     planets_by_id: &HashMap<Uuid, &Planet>,
@@ -386,6 +387,7 @@ fn build_dialogue_options(
                         &planets_by_id,
                         &ships_by_player_id,
                     );
+
                     Some(DialogueElem {
                         substitution: subs,
                         text,
@@ -635,7 +637,7 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
     for (state_name, (_, options)) in ss.table.into_iter() {
         let state_id = script.ids_db.get(&state_name).unwrap().clone();
         for (option_name, option_text, next_state_name, side_effects, option_condition) in
-            options.into_iter()
+        options.into_iter()
         {
             let option_id = script.ids_db.get(&option_name).unwrap().clone();
             let next_state_id = if next_state_name != "" {
@@ -660,4 +662,38 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
     }
     script.name = ss.name;
     script
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub enum SubstitutionType {
+    Unknown,
+    PlanetName,
+    CharacterName,
+    Generic,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct Substitution {
+    pub s_type: SubstitutionType,
+    pub id: Uuid,
+    pub text: String,
+    pub target_id: Option<Uuid>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct DialogueElem {
+    pub text: String,
+    pub id: Uuid,
+    pub is_option: bool,
+    pub substitution: Vec<Substitution>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct Dialogue {
+    pub id: Uuid,
+    pub options: Vec<DialogueElem>,
+    pub prompt: DialogueElem,
+    pub planet: Option<Planet>,
+    pub left_character: String,
+    pub right_character: String,
 }

@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use crate::abilities::*;
 use crate::dialogue::DialogueTable;
-use crate::dialogue_dto::Dialogue;
+use crate::dialogue::Dialogue;
 use crate::get_prng;
 use crate::perf::Sampler;
 use crate::rooms_api::create_room_impl;

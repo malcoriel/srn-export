@@ -39,8 +39,7 @@ use websocket::sync::Server;
 use websocket::{Message, OwnedMessage};
 
 use bots::BOT_ACTION_TIME_TICKS;
-use dialogue::{DialogueStates, DialogueTable};
-use dialogue_dto::Dialogue;
+use dialogue::{DialogueStates, DialogueTable, Dialogue};
 use lockfree::map::Map as LockFreeMap;
 use lockfree::set::Set as LockFreeSet;
 use net::{
@@ -119,7 +118,6 @@ mod cargo_rush;
 mod chat;
 mod combat;
 mod dialogue;
-mod dialogue_dto;
 mod dialogue_test;
 mod fof;
 mod indexing;

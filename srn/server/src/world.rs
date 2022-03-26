@@ -62,6 +62,7 @@ use crate::{dialogue, vec2};
 use crate::{DEBUG_PHYSICS, get_prng, new_id};
 use crate::{DialogueTable, seed_prng};
 use dialogue::DialogueStates;
+use crate::dialogue::Dialogue;
 use crate::world_actions::{Action, ShipMovementMarkers};
 
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
@@ -683,7 +684,10 @@ pub struct GameState {
     pub update_every_ticks: u64,
     pub accumulated_not_updated_ticks: u32,
     pub gen_opts: GenStateOpts,
+    pub dialogue_states: DialogueStates,
 }
+
+
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct GameOver {
@@ -725,6 +729,7 @@ impl GameState {
             update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
             accumulated_not_updated_ticks: 0,
             gen_opts: Default::default(),
+            dialogue_states: Default::default()
         }
     }
 }
@@ -1408,7 +1413,7 @@ fn update_initiate_ship_docking_by_navigation(
         try_start_long_action_ship(
             state,
             &ship_idx,
-            LongActionStart::Dock {
+            LongActionStart::DockInternal {
                 to_planet: planet_id,
             },
             prng,
@@ -2111,7 +2116,7 @@ pub fn undock_ship(
                 try_start_long_action_ship(
                     state,
                     &ship_idx,
-                    LongActionStart::Undock {
+                    LongActionStart::UndockInternal {
                         from_planet: planet_id,
                     },
                     prng,

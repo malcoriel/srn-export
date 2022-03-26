@@ -2,17 +2,17 @@ use std::collections::HashMap;
 use rand::prelude::SmallRng;
 
 use serde_derive::{Deserialize, Serialize};
-use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use uuid::Uuid;
 use uuid::*;
 use wasm_bindgen::prelude::*;
 
-use crate::dialogue_dto::{Substitution, SubstitutionType};
 use crate::indexing::{find_my_player_mut, index_planets_by_id};
-use crate::inventory::{count_items_of_types, value_items_of_types, MINERAL_TYPES};
+use crate::inventory::{count_items_of_types, MINERAL_TYPES, value_items_of_types};
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{GameMode, GameState, Planet, Player, Ship};
 use crate::{prng_id, substitutions};
+use crate::dialogue::{Substitution, SubstitutionType};
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
