@@ -348,7 +348,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
         &mut seed_prng(prng_seed),
         // these fields make sense only for full simulation, as they are part of the room now
         &mut Default::default(),
-        &Default::default(),
+        &get_current_d_table(),
     );
 
     if *ENABLE_PERF {
@@ -466,16 +466,19 @@ pub fn update_room_full(
     let mut sampler = get_sampler_clone();
     let seed = room.state.seed.clone();
     let mut prng = seed_prng(seed);
-    let d_table: DialogueTable = current_d_table.read().unwrap().clone().expect("no preloaded dialogue table, cannot update room. call .load_d_table first");
     let mut remaining = total_ticks;
     while remaining > 0 {
         remaining -= step_ticks;
         let (_indexes, _room, _sampler) =
-            world::update_room(&mut prng, sampler, step_ticks, &room, &d_table);
+            world::update_room(&mut prng, sampler, step_ticks, &room, &get_current_d_table());
         sampler = _sampler;
         room = _room;
     }
     Ok(custom_serialize(&room)?)
+}
+
+fn get_current_d_table() -> DialogueTable {
+    current_d_table.read().unwrap().clone().expect("no preloaded dialogue table, cannot update room. call .load_d_table first")
 }
 
 #[wasm_bindgen]
