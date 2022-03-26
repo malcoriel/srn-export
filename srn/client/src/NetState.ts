@@ -1,6 +1,5 @@
 import {
   AABB,
-  applyShipActionWasm,
   Dialogue,
   GameMode,
   GameState,
@@ -724,15 +723,12 @@ export default class NetState extends EventEmitter {
   private mutateShip = (commands: Action[]) => {
     const myShipIndex = findMyShipIndex(this.state);
     if (myShipIndex === -1 || myShipIndex === null) return;
-    let myShip = this.state.locations[0].ships[myShipIndex];
+    const myShip = this.state.locations[0].ships[myShipIndex];
     for (const cmd of commands) {
       if (this.isWorldUpdatePlayerAction(cmd)) {
         this.state.player_actions.push(cmd);
       } else {
-        const res = applyShipActionWasm(this.state, cmd);
-        if (res) {
-          myShip = res;
-        }
+        throw new Error('Cannot handle anything but world update actions');
       }
     }
     this.state.locations[0].ships.splice(myShipIndex, 1);

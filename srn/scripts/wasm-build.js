@@ -60,6 +60,7 @@ async function buildForWeb() {
   await fs.writeFile('world/pkg/world.d.ts', cleanedFile + extraImportsFile);
   const builders = `type Uuid = string; \n${extractedBuilders.join('\n\n')}`;
   const enums = extractedEnums.join('\n\n');
+  console.log('writing the extra file');
   await fs.writeFile('world/pkg/world.extra.ts', `${enums}\n\n${builders}`);
   console.log('Done, ts definitions + wasm binary are ready!');
 }
