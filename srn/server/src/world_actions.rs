@@ -206,6 +206,7 @@ pub fn is_world_update_action(act: &Action) -> bool {
             | Action::StopTurn { .. }
             | Action::DockNavigate { .. }
             | Action::Tractor { .. }
+            | Action::SelectDialogueOption { .. }
     )
 }
 

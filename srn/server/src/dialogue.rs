@@ -1,6 +1,7 @@
 use std::borrow::BorrowMut;
 use std::collections::{HashMap, HashSet};
 use std::fs;
+use std::ops::Deref;
 use std::slice::Iter;
 
 use itertools::Itertools;
@@ -261,21 +262,17 @@ pub fn execute_dialog_option(
 ) -> (Option<Dialogue>, bool) {
     // bool means "side effect happened, state changed"
     let mut return_value = (None, false);
-    let mut should_drop = false;
-    if let Some(all_dialogues) = dialogue_states.get_mut(&player_id) {
-        if let Some(dialogue_state) = all_dialogues.1.get_mut(&update.dialogue_id) {
+    let player_d_states = state.dialogue_states.get(&player_id).map(|v| (*v).clone());
+    if let Some(all_dialogues) = player_d_states {
+        if let Some(dialogue_state) = all_dialogues.1.get(&update.dialogue_id) {
             let (new_state, side_effect) = apply_dialogue_option(
-                dialogue_state.clone(),
+                Box::new(*dialogue_state.clone().deref()),
                 &update,
                 dialogue_table,
                 state,
                 player_id,
                 prng,
             );
-            if new_state.is_none() {
-                should_drop = true;
-            }
-            *dialogue_state = new_state;
             return_value = (
                 build_dialogue_from_state(
                     update.dialogue_id,
@@ -288,10 +285,7 @@ pub fn execute_dialog_option(
             );
         }
         else {
-            log!("no state for dialogue");
-        }
-        if should_drop {
-            all_dialogues.1.remove(&update.dialogue_id);
+            log!(format!("no state for dialogue for {} in {:?}", player_id, all_dialogues));
         }
     } else {
         log!("not state for player");
@@ -423,7 +417,7 @@ fn build_dialogue_options(
 }
 
 fn apply_dialogue_option(
-    current_state: Box<Option<StateId>>,
+    current_state: DialogueState,
     update: &DialogueUpdate,
     dialogue_table: &DialogueTable,
     state: &mut GameState,
@@ -440,6 +434,8 @@ fn apply_dialogue_option(
             let next_state = script.transitions.get(&(current_state, update.option_id));
             if let Some(next_state) = next_state {
                 let side_effect = apply_side_effects(state, next_state.1.clone(), player_id, prng);
+                let player_states = DialogueTable::get_player_d_states(&mut state.dialogue_states, player_id).entry(update.dialogue_id).or_insert(Box::new(None));
+                *player_states = Box::new(next_state.0);
                 (Box::new(next_state.0.clone()), side_effect)
             } else {
                 (Box::new(None), false)
