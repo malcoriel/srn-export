@@ -228,17 +228,11 @@ impl DialogueTable {
     pub fn trigger_dialogue(
         &self,
         script: &DialogueScript,
-        res: &mut Vec<(Uuid, Option<Dialogue>)>,
         player_id: Uuid,
-        player_d_states: &mut HashMap<Uuid, Box<Option<Uuid>>>,
-        game_state: &GameState,
+        game_state: &mut GameState,
     ) {
-        let value = Box::new(Some(script.initial_state));
-        res.push((
-            player_id,
-            build_dialogue_from_state(script.id, &value, self, player_id, game_state),
-        ));
-        player_d_states.insert(script.id, value);
+        let player_d_states = DialogueTable::get_player_d_states(&mut game_state.dialogue_states, player_id);
+        player_d_states.insert(script.id, Box::new(Some(script.initial_state)));
     }
 
     pub fn get_player_d_states(

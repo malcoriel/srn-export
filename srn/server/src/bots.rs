@@ -103,7 +103,8 @@ fn bot_cargo_rush_hauler_act(
 
     let mut result_actions = vec![];
 
-    let bot_d_states = DialogueTable::get_player_d_states_read(&state.dialogue_states, bot.id).unwrap_or(&HashMap::new());
+    let empty = HashMap::new();
+    let bot_d_states = DialogueTable::get_player_d_states_read(&state.dialogue_states, bot.id).unwrap_or(&empty);
     if bot_d_states.iter().count() > 0 {
         // stop all other actions when talking
         if bot.timer.is_none() {
