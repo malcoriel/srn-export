@@ -86,6 +86,7 @@ export enum ServerToClientMessageCode {
   ObsoleteStateChangeExclusive,
   TagConfirm = 3,
   MulticastPartialShipsUpdate = 4,
+  // intentionally unused
   UnicastDialogueStateChange = 5,
   XCastGameEvent = 6,
   RoomSwitched = 7,
@@ -126,10 +127,6 @@ export default class NetState extends EventEmitter {
   state!: GameState;
 
   indexes!: ClientStateIndexes;
-
-  dialogue?: Dialogue;
-
-  lastDialogue?: Dialogue;
 
   public connecting = true;
 
@@ -283,6 +280,7 @@ export default class NetState extends EventEmitter {
       processed_player_actions: [],
       update_every_ticks: 9999,
       accumulated_not_updated_ticks: 0,
+      dialogue_states: {},
     };
     reindexNetState(this);
   }
@@ -614,17 +612,14 @@ export default class NetState extends EventEmitter {
             }
           );
         }
-      } else if (
-        messageCode === ServerToClientMessageCode.UnicastDialogueStateChange
-      ) {
-        this.dialogue = JSON.parse(data).value;
-        this.emit('dialogue');
       } else if (messageCode === ServerToClientMessageCode.XCastGameEvent) {
         const event = JSON.parse(data).value;
         this.emit('gameEvent', event);
       } else if (messageCode === ServerToClientMessageCode.LeaveRoom) {
         console.log('Received disconnect request from server');
         this.disconnectAndDestroy();
+      } else {
+        console.log('unknown message code', messageCode);
       }
       reindexNetState(this);
     } catch (e) {

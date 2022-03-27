@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import './DialogueWindow.scss';
 import { Canvas } from '@react-three/fiber';
 import _ from 'lodash';
@@ -18,6 +18,7 @@ import { Vector3 } from 'three';
 import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
 import { transformAllTextSubstitutions } from '../utils/substitutions';
+import { useNSForceChange } from '../NetStateHooks';
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
   <span className="dialogue-option">
@@ -143,31 +144,31 @@ const renderMinimized = (
 );
 
 export const DialogueWindow: React.FC = () => {
-  const ns = NetState.get();
+  const ns = useNSForceChange('DialogueWindow');
   if (!ns) return null;
 
-  const [, forceUpdate] = useState(false);
   const dialogueWindowState = useStore((state) => state.dialogueWindow);
   const setDialogueWindowState = useStore((state) => state.setDialogueWindow);
   const [history, setHistory] = useState<DialogueElem[]>([]);
-  useEffect(() => {
-    const onDialogueChange = () => {
-      if (dialogueWindowState === WindowState.Hidden) {
-        setDialogueWindowState(WindowState.Shown);
-      }
-      forceUpdate((old) => !old);
-    };
-    ns.on('dialogue', onDialogueChange);
-    return () => {
-      ns.off('dialogue', onDialogueChange);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ns.id, dialogueWindowState, setDialogueWindowState]);
+  const { dialogue_states } = ns.state;
 
-  const { dialogue } = ns;
+  // technically [0] of the states was intended to show the active dialogue, but this is not supported yet
+  const [dialogue_id, dialogue_state] = Object.entries(
+    dialogue_states[ns.state.my_id][1] || {}
+  )[0] || [null, null];
+
+  useEffect(() => {
+    if (dialogue_id) {
+      setDialogueWindowState(WindowState.Shown);
+    } else {
+      setDialogueWindowState(WindowState.Hidden);
+    }
+  }, [dialogue_id]);
+
+  const dialogue = useMemo(() => {}, [dialogue_id, dialogue_state]);
 
   const tryDoOption = (i: number) => () => {
-    if (!dialogue) return;
+    if (!dialogue_states) return;
     const options = dialogue.options;
     if (!options) return;
     if (options[i]) {

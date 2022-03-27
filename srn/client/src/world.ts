@@ -287,6 +287,20 @@ export const loadReplayIntoWasm = (replay: any) => {
   wasmFunctions.load_replay(replay);
 };
 
+export const buildDialogueFromState = (
+  dialogueId: string,
+  currentStateId: string,
+  playerId: string,
+  state: GameState
+) => {
+  return wasmFunctions.build_dialogue_from_state(
+    dialogueId,
+    currentStateId,
+    playerId,
+    state
+  );
+};
+
 export const findPlanet = (
   state: GameState,
   id: string
