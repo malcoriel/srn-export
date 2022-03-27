@@ -15,7 +15,6 @@ pub fn world_update_handle_event(
     state: &mut GameState,
     prng: &mut SmallRng,
     event: GameEvent,
-    d_states: &mut DialogueStates,
     d_table: &DialogueTable,
 ) {
     match event {
@@ -28,7 +27,7 @@ pub fn world_update_handle_event(
         } => {
             if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
                 let (current_player_dialogue, player_d_states) =
-                    d_states.entry(player_id).or_insert((None, HashMap::new()));
+                    state.dialogue_states.entry(player_id).or_insert((None, HashMap::new()));
                 // this variable is useless here, it was previously needed for unicasting the changes back to clients
                 let mut dialogue_changes = vec![];
                 d_table.trigger_dialogue(script, &mut dialogue_changes, player_id, player_d_states, state);

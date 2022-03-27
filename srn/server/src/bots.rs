@@ -43,7 +43,6 @@ pub fn bot_act(
     state: &GameState,
     bot_elapsed_micro: i64,
     d_table: &DialogueTable,
-    bot_d_states: &DialogueStatesForPlayer,
     spatial_indexes: &SpatialIndexes,
     prng: &mut SmallRng,
 ) -> (Bot, Vec<BotAct>) {
@@ -57,7 +56,6 @@ pub fn bot_act(
             &state,
             bot_elapsed_micro,
             d_table,
-            bot_d_states,
             prng,
         );
     }
@@ -71,7 +69,6 @@ pub fn bot_act(
             &state,
             bot_elapsed_micro,
             d_table,
-            bot_d_states,
             spatial_indexes,
             prng,
         );
@@ -84,7 +81,6 @@ fn bot_cargo_rush_hauler_act(
     state: &&GameState,
     bot_elapsed_micro: i64,
     d_table: &DialogueTable,
-    bot_d_states: &DialogueStatesForPlayer,
     prng: &mut SmallRng,
 ) -> (Bot, Vec<BotAct>) {
     let player = find_my_player(&state, bot.id);
@@ -107,7 +103,8 @@ fn bot_cargo_rush_hauler_act(
 
     let mut result_actions = vec![];
 
-    if bot_d_states.1.iter().count() > 0 {
+    let bot_d_states = DialogueTable::get_player_d_states_read(&state.dialogue_states, bot.id).unwrap_or(&HashMap::new());
+    if bot_d_states.iter().count() > 0 {
         // stop all other actions when talking
         if bot.timer.is_none() {
             bot.timer = Some(BOT_QUEST_ACT_DELAY_MC + prng.gen_range(-500, 500) * 1000);
@@ -116,7 +113,7 @@ fn bot_cargo_rush_hauler_act(
             if bot.timer.unwrap() <= 0 {
                 bot.timer = Some(BOT_QUEST_ACT_DELAY_MC);
                 // time to act on all the dialogues
-                for (dialogue_id, _) in bot_d_states.1.iter() {
+                for (dialogue_id, _) in bot_d_states.iter() {
                     let act = make_dialogue_act(&bot, d_table, bot_d_states, *dialogue_id, state);
                     if let Some(act) = act {
                         result_actions.push(act);
@@ -161,13 +158,13 @@ fn not_already_there(ship: &Ship, desired_target: Uuid) -> bool {
 fn make_dialogue_act(
     bot: &Bot,
     d_table: &DialogueTable,
-    bot_d_states: &(Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>),
+    bot_d_states: &HashMap<Uuid, Box<Option<Uuid>>>,
     dialogue_id: Uuid,
     game_state: &GameState,
 ) -> Option<BotAct> {
     let current_script: &DialogueScript = d_table.scripts.get(&dialogue_id).unwrap();
     let current_dialogue_name = current_script.name.clone();
-    let current_d_state = bot_d_states.1.get(&current_script.id);
+    let current_d_state = bot_d_states.get(&current_script.id);
     // eprintln!("working on script {}, bot {}", current_script.name, self.id);
     current_d_state
         .and_then(|current_d_state| {
@@ -221,7 +218,6 @@ pub fn format_d_states(
 
 pub fn do_bot_players_actions(
     room: &mut Room,
-    d_states: &mut DialogueStates,
     d_table: &DialogueTable,
     bot_elapsed_micro: i64,
     spatial_indexes: &SpatialIndexes,
@@ -232,15 +228,12 @@ pub fn do_bot_players_actions(
 
     for orig_bot in room.bots.iter_mut() {
         let id: Uuid = orig_bot.id;
-        let bot_d_states = d_states.entry(id).or_insert((None, HashMap::new()));
-
         // log!(format!("bot d states before act {:?}", bot_d_states));
         let (bot, bot_acts) = bot_act(
             orig_bot.clone(),
             &room.state,
             bot_elapsed_micro,
             &d_table,
-            &bot_d_states,
             spatial_indexes,
             prng,
         );

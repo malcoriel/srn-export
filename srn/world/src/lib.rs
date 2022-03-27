@@ -345,8 +345,6 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
         },
         &mut indexes,
         &mut seed_prng(prng_seed),
-        // these fields make sense only for full simulation, as they are part of the room now
-        &mut Default::default(),
         &get_current_d_table(),
     );
 

@@ -451,7 +451,6 @@ fn main_thread() {
                     let spatial_indexes = spatial_indexes_by_room_id.get(&room.id).unwrap();
                     do_bot_players_actions(
                         room,
-                        &mut **d_states,
                         &d_table,
                         bot_action_elapsed,
                         spatial_indexes,

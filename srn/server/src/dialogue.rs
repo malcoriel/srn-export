@@ -249,6 +249,17 @@ impl DialogueTable {
             d_states.entry(player_id).or_insert((None, HashMap::new()));
         player_d_states
     }
+
+    pub fn get_player_d_states_read(
+        d_states: &HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
+        player_id: Uuid,
+    ) -> Option<&HashMap<Uuid, Box<Option<Uuid>>>> {
+        if let Some((_curr, all)) =
+            d_states.get(&player_id) {
+            return Some(all);
+        }
+        return None;
+    }
 }
 
 pub fn execute_dialog_option(
@@ -449,12 +460,13 @@ fn apply_side_effects(
                     let quest = my_player.quest.as_mut();
                     if let Some(mut quest) = quest {
                         quest.state = CargoDeliveryQuestState::Picked;
-                        add_item(&mut ship.inventory, InventoryItem::quest_pickup(quest.id))
+                        add_item(&mut ship.inventory, InventoryItem::quest_pickup(quest.id));
                     }
                     state_changed = true;
                 }
             }
             DialogueOptionSideEffect::QuestCargoDropOff => {
+                log!("dropoff");
                 if let (Some(my_player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
                     if let Some(mut quest) = my_player.quest.as_mut() {
                         quest.state = CargoDeliveryQuestState::Delivered;

@@ -855,7 +855,6 @@ pub fn update_world(
     update_options: UpdateOptions,
     spatial_indexes: &mut SpatialIndexes,
     prng: &mut SmallRng,
-    d_states: &mut DialogueStates,
     d_table: &DialogueTable,
 ) -> (GameState, Sampler) {
     let mut remaining = elapsed + state.accumulated_not_updated_ticks as i64;
@@ -870,7 +869,6 @@ pub fn update_world(
             update_options.clone(),
             spatial_indexes,
             prng,
-            d_states,
             d_table,
         );
         remaining -= update_interval;
@@ -889,7 +887,6 @@ fn update_world_iter(
     update_options: UpdateOptions,
     spatial_indexes: &mut SpatialIndexes,
     prng: &mut SmallRng,
-    d_states: &mut DialogueStates,
     d_table: &DialogueTable,
 ) -> (GameState, Sampler) {
     state.millis += elapsed as u32 / 1000;
@@ -901,7 +898,7 @@ fn update_world_iter(
     let mut sampler = sampler;
 
     let events_id = sampler.start(SamplerMarks::UpdateEvents as u32);
-    update_events(&mut state, prng, client, d_states, d_table);
+    update_events(&mut state, prng, client, d_table);
     sampler.end(events_id);
 
     let player_actions_id = sampler.start(SamplerMarks::UpdatePlayerActions as u32);
@@ -1051,7 +1048,6 @@ fn update_events(
     state: &mut GameState,
     prng: &mut SmallRng,
     client: bool,
-    d_states: &mut DialogueStates,
     d_table: &DialogueTable,
 ) {
     if client {
@@ -1063,7 +1059,7 @@ fn update_events(
     }
     let mut processed_events = vec![];
     for event in events_to_process.into_iter() {
-        world_update_handle_event(state, prng, event.clone(), d_states, d_table);
+        world_update_handle_event(state, prng, event.clone(), d_table);
         let processed_event = ProcessedGameEvent {
             event,
             processed_at_ticks: state.ticks,
@@ -2264,7 +2260,6 @@ pub fn make_room(
         id: room_id,
         name: room_name,
         state,
-        dialogue_states: Default::default(),
         last_players_mark: None,
         bots: vec![],
         bots_seed,
@@ -2293,7 +2288,6 @@ pub fn update_room(
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
     let mut spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
     sampler.end(spatial_indexes_id);
-    let mut modified_dialogue_states = room.dialogue_states.clone();
     let (new_state, mut sampler) = update_world(
         room.state.clone(),
         elapsed_micro,
@@ -2305,12 +2299,10 @@ pub fn update_room(
         },
         &mut spatial_indexes,
         &mut prng,
-        &mut modified_dialogue_states,
         &d_table,
     );
     let mut room = room.clone();
     room.state = new_state;
-    room.dialogue_states = modified_dialogue_states;
 
     spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
 
@@ -2330,16 +2322,13 @@ pub fn update_room(
             .insert(TimeMarks::BotAction, room.state.ticks as u32);
         let bots_mark = sampler.start(SamplerMarks::UpdateBots as u32);
         let bot_players_mark = sampler.start(SamplerMarks::UpdateBotsPlayers as u32);
-        let mut d_states_clone = room.dialogue_states.clone();
         do_bot_players_actions(
             &mut room,
-            &mut d_states_clone,
             &d_table,
             bot_action_elapsed as i64,
             &spatial_indexes,
             &mut bot_prng,
         );
-        room.dialogue_states = d_states_clone;
         sampler.end(bot_players_mark);
         let npcs_mark = sampler.start(SamplerMarks::UpdateBotsNPCs as u32);
         do_bot_npcs_actions(

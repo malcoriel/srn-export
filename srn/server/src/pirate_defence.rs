@@ -135,7 +135,6 @@ pub fn bot_planet_defender_act(
     state: &GameState,
     _bot_elapsed_micro: i64,
     _d_table: &DialogueTable,
-    _bot_d_states: &DialogueStatesForPlayer,
     spatial_indexes: &SpatialIndexes,
     prng: &mut SmallRng,
 ) -> (Bot, Vec<BotAct>) {
