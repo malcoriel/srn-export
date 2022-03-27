@@ -287,9 +287,14 @@ pub fn execute_dialog_option(
                 side_effect,
             );
         }
+        else {
+            log!("no state for dialogue");
+        }
         if should_drop {
             all_dialogues.1.remove(&update.dialogue_id);
         }
+    } else {
+        log!("not state for player");
     }
 
     return return_value;

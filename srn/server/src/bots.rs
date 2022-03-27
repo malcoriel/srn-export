@@ -277,15 +277,11 @@ pub fn do_bot_players_actions(
 
     for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
         for act in dialogue_update {
-            // eprintln!("executing {:?}", act);
-            execute_dialog_option(
-                bot_id,
-                &mut room.state,
-                act.clone(),
-                d_states,
-                &d_table,
-                prng,
-            );
+            room.state.player_actions.push_back(Action::SelectDialogueOption {
+                player_id: bot_id,
+                option_id: act.option_id,
+                dialogue_id: act.dialogue_id
+            });
         }
     }
 }
