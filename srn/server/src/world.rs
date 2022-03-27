@@ -905,7 +905,7 @@ fn update_world_iter(
     sampler.end(events_id);
 
     let player_actions_id = sampler.start(SamplerMarks::UpdatePlayerActions as u32);
-    update_player_actions(&mut state, prng);
+    update_player_actions(&mut state, prng, d_table);
     sampler.end(player_actions_id);
 
     let rules_id = sampler.start(SamplerMarks::UpdateRuleSpecific as u32);
@@ -1027,7 +1027,7 @@ fn update_world_iter(
     (state, sampler)
 }
 
-fn update_player_actions(state: &mut GameState, prng: &mut SmallRng) {
+fn update_player_actions(state: &mut GameState, prng: &mut SmallRng, d_table: &DialogueTable) {
     let state_clone = state.clone();
     let mut actions_to_process = vec![];
     while let Some(event) = state.player_actions.pop_front() {
@@ -1035,7 +1035,7 @@ fn update_player_actions(state: &mut GameState, prng: &mut SmallRng) {
     }
     let mut processed_actions = vec![];
     for action in actions_to_process.into_iter() {
-        world_update_handle_action(state, action.clone(), prng, &state_clone);
+        world_update_handle_action(state, action.clone(), prng, &state_clone, d_table);
         let processed_action = ProcessedPlayerAction {
             action,
             processed_at_ticks: state.ticks,

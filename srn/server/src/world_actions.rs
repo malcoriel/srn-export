@@ -10,6 +10,7 @@ use uuid::Uuid;
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use wasm_bindgen::prelude::*;
+use crate::dialogue::{execute_dialog_option, DialogueTable, DialogueUpdate};
 
 const MAX_ALLOWED_DISTANCE_TICKS: i64 = 10 * 1000 * 1000;
 
@@ -18,6 +19,7 @@ pub fn world_update_handle_action(
     action: Action,
     prng: &mut SmallRng,
     state_clone: &GameState,
+    d_table: &DialogueTable,
 ) {
     match action {
         Action::LongActionStart {
@@ -168,6 +170,20 @@ pub fn world_update_handle_action(
                 );
             }
         }
+        Action::SelectDialogueOption { player_id, option_id, dialogue_id } => {
+            let mut mut_d_states = state.dialogue_states.clone();
+            execute_dialog_option(
+                player_id,
+                state,
+                DialogueUpdate {
+                    dialogue_id,
+                    option_id
+                },
+                &mut mut_d_states, d_table,
+                prng,
+            );
+            state.dialogue_states = mut_d_states;
+        }
         _ => {
             warn!(format!(
                 "action {:?} cannot be handled by world_update_handle_player_action",
@@ -236,6 +252,11 @@ pub enum Action {
         player_id: Option<Uuid>,
         ship_id: Uuid,
     },
+    SelectDialogueOption {
+        player_id: Uuid,
+        option_id: Uuid,
+        dialogue_id: Uuid,
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

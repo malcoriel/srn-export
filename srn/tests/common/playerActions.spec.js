@@ -52,6 +52,13 @@ export const mockPlayerActionTractor = (shipId, target) => ({
   target,
 });
 
+export const mockSelectDialogueOption = (playerId, dialogueId, optionId) => ({
+  tag: 'SelectDialogueOption',
+  dialogue_id: dialogueId,
+  option_id: optionId,
+  player_id: playerId,
+});
+
 export const mockPlayerActionDockNavigate = (shipId, to) => ({
   tag: 'DockNavigate',
   ship_id: shipId,
@@ -222,10 +229,23 @@ describe('player actions logic', () => {
       state = updateWorld(state, 3000);
       const { dialogue_states } = state;
       const myState = Object.entries(dialogue_states[player.id][1])[0];
-      expect(myState).toBeTruthy();
-      console.log(
-        wasm.buildDialogueFromState(myState[0], myState[1], player.id, state)
+      expect(myState[1]).toBeTruthy(); // we can't really compare anything here as those ids are random
+      const dialogue = wasm.buildDialogueFromState(
+        myState[0],
+        myState[1],
+        player.id,
+        state
       );
+      state.player_actions.push(
+        mockSelectDialogueOption(
+          player.id,
+          dialogue.id,
+          dialogue.options.find((o) => o.text.indexOf('Undock') > -1)?.id
+        )
+      );
+      state = updateWorld(state, 3000);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.docked_at).toBeFalsy();
     });
   });
 
