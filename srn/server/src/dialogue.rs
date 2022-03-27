@@ -266,7 +266,7 @@ pub fn execute_dialog_option(
     let player_d_states = state.dialogue_states.get(&player_id).map(|v| (*v).clone());
     if let Some(all_dialogues) = player_d_states {
         if let Some(dialogue_state) = all_dialogues.1.get(&update.dialogue_id) {
-            let script = dialogue_table.scripts.get(&update.dialogue_id).unwrap();
+            // let script = dialogue_table.scripts.get(&update.dialogue_id).unwrap();
             // log!(format!("before applying, states are {:?}", state.dialogue_states.get(&player_id)));
             // log!(format!("t-ms {} player {} dialogue {:?} current state {:?} execute option {:?}", state.millis, player_id, script.name, script.names_db.get(&dialogue_state.clone().deref().unwrap()), script.names_db.get(&update.option_id)));
             apply_dialogue_option(

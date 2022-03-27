@@ -164,11 +164,6 @@ pub type WSRequest =
     WsUpgrade<std::net::TcpStream, std::option::Option<websocket::server::upgrade::sync::Buffer>>;
 
 lazy_static! {
-    static ref DIALOGUE_STATES: Arc<Mutex<Box<DialogueStates>>> =
-        Arc::new(Mutex::new(Box::new(HashMap::new())));
-}
-
-lazy_static! {
     static ref DIALOGUE_TABLE: Arc<Mutex<Box<DialogueTable>>> =
         Arc::new(Mutex::new(Box::new(DialogueTable::new())));
 }
@@ -412,7 +407,6 @@ fn main_thread() {
         let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
         let locks_id = sampler.start(SamplerMarks::Locks as u32);
         let mut cont = STATE.write().unwrap();
-        let mut d_states = DIALOGUE_STATES.lock().unwrap();
         if sampler.end_top(locks_id) < 0 {
             shortcut_frame += 1;
             sampler.end(total_mark);

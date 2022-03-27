@@ -217,7 +217,7 @@ describe('player actions logic', () => {
   });
 
   describe('dialogue actions', () => {
-    fit('can select dialogue options', () => {
+    it('can select dialogue options', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
       const planet = getLoc0(state).planets[0];

@@ -105,7 +105,7 @@ fn bot_cargo_rush_hauler_act(
 
     let empty = HashMap::new();
     let bot_d_states = DialogueTable::get_player_d_states_read(&state.dialogue_states, bot.id).unwrap_or(&empty);
-    let not_empty_d_states = bot_d_states.iter().filter(|(k, v)| v.is_some()).collect::<Vec<_>>();
+    let not_empty_d_states = bot_d_states.iter().filter(|(_, v)| v.is_some()).collect::<Vec<_>>();
     if not_empty_d_states.len() > 0 {
         // log!(format!("bot {} is talking since there are some dialogues {:?}", bot.id, bot_d_states));
         // stop all other actions when talking

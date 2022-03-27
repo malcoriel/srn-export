@@ -30,7 +30,7 @@ use crate::world_events::GameEvent;
 use crate::xcast::XCast;
 use crate::{
     dialogue, indexing, inventory, long_actions, market, notifications, sandbox,
-    states, world, xcast, DialogueRequest, LastCheck, WSRequest, DEFAULT_SLEEP_MS, DIALOGUE_STATES,
+    states, world, xcast, DialogueRequest, LastCheck, WSRequest, DEFAULT_SLEEP_MS,
     DIALOGUE_TABLE, MAX_ERRORS, MAX_ERRORS_SAMPLE_INTERVAL, MAX_MESSAGES_PER_INTERVAL,
     MAX_MESSAGE_SAMPLE_INTERVAL_MS,
 };
