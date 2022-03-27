@@ -171,7 +171,6 @@ pub fn world_update_handle_action(
             }
         }
         Action::SelectDialogueOption { player_id, option_id, dialogue_id } => {
-            let mut mut_d_states = state.dialogue_states.clone();
             execute_dialog_option(
                 player_id,
                 state,
@@ -181,7 +180,6 @@ pub fn world_update_handle_action(
                 }, d_table,
                 prng,
             );
-            state.dialogue_states = mut_d_states;
         }
         _ => {
             warn!(format!(

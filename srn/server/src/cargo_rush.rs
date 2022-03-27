@@ -22,9 +22,9 @@ use world::Player;
 pub fn on_create_room(room: &mut Room, prng: &mut SmallRng) {
     let traits = Some(vec![AiTrait::CargoRushHauler]);
     add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
-    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
-    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
-    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
+    // add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
+    // add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
+    // add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
 }
 
 pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>) {

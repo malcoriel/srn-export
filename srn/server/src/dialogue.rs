@@ -266,6 +266,9 @@ pub fn execute_dialog_option(
     let player_d_states = state.dialogue_states.get(&player_id).map(|v| (*v).clone());
     if let Some(all_dialogues) = player_d_states {
         if let Some(dialogue_state) = all_dialogues.1.get(&update.dialogue_id) {
+            let script = dialogue_table.scripts.get(&update.dialogue_id).unwrap();
+            // log!(format!("before applying, states are {:?}", state.dialogue_states.get(&player_id)));
+            // log!(format!("t-ms {} player {} dialogue {:?} current state {:?} execute option {:?}", state.millis, player_id, script.name, script.names_db.get(&dialogue_state.clone().deref().unwrap()), script.names_db.get(&update.option_id)));
             apply_dialogue_option(
                 Box::new(*dialogue_state.clone().deref()),
                 &update,
@@ -274,6 +277,7 @@ pub fn execute_dialog_option(
                 player_id,
                 prng,
             );
+            // log!(format!("after applying, states are {:?}", state.dialogue_states.get(&player_id)));
         }
         else {
             log!(format!("no state for dialogue for {} in {:?}", player_id, all_dialogues));
@@ -422,6 +426,8 @@ fn apply_dialogue_option(
                 apply_side_effects(state, next_state.1.clone(), player_id, prng);
                 let player_states = DialogueTable::get_player_d_states(&mut state.dialogue_states, player_id).entry(update.dialogue_id).or_insert(Box::new(None));
                 *player_states = Box::new(next_state.0);
+            } else {
+                warn!("invalid dialogue transition, no outcome");
             }
         }
     };
@@ -460,7 +466,6 @@ fn apply_side_effects(
                 }
             }
             DialogueOptionSideEffect::QuestCargoDropOff => {
-                log!("dropoff");
                 if let (Some(my_player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
                     if let Some(mut quest) = my_player.quest.as_mut() {
                         quest.state = CargoDeliveryQuestState::Delivered;

@@ -2,9 +2,9 @@
   "is_default": false,
   "is_planetary": true,
   "priority": -1,
-  "initial_state_name": "arrival",
+  "initial_state_name": "pickup_arrival",
   "table": {
-    "arrival": [
+    "pickup_arrival": [
       "You have arrived to a local business center on s_current_planet. Here you must pick up the cargo to deliver to s_cargo_destination_planet.",
       [
         [
@@ -55,7 +55,7 @@
   },
   "bot_path": [
     [
-      "arrival",
+      "pickup_arrival",
       "go_pickup",
       null
     ],

@@ -39,7 +39,7 @@ describe('cargo rush bots behavior', () => {
     expect(oldShipPos.x).not.toBeCloseTo(newShipPos.x);
   });
 
-  it('bots earn some money', async () => {
+  fit('bots earn some money', async () => {
     let room = wasm.createRoom({
       mode: 'CargoRush',
       seed: 'bots',
