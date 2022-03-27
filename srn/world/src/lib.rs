@@ -40,7 +40,6 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = console)]
     pub fn error(s: &str);
-
 }
 
 macro_rules! log {
@@ -240,7 +239,7 @@ fn deserialize_err_or_def(reason: &Error) -> String {
     serde_json::to_string(&ErrJson {
         message: format!("err deserializing {}", reason.to_string()),
     })
-    .unwrap_or(DEFAULT_ERR.to_string())
+        .unwrap_or(DEFAULT_ERR.to_string())
 }
 
 #[wasm_bindgen]
@@ -258,7 +257,7 @@ pub fn parse_state(serialized_args: &str) -> String {
 }
 
 use crate::api_struct::Room;
-use crate::dialogue::{parse_dialogue_script_from_file, DialogueTable};
+use crate::dialogue::{parse_dialogue_script_from_file, DialogueTable, DialogueState, Dialogue};
 use crate::indexing::{find_my_ship_index, ObjectSpecifier};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
@@ -685,4 +684,31 @@ pub fn apply_single_patch(state: JsValue, patch: JsValue) -> Result<JsValue, JsV
     let res = ReplayDiffed::apply_diff_batch(&state, &batch)
         .map_err(|_| JsValue::from_str("failed to apply single patch"))?;
     Ok(custom_serialize(&res)?)
+}
+
+pub fn get_uuid(str: JsValue) -> Uuid {
+    serde_wasm_bindgen::from_value::<Uuid>(str).ok().unwrap()
+}
+
+#[wasm_bindgen]
+pub fn build_dialogue_from_state(
+    dialogue_id: JsValue,
+    current_state: JsValue,
+    player_id: JsValue,
+    game_state: JsValue,
+) -> Result<JsValue, JsValue> {
+    let dialogue_state = dialogue::build_dialogue_from_state(
+        get_uuid(dialogue_id), &Box::new(Some(get_uuid(current_state))),
+        &get_current_d_table(),
+        get_uuid(player_id),
+        &serde_wasm_bindgen::from_value::<GameState>(game_state)?,
+    );
+    match dialogue_state {
+        None => {
+            Err(JsValue::from_str("couldn't build dialogue state"))
+        }
+        Some(v) => {
+            Ok(custom_serialize(&v)?)
+        }
+    }
 }

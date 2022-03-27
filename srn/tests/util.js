@@ -56,6 +56,9 @@ export const wasm = {
   interpolateStates: () => {
     throw new Error(notLoadedError);
   },
+  buildDialogueFromState: () => {
+    throw new Error(notLoadedError);
+  },
 };
 const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
   const result = JSON.parse(fn(JSON.stringify(args), ...extraArgs));
@@ -137,6 +140,7 @@ export const loadWasm = timerify(async function loadWasm() {
     );
     wasm.applySinglePatch = wasmFunctions.apply_single_patch;
     wasm.interpolateStates = wasmFunctions.interpolate_states;
+    wasm.buildDialogueFromState = wasmFunctions.build_dialogue_from_state;
     wasm.resources = resources;
     wasm.dialogueTable = wasm.makeDialogueTable(
       wasm.resources.dialogue_scripts
