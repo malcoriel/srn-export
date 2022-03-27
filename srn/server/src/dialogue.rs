@@ -253,35 +253,21 @@ impl DialogueTable {
 
 pub fn execute_dialog_option(
     player_id: Uuid,
-    // for state mutation due to dialogue, e.g. updating quest. you need to return the second return arg
     state: &mut GameState,
     update: DialogueUpdate,
-    dialogue_states: &mut DialogueStates,
     dialogue_table: &DialogueTable,
     prng: &mut SmallRng,
-) -> (Option<Dialogue>, bool) {
-    // bool means "side effect happened, state changed"
-    let mut return_value = (None, false);
+) {
     let player_d_states = state.dialogue_states.get(&player_id).map(|v| (*v).clone());
     if let Some(all_dialogues) = player_d_states {
         if let Some(dialogue_state) = all_dialogues.1.get(&update.dialogue_id) {
-            let (new_state, side_effect) = apply_dialogue_option(
+            apply_dialogue_option(
                 Box::new(*dialogue_state.clone().deref()),
                 &update,
                 dialogue_table,
                 state,
                 player_id,
                 prng,
-            );
-            return_value = (
-                build_dialogue_from_state(
-                    update.dialogue_id,
-                    dialogue_state,
-                    dialogue_table,
-                    player_id,
-                    state,
-                ),
-                side_effect,
             );
         }
         else {
@@ -290,8 +276,6 @@ pub fn execute_dialog_option(
     } else {
         log!("not state for player");
     }
-
-    return return_value;
 }
 
 pub fn build_dialogue_from_state(
@@ -347,7 +331,7 @@ pub fn build_dialogue_from_state(
                     satisfied_conditions,
                     options,
                 ),
-                prompt: prompt,
+                prompt,
                 planet: current_planet,
                 left_character: format!("{}", {
                     player.map_or("question.png".to_string(), |p| {
@@ -423,28 +407,18 @@ fn apply_dialogue_option(
     state: &mut GameState,
     player_id: PlayerId,
     prng: &mut SmallRng,
-) -> (Box<Option<StateId>>, bool) {
-    // eprintln!("apply start");
-
-    let current_state = *current_state;
+) {
     let script = dialogue_table.scripts.get(&update.dialogue_id);
-    return if let Some(script) = script {
-        if let Some(current_state) = current_state {
+    if let Some(script) = script {
+        if let Some(current_state) = *current_state {
             // eprintln!("apply current_state update {:?}", (current_state, update));
             let next_state = script.transitions.get(&(current_state, update.option_id));
             if let Some(next_state) = next_state {
-                let side_effect = apply_side_effects(state, next_state.1.clone(), player_id, prng);
+                apply_side_effects(state, next_state.1.clone(), player_id, prng);
                 let player_states = DialogueTable::get_player_d_states(&mut state.dialogue_states, player_id).entry(update.dialogue_id).or_insert(Box::new(None));
                 *player_states = Box::new(next_state.0);
-                (Box::new(next_state.0.clone()), side_effect)
-            } else {
-                (Box::new(None), false)
             }
-        } else {
-            (Box::new(None), false)
         }
-    } else {
-        (Box::new(None), false)
     };
 }
 

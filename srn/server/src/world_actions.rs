@@ -178,8 +178,7 @@ pub fn world_update_handle_action(
                 DialogueUpdate {
                     dialogue_id,
                     option_id
-                },
-                &mut mut_d_states, d_table,
+                }, d_table,
                 prng,
             );
             state.dialogue_states = mut_d_states;

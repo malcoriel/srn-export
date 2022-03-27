@@ -268,7 +268,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         },
         ClientOpCode::Name => on_client_personalize(client_id, second),
         ClientOpCode::DialogueOption => {
-            on_client_dialogue(client_id, second, third);
+            warn!("Unsupported client op code 'DialogueOption'");
         }
         ClientOpCode::SwitchRoom => on_client_switch_room(client_id, second),
         ClientOpCode::SandboxCommand => {
@@ -413,14 +413,6 @@ fn on_client_switch_room(client_id: Uuid, second: &&str) {
             warn!(format!("Bad switch room, err is {}", err));
         }
     }
-}
-
-fn on_client_dialogue(client_id: Uuid, second: &&str, third: Option<&&str>) {
-    handle_dialogue_option(
-        client_id,
-        serde_json::from_str::<DialogueUpdate>(second).ok().unwrap(),
-        third.map(|s| s.to_string()),
-    );
 }
 
 fn on_client_personalize(client_id: Uuid, second: &&str) {
@@ -686,40 +678,6 @@ fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) 
         }
         Err(err) => {
             eprintln!("couldn't parse dialogue request {}, err {}", data, err);
-        }
-    }
-}
-
-fn handle_dialogue_option(client_id: Uuid, dialogue_update: DialogueUpdate, _tag: Option<String>) {
-    let global_state_change;
-    {
-        let mut cont = STATE.write().unwrap();
-        let mut dialogue_cont = DIALOGUE_STATES.lock().unwrap();
-        let dialogue_table = DIALOGUE_TABLE.lock().unwrap();
-        let mut_state = states::select_state_mut(&mut cont, client_id);
-        if mut_state.is_none() {
-            warn!("attempt to handle dialogue option in non-existent state");
-        }
-        let mut_state = mut_state.unwrap();
-        world::force_update_to_now(mut_state);
-        let (new_dialogue_state, state_changed) = execute_dialog_option(
-            client_id,
-            mut_state,
-            dialogue_update,
-            &mut *dialogue_cont,
-            &*dialogue_table,
-            &mut get_prng(),
-        );
-        unicast_dialogue_state(client_id.clone(), new_dialogue_state, mut_state.id);
-        global_state_change = state_changed;
-    }
-    {
-        if global_state_change {
-            let state = crate::get_state_clone_read(client_id);
-            state.map(|state| {
-                let state_id = state.id.clone();
-                x_cast_state(state, XCast::Broadcast(state_id));
-            });
         }
     }
 }
