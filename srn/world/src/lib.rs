@@ -501,7 +501,9 @@ pub fn make_dialogue_table(dir_contents: JsValue) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 pub fn set_enable_perf(value: bool) {
     *ENABLE_PERF_HACK_INIT.write().unwrap() = value;
-    log!(format!("ENABLE_PERF was set to {}", value))
+    if value {
+        log!(format!("ENABLE_PERF was set to {}", value))
+    }
 }
 
 #[wasm_bindgen]
