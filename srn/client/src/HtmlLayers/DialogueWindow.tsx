@@ -155,7 +155,7 @@ export const DialogueWindow: React.FC = () => {
   // technically [0] of the states was intended to show the active dialogue, but this is not supported yet
   const [dialogue_id, dialogue_state]: [string, string] = (Object.entries(
     (dialogue_states[myPlayerId] || [])[1] || {}
-  )[0] as [string, string]) || [null, null];
+  ).filter(([_did, sid]) => !!sid)[0] as [string, string]) || [null, null];
 
   useEffect(() => {
     if (dialogue_id) {
