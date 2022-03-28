@@ -173,7 +173,9 @@ pub fn get_prng() -> SmallRng {
 }
 
 pub fn seed_prng(seed: String) -> SmallRng {
-    return SmallRng::seed_from_u64(system_gen::str_to_hash(seed));
+    let hash = system_gen::str_to_hash(seed.clone());
+    log!(format!("seed {} hash {}", seed, hash));
+    return SmallRng::seed_from_u64(hash);
 }
 
 lazy_static! {
@@ -484,12 +486,13 @@ pub fn make_dialogue_table(dir_contents: JsValue) -> Result<JsValue, JsValue> {
     let dir_contents: HashMap<String, String> = serde_wasm_bindgen::from_value(dir_contents)?;
     for (key, value) in dir_contents.into_iter() {
         res.push(parse_dialogue_script_from_file(
-            format!("{}.json", key).as_str(),
+            key.as_str(),
             value,
         ));
     }
     let mut d_table = DialogueTable::new();
     for s in res {
+        log!(format!("inserting {}", s.id));
         d_table.scripts.insert(s.id, s);
     }
     Ok(serde_wasm_bindgen::to_value(&d_table)?)

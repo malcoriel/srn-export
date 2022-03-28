@@ -39,6 +39,7 @@ import {
 import _ from 'lodash';
 import { Dictionary } from 'ts-essentials';
 import { findObjectPosition } from './ClientStateIndexing';
+import { dialogueResources } from './HtmlLayers/dialogueResources';
 
 export type {
   Notification,
@@ -172,6 +173,15 @@ let wasmFunctions: any = {};
   // the world/pkg/world_bg.js does not get imported when this file (world.ts) is imported via jest
   if (wasmFunctions && wasmFunctions.set_panic_hook) {
     wasmFunctions.set_panic_hook();
+  }
+  if (
+    wasmFunctions &&
+    wasmFunctions.load_d_table &&
+    wasmFunctions.make_dialogue_table
+  ) {
+    const parsedTable = wasmFunctions.make_dialogue_table(dialogueResources);
+    console.log(parsedTable);
+    wasmFunctions.load_d_table(parsedTable);
   }
 })();
 

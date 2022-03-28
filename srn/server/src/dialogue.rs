@@ -6,6 +6,7 @@ use std::slice::Iter;
 
 use itertools::Itertools;
 use rand::prelude::SmallRng;
+use rand::Rng;
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -21,7 +22,7 @@ use crate::inventory::{
     add_item, consume_items_of_types, count_items_of_types, InventoryItem,
     InventoryItemType, MINERAL_TYPES, remove_quest_item, value_items_of_types,
 };
-use crate::new_id;
+use crate::{prng_id, seed_prng};
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
@@ -292,16 +293,20 @@ pub fn build_dialogue_from_state(
     current_state: &Box<Option<StateId>>,
     dialogue_table: &DialogueTable,
     player_id: PlayerId,
-    game_state: &GameState,
+    game_state: &GameState
 ) -> Option<Dialogue> {
     let (planets_by_id, players_by_id, players_to_current_planets, ships_by_player_id, _) =
         index_state_for_substitution(game_state);
 
+    log!(format!("build {:?} in {}", current_state, dialogue_id));
     let satisfied_conditions = check_trigger_conditions(game_state, player_id);
     let script = dialogue_table.scripts.get(&dialogue_id);
     let player = find_my_player(game_state, player_id);
     if let Some(script) = script {
+        log!("script found");
+        let mut prng = seed_prng(script.name.clone() + game_state.id.to_string().as_str());
         if let Some(state) = **current_state {
+            log!("state found");
             let prompt = script.prompts.get(&state).unwrap();
             let options = script.options.get(&state).unwrap();
             let current_planet = if script.is_planetary {
@@ -325,7 +330,7 @@ pub fn build_dialogue_from_state(
 
             let prompt = DialogueElem {
                 text: prompt,
-                id: new_id(),
+                id: prng_id(&mut prng),
                 is_option: false,
                 substitution: subs,
             };
@@ -557,19 +562,26 @@ pub fn read_from_resource(file: &str) -> DialogueScript {
 }
 
 pub fn parse_dialogue_script_from_file(
-    file_name_for_debug: &str,
+    file_name: &str,
     json_contents: String,
 ) -> DialogueScript {
+    let seed = file_name.to_string();
+    let mut prng = seed_prng(seed.clone());
+
+    let num = prng.gen_range(0, 1000);
+    log!(format!("parse dialogue seed {}/{}", seed, num));
     let result = serde_json::from_str::<ShortScript>(json_contents.as_str());
     if result.is_err() {
         panic!(
             "Failed to load dialogue script {}, err is {:?}",
-            file_name_for_debug,
+            file_name,
             result.err()
         );
     }
     let ss = result.unwrap();
-    short_decrypt(ss)
+    let res = short_decrypt(ss, &mut prng);
+    log!(format!("resulting id {}", res.id));
+    res
 }
 
 // option_name, option_text, new_state_name, side_effects, option_condition_name
@@ -595,17 +607,17 @@ pub struct ShortScript {
     pub bot_path: Vec<(String, String, Option<TriggerCondition>)>,
 }
 
-pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
+pub fn short_decrypt(ss: ShortScript, prng: &mut SmallRng) -> DialogueScript {
     println!("loading {} dialogue...", ss.name);
     let mut script = DialogueScript::new();
-    script.id = new_id();
+    script.id = prng_id(prng);
     script.is_default = ss.is_default;
     script.is_planetary = ss.is_planetary;
     script.priority = ss.priority;
     script.portrait = ss.portrait.unwrap_or("question".to_string());
 
     for (state_name, (state_prompt, options)) in ss.table.iter() {
-        let state_id = new_id();
+        let state_id = prng_id(prng);
         if ss.initial_state_name == *state_name {
             script.initial_state = state_id;
         }
@@ -614,7 +626,7 @@ pub fn short_decrypt(ss: ShortScript) -> DialogueScript {
         script.prompts.insert(state_id, state_prompt.clone());
 
         for (option_name, _, _, _, _) in options.into_iter() {
-            let option_id = new_id();
+            let option_id = prng_id(prng);
             script.names_db.insert(option_id, option_name.clone());
             script.ids_db.insert(option_name.clone(), option_id);
         }

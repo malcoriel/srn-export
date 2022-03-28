@@ -11,7 +11,7 @@ import {
 } from '../ThreeLayers/CameraControls';
 import NetState from '../NetState';
 import { makePortraitPath } from './StartMenu';
-import { Dialogue, DialogueElem } from '../world';
+import { buildDialogueFromState, Dialogue, DialogueElem } from '../world';
 import { useStore, WindowState } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
 import { Vector3 } from 'three';
@@ -147,15 +147,15 @@ export const DialogueWindow: React.FC = () => {
   const ns = useNSForceChange('DialogueWindow');
   if (!ns) return null;
 
-  const dialogueWindowState = useStore((state) => state.dialogueWindow);
   const setDialogueWindowState = useStore((state) => state.setDialogueWindow);
   const [history, setHistory] = useState<DialogueElem[]>([]);
   const { dialogue_states } = ns.state;
 
+  const myPlayerId = ns.state.my_id;
   // technically [0] of the states was intended to show the active dialogue, but this is not supported yet
-  const [dialogue_id, dialogue_state] = Object.entries(
-    dialogue_states[ns.state.my_id][1] || {}
-  )[0] || [null, null];
+  const [dialogue_id, dialogue_state]: [string, string] = (Object.entries(
+    (dialogue_states[myPlayerId] || [])[1] || {}
+  )[0] as [string, string]) || [null, null];
 
   useEffect(() => {
     if (dialogue_id) {
@@ -163,12 +163,25 @@ export const DialogueWindow: React.FC = () => {
     } else {
       setDialogueWindowState(WindowState.Hidden);
     }
-  }, [dialogue_id]);
+  }, [dialogue_id, setDialogueWindowState]);
 
-  const dialogue = useMemo(() => {}, [dialogue_id, dialogue_state]);
+  const dialogue: null | Dialogue = useMemo(() => {
+    if (!dialogue_id || !dialogue_state) {
+      return null;
+    }
+    return buildDialogueFromState(
+      dialogue_id,
+      dialogue_state,
+      myPlayerId,
+      ns.state
+    );
+    // deliberately ignore ns.state dependency as it only matters at the point of dialogue creation,
+    // and shouldn't lead to recreation of the view every frame
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogue_id, dialogue_state]);
 
   const tryDoOption = (i: number) => () => {
-    if (!dialogue_states) return;
+    if (!dialogue) return;
     const options = dialogue.options;
     if (!options) return;
     if (options[i]) {

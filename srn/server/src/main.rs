@@ -221,7 +221,9 @@ pub fn get_prng() -> SmallRng {
 }
 
 pub fn seed_prng(seed: String) -> SmallRng {
-    return SmallRng::seed_from_u64(system_gen::str_to_hash(seed));
+    let hash = system_gen::str_to_hash(seed.clone());
+    log!(format!("seed {} hash {}", seed, hash));
+    return SmallRng::seed_from_u64(hash);
 }
 
 pub fn prng_id(rng: &mut SmallRng) -> Uuid {
@@ -266,6 +268,7 @@ fn rocket() -> rocket::Rocket {
         let mut d_table = DIALOGUE_TABLE.lock().unwrap();
         let scripts: Vec<DialogueScript> = dialogue::gen_scripts();
         for script in scripts {
+            log!(format!("inserting {}", script.id));
             d_table.scripts.insert(script.id, script);
         }
     }
