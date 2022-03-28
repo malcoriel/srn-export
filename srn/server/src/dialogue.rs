@@ -299,15 +299,12 @@ pub fn build_dialogue_from_state(
     let (planets_by_id, players_by_id, players_to_current_planets, ships_by_player_id, _) =
         index_state_for_substitution(game_state);
 
-    log!(format!("build {:?} in {}", current_state, dialogue_id));
     let satisfied_conditions = check_trigger_conditions(game_state, player_id);
     let script = dialogue_table.scripts.get(&dialogue_id);
     let player = find_my_player(game_state, player_id);
     if let Some(script) = script {
-        log!("script found");
         let mut prng = seed_prng(script.name.clone() + game_state.id.to_string().as_str());
         if let Some(state) = **current_state {
-            log!("state found");
             let prompt = script.prompts.get(&state).unwrap();
             let options = script.options.get(&state).unwrap();
             let current_planet = if script.is_planetary {
@@ -569,8 +566,6 @@ pub fn parse_dialogue_script_from_file(
     let seed = file_name.to_string();
     let mut prng = seed_prng(seed.clone());
 
-    let num = prng.gen_range(0, 1000);
-    log!(format!("parse dialogue seed {}/{}", seed, num));
     let result = serde_json::from_str::<ShortScript>(json_contents.as_str());
     if result.is_err() {
         panic!(
@@ -579,10 +574,7 @@ pub fn parse_dialogue_script_from_file(
             result.err()
         );
     }
-    let ss = result.unwrap();
-    let res = short_decrypt(ss, &mut prng);
-    log!(format!("resulting id {}", res.id));
-    res
+    short_decrypt(result.unwrap(), &mut prng)
 }
 
 // option_name, option_text, new_state_name, side_effects, option_condition_name

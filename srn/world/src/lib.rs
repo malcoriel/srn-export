@@ -173,9 +173,7 @@ pub fn get_prng() -> Pcg64Mcg {
 }
 
 pub fn seed_prng(seed: String) -> Pcg64Mcg {
-    let hash = system_gen::str_to_hash(seed.clone());
-    log!(format!("seed {} hash {}", seed, hash));
-    return Pcg64Mcg::seed_from_u64(hash);
+    return Pcg64Mcg::seed_from_u64(system_gen::str_to_hash(seed));
 }
 
 lazy_static! {
@@ -492,7 +490,6 @@ pub fn make_dialogue_table(dir_contents: JsValue) -> Result<JsValue, JsValue> {
     }
     let mut d_table = DialogueTable::new();
     for s in res {
-        log!(format!("inserting {}", s.id));
         d_table.scripts.insert(s.id, s);
     }
     Ok(serde_wasm_bindgen::to_value(&d_table)?)
