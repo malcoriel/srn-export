@@ -815,12 +815,13 @@ export default class NetState extends EventEmitter {
   };
 
   public sendDialogueOption(dialogueId: string, optionId: string) {
-    const tag = uuid.v4();
-    this.send({
-      code: ClientOpCode.DialogueOption,
-      value: { dialogue_id: dialogueId, option_id: optionId },
-      tag,
-    });
+    this.sendSchedulePlayerAction(
+      ActionBuilder.ActionSelectDialogueOption({
+        dialogue_id: dialogueId,
+        option_id: optionId,
+        player_id: this.state.my_id,
+      })
+    );
   }
 
   private sendSchedulePlayerAction(action: Action) {
