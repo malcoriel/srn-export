@@ -5,7 +5,7 @@ use std::f64::consts::PI;
 use std::hash::{Hash, Hasher};
 
 use chrono::Utc;
-use rand::rngs::SmallRng;
+use rand_pcg::Pcg64Mcg;
 use rand::{Rng, RngCore, SeedableRng};
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -41,7 +41,7 @@ pub struct PoolRandomPicker<T> {
 }
 
 impl<T> PoolRandomPicker<T> {
-    pub fn get(&mut self, prng: &mut SmallRng) -> T {
+    pub fn get(&mut self, prng: &mut Pcg64Mcg) -> T {
         let index = prng.gen_range(0, self.options.len());
         self.options.remove(index as usize)
     }
@@ -57,7 +57,7 @@ const LOCATION_COUNT: u32 = 5;
 const DIST: f64 = 100.0;
 const MAX_DIST: f64 = 250.0;
 
-pub fn wire_shake_locations(locations: &mut Vec<Location>, prng: &mut SmallRng) {
+pub fn wire_shake_locations(locations: &mut Vec<Location>, prng: &mut Pcg64Mcg) {
     let all_ids = locations.iter().map(|l| l.id.clone()).collect::<Vec<_>>();
     let mut angle: f64 = 0.0;
     let mut loc_pos_by_id = HashMap::new();
@@ -95,7 +95,7 @@ pub const MIN_CONTAINER_DISTANCE: f64 = 50.0;
 pub const CONTAINER_COUNT: i32 = 10;
 
 fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
-    let mut prng = SmallRng::seed_from_u64(str_to_hash(seed.clone()));
+    let mut prng = Pcg64Mcg::seed_from_u64(str_to_hash(seed.clone()));
     let star_id = prng_id(&mut prng);
     // the world is 1000x1000 for now,
     // so we have to divide 500 units between all zones
@@ -278,7 +278,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
 }
 
 pub fn gen_planet(
-    mut prng: &mut SmallRng,
+    mut prng: &mut Pcg64Mcg,
     anchor_id: Uuid,
     index: usize,
     planet_id: Uuid,
@@ -329,7 +329,7 @@ pub fn get_planet_type_color(p_type: PlanetType) -> String {
     }
 }
 
-pub fn gen_star(star_id: Uuid, mut prng: &mut SmallRng, radius: f64, pos: Vec2f64) -> Star {
+pub fn gen_star(star_id: Uuid, mut prng: &mut Pcg64Mcg, radius: f64, pos: Vec2f64) -> Star {
     let colors = gen_star_color(&mut prng);
     Star {
         color: colors.0.to_string(),
@@ -358,7 +358,7 @@ pub fn seed_state(mode: &GameMode, seed: String, opts: Option<GenStateOpts>) -> 
 
 fn make_cargo_rush_state(
     seed: String,
-    mut prng: &mut SmallRng,
+    mut prng: &mut Pcg64Mcg,
     opts: Option<GenStateOpts>,
 ) -> GameState {
     let mut default_opts = GenStateOpts::default();
@@ -378,7 +378,7 @@ fn assign_health_to_planets(planets: &mut Vec<Planet>, health: Health) {
 
 pub fn make_pirate_defence_state(
     seed: String,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
     opts: Option<GenStateOpts>,
 ) -> GameState {
     let mut gen_opts = GenStateOpts::default();
@@ -399,7 +399,7 @@ pub fn make_pirate_defence_state(
 
 pub const DEFAULT_WORLD_UPDATE_EVERY_TICKS: u64 = 16 * 1000; // standard 60fps
 
-fn make_tutorial_state(prng: &mut SmallRng, opts: Option<GenStateOpts>) -> GameState {
+fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameState {
     let seed = "tutorial".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
@@ -481,7 +481,7 @@ fn make_tutorial_state(prng: &mut SmallRng, opts: Option<GenStateOpts>) -> GameS
     }
 }
 
-pub fn make_sandbox_state(prng: &mut SmallRng, opts: Option<GenStateOpts>) -> GameState {
+pub fn make_sandbox_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameState {
     let seed = "sandbox".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
@@ -532,7 +532,7 @@ impl Default for GenStateOpts {
     }
 }
 
-fn gen_state(seed: String, opts: GenStateOpts, prng: &mut SmallRng) -> GameState {
+fn gen_state(seed: String, opts: GenStateOpts, prng: &mut Pcg64Mcg) -> GameState {
     let mut locations = vec![];
     for _i in 0..opts.system_count {
         let loc_seed = random_hex_seed_seeded(prng);

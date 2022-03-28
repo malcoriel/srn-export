@@ -15,8 +15,9 @@ use crate::planet_movement::IBody;
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, ShipIdx, ShipTemplate, PLAYER_RESPAWN_TIME_MC};
 use crate::{combat, indexing, locations, prng_id, world};
-use rand::prelude::SmallRng;
-use rand::Rng;
+
+use rand_pcg::Pcg64Mcg;
+use rand::prelude::*;
 use std::f64::consts::PI;
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone, Copy)]
@@ -148,7 +149,7 @@ pub fn try_start_long_action_ship(
     state: &mut GameState,
     ship_idx: &ShipIdx,
     action: LongActionStart,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> bool {
     match action {
         LongActionStart::Shoot {
@@ -177,7 +178,7 @@ pub fn try_start_long_action(
     state: &mut GameState,
     player_id: Uuid,
     action: LongActionStart,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> bool {
     match action {
         LongActionStart::Unknown => {
@@ -246,7 +247,7 @@ pub fn try_start_long_action(
 
 fn try_start_undock(
     state: &mut GameState,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
     from_planet: Uuid,
     ship_idx: ShipIdx,
 ) -> bool {
@@ -285,7 +286,7 @@ fn try_start_dock(
     state: &mut GameState,
     to_planet: Uuid,
     ship_idx: ShipIdx,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> bool {
     let ship = &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
     let planet = &state.locations[ship_idx.location_idx]
@@ -330,7 +331,7 @@ fn try_start_shoot(
     target: ShootTarget,
     ship_idx: Option<ShipIdx>,
     shooting_turret_id: Uuid,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> bool {
     let ship_idx = ship_idx.unwrap();
     if !combat::validate_shoot(
@@ -437,7 +438,7 @@ pub fn finish_long_act(
     act: LongAction,
     client: bool,
     ship_idx: ShipIdx,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     match act {
         LongAction::Unknown { .. } => {
@@ -477,7 +478,7 @@ pub fn finish_long_act_player(
     player_id: Uuid,
     act: LongActionPlayer,
     client: bool,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     match act {
         LongActionPlayer::Unknown { .. } => {

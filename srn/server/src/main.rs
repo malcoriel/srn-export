@@ -47,7 +47,7 @@ use net::{
     SwitchRoomPayload, TagConfirm, Wrapper,
 };
 use perf::SamplerMarks;
-use rand::prelude::SmallRng;
+use rand_pcg::Pcg64Mcg;
 use rand::{thread_rng, RngCore, SeedableRng};
 use states::{get_rooms_iter, update_rooms, StateContainer, ROOMS_READ, STATE};
 use world::{GameMode, GameState, Player, Ship, SpatialIndexes};
@@ -214,19 +214,19 @@ fn remove_player(conn_id: Uuid, state: &mut GameState) {
     world::remove_player_from_state(conn_id, state);
 }
 
-pub fn get_prng() -> SmallRng {
+pub fn get_prng() -> Pcg64Mcg {
     let mut rng = thread_rng();
-    let prng = SmallRng::seed_from_u64(rng.next_u64());
+    let prng = Pcg64Mcg::seed_from_u64(rng.next_u64());
     return prng;
 }
 
-pub fn seed_prng(seed: String) -> SmallRng {
+pub fn seed_prng(seed: String) -> Pcg64Mcg {
     let hash = system_gen::str_to_hash(seed.clone());
     log!(format!("seed {} hash {}", seed, hash));
-    return SmallRng::seed_from_u64(hash);
+    return Pcg64Mcg::seed_from_u64(hash);
 }
 
-pub fn prng_id(rng: &mut SmallRng) -> Uuid {
+pub fn prng_id(rng: &mut Pcg64Mcg) -> Uuid {
     let mut bytes = [0u8; 16];
     rng.fill_bytes(&mut bytes);
 

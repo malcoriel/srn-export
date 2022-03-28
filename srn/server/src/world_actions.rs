@@ -11,13 +11,14 @@ use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use wasm_bindgen::prelude::*;
 use crate::dialogue::{execute_dialog_option, DialogueTable, DialogueUpdate};
+use rand_pcg::Pcg64Mcg;
 
 const MAX_ALLOWED_DISTANCE_TICKS: i64 = 10 * 1000 * 1000;
 
 pub fn world_update_handle_action(
     state: &mut GameState,
     action: Action,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
     state_clone: &GameState,
     d_table: &DialogueTable,
 ) {

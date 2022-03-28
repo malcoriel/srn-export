@@ -164,18 +164,18 @@ use strum_macros::EnumIter;
 use uuid::*;
 use vec2::Vec2f64;
 
-pub fn get_prng() -> SmallRng {
+pub fn get_prng() -> Pcg64Mcg {
     let mut bytes = [0u8; 8];
     getrandom::getrandom(&mut bytes);
     let uint64: [u64; 1] = bytemuck::cast(bytes);
-    let prng = SmallRng::seed_from_u64(uint64[0]);
+    let prng = Pcg64Mcg::seed_from_u64(uint64[0]);
     return prng;
 }
 
-pub fn seed_prng(seed: String) -> SmallRng {
+pub fn seed_prng(seed: String) -> Pcg64Mcg {
     let hash = system_gen::str_to_hash(seed.clone());
     log!(format!("seed {} hash {}", seed, hash));
-    return SmallRng::seed_from_u64(hash);
+    return Pcg64Mcg::seed_from_u64(hash);
 }
 
 lazy_static! {
@@ -193,7 +193,7 @@ pub fn new_id() -> Uuid {
         .build()
 }
 
-pub fn prng_id(rng: &mut SmallRng) -> Uuid {
+pub fn prng_id(rng: &mut Pcg64Mcg) -> Uuid {
     let mut bytes = [0u8; 16];
     rng.fill_bytes(&mut bytes);
 
@@ -265,8 +265,8 @@ use crate::perf::{Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
 use crate::world::{GameMode, GameState};
 use mut_static::MutStatic;
-use rand::prelude::SmallRng;
-use rand::{RngCore, SeedableRng};
+use rand_pcg::Pcg64Mcg;
+use rand::prelude::*;
 use std::ops::DerefMut;
 use std::{env, mem};
 

@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::mem;
 
-use rand::rngs::SmallRng;
+use rand_pcg::Pcg64Mcg;
 use rand::{Rng, RngCore, SeedableRng};
 use serde_derive::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
@@ -134,7 +134,7 @@ impl InventoryItem {
         }
     }
 
-    pub fn random(prng: &mut SmallRng) -> InventoryItem {
+    pub fn random(prng: &mut Pcg64Mcg) -> InventoryItem {
         let possible = vec![
             InventoryItemType::CommonMineral,
             InventoryItemType::UncommonMineral,

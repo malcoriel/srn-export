@@ -1,7 +1,7 @@
 use crate::vec2::Vec2f64;
 use chrono::Local;
 use lazy_static::lazy_static;
-use rand::rngs::SmallRng;
+use rand_pcg::Pcg64Mcg;
 use rand::{Rng, RngCore, SeedableRng};
 use std::collections::{HashMap, HashSet};
 use std::sync::{mpsc, Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
@@ -44,7 +44,7 @@ pub fn bot_act(
     bot_elapsed_micro: i64,
     d_table: &DialogueTable,
     spatial_indexes: &SpatialIndexes,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> (Bot, Vec<BotAct>) {
     if bot
         .traits
@@ -81,7 +81,7 @@ fn bot_cargo_rush_hauler_act(
     state: &&GameState,
     bot_elapsed_micro: i64,
     d_table: &DialogueTable,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> (Bot, Vec<BotAct>) {
     let player = find_my_player(&state, bot.id);
     let conditions = check_trigger_conditions(state, bot.id);
@@ -195,7 +195,7 @@ fn make_dialogue_act(
         })
 }
 
-pub fn add_bot(room: &mut Room, bot: Bot, prng: &mut SmallRng) {
+pub fn add_bot(room: &mut Room, bot: Bot, prng: &mut Pcg64Mcg) {
     let id = bot.id.clone();
     room.bots.push(bot);
     world::add_player(&mut room.state, id, true, Some(gen_bot_name(prng)), prng);
@@ -224,7 +224,7 @@ pub fn do_bot_players_actions(
     d_table: &DialogueTable,
     bot_elapsed_micro: i64,
     spatial_indexes: &SpatialIndexes,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     let mut ship_updates: HashMap<Uuid, Vec<Action>> = HashMap::new();
     let mut dialogue_updates: HashMap<Uuid, Vec<DialogueUpdate>> = HashMap::new();
@@ -286,7 +286,7 @@ pub fn do_bot_npcs_actions(
     room: &mut Room,
     elapsed_micro: i64,
     spatial_indexes: &SpatialIndexes,
-    _prng: &mut SmallRng,
+    _prng: &mut Pcg64Mcg,
 ) {
     let mut ship_updates: HashMap<Uuid, (Vec<Action>, ShipIdx)> = HashMap::new();
 

@@ -1,7 +1,9 @@
 use itertools::Itertools;
-use rand::prelude::SmallRng;
 use std::f64::consts::PI;
 
+
+use rand_pcg::Pcg64Mcg;
+use rand::prelude::*;
 use rand::Rng;
 use uuid::Uuid;
 
@@ -28,7 +30,7 @@ use crate::world::{
 use crate::world_events::GameEvent;
 use crate::{fire_event, fof, indexing, prng_id, world, DialogueTable};
 
-pub fn on_pirate_spawn(state: &mut GameState, at: &Vec2f64, prng: &mut SmallRng) {
+pub fn on_pirate_spawn(state: &mut GameState, at: &Vec2f64, prng: &mut Pcg64Mcg) {
     world::spawn_ship(state, None, ShipTemplate::pirate(Some(at.clone())), prng);
 }
 
@@ -91,7 +93,7 @@ pub fn on_ship_died(state: &mut GameState, ship: Ship) {
     }
 }
 
-pub fn update_state_pirate_defence(state: &mut GameState, prng: &mut SmallRng) {
+pub fn update_state_pirate_defence(state: &mut GameState, prng: &mut Pcg64Mcg) {
     let current_ticks = state.millis * 1000;
     if world::every(
         PIRATE_SPAWN_INTERVAL_TICKS,
@@ -113,7 +115,7 @@ pub fn update_state_pirate_defence(state: &mut GameState, prng: &mut SmallRng) {
     }
 }
 
-pub fn gen_pirate_spawn(planet: &Planet, prng: &mut SmallRng) -> Vec2f64 {
+pub fn gen_pirate_spawn(planet: &Planet, prng: &mut Pcg64Mcg) -> Vec2f64 {
     let angle = prng.gen_range(0.0, PI * 2.0);
     let vec = Vec2f64 { x: 1.0, y: 0.0 };
     vec.rotate(angle)
@@ -124,7 +126,7 @@ pub fn gen_pirate_spawn(planet: &Planet, prng: &mut SmallRng) -> Vec2f64 {
         })
 }
 
-pub fn on_create_room(room: &mut Room, prng: &mut SmallRng) {
+pub fn on_create_room(room: &mut Room, prng: &mut Pcg64Mcg) {
     let traits = Some(vec![AiTrait::PirateDefencePlanetDefender]);
     add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
     add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
@@ -136,7 +138,7 @@ pub fn bot_planet_defender_act(
     _bot_elapsed_micro: i64,
     _d_table: &DialogueTable,
     spatial_indexes: &SpatialIndexes,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> (Bot, Vec<BotAct>) {
     let bot_id = bot.id;
     let nothing = (bot.clone(), vec![]);

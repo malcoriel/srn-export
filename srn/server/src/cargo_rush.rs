@@ -1,7 +1,8 @@
 use crate::{bots, fire_event, indexing, notifications, prng_id, world, Room};
 use itertools::Itertools;
-use rand::prelude::SmallRng;
-use rand::Rng;
+
+use rand_pcg::Pcg64Mcg;
+use rand::prelude::*;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use world::GameState;
@@ -19,7 +20,7 @@ use std::iter::FromIterator;
 use wasm_bindgen::prelude::*;
 use world::Player;
 
-pub fn on_create_room(room: &mut Room, prng: &mut SmallRng) {
+pub fn on_create_room(room: &mut Room, prng: &mut Pcg64Mcg) {
     let traits = Some(vec![AiTrait::CargoRushHauler]);
     add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
     // add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
@@ -43,7 +44,7 @@ pub fn generate_random_quest(
     player: &mut Player,
     planets: &Vec<Planet>,
     docked_at: Option<Uuid>,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     if planets.len() <= 0 {
         return;
@@ -105,7 +106,7 @@ pub struct Quest {
 }
 
 impl Quest {
-    pub fn as_notification(&self, prng: &mut SmallRng) -> Notification {
+    pub fn as_notification(&self, prng: &mut Pcg64Mcg) -> Notification {
         let text = format!("You've been tasked with delivering a cargo from one planet to another. Here's what you need:\n\n1. Pick up the cargo at s_cargo_source_planet.\n2. Drop off the cargo at s_cargo_destination_planet.\n\nYour employer, who wished to remain anonymous, will reward you: {} SB", self.reward);
         Notification::Task {
             header: "Delivery quest".to_string(),
@@ -119,7 +120,7 @@ impl Quest {
     }
 }
 
-pub fn update_quests(state: &mut GameState, prng: &mut SmallRng) {
+pub fn update_quests(state: &mut GameState, prng: &mut Pcg64Mcg) {
     let quest_planets = state.locations[0].planets.clone();
     let mut any_new_quests = vec![];
     let player_ids = state.players.iter().map(|p| p.id).collect::<Vec<_>>();

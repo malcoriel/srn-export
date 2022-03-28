@@ -7,7 +7,9 @@ use crate::api_struct::AiTrait;
 use crate::world_events::GameEvent;
 use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
-use rand::prelude::SmallRng;
+
+use rand_pcg::Pcg64Mcg;
+use rand::prelude::*;
 use uuid::Uuid;
 
 use crate::abilities::*;

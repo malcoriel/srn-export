@@ -1,6 +1,7 @@
 use std::collections::HashMap;
-use rand::prelude::SmallRng;
 
+use rand_pcg::Pcg64Mcg;
+use rand::prelude::*;
 use rand::Rng;
 use serde_derive::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
@@ -73,7 +74,7 @@ pub fn init_all_planets_market(state: &mut GameState) {
     }
 }
 
-pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction, prng: &mut SmallRng) {
+pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction, prng: &mut Pcg64Mcg) {
     let mut planet_inventory = state
         .market
         .wares
@@ -204,7 +205,7 @@ fn make_default_prices() -> HashMap<InventoryItemType, Price> {
     res
 }
 
-fn make_default_wares(prng: &mut SmallRng) -> Vec<InventoryItem> {
+fn make_default_wares(prng: &mut Pcg64Mcg) -> Vec<InventoryItem> {
     let mut res = vec![];
     for item in InventoryItemType::iter() {
         let it: InventoryItemType = item;
@@ -239,7 +240,7 @@ pub fn get_default_value(it: &InventoryItemType) -> i32 {
     }
 }
 
-pub fn gen_price_event(rng: &mut SmallRng) -> PriceEvent {
+pub fn gen_price_event(rng: &mut Pcg64Mcg) -> PriceEvent {
     let roll = rng.gen_range(0, 100);
     match roll {
         0..71 => PriceEvent::Normalize,
@@ -251,7 +252,7 @@ pub fn gen_price_event(rng: &mut SmallRng) -> PriceEvent {
     }
 }
 
-pub fn shake_market(planets: Vec<Planet>, wares: &mut Wares, prices: &mut Prices, prng: &mut SmallRng) {
+pub fn shake_market(planets: Vec<Planet>, wares: &mut Wares, prices: &mut Prices, prng: &mut Pcg64Mcg) {
     for planet in planets {
         let planet_prices = prices.entry(planet.id).or_insert(make_default_prices());
         let planet_wares = wares.entry(planet.id).or_insert(make_default_wares(prng));
@@ -263,7 +264,7 @@ pub fn shift_market(
     prices: &mut HashMap<InventoryItemType, Price>,
     wares: &mut Vec<InventoryItem>,
     _planet_name: String,
-    prng: &mut SmallRng
+    prng: &mut Pcg64Mcg
 ) {
     let event = gen_price_event(prng);
     // log!(format!("Market event {:?} on {}", event, planet_name));
@@ -297,7 +298,7 @@ pub fn apply_price_event(
     prices: &mut HashMap<InventoryItemType, Price>,
     event: PriceEvent,
     wares: &mut Vec<InventoryItem>,
-    prng: &mut SmallRng
+    prng: &mut Pcg64Mcg
 ) {
     match event {
         PriceEvent::Unknown => {}
@@ -395,7 +396,7 @@ pub fn apply_price_event(
 fn apply_normalize_event(
     prices: &mut HashMap<InventoryItemType, Price>,
     wares: &mut Vec<InventoryItem>,
-    prng: &mut SmallRng
+    prng: &mut Pcg64Mcg
 ) {
     let default_prices = make_default_prices();
     for (it, price) in prices {
@@ -494,7 +495,7 @@ fn set_quantity(
     wares: &mut Vec<InventoryItem>,
     target_type: &InventoryItemType,
     variant: QuantityVariant,
-    prng: &mut SmallRng
+    prng: &mut Pcg64Mcg
 ) {
     let mut indexed_by_type = index_items_by_type(wares);
 

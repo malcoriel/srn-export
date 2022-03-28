@@ -1,6 +1,8 @@
 use std::collections::HashMap;
-use rand::prelude::SmallRng;
 
+
+use rand_pcg::Pcg64Mcg;
+use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use uuid::Uuid;
@@ -61,7 +63,7 @@ pub struct NotificationText {
     pub substitutions: Vec<Substitution>,
 }
 
-pub fn get_new_player_notifications(_mode: &GameMode, prng: &mut SmallRng) -> Vec<Notification> {
+pub fn get_new_player_notifications(_mode: &GameMode, prng: &mut Pcg64Mcg) -> Vec<Notification> {
     return vec![
         Notification::Help {
             header: "How to play".to_string(),
@@ -110,7 +112,7 @@ pub fn apply_action(state: &mut GameState, player_id: Uuid, action: Notification
 //     return false;
 // }
 
-pub fn update_quest_notifications(player: &mut Player, prng: &mut SmallRng) {
+pub fn update_quest_notifications(player: &mut Player, prng: &mut Pcg64Mcg) {
     player.notifications.retain(|n| match n {
         Notification::Task { .. } => false,
         _ => true,

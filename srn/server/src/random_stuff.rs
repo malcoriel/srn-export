@@ -2,6 +2,7 @@ use crate::world::{Asteroid, Rarity, Star};
 use crate::{get_prng, prng_id};
 use rand::prelude::*;
 use std::f64::consts::PI;
+use rand_pcg::Pcg64Mcg;
 
 pub const STAR_NAMES: [&str; 32] = [
     "Ithoins",
@@ -140,19 +141,19 @@ pub const CHARACTER_NAMES: [&str; 32] = [
     "Lzee Hilly",
 ];
 
-pub fn rand_32(rng: &mut SmallRng) -> usize {
+pub fn rand_32(rng: &mut Pcg64Mcg) -> usize {
     return rng.gen_range(0, 32);
 }
 
-pub fn rand_8(rng: &mut SmallRng) -> usize {
+pub fn rand_8(rng: &mut Pcg64Mcg) -> usize {
     return rng.gen_range(0, 8);
 }
 
-pub fn gen_star_name(rng: &mut SmallRng) -> &'static str {
+pub fn gen_star_name(rng: &mut Pcg64Mcg) -> &'static str {
     STAR_NAMES[rand_32(rng)]
 }
 
-pub fn gen_planet_name(rng: &mut SmallRng) -> &'static str {
+pub fn gen_planet_name(rng: &mut Pcg64Mcg) -> &'static str {
     PLANET_NAMES[rand_32(rng)]
 }
 
@@ -161,36 +162,36 @@ pub fn gen_random_character_name() -> &'static str {
     CHARACTER_NAMES[rand_32(&mut prng)]
 }
 
-pub fn gen_sat_name(rng: &mut SmallRng) -> &'static str {
+pub fn gen_sat_name(rng: &mut Pcg64Mcg) -> &'static str {
     SAT_NAMES[rand_32(rng)]
 }
 
-pub fn gen_color(rng: &mut SmallRng) -> &'static str {
+pub fn gen_color(rng: &mut Pcg64Mcg) -> &'static str {
     COLORS[rand_32(rng)]
 }
-pub fn gen_star_color(rng: &mut SmallRng) -> (&'static str, &'static str) {
+pub fn gen_star_color(rng: &mut Pcg64Mcg) -> (&'static str, &'static str) {
     STAR_COLORS[rand_8(rng)]
 }
 
-pub fn gen_bot_name(rng: &mut SmallRng) -> String {
+pub fn gen_bot_name(rng: &mut Pcg64Mcg) -> String {
     format!("{} (bot)", BOT_NAMES[rand_32(rng)].to_string())
 }
 
-pub fn gen_planet_count(rng: &mut SmallRng) -> u32 {
+pub fn gen_planet_count(rng: &mut Pcg64Mcg) -> u32 {
     return rng.gen_range(5, 8);
 }
 
-pub fn gen_asteroid_radius(rng: &mut SmallRng) -> f64 {
+pub fn gen_asteroid_radius(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(0.2, 0.8);
 }
 
-pub fn gen_asteroid_shift(rng: &mut SmallRng) -> (f64, f64) {
+pub fn gen_asteroid_shift(rng: &mut Pcg64Mcg) -> (f64, f64) {
     let min = 3.0;
     let max = 5.0;
     return (rng.gen_range(min, max), rng.gen_range(min, max));
 }
 
-pub fn gen_sat_count(planet_radius: f64, rng: &mut SmallRng) -> u32 {
+pub fn gen_sat_count(planet_radius: f64, rng: &mut Pcg64Mcg) -> u32 {
     if planet_radius < 10.0 {
         return rng.gen_range(0, 2);
     }
@@ -200,42 +201,42 @@ pub fn gen_sat_count(planet_radius: f64, rng: &mut SmallRng) -> u32 {
     return rng.gen_range(2, 5);
 }
 
-pub fn gen_star_radius(rng: &mut SmallRng) -> f64 {
+pub fn gen_star_radius(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(20.0, 80.0);
 }
 
-pub fn gen_planet_gap(rng: &mut SmallRng) -> f64 {
+pub fn gen_planet_gap(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(60.0, 80.0);
 }
 
-pub fn gen_planet_orbit_speed(rng: &mut SmallRng) -> f64 {
+pub fn gen_planet_orbit_speed(rng: &mut Pcg64Mcg) -> f64 {
     let dir = if rng.gen_bool(0.5) { -1.0 } else { 1.0 };
     return rng.gen_range(5.0, 55.0) / 750.0 * dir;
 }
 
-pub fn gen_sat_orbit_speed(rng: &mut SmallRng) -> f64 {
+pub fn gen_sat_orbit_speed(rng: &mut Pcg64Mcg) -> f64 {
     let dir = if rng.gen_bool(0.5) { -1.0 } else { 1.0 };
     return rng.gen_range(20.0, 30.0) / 100.0 * dir;
 }
 
-pub fn gen_planet_radius(rng: &mut SmallRng) -> f64 {
+pub fn gen_planet_radius(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(8.0, 20.0);
 }
 
-pub fn gen_sat_radius(rng: &mut SmallRng) -> f64 {
+pub fn gen_sat_radius(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(2.0, 3.0);
 }
 
-pub fn gen_sat_gap(rng: &mut SmallRng) -> f64 {
+pub fn gen_sat_gap(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(8.0, 12.0);
 }
 
-pub fn gen_random_photo_id(rng: &mut SmallRng) -> i32 {
+pub fn gen_random_photo_id(rng: &mut Pcg64Mcg) -> i32 {
     return rng.gen_range(1, 10);
 }
 
 // radius, value, color
-pub fn gen_mineral_props(rng: &mut SmallRng) -> (f64, i32, String, Rarity) {
+pub fn gen_mineral_props(rng: &mut Pcg64Mcg) -> (f64, i32, String, Rarity) {
     let chance = rng.gen_range(0.0, 1.0);
     return if chance < 0.5 {
         (2.0, 100, "#b87333".to_string(), Rarity::Common)
@@ -253,7 +254,7 @@ pub fn random_hex_seed() -> String {
     hex::encode(bytes)
 }
 
-pub fn random_hex_seed_seeded(prng: &mut SmallRng) -> String {
+pub fn random_hex_seed_seeded(prng: &mut Pcg64Mcg) -> String {
     let mut bytes: [u8; 8] = [0; 8];
     prng.fill_bytes(&mut bytes);
     hex::encode(bytes)
@@ -262,7 +263,7 @@ pub fn random_hex_seed_seeded(prng: &mut SmallRng) -> String {
 const ASTEROID_COUNT: u32 = 200;
 const ASTEROID_BELT_RANGE: f64 = 100.0;
 
-pub fn seed_asteroids(star: &Star, rng: &mut SmallRng) -> Vec<Asteroid> {
+pub fn seed_asteroids(star: &Star, rng: &mut Pcg64Mcg) -> Vec<Asteroid> {
     let mut res = vec![];
     let mut cur_angle: f64 = 0.0;
     let angle_step = PI * 2.0 / ASTEROID_COUNT as f64;

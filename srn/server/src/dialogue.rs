@@ -5,8 +5,9 @@ use std::ops::Deref;
 use std::slice::Iter;
 
 use itertools::Itertools;
-use rand::prelude::SmallRng;
-use rand::Rng;
+
+use rand_pcg::Pcg64Mcg;
+use rand::prelude::*;
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -262,7 +263,7 @@ pub fn execute_dialog_option(
     state: &mut GameState,
     update: DialogueUpdate,
     dialogue_table: &DialogueTable,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     let player_d_states = state.dialogue_states.get(&player_id).map(|v| (*v).clone());
     if let Some(all_dialogues) = player_d_states {
@@ -420,7 +421,7 @@ fn apply_dialogue_option(
     dialogue_table: &DialogueTable,
     state: &mut GameState,
     player_id: PlayerId,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     let script = dialogue_table.scripts.get(&update.dialogue_id);
     if let Some(script) = script {
@@ -442,7 +443,7 @@ fn apply_side_effects(
     state: &mut GameState,
     side_effects: Vec<DialogueOptionSideEffect>,
     player_id: PlayerId,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> bool {
     let mut state_changed = false;
     let player = find_my_player(state, player_id);
@@ -607,7 +608,7 @@ pub struct ShortScript {
     pub bot_path: Vec<(String, String, Option<TriggerCondition>)>,
 }
 
-pub fn short_decrypt(ss: ShortScript, prng: &mut SmallRng) -> DialogueScript {
+pub fn short_decrypt(ss: ShortScript, prng: &mut Pcg64Mcg) -> DialogueScript {
     println!("loading {} dialogue...", ss.name);
     let mut script = DialogueScript::new();
     script.id = prng_id(prng);

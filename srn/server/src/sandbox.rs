@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use chrono::Utc;
 use lazy_static::lazy_static;
-use rand::rngs::SmallRng;
+use rand_pcg::Pcg64Mcg;
 use rand::SeedableRng;
 use uuid::Uuid;
 
@@ -86,7 +86,7 @@ fn get_pos(state: &mut GameState, player_id: Uuid) -> Option<Vec2f64> {
 }
 
 pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand) {
-    let mut prng = SmallRng::seed_from_u64(Utc::now().timestamp_millis() as u64);
+    let mut prng = Pcg64Mcg::seed_from_u64(Utc::now().timestamp_millis() as u64);
     match cmd {
         SandboxCommand::AddStar => {
             if let Some(pos) = get_pos(state, player_id) {

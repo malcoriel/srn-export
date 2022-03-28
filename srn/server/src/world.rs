@@ -64,6 +64,7 @@ use crate::{DialogueTable, seed_prng};
 use dialogue::DialogueStates;
 use crate::dialogue::Dialogue;
 use crate::world_actions::{Action, ShipMovementMarkers};
+use rand_pcg::Pcg64Mcg;
 
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -120,7 +121,7 @@ pub enum LocalEffect {
 pub fn get_random_planet<'a>(
     planets: &'a Vec<Planet>,
     docked_at: Option<Uuid>,
-    rng: &mut SmallRng,
+    rng: &mut Pcg64Mcg,
 ) -> Option<&'a Planet> {
     if planets.len() == 0 {
         return None;
@@ -416,7 +417,7 @@ pub struct Ship {
     pub properties: Vec<ObjectProperty>,
 }
 
-pub fn gen_turrets(count: usize, prng: &mut SmallRng) -> Vec<(Ability, ShipTurret)> {
+pub fn gen_turrets(count: usize, prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
     let mut res = vec![];
     for _i in 0..count {
         let id = prng_id(prng);
@@ -434,7 +435,7 @@ pub fn gen_turrets(count: usize, prng: &mut SmallRng) -> Vec<(Ability, ShipTurre
 }
 
 impl Ship {
-    pub fn new(prng: &mut SmallRng, at: &mut Option<Vec2f64>) -> Ship {
+    pub fn new(prng: &mut Pcg64Mcg, at: &mut Option<Vec2f64>) -> Ship {
         let turrets = gen_turrets(2, prng);
         Ship {
             id: prng_id(prng),
@@ -495,7 +496,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(id: Uuid, mode: &GameMode, prng: &mut SmallRng) -> Self {
+    pub fn new(id: Uuid, mode: &GameMode, prng: &mut Pcg64Mcg) -> Self {
         Player {
             id,
             is_bot: false,
@@ -566,7 +567,7 @@ impl Container {
             .min(3.0);
     }
 
-    pub fn random(prng: &mut SmallRng) -> Self {
+    pub fn random(prng: &mut Pcg64Mcg) -> Self {
         let mut cont = Container::new(prng_id(prng));
         for _i in 0..prng.gen_range(1, 5) {
             cont.items.push(InventoryItem::random(prng))
@@ -854,7 +855,7 @@ pub fn update_world(
     sampler: Sampler,
     update_options: UpdateOptions,
     spatial_indexes: &mut SpatialIndexes,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
     d_table: &DialogueTable,
 ) -> (GameState, Sampler) {
     let mut remaining = elapsed + state.accumulated_not_updated_ticks as i64;
@@ -886,7 +887,7 @@ fn update_world_iter(
     sampler: Sampler,
     update_options: UpdateOptions,
     spatial_indexes: &mut SpatialIndexes,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
     d_table: &DialogueTable,
 ) -> (GameState, Sampler) {
     state.millis += elapsed as u32 / 1000;
@@ -1024,7 +1025,7 @@ fn update_world_iter(
     (state, sampler)
 }
 
-fn update_player_actions(state: &mut GameState, prng: &mut SmallRng, d_table: &DialogueTable) {
+fn update_player_actions(state: &mut GameState, prng: &mut Pcg64Mcg, d_table: &DialogueTable) {
     let state_clone = state.clone();
     let mut actions_to_process = vec![];
     while let Some(event) = state.player_actions.pop_front() {
@@ -1046,7 +1047,7 @@ fn update_player_actions(state: &mut GameState, prng: &mut SmallRng, d_table: &D
 
 fn update_events(
     state: &mut GameState,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
     client: bool,
     d_table: &DialogueTable,
 ) {
@@ -1077,7 +1078,7 @@ pub fn update_location(
     mut sampler: Sampler,
     location_idx: usize,
     spatial_indexes: &mut SpatialIndexes,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> Sampler {
     let spatial_index_id = sampler.start(SamplerMarks::GenSpatialIndexOnDemand as u32);
     let spatial_index = spatial_indexes
@@ -1366,7 +1367,7 @@ fn interpolate_docking_ships_position(
 fn update_initiate_ship_docking_by_navigation(
     state: &mut GameState,
     location_idx: usize,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     let ships = &state.locations[location_idx].ships;
     let planets_by_id = index_planets_by_id(&state.locations[location_idx].planets);
@@ -1501,7 +1502,7 @@ const MAX_NAT_SPAWN_MINERALS: u32 = 10;
 fn update_state_minerals(
     existing: &Vec<NatSpawnMineral>,
     belts: &Vec<AsteroidBelt>,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> Vec<NatSpawnMineral> {
     let mut res = existing.clone();
     if belts.len() > 0 {
@@ -1515,7 +1516,7 @@ fn update_state_minerals(
     res
 }
 
-pub fn spawn_mineral(location: &mut Location, rarity: Rarity, pos: Vec2f64, prng: &mut SmallRng) {
+pub fn spawn_mineral(location: &mut Location, rarity: Rarity, pos: Vec2f64, prng: &mut Pcg64Mcg) {
     let mut min = gen_mineral(prng, pos);
     min.rarity = rarity;
     location.minerals.push(min)
@@ -1528,7 +1529,7 @@ pub fn spawn_container(loc: &mut Location, at: Vec2f64) {
     loc.containers.push(container);
 }
 
-fn seed_mineral(belts: &Vec<AsteroidBelt>, prng: &mut SmallRng) -> NatSpawnMineral {
+fn seed_mineral(belts: &Vec<AsteroidBelt>, prng: &mut Pcg64Mcg) -> NatSpawnMineral {
     let picked = prng.gen_range(0, belts.len());
     let belt = &belts[picked];
     let mut pos_in_belt = gen_pos_in_belt(belt, prng);
@@ -1536,7 +1537,7 @@ fn seed_mineral(belts: &Vec<AsteroidBelt>, prng: &mut SmallRng) -> NatSpawnMiner
     gen_mineral(prng, pos_in_belt)
 }
 
-fn gen_mineral(prng: &mut SmallRng, pos: Vec2f64) -> NatSpawnMineral {
+fn gen_mineral(prng: &mut Pcg64Mcg, pos: Vec2f64) -> NatSpawnMineral {
     let mineral_props = gen_mineral_props(prng);
     NatSpawnMineral {
         x: pos.x,
@@ -1549,7 +1550,7 @@ fn gen_mineral(prng: &mut SmallRng, pos: Vec2f64) -> NatSpawnMineral {
     }
 }
 
-fn gen_pos_in_belt(belt: &AsteroidBelt, prng: &mut SmallRng) -> Vec2f64 {
+fn gen_pos_in_belt(belt: &AsteroidBelt, prng: &mut Pcg64Mcg) -> Vec2f64 {
     let range = prng.gen_range(
         belt.radius - belt.width / 2.0,
         belt.radius + belt.width / 2.0,
@@ -1560,7 +1561,7 @@ fn gen_pos_in_belt(belt: &AsteroidBelt, prng: &mut SmallRng) -> Vec2f64 {
     Vec2f64 { x, y }
 }
 
-fn update_ships_respawn(state: &mut GameState, prng: &mut SmallRng) {
+fn update_ships_respawn(state: &mut GameState, prng: &mut Pcg64Mcg) {
     let mut to_spawn = vec![];
     for player in state.players.iter() {
         if player.ship_id.is_none() {
@@ -1619,7 +1620,7 @@ pub fn update_hp_effects(
     location_idx: usize,
     elapsed_micro: i64,
     current_tick: u32,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
@@ -1772,7 +1773,7 @@ pub fn add_player(
     player_id: Uuid,
     is_bot: bool,
     name: Option<String>,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     let mut player = Player::new(player_id, &state.mode, prng);
     player.is_bot = is_bot;
@@ -1887,7 +1888,7 @@ pub fn spawn_ship<'a>(
     state: &'a mut GameState,
     player_id: Option<Uuid>,
     template: ShipTemplate,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) -> &'a Ship {
     let rand_planet = get_random_planet(&state.locations[0].planets, None, prng);
     let mut at = template.at;
@@ -2092,7 +2093,7 @@ pub fn undock_ship(
     ship_idx: ShipIdx,
     client: bool,
     player_idx: Option<usize>,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
 ) {
     let state_read = state.clone();
     let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
@@ -2160,7 +2161,7 @@ pub fn every_diff(
 
 pub fn update_rule_specifics(
     state: &mut GameState,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
     sampler: &mut Sampler,
     _client: bool,
 ) {
@@ -2249,7 +2250,7 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
 pub fn make_room(
     mode: &GameMode,
     room_id: Uuid,
-    prng: &mut SmallRng,
+    prng: &mut Pcg64Mcg,
     bots_seed: Option<String>,
     opts: Option<GenStateOpts>,
 ) -> (Uuid, Room) {
@@ -2279,7 +2280,7 @@ pub fn make_room(
 }
 
 pub fn update_room(
-    mut prng: &mut SmallRng,
+    mut prng: &mut Pcg64Mcg,
     mut sampler: Sampler,
     elapsed_micro: i64,
     room: &Room,
