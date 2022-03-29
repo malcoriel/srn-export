@@ -504,6 +504,7 @@ export default class NetState extends EventEmitter {
         }
         this.switchingRooms = false;
         this.sendName();
+        return;
       }
 
       if (
