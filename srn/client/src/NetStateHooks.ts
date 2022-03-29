@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react';
 import _ from 'lodash';
 import NetState from './NetState';
 import { GameState } from './world';
+import { ClientStateIndexes } from './ClientStateIndexing';
 
 export type ShouldUpdateStateChecker = (
   prev: GameState,
-  next: GameState
+  next: GameState,
+  prevIndexes?: ClientStateIndexes,
+  nextIndexes?: ClientStateIndexes
 ) => boolean;
 export const useNSForceChange = (
   name: string,
@@ -17,7 +20,12 @@ export const useNSForceChange = (
   const ns = NetState.get();
   if (!ns) return null;
   useEffect(() => {
-    let listener = (prevState: GameState, nextState: GameState) => {
+    let listener = (
+      prevState: GameState,
+      nextState: GameState,
+      prevIndexes: ClientStateIndexes,
+      nextIndexes: ClientStateIndexes
+    ) => {
       if (
         prevState &&
         nextState &&

@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Window } from './ui/Window';
 import { cellsToPixels, ItemGrid, ItemMoveKind, MoveEvent } from './ItemGrid';
 import './TradeWindow.scss';
-import NetState from '../NetState';
-import { GameState, Market, Player } from '../world';
+import { GameState, Market } from '../world';
 import { useStore, WindowState } from '../store';
 import _ from 'lodash';
 import { InventoryActionBuilder } from '../../../world/pkg/world.extra';
@@ -49,34 +48,37 @@ const selectPlayerItems = (state: GameState) => {
 };
 
 export const TradeWindow = () => {
-  const ns = NetState.get();
+  const ns = useNSForceChange(
+    'TradeWindow',
+    false,
+    (oldState, newState, oldIndexes, newIndexes) => {
+      return (
+        JSON.stringify(oldIndexes?.myShip?.trading_with) !==
+          JSON.stringify(newIndexes?.myShip?.trading_with) ||
+        JSON.stringify(oldState.market) !== JSON.stringify(newState.market)
+      );
+    }
+  );
   if (!ns) return null;
 
   const [planetId, setPlanetId] = useState<string | null>(null);
-  useNSForceChange('TradeWindow', false, (oldState, newState) => {
-    return JSON.stringify(oldState.market) !== JSON.stringify(newState.market);
-  });
 
   const tradeWindowState = useStore((state) => state.tradeWindow);
   const setTradeWindowState = useStore((state) => state.setTradeWindow);
 
+  const tradePlanetId =
+    ns.indexes.myShip?.trading_with?.tag === 'Planet'
+      ? ns.indexes.myShip?.trading_with.id
+      : null;
+
   useEffect(() => {
-    ns.on('gameEvent', (gameEvent: any) => {
-      if (gameEvent.TradeTriggerRequest) {
-        const event = gameEvent.TradeTriggerRequest;
-        const {
-          player,
-          planet_id,
-        }: { player: Player; planet_id: string } = event;
-        if (player.id === ns.state.my_id) {
-          setPlanetId(planet_id);
-          if (tradeWindowState !== WindowState.Shown) {
-            setTradeWindowState(WindowState.Shown);
-          }
-        }
-      }
-    });
-  }, [setTradeWindowState, tradeWindowState, ns]);
+    setPlanetId(tradePlanetId);
+    if (tradeWindowState !== WindowState.Shown && tradePlanetId) {
+      setTradeWindowState(WindowState.Shown);
+    } else if (tradeWindowState !== WindowState.Hidden && !tradePlanetId) {
+      setTradeWindowState(WindowState.Hidden);
+    }
+  }, [setTradeWindowState, tradeWindowState, tradePlanetId]);
 
   const onMove = (moveAction: MoveEvent) => {
     if (!planetId) return;

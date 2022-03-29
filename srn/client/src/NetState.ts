@@ -163,6 +163,8 @@ export default class NetState extends EventEmitter {
 
   private lastSlowChangedState!: GameState;
 
+  private lastSlowChangedIndexes!: ClientStateIndexes;
+
   private mode!: GameMode;
 
   private switchingRooms = false;
@@ -341,8 +343,15 @@ export default class NetState extends EventEmitter {
 
         Perf.markEvent(Measure.SlowUpdateFrameEvent);
         Perf.usingMeasure(Measure.SlowUpdateFrameTime, () => {
-          ns.emit('slowchange', this.lastSlowChangedState, this.state);
+          ns.emit(
+            'slowchange',
+            this.lastSlowChangedState,
+            this.state,
+            this.lastSlowChangedIndexes,
+            this.indexes
+          );
           this.lastSlowChangedState = _.clone(this.state);
+          this.lastSlowChangedIndexes = _.clone(this.indexes);
         });
       },
       () => {}
