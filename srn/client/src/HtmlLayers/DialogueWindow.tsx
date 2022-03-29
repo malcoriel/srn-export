@@ -169,12 +169,13 @@ export const DialogueWindow: React.FC = () => {
     if (!dialogue_id || !dialogue_state) {
       return null;
     }
-    return buildDialogueFromState(
+    const dialogueStruct = buildDialogueFromState(
       dialogue_id,
       dialogue_state,
       myPlayerId,
       ns.state
     );
+    return dialogueStruct;
     // deliberately ignore ns.state dependency as it only matters at the point of dialogue creation,
     // and shouldn't lead to recreation of the view every frame
     // eslint-disable-next-line react-hooks/exhaustive-deps

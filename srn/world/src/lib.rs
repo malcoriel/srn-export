@@ -209,8 +209,7 @@ struct ErrJson {
 }
 
 lazy_static! {
-    // no support for substitutions
-    pub static ref SUB_RE: Regex = Regex::new(r"").unwrap();
+    pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
 }
 
 pub fn fire_event(_ev: world_events::GameEvent) {
