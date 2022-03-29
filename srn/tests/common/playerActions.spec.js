@@ -84,6 +84,18 @@ const createStateWithAShip = () => {
   };
 };
 
+const dockToPlanet = (state, ship) => {
+  let currState = state;
+  const planet = getLoc0(currState).planets[0];
+  ship.x = planet.x;
+  ship.y = planet.y;
+  currState.player_actions.push(
+    mockPlayerActionDockNavigate(ship.id, planet.id)
+  );
+  currState = updateWorld(currState, 3000);
+  return currState;
+};
+
 describe('player actions logic', () => {
   beforeAll(swapGlobals);
 
@@ -180,6 +192,7 @@ describe('player actions logic', () => {
       expect(ship.x).toBeCloseTo(110.0);
       expect(ship.y).toBeCloseTo(110.0);
     });
+
     it('can navigate and dock', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
@@ -189,7 +202,7 @@ describe('player actions logic', () => {
       state.player_actions.push(
         mockPlayerActionDockNavigate(ship.id, planet.id)
       );
-      state = updateWorld(state, 3000);
+      state = updateWorld(state, 4000);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.docked_at).toEqual(planet.id);
     });
@@ -220,15 +233,8 @@ describe('player actions logic', () => {
     it('can select dialogue options', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
-      const planet = getLoc0(state).planets[0];
-      ship.x = planet.x;
-      ship.y = planet.y;
-      state.player_actions.push(
-        mockPlayerActionDockNavigate(ship.id, planet.id)
-      );
-      state = updateWorld(state, 3000);
-      const { dialogue_states } = state;
-      const myState = Object.entries(dialogue_states[player.id][1])[0];
+      state = dockToPlanet(state, ship, player);
+      const myState = Object.entries(state.dialogue_states[player.id][1])[0];
       expect(myState[1]).toBeTruthy(); // we can't really compare anything here as those ids are random
       const dialogue = wasm.buildDialogueFromState(
         myState[0],
@@ -243,7 +249,7 @@ describe('player actions logic', () => {
           dialogue.options.find((o) => o.text.indexOf('Undock') > -1)?.id
         )
       );
-      state = updateWorld(state, 3000);
+      state = updateWorld(state, 1000);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.docked_at).toBeFalsy();
     });
