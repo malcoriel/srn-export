@@ -415,6 +415,7 @@ pub struct Ship {
     pub name: Option<String>,
     pub turrets: Vec<ShipTurret>,
     pub properties: Vec<ObjectProperty>,
+    pub trading_with: Option<ObjectSpecifier>,
 }
 
 pub fn gen_turrets(count: usize, prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
@@ -464,6 +465,7 @@ impl Ship {
             npc: None,
             name: None,
             properties: Default::default(),
+            trading_with: None
         }
     }
 }
@@ -1591,9 +1593,10 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
         // as global events
         GameEvent::ShipDocked { .. } => {}
         GameEvent::DialogueTriggerRequest { .. } => {}
+        GameEvent::TradeDialogueTriggerRequest { .. } => {}
         GameEvent::PirateSpawn { .. } => {}
         // events that has to be duplicated to the system, e.g. both server and world can do
-        // something on them. typically, server just does retransmitting them to the client
+        // something on them. typically, server just does retransmitting them to the client ahead of the normal update
         GameEvent::ShipSpawned { .. } => fire_event(event),
         GameEvent::ShipDied { .. } => fire_event(event),
         _ => fire_event(event),

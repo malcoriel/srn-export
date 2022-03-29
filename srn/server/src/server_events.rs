@@ -133,18 +133,8 @@ pub fn handle_events(
                         }
                         substitute_notification_texts(state, HashSet::from_iter(vec![player_id]));
                     }
-                    GameEvent::TradeDialogueTriggerRequest { player_id, .. } => {
-                        let state = crate::states::select_state_mut(cont, player_id);
-                        if state.is_none() {
-                            warn!("event in non-existent state");
-                            continue;
-                        }
-                        let state = state.unwrap();
-
-                        crate::main_ws_server::send_event_to_client(
-                            event.clone(),
-                            XCast::Unicast(state.id, player_id),
-                        );
+                    GameEvent::TradeDialogueTriggerRequest { .. } => {
+                        warn!("TradeDialogueTriggerRequest should happen in world events, there's some bug here");
                     }
                     GameEvent::CreateRoomRequest {
                         mode,

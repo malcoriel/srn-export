@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::dialogue;
+use crate::{dialogue, ObjectSpecifier};
 use crate::dialogue::DialogueStates;
 use crate::pirate_defence;
 use crate::world::{Planet, Player, Ship};
@@ -12,6 +12,7 @@ use world::GameState;
 
 use rand_pcg::Pcg64Mcg;
 use rand::prelude::*;
+use crate::indexing::{find_ship_index, find_ship_mut};
 
 pub fn world_update_handle_event(
     state: &mut GameState,
@@ -80,8 +81,10 @@ pub fn world_update_handle_event(
         GameEvent::CargoQuestTriggerRequest { .. } => {
             // sever-only, do nothing - only for tutorial purposes
         }
-        GameEvent::TradeDialogueTriggerRequest { .. } => {
-            // sever-only, do nothing
+        GameEvent::TradeDialogueTriggerRequest { ship_id, planet_id, .. } => {
+            if let Some(ship) = find_ship_mut(state, ship_id) {
+                ship.trading_with = Some(ObjectSpecifier::Planet { id: planet_id})
+            }
         }
         GameEvent::CreateRoomRequest { .. } => {
             // sever-only, do nothing
@@ -135,6 +138,7 @@ pub enum GameEvent {
     },
     TradeDialogueTriggerRequest {
         player_id: Uuid,
+        ship_id: Uuid,
         planet_id: Uuid,
     },
     DialogueTriggerRequest {

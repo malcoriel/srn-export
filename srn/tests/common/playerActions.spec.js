@@ -81,6 +81,7 @@ const createStateWithAShip = () => {
     state,
     player,
     ship,
+    planet: getLoc0(state).planets[0],
   };
 };
 
@@ -95,6 +96,11 @@ const dockToPlanet = (state, ship) => {
   currState = updateWorld(currState, 3000);
   return currState;
 };
+
+const findDialogueOptionId = (dialogue, keyword) =>
+  dialogue.options.find(
+    (o) => o.text.toLowerCase().indexOf(keyword.toLowerCase()) > -1
+  )?.id;
 
 describe('player actions logic', () => {
   beforeAll(swapGlobals);
@@ -246,12 +252,37 @@ describe('player actions logic', () => {
         mockSelectDialogueOption(
           player.id,
           dialogue.id,
-          dialogue.options.find((o) => o.text.indexOf('Undock') > -1)?.id
+          findDialogueOptionId(dialogue, 'undock')
         )
       );
       state = updateWorld(state, 1000);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.docked_at).toBeFalsy();
+    });
+
+    fit('can initiate trade via dialogue', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship, planet } = createStateWithAShip();
+      state = dockToPlanet(state, ship, player);
+      const myDialogueState = Object.entries(
+        state.dialogue_states[player.id][1]
+      )[0];
+      const dialogue = wasm.buildDialogueFromState(
+        myDialogueState[0],
+        myDialogueState[1],
+        player.id,
+        state
+      );
+      state.player_actions.push(
+        mockSelectDialogueOption(
+          player.id,
+          dialogue.id,
+          findDialogueOptionId(dialogue, 'marketplace')
+        )
+      );
+      state = updateWorld(state, 1000);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.trading_with?.id).toEqual(planet.id);
     });
   });
 

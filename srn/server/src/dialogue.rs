@@ -436,6 +436,7 @@ fn apply_dialogue_option(
     };
 }
 
+//noinspection RsUnresolvedReference
 fn apply_side_effects(
     state: &mut GameState,
     side_effects: Vec<DialogueOptionSideEffect>,
@@ -526,10 +527,14 @@ fn apply_side_effects(
                 }
             }
             DialogueOptionSideEffect::TriggerTrade => {
-                if let (Some(player), Some(ship)) = find_player_and_ship_mut(state, player_id) {
+                let find_result = find_player_and_ship(state, player_id);
+                let player_clone = find_result.0.map(|v| v.clone());
+                let ship_clone = find_result.1.map(|v| v.clone());
+                if let (Some(player), Some(ship)) = (player_clone, ship_clone) {
                     if ship.docked_at.is_some() {
-                        fire_event(GameEvent::TradeDialogueTriggerRequest {
+                        fire_saved_event(state, GameEvent::TradeDialogueTriggerRequest {
                             player_id: player.id,
+                            ship_id: ship.id,
                             planet_id: ship.docked_at.unwrap(),
                         })
                     }
