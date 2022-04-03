@@ -5,7 +5,7 @@ use crate::indexing::{
 use crate::indexing::{ObjectSpecifier};
 use crate::long_actions::{LongActionStart, try_start_long_action, try_start_long_action_ship};
 use crate::world::{fire_saved_event, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipWithTime, undock_ship};
-use crate::{indexing, tractoring, trajectory, Vec2f64};
+use crate::{indexing, inventory, tractoring, trajectory, Vec2f64};
 use rand::prelude::*;
 use uuid::Uuid;
 use serde_derive::{Deserialize, Serialize};
@@ -13,6 +13,7 @@ use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use wasm_bindgen::prelude::*;
 use crate::dialogue::{execute_dialog_option, DialogueTable, DialogueUpdate};
 use rand_pcg::Pcg64Mcg;
+use crate::inventory::InventoryAction;
 use crate::world_events::GameEvent;
 
 const MAX_ALLOWED_DISTANCE_TICKS: i64 = 10 * 1000 * 1000;
@@ -179,15 +180,15 @@ pub fn world_update_handle_action(
                 state,
                 DialogueUpdate {
                     dialogue_id,
-                    option_id
+                    option_id,
                 }, d_table,
                 prng,
             );
         }
-        Action::RequestDialogue { player_id, planet_id} => {
+        Action::RequestDialogue { player_id, planet_id } => {
             fire_saved_event(state, GameEvent::DialogueTriggerRequest {
                 dialogue_name: "basic_planet".to_string(),
-                target: Some(ObjectSpecifier::Planet { id: planet_id}),
+                target: Some(ObjectSpecifier::Planet { id: planet_id }),
                 player_id,
             })
         }
@@ -196,6 +197,11 @@ pub fn world_update_handle_action(
         } => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.trading_with = None;
+            }
+        }
+        Action::Inventory { player_id, action } => {
+            if let Some(ship) = find_my_ship_mut(state, player_id) {
+                inventory::apply_action(&mut ship.inventory, action);
             }
         }
         _ => {
@@ -223,6 +229,7 @@ pub fn is_world_update_action(act: &Action) -> bool {
             | Action::SelectDialogueOption { .. }
             | Action::RequestDialogue { .. }
             | Action::CancelTrade { .. }
+            | Action::Inventory { .. }
     )
 }
 
@@ -280,7 +287,11 @@ pub enum Action {
     },
     CancelTrade {
         player_id: Uuid,
-    }
+    },
+    Inventory {
+        player_id: Uuid,
+        action: InventoryAction,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

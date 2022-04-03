@@ -283,7 +283,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
             warn!("Unsupported client op code 'DialogueRequest'");
         }
         ClientOpCode::InventoryAction => {
-            on_client_inventory_action(client_id, second, third);
+            warn!("Unsupported client op code 'InventoryAction'");
         }
         ClientOpCode::ObsoleteLongActionStart => {
             warn!(format!("usage of obsolete opcode LongActionStart"));
@@ -473,29 +473,6 @@ fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
             let state = state.unwrap();
             market::attempt_trade(state, client_id, action, &mut get_prng());
             x_cast_state(state.clone(), XCast::Broadcast(state.id));
-            send_tag_confirm(tag.unwrap().to_string(), client_id);
-        }
-        Err(err) => {
-            eprintln!("couldn't parse trade action {}, err {}", data, err);
-        }
-    }
-}
-
-fn on_client_inventory_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
-    let parsed = serde_json::from_str::<inventory::InventoryAction>(data);
-    match parsed {
-        Ok(action) => {
-            let mut cont = STATE.write().unwrap();
-            let state = states::select_state_mut(&mut cont, client_id);
-            if state.is_none() {
-                warn!("inventory action in non-existent state");
-                return;
-            }
-            let state = state.unwrap();
-            if let Some(ship) = indexing::find_my_ship_mut(state, client_id) {
-                inventory::apply_action(&mut ship.inventory, action);
-            }
-            x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
             send_tag_confirm(tag.unwrap().to_string(), client_id);
         }
         Err(err) => {

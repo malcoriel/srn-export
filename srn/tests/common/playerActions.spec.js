@@ -64,6 +64,16 @@ export const mockCancelTradeAction = (playerId) => ({
   player_id: playerId,
 });
 
+export const mockInventoryActionMove = (playerId, itemId, index) => ({
+  tag: 'Inventory',
+  player_id: playerId,
+  action: {
+    tag: 'Move',
+    item: itemId,
+    index,
+  },
+});
+
 export const mockPlayerActionDockNavigate = (shipId, to) => ({
   tag: 'DockNavigate',
   ship_id: shipId,
@@ -82,6 +92,9 @@ const createStateWithAShip = () => {
   player.ship_id = ship.id;
   const loc = getLoc0(state);
   loc.ships.push(ship);
+  // to not blow up due to being in the star
+  ship.x = 100;
+  ship.y = 100;
   return {
     state,
     player,
@@ -106,6 +119,16 @@ const findDialogueOptionId = (dialogue, keyword) =>
   dialogue.options.find(
     (o) => o.text.toLowerCase().indexOf(keyword.toLowerCase()) > -1
   )?.id;
+
+const mockInventoryItem = (index = 0) => ({
+  id: uuid.v4(),
+  index,
+  quantity: 10,
+  value: 100,
+  stackable: true,
+  player_owned: true,
+  item_type: 'CommonMineral',
+});
 
 describe('player actions logic', () => {
   beforeAll(swapGlobals);
@@ -297,7 +320,18 @@ describe('player actions logic', () => {
   });
 
   describe('inventory and trade actions', () => {
-    it.todo('can move items in the inventory');
+    it('can move items in the inventory', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship } = createStateWithAShip();
+      const item1 = mockInventoryItem();
+      ship.inventory = [item1];
+      state.player_actions.push(
+        mockInventoryActionMove(player.id, item1.id, 1)
+      );
+      state = updateWorld(state, 1000);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.inventory[0].index).toEqual(1);
+    });
     it.todo('can split items in the inventory');
     it.todo('can join items in the inventory');
     it.todo('can trade items with a planet');

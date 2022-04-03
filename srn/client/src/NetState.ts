@@ -877,11 +877,12 @@ export default class NetState extends EventEmitter {
   }
 
   public sendInventoryAction(invAct: InventoryAction) {
-    this.send({
-      code: ClientOpCode.InventoryAction,
-      value: invAct,
-      tag: uuid.v4(),
-    });
+    this.sendSchedulePlayerAction(
+      ActionBuilder.ActionInventory({
+        player_id: this.state.my_id,
+        action: invAct,
+      })
+    );
   }
 
   public startLongAction(longAction: LongActionStart) {
