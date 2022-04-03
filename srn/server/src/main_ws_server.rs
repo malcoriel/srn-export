@@ -279,7 +279,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         }
         ClientOpCode::Unknown => {}
         ClientOpCode::DialogueRequest => {
-            on_client_dialogue_request(client_id, second, third);
+            warn!("Unsupported client op code 'DialogueRequest'");
         }
         ClientOpCode::InventoryAction => {
             on_client_inventory_action(client_id, second, third);

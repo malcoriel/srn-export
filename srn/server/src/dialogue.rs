@@ -512,6 +512,7 @@ fn apply_side_effects(
                         GameEvent::DialogueTriggerRequest {
                             dialogue_name: name,
                             player_id: player_clone.id,
+                            target: None
                         },
                     )
                 }

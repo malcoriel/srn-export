@@ -1,4 +1,4 @@
-use crate::{bots, fire_event, indexing, notifications, prng_id, world, Room};
+use crate::{bots, fire_event, indexing, notifications, prng_id, world, Room, ObjectSpecifier};
 use itertools::Itertools;
 
 use rand_pcg::Pcg64Mcg;
@@ -28,13 +28,14 @@ pub fn on_create_room(room: &mut Room, prng: &mut Pcg64Mcg) {
     // add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
 }
 
-pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>) {
+pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>, planet_id: Uuid) {
     if let Some(player_id) = player_id {
         fire_saved_event(
             state,
             GameEvent::DialogueTriggerRequest {
                 dialogue_name: "basic_planet".to_owned(),
                 player_id,
+                target: Some(ObjectSpecifier::Planet {id: planet_id}),
             },
         );
     }

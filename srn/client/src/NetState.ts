@@ -877,13 +877,7 @@ export default class NetState extends EventEmitter {
   }
 
   public sendDialogueRequest(planet_id: string) {
-    this.send({
-      code: ClientOpCode.DialogueRequest,
-      value: {
-        planet_id,
-      },
-      tag: uuid.v4(),
-    });
+    this.sendSchedulePlayerAction(ActionBuilder.)
   }
 
   public sendInventoryAction(invAct: InventoryAction) {

@@ -28,7 +28,12 @@ pub fn world_update_handle_event(
         GameEvent::DialogueTriggerRequest {
             dialogue_name,
             player_id,
+            target: planet_id,
         } => {
+            // potentially you could initiate the different dialogue when not even on a planet,
+            // but for now it's unnecessary - so the code always assumes that you are landed and
+            // the basic_planet will work exactly that way via s_current_planet
+            let _planet_id = planet_id;
             if let Some(script) = d_table.get_by_name(dialogue_name.as_str()) {
                 d_table.trigger_dialogue(script, player_id, state);
             } else {
@@ -43,10 +48,10 @@ pub fn world_update_handle_event(
         } => match state.mode {
             GameMode::Unknown => {}
             GameMode::CargoRush => {
-                cargo_rush::on_ship_docked(state, player_id);
+                cargo_rush::on_ship_docked(state, player_id, planet.id);
             }
             GameMode::Tutorial => {
-                tutorial::on_ship_docked(state, player_id);
+                tutorial::on_ship_docked(state, player_id, planet.id);
             }
             GameMode::Sandbox => {}
             GameMode::PirateDefence => {
@@ -145,6 +150,7 @@ pub enum GameEvent {
     DialogueTriggerRequest {
         dialogue_name: String,
         player_id: Uuid,
+        target: Option<ObjectSpecifier>,
     },
     PirateSpawn {
         at: Vec2f64,
