@@ -1599,6 +1599,7 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
         // something on them. typically, server just does retransmitting them to the client ahead of the normal update
         GameEvent::ShipSpawned { .. } => fire_event(event),
         GameEvent::ShipDied { .. } => fire_event(event),
+        GameEvent::SandboxCommandRequest { .. } => fire_event(event),
         _ => fire_event(event),
     }
 }

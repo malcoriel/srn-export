@@ -273,7 +273,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         }
         ClientOpCode::SwitchRoom => on_client_switch_room(client_id, second),
         ClientOpCode::SandboxCommand => {
-            on_client_sandbox_command(client_id, second, third);
+            warn!("Unsupported client op code 'SandboxCommand'");
         }
         ClientOpCode::TradeAction => {
             on_client_trade_action(client_id, second, third);
@@ -287,7 +287,6 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         }
         ClientOpCode::ObsoleteLongActionStart => {
             warn!(format!("usage of obsolete opcode LongActionStart"));
-            on_client_long_action_start(client_id, second, third);
         }
         ClientOpCode::ObsoleteRoomJoin => {
             eprintln!("usage of obsolete opcode RoomJoin");
@@ -430,33 +429,6 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
             crate::personalize_player(state, client_id, up);
         }
         Err(_) => {}
-    }
-}
-
-fn on_client_sandbox_command(client_id: Uuid, second: &&str, third: Option<&&str>) {
-    let parsed = serde_json::from_str::<sandbox::SandboxCommand>(second);
-    match parsed {
-        Ok(res) => {
-            let mut cont = STATE.write().unwrap();
-            let state = states::select_state_mut(&mut cont, client_id);
-            if state.is_none() {
-                warn!("sandbox command in non-existent state");
-                return;
-            }
-            let state = state.unwrap();
-            if state.mode != world::GameMode::Sandbox {
-                warn!(format!(
-                    "Attempt to send a sandbox command to non-sandbox state by client {}",
-                    client_id
-                ));
-                return;
-            }
-            sandbox::mutate_state(state, client_id, res);
-            send_tag_confirm(third.unwrap().to_string(), client_id);
-        }
-        Err(err) => {
-            eprintln!("couldn't parse sandbox action {}, err {}", second, err);
-        }
     }
 }
 

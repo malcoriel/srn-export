@@ -346,8 +346,8 @@ describe('player actions logic', () => {
   describe('sandbox commands', () => {
     it('can add a container', () => {
       // eslint-disable-next-line prefer-const
-      let { state } = createStateWithAShip('Sandbox');
-      state.player_actions.push(mockSandboxActionAddContainer(''));
+      let { state, player } = createStateWithAShip('Sandbox');
+      state.player_actions.push(mockSandboxActionAddContainer(player.id));
       state = updateWorld(state, 1000);
       expect(getLoc0(state).containers.length).toEqual(1);
     });

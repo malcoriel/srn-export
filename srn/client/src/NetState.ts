@@ -861,11 +861,12 @@ export default class NetState extends EventEmitter {
   }
 
   public sendSandboxCmd(cmd: SandboxCommand) {
-    this.send({
-      code: ClientOpCode.SandboxCommand,
-      value: serializeSandboxCommand(cmd),
-      tag: uuid.v4(),
-    });
+    this.sendSchedulePlayerAction(
+      ActionBuilder.ActionSandboxCommand({
+        player_id: this.state.my_id,
+        command: cmd,
+      })
+    );
   }
 
   public sendTradeAction(cmd: TradeAction) {
@@ -886,13 +887,7 @@ export default class NetState extends EventEmitter {
   }
 
   public startLongAction(longAction: LongActionStart) {
-    if (longAction.tag !== 'Shoot') {
-      this.send({
-        code: ClientOpCode.LongActionStart,
-        value: longAction,
-        tag: uuid.v4(),
-      });
-    } else if (this.indexes.myShip) {
+    if (this.indexes.myShip) {
       const act = ActionBuilder.ActionLongActionStart({
         long_action_start: longAction,
         player_id: this.state.my_id,

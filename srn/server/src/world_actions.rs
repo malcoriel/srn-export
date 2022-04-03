@@ -6,7 +6,7 @@ use crate::sandbox::{SandboxCommand};
 use crate::indexing::{ObjectSpecifier};
 use crate::long_actions::{LongActionStart, try_start_long_action, try_start_long_action_ship};
 use crate::world::{fire_saved_event, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipWithTime, undock_ship};
-use crate::{indexing, inventory, tractoring, trajectory, Vec2f64};
+use crate::{fire_event, indexing, inventory, tractoring, trajectory, Vec2f64};
 use rand::prelude::*;
 use uuid::Uuid;
 use serde_derive::{Deserialize, Serialize};
@@ -204,6 +204,12 @@ pub fn world_update_handle_action(
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 inventory::apply_action(&mut ship.inventory, action);
             }
+        }
+        Action::SandboxCommand {player_id, command} => {
+            fire_saved_event(state,GameEvent::SandboxCommandRequest {
+                player_id,
+                command
+            });
         }
         _ => {
             warn!(format!(

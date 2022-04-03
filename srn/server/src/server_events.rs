@@ -153,6 +153,9 @@ pub fn handle_events(
                     GameEvent::QuitPlayerRequest { player_id } => {
                         crate::main_ws_server::kick_player(player_id);
                     }
+                    GameEvent::SandboxCommandRequest { .. } => {
+                        // no commands yet require server-level handling, but it's not a mistake too
+                    }
                 }
             }
             Err(_) => {

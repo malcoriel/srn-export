@@ -204,3 +204,29 @@ pub struct SavedState {
 }
 
 pub type StateDictionary = HashMap<Uuid, SavedState>;
+
+pub fn is_world_command(command: &SandboxCommand) -> bool {
+    match command {
+        SandboxCommand::AddStar => {
+            true
+        }
+        SandboxCommand::AddMineral => {
+            true
+        }
+        SandboxCommand::AddContainer => {
+            true
+        }
+        SandboxCommand::ToggleGodMode => {
+            true
+        }
+        SandboxCommand::GetSomeWares => {
+            true
+        }
+        SandboxCommand::AddPlanet { .. } => {
+            true
+        }
+        SandboxCommand::Teleport { .. } => {
+            true
+        }
+    }
+}
