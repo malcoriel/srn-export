@@ -2,6 +2,7 @@ use crate::abilities::Ability;
 use crate::indexing::{
     find_my_ship_mut, find_player_idx_by_ship_id, find_ship_index, find_ship_mut, GameStateIndexes,
 };
+use crate::sandbox::{SandboxCommand};
 use crate::indexing::{ObjectSpecifier};
 use crate::long_actions::{LongActionStart, try_start_long_action, try_start_long_action_ship};
 use crate::world::{fire_saved_event, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipWithTime, undock_ship};
@@ -230,6 +231,7 @@ pub fn is_world_update_action(act: &Action) -> bool {
             | Action::RequestDialogue { .. }
             | Action::CancelTrade { .. }
             | Action::Inventory { .. }
+            | Action::SandboxCommand { .. }
     )
 }
 
@@ -291,6 +293,10 @@ pub enum Action {
     Inventory {
         player_id: Uuid,
         action: InventoryAction,
+    },
+    SandboxCommand {
+        player_id: Uuid,
+        command: SandboxCommand,
     },
 }
 

@@ -153,6 +153,9 @@ mod interpolation;
 #[path = "../../server/src/trajectory.rs"]
 mod trajectory;
 
+#[path = "../../server/src/sandbox.rs"]
+mod sandbox;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};

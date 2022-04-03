@@ -10,7 +10,8 @@ use uuid::Uuid;
 
 use crate::{indexing, prng_id};
 use crate::indexing::{find_my_ship, find_my_ship_mut};
-
+use serde_derive::{Deserialize, Serialize};
+use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;
 use crate::random_stuff::PLANET_NAMES;

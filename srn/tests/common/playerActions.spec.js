@@ -74,16 +74,22 @@ export const mockInventoryActionMove = (playerId, itemId, index) => ({
   },
 });
 
+export const mockSandboxActionAddContainer = (playerId) => ({
+  tag: 'SandboxCommand',
+  player_id: playerId,
+  command: 'AddContainer',
+});
+
 export const mockPlayerActionDockNavigate = (shipId, to) => ({
   tag: 'DockNavigate',
   ship_id: shipId,
   target: to,
 });
 
-const createStateWithAShip = () => {
+const createStateWithAShip = (mode = 'CargoRush') => {
   const state = wasm.seedWorld({
     seed: 'player actions',
-    mode: 'CargoRush',
+    mode,
     gen_state_opts: genStateOpts({ system_count: 1 }),
   });
   const player = mockPlayer(uuid.v4());
@@ -338,7 +344,13 @@ describe('player actions logic', () => {
   });
 
   describe('sandbox commands', () => {
-    it.todo('can add a container');
+    it('can add a container', () => {
+      // eslint-disable-next-line prefer-const
+      let { state } = createStateWithAShip('Sandbox');
+      state.player_actions.push(mockSandboxActionAddContainer(''));
+      state = updateWorld(state, 1000);
+      expect(getLoc0(state).containers.length).toEqual(1);
+    });
   });
 
   describe('notification actions', () => {
