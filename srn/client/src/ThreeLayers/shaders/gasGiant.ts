@@ -120,8 +120,6 @@ void main() {
   spots_uv.x = centeredCoord.x*sphericalDistortion / 2.0 + time * spotsRotationSpeed;
   spots_uv.y = centeredCoord.y*sphericalDistortion / 2.0 + 0.5;
 
-  (x, y) => (x1, y2)
-
   // random spots
   float spotSuppression = 0.1;
   float t1 = simplex_noise_2(spots_uv * 2.0) - spotSuppression;

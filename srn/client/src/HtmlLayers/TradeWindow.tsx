@@ -5,11 +5,15 @@ import './TradeWindow.scss';
 import { GameState, Market } from '../world';
 import { useStore, WindowState } from '../store';
 import _ from 'lodash';
-import { InventoryActionBuilder } from '../../../world/pkg/world.extra';
+import {
+  ActionBuilder,
+  InventoryActionBuilder,
+} from '../../../world/pkg/world.extra';
 import styleVars from './TradeWindow.vars.module.scss';
 import { pxToNumber } from '../utils/pxToNumber';
 import { findMyShip } from '../ClientStateIndexing';
 import { useNSForceChange } from '../NetStateHooks';
+
 const BOTTOM_BAR_HEIGHT = Number(pxToNumber(styleVars.bottomBarHeight));
 const TOP_BAR_HEIGHT = Number(pxToNumber(styleVars.topBarHeight));
 
@@ -132,7 +136,17 @@ export const TradeWindow = () => {
   };
 
   const onCloseTradeWindow = () => {
-    if (planetId) ns.sendDialogueRequest(planetId);
+    if (planetId) {
+      ns.sendSchedulePlayerAction(
+        ActionBuilder.ActionCancelTrade({ player_id: ns.state.my_id })
+      );
+      ns.sendSchedulePlayerAction(
+        ActionBuilder.ActionRequestDialogue({
+          player_id: ns.state.my_id,
+          planet_id: planetId,
+        })
+      );
+    }
   };
 
   if (!planetId) return null;

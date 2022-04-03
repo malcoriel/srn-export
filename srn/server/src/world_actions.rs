@@ -2,9 +2,10 @@ use crate::abilities::Ability;
 use crate::indexing::{
     find_my_ship_mut, find_player_idx_by_ship_id, find_ship_index, find_ship_mut, GameStateIndexes,
 };
+use crate::indexing::{ObjectSpecifier};
 use crate::long_actions::{LongActionStart, try_start_long_action, try_start_long_action_ship};
 use crate::world::{fire_saved_event, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipWithTime, undock_ship};
-use crate::{indexing, ObjectSpecifier, tractoring, trajectory, Vec2f64};
+use crate::{indexing, tractoring, trajectory, Vec2f64};
 use rand::prelude::*;
 use uuid::Uuid;
 use serde_derive::{Deserialize, Serialize};
@@ -190,6 +191,13 @@ pub fn world_update_handle_action(
                 player_id,
             })
         }
+        Action::CancelTrade {
+            player_id
+        } => {
+            if let Some(ship) = find_my_ship_mut(state, player_id) {
+                ship.trading_with = None;
+            }
+        }
         _ => {
             warn!(format!(
                 "action {:?} cannot be handled by world_update_handle_player_action",
@@ -214,6 +222,7 @@ pub fn is_world_update_action(act: &Action) -> bool {
             | Action::Tractor { .. }
             | Action::SelectDialogueOption { .. }
             | Action::RequestDialogue { .. }
+            | Action::CancelTrade { .. }
     )
 }
 
@@ -267,6 +276,9 @@ pub enum Action {
     },
     RequestDialogue {
         planet_id: Uuid,
+        player_id: Uuid,
+    },
+    CancelTrade {
         player_id: Uuid,
     }
 }

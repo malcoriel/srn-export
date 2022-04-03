@@ -1,7 +1,8 @@
 use crate::world::{fire_saved_event, GameState, Player};
 use crate::world_events::GameEvent;
 use uuid::Uuid;
-use crate::ObjectSpecifier;
+
+use crate::indexing::{ObjectSpecifier};
 
 pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>, planet_id: Uuid) {
     if let Some(player_id) = player_id {

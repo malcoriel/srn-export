@@ -834,7 +834,7 @@ export default class NetState extends EventEmitter {
     );
   }
 
-  private sendSchedulePlayerAction(action: Action) {
+  public sendSchedulePlayerAction(action: Action) {
     const tag = uuid.v4();
     this.send({
       code: ClientOpCode.SchedulePlayerAction,
@@ -874,10 +874,6 @@ export default class NetState extends EventEmitter {
       value: cmd,
       tag: uuid.v4(),
     });
-  }
-
-  public sendDialogueRequest(planet_id: string) {
-    this.sendSchedulePlayerAction(ActionBuilder.)
   }
 
   public sendInventoryAction(invAct: InventoryAction) {

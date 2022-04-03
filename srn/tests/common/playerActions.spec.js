@@ -260,7 +260,7 @@ describe('player actions logic', () => {
       expect(ship.docked_at).toBeFalsy();
     });
 
-    fit('can initiate trade via dialogue', () => {
+    it('can initiate trade via dialogue and then close it', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship, planet } = createStateWithAShip();
       state = dockToPlanet(state, ship, player);

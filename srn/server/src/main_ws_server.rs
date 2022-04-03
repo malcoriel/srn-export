@@ -15,6 +15,7 @@ use websocket::server::sync::Server;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::{Message, OwnedMessage};
 
+use crate::indexing::{ObjectSpecifier};
 use crate::dialogue::{execute_dialog_option, DialogueUpdate,Dialogue};
 use crate::get_prng;
 use crate::indexing::find_my_player;
@@ -651,35 +652,6 @@ pub fn multicast_ships_update_excluding(
             current_state_id,
         ))
         .unwrap();
-}
-
-fn on_client_dialogue_request(client_id: Uuid, data: &&str, tag: Option<&&str>) {
-    let parsed = serde_json::from_str::<DialogueRequest>(data);
-    match parsed {
-        // Technically, the dialogue should be triggered with the planet specified.
-        // However, the basic_planet trigger will handle the 'current' planet
-        // by itself. This will be useful later, however, to trigger something like
-        // remote-to-planet dialogue
-        Ok(_action) => {
-            let mut cont = STATE.write().unwrap();
-            let state = states::select_state_mut(&mut cont, client_id);
-            if state.is_none() {
-                warn!("dialogue request in non-existent state");
-                return;
-            }
-            let state = state.unwrap();
-            if let Some(player) = find_my_player(state, client_id) {
-                crate::fire_event(GameEvent::DialogueTriggerRequest {
-                    dialogue_name: "basic_planet".to_string(),
-                    player_id: player.id,
-                })
-            }
-            send_tag_confirm(tag.unwrap().to_string(), client_id);
-        }
-        Err(err) => {
-            eprintln!("couldn't parse dialogue request {}, err {}", data, err);
-        }
-    }
 }
 
 pub fn cleanup_bad_clients_thread() {

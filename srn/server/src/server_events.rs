@@ -5,6 +5,7 @@ use std::sync::{MutexGuard, RwLockWriteGuard};
 
 use crate::api_struct::AiTrait;
 use crate::world_events::GameEvent;
+use crate::indexing::{ObjectSpecifier};
 use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 
@@ -73,6 +74,7 @@ pub fn handle_events(
                             fire_event(GameEvent::DialogueTriggerRequest {
                                 dialogue_name: "tutorial_start".to_owned(),
                                 player_id,
+                                target: None
                             });
                         }
                     }

@@ -1,6 +1,7 @@
-use crate::{bots, fire_event, indexing, notifications, prng_id, world, Room, ObjectSpecifier};
+use crate::{bots, fire_event, indexing, notifications, prng_id, world, Room};
 use itertools::Itertools;
 
+use crate::indexing::{ObjectSpecifier};
 use rand_pcg::Pcg64Mcg;
 use rand::prelude::*;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
