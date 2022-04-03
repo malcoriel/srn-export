@@ -349,7 +349,19 @@ describe('player actions logic', () => {
     });
     it.todo('can split items in the inventory');
     it.todo('can join items in the inventory');
-    it.todo('can trade items with a planet');
+    fit('can trade items with a planet', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship, planet } = createStateWithAShip();
+      player.money = 5000;
+      state = dockToPlanet(state, ship, player);
+      ship = getShipByPlayerId(player.id);
+      ship.trading_with = {
+        tag: 'Planet',
+        id: planet.id,
+      };
+      console.log(state.market);
+      // state.player_actions.push(mockActionTrade());
+    });
   });
 
   describe('sandbox commands', () => {
