@@ -59,6 +59,11 @@ export const mockSelectDialogueOption = (playerId, dialogueId, optionId) => ({
   player_id: playerId,
 });
 
+export const mockCancelTradeAction = (playerId) => ({
+  tag: 'CancelTrade',
+  player_id: playerId,
+});
+
 export const mockPlayerActionDockNavigate = (shipId, to) => ({
   tag: 'DockNavigate',
   ship_id: shipId,
@@ -283,6 +288,11 @@ describe('player actions logic', () => {
       state = updateWorld(state, 1000);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.trading_with?.id).toEqual(planet.id);
+
+      state.player_actions.push(mockCancelTradeAction(player.id));
+      state = updateWorld(state, 1000);
+      ship = getShipByPlayerId(state, player.id);
+      expect(ship.trading_with?.id).toBeFalsy();
     });
   });
 
