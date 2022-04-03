@@ -50,8 +50,8 @@ impl Notification {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-#[serde(tag = "tag")]
-pub enum NotificationAction {
+#[serde(tag = "tag")] // must be named R because otherwise TS will pick up NotificationAction from DOM
+pub enum NotificationActionR {
     Unknown,
     Dismiss { id: Uuid },
 }
@@ -64,6 +64,7 @@ pub struct NotificationText {
 }
 
 pub fn get_new_player_notifications(_mode: &GameMode, prng: &mut Pcg64Mcg) -> Vec<Notification> {
+    log!("notifications built");
     return vec![
         Notification::Help {
             header: "How to play".to_string(),
@@ -95,10 +96,10 @@ pub fn get_new_player_notifications(_mode: &GameMode, prng: &mut Pcg64Mcg) -> Ve
     ];
 }
 
-pub fn apply_action(state: &mut GameState, player_id: Uuid, action: NotificationAction) {
+pub fn apply_action(state: &mut GameState, player_id: Uuid, action: NotificationActionR) {
     match action {
-        NotificationAction::Unknown => {}
-        NotificationAction::Dismiss { id } => {
+        NotificationActionR::Unknown => {}
+        NotificationActionR::Dismiss { id } => {
             let player = find_my_player_mut(state, player_id);
             if let Some(player) = player {
                 log!(format!("cleaning {} of {:?}", id, player.notifications));

@@ -2,7 +2,7 @@ import React from 'react';
 import './NotificationPanel.scss';
 import {
   Notification,
-  NotificationAction,
+  NotificationActionR,
   NotificationUnknown,
   Substitution,
 } from '../../../world/pkg';
@@ -11,13 +11,13 @@ import { FaQuestion, FaTasks } from 'react-icons/all';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import { StyledRect } from './ui/StyledRect';
-import { NotificationActionBuilder } from '../../../world/pkg/world.extra';
+import { NotificationActionRBuilder } from '../../../world/pkg/world.extra';
 import { transformAllTextSubstitutions } from '../utils/substitutions';
 
 type NotificationPanelProps = {
   notifications: Notification[];
   className?: string;
-  onAction?: (act: NotificationAction) => void;
+  onAction?: (act: NotificationActionR) => void;
   onFocusObject?: (id: string) => void;
 };
 
@@ -108,7 +108,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               onContextMenu={(e) => {
                 if (onAction && notification.isDismissable) {
                   onAction(
-                    NotificationActionBuilder.NotificationActionDismiss({
+                    NotificationActionRBuilder.NotificationActionRDismiss({
                       id: rawNotification.id,
                     })
                   );

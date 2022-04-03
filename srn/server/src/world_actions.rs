@@ -15,7 +15,7 @@ use wasm_bindgen::prelude::*;
 use crate::dialogue::{execute_dialog_option, DialogueTable, DialogueUpdate};
 use rand_pcg::Pcg64Mcg;
 use crate::inventory::InventoryAction;
-use crate::notifications::NotificationAction;
+use crate::notifications::NotificationActionR;
 use crate::world_events::GameEvent;
 
 const MAX_ALLOWED_DISTANCE_TICKS: i64 = 10 * 1000 * 1000;
@@ -307,7 +307,7 @@ pub enum Action {
     },
     Notification {
         player_id: Uuid,
-        action: NotificationAction,
+        action: NotificationActionR,
     },
     SandboxCommand {
         player_id: Uuid,

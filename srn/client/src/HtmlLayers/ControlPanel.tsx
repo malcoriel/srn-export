@@ -11,11 +11,10 @@ import {
 import { StyledRect } from './ui/StyledRect';
 import { Button } from './ui/Button';
 import { useStore } from '../store';
-import NetState from '../NetState';
 import { makePortraitPath } from './StartMenu';
 import { findObjectById, getObjectPosition, Ship } from '../world';
-import { NotificationPanel } from './NotifcationPanel';
-import { GameState, NotificationAction } from '../../../world/pkg';
+import { NotificationPanel } from './NotificationPanel';
+import { GameState, NotificationActionR } from '../../../world/pkg';
 import { PlayerActionsBar } from './PlayerActionsBar';
 import { findMyPlayer, findMyShip } from '../ClientStateIndexing';
 import { useNSForceChange } from '../NetStateHooks';
@@ -115,7 +114,7 @@ const Notifications = () => {
     <div className="notification-panel-in-control-panel">
       <NotificationPanel
         notifications={myPlayer.notifications}
-        onAction={(act: NotificationAction) => {
+        onAction={(act: NotificationActionR) => {
           if (ns) {
             ns.sendNotificationAction(act);
           }

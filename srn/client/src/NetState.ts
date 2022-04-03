@@ -24,8 +24,8 @@ import { UnreachableCaseError } from 'ts-essentials';
 import {
   InventoryAction,
   LongActionStart,
-  NotificationAction,
   Action,
+  NotificationActionR,
 } from '../../world/pkg';
 import {
   buildClientStateIndexes,
@@ -898,7 +898,7 @@ export default class NetState extends EventEmitter {
     }
   }
 
-  public sendNotificationAction(notAction: NotificationAction) {
+  public sendNotificationAction(notAction: NotificationActionR) {
     this.sendSchedulePlayerAction(
       ActionBuilder.ActionNotification({
         action: notAction,

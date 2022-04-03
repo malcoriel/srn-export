@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
-import { NotificationPanel } from './NotifcationPanel';
+import { NotificationPanel } from './NotificationPanel';
 import { gray } from '../utils/palette';
 import {
   NotificationBuilder,
