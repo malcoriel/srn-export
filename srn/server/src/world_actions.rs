@@ -6,7 +6,7 @@ use crate::sandbox::{SandboxCommand};
 use crate::indexing::{ObjectSpecifier};
 use crate::long_actions::{LongActionStart, try_start_long_action, try_start_long_action_ship};
 use crate::world::{fire_saved_event, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipWithTime, undock_ship};
-use crate::{fire_event, indexing, inventory, tractoring, trajectory, Vec2f64};
+use crate::{fire_event, indexing, inventory, notifications, tractoring, trajectory, Vec2f64};
 use rand::prelude::*;
 use uuid::Uuid;
 use serde_derive::{Deserialize, Serialize};
@@ -15,6 +15,7 @@ use wasm_bindgen::prelude::*;
 use crate::dialogue::{execute_dialog_option, DialogueTable, DialogueUpdate};
 use rand_pcg::Pcg64Mcg;
 use crate::inventory::InventoryAction;
+use crate::notifications::NotificationAction;
 use crate::world_events::GameEvent;
 
 const MAX_ALLOWED_DISTANCE_TICKS: i64 = 10 * 1000 * 1000;
@@ -211,6 +212,9 @@ pub fn world_update_handle_action(
                 command
             });
         }
+        Action::Notification {player_id, action} => {
+            notifications::apply_action(state, player_id, action);
+        }
         _ => {
             warn!(format!(
                 "action {:?} cannot be handled by world_update_handle_player_action",
@@ -237,6 +241,7 @@ pub fn is_world_update_action(act: &Action) -> bool {
             | Action::RequestDialogue { .. }
             | Action::CancelTrade { .. }
             | Action::Inventory { .. }
+            | Action::Notification { .. }
             | Action::SandboxCommand { .. }
     )
 }
@@ -299,6 +304,10 @@ pub enum Action {
     Inventory {
         player_id: Uuid,
         action: InventoryAction,
+    },
+    Notification {
+        player_id: Uuid,
+        action: NotificationAction,
     },
     SandboxCommand {
         player_id: Uuid,

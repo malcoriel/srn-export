@@ -899,11 +899,12 @@ export default class NetState extends EventEmitter {
   }
 
   public sendNotificationAction(notAction: NotificationAction) {
-    this.send({
-      code: ClientOpCode.NotificationAction,
-      value: notAction,
-      tag: uuid.v4(),
-    });
+    this.sendSchedulePlayerAction(
+      ActionBuilder.ActionNotification({
+        action: notAction,
+        player_id: this.state.my_id,
+      })
+    );
   }
 
   pauseReplay = () => {

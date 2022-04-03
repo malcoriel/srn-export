@@ -80,6 +80,15 @@ export const mockSandboxActionAddContainer = (playerId) => ({
   command: 'AddContainer',
 });
 
+export const mockActionDismissNotification = (playerId, notificationId) => ({
+  tag: 'Notification',
+  player_id: playerId,
+  action: {
+    tag: 'Dismiss',
+    id: notificationId,
+  },
+});
+
 export const mockPlayerActionDockNavigate = (shipId, to) => ({
   tag: 'DockNavigate',
   ship_id: shipId,
@@ -354,6 +363,27 @@ describe('player actions logic', () => {
   });
 
   describe('notification actions', () => {
-    it.todo('can dismiss a notification');
+    it('can dismiss a notification', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player } = createStateWithAShip();
+      const notId = uuid.v4();
+      player.notifications.push({
+        tag: 'Help',
+        header: 'Test',
+        text: {
+          text: 'test',
+          substituted: true,
+          substitutions: [],
+        },
+        id: notId,
+      });
+      state.player_actions.push(
+        mockActionDismissNotification(player.id, notId)
+      );
+      state = updateWorld(state, 1000);
+      expect(
+        state.players[0].notifications.filter((not) => not.id === notId)
+      ).toHaveLength(0);
+    });
   });
 });

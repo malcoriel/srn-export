@@ -292,7 +292,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
             eprintln!("usage of obsolete opcode RoomJoin");
         }
         ClientOpCode::NotificationAction => {
-            on_client_notification_action(client_id, second, third);
+            warn!(format!("usage of obsolete opcode NotificationAction"));
         }
         ClientOpCode::SchedulePlayerAction => {
             on_client_schedule_player_action(client_id, second, third);
@@ -315,55 +315,6 @@ fn on_client_room_join(client_id: Uuid) {
             mode: state.mode.clone(),
             player_id: player.id,
         });
-    }
-}
-
-fn on_client_long_action_start(client_id: Uuid, data: &&str, tag: Option<&&str>) {
-    let parsed = serde_json::from_str::<long_actions::LongActionStart>(data);
-    match parsed {
-        Ok(action) => {
-            let mut cont = STATE.write().unwrap();
-            let state = states::select_state_mut(&mut cont, client_id);
-            if state.is_none() {
-                warn!("long action start in non-existent state");
-                return;
-            }
-            let state = state.unwrap();
-            // let action_dbg = action.clone();
-            if !long_actions::try_start_long_action(state, client_id, action, &mut get_prng()) {
-                // invalid shooting produces too much noise
-                // warn!(format!(
-                //     "Impossible long action for client {}, action {:?}",
-                //     client_id, action_dbg
-                // ));
-            }
-            x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
-            send_tag_confirm(tag.unwrap().to_string(), client_id);
-        }
-        Err(err) => {
-            eprintln!("couldn't parse long action start {}, err {}", data, err);
-        }
-    }
-}
-
-fn on_client_notification_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
-    let parsed = serde_json::from_str::<notifications::NotificationAction>(data);
-    match parsed {
-        Ok(action) => {
-            let mut cont = STATE.write().unwrap();
-            let state = states::select_state_mut(&mut cont, client_id);
-            if state.is_none() {
-                warn!("notification action in non-existent state");
-                return;
-            }
-            let state = state.unwrap();
-            notifications::apply_action(state, client_id, action);
-            x_cast_state(state.clone(), XCast::Unicast(state.id, client_id));
-            send_tag_confirm(tag.unwrap().to_string(), client_id);
-        }
-        Err(err) => {
-            eprintln!("couldn't parse notification action {}, err {}", data, err);
-        }
     }
 }
 

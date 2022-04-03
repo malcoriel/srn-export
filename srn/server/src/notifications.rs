@@ -101,7 +101,9 @@ pub fn apply_action(state: &mut GameState, player_id: Uuid, action: Notification
         NotificationAction::Dismiss { id } => {
             let player = find_my_player_mut(state, player_id);
             if let Some(player) = player {
+                log!(format!("cleaning {} of {:?}", id, player.notifications));
                 player.notifications.retain(|n| n.get_id() != id);
+                log!(format!("result {:?}", player.notifications));
             }
         }
     }
