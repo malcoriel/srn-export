@@ -870,11 +870,12 @@ export default class NetState extends EventEmitter {
   }
 
   public sendTradeAction(cmd: TradeAction) {
-    this.send({
-      code: ClientOpCode.TradeAction,
-      value: cmd,
-      tag: uuid.v4(),
-    });
+    this.sendSchedulePlayerAction(
+      ActionBuilder.ActionTrade({
+        player_id: this.state.my_id,
+        action: cmd,
+      })
+    );
   }
 
   public sendInventoryAction(invAct: InventoryAction) {
