@@ -80,6 +80,16 @@ export const mockSandboxActionAddContainer = (playerId) => ({
   command: 'AddContainer',
 });
 
+export const mockActionBuy = (playerId, planetId, type, amount) => ({
+  tag: 'Trade',
+  player_id: playerId,
+  action: {
+    planet_id: planetId,
+    sells_to_planet: [],
+    buys_from_planet: [[type, amount]],
+  },
+});
+
 export const mockActionDismissNotification = (playerId, notificationId) => ({
   tag: 'Notification',
   player_id: playerId,
@@ -349,18 +359,29 @@ describe('player actions logic', () => {
     });
     it.todo('can split items in the inventory');
     it.todo('can join items in the inventory');
-    fit('can trade items with a planet', () => {
+    it('can trade items with a planet', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship, planet } = createStateWithAShip();
       player.money = 5000;
       state = dockToPlanet(state, ship, player);
-      ship = getShipByPlayerId(player.id);
+      ship = getShipByPlayerId(state, player.id);
       ship.trading_with = {
         tag: 'Planet',
         id: planet.id,
       };
-      console.log(state.market);
-      // state.player_actions.push(mockActionTrade());
+      const mineral = state.market.wares[planet.id].find(
+        (item) => item.item_type === 'CommonMineral'
+      );
+      expect(mineral).toBeTruthy();
+      state.player_actions.push(
+        mockActionBuy(player.id, planet.id, 'CommonMineral', 3)
+      );
+      state = updateWorld(state, 1000);
+      ship = getShipByPlayerId(state, player.id);
+      expect(
+        ship.inventory.find((item) => item.item_type === 'CommonMineral')
+          ?.quantity
+      ).toEqual(3);
     });
   });
 

@@ -99,10 +99,10 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction, p
             let target_items_ship = consume_items_of_type(&mut ship.inventory, &sell.0);
             if target_items_ship.len() == 1 {
                 let total_price = price.buy * sell.1;
-                log!(format!(
-                    "executing sell of {} {:?} for {}",
-                    sell.1, sell.0, total_price
-                ));
+                // log!(format!(
+                //     "executing sell of {} {:?} for {}",
+                //     sell.1, sell.0, total_price
+                // ));
                 let mut target_stack = target_items_ship.into_iter().nth(0).unwrap();
                 if target_stack.quantity >= sell.1 && sell.1 > 0 {
                     let mut cloned_stack = target_stack.clone();
@@ -135,10 +135,10 @@ pub fn attempt_trade(state: &mut GameState, player_id: Uuid, act: TradeAction, p
             if target_items_planet.len() == 1 {
                 let mut target_stack = target_items_planet.into_iter().nth(0).unwrap();
                 let total_price = price.sell * buy.1;
-                log!(format!(
-                    "executing buy of {} {:?} for {}",
-                    buy.1, buy.0, total_price
-                ));
+                // log!(format!(
+                //     "executing buy of {} {:?} for {}",
+                //     buy.1, buy.0, total_price
+                // ));
                 if target_stack.quantity >= buy.1 && buy.1 > 0 {
                     if player.money >= total_price {
                         let mut cloned_stack = target_stack.clone();
