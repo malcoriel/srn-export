@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.8.5 (2022-03-16)
+### Fixes
+* Fixed lacking help notifications in CargoRush mode
+* Improved stability of the game logic
+
 ## Version 0.8.4 (2022-03-16)
 ### Fixes
 * Made replays much smoother-looking via interpolation
