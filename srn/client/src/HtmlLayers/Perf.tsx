@@ -137,6 +137,7 @@ const Perf = {
     Perf.measureFPSStat(frameEvent, debug, debugName, fpsStat);
   },
   flushBuffer: (timeElapsed: number) => {
+    console.log('perf elapsed', timeElapsed);
     accumulatedTime += timeElapsed;
     if (accumulatedTime >= flushInterval) {
       try {
@@ -223,7 +224,7 @@ export const formatNumber = (x: any) => {
   return Number(x).toFixed(3);
 };
 
-const STATS_REFRESH_TIME = 1000;
+const STATS_REFRESH_TIME = 5000;
 const StatsPanel = () => {
   const [shown] = useToggleHotkey('shift+f', false, 'show FPS & stats');
   const [force, setForce] = useState(0);

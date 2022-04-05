@@ -276,7 +276,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
             warn!("Unsupported client op code 'SandboxCommand'");
         }
         ClientOpCode::TradeAction => {
-            on_client_trade_action(client_id, second, third);
+            warn!("Unsupported client op code 'TradeAction'");
         }
         ClientOpCode::Unknown => {}
         ClientOpCode::DialogueRequest => {
@@ -380,27 +380,6 @@ fn on_client_personalize(client_id: Uuid, second: &&str) {
             crate::personalize_player(state, client_id, up);
         }
         Err(_) => {}
-    }
-}
-
-fn on_client_trade_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
-    let parsed = serde_json::from_str::<market::TradeAction>(data);
-    match parsed {
-        Ok(action) => {
-            let mut cont = STATE.write().unwrap();
-            let state = states::select_state_mut(&mut cont, client_id);
-            if state.is_none() {
-                warn!("trade action in non-existent state");
-                return;
-            }
-            let state = state.unwrap();
-            market::attempt_trade(state, client_id, action, &mut get_prng());
-            x_cast_state(state.clone(), XCast::Broadcast(state.id));
-            send_tag_confirm(tag.unwrap().to_string(), client_id);
-        }
-        Err(err) => {
-            eprintln!("couldn't parse trade action {}, err {}", data, err);
-        }
     }
 }
 

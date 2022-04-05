@@ -1,6 +1,5 @@
 import {
   AABB,
-  Dialogue,
   GameMode,
   GameState,
   isManualMovement,
@@ -22,9 +21,9 @@ import { viewPortSizeMeters } from './coord';
 import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
 import {
+  Action,
   InventoryAction,
   LongActionStart,
-  Action,
   NotificationActionR,
 } from '../../world/pkg';
 import {
@@ -34,6 +33,7 @@ import {
   findMyShipIndex,
 } from './ClientStateIndexing';
 import { ActionBuilder } from '../../world/pkg/world.extra';
+
 export type Timeout = ReturnType<typeof setTimeout>;
 
 module?.hot?.dispose(() => {
@@ -43,18 +43,18 @@ module?.hot?.dispose(() => {
 
 enum ClientOpCode {
   Unknown,
-  Sync,
-  MutateMyShip,
+  ObsoleteSync,
+  ObsoleteMutateMyShip,
   Name,
-  DialogueOption,
+  ObsoleteDialogueOption,
   SwitchRoom,
-  SandboxCommand,
-  TradeAction,
-  DialogueRequest,
-  InventoryAction,
-  LongActionStart,
-  RoomJoin,
-  NotificationAction,
+  ObsoleteSandboxCommand,
+  ObsoleteTradeAction,
+  ObsoleteDialogueRequest,
+  ObsoleteInventoryAction,
+  ObsoleteLongActionStart,
+  ObsoleteRoomJoin,
+  ObsoleteNotificationAction,
   SchedulePlayerAction,
 }
 
@@ -111,11 +111,6 @@ statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 const MAX_ALLOWED_DIST_DESYNC = 5.0;
 // this has to be less than expiry (500ms) minus ping
 const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
-
-const serializeSandboxCommand = (cmd: SandboxCommand) => {
-  // if (typeof cmd === 'string') return cmd;
-  return JSON.stringify(cmd);
-};
 
 export const reindexNetState = (netState: NetState) => {
   netState.indexes = buildClientStateIndexes(netState.state);
@@ -489,16 +484,6 @@ export default class NetState extends EventEmitter {
     };
   };
 
-  public sendName() {
-    this.send({
-      code: ClientOpCode.Name,
-      value: JSON.stringify({
-        name: this.playerName,
-        portrait_name: this.portraitName,
-      }),
-    });
-  }
-
   private handleMessage(rawData: string) {
     try {
       const [messageCodeStr, data] = rawData.split('_%_');
@@ -512,7 +497,13 @@ export default class NetState extends EventEmitter {
           return;
         }
         this.switchingRooms = false;
-        this.sendName();
+        this.send({
+          code: ClientOpCode.Name,
+          value: JSON.stringify({
+            name: this.playerName,
+            portrait_name: this.portraitName,
+          }),
+        });
         return;
       }
 
@@ -523,21 +514,6 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
-        // // 1. try to deal with out-of-order packets by rejecting
-        // // the ones that are older than already received ones
-        // // 2. However, when the state resets and ticks go back to 0,
-        // // this protection will lead to a freeze. Hence, that check for big diff
-        // if (
-        //   parsed.millis < this.lastReceivedServerTicks &&
-        //
-        // ) {
-        //   console.log(
-        //     'drop out-of-order xcast_state',
-        //     parsed.millis,
-        //     this.lastReceivedServerTicks
-        //   );
-        //   return;
-        // }
         this.lastReceivedServerTicks = parsed.millis;
 
         this.desync = parsed.millis - this.state.millis;
@@ -642,74 +618,28 @@ export default class NetState extends EventEmitter {
   private send(cmd: Cmd) {
     if (this.socket && !this.connecting) {
       switch (cmd.code) {
-        case ClientOpCode.Unknown: {
-          console.warn(`Unknown opcode ${cmd.code}`);
-          break;
-        }
-        case ClientOpCode.Sync: {
+        case ClientOpCode.ObsoleteDialogueOption:
+        case ClientOpCode.ObsoleteSandboxCommand:
+        case ClientOpCode.ObsoleteTradeAction:
+        case ClientOpCode.ObsoleteSync:
+        case ClientOpCode.ObsoleteDialogueRequest:
+        case ClientOpCode.ObsoleteInventoryAction:
+        case ClientOpCode.ObsoleteLongActionStart:
+        case ClientOpCode.ObsoleteNotificationAction:
+        case ClientOpCode.ObsoleteRoomJoin:
+        case ClientOpCode.ObsoleteMutateMyShip: {
           console.warn('unsupported command');
           break;
         }
-        case ClientOpCode.MutateMyShip: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
+        case ClientOpCode.Unknown: {
+          console.warn(`Unknown opcode ${cmd.code}`);
           break;
         }
         case ClientOpCode.Name: {
           this.socket.send(`${cmd.code}_%_${cmd.value}`);
           break;
         }
-        case ClientOpCode.DialogueOption: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
-          break;
-        }
-        case ClientOpCode.SwitchRoom: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
-          break;
-        }
-        case ClientOpCode.SandboxCommand: {
-          this.socket.send(`${cmd.code}_%_${cmd.value}_%_${cmd.tag}`);
-          break;
-        }
-        case ClientOpCode.TradeAction: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
-          break;
-        }
-        case ClientOpCode.DialogueRequest: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
-          break;
-        }
-        case ClientOpCode.InventoryAction: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
-          break;
-        }
-        case ClientOpCode.LongActionStart: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
-          break;
-        }
-        case ClientOpCode.NotificationAction: {
-          this.socket.send(
-            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
-          );
-          break;
-        }
-        case ClientOpCode.RoomJoin: {
-          this.socket.send(`${cmd.code}_%_noop`);
-          break;
-        }
+        case ClientOpCode.SwitchRoom:
         case ClientOpCode.SchedulePlayerAction: {
           this.socket.send(
             `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
@@ -726,23 +656,10 @@ export default class NetState extends EventEmitter {
   private pendingActions: [string, Action[], number][] = [];
 
   private mutateShip = (commands: Action[]) => {
-    const myShipIndex = findMyShipIndex(this.state);
-    if (myShipIndex === -1 || myShipIndex === null) return;
-    const myShip = this.state.locations[0].ships[myShipIndex];
+    this.state.player_actions = [];
     for (const cmd of commands) {
-      if (this.isWorldUpdatePlayerAction(cmd)) {
-        this.state.player_actions.push(cmd);
-      } else {
-        throw new Error('Cannot handle anything but world update actions');
-      }
+      this.state.player_actions.push(cmd);
     }
-    this.state.locations[0].ships.splice(myShipIndex, 1);
-    this.state.locations[0].ships.push(myShip);
-    reindexNetState(this);
-  };
-
-  onPreferredNameChange = (newName: string) => {
-    this.playerName = newName;
   };
 
   updateLocalState = (elapsedMs: number) => {
@@ -775,7 +692,7 @@ export default class NetState extends EventEmitter {
       if (!this.isWorldUpdatePlayerAction(action)) {
         this.pendingActions.push([tag, [action], this.state.millis]);
       }
-      this.updateShipOnServer(tag, action);
+      this.sendSchedulePlayerAction(action);
     }
 
     this.mutateShip(actions as Action[]);
@@ -809,20 +726,6 @@ export default class NetState extends EventEmitter {
       return true;
     return false;
   }
-
-  private updateShipOnServer = (tag: string, action: Action) => {
-    if (this.state && !this.state.paused) {
-      if (!this.isWorldUpdatePlayerAction(action)) {
-        this.send({
-          code: ClientOpCode.MutateMyShip,
-          value: action,
-          tag,
-        });
-      } else {
-        this.sendSchedulePlayerAction(action);
-      }
-    }
-  };
 
   public sendDialogueOption(dialogueId: string, optionId: string) {
     this.sendSchedulePlayerAction(
