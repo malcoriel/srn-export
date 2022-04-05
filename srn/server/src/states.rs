@@ -148,6 +148,10 @@ pub fn move_player_to_room(client_id: Uuid, room_id: RoomId) {
         spawn_ship(new_state, Some(client_id), ShipTemplate::player(None), prng);
         new_state.id
     };
+    {
+        let mut cont = STATE.write().unwrap();
+        reindex_rooms(&mut cont.rooms);
+    }
 
     crate::main_ws_server::notify_state_changed(new_state_id, client_id);
 }
