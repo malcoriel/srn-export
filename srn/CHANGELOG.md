@@ -1,6 +1,10 @@
 # Changelog
 
-## Version 0.8.5 (2022-03-16)
+## Version 0.8.6 (2022-04-06)
+### Fixes
+* Fixed a bug when it was impossible to join the game in any mode
+
+## Version 0.8.5 (2022-04-05)
 ### Fixes
 * Fixed lacking help notifications in CargoRush mode
 * Improved stability of the game logic
