@@ -9,7 +9,7 @@ import { useToggleHotkey } from '../utils/useToggleHotkey';
 export const DEV_PERF_COUNTERS_ENABLED = true;
 
 export const PERF_COUNTERS_ENABLED =
-  process.env.NODE_ENV == 'production' ? false : DEV_PERF_COUNTERS_ENABLED;
+  process.env.NODE_ENV === 'production' ? false : DEV_PERF_COUNTERS_ENABLED;
 
 export const statsHeap: Record<string, number> = {
   timeStep: 0,
@@ -137,7 +137,6 @@ const Perf = {
     Perf.measureFPSStat(frameEvent, debug, debugName, fpsStat);
   },
   flushBuffer: (timeElapsed: number) => {
-    console.log('perf elapsed', timeElapsed);
     accumulatedTime += timeElapsed;
     if (accumulatedTime >= flushInterval) {
       try {

@@ -30,7 +30,6 @@ import {
   buildClientStateIndexes,
   ClientStateIndexes,
   findMyShip,
-  findMyShipIndex,
 } from './ClientStateIndexing';
 import { ActionBuilder } from '../../world/pkg/world.extra';
 

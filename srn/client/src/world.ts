@@ -180,7 +180,6 @@ let wasmFunctions: any = {};
     wasmFunctions.make_dialogue_table
   ) {
     const parsedTable = wasmFunctions.make_dialogue_table(dialogueResources);
-    console.log(parsedTable);
     wasmFunctions.load_d_table(parsedTable);
   }
 })();
