@@ -661,6 +661,12 @@ pub struct ShipWithTime {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct Breadcrumb {
+    pub position: Vec2f64,
+    pub color: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct GameState {
     pub id: Uuid,
     pub version: u32,
@@ -688,6 +694,7 @@ pub struct GameState {
     pub accumulated_not_updated_ticks: u32,
     pub gen_opts: GenStateOpts,
     pub dialogue_states: DialogueStates,
+    pub breadcrumbs: Vec<Breadcrumb>
 }
 
 
@@ -732,7 +739,8 @@ impl GameState {
             update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
             accumulated_not_updated_ticks: 0,
             gen_opts: Default::default(),
-            dialogue_states: Default::default()
+            dialogue_states: Default::default(),
+            breadcrumbs: vec![]
         }
     }
 }

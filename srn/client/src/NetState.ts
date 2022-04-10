@@ -1,5 +1,6 @@
 import {
   AABB,
+  DEFAULT_STATE,
   GameMode,
   GameState,
   isManualMovement,
@@ -13,7 +14,7 @@ import {
 import EventEmitter from 'events';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
-import Vector, { IVector } from './utils/Vector';
+import Vector, { IVector, VectorF } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledThrottledTime, vsyncedCoupledTime } from './utils/Times';
 import { api } from './utils/api';
@@ -22,6 +23,7 @@ import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
 import {
   Action,
+  Breadcrumb,
   InventoryAction,
   LongActionStart,
   NotificationActionR,
@@ -113,6 +115,21 @@ const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
 
 export const reindexNetState = (netState: NetState) => {
   netState.indexes = buildClientStateIndexes(netState.state);
+  const myShip = netState.indexes.myShip;
+  const debugBreadcrumbs: Breadcrumb[] = [];
+  netState.state.breadcrumbs = debugBreadcrumbs;
+  if (myShip) {
+    let right = {
+      color: 'red',
+      position: Vector.fromIVector(myShip).add(VectorF(3, 0)),
+    };
+
+    let center = {
+      color: 'red',
+      position: Vector.fromIVector(myShip),
+    };
+    debugBreadcrumbs.push(right, center);
+  }
 };
 
 export default class NetState extends EventEmitter {
@@ -224,60 +241,7 @@ export default class NetState extends EventEmitter {
   }
 
   private resetState() {
-    this.state = {
-      ticks: 0,
-      gen_opts: {
-        system_count: 0,
-        max_planets_in_system: 10,
-        max_satellites_for_planet: 3,
-      },
-      disable_hp_effects: false,
-      id: '',
-      leaderboard: {
-        rating: [],
-        winner: '',
-      },
-      market: {
-        prices: {},
-        wares: {},
-        time_before_next_shake: 0,
-      },
-      mode: GameMode.Unknown,
-      seed: '',
-      tag: '',
-      version: 0,
-      locations: [
-        {
-          id: '',
-          seed: '',
-          planets: [],
-          minerals: [],
-          containers: [],
-          asteroids: [],
-          asteroid_belts: [],
-          ships: [],
-          adjacent_location_ids: [],
-          star: null,
-          position: new Vector(0, 0),
-          wrecks: [],
-        },
-      ],
-      players: [],
-      millis: 0,
-      my_id: uuid.v4(),
-      start_time_ticks: 0,
-      milliseconds_remaining: 0,
-      paused: true,
-      interval_data: {},
-      game_over: null,
-      events: [],
-      processed_events: [],
-      player_actions: [],
-      processed_player_actions: [],
-      update_every_ticks: 9999,
-      accumulated_not_updated_ticks: 0,
-      dialogue_states: {},
-    };
+    this.state = DEFAULT_STATE;
     reindexNetState(this);
   }
 
@@ -688,9 +652,6 @@ export default class NetState extends EventEmitter {
         }
       }
       const tag = uuid.v4();
-      if (!this.isWorldUpdatePlayerAction(action)) {
-        this.pendingActions.push([tag, [action], this.state.millis]);
-      }
       this.sendSchedulePlayerAction(action);
     }
 
@@ -709,22 +670,6 @@ export default class NetState extends EventEmitter {
       this.updateVisMap();
     }
   };
-
-  private isWorldUpdatePlayerAction(action: Action) {
-    if (
-      action.tag === 'Gas' ||
-      action.tag === 'StopGas' ||
-      action.tag === 'TurnRight' ||
-      action.tag === 'TurnLeft' ||
-      action.tag === 'StopTurn' ||
-      action.tag === 'Navigate' ||
-      action.tag === 'Tractor' ||
-      action.tag === 'DockNavigate' ||
-      action.tag === 'Reverse'
-    )
-      return true;
-    return false;
-  }
 
   public sendDialogueOption(dialogueId: string, optionId: string) {
     this.sendSchedulePlayerAction(

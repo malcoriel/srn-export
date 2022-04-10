@@ -40,6 +40,7 @@ import _ from 'lodash';
 import { Dictionary } from 'ts-essentials';
 import { findObjectPosition } from './ClientStateIndexing';
 import { dialogueResources } from './HtmlLayers/dialogueResources';
+import * as uuid from 'uuid';
 
 export type {
   Notification,
@@ -438,4 +439,60 @@ export const normalizeHealth = (
   h: Health | null | undefined
 ): number | undefined => {
   return h ? h.current / h.max : undefined;
+};
+
+export const DEFAULT_STATE = {
+  ticks: 0,
+  gen_opts: {
+    system_count: 0,
+    max_planets_in_system: 10,
+    max_satellites_for_planet: 3,
+  },
+  disable_hp_effects: false,
+  id: '',
+  leaderboard: {
+    rating: [],
+    winner: '',
+  },
+  market: {
+    prices: {},
+    wares: {},
+    time_before_next_shake: 0,
+  },
+  mode: GameMode.Unknown,
+  seed: '',
+  tag: '',
+  version: 0,
+  locations: [
+    {
+      id: '',
+      seed: '',
+      planets: [],
+      minerals: [],
+      containers: [],
+      asteroids: [],
+      asteroid_belts: [],
+      ships: [],
+      adjacent_location_ids: [],
+      star: null,
+      position: new Vector(0, 0),
+      wrecks: [],
+    },
+  ],
+  players: [],
+  millis: 0,
+  my_id: uuid.v4(),
+  start_time_ticks: 0,
+  milliseconds_remaining: 0,
+  paused: true,
+  interval_data: {},
+  game_over: null,
+  events: [],
+  processed_events: [],
+  player_actions: [],
+  processed_player_actions: [],
+  update_every_ticks: 9999,
+  accumulated_not_updated_ticks: 0,
+  dialogue_states: {},
+  breadcrumbs: [],
 };

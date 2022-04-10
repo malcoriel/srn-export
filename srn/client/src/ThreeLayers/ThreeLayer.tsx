@@ -30,6 +30,7 @@ import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events
 import { seedToNumber, threeVectorToVector } from './util';
 import { ThreeLoadingIndicator } from './Resources';
 import { useNSForceChange } from '../NetStateHooks';
+import { ThreeBreadcrumbs } from './ThreeBreadcrumbs';
 
 THREE.Cache.enabled = true;
 
@@ -121,6 +122,7 @@ export const ThreeLayer: React.FC<{
           <ThreeNames netState={ns} visMap={visMap} />
           <ThreeWeaponEffectsLayer />
           <ThreeTrajectoryLayer indexes={indexes} />
+          <ThreeBreadcrumbs breadcrumbs={state.breadcrumbs} />
           {/*<ThreeWormhole position={posToThreePos(50, 50)} radius={3} />*/}
         </group>
       </Suspense>

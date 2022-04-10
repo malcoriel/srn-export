@@ -477,7 +477,8 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
         gen_opts: opts.unwrap_or_default(),
-        dialogue_states: Default::default()
+        dialogue_states: Default::default(),
+        breadcrumbs: vec![]
     }
 }
 
@@ -511,7 +512,8 @@ pub fn make_sandbox_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> Ga
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
         gen_opts: opts.unwrap_or_default(),
-        dialogue_states: Default::default()
+        dialogue_states: Default::default(),
+        breadcrumbs: vec![]
     }
 }
 
@@ -567,7 +569,8 @@ fn gen_state(seed: String, opts: GenStateOpts, prng: &mut Pcg64Mcg) -> GameState
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
         gen_opts: opts,
-        dialogue_states: Default::default()
+        dialogue_states: Default::default(),
+        breadcrumbs: vec![]
     };
 
     let mut state = validate_state(state);
