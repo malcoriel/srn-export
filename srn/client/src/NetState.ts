@@ -104,40 +104,27 @@ const isInAABB = (bounds: AABB, obj: IVector, radius: number): boolean => {
   );
 };
 
+const EXTRAPOLATE_AHEAD_MS = 1000;
+
 const MAX_PENDING_TICKS = 2000;
 // it's completely ignored in actual render, since vsynced time is used
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
-const MAX_ALLOWED_DIST_DESYNC = 5.0;
+const MAX_ALLOWED_DIST_DESYNC = 0.0;
 // this has to be less than expiry (500ms) minus ping
 const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
-
-export const reindexNetState = (netState: NetState) => {
-  netState.indexes = buildClientStateIndexes(netState.state);
-  const myShip = netState.indexes.myShip;
-  const debugBreadcrumbs: Breadcrumb[] = [];
-  netState.state.breadcrumbs = debugBreadcrumbs;
-  if (myShip) {
-    let right = {
-      color: 'red',
-      position: Vector.fromIVector(myShip).add(VectorF(3, 0)),
-    };
-
-    let center = {
-      color: 'red',
-      position: Vector.fromIVector(myShip),
-    };
-    debugBreadcrumbs.push(right, center);
-  }
-};
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
 
   state!: GameState;
 
+  nextState!: GameState;
+
   indexes!: ClientStateIndexes;
+
+  nextIndexes!: ClientStateIndexes;
 
   public connecting = true;
 
@@ -240,9 +227,26 @@ export default class NetState extends EventEmitter {
     }
   }
 
+  private extrapolate() {
+    const simArea = this.getSimulationArea();
+    const nextState = updateWorld(this.state, simArea, EXTRAPOLATE_AHEAD_MS);
+    if (nextState) {
+      this.nextState = nextState;
+      this.buildBreadcrumbs();
+    } else {
+      console.warn('extrapolation failed');
+    }
+  }
+
+  private reindexNetState = () => {
+    this.indexes = buildClientStateIndexes(this.state);
+    this.nextIndexes = buildClientStateIndexes(this.nextState);
+  };
+
   private resetState() {
-    this.state = DEFAULT_STATE;
-    reindexNetState(this);
+    this.state = _.clone(DEFAULT_STATE);
+    this.nextState = _.clone(DEFAULT_STATE);
+    this.reindexNetState();
   }
 
   disconnectAndDestroy = () => {
@@ -336,7 +340,7 @@ export default class NetState extends EventEmitter {
         );
         this.state = this.replay.current_state;
         this.updateVisMap();
-        reindexNetState(this);
+        this.reindexNetState();
       }
     } else {
       console.warn(`No best mark for ${markInMs}`);
@@ -447,6 +451,25 @@ export default class NetState extends EventEmitter {
     };
   };
 
+  private buildBreadcrumbs = () => {
+    const myNextShip = this.nextIndexes.myShip;
+    const myShip = this.indexes.myShip;
+    const breadcrumbs: Breadcrumb[] = [];
+    this.state.breadcrumbs = breadcrumbs;
+    if (myNextShip) {
+      breadcrumbs.push({
+        position: Vector.fromIVector(myNextShip),
+        color: 'green',
+      });
+    }
+    if (myShip) {
+      breadcrumbs.push({
+        position: Vector.fromIVector(myShip),
+        color: 'yellow',
+      });
+    }
+  };
+
   private handleMessage(rawData: string) {
     try {
       const [messageCodeStr, data] = rawData.split('_%_');
@@ -482,27 +505,12 @@ export default class NetState extends EventEmitter {
         this.desync = parsed.millis - this.state.millis;
 
         const myOldShip = findMyShip(this.state);
-        // the client should only hanlde its own player actions,
-        // and the server will not send any anyway
-        const oldPlayerActions = this.state.player_actions;
         this.state = parsed;
-        this.state.player_actions = oldPlayerActions;
-        // compensate for ping since the state we got is already outdated by that value
-        // 1. primarily work on planets - something that is adjusted deterministically
-        this.updateLocalState(this.ping);
-        const myUpdatedShip = findMyShip(this.state);
-        // 2. fix my movement rollback by allowing update. However, too much desync
-        // is dangerous, so cap it.
-        if (
-          myOldShip &&
-          myUpdatedShip &&
-          Vector.fromIVector(myOldShip).euDistTo(
-            Vector.fromIVector(myUpdatedShip)
-          ) <= MAX_ALLOWED_DIST_DESYNC
-        ) {
-          myUpdatedShip.x = myOldShip.x;
-          myUpdatedShip.y = myOldShip.y;
+        if (this.desync < 0) {
+          this.updateLocalState(-this.desync);
         }
+        this.extrapolate();
+        const myUpdatedShip = findMyShip(this.state);
         // 3. Erase server-side trajectory to remove annoying small glitched view
         if (myUpdatedShip && myOldShip) {
           myUpdatedShip.trajectory = myOldShip.trajectory;
@@ -570,7 +578,7 @@ export default class NetState extends EventEmitter {
       } else {
         console.log('unknown message code', messageCode);
       }
-      reindexNetState(this);
+      this.reindexNetState();
     } catch (e) {
       console.warn('error handling message', e);
     } finally {
@@ -666,7 +674,7 @@ export default class NetState extends EventEmitter {
     const result = updateWorld(this.state, simArea, elapsedMs);
     if (result) {
       this.state = result;
-      reindexNetState(this);
+      this.reindexNetState();
       this.updateVisMap();
     }
   };

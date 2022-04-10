@@ -1149,6 +1149,7 @@ pub fn update_location(
         &mut state.locations[location_idx].ships,
         elapsed,
         state.millis,
+        client
     );
     sampler.end(update_ship_manual_movement_id);
 
@@ -1431,16 +1432,16 @@ fn update_initiate_ship_docking_by_navigation(
 // keep synced with world.ts
 const MANUAL_MOVEMENT_INACTIVITY_DROP_MS: i32 = 500;
 
-fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, current_tick: u32) {
+fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, current_tick: u32, client: bool) {
     for ship in ships.iter_mut() {
-        update_ship_manual_movement(elapsed_micro, current_tick, ship);
+        update_ship_manual_movement(elapsed_micro, current_tick, ship, client);
     }
 }
 
-fn update_ship_manual_movement(elapsed_micro: i64, current_tick: u32, ship: &mut Ship) {
+fn update_ship_manual_movement(elapsed_micro: i64, current_tick: u32, ship: &mut Ship, client:bool) {
     let (new_move, new_pos) = if let Some(params) = &mut ship.movement_markers.gas {
         if (params.last_tick as i32 - current_tick as i32).abs()
-            > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
+            > MANUAL_MOVEMENT_INACTIVITY_DROP_MS && !client // assume that on client, we always hold the button - this one is only a server optimization
         {
             (None, None)
         } else {
