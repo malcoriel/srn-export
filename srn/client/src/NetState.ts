@@ -232,7 +232,7 @@ export default class NetState extends EventEmitter {
     const nextState = updateWorld(this.state, simArea, EXTRAPOLATE_AHEAD_MS);
     if (nextState) {
       this.nextState = nextState;
-      this.buildBreadcrumbs();
+      this.addExtrapolateBreadcrumbs();
     } else {
       console.warn('extrapolation failed');
     }
@@ -451,21 +451,23 @@ export default class NetState extends EventEmitter {
     };
   };
 
-  private buildBreadcrumbs = () => {
+  private addExtrapolateBreadcrumbs = () => {
     const myNextShip = this.nextIndexes.myShip;
-    const myShip = this.indexes.myShip;
-    const breadcrumbs: Breadcrumb[] = [];
-    this.state.breadcrumbs = breadcrumbs;
     if (myNextShip) {
-      breadcrumbs.push({
+      this.state.breadcrumbs.push({
         position: Vector.fromIVector(myNextShip),
         color: 'green',
       });
     }
+    this.addCurrentShipBreadcrumb('yellow');
+  };
+
+  private addCurrentShipBreadcrumb = (color: string) => {
+    const myShip = this.indexes.myShip;
     if (myShip) {
-      breadcrumbs.push({
+      this.state.breadcrumbs.push({
         position: Vector.fromIVector(myShip),
-        color: 'yellow',
+        color,
       });
     }
   };
@@ -506,7 +508,10 @@ export default class NetState extends EventEmitter {
 
         const myOldShip = findMyShip(this.state);
         this.state = parsed;
+        this.addCurrentShipBreadcrumb('red');
         if (this.desync < 0) {
+          // this is technically incorrect because we need to rebase all of
+          // unprocessed actions from client
           this.updateLocalState(-this.desync);
         }
         this.extrapolate();
