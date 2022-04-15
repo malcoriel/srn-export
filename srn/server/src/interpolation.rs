@@ -59,8 +59,10 @@ fn interpolate_location(
     }
     // then, sequentially (via tiers) restore absolute position
     let mut anchor_pos_by_id = HashMap::new();
-    let star_clone = result.star.clone().unwrap();
-    anchor_pos_by_id.insert(star_clone.id, star_clone.as_vec());
+    if let Some(star_clone) = result.star.clone() {
+        anchor_pos_by_id.insert(star_clone.id, star_clone.as_vec());
+
+    }
     for tier in 1..3 {
         for i in 0..result.planets.len() {
             let planet = &mut result.planets[i];

@@ -255,6 +255,7 @@ const doWasmCall = <R>(fnName: string, ...args: any[]): R | undefined => {
   }
   return result;
 };
+
 export const updateWorld = (
   inState: GameState,
   limit_area: AABB,
@@ -265,6 +266,14 @@ export const updateWorld = (
     JSON.stringify({ state: inState, limit_area }, null, 2),
     BigInt(elapsedMs * 1000)
   );
+};
+
+export const interpolateWorld = (
+  fromState: GameState,
+  toState: GameState,
+  value: number
+): GameState => {
+  return wasmFunctions.interpolate_states(fromState, toState, value);
 };
 
 const parseState = (inState: GameState): GameState | undefined => {

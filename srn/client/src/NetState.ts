@@ -3,6 +3,7 @@ import {
   DEFAULT_STATE,
   GameMode,
   GameState,
+  interpolateWorld,
   isManualMovement,
   loadReplayIntoWasm,
   ManualMovementActionTags,
@@ -14,7 +15,7 @@ import {
 import EventEmitter from 'events';
 import * as uuid from 'uuid';
 import { actionsActive, resetActions } from './utils/ShipControls';
-import Vector, { IVector, VectorF } from './utils/Vector';
+import Vector, { IVector } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledThrottledTime, vsyncedCoupledTime } from './utils/Times';
 import { api } from './utils/api';
@@ -23,7 +24,6 @@ import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
 import {
   Action,
-  Breadcrumb,
   InventoryAction,
   LongActionStart,
   NotificationActionR,
@@ -118,8 +118,17 @@ const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
 
+  // actual state used for rendering = interpolate(prevState, nextState, value=0..1)
   state!: GameState;
 
+  // last calculated state, either result of local actions,
+  // updated by timer
+  prevState!: GameState;
+
+  // delayed serverState, last known data from server
+  serverState!: GameState;
+
+  // extrapolated state used for calculating the actual state via interpolation
   nextState!: GameState;
 
   indexes!: ClientStateIndexes;
@@ -170,6 +179,8 @@ export default class NetState extends EventEmitter {
   public replay: any;
 
   public playingReplay = false;
+
+  private lastUpdateTimeMsFromPageLoad = 0;
 
   public static make() {
     NetState.instance = new NetState();
@@ -229,10 +240,14 @@ export default class NetState extends EventEmitter {
 
   private extrapolate() {
     const simArea = this.getSimulationArea();
-    const nextState = updateWorld(this.state, simArea, EXTRAPOLATE_AHEAD_MS);
+    const nextState = updateWorld(
+      this.prevState,
+      simArea,
+      EXTRAPOLATE_AHEAD_MS
+    );
     if (nextState) {
       this.nextState = nextState;
-      this.addExtrapolateBreadcrumbs();
+      // this.addExtrapolateBreadcrumbs();
     } else {
       console.warn('extrapolation failed');
     }
@@ -246,6 +261,7 @@ export default class NetState extends EventEmitter {
   private resetState() {
     this.state = _.clone(DEFAULT_STATE);
     this.nextState = _.clone(DEFAULT_STATE);
+    this.prevState = _.clone(DEFAULT_STATE);
     this.reindexNetState();
   }
 
@@ -274,7 +290,7 @@ export default class NetState extends EventEmitter {
     this.connecting = true;
     Perf.start();
     this.time.setInterval(
-      (elapsedMs) => {
+      () => {
         Perf.markEvent(Measure.PhysicsFrameEvent);
         Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
           const ns = NetState.get();
@@ -285,15 +301,18 @@ export default class NetState extends EventEmitter {
           if (this.switchingRooms) {
             return;
           }
-          ns.updateLocalState(Math.floor((elapsedMs * 1000) / 1000));
+          // not using elapsedMs here since this function will track it itself
+          // in relation to last forced update, as force can also happen on network load
+          // and player actions directly
+          this.forceUpdateLocalState();
         });
       },
-      () => {
+      (elapsedMs) => {
         Perf.markEvent(Measure.RenderFrameEvent);
         Perf.usingMeasure(Measure.RenderFrameTime, () => {
           const ns = NetState.get();
           if (!ns) return;
-
+          this.interpolateCurrentState(elapsedMs);
           ns.emit('change');
         });
       }
@@ -463,7 +482,7 @@ export default class NetState extends EventEmitter {
   };
 
   private addCurrentShipBreadcrumb = (color: string) => {
-    const myShip = this.indexes.myShip;
+    const myShip = findMyShip(this.state);
     if (myShip) {
       this.state.breadcrumbs.push({
         position: Vector.fromIVector(myShip),
@@ -502,24 +521,21 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
-        this.lastReceivedServerTicks = parsed.millis;
+        this.serverState = _.clone(parsed);
 
-        this.desync = parsed.millis - this.state.millis;
+        this.lastReceivedServerTicks = this.serverState.millis;
 
-        const myOldShip = findMyShip(this.state);
-        this.state = parsed;
-        this.addCurrentShipBreadcrumb('red');
-        if (this.desync < 0) {
-          // this is technically incorrect because we need to rebase all of
-          // unprocessed actions from client
-          this.updateLocalState(-this.desync);
-        }
+        this.desync = this.serverState.millis - this.state.millis;
+
+        // this.state.breadcrumbs = [];
+        // this.addCurrentShipBreadcrumb('red');
+        // const savedBreadcrumbs = this.state.breadcrumbs;
+
+        // TODO with new interpolation approach, this needs to be corrected to timestamp-match the previous prevState
+        // and the diff is not desync value  - the "rebase" process
+        this.prevState = parsed;
+        // this.state.breadcrumbs = savedBreadcrumbs;
         this.extrapolate();
-        const myUpdatedShip = findMyShip(this.state);
-        // 3. Erase server-side trajectory to remove annoying small glitched view
-        if (myUpdatedShip && myOldShip) {
-          myUpdatedShip.trajectory = myOldShip.trajectory;
-        }
 
         const toDrop = new Set();
         // noinspection JSUnusedLocalSymbols
@@ -536,7 +552,10 @@ export default class NetState extends EventEmitter {
             //     (a) => a.type
             //   )}`
             // );
-            this.mutateShip(actions);
+            this.state.player_actions = [];
+            for (const cmd of actions) {
+              this.state.player_actions.push(cmd);
+            }
           }
         }
         this.pendingActions = this.pendingActions.filter(
@@ -631,11 +650,16 @@ export default class NetState extends EventEmitter {
   // [tag, action, ticks], the order is the order of appearance
   private pendingActions: [string, Action[], number][] = [];
 
-  private mutateShip = (commands: Action[]) => {
-    this.state.player_actions = [];
-    for (const cmd of commands) {
-      this.state.player_actions.push(cmd);
+  forceUpdateLocalState = () => {
+    const prevLastUpdate =
+      this.lastUpdateTimeMsFromPageLoad || Math.floor(performance.now());
+    this.lastUpdateTimeMsFromPageLoad = Math.floor(performance.now());
+    const elapsedMs = this.lastUpdateTimeMsFromPageLoad - prevLastUpdate;
+    if (elapsedMs <= 0) {
+      return; // already actual state, beginning of game, or 'impossible' negative
     }
+    this.updateLocalState(elapsedMs);
+    this.prevState = _.clone(this.state);
   };
 
   updateLocalState = (elapsedMs: number) => {
@@ -664,11 +688,13 @@ export default class NetState extends EventEmitter {
           this.lastSendOfManualMovementMap[action.tag] = performance.now();
         }
       }
-      const tag = uuid.v4();
       this.sendSchedulePlayerAction(action);
     }
 
-    this.mutateShip(actions as Action[]);
+    this.state.player_actions = [];
+    for (const cmd of actions as Action[]) {
+      this.state.player_actions.push(cmd);
+    }
 
     if (actionsActive.Move) {
       this.visualState.boundCameraMovement = true;
@@ -792,5 +818,22 @@ export default class NetState extends EventEmitter {
       return [keys[keys.length - 1], null];
     }
     return [null, null];
+  }
+
+  private interpolateCurrentState(elapsedMs: number) {
+    // elapsedMs = time since last update
+    const currentMs = this.state.millis + elapsedMs;
+    const baseMs = this.prevState.millis;
+    const nextMs = this.nextState.millis;
+    const value = (currentMs - baseMs) / (nextMs - baseMs);
+    if (this.prevState.id && this.nextState.id) {
+      // if we have received any 'real' state from server
+      const interpolated = interpolateWorld(
+        this.prevState,
+        this.nextState,
+        value
+      );
+      this.state = interpolated || this.state;
+    }
   }
 }
