@@ -104,7 +104,8 @@ const isInAABB = (bounds: AABB, obj: IVector, radius: number): boolean => {
   );
 };
 
-const EXTRAPOLATE_AHEAD_MS = 1000;
+// Theoretically, we need that only for BROADCAST_SLEEP_MS from main.ws - however, we might need more in case something lags, so x 2
+const EXTRAPOLATE_AHEAD_MS = 100 * 2;
 
 const MAX_PENDING_TICKS = 2000;
 // it's completely ignored in actual render, since vsynced time is used
@@ -247,7 +248,7 @@ export default class NetState extends EventEmitter {
     );
     if (nextState) {
       this.nextState = nextState;
-      // this.addExtrapolateBreadcrumbs();
+      this.addExtrapolateBreadcrumbs();
     } else {
       console.warn('extrapolation failed');
     }
@@ -304,7 +305,7 @@ export default class NetState extends EventEmitter {
           // not using elapsedMs here since this function will track it itself
           // in relation to last forced update, as force can also happen on network load
           // and player actions directly
-          this.forceUpdateLocalState();
+          // this.forceUpdateLocalState();
         });
       },
       (elapsedMs) => {
@@ -521,20 +522,39 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
+        console.log('server state got at', parsed.millis);
         this.serverState = _.clone(parsed);
 
         this.lastReceivedServerTicks = this.serverState.millis;
 
         this.desync = this.serverState.millis - this.state.millis;
+        // this is not always true in case of packet loss, so probably better ping calculation should be in place -
+        // probably just putting the update frequency in the state?
+        const serverUpdateIntervalMs = Math.abs(
+          parsed.millis - this.prevState.millis
+        );
+        if (this.desync < 0) {
+          // assuming the server is behind client (and client didn't terribly lag)
+          const invDesync = -this.desync;
+          const newPing = serverUpdateIntervalMs - invDesync;
+          if (newPing >= 0) {
+            // negative means desync is so big that calculation cannot be applied, e.g. due to server lag or big packet loss
+            // so it cannot be calculated here
+            this.ping = newPing;
+          }
+        }
 
-        // this.state.breadcrumbs = [];
-        // this.addCurrentShipBreadcrumb('red');
-        // const savedBreadcrumbs = this.state.breadcrumbs;
+        this.state.breadcrumbs = [];
+        this.addCurrentShipBreadcrumb('red');
+        const savedBreadcrumbs = this.state.breadcrumbs;
 
         // TODO with new interpolation approach, this needs to be corrected to timestamp-match the previous prevState
         // and the diff is not desync value  - the "rebase" process
-        this.prevState = parsed;
-        // this.state.breadcrumbs = savedBreadcrumbs;
+        this.prevState = this.rebaseReceivedStateToCurrentPoint(
+          parsed,
+          this.ping
+        );
+        this.state.breadcrumbs = savedBreadcrumbs;
         this.extrapolate();
 
         const toDrop = new Set();
@@ -821,19 +841,37 @@ export default class NetState extends EventEmitter {
   }
 
   private interpolateCurrentState(elapsedMs: number) {
-    // elapsedMs = time since last update
-    const currentMs = this.state.millis + elapsedMs;
-    const baseMs = this.prevState.millis;
-    const nextMs = this.nextState.millis;
-    const value = (currentMs - baseMs) / (nextMs - baseMs);
     if (this.prevState.id && this.nextState.id) {
+      // elapsedMs = time since last update
+      const currentMs = this.state.millis + elapsedMs;
+      const baseMs = this.prevState.millis;
+      const nextMs = this.nextState.millis;
+      const value = (currentMs - baseMs) / (nextMs - baseMs);
       // if we have received any 'real' state from server
-      const interpolated = interpolateWorld(
-        this.prevState,
-        this.nextState,
-        value
-      );
-      this.state = interpolated || this.state;
+      if (value > 0) {
+        // for some reason, right after server update value is < 0
+        const interpolated = interpolateWorld(
+          this.prevState,
+          this.nextState,
+          value
+        );
+        this.state = interpolated || this.state;
+      } else {
+        this.state = _.clone(this.prevState);
+      }
+    } else {
+      this.state = _.clone(this.prevState);
     }
+  }
+
+  private rebaseReceivedStateToCurrentPoint(
+    parsed: GameState,
+    pingMillis: number
+  ): GameState {
+    // still doesn't take into account accumulated actions, so not yet true rebase
+    const area = this.getSimulationArea();
+    console.log({ pingMillis: pingMillis });
+    // return parsed;
+    return updateWorld(parsed, area, pingMillis) || parsed;
   }
 }

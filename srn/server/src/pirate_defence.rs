@@ -94,7 +94,7 @@ pub fn on_ship_died(state: &mut GameState, ship: Ship) {
 }
 
 pub fn update_state_pirate_defence(state: &mut GameState, prng: &mut Pcg64Mcg) {
-    let current_ticks = state.millis * 1000;
+    let current_ticks = state.ticks as u32;
     if world::every(
         PIRATE_SPAWN_INTERVAL_TICKS,
         current_ticks,

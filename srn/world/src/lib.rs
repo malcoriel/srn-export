@@ -332,6 +332,9 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     }
     let args = args.ok().unwrap();
 
+    if elapsed_micro < 0 {
+        return format!("Negative elapsed_micro: {}, can't update", elapsed_micro);
+    }
     let mut indexes = world::SpatialIndexes {
         values: HashMap::new(),
     };

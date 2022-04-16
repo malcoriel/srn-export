@@ -745,11 +745,6 @@ impl GameState {
     }
 }
 
-pub fn force_update_to_now(state: &mut GameState) {
-    let now = Utc::now().timestamp_millis() as u64;
-    state.millis = (now - state.start_time_ticks) as u32;
-}
-
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct AABB {
     pub top_left: Vec2f64,
@@ -900,8 +895,8 @@ fn update_world_iter(
     prng: &mut Pcg64Mcg,
     d_table: &DialogueTable,
 ) -> (GameState, Sampler) {
-    state.millis += elapsed as u32 / 1000;
     state.ticks += elapsed as u64;
+    state.millis = (state.ticks as f64 / 1000.0) as u32;
     if state.mode != GameMode::Tutorial {
         state.milliseconds_remaining -= elapsed as i32 / 1000;
     }

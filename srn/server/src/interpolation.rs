@@ -16,6 +16,7 @@ pub fn interpolate_states(
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
 ) -> GameState {
     let mut result = state_a.clone();
+    interpolate_timings(&mut result, state_b, value);
     for i in 0..result.locations.len() {
         let res = &mut result.locations[i];
         if let Some(target) = state_b.locations.get(i) {
@@ -23,6 +24,15 @@ pub fn interpolate_states(
         }
     }
     result
+}
+
+fn interpolate_timings(result: &mut GameState, target: &GameState, value: f64) {
+    let ticks_f64 = result.ticks as f64 + ((target.ticks as f64 - result.ticks as f64) * value);
+    let old_millis = result.millis;
+    result.ticks = ticks_f64 as u64;
+    result.millis = (ticks_f64 / 1000.0) as u32;
+    let elapsed_ms = result.millis as i32 - old_millis as i32;
+    result.milliseconds_remaining -= elapsed_ms;
 }
 
 fn interpolate_location(

@@ -177,7 +177,7 @@ lazy_static! {
 }
 
 const DEFAULT_SLEEP_MS: u64 = 2;
-const BROADCAST_SLEEP_MS: u64 = 500;
+const BROADCAST_SLEEP_MS: u64 = 100;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const MAX_MESSAGES_PER_INTERVAL: u32 = 10;
@@ -197,7 +197,6 @@ fn get_state_clone_read(client_id: Uuid) -> Option<GameState> {
 
 fn personalize_player(state: &mut GameState, conn_id: Uuid, update: PersonalizeUpdate) {
     {
-        world::force_update_to_now(state);
         state.players.iter_mut().find(|p| p.id == conn_id).map(|p| {
             p.name = update.name;
             p.portrait_name = update.portrait_name;
