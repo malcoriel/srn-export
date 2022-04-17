@@ -801,6 +801,23 @@ impl UpdateOptions {
     }
 }
 
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct UpdateOptionsV2 {
+    pub disable_hp_effects: Option<bool>,
+    pub limit_area: Option<AABB>,
+    pub limit_to_loc_idx: Option<usize>,
+}
+
+impl UpdateOptionsV2 {
+    pub fn new() -> Self {
+        Self {
+            disable_hp_effects: None,
+            limit_area: None,
+            limit_to_loc_idx: None
+        }
+    }
+}
+
 // first group is in area, second is not
 pub fn split_bodies_by_area(
     bodies: Vec<Box<dyn IBody>>,

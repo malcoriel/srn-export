@@ -7,7 +7,6 @@ import {
   isManualMovement,
   loadReplayIntoWasm,
   ManualMovementActionTags,
-  MaxedAABB,
   restoreReplayFrame,
   SandboxCommand,
   TradeAction,
@@ -251,8 +250,7 @@ export default class NetState extends EventEmitter {
   private extrapolate() {
     const nextState = updateWorld(
       this.prevState,
-      MaxedAABB, // this has to be maxed, because interpolate always considers absolutely all planets, not only
-      // in the simulation area, and without the maxing, it will lead to weird planet jumps
+      this.getSimulationArea(),
       EXTRAPOLATE_AHEAD_MS
     );
     if (nextState) {
@@ -635,11 +633,6 @@ export default class NetState extends EventEmitter {
         this.pendingActions = this.pendingActions.filter(
           ([tag]) => !toDrop.has(tag)
         );
-
-        // Sync updates on socket messages lead to big slowdown
-        // if (!this.disconnecting) {
-        //   this.emit('change', this.state);
-        // }
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
         const confirmedTag = JSON.parse(data).tag;
 
@@ -775,9 +768,12 @@ export default class NetState extends EventEmitter {
     if (isSyncActionTypeActive('Move')) {
       this.visualState.boundCameraMovement = true;
     }
+
+    // this.pendingActions.push(...actionsToSync);
+
     resetActiveSyncActions();
 
-    const result = updateWorld(this.state, MaxedAABB, elapsedMs);
+    const result = updateWorld(this.state, this.getSimulationArea(), elapsedMs);
     if (result) {
       this.state = result;
       this.reindexNetState();
@@ -908,7 +904,8 @@ export default class NetState extends EventEmitter {
         const interpolated = interpolateWorld(
           this.prevState,
           this.nextState,
-          value
+          value,
+          this.getSimulationArea()
         );
         // this.controlForOuterPlanet(this.prevState, this.nextState);
         this.state = interpolated || this.state;
@@ -947,7 +944,9 @@ export default class NetState extends EventEmitter {
       adjustMillis
     );
     // return parsed;
-    return updateWorld(parsed, MaxedAABB, adjustMillis) || parsed;
+    return (
+      updateWorld(parsed, this.getSimulationArea(), adjustMillis) || parsed
+    );
   }
 
   private controlForOuterPlanet(prevState: GameState, nextState: GameState) {

@@ -19,6 +19,8 @@ export const mockPlanet = () => ({
   properties: [],
 });
 
+const mockUpdateOptions = (overrides) => _.merge({}, overrides);
+
 describe('state interpolation', () => {
   beforeAll(swapGlobals);
   it('can interpolate ship direct movement', () => {
@@ -34,12 +36,22 @@ describe('state interpolation', () => {
     shipB.y += 10;
     const targetShipX_05 = lerp(shipA.x, shipB.x, 0.5);
     const targetShipY_05 = lerp(shipA.y, shipB.y, 0.5);
-    const stateC = wasm.interpolateStates(roomA.state, roomB.state, 0.5);
+    const stateC = wasm.interpolateStates(
+      roomA.state,
+      roomB.state,
+      0.5,
+      mockUpdateOptions()
+    );
     const shipC = getShipByPlayerId(stateC, playerId);
     expect(shipC.x).toBeCloseTo(targetShipX_05);
     expect(shipC.y).toBeCloseTo(targetShipY_05);
 
-    const stateD = wasm.interpolateStates(roomA.state, roomB.state, 0.7);
+    const stateD = wasm.interpolateStates(
+      roomA.state,
+      roomB.state,
+      0.7,
+      mockUpdateOptions()
+    );
     const targetShipX_07 = lerp(shipA.x, shipB.x, 0.7);
     const targetShipY_07 = lerp(shipA.y, shipB.y, 0.7);
     const shipD = getShipByPlayerId(stateD, playerId);
@@ -59,7 +71,12 @@ describe('state interpolation', () => {
     const planetB = getLoc0(roomB.state).planets[0];
     planetB.x = 0;
     planetB.y = 100;
-    const stateC = wasm.interpolateStates(roomA.state, roomB.state, 0.5);
+    const stateC = wasm.interpolateStates(
+      roomA.state,
+      roomB.state,
+      0.5,
+      mockUpdateOptions()
+    );
     const planetC = getLoc0(stateC).planets[0];
     expect(planetC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
     expect(planetC.y).toBeCloseTo((Math.sqrt(2) / 2) * 100);
@@ -80,7 +97,12 @@ describe('state interpolation', () => {
     const planetB = getLoc0(roomB.state).planets[0];
     planetB.x = 0;
     planetB.y = -100;
-    const stateC = wasm.interpolateStates(roomA.state, roomB.state, 0.5);
+    const stateC = wasm.interpolateStates(
+      roomA.state,
+      roomB.state,
+      0.5,
+      mockUpdateOptions()
+    );
     const planetC = getLoc0(stateC).planets[0];
     expect(planetC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
     expect(planetC.y).toBeCloseTo(-(Math.sqrt(2) / 2) * 100);
@@ -111,7 +133,12 @@ describe('state interpolation', () => {
     moonB.x = -20;
     moonB.y = 100;
 
-    const stateC = wasm.interpolateStates(roomA.state, roomB.state, 0.5);
+    const stateC = wasm.interpolateStates(
+      roomA.state,
+      roomB.state,
+      0.5,
+      mockUpdateOptions()
+    );
     const moonC = getLoc0(stateC).planets[1];
     expect(moonC.y).toBeCloseTo((Math.sqrt(2) / 2) * 100 + 20);
     expect(moonC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);

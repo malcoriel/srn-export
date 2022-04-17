@@ -1,8 +1,8 @@
 use crate::indexing::{index_all_ships_by_id, index_ships_by_id};
 use crate::planet_movement::{IBody, IBodyV2};
 use crate::vec2::{Precision, Vec2f64};
-use crate::world::{lerp, Location, Movement, Planet, PlanetV2, Ship};
-use crate::GameState;
+use crate::world::{lerp, Location, Movement, Planet, PlanetV2, Ship, UpdateOptionsV2};
+use crate::{AABB, GameState};
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::mem;
@@ -14,13 +14,19 @@ pub fn interpolate_states(
     state_b: &GameState,
     value: f64,
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
+    options: UpdateOptionsV2
 ) -> GameState {
     let mut result = state_a.clone();
     interpolate_timings(&mut result, state_b, value);
     for i in 0..result.locations.len() {
+        if let Some(limit_to_loc_idx) = &options.limit_to_loc_idx {
+            if *limit_to_loc_idx != i {
+                continue;
+            }
+        }
         let res = &mut result.locations[i];
         if let Some(target) = state_b.locations.get(i) {
-            interpolate_location(res, target, value, rel_orbit_cache);
+            interpolate_location(res, target, value, rel_orbit_cache, &options);
         }
     }
     result
@@ -40,6 +46,7 @@ fn interpolate_location(
     target: &Location,
     value: f64,
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
+    options: &UpdateOptionsV2,
 ) {
     let ships_by_id_target = index_ships_by_id(target);
     for i in 0..result.ships.len() {

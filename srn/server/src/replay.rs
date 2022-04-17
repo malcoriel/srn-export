@@ -1,8 +1,6 @@
 use crate::perf::SamplerMarks;
 use crate::system_gen::seed_state;
-use crate::{
-    get_prng, interpolation, new_id, world, DialogueTable, GameMode, GameState, Sampler, Vec2f64,
-};
+use crate::{get_prng, interpolation, new_id, world, DialogueTable, GameMode, GameState, Sampler, Vec2f64, UpdateOptionsV2};
 use itertools::Itertools;
 use json_patch::{
     patch, AddOperation, Patch, PatchError, PatchOperation, RemoveOperation, ReplaceOperation,
@@ -390,7 +388,7 @@ impl ReplayDiffed {
     ) -> Result<(PrevState, NextState, CurrState), ReplayError> {
         let prev = self.get_state_at(prev_ticks, sampler)?;
         let next = self.get_state_at(next_ticks, sampler)?;
-        let curr = interpolation::interpolate_states(&prev, &next, value, cache);
+        let curr = interpolation::interpolate_states(&prev, &next, value, cache, UpdateOptionsV2::new());
         Ok((prev, next, curr))
     }
 

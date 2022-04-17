@@ -263,7 +263,7 @@ use crate::dialogue::{parse_dialogue_script_from_file, DialogueTable, DialogueSt
 use crate::indexing::{find_my_ship_index, ObjectSpecifier};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
-use crate::world::{GameMode, GameState};
+use crate::world::{AABB, GameMode, GameState, UpdateOptions, UpdateOptionsV2};
 use mut_static::MutStatic;
 use rand_pcg::Pcg64Mcg;
 use rand::prelude::*;
@@ -674,11 +674,13 @@ pub fn interpolate_states(
     state_a: JsValue,
     state_b: JsValue,
     value: f64,
+    options: JsValue,
 ) -> Result<JsValue, JsValue> {
     let mut cache = &mut (*rel_orbit_cache.write().unwrap());
     let state_a: GameState = serde_wasm_bindgen::from_value(state_a)?;
     let state_b: GameState = serde_wasm_bindgen::from_value(state_b)?;
-    let result = interpolation::interpolate_states(&state_a, &state_b, value, cache);
+    let options: UpdateOptionsV2 = serde_wasm_bindgen::from_value(options)?;
+    let result = interpolation::interpolate_states(&state_a, &state_b, value, cache, options);
     Ok(custom_serialize(&result)?)
 }
 
