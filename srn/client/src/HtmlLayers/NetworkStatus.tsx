@@ -27,7 +27,7 @@ export const NetworkStatus: React.FC = () => {
       }, 1000)
     );
   }, [ns, ns.id]);
-  const { desync } = ns;
+  const { desync, ping, maxPing, connecting } = ns;
   const fps = statsHeap[Stat.RealFPS];
 
   return (
@@ -77,9 +77,7 @@ export const NetworkStatus: React.FC = () => {
       {/*          </span>*/}
       {/*        ) : null}*/}
       {/*      </>*/}
-      {/*    ) : (*/}
-      {/*      <span className="connecting"></span>*/}
-      {/*    )}*/}
+      {/*    ) : null}*/}
       {/*  </span>*/}
       {/*)}*/}
     </StyledRect>

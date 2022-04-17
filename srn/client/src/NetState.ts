@@ -112,7 +112,9 @@ const MAX_PENDING_TICKS = 2000;
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
-const MAX_ALLOWED_DIST_DESYNC = 0.0;
+// when either a game was restarted, or loaded in sandbox mode, all timings will be off and normal lag-compensation will go crazy
+// or if it lagged so hard that it's pointless to compensate
+const FULL_DESYNC_DETECT_MS = 500.0;
 // this has to be less than expiry (500ms) minus ping
 const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
 
@@ -300,6 +302,7 @@ export default class NetState extends EventEmitter {
             return;
           }
           if (this.switchingRooms) {
+            // eslint-disable-next-line no-useless-return
             return;
           }
           // not using elapsedMs here since this function will track it itself
@@ -522,38 +525,77 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
-        console.log('server state got at', parsed.millis);
-        this.serverState = _.clone(parsed);
-
-        this.lastReceivedServerTicks = this.serverState.millis;
-
-        this.desync = this.serverState.millis - this.state.millis;
+        this.desync = parsed.millis - this.state.millis;
+        this.lastReceivedServerTicks = this.serverState?.millis || 0;
         // this is not always true in case of packet loss, so probably better ping calculation should be in place -
         // probably just putting the update frequency in the state?
-        const serverUpdateIntervalMs = Math.abs(
-          parsed.millis - this.prevState.millis
-        );
-        if (this.desync < 0) {
-          // assuming the server is behind client (and client didn't terribly lag)
-          const invDesync = -this.desync;
-          const newPing = serverUpdateIntervalMs - invDesync;
-          if (newPing >= 0) {
-            // negative means desync is so big that calculation cannot be applied, e.g. due to server lag or big packet loss
-            // so it cannot be calculated here
-            this.ping = newPing;
-          }
-        }
+        // const serverUpdateIntervalMs = Math.abs(
+        //   parsed.millis - this.serverState?.millis || 0
+        // );
+
+        // const isDesyncSmallNegative =
+        //   this.desync < 0 &&
+        //   Math.abs(this.desync) < Math.abs(serverUpdateIntervalMs);
+        this.serverState = _.clone(parsed);
+        // const potentialNewPing = serverUpdateIntervalMs - this.desync;
+        // console.table({
+        //   serverMillis: parsed.millis,
+        //   stateMillis: this.state.millis,
+        //   desync: this.desync,
+        //   serverUpdateIntervalMs,
+        //   newPing:
+        //     isDesyncSmallNegative && potentialNewPing > 0
+        //       ? potentialNewPing
+        //       : this.ping,
+        // });
+        // if (isDesyncSmallNegative) {
+        //   // assuming the server is behind client (and client didn't terribly lag), but not too much, so
+        //   // we don't overexert local simulation
+        //   if (potentialNewPing >= 0) {
+        //     // negative means desync is so big that calculation cannot be applied, e.g. due to server lag or big packet loss,
+        //     // so it cannot be calculated here
+        //     this.ping = potentialNewPing;
+        //   }
+        // }
 
         this.state.breadcrumbs = [];
         this.addCurrentShipBreadcrumb('red');
         const savedBreadcrumbs = this.state.breadcrumbs;
 
         // TODO with new interpolation approach, this needs to be corrected to timestamp-match the previous prevState
-        // and the diff is not desync value  - the "rebase" process
-        this.prevState = this.rebaseReceivedStateToCurrentPoint(
-          parsed,
-          this.ping
-        );
+
+        if (Math.abs(this.desync) > FULL_DESYNC_DETECT_MS) {
+          console.warn(
+            'full desync detected, overriding the local state fully'
+          );
+          this.prevState = _.clone(parsed);
+          this.state = _.clone(parsed);
+        } else if (this.desync < 0) {
+          // normal client-ahead-of-server
+          this.prevState = this.rebaseReceivedStateToCurrentPoint(
+            parsed,
+            -this.desync
+          );
+          console.log(
+            'rebased prevState millis',
+            this.prevState.millis,
+            'on top of',
+            this.serverState.millis
+          );
+        } else {
+          // this means that client lagged and server is ahead of it, which shouldn't be the case
+          // or it's still synchronizing in the beginning
+          this.prevState = this.rebaseReceivedStateToCurrentPoint(
+            parsed,
+            10 // magic constant to bump client a little bit ahead so it doensn't have to accept it next time
+          );
+          console.log(
+            'accepted server state with a magic bump',
+            this.prevState.millis,
+            'on top of',
+            this.serverState.millis
+          );
+        }
         this.state.breadcrumbs = savedBreadcrumbs;
         this.extrapolate();
 
@@ -856,22 +898,43 @@ export default class NetState extends EventEmitter {
           value
         );
         this.state = interpolated || this.state;
+        console.log('true interpolate', this.state.millis);
       } else {
         this.state = _.clone(this.prevState);
+        console.log(
+          `interpolation bump due to client lag, may look bad, diff=${(
+            baseMs - currentMs
+          ).toFixed(0)}ms`
+        );
       }
     } else {
       this.state = _.clone(this.prevState);
+      console.log('interpolation impossible, no valid boundaries');
     }
   }
 
   private rebaseReceivedStateToCurrentPoint(
     parsed: GameState,
-    pingMillis: number
+    adjustMillis: number
   ): GameState {
+    // too much stuff here and it will slow down itself (unless I add again the instant-update mode without iterations, which is non-deterministic then)
+    const MAX_ACCEPTABLE_REBASE_ADJUST = 100;
+    if (adjustMillis > MAX_ACCEPTABLE_REBASE_ADJUST) {
+      console.warn(
+        `refusing to adjust state due to huge difference ${adjustMillis} > max=${MAX_ACCEPTABLE_REBASE_ADJUST}`
+      );
+      parsed.millis += adjustMillis;
+      return parsed;
+    }
+    console.log(
+      'executing rebase server state',
+      parsed.millis,
+      'with adjustMillis',
+      adjustMillis
+    );
     // still doesn't take into account accumulated actions, so not yet true rebase
     const area = this.getSimulationArea();
-    console.log({ pingMillis: pingMillis });
     // return parsed;
-    return updateWorld(parsed, area, pingMillis) || parsed;
+    return updateWorld(parsed, area, adjustMillis) || parsed;
   }
 }
