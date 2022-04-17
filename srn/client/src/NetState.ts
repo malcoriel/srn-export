@@ -186,6 +186,8 @@ export default class NetState extends EventEmitter {
 
   private lastUpdateTimeMsFromPageLoad = 0;
 
+  public scheduleUpdateLocalState: boolean = false;
+
   public static make() {
     NetState.instance = new NetState();
   }
@@ -309,7 +311,12 @@ export default class NetState extends EventEmitter {
           // not using elapsedMs here since this function will track it itself
           // in relation to last forced update, as force can also happen on network load
           // and player actions directly
-          // this.forceUpdateLocalState();
+          if (this.scheduleUpdateLocalState) {
+            // this is a special limitation so the forced-update happens on 'synchronous' ship actions so optimistic
+            // application happens without waiting for the server
+            this.scheduleUpdateLocalState = false;
+            this.forceUpdateLocalState();
+          }
         });
       },
       (elapsedMs) => {

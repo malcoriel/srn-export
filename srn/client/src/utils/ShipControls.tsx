@@ -30,6 +30,8 @@ const refreshActiveActions = () => {
     return;
   }
 
+  ns.scheduleUpdateLocalState = true;
+
   if (!keysActive.KeyW && keysActive.KeyS) {
     actionsActive.Reverse = ActionBuilder.ActionReverse({
       ship_id: myShipId,
