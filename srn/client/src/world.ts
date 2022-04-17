@@ -85,6 +85,17 @@ export type AABB = {
   bottom_right: Vector;
 };
 
+export const MaxedAABB = {
+  top_left: Vector.fromIVector({
+    x: min_x,
+    y: min_y,
+  }),
+  bottom_right: Vector.fromIVector({
+    x: max_x,
+    y: max_y,
+  }),
+};
+
 export enum SandboxCommandName {
   Unknown = 'Unknown',
   AddStar = 'AddStar',

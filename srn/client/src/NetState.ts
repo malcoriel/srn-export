@@ -7,6 +7,7 @@ import {
   isManualMovement,
   loadReplayIntoWasm,
   ManualMovementActionTags,
+  MaxedAABB,
   restoreReplayFrame,
   SandboxCommand,
   TradeAction,
@@ -105,7 +106,7 @@ const isInAABB = (bounds: AABB, obj: IVector, radius: number): boolean => {
 };
 
 // Theoretically, we need that only for BROADCAST_SLEEP_MS from main.ws - however, we might need more in case something lags, so x 2
-const EXTRAPOLATE_AHEAD_MS = 100 * 2;
+const EXTRAPOLATE_AHEAD_MS = 500 * 2;
 
 const MAX_PENDING_TICKS = 2000;
 // it's completely ignored in actual render, since vsynced time is used
@@ -242,10 +243,10 @@ export default class NetState extends EventEmitter {
   }
 
   private extrapolate() {
-    const simArea = this.getSimulationArea();
     const nextState = updateWorld(
       this.prevState,
-      simArea,
+      MaxedAABB, // this has to be maxed, because interpolate always considers absolutely all planets, not only
+      // in the simulation area, and without the maxing, it will lead to weird planet jumps
       EXTRAPOLATE_AHEAD_MS
     );
     if (nextState) {
@@ -897,8 +898,9 @@ export default class NetState extends EventEmitter {
           this.nextState,
           value
         );
+        // this.controlForOuterPlanet(this.prevState, this.nextState);
         this.state = interpolated || this.state;
-        console.log('true interpolate', this.state.millis);
+        console.log('true interpolate', this.state.millis, value.toFixed(3));
       } else {
         this.state = _.clone(this.prevState);
         console.log(
@@ -932,9 +934,24 @@ export default class NetState extends EventEmitter {
       'with adjustMillis',
       adjustMillis
     );
-    // still doesn't take into account accumulated actions, so not yet true rebase
-    const area = this.getSimulationArea();
     // return parsed;
-    return updateWorld(parsed, area, adjustMillis) || parsed;
+    return updateWorld(parsed, MaxedAABB, adjustMillis) || parsed;
+  }
+
+  private controlForOuterPlanet(prevState: GameState, nextState: GameState) {
+    const prevPlanet =
+      prevState.locations[0].planets[prevState.locations[0].planets.length - 1];
+    const nextPlanet =
+      nextState.locations[0].planets[nextState.locations[0].planets.length - 1];
+    const prevPos = Vector.fromIVector(prevPlanet);
+    const nextPos = Vector.fromIVector(nextPlanet);
+    const dist = prevPos.euDistTo(nextPos);
+    const timeDist = nextState.millis - prevState.millis;
+    console.log({
+      dist,
+      timeDist,
+      prevPos: prevPos.toFix(),
+      nextPos: nextPos.toFix(),
+    });
   }
 }

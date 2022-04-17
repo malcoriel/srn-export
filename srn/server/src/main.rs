@@ -177,7 +177,7 @@ lazy_static! {
 }
 
 const DEFAULT_SLEEP_MS: u64 = 2;
-const BROADCAST_SLEEP_MS: u64 = 100;
+const BROADCAST_FULL_SYNC_SLEEP_MS: u64 = 500;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const MAX_MESSAGES_PER_INTERVAL: u32 = 10;
@@ -353,7 +353,7 @@ fn broadcast_state_thread() {
         };
         // log!(format!("broadcast duration={}ms", diff));
         thread::sleep(Duration::from_millis(
-            (BROADCAST_SLEEP_MS as i64 - diff).max(0) as u64,
+            (BROADCAST_FULL_SYNC_SLEEP_MS as i64 - diff).max(0) as u64,
         ));
     }
 }
