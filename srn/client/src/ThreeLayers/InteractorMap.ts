@@ -9,7 +9,6 @@ import {
 import { common, rare } from '../utils/palette';
 import _ from 'lodash';
 import { rarityToColor } from './MineralsLayer';
-import { actionsActive } from '../utils/ShipControls';
 import {
   LongActionStartBuilder,
   ActionBuilder,
@@ -17,6 +16,7 @@ import {
 } from '../../../world/pkg/world.extra';
 import NetState from '../NetState';
 import { Ability, Planet } from '../../../world/pkg';
+import { executeSyncAction } from '../utils/ShipControls';
 
 const planetActionMap = new Map([
   [
@@ -25,10 +25,12 @@ const planetActionMap = new Map([
       const ns = NetState.get();
       const shipId = ns?.indexes?.myShip?.id;
       if (shipId) {
-        actionsActive.Navigate = ActionBuilder.ActionDockNavigate({
-          target: objectId,
-          ship_id: shipId,
-        });
+        executeSyncAction(
+          ActionBuilder.ActionDockNavigate({
+            target: objectId,
+            ship_id: shipId,
+          })
+        );
       }
     },
   ],
@@ -61,10 +63,12 @@ export const containerActionsMap = new Map([
       const ns = NetState.get();
       const shipId = ns?.indexes?.myShip?.id;
       if (shipId) {
-        actionsActive.Tractor = ActionBuilder.ActionTractor({
-          ship_id: shipId,
-          target: objectId,
-        });
+        executeSyncAction(
+          ActionBuilder.ActionTractor({
+            ship_id: shipId,
+            target: objectId,
+          })
+        );
       }
     },
   ],
@@ -91,10 +95,12 @@ export const mineralActionsMap = new Map([
       const ns = NetState.get();
       const shipId = ns?.indexes?.myShip?.id;
       if (shipId) {
-        actionsActive.Tractor = ActionBuilder.ActionTractor({
-          target: objectId,
-          ship_id: shipId,
-        });
+        executeSyncAction(
+          ActionBuilder.ActionTractor({
+            target: objectId,
+            ship_id: shipId,
+          })
+        );
       }
     },
   ],

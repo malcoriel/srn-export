@@ -15,7 +15,11 @@ import {
 } from './world';
 import EventEmitter from 'events';
 import * as uuid from 'uuid';
-import { actionsActive, resetActions } from './utils/ShipControls';
+import {
+  getActiveSyncActions,
+  isSyncActionTypeActive,
+  resetActiveSyncActions,
+} from './utils/ShipControls';
 import Vector, { IVector } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledThrottledTime, vsyncedCoupledTime } from './utils/Times';
@@ -186,7 +190,7 @@ export default class NetState extends EventEmitter {
 
   private lastUpdateTimeMsFromPageLoad = 0;
 
-  public scheduleUpdateLocalState: boolean = false;
+  public scheduleUpdateLocalState = false;
 
   public static make() {
     NetState.instance = new NetState();
@@ -733,14 +737,15 @@ export default class NetState extends EventEmitter {
   };
 
   updateLocalState = (elapsedMs: number) => {
+    // block all controls in inactive game state
     if (this.state.paused) {
-      resetActions();
+      resetActiveSyncActions();
       return;
     }
 
-    const actions = Object.values(actionsActive).filter((a) => !!a);
-    const actionsToSync = actions.filter((a) => !!a) as Action[];
+    const actionsToSync = getActiveSyncActions();
 
+    // send to server immediately
     for (const action of actionsToSync) {
       // prevent server DOS via gas action flooding, separated by action type
       if (isManualMovement(action)) {
@@ -761,18 +766,18 @@ export default class NetState extends EventEmitter {
       this.sendSchedulePlayerAction(action);
     }
 
+    // schedule for optimistic update
     this.state.player_actions = [];
-    for (const cmd of actions as Action[]) {
+    for (const cmd of actionsToSync) {
       this.state.player_actions.push(cmd);
     }
 
-    if (actionsActive.Move) {
+    if (isSyncActionTypeActive('Move')) {
       this.visualState.boundCameraMovement = true;
     }
-    resetActions();
+    resetActiveSyncActions();
 
-    const simArea = this.getSimulationArea();
-    const result = updateWorld(this.state, simArea, elapsedMs);
+    const result = updateWorld(this.state, MaxedAABB, elapsedMs);
     if (result) {
       this.state = result;
       this.reindexNetState();

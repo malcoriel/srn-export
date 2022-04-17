@@ -16,7 +16,6 @@ import {
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState from '../NetState';
 import Vector from '../utils/Vector';
-import { actionsActive } from '../utils/ShipControls';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { useStore } from '../store';
 import { size, viewPortSizeMeters } from '../coord';
@@ -31,6 +30,7 @@ import { seedToNumber, threeVectorToVector } from './util';
 import { ThreeLoadingIndicator } from './Resources';
 import { useNSForceChange } from '../NetStateHooks';
 import { ThreeBreadcrumbs } from './ThreeBreadcrumbs';
+import { executeSyncAction } from '../utils/ShipControls';
 
 THREE.Cache.enabled = true;
 
@@ -86,10 +86,12 @@ export const ThreeLayer: React.FC<{
             const pos = threeVectorToVector(evt.point);
             const shipId = indexes.myShip?.id;
             if (shipId) {
-              actionsActive.Navigate = ActionBuilder.ActionNavigate({
-                target: Vector.fromIVector(pos),
-                ship_id: shipId,
-              });
+              executeSyncAction(
+                ActionBuilder.ActionNavigate({
+                  target: Vector.fromIVector(pos),
+                  ship_id: shipId,
+                })
+              );
             }
           }}
         >

@@ -3,7 +3,33 @@ import { Action } from '../../../world/pkg';
 import { ActionBuilder } from '../../../world/pkg/world.extra';
 import NetState from '../NetState';
 
-export const actionsActive: Record<string, Action | undefined> = {
+// keep those in sync
+type SynchronousActionTags =
+  | 'Gas'
+  | 'TurnRight'
+  | 'TurnLeft'
+  | 'Reverse'
+  | 'Move'
+  | 'Navigate'
+  | 'DockNavigate'
+  | 'Tractor'
+  | 'StopGas'
+  | 'StopTurn';
+
+const syncActionTags = new Set([
+  'Gas',
+  'TurnRight',
+  'TurnLeft',
+  'Reverse',
+  'Move',
+  'Navigate',
+  'DockNavigate',
+  'Tractor',
+  'StopGas',
+  'StopTurn',
+]);
+
+const actionsActive: Record<SynchronousActionTags, Action | undefined> = {
   Gas: undefined,
   TurnRight: undefined,
   TurnLeft: undefined,
@@ -14,6 +40,27 @@ export const actionsActive: Record<string, Action | undefined> = {
   Tractor: undefined,
   StopGas: undefined,
   StopTurn: undefined,
+};
+
+export const getActiveSyncActions = () => {
+  return Object.values(actionsActive).filter((a) => !!a) as Action[];
+};
+
+export const isSyncActionTypeActive = (type: SynchronousActionTags) => {
+  return !!actionsActive[type];
+};
+
+export const executeSyncAction = (act: Action) => {
+  const ns = NetState.get();
+  if (!ns) {
+    return;
+  }
+
+  if (syncActionTags.has(act.tag)) {
+    // @ts-ignore - TS doesn't understand set-narrowing
+    actionsActive[act.tag] = act;
+    ns.scheduleUpdateLocalState = true;
+  }
 };
 
 const keysActive: Record<string, boolean> = {};
@@ -85,16 +132,15 @@ const keyUpHandler = (keyDownEvent: KeyboardEvent) => {
   refreshActiveActions();
 };
 
-const singleUseActions = [
+const singleUseActions: SynchronousActionTags[] = [
   'Navigate',
   'DockNavigate',
-  'Dock',
   'Tractor',
   'StopGas',
   'StopTurn',
 ];
 
-export const resetActions = () => {
+export const resetActiveSyncActions = () => {
   for (const key of singleUseActions) {
     actionsActive[key] = undefined;
   }
