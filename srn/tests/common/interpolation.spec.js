@@ -148,5 +148,55 @@ describe('state interpolation', () => {
     expect(moonC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
   });
 
-  it.todo('can interpolate only limited area');
+  fit('can interpolate only limited area', () => {
+    const worldA = wasm.seedWorld({
+      mode: 'PirateDefence',
+      seed: 'interpolate',
+    });
+    const planet = mockPlanet();
+    planet.anchor_id = getLoc0(worldA).star.id;
+    planet.x = 100;
+    planet.y = 0;
+    planet.anchor_tier = 1;
+    planet.name = 'planet';
+    const moon = mockPlanet();
+    moon.x = 120;
+    moon.y = 0;
+    moon.anchor_tier = 2;
+    moon.anchor_id = planet.id;
+    moon.name = 'moon';
+    getLoc0(worldA).planets = [planet, moon];
+    const worldB = _.cloneDeep(worldA);
+    const planetB = getLoc0(worldB).planets[0];
+    planetB.x = 60; // not really a correct trajectory, but interpolation doesn't care - it's going to pick up the closest trajectory point regardless
+    planetB.y = -60;
+    const moonB = getLoc0(worldB).planets[1];
+    moonB.x = 0; // let's go crazy so interpolation also would go crazy if it picks it up
+    moonB.y = 100;
+    const worldC = wasm.interpolateStates(
+      worldA,
+      worldB,
+      0.5,
+      mockUpdateOptions({
+        limit_area: {
+          top_left: {
+            x: 98,
+            y: -2,
+          },
+          bottom_right: {
+            x: 101,
+            y: 1,
+          },
+        },
+      })
+    );
+    const planetC = getLoc0(worldC).planets[0];
+    const moonC = getLoc0(worldC).planets[0];
+    // expect moon to be skipped from update, but not the planet
+    expect(planetC.x).not.toBeCloseTo(100);
+    expect(moonC.x).toBeCloseTo(120);
+  });
+  it.todo(
+    'interpolation of limited area does not break when an anchor is not interpolated'
+  );
 });
