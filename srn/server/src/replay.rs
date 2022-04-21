@@ -1,6 +1,6 @@
 use crate::perf::SamplerMarks;
 use crate::system_gen::seed_state;
-use crate::{get_prng, interpolation, new_id, world, DialogueTable, GameMode, GameState, Sampler, Vec2f64, UpdateOptionsV2};
+use crate::{get_prng, interpolation, new_id, world, DialogueTable, GameMode, GameState, Sampler, Vec2f64};
 use itertools::Itertools;
 use json_patch::{
     patch, AddOperation, Patch, PatchError, PatchOperation, RemoveOperation, ReplaceOperation,
@@ -19,6 +19,7 @@ use treediff::tools::ChangeType::{Added, Modified, Removed};
 use treediff::tools::{ChangeType, Recorder};
 use treediff::value::*;
 use treediff::Value;
+use world::UpdateOptionsV2;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

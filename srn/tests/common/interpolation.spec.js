@@ -1,4 +1,10 @@
-import { getLoc0, getShipByPlayerId, swapGlobals, wasm } from '../util';
+import {
+  getLoc0,
+  getShipByPlayerId,
+  mockUpdateOptions,
+  swapGlobals,
+  wasm,
+} from '../util';
 import _ from 'lodash';
 import * as uuid from 'uuid';
 
@@ -18,8 +24,6 @@ export const mockPlanet = () => ({
   health: null,
   properties: [],
 });
-
-const mockUpdateOptions = (overrides) => _.merge({}, overrides);
 
 describe('state interpolation', () => {
   beforeAll(swapGlobals);
@@ -143,4 +147,6 @@ describe('state interpolation', () => {
     expect(moonC.y).toBeCloseTo((Math.sqrt(2) / 2) * 100 + 20);
     expect(moonC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
   });
+
+  it.todo('can interpolate only limited area');
 });

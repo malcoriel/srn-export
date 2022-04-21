@@ -285,13 +285,10 @@ export const interpolateWorld = (
   value: number,
   limitArea: AABB
 ): GameState => {
-  return wasmFunctions.interpolate_states(
-    fromState,
-    toState,
-    value,
-    limitArea,
-    0 /* limit to loc idx=0 */
-  );
+  return wasmFunctions.interpolate_states(fromState, toState, value, {
+    limit_area: limitArea,
+    limit_to_loc_idx: 0,
+  });
 };
 
 const parseState = (inState: GameState): GameState | undefined => {

@@ -1,5 +1,6 @@
 import {
   genStateOpts,
+  mockUpdateOptions,
   swapGlobals,
   updateRoom,
   wasm,
@@ -133,7 +134,8 @@ describe('replay system', () => {
       const interpolated = wasm.interpolateStates(
         states[idxA],
         states[idxB],
-        value
+        value,
+        mockUpdateOptions()
       );
       expect(interpolatedRestored).toEqual(interpolated);
     }

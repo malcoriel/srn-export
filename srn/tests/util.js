@@ -324,3 +324,4 @@ export const packAndWriteReplay = async (states, name) => {
   };
   await writeReplay(replay);
 };
+export const mockUpdateOptions = (overrides) => _.merge({}, overrides);

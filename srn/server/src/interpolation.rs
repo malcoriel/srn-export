@@ -14,7 +14,7 @@ pub fn interpolate_states(
     state_b: &GameState,
     value: f64,
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
-    options: UpdateOptionsV2
+    options: UpdateOptionsV2,
 ) -> GameState {
     let mut result = state_a.clone();
     interpolate_timings(&mut result, state_b, value);
@@ -52,6 +52,9 @@ fn interpolate_location(
     for i in 0..result.ships.len() {
         let ship = &mut result.ships[i];
         if let Some(target) = ships_by_id_target.get(&ship.id) {
+            if should_skip_pos(&options, &ship.as_vec()) {
+                continue;
+            }
             interpolate_ship(ship, target, value);
         }
     }
@@ -72,31 +75,42 @@ fn interpolate_location(
     // then interpolate
     for i in 0..movements.len() {
         let (res_mov, tar_mov) = &mut movements[i];
-        interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache);
+        if !should_skip_pos(&options, &result.planets[i].as_vec()) {
+            interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache);
+        }
     }
     // then, sequentially (via tiers) restore absolute position
     let mut anchor_pos_by_id = HashMap::new();
     if let Some(star_clone) = result.star.clone() {
         anchor_pos_by_id.insert(star_clone.id, star_clone.as_vec());
-
     }
     for tier in 1..3 {
         for i in 0..result.planets.len() {
             let planet = &mut result.planets[i];
             if planet.anchor_tier == tier {
-                let new_pos = match movements[i].0 {
+                let (mov_0, _) = &movements[i];
+                let new_pos = match mov_0 {
                     Movement::RadialMonotonous {
                         relative_position, ..
                     } => relative_position,
                     _ => panic!("bad movement"),
                 }
-                .add(&anchor_pos_by_id.get(&planet.anchor_id).unwrap());
+                    .add(&anchor_pos_by_id.get(&planet.anchor_id).unwrap());
                 anchor_pos_by_id.insert(planet.id, new_pos.clone());
                 planet.x = new_pos.x;
                 planet.y = new_pos.y;
             }
         }
     }
+}
+
+fn should_skip_pos(options: &&UpdateOptionsV2, pos_to_skip: &Vec2f64) -> bool {
+    if let Some(limit_area) = &options.limit_area {
+        if !limit_area.contains_vec(&pos_to_skip) {
+            return true;
+        }
+    }
+    return false;
 }
 
 pub const REL_ORBIT_CACHE_KEY_PRECISION: f64 = 1.0e14;
