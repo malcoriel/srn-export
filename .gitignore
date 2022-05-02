@@ -164,3 +164,6 @@ log.txt
 
 # mkdkr
 .tmp
+
+# hardlinked rust files following convention
+*_link_.rs
