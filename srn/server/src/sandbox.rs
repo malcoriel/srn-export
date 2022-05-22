@@ -72,7 +72,7 @@ pub struct SBSetupState {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-#[serde(tag = "tag")]
+#[serde(tag = "tag", content="fields")]
 pub enum SandboxCommand {
     AddStar,
     AddMineral,

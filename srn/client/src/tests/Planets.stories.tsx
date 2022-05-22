@@ -16,28 +16,30 @@ const buildStory = async (): Promise<void> => {
   }
 
   const star_ref_id = {
-    tag: 'Reference',
+    tag: 'Reference' as const,
     reference: 'star',
   };
+
   console.log('building story');
-  nsRef.sendSandboxCmd(
-    SandboxCommandBuilder.SandboxCommandSetupState({
-      fields: {
-        star: {
-          radius: 50.0,
-          id: star_ref_id,
-        },
-        planets: [
-          {
-            p_type: PlanetType.Jovian,
-            orbit_speed: 0.001,
-            radius: 10.0,
-            anchor_id: star_ref_id,
-          },
-        ],
+  const cmd = SandboxCommandBuilder.SandboxCommandSetupState({
+    fields: {
+      star: {
+        radius: 50.0,
+        id: star_ref_id,
       },
-    })
-  );
+      planets: [
+        {
+          p_type: PlanetType.Jovian,
+          position: { x: 50, y: 50 },
+          id: null,
+          orbit_speed: 0.001,
+          radius: 10.0,
+          anchor_id: star_ref_id,
+        },
+      ],
+    },
+  });
+  nsRef.sendSandboxCmd(cmd);
 };
 
 const startTestGame = async (): Promise<void> => {

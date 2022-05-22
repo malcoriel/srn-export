@@ -161,11 +161,11 @@ module.exports = function (file, api) {
         return [
           j.importDeclaration.from({
             comments: [
-              j.commentLine(` start builder class ${builderClassName}`, true),
+              j.commentLine(` start builder class ${builderClassName}\n`, true),
             ],
             importKind: 'value',
             specifiers: getImportedTypes(union.types, j),
-            source: j.stringLiteral('./world.d.ts'),
+            source: j.stringLiteral('./world'),
           }),
           j.exportNamedDeclaration(
             j.classDeclaration.from({
