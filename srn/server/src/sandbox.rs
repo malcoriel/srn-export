@@ -155,6 +155,8 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.x = args.target.x;
                 ship.y = args.target.y;
+            } else {
+                warn!("couldn't find player ship to teleport")
             }
         }
         SandboxCommand::GetSomeWares => {

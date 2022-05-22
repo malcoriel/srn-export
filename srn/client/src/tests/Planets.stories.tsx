@@ -7,6 +7,7 @@ import { ThreeLayer } from '../ThreeLayers/ThreeLayer';
 import { size } from '../coord';
 import { Button } from '../HtmlLayers/ui/Button';
 import { SandboxCommandBuilder } from '../../../world/pkg/world.extra';
+import { delay } from '../utils/misc';
 
 let nsRef: NetState | undefined;
 
@@ -20,26 +21,37 @@ const buildStory = async (): Promise<void> => {
     reference: 'star',
   };
 
-  console.log('building story');
-  const cmd = SandboxCommandBuilder.SandboxCommandSetupState({
-    fields: {
-      star: {
-        radius: 50.0,
-        id: star_ref_id,
-      },
-      planets: [
-        {
-          p_type: PlanetType.Jovian,
-          position: { x: 50, y: 50 },
-          id: null,
-          orbit_speed: 0.001,
-          radius: 10.0,
-          anchor_id: star_ref_id,
+  nsRef.sendSandboxCmd(
+    SandboxCommandBuilder.SandboxCommandSetupState({
+      fields: {
+        star: {
+          radius: 50.0,
+          id: star_ref_id,
         },
-      ],
-    },
-  });
-  nsRef.sendSandboxCmd(cmd);
+        planets: [
+          {
+            p_type: PlanetType.Jovian,
+            position: { x: 50, y: 50 },
+            id: null,
+            orbit_speed: 0.001,
+            radius: 10.0,
+            anchor_id: star_ref_id,
+          },
+        ],
+      },
+    })
+  );
+  await delay(1000);
+  nsRef.sendSandboxCmd(
+    SandboxCommandBuilder.SandboxCommandTeleport({
+      fields: {
+        target: {
+          x: 50,
+          y: 50,
+        },
+      },
+    })
+  );
 };
 
 const startTestGame = async (): Promise<void> => {
