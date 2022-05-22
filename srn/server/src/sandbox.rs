@@ -6,18 +6,20 @@ use chrono::Utc;
 use lazy_static::lazy_static;
 use rand_pcg::Pcg64Mcg;
 use rand::SeedableRng;
+use rand_pcg::rand_core::RngCore;
 use uuid::Uuid;
 
 use crate::{indexing, prng_id};
 use crate::indexing::{find_my_ship, find_my_ship_mut};
 use serde_derive::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
 use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;
-use crate::random_stuff::PLANET_NAMES;
-use crate::system_gen::{gen_planet_typed, gen_star, PlanetType, PoolRandomPicker};
+use crate::random_stuff::{gen_color, gen_planet_name, gen_star_color, gen_star_name, PLANET_NAMES, random_hex_seed};
+use crate::system_gen::{gen_planet, gen_planet_typed, gen_star, PlanetType, PoolRandomPicker};
 use crate::vec2::Vec2f64;
-use crate::world::{GameState, Ship};
+use crate::world::{GameState, Location, Planet, Ship, Star};
 use crate::{new_id, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -31,22 +33,55 @@ lazy_static! {
         Arc::new(Mutex::new(Box::new(HashMap::new())));
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[serde(tag = "tag")]
+pub enum ReferencableId {
+    Id {
+        id: Uuid
+    },
+    Reference {
+        reference: String,
+    },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct SBAddPlanet {
+    p_type: PlanetType,
+    orbit_speed: f64,
+    radius: f64,
+    position: Vec2f64,
+    anchor_id: ReferencableId,
+    id: Option<ReferencableId>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct SBAddStar {
+    radius: f64,
+    id: Option<ReferencableId>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct SBTeleport {
+    target: Vec2f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct SBSetupState {
+    star: SBAddStar,
+    planets: Vec<SBAddPlanet>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[serde(tag = "tag")]
 pub enum SandboxCommand {
     AddStar,
     AddMineral,
     AddContainer,
     ToggleGodMode,
     GetSomeWares,
-    AddPlanet {
-        p_type: PlanetType,
-        orbit_speed: f64,
-        radius: f64,
-        anchor_id: Uuid,
-    },
-    Teleport {
-        target: SandboxTeleportTarget,
-    },
+    AddPlanet(SBAddPlanet),
+    Teleport(SBTeleport),
+    SetupState(SBSetupState),
 }
 
 pub fn init_saved_states() {
@@ -98,35 +133,28 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
         SandboxCommand::ToggleGodMode => {
             state.disable_hp_effects = !state.disable_hp_effects;
         }
-        SandboxCommand::AddPlanet {
-            p_type,
-            orbit_speed,
-            radius,
-            anchor_id,
-        } => {
+        SandboxCommand::AddPlanet(args) => {
             if let Some(pos) = get_pos(state, player_id) {
                 let mut planet_name_pool = PoolRandomPicker {
                     // TODO filter out existing planets
                     options: Vec::from(PLANET_NAMES),
                 };
                 let name = planet_name_pool.get(&mut prng).to_string();
-                let mut planet = gen_planet_typed(p_type, prng_id(&mut prng));
+                let mut planet = gen_planet_typed(args.p_type, prng_id(&mut prng));
                 planet.name = name;
-                planet.radius = radius;
-                planet.orbit_speed = orbit_speed;
-                planet.anchor_id = anchor_id;
-                planet.anchor_tier = get_anchor_tier(state, anchor_id);
+                planet.radius = args.radius;
+                planet.orbit_speed = args.orbit_speed;
+                planet.anchor_id = map_id(args.anchor_id, &mut HashMap::new(), &mut prng);
+                planet.anchor_tier = find_anchor_tier(&state.locations[0], planet.anchor_id);
                 planet.x = pos.x;
                 planet.y = pos.y;
                 state.locations[0].planets.push(planet);
             }
         }
-        SandboxCommand::Teleport { target } => {
-            if target == SandboxTeleportTarget::Zero {
-                if let Some(ship) = find_my_ship_mut(state, player_id) {
-                    ship.x = 0.0;
-                    ship.y = 0.0;
-                }
+        SandboxCommand::Teleport(args) => {
+            if let Some(ship) = find_my_ship_mut(state, player_id) {
+                ship.x = args.target.x;
+                ship.y = args.target.y;
             }
         }
         SandboxCommand::GetSomeWares => {
@@ -161,7 +189,70 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 world::spawn_container(location, pos);
             }
         }
+        SandboxCommand::SetupState(args) => {
+            let loc_idx = 0;
+            let loc = &mut state.locations[loc_idx];
+            let mut id_storage = HashMap::new();
+            if let Some(star_id) = args.star.id {
+                let star_color = gen_star_color(&mut prng);
+                loc.star = Some(Star {
+                    id: map_id(star_id, &mut id_storage, &mut prng),
+                    name: gen_star_name(&mut prng).to_string(),
+                    x: 0.0,
+                    y: 0.0,
+                    radius: args.star.radius,
+                    rotation: 0.0,
+                    color: star_color.0.to_string(),
+                    corona_color: star_color.1.to_string(),
+                });
+            }
+            loc.planets = args.planets.iter().map(|spb| {
+                let anchor_id = map_id(spb.anchor_id.clone(), &mut id_storage, &mut prng);
+                Planet {
+                    id: map_id_opt(spb.id.clone(), &mut id_storage, &mut prng),
+                    name: gen_planet_name(&mut prng).to_string(),
+                    x: spb.position.x,
+                    y: spb.position.y,
+                    rotation: 0.0,
+                    radius: spb.radius,
+                    orbit_speed: spb.orbit_speed,
+                    anchor_id,
+                    anchor_tier: find_anchor_tier(&loc.clone(), anchor_id),
+                    color: gen_color(&mut prng).to_string(),
+                    health: None,
+                    properties: vec![]
+                }
+            }).collect();
+        }
     }
+}
+
+type ReferencableIdStorage = HashMap<String, Uuid>;
+
+fn map_id_opt(ref_id: Option<ReferencableId>, id_storage: &mut ReferencableIdStorage, prng: &mut Pcg64Mcg) -> Uuid {
+    if let Some(id) = ref_id {
+        map_id(id, id_storage, prng)
+    } else {
+        let mut bytes: [u8; 4] = [0; 4];
+        prng.fill_bytes(&mut bytes);
+        let hexed_ref = hex::encode(bytes);
+        map_id(ReferencableId::Reference {
+            reference: hexed_ref
+        }, id_storage, prng)
+    }
+}
+
+fn map_id(ref_id: ReferencableId, id_storage: &mut ReferencableIdStorage, prng: &mut Pcg64Mcg) -> Uuid {
+    match ref_id {
+        ReferencableId::Id { id } => {
+            id
+        }
+        ReferencableId::Reference { reference } => {
+            let entry = id_storage.entry(reference).or_insert(prng_id(prng));
+            *entry
+        }
+    }
+
 }
 
 fn add_free_stuff(ship: &mut Ship, iit: InventoryItemType, quantity: i32) {
@@ -180,13 +271,13 @@ fn add_free_stuff(ship: &mut Ship, iit: InventoryItemType, quantity: i32) {
     )
 }
 
-fn get_anchor_tier(state: &mut GameState, anchor_id: Uuid) -> u32 {
-    let anchor_planet = state.locations[0]
+fn find_anchor_tier(loc: &Location, anchor_id: Uuid) -> u32 {
+    let anchor_planet = loc
         .planets
         .iter()
         .find(|p| p.id == anchor_id);
     if anchor_planet.is_none() {
-        if let Some(star) = state.locations[0].star.as_ref() {
+        if let Some(star) = loc.star.as_ref() {
             if star.id == anchor_id {
                 return 1;
             }
@@ -204,29 +295,3 @@ pub struct SavedState {
 }
 
 pub type StateDictionary = HashMap<Uuid, SavedState>;
-
-pub fn is_world_command(command: &SandboxCommand) -> bool {
-    match command {
-        SandboxCommand::AddStar => {
-            true
-        }
-        SandboxCommand::AddMineral => {
-            true
-        }
-        SandboxCommand::AddContainer => {
-            true
-        }
-        SandboxCommand::ToggleGodMode => {
-            true
-        }
-        SandboxCommand::GetSomeWares => {
-            true
-        }
-        SandboxCommand::AddPlanet { .. } => {
-            true
-        }
-        SandboxCommand::Teleport { .. } => {
-            true
-        }
-    }
-}

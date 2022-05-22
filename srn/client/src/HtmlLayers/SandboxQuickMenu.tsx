@@ -6,13 +6,10 @@ import {
   GameMode,
   GameState,
   PlanetType,
-  SandboxCommandName,
   SandboxTeleportTarget,
 } from '../world';
 import {
-  BiPlanet,
   BiReset,
-  CgCodeClimate,
   FaCreativeCommonsZero,
   FaShapes,
   FiBox,
@@ -23,18 +20,18 @@ import {
   GiStoneSphere,
   GiWoodenCrate,
   ImFloppyDisk,
-  IoIosSpeedometer,
   RiDownloadCloudLine,
   RiUploadCloudLine,
   SiGodotengine,
 } from 'react-icons/all';
-import Vector from '../utils/Vector';
+import Vector, { VectorF } from '../utils/Vector';
 import _ from 'lodash';
 import { FaDiceD20 } from 'react-icons/fa';
 import { api } from '../utils/api';
 import { usePrompt } from './PromptWindow';
 import { findMyShip } from '../ClientStateIndexing';
 import { useNSForceChange } from '../NetStateHooks';
+import { SandboxCommandBuilder } from '../../../world/pkg/world.extra';
 
 const pickClosestObject = (
   state: GameState,
@@ -154,17 +151,22 @@ export const SandboxQuickMenu = () => {
         {
           text: 'Add a star',
           icon: <GiStarProminences />,
-          handler: () => ns.sendSandboxCmd(SandboxCommandName.AddStar),
+          handler: () =>
+            ns.sendSandboxCmd(SandboxCommandBuilder.SandboxCommandAddStar()),
         },
         {
           text: 'Add a container',
           icon: <FiBox />,
-          handler: () => ns.sendSandboxCmd(SandboxCommandName.AddContainer),
+          handler: () =>
+            ns.sendSandboxCmd(
+              SandboxCommandBuilder.SandboxCommandAddContainer()
+            ),
         },
         {
           text: 'Add a mineral',
           icon: <GiStoneSphere />,
-          handler: () => ns.sendSandboxCmd(SandboxCommandName.AddMineral),
+          handler: () =>
+            ns.sendSandboxCmd(SandboxCommandBuilder.SandboxCommandAddMineral()),
         },
         // {
         //   text: `Add a ${planetType} planet sp. ${planetSpeed}`,
@@ -217,11 +219,13 @@ export const SandboxQuickMenu = () => {
       text: 'Move to zero',
       icon: <FaCreativeCommonsZero />,
       handler: () =>
-        ns.sendSandboxCmd({
-          [SandboxCommandName.Teleport]: {
-            target: SandboxTeleportTarget.Zero,
-          },
-        }),
+        ns.sendSandboxCmd(
+          SandboxCommandBuilder.SandboxCommandTeleport({
+            fields: {
+              target: VectorF(0, 0),
+            },
+          })
+        ),
     },
     {
       text: 'Cheats',
@@ -230,12 +234,18 @@ export const SandboxQuickMenu = () => {
         {
           text: 'Toggle god mode',
           icon: <SiGodotengine />,
-          handler: () => ns.sendSandboxCmd(SandboxCommandName.ToggleGodMode),
+          handler: () =>
+            ns.sendSandboxCmd(
+              SandboxCommandBuilder.SandboxCommandToggleGodMode()
+            ),
         },
         {
           text: 'Get some wares',
           icon: <GiWoodenCrate />,
-          handler: () => ns.sendSandboxCmd(SandboxCommandName.GetSomeWares),
+          handler: () =>
+            ns.sendSandboxCmd(
+              SandboxCommandBuilder.SandboxCommandGetSomeWares()
+            ),
         },
       ],
     },

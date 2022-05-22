@@ -16,6 +16,7 @@ const apiUrl =
   process.env.NODE_ENV !== 'production'
     ? 'http://localhost:8000/api'
     : 'https://srn.malcoriel.de/api';
+
 export const api = {
   getVersion: async () => {
     const resp = await fetch(`${apiUrl}/version`);

@@ -88,11 +88,16 @@ const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
             }
           }
           newMemberValue = j.unionTypeAnnotation(resultMapped);
+        } else if (memberValue.type === 'TSTypeLiteral') {
+          console.log(
+            'cannot support TSTypeLiteral as an enum member, instead extract to its own rust newtype',
+            memberValue
+          );
         }
 
         if (!newMemberValue) {
           throw new Error(
-            `Unsupported member value type: ${memberValue.type} at ${memberValue.loc}`
+            `Unsupported member value type: ${memberValue.type} at ${memberValue.loc.start}-${memberValue.loc.end}`
           );
         }
 

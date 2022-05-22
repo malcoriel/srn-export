@@ -8,7 +8,6 @@ import {
   loadReplayIntoWasm,
   ManualMovementActionTags,
   restoreReplayFrame,
-  SandboxCommand,
   TradeAction,
   updateWorld,
 } from './world';
@@ -31,6 +30,7 @@ import {
   InventoryAction,
   LongActionStart,
   NotificationActionR,
+  SandboxCommand,
 } from '../../world/pkg';
 import {
   buildClientStateIndexes,
@@ -191,8 +191,9 @@ export default class NetState extends EventEmitter {
 
   public scheduleUpdateLocalState = false;
 
-  public static make() {
+  public static make(): NetState {
     NetState.instance = new NetState();
+    return NetState.instance;
   }
 
   public static get(): NetState | undefined {
@@ -292,7 +293,7 @@ export default class NetState extends EventEmitter {
     NetState.instance = undefined;
   };
 
-  init = (mode: GameMode) => {
+  init = (mode: GameMode): Promise<void> => {
     this.mode = mode;
     console.log(`initializing NS ${this.id}`);
     this.connecting = true;
@@ -351,7 +352,7 @@ export default class NetState extends EventEmitter {
       },
       () => {}
     );
-    this.connect();
+    return this.connect();
   };
 
   rewindReplayToMs = (markInMs: number) => {
@@ -434,54 +435,58 @@ export default class NetState extends EventEmitter {
     );
   };
 
-  connect = () => {
-    if (this.disconnecting) {
-      return;
-    }
-    console.log(`connecting NS ${this.id}`);
-    this.socket = new WebSocket(api.getWebSocketUrl(), 'rust-websocket');
-    this.socket.onmessage = (event) => {
-      Perf.markEvent(Measure.SocketFrameEvent);
-      Perf.usingMeasure(Measure.SocketFrameTime, () => {
-        this.handleMessage(event.data);
-      });
-    };
-    this.socket.onclose = () => {
-      if (!this.disconnecting) {
-        this.emit('network');
+  connect = (): Promise<void> => {
+    return new Promise<void>((resolve, reject) => {
+      if (this.disconnecting) {
+        reject(new Error('Currently disconnecting'));
+        return;
       }
-      this.socket = null;
-      this.state.millis = 0;
-      this.reconnectTimeout = setTimeout(() => {
-        this.connecting = true;
-        this.connect();
-      }, RECONNECT_INTERVAL);
-    };
-    this.socket.onopen = () => {
-      this.connecting = false;
-      this.visualState.boundCameraMovement = true;
-
-      const switchRoomTag = uuid.v4();
-      this.switchingRooms = true;
-      (async () => {
-        const roomId = await api.getRoomToJoin(this.mode);
-        this.send({
-          code: ClientOpCode.SwitchRoom,
-          value: { room_id: roomId, client_name: this.playerName },
-          tag: switchRoomTag,
+      console.log(`connecting NS ${this.id}`);
+      this.socket = new WebSocket(api.getWebSocketUrl(), 'rust-websocket');
+      this.socket.onmessage = (event) => {
+        Perf.markEvent(Measure.SocketFrameEvent);
+        Perf.usingMeasure(Measure.SocketFrameTime, () => {
+          this.handleMessage(event.data);
         });
-      })();
-    };
-    this.socket.onerror = () => {
-      console.warn('socket error');
-      this.resetState();
-      if (!this.disconnecting) {
-        this.emit('network');
-      }
-      if (this.socket) {
-        this.socket.close();
-      }
-    };
+      };
+      this.socket.onclose = () => {
+        if (!this.disconnecting) {
+          this.emit('network');
+        }
+        this.socket = null;
+        this.state.millis = 0;
+        this.reconnectTimeout = setTimeout(() => {
+          this.connecting = true;
+          this.connect();
+        }, RECONNECT_INTERVAL);
+      };
+      this.socket.onopen = () => {
+        this.connecting = false;
+        this.visualState.boundCameraMovement = true;
+
+        const switchRoomTag = uuid.v4();
+        this.switchingRooms = true;
+        (async () => {
+          const roomId = await api.getRoomToJoin(this.mode);
+          this.send({
+            code: ClientOpCode.SwitchRoom,
+            value: { room_id: roomId, client_name: this.playerName },
+            tag: switchRoomTag,
+          });
+          resolve();
+        })();
+      };
+      this.socket.onerror = () => {
+        console.warn('socket error');
+        this.resetState();
+        if (!this.disconnecting) {
+          this.emit('network');
+        }
+        if (this.socket) {
+          this.socket.close();
+        }
+      };
+    });
   };
 
   private addExtrapolateBreadcrumbs = () => {
@@ -909,7 +914,7 @@ export default class NetState extends EventEmitter {
         );
         // this.controlForOuterPlanet(this.prevState, this.nextState);
         this.state = interpolated || this.state;
-        console.log('true interpolate', this.state.millis, value.toFixed(3));
+        // console.log('true interpolate', this.state.millis, value.toFixed(3));
       } else {
         this.state = _.clone(this.prevState);
         console.log(

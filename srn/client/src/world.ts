@@ -96,16 +96,6 @@ export const MaxedAABB = {
   }),
 };
 
-export enum SandboxCommandName {
-  Unknown = 'Unknown',
-  AddStar = 'AddStar',
-  AddContainer = 'AddContainer',
-  AddMineral = 'AddMineral',
-  ToggleGodMode = 'ToggleGodMode',
-  GetSomeWares = 'GetSomeWares',
-  Teleport = 'Teleport',
-}
-
 export enum PlanetType {
   Unknown = 'Unknown',
   Ice = 'Ice',
@@ -118,26 +108,6 @@ export enum SandboxTeleportTarget {
   Unknown = 'Unknown',
   Zero = 'Zero',
 }
-
-export type SandboxCommand =
-  | SandboxCommandName.AddStar
-  | SandboxCommandName.AddContainer
-  | SandboxCommandName.AddMineral
-  | SandboxCommandName.ToggleGodMode
-  | SandboxCommandName.GetSomeWares
-  | {
-      AddPlanet: {
-        p_type: PlanetType;
-        orbit_speed: number;
-        radius: number;
-        anchor_id: string;
-      };
-    }
-  | {
-      Teleport: {
-        target: SandboxTeleportTarget;
-      };
-    };
 
 export const isStateTutorial = (st: GameState) => {
   return st.mode === GameMode.Tutorial;

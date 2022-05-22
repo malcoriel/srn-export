@@ -15,7 +15,7 @@ use crate::sandbox;
 use rand_pcg::Pcg64Mcg;
 use rand::prelude::*;
 use crate::indexing::{find_ship_index, find_ship_mut};
-use crate::sandbox::{is_world_command, SandboxCommand};
+use crate::sandbox::{SandboxCommand};
 
 pub fn world_update_handle_event(
     state: &mut GameState,
@@ -102,12 +102,8 @@ pub fn world_update_handle_event(
             // side effect for tutorial dialogue mostly
         }
         GameEvent::SandboxCommandRequest { player_id, command } => {
-            // some of those are server-handled, some world-handled
-            if is_world_command(&command) {
-                sandbox::mutate_state(state, player_id, command)
-            } else {
-                warn!("non-world sandbox commands are not yet supported");
-            }
+            // only world-handled, not room for now
+            sandbox::mutate_state(state, player_id, command)
         }
     }
 }
