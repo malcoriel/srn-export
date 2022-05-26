@@ -28,7 +28,7 @@ const buildStory = async (): Promise<void> => {
   nsRef.sendSandboxCmd(
     SandboxCommandBuilder.SandboxCommandSetupState({
       fields: {
-        force_seed: "Planets",
+        force_seed: 'Planets',
         star: {
           radius: 50.0,
           id: star_ref_id,
@@ -45,9 +45,9 @@ const buildStory = async (): Promise<void> => {
           },
           {
             p_type: PlanetType.Jovian,
-            position: { x: 130, y: 100 },
+            position: { x: 150, y: 100 },
             id: null,
-            orbit_speed: 0.003,
+            orbit_speed: 0.006,
             anchor_tier: 2,
             radius: 5.0,
             anchor_id: planet_ref_id,

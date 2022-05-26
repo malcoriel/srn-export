@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useHotkeys } from 'react-hotkeys-hook';
 import NetState, { VisualState } from '../NetState';
 import { height_units, Ship, width_units } from '../world';
 import { unitsToPixels_min } from '../coord';
 import { IVector } from '../utils/Vector';
+import { ShaderMaterial } from 'three';
 
 export const CAMERA_HEIGHT = 100;
 export const CAMERA_DEFAULT_ZOOM = () => unitsToPixels_min();
@@ -39,9 +40,11 @@ export const BoundCameraMover: React.FC = () => {
       }
     });
   }, [ns.id]);
-  if (visualState.boundCameraMovement) {
-    forceMoveCameraToShip();
-  }
+  useFrame(() => {
+    if (visualState.boundCameraMovement) {
+      forceMoveCameraToShip();
+    }
+  });
   return null;
 };
 

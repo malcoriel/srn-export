@@ -263,9 +263,13 @@ export default class NetState extends EventEmitter {
   }
 
   private reindexNetState = () => {
-    this.indexes = buildClientStateIndexes(this.state);
+    this.reindexCurrentState();
     this.nextIndexes = buildClientStateIndexes(this.nextState);
   };
+
+  private reindexCurrentState() {
+    this.indexes = buildClientStateIndexes(this.state);
+  }
 
   private resetState() {
     this.state = _.clone(DEFAULT_STATE);
@@ -927,6 +931,7 @@ export default class NetState extends EventEmitter {
       this.state = _.clone(this.prevState);
       console.log('interpolation impossible, no valid boundaries');
     }
+    this.reindexCurrentState();
   }
 
   private rebaseReceivedStateToCurrentPoint(
