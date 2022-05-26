@@ -17,7 +17,7 @@ use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;
 use crate::random_stuff::{gen_color, gen_planet_name, gen_star_color, gen_star_name, PLANET_NAMES, random_hex_seed};
-use crate::system_gen::{gen_planet, gen_planet_typed, gen_star, PlanetType, PoolRandomPicker};
+use crate::system_gen::{gen_planet, gen_planet_typed, gen_star, PlanetType, PoolRandomPicker, str_to_hash};
 use crate::vec2::Vec2f64;
 use crate::world::{GameState, Location, Planet, Ship, Star};
 use crate::{new_id, world};
@@ -51,6 +51,7 @@ pub struct SBAddPlanet {
     radius: f64,
     position: Vec2f64,
     anchor_id: ReferencableId,
+    anchor_tier: u32,
     id: Option<ReferencableId>,
 }
 
@@ -69,6 +70,7 @@ pub struct SBTeleport {
 pub struct SBSetupState {
     star: SBAddStar,
     planets: Vec<SBAddPlanet>,
+    force_seed: Option<String>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -122,7 +124,7 @@ fn get_pos(state: &mut GameState, player_id: Uuid) -> Option<Vec2f64> {
 }
 
 pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand) {
-    let mut prng = Pcg64Mcg::seed_from_u64(Utc::now().timestamp_millis() as u64);
+    let mut prng = Pcg64Mcg::seed_from_u64(state.ticks);
     match cmd {
         SandboxCommand::AddStar => {
             if let Some(pos) = get_pos(state, player_id) {
@@ -193,6 +195,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
         }
         SandboxCommand::SetupState(args) => {
             let loc_idx = 0;
+            let mut prng = Pcg64Mcg::seed_from_u64(args.force_seed.map(|s| str_to_hash(s)).unwrap_or(state.ticks));
             let loc = &mut state.locations[loc_idx];
             let mut id_storage = HashMap::new();
             if let Some(star_id) = args.star.id {
@@ -219,7 +222,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     radius: spb.radius,
                     orbit_speed: spb.orbit_speed,
                     anchor_id,
-                    anchor_tier: find_anchor_tier(&loc.clone(), anchor_id),
+                    anchor_tier: spb.anchor_tier,
                     color: gen_color(&mut prng).to_string(),
                     health: None,
                     properties: vec![]

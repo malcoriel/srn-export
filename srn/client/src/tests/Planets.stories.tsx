@@ -20,10 +20,15 @@ const buildStory = async (): Promise<void> => {
     tag: 'Reference' as const,
     reference: 'star',
   };
+  const planet_ref_id = {
+    tag: 'Reference' as const,
+    reference: 'planet',
+  };
 
   nsRef.sendSandboxCmd(
     SandboxCommandBuilder.SandboxCommandSetupState({
       fields: {
+        force_seed: "Planets",
         star: {
           radius: 50.0,
           id: star_ref_id,
@@ -31,11 +36,21 @@ const buildStory = async (): Promise<void> => {
         planets: [
           {
             p_type: PlanetType.Jovian,
-            position: { x: 50, y: 50 },
-            id: null,
-            orbit_speed: 0.001,
-            radius: 10.0,
+            position: { x: 100, y: 100 },
+            id: planet_ref_id,
+            orbit_speed: 0.003,
+            anchor_tier: 1,
+            radius: 20.0,
             anchor_id: star_ref_id,
+          },
+          {
+            p_type: PlanetType.Jovian,
+            position: { x: 130, y: 100 },
+            id: null,
+            orbit_speed: 0.003,
+            anchor_tier: 2,
+            radius: 5.0,
+            anchor_id: planet_ref_id,
           },
         ],
       },
@@ -46,8 +61,8 @@ const buildStory = async (): Promise<void> => {
     SandboxCommandBuilder.SandboxCommandTeleport({
       fields: {
         target: {
-          x: 50,
-          y: 50,
+          x: 100,
+          y: 100,
         },
       },
     })
