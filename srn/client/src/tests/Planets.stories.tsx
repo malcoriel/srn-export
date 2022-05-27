@@ -144,8 +144,8 @@ const Template: Story = (args) => {
     };
   }, []);
 
-  const flipPlaying = useCallback(async () => {
-    const newPlaying = !playing;
+  const flipPlaying = useCallback(async (oldPlaying) => {
+    const newPlaying = !oldPlaying;
     if (newPlaying) {
       await startTestGame();
     } else {
@@ -156,7 +156,7 @@ const Template: Story = (args) => {
   }, []);
 
   useEffect(() => {
-    flipPlaying().then();
+    flipPlaying(false).then();
   }, [flipPlaying]);
 
   return (
@@ -173,7 +173,13 @@ const Template: Story = (args) => {
           />
         )}
       </div>
-      <Button thin onClick={flipPlaying} text="toggle playing" />
+      <Button
+        thin
+        onClick={() => {
+          flipPlaying(playing).then();
+        }}
+        text="toggle playing"
+      />
     </div>
   );
 };

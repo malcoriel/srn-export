@@ -80,12 +80,6 @@ export const getOnWheel = (
   const delta = adaptedEvent.y;
   visualState.zoomShift = visualState.zoomShift || 1.0;
   const deltaZoom = delta * CAMERA_ZOOM_CHANGE_SPEED;
-  console.log({
-    prev: visualState.zoomShift,
-    next: visualState.zoomShift - deltaZoom,
-    max: overrideMax || CAMERA_MAX_ZOOM,
-    min: overrideMin || CAMERA_MIN_ZOOM,
-  });
   visualState.zoomShift -= deltaZoom;
   visualState.zoomShift = Math.min(
     visualState.zoomShift,
@@ -95,7 +89,6 @@ export const getOnWheel = (
     visualState.zoomShift,
     overrideMin || CAMERA_MIN_ZOOM
   );
-  console.log({ shift: visualState.zoomShift, delta, deltaZoom });
 };
 
 export type CameraZoomerProps = {
