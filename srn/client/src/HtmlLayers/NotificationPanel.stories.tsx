@@ -39,6 +39,7 @@ Main.args = {
       text: {
         text: 'test help notification',
         substitutions: [],
+        substituted: false,
       },
     }),
     NotificationBuilder.NotificationTask({
@@ -48,6 +49,7 @@ Main.args = {
         text:
           'Soooooo long description\nSoooooo long description Soooooo long description',
         substitutions: [],
+        substituted: false,
       },
     }),
     NotificationBuilder.NotificationHelp({
@@ -56,6 +58,7 @@ Main.args = {
       text: {
         text: 'test help notification 2',
         substitutions: [],
+        substituted: false,
       },
     }),
     NotificationBuilder.NotificationTask({
@@ -69,13 +72,16 @@ Main.args = {
             id: '123',
             s_type: SubstitutionType.PlanetName,
             text: 'Planet 123',
+            target_id: '1',
           },
           {
             id: '456',
             s_type: SubstitutionType.PlanetName,
             text: 'Planet 456',
+            target_id: '1',
           },
         ],
+        substituted: false,
       },
     }),
     NotificationBuilder.NotificationUnknown(),

@@ -72,17 +72,41 @@ export const ExternalCameraControl: React.FC = () => {
 
 export const getOnWheel = (
   visualState: VisualState,
-  eventAdapter: (evt: any) => IVector
+  eventAdapter: (evt: any) => IVector,
+  overrideMax?: number,
+  overrideMin?: number
 ) => (evt: any) => {
-  const delta = eventAdapter(evt).y;
+  const adaptedEvent = eventAdapter(evt);
+  const delta = adaptedEvent.y;
   visualState.zoomShift = visualState.zoomShift || 1.0;
   const deltaZoom = delta * CAMERA_ZOOM_CHANGE_SPEED;
+  console.log({
+    prev: visualState.zoomShift,
+    next: visualState.zoomShift - deltaZoom,
+    max: overrideMax || CAMERA_MAX_ZOOM,
+    min: overrideMin || CAMERA_MIN_ZOOM,
+  });
   visualState.zoomShift -= deltaZoom;
-  visualState.zoomShift = Math.min(visualState.zoomShift, CAMERA_MAX_ZOOM);
-  visualState.zoomShift = Math.max(visualState.zoomShift, CAMERA_MIN_ZOOM);
+  visualState.zoomShift = Math.min(
+    visualState.zoomShift,
+    overrideMax || CAMERA_MAX_ZOOM
+  );
+  visualState.zoomShift = Math.max(
+    visualState.zoomShift,
+    overrideMin || CAMERA_MIN_ZOOM
+  );
+  console.log({ shift: visualState.zoomShift, delta, deltaZoom });
 };
 
-export const CameraZoomer: React.FC = () => {
+export type CameraZoomerProps = {
+  overrideMax?: number;
+  overrideMin?: number;
+};
+
+export const CameraZoomer: React.FC<CameraZoomerProps> = ({
+  overrideMax,
+  overrideMin,
+}) => {
   const ns = NetState.get();
   if (!ns) return null;
   const { visualState } = ns;
@@ -92,10 +116,15 @@ export const CameraZoomer: React.FC = () => {
   });
   return (
     <group
-      onWheel={getOnWheel(visualState, (evt) => ({
-        y: evt.deltaY,
-        x: evt.deltaX,
-      }))}
+      onWheel={getOnWheel(
+        visualState,
+        (evt) => ({
+          y: evt.deltaY,
+          x: evt.deltaX,
+        }),
+        overrideMax,
+        overrideMin
+      )}
     >
       <mesh position={[0, 0, -20]}>
         <planeBufferGeometry args={[width_units, height_units]} />

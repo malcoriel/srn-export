@@ -22,10 +22,10 @@ const genLongAct = (percentage: number, turretId: string) => {
     id: '1',
     micro_left: 500,
     percentage,
-    target: '1',
+    target: { tag: 'Ship', id: '1' },
     turret_id: '1',
   });
-  longActionShoot.turretId = turretId;
+  longActionShoot.turret_id = turretId;
   return longActionShoot;
 };
 export const genLongActions = (shootMode: ShootMode, percentage: number) => {

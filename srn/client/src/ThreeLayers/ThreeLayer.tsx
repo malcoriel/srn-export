@@ -49,7 +49,14 @@ export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
 export const ThreeLayer: React.FC<{
   visible: boolean;
   desiredMode: GameMode;
-}> = ({ visible, desiredMode }) => {
+  cameraMinZoomShiftOverride?: number;
+  cameraMaxZoomShiftOverride?: number;
+}> = ({
+  visible,
+  desiredMode,
+  cameraMinZoomShiftOverride,
+  cameraMaxZoomShiftOverride,
+}) => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state, visMap, visualState, indexes } = ns;
@@ -104,7 +111,10 @@ export const ThreeLayer: React.FC<{
             cameraBound
           />
           <ExternalCameraControl />
-          <CameraZoomer />
+          <CameraZoomer
+            overrideMin={cameraMinZoomShiftOverride}
+            overrideMax={cameraMaxZoomShiftOverride}
+          />
           <BoundCameraMover />
           <ambientLight />
           {showCoords && (
