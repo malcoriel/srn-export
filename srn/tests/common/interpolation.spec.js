@@ -3,6 +3,7 @@ import {
   getShipByPlayerId,
   mockUpdateOptions,
   swapGlobals,
+  updateWorld,
   wasm,
 } from '../util';
 import _ from 'lodash';
@@ -148,7 +149,7 @@ describe('state interpolation', () => {
     expect(moonC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
   });
 
-  fit('can interpolate only limited area', () => {
+  xit('can interpolate only limited area', () => {
     const worldA = wasm.seedWorld({
       mode: 'PirateDefence',
       seed: 'interpolate',
@@ -196,7 +197,30 @@ describe('state interpolation', () => {
     expect(planetC.x).not.toBeCloseTo(100);
     expect(moonC.x).toBeCloseTo(120);
   });
-  it.todo(
-    'interpolation of limited area does not break when an anchor is not interpolated'
-  );
+
+  fit('interpolation matches extrapolation', () => {
+    const STEP_MS = 1000;
+    const state = wasm.seedWorld({ mode: 'CargoRush', seed: 'int + exp' });
+    const planetCount = state.locations[0].planets.length;
+    for (let i = 0; i < 10; i++) {
+      const currentTimestamp = i * STEP_MS;
+      const nextTimestamp = (i + 1) * STEP_MS;
+      const fullDistance = nextTimestamp - currentTimestamp;
+      const halfDistance = fullDistance / 2;
+      const stateExpHalf = updateWorld(state, halfDistance);
+      const stateExpFull = updateWorld(state, fullDistance);
+      const stateIntHalf = wasm.interpolateStates(
+        state,
+        stateExpFull,
+        0.5,
+        mockUpdateOptions()
+      );
+      for (let i = 0; i < planetCount; ++i) {
+        const expPlanet = stateExpHalf.locations[0].planets[i];
+        const intPlanet = stateIntHalf.locations[0].planets[i];
+        expect(expPlanet.x).toBeCloseTo(intPlanet.x);
+        expect(expPlanet.y).toBeCloseTo(intPlanet.y);
+      }
+    }
+  });
 });

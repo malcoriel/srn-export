@@ -77,6 +77,8 @@ fn interpolate_location(
         let (res_mov, tar_mov) = &mut movements[i];
         if !should_skip_pos(&options, &result.planets[i].as_vec()) {
             interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache);
+        } else {
+            log!(format!("skipping {}", i));
         }
     }
     // then, sequentially (via tiers) restore absolute position

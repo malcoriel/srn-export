@@ -6,7 +6,7 @@ import {
   interpolateWorld,
   isManualMovement,
   loadReplayIntoWasm,
-  ManualMovementActionTags,
+  ManualMovementActionTags, MaxedAABB,
   restoreReplayFrame,
   TradeAction,
   updateWorld,
