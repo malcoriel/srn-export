@@ -929,7 +929,7 @@ pub fn update_location(
     let (planets, sampler_out) = planet_movement::update_planets(
         &state.locations[location_idx].planets,
         &state.locations[location_idx].star,
-        elapsed,
+        state.ticks as i64 + elapsed,
         sampler,
         update_options.limit_area.clone(),
     );
@@ -941,10 +941,10 @@ pub fn update_location(
     state.locations[location_idx].asteroids = planet_movement::update_asteroids(
         &state.locations[location_idx].asteroids,
         &state.locations[location_idx].star,
-        elapsed,
+        state.ticks as i64 + elapsed,
     );
     for mut belt in state.locations[location_idx].asteroid_belts.iter_mut() {
-        belt.spatial.rotation_rad += belt.movement.get_orbit_speed() / 1000.0 / 1000.0 * elapsed as f64;
+        planet_movement::update_asteroid_belts(belt, state.locations[location_idx].star.clone());
     }
     sampler.end(update_ast_id);
 
@@ -1871,7 +1871,7 @@ pub fn update_ships_navigation(
                         y: ship.y,
                     };
                     let planet_anchor = bodies_by_id.get(&planet.get_movement().get_anchor_id()).unwrap();
-                    ship.trajectory = trajectory::build_trajectory_to_body(
+                    ship.trajectory = trajectory::build_trajectory_to_planet(
                         ship_pos,
                         &planet,
                         planet_anchor,

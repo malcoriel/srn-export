@@ -653,15 +653,9 @@ fn gen_state(seed: String, opts: GenStateOpts, prng: &mut Pcg64Mcg) -> GameState
     };
 
     let mut state = validate_state(state);
-    for idx in 0..state.locations.len() {
-        let (planets, _sampler) = planet_movement::update_planets(
-            &state.locations[idx].planets,
-            &state.locations[idx].star,
-            SEED_TIME,
-            Sampler::empty(),
-            AABB::maxed(),
-        );
-        state.locations[idx].planets = planets;
+    for _idx in 0..state.locations.len() {
+        todo!("instead of seed time, implement random period hint shift");
+        // state.locations[idx].planets = planets;
     }
     let state = validate_state(state);
     state

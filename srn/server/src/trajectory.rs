@@ -34,3 +34,7 @@ pub fn build_trajectory_to_point(
     }
     result
 }
+
+pub fn build_trajectory_to_planet(current_pos: Vec2f64, planet: &Box<dyn IBodyV2>, anchor: &Box<dyn IBodyV2>, ship_movement: &Movement) -> Vec<Vec2f64> {
+    todo!()
+}

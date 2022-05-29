@@ -10,10 +10,7 @@ use crate::indexing::index_planets_by_id;
 use crate::perf::Sampler;
 use crate::perf::SamplerMarks;
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::world::{
-    Asteroid, Movement, ObjectProperty, PlanetV2, SpatialProps, Star,
-    AABB,
-};
+use crate::world::{Asteroid, Movement, ObjectProperty, PlanetV2, SpatialProps, Star, AABB, AsteroidBelt};
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
 
@@ -110,4 +107,16 @@ fn planets_to_bodies(planets: &Vec<PlanetV2>) -> Vec<Box<dyn IBodyV2>> {
         res.push(Box::new(planet.clone()));
     }
     res
+}
+
+pub fn update_planets(planets: &Vec<PlanetV2>, star: &Option<Star>, current_ticks: i64, sampler: Sampler, limit_area: AABB) -> (Vec<PlanetV2>, Sampler) {
+    todo!()
+}
+
+pub fn update_asteroids(asteroid: &Vec<Asteroid>, star: &Option<Star>, current_ticks: i64) -> Vec<Asteroid> {
+    todo!()
+}
+
+pub fn update_asteroid_belts(belt: &mut AsteroidBelt, star_clone: Option<Star>) {
+    todo!()
 }
