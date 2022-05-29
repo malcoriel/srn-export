@@ -967,12 +967,11 @@ pub fn update_location(
     let my_ship_id = find_my_ship(&state, state.my_id).map(|s| s.id);
     state.locations[location_idx].ships = update_ships_navigation(
         &state.locations[location_idx].ships,
-        &state.locations[location_idx].planets,
-        &state.locations[location_idx].star,
         elapsed,
         my_ship_id,
         client,
         update_options,
+        indexes,
     );
     sampler.end(update_ships_navigation_id);
     if !client {
@@ -1815,15 +1814,13 @@ pub fn spawn_ship<'a>(
 
 pub fn update_ships_navigation(
     ships: &Vec<Ship>,
-    planets: &Vec<PlanetV2>,
-    star: &Option<Star>,
     elapsed_micro: i64,
     _my_ship_id: Option<Uuid>,
     _client: bool,
     update_options: &UpdateOptions,
+    indexes: &GameStateIndexes,
 ) -> Vec<Ship> {
     let mut res = vec![];
-    let bodies_by_id: HashMap<Uuid, &Box<dyn IBodyV2>> = todo!();
     let docking_ship_ids: HashSet<Uuid> = HashSet::from_iter(ships.iter().filter_map(|s| {
         let long_act = s
             .long_actions
@@ -1900,18 +1897,19 @@ pub fn update_ships_navigation(
                     ship.navigate_target = None;
                 }
             } else if let Some(target) = ship.dock_target {
-                if let Some(planet) = bodies_by_id.get(&target) {
+                if let Some(planet) = indexes.bodies_by_id.get(&ObjectSpecifier::Planet { id: target }) {
                     let ship_pos = Vec2f64 {
                         x: ship.x,
                         y: ship.y,
                     };
-                    let planet_anchor = bodies_by_id.get(&planet.get_movement().get_anchor_id()).unwrap();
-                    ship.trajectory = trajectory::build_trajectory_to_planet(
-                        ship_pos,
-                        &planet,
-                        planet_anchor,
-                        &ship.movement_definition,
-                    );
+                    let planet_anchor = indexes.bodies_by_id.get(&planet.get_movement().get_anchor_spec()).unwrap();
+                    todo!("build trajectory to planet");
+                    // ship.trajectory = trajectory::build_trajectory_to_planet(
+                    //     ship_pos,
+                    //     planet.as_ref(),
+                    //     planet_anchor,
+                    //     &ship.movement_definition,
+                    // );
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
                         ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
