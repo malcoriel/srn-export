@@ -288,13 +288,12 @@ pub fn seed_asteroids(star: &Star, rng: &mut Pcg64Mcg) -> Vec<Asteroid> {
             },
             movement: Movement::RadialMonotonous {
                 full_period_ticks: (180 * 1000 * 1000) as f64,
-                radius_to_anchor: 0.0,
                 clockwise: false,
                 anchor: ObjectSpecifier::Star {
                     id: star.id,
                 },
                 relative_position: Default::default(),
-                interpolation_hint: None
+                phase: None
             }
         });
         cur_angle += angle_step;

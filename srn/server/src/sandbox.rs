@@ -147,13 +147,12 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 planet.spatial.radius = args.radius;
                 planet.movement = Movement::RadialMonotonous {
                     full_period_ticks: args.full_period_ticks,
-                    radius_to_anchor: 0.0,
                     clockwise: false,
                     anchor: ObjectSpecifier::Star {
                         id: map_id(args.anchor_id, &mut HashMap::new(), &mut prng),
                     },
                     relative_position: Default::default(),
-                    interpolation_hint: None
+                    phase: None
                 };
                 planet.anchor_tier = find_anchor_tier(&state.locations[0], planet.movement.get_anchor_id());
                 planet.spatial.position.x = pos.x;
@@ -242,13 +241,12 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     properties: vec![],
                     movement: Movement::RadialMonotonous {
                         full_period_ticks: spb.full_period_ticks,
-                        radius_to_anchor: 0.0,
                         clockwise: false,
                         anchor: ObjectSpecifier::Planet {
                             id: anchor_id,
                         },
                         relative_position: Default::default(),
-                        interpolation_hint: None
+                        phase: None
                     }
                 }
             }).collect();

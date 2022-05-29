@@ -1,8 +1,7 @@
-use crate::indexing::{index_all_ships_by_id, index_ships_by_id};
+use crate::indexing::{GameStateIndexes, index_all_ships_by_id, index_ships_by_id, Spec, ObjectSpecifier, index_state};
 use crate::planet_movement::{IBodyV2};
 use crate::vec2::{Precision, Vec2f64};
-use crate::world::{lerp, Location, Movement, PlanetV2, Ship, UpdateOptionsV2};
-use crate::{AABB, GameState};
+use crate::world::{lerp, Location, Movement, PlanetV2, Ship, UpdateOptionsV2, GameState, AABB};
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::mem;
@@ -17,6 +16,7 @@ pub fn interpolate_states(
     options: UpdateOptionsV2,
 ) -> GameState {
     let mut result = state_a.clone();
+    let result_indexes = index_state(&state_a);
     interpolate_timings(&mut result, state_b, value);
     for i in 0..result.locations.len() {
         if let Some(limit_to_loc_idx) = &options.limit_to_loc_idx {
@@ -26,7 +26,7 @@ pub fn interpolate_states(
         }
         let res = &mut result.locations[i];
         if let Some(target) = state_b.locations.get(i) {
-            interpolate_location(res, target, value, rel_orbit_cache, &options);
+            interpolate_location(res, target, value, rel_orbit_cache, &options, &result_indexes);
         }
     }
     result
@@ -47,6 +47,7 @@ fn interpolate_location(
     value: f64,
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
     options: &UpdateOptionsV2,
+    result_indexes: &GameStateIndexes,
 ) {
     let ships_by_id_target = index_ships_by_id(target);
     for i in 0..result.ships.len() {
@@ -68,15 +69,16 @@ fn interpolate_location(
             movements.push((
                 result.planets[i].movement.clone(),
                 target_p.movement.clone(),
+                result.planets[i].spec(),
             ));
         }
     }
 
     // then interpolate
     for i in 0..movements.len() {
-        let (res_mov, tar_mov) = &mut movements[i];
+        let (res_mov, tar_mov, planet_spec) = &mut movements[i];
         if !should_skip_pos(&options, &result.planets[i].spatial.position) {
-            interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache);
+            interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache, result_indexes, planet_spec);
         } else {
             log!(format!("skipping {}", i));
         }
@@ -90,7 +92,7 @@ fn interpolate_location(
         for i in 0..result.planets.len() {
             let planet = &mut result.planets[i];
             if planet.anchor_tier == tier {
-                let (mov_0, _) = &movements[i];
+                let (mov_0, _, _) = &movements[i];
                 let new_pos = match mov_0 {
                     Movement::RadialMonotonous {
                         relative_position, ..
@@ -122,38 +124,37 @@ fn interpolate_planet_relative_movement(
     target: &Movement,
     value: f64,
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
+    indexes: &GameStateIndexes,
+    planet_spec: &ObjectSpecifier,
 ) {
     let res_clone = result.clone();
-    let (radius_key, interpolation_hint_result, result_pos) = match result {
+    let ( interpolation_hint_result, result_pos) = match result {
         Movement::RadialMonotonous {
-            radius_to_anchor,
-            interpolation_hint,
+            phase,
             relative_position,
             ..
         } => (
-            radius_to_anchor,
-            interpolation_hint.map(|v| v as usize),
+            phase.map(|v| v as usize),
             relative_position,
         ),
         _ => panic!("bad movement"),
     };
     let (interpolation_hint_target, target_pos) = match target {
         Movement::RadialMonotonous {
-            interpolation_hint,
+            phase: interpolation_hint,
             relative_position,
             ..
         } => (interpolation_hint.map(|v| v as usize), relative_position),
         _ => panic!("bad movement"),
     };
 
-    let phase_table = rel_orbit_cache
-        .entry((*radius_key * REL_ORBIT_CACHE_KEY_PRECISION) as u64)
-        .or_insert_with(|| get_rel_position_phase_table(&res_clone));
+    let radius_to_anchor = indexes.anchor_distances.get(&planet_spec).expect(format!("no anchor distance in cache for {:?}", planet_spec).as_str());
+    let phase_table = get_phase_table(rel_orbit_cache, &res_clone, *radius_to_anchor);
     let result_idx = interpolation_hint_result.unwrap_or_else(|| {
-        calculate_hint(&phase_table, result_pos).expect("could not calculate hint")
+        calculate_phase(&phase_table, result_pos).expect("could not calculate hint")
     });
     let target_idx = interpolation_hint_target.unwrap_or_else(|| {
-        calculate_hint(&phase_table, target_pos).expect("could not calculate hint")
+        calculate_phase(&phase_table, target_pos).expect("could not calculate hint")
     });
     let lerped_idx = lerp_usize_cycle(result_idx, target_idx, value, phase_table.len());
     // log!(format!(
@@ -171,8 +172,18 @@ fn interpolate_planet_relative_movement(
     }
 }
 
+pub fn get_phase_table<'a, 'b>(rel_orbit_cache: &'a mut HashMap<u64, Vec<Vec2f64>>, movement_def: &'b Movement, orbit_radius: f64) -> &'a mut Vec<Vec2f64> {
+    rel_orbit_cache
+        .entry(coerce_phase_table_cache_key(orbit_radius))
+        .or_insert_with(|| gen_rel_position_phase_table(&movement_def, orbit_radius))
+}
+
+pub fn coerce_phase_table_cache_key(radius_value: f64) -> u64 {
+    (radius_value * REL_ORBIT_CACHE_KEY_PRECISION) as u64
+}
+
 // assume that the table is a set of sequential circle coordinates
-fn calculate_hint(table: &Vec<Vec2f64>, pos: &Vec2f64) -> Option<usize> {
+fn calculate_phase(table: &Vec<Vec2f64>, pos: &Vec2f64) -> Option<usize> {
     // this can be further optimized by using binary search and not calculating every single distance
     let mut current_distance = 9999.0;
     let mut index = None;
@@ -204,12 +215,11 @@ pub const REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER: f64 = 32000.0;
 // build a list of coordinates of the linear (segment) approximation of the circle, where every point
 // is a vertex of the resulting polygon, in an assumption that precision is enough (subdivided to enough amount of points)
 // so lerp(A,B) =~ the real circle point with some precision, but at the same time as low as possible
-fn get_rel_position_phase_table(def: &Movement) -> Vec<Vec2f64> {
+fn gen_rel_position_phase_table(def: &Movement, radius_to_anchor: f64) -> Vec<Vec2f64> {
     // log!(format!("calculate call {def:?}"));
     match def {
         Movement::RadialMonotonous {
             full_period_ticks,
-            radius_to_anchor,
             clockwise,
             ..
         } => {

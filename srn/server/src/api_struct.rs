@@ -4,6 +4,7 @@ use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
+use crate::indexing::GameStateCaches;
 
 use crate::world::{GameMode, GameState, PlayerId};
 
@@ -60,7 +61,8 @@ pub struct Room {
     pub state: GameState,
     pub last_players_mark: Option<i64>,
     pub bots: Vec<Bot>,
-    pub bots_seed: Option<String>
+    pub bots_seed: Option<String>,
+    pub caches: GameStateCaches,
 }
 
 impl RoomsState {

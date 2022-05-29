@@ -4,6 +4,7 @@ use std::mem;
 use rocket::http::Status;
 use rocket_contrib::json::Json;
 use uuid::Uuid;
+use crate::indexing::GameStateCaches;
 
 use crate::market::init_all_planets_market;
 use crate::random_stuff::random_hex_seed;
@@ -60,11 +61,12 @@ pub fn load_saved_state(player_id: String, state_id: String) {
     let state_id = Uuid::parse_str(state_id.as_str())
         .expect(format!("Bad state_id {}, not a uuid", player_id).as_str());
     let mut saved_cont = SAVED_STATES.lock().unwrap();
+    let caches = GameStateCaches::new();
     let saved_state = saved_cont
         .get_mut(&state_id)
         .expect("Requested state does not exist")
         .clone();
-    replace_player_state(player_id, saved_state.state)
+    replace_player_state(player_id, saved_state.state, caches)
 }
 
 #[post("/saved_states/load_clean/<player_id>")]
@@ -72,17 +74,18 @@ pub fn load_clean_state(player_id: String) {
     let mut current = crate::STATE.write().unwrap();
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-    let current_state = select_state_mut(&mut current, Uuid::from_u128(player_id.as_u128()));
-    if current_state.is_none() {
-        warn!("attempt to load into non-existent state");
+    let current_room = select_room_mut(&mut current, Uuid::from_u128(player_id.as_u128()));
+    if current_room.is_none() {
+        warn!("attempt to load into non-existent room");
         return;
     }
-    let current_state = current_state.unwrap();
+    let current_room = current_room.unwrap();
+    let current_state = &mut current_room.state;
     if current_state.id != player_id {
         warn!("attempt to load into non-personal state");
         return;
     }
-    let mut clean_state = seed_state(&GameMode::Sandbox, "clean".to_string(), None);
+    let mut clean_state = seed_state(&GameMode::Sandbox, "clean".to_string(), None, &mut current_room.caches);
     mem::swap(current_state, &mut clean_state);
 }
 
@@ -100,14 +103,15 @@ pub fn load_random_state(player_id: String) {
     {
         let player_id = Uuid::parse_str(player_id.as_str())
             .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
+        let mut caches = GameStateCaches::new();
         replace_player_state(
             player_id,
-            seed_state(&GameMode::CargoRush, random_hex_seed(), None),
+            seed_state(&GameMode::CargoRush, random_hex_seed(), None, &mut caches), caches,
         );
     }
 }
 
-fn replace_player_state(player_id: Uuid, mut new_state: GameState) {
+fn replace_player_state(player_id: Uuid, mut new_state: GameState, caches: GameStateCaches) {
     let mut cont = crate::STATE.write().unwrap();
     {
         let room = select_room_mut(&mut cont, player_id);
@@ -129,6 +133,7 @@ fn replace_player_state(player_id: Uuid, mut new_state: GameState) {
         room.state.players.push(player);
         room.state.mode = GameMode::Sandbox;
         room.state.milliseconds_remaining = 99 * 60 * 1000;
+        room.caches = caches;
         let loc = &mut room.state.locations[0];
         loc.ships.push(ship);
     }
@@ -137,7 +142,8 @@ fn replace_player_state(player_id: Uuid, mut new_state: GameState) {
 
 #[post("/saved_states/load_seeded/<player_id>/<seed>")]
 pub fn load_seeded_state(player_id: String, seed: String) {
+    let mut caches = GameStateCaches::new();
     let player_id = Uuid::parse_str(player_id.as_str())
         .expect(format!("Bad player_id {}, not a uuid", player_id).as_str());
-    replace_player_state(player_id, seed_state(&GameMode::CargoRush, seed, None));
+    replace_player_state(player_id, seed_state(&GameMode::CargoRush, seed, None, &mut caches), caches);
 }

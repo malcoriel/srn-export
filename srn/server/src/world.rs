@@ -21,10 +21,7 @@ use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::bots::{BOT_ACTION_TIME_TICKS, do_bot_npcs_actions, do_bot_players_actions};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
 use crate::combat::{Health, ShootTarget};
-use crate::indexing::{
-    find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
-    index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, ObjectSpecifier,
-};
+use crate::indexing::{find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut, GameStateCaches, index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, ObjectSpecifier};
 use crate::inventory::{
     add_item, add_items, has_quest_item, InventoryItem, InventoryItemType, shake_items,
 };
@@ -558,7 +555,7 @@ pub struct GameOver {
     pub reason: String,
 }
 
-pub const GAME_STATE_VERSION: u32 = 3;
+pub const GAME_STATE_VERSION: u32 = 4;
 
 impl GameState {
     pub fn new() -> Self {
@@ -693,6 +690,7 @@ pub fn update_world(
     spatial_indexes: &mut SpatialIndexes,
     prng: &mut Pcg64Mcg,
     d_table: &DialogueTable,
+    caches: &mut GameStateCaches,
 ) -> (GameState, Sampler) {
     let mut remaining = elapsed + state.accumulated_not_updated_ticks as i64;
     let update_interval = state.update_every_ticks as i64;
@@ -707,6 +705,7 @@ pub fn update_world(
             spatial_indexes,
             prng,
             d_table,
+            caches
         );
         remaining -= update_interval;
         curr_state = pair.0;
@@ -725,6 +724,7 @@ fn update_world_iter(
     spatial_indexes: &mut SpatialIndexes,
     prng: &mut Pcg64Mcg,
     d_table: &DialogueTable,
+    caches: &mut GameStateCaches,
 ) -> (GameState, Sampler) {
     state.ticks += elapsed as u64;
     state.millis = (state.ticks as f64 / 1000.0) as u32;
@@ -763,6 +763,7 @@ fn update_world_iter(
                     &state.mode,
                     random_stuff::random_hex_seed(),
                     Some(state.gen_opts),
+                    caches
                 );
                 state.players = players.clone();
                 for player in players.iter() {
@@ -1635,11 +1636,10 @@ pub enum Movement {
         // so it's fully periodical, e.g. such P exists that position(t = P) = initial,
         // position (t  = 2P) = initial, etc
         full_period_ticks: f64,
-        radius_to_anchor: f64,
         clockwise: bool,
         anchor: ObjectSpecifier,
         relative_position: Vec2f64,
-        interpolation_hint: Option<u32>,
+        phase: Option<u32>,
     },
 }
 
@@ -1668,9 +1668,28 @@ impl Movement {
         }
     }
 
+    pub fn get_anchor_spec(&self) -> &ObjectSpecifier {
+        match self {
+            Movement::RadialMonotonous { anchor, .. } => {
+                anchor
+            }
+            _ => panic!("cannot get anchor for movement without an anchor")
+        }
+    }
+
     #[deprecated(since = "0.8.7", note="this method is needed for non-periodic orbit movements support, however they should not exist")]
     pub fn get_orbit_speed(&self) -> f64 {
         todo!()
+    }
+
+    pub fn set_phase(&mut self, new_phase: u32) {
+        match self {
+            Movement::RadialMonotonous { phase, .. } => {
+                *phase = Some(new_phase)
+            }
+            _ => panic!("Cannot set phase to movement without phase")
+
+        }
     }
 }
 
@@ -2093,7 +2112,8 @@ pub fn make_room(
     opts: Option<GenStateOpts>,
 ) -> (Uuid, Room) {
     let room_name = format!("{} - {}", mode, room_id);
-    let state = system_gen::seed_state(&mode, random_stuff::random_hex_seed_seeded(prng), opts);
+    let mut caches = GameStateCaches::new();
+    let state = system_gen::seed_state(&mode, random_stuff::random_hex_seed_seeded(prng), opts, &mut caches);
     let state_id = state.id.clone();
     let mut room = Room {
         id: room_id,
@@ -2102,6 +2122,7 @@ pub fn make_room(
         last_players_mark: None,
         bots: vec![],
         bots_seed,
+        caches,
     };
     match mode {
         GameMode::Unknown => {}
@@ -2127,6 +2148,7 @@ pub fn update_room(
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
     let mut spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
     sampler.end(spatial_indexes_id);
+    let mut caches_clone = room.caches.clone();
     let (new_state, mut sampler) = update_world(
         room.state.clone(),
         elapsed_micro,
@@ -2139,8 +2161,10 @@ pub fn update_room(
         &mut spatial_indexes,
         &mut prng,
         &d_table,
+        &mut caches_clone,
     );
     let mut room = room.clone();
+    room.caches = caches_clone;
     room.state = new_state;
 
     spatial_indexes = indexing::build_full_spatial_indexes(&room.state);

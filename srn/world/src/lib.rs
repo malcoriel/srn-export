@@ -260,7 +260,7 @@ pub fn parse_state(serialized_args: &str) -> String {
 
 use crate::api_struct::Room;
 use crate::dialogue::{parse_dialogue_script_from_file, DialogueTable, DialogueState, Dialogue};
-use crate::indexing::{find_my_ship_index, ObjectSpecifier};
+use crate::indexing::{find_my_ship_index, ObjectSpecifier, GameStateCaches};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
 use crate::world::{AABB, GameMode, GameState, UpdateOptions, UpdateOptionsV2};
@@ -289,8 +289,8 @@ lazy_static! {
 }
 
 lazy_static! {
-    pub static ref rel_orbit_cache: MutStatic<HashMap<u64, Vec<Vec2f64>>> =
-        { MutStatic::from(HashMap::new()) };
+    pub static ref game_state_caches: MutStatic<GameStateCaches> =
+        { MutStatic::from(GameStateCaches::new()) };
 }
 
 pub struct InternalTimers {
@@ -351,6 +351,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
         &mut indexes,
         &mut seed_prng(prng_seed),
         &get_current_d_table(),
+        &mut game_state_caches.write().unwrap(),
     );
 
     if *ENABLE_PERF {
@@ -412,7 +413,7 @@ pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 pub fn seed_world(args: JsValue) -> Result<JsValue, JsValue> {
     let args: SeedWorldArgs = serde_wasm_bindgen::from_value(args)?;
-    let state = system_gen::seed_state(&args.mode, args.seed, args.gen_state_opts);
+    let state = system_gen::seed_state(&args.mode, args.seed, args.gen_state_opts, &mut (*game_state_caches.write().unwrap()));
     Ok(custom_serialize(&state)?)
 }
 
@@ -623,7 +624,7 @@ pub fn get_preloaded_diff_replay_state_at_interpolated(
     } else {
         None
     };
-    let mut cache = &mut (*rel_orbit_cache.write().unwrap());
+    let mut cache = &mut game_state_caches.write().unwrap().rel_orbit_cache;
     let full_id = sampler
         .as_mut()
         .map(|s| s.start(SamplerMarks::GetDiffReplayStateAtPreloadedInterpolated as u32));
@@ -676,7 +677,7 @@ pub fn interpolate_states(
     value: f64,
     options: JsValue,
 ) -> Result<JsValue, JsValue> {
-    let mut cache = &mut (*rel_orbit_cache.write().unwrap());
+    let mut cache = &mut game_state_caches.write().unwrap().rel_orbit_cache;
     let state_a: GameState = serde_wasm_bindgen::from_value(state_a)?;
     let state_b: GameState = serde_wasm_bindgen::from_value(state_b)?;
     let options: UpdateOptionsV2 = serde_wasm_bindgen::from_value(options)?;
