@@ -67,7 +67,7 @@ const ORB_SPEED_MULT: f64 = 1.0;
 pub type PlayerId = Uuid;
 
 #[derive(
-    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
+Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
 )]
 pub enum GameMode {
     Unknown,
@@ -130,7 +130,7 @@ pub fn get_random_planet<'a>(
 }
 
 #[derive(
-    Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash,
+Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash,
 )]
 #[serde(tag = "tag")]
 pub enum ObjectProperty {
@@ -316,7 +316,7 @@ impl Ship {
             npc: None,
             name: None,
             properties: Default::default(),
-            trading_with: None
+            trading_with: None,
         }
     }
 }
@@ -545,9 +545,8 @@ pub struct GameState {
     pub accumulated_not_updated_ticks: u32,
     pub gen_opts: GenStateOpts,
     pub dialogue_states: DialogueStates,
-    pub breadcrumbs: Vec<Breadcrumb>
+    pub breadcrumbs: Vec<Breadcrumb>,
 }
-
 
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -591,7 +590,7 @@ impl GameState {
             accumulated_not_updated_ticks: 0,
             gen_opts: Default::default(),
             dialogue_states: Default::default(),
-            breadcrumbs: vec![]
+            breadcrumbs: vec![],
         }
     }
 }
@@ -664,7 +663,7 @@ impl UpdateOptionsV2 {
         Self {
             disable_hp_effects: None,
             limit_area: None,
-            limit_to_loc_idx: None
+            limit_to_loc_idx: None,
         }
     }
 }
@@ -705,7 +704,7 @@ pub fn update_world(
             spatial_indexes,
             prng,
             d_table,
-            caches
+            caches,
         );
         remaining -= update_interval;
         curr_state = pair.0;
@@ -763,7 +762,7 @@ fn update_world_iter(
                     &state.mode,
                     random_stuff::random_hex_seed(),
                     Some(state.gen_opts),
-                    caches
+                    caches,
                 );
                 state.players = players.clone();
                 for player in players.iter() {
@@ -775,8 +774,7 @@ fn update_world_iter(
                     );
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
-            } else {
-            }
+            } else {}
         }
     } else {
         if !client {
@@ -940,7 +938,7 @@ pub fn update_location(
         next_ticks,
         sampler,
         update_options.limit_area.clone(),
-        indexes, caches
+        indexes, caches,
     );
     state.locations[location_idx] = location;
     sampler = sampler_out;
@@ -989,7 +987,7 @@ pub fn update_location(
         &mut state.locations[location_idx].ships,
         elapsed,
         state.millis,
-        client
+        client,
     );
     sampler.end(update_ship_manual_movement_id);
 
@@ -1228,7 +1226,7 @@ fn update_initiate_ship_docking_by_navigation(
                 };
                 if planet_pos.euclidean_distance(&ship_pos)
                     < (planet.spatial.radius * planet.spatial.radius * SHIP_DOCKING_RADIUS_COEFF)
-                        .max(MIN_SHIP_DOCKING_RADIUS)
+                    .max(MIN_SHIP_DOCKING_RADIUS)
                 {
                     let docks_in_progress = ship
                         .long_actions
@@ -1269,7 +1267,7 @@ fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, curre
     }
 }
 
-fn update_ship_manual_movement(elapsed_micro: i64, current_tick: u32, ship: &mut Ship, client:bool) {
+fn update_ship_manual_movement(elapsed_micro: i64, current_tick: u32, ship: &mut Ship, client: bool) {
     let (new_move, new_pos) = if let Some(params) = &mut ship.movement_markers.gas {
         if (params.last_tick as i32 - current_tick as i32).abs()
             > MANUAL_MOVEMENT_INACTIVITY_DROP_MS && !client // assume that on client, we always hold the button - this one is only a server optimization
@@ -1289,7 +1287,7 @@ fn update_ship_manual_movement(elapsed_micro: i64, current_tick: u32, ship: &mut
                 x: ship.x,
                 y: ship.y,
             }
-            .add(&shift);
+                .add(&shift);
             (Some(params.clone()), Some(new_pos))
         }
     } else {
@@ -1690,7 +1688,7 @@ impl Movement {
         }
     }
 
-    #[deprecated(since = "0.8.7", note="this method is needed for non-periodic orbit movements support, however they should not exist")]
+    #[deprecated(since = "0.8.7", note = "this method is needed for non-periodic orbit movements support, however they should not exist")]
     pub fn get_orbit_speed(&self) -> f64 {
         todo!()
     }
@@ -1702,7 +1700,6 @@ impl Movement {
                 *start_phase = new_phase;
             }
             _ => panic!("Cannot set phase to movement without phase")
-
         }
     }
 }
@@ -1855,9 +1852,9 @@ pub fn update_ships_navigation(
         if docking_ship_ids.contains(&ship.id)
             || undocking_ship_ids.contains(&ship.id)
             || !update_options.limit_area.contains_vec(&Vec2f64 {
-                x: ship.x,
-                y: ship.y,
-            })
+            x: ship.x,
+            y: ship.y,
+        })
         {
             ship.trajectory = vec![];
             res.push(ship);
@@ -2126,10 +2123,13 @@ pub fn make_room(
     prng: &mut Pcg64Mcg,
     bots_seed: Option<String>,
     opts: Option<GenStateOpts>,
+    external_caches: Option<&mut GameStateCaches>,
 ) -> (Uuid, Room) {
     let room_name = format!("{} - {}", mode, room_id);
-    let mut caches = GameStateCaches::new();
-    let state = system_gen::seed_state(&mode, random_stuff::random_hex_seed_seeded(prng), opts, &mut caches);
+    let mut new_caches = GameStateCaches::new();
+    let use_external_caches = external_caches.is_some();
+    let mut caches = external_caches.unwrap_or(&mut new_caches);
+    let state = system_gen::seed_state(&mode, random_stuff::random_hex_seed_seeded(prng), opts, caches);
     let state_id = state.id.clone();
     let mut room = Room {
         id: room_id,
@@ -2138,7 +2138,7 @@ pub fn make_room(
         last_players_mark: None,
         bots: vec![],
         bots_seed,
-        caches,
+        caches: if use_external_caches { GameStateCaches::new() } else { new_caches },
     };
     match mode {
         GameMode::Unknown => {}
@@ -2160,11 +2160,12 @@ pub fn update_room(
     elapsed_micro: i64,
     room: &Room,
     d_table: &DialogueTable,
+    external_caches: Option<&mut GameStateCaches>,
 ) -> (SpatialIndexes, Room, Sampler) {
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
     let mut spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
     sampler.end(spatial_indexes_id);
-    let mut caches_clone = room.caches.clone();
+    let mut caches_clone = external_caches.as_ref().map_or(room.caches.clone(), |caches| (**caches).clone());
     let (new_state, mut sampler) = update_world(
         room.state.clone(),
         elapsed_micro,
@@ -2180,7 +2181,11 @@ pub fn update_room(
         &mut caches_clone,
     );
     let mut room = room.clone();
-    room.caches = caches_clone;
+    if let Some(external_cache) = external_caches {
+        *external_cache = caches_clone;
+    } else {
+        room.caches = caches_clone;
+    }
     room.state = new_state;
 
     spatial_indexes = indexing::build_full_spatial_indexes(&room.state);

@@ -435,6 +435,7 @@ pub fn create_room(args: JsValue) -> Result<JsValue, JsValue> {
         &mut prng,
         args.bots_seed,
         args.gen_state_opts,
+        Some(&mut game_state_caches.write().unwrap())
     );
     Ok(serde_wasm_bindgen::to_value(&room)?)
 }
@@ -455,6 +456,7 @@ pub fn update_room(
         elapsed_micro,
         &room,
         &d_table,
+        Some(&mut game_state_caches.write().unwrap()),
     );
     Ok(custom_serialize(&room)?)
 }
@@ -473,7 +475,10 @@ pub fn update_room_full(
     while remaining > 0 {
         remaining -= step_ticks;
         let (_indexes, _room, _sampler) =
-            world::update_room(&mut prng, sampler, step_ticks, &room, &get_current_d_table());
+            world::update_room(
+                &mut prng, sampler, step_ticks,
+                &room, &get_current_d_table(), Some(&mut game_state_caches.write().unwrap())
+            );
         sampler = _sampler;
         room = _room;
     }

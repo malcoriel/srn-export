@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::api_struct::{Room, RoomId, RoomsState};
-use crate::indexing::find_and_extract_ship;
+use crate::indexing::{find_and_extract_ship, GameStateCaches};
 use crate::world::{spawn_ship, GameMode, Player, ShipTemplate};
 use uuid::Uuid;
 

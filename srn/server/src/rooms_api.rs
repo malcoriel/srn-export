@@ -72,7 +72,7 @@ pub fn create_room_impl(
     room_id: Uuid,
     bots_seed: Option<String>,
 ) {
-    let (state_id, room) = world::make_room(&mode, room_id, &mut get_prng(), bots_seed, None);
+    let (state_id, room) = world::make_room(&mode, room_id, &mut get_prng(), bots_seed, None, None);
     let bot_len = room.bots.len();
     cont.rooms.values.push(room);
     log!(format!(

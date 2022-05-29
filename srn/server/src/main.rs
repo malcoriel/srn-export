@@ -423,7 +423,7 @@ fn main_thread() {
         let mut spatial_indexes_by_room_id = HashMap::new();
         for room in get_rooms_iter(&cont) {
             let (spatial_indexes, room_clone, new_sampler) =
-                world::update_room(&mut prng, sampler, elapsed_micro, &room, &d_table);
+                world::update_room(&mut prng, sampler, elapsed_micro, &room, &d_table, None);
             sampler = new_sampler;
             updated_rooms.push(room_clone);
             spatial_indexes_by_room_id.insert(room.id, spatial_indexes);
