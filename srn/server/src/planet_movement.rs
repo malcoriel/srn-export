@@ -73,7 +73,7 @@ impl IBodyV2 for Asteroid {
     }
 
     fn get_name(&self) -> &String {
-        &"".to_string()
+        unimplemented!()
     }
 
     fn get_spatial(&self) -> &SpatialProps {
@@ -117,6 +117,6 @@ pub fn update_asteroids(asteroid: &Vec<Asteroid>, star: &Option<Star>, current_t
     todo!()
 }
 
-pub fn update_asteroid_belts(belt: &mut AsteroidBelt, star_clone: Option<Star>) {
+pub fn update_asteroid_belts(belt: &mut AsteroidBelt, star_clone: &Option<Star>) {
     todo!()
 }

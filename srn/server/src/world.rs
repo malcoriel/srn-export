@@ -943,8 +943,9 @@ pub fn update_location(
         &state.locations[location_idx].star,
         state.ticks as i64 + elapsed,
     );
+    let star_clone = state.locations[location_idx].star.clone();
     for mut belt in state.locations[location_idx].asteroid_belts.iter_mut() {
-        planet_movement::update_asteroid_belts(belt, state.locations[location_idx].star.clone());
+        planet_movement::update_asteroid_belts(belt, &star_clone);
     }
     sampler.end(update_ast_id);
 
