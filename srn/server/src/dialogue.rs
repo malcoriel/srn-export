@@ -27,7 +27,7 @@ use crate::{prng_id, seed_prng};
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
-use crate::world::{fire_saved_event, GameState, Planet, Player, PlayerId, Ship};
+use crate::world::{fire_saved_event, GameState, Planet, PlanetV2, Player, PlayerId, Ship};
 use crate::world_events::GameEvent;
 use crate::{fire_event, world};
 
@@ -206,7 +206,7 @@ impl DialogueScript {
 fn find_current_planet<'a, 'b>(
     player: &'a Player,
     game_state: &'b GameState,
-) -> Option<&'b Planet> {
+) -> Option<&'b PlanetV2> {
     let ship = find_my_ship(game_state, player.id);
     ship.and_then(|s| s.docked_at)
         .and_then(|id| find_planet(game_state, &id))
@@ -361,9 +361,9 @@ pub fn build_dialogue_from_state(
 //noinspection RsTypeCheck
 fn build_dialogue_options(
     player_id: Uuid,
-    planets_by_id: &HashMap<Uuid, &Planet>,
+    planets_by_id: &HashMap<Uuid, &PlanetV2>,
     players_by_id: &HashMap<Uuid, &Player>,
-    players_to_current_planets: &HashMap<Uuid, &Planet>,
+    players_to_current_planets: &HashMap<Uuid, &PlanetV2>,
     ships_by_player_id: &HashMap<Uuid, &Ship>,
     satisfied_conditions: HashSet<TriggerCondition>,
     options: &Vec<(Uuid, String, Option<TriggerCondition>)>,
@@ -690,7 +690,7 @@ pub struct Dialogue {
     pub id: Uuid,
     pub options: Vec<DialogueElem>,
     pub prompt: DialogueElem,
-    pub planet: Option<Planet>,
+    pub planet: Option<PlanetV2>,
     pub left_character: String,
     pub right_character: String,
 }

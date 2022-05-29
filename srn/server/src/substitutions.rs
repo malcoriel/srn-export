@@ -12,14 +12,14 @@ use crate::indexing::{
 use crate::inventory::{count_items_of_types, MINERAL_TYPES, value_items_of_types};
 use crate::new_id;
 use crate::random_stuff::gen_random_character_name;
-use crate::world::{GameState, Planet, Player, Ship};
+use crate::world::{GameState, Planet, PlanetV2, Player, Ship};
 
 pub fn substitute_text(
     text: &String,
     player_id: Uuid,
-    players_to_current_planets: &HashMap<Uuid, &Planet>,
+    players_to_current_planets: &HashMap<Uuid, &PlanetV2>,
     players_by_id: &HashMap<Uuid, &Player>,
-    planets_by_id: &HashMap<Uuid, &Planet>,
+    planets_by_id: &HashMap<Uuid, &PlanetV2>,
     ships_by_player_id: &HashMap<Uuid, &Ship>,
 ) -> (Vec<Substitution>, String) {
     let mut text_res = text.clone();
@@ -213,9 +213,9 @@ pub fn substitute_notification_texts(state: &mut GameState, player_ids: HashSet<
 pub fn index_state_for_substitution(
     state: &GameState,
 ) -> (
-    HashMap<Uuid, &Planet>,
+    HashMap<Uuid, &PlanetV2>,
     HashMap<Uuid, &Player>,
-    HashMap<Uuid, &Planet>,
+    HashMap<Uuid, &PlanetV2>,
     HashMap<Uuid, &Ship>,
     HashMap<Uuid, &Ship>,
 ) {

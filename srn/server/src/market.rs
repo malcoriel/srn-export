@@ -18,7 +18,7 @@ use crate::inventory::{
     InventoryItem, InventoryItemType,
 };
 use crate::{prng_id};
-use crate::world::{GameState, Planet};
+use crate::world::{GameState, Planet, PlanetV2};
 
 pub type Wares = HashMap<Uuid, Vec<InventoryItem>>;
 pub type Prices = HashMap<Uuid, HashMap<InventoryItemType, Price>>;
@@ -252,7 +252,7 @@ pub fn gen_price_event(rng: &mut Pcg64Mcg) -> PriceEvent {
     }
 }
 
-pub fn shake_market(planets: Vec<Planet>, wares: &mut Wares, prices: &mut Prices, prng: &mut Pcg64Mcg) {
+pub fn shake_market(planets: Vec<PlanetV2>, wares: &mut Wares, prices: &mut Prices, prng: &mut Pcg64Mcg) {
     for planet in planets {
         let planet_prices = prices.entry(planet.id).or_insert(make_default_prices());
         let planet_wares = wares.entry(planet.id).or_insert(make_default_wares(prng));

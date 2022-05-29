@@ -13,7 +13,7 @@ use crate::bots::add_bot;
 use crate::inventory::has_quest_item;
 use crate::notifications::{Notification, NotificationText};
 use crate::substitutions::substitute_notification_texts;
-use crate::world::{fire_saved_event, Leaderboard, Planet};
+use crate::world::{fire_saved_event, Leaderboard, Planet, PlanetV2};
 use crate::world_events::GameEvent;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -44,7 +44,7 @@ pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>, planet_id:
 
 pub fn generate_random_quest(
     player: &mut Player,
-    planets: &Vec<Planet>,
+    planets: &Vec<PlanetV2>,
     docked_at: Option<Uuid>,
     prng: &mut Pcg64Mcg,
 ) {

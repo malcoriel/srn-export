@@ -66,8 +66,8 @@ fn interpolate_location(
     for i in 0..result.planets.len() {
         if let Some(target_p) = target.planets.get(i) {
             movements.push((
-                PlanetV2::from(&result.planets[i], result).movement,
-                PlanetV2::from(target_p, target).movement,
+                result.planets[i].movement.clone(),
+                target_p.movement.clone(),
             ));
         }
     }
@@ -75,7 +75,7 @@ fn interpolate_location(
     // then interpolate
     for i in 0..movements.len() {
         let (res_mov, tar_mov) = &mut movements[i];
-        if !should_skip_pos(&options, &result.planets[i].as_vec()) {
+        if !should_skip_pos(&options, &result.planets[i].spatial.position) {
             interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache);
         } else {
             log!(format!("skipping {}", i));
@@ -84,7 +84,7 @@ fn interpolate_location(
     // then, sequentially (via tiers) restore absolute position
     let mut anchor_pos_by_id = HashMap::new();
     if let Some(star_clone) = result.star.clone() {
-        anchor_pos_by_id.insert(star_clone.id, star_clone.as_vec());
+        anchor_pos_by_id.insert(star_clone.id, star_clone.spatial.position.clone());
     }
     for tier in 1..3 {
         for i in 0..result.planets.len() {
@@ -97,10 +97,10 @@ fn interpolate_location(
                     } => relative_position,
                     _ => panic!("bad movement"),
                 }
-                    .add(&anchor_pos_by_id.get(&planet.anchor_id).unwrap());
+                    .add(&anchor_pos_by_id.get(&planet.movement.get_anchor_id()).unwrap());
                 anchor_pos_by_id.insert(planet.id, new_pos.clone());
-                planet.x = new_pos.x;
-                planet.y = new_pos.y;
+                planet.spatial.position.x = new_pos.x;
+                planet.spatial.position.y = new_pos.y;
             }
         }
     }

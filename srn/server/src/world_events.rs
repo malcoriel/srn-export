@@ -3,7 +3,7 @@ use crate::{dialogue};
 use crate::dialogue::DialogueStates;
 use crate::pirate_defence;
 use crate::indexing::{ObjectSpecifier};
-use crate::world::{Planet, Player, Ship};
+use crate::world::{Planet, PlanetV2, Player, Ship};
 use crate::{cargo_rush, tutorial, world, GameMode, Vec2f64};
 use dialogue::DialogueTable;
 use serde_derive::{Deserialize, Serialize};
@@ -115,13 +115,13 @@ pub enum GameEvent {
     ShipDocked {
         state_id: Uuid,
         ship: Ship,
-        planet: Planet,
+        planet: PlanetV2,
         player_id: Option<Uuid>,
     },
     ShipUndocked {
         state_id: Uuid,
         ship: Ship,
-        planet: Planet,
+        planet: PlanetV2,
         player_id: Option<Uuid>,
     },
     ShipSpawned {

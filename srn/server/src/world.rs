@@ -36,9 +36,7 @@ use crate::long_actions::{
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
 use crate::perf::{Sampler, SamplerMarks};
-use crate::planet_movement::{
-    build_anchors_from_bodies, IBody, index_bodies_by_id, make_bodies_from_planets,
-};
+use crate::planet_movement::{build_anchors_from_bodies, IBody, IBodyV2, index_bodies_by_id, make_bodies_from_planets};
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
     gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
@@ -119,10 +117,10 @@ pub enum LocalEffect {
 }
 
 pub fn get_random_planet<'a>(
-    planets: &'a Vec<Planet>,
+    planets: &'a Vec<PlanetV2>,
     docked_at: Option<Uuid>,
     rng: &mut Pcg64Mcg,
-) -> Option<&'a Planet> {
+) -> Option<&'a PlanetV2> {
     if planets.len() == 0 {
         return None;
     }
@@ -176,13 +174,14 @@ pub struct PlanetV2 {
     pub name: String,
     pub spatial: SpatialProps,
     pub movement: Movement,
+    pub anchor_tier: u32,
     pub color: String,
     pub health: Option<Health>,
     pub properties: Vec<ObjectProperty>,
 }
 
 impl PlanetV2 {
-    pub fn get_anchor_ref<'a>(&self, loc: &'a Location) -> Box<&'a dyn IBody> {
+    pub fn get_anchor_ref<'a>(&self, loc: &'a Location) -> Box<&'a dyn IBodyV2> {
         match &self.movement {
             Movement::RadialMonotonous { anchor, .. } => Box::new(match anchor {
                 ObjectSpecifier::Planet { id } => loc
@@ -223,8 +222,8 @@ impl PlanetV2 {
                 );
                 (
                     ObjectSpecifier::Star { id: star.id },
-                    pos.euclidean_distance(&star.as_vec()),
-                    pos.subtract(&star.as_vec()),
+                    pos.euclidean_distance(&star.spatial.position),
+                    pos.subtract(&star.spatial.position),
                 )
             }
             2 => {
@@ -235,7 +234,7 @@ impl PlanetV2 {
                     )
                     .as_str(),
                 );
-                let parent_pos = AsVec2f64::as_vec(parent_planet);
+                let parent_pos = parent_planet.spatial.position.clone();
                 (
                     ObjectSpecifier::Planet {
                         id: parent_planet.id,
@@ -262,6 +261,7 @@ impl PlanetV2 {
                 relative_position,
                 interpolation_hint: None,
             },
+            anchor_tier: 0,
             color: p.color.clone(),
             health: p.health.clone(),
             properties: p.properties.clone(),
@@ -367,12 +367,10 @@ impl AsVec2f64 for Planet {
 pub struct Star {
     pub id: Uuid,
     pub name: String,
-    pub x: f64,
-    pub y: f64,
-    pub radius: f64,
-    pub rotation: f64,
     pub color: String,
     pub corona_color: String,
+    pub spatial: SpatialProps,
+    pub movement: Movement,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -458,7 +456,7 @@ impl Ship {
             auto_focus: None,
             hostile_auto_focus: None,
             movement_markers: Default::default(),
-            movement_definition: Movement::Unknown,
+            movement_definition: Movement::None,
             health: Health::new(100.0),
             local_effects: vec![],
             long_actions: vec![],
@@ -599,7 +597,7 @@ pub struct Location {
     pub seed: String,
     pub id: Uuid,
     pub star: Option<Star>,
-    pub planets: Vec<Planet>,
+    pub planets: Vec<PlanetV2>,
     pub asteroids: Vec<Asteroid>,
     pub wrecks: Vec<Wreck>,
     pub minerals: Vec<NatSpawnMineral>,
@@ -769,9 +767,9 @@ impl AABB {
             },
         }
     }
-    pub fn contains_body(&self, body: &Box<dyn IBody>) -> bool {
-        let x = body.get_x();
-        let y = body.get_y();
+    pub fn contains_body(&self, body: &Box<dyn IBodyV2>) -> bool {
+        let x = body.get_spatial().position.x;
+        let y = body.get_spatial().position.y;
         return self.top_left.x <= x
             && x <= self.bottom_right.x
             && self.top_left.y <= y
@@ -820,9 +818,9 @@ impl UpdateOptionsV2 {
 
 // first group is in area, second is not
 pub fn split_bodies_by_area(
-    bodies: Vec<Box<dyn IBody>>,
+    bodies: Vec<Box<dyn IBodyV2>>,
     area: AABB,
-) -> (Vec<Box<dyn IBody>>, Vec<Box<dyn IBody>>) {
+) -> (Vec<Box<dyn IBodyV2>>, Vec<Box<dyn IBodyV2>>) {
     let anchors = build_anchors_from_bodies(bodies.clone());
 
     let res: (Vec<_>, Vec<_>) = bodies.into_iter().partition_map(|b| {
@@ -839,7 +837,7 @@ pub fn split_bodies_by_area(
     let anchors_vec = picked
         .iter()
         .filter_map(|p| {
-            anchors.get(&p.get_anchor_id()).and_then(|p| {
+            anchors.get(&p.get_movement().get_anchor_id()).and_then(|p| {
                 if !already_picked_ids.contains(&p.get_id()) {
                     already_picked_ids.insert(p.get_id());
                     Some(p.clone())
@@ -1334,10 +1332,7 @@ fn interpolate_docking_ships_position(
                     ..
                 } => {
                     if let Some(planet) = planets_by_id.get(&to_planet) {
-                        let target = Vec2f64 {
-                            x: planet.x,
-                            y: planet.y,
-                        };
+                        let target = planet.spatial.position.clone();
                         let ship_pos = Vec2f64 {
                             x: ship.x,
                             y: ship.y,
@@ -1348,8 +1343,8 @@ fn interpolate_docking_ships_position(
                             ship.rotation = -ship.rotation;
                         }
 
-                        ship.x = lerp(start_pos.x, planet.x, *percentage as f64 / 100.0);
-                        ship.y = lerp(start_pos.y, planet.y, *percentage as f64 / 100.0);
+                        ship.x = lerp(start_pos.x, planet.spatial.position.x, *percentage as f64 / 100.0);
+                        ship.y = lerp(start_pos.y, planet.spatial.position.y, *percentage as f64 / 100.0);
                     }
                 }
                 _ => {}
@@ -1363,10 +1358,7 @@ fn interpolate_docking_ships_position(
                     ..
                 } => {
                     if let Some(planet) = planets_by_id.get(&from_planet) {
-                        let from_pos = Vec2f64 {
-                            x: planet.x,
-                            y: planet.y,
-                        };
+                        let from_pos = planet.spatial.position.clone();
                         let ship_pos = Vec2f64 {
                             x: ship.x,
                             y: ship.y,
@@ -1399,16 +1391,13 @@ fn update_initiate_ship_docking_by_navigation(
         let ship = &ships[i];
         if let Some(t) = ship.dock_target {
             if let Some(planet) = planets_by_id.get(&t) {
-                let planet_pos = Vec2f64 {
-                    x: planet.x,
-                    y: planet.y,
-                };
+                let planet_pos = planet.spatial.position.clone();
                 let ship_pos = Vec2f64 {
                     x: ship.x,
                     y: ship.y,
                 };
                 if planet_pos.euclidean_distance(&ship_pos)
-                    < (planet.radius * planet.radius * SHIP_DOCKING_RADIUS_COEFF)
+                    < (planet.spatial.radius * planet.spatial.radius * SHIP_DOCKING_RADIUS_COEFF)
                         .max(MIN_SHIP_DOCKING_RADIUS)
                 {
                     let docks_in_progress = ship
@@ -1650,10 +1639,7 @@ pub fn update_hp_effects(
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
     if let Some(star) = state.locations[location_idx].star.clone() {
-        let star_center = Vec2f64 {
-            x: star.x,
-            y: star.y,
-        };
+        let star_center = star.spatial.position.clone();
         for mut ship in state.locations[location_idx].ships.iter_mut() {
             let ship_pos = Vec2f64 {
                 x: ship.x,
@@ -1661,7 +1647,7 @@ pub fn update_hp_effects(
             };
 
             let dist_to_star = ship_pos.euclidean_distance(&star_center);
-            let rr = dist_to_star / star.radius;
+            let rr = dist_to_star / star.spatial.radius;
 
             let star_damage = if rr < STAR_INSIDE_RADIUS {
                 STAR_INSIDE_DAMAGE_PER_SEC
@@ -1809,7 +1795,7 @@ pub fn add_player(
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
 pub enum Movement {
-    Unknown,
+    None,
     ShipMonotonous {
         move_speed: f64,
         turn_speed: f64,
@@ -1843,7 +1829,7 @@ pub enum Movement {
 impl Movement {
     pub fn get_current_linear_move_speed_per_tick(&self) -> f64 {
         match self {
-            Movement::Unknown => 0.0,
+            Movement::None => 0.0,
             Movement::ShipMonotonous { move_speed, .. } => {
                 // This is kind of incorrect for a stopped ship, but to get it we need
                 // to unify movement markers with movement definition
@@ -1853,6 +1839,15 @@ impl Movement {
                 current_move_speed, ..
             } => *current_move_speed,
             Movement::RadialMonotonous { .. } => 0.0,
+        }
+    }
+
+    pub fn get_anchor_id(&self) -> Uuid {
+        match self {
+            Movement::RadialMonotonous { anchor, .. } => {
+                anchor.get_id().expect("anchor without id for movement")
+            }
+            _ => panic!("cannot get anchor for movement without an anchor")
         }
     }
 }
@@ -1919,10 +1914,7 @@ pub fn spawn_ship<'a>(
     let mut at = template.at;
     if rand_planet.is_some() && at.is_none() {
         let p = rand_planet.unwrap();
-        at = Some(Vec2f64 {
-            x: p.x.clone(),
-            y: p.y.clone(),
-        })
+        at = Some(p.spatial.position.clone());
     }
     let mut ship = Ship::new(prng, &mut at);
     template
@@ -1967,7 +1959,7 @@ pub fn spawn_ship<'a>(
 
 pub fn update_ships_navigation(
     ships: &Vec<Ship>,
-    planets: &Vec<Planet>,
+    planets: &Vec<PlanetV2>,
     star: &Option<Star>,
     elapsed_micro: i64,
     _my_ship_id: Option<Uuid>,
@@ -2058,7 +2050,7 @@ pub fn update_ships_navigation(
                         x: ship.x,
                         y: ship.y,
                     };
-                    let planet_anchor = bodies_by_id.get(&planet.get_anchor_id()).unwrap();
+                    let planet_anchor = bodies_by_id.get(&planet.get_movement().get_anchor_id()).unwrap();
                     ship.trajectory = trajectory::build_trajectory_to_body(
                         ship_pos,
                         &planet,
@@ -2091,14 +2083,14 @@ pub fn dock_ship(
     state: &mut GameState,
     ship_idx: ShipIdx,
     player_idx: Option<usize>,
-    body: Box<dyn IBody>,
+    body: Box<dyn IBodyV2>,
 ) {
     let ship_clone = {
         let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
         ship.docked_at = Some(body.get_id());
         ship.dock_target = None;
-        ship.x = body.get_x();
-        ship.y = body.get_y();
+        ship.x = body.get_spatial().position.x;
+        ship.y = body.get_spatial().position.y;
         ship.trajectory = vec![];
         ship.clone()
     };
@@ -2106,7 +2098,7 @@ pub fn dock_ship(
         state,
         GameEvent::ShipDocked {
             ship: ship_clone,
-            planet: Planet::from(body),
+            planet: PlanetV2::from(body),
             player_id: player_idx.map(|idx| state.players[idx].id),
             state_id: state.id,
         },
@@ -2126,8 +2118,8 @@ pub fn undock_ship(
         ship.docked_at = None;
         if let Some(planet) = find_planet(&state_read, &planet_id) {
             let planet = planet.clone();
-            ship.x = planet.x;
-            ship.y = planet.y;
+            ship.x = planet.spatial.position.x;
+            ship.y = planet.spatial.position.y;
             if !client {
                 fire_event(GameEvent::ShipUndocked {
                     state_id: state.id,

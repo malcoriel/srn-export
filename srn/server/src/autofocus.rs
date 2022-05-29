@@ -115,7 +115,7 @@ pub fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
     for i in 0..loc.planets.len() {
         let p = &loc.planets[i];
         refs.push(ObjectIndexSpecifier::Planet { idx: i });
-        points.push((p.x, p.y));
+        points.push((p.spatial.position.x, p.spatial.position.y));
     }
     for i in 0..loc.ships.len() {
         let s = &loc.ships[i];
@@ -274,12 +274,12 @@ pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) 
             loc.containers.get(*idx).map(|o| o.position.clone())
         }
         ObjectIndexSpecifier::Planet { idx } => {
-            loc.planets.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
+            loc.planets.get(*idx).map(|o| o.spatial.position.clone())
         }
         ObjectIndexSpecifier::Ship { idx } => {
             loc.ships.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
         }
-        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|o| Vec2f64 { x: o.x, y: o.y }),
+        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|o| o.spatial.position.clone()),
     }
 }
 
@@ -293,12 +293,12 @@ fn get_position(loc: &Location, sp: &ObjectIndexSpecifier) -> Option<Vec2f64> {
             loc.containers.get(*idx).map(|c| c.position.clone())
         }
         ObjectIndexSpecifier::Planet { idx } => {
-            loc.planets.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
+            loc.planets.get(*idx).map(|o| o.spatial.position.clone())
         }
         ObjectIndexSpecifier::Ship { idx } => {
             loc.ships.get(*idx).map(|s| Vec2f64 { x: s.x, y: s.y })
         }
-        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|s| Vec2f64 { x: s.x, y: s.y }),
+        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|s| s.spatial.position.clone()),
     }
 }
 

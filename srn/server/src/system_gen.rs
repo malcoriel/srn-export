@@ -13,19 +13,13 @@ use uuid::Uuid;
 use crate::combat::Health;
 use crate::market::{init_all_planets_market, Market};
 use crate::perf::Sampler;
-use crate::random_stuff::{
-    gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count,
-    gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_color, gen_star_name,
-    gen_star_radius, random_hex_seed_seeded, PLANET_NAMES, SAT_NAMES,
-};
+use crate::random_stuff::{gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_color, gen_star_name, gen_star_radius, random_hex_seed_seeded, PLANET_NAMES, SAT_NAMES, gen_sat_orbit_period};
 use crate::vec2::Vec2f64;
-use crate::world::{
-    AsteroidBelt, Container, GameMode, GameState, Location, ObjectProperty, Planet, Star, AABB,
-    GAME_STATE_VERSION,
-};
+use crate::world::{AsteroidBelt, Container, GameMode, GameState, Location, ObjectProperty, Planet, Star, AABB, GAME_STATE_VERSION, PlanetV2, SpatialProps, Movement};
 use crate::{planet_movement, prng_id, seed_prng, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
+use crate::indexing::ObjectSpecifier;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum PlanetType {
@@ -167,8 +161,9 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                     let planet_center_x = current_x + width / 2.0;
                     let planet = gen_planet(
                         &mut prng,
-                        star.id,
-                        index,
+                        ObjectSpecifier::Star {
+                            id: star.id,
+                        },
                         planet_id,
                         name,
                         planet_radius,
@@ -182,19 +177,31 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                     {
                         let name = sat_name_pool.get(&mut prng).to_string();
                         current_sat_x += gen_sat_gap(&mut prng);
-                        planets.push(Planet {
+                        planets.push(PlanetV2 {
                             id: prng_id(&mut prng),
                             name,
-                            x: current_sat_x,
-                            y: 0.0,
-                            rotation: 0.0,
-                            radius: gen_sat_radius(&mut prng),
-                            orbit_speed: gen_sat_orbit_speed(&mut prng) / (j + 1) as f64,
-                            anchor_id: planet_id,
+                            spatial: SpatialProps {
+                                position: Vec2f64 {
+                                    x: current_sat_x,
+                                    y: 0.0,
+                                },
+                                rotation_rad: 0.0,
+                                radius: gen_sat_radius(&mut prng),
+                            },
                             anchor_tier: 2,
                             color: gen_color(&mut prng).to_string(),
                             health: None,
                             properties: Default::default(),
+                            movement: Movement::RadialMonotonous {
+                                full_period_ticks: gen_sat_orbit_period(&mut prng, j + 1),
+                                radius_to_anchor: 0.0,
+                                clockwise: false,
+                                anchor: ObjectSpecifier::Planet {
+                                    id: planet_id,
+                                },
+                                relative_position: Default::default(),
+                                interpolation_hint: None,
+                            },
                         })
                     }
                 } else {
@@ -257,15 +264,15 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
         for p in location.planets.iter() {
             if container
                 .position
-                .euclidean_distance(&Vec2f64 { x: p.x, y: p.y })
+                .euclidean_distance(&p.spatial.position)
                 < MIN_CONTAINER_DISTANCE
             {
                 res_container = None;
             }
         }
         if container.position.euclidean_distance(&Vec2f64 {
-            x: location.star.as_ref().map_or(0.0, |s| s.x),
-            y: location.star.as_ref().map_or(0.0, |s| s.y),
+            x: location.star.as_ref().map_or(0.0, |s| s.spatial.position.x),
+            y: location.star.as_ref().map_or(0.0, |s| s.spatial.position.y),
         }) < MIN_CONTAINER_DISTANCE
         {
             res_container = None;
@@ -279,43 +286,55 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
 
 pub fn gen_planet(
     mut prng: &mut Pcg64Mcg,
-    anchor_id: Uuid,
-    index: usize,
+    anchor: ObjectSpecifier,
     planet_id: Uuid,
     name: String,
     planet_radius: f64,
     planet_center_x: f64,
-) -> Planet {
-    Planet {
+) -> PlanetV2 {
+    PlanetV2 {
         id: planet_id,
         name,
-        x: planet_center_x,
-        y: 0.0,
-        rotation: 0.0,
-        radius: planet_radius,
-        orbit_speed: gen_planet_orbit_speed(&mut prng) / (index + 1) as f64,
-        anchor_id,
+        spatial: SpatialProps {
+            position: Vec2f64 {
+                x: planet_center_x,
+                y: 0.0,
+            },
+            radius: planet_radius,
+            rotation_rad: 0.0,
+        },
         anchor_tier: 1,
         color: gen_color(&mut prng).to_string(),
         health: None,
         properties: Default::default(),
+        movement: Movement::RadialMonotonous {
+            full_period_ticks: 0.0,
+            radius_to_anchor: 0.0,
+            clockwise: false,
+            anchor,
+            relative_position: Default::default(),
+            interpolation_hint: None,
+        },
     }
 }
 
-pub fn gen_planet_typed(p_type: PlanetType, id: Uuid) -> Planet {
-    Planet {
+pub fn gen_planet_typed(p_type: PlanetType, id: Uuid) -> PlanetV2 {
+    PlanetV2 {
         id,
         name: "".to_string(),
-        x: 0.0,
-        y: 0.0,
-        rotation: 0.0,
-        radius: 0.0,
-        orbit_speed: 0.0,
-        anchor_id: Default::default(),
+        spatial: SpatialProps {
+            position: Vec2f64 {
+                x: 0.0,
+                y: 0.0,
+            },
+            rotation_rad: 0.0,
+            radius: 0.0
+        },
         anchor_tier: 0,
         color: get_planet_type_color(p_type),
         health: None,
         properties: Default::default(),
+        movement: Movement::None,
     }
 }
 
@@ -334,12 +353,17 @@ pub fn gen_star(star_id: Uuid, mut prng: &mut Pcg64Mcg, radius: f64, pos: Vec2f6
     Star {
         color: colors.0.to_string(),
         corona_color: colors.1.to_string(),
+        spatial: SpatialProps {
+            position: Vec2f64 {
+                x: pos.x,
+                y: pos.y,
+            },
+            rotation_rad: 0.0,
+            radius,
+        },
         id: star_id.clone(),
         name: gen_star_name(&mut prng).to_string(),
-        x: pos.x,
-        y: pos.y,
-        rotation: 0.0,
-        radius,
+        movement: Movement::None,
     }
 }
 
@@ -370,7 +394,7 @@ fn make_cargo_rush_state(
     state
 }
 
-fn assign_health_to_planets(planets: &mut Vec<Planet>, health: Health) {
+fn assign_health_to_planets(planets: &mut Vec<PlanetV2>, health: Health) {
     for mut planet in planets.into_iter() {
         planet.health = Some(health.clone())
     }
@@ -408,12 +432,17 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
     let star = Star {
         color: "rgb(100, 200, 85)".to_string(),
         corona_color: "rgb(100, 200, 85)".to_string(),
+        spatial: SpatialProps {
+            position: Vec2f64 {
+                x: 0.0,
+                y: 0.0,
+            },
+            rotation_rad: 0.0,
+            radius: 30.0,
+        },
         id: star_id.clone(),
         name: gen_star_name(prng).to_string(),
-        x: 0.0,
-        y: 0.0,
-        rotation: 0.0,
-        radius: 30.0,
+        movement: Movement::None,
     };
 
     let planet_id = prng_id(prng);
@@ -421,33 +450,58 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
     location.seed = seed.clone();
     location.star = Some(star);
     location.planets = vec![
-        Planet {
+        PlanetV2 {
             id: planet_id,
             name: "Schoolia".to_string(),
-            x: 100.0,
-            y: 0.0,
-            rotation: 0.0,
-            radius: 8.0,
-            orbit_speed: 0.01,
-            anchor_id: star_id.clone(),
+
+            spatial: SpatialProps {
+                position: Vec2f64 {
+                    x: 100.0,
+                    y: 0.0,
+                },
+                rotation_rad: 0.0,
+                radius: 8.0,
+            },
             anchor_tier: 1,
             color: "#008FA9".to_string(),
             health: None,
             properties: Default::default(),
+            movement: Movement::RadialMonotonous {
+                full_period_ticks: 120.0 * 1000.0 * 1000.0,
+                radius_to_anchor: 0.0,
+                clockwise: false,
+                anchor: ObjectSpecifier::Star {
+                    id: star_id
+                },
+                relative_position: Default::default(),
+                interpolation_hint: None,
+            },
         },
-        Planet {
+        PlanetV2 {
             id: prng_id(prng),
             name: "Sat".to_string(),
-            x: 120.0,
-            y: 0.0,
-            rotation: 0.0,
-            radius: 1.5,
-            orbit_speed: 0.005,
-            anchor_id: planet_id.clone(),
+            spatial: SpatialProps {
+                position: Vec2f64 {
+                    x: 120.0,
+                    y: 0.0,
+                },
+                rotation_rad: 0.0,
+                radius: 1.5,
+            },
             anchor_tier: 2,
             color: "#1D334A".to_string(),
             health: None,
             properties: Default::default(),
+            movement: Movement::RadialMonotonous {
+                full_period_ticks: 20.0 * 1000.0 * 1000.0,
+                radius_to_anchor: 0.0,
+                clockwise: false,
+                anchor: ObjectSpecifier::Planet {
+                    id: planet_id
+                },
+                relative_position: Default::default(),
+                interpolation_hint: None,
+            },
         },
     ];
 
@@ -478,7 +532,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
         accumulated_not_updated_ticks: 0,
         gen_opts: opts.unwrap_or_default(),
         dialogue_states: Default::default(),
-        breadcrumbs: vec![]
+        breadcrumbs: vec![],
     }
 }
 
@@ -513,7 +567,7 @@ pub fn make_sandbox_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> Ga
         accumulated_not_updated_ticks: 0,
         gen_opts: opts.unwrap_or_default(),
         dialogue_states: Default::default(),
-        breadcrumbs: vec![]
+        breadcrumbs: vec![],
     }
 }
 
@@ -570,7 +624,7 @@ fn gen_state(seed: String, opts: GenStateOpts, prng: &mut Pcg64Mcg) -> GameState
         accumulated_not_updated_ticks: 0,
         gen_opts: opts,
         dialogue_states: Default::default(),
-        breadcrumbs: vec![]
+        breadcrumbs: vec![],
     };
 
     let mut state = validate_state(state);
@@ -597,18 +651,18 @@ pub fn validate_state(mut in_state: GameState) -> GameState {
     in_state
 }
 
-pub fn extract_valid_planets(in_state: &GameState, location_idx: usize) -> Vec<Planet> {
+pub fn extract_valid_planets(in_state: &GameState, location_idx: usize) -> Vec<PlanetV2> {
     in_state.locations[location_idx]
         .planets
         .iter()
         .filter(|p| {
-            let p_pos = Vec2f64 { x: p.x, y: p.y };
-            let check = p.x.is_finite()
-                && !p.x.is_nan()
-                && p.y.is_finite()
-                && !p.y.is_nan()
-                && p.rotation.is_finite()
-                && !p.rotation.is_nan()
+            let p_pos = p.spatial.position.clone();
+            let check = p_pos.x.is_finite()
+                && !p_pos.x.is_nan()
+                && p_pos.y.is_finite()
+                && !p_pos.y.is_nan()
+                && p.spatial.rotation_rad.is_finite()
+                && !p.spatial.rotation_rad.is_nan()
                 && p_pos.euclidean_len() < MAX_ORBIT;
 
             // if !check {

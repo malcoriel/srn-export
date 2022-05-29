@@ -23,10 +23,7 @@ use crate::long_actions::LongActionStart;
 use crate::world_actions::Action;
 use crate::vec2::Vec2f64;
 use crate::world::TimeMarks::BotAction;
-use crate::world::{
-    fire_saved_event, GameOver, GameState, ObjectProperty, Planet, Ship, ShipTemplate,
-    SpatialIndexes, TimeMarks,
-};
+use crate::world::{fire_saved_event, GameOver, GameState, ObjectProperty, Planet, PlanetV2, Ship, ShipTemplate, SpatialIndexes, TimeMarks};
 use crate::world_events::GameEvent;
 use crate::{fire_event, fof, indexing, prng_id, world, DialogueTable};
 
@@ -39,7 +36,7 @@ const PIRATE_SPAWN_DIST: f64 = 100.0;
 const PIRATE_SPAWN_COUNT: usize = 3;
 const PIRATE_SPAWN_INTERVAL_TICKS: u32 = 10 * 1000 * 1000;
 
-pub fn on_ship_docked(state: &mut GameState, ship: Ship, planet: Planet) {
+pub fn on_ship_docked(state: &mut GameState, ship: Ship, planet: PlanetV2) {
     if ship
         .abilities
         .iter()
@@ -115,14 +112,14 @@ pub fn update_state_pirate_defence(state: &mut GameState, prng: &mut Pcg64Mcg) {
     }
 }
 
-pub fn gen_pirate_spawn(planet: &Planet, prng: &mut Pcg64Mcg) -> Vec2f64 {
+pub fn gen_pirate_spawn(planet: &&PlanetV2, prng: &mut Pcg64Mcg) -> Vec2f64 {
     let angle = prng.gen_range(0.0, PI * 2.0);
     let vec = Vec2f64 { x: 1.0, y: 0.0 };
     vec.rotate(angle)
         .scalar_mul(PIRATE_SPAWN_DIST)
         .add(&Vec2f64 {
-            x: planet.x,
-            y: planet.y,
+            x: planet.spatial.position.x,
+            y: planet.spatial.position.y,
         })
 }
 
@@ -195,10 +192,10 @@ pub fn bot_planet_defender_act(
                 }
             }
             let def_planet = &state.locations[0].planets[0];
-            let rad = def_planet.radius;
+            let rad = def_planet.spatial.radius;
             if my_ship
                 .as_vec()
-                .euclidean_distance(&def_planet.get_position())
+                .euclidean_distance(&def_planet.spatial.position)
                 > rad * 1.5
                 && my_ship.trajectory.len() == 0
             {
@@ -206,7 +203,7 @@ pub fn bot_planet_defender_act(
                 let random_shift_y = prng.gen_range(-rad, rad);
                 all_acts.push(BotAct::Act(Action::Navigate {
                     ship_id: my_ship.id,
-                    target: def_planet.get_position().add(&Vec2f64 {
+                    target: def_planet.spatial.position.add(&Vec2f64 {
                         x: random_shift_x,
                         y: random_shift_y,
                     }),

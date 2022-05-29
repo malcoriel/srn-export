@@ -11,7 +11,7 @@ use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
     find_player_by_ship_id, find_player_idx_by_ship_id,
 };
-use crate::planet_movement::IBody;
+use crate::planet_movement::{IBody, IBodyV2};
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, ShipIdx, ShipTemplate, PLAYER_RESPAWN_TIME_MC};
 use crate::{combat, indexing, locations, prng_id, world};
@@ -260,10 +260,10 @@ fn try_start_undock(
     }
     let planet = planet.unwrap();
     let random_angle = prng.gen_range(0.0, PI * 2.0);
-    let dist = (planet.radius * 1.2).max(MIN_SHIP_DOCKING_RADIUS);
+    let dist = (planet.spatial.radius * 1.2).max(MIN_SHIP_DOCKING_RADIUS);
     let planet_pos = Vec2f64 {
-        x: planet.x,
-        y: planet.y,
+        x: planet.spatial.position.x,
+        y: planet.spatial.position.y,
     };
     let vec = Vec2f64 { x: 1.0, y: 0.0 }
         .rotate(random_angle)
@@ -303,11 +303,11 @@ fn try_start_dock(
         y: ship.y,
     };
     let planet_pos = Vec2f64 {
-        x: planet.x,
-        y: planet.y,
+        x: planet.spatial.position.x,
+        y: planet.spatial.position.y,
     };
     if planet_pos.euclidean_distance(&ship_pos)
-        > (planet.radius * SHIP_DOCKING_RADIUS_COEFF).max(MIN_SHIP_DOCKING_RADIUS)
+        > (planet.spatial.radius * SHIP_DOCKING_RADIUS_COEFF).max(MIN_SHIP_DOCKING_RADIUS)
     {
         return false;
     }
@@ -461,7 +461,7 @@ pub fn finish_long_act(
             let ship_id = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].id;
             let player_idx = find_player_idx_by_ship_id(state, ship_id);
             if let Some(planet) = planet {
-                let body = Box::new(planet) as Box<dyn IBody>;
+                let body = Box::new(planet) as Box<dyn IBodyV2>;
                 world::dock_ship(state, ship_idx, player_idx, body);
             }
         }

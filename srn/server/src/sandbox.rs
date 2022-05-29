@@ -10,7 +10,7 @@ use rand_pcg::rand_core::RngCore;
 use uuid::Uuid;
 
 use crate::{indexing, prng_id};
-use crate::indexing::{find_my_ship, find_my_ship_mut};
+use crate::indexing::{find_my_ship, find_my_ship_mut, ObjectSpecifier};
 use serde_derive::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use typescript_definitions::{TypescriptDefinition, TypeScriptify};
@@ -19,7 +19,7 @@ use crate::market::get_default_value;
 use crate::random_stuff::{gen_color, gen_planet_name, gen_star_color, gen_star_name, PLANET_NAMES, random_hex_seed};
 use crate::system_gen::{gen_planet, gen_planet_typed, gen_star, PlanetType, PoolRandomPicker, str_to_hash};
 use crate::vec2::Vec2f64;
-use crate::world::{GameState, Location, Planet, Ship, Star};
+use crate::world::{GameState, Location, Movement, Planet, PlanetV2, Ship, SpatialProps, Star};
 use crate::{new_id, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -47,7 +47,7 @@ pub enum ReferencableId {
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct SBAddPlanet {
     p_type: PlanetType,
-    orbit_speed: f64,
+    full_period_ticks: f64,
     radius: f64,
     position: Vec2f64,
     anchor_id: ReferencableId,
@@ -144,12 +144,20 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 let name = planet_name_pool.get(&mut prng).to_string();
                 let mut planet = gen_planet_typed(args.p_type, prng_id(&mut prng));
                 planet.name = name;
-                planet.radius = args.radius;
-                planet.orbit_speed = args.orbit_speed;
-                planet.anchor_id = map_id(args.anchor_id, &mut HashMap::new(), &mut prng);
-                planet.anchor_tier = find_anchor_tier(&state.locations[0], planet.anchor_id);
-                planet.x = pos.x;
-                planet.y = pos.y;
+                planet.spatial.radius = args.radius;
+                planet.movement = Movement::RadialMonotonous {
+                    full_period_ticks: args.full_period_ticks,
+                    radius_to_anchor: 0.0,
+                    clockwise: false,
+                    anchor: ObjectSpecifier::Star {
+                        id: map_id(args.anchor_id, &mut HashMap::new(), &mut prng),
+                    },
+                    relative_position: Default::default(),
+                    interpolation_hint: None
+                };
+                planet.anchor_tier = find_anchor_tier(&state.locations[0], planet.movement.get_anchor_id());
+                planet.spatial.position.x = pos.x;
+                planet.spatial.position.y = pos.y;
                 state.locations[0].planets.push(planet);
             }
         }
@@ -203,29 +211,45 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 loc.star = Some(Star {
                     id: map_id(star_id, &mut id_storage, &mut prng),
                     name: gen_star_name(&mut prng).to_string(),
-                    x: 0.0,
-                    y: 0.0,
-                    radius: args.star.radius,
-                    rotation: 0.0,
                     color: star_color.0.to_string(),
                     corona_color: star_color.1.to_string(),
+                    spatial: SpatialProps {
+                        position: Vec2f64 {x: 0.0,
+                            y: 0.0,
+                        },
+                        rotation_rad: 0.0,
+                        radius: args.star.radius,
+                    },
+                    movement: Movement::None
                 });
             }
             loc.planets = args.planets.iter().map(|spb| {
                 let anchor_id = map_id(spb.anchor_id.clone(), &mut id_storage, &mut prng);
-                Planet {
+                PlanetV2 {
                     id: map_id_opt(spb.id.clone(), &mut id_storage, &mut prng),
                     name: gen_planet_name(&mut prng).to_string(),
-                    x: spb.position.x,
-                    y: spb.position.y,
-                    rotation: 0.0,
-                    radius: spb.radius,
-                    orbit_speed: spb.orbit_speed,
-                    anchor_id,
+                    spatial: SpatialProps {
+                        position: Vec2f64 {
+                            x: spb.position.x,
+                            y: spb.position.y,
+                        },
+                        rotation_rad: 0.0,
+                        radius: spb.radius,
+                    },
                     anchor_tier: spb.anchor_tier,
                     color: gen_color(&mut prng).to_string(),
                     health: None,
-                    properties: vec![]
+                    properties: vec![],
+                    movement: Movement::RadialMonotonous {
+                        full_period_ticks: spb.full_period_ticks,
+                        radius_to_anchor: 0.0,
+                        clockwise: false,
+                        anchor: ObjectSpecifier::Planet {
+                            id: anchor_id,
+                        },
+                        relative_position: Default::default(),
+                        interpolation_hint: None
+                    }
                 }
             }).collect();
         }

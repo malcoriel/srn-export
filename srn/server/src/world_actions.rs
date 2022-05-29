@@ -148,8 +148,8 @@ pub fn world_update_handle_action(
 
                         let ship_pos = ship.as_vec();
                         let planet_pos = Vec2f64 {
-                            x: planet.x,
-                            y: planet.y,
+                            x: planet.spatial.position.x,
+                            y: planet.spatial.position.y,
                         };
 
                         ship.navigate_target = None;

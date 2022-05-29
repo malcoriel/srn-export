@@ -7,9 +7,7 @@ use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::world;
-use crate::world::{
-    Container, GameState, Location, NatSpawnMineral, Planet, Player, Ship, ShipIdx, SpatialIndexes,
-};
+use crate::world::{Container, GameState, Location, NatSpawnMineral, Planet, PlanetV2, Player, Ship, ShipIdx, SpatialIndexes};
 
 pub fn find_mineral(loc: &world::Location, id: Uuid) -> Option<&NatSpawnMineral> {
     loc.minerals.iter().find(|m| m.id == id)
@@ -58,7 +56,7 @@ pub fn index_ships_by_id(loc: &Location) -> HashMap<Uuid, &Ship> {
     by_id
 }
 
-pub fn index_planets_by_id(planets: &Vec<Planet>) -> HashMap<Uuid, &Planet> {
+pub fn index_planets_by_id(planets: &Vec<PlanetV2>) -> HashMap<Uuid, &PlanetV2> {
     let mut by_id = HashMap::new();
     for p in planets.iter() {
         by_id.entry(p.id).or_insert(p);
@@ -66,7 +64,7 @@ pub fn index_planets_by_id(planets: &Vec<Planet>) -> HashMap<Uuid, &Planet> {
     by_id
 }
 
-pub fn index_all_planets_by_id(locations: &Vec<Location>) -> HashMap<Uuid, &Planet> {
+pub fn index_all_planets_by_id(locations: &Vec<Location>) -> HashMap<Uuid, &PlanetV2> {
     let mut by_id = HashMap::new();
     for loc in locations.iter() {
         for p in loc.planets.iter() {
@@ -258,7 +256,7 @@ pub fn find_player_idx_by_ship_id(state: &GameState, ship_id: Uuid) -> Option<us
     return None;
 }
 
-pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<&'a Planet> {
+pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<&'a PlanetV2> {
     for loc in state.locations.iter() {
         if let Some(planet) = loc.planets.iter().find(|p| p.id == *planet_id) {
             return Some(planet);
@@ -270,7 +268,7 @@ pub fn find_planet<'a, 'b>(state: &'a GameState, planet_id: &'b Uuid) -> Option<
 pub fn find_planet_mut<'a, 'b>(
     state: &'a mut GameState,
     planet_id: &'b Uuid,
-) -> Option<&'a mut Planet> {
+) -> Option<&'a mut PlanetV2> {
     for loc in state.locations.iter_mut() {
         if let Some(planet) = loc.planets.iter_mut().find(|p| p.id == *planet_id) {
             return Some(planet);
@@ -431,7 +429,7 @@ pub struct FullObjectSpecifier {
 
 #[derive(Clone)]
 pub struct GameStateIndexes<'a> {
-    pub planets_by_id: HashMap<Uuid, &'a Planet>,
+    pub planets_by_id: HashMap<Uuid, &'a PlanetV2>,
     pub players_by_id: HashMap<Uuid, &'a Player>,
     pub ships_by_id: HashMap<Uuid, &'a Ship>,
 }

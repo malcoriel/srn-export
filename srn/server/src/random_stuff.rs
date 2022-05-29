@@ -219,6 +219,10 @@ pub fn gen_sat_orbit_speed(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(20.0, 30.0) / 100.0 * dir;
 }
 
+pub fn gen_sat_orbit_period(rng: &mut Pcg64Mcg, i: u32) -> f64 {
+    todo!()
+}
+
 pub fn gen_planet_radius(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(8.0, 20.0);
 }
