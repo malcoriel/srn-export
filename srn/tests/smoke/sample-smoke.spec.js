@@ -15,8 +15,10 @@ describe('sample smoke test', () => {
     let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
     expect(world.mode).toEqual('PirateDefence');
     expect(world.seed).toEqual('123');
-    const oldX = world.locations[0].planets[0].x;
+    const oldX = world.locations[0].planets[0].spatial.position.x;
     world = updateWorld(world, 1000);
-    expect(world.locations[0].planets[0].x).not.toBeCloseTo(oldX);
+    expect(world.locations[0].planets[0].spatial.position.x).not.toBeCloseTo(
+      oldX
+    );
   });
 });
