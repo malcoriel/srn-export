@@ -220,8 +220,12 @@ pub fn gen_sat_orbit_speed(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(20.0, 30.0) / 100.0 * dir;
 }
 
-pub fn gen_sat_orbit_period(rng: &mut Pcg64Mcg, i: u32) -> f64 {
-    todo!()
+pub fn gen_sat_orbit_period(rng: &mut Pcg64Mcg) -> f64 {
+    return rng.gen_range(50.0, 70.0) * 1000.0 * 1000.0;
+}
+
+pub fn gen_planet_orbit_period(rng: &mut Pcg64Mcg) -> f64 {
+    return rng.gen_range(180.0, 240.0) * 1000.0 * 1000.0;
 }
 
 pub fn gen_planet_radius(rng: &mut Pcg64Mcg) -> f64 {
@@ -293,7 +297,8 @@ pub fn seed_asteroids(star: &Star, rng: &mut Pcg64Mcg) -> Vec<Asteroid> {
                     id: star.id,
                 },
                 relative_position: Default::default(),
-                phase: None
+                phase: None,
+                start_phase: 0
             }
         });
         cur_angle += angle_step;

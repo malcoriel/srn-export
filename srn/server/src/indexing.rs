@@ -380,6 +380,7 @@ pub fn find_player_and_ship(
 pub enum ObjectSpecifier {
     Unknown,
     Mineral { id: Uuid },
+    Asteroid { id: Uuid },
     Container { id: Uuid },
     Planet { id: Uuid },
     Ship { id: Uuid },
@@ -407,6 +408,7 @@ impl ObjectSpecifier {
             ObjectSpecifier::Planet { id } => Some(*id),
             ObjectSpecifier::Ship { id } => Some(*id),
             ObjectSpecifier::Star { id } => Some(*id),
+            ObjectSpecifier::Asteroid { id } => { Some(*id) }
         }
     }
 }

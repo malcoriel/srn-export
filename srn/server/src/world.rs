@@ -21,7 +21,7 @@ use crate::autofocus::{build_spatial_index, SpatialIndex};
 use crate::bots::{BOT_ACTION_TIME_TICKS, do_bot_npcs_actions, do_bot_players_actions};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
 use crate::combat::{Health, ShootTarget};
-use crate::indexing::{find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut, GameStateCaches, index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, ObjectSpecifier};
+use crate::indexing::{find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut, GameStateCaches, GameStateIndexes, index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, ObjectSpecifier};
 use crate::inventory::{
     add_item, add_items, has_quest_item, InventoryItem, InventoryItemType, shake_items,
 };
@@ -845,6 +845,9 @@ fn update_world_iter(
             // the client only operates with the first location,
             // so to conserve effort we skip the others
             let max_loc = if client { 1 } else { state.locations.len() };
+            let state_read_clone = state.clone();
+            let indexes = index_state(&state_read_clone);
+
             for location_idx in 0..max_loc {
                 sampler = update_location(
                     &mut state,
@@ -854,6 +857,8 @@ fn update_world_iter(
                     sampler,
                     location_idx,
                     spatial_indexes,
+                    &indexes,
+                    caches,
                     prng,
                 )
             }
@@ -915,8 +920,11 @@ pub fn update_location(
     mut sampler: Sampler,
     location_idx: usize,
     spatial_indexes: &mut SpatialIndexes,
+    indexes: &GameStateIndexes,
+    caches: &mut GameStateCaches,
     prng: &mut Pcg64Mcg,
 ) -> Sampler {
+    let next_ticks = state.ticks as i64 + elapsed;
     let spatial_index_id = sampler.start(SamplerMarks::GenSpatialIndexOnDemand as u32);
     let spatial_index = spatial_indexes
         .values
@@ -927,23 +935,28 @@ pub fn update_location(
         ));
     sampler.end(spatial_index_id);
     let update_planets_id = sampler.start(SamplerMarks::UpdatePlanetMovement as u32);
-    let (planets, sampler_out) = planet_movement::update_planets(
-        &state.locations[location_idx].planets,
-        &state.locations[location_idx].star,
-        state.ticks as i64 + elapsed,
+    let (location, sampler_out) = planet_movement::update_planets(
+        &state.locations[location_idx],
+        next_ticks,
         sampler,
         update_options.limit_area.clone(),
+        indexes, caches
     );
-    state.locations[location_idx].planets = planets;
+    state.locations[location_idx] = location;
     sampler = sampler_out;
 
     sampler.end(update_planets_id);
     let update_ast_id = sampler.start(SamplerMarks::UpdateAsteroids as u32);
-    state.locations[location_idx].asteroids = planet_movement::update_asteroids(
-        &state.locations[location_idx].asteroids,
-        &state.locations[location_idx].star,
-        state.ticks as i64 + elapsed,
+    let (location, sampler_out) = planet_movement::update_asteroids(
+        &mut state.locations[location_idx],
+        next_ticks,
+        sampler,
+        update_options.limit_area.clone(),
+        indexes, caches,
     );
+    state.locations[location_idx] = location;
+    sampler = sampler_out;
+
     let star_clone = state.locations[location_idx].star.clone();
     for mut belt in state.locations[location_idx].asteroid_belts.iter_mut() {
         planet_movement::update_asteroid_belts(belt, &star_clone);
@@ -1640,6 +1653,7 @@ pub enum Movement {
         anchor: ObjectSpecifier,
         relative_position: Vec2f64,
         phase: Option<u32>,
+        start_phase: u32,
     },
 }
 
@@ -1682,10 +1696,11 @@ impl Movement {
         todo!()
     }
 
-    pub fn set_phase(&mut self, new_phase: u32) {
+    pub fn set_start_phase(&mut self, new_phase: u32) {
         match self {
-            Movement::RadialMonotonous { phase, .. } => {
-                *phase = Some(new_phase)
+            Movement::RadialMonotonous { phase, start_phase, .. } => {
+                *phase = Some(new_phase);
+                *start_phase = new_phase;
             }
             _ => panic!("Cannot set phase to movement without phase")
 
@@ -2100,6 +2115,9 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
         ObjectSpecifier::Planet { id } => state.locations[loc_idx].planets.retain(|m| m.id != id),
         ObjectSpecifier::Star { .. } => {
             state.locations[loc_idx].star = None;
+        }
+        ObjectSpecifier::Asteroid { id } => {
+            state.locations[loc_idx].asteroids.retain(|m| m.id != id)
         }
     }
 }

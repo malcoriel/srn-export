@@ -60,49 +60,46 @@ fn interpolate_location(
         }
     }
 
-    let mut movements = vec![];
-    // in order to avoid tiers, instead calculate all relative positions via casting to v2
-    // ideally, this should not happen - but will only be possible once I migrate actual state to v2 and do
-    // the movement via same interpolation algorithm
+    // interpolate
     for i in 0..result.planets.len() {
-        if let Some(target_p) = target.planets.get(i) {
-            movements.push((
-                result.planets[i].movement.clone(),
-                target_p.movement.clone(),
-                result.planets[i].spec(),
-            ));
-        }
-    }
-
-    // then interpolate
-    for i in 0..movements.len() {
-        let (res_mov, tar_mov, planet_spec) = &mut movements[i];
-        if !should_skip_pos(&options, &result.planets[i].spatial.position) {
-            interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache, result_indexes, planet_spec);
+        let planet_spec = result.planets[i].spec();
+        let should_skip = should_skip_pos(&options, &result.planets[i].spatial.position);
+        let res_mov = &mut result.planets[i].movement;
+        let tar_mov = &target.planets[i].movement;
+        if !should_skip {
+            interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache, result_indexes, &planet_spec);
         } else {
             log!(format!("skipping {}", i));
         }
     }
+
     // then, sequentially (via tiers) restore absolute position
+    let star_clone = &result.star.clone().expect("cannot interpolate location without a star");
+    let star_root: Box<&dyn IBodyV2> = Box::new(star_clone as &dyn IBodyV2);
+    restore_absolute_positions(
+        star_root,
+        result.planets.iter_mut().map(|p| Box::new(p as &mut dyn IBodyV2)).collect()
+    )
+}
+
+pub fn restore_absolute_positions(root: Box<&dyn IBodyV2>, mut bodies: Vec<Box<&mut dyn IBodyV2>>) {
     let mut anchor_pos_by_id = HashMap::new();
-    if let Some(star_clone) = result.star.clone() {
-        anchor_pos_by_id.insert(star_clone.id, star_clone.spatial.position.clone());
-    }
+    anchor_pos_by_id.insert(root.get_id(), root.get_spatial().position.clone());
     for tier in 1..3 {
-        for i in 0..result.planets.len() {
-            let planet = &mut result.planets[i];
-            if planet.anchor_tier == tier {
-                let (mov_0, _, _) = &movements[i];
+        for i in 0..bodies.len() {
+            let mov_0 = bodies[i].get_movement().clone();
+            let body = bodies[i].as_mut();
+            if body.get_anchor_tier() == tier {
                 let new_pos = match mov_0 {
                     Movement::RadialMonotonous {
                         relative_position, ..
                     } => relative_position,
                     _ => panic!("bad movement"),
                 }
-                    .add(&anchor_pos_by_id.get(&planet.movement.get_anchor_id()).unwrap());
-                anchor_pos_by_id.insert(planet.id, new_pos.clone());
-                planet.spatial.position.x = new_pos.x;
-                planet.spatial.position.y = new_pos.y;
+                    .add(&anchor_pos_by_id.get(&body.get_movement().get_anchor_id()).unwrap());
+                anchor_pos_by_id.insert(body.get_id(), new_pos.clone());
+                body.get_spatial_mut().position.x = new_pos.x;
+                body.get_spatial_mut().position.y = new_pos.y;
             }
         }
     }

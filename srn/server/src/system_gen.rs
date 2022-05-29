@@ -13,7 +13,7 @@ use uuid::Uuid;
 use crate::combat::Health;
 use crate::market::{init_all_planets_market, Market};
 use crate::perf::Sampler;
-use crate::random_stuff::{gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_color, gen_star_name, gen_star_radius, random_hex_seed_seeded, PLANET_NAMES, SAT_NAMES, gen_sat_orbit_period};
+use crate::random_stuff::{gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_color, gen_star_name, gen_star_radius, random_hex_seed_seeded, PLANET_NAMES, SAT_NAMES, gen_sat_orbit_period, gen_planet_orbit_period};
 use crate::vec2::Vec2f64;
 use crate::world::{AsteroidBelt, Container, GameMode, GameState, Location, ObjectProperty, Star, AABB, GAME_STATE_VERSION, PlanetV2, SpatialProps, Movement};
 use crate::{planet_movement, prng_id, seed_prng, world};
@@ -194,13 +194,14 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             health: None,
                             properties: Default::default(),
                             movement: Movement::RadialMonotonous {
-                                full_period_ticks: gen_sat_orbit_period(&mut prng, j + 1),
+                                full_period_ticks: gen_sat_orbit_period(&mut prng),
                                 clockwise: false,
                                 anchor: ObjectSpecifier::Planet {
                                     id: planet_id,
                                 },
                                 relative_position: Default::default(),
                                 phase: None,
+                                start_phase: 0
                             },
                         })
                     }
@@ -223,7 +224,8 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                                 id: star_id
                             },
                             relative_position: Default::default(),
-                            phase: None
+                            phase: None,
+                            start_phase: 0
                         }
                     });
                     asteroid_belts.push(AsteroidBelt {
@@ -243,7 +245,8 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                                 id: star_id,
                             },
                             relative_position: Default::default(),
-                            phase: None
+                            phase: None,
+                            start_phase: 0
                         }
                     });
                     asteroid_belts.push(AsteroidBelt {
@@ -264,7 +267,8 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                                 id: star_id,
                             },
                             relative_position: Default::default(),
-                            phase: None
+                            phase: None,
+                            start_phase: 0
                         }
                     });
                 }
@@ -330,11 +334,12 @@ pub fn gen_planet(
         health: None,
         properties: Default::default(),
         movement: Movement::RadialMonotonous {
-            full_period_ticks: 0.0,
+            full_period_ticks: gen_planet_orbit_period(&mut prng),
             clockwise: false,
             anchor,
             relative_position: Default::default(),
             phase: None,
+            start_phase: 0
         },
     }
 }
@@ -497,6 +502,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
                 },
                 relative_position: Default::default(),
                 phase: None,
+                start_phase: 0
             },
         },
         PlanetV2 {
@@ -522,6 +528,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
                 },
                 relative_position: Default::default(),
                 phase: None,
+                start_phase: 0
             },
         },
     ];
@@ -655,8 +662,7 @@ fn gen_state(seed: String, opts: GenStateOpts, prng: &mut Pcg64Mcg, caches: &mut
             let planet_spec = planet.spec();
             let anchor_dist = *anchor_distances.get(&planet_spec).expect(format!("No distance to anchor for {:?}", planet_spec).as_str());
             let table = get_phase_table(&mut caches.rel_orbit_cache, &planet.movement, anchor_dist);
-            warn!(format!("table len for {:?} is {}", planet.movement, table.len()));
-            planet.movement.set_phase(prng.gen_range(0, table.len()) as u32);
+            planet.movement.set_start_phase(prng.gen_range(0, table.len()) as u32);
         }
     }
     let state = validate_state(state);

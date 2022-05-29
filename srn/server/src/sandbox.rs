@@ -152,7 +152,8 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                         id: map_id(args.anchor_id, &mut HashMap::new(), &mut prng),
                     },
                     relative_position: Default::default(),
-                    phase: None
+                    phase: None,
+                    start_phase: 0
                 };
                 planet.anchor_tier = find_anchor_tier(&state.locations[0], planet.movement.get_anchor_id());
                 planet.spatial.position.x = pos.x;
@@ -246,7 +247,8 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                             id: anchor_id,
                         },
                         relative_position: Default::default(),
-                        phase: None
+                        phase: None,
+                        start_phase: 0
                     }
                 }
             }).collect();
