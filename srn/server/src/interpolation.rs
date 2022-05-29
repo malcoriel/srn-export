@@ -1,7 +1,7 @@
 use crate::indexing::{index_all_ships_by_id, index_ships_by_id};
-use crate::planet_movement::{IBody, IBodyV2};
+use crate::planet_movement::{IBodyV2};
 use crate::vec2::{Precision, Vec2f64};
-use crate::world::{lerp, Location, Movement, Planet, PlanetV2, Ship, UpdateOptionsV2};
+use crate::world::{lerp, Location, Movement, PlanetV2, Ship, UpdateOptionsV2};
 use crate::{AABB, GameState};
 use std::collections::HashMap;
 use std::f64::consts::PI;

@@ -12,7 +12,7 @@ use crate::indexing::{
 use crate::inventory::{count_items_of_types, MINERAL_TYPES, value_items_of_types};
 use crate::new_id;
 use crate::random_stuff::gen_random_character_name;
-use crate::world::{GameState, Planet, PlanetV2, Player, Ship};
+use crate::world::{GameState, PlanetV2, Player, Ship};
 
 pub fn substitute_text(
     text: &String,

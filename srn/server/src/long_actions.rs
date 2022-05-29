@@ -11,7 +11,7 @@ use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
     find_player_by_ship_id, find_player_idx_by_ship_id,
 };
-use crate::planet_movement::{IBody, IBodyV2};
+use crate::planet_movement::{IBodyV2};
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, ShipIdx, ShipTemplate, PLAYER_RESPAWN_TIME_MC};
 use crate::{combat, indexing, locations, prng_id, world};

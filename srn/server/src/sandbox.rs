@@ -19,7 +19,7 @@ use crate::market::get_default_value;
 use crate::random_stuff::{gen_color, gen_planet_name, gen_star_color, gen_star_name, PLANET_NAMES, random_hex_seed};
 use crate::system_gen::{gen_planet, gen_planet_typed, gen_star, PlanetType, PoolRandomPicker, str_to_hash};
 use crate::vec2::Vec2f64;
-use crate::world::{GameState, Location, Movement, Planet, PlanetV2, Ship, SpatialProps, Star};
+use crate::world::{GameState, Location, Movement, PlanetV2, Ship, SpatialProps, Star};
 use crate::{new_id, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]

@@ -18,7 +18,7 @@ use crate::inventory::{
     InventoryItem, InventoryItemType,
 };
 use crate::{prng_id};
-use crate::world::{GameState, Planet, PlanetV2};
+use crate::world::{GameState, PlanetV2};
 
 pub type Wares = HashMap<Uuid, Vec<InventoryItem>>;
 pub type Prices = HashMap<Uuid, HashMap<InventoryItemType, Price>>;

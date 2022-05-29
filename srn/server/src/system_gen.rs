@@ -15,7 +15,7 @@ use crate::market::{init_all_planets_market, Market};
 use crate::perf::Sampler;
 use crate::random_stuff::{gen_color, gen_planet_count, gen_planet_orbit_speed, gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_speed, gen_sat_radius, gen_star_color, gen_star_name, gen_star_radius, random_hex_seed_seeded, PLANET_NAMES, SAT_NAMES, gen_sat_orbit_period};
 use crate::vec2::Vec2f64;
-use crate::world::{AsteroidBelt, Container, GameMode, GameState, Location, ObjectProperty, Planet, Star, AABB, GAME_STATE_VERSION, PlanetV2, SpatialProps, Movement};
+use crate::world::{AsteroidBelt, Container, GameMode, GameState, Location, ObjectProperty, Star, AABB, GAME_STATE_VERSION, PlanetV2, SpatialProps, Movement};
 use crate::{planet_movement, prng_id, seed_prng, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
@@ -208,42 +208,67 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                     let middle = current_x + width / 2.0;
                     asteroid_belts.push(AsteroidBelt {
                         id: prng_id(&mut prng),
-                        x: 0.0,
-                        y: 0.0,
-                        rotation: 0.0,
-                        radius: middle,
                         width: width / asteroid_belt_compression,
                         count: 200,
-                        orbit_speed: 0.006,
-                        anchor_id: star_id,
-                        anchor_tier: 0,
                         scale_mod: 1.0,
+                        spatial: SpatialProps {
+                            position: Vec2f64::zero(),
+                            rotation_rad: 0.0,
+                            radius: middle,
+                        },
+                        movement: Movement::RadialMonotonous {
+                            full_period_ticks: (60 * 1000 * 1000) as f64,
+                            radius_to_anchor: 0.0,
+                            clockwise: false,
+                            anchor: ObjectSpecifier::Star {
+                                id: star_id
+                            },
+                            relative_position: Default::default(),
+                            interpolation_hint: None
+                        }
                     });
                     asteroid_belts.push(AsteroidBelt {
                         id: prng_id(&mut prng),
-                        x: 0.0,
-                        y: 0.0,
-                        rotation: 0.0,
-                        radius: middle - 3.0,
                         width: (width - 3.0) / asteroid_belt_compression,
                         count: 100,
-                        orbit_speed: 0.004,
-                        anchor_id: star_id,
-                        anchor_tier: 0,
                         scale_mod: 2.0,
+                        spatial: SpatialProps {
+                            position: Default::default(),
+                            rotation_rad: 0.0,
+                            radius: middle - 3.0
+                        },
+                        movement: Movement::RadialMonotonous {
+                            full_period_ticks: (180 * 1000 * 1000) as f64,
+                            radius_to_anchor: 0.0,
+                            clockwise: false,
+                            anchor: ObjectSpecifier::Star {
+                                id: star_id,
+                            },
+                            relative_position: Default::default(),
+                            interpolation_hint: None
+                        }
                     });
                     asteroid_belts.push(AsteroidBelt {
                         id: prng_id(&mut prng),
-                        x: 0.0,
-                        y: 0.0,
-                        rotation: 0.0,
-                        radius: middle + 5.0,
                         width: (width - 5.0) / asteroid_belt_compression,
                         count: 400,
-                        orbit_speed: 0.008,
-                        anchor_id: star_id,
-                        anchor_tier: 0,
                         scale_mod: 0.5,
+                        spatial: SpatialProps {
+                            position: Default::default(),
+                            rotation_rad: 0.0,
+                            radius: middle + 5.0,
+                        }
+                        ,
+                        movement: Movement::RadialMonotonous {
+                            full_period_ticks: (40 * 1000 * 1000) as f64,
+                            radius_to_anchor: 0.0,
+                            clockwise: false,
+                            anchor: ObjectSpecifier::Star {
+                                id: star_id,
+                            },
+                            relative_position: Default::default(),
+                            interpolation_hint: None
+                        }
                     });
                 }
             }

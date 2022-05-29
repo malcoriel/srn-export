@@ -7,7 +7,7 @@ use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::world;
-use crate::world::{Container, GameState, Location, NatSpawnMineral, Planet, PlanetV2, Player, Ship, ShipIdx, SpatialIndexes};
+use crate::world::{Container, GameState, Location, NatSpawnMineral, PlanetV2, Player, Ship, ShipIdx, SpatialIndexes};
 
 pub fn find_mineral(loc: &world::Location, id: Uuid) -> Option<&NatSpawnMineral> {
     loc.minerals.iter().find(|m| m.id == id)

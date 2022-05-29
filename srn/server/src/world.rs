@@ -36,7 +36,7 @@ use crate::long_actions::{
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
 use crate::perf::{Sampler, SamplerMarks};
-use crate::planet_movement::{build_anchors_from_bodies, IBody, IBodyV2, index_bodies_by_id, make_bodies_from_planets};
+use crate::planet_movement::{IBodyV2};
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
     gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
@@ -145,22 +145,6 @@ pub enum ObjectProperty {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct Planet {
-    pub id: Uuid,
-    pub name: String,
-    pub x: f64,
-    pub y: f64,
-    pub rotation: f64,
-    pub radius: f64,
-    pub orbit_speed: f64,
-    pub anchor_id: Uuid,
-    pub anchor_tier: u32,
-    pub color: String,
-    pub health: Option<Health>,
-    pub properties: Vec<ObjectProperty>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 // derive Serialize-Deserialize will add constraints itself, no need to explicitly mark them
 pub struct SpatialProps {
     pub position: Vec2f64,
@@ -178,6 +162,18 @@ pub struct PlanetV2 {
     pub color: String,
     pub health: Option<Health>,
     pub properties: Vec<ObjectProperty>,
+}
+
+impl From<Box<dyn IBodyV2>> for PlanetV2 {
+    fn from(_: Box<dyn IBodyV2>) -> Self {
+        todo!()
+    }
+}
+
+impl From<&Box<dyn IBodyV2>> for PlanetV2 {
+    fn from(_: &Box<dyn IBodyV2>) -> Self {
+        todo!()
+    }
 }
 
 impl PlanetV2 {
@@ -204,163 +200,23 @@ impl PlanetV2 {
             ),
         }
     }
-
-    pub fn from(p: &Planet, loc: &Location) -> Self {
-        let pos = Vec2f64 { x: p.x, y: p.y };
-        let speed_ticks_rad = p.orbit_speed / 1000.0 / 1000.0;
-        let full_period_ticks = (std::f64::consts::PI * 2.0 / speed_ticks_rad).floor();
-
-        let (anchor, radius_to_anchor, relative_position) = match p.anchor_tier {
-            1 => {
-                // planet
-                let star = loc.star.clone().expect(
-                    format!(
-                        "No star found for anchor tier {} of planet {}",
-                        p.anchor_tier, p.id
-                    )
-                    .as_str(),
-                );
-                (
-                    ObjectSpecifier::Star { id: star.id },
-                    pos.euclidean_distance(&star.spatial.position),
-                    pos.subtract(&star.spatial.position),
-                )
-            }
-            2 => {
-                let parent_planet = loc.planets.iter().find(|par| par.id == p.anchor_id).expect(
-                    format!(
-                        "No anchor planet found by id {} for planet {}",
-                        p.anchor_id, p.id
-                    )
-                    .as_str(),
-                );
-                let parent_pos = parent_planet.spatial.position.clone();
-                (
-                    ObjectSpecifier::Planet {
-                        id: parent_planet.id,
-                    },
-                    pos.euclidean_distance(&parent_pos),
-                    pos.subtract(&parent_pos),
-                )
-            }
-            _ => panic!("Unsupported anchor tier {}", p.anchor_tier),
-        };
-        Self {
-            id: p.id.clone(),
-            name: p.name.clone(),
-            spatial: SpatialProps {
-                position: pos,
-                rotation_rad: p.rotation,
-                radius: p.radius,
-            },
-            movement: Movement::RadialMonotonous {
-                full_period_ticks: full_period_ticks.abs(),
-                clockwise: full_period_ticks < 0.0,
-                radius_to_anchor,
-                anchor,
-                relative_position,
-                interpolation_hint: None,
-            },
-            anchor_tier: 0,
-            color: p.color.clone(),
-            health: p.health.clone(),
-            properties: p.properties.clone(),
-        }
-    }
-}
-
-impl Planet {
-    pub fn new() -> Self {
-        Self {
-            id: Default::default(),
-            name: "".to_string(),
-            x: 0.0,
-            y: 0.0,
-            rotation: 0.0,
-            radius: 0.0,
-            orbit_speed: 0.0,
-            anchor_id: Default::default(),
-            anchor_tier: 1,
-            color: "".to_string(),
-            health: None,
-            properties: Default::default(),
-        }
-    }
-
-    pub fn get_position(&self) -> Vec2f64 {
-        return Vec2f64 {
-            x: self.x,
-            y: self.y,
-        };
-    }
-
-    pub fn from_pv2(f: &PlanetV2, star_id: Uuid) -> Self {
-        let (orbit_speed, anchor_id, anchor_tier) = match &f.movement {
-            Movement::RadialMonotonous {
-                full_period_ticks,
-                anchor,
-                ..
-            } => {
-                let anchor_id = anchor.get_id().unwrap();
-                (
-                    std::f64::consts::PI * 2.0 / full_period_ticks,
-                    anchor_id,
-                    if anchor_id == star_id { 1 } else { 2 },
-                )
-            }
-            _ => panic!("Unsupported movement {:?}", f.movement),
-        };
-        Self {
-            id: f.id,
-            name: f.name.clone(),
-            x: f.spatial.position.x,
-            y: f.spatial.position.y,
-            rotation: f.spatial.rotation_rad,
-            radius: f.spatial.radius,
-            orbit_speed,
-            anchor_id,
-            anchor_tier,
-            color: f.color.clone(),
-            health: f.health.clone(),
-            properties: f.properties.clone(),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Asteroid {
     pub id: Uuid,
-    pub x: f64,
-    pub y: f64,
-    pub rotation: f64,
-    pub radius: f64,
-    pub orbit_speed: f64,
-    pub anchor_id: Uuid,
-    pub anchor_tier: u32,
+    pub spatial: SpatialProps,
+    pub movement: Movement,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct AsteroidBelt {
     pub id: Uuid,
-    pub x: f64,
-    pub y: f64,
-    pub rotation: f64,
-    pub radius: f64,
+    pub spatial: SpatialProps,
     pub width: f64,
     pub count: u32,
-    pub orbit_speed: f64,
-    pub anchor_id: Uuid,
-    pub anchor_tier: u32,
+    pub movement: Movement,
     pub scale_mod: f64,
-}
-
-impl AsVec2f64 for Planet {
-    fn as_vec(&self) -> Vec2f64 {
-        Vec2f64 {
-            x: self.x,
-            y: self.y,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -816,46 +672,6 @@ impl UpdateOptionsV2 {
     }
 }
 
-// first group is in area, second is not
-pub fn split_bodies_by_area(
-    bodies: Vec<Box<dyn IBodyV2>>,
-    area: AABB,
-) -> (Vec<Box<dyn IBodyV2>>, Vec<Box<dyn IBodyV2>>) {
-    let anchors = build_anchors_from_bodies(bodies.clone());
-
-    let res: (Vec<_>, Vec<_>) = bodies.into_iter().partition_map(|b| {
-        if area.contains_body(&b) {
-            Either::Left(b)
-        } else {
-            Either::Right(b)
-        }
-    });
-
-    let (mut picked, mut dropped) = res;
-    let mut already_picked_ids: HashSet<Uuid> =
-        HashSet::from_iter(picked.iter().map(|p| p.get_id()));
-    let anchors_vec = picked
-        .iter()
-        .filter_map(|p| {
-            anchors.get(&p.get_movement().get_anchor_id()).and_then(|p| {
-                if !already_picked_ids.contains(&p.get_id()) {
-                    already_picked_ids.insert(p.get_id());
-                    Some(p.clone())
-                } else {
-                    None
-                }
-            })
-        })
-        .collect::<Vec<_>>();
-    let anchor_ids: HashSet<Uuid> = HashSet::from_iter(anchors_vec.iter().map(|a| a.get_id()));
-    picked.append(&mut anchors_vec.clone());
-    dropped = dropped
-        .into_iter()
-        .filter(|p| !anchor_ids.contains(&p.get_id()))
-        .collect::<Vec<_>>();
-    return (picked, dropped);
-}
-
 pub struct SpatialIndexes {
     pub values: HashMap<usize, SpatialIndex>,
 }
@@ -1128,7 +944,7 @@ pub fn update_location(
         elapsed,
     );
     for mut belt in state.locations[location_idx].asteroid_belts.iter_mut() {
-        belt.rotation += belt.orbit_speed / 1000.0 / 1000.0 * elapsed as f64;
+        belt.spatial.rotation_rad += belt.movement.get_orbit_speed() / 1000.0 / 1000.0 * elapsed as f64;
     }
     sampler.end(update_ast_id);
 
@@ -1564,8 +1380,8 @@ fn gen_mineral(prng: &mut Pcg64Mcg, pos: Vec2f64) -> NatSpawnMineral {
 
 fn gen_pos_in_belt(belt: &AsteroidBelt, prng: &mut Pcg64Mcg) -> Vec2f64 {
     let range = prng.gen_range(
-        belt.radius - belt.width / 2.0,
-        belt.radius + belt.width / 2.0,
+        belt.spatial.radius - belt.width / 2.0,
+        belt.spatial.radius + belt.width / 2.0,
     );
     let angle_rad = prng.gen_range(0.0, PI * 2.0);
     let x = angle_rad.cos() * range;
@@ -1850,6 +1666,11 @@ impl Movement {
             _ => panic!("cannot get anchor for movement without an anchor")
         }
     }
+
+    #[deprecated(since = "0.8.7", note="this method is needed for non-periodic orbit movements support, however they should not exist")]
+    pub fn get_orbit_speed(&self) -> f64 {
+        todo!()
+    }
 }
 
 pub struct ShipTemplate {
@@ -1967,8 +1788,7 @@ pub fn update_ships_navigation(
     update_options: &UpdateOptions,
 ) -> Vec<Ship> {
     let mut res = vec![];
-    let planets_with_star = make_bodies_from_planets(&planets, star);
-    let bodies_by_id = index_bodies_by_id(planets_with_star);
+    let bodies_by_id: HashMap<Uuid, &Box<dyn IBodyV2>> = todo!();
     let docking_ship_ids: HashSet<Uuid> = HashSet::from_iter(ships.iter().filter_map(|s| {
         let long_act = s
             .long_actions

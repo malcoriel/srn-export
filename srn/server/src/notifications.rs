@@ -12,7 +12,7 @@ use wasm_bindgen::prelude::*;
 use crate::indexing::{find_my_player_mut, index_planets_by_id};
 use crate::inventory::{count_items_of_types, MINERAL_TYPES, value_items_of_types};
 use crate::random_stuff::gen_random_character_name;
-use crate::world::{GameMode, GameState, Planet, Player, Ship};
+use crate::world::{GameMode, GameState, Player, Ship};
 use crate::{prng_id, substitutions};
 use crate::dialogue::{Substitution, SubstitutionType};
 

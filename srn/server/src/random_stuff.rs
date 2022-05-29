@@ -1,8 +1,9 @@
-use crate::world::{Asteroid, Rarity, Star};
-use crate::{get_prng, prng_id};
+use crate::world::{Asteroid, Movement, Rarity, SpatialProps, Star};
+use crate::{get_prng, prng_id, Vec2f64};
 use rand::prelude::*;
 use std::f64::consts::PI;
 use rand_pcg::Pcg64Mcg;
+use crate::indexing::ObjectSpecifier;
 
 pub const STAR_NAMES: [&str; 32] = [
     "Ithoins",
@@ -277,13 +278,24 @@ pub fn seed_asteroids(star: &Star, rng: &mut Pcg64Mcg) -> Vec<Asteroid> {
         let shift = gen_asteroid_shift(rng);
         res.push(Asteroid {
             id: prng_id(rng),
-            x: x + shift.0,
-            y: y + shift.1,
-            rotation: 0.0,
-            radius: gen_asteroid_radius(rng),
-            orbit_speed: 0.05,
-            anchor_id: star.id,
-            anchor_tier: 1,
+            spatial: SpatialProps {
+                position: Vec2f64 {
+                    x: x + shift.0,
+                    y: y + shift.1,
+                },
+                rotation_rad: 0.0,
+                radius: gen_asteroid_radius(rng),
+            },
+            movement: Movement::RadialMonotonous {
+                full_period_ticks: (180 * 1000 * 1000) as f64,
+                radius_to_anchor: 0.0,
+                clockwise: false,
+                anchor: ObjectSpecifier::Star {
+                    id: star.id,
+                },
+                relative_position: Default::default(),
+                interpolation_hint: None
+            }
         });
         cur_angle += angle_step;
     }

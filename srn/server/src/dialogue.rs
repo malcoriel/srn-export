@@ -27,7 +27,7 @@ use crate::{prng_id, seed_prng};
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
-use crate::world::{fire_saved_event, GameState, Planet, PlanetV2, Player, PlayerId, Ship};
+use crate::world::{fire_saved_event, GameState, PlanetV2, Player, PlayerId, Ship};
 use crate::world_events::GameEvent;
 use crate::{fire_event, world};
 
