@@ -7,7 +7,7 @@ mod world_test {
     use crate::market::Market;
     use crate::new_id;
     use crate::perf::Sampler;
-    use crate::planet_movement::update_planets;
+    use crate::planet_movement::update_radial_moving_entities;
     use crate::system_gen::seed_state_test;
     use crate::vec2::Vec2f64;
     use crate::world::{
@@ -87,7 +87,7 @@ mod world_test {
         };
         let eps = 0.2;
         let location = &state.locations[0];
-        let new_planets = update_planets(
+        let new_planets = update_radial_moving_entities(
             &location.planets,
             &location.star,
             (1000.0 * 1000.0 * PI / 2.0) as i64,
@@ -109,7 +109,7 @@ mod world_test {
         let sat_x = coord + cos_pi_8;
         let sat_y = -coord - sin_pi_8;
 
-        let out = update_planets(
+        let out = update_radial_moving_entities(
             &location.planets,
             &location.star,
             (1000.0 * 1000.0 * PI / 4.0) as i64,
@@ -197,7 +197,7 @@ mod world_test {
         };
         let eps = 0.2;
         let location = &state.locations[0];
-        let new_planets = update_planets(
+        let new_planets = update_radial_moving_entities(
             &location.planets,
             &location.star,
             (1000.0 * 1000.0 * PI / 2.0) as i64,
@@ -289,7 +289,7 @@ mod world_test {
         };
         let eps = 0.2;
         let location = &state.locations[0];
-        let new_planets = update_planets(
+        let new_planets = update_radial_moving_entities(
             &location.planets,
             &location.star,
             (1000.0 * 1000.0 * PI / 2.0) as i64,

@@ -61,6 +61,54 @@ impl IBodyV2 for PlanetV2 {
     }
 }
 
+impl Anchored for AsteroidBelt {
+    fn get_anchor_dist(&self, indexes: &GameStateIndexes) -> f64 {
+        generic_get_anchor_dist(self, indexes)
+    }
+}
+
+impl Spec for AsteroidBelt {
+    fn spec(&self) -> ObjectSpecifier {
+        ObjectSpecifier::AsteroidBelt {
+            id: self.id
+        }
+    }
+}
+
+impl IBodyV2 for AsteroidBelt {
+    fn get_id(&self) -> Uuid {
+        self.id
+    }
+
+    fn get_name(&self) -> &String {
+        unimplemented!()
+    }
+
+    fn get_spatial(&self) -> &SpatialProps {
+        &self.spatial
+    }
+
+    fn get_spatial_mut(&mut self) -> &mut SpatialProps {
+        &mut self.spatial
+    }
+
+    fn get_movement(&self) -> &Movement {
+        &self.movement
+    }
+
+    fn get_movement_mut(&mut self) -> &mut Movement {
+        &mut self.movement
+    }
+
+    fn set_spatial(&mut self, x: SpatialProps) {
+        self.spatial = x;
+    }
+
+    fn get_anchor_tier(&self) -> u32 {
+        todo!()
+    }
+}
+
 impl Anchored for Star {
     fn get_anchor_dist(&self, _indexes: &GameStateIndexes) -> f64 {
         0.0
@@ -209,33 +257,38 @@ fn update_radial_movement(current_ticks: i64, sampler: &mut Sampler, limit_area:
     }
 }
 
-pub fn update_planets(location: &Location, current_ticks: i64, mut sampler: Sampler, limit_area: AABB, indexes: &GameStateIndexes, caches: &mut GameStateCaches) -> (Location, Sampler) {
+pub fn update_radial_moving_entities(location: &Location, current_ticks: i64, mut sampler: Sampler, limit_area: AABB, indexes: &GameStateIndexes, caches: &mut GameStateCaches) -> (Location, Sampler) {
     let mut res = location.clone();
-    let bodies: Vec<Box<&mut dyn IBodyV2>> = res.planets.iter_mut().map(|p| Box::new(p as &mut dyn IBodyV2)).collect();
+    let bodies = get_radial_bodies(&mut res);
     update_radial_movement(current_ticks, &mut sampler, limit_area, indexes, caches, bodies);
     let mark = sampler.start(SamplerMarks::RestoreAbsolutePosition as u32);
     let star_clone = location.star.clone().expect("cannot update planets radial movement in a location without a star");
     let star_root: Box<&dyn IBodyV2> = Box::new(&star_clone as &dyn IBodyV2);
-    restore_absolute_positions(star_root,res.planets.iter_mut().map(|p| Box::new(p as &mut dyn IBodyV2)).collect());
+    restore_absolute_positions(star_root, get_radial_bodies(&mut res));
     sampler.end(mark);
     (res, sampler)
 }
 
-pub fn update_asteroids(location: &Location, current_ticks: i64, mut sampler: Sampler, limit_area: AABB, indexes: &GameStateIndexes, caches: &mut GameStateCaches) -> (Location, Sampler) {
-    let mut res = location.clone();
-    let bodies: Vec<Box<&mut dyn IBodyV2>> = res.asteroids.iter_mut().map(|p| Box::new(p as &mut dyn IBodyV2)).collect();
-    update_radial_movement(current_ticks, &mut sampler, limit_area, indexes, caches, bodies);
-    let mark = sampler.start(SamplerMarks::RestoreAbsolutePosition as u32);
-    let star_clone = location.star.clone().expect("cannot update asteroids radial movement in a location without a star");
-    let star_root: Box<&dyn IBodyV2> = Box::new(&star_clone as &dyn IBodyV2);
-    restore_absolute_positions(star_root,res.asteroids.iter_mut().map(|p| Box::new(p as &mut dyn IBodyV2)).collect());
-    sampler.end(mark);
-    (res, sampler)
+fn get_radial_bodies(res: &mut Location) -> Vec<Box<&mut dyn IBodyV2>> {
+    let mut bodies: Vec<Box<&mut dyn IBodyV2>> = vec![];
+    let mut planet_bodies =
+        res.planets.iter_mut()
+            .map(|p| Box::new(p as &mut dyn IBodyV2))
+            .collect();
+    let mut asteroid_bodies =
+        res.asteroids.iter_mut()
+            .map(|p| Box::new(p as &mut dyn IBodyV2))
+            .collect();
+    let mut asteroid_belt_bodies =
+        res.asteroid_belts.iter_mut()
+            .map(|p| Box::new(p as &mut dyn IBodyV2))
+            .collect();
+    bodies.append(&mut planet_bodies);
+    bodies.append(&mut asteroid_bodies);
+    bodies.append(&mut asteroid_belt_bodies);
+    bodies
 }
 
-pub fn update_asteroid_belts(belt: &mut AsteroidBelt, star_clone: &Option<Star>) {
-    todo!()
-}
 
 pub trait Anchored {
     fn get_anchor_dist(&self, indexes: &GameStateIndexes) -> f64;

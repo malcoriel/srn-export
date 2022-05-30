@@ -932,8 +932,8 @@ pub fn update_location(
             location_idx,
         ));
     sampler.end(spatial_index_id);
-    let update_planets_id = sampler.start(SamplerMarks::UpdatePlanetMovement as u32);
-    let (location, sampler_out) = planet_movement::update_planets(
+    let update_radials_id = sampler.start(SamplerMarks::UpdateLocationRadialMovement as u32);
+    let (location, sampler_out) = planet_movement::update_radial_moving_entities(
         &state.locations[location_idx],
         next_ticks,
         sampler,
@@ -942,24 +942,7 @@ pub fn update_location(
     );
     state.locations[location_idx] = location;
     sampler = sampler_out;
-
-    sampler.end(update_planets_id);
-    let update_ast_id = sampler.start(SamplerMarks::UpdateAsteroids as u32);
-    let (location, sampler_out) = planet_movement::update_asteroids(
-        &mut state.locations[location_idx],
-        next_ticks,
-        sampler,
-        update_options.limit_area.clone(),
-        indexes, caches,
-    );
-    state.locations[location_idx] = location;
-    sampler = sampler_out;
-
-    let star_clone = state.locations[location_idx].star.clone();
-    for mut belt in state.locations[location_idx].asteroid_belts.iter_mut() {
-        planet_movement::update_asteroid_belts(belt, &star_clone);
-    }
-    sampler.end(update_ast_id);
+    sampler.end(update_radials_id);
 
     let update_ships_navigation_id = sampler.start(SamplerMarks::UpdateShipsNavigation as u32);
     let my_ship_id = find_my_ship(&state, state.my_id).map(|s| s.id);
@@ -2113,6 +2096,9 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
         }
         ObjectSpecifier::Asteroid { id } => {
             state.locations[loc_idx].asteroids.retain(|m| m.id != id)
+        }
+        ObjectSpecifier::AsteroidBelt { id } => {
+            state.locations[loc_idx].asteroid_belts.retain(|m| m.id != id)
         }
     }
 }

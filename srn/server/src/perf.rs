@@ -263,7 +263,7 @@ pub enum SamplerMarks {
     ShipCleanup = 6,
     MulticastUpdate = 7,
     UpdateLeaderboard = 8,
-    UpdatePlanetMovement = 9,
+    UpdateLocationRadialMovement = 9,
     UpdateAsteroids = 10,
     UpdateShipsOnPlanets = 11,
     UpdateShipsNavigation = 12,
