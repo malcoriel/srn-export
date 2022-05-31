@@ -4,23 +4,29 @@ use std::sync::{Arc, Mutex};
 
 use chrono::Utc;
 use lazy_static::lazy_static;
-use rand_pcg::Pcg64Mcg;
 use rand::SeedableRng;
 use rand_pcg::rand_core::RngCore;
+use rand_pcg::Pcg64Mcg;
 use uuid::Uuid;
 
-use crate::{indexing, prng_id};
 use crate::indexing::{find_my_ship, find_my_ship_mut, ObjectSpecifier};
-use serde_derive::{Deserialize, Serialize};
-use wasm_bindgen::prelude::*;
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;
-use crate::random_stuff::{gen_color, gen_planet_name, gen_star_color, gen_star_name, PLANET_NAMES, random_hex_seed};
-use crate::system_gen::{gen_planet, gen_planet_typed, gen_star, PlanetType, PoolRandomPicker, str_to_hash};
+use crate::random_stuff::{
+    gen_color, gen_planet_name, gen_star_color, gen_star_name, random_hex_seed, PLANET_NAMES,
+};
+use crate::system_gen::{
+    gen_planet, gen_planet_typed, gen_star, str_to_hash, PlanetType, PoolRandomPicker,
+};
 use crate::vec2::Vec2f64;
-use crate::world::{GameState, Location, Movement, PlanetV2, Ship, SpatialProps, Star};
+use crate::world::{
+    GameState, Location, Movement, PlanetV2, RotationMovement, Ship, SpatialProps, Star,
+};
+use crate::{indexing, prng_id};
 use crate::{new_id, world};
+use serde_derive::{Deserialize, Serialize};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum SandboxTeleportTarget {
@@ -36,12 +42,8 @@ lazy_static! {
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
 pub enum ReferencableId {
-    Id {
-        id: Uuid
-    },
-    Reference {
-        reference: String,
-    },
+    Id { id: Uuid },
+    Reference { reference: String },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -70,11 +72,11 @@ pub struct SBTeleport {
 pub struct SBSetupState {
     star: SBAddStar,
     planets: Vec<SBAddPlanet>,
-    force_seed: Option<String>
+    force_seed: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-#[serde(tag = "tag", content="fields")]
+#[serde(tag = "tag", content = "fields")]
 pub enum SandboxCommand {
     AddStar,
     AddMineral,
@@ -153,9 +155,10 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     },
                     relative_position: Default::default(),
                     phase: None,
-                    start_phase: 0
+                    start_phase: 0,
                 };
-                planet.anchor_tier = find_anchor_tier(&state.locations[0], planet.movement.get_anchor_id());
+                planet.anchor_tier =
+                    find_anchor_tier(&state.locations[0], planet.movement.get_anchor_id());
                 planet.spatial.position.x = pos.x;
                 planet.spatial.position.y = pos.y;
                 state.locations[0].planets.push(planet);
@@ -203,7 +206,11 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
         }
         SandboxCommand::SetupState(args) => {
             let loc_idx = 0;
-            let mut prng = Pcg64Mcg::seed_from_u64(args.force_seed.map(|s| str_to_hash(s)).unwrap_or(state.ticks));
+            let mut prng = Pcg64Mcg::seed_from_u64(
+                args.force_seed
+                    .map(|s| str_to_hash(s))
+                    .unwrap_or(state.ticks),
+            );
             let loc = &mut state.locations[loc_idx];
             let mut id_storage = HashMap::new();
             if let Some(star_id) = args.star.id {
@@ -214,74 +221,85 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     color: star_color.0.to_string(),
                     corona_color: star_color.1.to_string(),
                     spatial: SpatialProps {
-                        position: Vec2f64 {x: 0.0,
-                            y: 0.0,
-                        },
+                        position: Vec2f64 { x: 0.0, y: 0.0 },
                         rotation_rad: 0.0,
                         radius: args.star.radius,
                     },
-                    movement: Movement::None
+                    movement: Movement::None,
+                    rot_movement: RotationMovement::None,
                 });
             }
-            loc.planets = args.planets.iter().map(|spb| {
-                let anchor_id = map_id(spb.anchor_id.clone(), &mut id_storage, &mut prng);
-                PlanetV2 {
-                    id: map_id_opt(spb.id.clone(), &mut id_storage, &mut prng),
-                    name: gen_planet_name(&mut prng).to_string(),
-                    spatial: SpatialProps {
-                        position: Vec2f64 {
-                            x: spb.position.x,
-                            y: spb.position.y,
+            loc.planets = args
+                .planets
+                .iter()
+                .map(|spb| {
+                    let anchor_id = map_id(spb.anchor_id.clone(), &mut id_storage, &mut prng);
+                    PlanetV2 {
+                        id: map_id_opt(spb.id.clone(), &mut id_storage, &mut prng),
+                        name: gen_planet_name(&mut prng).to_string(),
+                        spatial: SpatialProps {
+                            position: Vec2f64 {
+                                x: spb.position.x,
+                                y: spb.position.y,
+                            },
+                            rotation_rad: 0.0,
+                            radius: spb.radius,
                         },
-                        rotation_rad: 0.0,
-                        radius: spb.radius,
-                    },
-                    anchor_tier: spb.anchor_tier,
-                    color: gen_color(&mut prng).to_string(),
-                    health: None,
-                    properties: vec![],
-                    movement: Movement::RadialMonotonous {
-                        full_period_ticks: spb.full_period_ticks,
-                        clockwise: false,
-                        anchor: ObjectSpecifier::Planet {
-                            id: anchor_id,
+                        anchor_tier: spb.anchor_tier,
+                        color: gen_color(&mut prng).to_string(),
+                        health: None,
+                        properties: vec![],
+                        movement: Movement::RadialMonotonous {
+                            full_period_ticks: spb.full_period_ticks,
+                            clockwise: false,
+                            anchor: ObjectSpecifier::Planet { id: anchor_id },
+                            relative_position: Default::default(),
+                            phase: None,
+                            start_phase: 0,
                         },
-                        relative_position: Default::default(),
-                        phase: None,
-                        start_phase: 0
+                        rot_movement: RotationMovement::None,
                     }
-                }
-            }).collect();
+                })
+                .collect();
         }
     }
 }
 
 type ReferencableIdStorage = HashMap<String, Uuid>;
 
-fn map_id_opt(ref_id: Option<ReferencableId>, id_storage: &mut ReferencableIdStorage, prng: &mut Pcg64Mcg) -> Uuid {
+fn map_id_opt(
+    ref_id: Option<ReferencableId>,
+    id_storage: &mut ReferencableIdStorage,
+    prng: &mut Pcg64Mcg,
+) -> Uuid {
     if let Some(id) = ref_id {
         map_id(id, id_storage, prng)
     } else {
         let mut bytes: [u8; 4] = [0; 4];
         prng.fill_bytes(&mut bytes);
         let hexed_ref = hex::encode(bytes);
-        map_id(ReferencableId::Reference {
-            reference: hexed_ref
-        }, id_storage, prng)
+        map_id(
+            ReferencableId::Reference {
+                reference: hexed_ref,
+            },
+            id_storage,
+            prng,
+        )
     }
 }
 
-fn map_id(ref_id: ReferencableId, id_storage: &mut ReferencableIdStorage, prng: &mut Pcg64Mcg) -> Uuid {
+fn map_id(
+    ref_id: ReferencableId,
+    id_storage: &mut ReferencableIdStorage,
+    prng: &mut Pcg64Mcg,
+) -> Uuid {
     match ref_id {
-        ReferencableId::Id { id } => {
-            id
-        }
+        ReferencableId::Id { id } => id,
         ReferencableId::Reference { reference } => {
             let entry = id_storage.entry(reference).or_insert(prng_id(prng));
             *entry
         }
     }
-
 }
 
 fn add_free_stuff(ship: &mut Ship, iit: InventoryItemType, quantity: i32) {
@@ -301,10 +319,7 @@ fn add_free_stuff(ship: &mut Ship, iit: InventoryItemType, quantity: i32) {
 }
 
 fn find_anchor_tier(loc: &Location, anchor_id: Uuid) -> u32 {
-    let anchor_planet = loc
-        .planets
-        .iter()
-        .find(|p| p.id == anchor_id);
+    let anchor_planet = loc.planets.iter().find(|p| p.id == anchor_id);
     if anchor_planet.is_none() {
         if let Some(star) = loc.star.as_ref() {
             if star.id == anchor_id {

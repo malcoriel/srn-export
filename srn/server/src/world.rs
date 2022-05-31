@@ -10,30 +10,35 @@ use chrono::Utc;
 use itertools::{Either, Itertools};
 use rand::prelude::*;
 use serde_derive::{Deserialize, Serialize};
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
-use crate::api_struct::{AiTrait, Bot, new_bot, Room, RoomId};
+use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
-use crate::bots::{BOT_ACTION_TIME_TICKS, do_bot_npcs_actions, do_bot_players_actions};
+use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
 use crate::combat::{Health, ShootTarget};
-use crate::indexing::{find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut, GameStateCaches, GameStateIndexes, index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, ObjectSpecifier};
+use crate::dialogue::Dialogue;
+use crate::indexing::{
+    find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
+    index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, GameStateCaches,
+    GameStateIndexes, ObjectSpecifier,
+};
 use crate::inventory::{
-    add_item, add_items, has_quest_item, InventoryItem, InventoryItemType, shake_items,
+    add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
 };
 use crate::long_actions::{
-    cancel_all_long_actions_of_type, finish_long_act, finish_long_act_player, LongAction,
+    cancel_all_long_actions_of_type, finish_long_act, finish_long_act_player, tick_long_act,
+    tick_long_act_player, try_start_long_action, try_start_long_action_ship, LongAction,
     LongActionPlayer, LongActionStart, MIN_SHIP_DOCKING_RADIUS, SHIP_DOCKING_RADIUS_COEFF,
-    tick_long_act, tick_long_act_player, try_start_long_action, try_start_long_action_ship,
 };
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
 use crate::perf::{Sampler, SamplerMarks};
-use crate::planet_movement::{IBodyV2};
+use crate::planet_movement::IBodyV2;
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
     gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
@@ -41,24 +46,23 @@ use crate::random_stuff::{
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
 use crate::substitutions::substitute_notification_texts;
-use crate::system_gen::{DEFAULT_WORLD_UPDATE_EVERY_TICKS, GenStateOpts, seed_state, str_to_hash};
+use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
 use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
-use crate::vec2::{AsVec2f64, deg_to_rad, Precision, Vec2f64};
+use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
 use crate::world_actions::*;
-use crate::world_events::{GameEvent, ProcessedGameEvent, world_update_handle_event};
+use crate::world_actions::{Action, ShipMovementMarkers};
+use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEvent};
 use crate::{
     abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, random_stuff, system_gen,
     trajectory, world_events,
 };
 use crate::{combat, fire_event, market, notifications, planet_movement, tractoring};
 use crate::{dialogue, vec2};
-use crate::{DEBUG_PHYSICS, get_prng, new_id};
-use crate::{DialogueTable, seed_prng};
+use crate::{get_prng, new_id, DEBUG_PHYSICS};
+use crate::{seed_prng, DialogueTable};
 use dialogue::DialogueStates;
-use crate::dialogue::Dialogue;
-use crate::world_actions::{Action, ShipMovementMarkers};
 use rand_pcg::Pcg64Mcg;
 
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
@@ -67,7 +71,7 @@ const ORB_SPEED_MULT: f64 = 1.0;
 pub type PlayerId = Uuid;
 
 #[derive(
-Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify,
 )]
 pub enum GameMode {
     Unknown,
@@ -130,7 +134,7 @@ pub fn get_random_planet<'a>(
 }
 
 #[derive(
-Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash,
+    Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash,
 )]
 #[serde(tag = "tag")]
 pub enum ObjectProperty {
@@ -155,6 +159,7 @@ pub struct PlanetV2 {
     pub name: String,
     pub spatial: SpatialProps,
     pub movement: Movement,
+    pub rot_movement: RotationMovement,
     pub anchor_tier: u32,
     pub color: String,
     pub health: Option<Health>,
@@ -204,6 +209,7 @@ pub struct Asteroid {
     pub id: Uuid,
     pub spatial: SpatialProps,
     pub movement: Movement,
+    pub rot_movement: RotationMovement,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -214,6 +220,7 @@ pub struct AsteroidBelt {
     pub count: u32,
     pub movement: Movement,
     pub scale_mod: f64,
+    pub rot_movement: RotationMovement,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -224,6 +231,7 @@ pub struct Star {
     pub corona_color: String,
     pub spatial: SpatialProps,
     pub movement: Movement,
+    pub rot_movement: RotationMovement,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -548,7 +556,6 @@ pub struct GameState {
     pub breadcrumbs: Vec<Breadcrumb>,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct GameOver {
     pub reason: String,
@@ -620,12 +627,18 @@ impl AABB {
         }
     }
     pub fn contains_body(&self, body: &Box<dyn IBodyV2>) -> bool {
-        let x = body.get_spatial().position.x;
-        let y = body.get_spatial().position.y;
-        return self.top_left.x <= x
-            && x <= self.bottom_right.x
-            && self.top_left.y <= y
-            && y <= self.bottom_right.y;
+        let spatial = body.get_spatial();
+        self.contains_spatial(spatial)
+    }
+
+    pub fn contains_spatial(&self, spatial: &SpatialProps) -> bool {
+        let x = spatial.position.x;
+        let y = spatial.position.y;
+        let radius = spatial.radius;
+        return self.top_left.x <= (x - radius)
+            && (x + radius) <= self.bottom_right.x
+            && self.top_left.y <= (y - radius)
+            && (y + radius) <= self.bottom_right.y;
     }
 
     pub fn contains_vec(&self, vec: &Vec2f64) -> bool {
@@ -774,7 +787,8 @@ fn update_world_iter(
                     );
                 }
                 fire_event(GameEvent::GameStarted { state_id: state.id });
-            } else {}
+            } else {
+            }
         }
     } else {
         if !client {
@@ -938,7 +952,8 @@ pub fn update_location(
         next_ticks,
         sampler,
         update_options.limit_area.clone(),
-        indexes, caches,
+        indexes,
+        caches,
     );
     state.locations[location_idx] = location;
     sampler = sampler_out;
@@ -1154,8 +1169,16 @@ fn interpolate_docking_ships_position(
                             ship.rotation = -ship.rotation;
                         }
 
-                        ship.x = lerp(start_pos.x, planet.spatial.position.x, *percentage as f64 / 100.0);
-                        ship.y = lerp(start_pos.y, planet.spatial.position.y, *percentage as f64 / 100.0);
+                        ship.x = lerp(
+                            start_pos.x,
+                            planet.spatial.position.x,
+                            *percentage as f64 / 100.0,
+                        );
+                        ship.y = lerp(
+                            start_pos.y,
+                            planet.spatial.position.y,
+                            *percentage as f64 / 100.0,
+                        );
                     }
                 }
                 _ => {}
@@ -1209,7 +1232,7 @@ fn update_initiate_ship_docking_by_navigation(
                 };
                 if planet_pos.euclidean_distance(&ship_pos)
                     < (planet.spatial.radius * planet.spatial.radius * SHIP_DOCKING_RADIUS_COEFF)
-                    .max(MIN_SHIP_DOCKING_RADIUS)
+                        .max(MIN_SHIP_DOCKING_RADIUS)
                 {
                     let docks_in_progress = ship
                         .long_actions
@@ -1244,16 +1267,28 @@ fn update_initiate_ship_docking_by_navigation(
 // keep synced with world.ts
 const MANUAL_MOVEMENT_INACTIVITY_DROP_MS: i32 = 500;
 
-fn update_ships_manual_movement(ships: &mut Vec<Ship>, elapsed_micro: i64, current_tick: u32, client: bool) {
+fn update_ships_manual_movement(
+    ships: &mut Vec<Ship>,
+    elapsed_micro: i64,
+    current_tick: u32,
+    client: bool,
+) {
     for ship in ships.iter_mut() {
         update_ship_manual_movement(elapsed_micro, current_tick, ship, client);
     }
 }
 
-fn update_ship_manual_movement(elapsed_micro: i64, current_tick: u32, ship: &mut Ship, client: bool) {
+fn update_ship_manual_movement(
+    elapsed_micro: i64,
+    current_tick: u32,
+    ship: &mut Ship,
+    client: bool,
+) {
     let (new_move, new_pos) = if let Some(params) = &mut ship.movement_markers.gas {
         if (params.last_tick as i32 - current_tick as i32).abs()
-            > MANUAL_MOVEMENT_INACTIVITY_DROP_MS && !client // assume that on client, we always hold the button - this one is only a server optimization
+            > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
+            && !client
+        // assume that on client, we always hold the button - this one is only a server optimization
         {
             (None, None)
         } else {
@@ -1270,7 +1305,7 @@ fn update_ship_manual_movement(elapsed_micro: i64, current_tick: u32, ship: &mut
                 x: ship.x,
                 y: ship.y,
             }
-                .add(&shift);
+            .add(&shift);
             (Some(params.clone()), Some(new_pos))
         }
     } else {
@@ -1635,6 +1670,20 @@ pub enum Movement {
         phase: Option<u32>,
         start_phase: u32,
     },
+    AnchoredStatic {
+        anchor: ObjectSpecifier,
+    },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[serde(tag = "tag")]
+pub enum RotationMovement {
+    None,
+    Monotonous {
+        full_period_ticks: f64, // positive => counter-clockwise
+        phase: Option<u32>,
+        start_phase: u32,
+    },
 }
 
 impl Movement {
@@ -1650,6 +1699,7 @@ impl Movement {
                 current_move_speed, ..
             } => *current_move_speed,
             Movement::RadialMonotonous { .. } => 0.0,
+            Movement::AnchoredStatic { .. } => 0.0,
         }
     }
 
@@ -1658,31 +1708,38 @@ impl Movement {
             Movement::RadialMonotonous { anchor, .. } => {
                 anchor.get_id().expect("anchor without id for movement")
             }
-            _ => panic!("cannot get anchor for movement without an anchor")
+            Movement::AnchoredStatic { anchor } => {
+                anchor.get_id().expect("anchor without id for movement")
+            }
+            _ => panic!("cannot get anchor for movement without an anchor"),
         }
     }
 
     pub fn get_anchor_spec(&self) -> &ObjectSpecifier {
         match self {
-            Movement::RadialMonotonous { anchor, .. } => {
-                anchor
-            }
-            _ => panic!("cannot get anchor for movement without an anchor")
+            Movement::RadialMonotonous { anchor, .. } => anchor,
+            Movement::AnchoredStatic { anchor } => anchor,
+            _ => panic!("cannot get anchor for movement without an anchor"),
         }
     }
 
-    #[deprecated(since = "0.8.7", note = "this method is needed for non-periodic orbit movements support, however they should not exist")]
+    #[deprecated(
+        since = "0.8.7",
+        note = "this method is needed for non-periodic orbit movements support, however they should not exist"
+    )]
     pub fn get_orbit_speed(&self) -> f64 {
         todo!()
     }
 
     pub fn set_start_phase(&mut self, new_phase: u32) {
         match self {
-            Movement::RadialMonotonous { phase, start_phase, .. } => {
+            Movement::RadialMonotonous {
+                phase, start_phase, ..
+            } => {
                 *phase = Some(new_phase);
                 *start_phase = new_phase;
             }
-            _ => panic!("Cannot set phase to movement without phase")
+            _ => panic!("Cannot set phase to movement without phase"),
         }
     }
 }
@@ -1835,9 +1892,9 @@ pub fn update_ships_navigation(
         if docking_ship_ids.contains(&ship.id)
             || undocking_ship_ids.contains(&ship.id)
             || !update_options.limit_area.contains_vec(&Vec2f64 {
-            x: ship.x,
-            y: ship.y,
-        })
+                x: ship.x,
+                y: ship.y,
+            })
         {
             ship.trajectory = vec![];
             res.push(ship);
@@ -1877,12 +1934,18 @@ pub fn update_ships_navigation(
                     ship.navigate_target = None;
                 }
             } else if let Some(target) = ship.dock_target {
-                if let Some(planet) = indexes.bodies_by_id.get(&ObjectSpecifier::Planet { id: target }) {
+                if let Some(planet) = indexes
+                    .bodies_by_id
+                    .get(&ObjectSpecifier::Planet { id: target })
+                {
                     let ship_pos = Vec2f64 {
                         x: ship.x,
                         y: ship.y,
                     };
-                    let planet_anchor = indexes.bodies_by_id.get(&planet.get_movement().get_anchor_spec()).unwrap();
+                    let planet_anchor = indexes
+                        .bodies_by_id
+                        .get(&planet.get_movement().get_anchor_spec())
+                        .unwrap();
                     todo!("build trajectory to planet");
                     // ship.trajectory = trajectory::build_trajectory_to_planet(
                     //     ship_pos,
@@ -2097,9 +2160,9 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
         ObjectSpecifier::Asteroid { id } => {
             state.locations[loc_idx].asteroids.retain(|m| m.id != id)
         }
-        ObjectSpecifier::AsteroidBelt { id } => {
-            state.locations[loc_idx].asteroid_belts.retain(|m| m.id != id)
-        }
+        ObjectSpecifier::AsteroidBelt { id } => state.locations[loc_idx]
+            .asteroid_belts
+            .retain(|m| m.id != id),
     }
 }
 
@@ -2115,7 +2178,12 @@ pub fn make_room(
     let mut new_caches = GameStateCaches::new();
     let use_external_caches = external_caches.is_some();
     let mut caches = external_caches.unwrap_or(&mut new_caches);
-    let state = system_gen::seed_state(&mode, random_stuff::random_hex_seed_seeded(prng), opts, caches);
+    let state = system_gen::seed_state(
+        &mode,
+        random_stuff::random_hex_seed_seeded(prng),
+        opts,
+        caches,
+    );
     let state_id = state.id.clone();
     let mut room = Room {
         id: room_id,
@@ -2124,7 +2192,11 @@ pub fn make_room(
         last_players_mark: None,
         bots: vec![],
         bots_seed,
-        caches: if use_external_caches { GameStateCaches::new() } else { new_caches },
+        caches: if use_external_caches {
+            GameStateCaches::new()
+        } else {
+            new_caches
+        },
     };
     match mode {
         GameMode::Unknown => {}
@@ -2151,7 +2223,9 @@ pub fn update_room(
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
     let mut spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
     sampler.end(spatial_indexes_id);
-    let mut caches_clone = external_caches.as_ref().map_or(room.caches.clone(), |caches| (**caches).clone());
+    let mut caches_clone = external_caches
+        .as_ref()
+        .map_or(room.caches.clone(), |caches| (**caches).clone());
     let (new_state, mut sampler) = update_world(
         room.state.clone(),
         elapsed_micro,

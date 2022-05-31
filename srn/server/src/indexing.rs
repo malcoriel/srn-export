@@ -6,9 +6,12 @@ use uuid::Uuid;
 use uuid::*;
 use wasm_bindgen::prelude::*;
 
-use crate::{Vec2f64, world};
-use crate::planet_movement::IBodyV2;
-use crate::world::{Container, GameState, Location, NatSpawnMineral, PlanetV2, Player, Ship, ShipIdx, SpatialIndexes};
+use crate::planet_movement::{get_radial_bodies, IBodyV2};
+use crate::world::{
+    Container, GameState, Location, NatSpawnMineral, PlanetV2, Player, Ship, ShipIdx,
+    SpatialIndexes,
+};
+use crate::{world, Vec2f64};
 
 pub fn find_mineral(loc: &world::Location, id: Uuid) -> Option<&NatSpawnMineral> {
     loc.minerals.iter().find(|m| m.id == id)
@@ -394,9 +397,7 @@ pub trait Spec {
 
 impl Spec for PlanetV2 {
     fn spec(&self) -> ObjectSpecifier {
-        ObjectSpecifier::Planet {
-            id: self.id,
-        }
+        ObjectSpecifier::Planet { id: self.id }
     }
 }
 
@@ -409,8 +410,8 @@ impl ObjectSpecifier {
             ObjectSpecifier::Planet { id } => Some(*id),
             ObjectSpecifier::Ship { id } => Some(*id),
             ObjectSpecifier::Star { id } => Some(*id),
-            ObjectSpecifier::Asteroid { id } => { Some(*id) }
-            ObjectSpecifier::AsteroidBelt { id } => { Some(*id) }
+            ObjectSpecifier::Asteroid { id } => Some(*id),
+            ObjectSpecifier::AsteroidBelt { id } => Some(*id),
         }
     }
 }
@@ -450,18 +451,20 @@ pub struct GameStateIndexes<'a> {
     pub players_by_id: HashMap<Uuid, &'a Player>,
     pub ships_by_id: HashMap<Uuid, &'a Ship>,
     pub anchor_distances: HashMap<ObjectSpecifier, f64>,
-    pub bodies_by_id: HashMap<ObjectSpecifier, Box<&'a dyn IBodyV2>>
+    pub bodies_by_id: HashMap<ObjectSpecifier, Box<&'a dyn IBodyV2>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameStateCaches {
     pub rel_orbit_cache: HashMap<u64, Vec<Vec2f64>>,
+    pub rotation_cache: HashMap<u64, Vec<f64>>,
 }
 
 impl GameStateCaches {
     pub fn new() -> GameStateCaches {
         Self {
-            rel_orbit_cache: Default::default()
+            rel_orbit_cache: Default::default(),
+            rotation_cache: Default::default(),
         }
     }
 }
@@ -470,11 +473,19 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
     let planets_by_id = index_all_planets_by_id(&state.locations);
     let mut bodies_by_id: HashMap<ObjectSpecifier, Box<&dyn IBodyV2>> = planets_by_id
         .iter()
-        .map(|(k, v)| (ObjectSpecifier::Planet { id: *k}, Box::new((*v) as &dyn IBodyV2)))
+        .map(|(k, v)| {
+            (
+                ObjectSpecifier::Planet { id: *k },
+                Box::new((*v) as &dyn IBodyV2),
+            )
+        })
         .collect();
     for loc in state.locations.iter() {
         if let Some(star) = &loc.star {
-            bodies_by_id.insert(ObjectSpecifier::Star { id: star.id }, Box::new(star as &dyn IBodyV2));
+            bodies_by_id.insert(
+                ObjectSpecifier::Star { id: star.id },
+                Box::new(star as &dyn IBodyV2),
+            );
         }
     }
     let players_by_id = index_players_by_id(&state.players);
@@ -486,19 +497,24 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
         bodies_by_id,
         players_by_id,
         ships_by_id,
-        anchor_distances
+        anchor_distances,
     }
 }
 
-fn index_anchor_distances(locations: &Vec<Location>, bodies_by_id: &HashMap<ObjectSpecifier, Box<&dyn IBodyV2>>) -> HashMap<ObjectSpecifier, f64> {
+fn index_anchor_distances(
+    locations: &Vec<Location>,
+    bodies_by_id: &HashMap<ObjectSpecifier, Box<&dyn IBodyV2>>,
+) -> HashMap<ObjectSpecifier, f64> {
     let mut res = HashMap::new();
     for loc in locations {
-        for planet in loc.planets.iter() {
-            if let Some(anchor) = bodies_by_id.get(&planet.movement.get_anchor_spec()) {
+        for body in get_radial_bodies(&loc).iter() {
+            if let Some(anchor) = bodies_by_id.get(&body.get_movement().get_anchor_spec()) {
                 let anchor_pos = &anchor.get_spatial().position;
-                res.insert(ObjectSpecifier::Planet {id: planet.id}, planet.spatial.position.euclidean_distance(anchor_pos));
+                res.insert(
+                    body.spec(),
+                    body.get_spatial().position.euclidean_distance(anchor_pos),
+                );
             }
-
         }
     }
     res

@@ -1,7 +1,11 @@
-use crate::indexing::{GameStateIndexes, index_all_ships_by_id, index_ships_by_id, Spec, ObjectSpecifier, index_state};
-use crate::planet_movement::{IBodyV2};
+use crate::indexing::{
+    index_all_ships_by_id, index_ships_by_id, index_state, GameStateIndexes, ObjectSpecifier, Spec,
+};
+use crate::planet_movement::IBodyV2;
 use crate::vec2::{Precision, Vec2f64};
-use crate::world::{lerp, Location, Movement, PlanetV2, Ship, UpdateOptionsV2, GameState, AABB};
+use crate::world::{
+    lerp, GameState, Location, Movement, PlanetV2, RotationMovement, Ship, UpdateOptionsV2, AABB,
+};
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::mem;
@@ -26,7 +30,14 @@ pub fn interpolate_states(
         }
         let res = &mut result.locations[i];
         if let Some(target) = state_b.locations.get(i) {
-            interpolate_location(res, target, value, rel_orbit_cache, &options, &result_indexes);
+            interpolate_location(
+                res,
+                target,
+                value,
+                rel_orbit_cache,
+                &options,
+                &result_indexes,
+            );
         }
     }
     result
@@ -67,18 +78,32 @@ fn interpolate_location(
         let res_mov = &mut result.planets[i].movement;
         let tar_mov = &target.planets[i].movement;
         if !should_skip {
-            interpolate_planet_relative_movement(res_mov, tar_mov, value, rel_orbit_cache, result_indexes, &planet_spec);
+            interpolate_planet_relative_movement(
+                res_mov,
+                tar_mov,
+                value,
+                rel_orbit_cache,
+                result_indexes,
+                &planet_spec,
+            );
         } else {
             log!(format!("skipping {}", i));
         }
     }
 
     // then, sequentially (via tiers) restore absolute position
-    let star_clone = &result.star.clone().expect("cannot interpolate location without a star");
+    let star_clone = &result
+        .star
+        .clone()
+        .expect("cannot interpolate location without a star");
     let star_root: Box<&dyn IBodyV2> = Box::new(star_clone as &dyn IBodyV2);
     restore_absolute_positions(
         star_root,
-        result.planets.iter_mut().map(|p| Box::new(p as &mut dyn IBodyV2)).collect()
+        result
+            .planets
+            .iter_mut()
+            .map(|p| Box::new(p as &mut dyn IBodyV2))
+            .collect(),
     )
 }
 
@@ -96,7 +121,11 @@ pub fn restore_absolute_positions(root: Box<&dyn IBodyV2>, mut bodies: Vec<Box<&
                     } => relative_position,
                     _ => panic!("bad movement"),
                 }
-                    .add(&anchor_pos_by_id.get(&body.get_movement().get_anchor_id()).unwrap());
+                .add(
+                    &anchor_pos_by_id
+                        .get(&body.get_movement().get_anchor_id())
+                        .unwrap(),
+                );
                 anchor_pos_by_id.insert(body.get_id(), new_pos.clone());
                 body.get_spatial_mut().position.x = new_pos.x;
                 body.get_spatial_mut().position.y = new_pos.y;
@@ -125,15 +154,12 @@ fn interpolate_planet_relative_movement(
     planet_spec: &ObjectSpecifier,
 ) {
     let res_clone = result.clone();
-    let ( interpolation_hint_result, result_pos) = match result {
+    let (interpolation_hint_result, result_pos) = match result {
         Movement::RadialMonotonous {
             phase,
             relative_position,
             ..
-        } => (
-            phase.map(|v| v as usize),
-            relative_position,
-        ),
+        } => (phase.map(|v| v as usize), relative_position),
         _ => panic!("bad movement"),
     };
     let (interpolation_hint_target, target_pos) = match target {
@@ -145,8 +171,11 @@ fn interpolate_planet_relative_movement(
         _ => panic!("bad movement"),
     };
 
-    let radius_to_anchor = indexes.anchor_distances.get(&planet_spec).expect(format!("no anchor distance in cache for {:?}", planet_spec).as_str());
-    let phase_table = get_phase_table(rel_orbit_cache, &res_clone, *radius_to_anchor);
+    let radius_to_anchor = indexes
+        .anchor_distances
+        .get(&planet_spec)
+        .expect(format!("no anchor distance in cache for {:?}", planet_spec).as_str());
+    let phase_table = get_orbit_phase_table(rel_orbit_cache, &res_clone, *radius_to_anchor);
     let result_idx = interpolation_hint_result.unwrap_or_else(|| {
         calculate_phase(&phase_table, result_pos).expect("could not calculate hint")
     });
@@ -169,10 +198,24 @@ fn interpolate_planet_relative_movement(
     }
 }
 
-pub fn get_phase_table<'a, 'b>(rel_orbit_cache: &'a mut HashMap<u64, Vec<Vec2f64>>, movement_def: &'b Movement, orbit_radius: f64) -> &'a mut Vec<Vec2f64> {
+pub fn get_orbit_phase_table<'a, 'b>(
+    rel_orbit_cache: &'a mut HashMap<u64, Vec<Vec2f64>>,
+    movement_def: &'b Movement,
+    orbit_radius: f64,
+) -> &'a mut Vec<Vec2f64> {
     rel_orbit_cache
         .entry(coerce_phase_table_cache_key(orbit_radius))
-        .or_insert_with(|| gen_rel_position_phase_table(&movement_def, orbit_radius))
+        .or_insert_with(|| gen_rel_position_orbit_phase_table(&movement_def, orbit_radius))
+}
+
+pub fn get_rotation_phase_table<'a, 'b>(
+    rot_cache: &'a mut HashMap<u64, Vec<f64>>,
+    rot_movement_def: &'b RotationMovement,
+    radius: f64,
+) -> &'a mut Vec<f64> {
+    rot_cache
+        .entry(coerce_phase_table_cache_key(radius))
+        .or_insert_with(|| gen_rotation_phase_table(&rot_movement_def, radius))
 }
 
 pub fn coerce_phase_table_cache_key(radius_value: f64) -> u64 {
@@ -212,8 +255,8 @@ pub const REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER: f64 = 32000.0;
 // build a list of coordinates of the linear (segment) approximation of the circle, where every point
 // is a vertex of the resulting polygon, in an assumption that precision is enough (subdivided to enough amount of points)
 // so lerp(A,B) =~ the real circle point with some precision, but at the same time as low as possible
-fn gen_rel_position_phase_table(def: &Movement, radius_to_anchor: f64) -> Vec<Vec2f64> {
-    // log!(format!("calculate call {def:?}"));
+fn gen_rel_position_orbit_phase_table(def: &Movement, radius_to_anchor: f64) -> Vec<Vec2f64> {
+    // log!(format!("calculate call {def:?} {radius_to_anchor:?}"));
     match def {
         Movement::RadialMonotonous {
             full_period_ticks,
@@ -221,28 +264,8 @@ fn gen_rel_position_phase_table(def: &Movement, radius_to_anchor: f64) -> Vec<Ve
             ..
         } => {
             let mut res = vec![];
-            let ideal_amount = radius_to_anchor * IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER; // completely arbitrary for now, without targeting specific precision
-            let amount_from_period = *full_period_ticks; // every tick is a point. However, it's super-unlikely that I will ever have an update every tick, and even every cycle of 16ms is unnecessary
-            let realistic_amount =
-                amount_from_period / REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER; // precision with 1ms is probably fine-grained enough, equivalent to every 2 cycles of 16ms
 
-            let mut chosen_amount: usize = {
-                if ideal_amount < realistic_amount {
-                    // no need to be more precise than the heuristic
-                    ideal_amount as usize
-                } else {
-                    if realistic_amount < 0.5 * ideal_amount {
-                        // this is bad, and will lead to horrible visual artifacts likely, so will reuse the ideal * 0.5 instead
-                        (0.5 * ideal_amount) as usize
-                    } else {
-                        // if realistic is between 0.5 and 1.0 of ideal, this is probably fine
-                        realistic_amount as usize
-                    }
-                }
-            };
-            if chosen_amount % 2 > 0 {
-                chosen_amount += 1; // make even
-            }
+            let mut chosen_amount = choose_radial_amount(radius_to_anchor, *full_period_ticks);
             let angle_step_rad = PI * 2.0 / chosen_amount as f64;
             let sign = if *clockwise { -1.0 } else { 1.0 };
             for i in 0..chosen_amount {
@@ -250,6 +273,51 @@ fn gen_rel_position_phase_table(def: &Movement, radius_to_anchor: f64) -> Vec<Ve
                 let x = angle.cos() * radius_to_anchor;
                 let y = angle.sin() * radius_to_anchor * sign;
                 res.push(Vec2f64 { x, y });
+            }
+            res
+        }
+        _ => panic!("bad movement"),
+    }
+}
+
+fn choose_radial_amount(radius_to_anchor: f64, full_period_ticks: f64) -> usize {
+    let ideal_amount = radius_to_anchor * IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER; // completely arbitrary for now, without targeting specific precision
+    let amount_from_period = full_period_ticks; // every tick is a point. However, it's super-unlikely that I will ever have an update every tick, and even every cycle of 16ms is unnecessary
+    let realistic_amount = amount_from_period / REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER; // precision with 1ms is probably fine-grained enough, equivalent to every 2 cycles of 16ms
+
+    let mut chosen_amount: usize = {
+        if ideal_amount < realistic_amount {
+            // no need to be more precise than the heuristic
+            ideal_amount as usize
+        } else {
+            if realistic_amount < 0.5 * ideal_amount {
+                // this is bad, and will lead to horrible visual artifacts likely, so will reuse the ideal * 0.5 instead
+                (0.5 * ideal_amount) as usize
+            } else {
+                // if realistic is between 0.5 and 1.0 of ideal, this is probably fine
+                realistic_amount as usize
+            }
+        }
+    };
+    if chosen_amount % 2 > 0 {
+        chosen_amount += 1; // make even
+    }
+    chosen_amount
+}
+
+fn gen_rotation_phase_table(def: &RotationMovement, radius: f64) -> Vec<f64> {
+    // log!(format!("calculate call {def:?} {radius_to_anchor:?}"));
+    match def {
+        RotationMovement::Monotonous {
+            full_period_ticks, ..
+        } => {
+            let mut res: Vec<f64> = vec![];
+            let mut chosen_amount = choose_radial_amount(radius, full_period_ticks.abs());
+            let angle_step_rad = PI * 2.0 / chosen_amount as f64;
+            let sign = full_period_ticks.signum();
+            for i in 0..chosen_amount {
+                let angle = i as f64 * angle_step_rad * sign;
+                res.push(angle);
             }
             res
         }
