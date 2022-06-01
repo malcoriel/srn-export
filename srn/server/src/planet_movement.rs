@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::collections::{HashMap, HashSet};
 use std::f64::consts::PI;
 
@@ -34,6 +35,7 @@ pub trait IBodyV2: Clone + Anchored + Spec {
     fn get_movement_mut(&mut self) -> &mut Movement;
     fn set_spatial(&mut self, x: SpatialProps);
     fn get_anchor_tier(&self) -> u32;
+    fn as_any(&self) -> &dyn Any;
 }
 
 impl IBodyV2 for PlanetV2 {
@@ -75,6 +77,10 @@ impl IBodyV2 for PlanetV2 {
 
     fn get_anchor_tier(&self) -> u32 {
         self.anchor_tier
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -130,6 +136,10 @@ impl IBodyV2 for AsteroidBelt {
     fn get_anchor_tier(&self) -> u32 {
         todo!()
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl Anchored for Star {
@@ -183,6 +193,10 @@ impl IBodyV2 for Star {
 
     fn get_anchor_tier(&self) -> u32 {
         0
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -246,6 +260,10 @@ impl IBodyV2 for Asteroid {
     fn get_anchor_tier(&self) -> u32 {
         1
     }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl From<Box<dyn IBodyV2>> for Asteroid {
@@ -280,37 +298,53 @@ fn update_radial_movement(
     for mut body in bodies {
         let mark = sampler.start(SamplerMarks::UpdateRadialMovement as u32);
         if limit_area.contains_vec(&body.get_spatial().position) {
-            let phase_table = get_orbit_phase_table(
-                &mut caches.rel_orbit_cache,
-                &body.get_movement(),
-                body.get_anchor_dist(indexes),
-            );
-            match &mut body.get_movement_mut() {
-                Movement::RadialMonotonous {
-                    relative_position,
-                    phase,
-                    full_period_ticks,
-                    start_phase,
-                    ..
-                } => {
-                    if (*full_period_ticks).abs() < 1e-3 || phase_table.len() == 0 {
-                        panic!(
-                            "bad movement for {:?}: {:?}",
-                            body.spec(),
-                            body.get_movement()
-                        );
-                    }
-                    let phase_abs = ((current_ticks as i64 % (*full_period_ticks) as i64) as f64
-                        / (*full_period_ticks)
-                        * phase_table.len() as f64) as u32;
-                    let phase_rel = (phase_abs + (*start_phase)) % phase_table.len() as u32;
-                    *phase = Some(phase_rel);
-                    *relative_position = phase_table[phase_rel as usize];
-                }
-                _ => panic!("unsupported body movement"),
-            }
+            project_body_relative_position(current_ticks, indexes, caches, body);
         }
         sampler.end(mark);
+    }
+}
+
+pub fn project_body_relative_position(
+    current_ticks: i64,
+    indexes: &GameStateIndexes,
+    caches: &mut GameStateCaches,
+    mut body: Box<&mut dyn IBodyV2>,
+) {
+    let movement_read = body.get_movement();
+    let anchor_dist = body.get_anchor_dist(indexes);
+    let movement_mut = body.get_movement_mut();
+    let specifier = body.spec();
+
+    project_movement_relative_position(current_ticks, caches, anchor_dist, movement_mut, specifier)
+}
+
+pub fn project_movement_relative_position(
+    current_ticks: i64,
+    caches: &mut GameStateCaches,
+    anchor_dist: f64,
+    movement_mut: &mut Movement,
+    specifier: ObjectSpecifier,
+) {
+    let phase_table = get_orbit_phase_table(&mut caches.rel_orbit_cache, movement_mut, anchor_dist);
+    match movement_mut {
+        Movement::RadialMonotonous {
+            relative_position,
+            phase,
+            full_period_ticks,
+            start_phase,
+            ..
+        } => {
+            if (*full_period_ticks).abs() < 1e-3 || phase_table.len() == 0 {
+                panic!("bad movement for {:?}: {:?}", specifier, movement_mut);
+            }
+            let phase_abs = ((current_ticks as i64 % (*full_period_ticks) as i64) as f64
+                / (*full_period_ticks)
+                * phase_table.len() as f64) as u32;
+            let phase_rel = (phase_abs + (*start_phase)) % phase_table.len() as u32;
+            *phase = Some(phase_rel);
+            *relative_position = phase_table[phase_rel as usize];
+        }
+        _ => panic!("unsupported body movement"),
     }
 }
 

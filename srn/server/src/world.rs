@@ -1675,18 +1675,16 @@ pub enum Movement {
     },
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-#[serde(tag = "tag")]
-pub enum RotationMovement {
-    None,
-    Monotonous {
-        full_period_ticks: f64, // positive => counter-clockwise
-        phase: Option<u32>,
-        start_phase: u32,
-    },
-}
-
 impl Movement {
+    pub fn get_anchor_relative_position(&self) -> &Vec2f64 {
+        match self {
+            Movement::RadialMonotonous {
+                relative_position, ..
+            } => relative_position,
+            _ => panic!("bad movement, it doesn't have anchor relative position"),
+        }
+    }
+
     pub fn get_current_linear_move_speed_per_tick(&self) -> f64 {
         match self {
             Movement::None => 0.0,
@@ -1742,6 +1740,17 @@ impl Movement {
             _ => panic!("Cannot set phase to movement without phase"),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[serde(tag = "tag")]
+pub enum RotationMovement {
+    None,
+    Monotonous {
+        full_period_ticks: f64, // positive => counter-clockwise
+        phase: Option<u32>,
+        start_phase: u32,
+    },
 }
 
 pub struct ShipTemplate {
@@ -1924,7 +1933,7 @@ pub fn update_ships_navigation(
                         &ship.movement_definition,
                     );
                     if dist > max_shift {
-                        let new_pos = move_ship(&target, &ship_pos, max_shift);
+                        let new_pos = move_ship_towards(&target, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
                     } else {
                         ship.set_from(&target);
@@ -1946,20 +1955,19 @@ pub fn update_ships_navigation(
                         .bodies_by_id
                         .get(&planet.get_movement().get_anchor_spec())
                         .unwrap();
-                    todo!("build trajectory to planet");
-                    // ship.trajectory = trajectory::build_trajectory_to_planet(
-                    //     ship_pos,
-                    //     planet.as_ref(),
-                    //     planet_anchor,
-                    //     &ship.movement_definition,
-                    // );
+                    ship.trajectory = trajectory::build_trajectory_to_planet(
+                        ship_pos,
+                        planet,
+                        planet_anchor,
+                        &ship.movement_definition,
+                    );
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
                         ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
                         if dir.x < 0.0 {
                             ship.rotation = -ship.rotation;
                         }
-                        let new_pos = move_ship(first, &ship_pos, max_shift);
+                        let new_pos = move_ship_towards(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
                     }
                 } else {
@@ -2036,7 +2044,7 @@ pub fn undock_ship(
     }
 }
 
-pub fn move_ship(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
+pub fn move_ship_towards(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
     let dir = target.subtract(&ship_pos).normalize();
 
     let shift = dir.scalar_mul(max_shift);
