@@ -1,23 +1,27 @@
 use crate::abilities::Ability;
+use crate::dialogue::{execute_dialog_option, DialogueTable, DialogueUpdate};
+use crate::indexing::ObjectSpecifier;
 use crate::indexing::{
     find_my_ship_mut, find_player_idx_by_ship_id, find_ship_index, find_ship_mut, GameStateIndexes,
 };
-use crate::sandbox::{SandboxCommand};
-use crate::indexing::{ObjectSpecifier};
-use crate::long_actions::{LongActionStart, try_start_long_action, try_start_long_action_ship};
-use crate::world::{fire_saved_event, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipWithTime, undock_ship};
-use crate::{fire_event, indexing, inventory, market, notifications, tractoring, trajectory, Vec2f64};
-use rand::prelude::*;
-use uuid::Uuid;
-use serde_derive::{Deserialize, Serialize};
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
-use wasm_bindgen::prelude::*;
-use crate::dialogue::{execute_dialog_option, DialogueTable, DialogueUpdate};
-use rand_pcg::Pcg64Mcg;
 use crate::inventory::InventoryAction;
+use crate::long_actions::{try_start_long_action, try_start_long_action_ship, LongActionStart};
 use crate::market::TradeAction;
 use crate::notifications::NotificationActionR;
+use crate::sandbox::SandboxCommand;
+use crate::world::{
+    fire_saved_event, undock_ship, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipWithTime,
+};
 use crate::world_events::GameEvent;
+use crate::{
+    fire_event, indexing, inventory, market, notifications, tractoring, trajectory, Vec2f64,
+};
+use rand::prelude::*;
+use rand_pcg::Pcg64Mcg;
+use serde_derive::{Deserialize, Serialize};
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use uuid::Uuid;
+use wasm_bindgen::prelude::*;
 
 const MAX_ALLOWED_DISTANCE_TICKS: i64 = 10 * 1000 * 1000;
 
@@ -114,6 +118,7 @@ pub fn world_update_handle_action(
                     ship_pos,
                     &target,
                     &ship.movement_definition,
+                    state.update_every_ticks,
                 );
                 ship.movement_markers.gas = None;
                 ship.movement_markers.turn = None;
@@ -159,6 +164,7 @@ pub fn world_update_handle_action(
                             ship_pos,
                             &planet_pos,
                             &ship.movement_definition,
+                            state.update_every_ticks,
                         );
                         ship.movement_markers.gas = None;
                         ship.movement_markers.turn = None;
@@ -177,27 +183,34 @@ pub fn world_update_handle_action(
                 );
             }
         }
-        Action::SelectDialogueOption { player_id, option_id, dialogue_id } => {
+        Action::SelectDialogueOption {
+            player_id,
+            option_id,
+            dialogue_id,
+        } => {
             execute_dialog_option(
                 player_id,
                 state,
                 DialogueUpdate {
                     dialogue_id,
                     option_id,
-                }, d_table,
+                },
+                d_table,
                 prng,
             );
         }
-        Action::RequestDialogue { player_id, planet_id } => {
-            fire_saved_event(state, GameEvent::DialogueTriggerRequest {
+        Action::RequestDialogue {
+            player_id,
+            planet_id,
+        } => fire_saved_event(
+            state,
+            GameEvent::DialogueTriggerRequest {
                 dialogue_name: "basic_planet".to_string(),
                 target: Some(ObjectSpecifier::Planet { id: planet_id }),
                 player_id,
-            })
-        }
-        Action::CancelTrade {
-            player_id
-        } => {
+            },
+        ),
+        Action::CancelTrade { player_id } => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.trading_with = None;
             }
@@ -207,16 +220,16 @@ pub fn world_update_handle_action(
                 inventory::apply_action(&mut ship.inventory, action);
             }
         }
-        Action::SandboxCommand {player_id, command} => {
-            fire_saved_event(state,GameEvent::SandboxCommandRequest {
-                player_id,
-                command
-            });
+        Action::SandboxCommand { player_id, command } => {
+            fire_saved_event(
+                state,
+                GameEvent::SandboxCommandRequest { player_id, command },
+            );
         }
-        Action::Notification {player_id, action} => {
+        Action::Notification { player_id, action } => {
             notifications::apply_action(state, player_id, action);
         }
-        Action::Trade {player_id, action} => {
+        Action::Trade { player_id, action } => {
             market::attempt_trade(state, player_id, action, prng);
         }
         _ => {

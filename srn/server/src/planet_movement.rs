@@ -288,14 +288,14 @@ fn planets_to_bodies(planets: &Vec<PlanetV2>) -> Vec<Box<dyn IBodyV2>> {
 }
 
 fn update_radial_movement(
-    current_ticks: i64,
+    current_ticks: u64,
     sampler: &mut Sampler,
     limit_area: AABB,
     indexes: &GameStateIndexes,
     caches: &mut GameStateCaches,
     bodies: Vec<Box<&mut dyn IBodyV2>>,
 ) {
-    for mut body in bodies {
+    for body in bodies {
         let mark = sampler.start(SamplerMarks::UpdateRadialMovement as u32);
         if limit_area.contains_vec(&body.get_spatial().position) {
             project_body_relative_position(current_ticks, indexes, caches, body);
@@ -305,21 +305,20 @@ fn update_radial_movement(
 }
 
 pub fn project_body_relative_position(
-    current_ticks: i64,
+    current_ticks: u64,
     indexes: &GameStateIndexes,
     caches: &mut GameStateCaches,
     mut body: Box<&mut dyn IBodyV2>,
 ) {
-    let movement_read = body.get_movement();
     let anchor_dist = body.get_anchor_dist(indexes);
-    let movement_mut = body.get_movement_mut();
     let specifier = body.spec();
+    let movement_mut = body.get_movement_mut();
 
     project_movement_relative_position(current_ticks, caches, anchor_dist, movement_mut, specifier)
 }
 
 pub fn project_movement_relative_position(
-    current_ticks: i64,
+    current_ticks: u64,
     caches: &mut GameStateCaches,
     anchor_dist: f64,
     movement_mut: &mut Movement,
@@ -350,7 +349,7 @@ pub fn project_movement_relative_position(
 
 pub fn update_radial_moving_entities(
     location: &Location,
-    current_ticks: i64,
+    current_ticks: u64,
     mut sampler: Sampler,
     limit_area: AABB,
     indexes: &GameStateIndexes,
@@ -382,7 +381,7 @@ pub fn update_radial_moving_entities(
 }
 
 fn update_self_rotating_movement(
-    current_ticks: i64,
+    current_ticks: u64,
     limit_area: AABB,
     caches: &mut GameStateCaches,
     bodies: Vec<Box<&mut dyn IBodyV2>>,

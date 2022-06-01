@@ -265,7 +265,7 @@ fn gen_rel_position_orbit_phase_table(def: &Movement, radius_to_anchor: f64) -> 
         } => {
             let mut res = vec![];
 
-            let mut chosen_amount = choose_radial_amount(radius_to_anchor, *full_period_ticks);
+            let chosen_amount = choose_radial_amount(radius_to_anchor, *full_period_ticks);
             let angle_step_rad = PI * 2.0 / chosen_amount as f64;
             let sign = if *clockwise { -1.0 } else { 1.0 };
             for i in 0..chosen_amount {
@@ -312,7 +312,7 @@ fn gen_rotation_phase_table(def: &RotationMovement, radius: f64) -> Vec<f64> {
             full_period_ticks, ..
         } => {
             let mut res: Vec<f64> = vec![];
-            let mut chosen_amount = choose_radial_amount(radius, full_period_ticks.abs());
+            let chosen_amount = choose_radial_amount(radius, full_period_ticks.abs());
             let angle_step_rad = PI * 2.0 / chosen_amount as f64;
             let sign = full_period_ticks.signum();
             for i in 0..chosen_amount {

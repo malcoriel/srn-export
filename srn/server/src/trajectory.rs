@@ -47,7 +47,7 @@ pub fn build_trajectory_to_planet(
     anchor: &Box<&dyn IBodyV2>,
     ship_movement: &Movement,
     update_every_ticks: u64,
-    initial_ticks: i64,
+    initial_ticks: u64,
     indexes: &GameStateIndexes,
     caches: &mut GameStateCaches,
 ) -> Vec<Vec2f64> {
@@ -60,7 +60,7 @@ pub fn build_trajectory_to_planet(
     let planet_radius = planet.get_spatial().radius;
     let anchor_dist = planet.get_anchor_dist(indexes);
     loop {
-        current_ticks += step_ticks as i64;
+        current_ticks += step_ticks as u64;
         let mut mutable_planet_mov = planet.get_movement().clone();
         project_movement_relative_position(
             current_ticks,

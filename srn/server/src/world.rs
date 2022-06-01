@@ -167,14 +167,14 @@ pub struct PlanetV2 {
 }
 
 impl From<Box<dyn IBodyV2>> for PlanetV2 {
-    fn from(_: Box<dyn IBodyV2>) -> Self {
-        todo!()
+    fn from(b: Box<dyn IBodyV2>) -> Self {
+        b.as_any().downcast_ref::<PlanetV2>().unwrap().clone()
     }
 }
 
 impl From<&Box<dyn IBodyV2>> for PlanetV2 {
-    fn from(_: &Box<dyn IBodyV2>) -> Self {
-        todo!()
+    fn from(b: &Box<dyn IBodyV2>) -> Self {
+        b.as_any().downcast_ref::<PlanetV2>().unwrap().clone()
     }
 }
 
@@ -936,7 +936,7 @@ pub fn update_location(
     caches: &mut GameStateCaches,
     prng: &mut Pcg64Mcg,
 ) -> Sampler {
-    let next_ticks = state.ticks as i64 + elapsed;
+    let next_ticks = state.ticks as u64 + elapsed as u64;
     let spatial_index_id = sampler.start(SamplerMarks::GenSpatialIndexOnDemand as u32);
     let spatial_index = spatial_indexes
         .values
@@ -968,6 +968,9 @@ pub fn update_location(
         client,
         update_options,
         indexes,
+        state.update_every_ticks,
+        caches,
+        state.ticks,
     );
     sampler.end(update_ships_navigation_id);
     if !client {
@@ -1865,6 +1868,9 @@ pub fn update_ships_navigation(
     _client: bool,
     update_options: &UpdateOptions,
     indexes: &GameStateIndexes,
+    update_every_ticks: u64,
+    caches: &mut GameStateCaches,
+    current_ticks: u64,
 ) -> Vec<Ship> {
     let mut res = vec![];
     let docking_ship_ids: HashSet<Uuid> = HashSet::from_iter(ships.iter().filter_map(|s| {
@@ -1931,6 +1937,7 @@ pub fn update_ships_navigation(
                         ship_pos,
                         &target,
                         &ship.movement_definition,
+                        update_every_ticks,
                     );
                     if dist > max_shift {
                         let new_pos = move_ship_towards(&target, &ship_pos, max_shift);
@@ -1960,6 +1967,10 @@ pub fn update_ships_navigation(
                         planet,
                         planet_anchor,
                         &ship.movement_definition,
+                        update_every_ticks,
+                        current_ticks,
+                        indexes,
+                        caches,
                     );
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
@@ -2185,7 +2196,7 @@ pub fn make_room(
     let room_name = format!("{} - {}", mode, room_id);
     let mut new_caches = GameStateCaches::new();
     let use_external_caches = external_caches.is_some();
-    let mut caches = external_caches.unwrap_or(&mut new_caches);
+    let caches = external_caches.unwrap_or(&mut new_caches);
     let state = system_gen::seed_state(
         &mode,
         random_stuff::random_hex_seed_seeded(prng),
