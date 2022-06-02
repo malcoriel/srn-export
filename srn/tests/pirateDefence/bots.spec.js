@@ -45,6 +45,6 @@ describe('pirate defence bots behavior', () => {
     const distance = Vector.fromIVector(newShipPos).euDistTo(
       Vector.fromIVector(newPlanetPos)
     );
-    expect(distance).toBeLessThan(planet.radius * 2);
+    expect(distance).toBeLessThan(planet.spatial.radius * 2);
   });
 });

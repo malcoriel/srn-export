@@ -84,6 +84,12 @@ export const findObjectPosition = (obj: any): IVector | null => {
       y: obj.position.y,
     };
   }
+  if (obj.spatial && isIVector(obj.spatial.position)) {
+    return {
+      x: obj.spatial.position.x,
+      y: obj.spatial.position.y,
+    };
+  }
   return null;
 };
 export const buildClientStateIndexes = (state: GameState) => {
