@@ -74,7 +74,9 @@ fn interpolate_location(
     // interpolate
     for i in 0..result.planets.len() {
         let planet_spec = result.planets[i].spec();
-        let should_skip = should_skip_pos(&options, &result.planets[i].spatial.position);
+        let planet_pos = result.planets[i].spatial.position;
+        let planet_pos_target = target.planets[i].spatial.position;
+        let should_skip = should_skip_pos(&options, &planet_pos);
         let res_mov = &mut result.planets[i].movement;
         let tar_mov = &target.planets[i].movement;
         if !should_skip {
@@ -85,6 +87,8 @@ fn interpolate_location(
                 rel_orbit_cache,
                 result_indexes,
                 &planet_spec,
+                &planet_pos,
+                &planet_pos_target,
             );
         } else {
             log!(format!("skipping {}", i));
@@ -121,6 +125,7 @@ pub fn restore_absolute_positions(root: Box<&dyn IBodyV2>, mut bodies: Vec<Box<&
                     } => relative_position,
                     _ => panic!("bad movement"),
                 }
+                .expect("cannot restore absolute position on empty relative position, bailing out")
                 .add(
                     &anchor_pos_by_id
                         .get(&body.get_movement().get_anchor_id())
@@ -152,6 +157,8 @@ fn interpolate_planet_relative_movement(
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
     indexes: &GameStateIndexes,
     planet_spec: &ObjectSpecifier,
+    planet_pos_result: &Vec2f64,
+    planet_pos_target: &Vec2f64,
 ) {
     let res_clone = result.clone();
     let (interpolation_hint_result, result_pos) = match result {
@@ -177,10 +184,14 @@ fn interpolate_planet_relative_movement(
         .expect(format!("no anchor distance in cache for {:?}", planet_spec).as_str());
     let phase_table = get_orbit_phase_table(rel_orbit_cache, &res_clone, *radius_to_anchor);
     let result_idx = interpolation_hint_result.unwrap_or_else(|| {
-        calculate_phase(&phase_table, result_pos).expect("could not calculate hint")
+        let result_pos = result_pos
+            .unwrap_or_else(|| restore_relative_position(&res_clone, planet_pos_result, indexes));
+        calculate_phase(&phase_table, &result_pos).expect("could not calculate hint")
     });
     let target_idx = interpolation_hint_target.unwrap_or_else(|| {
-        calculate_phase(&phase_table, target_pos).expect("could not calculate hint")
+        let target_pos = target_pos
+            .unwrap_or_else(|| restore_relative_position(&res_clone, planet_pos_target, indexes));
+        calculate_phase(&phase_table, &target_pos).expect("could not calculate hint")
     });
     let lerped_idx = lerp_usize_cycle(result_idx, target_idx, value, phase_table.len());
     // log!(format!(
@@ -192,10 +203,23 @@ fn interpolate_planet_relative_movement(
         Movement::RadialMonotonous {
             relative_position, ..
         } => {
-            *relative_position = phase_table[lerped_idx];
+            *relative_position = Some(phase_table[lerped_idx]);
         }
         _ => panic!("bad movement"),
     }
+}
+
+fn restore_relative_position(
+    movement: &Movement,
+    absolute_position: &Vec2f64,
+    indexes: &GameStateIndexes,
+) -> Vec2f64 {
+    let anchor_spatial = indexes
+        .bodies_by_id
+        .get(&movement.get_anchor_spec())
+        .expect("cannot restore relative position without an anchor")
+        .get_spatial();
+    return absolute_position.subtract(&anchor_spatial.position);
 }
 
 pub fn get_orbit_phase_table<'a, 'b>(

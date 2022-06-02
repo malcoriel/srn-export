@@ -341,7 +341,7 @@ pub fn project_movement_relative_position(
                 * phase_table.len() as f64) as u32;
             let phase_rel = (phase_abs + (*start_phase)) % phase_table.len() as u32;
             *phase = Some(phase_rel);
-            *relative_position = phase_table[phase_rel as usize];
+            *relative_position = Some(phase_table[phase_rel as usize]);
         }
         _ => panic!("unsupported body movement"),
     }

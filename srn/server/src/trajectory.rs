@@ -72,7 +72,7 @@ pub fn build_trajectory_to_planet(
         let new_absolute_position = anchor
             .get_spatial()
             .position
-            .add(mutable_planet_mov.get_anchor_relative_position());
+            .add(&mutable_planet_mov.get_anchor_relative_position().expect("cannot calculate trajectory to a planet without relative position, make sure it's restored first"));
         let distance = new_absolute_position.euclidean_distance(&current_from);
         let should_break = counter >= TRAJECTORY_MAX_ITER || distance <= planet_radius;
         if should_break {

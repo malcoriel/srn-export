@@ -1669,7 +1669,7 @@ pub enum Movement {
         full_period_ticks: f64,
         clockwise: bool,
         anchor: ObjectSpecifier,
-        relative_position: Vec2f64,
+        relative_position: Option<Vec2f64>,
         phase: Option<u32>,
         start_phase: u32,
     },
@@ -1679,7 +1679,7 @@ pub enum Movement {
 }
 
 impl Movement {
-    pub fn get_anchor_relative_position(&self) -> &Vec2f64 {
+    pub fn get_anchor_relative_position(&self) -> &Option<Vec2f64> {
         match self {
             Movement::RadialMonotonous {
                 relative_position, ..
