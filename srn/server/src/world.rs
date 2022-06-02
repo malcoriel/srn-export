@@ -843,9 +843,9 @@ fn update_world_iter(
         let game_over_end = state.game_over.is_some();
         if time_end || game_over_end {
             if time_end {
-                log!("Game ended due to time limit");
+                // log!("Game ended due to time limit");
             } else if game_over_end {
-                log!("Game ended due to game over trigger");
+                // log!("Game ended due to game over trigger");
             }
             state.paused = true;
             state.milliseconds_remaining = 10 * 1000;

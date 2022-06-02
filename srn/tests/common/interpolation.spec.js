@@ -146,11 +146,11 @@ describe('state interpolation', () => {
     getLoc0(roomA.state).planets = [planet, moon];
     const roomB = _.cloneDeep(roomA);
     const planetB = getLoc0(roomB.state).planets[0];
-    planetB.x = 0;
-    planetB.y = 100;
+    planetB.spatial.position.x = 0;
+    planetB.spatial.position.y = 100;
     const moonB = getLoc0(roomB.state).planets[1];
-    moonB.x = -20;
-    moonB.y = 100;
+    moonB.spatial.position.x = -20;
+    moonB.spatial.position.y = 100;
 
     const stateC = wasm.interpolateStates(
       roomA.state,
