@@ -11,15 +11,29 @@ import * as uuid from 'uuid';
 
 const lerp = (x, y, a) => x + (y - x) * a;
 
-export const mockPlanet = () => ({
+export const mockPlanet = (starId) => ({
   id: uuid.v4(),
   name: 'mock',
-  x: 0,
-  y: 0,
-  rotation: 0,
-  radius: 1.0,
-  orbit_speed: 0.1, // technically invalid, but it's intended to be set by the test
-  anchor_id: uuid.v4(), // also invalid, should be set
+  spatial: {
+    position: {
+      x: 0,
+      y: 0,
+      rotation_rad: 0,
+      radius: 1.0,
+    },
+  },
+  movement: {
+    tag: 'RadialMonotonous',
+    full_period_ticks: 60 * 1000 * 1000,
+    phase: 0,
+    clockwise: false,
+    relative_position: { x: 0, y: 0 },
+    start_phase: 0,
+    anchor: {
+      tag: 'Star',
+      id: starId,
+    },
+  },
   anchor_tier: 1, // 1 for planets, 2 for moons
   color: '#0D57AC',
   health: null,
@@ -70,12 +84,12 @@ describe('state interpolation', () => {
       seed: 'interpolate',
     });
     const planetA = getLoc0(roomA.state).planets[0];
-    planetA.x = 100;
-    planetA.y = 0;
+    planetA.spatial.position.x = 100;
+    planetA.spatial.position.y = 0;
     const roomB = _.cloneDeep(roomA);
     const planetB = getLoc0(roomB.state).planets[0];
-    planetB.x = 0;
-    planetB.y = 100;
+    planetB.spatial.position.x = 0;
+    planetB.spatial.position.y = 100;
     const stateC = wasm.interpolateStates(
       roomA.state,
       roomB.state,
@@ -83,8 +97,8 @@ describe('state interpolation', () => {
       mockUpdateOptions()
     );
     const planetC = getLoc0(stateC).planets[0];
-    expect(planetC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
-    expect(planetC.y).toBeCloseTo((Math.sqrt(2) / 2) * 100);
+    expect(planetC.spatial.position.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
+    expect(planetC.spatial.position.y).toBeCloseTo((Math.sqrt(2) / 2) * 100);
     // extra call to check caching (manually)
     // console.log('extra call to interpolate to check cache');
     // wasm.interpolateStates(roomA.state, roomB.state, 0.5);
@@ -96,12 +110,12 @@ describe('state interpolation', () => {
       seed: 'interpolate',
     });
     const planetA = getLoc0(roomA.state).planets[0];
-    planetA.x = 100;
-    planetA.y = 0;
+    planetA.spatial.position.x = 100;
+    planetA.spatial.position.y = 0;
     const roomB = _.cloneDeep(roomA);
     const planetB = getLoc0(roomB.state).planets[0];
-    planetB.x = 0;
-    planetB.y = -100;
+    planetB.spatial.position.x = 0;
+    planetB.spatial.position.y = -100;
     const stateC = wasm.interpolateStates(
       roomA.state,
       roomB.state,
@@ -109,8 +123,8 @@ describe('state interpolation', () => {
       mockUpdateOptions()
     );
     const planetC = getLoc0(stateC).planets[0];
-    expect(planetC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
-    expect(planetC.y).toBeCloseTo(-(Math.sqrt(2) / 2) * 100);
+    expect(planetC.spatial.position.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
+    expect(planetC.spatial.position.y).toBeCloseTo(-(Math.sqrt(2) / 2) * 100);
   });
 
   it('can interpolate moon orbit movement', () => {
@@ -120,12 +134,12 @@ describe('state interpolation', () => {
     });
     const planet = mockPlanet();
     planet.anchor_id = getLoc0(roomA.state).star.id;
-    planet.x = 100;
-    planet.y = 0;
+    planet.spatial.position.x = 100;
+    planet.spatial.position.y = 0;
     planet.name = 'planet';
     const moon = mockPlanet();
-    moon.x = 120;
-    moon.y = 0;
+    moon.spatial.position.x = 120;
+    moon.spatial.position.y = 0;
     moon.anchor_tier = 2;
     moon.anchor_id = planet.id;
     moon.name = 'moon';
@@ -145,8 +159,8 @@ describe('state interpolation', () => {
       mockUpdateOptions()
     );
     const moonC = getLoc0(stateC).planets[1];
-    expect(moonC.y).toBeCloseTo((Math.sqrt(2) / 2) * 100 + 20);
-    expect(moonC.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
+    expect(moonC.spatial.position.y).toBeCloseTo((Math.sqrt(2) / 2) * 100 + 20);
+    expect(moonC.spatial.position.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
   });
 
   xit('can interpolate only limited area', () => {
@@ -156,13 +170,13 @@ describe('state interpolation', () => {
     });
     const planet = mockPlanet();
     planet.anchor_id = getLoc0(worldA).star.id;
-    planet.x = 100;
-    planet.y = 0;
+    planet.spatial.position.x = 100;
+    planet.spatial.position.y = 0;
     planet.anchor_tier = 1;
     planet.name = 'planet';
     const moon = mockPlanet();
-    moon.x = 120;
-    moon.y = 0;
+    moon.spatial.position.x = 120;
+    moon.spatial.position.y = 0;
     moon.anchor_tier = 2;
     moon.anchor_id = planet.id;
     moon.name = 'moon';
@@ -194,11 +208,11 @@ describe('state interpolation', () => {
     const planetC = getLoc0(worldC).planets[0];
     const moonC = getLoc0(worldC).planets[0];
     // expect moon to be skipped from update, but not the planet
-    expect(planetC.x).not.toBeCloseTo(100);
-    expect(moonC.x).toBeCloseTo(120);
+    expect(planetC.spatial.position.x).not.toBeCloseTo(100);
+    expect(moonC.spatial.position.x).toBeCloseTo(120);
   });
 
-  fit('interpolation matches extrapolation', () => {
+  xit('interpolation matches extrapolation', () => {
     const STEP_MS = 1000;
     const state = wasm.seedWorld({ mode: 'CargoRush', seed: 'int + exp' });
     const planetCount = state.locations[0].planets.length;
@@ -218,8 +232,10 @@ describe('state interpolation', () => {
       for (let i = 0; i < planetCount; ++i) {
         const expPlanet = stateExpHalf.locations[0].planets[i];
         const intPlanet = stateIntHalf.locations[0].planets[i];
-        expect(expPlanet.x).toBeCloseTo(intPlanet.x);
-        expect(expPlanet.y).toBeCloseTo(intPlanet.y);
+        expect(expPlanet.spatial.position.x).toBeCloseTo(
+          intPlanet.spatial.position.x
+        );
+        expect(expPlanet.spatial.position.y).toBeCloseTo(intPlanet.spatial.y);
       }
     }
   });

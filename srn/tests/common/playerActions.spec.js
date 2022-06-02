@@ -77,7 +77,9 @@ export const mockInventoryActionMove = (playerId, itemId, index) => ({
 export const mockSandboxActionAddContainer = (playerId) => ({
   tag: 'SandboxCommand',
   player_id: playerId,
-  command: 'AddContainer',
+  command: {
+    tag: 'AddContainer'
+  },
 });
 
 export const mockActionBuy = (playerId, planetId, type, amount) => ({
@@ -131,8 +133,8 @@ const createStateWithAShip = (mode = 'CargoRush') => {
 const dockToPlanet = (state, ship) => {
   let currState = state;
   const planet = getLoc0(currState).planets[0];
-  ship.x = planet.x;
-  ship.y = planet.y;
+  ship.x = planet.spatial.position.x;
+  ship.y = planet.spatial.position.y;
   currState.player_actions.push(
     mockPlayerActionDockNavigate(ship.id, planet.id)
   );
@@ -256,8 +258,8 @@ describe('player actions logic', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
       const planet = getLoc0(state).planets[0];
-      ship.x = planet.x + planet.radius + 20.0;
-      ship.y = planet.y + planet.radius + 20.0;
+      ship.x = planet.spatial.position.x + planet.spatial.radius + 20.0;
+      ship.y = planet.spatial.position.y + planet.spatial.radius + 20.0;
       state.player_actions.push(
         mockPlayerActionDockNavigate(ship.id, planet.id)
       );

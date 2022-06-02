@@ -366,17 +366,15 @@ pub fn update_radial_moving_entities(
         bodies,
     );
     let mark = sampler.start(SamplerMarks::RestoreAbsolutePosition as u32);
-    let star_clone = location
-        .star
-        .clone()
-        .expect("cannot update planets radial movement in a location without a star");
-    let star_root: Box<&dyn IBodyV2> = Box::new(&star_clone as &dyn IBodyV2);
-    restore_absolute_positions(star_root, get_radial_bodies_mut(&mut res));
-    sampler.end(mark);
-    let mark = sampler.start(SamplerMarks::UpdateSelfRotatingMovement as u32);
-    let bodies = get_rotating_bodies_mut(&mut res);
-    update_self_rotating_movement(current_ticks, limit_area, caches, bodies);
-    sampler.end(mark);
+    if let Some(star_clone) = location.star.clone() {
+        let star_root: Box<&dyn IBodyV2> = Box::new(&star_clone as &dyn IBodyV2);
+        restore_absolute_positions(star_root, get_radial_bodies_mut(&mut res));
+        sampler.end(mark);
+        let mark = sampler.start(SamplerMarks::UpdateSelfRotatingMovement as u32);
+        let bodies = get_rotating_bodies_mut(&mut res);
+        update_self_rotating_movement(current_ticks, limit_area, caches, bodies);
+        sampler.end(mark);
+    }
     (res, sampler)
 }
 

@@ -47,8 +47,8 @@ describe('autofocus behavior', () => {
     const planet = getLoc0(room.state).planets[0];
     // this relies on the indexing to be keeping the reference to the original ship (and not copies)
     // so modifying indexed results actually modifies the ship
-    botShipBeforeUpdate.x = planet.x; // teleport ship to planet
-    botShipBeforeUpdate.y = planet.y;
+    botShipBeforeUpdate.x = planet.spatial.position.x; // teleport ship to planet
+    botShipBeforeUpdate.y = planet.spatial.position.y;
     room = updateRoom(room, 100);
     const botShipAfterUpdate = getShipByPlayerId(room.state, firstBotId);
     expect(botShipAfterUpdate.auto_focus?.id).toEqual(planet.id);
