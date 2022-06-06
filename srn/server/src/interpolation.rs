@@ -21,6 +21,7 @@ pub fn interpolate_states(
 ) -> GameState {
     let mut result = state_a.clone();
     let result_indexes = index_state(&state_a);
+    let target_indexes = index_state(&state_b);
     interpolate_timings(&mut result, state_b, value);
     for i in 0..result.locations.len() {
         if let Some(limit_to_loc_idx) = &options.limit_to_loc_idx {
@@ -37,6 +38,7 @@ pub fn interpolate_states(
                 rel_orbit_cache,
                 &options,
                 &result_indexes,
+                &target_indexes,
             );
         }
     }
@@ -59,6 +61,7 @@ fn interpolate_location(
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
     options: &UpdateOptionsV2,
     result_indexes: &GameStateIndexes,
+    target_indexes: &GameStateIndexes,
 ) {
     let ships_by_id_target = index_ships_by_id(target);
     for i in 0..result.ships.len() {
@@ -89,9 +92,10 @@ fn interpolate_location(
                 &planet_spec,
                 &planet_pos,
                 &planet_pos_target,
+                target_indexes,
             );
         } else {
-            log!(format!("skipping {}", i));
+            // log!(format!("skipping {}", i));
         }
     }
 
@@ -155,45 +159,57 @@ fn interpolate_planet_relative_movement(
     target: &Movement,
     value: f64,
     rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
-    indexes: &GameStateIndexes,
+    result_indexes: &GameStateIndexes,
     planet_spec: &ObjectSpecifier,
     planet_pos_result: &Vec2f64,
     planet_pos_target: &Vec2f64,
+    target_indexes: &GameStateIndexes,
 ) {
-    let res_clone = result.clone();
-    let (interpolation_hint_result, result_pos) = match result {
+    let mut res_fixed = result.clone();
+    try_restore_relative_position(&mut res_fixed, planet_pos_result, result_indexes);
+    let mut target_fixed = target.clone();
+    try_restore_relative_position(&mut target_fixed, planet_pos_target, target_indexes);
+
+    let (interpolation_hint_result, result_pos) = match res_fixed.clone() {
         Movement::RadialMonotonous {
             phase,
             relative_position,
             ..
-        } => (phase.map(|v| v as usize), relative_position),
+        } => (
+            phase.map(|v| v as usize),
+            relative_position.unwrap(), // try_restore guarantees not-null
+        ),
         _ => panic!("bad movement"),
     };
-    let (interpolation_hint_target, target_pos) = match target {
+    let (interpolation_hint_target, target_pos) = match target_fixed.clone() {
         Movement::RadialMonotonous {
             phase: interpolation_hint,
             relative_position,
             ..
-        } => (interpolation_hint.map(|v| v as usize), relative_position),
+        } => (
+            interpolation_hint.map(|v| v as usize),
+            relative_position.unwrap(), // try_restore guarantees not-null
+        ),
         _ => panic!("bad movement"),
     };
 
-    let radius_to_anchor = indexes
+    let radius_to_anchor = result_indexes
         .anchor_distances
         .get(&planet_spec)
         .expect(format!("no anchor distance in cache for {:?}", planet_spec).as_str());
-    let phase_table = get_orbit_phase_table(rel_orbit_cache, &res_clone, *radius_to_anchor);
+    let phase_table = get_orbit_phase_table(rel_orbit_cache, &res_fixed, *radius_to_anchor);
     let result_idx = interpolation_hint_result.unwrap_or_else(|| {
-        let result_pos = result_pos
-            .unwrap_or_else(|| restore_relative_position(&res_clone, planet_pos_result, indexes));
-        calculate_phase(&phase_table, &result_pos).expect("could not calculate hint")
+        calculate_phase(&phase_table, &result_pos).expect("could not calculate phase hint")
     });
     let target_idx = interpolation_hint_target.unwrap_or_else(|| {
-        let target_pos = target_pos
-            .unwrap_or_else(|| restore_relative_position(&res_clone, planet_pos_target, indexes));
-        calculate_phase(&phase_table, &target_pos).expect("could not calculate hint")
+        calculate_phase(&phase_table, &target_pos).expect("could not calculate phase hint")
     });
     let lerped_idx = lerp_usize_cycle(result_idx, target_idx, value, phase_table.len());
+    // log!(format!(
+    //     "values near -1={} +1={}",
+    //     phase_table[lerped_idx - 1],
+    //     phase_table[lerped_idx + 1]
+    // ));
     // log!(format!(
     //     "own rel pos after calculation {} lerped_idx/total {lerped_idx}/{} result/target idx {result_idx}/{target_idx}",
     //     phase_table[lerped_idx],
@@ -209,7 +225,7 @@ fn interpolate_planet_relative_movement(
     }
 }
 
-fn restore_relative_position(
+fn recalculate_relative_position(
     movement: &Movement,
     absolute_position: &Vec2f64,
     indexes: &GameStateIndexes,
@@ -219,7 +235,27 @@ fn restore_relative_position(
         .get(&movement.get_anchor_spec())
         .expect("cannot restore relative position without an anchor")
         .get_spatial();
+    // log!(format!(
+    //     "recalc relative, anchor is at {}, self at {}",
+    //     anchor_spatial.position, absolute_position
+    // ));
     return absolute_position.subtract(&anchor_spatial.position);
+}
+
+fn try_restore_relative_position(
+    movement: &mut Movement,
+    absolute_position: &Vec2f64,
+    indexes: &GameStateIndexes,
+) {
+    let restored = recalculate_relative_position(movement, absolute_position, indexes);
+    match movement {
+        Movement::RadialMonotonous {
+            relative_position, ..
+        } => {
+            *relative_position = Some(relative_position.unwrap_or(restored));
+        }
+        _ => {}
+    }
 }
 
 pub fn get_orbit_phase_table<'a, 'b>(
@@ -249,6 +285,7 @@ pub fn coerce_phase_table_cache_key(radius_value: f64) -> u64 {
 // assume that the table is a set of sequential circle coordinates
 fn calculate_phase(table: &Vec<Vec2f64>, pos: &Vec2f64) -> Option<usize> {
     // this can be further optimized by using binary search and not calculating every single distance
+    // log!(format!("calculate phase, {}", pos));
     let mut current_distance = 9999.0;
     let mut index = None;
     for i in 0..table.len() {
@@ -274,7 +311,7 @@ fn lerp_usize_cycle(from: usize, to: usize, value: f64, max: usize) -> usize {
 }
 
 pub const IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER: f64 = 100.0;
-pub const REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER: f64 = 32000.0;
+pub const REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER: f64 = 16000.0;
 
 // build a list of coordinates of the linear (segment) approximation of the circle, where every point
 // is a vertex of the resulting polygon, in an assumption that precision is enough (subdivided to enough amount of points)
@@ -290,6 +327,7 @@ fn gen_rel_position_orbit_phase_table(def: &Movement, radius_to_anchor: f64) -> 
             let mut res = vec![];
 
             let chosen_amount = choose_radial_amount(radius_to_anchor, *full_period_ticks);
+            // log!(format!("gen radial amount, rad={radius_to_anchor}, period={full_period_ticks}, chosen={chosen_amount}"));
             let angle_step_rad = PI * 2.0 / chosen_amount as f64;
             let sign = if *clockwise { -1.0 } else { 1.0 };
             for i in 0..chosen_amount {
@@ -307,20 +345,15 @@ fn gen_rel_position_orbit_phase_table(def: &Movement, radius_to_anchor: f64) -> 
 fn choose_radial_amount(radius_to_anchor: f64, full_period_ticks: f64) -> usize {
     let ideal_amount = radius_to_anchor * IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER; // completely arbitrary for now, without targeting specific precision
     let amount_from_period = full_period_ticks; // every tick is a point. However, it's super-unlikely that I will ever have an update every tick, and even every cycle of 16ms is unnecessary
-    let realistic_amount = amount_from_period / REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER; // precision with 1ms is probably fine-grained enough, equivalent to every 2 cycles of 16ms
+    let realistic_amount = amount_from_period / REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER; // precision with 1ms is probably fine-grained enough, equivalent to every cycle of 16ms
 
     let mut chosen_amount: usize = {
-        if ideal_amount < realistic_amount {
-            // no need to be more precise than the heuristic
-            ideal_amount as usize
+        if realistic_amount < 0.5 * ideal_amount {
+            // this is bad, and will lead to horrible visual artifacts likely, so will reuse the ideal * 0.5 instead
+            (0.5 * ideal_amount) as usize
         } else {
-            if realistic_amount < 0.5 * ideal_amount {
-                // this is bad, and will lead to horrible visual artifacts likely, so will reuse the ideal * 0.5 instead
-                (0.5 * ideal_amount) as usize
-            } else {
-                // if realistic is between 0.5 and 1.0 of ideal, this is probably fine
-                realistic_amount as usize
-            }
+            // if realistic is between 0.5 and 1.0 of ideal, this is probably fine
+            realistic_amount as usize
         }
     };
     if chosen_amount % 2 > 0 {

@@ -241,7 +241,7 @@ fn deserialize_err_or_def(reason: &Error) -> String {
     serde_json::to_string(&ErrJson {
         message: format!("err deserializing {}", reason.to_string()),
     })
-        .unwrap_or(DEFAULT_ERR.to_string())
+    .unwrap_or(DEFAULT_ERR.to_string())
 }
 
 #[wasm_bindgen]
@@ -259,14 +259,14 @@ pub fn parse_state(serialized_args: &str) -> String {
 }
 
 use crate::api_struct::Room;
-use crate::dialogue::{parse_dialogue_script_from_file, DialogueTable, DialogueState, Dialogue};
-use crate::indexing::{find_my_ship_index, ObjectSpecifier, GameStateCaches};
+use crate::dialogue::{parse_dialogue_script_from_file, Dialogue, DialogueState, DialogueTable};
+use crate::indexing::{find_my_ship_index, GameStateCaches, ObjectSpecifier};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
-use crate::world::{AABB, GameMode, GameState, UpdateOptions, UpdateOptionsV2};
+use crate::world::{GameMode, GameState, UpdateOptions, UpdateOptionsV2, AABB};
 use mut_static::MutStatic;
-use rand_pcg::Pcg64Mcg;
 use rand::prelude::*;
+use rand_pcg::Pcg64Mcg;
 use std::ops::DerefMut;
 use std::{env, mem};
 
@@ -413,7 +413,12 @@ pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 pub fn seed_world(args: JsValue) -> Result<JsValue, JsValue> {
     let args: SeedWorldArgs = serde_wasm_bindgen::from_value(args)?;
-    let state = system_gen::seed_state(&args.mode, args.seed, args.gen_state_opts, &mut (*game_state_caches.write().unwrap()));
+    let state = system_gen::seed_state(
+        &args.mode,
+        args.seed,
+        args.gen_state_opts,
+        &mut (*game_state_caches.write().unwrap()),
+    );
     Ok(custom_serialize(&state)?)
 }
 
@@ -435,7 +440,7 @@ pub fn create_room(args: JsValue) -> Result<JsValue, JsValue> {
         &mut prng,
         args.bots_seed,
         args.gen_state_opts,
-        Some(&mut game_state_caches.write().unwrap())
+        Some(&mut game_state_caches.write().unwrap()),
     );
     Ok(serde_wasm_bindgen::to_value(&room)?)
 }
@@ -474,11 +479,14 @@ pub fn update_room_full(
     let mut remaining = total_ticks;
     while remaining > 0 {
         remaining -= step_ticks;
-        let (_indexes, _room, _sampler) =
-            world::update_room(
-                &mut prng, sampler, step_ticks,
-                &room, &get_current_d_table(), Some(&mut game_state_caches.write().unwrap())
-            );
+        let (_indexes, _room, _sampler) = world::update_room(
+            &mut prng,
+            sampler,
+            step_ticks,
+            &room,
+            &get_current_d_table(),
+            Some(&mut game_state_caches.write().unwrap()),
+        );
         sampler = _sampler;
         room = _room;
     }
@@ -486,7 +494,11 @@ pub fn update_room_full(
 }
 
 fn get_current_d_table() -> DialogueTable {
-    current_d_table.read().unwrap().clone().expect("no preloaded dialogue table, cannot update room. call .load_d_table first")
+    current_d_table
+        .read()
+        .unwrap()
+        .clone()
+        .expect("no preloaded dialogue table, cannot update room. call .load_d_table first")
 }
 
 #[wasm_bindgen]
@@ -494,10 +506,7 @@ pub fn make_dialogue_table(dir_contents: JsValue) -> Result<JsValue, JsValue> {
     let mut res = vec![];
     let dir_contents: HashMap<String, String> = serde_wasm_bindgen::from_value(dir_contents)?;
     for (key, value) in dir_contents.into_iter() {
-        res.push(parse_dialogue_script_from_file(
-            key.as_str(),
-            value,
-        ));
+        res.push(parse_dialogue_script_from_file(key.as_str(), value));
     }
     let mut d_table = DialogueTable::new();
     for s in res {
@@ -683,17 +692,32 @@ pub fn interpolate_states(
     options: JsValue,
 ) -> Result<JsValue, JsValue> {
     let mut cache = &mut game_state_caches.write().unwrap().rel_orbit_cache;
-    let state_a: GameState = serde_wasm_bindgen::from_value(state_a)?;
-    let state_b: GameState = serde_wasm_bindgen::from_value(state_b)?;
+    let state_a: GameState = custom_deserialize(state_a)?;
+    let state_b: GameState = custom_deserialize(state_b)?;
     let options: UpdateOptionsV2 = serde_wasm_bindgen::from_value(options)?;
     let result = interpolation::interpolate_states(&state_a, &state_b, value, cache, options);
     Ok(custom_serialize(&result)?)
 }
 
+fn custom_deserialize<T: serde::de::DeserializeOwned + std::fmt::Debug>(
+    val: JsValue,
+) -> Result<T, JsValue> {
+    let res = serde_wasm_bindgen::from_value(val.clone());
+    res.map_err(|_| {
+        // that error sucks, retry with a better one
+        let retry_err = serde_path_to_error::deserialize::<serde_wasm_bindgen::Deserializer, T>(
+            serde_wasm_bindgen::Deserializer::from(val),
+        )
+        .expect_err("error mismatch between serde and serde_wasm_bindgen");
+
+        return JsValue::from(retry_err.to_string());
+    })
+}
+
 #[wasm_bindgen]
 pub fn apply_single_patch(state: JsValue, patch: JsValue) -> Result<JsValue, JsValue> {
-    let state: GameState = serde_wasm_bindgen::from_value(state)?;
-    let batch: Vec<ValueDiff> = serde_wasm_bindgen::from_value(patch)?;
+    let state: GameState = custom_deserialize(state)?;
+    let batch: Vec<ValueDiff> = custom_deserialize(patch)?;
     let res = ReplayDiffed::apply_diff_batch(&state, &batch)
         .map_err(|_| JsValue::from_str("failed to apply single patch"))?;
     Ok(custom_serialize(&res)?)
@@ -711,17 +735,14 @@ pub fn build_dialogue_from_state(
     game_state: JsValue,
 ) -> Result<JsValue, JsValue> {
     let dialogue_state = dialogue::build_dialogue_from_state(
-        get_uuid(dialogue_id), &Box::new(Some(get_uuid(current_state))),
+        get_uuid(dialogue_id),
+        &Box::new(Some(get_uuid(current_state))),
         &get_current_d_table(),
         get_uuid(player_id),
         &serde_wasm_bindgen::from_value::<GameState>(game_state)?,
     );
     match dialogue_state {
-        None => {
-            Err(JsValue::from_str("couldn't build dialogue state"))
-        }
-        Some(v) => {
-            Ok(custom_serialize(&v)?)
-        }
+        None => Err(JsValue::from_str("couldn't build dialogue state")),
+        Some(v) => Ok(custom_serialize(&v)?),
     }
 }

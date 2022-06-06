@@ -18,21 +18,27 @@ export const mockPlanet = (starId) => ({
     position: {
       x: 0,
       y: 0,
-      rotation_rad: 0,
-      radius: 1.0,
     },
+    rotation_rad: 0,
+    radius: 1.0,
   },
   movement: {
     tag: 'RadialMonotonous',
-    full_period_ticks: 60 * 1000 * 1000,
+    full_period_ticks: 120 * 1000 * 1000,
     phase: 0,
     clockwise: false,
-    relative_position: { x: 0, y: 0 },
+    relative_position: {
+      x: 0,
+      y: 0,
+    },
     start_phase: 0,
     anchor: {
       tag: 'Star',
       id: starId,
     },
+  },
+  rot_movement: {
+    tag: 'None',
   },
   anchor_tier: 1, // 1 for planets, 2 for moons
   color: '#0D57AC',
@@ -89,16 +95,23 @@ describe('state interpolation', () => {
     expect(shipD.y).toBeCloseTo(targetShipY_07);
   });
 
-  fit('can interpolate planet orbit movement', () => {
+  it('can interpolate planet orbit movement', () => {
     const roomA = wasm.createRoom({
       mode: 'PirateDefence',
       seed: 'interpolate',
     });
     const planetA = getLoc0(roomA.state).planets[0];
-    forceSetBodyPosition(planetA, { x: 100, y: 0 });
+    forceSetBodyPosition(planetA, {
+      x: 100,
+      y: 0,
+    });
     const roomB = _.cloneDeep(roomA);
     const planetB = getLoc0(roomB.state).planets[0];
-    forceSetBodyPosition(planetB, { x: 0, y: 100 });
+    forceSetBodyPosition(planetB, {
+      x: 0,
+      y: 100,
+    });
+    console.log('interpolate call');
     const stateC = wasm.interpolateStates(
       roomA.state,
       roomB.state,
@@ -113,16 +126,22 @@ describe('state interpolation', () => {
     // wasm.interpolateStates(roomA.state, roomB.state, 0.5);
   });
 
-  fit('interpolates via shortest path, even if the orbit indexes are not close', () => {
+  it('interpolates via shortest path, even if the orbit indexes are not close', () => {
     const roomA = wasm.createRoom({
       mode: 'PirateDefence',
       seed: 'interpolate',
     });
     const planetA = getLoc0(roomA.state).planets[0];
-    forceSetBodyPosition(planetA, { x: 100, y: 0 });
+    forceSetBodyPosition(planetA, {
+      x: 100,
+      y: 0,
+    });
     const roomB = _.cloneDeep(roomA);
     const planetB = getLoc0(roomB.state).planets[0];
-    forceSetBodyPosition(planetA, { x: 0, y: -100 });
+    forceSetBodyPosition(planetA, {
+      x: 0,
+      y: -100,
+    });
     const stateC = wasm.interpolateStates(
       roomA.state,
       roomB.state,
@@ -142,25 +161,35 @@ describe('state interpolation', () => {
       mode: 'PirateDefence',
       seed: 'interpolate',
     });
-    const planet = mockPlanet();
-    planet.anchor_id = getLoc0(roomA.state).star.id;
-    planet.spatial.position.x = 100;
-    planet.spatial.position.y = 0;
+    const planet = mockPlanet(getLoc0(roomA.state).star.id);
+    forceSetBodyPosition(planet, {
+      x: 100,
+      y: 0,
+    });
     planet.name = 'planet';
     const moon = mockPlanet();
-    moon.spatial.position.x = 120;
-    moon.spatial.position.y = 0;
+    forceSetBodyPosition(moon, {
+      x: 120,
+      y: 0,
+    });
     moon.anchor_tier = 2;
-    moon.anchor_id = planet.id;
+    moon.movement.anchor = {
+      tag: 'Planet',
+      id: planet.id,
+    };
     moon.name = 'moon';
     getLoc0(roomA.state).planets = [planet, moon];
     const roomB = _.cloneDeep(roomA);
     const planetB = getLoc0(roomB.state).planets[0];
-    planetB.spatial.position.x = 0;
-    planetB.spatial.position.y = 100;
+    forceSetBodyPosition(planetB, {
+      x: 0,
+      y: 100,
+    });
     const moonB = getLoc0(roomB.state).planets[1];
-    moonB.spatial.position.x = -20;
-    moonB.spatial.position.y = 100;
+    forceSetBodyPosition(moonB, {
+      x: -20,
+      y: 100,
+    });
 
     const stateC = wasm.interpolateStates(
       roomA.state,
@@ -169,8 +198,8 @@ describe('state interpolation', () => {
       mockUpdateOptions()
     );
     const moonC = getLoc0(stateC).planets[1];
-    expect(moonC.spatial.position.y).toBeCloseTo((Math.sqrt(2) / 2) * 100 + 20);
-    expect(moonC.spatial.position.x).toBeCloseTo((Math.sqrt(2) / 2) * 100);
+    expect(moonC.spatial.position.y).toBeCloseTo((Math.sqrt(2) / 2) * 100 + 20, 0);
+    expect(moonC.spatial.position.x).toBeCloseTo((Math.sqrt(2) / 2) * 100, 0);
   });
 
   xit('can interpolate only limited area', () => {
@@ -224,7 +253,10 @@ describe('state interpolation', () => {
 
   xit('interpolation matches extrapolation', () => {
     const STEP_MS = 1000;
-    const state = wasm.seedWorld({ mode: 'CargoRush', seed: 'int + exp' });
+    const state = wasm.seedWorld({
+      mode: 'CargoRush',
+      seed: 'int + exp',
+    });
     const planetCount = state.locations[0].planets.length;
     for (let i = 0; i < 10; i++) {
       const currentTimestamp = i * STEP_MS;
