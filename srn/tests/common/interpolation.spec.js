@@ -111,7 +111,6 @@ describe('state interpolation', () => {
       x: 0,
       y: 100,
     });
-    console.log('interpolate call');
     const stateC = wasm.interpolateStates(
       roomA.state,
       roomB.state,
