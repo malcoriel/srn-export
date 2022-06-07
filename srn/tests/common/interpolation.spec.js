@@ -197,7 +197,10 @@ describe('state interpolation', () => {
       mockUpdateOptions()
     );
     const moonC = getLoc0(stateC).planets[1];
-    expect(moonC.spatial.position.y).toBeCloseTo((Math.sqrt(2) / 2) * 100 + 20, 0);
+    expect(moonC.spatial.position.y).toBeCloseTo(
+      (Math.sqrt(2) / 2) * 100 + 20,
+      0
+    );
     expect(moonC.spatial.position.x).toBeCloseTo((Math.sqrt(2) / 2) * 100, 0);
   });
 
@@ -250,7 +253,7 @@ describe('state interpolation', () => {
     expect(moonC.spatial.position.x).toBeCloseTo(120);
   });
 
-  xit('interpolation matches extrapolation', () => {
+  it('interpolation matches extrapolation', () => {
     const STEP_MS = 1000;
     const state = wasm.seedWorld({
       mode: 'CargoRush',
@@ -274,9 +277,13 @@ describe('state interpolation', () => {
         const expPlanet = stateExpHalf.locations[0].planets[i];
         const intPlanet = stateIntHalf.locations[0].planets[i];
         expect(expPlanet.spatial.position.x).toBeCloseTo(
-          intPlanet.spatial.position.x
+          intPlanet.spatial.position.x,
+          0
         );
-        expect(expPlanet.spatial.position.y).toBeCloseTo(intPlanet.spatial.y);
+        expect(expPlanet.spatial.position.y).toBeCloseTo(
+          intPlanet.spatial.position.y,
+          0
+        );
       }
     }
   });

@@ -1,4 +1,5 @@
 use crate::autofocus::build_spatial_index;
+use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -507,7 +508,10 @@ fn index_anchor_distances(
 ) -> HashMap<ObjectSpecifier, f64> {
     let mut res = HashMap::new();
     for loc in locations {
-        for body in get_radial_bodies(&loc).iter() {
+        for body in get_radial_bodies(&loc)
+            .iter()
+            .sorted_by_key(|i| i.get_anchor_tier())
+        {
             if let Some(anchor) = bodies_by_id.get(&body.get_movement().get_anchor_spec()) {
                 let anchor_pos = &anchor.get_spatial().position;
                 res.insert(

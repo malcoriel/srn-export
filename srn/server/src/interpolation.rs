@@ -100,19 +100,18 @@ fn interpolate_location(
     }
 
     // then, sequentially (via tiers) restore absolute position
-    let star_clone = &result
-        .star
-        .clone()
-        .expect("cannot interpolate location without a star");
-    let star_root: Box<&dyn IBodyV2> = Box::new(star_clone as &dyn IBodyV2);
-    restore_absolute_positions(
-        star_root,
-        result
-            .planets
-            .iter_mut()
-            .map(|p| Box::new(p as &mut dyn IBodyV2))
-            .collect(),
-    )
+    let star_clone = &result.star.clone();
+    if let Some(star_clone) = star_clone {
+        let star_root: Box<&dyn IBodyV2> = Box::new(star_clone as &dyn IBodyV2);
+        restore_absolute_positions(
+            star_root,
+            result
+                .planets
+                .iter_mut()
+                .map(|p| Box::new(p as &mut dyn IBodyV2))
+                .collect(),
+        )
+    }
 }
 
 pub fn restore_absolute_positions(root: Box<&dyn IBodyV2>, mut bodies: Vec<Box<&mut dyn IBodyV2>>) {

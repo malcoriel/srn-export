@@ -208,10 +208,13 @@ impl Spec for Asteroid {
 
 pub fn generic_get_anchor_dist<T: Spec>(arg: &T, indexes: &GameStateIndexes) -> f64 {
     let specifier = arg.spec();
-    *indexes
-        .anchor_distances
-        .get(&specifier)
-        .expect(format!("No anchor distance found for {:?}", specifier).as_str())
+    *indexes.anchor_distances.get(&specifier).expect(
+        format!(
+            "No anchor distance found for {:?}, indexes are {:?}",
+            specifier, indexes.anchor_distances
+        )
+        .as_str(),
+    )
 }
 
 impl Anchored for Asteroid {

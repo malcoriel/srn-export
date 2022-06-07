@@ -229,11 +229,17 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     rot_movement: RotationMovement::None,
                 });
             }
+            let star_id = loc.star.as_ref().map_or(Uuid::default(), |s| s.id);
             loc.planets = args
                 .planets
                 .iter()
                 .map(|spb| {
                     let anchor_id = map_id(spb.anchor_id.clone(), &mut id_storage, &mut prng);
+                    let anchor = if anchor_id == star_id {
+                        ObjectSpecifier::Star { id: anchor_id }
+                    } else {
+                        ObjectSpecifier::Planet { id: anchor_id }
+                    };
                     PlanetV2 {
                         id: map_id_opt(spb.id.clone(), &mut id_storage, &mut prng),
                         name: gen_planet_name(&mut prng).to_string(),
@@ -252,7 +258,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                         movement: Movement::RadialMonotonous {
                             full_period_ticks: spb.full_period_ticks,
                             clockwise: false,
-                            anchor: ObjectSpecifier::Planet { id: anchor_id },
+                            anchor,
                             relative_position: Default::default(),
                             phase: None,
                             start_phase: 0,
