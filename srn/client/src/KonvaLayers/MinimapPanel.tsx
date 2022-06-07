@@ -21,6 +21,8 @@ import { getOnWheel } from '../ThreeLayers/CameraControls';
 import { useIsMounted } from 'usehooks-ts';
 import { findMyShip } from '../ClientStateIndexing';
 import { useNSForceChange } from '../NetStateHooks';
+// eslint-disable-next-line import/named
+import { PlanetV2 } from '../../../world/pkg/world';
 
 export const minimap_proportion = 0.2;
 export const get_minimap_size_x = () => size.getMinSize() * minimap_proportion;
@@ -63,6 +65,7 @@ const StaticEntitiesLayer = React.memo(
           }
         }, 1000)
       );
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ns, ns.id]);
 
     return (
@@ -72,8 +75,8 @@ const StaticEntitiesLayer = React.memo(
             key={b.id}
             angle={360}
             onMouseDown={moveCamera}
-            innerRadius={realLenToScreenLen(b.radius - b.width / 2)}
-            outerRadius={realLenToScreenLen(b.radius + b.width / 2)}
+            innerRadius={realLenToScreenLen(b.spatial.radius - b.width / 2)}
+            outerRadius={realLenToScreenLen(b.spatial.radius + b.width / 2)}
             fill={dirtyGray}
             opacity={0.4}
             position={realPosToScreenPos(VectorF(0, 0))}
@@ -84,9 +87,13 @@ const StaticEntitiesLayer = React.memo(
             key={state.locations[0].star.id}
             opacity={planetOpacity}
             onMouseDown={moveCamera}
-            radius={realLenToScreenLen(state.locations[0].star.radius) * 0.6}
+            radius={
+              realLenToScreenLen(state.locations[0].star.spatial.radius) * 0.6
+            }
             fill={state.locations[0].star.color}
-            position={realPosToScreenPos(state.locations[0].star)}
+            position={realPosToScreenPos(
+              state.locations[0].star.spatial.position
+            )}
           />
         )}
       </Layer>
@@ -99,6 +106,13 @@ interface SlowBodiesLayerParams {
   realPosToScreenPos: (objPos: IVector) => Vector;
   moveCamera: (dragEvent: any) => void;
 }
+
+const isNegativeRotation = (p: PlanetV2): boolean => {
+  if (p.movement.tag === 'RadialMonotonous') {
+    return p.movement.clockwise;
+  }
+  return false;
+};
 
 const SlowEntitiesLayer = React.memo(
   ({
@@ -118,19 +132,19 @@ const SlowEntitiesLayer = React.memo(
         {state.locations[0].planets &&
           state.locations[0].planets.map((p, i) => {
             const anchorPos = state.locations[0].star
-              ? Vector.fromIVector(state.locations[0].star)
+              ? Vector.fromIVector(state.locations[0].star.spatial.position)
               : VectorF(0, 0);
-            const pPos = Vector.fromIVector(p);
+            const pPos = Vector.fromIVector(p.spatial.position);
             const orbitDist = realLenToScreenLen(pPos.euDistTo(anchorPos));
             const angleRad = pPos.angleRad(anchorPos.add(VectorF(1, 0)));
-            const negativeRotation = p.orbit_speed < 0;
+            const negativeRotation = isNegativeRotation(p);
             // let arcDirMultiplier = 1;
             // if (negativeRotation) {
             //   //arcDirMultiplier = -1;
             // }
 
             const rotationDeg = radToDeg(angleRad);
-            const b = p.radius;
+            const b = p.spatial.radius;
             const a = pPos.euDistTo(anchorPos);
             const beta = Math.acos((2 * a * a - b * b) / (2 * a * a));
 
@@ -144,10 +158,10 @@ const SlowEntitiesLayer = React.memo(
             };
             return (
               <Group key={p.id ? p.id : i}>
-                <Group position={realPosToScreenPos(p)}>
+                <Group position={realPosToScreenPos(p.spatial.position)}>
                   <Circle
                     opacity={planetOpacity}
-                    radius={realLenToScreenLen(p.radius)}
+                    radius={realLenToScreenLen(p.spatial.radius)}
                     fill={p.color}
                     stroke={mint}
                     strokeWidth={0.5}

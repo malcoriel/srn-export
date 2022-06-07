@@ -37,16 +37,16 @@ export const ThreeTrajectoryLayer: React.FC<{
         {planetTarget && (
           <mesh
             position={posToThreePos(
-              planetTarget.x,
-              planetTarget.y,
+              planetTarget.spatial.position.x,
+              planetTarget.spatial.position.y,
               SHIP_FIXED_Z
             )}
           >
             <ringGeometry
               args={[
-                planetTarget.radius + 0.5,
-                planetTarget.radius + 0.5 + 0.25,
-                Math.max(16, planetTarget.radius * 3),
+                planetTarget.spatial.radius + 0.5,
+                planetTarget.spatial.radius + 0.5 + 0.25,
+                Math.max(16, planetTarget.spatial.radius * 3),
               ]}
             />
             <meshBasicMaterial color={babyBlue} />

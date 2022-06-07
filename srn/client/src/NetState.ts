@@ -6,7 +6,8 @@ import {
   interpolateWorld,
   isManualMovement,
   loadReplayIntoWasm,
-  ManualMovementActionTags, MaxedAABB,
+  ManualMovementActionTags,
+  MaxedAABB,
   restoreReplayFrame,
   TradeAction,
   updateWorld,
@@ -240,11 +241,19 @@ export default class NetState extends EventEmitter {
       this.visMap[ship.id] = isInAABB(AABB, ship, ship.radius);
     }
     for (const planet of this.state.locations[0].planets) {
-      this.visMap[planet.id] = isInAABB(AABB, planet, planet.radius);
+      this.visMap[planet.id] = isInAABB(
+        AABB,
+        planet.spatial.position,
+        planet.spatial.radius
+      );
     }
     const star = this.state.locations[0].star;
     if (star) {
-      this.visMap[star.id] = isInAABB(AABB, star, star.radius);
+      this.visMap[star.id] = isInAABB(
+        AABB,
+        star.spatial.position,
+        star.spatial.radius
+      );
     }
   }
 
@@ -964,8 +973,8 @@ export default class NetState extends EventEmitter {
       prevState.locations[0].planets[prevState.locations[0].planets.length - 1];
     const nextPlanet =
       nextState.locations[0].planets[nextState.locations[0].planets.length - 1];
-    const prevPos = Vector.fromIVector(prevPlanet);
-    const nextPos = Vector.fromIVector(nextPlanet);
+    const prevPos = Vector.fromIVector(prevPlanet.spatial.position);
+    const nextPos = Vector.fromIVector(nextPlanet.spatial.position);
     const dist = prevPos.euDistTo(nextPos);
     const timeDist = nextState.millis - prevState.millis;
     console.log({

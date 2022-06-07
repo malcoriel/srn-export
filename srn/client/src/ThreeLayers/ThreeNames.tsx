@@ -28,8 +28,8 @@ const getNamesWithPos = (
     res.push({
       id: planet.id,
       name: planet.name,
-      pos: Vector.fromIVector(planet),
-      radius: planet.radius,
+      pos: Vector.fromIVector(planet.spatial.position),
+      radius: planet.spatial.radius,
     });
   }
 
@@ -38,8 +38,8 @@ const getNamesWithPos = (
     res.push({
       id: star.id,
       name: star.name,
-      pos: Vector.fromIVector(star),
-      radius: star.radius,
+      pos: Vector.fromIVector(star.spatial.position),
+      radius: star.spatial.radius,
     });
   }
 

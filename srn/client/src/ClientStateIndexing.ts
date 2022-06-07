@@ -3,7 +3,7 @@
 import type {
   FullObjectSpecifier,
   GameState,
-  Planet,
+  PlanetV2,
   Player,
   Ship,
 } from './world';
@@ -15,7 +15,7 @@ export interface ClientStateIndexes {
   myShip: Ship | null;
   myShipPosition: Vector | null;
   playersById: Map<string, Player>;
-  planetsById: Map<string, Planet>;
+  planetsById: Map<string, PlanetV2>;
   playersByShipId: Map<string, Player>;
   shipByPlayerId: Map<string, Ship>;
 }
@@ -66,6 +66,14 @@ export const findObjectBySpecifier = (
     }
     case 'Star': {
       return loc.star?.id === specifier.obj_spec.id ? loc.star : undefined;
+    }
+    case 'Asteroid': {
+      const spec = specifier.obj_spec;
+      return loc.asteroids.find((o) => o.id === spec.id);
+    }
+    case 'AsteroidBelt': {
+      const spec = specifier.obj_spec;
+      return loc.asteroid_belts.find((o) => o.id === spec.id);
     }
     default:
       throw new UnreachableCaseError(specifier.obj_spec);

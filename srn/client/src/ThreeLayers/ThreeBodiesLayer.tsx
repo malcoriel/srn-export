@@ -32,8 +32,13 @@ export const ThreeBodiesLayer: React.FC<{
           timeScale={0.5}
           visualState={visualState}
           visible={visMap[star.id]}
-          scale={_.times(3, () => star.radius) as [number, number, number]}
-          position={posToThreePos(star.x, star.y)}
+          scale={
+            _.times(3, () => star.spatial.radius) as [number, number, number]
+          }
+          position={posToThreePos(
+            star.spatial.position.x,
+            star.spatial.position.y
+          )}
           color={star.color}
           coronaColor={star.corona_color}
         />

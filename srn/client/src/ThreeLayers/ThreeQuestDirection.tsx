@@ -102,7 +102,7 @@ export const ThreeQuestDirection: React.FC<{
       : quest.from_id;
   const questTarget = targetId ? findPlanet(state, targetId) : undefined;
   if (!questTarget) return null;
-  const targetPos = Vector.fromIVector(questTarget);
+  const targetPos = Vector.fromIVector(questTarget.spatial.position);
   if (targetPos.euDistTo(shipPos) < 20) {
     return null;
   }

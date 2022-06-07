@@ -15,10 +15,10 @@ export const AsteroidBeltsLayer: React.FC<AsteroidBeltsLayerParams> = ({
       <ThreeAsteroidBelt
         key={b.id}
         count={b.count}
-        radius={b.radius}
-        position={posToThreePos(b.x, b.y)}
+        radius={b.spatial.radius}
+        position={posToThreePos(b.spatial.position.x, b.spatial.position.y)}
         width={b.width}
-        rotation={[0, 0, b.rotation]}
+        rotation={[0, 0, b.spatial.rotation_rad]}
         gid={b.id}
         scale_mod={b.scale_mod}
       />

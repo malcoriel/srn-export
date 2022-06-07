@@ -21,7 +21,7 @@ import {
   Notification,
   NotificationText,
   ObjectSpecifier,
-  Planet,
+  PlanetV2,
   Player,
   Price,
   Quest,
@@ -48,7 +48,7 @@ export type {
   NatSpawnMineral,
   Asteroid,
   AsteroidBelt,
-  Planet,
+  PlanetV2,
   Ship,
   Star,
   Quest,
@@ -308,7 +308,7 @@ export const buildDialogueFromState = (
 export const findPlanet = (
   state: GameState,
   id: string
-): Planet | undefined => {
+): PlanetV2 | undefined => {
   return state.locations[0].planets.find((p) => p.id === id);
 };
 
@@ -316,7 +316,7 @@ export enum FindObjectHint {
   Planet,
 }
 
-type FindableObject = Planet | NatSpawnMineral | Container | Ship;
+type FindableObject = PlanetV2 | NatSpawnMineral | Container | Ship;
 type FindObjectResult =
   | {
       object: FindableObject;

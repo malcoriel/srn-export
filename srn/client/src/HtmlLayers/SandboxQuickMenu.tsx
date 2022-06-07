@@ -45,7 +45,7 @@ const pickClosestObject = (
       if (!obj) {
         return null;
       }
-      const objPos = Vector.fromIVector(obj);
+      const objPos = Vector.fromIVector(obj.spatial.position);
       return [obj.id, objPos.euDistTo(from)];
     })
     .filter((s) => !!s) as [string, number][];

@@ -1,11 +1,11 @@
-import { Planet } from '../../../world/pkg';
+import { PlanetV2 } from '../../../world/pkg';
 import React from 'react';
 import { ThreePlanetShape } from './ThreePlanetShape';
 import { InteractorMap } from './InteractorMap';
 import { normalizeHealth } from '../world';
 
 interface ThreePlanetsLayerParams {
-  planets: Planet[];
+  planets: PlanetV2[];
   visMap: Record<string, boolean>;
 }
 
@@ -18,14 +18,14 @@ export const ThreePlanetsLayer: React.FC<ThreePlanetsLayerParams> = ({
       return (
         <ThreePlanetShape
           gid={p.id}
-          radius={p.radius}
+          radius={p.spatial.radius}
           // onClick={(evt: MouseEvent) => {
           //   evt.stopPropagation();
           //   actionsActive[
           //     ShipActionType.DockNavigate
           //   ] = ShipAction.DockNavigate(p.id);
           // }}
-          position={p}
+          position={p.spatial.position}
           key={p.id}
           color={p.color}
           atmosphereColor={p.color}

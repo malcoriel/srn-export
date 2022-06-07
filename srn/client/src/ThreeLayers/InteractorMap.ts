@@ -15,7 +15,7 @@ import {
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import NetState from '../NetState';
-import { Ability, Planet } from '../../../world/pkg';
+import { Ability, PlanetV2 } from '../../../world/pkg';
 import { executeSyncAction } from '../utils/ShipControls';
 
 const planetActionMap = new Map([
@@ -142,7 +142,7 @@ export const InteractorMap: Record<
     (m) => m.id
   ),
   planet: _.memoize(
-    (p: Planet) => {
+    (p: PlanetV2) => {
       const isUnlandable = p.properties.find(
         (v) => v.tag === 'UnlandablePlanet'
       );

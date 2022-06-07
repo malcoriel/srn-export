@@ -69,7 +69,7 @@ const renderContent = (
                 <ThreePlanetShape
                   gid={dialogue.planet.id}
                   position={new Vector(0, 0)}
-                  radius={dialogue.planet.radius}
+                  radius={dialogue.planet.spatial.radius}
                   visible
                   key={dialogue.planet.id}
                   color={dialogue.planet.color}
