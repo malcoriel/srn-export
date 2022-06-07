@@ -336,11 +336,12 @@ pub fn project_movement_relative_position(
             start_phase,
             ..
         } => {
-            if (*full_period_ticks).abs() < 1e-3 || phase_table.len() == 0 {
+            let full_period_ticks = full_period_ticks.abs();
+            if (full_period_ticks).abs() < 1e-3 || phase_table.len() == 0 {
                 panic!("bad movement for {:?}: {:?}", specifier, movement_mut);
             }
             let divided =
-                (current_ticks as i64 % (*full_period_ticks) as i64) as f64 / (*full_period_ticks);
+                (current_ticks as i64 % (full_period_ticks) as i64) as f64 / (full_period_ticks);
             let phase_abs = (divided * phase_table.len() as f64) as u32;
             let phase_rel = (phase_abs + (*start_phase)) % phase_table.len() as u32;
             *phase = Some(phase_rel);

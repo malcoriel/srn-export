@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import NetState from '../NetState';
-import { GameMode, PlanetType } from '../world';
+import { GameMode, genPeriod, PlanetType } from '../world';
 import { ThreeLayer } from '../ThreeLayers/ThreeLayer';
 import { size } from '../coord';
 import { Button } from '../HtmlLayers/ui/Button';
@@ -43,7 +43,7 @@ const buildStory = async (): Promise<void> => {
               y: 15.99053448539727,
             },
             radius: 10.40783200434442,
-            full_period_ticks: 120 * 1000 * 1000,
+            full_period_ticks: genPeriod('aaaaa'),
             anchor_id: star_ref_id,
             anchor_tier: 1,
           },
@@ -57,7 +57,7 @@ const buildStory = async (): Promise<void> => {
               y: -346.1008470849561,
             },
             radius: 13.034404808418401,
-            full_period_ticks: 120 * 1000 * 1000,
+            full_period_ticks: genPeriod('bbbbb'),
             anchor_id: star_ref_id,
             anchor_tier: 1,
           },
@@ -71,7 +71,7 @@ const buildStory = async (): Promise<void> => {
               y: 355.0107661147141,
             },
             radius: 14.284974612384675,
-            full_period_ticks: 120 * 1000 * 1000,
+            full_period_ticks: genPeriod('ccccc'),
             anchor_id: star_ref_id,
             anchor_tier: 1,
           },
@@ -85,7 +85,7 @@ const buildStory = async (): Promise<void> => {
               y: 43.567516371004665,
             },
             radius: 2.118708819446513,
-            full_period_ticks: 120 * 1000 * 1000,
+            full_period_ticks: genPeriod('ddddd'),
             anchor_id: ReferencableIdBuilder.ReferencableIdId({
               id: '7d840590-01ce-4b37-a32a-037264da2e50',
             }),

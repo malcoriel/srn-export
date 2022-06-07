@@ -1667,7 +1667,6 @@ pub enum Movement {
         // so it's fully periodical, e.g. such P exists that position(t = P) = initial,
         // position (t  = 2P) = initial, etc
         full_period_ticks: f64,
-        clockwise: bool,
         anchor: ObjectSpecifier,
         relative_position: Option<Vec2f64>,
         phase: Option<u32>,

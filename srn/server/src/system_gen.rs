@@ -16,7 +16,7 @@ use crate::interpolation::get_orbit_phase_table;
 use crate::market::{init_all_planets_market, Market};
 use crate::perf::Sampler;
 use crate::random_stuff::{
-    gen_color, gen_planet_count, gen_planet_orbit_period, gen_planet_orbit_speed,
+    gen_color, gen_period, gen_planet_count, gen_planet_orbit_period, gen_planet_orbit_speed,
     gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_period, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_color, gen_star_name, gen_star_radius, random_hex_seed_seeded,
     PLANET_NAMES, SAT_NAMES,
@@ -184,6 +184,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                         .min(opts.max_satellites_for_planet))
                     {
                         let name = sat_name_pool.get(&mut prng).to_string();
+                        let dir = if prng.gen_bool(0.5) { 1.0 } else { -1.0 };
                         current_sat_x += gen_sat_gap(&mut prng);
                         planets.push(PlanetV2 {
                             id: prng_id(&mut prng),
@@ -201,8 +202,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             health: None,
                             properties: Default::default(),
                             movement: Movement::RadialMonotonous {
-                                full_period_ticks: gen_sat_orbit_period(&mut prng),
-                                clockwise: false,
+                                full_period_ticks: gen_sat_orbit_period(&mut prng) * dir,
                                 anchor: ObjectSpecifier::Planet { id: planet_id },
                                 relative_position: Default::default(),
                                 phase: None,
@@ -331,7 +331,6 @@ pub fn gen_planet(
         properties: Default::default(),
         movement: Movement::RadialMonotonous {
             full_period_ticks: gen_planet_orbit_period(&mut prng),
-            clockwise: false,
             anchor,
             relative_position: Default::default(),
             phase: None,
@@ -488,8 +487,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
             health: None,
             properties: Default::default(),
             movement: Movement::RadialMonotonous {
-                full_period_ticks: 120.0 * 1000.0 * 1000.0,
-                clockwise: false, // get rid of it in favor of sign in full_period
+                full_period_ticks: gen_period(prng, 1.0),
                 anchor: ObjectSpecifier::Star { id: star_id },
                 relative_position: Default::default(),
                 phase: None,
@@ -510,8 +508,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
             health: None,
             properties: Default::default(),
             movement: Movement::RadialMonotonous {
-                full_period_ticks: 20.0 * 1000.0 * 1000.0,
-                clockwise: false,
+                full_period_ticks: gen_period(prng, 0.25),
                 anchor: ObjectSpecifier::Planet { id: planet_id },
                 relative_position: Default::default(),
                 phase: None,

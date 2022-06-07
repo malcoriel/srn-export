@@ -319,16 +319,14 @@ fn gen_rel_position_orbit_phase_table(def: &Movement, radius_to_anchor: f64) -> 
     // log!(format!("calculate call {def:?} {radius_to_anchor:?}"));
     match def {
         Movement::RadialMonotonous {
-            full_period_ticks,
-            clockwise,
-            ..
+            full_period_ticks, ..
         } => {
             let mut res = vec![];
 
             let chosen_amount = choose_radial_amount(radius_to_anchor, *full_period_ticks);
             // log!(format!("gen radial amount, rad={radius_to_anchor}, period={full_period_ticks}, chosen={chosen_amount}"));
             let angle_step_rad = PI * 2.0 / chosen_amount as f64;
-            let sign = if *clockwise { -1.0 } else { 1.0 };
+            let sign = full_period_ticks.signum();
             for i in 0..chosen_amount {
                 let angle = i as f64 * angle_step_rad;
                 let x = angle.cos() * radius_to_anchor;

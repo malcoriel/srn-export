@@ -41,6 +41,7 @@ import { Dictionary } from 'ts-essentials';
 import { findObjectPosition } from './ClientStateIndexing';
 import { dialogueResources } from './HtmlLayers/dialogueResources';
 import * as uuid from 'uuid';
+import Prando from 'prando';
 
 export type {
   Notification,
@@ -489,4 +490,18 @@ export const DEFAULT_STATE = {
   accumulated_not_updated_ticks: 0,
   dialogue_states: {},
   breadcrumbs: [],
+};
+
+const periodPrimes = [7, 11, 13, 17, 19, 23];
+export const genPeriod = (
+  seed = new Date().valueOf().toString(),
+  scale = 1.0
+) => {
+  const prng = new Prando(seed);
+  const idx = Math.floor(prng.next(0, periodPrimes.length));
+  const prime = periodPrimes[idx];
+  const dir = prng.nextBoolean() ? 1 : -1;
+  const val = dir * prime * 10 * 1000 * 1000 * scale * 2.0;
+  console.log({ seed, dir, prime, scale, idx });
+  return val;
 };

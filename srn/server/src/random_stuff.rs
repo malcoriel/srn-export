@@ -220,12 +220,19 @@ pub fn gen_sat_orbit_speed(rng: &mut Pcg64Mcg) -> f64 {
     return rng.gen_range(20.0, 30.0) / 100.0 * dir;
 }
 
+const PERIOD_PRIMES: [u32; 6] = [7, 11, 13, 17, 19, 23];
+pub fn gen_period(prng: &mut Pcg64Mcg, scale: f64) -> f64 {
+    let dir = if prng.gen_bool(0.5) { 1.0 } else { -1.0 };
+    let idx = prng.gen_range(0, PERIOD_PRIMES.len());
+    return (PERIOD_PRIMES[idx as usize] as f64 * dir).floor() * 1000.0 * 1000.0 * scale;
+}
+
 pub fn gen_sat_orbit_period(rng: &mut Pcg64Mcg) -> f64 {
-    return rng.gen_range(50.0, 70.0) * 1000.0 * 1000.0;
+    return gen_period(rng, 1.0);
 }
 
 pub fn gen_planet_orbit_period(rng: &mut Pcg64Mcg) -> f64 {
-    return rng.gen_range(180.0, 240.0) * 1000.0 * 1000.0;
+    return gen_period(rng, 2.0);
 }
 
 pub fn gen_planet_radius(rng: &mut Pcg64Mcg) -> f64 {
@@ -272,27 +279,26 @@ pub fn random_hex_seed_seeded(prng: &mut Pcg64Mcg) -> String {
 const ASTEROID_COUNT: u32 = 200;
 const ASTEROID_BELT_RANGE: f64 = 100.0;
 
-pub fn seed_asteroids(star: &Star, rng: &mut Pcg64Mcg) -> Vec<Asteroid> {
+pub fn seed_asteroids(star: &Star, prng: &mut Pcg64Mcg) -> Vec<Asteroid> {
     let mut res = vec![];
     let mut cur_angle: f64 = 0.0;
     let angle_step = PI * 2.0 / ASTEROID_COUNT as f64;
     for _i in 0..ASTEROID_COUNT {
         let x: f64 = cur_angle.cos() * ASTEROID_BELT_RANGE;
         let y: f64 = cur_angle.sin() * ASTEROID_BELT_RANGE;
-        let shift = gen_asteroid_shift(rng);
+        let shift = gen_asteroid_shift(prng);
         res.push(Asteroid {
-            id: prng_id(rng),
+            id: prng_id(prng),
             spatial: SpatialProps {
                 position: Vec2f64 {
                     x: x + shift.0,
                     y: y + shift.1,
                 },
                 rotation_rad: 0.0,
-                radius: gen_asteroid_radius(rng),
+                radius: gen_asteroid_radius(prng),
             },
             movement: Movement::RadialMonotonous {
-                full_period_ticks: (180 * 1000 * 1000) as f64,
-                clockwise: false,
+                full_period_ticks: gen_period(prng, 1.5),
                 anchor: ObjectSpecifier::Star { id: star.id },
                 relative_position: Default::default(),
                 phase: None,

@@ -149,7 +149,6 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 planet.spatial.radius = args.radius;
                 planet.movement = Movement::RadialMonotonous {
                     full_period_ticks: args.full_period_ticks,
-                    clockwise: false,
                     anchor: ObjectSpecifier::Star {
                         id: map_id(args.anchor_id, &mut HashMap::new(), &mut prng),
                     },
@@ -257,7 +256,6 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                         properties: vec![],
                         movement: Movement::RadialMonotonous {
                             full_period_ticks: spb.full_period_ticks,
-                            clockwise: false,
                             anchor,
                             relative_position: Default::default(),
                             phase: None,
