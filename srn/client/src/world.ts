@@ -30,12 +30,7 @@ import {
   Substitution,
   TradeAction,
 } from '../../world/pkg';
-import {
-  CargoDeliveryQuestState,
-  GameMode,
-  InventoryItemType,
-  SubstitutionType,
-} from '../../world/pkg/world.extra';
+import { CargoDeliveryQuestState, GameMode, InventoryItemType, SubstitutionType, } from '../../world/pkg/world.extra';
 import _ from 'lodash';
 import { Dictionary } from 'ts-essentials';
 import { findObjectPosition } from './ClientStateIndexing';
@@ -501,7 +496,13 @@ export const genPeriod = (
   const idx = Math.floor(prng.next(0, periodPrimes.length));
   const prime = periodPrimes[idx];
   const dir = prng.nextBoolean() ? 1 : -1;
-  const val = dir * prime * 10 * 1000 * 1000 * scale * 2.0;
-  console.log({ seed, dir, prime, scale, idx });
-  return val;
+  return dir * prime * 10 * 1000 * 1000 * scale * 2.0;
+};
+export const isInAABB = (bounds: AABB, obj: IVector, radius: number): boolean => {
+  return (
+    bounds.top_left.x - radius <= obj.x &&
+    obj.x <= bounds.bottom_right.x + radius &&
+    bounds.top_left.y - radius <= obj.y &&
+    obj.y <= bounds.bottom_right.y + radius
+  );
 };

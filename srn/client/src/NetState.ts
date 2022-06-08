@@ -4,10 +4,10 @@ import {
   GameMode,
   GameState,
   interpolateWorld,
+  isInAABB,
   isManualMovement,
   loadReplayIntoWasm,
   ManualMovementActionTags,
-  MaxedAABB,
   restoreReplayFrame,
   TradeAction,
   updateWorld,
@@ -19,7 +19,7 @@ import {
   isSyncActionTypeActive,
   resetActiveSyncActions,
 } from './utils/ShipControls';
-import Vector, { IVector } from './utils/Vector';
+import Vector from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledThrottledTime, vsyncedCoupledTime } from './utils/Times';
 import { api } from './utils/api';
@@ -100,15 +100,6 @@ export enum ServerToClientMessageCode {
   LeaveRoom = 9,
 }
 
-const isInAABB = (bounds: AABB, obj: IVector, radius: number): boolean => {
-  return (
-    bounds.top_left.x - radius <= obj.x &&
-    obj.x <= bounds.bottom_right.x + radius &&
-    bounds.top_left.y - radius <= obj.y &&
-    obj.y <= bounds.bottom_right.y + radius
-  );
-};
-
 // Theoretically, we need that only for BROADCAST_SLEEP_MS from main.ws - however, we might need more in case something lags, so x 2
 const EXTRAPOLATE_AHEAD_MS = 500 * 2;
 
@@ -122,6 +113,10 @@ statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 const FULL_DESYNC_DETECT_MS = 500.0;
 // this has to be less than expiry (500ms) minus ping
 const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
+
+const normalLog = (...args: any[]) => console.log(...args);
+const normalWarn = (...args: any[]) => console.warn(...args);
+const normalErr = (...args: any[]) => console.error(...args);
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -210,7 +205,7 @@ export default class NetState extends EventEmitter {
     this.setMaxListeners(100);
     this.id = uuid.v4();
     const newVar = DEBUG_CREATION ? `at ${new Error().stack}` : '';
-    console.log(`created NS ${this.id} ${newVar}`);
+    normalLog(`created NS ${this.id} ${newVar}`);
     this.resetState();
     this.ping = 0;
     this.desync = 0;
@@ -289,7 +284,7 @@ export default class NetState extends EventEmitter {
 
   disconnectAndDestroy = () => {
     this.disconnecting = true;
-    console.log(`disconnecting NS ${this.id}`);
+    normalLog(`disconnecting NS ${this.id}`);
     if (this.socket) {
       this.socket.close();
     }
@@ -308,7 +303,7 @@ export default class NetState extends EventEmitter {
 
   init = (mode: GameMode): Promise<void> => {
     this.mode = mode;
-    console.log(`initializing NS ${this.id}`);
+    normalLog(`initializing NS ${this.id}`);
     this.connecting = true;
     Perf.start();
     this.time.setInterval(
@@ -390,17 +385,17 @@ export default class NetState extends EventEmitter {
         this.reindexNetState();
       }
     } else {
-      console.warn(`No best mark for ${markInMs}`);
+      normalWarn(`No best mark for ${markInMs}`);
       this.pauseReplay();
     }
     this.emit('change');
   };
 
   initReplay = async (replayId: string) => {
-    console.log(`initializing replay NS ${this.id} for replay ${replayId}`);
+    normalLog(`initializing replay NS ${this.id} for replay ${replayId}`);
     this.connecting = true;
     const replayJson: any = await api.downloadReplayJson(replayId);
-    console.log('replay downloaded');
+    normalLog('replay downloaded');
     this.connecting = false;
     this.mode = replayJson.initial_state.mode;
     this.replay = replayJson;
@@ -454,7 +449,7 @@ export default class NetState extends EventEmitter {
         reject(new Error('Currently disconnecting'));
         return;
       }
-      console.log(`connecting NS ${this.id}`);
+      normalLog(`connecting NS ${this.id}`);
       this.socket = new WebSocket(api.getWebSocketUrl(), 'rust-websocket');
       this.socket.onmessage = (event) => {
         Perf.markEvent(Measure.SocketFrameEvent);
@@ -490,7 +485,7 @@ export default class NetState extends EventEmitter {
         })();
       };
       this.socket.onerror = () => {
-        console.warn('socket error');
+        normalWarn('socket error');
         this.resetState();
         if (!this.disconnecting) {
           this.emit('network');
@@ -604,12 +599,12 @@ export default class NetState extends EventEmitter {
             parsed,
             -this.desync
           );
-          console.log(
-            'rebased prevState millis',
-            this.prevState.millis,
-            'on top of',
-            this.serverState.millis
-          );
+          // console.log(
+          //   'rebased prevState millis',
+          //   this.prevState.millis,
+          //   'on top of',
+          //   this.serverState.millis
+          // );
         } else {
           // this means that client lagged and server is ahead of it, which shouldn't be the case
           // or it's still synchronizing in the beginning
@@ -617,12 +612,12 @@ export default class NetState extends EventEmitter {
             parsed,
             10 // magic constant to bump client a little bit ahead so it doensn't have to accept it next time
           );
-          console.log(
-            'accepted server state with a magic bump',
-            this.prevState.millis,
-            'on top of',
-            this.serverState.millis
-          );
+          // console.log(
+          //   'accepted server state with a magic bump',
+          //   this.prevState.millis,
+          //   'on top of',
+          //   this.serverState.millis
+          // );
         }
         this.state.breadcrumbs = savedBreadcrumbs;
         this.extrapolate();
@@ -682,14 +677,14 @@ export default class NetState extends EventEmitter {
         const event = JSON.parse(data).value;
         this.emit('gameEvent', event);
       } else if (messageCode === ServerToClientMessageCode.LeaveRoom) {
-        console.log('Received disconnect request from server');
+        normalLog('Received disconnect request from server');
         this.disconnectAndDestroy();
       } else {
-        console.log('unknown message code', messageCode);
+        normalWarn('unknown message code', messageCode);
       }
       this.reindexNetState();
     } catch (e) {
-      console.warn('error handling message', e);
+      normalWarn('error handling message', e);
     } finally {
       this.updateVisMap();
     }
@@ -708,11 +703,11 @@ export default class NetState extends EventEmitter {
         case ClientOpCode.ObsoleteNotificationAction:
         case ClientOpCode.ObsoleteRoomJoin:
         case ClientOpCode.ObsoleteMutateMyShip: {
-          console.warn('unsupported command');
+          normalWarn('unsupported command');
           break;
         }
         case ClientOpCode.Unknown: {
-          console.warn(`Unknown opcode ${cmd.code}`);
+          normalWarn(`Unknown opcode ${cmd.code}`);
           break;
         }
         case ClientOpCode.Name: {
@@ -930,15 +925,15 @@ export default class NetState extends EventEmitter {
         // console.log('true interpolate', this.state.millis, value.toFixed(3));
       } else {
         this.state = _.clone(this.prevState);
-        console.log(
-          `interpolation bump due to client lag, may look bad, diff=${(
-            baseMs - currentMs
-          ).toFixed(0)}ms`
-        );
+        // console.log(
+        //   `interpolation bump due to client lag, may look bad, diff=${(
+        //     baseMs - currentMs
+        //   ).toFixed(0)}ms`
+        // );
       }
     } else {
       this.state = _.clone(this.prevState);
-      console.log('interpolation impossible, no valid boundaries');
+      // console.log('interpolation impossible, no valid boundaries');
     }
     this.reindexCurrentState();
   }
@@ -950,38 +945,21 @@ export default class NetState extends EventEmitter {
     // too much stuff here and it will slow down itself (unless I add again the instant-update mode without iterations, which is non-deterministic then)
     const MAX_ACCEPTABLE_REBASE_ADJUST = 100;
     if (adjustMillis > MAX_ACCEPTABLE_REBASE_ADJUST) {
-      console.warn(
-        `refusing to adjust state due to huge difference ${adjustMillis} > max=${MAX_ACCEPTABLE_REBASE_ADJUST}`
-      );
+      // console.warn(
+      //   `refusing to adjust state due to huge difference ${adjustMillis} > max=${MAX_ACCEPTABLE_REBASE_ADJUST}`
+      // );
       parsed.millis += adjustMillis;
       return parsed;
     }
-    console.log(
-      'executing rebase server state',
-      parsed.millis,
-      'with adjustMillis',
-      adjustMillis
-    );
+    // console.log(
+    //   'executing rebase server state',
+    //   parsed.millis,
+    //   'with adjustMillis',
+    //   adjustMillis
+    // );
     // return parsed;
     return (
       updateWorld(parsed, this.getSimulationArea(), adjustMillis) || parsed
     );
-  }
-
-  private controlForOuterPlanet(prevState: GameState, nextState: GameState) {
-    const prevPlanet =
-      prevState.locations[0].planets[prevState.locations[0].planets.length - 1];
-    const nextPlanet =
-      nextState.locations[0].planets[nextState.locations[0].planets.length - 1];
-    const prevPos = Vector.fromIVector(prevPlanet.spatial.position);
-    const nextPos = Vector.fromIVector(nextPlanet.spatial.position);
-    const dist = prevPos.euDistTo(nextPos);
-    const timeDist = nextState.millis - prevState.millis;
-    console.log({
-      dist,
-      timeDist,
-      prevPos: prevPos.toFix(),
-      nextPos: nextPos.toFix(),
-    });
   }
 }

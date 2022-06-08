@@ -1,7 +1,7 @@
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Vector3 } from 'three';
-import React, { Suspense } from 'react';
+import React, { Suspense, useRef } from 'react';
 import classnames from 'classnames';
 import 'loaders.css';
 import { GameMode, max_x, min_x } from '../world';
@@ -51,18 +51,22 @@ export const ThreeLayer: React.FC<{
   desiredMode: GameMode;
   cameraMinZoomShiftOverride?: number;
   cameraMaxZoomShiftOverride?: number;
+  defaultShowGrid?: boolean;
 }> = ({
   visible,
   desiredMode,
   cameraMinZoomShiftOverride,
   cameraMaxZoomShiftOverride,
+  defaultShowGrid = false,
 }) => {
   const ns = NetState.get();
   if (!ns) return null;
   const { state, visMap, visualState, indexes } = ns;
-  const [shown] = useToggleHotkey('shift+g', false, 'show helper grid');
-  const showCoords = shown;
-
+  const [showGrid] = useToggleHotkey(
+    'shift+g',
+    defaultShowGrid,
+    'show helper grid'
+  );
   useNSForceChange('ThreeLayer', true);
 
   const hoverOnGrabbable = useStore((state) => state.showTractorCircle);
@@ -117,7 +121,7 @@ export const ThreeLayer: React.FC<{
           />
           <BoundCameraMover />
           <ambientLight />
-          {showCoords && (
+          {showGrid && (
             <gridHelper
               args={[max_x - min_x, (max_x - min_x) / 10]}
               rotation={[Math.PI / 2, 0, 0]}
