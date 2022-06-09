@@ -209,12 +209,5 @@ export const ThreeSpaceBackground: React.FC<{
       />
     </mesh>
   );
-  // noinspection RequiredAttributes
-  return cameraBound ? (
-    <OrthographicCamera key={shaderShift} makeDefault>
-      {backgroundPlaneMesh}
-    </OrthographicCamera>
-  ) : (
-    backgroundPlaneMesh
-  );
+  return backgroundPlaneMesh;
 };

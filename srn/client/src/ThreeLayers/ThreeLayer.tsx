@@ -31,6 +31,7 @@ import { ThreeLoadingIndicator } from './Resources';
 import { useNSForceChange } from '../NetStateHooks';
 import { ThreeBreadcrumbs } from './ThreeBreadcrumbs';
 import { executeSyncAction } from '../utils/ShipControls';
+import { Html, OrthographicCamera } from '@react-three/drei';
 
 THREE.Cache.enabled = true;
 
@@ -44,6 +45,16 @@ const getViewPortMaxDimension = () => {
 export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
   const viewPortMaxDimension = getViewPortMaxDimension();
   return viewPortMaxDimension * SAFE_ENLARGE_BACKGROUND * cameraZoomFactor;
+};
+
+const initialCameraPosition = new Vector3(0, 0, CAMERA_HEIGHT);
+
+const ThreeCameraUi: React.FC = () => {
+  return (
+    <Html>
+      <div style={{ backgroundColor: 'red', color: 'white' }}>123123</div>
+    </Html>
+  ); 
 };
 
 export const ThreeLayer: React.FC<{
@@ -70,16 +81,13 @@ export const ThreeLayer: React.FC<{
   useNSForceChange('ThreeLayer', true);
 
   const hoverOnGrabbable = useStore((state) => state.showTractorCircle);
+  const overridenCameraRef = useRef();
 
+  const shaderShift = seedToNumber(state.seed) % 1000;
   return (
     <Canvas
       className={classnames({ grabbable: hoverOnGrabbable })}
       orthographic
-      camera={{
-        position: new Vector3(0, 0, CAMERA_HEIGHT),
-        zoom: CAMERA_DEFAULT_ZOOM(),
-        far: 1000,
-      }}
       style={{
         position: 'absolute',
         width: size.width_px,
@@ -108,18 +116,30 @@ export const ThreeLayer: React.FC<{
         >
           {/*background plane serves to be a click helper, as otherwise
           three will not register clicks (through empty space)*/}
-          <ThreeSpaceBackground
-            shaderShift={seedToNumber(state.seed) % 1000}
-            cameraPositonParallaxed
-            size={getBackgroundSize()}
-            cameraBound
-          />
+          <OrthographicCamera
+            key={visualState.zoomShift}
+            makeDefault
+            position={initialCameraPosition}
+            zoom={CAMERA_DEFAULT_ZOOM()}
+            far={1000}
+            ref={overridenCameraRef}
+          >
+            <group>
+              <ThreeCameraUi />
+            </group>
+            <ThreeSpaceBackground
+              shaderShift={shaderShift}
+              cameraPositonParallaxed
+              size={getBackgroundSize()}
+              cameraBound
+            />
+          </OrthographicCamera>
           <ExternalCameraControl />
           <CameraZoomer
             overrideMin={cameraMinZoomShiftOverride}
             overrideMax={cameraMaxZoomShiftOverride}
           />
-          <BoundCameraMover />
+          {overridenCameraRef.current && <BoundCameraMover />}
           <ambientLight />
           {showGrid && (
             <gridHelper
