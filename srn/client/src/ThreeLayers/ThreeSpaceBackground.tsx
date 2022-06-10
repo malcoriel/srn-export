@@ -143,14 +143,14 @@ export const ThreeSpaceBackground: React.FC<{
   shaderShift: number;
   size: number;
   cameraBound?: boolean;
-  cameraPositonParallaxed?: boolean;
+  cameraPositionParallaxed?: boolean;
   boost?: number;
   animationSpeed?: number;
   onClick?: () => void;
 }> = ({
   shaderShift,
   size,
-  cameraPositonParallaxed,
+  cameraPositionParallaxed,
   onClick,
   cameraBound,
   animationSpeed,
@@ -161,7 +161,7 @@ export const ThreeSpaceBackground: React.FC<{
 
   useFrame(({ camera }) => {
     let parallaxShift: IVector;
-    if (!cameraPositonParallaxed) {
+    if (!cameraPositionParallaxed) {
       parallaxShift = VectorFzero;
     } else {
       const cameraPos = camera.position;

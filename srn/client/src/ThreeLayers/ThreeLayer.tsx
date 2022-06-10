@@ -31,7 +31,8 @@ import { ThreeLoadingIndicator } from './Resources';
 import { useNSForceChange } from '../NetStateHooks';
 import { ThreeBreadcrumbs } from './ThreeBreadcrumbs';
 import { executeSyncAction } from '../utils/ShipControls';
-import { Html, OrthographicCamera } from '@react-three/drei';
+import { OrthographicCamera } from '@react-three/drei';
+import { ThreeCameraUi } from './ThreeCameraUi';
 
 THREE.Cache.enabled = true;
 
@@ -48,14 +49,6 @@ export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
 };
 
 const initialCameraPosition = new Vector3(0, 0, CAMERA_HEIGHT);
-
-const ThreeCameraUi: React.FC = () => {
-  return (
-    <Html>
-      <div style={{ backgroundColor: 'red', color: 'white' }}>123123</div>
-    </Html>
-  ); 
-};
 
 export const ThreeLayer: React.FC<{
   visible: boolean;
@@ -129,7 +122,7 @@ export const ThreeLayer: React.FC<{
             </group>
             <ThreeSpaceBackground
               shaderShift={shaderShift}
-              cameraPositonParallaxed
+              cameraPositionParallaxed
               size={getBackgroundSize()}
               cameraBound
             />
