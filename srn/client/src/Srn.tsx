@@ -41,8 +41,8 @@ import {
   MenuLoadingIndicator,
   SuspendedPreloader,
 } from './ThreeLayers/Resources';
-import { api } from './utils/api';
 import { ReplayControlsSrnContainer } from './ReplayControlsSrnContainer';
+import { CameraCoordinatesBox } from './HtmlLayers/CameraCoordinatesBox';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -79,6 +79,7 @@ const renderPlayingElements = (mode: GameMode) => (
       <PromptWindow />
       <StateStoreSyncer />
       <SandboxQuickMenu />
+      <CameraCoordinatesBox />
     </>
   </>
 );
@@ -102,6 +103,7 @@ const renderWatchingElements = (mode: GameMode) => (
       <OverheadPanel />
       <StateStoreSyncer />
       <ReplayControlsSrnContainer />
+      <CameraCoordinatesBox />
     </>
   </>
 );

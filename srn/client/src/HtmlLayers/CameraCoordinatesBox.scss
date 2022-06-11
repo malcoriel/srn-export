@@ -1,0 +1,16 @@
+@import "../utils/palette";
+.coordinate-box {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  height: 12px;
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 12px;
+  color: $teal;
+  display:flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  overflow: hidden;
+}

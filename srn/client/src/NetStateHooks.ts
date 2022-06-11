@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import _ from 'lodash';
-import NetState from './NetState';
+import NetState, { VisualState } from './NetState';
 import { GameState } from './world';
 import { ClientStateIndexes } from './ClientStateIndexing';
 
@@ -32,7 +32,7 @@ export const useNSForceChange = (
         // @ts-ignore
         shouldUpdate
       ) {
-        if (shouldUpdate(prevState, nextState)) {
+        if (shouldUpdate(prevState, nextState, prevIndexes, nextIndexes)) {
           forceChange((flip) => !flip);
         }
       } else {

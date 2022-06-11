@@ -7,6 +7,7 @@ import { size } from '../coord';
 import { Button } from '../HtmlLayers/ui/Button';
 import { startTestGame, stopTestGame } from './functionalStoryTools';
 import { ReferencableIdBuilder } from '../../../world/pkg/world.extra';
+import { CameraCoordinatesBox } from '../HtmlLayers/CameraCoordinatesBox';
 
 const getStartGameParams = () => {
   const star_ref_id = {
@@ -129,13 +130,16 @@ const Template: Story = (args) => {
     >
       <div style={{ width: 768, height: 768, position: 'relative' }}>
         {playing && (
-          <ThreeLayer
-            cameraMinZoomShiftOverride={0.1}
-            cameraMaxZoomShiftOverride={10.0}
-            desiredMode={GameMode.Sandbox}
-            visible
-            defaultShowGrid
-          />
+          <div style={{ height: '100%', width: '100%' }}>
+            <ThreeLayer
+              cameraMinZoomShiftOverride={0.1}
+              cameraMaxZoomShiftOverride={10.0}
+              desiredMode={GameMode.Sandbox}
+              visible
+              defaultShowGrid
+            />
+            <CameraCoordinatesBox />
+          </div>
         )}
       </div>
       <Button

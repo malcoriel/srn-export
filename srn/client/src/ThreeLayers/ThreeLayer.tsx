@@ -117,9 +117,7 @@ export const ThreeLayer: React.FC<{
             far={1000}
             ref={overridenCameraRef}
           >
-            <group>
-              <ThreeCameraUi />
-            </group>
+            <ThreeCameraUi />
             <ThreeSpaceBackground
               shaderShift={shaderShift}
               cameraPositionParallaxed
