@@ -928,11 +928,11 @@ export default class NetState extends EventEmitter {
         // console.log('true interpolate', this.state.millis, value.toFixed(3));
       } else {
         this.state = _.clone(this.prevState);
-        // console.log(
-        //   `interpolation bump due to client lag, may look bad, diff=${(
-        //     baseMs - currentMs
-        //   ).toFixed(0)}ms`
-        // );
+        console.log(
+          `interpolation bump due to client lag, may look bad, diff=${(
+            baseMs - currentMs
+          ).toFixed(0)}ms`
+        );
       }
     } else {
       this.state = _.clone(this.prevState);
@@ -940,11 +940,11 @@ export default class NetState extends EventEmitter {
     }
     this.reindexCurrentState();
     if (this.indexes.myShipPosition) {
-      this.visualState.breadcrumbs.push({
-        color: 'pink',
-        timestamp_ticks: this.state.ticks,
-        position: this.indexes.myShipPosition,
-      });
+      // this.visualState.breadcrumbs.push({
+      //   color: 'pink',
+      //   timestamp_ticks: this.state.ticks,
+      //   position: this.indexes.myShipPosition,
+      // });
     }
   }
 
