@@ -39,6 +39,8 @@ pub fn interpolate_states(
                 &options,
                 &result_indexes,
                 &target_indexes,
+                state_a.ticks,
+                state_b.ticks,
             );
         }
     }
@@ -62,6 +64,8 @@ fn interpolate_location(
     options: &UpdateOptionsV2,
     result_indexes: &GameStateIndexes,
     target_indexes: &GameStateIndexes,
+    result_ticks: u64,
+    target_ticks: u64,
 ) {
     let ships_by_id_target = index_ships_by_id(target);
     for i in 0..result.ships.len() {
@@ -70,7 +74,7 @@ fn interpolate_location(
             if should_skip_pos(&options, &ship.as_vec()) {
                 continue;
             }
-            interpolate_ship(ship, target, value);
+            interpolate_ship(ship, target, value, result_ticks, target_ticks);
         }
     }
 
@@ -379,7 +383,35 @@ fn gen_rotation_phase_table(def: &RotationMovement, radius: f64) -> Vec<f64> {
     }
 }
 
-fn interpolate_ship(result: &mut Ship, target: &Ship, value: f64) {
+fn interpolate_ship(
+    result: &mut Ship,
+    target: &Ship,
+    mut value: f64,
+    result_ticks: u64,
+    target_ticks: u64,
+) {
+    let time_diff = target_ticks - result_ticks;
+    let linear_speed = result
+        .movement_definition
+        .get_current_linear_move_speed_per_tick();
+    let time_to_target = if let Some(navigate_target) = &result.navigate_target {
+        let distance_to_target = navigate_target.subtract(&result.as_vec()).euclidean_len();
+        let time_to_target = distance_to_target / linear_speed;
+        let dist_target = target.as_vec().euclidean_distance(navigate_target);
+        if time_diff > time_to_target as u64 && dist_target <= 0.01 {
+            // consider this a successful navigation interpolation, meaning that the actual passed distance might be larger than lerp
+            Some(time_to_target)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    if let Some(time_to_target) = time_to_target {
+        let multiplication = time_diff as f64 / time_to_target;
+        value *= multiplication;
+        value = value.max(0.0).min(1.0);
+    }
     result.x = lerp(result.x, target.x, value);
     result.y = lerp(result.y, target.y, value);
 }

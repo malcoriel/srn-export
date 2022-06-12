@@ -1,4 +1,5 @@
 import {
+  createStateWithAShip,
   getLoc0,
   getShipByPlayerId,
   mockUpdateOptions,
@@ -8,6 +9,7 @@ import {
 } from '../util';
 import _ from 'lodash';
 import * as uuid from 'uuid';
+import { mockPlayerActionNavigate } from './playerActions.spec';
 
 const lerp = (x, y, a) => x + (y - x) * a;
 
@@ -137,7 +139,7 @@ describe('state interpolation', () => {
     });
     const roomB = _.cloneDeep(roomA);
     const planetB = getLoc0(roomB.state).planets[0];
-    forceSetBodyPosition(planetA, {
+    forceSetBodyPosition(planetB, {
       x: 0,
       y: -100,
     });
@@ -286,5 +288,32 @@ describe('state interpolation', () => {
         );
       }
     }
+  });
+
+  it('can interpolate ship movement approaching navigation end correctly', () => {
+    const { state, ship } = createStateWithAShip('Sandbox');
+    const speed = ship.movement_definition.move_speed;
+    const start = state.ticks;
+    const end = start + 5 * 1000 * 1000;
+    const ratio = 0.2;
+    const arrival_diff = (end - start) * ratio;
+    const distance_diff = arrival_diff * speed;
+    ship.x = 100;
+    ship.y = 100;
+    const newPos = { x: ship.x, y: ship.y };
+    newPos.x += distance_diff;
+    ship.navigate_target = newPos;
+    const stateB = _.cloneDeep(state);
+    stateB.locations[0].ships[0].x = newPos.x;
+    stateB.player_actions = [];
+    stateB.ticks = end;
+    const stateC = wasm.interpolateStates(
+      state,
+      stateB,
+      ratio,
+      mockUpdateOptions()
+    );
+    const newShipPosX = stateC.locations[0].ships[0].x;
+    expect(newShipPosX).toBeCloseTo(newPos.x);
   });
 });

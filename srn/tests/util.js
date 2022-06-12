@@ -194,7 +194,7 @@ export const mockShip = (id) => ({
   id,
   x: 0,
   y: 0,
-  rotation: Math.PI, // orient towards positive y
+  rotation: Math.PI,
   radius: 1,
   acc_periodic_dmg: 0,
   acc_periodic_heal: 0,
@@ -325,3 +325,26 @@ export const packAndWriteReplay = async (states, name) => {
   await writeReplay(replay);
 };
 export const mockUpdateOptions = (overrides) => _.merge({}, overrides);
+
+export const createStateWithAShip = (mode = 'CargoRush') => {
+  const state = wasm.seedWorld({
+    seed: 'player actions',
+    mode,
+    gen_state_opts: genStateOpts({ system_count: 1 }),
+  });
+  const player = mockPlayer(uuid.v4());
+  state.players.push(player);
+  const ship = mockShip(uuid.v4());
+  player.ship_id = ship.id;
+  const loc = getLoc0(state);
+  loc.ships.push(ship);
+  // to not blow up due to being in the star
+  ship.x = 100;
+  ship.y = 100;
+  return {
+    state,
+    player,
+    ship,
+    planet: getLoc0(state).planets[0],
+  };
+};

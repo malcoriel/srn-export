@@ -1,9 +1,8 @@
 import {
+  createStateWithAShip,
   genStateOpts,
   getLoc0,
   getShipByPlayerId,
-  mockPlayer,
-  mockShip,
   swapGlobals,
   updateRoom,
   updateWorld,
@@ -106,29 +105,6 @@ export const mockPlayerActionDockNavigate = (shipId, to) => ({
   ship_id: shipId,
   target: to,
 });
-
-const createStateWithAShip = (mode = 'CargoRush') => {
-  const state = wasm.seedWorld({
-    seed: 'player actions',
-    mode,
-    gen_state_opts: genStateOpts({ system_count: 1 }),
-  });
-  const player = mockPlayer(uuid.v4());
-  state.players.push(player);
-  const ship = mockShip(uuid.v4());
-  player.ship_id = ship.id;
-  const loc = getLoc0(state);
-  loc.ships.push(ship);
-  // to not blow up due to being in the star
-  ship.x = 100;
-  ship.y = 100;
-  return {
-    state,
-    player,
-    ship,
-    planet: getLoc0(state).planets[0],
-  };
-};
 
 const dockToPlanet = (state, ship) => {
   let currState = state;

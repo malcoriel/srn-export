@@ -134,7 +134,7 @@ impl IBodyV2 for AsteroidBelt {
     }
 
     fn get_anchor_tier(&self) -> u32 {
-        todo!()
+        return 1;
     }
 
     fn as_any(&self) -> &dyn Any {
