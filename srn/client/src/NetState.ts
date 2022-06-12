@@ -186,8 +186,6 @@ export default class NetState extends EventEmitter {
 
   public playingReplay = false;
 
-  private lastUpdateTimeMsFromPageLoad = 0;
-
   public scheduleUpdateLocalState = false;
 
   public static make(): NetState {
@@ -330,7 +328,7 @@ export default class NetState extends EventEmitter {
             // this is a special limitation so the forced-update happens on 'synchronous' ship actions so optimistic
             // application happens without waiting for the server
             this.scheduleUpdateLocalState = false;
-            this.forceUpdateLocalState();
+            this.forceUpdateLocalStateForOptimisticSync();
           }
         });
       },
@@ -741,15 +739,8 @@ export default class NetState extends EventEmitter {
   // [tag, action, ticks], the order is the order of appearance
   private pendingActions: [string, Action[], number][] = [];
 
-  forceUpdateLocalState = () => {
-    const prevLastUpdate =
-      this.lastUpdateTimeMsFromPageLoad || Math.floor(performance.now());
-    this.lastUpdateTimeMsFromPageLoad = Math.floor(performance.now());
-    const elapsedMs = this.lastUpdateTimeMsFromPageLoad - prevLastUpdate;
-    if (elapsedMs <= 0) {
-      return; // already actual state, beginning of game, or 'impossible' negative
-    }
-    this.updateLocalState(elapsedMs);
+  forceUpdateLocalStateForOptimisticSync = () => {
+    this.updateLocalState(Math.ceil(this.state.update_every_ticks / 1000)); // do a minimal update. this will cause a very small desync forward, but will flush out all the actions
     this.prevState = _.clone(this.state);
   };
 
@@ -801,6 +792,7 @@ export default class NetState extends EventEmitter {
     if (result) {
       this.state = result;
       this.reindexNetState();
+      console.log('after update local', elapsedMs, this.indexes.myShipPosition);
       this.updateVisMap();
     }
   };
@@ -947,6 +939,13 @@ export default class NetState extends EventEmitter {
       // console.log('interpolation impossible, no valid boundaries');
     }
     this.reindexCurrentState();
+    if (this.indexes.myShipPosition) {
+      this.visualState.breadcrumbs.push({
+        color: 'pink',
+        timestamp_ticks: this.state.ticks,
+        position: this.indexes.myShipPosition,
+      });
+    }
   }
 
   private rebaseReceivedStateToCurrentPoint(

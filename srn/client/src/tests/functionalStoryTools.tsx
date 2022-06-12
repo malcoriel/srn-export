@@ -12,6 +12,7 @@ import { size } from '../coord';
 import { ThreeLayer } from '../ThreeLayers/ThreeLayer';
 import { CameraCoordinatesBox } from '../HtmlLayers/CameraCoordinatesBox';
 import { Button } from '../HtmlLayers/ui/Button';
+import { executeSyncAction } from '../utils/ShipControls';
 
 let nsRef: NetState | undefined;
 
@@ -69,7 +70,7 @@ export const buildStory = async ({
     for (const { action, wait } of actions) {
       await delay(wait);
       patchAction(action, nsRef);
-      nsRef.sendSchedulePlayerAction(action);
+      executeSyncAction(action);
     }
   }
 };
