@@ -17,8 +17,16 @@ const roundPos = (
   return around.add(VectorF(x, y));
 };
 
-type ThreeBreadcrumbsProps = { breadcrumbs: Breadcrumb[] };
-export const ThreeBreadcrumbs = ({ breadcrumbs }: ThreeBreadcrumbsProps) => {
+type ThreeBreadcrumbsProps = {
+  breadcrumbs: Breadcrumb[];
+  currentTicks: number;
+  displayForLastTicks: number;
+};
+export const ThreeBreadcrumbs = ({
+  breadcrumbs,
+  currentTicks,
+  displayForLastTicks,
+}: ThreeBreadcrumbsProps) => {
   const withPosKeys: (Breadcrumb & { posKey: string })[] = breadcrumbs.map(
     (b) => ({
       ...b,
@@ -31,7 +39,10 @@ export const ThreeBreadcrumbs = ({ breadcrumbs }: ThreeBreadcrumbsProps) => {
       {Object.entries(grouped).map(([key, breadcrumbs]) => {
         return (
           <group key={key}>
-            {breadcrumbs.map(({ color, position }, i) => {
+            {breadcrumbs.map(({ color, position, timestamp_ticks }, i) => {
+              if (currentTicks >= timestamp_ticks + displayForLastTicks) {
+                return null;
+              }
               let pos;
               if (breadcrumbs.length > 1) {
                 pos = roundPos(

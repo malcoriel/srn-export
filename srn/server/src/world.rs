@@ -523,6 +523,7 @@ pub struct ShipWithTime {
 pub struct Breadcrumb {
     pub position: Vec2f64,
     pub color: String,
+    pub timestamp_ticks: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

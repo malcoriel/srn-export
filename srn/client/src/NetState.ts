@@ -28,6 +28,7 @@ import _ from 'lodash';
 import { UnreachableCaseError } from 'ts-essentials';
 import {
   Action,
+  Breadcrumb,
   InventoryAction,
   LongActionStart,
   NotificationActionR,
@@ -82,6 +83,7 @@ export type VisualState = {
   };
   // proportion from default zoom
   zoomShift: number;
+  breadcrumbs: Breadcrumb[];
 };
 
 const DEBUG_CREATION = false;
@@ -117,6 +119,7 @@ const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
 const normalLog = (...args: any[]) => console.log(...args);
 const normalWarn = (...args: any[]) => console.warn(...args);
 const normalErr = (...args: any[]) => console.error(...args);
+export const DISPLAY_BREADCRUMBS_LAST_TICKS = 5 * 1000 * 1000; // 5s
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -223,6 +226,7 @@ export default class NetState extends EventEmitter {
         y: 0,
       },
       zoomShift: 1,
+      breadcrumbs: [],
     };
     this.visMap = {};
     this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
@@ -356,6 +360,7 @@ export default class NetState extends EventEmitter {
           );
           this.lastSlowChangedState = _.clone(this.state);
           this.lastSlowChangedIndexes = _.clone(this.indexes);
+          this.cleanupBreadcrumbs();
         });
       },
       () => {}
@@ -500,20 +505,29 @@ export default class NetState extends EventEmitter {
   private addExtrapolateBreadcrumbs = () => {
     const myNextShip = this.nextIndexes.myShip;
     if (myNextShip) {
-      this.state.breadcrumbs.push({
+      this.visualState.breadcrumbs.push({
         position: Vector.fromIVector(myNextShip),
         color: 'green',
+        timestamp_ticks: this.state.ticks,
       });
     }
     this.addCurrentShipBreadcrumb('yellow');
   };
 
+  private cleanupBreadcrumbs = () => {
+    this.visualState.breadcrumbs = this.visualState.breadcrumbs.filter(
+      ({ timestamp_ticks }) =>
+        timestamp_ticks + DISPLAY_BREADCRUMBS_LAST_TICKS > this.state.ticks
+    );
+  };
+
   private addCurrentShipBreadcrumb = (color: string) => {
     const myShip = findMyShip(this.state);
     if (myShip) {
-      this.state.breadcrumbs.push({
+      this.visualState.breadcrumbs.push({
         position: Vector.fromIVector(myShip),
         color,
+        timestamp_ticks: this.state.ticks,
       });
     }
   };
@@ -581,9 +595,7 @@ export default class NetState extends EventEmitter {
         //   }
         // }
 
-        this.state.breadcrumbs = [];
         this.addCurrentShipBreadcrumb('red');
-        const savedBreadcrumbs = this.state.breadcrumbs;
 
         // TODO with new interpolation approach, this needs to be corrected to timestamp-match the previous prevState
 
@@ -619,7 +631,6 @@ export default class NetState extends EventEmitter {
           //   this.serverState.millis
           // );
         }
-        this.state.breadcrumbs = savedBreadcrumbs;
         this.extrapolate();
 
         const toDrop = new Set();

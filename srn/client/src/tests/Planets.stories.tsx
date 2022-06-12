@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Meta, Story } from '@storybook/react';
-import * as uuid from 'uuid';
-import { GameMode, genPeriod, PlanetType } from '../world';
-import { ThreeLayer } from '../ThreeLayers/ThreeLayer';
-import { size } from '../coord';
-import { Button } from '../HtmlLayers/ui/Button';
-import { startTestGame, stopTestGame } from './functionalStoryTools';
+import React from 'react';
+import { Meta } from '@storybook/react';
+import { genPeriod, PlanetType } from '../world';
+import {
+  FunctionalStoryTemplate,
+  getStartGameParams,
+} from './functionalStoryTools';
 import { ReferencableIdBuilder } from '../../../world/pkg/world.extra';
-import { CameraCoordinatesBox } from '../HtmlLayers/CameraCoordinatesBox';
 
-const getStartGameParams = () => {
+const storyName = 'Functional/Planets';
+
+const getStartGameParamsPlanets = () => {
   const star_ref_id = {
     tag: 'Reference' as const,
     reference: 'star',
@@ -17,7 +17,7 @@ const getStartGameParams = () => {
 
   return {
     initialState: {
-      force_seed: 'Planets',
+      force_seed: storyName,
       star: {
         radius: 50.0,
         id: star_ref_id,
@@ -91,72 +91,13 @@ const getStartGameParams = () => {
   };
 };
 
-const Template: Story = (args) => {
-  const [revision, setRevision] = useState(uuid.v4());
-  const [playing, setPlaying] = useState(false);
-  useEffect(() => {
-    setRevision((old) => old + 1);
-  }, []);
-  size.width_px = 768;
-  size.height_px = 768;
-
-  useEffect(() => {
-    return () => {
-      // always destroy on unmount
-      stopTestGame().then(() =>
-        console.log('disconnect on unmount story done')
-      );
-    };
-  }, []);
-
-  const flipPlaying = useCallback(async (oldPlaying) => {
-    const newPlaying = !oldPlaying;
-    if (newPlaying) {
-      await startTestGame(getStartGameParams());
-    } else {
-      await stopTestGame();
-    }
-    setPlaying(newPlaying);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    flipPlaying(false).then();
-  }, [flipPlaying]);
-
-  return (
-    <div
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-    >
-      <div style={{ width: 768, height: 768, position: 'relative' }}>
-        {playing && (
-          <div style={{ height: '100%', width: '100%' }}>
-            <ThreeLayer
-              cameraMinZoomShiftOverride={0.1}
-              cameraMaxZoomShiftOverride={10.0}
-              desiredMode={GameMode.Sandbox}
-              visible
-              defaultShowGrid
-            />
-            <CameraCoordinatesBox />
-          </div>
-        )}
-      </div>
-      <Button
-        thin
-        onClick={() => {
-          flipPlaying(playing).then();
-        }}
-        text="toggle playing"
-      />
-    </div>
-  );
+export const Main = FunctionalStoryTemplate.bind({});
+Main.args = {
+  storyName,
 };
-
-export const Main = Template.bind({});
-Main.args = {};
+getStartGameParams[storyName] = getStartGameParamsPlanets;
 
 export default {
-  title: 'Functional/Planets',
+  title: storyName,
   argTypes: {},
 } as Meta;

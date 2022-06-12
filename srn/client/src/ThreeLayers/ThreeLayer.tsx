@@ -14,7 +14,7 @@ import {
   ExternalCameraControl,
 } from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
-import NetState from '../NetState';
+import NetState, { DISPLAY_BREADCRUMBS_LAST_TICKS } from '../NetState';
 import Vector from '../utils/Vector';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { useStore } from '../store';
@@ -149,7 +149,11 @@ export const ThreeLayer: React.FC<{
           <ThreeNames netState={ns} visMap={visMap} />
           <ThreeWeaponEffectsLayer />
           <ThreeTrajectoryLayer indexes={indexes} />
-          <ThreeBreadcrumbs breadcrumbs={state.breadcrumbs} />
+          <ThreeBreadcrumbs
+            breadcrumbs={visualState.breadcrumbs}
+            currentTicks={state.ticks}
+            displayForLastTicks={DISPLAY_BREADCRUMBS_LAST_TICKS}
+          />
           {/*<ThreeWormhole position={posToThreePos(50, 50)} radius={3} />*/}
         </group>
       </Suspense>
