@@ -21,7 +21,7 @@ export interface BuildStoryParams {
   initialPos: IVector;
   initialZoom: number;
   forceCameraPosition?: IVector;
-  actions?: { wait: number; action: Action }[];
+  actions?: Iterable<{ wait: number; action: Action }>;
 }
 
 const patchAction = (action: Action, nsRef: NetState) => {
@@ -66,13 +66,16 @@ export const buildStory = async ({
     nsRef.visualState.cameraPosition = forceCameraPosition;
   }
   nsRef.visualState.zoomShift = initialZoom;
-  if (actions) {
-    for (const { action, wait } of actions) {
-      await delay(wait);
-      patchAction(action, nsRef);
-      executeSyncAction(action);
+  // stop init immediately, then all actions are async
+  setTimeout(async () => {
+    if (actions && nsRef) {
+      for (const { action, wait } of actions) {
+        await delay(wait);
+        patchAction(action, nsRef);
+        executeSyncAction(action);
+      }
     }
-  }
+  }, 0);
 };
 
 export const startTestGame = async (

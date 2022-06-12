@@ -47,7 +47,7 @@ export const ThreeBreadcrumbs = ({
               if (breadcrumbs.length > 1) {
                 pos = roundPos(
                   Vector.fromIVector(position),
-                  0.5,
+                  0.125,
                   i,
                   breadcrumbs.length
                 );
@@ -59,7 +59,7 @@ export const ThreeBreadcrumbs = ({
                   key={i}
                   position={posToThreePos(pos.x, pos.y, SHIP_FIXED_Z + 10)}
                 >
-                  <circleBufferGeometry args={[0.5, 8]} />
+                  <circleBufferGeometry args={[0.25, 8]} />
                   <meshBasicMaterial color={color} />
                 </mesh>
               );

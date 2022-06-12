@@ -742,6 +742,7 @@ export default class NetState extends EventEmitter {
   forceUpdateLocalStateForOptimisticSync = () => {
     this.updateLocalState(Math.ceil(this.state.update_every_ticks / 1000)); // do a minimal update. this will cause a very small desync forward, but will flush out all the actions
     this.prevState = _.clone(this.state);
+    this.extrapolate();
   };
 
   updateLocalState = (elapsedMs: number) => {
@@ -792,7 +793,6 @@ export default class NetState extends EventEmitter {
     if (result) {
       this.state = result;
       this.reindexNetState();
-      console.log('after update local', elapsedMs, this.indexes.myShipPosition);
       this.updateVisMap();
     }
   };
