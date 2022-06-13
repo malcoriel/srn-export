@@ -136,7 +136,10 @@ export default class Vector implements IVector {
    * @deprecated
    * */
   angleRad(b: Vector): number {
-    return Math.acos(this.scalarMultiply(b) / this.length() / b.length());
+    const dot = this.scalarMultiply(b);
+    const det = this.x * b.y - b.x * this.y;
+    return Math.atan2(det, dot);
+    // return Math.acos(this.scalarMultiply(b) / this.length() / b.length());
   }
 
   // noinspection JSUnusedGlobalSymbols

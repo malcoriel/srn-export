@@ -19,7 +19,7 @@ import {
   isSyncActionTypeActive,
   resetActiveSyncActions,
 } from './utils/ShipControls';
-import Vector from './utils/Vector';
+import Vector, { IVector } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledThrottledTime, vsyncedCoupledTime } from './utils/Times';
 import { api } from './utils/api';
@@ -74,6 +74,13 @@ interface Cmd {
 const AREA_BUFF_TO_COVER_SIZE = 1.5;
 const RECONNECT_INTERVAL = 1000;
 
+export type BreadcrumbLine = {
+  position: IVector;
+  to: IVector;
+  color: string;
+  timestamp_ticks: number;
+};
+
 export type VisualState = {
   boundCameraMovement: boolean;
   // real coordinates of the camera in the world
@@ -83,7 +90,7 @@ export type VisualState = {
   };
   // proportion from default zoom
   zoomShift: number;
-  breadcrumbs: Breadcrumb[];
+  breadcrumbs: (Breadcrumb | BreadcrumbLine)[];
 };
 
 const DEBUG_CREATION = false;
@@ -102,8 +109,7 @@ export enum ServerToClientMessageCode {
   LeaveRoom = 9,
 }
 
-// Theoretically, we need that only for BROADCAST_SLEEP_MS from main.ws - however, we might need more in case something lags, so x 2
-const EXTRAPOLATE_AHEAD_MS = 500 * 2;
+const EXTRAPOLATE_AHEAD_MS = 500;
 
 const MAX_PENDING_TICKS = 2000;
 // it's completely ignored in actual render, since vsynced time is used
@@ -262,9 +268,10 @@ export default class NetState extends EventEmitter {
     );
     if (nextState) {
       this.nextState = nextState;
+      this.nextIndexes = buildClientStateIndexes(this.nextState);
       this.addExtrapolateBreadcrumbs();
     } else {
-      console.warn('extrapolation failed');
+      normalWarn('extrapolation failed');
     }
   }
 
@@ -309,7 +316,7 @@ export default class NetState extends EventEmitter {
     this.connecting = true;
     Perf.start();
     this.time.setInterval(
-      () => {
+      (elapsedMs: number) => {
         Perf.markEvent(Measure.PhysicsFrameEvent);
         Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
           const ns = NetState.get();
@@ -330,6 +337,7 @@ export default class NetState extends EventEmitter {
             this.scheduleUpdateLocalState = false;
             this.forceUpdateLocalStateForOptimisticSync();
           }
+          this.detectJumpInMyShipPos(elapsedMs);
         });
       },
       (elapsedMs) => {
@@ -509,7 +517,7 @@ export default class NetState extends EventEmitter {
         timestamp_ticks: this.state.ticks,
       });
     }
-    this.addCurrentShipBreadcrumb('yellow');
+    // this.addCurrentShipBreadcrumb('yellow');
   };
 
   private cleanupBreadcrumbs = () => {
@@ -593,7 +601,7 @@ export default class NetState extends EventEmitter {
         //   }
         // }
 
-        this.addCurrentShipBreadcrumb('red');
+        // this.addCurrentShipBreadcrumb('red');
 
         // TODO with new interpolation approach, this needs to be corrected to timestamp-match the previous prevState
 
@@ -889,6 +897,44 @@ export default class NetState extends EventEmitter {
     this.playingReplay = true;
   };
 
+  private lastMyShipPos: null | Vector = null;
+
+  private MAX_ALLOWED_JUMP_PER_MS = 0.03;
+
+  private detectJumpInMyShipPos = (elapsedMs: number) => {
+    if (this.lastMyShipPos && this.indexes.myShipPosition) {
+      if (
+        this.lastMyShipPos.euDistTo(this.indexes.myShipPosition) >
+        elapsedMs * this.MAX_ALLOWED_JUMP_PER_MS
+      ) {
+        const jumpDir = this.indexes.myShipPosition.subtract(
+          this.lastMyShipPos
+        );
+        let color;
+
+        if (
+          this.indexes.myShip &&
+          this.indexes.myShip.navigate_target &&
+          jumpDir.angleRad(
+            Vector.fromIVector(this.indexes.myShip.navigate_target)
+          ) <
+            Math.PI / 2
+        ) {
+          color = 'green';
+        } else {
+          color = 'red';
+        }
+        this.visualState.breadcrumbs.push({
+          position: this.lastMyShipPos,
+          to: this.indexes.myShipPosition,
+          color,
+          timestamp_ticks: this.state.ticks,
+        });
+      }
+    }
+    this.lastMyShipPos = this.indexes.myShipPosition;
+  };
+
   private findClosestMarks(
     keys: number[],
     markInMs: number
@@ -928,11 +974,11 @@ export default class NetState extends EventEmitter {
         // console.log('true interpolate', this.state.millis, value.toFixed(3));
       } else {
         this.state = _.clone(this.prevState);
-        console.log(
-          `interpolation bump due to client lag, may look bad, diff=${(
-            baseMs - currentMs
-          ).toFixed(0)}ms`
-        );
+        // console.log(
+        //   `interpolation bump due to client lag, may look bad, diff=${(
+        //     baseMs - currentMs
+        //   ).toFixed(0)}ms`
+        // );
       }
     } else {
       this.state = _.clone(this.prevState);
