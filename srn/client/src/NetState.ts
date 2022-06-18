@@ -708,7 +708,7 @@ export default class NetState extends EventEmitter {
             // );
             this.state.player_actions = [];
             for (const cmd of actions) {
-              this.state.player_actions.push(cmd);
+              this.state.player_actions.push([cmd, null]);
             }
           }
         }
@@ -857,7 +857,7 @@ export default class NetState extends EventEmitter {
     // schedule for optimistic update
     this.state.player_actions = [];
     for (const cmd of actionsToSync) {
-      this.state.player_actions.push(cmd);
+      this.state.player_actions.push([cmd, null]);
     }
 
     this.pendingActionPacks.push([
@@ -1114,14 +1114,21 @@ export default class NetState extends EventEmitter {
 
     // may not be exactly correct, since different actions happen in different moments in the past, and such reapplication
     // literally changes the outcome - however, it's unclear how to combine it with adjustMillis for now
-    const alreadyExecutedInState = parsed.processed_player_actions.map()
+    const alreadyExecutedTagsInState = new Set(
+      parsed.processed_player_actions.map(({ packet_tag }) => packet_tag)
+    );
     const actionsToRebase = pendingActionPacks.reduce(
-      (acc, curr: [string, Action[], number]) => {
+      (acc, [tag, actions]: [string, Action[], number]) => {
+        if (!alreadyExecutedTagsInState.has(tag)) {
+          return [...acc, ...actions];
+        }
         return acc;
       },
-      []);
+      [] as Action[]
+    );
 
-    parsed.player_actions.push(...pendingActionPacks);
+    const rebasedActs = actionsToRebase.map((a) => [a, null] as [Action, null]);
+    parsed.player_actions.push(...rebasedActs);
     return (
       updateWorld(parsed, this.getSimulationArea(), adjustMillis) || parsed
     );
