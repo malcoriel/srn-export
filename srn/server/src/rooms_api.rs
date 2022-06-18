@@ -18,18 +18,24 @@ use uuid::Uuid;
 use crate::api_struct::RoomsState;
 use crate::api_struct::*;
 use crate::server_events::fire_event;
-use crate::states::{StateContainer, ROOMS_READ};
+use crate::states::{RoomHeader, StateContainer, ROOMS_READ};
 use crate::world::{GameMode, GameState, PlayerId};
 use crate::{cargo_rush, get_prng, new_id, system_gen, world};
 
 #[get("/")]
-pub fn get_rooms() -> Json<Vec<Room>> {
-    let rooms = crate::ROOMS_READ.iter().map(|r| r.val().clone()).collect();
+pub fn get_rooms() -> Json<Vec<RoomHeader>> {
+    let rooms = crate::ROOMS_READ
+        .iter()
+        .map(|r| RoomHeader {
+            id: r.val().id,
+            name: r.val().name.clone(),
+        })
+        .collect();
     Json(rooms)
 }
 
 #[get("/<game_mode>")]
-pub fn get_rooms_for_mode(game_mode: String) -> Json<Vec<Room>> {
+pub fn get_rooms_for_mode(game_mode: String) -> Json<Vec<RoomHeader>> {
     let mode =
         serde_json::from_str::<crate::world::GameMode>(format!("\"{}\"", game_mode).as_str());
     if mode.is_err() {
@@ -41,7 +47,11 @@ pub fn get_rooms_for_mode(game_mode: String) -> Json<Vec<Room>> {
     let rooms = rooms
         .into_iter()
         .filter(|r| r.state.mode == mode)
-        .collect::<Vec<Room>>();
+        .map(|r| RoomHeader {
+            id: r.id,
+            name: r.name,
+        })
+        .collect::<Vec<RoomHeader>>();
 
     Json(rooms)
 }
@@ -180,10 +190,9 @@ pub fn reindex_rooms(state: &mut RoomsState) {
     for id in ids.into_iter() {
         ROOMS_READ.remove(&id);
     }
-    let rooms_clone = state.clone().values;
-    for i in 0..rooms_clone.len() {
-        let room = rooms_clone.get(i).unwrap();
-        ROOMS_READ.insert(room.state.id, room.clone());
+    for i in 0..state.values.len() {
+        let room = state.values.get(i).unwrap();
+        ROOMS_READ.insert(room.id, room.clone());
         for player in room.state.players.iter() {
             state.state_id_by_player_id.insert(player.id, room.state.id);
             state.idx_by_player_id.insert(player.id, i);

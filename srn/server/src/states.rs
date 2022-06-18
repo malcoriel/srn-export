@@ -29,6 +29,12 @@ lazy_static! {
     pub static ref ROOMS_READ: LockFreeMap<Uuid, Room> = LockFreeMap::new();
 }
 
+#[derive(Serialize)]
+pub struct RoomHeader {
+    pub id: RoomId,
+    pub name: String,
+}
+
 pub struct StateContainer {
     pub rooms: RoomsState,
 }

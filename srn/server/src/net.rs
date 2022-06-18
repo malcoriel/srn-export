@@ -1,3 +1,5 @@
+use num_traits::real::Real;
+use objekt_clonable::objekt::Clone;
 use std::collections::HashMap;
 
 use crate::api_struct::RoomId;
@@ -44,6 +46,8 @@ pub enum ServerToClientMessage {
     RoomLeave(Uuid),
 }
 
+pub const MAX_PROCESSED_ACTIONS_SHARE_TIME: f64 = 10.0 * 1000.0 * 1000.0;
+
 pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> GameState {
     state.my_id = player_id;
     let player_loc_idx = find_player_location_idx(&state, player_id);
@@ -72,10 +76,18 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
             .filter_map(|l| if l.id != current_id { Some(l) } else { None })
             .collect::<Vec<_>>(),
     );
+    let current_ticks = state.ticks;
     state.events = Default::default();
     state.processed_events = Default::default();
     state.player_actions = Default::default();
-    state.processed_player_actions = Default::default();
+    state.processed_player_actions = state
+        .processed_player_actions
+        .into_iter()
+        .filter(|a| {
+            (a.processed_at_ticks as f64 - current_ticks as f64).abs()
+                < MAX_PROCESSED_ACTIONS_SHARE_TIME
+        })
+        .collect();
     state.dialogue_states.retain(|k, _| *k == player_id);
     return state;
 }

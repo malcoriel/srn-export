@@ -1127,8 +1127,8 @@ export default class NetState extends EventEmitter {
       [] as Action[]
     );
 
-    const rebasedActs = actionsToRebase.map((a) => [a, null] as [Action, null]);
-    parsed.player_actions.push(...rebasedActs);
+    // const rebasedActs = actionsToRebase.map((a) => [a, null] as [Action, null]);
+    // parsed.player_actions.push(...rebasedActs);
     return (
       updateWorld(parsed, this.getSimulationArea(), adjustMillis) || parsed
     );
