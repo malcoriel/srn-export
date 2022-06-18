@@ -15,25 +15,24 @@ use websocket::server::sync::Server;
 use websocket::server::upgrade::WsUpgrade;
 use websocket::{Message, OwnedMessage};
 
-use crate::indexing::{ObjectSpecifier};
-use crate::dialogue::{execute_dialog_option, DialogueUpdate,Dialogue};
+use crate::dialogue::{execute_dialog_option, Dialogue, DialogueUpdate};
 use crate::get_prng;
 use crate::indexing::find_my_player;
+use crate::indexing::ObjectSpecifier;
 use crate::net::{
     ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
     TagConfirm, Wrapper,
 };
-use crate::world_actions::Action;
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
 use crate::world::{GameState, Player, Ship};
 use crate::world_actions::is_world_update_action;
+use crate::world_actions::Action;
 use crate::world_events::GameEvent;
 use crate::xcast::XCast;
 use crate::{
-    dialogue, indexing, inventory, long_actions, market, notifications, sandbox,
-    states, world, xcast, DialogueRequest, LastCheck, WSRequest, DEFAULT_SLEEP_MS,
-    DIALOGUE_TABLE, MAX_ERRORS, MAX_ERRORS_SAMPLE_INTERVAL, MAX_MESSAGES_PER_INTERVAL,
-    MAX_MESSAGE_SAMPLE_INTERVAL_MS,
+    dialogue, indexing, inventory, long_actions, market, notifications, sandbox, states, world,
+    xcast, DialogueRequest, LastCheck, WSRequest, DEFAULT_SLEEP_MS, DIALOGUE_TABLE, MAX_ERRORS,
+    MAX_ERRORS_SAMPLE_INTERVAL, MAX_MESSAGES_PER_INTERVAL, MAX_MESSAGE_SAMPLE_INTERVAL_MS,
 };
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 
@@ -266,7 +265,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         }
         ClientOpCode::MutateMyShip => {
             warn!("Unsupported client op code 'MutateMyShip'");
-        },
+        }
         ClientOpCode::Name => on_client_personalize(client_id, second),
         ClientOpCode::DialogueOption => {
             warn!("Unsupported client op code 'DialogueOption'");
@@ -297,6 +296,9 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::SchedulePlayerAction => {
             on_client_schedule_player_action(client_id, second, third);
         }
+        ClientOpCode::SchedulePlayerActionBatch => {
+            on_client_schedule_player_action_batch(client_id, second, third);
+        }
     };
 }
 
@@ -323,6 +325,11 @@ pub struct SchedulePlayerAction {
     action: Action,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
+pub struct SchedulePlayerActionBatch {
+    actions: Vec<Action>,
+}
+
 fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
     let parsed = serde_json::from_str::<SchedulePlayerAction>(data);
     match parsed {
@@ -334,15 +341,53 @@ fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&
                 return;
             }
             let state = state.unwrap();
+            let packet_tag = tag.unwrap().to_string();
             if is_world_update_action(&action.action) {
-                state.player_actions.push_back(action.action);
+                state
+                    .player_actions
+                    .push_back((action.action, Some(packet_tag.clone())));
             } else {
                 warn!(format!(
                     "schedule player action does not support that player action: {:?}",
                     action.action
                 ));
             }
-            send_tag_confirm(tag.unwrap().to_string(), client_id);
+            send_tag_confirm(packet_tag, client_id);
+        }
+        Err(err) => {
+            warn!(format!(
+                "couldn't schedule player action {}, err {}",
+                data, err
+            ));
+        }
+    }
+}
+
+fn on_client_schedule_player_action_batch(client_id: Uuid, data: &&str, tag: Option<&&str>) {
+    let parsed = serde_json::from_str::<SchedulePlayerActionBatch>(data);
+    match parsed {
+        Ok(parsed) => {
+            let mut cont = STATE.write().unwrap();
+            let state = states::select_state_mut(&mut cont, client_id);
+            if state.is_none() {
+                warn!("schedule player action in non-existent state");
+                return;
+            }
+            let state = state.unwrap();
+            let packet_tag = tag.unwrap().to_string();
+            for action in parsed.actions {
+                if is_world_update_action(&action) {
+                    state
+                        .player_actions
+                        .push_back((action, Some(packet_tag.clone())));
+                } else {
+                    warn!(format!(
+                        "schedule player action does not support that player action: {:?}",
+                        action
+                    ));
+                }
+            }
+            send_tag_confirm(packet_tag, client_id);
         }
         Err(err) => {
             warn!(format!(

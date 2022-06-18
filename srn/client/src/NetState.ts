@@ -19,7 +19,7 @@ import {
   isSyncActionTypeActive,
   resetActiveSyncActions,
 } from './utils/ShipControls';
-import Vector, { IVector } from './utils/Vector';
+import Vector, { IVector, VectorFzero } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledThrottledTime, vsyncedCoupledTime } from './utils/Times';
 import { api } from './utils/api';
@@ -63,6 +63,7 @@ enum ClientOpCode {
   ObsoleteRoomJoin,
   ObsoleteNotificationAction,
   SchedulePlayerAction,
+  SchedulePlayerActionBatch,
 }
 
 interface Cmd {
@@ -79,6 +80,7 @@ export type BreadcrumbLine = {
   to: IVector;
   color: string;
   timestamp_ticks: number;
+  tag?: string;
 };
 
 export type VisualState = {
@@ -109,7 +111,7 @@ export enum ServerToClientMessageCode {
   LeaveRoom = 9,
 }
 
-const EXTRAPOLATE_AHEAD_MS = 500;
+const EXTRAPOLATE_AHEAD_MS = 500 * 2;
 
 const MAX_PENDING_TICKS = 2000;
 // it's completely ignored in actual render, since vsynced time is used
@@ -337,7 +339,13 @@ export default class NetState extends EventEmitter {
             this.scheduleUpdateLocalState = false;
             this.forceUpdateLocalStateForOptimisticSync();
           }
-          this.detectJumpInMyShipPos(elapsedMs);
+          if (this.indexes.myShipPosition) {
+            this.detectJumpInMyShipPos(
+              elapsedMs,
+              this.indexes.myShipPosition,
+              'pink'
+            );
+          }
         });
       },
       (elapsedMs) => {
@@ -509,15 +517,36 @@ export default class NetState extends EventEmitter {
   };
 
   private addExtrapolateBreadcrumbs = () => {
+    this.visualState.breadcrumbs = this.visualState.breadcrumbs.filter(
+      (b) => b.tag !== 'extrapolate'
+    );
     const myNextShip = this.nextIndexes.myShip;
     if (myNextShip) {
       this.visualState.breadcrumbs.push({
         position: Vector.fromIVector(myNextShip),
         color: 'green',
         timestamp_ticks: this.state.ticks,
+        tag: 'extrapolate',
       });
     }
-    // this.addCurrentShipBreadcrumb('yellow');
+    const myPrevShip = findMyShip(this.prevState);
+    if (myPrevShip) {
+      this.visualState.breadcrumbs.push({
+        position: Vector.fromIVector(myPrevShip),
+        color: 'yellow',
+        timestamp_ticks: this.state.ticks,
+        tag: 'extrapolate',
+      });
+    }
+    if (myNextShip && myPrevShip) {
+      this.visualState.breadcrumbs.push({
+        position: Vector.fromIVector(myPrevShip),
+        to: Vector.fromIVector(myNextShip),
+        color: 'yellow',
+        timestamp_ticks: this.state.ticks,
+        tag: 'extrapolate',
+      });
+    }
   };
 
   private cleanupBreadcrumbs = () => {
@@ -525,17 +554,6 @@ export default class NetState extends EventEmitter {
       ({ timestamp_ticks }) =>
         timestamp_ticks + DISPLAY_BREADCRUMBS_LAST_TICKS > this.state.ticks
     );
-  };
-
-  private addCurrentShipBreadcrumb = (color: string) => {
-    const myShip = findMyShip(this.state);
-    if (myShip) {
-      this.visualState.breadcrumbs.push({
-        position: Vector.fromIVector(myShip),
-        color,
-        timestamp_ticks: this.state.ticks,
-      });
-    }
   };
 
   private handleMessage(rawData: string) {
@@ -611,12 +629,35 @@ export default class NetState extends EventEmitter {
           );
           this.prevState = _.clone(parsed);
           this.state = _.clone(parsed);
+          const newShip = findMyShip(this.state);
+          if (newShip) {
+            this.detectJumpInMyShipPos(0, Vector.fromIVector(newShip), 'red');
+            // same position because prevState == state now
+            this.detectJumpInMyPrevShipPos(
+              0,
+              Vector.fromIVector(newShip),
+              'red'
+            );
+          }
         } else if (this.desync < 0) {
           // normal client-ahead-of-server
           this.prevState = this.rebaseReceivedStateToCurrentPoint(
             parsed,
-            -this.desync
+            -this.desync,
+            this.pendingActionPacks
           );
+          const newShip = findMyShip(this.prevState);
+          if (newShip) {
+            this.detectJumpInMyPrevShipPos(
+              0,
+              Vector.fromIVector(newShip),
+              null
+            );
+          }
+          // const newShip = findMyShip(this.prevState);
+          // if (newShip) {
+          //   this.detectJumpInMyShipPos(0, Vector.fromIVector(newShip), 'green');
+          // }
           // console.log(
           //   'rebased prevState millis',
           //   this.prevState.millis,
@@ -628,8 +669,17 @@ export default class NetState extends EventEmitter {
           // or it's still synchronizing in the beginning
           this.prevState = this.rebaseReceivedStateToCurrentPoint(
             parsed,
-            10 // magic constant to bump client a little bit ahead so it doensn't have to accept it next time
+            10, // magic constant to bump client a little bit ahead so it doensn't have to accept it next time
+            this.pendingActionPacks
           );
+          const newShip = findMyShip(this.prevState);
+          if (newShip) {
+            this.detectJumpInMyPrevShipPos(
+              0,
+              Vector.fromIVector(newShip),
+              null
+            );
+          }
           // console.log(
           //   'accepted server state with a magic bump',
           //   this.prevState.millis,
@@ -637,15 +687,17 @@ export default class NetState extends EventEmitter {
           //   this.serverState.millis
           // );
         }
-        this.extrapolate();
 
+        // after receiving server state, we might receive a state that doesn't contain the command we just sent, which
+        // will result in command rollback with nasty visual effect. To deal with it, we save non-confirmed commands
+        // in pendingActions and reapply them here after normal compensation techniques
         const toDrop = new Set();
         // noinspection JSUnusedLocalSymbols
-        for (const [tag, actions, ticks] of this.pendingActions) {
-          const age = Math.abs(ticks - this.state.millis);
+        for (const [tag, actions, millis] of this.pendingActionPacks) {
+          const age = Math.abs(millis - this.state.millis);
           if (age > MAX_PENDING_TICKS) {
             console.warn(
-              `dropping pending action ${tag} with age ${age}>${MAX_PENDING_TICKS}`
+              `dropping pending actions packs ${tag} with age ${age}>${MAX_PENDING_TICKS}`
             );
             toDrop.add(tag);
           } else {
@@ -660,15 +712,23 @@ export default class NetState extends EventEmitter {
             }
           }
         }
-        this.pendingActions = this.pendingActions.filter(
+        this.pendingActionPacks = this.pendingActionPacks.filter(
           ([tag]) => !toDrop.has(tag)
         );
+
+        this.extrapolate();
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
         const confirmedTag = JSON.parse(data).tag;
+        // console.log('confirmed', confirmedTag);
 
-        this.pendingActions = this.pendingActions.filter(
+        const prevLen = this.pendingActionPacks.length;
+        this.pendingActionPacks = this.pendingActionPacks.filter(
           ([tag]) => tag !== confirmedTag
         );
+        const newLen = this.pendingActionPacks.length;
+        // if (newLen < prevLen) {
+        //   console.log(`confirmed pending pack ${confirmedTag}`);
+        // }
       } else if (
         messageCode === ServerToClientMessageCode.MulticastPartialShipsUpdate
       ) {
@@ -738,6 +798,12 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
+        case ClientOpCode.SchedulePlayerActionBatch: {
+          this.socket.send(
+            `${cmd.code}_%_${JSON.stringify(cmd.value)}_%_${cmd.tag}`
+          );
+          break;
+        }
         default:
           throw new UnreachableCaseError(cmd.code);
       }
@@ -745,11 +811,15 @@ export default class NetState extends EventEmitter {
   }
 
   // [tag, action, ticks], the order is the order of appearance
-  private pendingActions: [string, Action[], number][] = [];
+  private pendingActionPacks: [string, Action[], number][] = [];
 
   forceUpdateLocalStateForOptimisticSync = () => {
     this.updateLocalState(Math.ceil(this.state.update_every_ticks / 1000)); // do a minimal update. this will cause a very small desync forward, but will flush out all the actions
     this.prevState = _.clone(this.state);
+    const myShip = findMyShip(this.prevState);
+    if (myShip) {
+      this.detectJumpInMyPrevShipPos(0, Vector.fromIVector(myShip), null);
+    }
     this.extrapolate();
   };
 
@@ -762,7 +832,7 @@ export default class NetState extends EventEmitter {
 
     const actionsToSync = getActiveSyncActions();
 
-    // send to server immediately
+    const actionsToSend = [];
     for (const action of actionsToSync) {
       // prevent server DOS via gas action flooding, separated by action type
       if (isManualMovement(action)) {
@@ -780,8 +850,9 @@ export default class NetState extends EventEmitter {
           this.lastSendOfManualMovementMap[action.tag] = performance.now();
         }
       }
-      this.sendSchedulePlayerAction(action);
+      actionsToSend.push(action);
     }
+    const sentBatchTag = this.sendSchedulePlayerActionBatch(actionsToSend);
 
     // schedule for optimistic update
     this.state.player_actions = [];
@@ -789,11 +860,15 @@ export default class NetState extends EventEmitter {
       this.state.player_actions.push(cmd);
     }
 
+    this.pendingActionPacks.push([
+      sentBatchTag,
+      actionsToSync,
+      this.state.millis + elapsedMs,
+    ]);
+
     if (isSyncActionTypeActive('Move')) {
       this.visualState.boundCameraMovement = true;
     }
-
-    // this.pendingActions.push(...actionsToSync);
 
     resetActiveSyncActions();
 
@@ -822,6 +897,16 @@ export default class NetState extends EventEmitter {
       value: { action },
       tag,
     });
+  }
+
+  public sendSchedulePlayerActionBatch(actions: Action[]): string {
+    const tag = uuid.v4();
+    this.send({
+      code: ClientOpCode.SchedulePlayerActionBatch,
+      value: { actions },
+      tag,
+    });
+    return tag;
   }
 
   private getSimulationArea(): AABB {
@@ -899,40 +984,51 @@ export default class NetState extends EventEmitter {
 
   private lastMyShipPos: null | Vector = null;
 
+  private lastPrevMyShipPos: null | Vector = null;
+
   private MAX_ALLOWED_JUMP_PER_MS = 0.03;
 
-  private detectJumpInMyShipPos = (elapsedMs: number) => {
-    if (this.lastMyShipPos && this.indexes.myShipPosition) {
+  private detectJumpInMyShipPos = (
+    elapsedMs: number,
+    newShipPos: Vector,
+    color: string
+  ) => {
+    if (this.lastMyShipPos && newShipPos) {
       if (
-        this.lastMyShipPos.euDistTo(this.indexes.myShipPosition) >
+        this.lastMyShipPos.euDistTo(newShipPos) >
         elapsedMs * this.MAX_ALLOWED_JUMP_PER_MS
       ) {
-        const jumpDir = this.indexes.myShipPosition.subtract(
-          this.lastMyShipPos
-        );
-        let color;
-
-        if (
-          this.indexes.myShip &&
-          this.indexes.myShip.navigate_target &&
-          jumpDir.angleRad(
-            Vector.fromIVector(this.indexes.myShip.navigate_target)
-          ) <
-            Math.PI / 2
-        ) {
-          color = 'green';
-        } else {
-          color = 'red';
-        }
         this.visualState.breadcrumbs.push({
           position: this.lastMyShipPos,
-          to: this.indexes.myShipPosition,
+          to: newShipPos,
           color,
           timestamp_ticks: this.state.ticks,
         });
       }
     }
-    this.lastMyShipPos = this.indexes.myShipPosition;
+    this.lastMyShipPos = newShipPos;
+  };
+
+  private detectJumpInMyPrevShipPos = (
+    elapsedMs: number,
+    newPrevShipPos: Vector,
+    color: string | null
+  ) => {
+    if (this.lastPrevMyShipPos && newPrevShipPos) {
+      if (
+        this.lastPrevMyShipPos.euDistTo(newPrevShipPos) >
+          elapsedMs * this.MAX_ALLOWED_JUMP_PER_MS &&
+        color
+      ) {
+        this.visualState.breadcrumbs.push({
+          position: this.lastPrevMyShipPos,
+          to: newPrevShipPos,
+          color,
+          timestamp_ticks: this.state.ticks,
+        });
+      }
+    }
+    this.lastPrevMyShipPos = newPrevShipPos;
   };
 
   private findClosestMarks(
@@ -996,7 +1092,8 @@ export default class NetState extends EventEmitter {
 
   private rebaseReceivedStateToCurrentPoint(
     parsed: GameState,
-    adjustMillis: number
+    adjustMillis: number,
+    pendingActionPacks: [string, Action[], number][] // tag, actions, atMillis
   ): GameState {
     // too much stuff here and it will slow down itself (unless I add again the instant-update mode without iterations, which is non-deterministic then)
     const MAX_ACCEPTABLE_REBASE_ADJUST = 100;
@@ -1014,6 +1111,17 @@ export default class NetState extends EventEmitter {
     //   adjustMillis
     // );
     // return parsed;
+
+    // may not be exactly correct, since different actions happen in different moments in the past, and such reapplication
+    // literally changes the outcome - however, it's unclear how to combine it with adjustMillis for now
+    const alreadyExecutedInState = parsed.processed_player_actions.map()
+    const actionsToRebase = pendingActionPacks.reduce(
+      (acc, curr: [string, Action[], number]) => {
+        return acc;
+      },
+      []);
+
+    parsed.player_actions.push(...pendingActionPacks);
     return (
       updateWorld(parsed, this.getSimulationArea(), adjustMillis) || parsed
     );

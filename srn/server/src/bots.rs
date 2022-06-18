@@ -1,8 +1,8 @@
 use crate::vec2::Vec2f64;
 use chrono::Local;
 use lazy_static::lazy_static;
-use rand_pcg::Pcg64Mcg;
 use rand::{Rng, RngCore, SeedableRng};
+use rand_pcg::Pcg64Mcg;
 use std::collections::{HashMap, HashSet};
 use std::sync::{mpsc, Arc, Mutex, MutexGuard, RwLock, RwLockWriteGuard};
 use std::thread;
@@ -22,9 +22,9 @@ use crate::indexing::{
 };
 use crate::long_actions::LongAction;
 use crate::random_stuff::gen_bot_name;
-use crate::world_actions::Action;
 use crate::world;
 use crate::world::{GameState, Ship, ShipIdx, ShipTemplate, SpatialIndexes};
+use crate::world_actions::Action;
 use crate::world_events::GameEvent;
 use crate::{fire_event, pirate_defence};
 use crate::{indexing, world_actions};
@@ -51,13 +51,7 @@ pub fn bot_act(
         .iter()
         .any(|t| matches!(t, AiTrait::CargoRushHauler { .. }))
     {
-        return bot_cargo_rush_hauler_act(
-            bot,
-            &state,
-            bot_elapsed_micro,
-            d_table,
-            prng,
-        );
+        return bot_cargo_rush_hauler_act(bot, &state, bot_elapsed_micro, d_table, prng);
     }
     if bot
         .traits
@@ -104,8 +98,12 @@ fn bot_cargo_rush_hauler_act(
     let mut result_actions = vec![];
 
     let empty = HashMap::new();
-    let bot_d_states = DialogueTable::get_player_d_states_read(&state.dialogue_states, bot.id).unwrap_or(&empty);
-    let not_empty_d_states = bot_d_states.iter().filter(|(_, v)| v.is_some()).collect::<Vec<_>>();
+    let bot_d_states =
+        DialogueTable::get_player_d_states_read(&state.dialogue_states, bot.id).unwrap_or(&empty);
+    let not_empty_d_states = bot_d_states
+        .iter()
+        .filter(|(_, v)| v.is_some())
+        .collect::<Vec<_>>();
     if not_empty_d_states.len() > 0 {
         // log!(format!("bot {} is talking since there are some dialogues {:?}", bot.id, bot_d_states));
         // stop all other actions when talking
@@ -267,17 +265,20 @@ pub fn do_bot_players_actions(
 
     for (_, acts) in ship_updates.into_iter() {
         for act in acts {
-            room.state.player_actions.push_back(act);
+            room.state.player_actions.push_back((act, None));
         }
     }
 
     for (bot_id, dialogue_update) in dialogue_updates.into_iter() {
         for act in dialogue_update {
-            room.state.player_actions.push_back(Action::SelectDialogueOption {
-                player_id: bot_id,
-                option_id: act.option_id,
-                dialogue_id: act.dialogue_id
-            });
+            room.state.player_actions.push_back((
+                Action::SelectDialogueOption {
+                    player_id: bot_id,
+                    option_id: act.option_id,
+                    dialogue_id: act.dialogue_id,
+                },
+                None,
+            ));
         }
     }
 }
@@ -316,7 +317,7 @@ pub fn do_bot_npcs_actions(
 
     for (_ship_id, (acts, _idx)) in ship_updates.into_iter() {
         for act in acts {
-            room.state.player_actions.push_back(act);
+            room.state.player_actions.push_back((act, None));
         }
     }
 }

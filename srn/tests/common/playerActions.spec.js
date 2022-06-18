@@ -10,19 +10,18 @@ import {
 } from '../util';
 import * as uuid from 'uuid';
 
-export const mockPlayerActionTransSystemJump = (
-  toLocId,
-  byPlayerId,
-  shipId
-) => ({
-  tag: 'LongActionStart',
-  player_id: byPlayerId,
-  ship_id: shipId,
-  long_action_start: {
-    tag: 'TransSystemJump',
-    to: toLocId,
-  },
-});
+export const mockNullPacketTagged = (act) => [act, null];
+
+export const mockPlayerActionTransSystemJump = (toLocId, byPlayerId, shipId) =>
+  mockNullPacketTagged({
+    tag: 'LongActionStart',
+    player_id: byPlayerId,
+    ship_id: shipId,
+    long_action_start: {
+      tag: 'TransSystemJump',
+      to: toLocId,
+    },
+  });
 
 export const mockMineral = () => ({
   id: uuid.v4(),
@@ -34,77 +33,87 @@ export const mockMineral = () => ({
   color: '#ff00ff',
 });
 
-export const mockPlayerActionMove = (type, shipId) => ({
-  tag: type, // Gas | StopGas | Turn | StopTurn | Reverse
-  ship_id: shipId,
-});
+export const mockPlayerActionMove = (type, shipId) =>
+  mockNullPacketTagged({
+    tag: type, // Gas | StopGas | Turn | StopTurn | Reverse
+    ship_id: shipId,
+  });
 
-export const mockPlayerActionNavigate = (shipId, to) => ({
-  tag: 'Navigate',
-  ship_id: shipId,
-  target: to,
-});
+export const mockPlayerActionNavigate = (shipId, to) =>
+  mockNullPacketTagged({
+    tag: 'Navigate',
+    ship_id: shipId,
+    target: to,
+  });
 
-export const mockPlayerActionTractor = (shipId, target) => ({
-  tag: 'Tractor',
-  ship_id: shipId,
-  target,
-});
+export const mockPlayerActionTractor = (shipId, target) =>
+  mockNullPacketTagged({
+    tag: 'Tractor',
+    ship_id: shipId,
+    target,
+  });
 
-export const mockSelectDialogueOption = (playerId, dialogueId, optionId) => ({
-  tag: 'SelectDialogueOption',
-  dialogue_id: dialogueId,
-  option_id: optionId,
-  player_id: playerId,
-});
+export const mockSelectDialogueOption = (playerId, dialogueId, optionId) =>
+  mockNullPacketTagged({
+    tag: 'SelectDialogueOption',
+    dialogue_id: dialogueId,
+    option_id: optionId,
+    player_id: playerId,
+  });
 
-export const mockCancelTradeAction = (playerId) => ({
-  tag: 'CancelTrade',
-  player_id: playerId,
-});
+export const mockCancelTradeAction = (playerId) =>
+  mockNullPacketTagged({
+    tag: 'CancelTrade',
+    player_id: playerId,
+  });
 
-export const mockInventoryActionMove = (playerId, itemId, index) => ({
-  tag: 'Inventory',
-  player_id: playerId,
-  action: {
-    tag: 'Move',
-    item: itemId,
-    index,
-  },
-});
+export const mockInventoryActionMove = (playerId, itemId, index) =>
+  mockNullPacketTagged({
+    tag: 'Inventory',
+    player_id: playerId,
+    action: {
+      tag: 'Move',
+      item: itemId,
+      index,
+    },
+  });
 
-export const mockSandboxActionAddContainer = (playerId) => ({
-  tag: 'SandboxCommand',
-  player_id: playerId,
-  command: {
-    tag: 'AddContainer'
-  },
-});
+export const mockSandboxActionAddContainer = (playerId) =>
+  mockNullPacketTagged({
+    tag: 'SandboxCommand',
+    player_id: playerId,
+    command: {
+      tag: 'AddContainer',
+    },
+  });
 
-export const mockActionBuy = (playerId, planetId, type, amount) => ({
-  tag: 'Trade',
-  player_id: playerId,
-  action: {
-    planet_id: planetId,
-    sells_to_planet: [],
-    buys_from_planet: [[type, amount]],
-  },
-});
+export const mockActionBuy = (playerId, planetId, type, amount) =>
+  mockNullPacketTagged({
+    tag: 'Trade',
+    player_id: playerId,
+    action: {
+      planet_id: planetId,
+      sells_to_planet: [],
+      buys_from_planet: [[type, amount]],
+    },
+  });
 
-export const mockActionDismissNotification = (playerId, notificationId) => ({
-  tag: 'Notification',
-  player_id: playerId,
-  action: {
-    tag: 'Dismiss',
-    id: notificationId,
-  },
-});
+export const mockActionDismissNotification = (playerId, notificationId) =>
+  mockNullPacketTagged({
+    tag: 'Notification',
+    player_id: playerId,
+    action: {
+      tag: 'Dismiss',
+      id: notificationId,
+    },
+  });
 
-export const mockPlayerActionDockNavigate = (shipId, to) => ({
-  tag: 'DockNavigate',
-  ship_id: shipId,
-  target: to,
-});
+export const mockPlayerActionDockNavigate = (shipId, to) =>
+  mockNullPacketTagged({
+    tag: 'DockNavigate',
+    ship_id: shipId,
+    target: to,
+  });
 
 const dockToPlanet = (state, ship) => {
   let currState = state;

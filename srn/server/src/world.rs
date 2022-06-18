@@ -239,6 +239,7 @@ pub struct Star {
 pub struct ProcessedPlayerAction {
     pub action: Action,
     pub processed_at_ticks: u64,
+    pub packet_tag: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -524,6 +525,7 @@ pub struct Breadcrumb {
     pub position: Vec2f64,
     pub color: String,
     pub timestamp_ticks: u64,
+    pub tag: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -547,7 +549,7 @@ pub struct GameState {
     pub interval_data: HashMap<TimeMarks, u32>,
     pub game_over: Option<GameOver>,
     pub events: VecDeque<GameEvent>,
-    pub player_actions: VecDeque<Action>,
+    pub player_actions: VecDeque<(Action, Option<String>)>, // (action, packet_tag_that_received_it)
     pub processed_events: Vec<ProcessedGameEvent>,
     pub processed_player_actions: Vec<ProcessedPlayerAction>,
     pub update_every_ticks: u64,
@@ -888,9 +890,10 @@ fn update_player_actions(state: &mut GameState, prng: &mut Pcg64Mcg, d_table: &D
     }
     let mut processed_actions = vec![];
     for action in actions_to_process.into_iter() {
-        world_update_handle_action(state, action.clone(), prng, &state_clone, d_table);
+        world_update_handle_action(state, action.0.clone(), prng, &state_clone, d_table);
         let processed_action = ProcessedPlayerAction {
-            action,
+            action: action.0,
+            packet_tag: action.1,
             processed_at_ticks: state.ticks,
         };
         processed_actions.push(processed_action);

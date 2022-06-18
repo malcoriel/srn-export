@@ -166,4 +166,5 @@ pub enum ClientOpCode {
     ObsoleteRoomJoin = 11,
     NotificationAction = 12,
     SchedulePlayerAction = 13,
+    SchedulePlayerActionBatch = 14,
 }
