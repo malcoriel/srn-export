@@ -386,40 +386,50 @@ fn update_self_rotating_movement(
     current_ticks: u64,
     limit_area: AABB,
     caches: &mut GameStateCaches,
-    bodies: Vec<Box<&mut dyn IBodyV2>>,
+    mut bodies: Vec<Box<&mut dyn IBodyV2>>,
 ) {
-    for mut body in bodies {
+    for body in bodies.iter_mut() {
         if limit_area.contains_spatial(body.get_spatial()) {
-            let phase_table = get_rotation_phase_table(
+            let (new_rotation, new_rotation_phase) = project_rotation(
+                current_ticks,
                 &mut caches.rotation_cache,
-                &body.get_rotation_movement(),
+                body.get_rotation_movement(),
                 body.get_spatial().radius,
+                body.spec(),
             );
-            let new_rotation = match &mut body.get_rotation_movement_mut() {
-                RotationMovement::Monotonous {
-                    phase,
-                    full_period_ticks,
-                    start_phase,
-                } => {
-                    if (*full_period_ticks).abs() < 1e-3 || phase_table.len() == 0 {
-                        panic!(
-                            "bad rotation movement for {:?}: {:?}",
-                            body.spec(),
-                            body.get_movement()
-                        );
-                    }
-                    let phase_abs = ((current_ticks as i64 % (*full_period_ticks) as i64) as f64
-                        / (*full_period_ticks)
-                        * phase_table.len() as f64) as u32;
-                    let phase_rel = (phase_abs + (*start_phase)) % phase_table.len() as u32;
-                    *phase = Some(phase_rel);
-                    phase_table[phase_rel as usize]
-                }
-                _ => panic!("unsupported body movement"),
-            };
             body.get_spatial_mut().rotation_rad = new_rotation;
+            body.get_rotation_movement_mut()
+                .set_phase(new_rotation_phase);
         }
     }
+}
+
+pub fn project_rotation(
+    current_ticks: u64,
+    cache: &mut HashMap<u64, Vec<f64>>,
+    movement: &RotationMovement,
+    body_radius: f64,
+    body_spec: ObjectSpecifier,
+) -> (f64, Option<u32>) {
+    let phase_table = get_rotation_phase_table(cache, movement, body_radius);
+    let (new_rotation, new_rotation_phase) = match movement {
+        RotationMovement::Monotonous {
+            full_period_ticks,
+            start_phase,
+            ..
+        } => {
+            if (*full_period_ticks).abs() < 1e-3 || phase_table.len() == 0 {
+                panic!("bad rotation movement for {:?}: {:?}", body_spec, movement);
+            }
+            let phase_abs = ((current_ticks as i64 % (*full_period_ticks) as i64) as f64
+                / (*full_period_ticks)
+                * phase_table.len() as f64) as u32;
+            let phase_rel = (phase_abs + (*start_phase)) % phase_table.len() as u32;
+            (phase_table[phase_rel as usize], Some(phase_rel))
+        }
+        _ => panic!("unsupported body rotation movement"),
+    };
+    (new_rotation, new_rotation_phase)
 }
 
 pub fn get_radial_bodies_mut(res: &mut Location) -> Vec<Box<&mut dyn IBodyV2>> {

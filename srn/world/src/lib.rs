@@ -638,13 +638,13 @@ pub fn get_preloaded_diff_replay_state_at_interpolated(
     } else {
         None
     };
-    let mut cache = &mut game_state_caches.write().unwrap().rel_orbit_cache;
+    let mut caches = game_state_caches.write().unwrap();
     let full_id = sampler
         .as_mut()
         .map(|s| s.start(SamplerMarks::GetDiffReplayStateAtPreloadedInterpolated as u32));
     let mut replay: ReplayDiffed = current_replay.read().unwrap().clone().unwrap();
     let (prev, next, curr) = replay
-        .get_state_at_interpolated(prev_ticks, next_ticks, value, &mut sampler, cache)
+        .get_state_at_interpolated(prev_ticks, next_ticks, value, &mut sampler, &mut caches)
         .map_err(|_| JsValue::from_str("failed to rewind"))?;
     sampler.as_mut().map(|s| {
         full_id.map(|fid| s.end(fid));
@@ -691,11 +691,11 @@ pub fn interpolate_states(
     value: f64,
     options: JsValue,
 ) -> Result<JsValue, JsValue> {
-    let mut cache = &mut game_state_caches.write().unwrap().rel_orbit_cache;
+    let mut guard = game_state_caches.write().unwrap();
     let state_a: GameState = custom_deserialize(state_a)?;
     let state_b: GameState = custom_deserialize(state_b)?;
     let options: UpdateOptionsV2 = serde_wasm_bindgen::from_value(options)?;
-    let result = interpolation::interpolate_states(&state_a, &state_b, value, cache, options);
+    let result = interpolation::interpolate_states(&state_a, &state_b, value, &mut guard, options);
     Ok(custom_serialize(&result)?)
 }
 

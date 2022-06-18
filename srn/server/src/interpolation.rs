@@ -1,7 +1,8 @@
 use crate::indexing::{
-    index_all_ships_by_id, index_ships_by_id, index_state, GameStateIndexes, ObjectSpecifier, Spec,
+    index_all_ships_by_id, index_ships_by_id, index_state, GameStateCaches, GameStateIndexes,
+    ObjectSpecifier, Spec,
 };
-use crate::planet_movement::IBodyV2;
+use crate::planet_movement::{project_rotation, IBodyV2};
 use crate::vec2::{Precision, Vec2f64};
 use crate::world::{
     lerp, GameState, Location, Movement, PlanetV2, RotationMovement, Ship, UpdateOptionsV2, AABB,
@@ -16,7 +17,7 @@ pub fn interpolate_states(
     state_a: &GameState,
     state_b: &GameState,
     value: f64,
-    rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
+    caches: &mut GameStateCaches,
     options: UpdateOptionsV2,
 ) -> GameState {
     let mut result = state_a.clone();
@@ -35,7 +36,7 @@ pub fn interpolate_states(
                 res,
                 target,
                 value,
-                rel_orbit_cache,
+                caches,
                 &options,
                 &result_indexes,
                 &target_indexes,
@@ -60,7 +61,7 @@ fn interpolate_location(
     result: &mut Location,
     target: &Location,
     value: f64,
-    rel_orbit_cache: &mut HashMap<u64, Vec<Vec2f64>>,
+    caches: &mut GameStateCaches,
     options: &UpdateOptionsV2,
     result_indexes: &GameStateIndexes,
     target_indexes: &GameStateIndexes,
@@ -91,7 +92,7 @@ fn interpolate_location(
                 res_mov,
                 tar_mov,
                 value,
-                rel_orbit_cache,
+                &mut caches.rel_orbit_cache,
                 result_indexes,
                 &planet_spec,
                 &planet_pos,
@@ -101,6 +102,24 @@ fn interpolate_location(
         } else {
             // log!(format!("skipping {}", i));
         }
+    }
+
+    for i in 0..result.asteroid_belts.len() {
+        let radius = result.asteroid_belts[i].spatial.radius;
+        let spec = result.asteroid_belts[i].spec();
+        let res_mov = &mut result.asteroid_belts[i].rot_movement;
+        let tar_mov = &target.asteroid_belts[i].rot_movement;
+        let new_rotation = interpolate_asteroid_belt_rotation_movement(
+            res_mov,
+            tar_mov,
+            result_ticks,
+            target_ticks,
+            &mut caches.rotation_cache,
+            radius,
+            value,
+            spec,
+        );
+        result.asteroid_belts[i].spatial.rotation_rad = new_rotation;
     }
 
     // then, sequentially (via tiers) restore absolute position
@@ -116,6 +135,38 @@ fn interpolate_location(
                 .collect(),
         )
     }
+}
+
+fn interpolate_asteroid_belt_rotation_movement(
+    res_mov: &mut RotationMovement,
+    tar_mov: &RotationMovement,
+    res_ticks: u64,
+    tar_ticks: u64,
+    rotation_cache: &mut HashMap<u64, Vec<f64>>,
+    body_radius: f64,
+    value: f64,
+    body_spec: ObjectSpecifier,
+) -> f64 {
+    let res_phase = res_mov.get_phase().clone().unwrap_or_else(|| {
+        project_rotation(
+            res_ticks,
+            rotation_cache,
+            res_mov,
+            body_radius,
+            body_spec.clone(),
+        )
+        .1
+        .unwrap()
+    }) as usize;
+    let target_phase = tar_mov.get_phase().clone().unwrap_or_else(|| {
+        project_rotation(tar_ticks, rotation_cache, tar_mov, body_radius, body_spec)
+            .1
+            .unwrap()
+    }) as usize;
+    let table = get_rotation_phase_table(rotation_cache, res_mov, body_radius);
+    let lerped_idx = lerp_usize_cycle(res_phase, target_phase, value, table.len());
+    res_mov.set_phase(Some(lerped_idx as u32));
+    return table[lerped_idx];
 }
 
 pub fn restore_absolute_positions(root: Box<&dyn IBodyV2>, mut bodies: Vec<Box<&mut dyn IBodyV2>>) {
@@ -274,11 +325,11 @@ pub fn get_orbit_phase_table<'a, 'b>(
 pub fn get_rotation_phase_table<'a, 'b>(
     rot_cache: &'a mut HashMap<u64, Vec<f64>>,
     rot_movement_def: &'b RotationMovement,
-    radius: f64,
+    body_radius: f64,
 ) -> &'a mut Vec<f64> {
     rot_cache
-        .entry(coerce_phase_table_cache_key(radius))
-        .or_insert_with(|| gen_rotation_phase_table(&rot_movement_def, radius))
+        .entry(coerce_phase_table_cache_key(body_radius))
+        .or_insert_with(|| gen_rotation_phase_table(&rot_movement_def, body_radius))
 }
 
 pub fn coerce_phase_table_cache_key(radius_value: f64) -> u64 {

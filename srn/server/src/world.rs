@@ -1759,6 +1759,22 @@ pub enum RotationMovement {
     },
 }
 
+impl RotationMovement {
+    pub fn set_phase(&mut self, new_phase: Option<u32>) {
+        match self {
+            RotationMovement::None => {}
+            RotationMovement::Monotonous { phase, .. } => *phase = new_phase,
+        }
+    }
+
+    pub fn get_phase(&self) -> &Option<u32> {
+        match self {
+            RotationMovement::None => &None,
+            RotationMovement::Monotonous { phase, .. } => phase,
+        }
+    }
+}
+
 pub struct ShipTemplate {
     at: Option<Vec2f64>,
     npc_traits: Option<Vec<AiTrait>>,

@@ -1,6 +1,9 @@
 use crate::perf::SamplerMarks;
 use crate::system_gen::seed_state;
-use crate::{get_prng, interpolation, new_id, world, DialogueTable, GameMode, GameState, Sampler, Vec2f64};
+use crate::{
+    get_prng, interpolation, new_id, world, DialogueTable, GameMode, GameState, GameStateCaches,
+    Sampler, Vec2f64,
+};
 use itertools::Itertools;
 use json_patch::{
     patch, AddOperation, Patch, PatchError, PatchOperation, RemoveOperation, ReplaceOperation,
@@ -19,8 +22,8 @@ use treediff::tools::ChangeType::{Added, Modified, Removed};
 use treediff::tools::{ChangeType, Recorder};
 use treediff::value::*;
 use treediff::Value;
-use world::UpdateOptionsV2;
 use uuid::Uuid;
+use world::UpdateOptionsV2;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ReplayError {
@@ -62,7 +65,7 @@ pub struct ValueKey(
 fn serialize_key<S>(
     value: &Key,
     serializer: S,
-) -> std::result::Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
 where
     S: Serializer,
 {
@@ -72,7 +75,7 @@ where
     }
 }
 
-fn deserialize_key<'de, D>(deserializer: D) -> std::result::Result<Key, D::Error>
+fn deserialize_key<'de, D>(deserializer: D) -> Result<Key, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -385,11 +388,12 @@ impl ReplayDiffed {
         next_ticks: u32,
         value: f64,
         sampler: &mut Option<Sampler>,
-        cache: &mut HashMap<u64, Vec<Vec2f64>>,
+        caches: &mut GameStateCaches,
     ) -> Result<(PrevState, NextState, CurrState), ReplayError> {
         let prev = self.get_state_at(prev_ticks, sampler)?;
         let next = self.get_state_at(next_ticks, sampler)?;
-        let curr = interpolation::interpolate_states(&prev, &next, value, cache, UpdateOptionsV2::new());
+        let curr =
+            interpolation::interpolate_states(&prev, &next, value, caches, UpdateOptionsV2::new());
         Ok((prev, next, curr))
     }
 
@@ -399,7 +403,7 @@ impl ReplayDiffed {
         next_ticks: u32,
         value: f64,
         sampler: &mut Option<Sampler>,
-        cache: &mut HashMap<u64, Vec<Vec2f64>>,
+        caches: &mut GameStateCaches,
     ) -> Result<(PrevState, NextState, CurrState), ReplayError> {
         let prev_ticks_index = self
             .marks_ticks
@@ -454,7 +458,8 @@ impl ReplayDiffed {
         // // case A, E - complete miss
 
         // fall back to full restore if every optimization check fails
-        return self
-            .get_state_at_interpolated_full_restore(prev_ticks, next_ticks, value, sampler, cache);
+        return self.get_state_at_interpolated_full_restore(
+            prev_ticks, next_ticks, value, sampler, caches,
+        );
     }
 }

@@ -9,7 +9,6 @@ import {
 } from '../util';
 import _ from 'lodash';
 import * as uuid from 'uuid';
-import { mockPlayerActionNavigate } from './playerActions.spec';
 
 const lerp = (x, y, a) => x + (y - x) * a;
 
@@ -56,6 +55,14 @@ export const forceSetBodyPosition = (body, position) => {
   }
   if (body.movement && !_.isNil(body.movement.relative_position)) {
     body.movement.relative_position = null;
+  }
+};
+
+export const forceSetBodyRotation = (body, rotation) => {
+  body.spatial.rotation_rad = rotation;
+  // if the position is set artificially, phase hint becomes invalid and has to be force-recalculated
+  if (body.rot_movement && !_.isNil(body.rot_movement.phase)) {
+    body.rot_movement.phase = null;
   }
 };
 
@@ -315,5 +322,28 @@ describe('state interpolation', () => {
     );
     const newShipPosX = stateC.locations[0].ships[0].x;
     expect(newShipPosX).toBeCloseTo(newPos.x);
+  });
+
+  it('can interpolate asteroid belt rotation', () => {
+    const state = wasm.seedWorld({
+      mode: 'CargoRush',
+      seed: 'belt interpolate',
+    });
+    state.locations[0].asteroid_belts[0].rot_movement.full_period_ticks = Math.abs(
+      state.locations[0].asteroid_belts[0].rot_movement.full_period_ticks // guarantee positive
+    );
+    forceSetBodyRotation(state.locations[0].asteroid_belts[0], 0.0);
+    const stateB = _.cloneDeep(state);
+    stateB.ticks +=
+      stateB.locations[0].asteroid_belts[0].rot_movement.full_period_ticks / 4;
+    forceSetBodyRotation(stateB.locations[0].asteroid_belts[0], Math.PI / 2);
+    const stateC = wasm.interpolateStates(
+      state,
+      stateB,
+      0.5,
+      mockUpdateOptions()
+    );
+    const beltC = stateC.locations[0].asteroid_belts[0];
+    expect(beltC.spatial.rotation_rad).toBeCloseTo(Math.PI / 4);
   });
 });
