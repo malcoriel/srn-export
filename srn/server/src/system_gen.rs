@@ -176,11 +176,12 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                         name,
                         planet_radius,
                         planet_center_x,
+                        index + 1,
                     );
                     planets.push(planet);
 
                     let mut current_sat_x = planet_center_x + planet_radius + 10.0;
-                    for _j in 0..(gen_sat_count(planet_radius, &mut prng)
+                    for sat_index in 0..(gen_sat_count(planet_radius, &mut prng)
                         .min(opts.max_satellites_for_planet))
                     {
                         let name = sat_name_pool.get(&mut prng).to_string();
@@ -202,7 +203,10 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             health: None,
                             properties: Default::default(),
                             movement: Movement::RadialMonotonous {
-                                full_period_ticks: gen_sat_orbit_period(&mut prng) * dir,
+                                full_period_ticks: gen_sat_orbit_period(
+                                    &mut prng,
+                                    sat_index as f64 + 1.0,
+                                ) * dir,
                                 anchor: ObjectSpecifier::Planet { id: planet_id },
                                 relative_position: Default::default(),
                                 phase: None,
@@ -228,7 +232,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor: star_spec.clone(),
                         },
                         rot_movement: RotationMovement::Monotonous {
-                            full_period_ticks: (60 * 1000 * 1000) as f64,
+                            full_period_ticks: (5 * 60 * 1000 * 1000) as f64,
                             phase: None,
                             start_phase: 0,
                         },
@@ -247,7 +251,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor: star_spec.clone(),
                         },
                         rot_movement: RotationMovement::Monotonous {
-                            full_period_ticks: (180 * 1000 * 1000) as f64,
+                            full_period_ticks: (5 * 180 * 1000 * 1000) as f64,
                             phase: None,
                             start_phase: 0,
                         },
@@ -266,7 +270,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor: star_spec.clone(),
                         },
                         rot_movement: RotationMovement::Monotonous {
-                            full_period_ticks: (40 * 1000 * 1000) as f64,
+                            full_period_ticks: (5 * 40 * 1000 * 1000) as f64,
                             phase: None,
                             start_phase: 0,
                         },
@@ -313,6 +317,7 @@ pub fn gen_planet(
     name: String,
     planet_radius: f64,
     planet_center_x: f64,
+    index: usize,
 ) -> PlanetV2 {
     PlanetV2 {
         id: planet_id,
@@ -330,7 +335,7 @@ pub fn gen_planet(
         health: None,
         properties: Default::default(),
         movement: Movement::RadialMonotonous {
-            full_period_ticks: gen_planet_orbit_period(&mut prng),
+            full_period_ticks: gen_planet_orbit_period(&mut prng, index as f64),
             anchor,
             relative_position: Default::default(),
             phase: None,

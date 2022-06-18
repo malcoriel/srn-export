@@ -135,7 +135,7 @@ pub fn find_room_by_player_id_mut<'a>(
         .and_then(move |idx| cont.rooms.values.get_mut(idx))
 }
 
-pub const ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS: i64 = 5 * 1000;
+pub const ROOM_CLEANUP_NO_PLAYERS_TIMEOUT_MS: i64 = 10 * 1000;
 
 pub fn cleanup_empty_rooms(cont: &mut RwLockWriteGuard<StateContainer>) {
     let curr_millis = Local::now().timestamp_millis();

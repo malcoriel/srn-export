@@ -227,12 +227,12 @@ pub fn gen_period(prng: &mut Pcg64Mcg, scale: f64) -> f64 {
     return (PERIOD_PRIMES[idx as usize] as f64 * dir).floor() * 1000.0 * 1000.0 * scale;
 }
 
-pub fn gen_sat_orbit_period(rng: &mut Pcg64Mcg) -> f64 {
-    return gen_period(rng, 1.0);
+pub fn gen_sat_orbit_period(rng: &mut Pcg64Mcg, extra_scale: f64) -> f64 {
+    return gen_period(rng, 12.0 * extra_scale);
 }
 
-pub fn gen_planet_orbit_period(rng: &mut Pcg64Mcg) -> f64 {
-    return gen_period(rng, 2.0);
+pub fn gen_planet_orbit_period(rng: &mut Pcg64Mcg, extra_scale: f64) -> f64 {
+    return gen_period(rng, 18.0 * extra_scale);
 }
 
 pub fn gen_planet_radius(rng: &mut Pcg64Mcg) -> f64 {
