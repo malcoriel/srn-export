@@ -77,6 +77,7 @@ export const StarMap: React.FC<StarMapProps> = ({
                 boundCameraMovement: false,
                 zoomShift: 1,
                 cameraPosition: new Vector(0, 0),
+                breadcrumbs:[]
               }}
             />
             <Text

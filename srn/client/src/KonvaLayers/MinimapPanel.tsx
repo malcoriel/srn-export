@@ -109,7 +109,7 @@ interface SlowBodiesLayerParams {
 
 const isNegativeRotation = (p: PlanetV2): boolean => {
   if (p.movement.tag === 'RadialMonotonous') {
-    return p.movement.clockwise;
+    return p.movement.full_period_ticks >= 0;
   }
   return false;
 };

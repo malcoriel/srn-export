@@ -31,6 +31,7 @@ const Template: Story = (args) => {
             boundCameraMovement: false,
             zoomShift: 1,
             cameraPosition: new Vector(0, 0),
+            breadcrumbs: [],
           }}
           visible
           scale={_.times(3, () => 128) as [number, number, number]}
