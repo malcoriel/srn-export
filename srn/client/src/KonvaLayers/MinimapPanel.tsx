@@ -178,7 +178,7 @@ const SlowEntitiesLayer = React.memo(
                           key={i}
                           {...arcCommonProps}
                           rotation={
-                            (pPos.y >= 0 ? -rotationDeg : rotationDeg) +
+                            (-rotationDeg) +
                             (negativeRotation ? -totalArc : 0) +
                             // shaderShift for the planet radius
                             radToDeg(beta) +
