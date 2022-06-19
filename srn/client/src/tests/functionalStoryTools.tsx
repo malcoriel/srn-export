@@ -21,6 +21,7 @@ export interface BuildStoryParams {
   initialPos: IVector;
   initialZoom: number;
   forceCameraPosition?: IVector;
+  storyName: string;
   actions?: Iterable<{ wait: number; action: Action }>;
 }
 
@@ -37,16 +38,19 @@ const patchAction = (action: Action, nsRef: NetState) => {
   }
 };
 
+let currentStoryName = '';
 export const buildStory = async ({
   initialState,
   initialPos,
   initialZoom,
   forceCameraPosition,
   actions,
+  storyName,
 }: BuildStoryParams): Promise<void> => {
   if (!nsRef) {
     return;
   }
+  currentStoryName = storyName;
 
   nsRef.sendSandboxCmd(
     SandboxCommandBuilder.SandboxCommandSetupState({ fields: initialState })
@@ -71,6 +75,9 @@ export const buildStory = async ({
     if (actions && nsRef) {
       for (const { action, wait } of actions) {
         await delay(wait);
+        if (storyName !== currentStoryName) {
+          break;
+        }
         patchAction(action, nsRef);
         executeSyncAction(action);
       }

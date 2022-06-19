@@ -8,7 +8,6 @@ import { ContainersLayer } from './ContainersLayer';
 import { ThreePlanetsLayer } from './ThreePlanetsLayer';
 import { AsteroidBeltsLayer } from './AsteroidBeltsLayer';
 import { posToThreePos } from './util';
-import { ClientStateIndexes, findMyShip } from '../ClientStateIndexing';
 
 export const ThreeBodiesLayer: React.FC<{
   state: GameState;

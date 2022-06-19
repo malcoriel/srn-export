@@ -20,7 +20,8 @@ use crate::system_gen::{
 };
 use crate::vec2::Vec2f64;
 use crate::world::{
-    GameState, Location, Movement, PlanetV2, RotationMovement, Ship, SpatialProps, Star,
+    AsteroidBelt, GameState, Location, Movement, PlanetV2, RotationMovement, Ship, SpatialProps,
+    Star,
 };
 use crate::{indexing, prng_id};
 use crate::{new_id, world};
@@ -69,9 +70,19 @@ pub struct SBTeleport {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct SBAddAsteroidBelt {
+    id: Option<ReferencableId>,
+    width: f64,
+    count: u32,
+    radius: f64,
+    full_period_ticks: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct SBSetupState {
     star: SBAddStar,
     planets: Vec<SBAddPlanet>,
+    asteroid_belts: Vec<SBAddAsteroidBelt>,
     force_seed: Option<String>,
 }
 
@@ -229,6 +240,29 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                 });
             }
             let star_id = loc.star.as_ref().map_or(Uuid::default(), |s| s.id);
+            loc.asteroid_belts = args
+                .asteroid_belts
+                .iter()
+                .map(|sbb| AsteroidBelt {
+                    id: map_id_opt(sbb.id.clone(), &mut id_storage, &mut prng),
+                    spatial: SpatialProps {
+                        position: Vec2f64::zero(),
+                        rotation_rad: 0.0,
+                        radius: sbb.radius,
+                    },
+                    width: sbb.width,
+                    count: sbb.count,
+                    movement: Movement::AnchoredStatic {
+                        anchor: ObjectSpecifier::Star { id: star_id },
+                    },
+                    scale_mod: 0.0,
+                    rot_movement: RotationMovement::Monotonous {
+                        full_period_ticks: sbb.full_period_ticks,
+                        phase: Some(0),
+                        start_phase: 0,
+                    },
+                })
+                .collect();
             loc.planets = args
                 .planets
                 .iter()

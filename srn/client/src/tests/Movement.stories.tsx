@@ -28,6 +28,7 @@ const getStartGameParamsPlanets = () => {
   let currentIdx = 0;
 
   return {
+    storyName,
     forceCameraPosition: {
       x: 125,
       y: 100,
@@ -39,6 +40,7 @@ const getStartGameParamsPlanets = () => {
         id: star_ref_id,
       },
       planets: [],
+      asteroid_belts: [],
     },
     initialPos: {
       x: 100,

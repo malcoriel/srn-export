@@ -7,8 +7,7 @@ import {
 } from './functionalStoryTools';
 import { ReferencableIdBuilder } from '../../../world/pkg/world.extra';
 
-const storyName = 'Functional/Planets';
-
+const planetsStory = 'Functional/Celestial/Planets';
 const getStartGameParamsPlanets = () => {
   const star_ref_id = {
     tag: 'Reference' as const,
@@ -16,12 +15,14 @@ const getStartGameParamsPlanets = () => {
   };
 
   return {
+    storyName: planetsStory,
     initialState: {
-      force_seed: storyName,
+      force_seed: planetsStory,
       star: {
         radius: 50.0,
         id: star_ref_id,
       },
+      asteroid_belts: [],
       planets: [
         {
           p_type: PlanetType.Jovian,
@@ -90,14 +91,53 @@ const getStartGameParamsPlanets = () => {
     initialZoom: 0.8,
   };
 };
-
-export const Main = FunctionalStoryTemplate.bind({});
-Main.args = {
-  storyName,
+export const Planets = FunctionalStoryTemplate.bind({});
+Planets.args = {
+  storyName: planetsStory,
 };
-getStartGameParams[storyName] = getStartGameParamsPlanets;
+getStartGameParams[planetsStory] = getStartGameParamsPlanets;
+const asteroidBeltStory = 'Functional/Celestial/AsteroidBelt';
+const getStartGameParamsAsteroidBelt = () => {
+  const star_ref_id = {
+    tag: 'Reference' as const,
+    reference: 'star',
+  };
+
+  return {
+    storyName: asteroidBeltStory,
+    initialState: {
+      force_seed: asteroidBeltStory,
+      star: {
+        radius: 50.0,
+        id: star_ref_id,
+      },
+      planets: [],
+      asteroid_belts: [
+        {
+          id: ReferencableIdBuilder.ReferencableIdReference({
+            reference: 'belt',
+          }),
+          radius: 100,
+          count: 100,
+          width: 10.0,
+          full_period_ticks: genPeriod('belt', 10.0),
+        },
+      ],
+    },
+    initialPos: {
+      x: 100,
+      y: 100,
+    },
+    initialZoom: 0.8,
+  };
+};
+export const AsteroidBelt = FunctionalStoryTemplate.bind({});
+AsteroidBelt.args = {
+  storyName: asteroidBeltStory,
+};
+getStartGameParams[asteroidBeltStory] = getStartGameParamsAsteroidBelt;
 
 export default {
-  title: storyName,
+  title: 'Functional/Celestial',
   argTypes: {},
 } as Meta;

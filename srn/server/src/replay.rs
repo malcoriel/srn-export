@@ -1,8 +1,8 @@
+use crate::indexing::GameStateCaches;
 use crate::perf::SamplerMarks;
 use crate::system_gen::seed_state;
 use crate::{
-    get_prng, interpolation, new_id, world, DialogueTable, GameMode, GameState, GameStateCaches,
-    Sampler, Vec2f64,
+    get_prng, interpolation, new_id, world, DialogueTable, GameMode, GameState, Sampler, Vec2f64,
 };
 use itertools::Itertools;
 use json_patch::{
