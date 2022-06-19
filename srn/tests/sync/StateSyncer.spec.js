@@ -23,7 +23,7 @@ const maxedAABB = {
 
 const initSyncer = (seedWorldArgs) => {
   const initState = wasm.seedWorld(seedWorldArgs);
-  const syncer = new StateSyncer();
+  const syncer = new StateSyncer({ wasmUpdateWorld: wasm.updateWorld });
   const result = syncer.handle({
     tag: 'init',
     state: initState,

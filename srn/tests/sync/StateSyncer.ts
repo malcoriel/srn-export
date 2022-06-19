@@ -1,5 +1,5 @@
 import { AABB, GameState } from '../../client/src/world';
-import { wasm } from '../util';
+import { Action } from '../../world/pkg/world';
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = { tag: 'desynced success'; state: GameState };
 type StateSyncerError = { tag: 'error'; message: string };
@@ -27,7 +27,7 @@ type StateSyncerEvent =
   | { tag: 'server state'; state: GameState; visibleArea: AABB }
   | {
       tag: 'player action';
-      actions: GameState;
+      actions: Action[];
       visibleArea: AABB;
     };
 
@@ -36,33 +36,87 @@ interface IStateSyncer {
   observe(): GameState;
 }
 
+export interface WasmDeps {
+  wasmUpdateWorld: any;
+}
+
 export class StateSyncer implements IStateSyncer {
+  private readonly wasmUpdateWorld;
+
+  constructor(deps: WasmDeps) {
+    this.wasmUpdateWorld = deps.wasmUpdateWorld;
+  }
+
   private state!: GameState;
 
   public handle = (event: StateSyncerEvent): StateSyncerResult => {
     switch (event.tag) {
-      case 'init':
-        this.state = event.state;
-        return this.successCurrent();
-      case 'time update':
-        this.state = wasm.updateWorld(
-          // @ts-ignore
-          {
-            state: this.state,
-            limit_area: event.visibleArea,
-            client: true,
-          },
-          BigInt(event.elapsedMs * 1000)
-        );
-        return this.successCurrent();
-      case 'server state':
-        return this.successCurrent();
-      case 'player action':
-        return this.successCurrent();
+      case 'init': {
+        return this.onInit(event);
+      }
+      case 'time update': {
+        return this.onTimeUpdate(event);
+      }
+      case 'server state': {
+        return this.onServerUpdate();
+      }
+      case 'player action': {
+        return this.onPlayerAction(event);
+      }
       default:
         throw new Error(`bad case ${(event as any).tag}`);
     }
   };
+
+  private updateState(from, elapsedTicks, area): GameState | null {
+    return this.wasmUpdateWorld(
+      {
+        state: from,
+        limit_area: area,
+        client: true,
+      },
+      BigInt(elapsedTicks * 1000)
+    );
+  }
+
+  private onPlayerAction(event: {
+    tag: 'player action';
+    actions: Action[];
+    visibleArea: AABB;
+  }) {
+    this.state.player_actions.push(
+      ...event.actions.map((a) => [a, null] as [Action, null])
+    );
+
+    this.state = this.updateState(
+      this.state,
+      this.state.update_every_ticks,
+      event.visibleArea
+    );
+    return this.successCurrent();
+  }
+
+  private onServerUpdate() {
+    return this.successCurrent();
+  }
+
+  private onTimeUpdate(event: {
+    tag: 'time update';
+    elapsedMs: number;
+    visibleArea: AABB;
+  }) {
+    this.state = this.updateState(
+      this.state,
+      event.elapsedMs,
+      event.visibleArea
+    );
+    return this.successCurrent();
+  }
+
+  private onInit(event: { tag: 'init'; state: GameState; visibleArea: AABB }) {
+    this.state = event.state;
+    return this.successCurrent();
+  }
 
   private successCurrent() {
     return { tag: 'success' as const, state: this.state };
