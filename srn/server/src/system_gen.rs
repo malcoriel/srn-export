@@ -232,7 +232,10 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor: star_spec.clone(),
                         },
                         rot_movement: RotationMovement::Monotonous {
-                            full_period_ticks: (5 * 60 * 1000 * 1000) as f64,
+                            full_period_ticks: gen_planet_orbit_period(
+                                &mut prng,
+                                (index as f64 + 1.0) * 5.0,
+                            ),
                             phase: None,
                             start_phase: 0,
                         },
@@ -251,7 +254,10 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor: star_spec.clone(),
                         },
                         rot_movement: RotationMovement::Monotonous {
-                            full_period_ticks: (5 * 180 * 1000 * 1000) as f64,
+                            full_period_ticks: gen_planet_orbit_period(
+                                &mut prng,
+                                (index as f64 + 1.0) * 6.0,
+                            ),
                             phase: None,
                             start_phase: 0,
                         },
@@ -270,7 +276,10 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                             anchor: star_spec.clone(),
                         },
                         rot_movement: RotationMovement::Monotonous {
-                            full_period_ticks: (5 * 40 * 1000 * 1000) as f64,
+                            full_period_ticks: gen_planet_orbit_period(
+                                &mut prng,
+                                (index as f64 + 1.0) * 3.0,
+                            ),
                             phase: None,
                             start_phase: 0,
                         },
