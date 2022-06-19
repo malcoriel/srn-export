@@ -1,4 +1,4 @@
-import { swapGlobals, updateWorld, wasm } from '../util';
+import { swapGlobals, updateWorld, wasm, writeTmpJson } from '../util';
 
 describe('sample smoke test', () => {
   beforeAll(swapGlobals);
@@ -20,5 +20,10 @@ describe('sample smoke test', () => {
     expect(world.locations[0].planets[0].spatial.position.x).not.toBeCloseTo(
       oldX
     );
+  });
+
+  xit('can generate and save temp state', async () => {
+    const world = wasm.seedWorld({ mode: 'CargoRush', seed: '123' });
+    await writeTmpJson('test-state', world);
   });
 });

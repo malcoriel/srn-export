@@ -30,7 +30,12 @@ import {
   Substitution,
   TradeAction,
 } from '../../world/pkg';
-import { CargoDeliveryQuestState, GameMode, InventoryItemType, SubstitutionType, } from '../../world/pkg/world.extra';
+import {
+  CargoDeliveryQuestState,
+  GameMode,
+  InventoryItemType,
+  SubstitutionType,
+} from '../../world/pkg/world.extra';
 import _ from 'lodash';
 import { Dictionary } from 'ts-essentials';
 import { findObjectPosition } from './ClientStateIndexing';
@@ -255,6 +260,10 @@ export const interpolateWorld = (
     limit_area: limitArea,
     limit_to_loc_idx: 0,
   });
+};
+
+export const seedWorld = (seed: string, mode: GameMode): GameState => {
+  return wasmFunctions.seed_world({ mode, seed });
 };
 
 const parseState = (inState: GameState): GameState | undefined => {
@@ -498,7 +507,11 @@ export const genPeriod = (
   const dir = prng.nextBoolean() ? 1 : -1;
   return dir * prime * 10 * 1000 * 1000 * scale * 2.0;
 };
-export const isInAABB = (bounds: AABB, obj: IVector, radius: number): boolean => {
+export const isInAABB = (
+  bounds: AABB,
+  obj: IVector,
+  radius: number
+): boolean => {
   return (
     bounds.top_left.x - radius <= obj.x &&
     obj.x <= bounds.bottom_right.x + radius &&

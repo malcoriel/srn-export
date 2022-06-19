@@ -627,8 +627,8 @@ export default class NetState extends EventEmitter {
           console.warn(
             'full desync detected, overriding the local state fully'
           );
-          this.prevState = _.clone(parsed);
-          this.state = _.clone(parsed);
+          this.tryUpdatePrevState(_.clone(parsed), 'full desync');
+          this.state = _.clone(this.prevState);
           const newShip = findMyShip(this.state);
           if (newShip) {
             this.detectJumpInMyShipPos(0, Vector.fromIVector(newShip), 'red');
@@ -641,10 +641,13 @@ export default class NetState extends EventEmitter {
           }
         } else if (this.desync < 0) {
           // normal client-ahead-of-server
-          this.prevState = this.rebaseReceivedStateToCurrentPoint(
-            parsed,
-            -this.desync,
-            this.pendingActionPacks
+          this.tryUpdatePrevState(
+            this.rebaseReceivedStateToCurrentPoint(
+              parsed,
+              -this.desync,
+              this.pendingActionPacks
+            ),
+            'client ahead'
           );
           const newShip = findMyShip(this.prevState);
           if (newShip) {
@@ -667,10 +670,13 @@ export default class NetState extends EventEmitter {
         } else {
           // this means that client lagged and server is ahead of it, which shouldn't be the case
           // or it's still synchronizing in the beginning
-          this.prevState = this.rebaseReceivedStateToCurrentPoint(
-            parsed,
-            10, // magic constant to bump client a little bit ahead so it doensn't have to accept it next time
-            this.pendingActionPacks
+          this.tryUpdatePrevState(
+            this.rebaseReceivedStateToCurrentPoint(
+              parsed,
+              10, // magic constant to bump client a little bit ahead so it doensn't have to accept it next time
+              this.pendingActionPacks
+            ),
+            'server ahead'
           );
           const newShip = findMyShip(this.prevState);
           if (newShip) {
@@ -815,7 +821,7 @@ export default class NetState extends EventEmitter {
 
   forceUpdateLocalStateForOptimisticSync = () => {
     this.updateLocalState(Math.ceil(this.state.update_every_ticks / 1000)); // do a minimal update. this will cause a very small desync forward, but will flush out all the actions
-    this.prevState = _.clone(this.state);
+    this.tryUpdatePrevState(_.clone(this.state), 'force update local');
     const myShip = findMyShip(this.prevState);
     if (myShip) {
       this.detectJumpInMyPrevShipPos(0, Vector.fromIVector(myShip), null);
@@ -1047,6 +1053,34 @@ export default class NetState extends EventEmitter {
       return [keys[keys.length - 1], null];
     }
     return [null, null];
+  }
+
+  // to guarantee lack of rollbacks, we must ensure that prevState never, ever
+  // goes below the current state on client, counted by ticks.
+  private tryUpdatePrevState(newPrevState: GameState, source: string) {
+    if (newPrevState.ticks >= this.state.ticks) {
+      this.prevState = newPrevState;
+      return;
+    }
+    const diffTicks = Math.abs(newPrevState.ticks - this.state.ticks);
+    const diffMs = Math.ceil(diffTicks / 1000.0);
+    const correctedPrevState = updateWorld(
+      newPrevState,
+      this.getSimulationArea(),
+      diffMs
+    );
+    if (correctedPrevState) {
+      this.prevState = correctedPrevState;
+      // normalLog(
+      //   `Corrected prev state from ${source} by ${diffMs}ms ${diffTicks}mcs, ticks before/after ${
+      //     newPrevState.ticks
+      //   }/${correctedPrevState.ticks}, ${
+      //     newPrevState.ticks === correctedPrevState.ticks ? 'SAME!' : ''
+      //   }`
+      // );
+    } else {
+      // normalWarn(`Could not correct prev state from ${source} by ${diffMs}ms`);
+    }
   }
 
   private interpolateCurrentState(elapsedMs: number) {
