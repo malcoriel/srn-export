@@ -3,6 +3,7 @@
 import type {
   FullObjectSpecifier,
   GameState,
+  NatSpawnMineral,
   PlanetV2,
   Player,
   Ship,
@@ -10,6 +11,7 @@ import type {
 import Vector, { isIVector, IVector } from './utils/Vector';
 import { ObjectSpecifierBuilder } from '../../world/pkg/world.extra';
 import { UnreachableCaseError } from 'ts-essentials';
+import { Container } from '../../world/pkg/world';
 
 export interface ClientStateIndexes {
   myShip: Ship | null;
@@ -143,4 +145,76 @@ export const buildClientStateIndexes = (state: GameState) => {
     }
   }
   return indexes;
+};
+
+export enum FindObjectHint {
+  Planet,
+}
+
+type FindableObject = PlanetV2 | NatSpawnMineral | Container | Ship;
+type FindObjectResult =
+  | {
+      object: FindableObject;
+      locIndex: number;
+    }
+  | undefined;
+export const findObjectById = (
+  state: GameState,
+  objId: string,
+  // for further optimizations like what type & location, but for now just pure search
+  _hints?: FindObjectHint[]
+): FindObjectResult => {
+  // considering the fact server only provides 0-th location, this is safe to
+  // iterate them all, for now
+  for (let i = 0; i < state.locations.length; i++) {
+    const loc = state.locations[i];
+    let found;
+    found = loc.planets.find((p) => p.id === objId);
+    if (found) {
+      return {
+        object: found,
+        locIndex: i,
+      };
+    }
+    found = loc.ships.find((p) => p.id === objId);
+    if (found) {
+      return {
+        object: found,
+        locIndex: i,
+      };
+    }
+    found = loc.minerals.find((p) => p.id === objId);
+    if (found) {
+      return {
+        object: found,
+        locIndex: i,
+      };
+    }
+    found = loc.containers.find((p) => p.id === objId);
+    if (found) {
+      return {
+        object: found,
+        locIndex: i,
+      };
+    }
+  }
+  return undefined;
+};
+export const getObjectPosition = (obj: any): IVector => {
+  const pos = findObjectPosition(obj);
+  if (!pos) {
+    throw new Error('Invalid object for getObjectPosition');
+  }
+  return pos;
+};
+export const findObjectPositionById = (
+  state: GameState,
+  objId: string
+): Vector | null => {
+  const objRes = findObjectById(state, objId);
+  if (!objRes) {
+    return null;
+  }
+  const { object } = objRes;
+  return Vector.fromIVector(getObjectPosition(object));
 };

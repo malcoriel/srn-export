@@ -2,8 +2,9 @@ import React from 'react';
 import NetState from '../NetState';
 import { LongAction, Player } from '../../../world/pkg';
 import Vector from '../utils/Vector';
-import { findObjectPositionById, indexShipsByPlayerId } from '../world';
+import { indexShipsByPlayerId } from '../world';
 import { ThreeLaserBeam } from './combat/ThreeLaserBeam';
+import { findObjectPositionById } from '../ClientStateIndexing';
 
 // type BeamProps = {
 //   playerId: string;

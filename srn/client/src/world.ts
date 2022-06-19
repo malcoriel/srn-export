@@ -7,7 +7,6 @@ import {
   ActionTurnRight,
   Asteroid,
   AsteroidBelt,
-  Container,
   Dialogue,
   DialogueElem,
   FullObjectSpecifier,
@@ -30,15 +29,9 @@ import {
   Substitution,
   TradeAction,
 } from '../../world/pkg';
-import {
-  CargoDeliveryQuestState,
-  GameMode,
-  InventoryItemType,
-  SubstitutionType,
-} from '../../world/pkg/world.extra';
+import { CargoDeliveryQuestState, GameMode, InventoryItemType, SubstitutionType, } from '../../world/pkg/world.extra';
 import _ from 'lodash';
 import { Dictionary } from 'ts-essentials';
-import { findObjectPosition } from './ClientStateIndexing';
 import { dialogueResources } from './HtmlLayers/dialogueResources';
 import * as uuid from 'uuid';
 import Prando from 'prando';
@@ -317,68 +310,6 @@ export const findPlanet = (
   return state.locations[0].planets.find((p) => p.id === id);
 };
 
-export enum FindObjectHint {
-  Planet,
-}
-
-type FindableObject = PlanetV2 | NatSpawnMineral | Container | Ship;
-type FindObjectResult =
-  | {
-      object: FindableObject;
-      locIndex: number;
-    }
-  | undefined;
-export const findObjectById = (
-  state: GameState,
-  objId: string,
-  // for further optimizations like what type & location, but for now just pure search
-  _hints?: FindObjectHint[]
-): FindObjectResult => {
-  // considering the fact server only provides 0-th location, this is safe to
-  // iterate them all, for now
-  for (let i = 0; i < state.locations.length; i++) {
-    const loc = state.locations[i];
-    let found;
-    found = loc.planets.find((p) => p.id === objId);
-    if (found) {
-      return {
-        object: found,
-        locIndex: i,
-      };
-    }
-    found = loc.ships.find((p) => p.id === objId);
-    if (found) {
-      return {
-        object: found,
-        locIndex: i,
-      };
-    }
-    found = loc.minerals.find((p) => p.id === objId);
-    if (found) {
-      return {
-        object: found,
-        locIndex: i,
-      };
-    }
-    found = loc.containers.find((p) => p.id === objId);
-    if (found) {
-      return {
-        object: found,
-        locIndex: i,
-      };
-    }
-  }
-  return undefined;
-};
-
-export const getObjectPosition = (obj: any): IVector => {
-  const pos = findObjectPosition(obj);
-  if (!pos) {
-    throw new Error('Invalid object for getObjectPosition');
-  }
-  return pos;
-};
-
 export const indexShipsByPlayerId = (
   loc: Location,
   players: Player[]
@@ -394,18 +325,6 @@ export const indexShipsByPlayerId = (
     }
   }
   return res;
-};
-
-export const findObjectPositionById = (
-  state: GameState,
-  objId: string
-): Vector | null => {
-  const objRes = findObjectById(state, objId);
-  if (!objRes) {
-    return null;
-  }
-  const { object } = objRes;
-  return Vector.fromIVector(getObjectPosition(object));
 };
 
 export const getSpecifierId = (os?: ObjectSpecifier | null): string | null => {

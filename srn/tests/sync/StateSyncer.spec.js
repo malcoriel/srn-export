@@ -9,6 +9,7 @@ import {
   wasm,
 } from '../util';
 import * as uuid from 'uuid';
+import _ from 'lodash';
 
 const maxedAABB = {
   top_left: {
@@ -55,11 +56,11 @@ describe('state syncer', () => {
     const syncerState = invariantAndPull(
       syncer.handle({
         tag: 'time update',
-        elapsedMs: 100,
+        elapsedTicks: 16000,
         visibleArea: maxedAABB,
       }).state
     );
-    const updateState = updateWorld(initState, 100, false);
+    const updateState = updateWorld(initState, 16, false);
     expect(syncerState).toEqual(updateState);
   });
 
@@ -129,12 +130,13 @@ describe('state syncer', () => {
             },
           ],
         },
-        U: {
+        Ux10: {
           tag: 'S',
-          stateChecker: (state) => {
+          stateChecker: (state, event) => {
             const ship = getShipByPlayerId(state, state.my_id);
             expect(ship.x).toBeGreaterThan(100);
             expect(ship.y).toBeGreaterThan(100);
+            // console.log({ x: ship.x, y: ship.y });
           },
         },
       },
@@ -152,9 +154,17 @@ describe('state syncer', () => {
     if (key === 'U') {
       return {
         tag: 'time update',
-        elapsedMs: 16,
+        elapsedTicks: 16000,
         visibleArea: maxedAABB,
       };
+    }
+    if (key.startsWith('Ux')) {
+      const counter = key.match(/^Ux(\d+)/)[1];
+      return _.times(counter, () => ({
+        tag: 'time update',
+        elapsedTicks: 16000,
+        visibleArea: maxedAABB,
+      }));
     }
     throw new Error(`unsupported event key ${key}`);
   };
@@ -166,6 +176,17 @@ describe('state syncer', () => {
     throw new Error(`unsupported result key ${tag}`);
   };
 
+  const checkViolations = (syncer, showLog) => {
+    const log = syncer.flushLog();
+    if (showLog) {
+      for (const entry of log) {
+        console.log(entry);
+      }
+    }
+    const violations = syncer.flushViolations();
+    expect(violations).toEqual([]);
+  };
+
   for (const seq of sequences) {
     it(`can process ${seq.name} with maxed aabb`, () => {
       const { syncer, initState } = initSyncer({
@@ -174,17 +195,22 @@ describe('state syncer', () => {
       });
       squareMovementInit(initState);
       for (const [key, value] of Object.entries(seq.steps)) {
-        const event = toEvent(key, value);
-        if (event.actions) {
-          for (const act of event.actions) {
-            patchAction(act, syncer.observe());
+        const parsedEvent = toEvent(key, value);
+        const events = _.isArray(parsedEvent) ? parsedEvent : [parsedEvent];
+
+        for (const event of events) {
+          if (event.actions) {
+            for (const act of event.actions) {
+              patchAction(act, syncer.observe());
+            }
           }
-        }
-        const result = toResult(value);
-        const syncerResult = syncer.handle(event);
-        expect(syncerResult.tag).toEqual(result.tag);
-        if (result.stateChecker) {
-          result.stateChecker(syncerResult.state);
+          const result = toResult(value);
+          const syncerResult = syncer.handle(event);
+          expect(syncerResult.tag).toEqual(result.tag);
+          if (result.stateChecker) {
+            result.stateChecker(syncerResult.state, event);
+          }
+          checkViolations(syncer, false);
         }
       }
     });
