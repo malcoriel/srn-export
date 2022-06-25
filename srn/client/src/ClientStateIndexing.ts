@@ -102,6 +102,25 @@ export const findObjectPosition = (obj: any): IVector | null => {
   }
   return null;
 };
+
+export const setObjectPosition = (obj: any, newVal: IVector): void => {
+  if (isIVector(obj)) {
+    obj.x = newVal.x;
+    obj.y = newVal.y;
+    return;
+  }
+  if (obj.position && isIVector(obj.position)) {
+    obj.position.x = newVal.x;
+    obj.position.y = newVal.y;
+    return;
+  }
+  if (obj.spatial && isIVector(obj.spatial.position)) {
+    obj.spatial.position.x = newVal.x;
+    obj.spatial.position.y = newVal.y;
+    return;
+  }
+  throw new Error('Could not set object position');
+};
 export const buildClientStateIndexes = (state: GameState) => {
   const indexes: ClientStateIndexes = {
     myShip: null,

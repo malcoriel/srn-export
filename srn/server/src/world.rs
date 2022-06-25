@@ -710,7 +710,7 @@ pub fn update_world(
     let mut remaining = elapsed + state.accumulated_not_updated_ticks as i64;
     let update_interval = state.update_every_ticks as i64;
     let (mut curr_state, mut curr_sampler) = (state, sampler);
-    while remaining > update_interval {
+    while remaining >= update_interval {
         let pair = update_world_iter(
             curr_state,
             update_interval,

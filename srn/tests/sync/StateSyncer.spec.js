@@ -37,6 +37,76 @@ const initSyncer = (seedWorldArgs) => {
   };
 };
 
+const patchAction = (action, state) => {
+  const myShip = getShipByPlayerId(state, state.my_id);
+  if (action.tag === 'Navigate') {
+    if (action.ship_id === '$my_ship_id') {
+      action.ship_id = myShip.id;
+    }
+  }
+};
+
+const toEvent = (key, value, prevState) => {
+  if (key === 'A') {
+    return {
+      tag: 'player action',
+      actions: value.actions,
+      visibleArea: maxedAABB,
+      packetTag: uuid.v4(),
+    };
+  }
+  if (key === 'U') {
+    return {
+      tag: 'time update',
+      elapsedTicks: 16000,
+      visibleArea: maxedAABB,
+    };
+  }
+  if (key.startsWith('Ux')) {
+    const counter = key.match(/^Ux(\d+)/)[1];
+    return _.times(counter, () => ({
+      tag: 'time update',
+      elapsedTicks: 16000,
+      visibleArea: maxedAABB,
+    }));
+  }
+  if (key === 'SbA') {
+    return {
+      tag: 'server state',
+      state: value.serverStateChanger(prevState),
+      visibleArea: maxedAABB,
+    };
+  }
+  throw new Error(`unsupported event key ${key}`);
+};
+
+const toResult = ({ tag, stateChecker }) => {
+  if (tag === 'S') {
+    return {
+      tag: 'success',
+      stateChecker,
+    };
+  }
+  if (tag === 'SD') {
+    return {
+      tag: 'success desynced',
+      stateChecker,
+    };
+  }
+  throw new Error(`unsupported result key ${tag}`);
+};
+
+const checkViolations = (syncer, showLog) => {
+  const log = syncer.flushLog();
+  if (showLog) {
+    for (const entry of log) {
+      console.log(entry);
+    }
+  }
+  const violations = syncer.flushViolations();
+  expect(violations).toEqual([]);
+};
+
 describe('state syncer', () => {
   beforeAll(swapGlobals);
 
@@ -105,114 +175,29 @@ describe('state syncer', () => {
     loc.ships.push(ship);
     ship.x = 100;
     ship.y = 100;
+    return ship;
   };
 
-  const patchAction = (action, state) => {
-    const myShip = getShipByPlayerId(state, state.my_id);
-    if (action.tag === 'Navigate') {
-      if (action.ship_id === '$my_ship_id') {
-        action.ship_id = myShip.id;
-      }
-    }
+  const coordsAreBigger = (state, prevState) => {
+    const ship = getShipByPlayerId(state, state.my_id);
+    const oldShip = getShipByPlayerId(prevState, state.my_id);
+    expect(ship.x).toBeGreaterThan(oldShip.x);
+    expect(ship.y).toBeGreaterThan(oldShip.y);
   };
-
-  const sequences = [
-    {
-      name: 'no loss of action',
-      steps: {
-        A: {
-          tag: 'S',
-          actions: [
-            {
-              tag: 'Navigate',
-              ship_id: '$my_ship_id',
-              target: { x: 125, y: 125 },
-            },
-          ],
-        },
-        Ux10: {
-          tag: 'S',
-          stateChecker: (state, event) => {
-            const ship = getShipByPlayerId(state, state.my_id);
-            expect(ship.x).toBeGreaterThan(100);
-            expect(ship.y).toBeGreaterThan(100);
-            // console.log({ x: ship.x, y: ship.y });
-          },
-        },
-      },
-    },
-  ];
-
-  const toEvent = (key, value) => {
-    if (key === 'A') {
-      return {
-        tag: 'player action',
-        actions: value.actions,
-        visibleArea: maxedAABB,
-      };
-    }
-    if (key === 'U') {
-      return {
-        tag: 'time update',
-        elapsedTicks: 16000,
-        visibleArea: maxedAABB,
-      };
-    }
-    if (key.startsWith('Ux')) {
-      const counter = key.match(/^Ux(\d+)/)[1];
-      return _.times(counter, () => ({
-        tag: 'time update',
-        elapsedTicks: 16000,
-        visibleArea: maxedAABB,
-      }));
-    }
-    throw new Error(`unsupported event key ${key}`);
-  };
-
-  const toResult = ({ tag, stateChecker }) => {
-    if (tag === 'S') {
-      return { tag: 'success', stateChecker };
-    }
-    throw new Error(`unsupported result key ${tag}`);
-  };
-
-  const checkViolations = (syncer, showLog) => {
-    const log = syncer.flushLog();
-    if (showLog) {
-      for (const entry of log) {
-        console.log(entry);
-      }
-    }
-    const violations = syncer.flushViolations();
-    expect(violations).toEqual([]);
-  };
-
-  for (const seq of sequences) {
-    it(`can process ${seq.name} with maxed aabb`, () => {
-      const { syncer, initState } = initSyncer({
-        mode: 'Sandbox',
-        seed: '123',
-      });
-      squareMovementInit(initState);
-      for (const [key, value] of Object.entries(seq.steps)) {
-        const parsedEvent = toEvent(key, value);
-        const events = _.isArray(parsedEvent) ? parsedEvent : [parsedEvent];
-
-        for (const event of events) {
-          if (event.actions) {
-            for (const act of event.actions) {
-              patchAction(act, syncer.observe());
-            }
-          }
-          const result = toResult(value);
-          const syncerResult = syncer.handle(event);
-          expect(syncerResult.tag).toEqual(result.tag);
-          if (result.stateChecker) {
-            result.stateChecker(syncerResult.state, event);
-          }
-          checkViolations(syncer, false);
-        }
-      }
+  it('can apply actions', () => {
+    const { syncer, initState } = initSyncer({
+      mode: 'Sandbox',
+      seed: '123',
     });
-  }
+    const ship = squareMovementInit(initState);
+    const navigateBottom = { x: 125, y: 125 };
+    const res = syncer.handle({
+      tag: 'player action',
+      actions: [{ tag: 'Navigate', ship_id: ship.id, target: navigateBottom }],
+      visibleArea: maxedAABB,
+    });
+    expect(res.tag).toBe('success');
+    const newShip = getShipByPlayerId(res.state, res.state.my_id);
+    expect(newShip.navigate_target).toEqual(navigateBottom);
+  });
 });
