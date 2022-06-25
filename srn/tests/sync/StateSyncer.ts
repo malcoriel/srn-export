@@ -172,7 +172,6 @@ export class StateSyncer implements IStateSyncer {
     visibleArea: AABB
   ): StateSyncerResult {
     const elapsedDiff = Math.abs(serverState.ticks - this.state.ticks);
-    console.log({ elapsedDiff });
     // may not be exactly correct, since different actions happen in different moments in the past, and such reapplication
     // literally changes the outcome - however, it's unclear how to combine it with adjustMillis for now
     const alreadyExecutedTagsInState = new Set(
@@ -214,21 +213,7 @@ export class StateSyncer implements IStateSyncer {
     visibleArea: AABB;
   }): StateSyncerResult {
     const oldState = this.state;
-    const alreadyExecutedTagsInState = new Set(
-      this.state.processed_player_actions.map(({ packet_tag }) => packet_tag)
-    );
-    if (this.pendingActionPacks.length > 0) {
-      const flattenedActions = _.flatMap(
-        this.pendingActionPacks,
-        ({ actions, packet_tag }) => {
-          if (alreadyExecutedTagsInState.has(packet_tag)) {
-            return [];
-          }
-          return actions.map((a) => [a, packet_tag]);
-        }
-      ) as [Action, string][];
-      this.state.player_actions.push(...flattenedActions);
-    }
+    this.flushNotYetAppliedPendingActionsIntoLocalState();
     const updatedState = this.updateState(
       this.desyncedCorrectState || this.state,
       event.elapsedTicks,
@@ -254,6 +239,24 @@ export class StateSyncer implements IStateSyncer {
     );
     this.replaceCurrentState(correctedState);
     return this.successDesynced();
+  }
+
+  private flushNotYetAppliedPendingActionsIntoLocalState() {
+    const alreadyExecutedTagsInState = new Set(
+      this.state.processed_player_actions.map(({ packet_tag }) => packet_tag)
+    );
+    if (this.pendingActionPacks.length > 0) {
+      const flattenedActions = _.flatMap(
+        this.pendingActionPacks,
+        ({ actions, packet_tag }) => {
+          if (alreadyExecutedTagsInState.has(packet_tag)) {
+            return [];
+          }
+          return actions.map((a) => [a, packet_tag]);
+        }
+      ) as [Action, string][];
+      this.state.player_actions.push(...flattenedActions);
+    }
   }
 
   private replaceCurrentState(newState: GameState) {

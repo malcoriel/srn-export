@@ -201,24 +201,38 @@ describe('state syncer', () => {
     expect(newShip.navigate_target).not.toEqual(navigateBottom);
     res = syncer.handle({
       tag: 'time update',
-      elapsedTicks: initState.update_every_ticks,
+      elapsedTicks: 16000,
       visibleArea: maxedAABB,
     });
     newShip = getShipByPlayerId(res.state, res.state.my_id);
     expect(newShip.navigate_target).toEqual(navigateBottom);
   });
 
-  xit('can handle small rollback from server', () => {
+  it('can handle small rollback from server', () => {
     const { syncer, initState } = initSyncer({
       mode: 'Sandbox',
       seed: '123',
     });
+    const origShip = squareMovementInit(initState);
     const serverDelayedState = updateWorld(initState, 16);
     const clientUpdated = syncer.handle({
       tag: 'time update',
       elapsedTicks: 5 * 16 * 1000,
       visibleArea: maxedAABB,
     }).state;
-    syncer.handle({ tag: 'server state', state: serverDelayedState });
+    const newShip1 = getShipByPlayerId(clientUpdated, clientUpdated.my_id);
+    syncer.handle({
+      tag: 'server state',
+      state: serverDelayedState,
+      visibleArea: maxedAABB,
+    }).state;
+    const clientMerged = syncer.handle({
+      tag: 'time update',
+      elapsedTicks: 16000,
+      visibleArea: maxedAABB,
+    }).state;
+    const newShip2 = getShipByPlayerId(clientMerged, clientMerged.my_id);
+    expect(origShip.x).toBeLessThanOrEqual(newShip1.x);
+    expect(newShip1.x).toBeLessThanOrEqual(newShip2.x);
   });
 });
