@@ -139,20 +139,6 @@ export class StateSyncer implements IStateSyncer {
     visibleArea: AABB;
     packetTag: string;
   }) {
-    this.state.player_actions.push(
-      ...event.actions.map((a) => [a, null] as [Action, null])
-    );
-
-    const oldState = this.state;
-    const elapsedTicks = this.state.update_every_ticks;
-
-    const updatedState = this.updateState(
-      this.state,
-      elapsedTicks,
-      event.visibleArea
-    );
-    this.replaceCurrentState(updatedState);
-    this.violations = this.checkViolations(oldState, this.state, elapsedTicks);
     this.pendingActionPacks.push({
       actions: event.actions,
       packet_tag: event.packetTag,
@@ -228,6 +214,21 @@ export class StateSyncer implements IStateSyncer {
     visibleArea: AABB;
   }): StateSyncerResult {
     const oldState = this.state;
+    const alreadyExecutedTagsInState = new Set(
+      this.state.processed_player_actions.map(({ packet_tag }) => packet_tag)
+    );
+    if (this.pendingActionPacks.length > 0) {
+      const flattenedActions = _.flatMap(
+        this.pendingActionPacks,
+        ({ actions, packet_tag }) => {
+          if (alreadyExecutedTagsInState.has(packet_tag)) {
+            return [];
+          }
+          return actions.map((a) => [a, packet_tag]);
+        }
+      ) as [Action, string][];
+      this.state.player_actions.push(...flattenedActions);
+    }
     const updatedState = this.updateState(
       this.desyncedCorrectState || this.state,
       event.elapsedTicks,

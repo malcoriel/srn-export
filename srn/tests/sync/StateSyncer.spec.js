@@ -191,13 +191,34 @@ describe('state syncer', () => {
     });
     const ship = squareMovementInit(initState);
     const navigateBottom = { x: 125, y: 125 };
-    const res = syncer.handle({
+    let res = syncer.handle({
       tag: 'player action',
       actions: [{ tag: 'Navigate', ship_id: ship.id, target: navigateBottom }],
       visibleArea: maxedAABB,
     });
     expect(res.tag).toBe('success');
-    const newShip = getShipByPlayerId(res.state, res.state.my_id);
+    let newShip = getShipByPlayerId(res.state, res.state.my_id);
+    expect(newShip.navigate_target).not.toEqual(navigateBottom);
+    res = syncer.handle({
+      tag: 'time update',
+      elapsedTicks: initState.update_every_ticks,
+      visibleArea: maxedAABB,
+    });
+    newShip = getShipByPlayerId(res.state, res.state.my_id);
     expect(newShip.navigate_target).toEqual(navigateBottom);
+  });
+
+  xit('can handle small rollback from server', () => {
+    const { syncer, initState } = initSyncer({
+      mode: 'Sandbox',
+      seed: '123',
+    });
+    const serverDelayedState = updateWorld(initState, 16);
+    const clientUpdated = syncer.handle({
+      tag: 'time update',
+      elapsedTicks: 5 * 16 * 1000,
+      visibleArea: maxedAABB,
+    }).state;
+    syncer.handle({ tag: 'server state', state: serverDelayedState });
   });
 });
