@@ -10,6 +10,7 @@ import {
 } from '../util';
 import * as uuid from 'uuid';
 import _ from 'lodash';
+import Vector from '../../client/src/utils/Vector';
 
 const maxedAABB = {
   top_left: {
@@ -184,16 +185,26 @@ describe('state syncer', () => {
     expect(ship.x).toBeGreaterThan(oldShip.x);
     expect(ship.y).toBeGreaterThan(oldShip.y);
   };
+  const navigateBottom = {
+    x: 125,
+    y: 125,
+  };
+
   it('can apply actions', () => {
     const { syncer, initState } = initSyncer({
       mode: 'Sandbox',
       seed: '123',
     });
     const ship = squareMovementInit(initState);
-    const navigateBottom = { x: 125, y: 125 };
     let res = syncer.handle({
       tag: 'player action',
-      actions: [{ tag: 'Navigate', ship_id: ship.id, target: navigateBottom }],
+      actions: [
+        {
+          tag: 'Navigate',
+          ship_id: ship.id,
+          target: navigateBottom,
+        },
+      ],
       visibleArea: maxedAABB,
     });
     expect(res.tag).toBe('success');
@@ -214,25 +225,46 @@ describe('state syncer', () => {
       seed: '123',
     });
     const origShip = squareMovementInit(initState);
-    const serverDelayedState = updateWorld(initState, 16);
+    const navigateAction = {
+      tag: 'Navigate',
+      ship_id: origShip.id,
+      target: navigateBottom,
+    };
+    const packetTag = uuid.v4();
+    const serverState = _.cloneDeep(initState);
+    serverState.player_actions.push([navigateAction, packetTag]);
+    const serverDelayedState = updateWorld(serverState, 16);
+    syncer.handle({
+      tag: 'player action',
+      actions: [navigateAction],
+      visibleArea: maxedAABB,
+      packetTag,
+    });
     const clientUpdated = syncer.handle({
       tag: 'time update',
       elapsedTicks: 5 * 16 * 1000,
       visibleArea: maxedAABB,
     }).state;
     const newShip1 = getShipByPlayerId(clientUpdated, clientUpdated.my_id);
-    syncer.handle({
-      tag: 'server state',
-      state: serverDelayedState,
-      visibleArea: maxedAABB,
-    }).state;
-    const clientMerged = syncer.handle({
-      tag: 'time update',
-      elapsedTicks: 16000,
-      visibleArea: maxedAABB,
-    }).state;
+    // console.log('orig', Vector.fromIVector(origShip).toFix());
+    // console.log('new1', Vector.fromIVector(newShip1).toFix());
+    expect(origShip.x).toBeLessThan(newShip1.x);
+
+    const clientMerged = syncer.handleBatch([
+      {
+        tag: 'server state',
+        state: serverDelayedState,
+        visibleArea: maxedAABB,
+      },
+      {
+        tag: 'time update',
+        elapsedTicks: 16000,
+        visibleArea: maxedAABB,
+      },
+    ]).state;
+    expect(clientMerged.ticks).toEqual(6 * 16 * 1000);
     const newShip2 = getShipByPlayerId(clientMerged, clientMerged.my_id);
-    expect(origShip.x).toBeLessThanOrEqual(newShip1.x);
-    expect(newShip1.x).toBeLessThanOrEqual(newShip2.x);
+    // console.log('new2', Vector.fromIVector(newShip2).toFix());
+    expect(newShip1.x).toBeLessThan(newShip2.x);
   });
 });

@@ -8,12 +8,11 @@ import {
 
 import {
   AABB,
-  GameState,
-  // @ts-ignore
-  ObjectSpecifier,
-  // @ts-ignore
   Action,
+  GameState,
+  ObjectSpecifier,
 } from '../../client/src/world';
+
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = { tag: 'success desynced'; state: GameState };
 type StateSyncerFullDesyncedSuccess = {
@@ -74,6 +73,7 @@ type SyncerViolationTimeRollback = {
 type SyncerViolation = SyncerViolationObjectJump | SyncerViolationTimeRollback;
 
 interface IStateSyncer {
+  handleBatch: (events: StateSyncerEvent[]) => StateSyncerResult;
   handle(StateSyncerEvent: StateSyncerEvent): StateSyncerResult;
   getCurrentState(): GameState;
   getPrevState(): GameState;
@@ -122,6 +122,15 @@ export class StateSyncer implements IStateSyncer {
     }
   };
 
+  public handleBatch = (events: StateSyncerEvent[]): StateSyncerResult => {
+    let result;
+    for (const event of events) {
+      result = this.handle(event);
+    }
+    // intentionally return only the last one
+    return result;
+  };
+
   private updateState(from, elapsedTicks, area): GameState | null {
     return this.wasmUpdateWorld(
       {
@@ -152,12 +161,10 @@ export class StateSyncer implements IStateSyncer {
     state: serverState,
     visibleArea,
   }: StateSyncerEventServerState) {
-    const confirmedActionPacks = new Set(
-      serverState.processed_player_actions.map((a: any) => a.packet_tag)
-    );
-    this.pendingActionPacks = this.pendingActionPacks.filter(
-      (a) => !confirmedActionPacks.has(a.packet_tag)
-    );
+    this.dropPendingActionsFullyCommittedOnServer(serverState);
+    // if (serverState && serverState.locations[0].ships[0]) {
+    //   console.log('on server state', Vector.fromIVector(serverState.locations[0].ships[0]).toFix());
+    // }
     if (serverState.ticks < this.state.ticks) {
       return this.rebaseCurrentStateUsingPendingActionPacks(
         serverState,
@@ -167,11 +174,21 @@ export class StateSyncer implements IStateSyncer {
     throw new Error('TODO');
   }
 
+  private dropPendingActionsFullyCommittedOnServer(serverState) {
+    const confirmedActionPacks = new Set(
+      serverState.processed_player_actions.map((a: any) => a.packet_tag)
+    );
+    this.pendingActionPacks = this.pendingActionPacks.filter(
+      (a) => !confirmedActionPacks.has(a.packet_tag)
+    );
+  }
+
   private rebaseCurrentStateUsingPendingActionPacks(
     serverState: GameState,
     visibleArea: AABB
   ): StateSyncerResult {
     const elapsedDiff = Math.abs(serverState.ticks - this.state.ticks);
+    // console.log('rebase', elapsedDiff);
     // may not be exactly correct, since different actions happen in different moments in the past, and such reapplication
     // literally changes the outcome - however, it's unclear how to combine it with adjustMillis for now
     const alreadyExecutedTagsInState = new Set(
@@ -187,8 +204,7 @@ export class StateSyncer implements IStateSyncer {
       []
     ) as [Action, null][];
 
-    const rebasedActs = actionsToRebase;
-    serverState.player_actions.push(...rebasedActs);
+    serverState.player_actions.push(...actionsToRebase);
     const oldState = this.state;
     const rebasedState = this.updateState(
       serverState,
@@ -214,11 +230,34 @@ export class StateSyncer implements IStateSyncer {
   }): StateSyncerResult {
     const oldState = this.state;
     this.flushNotYetAppliedPendingActionsIntoLocalState();
+    // if (this.state.locations[0].ships[0]) {
+    //   console.log(
+    //     'current',
+    //     Vector.fromIVector(this.state.locations[0].ships[0]).toFix(),
+    //     this.state.locations[0].ships[0].navigate_target
+    //   );
+    // }
+    // if (this.desyncedCorrectState && this.desyncedCorrectState.locations[0].ships[0]) {
+    //   console.log(
+    //     'desynced',
+    //     Vector.fromIVector(
+    //       this.desyncedCorrectState.locations[0].ships[0]
+    //     ).toFix(),
+    //     this.desyncedCorrectState.locations[0].ships[0].navigate_target
+    //   );
+    // }
     const updatedState = this.updateState(
       this.desyncedCorrectState || this.state,
       event.elapsedTicks,
       event.visibleArea
     );
+    // if (updatedState.locations[0].ships[0]) {
+    //   console.log(
+    //     'updated',
+    //     Vector.fromIVector(updatedState.locations[0].ships[0]).toFix(),
+    //     updatedState.locations[0].ships[0].navigate_target
+    //   );
+    // }
     this.violations = this.checkViolations(
       oldState,
       updatedState,
