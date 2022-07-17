@@ -198,6 +198,10 @@ const exposeJsonParseError = (
   }
 };
 
+export const rawUpdateWorld = (...args: any[]) => {
+  return wasmFunctions.update_world(...args);
+};
+
 const doWasmCall = <R>(fnName: string, ...args: any[]): R | undefined => {
   const fn = wasmFunctions[fnName];
   if (!fn) {

@@ -6,6 +6,7 @@ import {
   isInAABB,
   loadReplayIntoWasm,
   ManualMovementActionTags,
+  rawUpdateWorld,
   restoreReplayFrame,
   TradeAction,
   updateWorld,
@@ -228,7 +229,7 @@ export default class NetState extends EventEmitter {
     this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
     this.slowTime = new vsyncedCoupledThrottledTime(SLOW_TIME_STEP);
     this.syncer = new StateSyncer({
-      wasmUpdateWorld: updateWorld,
+      wasmUpdateWorld: rawUpdateWorld,
     });
   }
 
@@ -332,7 +333,7 @@ export default class NetState extends EventEmitter {
           if (!ns) return;
           this.syncer.handle({
             tag: 'time update',
-            elapsedTicks: elapsedMs * 1000,
+            elapsedTicks: Math.round(elapsedMs) * 1000,
             visibleArea: this.getSimulationArea(),
           });
           this.state = this.syncer.getCurrentState();
@@ -570,108 +571,10 @@ export default class NetState extends EventEmitter {
         const parsed = JSON.parse(data);
         this.syncer.handle({
           tag: 'server state',
-          state: _.cloneDeep(parsed),
+          state: parsed,
           visibleArea: this.getSimulationArea(),
         });
-        this.desync = parsed.millis - this.state.millis;
-        if (Math.abs(this.desync) > FULL_DESYNC_DETECT_MS) {
-          console.warn(
-            'full desync detected, overriding the local state fully'
-          );
-          this.tryUpdatePrevState(_.clone(parsed));
-          this.state = _.clone(this.prevState);
-          const newShip = findMyShip(this.state);
-          if (newShip) {
-            this.detectJumpInMyShipPos(0, Vector.fromIVector(newShip), 'red');
-            // same position because prevState == state now
-            this.detectJumpInMyPrevShipPos(
-              0,
-              Vector.fromIVector(newShip),
-              'red'
-            );
-          }
-        } else if (this.desync < 0) {
-          // normal client-ahead-of-server
-          this.tryUpdatePrevState(
-            this.rebaseReceivedStateToCurrentPoint(parsed, -this.desync)
-          );
-          const newShip = findMyShip(this.prevState);
-          if (newShip) {
-            this.detectJumpInMyPrevShipPos(
-              0,
-              Vector.fromIVector(newShip),
-              null
-            );
-          }
-          // const newShip = findMyShip(this.prevState);
-          // if (newShip) {
-          //   this.detectJumpInMyShipPos(0, Vector.fromIVector(newShip), 'green');
-          // }
-          // console.log(
-          //   'rebased prevState millis',
-          //   this.prevState.millis,
-          //   'on top of',
-          //   this.serverState.millis
-          // );
-        } else {
-          // this means that client lagged and server is ahead of it, which shouldn't be the case
-          // or it's still synchronizing in the beginning
-          this.tryUpdatePrevState(
-            this.rebaseReceivedStateToCurrentPoint(
-              parsed,
-              10 // magic constant to bump client a little bit ahead so it doensn't have to accept it next time
-            )
-          );
-          const newShip = findMyShip(this.prevState);
-          if (newShip) {
-            this.detectJumpInMyPrevShipPos(
-              0,
-              Vector.fromIVector(newShip),
-              null
-            );
-          }
-          // console.log(
-          //   'accepted server state with a magic bump',
-          //   this.prevState.millis,
-          //   'on top of',
-          //   this.serverState.millis
-          // );
-        }
-
-        // after receiving server state, we might receive a state that doesn't contain the command we just sent, which
-        // will result in command rollback with nasty visual effect. To deal with it, we save non-confirmed commands
-        // in pendingActions and reapply them here after normal compensation techniques
-        const toDrop = new Set();
-        // noinspection JSUnusedLocalSymbols
-        for (const [tag, actions, millis] of this.pendingActionPacks) {
-          const age = Math.abs(millis - this.state.millis);
-          if (age > MAX_PENDING_TICKS) {
-            console.warn(
-              `dropping pending actions packs ${tag} with age ${age}>${MAX_PENDING_TICKS}`
-            );
-            toDrop.add(tag);
-          } else {
-            // console.log(
-            //   `re-applying pending actions ${tag} with types ${actions.map(
-            //     (a) => a.type
-            //   )}`
-            // );
-            this.state.player_actions = [];
-            for (const cmd of actions) {
-              this.state.player_actions.push([cmd, null]);
-            }
-          }
-        }
-        this.pendingActionPacks = this.pendingActionPacks.filter(
-          ([tag]) => !toDrop.has(tag)
-        );
-
-        this.extrapolate();
-      } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
-        const confirmedTag = JSON.parse(data).tag;
-        this.pendingActionPacks = this.pendingActionPacks.filter(
-          ([tag]) => tag !== confirmedTag
-        );
+        this.state = this.syncer.getCurrentState();
       } else if (
         messageCode === ServerToClientMessageCode.MulticastPartialShipsUpdate
       ) {
@@ -752,9 +655,6 @@ export default class NetState extends EventEmitter {
       }
     }
   }
-
-  // [tag, action, ticks], the order is the order of appearance
-  private pendingActionPacks: [string, Action[], number][] = [];
 
   public sendDialogueOption(dialogueId: string, optionId: string) {
     this.sendSchedulePlayerAction(
@@ -860,8 +760,6 @@ export default class NetState extends EventEmitter {
 
   private lastMyShipPos: null | Vector = null;
 
-  private lastPrevMyShipPos: null | Vector = null;
-
   private MAX_ALLOWED_JUMP_PER_MS = 0.03;
 
   private detectJumpInMyShipPos = (
@@ -885,28 +783,6 @@ export default class NetState extends EventEmitter {
     this.lastMyShipPos = newShipPos;
   };
 
-  private detectJumpInMyPrevShipPos = (
-    elapsedMs: number,
-    newPrevShipPos: Vector,
-    color: string | null
-  ) => {
-    if (this.lastPrevMyShipPos && newPrevShipPos) {
-      if (
-        this.lastPrevMyShipPos.euDistTo(newPrevShipPos) >
-          elapsedMs * this.MAX_ALLOWED_JUMP_PER_MS &&
-        color
-      ) {
-        this.visualState.breadcrumbs.push({
-          position: this.lastPrevMyShipPos,
-          to: newPrevShipPos,
-          color,
-          timestamp_ticks: this.state.ticks,
-        });
-      }
-    }
-    this.lastPrevMyShipPos = newPrevShipPos;
-  };
-
   private findClosestMarks(
     keys: number[],
     markInMs: number
@@ -923,45 +799,5 @@ export default class NetState extends EventEmitter {
       return [keys[keys.length - 1], null];
     }
     return [null, null];
-  }
-
-  private tryUpdatePrevState(newPrevState: GameState) {
-    if (newPrevState.ticks >= this.state.ticks) {
-      this.prevState = newPrevState;
-      return;
-    }
-    const diffTicks = Math.abs(newPrevState.ticks - this.state.ticks);
-    const diffMs = Math.ceil(diffTicks / 1000.0);
-    const correctedPrevState = updateWorld(
-      newPrevState,
-      this.getSimulationArea(),
-      diffMs
-    );
-    if (correctedPrevState) {
-      this.prevState = correctedPrevState;
-      // normalLog(
-      //   `Corrected prev state from ${source} by ${diffMs}ms ${diffTicks}mcs, ticks before/after ${
-      //     newPrevState.ticks
-      //   }/${correctedPrevState.ticks}, ${
-      //     newPrevState.ticks === correctedPrevState.ticks ? 'SAME!' : ''
-      //   }`
-      // );
-    } else {
-      // normalWarn(`Could not correct prev state from ${source} by ${diffMs}ms`);
-    }
-  }
-
-  private rebaseReceivedStateToCurrentPoint(
-    parsed: GameState,
-    adjustMillis: number
-  ): GameState {
-    const MAX_ACCEPTABLE_REBASE_ADJUST = 100;
-    if (adjustMillis > MAX_ACCEPTABLE_REBASE_ADJUST) {
-      parsed.millis += adjustMillis;
-      return parsed;
-    }
-    return (
-      updateWorld(parsed, this.getSimulationArea(), adjustMillis) || parsed
-    );
   }
 }
