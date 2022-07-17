@@ -94,6 +94,8 @@ type PendingActionPack = {
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
 
+  private clientLagsAtTicks: number[] = [];
+
   constructor(deps: WasmDeps) {
     this.wasmUpdateWorld = deps.wasmUpdateWorld;
     this.desyncedCorrectState = null;
@@ -171,18 +173,16 @@ export class StateSyncer implements IStateSyncer {
     visibleArea,
   }: StateSyncerEventServerState) {
     this.dropPendingActionsFullyCommittedOnServer(serverState);
-    // if (serverState && serverState.locations[0].ships[0]) {
-    //   console.log('on server state', Vector.fromIVector(serverState.locations[0].ships[0]).toFix());
-    // }
+    // normal situation, server slightly behind
     if (serverState.ticks < this.state.ticks) {
       return this.rebaseCurrentStateUsingPendingActionPacks(
         serverState,
         visibleArea
       );
     }
-
-    this.state = serverState;
-    return this.successCurrent();
+    // client lag situation, server ahead
+    const clientLag = serverState.ticks - this.state.ticks;
+    return this.compensateClientLag(serverState, visibleArea, clientLag);
   }
 
   private dropPendingActionsFullyCommittedOnServer(serverState: GameState) {
@@ -248,6 +248,7 @@ export class StateSyncer implements IStateSyncer {
     }
     const oldState = this.state;
     this.flushNotYetAppliedPendingActionsIntoLocalState();
+    this.updateClientLagCounter(this.state.ticks, event.elapsedTicks);
     // if (this.state.locations[0].ships[0]) {
     //   console.log(
     //     'current',
@@ -364,6 +365,8 @@ export class StateSyncer implements IStateSyncer {
 
   private MAX_ALLOWED_JUMP_UNITS_PER_TICK = 10 / 1000 / 1000; // in units = 10 units/second is max allowed speed
 
+  private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = 30 / 1000 / 1000; // in units = 10 units/second is max allowed speed
+
   private checkViolations(
     prevState: GameState,
     newState: GameState,
@@ -451,7 +454,8 @@ export class StateSyncer implements IStateSyncer {
     elapsedTicks: number
   ): GameState {
     const correctedState = _.cloneDeep(toCorrectDesynced);
-    const maxShiftLen = elapsedTicks * this.MAX_ALLOWED_JUMP_UNITS_PER_TICK;
+    const maxShiftLen =
+      elapsedTicks * this.MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK;
     const correctedObjectIds = new Set();
     for (const violation of violations) {
       const jumpDir = Vector.fromIVector(violation.to).subtract(
@@ -462,7 +466,7 @@ export class StateSyncer implements IStateSyncer {
       const oldObj = findObjectById(fromCurrent, objId)?.object;
       const oldObjectPos = Vector.fromIVector(getObjectPosition(oldObj));
       const newObj = findObjectById(correctedState, objId)?.object;
-      console.log({ correctedJump, oldObjectPos, violation });
+      // console.log({ correctedJump, oldObjectPos, violation });
       const correctedPos = oldObjectPos.add(correctedJump);
       setObjectPosition(newObj, correctedPos);
       correctedObjectIds.add(objId);
@@ -479,5 +483,32 @@ export class StateSyncer implements IStateSyncer {
       elapsedTicks
     );
     return correctedState;
+  }
+
+  private compensateClientLag(
+    serverState: GameState,
+    visibleArea: AABB,
+    clientLagTicks: number
+  ): StateSyncerResult {
+    this.clientLagsAtTicks.push(this.state.ticks);
+    // assume that if we lagged once for a certain value, then it should go forward to the same value
+    this.desyncedCorrectState = serverState;
+    return this.successDesynced();
+  }
+
+  private updateClientLagCounter(current_ticks: number, elapsedTicks: number) {
+    const MAX_CLIENT_LAG_AGE_TICKS = 1000 * 1000 * 10;
+    const MAX_ALLOWED_CLIENT_LAG_PER_PERIOD = 30; // 30 lags in last 10 seconds
+    this.clientLagsAtTicks = this.clientLagsAtTicks.filter((point) => {
+      return point >= current_ticks + elapsedTicks - MAX_CLIENT_LAG_AGE_TICKS;
+    });
+    if (this.clientLagsAtTicks.length > MAX_ALLOWED_CLIENT_LAG_PER_PERIOD) {
+      console.warn(
+        'client lags at',
+        current_ticks,
+        'x',
+        this.clientLagsAtTicks.length
+      );
+    }
   }
 }
