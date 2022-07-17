@@ -592,6 +592,11 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
+        this.syncer.handle({
+          tag: 'server state',
+          state: _.cloneDeep(parsed),
+          visibleArea: this.getSimulationArea(),
+        });
         this.desync = parsed.millis - this.state.millis;
         this.lastReceivedServerTicks = this.serverState?.millis || 0;
         // this is not always true in case of packet loss, so probably better ping calculation should be in place -

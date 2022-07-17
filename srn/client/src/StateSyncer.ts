@@ -114,6 +114,9 @@ export class StateSyncer implements IStateSyncer {
         return this.onTimeUpdate(event);
       }
       case 'server state': {
+        if (!this.state) {
+          return this.onInit({ tag: 'init', state: event.state });
+        }
         return this.onServerState(event);
       }
       case 'player action': {
@@ -177,7 +180,9 @@ export class StateSyncer implements IStateSyncer {
         visibleArea
       );
     }
-    throw new Error('TODO');
+
+    this.state = serverState;
+    return this.successCurrent();
   }
 
   private dropPendingActionsFullyCommittedOnServer(serverState: GameState) {
@@ -319,7 +324,7 @@ export class StateSyncer implements IStateSyncer {
     this.state = newState;
   }
 
-  private onInit(event: { tag: 'init'; state: GameState; visibleArea: AABB }) {
+  private onInit(event: { tag: 'init'; state: GameState }) {
     this.state = event.state;
     this.prevState = _.cloneDeep(this.state);
     return this.successCurrent();
@@ -331,6 +336,10 @@ export class StateSyncer implements IStateSyncer {
 
   private successDesynced() {
     return { tag: 'success desynced' as const, state: this.state };
+  }
+
+  private error(message: string) {
+    return { tag: 'error' as const, message };
   }
 
   getCurrentState() {
