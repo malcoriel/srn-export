@@ -243,6 +243,9 @@ export class StateSyncer implements IStateSyncer {
     elapsedTicks: number;
     visibleArea: AABB;
   }): StateSyncerResult {
+    if (!this.state) {
+      return this.error('not initialized');
+    }
     const oldState = this.state;
     this.flushNotYetAppliedPendingActionsIntoLocalState();
     // if (this.state.locations[0].ships[0]) {

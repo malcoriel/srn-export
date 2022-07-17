@@ -3,9 +3,7 @@ import {
   DEFAULT_STATE,
   GameMode,
   GameState,
-  interpolateWorld,
   isInAABB,
-  isManualMovement,
   loadReplayIntoWasm,
   ManualMovementActionTags,
   restoreReplayFrame,
@@ -14,12 +12,7 @@ import {
 } from './world';
 import EventEmitter from 'events';
 import * as uuid from 'uuid';
-import {
-  getActiveSyncActions,
-  isSyncActionTypeActive,
-  resetActiveSyncActions,
-} from './utils/ShipControls';
-import Vector, { IVector, VectorFzero } from './utils/Vector';
+import Vector, { IVector } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledThrottledTime, vsyncedCoupledTime } from './utils/Times';
 import { api } from './utils/api';
@@ -142,9 +135,6 @@ export default class NetState extends EventEmitter {
   // updated by timer
   prevState!: GameState;
 
-  // delayed serverState, last known data from server
-  serverState!: GameState;
-
   // extrapolated state used for calculating the actual state via interpolation
   nextState!: GameState;
 
@@ -177,8 +167,6 @@ export default class NetState extends EventEmitter {
   private slowTime: vsyncedCoupledThrottledTime;
 
   public desync: number;
-
-  public lastReceivedServerTicks: number;
 
   private readonly lastSendOfManualMovementMap: Record<
     ManualMovementActionTags,
@@ -221,7 +209,6 @@ export default class NetState extends EventEmitter {
     this.resetState();
     this.ping = 0;
     this.desync = 0;
-    this.lastReceivedServerTicks = -1;
     this.lastSendOfManualMovementMap = {
       Gas: 0,
       Reverse: 0,
@@ -336,22 +323,6 @@ export default class NetState extends EventEmitter {
             // eslint-disable-next-line no-useless-return
             return;
           }
-          // not using elapsedMs here since this function will track it itself
-          // in relation to last forced update, as force can also happen on network load
-          // and player actions directly
-          if (this.scheduleUpdateLocalState) {
-            // this is a special limitation so the forced-update happens on 'synchronous' ship actions so optimistic
-            // application happens without waiting for the server
-            this.scheduleUpdateLocalState = false;
-            this.forceUpdateLocalStateForOptimisticSync();
-          }
-          if (this.indexes.myShipPosition) {
-            this.detectJumpInMyShipPos(
-              elapsedMs,
-              this.indexes.myShipPosition,
-              'pink'
-            );
-          }
         });
       },
       (elapsedMs) => {
@@ -359,7 +330,12 @@ export default class NetState extends EventEmitter {
         Perf.usingMeasure(Measure.RenderFrameTime, () => {
           const ns = NetState.get();
           if (!ns) return;
-          this.interpolateCurrentState(elapsedMs);
+          this.syncer.handle({
+            tag: 'time update',
+            elapsedTicks: elapsedMs * 1000,
+            visibleArea: this.getSimulationArea(),
+          });
+          this.state = this.syncer.getCurrentState();
           ns.emit('change');
         });
       }
@@ -598,47 +574,11 @@ export default class NetState extends EventEmitter {
           visibleArea: this.getSimulationArea(),
         });
         this.desync = parsed.millis - this.state.millis;
-        this.lastReceivedServerTicks = this.serverState?.millis || 0;
-        // this is not always true in case of packet loss, so probably better ping calculation should be in place -
-        // probably just putting the update frequency in the state?
-        // const serverUpdateIntervalMs = Math.abs(
-        //   parsed.millis - this.serverState?.millis || 0
-        // );
-
-        // const isDesyncSmallNegative =
-        //   this.desync < 0 &&
-        //   Math.abs(this.desync) < Math.abs(serverUpdateIntervalMs);
-        this.serverState = _.clone(parsed);
-        // const potentialNewPing = serverUpdateIntervalMs - this.desync;
-        // console.table({
-        //   serverMillis: parsed.millis,
-        //   stateMillis: this.state.millis,
-        //   desync: this.desync,
-        //   serverUpdateIntervalMs,
-        //   newPing:
-        //     isDesyncSmallNegative && potentialNewPing > 0
-        //       ? potentialNewPing
-        //       : this.ping,
-        // });
-        // if (isDesyncSmallNegative) {
-        //   // assuming the server is behind client (and client didn't terribly lag), but not too much, so
-        //   // we don't overexert local simulation
-        //   if (potentialNewPing >= 0) {
-        //     // negative means desync is so big that calculation cannot be applied, e.g. due to server lag or big packet loss,
-        //     // so it cannot be calculated here
-        //     this.ping = potentialNewPing;
-        //   }
-        // }
-
-        // this.addCurrentShipBreadcrumb('red');
-
-        // TODO with new interpolation approach, this needs to be corrected to timestamp-match the previous prevState
-
         if (Math.abs(this.desync) > FULL_DESYNC_DETECT_MS) {
           console.warn(
             'full desync detected, overriding the local state fully'
           );
-          this.tryUpdatePrevState(_.clone(parsed), 'full desync');
+          this.tryUpdatePrevState(_.clone(parsed));
           this.state = _.clone(this.prevState);
           const newShip = findMyShip(this.state);
           if (newShip) {
@@ -653,12 +593,7 @@ export default class NetState extends EventEmitter {
         } else if (this.desync < 0) {
           // normal client-ahead-of-server
           this.tryUpdatePrevState(
-            this.rebaseReceivedStateToCurrentPoint(
-              parsed,
-              -this.desync,
-              this.pendingActionPacks
-            ),
-            'client ahead'
+            this.rebaseReceivedStateToCurrentPoint(parsed, -this.desync)
           );
           const newShip = findMyShip(this.prevState);
           if (newShip) {
@@ -684,10 +619,8 @@ export default class NetState extends EventEmitter {
           this.tryUpdatePrevState(
             this.rebaseReceivedStateToCurrentPoint(
               parsed,
-              10, // magic constant to bump client a little bit ahead so it doensn't have to accept it next time
-              this.pendingActionPacks
-            ),
-            'server ahead'
+              10 // magic constant to bump client a little bit ahead so it doensn't have to accept it next time
+            )
           );
           const newShip = findMyShip(this.prevState);
           if (newShip) {
@@ -736,16 +669,9 @@ export default class NetState extends EventEmitter {
         this.extrapolate();
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
         const confirmedTag = JSON.parse(data).tag;
-        // console.log('confirmed', confirmedTag);
-
-        const prevLen = this.pendingActionPacks.length;
         this.pendingActionPacks = this.pendingActionPacks.filter(
           ([tag]) => tag !== confirmedTag
         );
-        const newLen = this.pendingActionPacks.length;
-        // if (newLen < prevLen) {
-        //   console.log(`confirmed pending pack ${confirmedTag}`);
-        // }
       } else if (
         messageCode === ServerToClientMessageCode.MulticastPartialShipsUpdate
       ) {
@@ -829,73 +755,6 @@ export default class NetState extends EventEmitter {
 
   // [tag, action, ticks], the order is the order of appearance
   private pendingActionPacks: [string, Action[], number][] = [];
-
-  forceUpdateLocalStateForOptimisticSync = () => {
-    this.updateLocalState(Math.ceil(this.state.update_every_ticks / 1000)); // do a minimal update. this will cause a very small desync forward, but will flush out all the actions
-    this.tryUpdatePrevState(_.clone(this.state), 'force update local');
-    const myShip = findMyShip(this.prevState);
-    if (myShip) {
-      this.detectJumpInMyPrevShipPos(0, Vector.fromIVector(myShip), null);
-    }
-    this.extrapolate();
-  };
-
-  updateLocalState = (elapsedMs: number) => {
-    // block all controls in inactive game state
-    if (this.state.paused) {
-      resetActiveSyncActions();
-      return;
-    }
-
-    const actionsToSync = getActiveSyncActions();
-
-    const actionsToSend = [];
-    for (const action of actionsToSync) {
-      // prevent server DOS via gas action flooding, separated by action type
-      if (isManualMovement(action)) {
-        if (
-          // @ts-ignore
-          this.lastSendOfManualMovementMap[action.tag] &&
-          Math.abs(
-            // @ts-ignore
-            this.lastSendOfManualMovementMap[action.tag] - performance.now()
-          ) < MANUAL_MOVEMENT_SYNC_INTERVAL_MS
-        ) {
-          continue;
-        } else {
-          // @ts-ignore
-          this.lastSendOfManualMovementMap[action.tag] = performance.now();
-        }
-      }
-      actionsToSend.push(action);
-    }
-    const sentBatchTag = this.sendSchedulePlayerActionBatch(actionsToSend);
-
-    // schedule for optimistic update
-    this.state.player_actions = [];
-    for (const cmd of actionsToSync) {
-      this.state.player_actions.push([cmd, null]);
-    }
-
-    this.pendingActionPacks.push([
-      sentBatchTag,
-      actionsToSync,
-      this.state.millis + elapsedMs,
-    ]);
-
-    if (isSyncActionTypeActive('Move')) {
-      this.visualState.boundCameraMovement = true;
-    }
-
-    resetActiveSyncActions();
-
-    const result = updateWorld(this.state, this.getSimulationArea(), elapsedMs);
-    if (result) {
-      this.state = result;
-      this.reindexNetState();
-      this.updateVisMap();
-    }
-  };
 
   public sendDialogueOption(dialogueId: string, optionId: string) {
     this.sendSchedulePlayerAction(
@@ -1066,9 +925,7 @@ export default class NetState extends EventEmitter {
     return [null, null];
   }
 
-  // to guarantee lack of rollbacks, we must ensure that prevState never, ever
-  // goes below the current state on client, counted by ticks.
-  private tryUpdatePrevState(newPrevState: GameState, source: string) {
+  private tryUpdatePrevState(newPrevState: GameState) {
     if (newPrevState.ticks >= this.state.ticks) {
       this.prevState = newPrevState;
       return;
@@ -1094,86 +951,15 @@ export default class NetState extends EventEmitter {
     }
   }
 
-  private interpolateCurrentState(elapsedMs: number) {
-    if (this.prevState.id && this.nextState.id) {
-      // elapsedMs = time since last update
-      const currentMs = this.state.millis + elapsedMs;
-      const baseMs = this.prevState.millis;
-      const nextMs = this.nextState.millis;
-      const value = (currentMs - baseMs) / (nextMs - baseMs);
-      // if we have received any 'real' state from server
-      if (value > 0) {
-        // for some reason, right after server update value is < 0
-        const interpolated = interpolateWorld(
-          this.prevState,
-          this.nextState,
-          value,
-          this.getSimulationArea()
-        );
-        // this.controlForOuterPlanet(this.prevState, this.nextState);
-        this.state = interpolated || this.state;
-        // console.log('true interpolate', this.state.millis, value.toFixed(3));
-      } else {
-        this.state = _.clone(this.prevState);
-        // console.log(
-        //   `interpolation bump due to client lag, may look bad, diff=${(
-        //     baseMs - currentMs
-        //   ).toFixed(0)}ms`
-        // );
-      }
-    } else {
-      this.state = _.clone(this.prevState);
-      // console.log('interpolation impossible, no valid boundaries');
-    }
-    this.reindexCurrentState();
-    if (this.indexes.myShipPosition) {
-      // this.visualState.breadcrumbs.push({
-      //   color: 'pink',
-      //   timestamp_ticks: this.state.ticks,
-      //   position: this.indexes.myShipPosition,
-      // });
-    }
-  }
-
   private rebaseReceivedStateToCurrentPoint(
     parsed: GameState,
-    adjustMillis: number,
-    pendingActionPacks: [string, Action[], number][] // tag, actions, atMillis
+    adjustMillis: number
   ): GameState {
-    // too much stuff here and it will slow down itself (unless I add again the instant-update mode without iterations, which is non-deterministic then)
     const MAX_ACCEPTABLE_REBASE_ADJUST = 100;
     if (adjustMillis > MAX_ACCEPTABLE_REBASE_ADJUST) {
-      // console.warn(
-      //   `refusing to adjust state due to huge difference ${adjustMillis} > max=${MAX_ACCEPTABLE_REBASE_ADJUST}`
-      // );
       parsed.millis += adjustMillis;
       return parsed;
     }
-    // console.log(
-    //   'executing rebase server state',
-    //   parsed.millis,
-    //   'with adjustMillis',
-    //   adjustMillis
-    // );
-    // return parsed;
-
-    // may not be exactly correct, since different actions happen in different moments in the past, and such reapplication
-    // literally changes the outcome - however, it's unclear how to combine it with adjustMillis for now
-    const alreadyExecutedTagsInState = new Set(
-      parsed.processed_player_actions.map(({ packet_tag }) => packet_tag)
-    );
-    const actionsToRebase = pendingActionPacks.reduce(
-      (acc, [tag, actions]: [string, Action[], number]) => {
-        if (!alreadyExecutedTagsInState.has(tag)) {
-          return [...acc, ...actions];
-        }
-        return acc;
-      },
-      [] as Action[]
-    );
-
-    // const rebasedActs = actionsToRebase.map((a) => [a, null] as [Action, null]);
-    // parsed.player_actions.push(...rebasedActs);
     return (
       updateWorld(parsed, this.getSimulationArea(), adjustMillis) || parsed
     );
