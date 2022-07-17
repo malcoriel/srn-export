@@ -267,4 +267,12 @@ describe('state syncer', () => {
     // console.log('new2', Vector.fromIVector(newShip2).toFix());
     expect(newShip1.x).toBeLessThan(newShip2.x);
   });
+
+  it('can correct big rollback from server', () => {
+    const { syncer, initState } = initSyncer({
+      mode: 'Sandbox',
+      seed: '123',
+    });
+    const origShip = squareMovementInit(initState);
+  });
 });
