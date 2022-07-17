@@ -59,7 +59,6 @@ export const executeSyncAction = (act: Action) => {
   if (syncActionTags.has(act.tag)) {
     // @ts-ignore - TS doesn't understand set-narrowing
     actionsActive[act.tag] = act;
-    ns.scheduleUpdateLocalState = true;
   }
 };
 
@@ -76,8 +75,6 @@ const refreshActiveActions = () => {
   if (!myShipId) {
     return;
   }
-
-  ns.scheduleUpdateLocalState = true;
 
   if (!keysActive.KeyW && keysActive.KeyS) {
     actionsActive.Reverse = ActionBuilder.ActionReverse({

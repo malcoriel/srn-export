@@ -35,6 +35,10 @@ import {
 } from './ClientStateIndexing';
 import { ActionBuilder } from '../../world/pkg/world.extra';
 import { StateSyncer } from './StateSyncer';
+import {
+  getActiveSyncActions,
+  resetActiveSyncActions,
+} from './utils/ShipControls';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -186,8 +190,6 @@ export default class NetState extends EventEmitter {
 
   public playingReplay = false;
 
-  public scheduleUpdateLocalState = false;
-
   public static make(): NetState {
     NetState.instance = new NetState();
     return NetState.instance;
@@ -297,18 +299,10 @@ export default class NetState extends EventEmitter {
     this.connecting = true;
     Perf.start();
     this.time.setInterval(
-      (elapsedMs: number) => {
+      (_elapsedMs: number) => {
         Perf.markEvent(Measure.PhysicsFrameEvent);
         Perf.usingMeasure(Measure.PhysicsFrameTime, () => {
-          const ns = NetState.get();
-          if (!ns) return;
-          if (this.connecting) {
-            return;
-          }
-          if (this.switchingRooms) {
-            // eslint-disable-next-line no-useless-return
-            return;
-          }
+          // do nothing, everything happens in render
         });
       },
       (elapsedMs) => {
@@ -316,12 +310,15 @@ export default class NetState extends EventEmitter {
         Perf.usingMeasure(Measure.RenderFrameTime, () => {
           const ns = NetState.get();
           if (!ns) return;
-          const elapsedTicks = Math.round(elapsedMs) * 1000;
+          const elapsedTicks = Math.round(elapsedMs * 1000);
+          const actionsActive = getActiveSyncActions();
+          const visibleArea = this.getSimulationArea();
+          this.applyCurrentPlayerActions(actionsActive, visibleArea);
           this.syncer.handle({
             tag: 'time update',
             elapsedTicks,
-            visibleArea: this.getSimulationArea(),
-          });
+            visibleArea,
+          }); // ignore errors from syncer for now
           this.state = this.syncer.getCurrentState();
           ns.emit('change');
         });
@@ -350,6 +347,24 @@ export default class NetState extends EventEmitter {
     );
     return this.connect();
   };
+
+  private applyCurrentPlayerActions(
+    actionsActive: Action[],
+    visibleArea: AABB
+  ) {
+    if (actionsActive.length <= 0) {
+      return;
+    }
+    const packetTag = uuid.v4();
+    this.syncer.handle({
+      tag: 'player action',
+      actions: actionsActive,
+      packetTag,
+      visibleArea,
+    });
+    resetActiveSyncActions();
+    this.sendSchedulePlayerActionBatch(actionsActive, packetTag);
+  }
 
   rewindReplayToMs = (markInMs: number) => {
     this.replay.current_millis = markInMs;
@@ -663,14 +678,12 @@ export default class NetState extends EventEmitter {
     });
   }
 
-  public sendSchedulePlayerActionBatch(actions: Action[]): string {
-    const tag = uuid.v4();
+  public sendSchedulePlayerActionBatch(actions: Action[], tag: string) {
     this.send({
       code: ClientOpCode.SchedulePlayerActionBatch,
       value: { actions },
       tag,
     });
-    return tag;
   }
 
   private getSimulationArea(): AABB {
