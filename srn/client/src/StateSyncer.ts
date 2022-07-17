@@ -147,7 +147,7 @@ export class StateSyncer implements IStateSyncer {
         limit_area: area,
         client: true,
       },
-      BigInt(elapsedTicks)
+      elapsedTicks
     );
   }
 
@@ -341,6 +341,7 @@ export class StateSyncer implements IStateSyncer {
     return { tag: 'success desynced' as const, state: this.state };
   }
 
+  // noinspection JSMethodCanBeStatic
   private error(message: string) {
     return { tag: 'error' as const, message };
   }

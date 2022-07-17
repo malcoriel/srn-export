@@ -229,7 +229,7 @@ export default class NetState extends EventEmitter {
     this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
     this.slowTime = new vsyncedCoupledThrottledTime(SLOW_TIME_STEP);
     this.syncer = new StateSyncer({
-      wasmUpdateWorld: rawUpdateWorld,
+      wasmUpdateWorld: updateWorld,
     });
   }
 
@@ -253,21 +253,6 @@ export default class NetState extends EventEmitter {
         star.spatial.position,
         star.spatial.radius
       );
-    }
-  }
-
-  private extrapolate() {
-    const nextState = updateWorld(
-      this.prevState,
-      this.getSimulationArea(),
-      EXTRAPOLATE_AHEAD_MS
-    );
-    if (nextState) {
-      this.nextState = nextState;
-      this.nextIndexes = buildClientStateIndexes(this.nextState);
-      this.addExtrapolateBreadcrumbs();
-    } else {
-      normalWarn('extrapolation failed');
     }
   }
 
@@ -331,9 +316,10 @@ export default class NetState extends EventEmitter {
         Perf.usingMeasure(Measure.RenderFrameTime, () => {
           const ns = NetState.get();
           if (!ns) return;
+          const elapsedTicks = Math.round(elapsedMs) * 1000;
           this.syncer.handle({
             tag: 'time update',
-            elapsedTicks: Math.round(elapsedMs) * 1000,
+            elapsedTicks,
             visibleArea: this.getSimulationArea(),
           });
           this.state = this.syncer.getCurrentState();
@@ -602,6 +588,8 @@ export default class NetState extends EventEmitter {
       } else if (messageCode === ServerToClientMessageCode.LeaveRoom) {
         normalLog('Received disconnect request from server');
         this.disconnectAndDestroy();
+      } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
+        // nothing for now
       } else {
         normalWarn('unknown message code', messageCode);
       }
@@ -705,7 +693,7 @@ export default class NetState extends EventEmitter {
   public sendSandboxCmd(cmd: SandboxCommand) {
     this.sendSchedulePlayerAction(
       ActionBuilder.ActionSandboxCommand({
-        player_id: this.state.my_id,
+        player_id: this.state?.my_id,
         command: cmd,
       })
     );

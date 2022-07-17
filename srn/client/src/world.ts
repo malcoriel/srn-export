@@ -243,14 +243,17 @@ const doWasmCall = <R>(fnName: string, ...args: any[]): R | undefined => {
 };
 
 export const updateWorld = (
-  inState: GameState,
-  limit_area: AABB,
-  elapsedMs: number
+  {
+    state,
+    limit_area,
+    client,
+  }: { state: GameState; limit_area: AABB; client: boolean },
+  elapsedTicks: number
 ): GameState | undefined => {
   return doWasmCall<GameState>(
     'update_world',
-    JSON.stringify({ state: inState, limit_area }, null, 2),
-    BigInt(elapsedMs * 1000)
+    JSON.stringify({ state, limit_area, client }, null, 2),
+    BigInt(elapsedTicks)
   );
 };
 
