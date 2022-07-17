@@ -29,7 +29,12 @@ import {
   Substitution,
   TradeAction,
 } from '../../world/pkg';
-import { CargoDeliveryQuestState, GameMode, InventoryItemType, SubstitutionType, } from '../../world/pkg/world.extra';
+import {
+  CargoDeliveryQuestState,
+  GameMode,
+  InventoryItemType,
+  SubstitutionType,
+} from '../../world/pkg/world.extra';
 import _ from 'lodash';
 import { Dictionary } from 'ts-essentials';
 import { dialogueResources } from './HtmlLayers/dialogueResources';
@@ -37,6 +42,7 @@ import * as uuid from 'uuid';
 import Prando from 'prando';
 
 export type {
+  Action,
   Notification,
   NotificationText,
   NatSpawnMineral,
@@ -47,6 +53,7 @@ export type {
   Star,
   Quest,
   Player,
+  ObjectSpecifier,
   Leaderboard,
   Dialogue,
   Substitution,
@@ -437,4 +444,11 @@ export const isInAABB = (
     bounds.top_left.y - radius <= obj.y &&
     obj.y <= bounds.bottom_right.y + radius
   );
+};
+
+export const getObjSpecId = (objSpec: ObjectSpecifier): string | null => {
+  if (objSpec.tag === 'Unknown') {
+    return null;
+  }
+  return objSpec.id;
 };

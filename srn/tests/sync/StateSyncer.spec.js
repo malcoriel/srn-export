@@ -1,4 +1,4 @@
-import { invariantAndPull, StateSyncer } from './StateSyncer';
+import { invariantAndPull, StateSyncer } from '../../client/src/StateSyncer';
 import {
   getLoc0,
   getShipByPlayerId,

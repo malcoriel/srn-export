@@ -1,17 +1,18 @@
-import Vector, { IVector } from '../../client/src/utils/Vector';
+import Vector, { IVector } from './utils/Vector';
 import * as _ from 'lodash';
 import {
   findObjectById,
   getObjectPosition,
   setObjectPosition,
-} from '../../client/src/ClientStateIndexing';
+} from './ClientStateIndexing';
 
 import {
   AABB,
   Action,
   GameState,
+  getObjSpecId,
   ObjectSpecifier,
-} from '../../client/src/world';
+} from './world';
 
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = { tag: 'success desynced'; state: GameState };
@@ -95,6 +96,7 @@ export class StateSyncer implements IStateSyncer {
 
   constructor(deps: WasmDeps) {
     this.wasmUpdateWorld = deps.wasmUpdateWorld;
+    this.desyncedCorrectState = null;
   }
 
   private state!: GameState;
@@ -128,10 +130,14 @@ export class StateSyncer implements IStateSyncer {
       result = this.handle(event);
     }
     // intentionally return only the last one
-    return result;
+    return result || { tag: 'error', message: 'no handle result' };
   };
 
-  private updateState(from, elapsedTicks, area): GameState | null {
+  private updateState(
+    from: GameState,
+    elapsedTicks: number,
+    area: AABB
+  ): GameState | null {
     return this.wasmUpdateWorld(
       {
         state: from,
@@ -174,7 +180,7 @@ export class StateSyncer implements IStateSyncer {
     throw new Error('TODO');
   }
 
-  private dropPendingActionsFullyCommittedOnServer(serverState) {
+  private dropPendingActionsFullyCommittedOnServer(serverState: GameState) {
     const confirmedActionPacks = new Set(
       serverState.processed_player_actions.map((a: any) => a.packet_tag)
     );
@@ -194,15 +200,15 @@ export class StateSyncer implements IStateSyncer {
     const alreadyExecutedTagsInState = new Set(
       serverState.processed_player_actions.map(({ packet_tag }) => packet_tag)
     );
-    const actionsToRebase: [Action, null][] = this.pendingActionPacks.reduce(
-      (acc, pack: PendingActionPack) => {
+    const actionsToRebase: [Action, null][] = (this.pendingActionPacks.reduce(
+      (acc: any[], pack: PendingActionPack) => {
         if (!alreadyExecutedTagsInState.has(pack.packet_tag)) {
           return [...acc, ...pack.actions.map((a) => [a, pack.packet_tag])];
         }
         return acc;
       },
       []
-    ) as [Action, null][];
+    ) as unknown) as [Action, null][];
 
     serverState.player_actions.push(...actionsToRebase);
     const oldState = this.state;
@@ -212,7 +218,11 @@ export class StateSyncer implements IStateSyncer {
       visibleArea
     );
     // there is effectively 0 time passed - although, I can calculate time since last time update event of course
-    const tmpViolations = this.checkViolations(oldState, rebasedState, 0);
+    const tmpViolations = this.checkViolations(
+      oldState,
+      rebasedState as GameState,
+      0
+    );
     const objectJumpViolations = tmpViolations.filter(
       (v) => v.tag === 'ObjectJump'
     );
@@ -251,6 +261,12 @@ export class StateSyncer implements IStateSyncer {
       event.elapsedTicks,
       event.visibleArea
     );
+    if (!updatedState) {
+      return {
+        tag: 'error',
+        message: 'no state after update state',
+      };
+    }
     // if (updatedState.locations[0].ships[0]) {
     //   console.log(
     //     'updated',
@@ -356,7 +372,7 @@ export class StateSyncer implements IStateSyncer {
     }
     if (prevState.ticks > newState.ticks) {
       res.push({
-        tag: 'TimeRollback',
+        tag: 'TimeRollback' as const,
         from: prevState.ticks,
         to: newState.ticks,
         diff: prevState.ticks - newState.ticks,
@@ -382,7 +398,7 @@ export class StateSyncer implements IStateSyncer {
       obj: s,
     }));
     res.push(...ships);
-    return res;
+    return res as { spec: ObjectSpecifier; obj: any }[];
   }
 
   private findOldVersionOfObject(
@@ -429,16 +445,19 @@ export class StateSyncer implements IStateSyncer {
         Vector.fromIVector(violation.from)
       );
       const correctedJump = jumpDir.normalize().scale(maxShiftLen);
-      const oldObj = findObjectById(fromCurrent, violation.obj.id).object;
+      const objId = getObjSpecId(violation.obj)!;
+      const oldObj = findObjectById(fromCurrent, objId)?.object;
       const oldObjectPos = Vector.fromIVector(getObjectPosition(oldObj));
-      const newObj = findObjectById(correctedState, violation.obj.id).object;
+      const newObj = findObjectById(correctedState, objId)?.object;
       console.log({ correctedJump, oldObjectPos, violation });
       const correctedPos = oldObjectPos.add(correctedJump);
       setObjectPosition(newObj, correctedPos);
-      correctedObjectIds.add(violation.obj.id);
+      correctedObjectIds.add(objId);
     }
     this.violations = this.violations.filter((v) => {
-      return !(v.tag === 'ObjectJump' && correctedObjectIds.has(v.obj.id));
+      return !(
+        v.tag === 'ObjectJump' && correctedObjectIds.has(getObjSpecId(v.obj))
+      );
     });
     this.log.push(`corrected ${correctedObjectIds.size} violations`);
     this.violations = this.checkViolations(

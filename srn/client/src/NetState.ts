@@ -40,6 +40,7 @@ import {
   findMyShip,
 } from './ClientStateIndexing';
 import { ActionBuilder } from '../../world/pkg/world.extra';
+import { StateSyncer } from './StateSyncer';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -134,6 +135,8 @@ export default class NetState extends EventEmitter {
 
   // actual state used for rendering = interpolate(prevState, nextState, value=0..1)
   state!: GameState;
+
+  syncer: StateSyncer;
 
   // last calculated state, either result of local actions,
   // updated by timer
@@ -237,6 +240,9 @@ export default class NetState extends EventEmitter {
     this.visMap = {};
     this.time = new vsyncedCoupledTime(LOCAL_SIM_TIME_STEP);
     this.slowTime = new vsyncedCoupledThrottledTime(SLOW_TIME_STEP);
+    this.syncer = new StateSyncer({
+      wasmUpdateWorld: updateWorld,
+    });
   }
 
   private updateVisMap() {
