@@ -319,7 +319,7 @@ export default class NetState extends EventEmitter {
             elapsedTicks,
             visibleArea,
           }); // ignore errors from syncer for now
-          this.state = this.syncer.getCurrentState();
+          this.state = this.syncer.getCurrentState() || this.state;
           ns.emit('change');
         });
       }
@@ -466,10 +466,6 @@ export default class NetState extends EventEmitter {
         }
         this.socket = null;
         this.state.millis = 0;
-        this.reconnectTimeout = setTimeout(() => {
-          this.connecting = true;
-          this.connect();
-        }, RECONNECT_INTERVAL);
       };
       this.socket.onopen = () => {
         this.connecting = false;
