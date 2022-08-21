@@ -64,6 +64,7 @@ type SyncerViolationObjectJump = {
   obj: ObjectSpecifier;
   from: IVector;
   to: IVector;
+  diff: number;
 };
 type SyncerViolationTimeRollback = {
   tag: 'TimeRollback';
@@ -181,6 +182,7 @@ export class StateSyncer implements IStateSyncer {
       );
     }
     // client lag situation, server ahead
+    console.log('client behind');
     const clientLag = serverState.ticks - this.state.ticks;
     return this.compensateClientLag(serverState, visibleArea, clientLag);
   }
@@ -222,18 +224,18 @@ export class StateSyncer implements IStateSyncer {
       elapsedDiff,
       visibleArea
     );
+    if (!rebasedState) {
+      return this.error(
+        'rebase state failed, will fall back to desynced server state'
+      );
+    }
     // there is effectively 0 time passed - although, I can calculate time since last time update event of course
-    const tmpViolations = this.checkViolations(
-      oldState,
-      rebasedState as GameState,
-      0
-    );
+    const tmpViolations = this.checkViolations(oldState, rebasedState, 0);
     const objectJumpViolations = tmpViolations.filter(
       (v) => v.tag === 'ObjectJump'
     );
     if (objectJumpViolations.length > 0) {
-      this.desyncedCorrectState = rebasedState;
-      return this.successDesynced();
+      return this.successDesynced(rebasedState);
     }
     return this.successCurrent();
   }
@@ -249,60 +251,49 @@ export class StateSyncer implements IStateSyncer {
     const oldState = this.state;
     this.flushNotYetAppliedPendingActionsIntoLocalState();
     this.updateClientLagCounter(this.state.ticks, event.elapsedTicks);
-    // if (this.state.locations[0].ships[0]) {
-    //   console.log(
-    //     'current',
-    //     Vector.fromIVector(this.state.locations[0].ships[0]).toFix(),
-    //     this.state.locations[0].ships[0].navigate_target
-    //   );
-    // }
-    // if (this.desyncedCorrectState && this.desyncedCorrectState.locations[0].ships[0]) {
-    //   console.log(
-    //     'desynced',
-    //     Vector.fromIVector(
-    //       this.desyncedCorrectState.locations[0].ships[0]
-    //     ).toFix(),
-    //     this.desyncedCorrectState.locations[0].ships[0].navigate_target
-    //   );
-    // }
     const updatedState = this.updateState(
       this.desyncedCorrectState || this.state,
       event.elapsedTicks,
       event.visibleArea
     );
     if (!updatedState) {
-      return {
-        tag: 'error',
-        message: 'no state after update state',
-      };
+      return this.error('no state after update state');
     }
-    // if (updatedState.locations[0].ships[0]) {
-    //   console.log(
-    //     'updated',
-    //     Vector.fromIVector(updatedState.locations[0].ships[0]).toFix(),
-    //     updatedState.locations[0].ships[0].navigate_target
-    //   );
-    // }
+    // can happen if there is the desynced state is still not fully corrected
     this.violations = this.checkViolations(
       oldState,
       updatedState,
       event.elapsedTicks
     );
     if (this.violations.length === 0) {
-      this.desyncedCorrectState = null;
       this.replaceCurrentState(updatedState);
       return this.successCurrent();
     }
+    const toCorrect = this.violations.filter(
+      (v) => v.tag === 'ObjectJump'
+    ) as SyncerViolationObjectJump[];
     const correctedState = this.applyMaxPossibleDesyncCorrection(
-      this.violations.filter(
-        (v) => v.tag === 'ObjectJump'
-      ) as SyncerViolationObjectJump[],
+      toCorrect,
       oldState,
       updatedState,
       event.elapsedTicks
     );
     this.replaceCurrentState(correctedState);
-    return this.successDesynced();
+    if (this.violations.length === 0) {
+      return this.successCurrent();
+    }
+    console.log(
+      'before',
+      toCorrect.map((v) => v.diff)
+    );
+    console.log(
+      'after',
+      this.violations.map((v) => (v as SyncerViolationObjectJump).diff)
+    );
+    return this.successDesynced(
+      correctedState,
+      `time update ${this.violations.length}`
+    );
   }
 
   private flushNotYetAppliedPendingActionsIntoLocalState() {
@@ -335,10 +326,15 @@ export class StateSyncer implements IStateSyncer {
   }
 
   private successCurrent() {
+    this.desyncedCorrectState = null;
     return { tag: 'success' as const, state: this.state };
   }
 
-  private successDesynced() {
+  private successDesynced(desyncedState: GameState, _reason?: string) {
+    this.desyncedCorrectState = desyncedState;
+    if (_reason) {
+      console.log('desynced', _reason);
+    }
     return { tag: 'success desynced' as const, state: this.state };
   }
 
@@ -365,7 +361,7 @@ export class StateSyncer implements IStateSyncer {
 
   private MAX_ALLOWED_JUMP_UNITS_PER_TICK = 10 / 1000 / 1000; // in units = 10 units/second is max allowed speed
 
-  private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = 30 / 1000 / 1000; // in units = 10 units/second is max allowed speed
+  private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = 50 / 1000 / 1000; // in units = 10 units/second is max allowed speed
 
   private checkViolations(
     prevState: GameState,
@@ -442,6 +438,7 @@ export class StateSyncer implements IStateSyncer {
         obj: spec,
         from: oldPos,
         to: newPos,
+        diff: dist,
       };
     }
     return null;
@@ -461,13 +458,25 @@ export class StateSyncer implements IStateSyncer {
       const jumpDir = Vector.fromIVector(violation.to).subtract(
         Vector.fromIVector(violation.from)
       );
-      const correctedJump = jumpDir.normalize().scale(maxShiftLen);
+      const jumpCorrectionToOldPosBack = jumpDir
+        .normalize()
+        .scale(
+          -Math.min(
+            maxShiftLen,
+            jumpDir.length() -
+              this.MAX_ALLOWED_JUMP_UNITS_PER_TICK * elapsedTicks
+          )
+        );
+      console.log(
+        'jump',
+        jumpDir.length(),
+        'corr',
+        jumpCorrectionToOldPosBack.length()
+      );
       const objId = getObjSpecId(violation.obj)!;
-      const oldObj = findObjectById(fromCurrent, objId)?.object;
-      const oldObjectPos = Vector.fromIVector(getObjectPosition(oldObj));
       const newObj = findObjectById(correctedState, objId)?.object;
-      // console.log({ correctedJump, oldObjectPos, violation });
-      const correctedPos = oldObjectPos.add(correctedJump);
+      const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
+      const correctedPos = newObjectPos.add(jumpCorrectionToOldPosBack);
       setObjectPosition(newObj, correctedPos);
       correctedObjectIds.add(objId);
     }
@@ -492,8 +501,7 @@ export class StateSyncer implements IStateSyncer {
   ): StateSyncerResult {
     this.clientLagsAtTicks.push(this.state.ticks);
     // assume that if we lagged once for a certain value, then it should go forward to the same value
-    this.desyncedCorrectState = serverState;
-    return this.successDesynced();
+    return this.successDesynced(serverState);
   }
 
   private updateClientLagCounter(current_ticks: number, elapsedTicks: number) {
