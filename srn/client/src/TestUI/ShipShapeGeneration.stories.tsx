@@ -7,9 +7,26 @@ import * as THREE from 'three';
 import { BufferGeometry } from 'three';
 import Vector, { VectorF } from '../utils/Vector';
 import { posToThreePos } from '../ThreeLayers/util';
-import _ from 'lodash';
 
 const ShipShapeGeneration = () => null;
+
+export const useShapeGeometry = ({
+  vertices,
+  scale = 1.0,
+}: {
+  vertices: Vector[];
+  scale?: number;
+}): BufferGeometry => {
+  return useMemo(() => {
+    const shape = new THREE.Shape();
+    shape.moveTo(0, 0);
+    for (const point of vertices) {
+      const point2 = point.scale(scale);
+      shape.lineTo(point2.x, point2.y);
+    }
+    return new THREE.ShapeGeometry(shape);
+  }, [vertices, scale]);
+};
 
 export const useCustomGeometry = ({
   vertices,
@@ -20,55 +37,17 @@ export const useCustomGeometry = ({
   scale: number;
   shift?: Vector;
 }): BufferGeometry => {
-  const triangleGeometry = useMemo(() => {
-    const geometry = new THREE.BufferGeometry();
+  const shiftedVertices = useMemo(() => {
+    const verticesUsed = [...vertices, vertices[0]];
     let shiftedVertices;
     if (shift) {
-      shiftedVertices = vertices.map((v) => v.add(shift));
+      shiftedVertices = verticesUsed.map((v) => v.add(shift));
     } else {
-      shiftedVertices = vertices;
+      shiftedVertices = verticesUsed;
     }
-    const verticesUnpacked = shiftedVertices.reduce((acc, curr) => {
-      const scaled = curr.scale(scale);
-      return [...acc, ...posToThreePos(scaled.x, -scaled.y)];
-    }, [] as number[]);
-    const indices = _.times(vertices.length, (i) => i);
-
-    console.log(verticesUnpacked, indices);
-
-    geometry.setAttribute(
-      'position',
-      new THREE.Float32BufferAttribute(verticesUnpacked, vertices.length)
-    );
-    geometry.setIndex(indices);
-    return geometry;
-  }, [scale, vertices, shift]);
-  return triangleGeometry;
-};
-
-export const useShapeGeometry = ({
-  vertices,
-}: {
-  vertices: Vector[];
-  shift?: Vector;
-}): BufferGeometry => {
-  return useMemo(() => {
-    const shape = new THREE.Shape();
-    // shape.moveTo(25, 25);
-    // shape.lineTo(25, 25);
-    // shape.bezierCurveTo(25, 25, 20, 0, 0, 0);
-    // shape.bezierCurveTo(-30, 0, -30, 35, -30, 35);
-    // shape.bezierCurveTo(-30, 55, -10, 77, 25, 95);
-    // shape.bezierCurveTo(60, 77, 80, 55, 80, 35);
-    // shape.bezierCurveTo(80, 35, 80, 0, 50, 0);
-    // shape.bezierCurveTo(35, 0, 25, 25, 25, 25);
-
-    shape.moveTo(0, 0);
-    for (const point of vertices) {
-      shape.lineTo(point.x, -point.y);
-    }
-    return new THREE.ShapeGeometry(shape);
-  }, [vertices]);
+    return shiftedVertices;
+  }, [vertices, shift]);
+  return useShapeGeometry({ vertices: shiftedVertices, scale });
 };
 
 export type ThreeTriangleProps = {
@@ -84,7 +63,7 @@ export const ThreeTriangle: React.FC<ThreeTriangleProps> = ({
   rotationRad,
   sideSize,
 }) => {
-  const height = Math.sin(Math.PI / 3) / 2;
+  const height = Math.sin(Math.PI / 3) / 3;
   const triangleGeometry = useCustomGeometry({
     scale: sideSize,
     vertices: [
@@ -116,7 +95,7 @@ export const ThreeInterceptorOutline = () => {
     ],
   });
   return (
-    <mesh geometry={geometry} scale={2}>
+    <mesh geometry={geometry} position={[0, 0, -1]}>
       <meshBasicMaterial color="blue" />
     </mesh>
   );
