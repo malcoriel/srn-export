@@ -46,6 +46,31 @@ export const useCustomGeometry = ({
   return triangleGeometry;
 };
 
+export const useShapeGeometry = ({
+  vertices,
+}: {
+  vertices: Vector[];
+  shift?: Vector;
+}): BufferGeometry => {
+  return useMemo(() => {
+    const shape = new THREE.Shape();
+    // shape.moveTo(25, 25);
+    // shape.lineTo(25, 25);
+    // shape.bezierCurveTo(25, 25, 20, 0, 0, 0);
+    // shape.bezierCurveTo(-30, 0, -30, 35, -30, 35);
+    // shape.bezierCurveTo(-30, 55, -10, 77, 25, 95);
+    // shape.bezierCurveTo(60, 77, 80, 55, 80, 35);
+    // shape.bezierCurveTo(80, 35, 80, 0, 50, 0);
+    // shape.bezierCurveTo(35, 0, 25, 25, 25, 25);
+
+    shape.moveTo(0, 0);
+    for (const point of vertices) {
+      shape.lineTo(point.x, -point.y);
+    }
+    return new THREE.ShapeGeometry(shape);
+  }, [vertices]);
+};
+
 export type ThreeTriangleProps = {
   position: Vector;
   rotationRad: number;
@@ -81,18 +106,18 @@ export const ThreeTriangle: React.FC<ThreeTriangleProps> = ({
 };
 
 export const ThreeInterceptorOutline = () => {
-  const geometry = useCustomGeometry({
+  const geometry = useShapeGeometry({
     vertices: [
       VectorF(100, 100),
       VectorF(100, -100),
       VectorF(-100, -100),
       VectorF(-100, 100),
+      VectorF(100, 100),
     ],
-    scale: 1.0,
   });
   return (
-    <mesh geometry={geometry}>
-      <meshBasicMaterial color="blue" wireframe/>
+    <mesh geometry={geometry} scale={2}>
+      <meshBasicMaterial color="blue" />
     </mesh>
   );
 };
