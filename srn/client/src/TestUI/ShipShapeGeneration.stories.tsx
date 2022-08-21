@@ -30,11 +30,11 @@ export const useShapeGeometry = ({
 
 export const useCustomGeometry = ({
   vertices,
-  scale,
+  scale = 1.0,
   shift,
 }: {
   vertices: Vector[];
-  scale: number;
+  scale?: number;
   shift?: Vector;
 }): BufferGeometry => {
   const shiftedVertices = useMemo(() => {
@@ -85,14 +85,15 @@ export const ThreeTriangle: React.FC<ThreeTriangleProps> = ({
 };
 
 export const ThreeInterceptorOutline = () => {
-  const geometry = useShapeGeometry({
+  const geometry = useCustomGeometry({
     vertices: [
-      VectorF(100, 100),
-      VectorF(100, -100),
-      VectorF(-100, -100),
-      VectorF(-100, 100),
-      VectorF(100, 100),
+      VectorF(64, 64),
+      VectorF(128, -128),
+      VectorF(0, -64),
+      VectorF(-128, -128),
+      VectorF(-64, 64),
     ],
+    shift: VectorF(0, 0),
   });
   return (
     <mesh geometry={geometry} position={[0, 0, -1]}>
@@ -115,9 +116,9 @@ const Template: Story = (args) => {
           size={512}
         />
         <ThreeTriangle
-          sideSize={100}
+          sideSize={64}
           position={VectorF(0, 0)}
-          rotationRad={0.0}
+          rotationRad={args.rotationRad}
           color="red"
         />
         <ThreeInterceptorOutline />
@@ -127,10 +128,21 @@ const Template: Story = (args) => {
 };
 
 export const Main = Template.bind({});
-Main.args = {};
+Main.args = {
+  rotationRad: 0.0,
+};
 
 export default {
   title: 'Three/ShipShapeGeneration',
   component: ShipShapeGeneration,
-  argTypes: {},
+  argTypes: {
+    rotationRad: {
+      control: {
+        type: 'range',
+        min: 0.0,
+        max: Math.PI / 2,
+        step: 0.1,
+      },
+    },
+  },
 } as Meta;
