@@ -14,19 +14,27 @@ const ShipShapeGeneration = () => null;
 export const useCustomGeometry = ({
   vertices,
   scale,
+  shift,
 }: {
   vertices: Vector[];
   scale: number;
+  shift?: Vector;
 }): BufferGeometry => {
   const triangleGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
-    const height = Math.sin(Math.PI / 3) / 2;
-    const verticesShifted = vertices.map((v) => v.add(VectorF(0, -height)));
-    const verticesUnpacked = verticesShifted.reduce((acc, curr) => {
+    let shiftedVertices;
+    if (shift) {
+      shiftedVertices = vertices.map((v) => v.add(shift));
+    } else {
+      shiftedVertices = vertices;
+    }
+    const verticesUnpacked = shiftedVertices.reduce((acc, curr) => {
       const scaled = curr.scale(scale);
       return [...acc, ...posToThreePos(scaled.x, -scaled.y)];
     }, [] as number[]);
     const indices = _.times(vertices.length, (i) => i);
+
+    console.log(verticesUnpacked, indices);
 
     geometry.setAttribute(
       'position',
@@ -34,7 +42,7 @@ export const useCustomGeometry = ({
     );
     geometry.setIndex(indices);
     return geometry;
-  }, [scale, vertices]);
+  }, [scale, vertices, shift]);
   return triangleGeometry;
 };
 
@@ -51,6 +59,7 @@ export const ThreeTriangle: React.FC<ThreeTriangleProps> = ({
   rotationRad,
   sideSize,
 }) => {
+  const height = Math.sin(Math.PI / 3) / 2;
   const triangleGeometry = useCustomGeometry({
     scale: sideSize,
     vertices: [
@@ -58,6 +67,7 @@ export const ThreeTriangle: React.FC<ThreeTriangleProps> = ({
       VectorF(1 / 2, 0),
       VectorF(0, Math.sin(Math.PI / 3)),
     ],
+    shift: VectorF(0, -height),
   });
   return (
     <mesh
@@ -66,6 +76,23 @@ export const ThreeTriangle: React.FC<ThreeTriangleProps> = ({
       rotation={[0, 0, rotationRad]}
     >
       <meshBasicMaterial color={color} />
+    </mesh>
+  );
+};
+
+export const ThreeInterceptorOutline = () => {
+  const geometry = useCustomGeometry({
+    vertices: [
+      VectorF(100, 100),
+      VectorF(100, -100),
+      VectorF(-100, -100),
+      VectorF(-100, 100),
+    ],
+    scale: 1.0,
+  });
+  return (
+    <mesh geometry={geometry}>
+      <meshBasicMaterial color="blue" wireframe/>
     </mesh>
   );
 };
@@ -89,6 +116,7 @@ const Template: Story = (args) => {
           rotationRad={0.0}
           color="red"
         />
+        <ThreeInterceptorOutline />
       </StoryCanvas>
     </div>
   );
