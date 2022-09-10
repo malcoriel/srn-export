@@ -1,4 +1,6 @@
 import {
+  genGrid,
+  GridType,
   pointInsidePolygon,
   polygonIntersects,
   segmentIntersect,
@@ -76,5 +78,18 @@ describe('polygonUtils', () => {
         VectorF(1, 0),
       ])
     ).toBeFalsy();
+  });
+
+  it('can generate a triangle grid', () => {
+    const grid = genGrid(
+      GridType.Triangles,
+      VectorF(0, 0),
+      {
+        top_left: VectorF(-10, -10),
+        bottom_right: VectorF(10, 10),
+      },
+      5
+    );
+    expect(grid.items.length).toBeGreaterThan(0);
   });
 });

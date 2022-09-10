@@ -111,19 +111,26 @@ type GeometricalGrid = {
   gridFlatToReal: (i: number) => Vector;
 };
 
+class Grid implements GeometricalGrid {
+  constructor(public items: Vector[][]) {}
+
+  gridFlatToReal(i: number): Vector {
+    return VectorF(0, 0);
+  }
+
+  gridToReal(i: number, j: number): Vector {
+    return VectorF(0, 0);
+  }
+}
+
 export const genGrid = (
   type: GridType,
   zero: Vector,
-  bounds: AABB
+  bounds: AABB,
+  itemSize: number,
 ): GeometricalGrid => {
   const items: Vector[][] = [];
-
-  return {
-    items,
-    gridToReal: () => {
-      return VectorF(0, 0);
-    },
-  };
+  return new Grid(items);
 };
 
 export type ThreeTriangleProps = {

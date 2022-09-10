@@ -3,7 +3,12 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
 import { ThreeSpaceBackground } from '../ThreeLayers/ThreeSpaceBackground';
-import { ShipShapeGeneration } from './ShipShapeGeneration';
+import {
+  ShipShapeGeneration,
+  ThreeInterceptorOutline,
+  ThreeTriangle,
+} from './ShipShapeGeneration';
+import { VectorF } from '../utils/Vector';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
@@ -18,13 +23,13 @@ const Template: Story = (args) => {
           shaderShift={args.shift}
           size={512}
         />
-        {/*<ThreeTriangle*/}
-        {/*  sideSize={64}*/}
-        {/*  position={VectorF(0, 0)}*/}
-        {/*  rotationRad={args.rotationRad}*/}
-        {/*  color="red"*/}
-        {/*/>*/}
-        {/*<ThreeInterceptorOutline />*/}
+        <ThreeTriangle
+          sideSize={64}
+          position={VectorF(0, 0)}
+          rotationRad={args.rotationRad}
+          color="red"
+        />
+        <ThreeInterceptorOutline />
       </StoryCanvas>
     </div>
   );
