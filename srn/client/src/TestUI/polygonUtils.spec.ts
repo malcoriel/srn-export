@@ -91,5 +91,18 @@ describe('polygonUtils', () => {
       5
     );
     expect(grid.items.length).toBeGreaterThan(0);
+    /*
+    Triangle grid is like - y - direction is normal, and x
+    creates alternating triangles in the x-direction, that
+    stack to the nearest one:
+
+    ____
+    \/\/
+     __
+    /\/\
+    ____
+    */
+    expect(grid.gridToReal(0, 0)).toEqual(VectorF(0, 0));
+    expect(grid.gridToReal(0, 1)).toEqual(VectorF(0, 5));
   });
 });

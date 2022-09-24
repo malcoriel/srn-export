@@ -106,20 +106,31 @@ export enum GridType {
 }
 
 type GeometricalGrid = {
-  items: Vector[][];
-  gridToReal: (i: number, j: number) => Vector;
-  gridFlatToReal: (i: number) => Vector;
+  items: GridItem[];
+  gridToReal: (i: number, j: number) => GridItem;
+};
+
+type GridItem = {
+  vertices: Vector[];
+  center: Vector;
 };
 
 class Grid implements GeometricalGrid {
-  constructor(public items: Vector[][]) {}
+  // this grid uses circular layout of items into array, going counterclockwise
+  // like the first element is at (0, 0), then (1, 0), then (1, 1), then (0, 1)
+  constructor(public items: GridItem[]) {}
 
-  gridFlatToReal(i: number): Vector {
-    return VectorF(0, 0);
+  coordToLinear(i: number, j: number): number {
+    return 0;
   }
 
-  gridToReal(i: number, j: number): Vector {
-    return VectorF(0, 0);
+  gridToReal(i: number, j: number): GridItem {
+    const index = this.coordToLinear(i, j);
+    const item = this.items[index];
+    if (!item) {
+      throw new Error(`No item at ${i}/${j}`);
+    }
+    return item;
   }
 }
 
@@ -127,9 +138,9 @@ export const genGrid = (
   type: GridType,
   zero: Vector,
   bounds: AABB,
-  itemSize: number,
+  itemSize: number
 ): GeometricalGrid => {
-  const items: Vector[][] = [];
+  const items: GridItem[] = [];
   return new Grid(items);
 };
 
