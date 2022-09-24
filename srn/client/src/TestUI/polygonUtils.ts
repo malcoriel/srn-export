@@ -105,26 +105,100 @@ export enum GridType {
   Triangles,
 }
 
-type GeometricalGrid = {
+export type GeometricalGrid = {
   items: GridItem[];
   gridToReal: (i: number, j: number) => GridItem;
+  type: GridType;
 };
 
-type GridItem = {
+export type GridItem = {
   vertices: Vector[];
   center: Vector;
+  id?: number;
 };
 
-class Grid implements GeometricalGrid {
-  // this grid uses circular layout of items into array, going counterclockwise
-  // like the first element is at (0, 0), then (1, 0), then (1, 1), then (0, 1)
-  constructor(public items: GridItem[]) {}
+/*
+ * y = x > 1 ? (1 + 2 * (x - 2)) * 4 + 4 : 1
+ * tier 1 = 1
+ * tier 2 = 4 + (1 * 4) = 8
+ * tier 3 = 4 + (3 * 4) = 16
+ * tier 4 = 4 + (5 * 4) = 24
+ * */
+// given squares, how many items are on the x-th level of boundaries around a point?
+// first it's the point itself, then 8 cells around it, then 16 around them, etc.
+// tiers are 1-based, where 1 is the point itself
+export const circularItemsCount = (tier: number) => {
+  return tier > 1 ? (1 + 2 * (tier - 2)) * 4 + 4 : 1;
+};
 
-  coordToLinear(i: number, j: number): number {
+const calcItemsBeforeTier = (tier: number): number => {
+  if (tier === 1 || tier === 0) {
     return 0;
   }
+  let total = 0;
+  for (let i = 0; i < tier - 1; i++) {
+    total += circularItemsCount(i + 1);
+  }
+  return total;
+};
 
-  gridToReal(i: number, j: number): GridItem {
+export class Grid implements GeometricalGrid {
+  // this grid uses circular layout of items into array, going counterclockwise
+  // in mathematical coords (y up)
+  // like the first element is at (0, 0), then (1, 0), then (1, 1), then (0, 1)
+  constructor(public items: GridItem[], public type: GridType) {}
+
+  public coordToLinear(i: number, j: number): number {
+    if (i === 0 && j === 0) {
+      return 0;
+    }
+    const tier = Math.max(Math.abs(i), Math.abs(j)) + 1;
+    const itemsInTiersBefore = calcItemsBeforeTier(tier);
+    const itemsInThisTier = circularItemsCount(tier);
+    const octantItems = itemsInThisTier / 8; // after t1, it's always divisible by 8
+    // console.log({octantItems, tier, itemsInTiersBefore});
+    let shift = 0;
+    if (i > 0 && j >= 0) {
+      // Q1 excluding topmost
+      if (i > j) {
+        // O1 excluding top right
+        shift = j;
+      } else {
+        // O2 excluding topmost
+        shift = octantItems + (octantItems - i);
+      }
+    } else if (i <= 0 && j > 0) {
+      // Q2 excluding leftmost
+      if (Math.abs(i) < Math.abs(j)) {
+        // O3 excluding top left
+        shift = octantItems * 2 + (octantItems - i) - 1;
+      } else {
+        // O4 excluding leftmost
+        shift = octantItems * 3 + (octantItems - j);
+      }
+    } else if (i < 0 && j <= 0) {
+      // Q3 excluding bottommost
+      if (Math.abs(i) > Math.abs(j)) {
+        // O5 excluding bottom left
+        shift = octantItems * 4 + (octantItems - j) - 1;
+      } else {
+        // O6 excluding bottommost
+        shift = octantItems * 5 + (octantItems - i) - 2;
+      }
+    } else if (i >= 0 && j < 0) {
+      // Q4 excluding rightmost
+      if (Math.abs(i) < Math.abs(j)) {
+        // O7 excluding bottom right
+        shift = octantItems * 6 + (octantItems - i) - 1;
+      } else {
+        // O8 excluding rightmost
+        shift = octantItems * 7 + (octantItems - j) - 2;
+      }
+    }
+    return itemsInTiersBefore + shift;
+  }
+
+  public gridToReal(i: number, j: number): GridItem {
     const index = this.coordToLinear(i, j);
     const item = this.items[index];
     if (!item) {
@@ -141,7 +215,7 @@ export const genGrid = (
   itemSize: number
 ): GeometricalGrid => {
   const items: GridItem[] = [];
-  return new Grid(items);
+  return new Grid(items, type);
 };
 
 export type ThreeTriangleProps = {
