@@ -135,10 +135,15 @@ export const ThreeInterceptorOutline = () => {
 export const TriangleGrid = () => {
   const grid = useMemo(
     () =>
-      genGrid(GridType.Triangles, VectorF(0, 0), {
-        top_left: VectorF(-10, 10),
-        bottom_right: VectorF(10, -10),
-      }),
+      genGrid(
+        GridType.Triangles,
+        VectorF(0, 0),
+        {
+          top_left: VectorF(-10, 10),
+          bottom_right: VectorF(10, -10),
+        },
+        10
+      ),
     []
   );
   const geometry = useShapeGeometry({

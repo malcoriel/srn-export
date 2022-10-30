@@ -111,6 +111,13 @@ describe('polygonUtils', () => {
     expect(grid.coordToLinear(2, 1)).toEqual(10);
   });
 
+  xit('can unwrap linear into coord', () => {
+    const grid = new Grid([], GridType.Triangles);
+    expect(grid.linearToCoord(0)).toEqual({ i: 0, j: 0 });
+    expect(grid.linearToCoord(1)).toEqual({ i: 1, j: 0 });
+    expect(grid.linearToCoord(2)).toEqual({ i: 1, j: 1 });
+  });
+
   xit('can generate a triangle grid', () => {
     const grid = genGrid(
       GridType.Triangles,

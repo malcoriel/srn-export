@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { StoryCanvas } from './StoryCanvas';
@@ -7,8 +7,46 @@ import {
   ShipShapeGeneration,
   ThreeInterceptorOutline,
   ThreeTriangle,
+  useShapeGeometries,
 } from './ShipShapeGeneration';
 import { VectorF } from '../utils/Vector';
+import { genGrid, GridItem, GridType } from './polygonUtils';
+import { posToThreePos } from '../ThreeLayers/util';
+
+const ThreeShapeGrid: React.FC<{ type: GridType }> = ({ type }) => {
+  const grid = useMemo(
+    () =>
+      genGrid(
+        type,
+        VectorF(0, 0),
+        {
+          top_left: VectorF(-50, -50),
+          bottom_right: VectorF(50, 50),
+        },
+        10
+      ),
+    [type]
+  );
+  console.log({ grid });
+  const geometries = useShapeGeometries({
+    multiVertices: grid.items.map((i) => i.vertices),
+  });
+  return (
+    <group>
+      {grid.items.map((item: GridItem, i) => {
+        return (
+          <mesh
+            geometry={geometries[i]}
+            position={posToThreePos(item.center.x, item.center.y)}
+            rotation={[0, 0, 0.0]}
+          >
+            <meshBasicMaterial color="green" />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+};
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
@@ -29,6 +67,7 @@ const Template: Story = (args) => {
           rotationRad={args.rotationRad}
           color="red"
         />
+        <ThreeShapeGrid type={GridType.Triangles} />
         <ThreeInterceptorOutline />
       </StoryCanvas>
     </div>

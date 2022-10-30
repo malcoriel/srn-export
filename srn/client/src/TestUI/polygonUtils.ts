@@ -119,17 +119,32 @@ export type GridItem = {
 
 /*
  * y = x > 1 ? (1 + 2 * (x - 2)) * 4 + 4 : 1
+ * y = x > 1 ? (2x - 3) * 4 + 4 : 1
+ * y = x > 1 ? 8x - 12 + 4 : 1
+ * y = x > 1 ? 8x - 8 : 1
  * tier 1 = 1
  * tier 2 = 4 + (1 * 4) = 8
  * tier 3 = 4 + (3 * 4) = 16
  * tier 4 = 4 + (5 * 4) = 24
+ * tier 5 = 4 + (7 * 4) = 32
  * */
 // given squares, how many items are on the x-th level of boundaries around a point?
 // first it's the point itself, then 8 cells around it, then 16 around them, etc.
 // tiers are 1-based, where 1 is the point itself
 export const circularItemsCount = (tier: number) => {
-  return tier > 1 ? (1 + 2 * (tier - 2)) * 4 + 4 : 1;
+  return tier > 1 ? 8 * tier - 8 : 1;
 };
+
+// /*
+// * 0 -> 1
+// * 1-8 -> 2
+// * 9-24 -> 3
+// * 25 ->
+// * */
+// // Given 0-based index of an item, determine which tier from the center it is
+// export const tierFromCircularIndex = (i: number) => {
+//
+// }
 
 const calcItemsBeforeTier = (tier: number): number => {
   if (tier === 1 || tier === 0) {
@@ -147,6 +162,14 @@ export class Grid implements GeometricalGrid {
   // in mathematical coords (y up)
   // like the first element is at (0, 0), then (1, 0), then (1, 1), then (0, 1)
   constructor(public items: GridItem[], public type: GridType) {}
+
+  public linearToCoord(i: number): { i: number; j: number } {
+    if (i === 0) {
+      return { i: 0, j: 0 };
+    }
+
+    return { i: 0, j: 0 };
+  }
 
   public coordToLinear(i: number, j: number): number {
     if (i === 0 && j === 0) {
