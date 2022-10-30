@@ -182,7 +182,7 @@ export class StateSyncer implements IStateSyncer {
       );
     }
     // client lag situation, server ahead
-    console.log('client behind');
+    // console.log('client behind');
     const clientLag = serverState.ticks - this.state.ticks;
     return this.compensateClientLag(serverState, visibleArea, clientLag);
   }
@@ -282,14 +282,14 @@ export class StateSyncer implements IStateSyncer {
     if (this.violations.length === 0) {
       return this.successCurrent();
     }
-    console.log(
-      'before',
-      toCorrect.map((v) => v.diff)
-    );
-    console.log(
-      'after',
-      this.violations.map((v) => (v as SyncerViolationObjectJump).diff)
-    );
+    // console.log(
+    //   'before',
+    //   toCorrect.map((v) => v.diff)
+    // );
+    // console.log(
+    //   'after',
+    //   this.violations.map((v) => (v as SyncerViolationObjectJump).diff)
+    // );
     return this.successDesynced(
       correctedState,
       `time update ${this.violations.length}`
@@ -333,7 +333,7 @@ export class StateSyncer implements IStateSyncer {
   private successDesynced(desyncedState: GameState, _reason?: string) {
     this.desyncedCorrectState = desyncedState;
     if (_reason) {
-      console.log('desynced', _reason);
+      // console.log('desynced', _reason);
     }
     return { tag: 'success desynced' as const, state: this.state };
   }
@@ -467,12 +467,12 @@ export class StateSyncer implements IStateSyncer {
               this.MAX_ALLOWED_JUMP_UNITS_PER_TICK * elapsedTicks
           )
         );
-      console.log(
-        'jump',
-        jumpDir.length(),
-        'corr',
-        jumpCorrectionToOldPosBack.length()
-      );
+      // console.log(
+      //   'jump',
+      //   jumpDir.length(),
+      //   'corr',
+      //   jumpCorrectionToOldPosBack.length()
+      // );
       const objId = getObjSpecId(violation.obj)!;
       const newObj = findObjectById(correctedState, objId)?.object;
       const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
