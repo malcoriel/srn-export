@@ -31,6 +31,18 @@ function simulate(overrideCount) {
   return states;
 }
 
+const patchDiscrepancies = (state) => {
+  for (const loc of state.locations) {
+    for (const belt of loc.asteroid_belts) {
+      // eslint-disable-next-line no-compare-neg-zero
+      if (belt.spatial.rotation_rad === -0) {
+        belt.spatial.rotation_rad = 0;
+      }
+    }
+  }
+  return state;
+};
+
 describe('replay system', () => {
   beforeAll(swapGlobals);
 
@@ -62,7 +74,9 @@ describe('replay system', () => {
         replayDiff.diffs[replayDiff.diffs.length - 1]
       );
       const endStateRestored = getDiff(replayRaw.marks_ticks[lastIndex]);
-      expect(endStateRestored).toEqual(endStateRaw);
+      expect(patchDiscrepancies(endStateRestored)).toEqual(
+        patchDiscrepancies(endStateRaw)
+      );
 
       expect(replayRaw.initial_state.millis).toEqual(0);
       expect(replayRaw.marks_ticks[0]).toEqual(0);
@@ -85,8 +99,9 @@ describe('replay system', () => {
         replayDiff
       );
     });
+
     it('works with preloaded replay', async () => {
-      const name = 'non-preloaded';
+      const name = 'preloaded';
       const states = simulate();
       const replayDiff = wasm.packReplay(states, `${name}-test`, true);
       wasm.loadReplay(replayDiff);
