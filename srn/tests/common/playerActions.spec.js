@@ -248,7 +248,7 @@ describe('player actions logic', () => {
       state.player_actions.push(
         mockPlayerActionDockNavigate(ship.id, planet.id)
       );
-      state = updateWorld(state, 4000);
+      state = updateWorld(state, 8000);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.docked_at).toEqual(planet.id);
     });
