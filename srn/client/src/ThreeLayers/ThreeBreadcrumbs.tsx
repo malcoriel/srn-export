@@ -32,7 +32,7 @@ export const ThreeBreadcrumbs = ({
     posKey: string;
   })[] = breadcrumbs.map((b) => ({
     ...b,
-    posKey: Vector.fromIVector(b.position).toKey('/', 0),
+    posKey: Vector.fromIVector(b.position).toKey('/', 3),
   }));
   const grouped = _.groupBy(withPosKeys, 'posKey');
   return (
@@ -49,7 +49,7 @@ export const ThreeBreadcrumbs = ({
                 if (breadcrumbs.length > 1) {
                   pos = roundPos(
                     Vector.fromIVector(position),
-                    0.125,
+                    0.15,
                     i,
                     breadcrumbs.length
                   );
@@ -63,7 +63,7 @@ export const ThreeBreadcrumbs = ({
                       key={i}
                       position={posToThreePos(pos.x, pos.y, SHIP_FIXED_Z + 10)}
                     >
-                      <circleBufferGeometry args={[0.25, 8]} />
+                      <circleBufferGeometry args={[0.125, 8]} />
                       <meshBasicMaterial color={color} />
                     </mesh>
                   );

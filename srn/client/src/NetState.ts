@@ -126,7 +126,7 @@ const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
 const normalLog = (...args: any[]) => console.log(...args);
 const normalWarn = (...args: any[]) => console.warn(...args);
 const normalErr = (...args: any[]) => console.error(...args);
-export const DISPLAY_BREADCRUMBS_LAST_TICKS = 5 * 1000 * 1000; // 5s
+export const DISPLAY_BREADCRUMBS_LAST_TICKS = 10 * 1000 * 1000; // 10s
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -189,6 +189,8 @@ export default class NetState extends EventEmitter {
   public replay: any;
 
   public playingReplay = false;
+
+  public debugSpaceTime = false;
 
   public static make(): NetState {
     NetState.instance = new NetState();
@@ -320,6 +322,9 @@ export default class NetState extends EventEmitter {
             visibleArea,
           }); // ignore errors from syncer for now
           this.state = this.syncer.getCurrentState() || this.state;
+          if (this.debugSpaceTime) {
+            this.addSpaceTimeBreadcrumbs();
+          }
           ns.emit('change');
         });
       }
@@ -494,6 +499,40 @@ export default class NetState extends EventEmitter {
         }
       };
     });
+  };
+
+  private addSpaceTimeBreadcrumbs = () => {
+    const SPACING_TICKS = 50 * 1000;
+    // @ts-ignore
+    const lastBreadcrumb = this.visualState.breadcrumbs.findLast(
+      (b: Breadcrumb | BreadcrumbLine) => b.tag === 'spaceTime'
+    );
+    if (
+      lastBreadcrumb &&
+      Math.abs(this.state.ticks - lastBreadcrumb.timestamp_ticks) <=
+        SPACING_TICKS
+    ) {
+      // console.log('skip', this.state.ticks - lastBreadcrumb.timestamp_ticks);
+      return;
+    }
+    // console.log('draw');
+    const SPACE_TIME_SHIFT_SPEED = 5 / 1000 / 1000;
+    this.visualState.breadcrumbs = this.visualState.breadcrumbs.map((b) => {
+      if (b.tag !== 'spaceTime') {
+        return b;
+      }
+      b.position.x -= SPACING_TICKS * SPACE_TIME_SHIFT_SPEED;
+      return b;
+    });
+    const myShip = findMyShip(this.state);
+    if (myShip) {
+      this.visualState.breadcrumbs.push({
+        position: Vector.fromIVector(myShip),
+        color: 'green',
+        timestamp_ticks: this.state.ticks,
+        tag: 'spaceTime',
+      });
+    }
   };
 
   private addExtrapolateBreadcrumbs = () => {

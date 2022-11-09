@@ -86,7 +86,8 @@ export const buildStory = async ({
 };
 
 export const startTestGame = async (
-  params: BuildStoryParams
+  params: BuildStoryParams,
+  debugSpaceTime?: boolean
 ): Promise<void> => {
   if (NetState.get()) {
     throw new Error('Double initialization');
@@ -94,6 +95,7 @@ export const startTestGame = async (
   const ns = NetState.make();
   await ns.init(GameMode.Sandbox);
   nsRef = ns;
+  nsRef.debugSpaceTime = !!debugSpaceTime;
   await buildStory(params);
 };
 
@@ -125,7 +127,10 @@ export const FunctionalStoryTemplate: Story = (args) => {
   const flipPlaying = useCallback(async (oldPlaying) => {
     const newPlaying = !oldPlaying;
     if (newPlaying) {
-      await startTestGame(getStartGameParams[args.storyName]());
+      await startTestGame(
+        getStartGameParams[args.storyName](),
+        args.debugSpaceTime
+      );
     } else {
       await stopTestGame();
     }

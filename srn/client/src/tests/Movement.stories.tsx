@@ -73,15 +73,21 @@ const storyName2 = 'Functional/Movement/SpaceTime';
 export const SpaceTime = FunctionalStoryTemplate.bind({});
 SpaceTime.args = {
   storyName: storyName2,
+  debugSpaceTime: true,
 };
 const positions2 = [
-  { x: 125.0, y: 75.0 },
-  { x: 125.0, y: 125.0 },
+  { x: 150.0, y: 75.0 },
+  { x: 150.0, y: 125.0 },
 ];
-getStartGameParams[storyName2] = cyclicalMovementStory(positions2, storyName2, {
-  x: 125,
-  y: 125,
-}, 4000);
+getStartGameParams[storyName2] = cyclicalMovementStory(
+  positions2,
+  storyName2,
+  {
+    x: 150,
+    y: 125,
+  },
+  4000
+);
 
 export default {
   title: 'Functional/Movement',
