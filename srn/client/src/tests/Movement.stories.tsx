@@ -1,25 +1,30 @@
 import React from 'react';
 import { Meta } from '@storybook/react';
-import { genPeriod, PlanetType } from '../world';
 import {
   FunctionalStoryTemplate,
   getStartGameParams,
 } from './functionalStoryTools';
-import {
-  ActionBuilder,
-  ReferencableIdBuilder,
-} from '../../../world/pkg/world.extra';
+import { ActionBuilder } from '../../../world/pkg/world.extra';
 
-const storyName = 'Functional/Movement';
+const storyName = 'Functional/Movement/Main';
 
-const positions = [
+const positions1 = [
   { x: 125.0, y: 125.0 },
   { x: 150.0, y: 100.0 },
   { x: 125.0, y: 75.0 },
   { x: 100.0, y: 100.0 },
 ];
 
-const getStartGameParamsPlanets = () => {
+export const Main = FunctionalStoryTemplate.bind({});
+Main.args = {
+  storyName,
+};
+const cyclicalMovementStory = (
+  positions: any[],
+  storyName: string,
+  initialPos: { x: number; y: number },
+  wait = 2000
+) => () => {
   const star_ref_id = {
     tag: 'Reference' as const,
     reference: 'star',
@@ -42,15 +47,12 @@ const getStartGameParamsPlanets = () => {
       planets: [],
       asteroid_belts: [],
     },
-    initialPos: {
-      x: 100,
-      y: 100,
-    },
+    initialPos,
     initialZoom: 1.1,
     actions: (function* makeSequence() {
       while (true) {
         yield {
-          wait: 2000,
+          wait,
           action: ActionBuilder.ActionNavigate({
             ship_id: '$my_ship_id',
             target: positions[currentIdx],
@@ -62,12 +64,24 @@ const getStartGameParamsPlanets = () => {
     })(),
   };
 };
+getStartGameParams[storyName] = cyclicalMovementStory(positions1, storyName, {
+  x: 100,
+  y: 100,
+});
 
-export const Main = FunctionalStoryTemplate.bind({});
-Main.args = {
-  storyName,
+const storyName2 = 'Functional/Movement/SpaceTime';
+export const SpaceTime = FunctionalStoryTemplate.bind({});
+SpaceTime.args = {
+  storyName: storyName2,
 };
-getStartGameParams[storyName] = getStartGameParamsPlanets;
+const positions2 = [
+  { x: 125.0, y: 75.0 },
+  { x: 125.0, y: 125.0 },
+];
+getStartGameParams[storyName2] = cyclicalMovementStory(positions2, storyName2, {
+  x: 125,
+  y: 125,
+}, 4000);
 
 export default {
   title: 'Functional/Movement',
