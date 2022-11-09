@@ -1,5 +1,5 @@
 const yargs = require('yargs');
-const { spawnWatched } = require('../../core/util/shellspawn');
+const { spawnWatched } = require('./shellspawn');
 
 const fs = require('fs-extra');
 const sshPort = '2233';

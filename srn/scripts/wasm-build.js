@@ -1,4 +1,4 @@
-const { spawnWatched } = require('../../core/util/shellspawn');
+const { spawnWatched } = require('./shellspawn');
 const fs = require('fs-extra');
 const isWin = process.platform === 'win32';
 const yargs = require('yargs');
