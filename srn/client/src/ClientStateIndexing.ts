@@ -103,6 +103,13 @@ export const findObjectPosition = (obj: any): IVector | null => {
   return null;
 };
 
+export const findObjectRotation = (obj: any): number | null => {
+  if (typeof obj.rotation !== 'undefined') {
+    return obj.rotation;
+  }
+  return null;
+};
+
 export const setObjectPosition = (obj: any, newVal: IVector): void => {
   if (isIVector(obj)) {
     obj.x = newVal.x;
@@ -121,6 +128,15 @@ export const setObjectPosition = (obj: any, newVal: IVector): void => {
   }
   throw new Error('Could not set object position');
 };
+
+export const setObjectRotation = (obj: any, newVal: number): void => {
+  if (typeof obj.rotation !== 'undefined') {
+    obj.rotation = newVal;
+    return;
+  }
+  throw new Error('Could not set object rotation');
+};
+
 export const buildClientStateIndexes = (state: GameState) => {
   const indexes: ClientStateIndexes = {
     myShip: null,
@@ -225,6 +241,13 @@ export const getObjectPosition = (obj: any): IVector => {
     throw new Error('Invalid object for getObjectPosition');
   }
   return pos;
+};
+export const getObjectRotation = (obj: any): number => {
+  const rot = findObjectRotation(obj);
+  if (rot === null) {
+    throw new Error('Invalid object for getObjectRotation');
+  }
+  return rot;
 };
 export const findObjectPositionById = (
   state: GameState,

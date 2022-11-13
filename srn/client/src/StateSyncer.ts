@@ -3,7 +3,9 @@ import * as _ from 'lodash';
 import {
   findObjectById,
   getObjectPosition,
+  getObjectRotation,
   setObjectPosition,
+  setObjectRotation,
 } from './ClientStateIndexing';
 
 import {
@@ -286,6 +288,7 @@ export class StateSyncer implements IStateSyncer {
       this.state,
       event.elapsedTicks
     );
+    this.overrideRotationsInstantly(this.state, this.trueState);
     return this.successCurrent();
   }
 
@@ -353,13 +356,13 @@ export class StateSyncer implements IStateSyncer {
     return violations;
   }
 
-  private MAX_ALLOWED_JUMP_UNITS_PER_TICK = 10 / 1000 / 1000; // in units = 10 units/second is max allowed speed
+  private MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK = 10 / 1000 / 1000; // in units = 10 units/second is max allowed speed
 
   private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = MAX_ALLOWED_CORRECTION_JUMP_CONST; // in units = 10 units/second is max allowed speed
 
   private CORRECTION_TELEPORT_BAIL_PER_TICK =
     MAX_ALLOWED_CORRECTION_JUMP_CONST * 20; // sometimes we need to teleport, e.g. in case of an actual teleport
-  
+
   private checkViolations(
     prevState: GameState,
     newState: GameState,
@@ -370,13 +373,13 @@ export class StateSyncer implements IStateSyncer {
     for (const { spec, obj } of checkableObjects) {
       const oldObj = this.findOldVersionOfObject(prevState, spec).object;
       if (oldObj) {
-        const vio = this.checkPositionViolation(
+        const posVio = this.checkPositionViolation(
           elapsedTicks,
           obj,
           oldObj,
           spec
         );
-        if (vio) res.push(vio);
+        if (posVio) res.push(posVio);
       }
     }
     if (prevState.ticks > newState.ticks) {
@@ -431,7 +434,7 @@ export class StateSyncer implements IStateSyncer {
     const oldPos = Vector.fromIVector(getObjectPosition(oldObj));
     const newPos = Vector.fromIVector(getObjectPosition(newObj));
     const dist = oldPos.euDistTo(newPos);
-    if (dist > elapsedTicks * this.MAX_ALLOWED_JUMP_UNITS_PER_TICK) {
+    if (dist > elapsedTicks * this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK) {
       return {
         tag: 'ObjectJump',
         obj: spec,
@@ -475,7 +478,7 @@ export class StateSyncer implements IStateSyncer {
             Math.min(
               maxShiftLen,
               jumpDir.length() -
-                this.MAX_ALLOWED_JUMP_UNITS_PER_TICK * elapsedTicks
+                this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK * elapsedTicks
             )
           );
       }
@@ -526,6 +529,16 @@ export class StateSyncer implements IStateSyncer {
         'x',
         this.clientLagsAtTicks.length
       );
+    }
+  }
+
+  private overrideRotationsInstantly(state: GameState, trueState: GameState) {
+    const checkableObjects = this.enumerateCheckableObjects(state);
+    for (const { spec, obj } of checkableObjects) {
+      const correctObj = this.findOldVersionOfObject(trueState, spec).object;
+      if (correctObj) {
+        setObjectRotation(obj, getObjectRotation(correctObj));
+      }
     }
   }
 }
