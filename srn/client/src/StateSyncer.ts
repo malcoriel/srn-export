@@ -181,6 +181,16 @@ export class StateSyncer implements IStateSyncer {
       packet_tag: event.packetTag,
       happened_at_ticks: this.state.ticks,
     });
+    this.state.player_actions.push(
+      ...event.actions.map(
+        (a) =>
+          [a, event.packetTag, this.state.ticks] as [
+            Action,
+            string | null,
+            number | null
+          ]
+      )
+    );
     return this.successCurrent();
   }
 
@@ -196,7 +206,8 @@ export class StateSyncer implements IStateSyncer {
       // TODO rebase not reflected actions instead of plain update
       const diff = this.state.ticks - serverState.ticks;
       this.trueState =
-        this.updateState(serverState, diff, visibleArea) || this.state;
+        this.rebaseStateUsingCurrentActions(serverState, diff, visibleArea) ||
+        this.state;
     } else if (serverState.ticks >= this.state.ticks) {
       // TODO calculate proper value to extrapolate to instead, based on average client perf lag,
       // plus do the rebase not reflected actions
@@ -221,39 +232,35 @@ export class StateSyncer implements IStateSyncer {
     state: GameState,
     elapsedTicks: number,
     visibleArea: AABB
-  ): GameState {
+  ): GameState | null {
     const alreadyExecutedTagsInState = new Set(
       state.processed_player_actions.map(({ packet_tag }) => packet_tag)
     );
-    const actionsToRebase: [Action, null][] = (this.pendingActionPacks.reduce(
+    const actionsToRebase: [
+      Action,
+      null,
+      number
+    ][] = (this.pendingActionPacks.reduce(
       (acc: any[], pack: PendingActionPack) => {
         const isInTimeFrame =
           pack.happened_at_ticks <= state.ticks + elapsedTicks;
         if (!alreadyExecutedTagsInState.has(pack.packet_tag) && isInTimeFrame) {
-          return [...acc, ...pack.actions.map((a) => [a, pack.packet_tag])];
+          return [
+            ...acc,
+            ...pack.actions.map((a) => [
+              a,
+              pack.packet_tag,
+              pack.happened_at_ticks,
+            ]),
+          ];
         }
         return acc;
       },
       []
-    ) as unknown) as [Action, null][];
+    ) as unknown) as [Action, null, number][];
 
     state.player_actions.push(...actionsToRebase);
-    const oldState = this.state;
-    const rebasedState = this.updateState(state, elapsedDiff, visibleArea);
-    if (!rebasedState) {
-      return this.error(
-        'rebase state failed, will fall back to desynced server state'
-      );
-    }
-    // there is effectively 0 time passed - although, I can calculate time since last time update event of course
-    const tmpViolations = this.checkViolations(oldState, rebasedState, 0);
-    const objectJumpViolations = tmpViolations.filter(
-      (v) => v.tag === 'ObjectJump'
-    );
-    if (objectJumpViolations.length > 0) {
-      return this.successDesynced(rebasedState);
-    }
-    return this.successCurrent();
+    return this.updateState(state, elapsedTicks, visibleArea);
   }
 
   private onTimeUpdate(event: {
@@ -300,9 +307,9 @@ export class StateSyncer implements IStateSyncer {
           if (alreadyExecutedTagsInState.has(packet_tag)) {
             return [];
           }
-          return actions.map((a) => [a, packet_tag]);
+          return actions.map((a) => [a, packet_tag, null]);
         }
-      ) as [Action, string][];
+      ) as [Action, string, null][];
       this.state.player_actions.push(...flattenedActions);
     }
   }
