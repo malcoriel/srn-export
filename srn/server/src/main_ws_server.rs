@@ -345,7 +345,7 @@ fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&
             if is_world_update_action(&action.action) {
                 state
                     .player_actions
-                    .push_back((action.action, Some(packet_tag.clone())));
+                    .push_back((action.action, Some(packet_tag.clone()), None));
             } else {
                 warn!(format!(
                     "schedule player action does not support that player action: {:?}",
@@ -379,7 +379,7 @@ fn on_client_schedule_player_action_batch(client_id: Uuid, data: &&str, tag: Opt
                 if is_world_update_action(&action) {
                     state
                         .player_actions
-                        .push_back((action, Some(packet_tag.clone())));
+                        .push_back((action, Some(packet_tag.clone()), None));
                 } else {
                     warn!(format!(
                         "schedule player action does not support that player action: {:?}",

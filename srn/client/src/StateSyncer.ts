@@ -92,6 +92,7 @@ export interface WasmDeps {
 type PendingActionPack = {
   actions: Action[];
   packet_tag: string | null;
+  happened_at_ticks: number;
 };
 
 const MAX_ALLOWED_CORRECTION_JUMP_CONST = 50 / 1000 / 1000;
@@ -178,6 +179,7 @@ export class StateSyncer implements IStateSyncer {
     this.pendingActionPacks.push({
       actions: event.actions,
       packet_tag: event.packetTag,
+      happened_at_ticks: this.state.ticks,
     });
     return this.successCurrent();
   }
@@ -215,20 +217,19 @@ export class StateSyncer implements IStateSyncer {
     );
   }
 
-  private rebaseCurrentStateUsingPendingActionPacks(
-    serverState: GameState,
+  private rebaseStateUsingCurrentActions(
+    state: GameState,
+    elapsedTicks: number,
     visibleArea: AABB
-  ): StateSyncerResult {
-    const elapsedDiff = Math.abs(serverState.ticks - this.state.ticks);
-    // console.log('rebase', elapsedDiff);
-    // may not be exactly correct, since different actions happen in different moments in the past, and such reapplication
-    // literally changes the outcome - however, it's unclear how to combine it with adjustMillis for now
+  ): GameState {
     const alreadyExecutedTagsInState = new Set(
-      serverState.processed_player_actions.map(({ packet_tag }) => packet_tag)
+      state.processed_player_actions.map(({ packet_tag }) => packet_tag)
     );
     const actionsToRebase: [Action, null][] = (this.pendingActionPacks.reduce(
       (acc: any[], pack: PendingActionPack) => {
-        if (!alreadyExecutedTagsInState.has(pack.packet_tag)) {
+        const isInTimeFrame =
+          pack.happened_at_ticks <= state.ticks + elapsedTicks;
+        if (!alreadyExecutedTagsInState.has(pack.packet_tag) && isInTimeFrame) {
           return [...acc, ...pack.actions.map((a) => [a, pack.packet_tag])];
         }
         return acc;
@@ -236,13 +237,9 @@ export class StateSyncer implements IStateSyncer {
       []
     ) as unknown) as [Action, null][];
 
-    serverState.player_actions.push(...actionsToRebase);
+    state.player_actions.push(...actionsToRebase);
     const oldState = this.state;
-    const rebasedState = this.updateState(
-      serverState,
-      elapsedDiff,
-      visibleArea
-    );
+    const rebasedState = this.updateState(state, elapsedDiff, visibleArea);
     if (!rebasedState) {
       return this.error(
         'rebase state failed, will fall back to desynced server state'

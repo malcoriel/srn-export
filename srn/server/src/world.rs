@@ -549,7 +549,7 @@ pub struct GameState {
     pub interval_data: HashMap<TimeMarks, u32>,
     pub game_over: Option<GameOver>,
     pub events: VecDeque<GameEvent>,
-    pub player_actions: VecDeque<(Action, Option<String>)>, // (action, packet_tag_that_received_it)
+    pub player_actions: VecDeque<(Action, Option<String>, Option<u64>)>, // (action, packet_tag_that_received_it, ticks_at)
     pub processed_events: Vec<ProcessedGameEvent>,
     pub processed_player_actions: Vec<ProcessedPlayerAction>,
     pub update_every_ticks: u64,
@@ -890,6 +890,13 @@ fn update_player_actions(state: &mut GameState, prng: &mut Pcg64Mcg, d_table: &D
     }
     let mut processed_actions = vec![];
     for action in actions_to_process.into_iter() {
+        // special case for client extrapolation - skip some actions that are in the future
+        if action.2.is_some() {
+            let moment = action.2.unwrap();
+            if moment > state.ticks {
+                continue;
+            }
+        }
         world_update_handle_action(state, action.0.clone(), prng, &state_clone, d_table);
         let processed_action = ProcessedPlayerAction {
             action: action.0,

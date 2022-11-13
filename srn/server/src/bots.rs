@@ -265,7 +265,7 @@ pub fn do_bot_players_actions(
 
     for (_, acts) in ship_updates.into_iter() {
         for act in acts {
-            room.state.player_actions.push_back((act, None));
+            room.state.player_actions.push_back((act, None, None));
         }
     }
 
@@ -277,6 +277,7 @@ pub fn do_bot_players_actions(
                     option_id: act.option_id,
                     dialogue_id: act.dialogue_id,
                 },
+                None,
                 None,
             ));
         }
@@ -317,7 +318,7 @@ pub fn do_bot_npcs_actions(
 
     for (_ship_id, (acts, _idx)) in ship_updates.into_iter() {
         for act in acts {
-            room.state.player_actions.push_back((act, None));
+            room.state.player_actions.push_back((act, None, None));
         }
     }
 }

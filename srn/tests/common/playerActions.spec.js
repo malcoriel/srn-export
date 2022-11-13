@@ -10,7 +10,7 @@ import {
 } from '../util';
 import * as uuid from 'uuid';
 
-export const mockNullPacketTagged = (act) => [act, null];
+export const mockNullPacketTagged = (act) => [act, null, null];
 
 export const mockPlayerActionTransSystemJump = (toLocId, byPlayerId, shipId) =>
   mockNullPacketTagged({
