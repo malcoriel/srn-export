@@ -345,13 +345,13 @@ export default class NetState extends EventEmitter {
           );
           this.lastSlowChangedState = _.clone(this.state);
           this.lastSlowChangedIndexes = _.clone(this.indexes);
-          const syncerLogEntries = this.syncer.flushLog();
-          if (syncerLogEntries.length > 0) {
-            for (const entry of syncerLogEntries) {
-              console.log(entry);
-            }
-            console.log('---');
-          }
+          // const syncerLogEntries = this.syncer.flushLog();
+          // if (syncerLogEntries.length > 0) {
+          //   for (const entry of syncerLogEntries) {
+          //     console.log(entry);
+          //   }
+          //   console.log('---');
+          // }
           this.cleanupBreadcrumbs();
         });
       },

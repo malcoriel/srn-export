@@ -92,6 +92,8 @@ type PendingActionPack = {
   packet_tag: string | null;
 };
 
+const MAX_ALLOWED_CORRECTION_JUMP_CONST = 50 / 1000 / 1000;
+
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
 
@@ -353,8 +355,11 @@ export class StateSyncer implements IStateSyncer {
 
   private MAX_ALLOWED_JUMP_UNITS_PER_TICK = 10 / 1000 / 1000; // in units = 10 units/second is max allowed speed
 
-  private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = 50 / 1000 / 1000; // in units = 10 units/second is max allowed speed
+  private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = MAX_ALLOWED_CORRECTION_JUMP_CONST; // in units = 10 units/second is max allowed speed
 
+  private CORRECTION_TELEPORT_BAIL_PER_TICK =
+    MAX_ALLOWED_CORRECTION_JUMP_CONST * 20; // sometimes we need to teleport, e.g. in case of an actual teleport
+  
   private checkViolations(
     prevState: GameState,
     newState: GameState,
@@ -456,15 +461,24 @@ export class StateSyncer implements IStateSyncer {
       const jumpDir = Vector.fromIVector(violation.to).subtract(
         Vector.fromIVector(violation.from)
       );
-      const jumpCorrectionToOldPosBack = jumpDir
-        .normalize()
-        .scale(
-          Math.min(
-            maxShiftLen,
-            jumpDir.length() -
-              this.MAX_ALLOWED_JUMP_UNITS_PER_TICK * elapsedTicks
-          )
-        );
+      let jumpCorrectionToOldPosBack: Vector;
+      if (
+        violation.diff / elapsedTicks >
+        this.CORRECTION_TELEPORT_BAIL_PER_TICK
+      ) {
+        console.warn('teleport correction bail');
+        jumpCorrectionToOldPosBack = jumpDir;
+      } else {
+        jumpCorrectionToOldPosBack = jumpDir
+          .normalize()
+          .scale(
+            Math.min(
+              maxShiftLen,
+              jumpDir.length() -
+                this.MAX_ALLOWED_JUMP_UNITS_PER_TICK * elapsedTicks
+            )
+          );
+      }
       const objId = getObjSpecId(violation.obj)!;
       const newObj = findObjectById(correctedState, objId)?.object;
       const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
