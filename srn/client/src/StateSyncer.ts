@@ -104,6 +104,8 @@ export class StateSyncer implements IStateSyncer {
 
   private state!: GameState;
 
+  private trueState!: GameState;
+
   private prevState!: GameState;
 
   private desyncedCorrectState: GameState | null;
@@ -174,17 +176,24 @@ export class StateSyncer implements IStateSyncer {
     visibleArea,
   }: StateSyncerEventServerState) {
     this.dropPendingActionsFullyCommittedOnServer(serverState);
-    // normal situation, server slightly behind
+    this.trueState = serverState;
     if (serverState.ticks < this.state.ticks) {
-      return this.rebaseCurrentStateUsingPendingActionPacks(
-        serverState,
-        visibleArea
-      );
+      // TODO rebase not reflected actions instead of plain update
+      this.trueState =
+        this.updateState(
+          serverState,
+          this.state.ticks - serverState.ticks,
+          visibleArea
+        ) || this.state;
+    } else if (serverState.ticks >= this.state.ticks) {
+      // TODO calculate proper value to extrapolate to instead, based on average client perf lag,
+      // plus do the rebase not reflected actions
+      this.trueState = serverState;
     }
-    // client lag situation, server ahead
-    // console.log('client behind');
-    const clientLag = serverState.ticks - this.state.ticks;
-    return this.compensateClientLag(serverState, visibleArea, clientLag);
+
+    this.state = this.trueState;
+
+    return this.successCurrent();
   }
 
   private dropPendingActionsFullyCommittedOnServer(serverState: GameState) {
@@ -246,54 +255,13 @@ export class StateSyncer implements IStateSyncer {
     visibleArea: AABB;
   }): StateSyncerResult {
     if (!this.state) {
-      return this.error('not initialized');
-    }
-    const oldState = this.state;
-    this.flushNotYetAppliedPendingActionsIntoLocalState();
-    this.updateClientLagCounter(this.state.ticks, event.elapsedTicks);
-    const updatedState = this.updateState(
-      this.desyncedCorrectState || this.state,
-      event.elapsedTicks,
-      event.visibleArea
-    );
-    if (!updatedState) {
-      return this.error('no state after update state');
-    }
-    // can happen if there is the desynced state is still not fully corrected
-    this.violations = this.checkViolations(
-      oldState,
-      updatedState,
-      event.elapsedTicks
-    );
-    if (this.violations.length === 0) {
-      this.replaceCurrentState(updatedState);
       return this.successCurrent();
     }
-    const toCorrect = this.violations.filter(
-      (v) => v.tag === 'ObjectJump'
-    ) as SyncerViolationObjectJump[];
-    const correctedState = this.applyMaxPossibleDesyncCorrection(
-      toCorrect,
-      oldState,
-      updatedState,
-      event.elapsedTicks
-    );
-    this.replaceCurrentState(correctedState);
-    if (this.violations.length === 0) {
-      return this.successCurrent();
-    }
-    // console.log(
-    //   'before',
-    //   toCorrect.map((v) => v.diff)
-    // );
-    // console.log(
-    //   'after',
-    //   this.violations.map((v) => (v as SyncerViolationObjectJump).diff)
-    // );
-    return this.successDesynced(
-      correctedState,
-      `time update ${this.violations.length}`
-    );
+    this.state =
+      this.updateState(this.state, event.elapsedTicks, event.visibleArea) ||
+      this.state;
+    // this.applyMaxPossibleDesyncCorrection();
+    return this.successCurrent();
   }
 
   private flushNotYetAppliedPendingActionsIntoLocalState() {
@@ -322,6 +290,7 @@ export class StateSyncer implements IStateSyncer {
   private onInit(event: { tag: 'init'; state: GameState }) {
     this.state = event.state;
     this.prevState = _.cloneDeep(this.state);
+    this.trueState = _.cloneDeep(this.state);
     return this.successCurrent();
   }
 
