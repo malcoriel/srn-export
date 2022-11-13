@@ -367,6 +367,17 @@ export default class NetState extends EventEmitter {
       packetTag,
       visibleArea,
     });
+    if (this.debugSpaceTime) {
+      const myShip = findMyShip(this.state);
+      if (myShip) {
+        this.visualState.breadcrumbs.push({
+          tag: 'spaceTime',
+          timestamp_ticks: this.state.ticks,
+          position: Vector.fromIVector(myShip),
+          color: 'orange',
+        });
+      }
+    }
     resetActiveSyncActions();
     this.sendSchedulePlayerActionBatch(actionsActive, packetTag);
   }

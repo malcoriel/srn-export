@@ -146,6 +146,10 @@ export class StateSyncer implements IStateSyncer {
     elapsedTicks: number,
     area: AABB
   ): GameState | null {
+    if (elapsedTicks > 1000 * 1000) {
+      console.warn('too long update bail', elapsedTicks);
+      return from;
+    }
     return this.wasmUpdateWorld(
       {
         state: from,
@@ -179,12 +183,14 @@ export class StateSyncer implements IStateSyncer {
     this.trueState = serverState;
     if (serverState.ticks < this.state.ticks) {
       // TODO rebase not reflected actions instead of plain update
-      this.trueState =
-        this.updateState(
-          serverState,
-          this.state.ticks - serverState.ticks,
-          visibleArea
-        ) || this.state;
+      const diff = this.state.ticks - serverState.ticks;
+      if (diff > 1000 * 1000) {
+        // 1s max update, otherwise just bail - background in chrome will otherwise trigger very long updates
+        this.trueState = serverState;
+      } else {
+        this.trueState =
+          this.updateState(serverState, diff, visibleArea) || this.state;
+      }
     } else if (serverState.ticks >= this.state.ticks) {
       // TODO calculate proper value to extrapolate to instead, based on average client perf lag,
       // plus do the rebase not reflected actions
