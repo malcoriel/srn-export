@@ -146,8 +146,13 @@ export class StateSyncer implements IStateSyncer {
     elapsedTicks: number,
     area: AABB
   ): GameState | null {
-    if (elapsedTicks > 1000 * 1000) {
-      console.warn('too long update bail', elapsedTicks);
+    const LONG_UPDATE_BAIL = 500 * 1000;
+    if (elapsedTicks > LONG_UPDATE_BAIL) {
+      console.warn(
+        `too long update bail for ${Math.round(
+          elapsedTicks / 1000
+        )}ms (max ${LONG_UPDATE_BAIL})`
+      );
       return from;
     }
     return this.wasmUpdateWorld(
@@ -184,20 +189,15 @@ export class StateSyncer implements IStateSyncer {
     if (serverState.ticks < this.state.ticks) {
       // TODO rebase not reflected actions instead of plain update
       const diff = this.state.ticks - serverState.ticks;
-      if (diff > 1000 * 1000) {
-        // 1s max update, otherwise just bail - background in chrome will otherwise trigger very long updates
-        this.trueState = serverState;
-      } else {
-        this.trueState =
-          this.updateState(serverState, diff, visibleArea) || this.state;
-      }
+      this.trueState =
+        this.updateState(serverState, diff, visibleArea) || this.state;
     } else if (serverState.ticks >= this.state.ticks) {
       // TODO calculate proper value to extrapolate to instead, based on average client perf lag,
       // plus do the rebase not reflected actions
       this.trueState = serverState;
     }
 
-    this.state = this.trueState;
+    // this.state = this.trueState;
 
     return this.successCurrent();
   }
@@ -263,10 +263,27 @@ export class StateSyncer implements IStateSyncer {
     if (!this.state) {
       return this.successCurrent();
     }
-    this.state =
+    this.replaceCurrentState(
       this.updateState(this.state, event.elapsedTicks, event.visibleArea) ||
-      this.state;
-    // this.applyMaxPossibleDesyncCorrection();
+        this.state
+    );
+    // time has to pass for the server state as well
+    this.trueState =
+      this.updateState(this.trueState, event.elapsedTicks, event.visibleArea) ||
+      this.trueState;
+    this.violations = this.checkViolations(
+      this.state,
+      this.trueState,
+      event.elapsedTicks
+    );
+    // without updating prevState, since it was already updated above
+    this.state = this.applyMaxPossibleDesyncCorrection(
+      this.violations.filter(
+        (v) => v.tag === 'ObjectJump'
+      ) as SyncerViolationObjectJump[],
+      this.state,
+      event.elapsedTicks
+    );
     return this.successCurrent();
   }
 
@@ -371,9 +388,11 @@ export class StateSyncer implements IStateSyncer {
   private log: any[] = [];
 
   flushLog(): any[] {
-    const log = this.log;
-    this.log = [];
-    return log;
+    try {
+      return this.log;
+    } finally {
+      this.log = [];
+    }
   }
 
   private enumerateCheckableObjects(
@@ -414,6 +433,10 @@ export class StateSyncer implements IStateSyncer {
         from: oldPos,
         to: newPos,
         diff: dist,
+        // @ts-ignore
+        diffX: newPos.x - oldPos.x,
+        // @ts-ignore
+        diffY: newPos.y - oldPos.y,
       };
     }
     return null;
@@ -421,36 +444,31 @@ export class StateSyncer implements IStateSyncer {
 
   private applyMaxPossibleDesyncCorrection(
     violations: SyncerViolationObjectJump[],
-    fromCurrent: GameState,
-    toCorrectDesynced: GameState,
+    currentState: GameState,
     elapsedTicks: number
-  ): GameState {
-    const correctedState = _.cloneDeep(toCorrectDesynced);
+  ) {
+    const correctedState = _.cloneDeep(currentState);
     const maxShiftLen =
       elapsedTicks * this.MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK;
     const correctedObjectIds = new Set();
     for (const violation of violations) {
+      this.log.push(JSON.stringify(violation));
       const jumpDir = Vector.fromIVector(violation.to).subtract(
         Vector.fromIVector(violation.from)
       );
       const jumpCorrectionToOldPosBack = jumpDir
         .normalize()
         .scale(
-          -Math.min(
+          Math.min(
             maxShiftLen,
             jumpDir.length() -
               this.MAX_ALLOWED_JUMP_UNITS_PER_TICK * elapsedTicks
           )
         );
-      // console.log(
-      //   'jump',
-      //   jumpDir.length(),
-      //   'corr',
-      //   jumpCorrectionToOldPosBack.length()
-      // );
       const objId = getObjSpecId(violation.obj)!;
       const newObj = findObjectById(correctedState, objId)?.object;
       const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
+      this.log.push(jumpCorrectionToOldPosBack.toFix());
       const correctedPos = newObjectPos.add(jumpCorrectionToOldPosBack);
       setObjectPosition(newObj, correctedPos);
       correctedObjectIds.add(objId);
@@ -460,9 +478,11 @@ export class StateSyncer implements IStateSyncer {
         v.tag === 'ObjectJump' && correctedObjectIds.has(getObjSpecId(v.obj))
       );
     });
-    this.log.push(`corrected ${correctedObjectIds.size} violations`);
+    if (correctedObjectIds.size > 0) {
+      this.log.push(`corrected ${correctedObjectIds.size} violations`);
+    }
     this.violations = this.checkViolations(
-      fromCurrent,
+      currentState,
       correctedState,
       elapsedTicks
     );
