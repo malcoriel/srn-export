@@ -533,7 +533,6 @@ export default class NetState extends EventEmitter {
       // console.log('skip', this.state.ticks - lastBreadcrumb.timestamp_ticks);
       return;
     }
-    // console.log('draw');
     const SPACE_TIME_SHIFT_SPEED = 5 / 1000 / 1000;
     this.visualState.breadcrumbs = this.visualState.breadcrumbs.map((b) => {
       if (b.tag !== 'spaceTime') {
@@ -546,7 +545,7 @@ export default class NetState extends EventEmitter {
     if (myShip) {
       this.visualState.breadcrumbs.push({
         position: Vector.fromIVector(myShip),
-        color: 'green',
+        color: myShip.navigate_target ? 'green' : 'pink',
         timestamp_ticks: this.state.ticks,
         tag: 'spaceTime',
       });
