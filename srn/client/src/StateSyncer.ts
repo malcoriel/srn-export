@@ -95,7 +95,7 @@ type PendingActionPack = {
   happened_at_ticks: number;
 };
 
-const MAX_ALLOWED_CORRECTION_JUMP_CONST = 50 / 1000 / 1000;
+const MAX_ALLOWED_CORRECTION_JUMP_CONST = 15 / 1000 / 1000;
 
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
@@ -369,7 +369,7 @@ export class StateSyncer implements IStateSyncer {
   private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = MAX_ALLOWED_CORRECTION_JUMP_CONST; // in units = 10 units/second is max allowed speed
 
   private CORRECTION_TELEPORT_BAIL_PER_TICK =
-    MAX_ALLOWED_CORRECTION_JUMP_CONST * 20; // sometimes we need to teleport, e.g. in case of an actual teleport
+    MAX_ALLOWED_CORRECTION_JUMP_CONST * 30; // sometimes we need to teleport, e.g. in case of an actual teleport
 
   private checkViolations(
     prevState: GameState,
