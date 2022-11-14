@@ -191,6 +191,7 @@ export class StateSyncer implements IStateSyncer {
           ]
       )
     );
+    this.trueState = _.cloneDeep(this.state);
     return this.successCurrent();
   }
 
@@ -277,8 +278,11 @@ export class StateSyncer implements IStateSyncer {
     );
     // time has to pass for the server state as well
     this.trueState =
-      this.updateState(this.trueState, event.elapsedTicks, event.visibleArea) ||
-      this.trueState;
+      this.rebaseStateUsingCurrentActions(
+        this.trueState,
+        event.elapsedTicks,
+        event.visibleArea
+      ) || this.trueState;
     this.violations = this.checkViolations(
       this.state,
       this.trueState,
