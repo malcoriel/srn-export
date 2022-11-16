@@ -13,6 +13,7 @@ export type ShipShapeProps = {
   position: Vector;
   rotation: number;
   color: string;
+  gid: string;
   opacity: number;
 };
 export const ShipShape: React.FC<ShipShapeProps> = ({
@@ -22,6 +23,7 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
   color,
   opacity,
   children,
+  gid,
 }) => {
   // @ts-ignore
   const shipModel = useLoader<Geometry>(STLLoader, 'resources/models/ship.stl');
@@ -38,6 +40,7 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
   return (
     <group position={posToThreePos(position.x, position.y, SHIP_FIXED_Z)}>
       <mesh
+        name={`ship-${gid}`}
         position={[-shift.x, shift.y, 0]}
         scale={memoScale}
         rotation={[Math.PI, 0, rotation]}

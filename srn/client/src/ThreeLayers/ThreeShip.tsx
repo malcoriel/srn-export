@@ -8,7 +8,7 @@ import {
   ThreeInteractor,
   ThreeInteractorProps,
 } from './blocks/ThreeInteractor';
-import { vecToThreePos, vecToThreePosInv } from './util';
+import { vecToThreePos } from './util';
 import { ThreeProgressbar } from './blocks/ThreeProgressbar';
 import { common, darkGreen } from '../utils/palette';
 import { ShipShape } from './ShipShape';
@@ -128,7 +128,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     );
 
     return (
-      <ShipShape {...{ radius, position, rotation, color, opacity }}>
+      <ShipShape {...{ radius, position, rotation, color, opacity, gid }}>
         {healthBar}
         {interactorElem}
         {tractorBeam}

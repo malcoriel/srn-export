@@ -1,6 +1,7 @@
 import Vector, { IVector } from './utils/Vector';
 import * as _ from 'lodash';
 import {
+  findMyShip,
   findObjectById,
   getObjectPosition,
   getObjectRotation,
@@ -98,6 +99,9 @@ type PendingActionPack = {
 const MAX_ALLOWED_CORRECTION_JUMP_CONST = 15 / 1000 / 1000;
 // max 'too fast client' desync value, to skip too eager client frame. Since 1 update is roughly 16ms, then we must allow 1 frame ahead, but not 2
 const MAX_ALLOWED_CLIENT_AHEAD_TICKS = 17 * 1000;
+
+// due to frame skipping and network desync artifacts, to make UX better I suppress the displayed state changes when it's lower than this value. Essentially, lying about true state
+const MAX_ALLOWED_VISUAL_DESYNC_UNITS = 0.3;
 
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
@@ -477,7 +481,10 @@ export class StateSyncer implements IStateSyncer {
     const oldPos = Vector.fromIVector(getObjectPosition(oldObj));
     const newPos = Vector.fromIVector(getObjectPosition(newObj));
     const dist = oldPos.euDistTo(newPos);
-    if (dist > elapsedTicks * this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK) {
+    if (
+      dist > elapsedTicks * this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK &&
+      dist > MAX_ALLOWED_VISUAL_DESYNC_UNITS
+    ) {
       return {
         tag: 'ObjectJump',
         obj: spec,
@@ -499,6 +506,7 @@ export class StateSyncer implements IStateSyncer {
     elapsedTicks: number
   ) {
     const correctedState = _.cloneDeep(currentState);
+    const myShipId = findMyShip(currentState)?.id;
     const maxShiftLen =
       elapsedTicks * this.MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK;
     const correctedObjectIds = new Set();
@@ -512,7 +520,9 @@ export class StateSyncer implements IStateSyncer {
         violation.diff / elapsedTicks >
         this.CORRECTION_TELEPORT_BAIL_PER_TICK
       ) {
-        console.warn(`teleport correction bail, dist = ${violation.diff}`);
+        if (myShipId === getObjSpecId(violation.obj)) {
+          console.warn(`teleport correction bail, dist = ${violation.diff}`);
+        }
         jumpCorrectionToOldPosBack = jumpDir;
       } else {
         jumpCorrectionToOldPosBack = jumpDir
