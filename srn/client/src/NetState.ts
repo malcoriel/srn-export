@@ -789,7 +789,7 @@ export default class NetState extends EventEmitter {
         player_id: this.state.my_id,
         ship_id: this.indexes.myShip.id,
       });
-      this.state.player_actions.push([act, null]);
+      this.state.player_actions.push([act, null, null]);
       this.sendSchedulePlayerAction(act);
     }
   }

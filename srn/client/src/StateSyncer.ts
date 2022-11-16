@@ -96,6 +96,8 @@ type PendingActionPack = {
 };
 
 const MAX_ALLOWED_CORRECTION_JUMP_CONST = 15 / 1000 / 1000;
+// max 'too fast client' desync value, to skip too eager client frame. Since 1 update is roughly 16ms, then we must allow 1 frame ahead, but not 2
+const MAX_ALLOWED_CLIENT_AHEAD_TICKS = 17 * 1000;
 
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
@@ -149,14 +151,21 @@ export class StateSyncer implements IStateSyncer {
   private updateState(
     from: GameState,
     elapsedTicks: number,
-    area: AABB
+    area: AABB,
+    context: string
   ): GameState | null {
     const LONG_UPDATE_BAIL = 500 * 1000;
     if (elapsedTicks > LONG_UPDATE_BAIL) {
+      const clientAheadTicks =
+        this.state.ticks + elapsedTicks - this.trueState.ticks;
       console.warn(
         `too long update bail for ${Math.round(
           elapsedTicks / 1000
-        )}ms (max ${LONG_UPDATE_BAIL})`
+        )}ms (max ${Math.round(
+          LONG_UPDATE_BAIL / 1000
+        )}ms) in ${context}, client ahead by ${Math.round(
+          clientAheadTicks / 1000
+        )}ms`
       );
       return from;
     }
@@ -176,6 +185,9 @@ export class StateSyncer implements IStateSyncer {
     visibleArea: AABB;
     packetTag: string;
   }) {
+    if (!this.state) {
+      return this.error('no state');
+    }
     this.pendingActionPacks.push({
       actions: event.actions,
       packet_tag: event.packetTag,
@@ -204,11 +216,14 @@ export class StateSyncer implements IStateSyncer {
     this.dropPendingActionsFullyCommittedOnServer(serverState);
     this.trueState = serverState;
     if (serverState.ticks < this.state.ticks) {
-      // TODO rebase not reflected actions instead of plain update
       const diff = this.state.ticks - serverState.ticks;
-      this.trueState =
-        this.rebaseStateUsingCurrentActions(serverState, diff, visibleArea) ||
-        this.state;
+      const rebasedState = this.rebaseStateUsingCurrentActions(
+        serverState,
+        diff,
+        visibleArea,
+        'onServerState'
+      );
+      this.trueState = rebasedState || serverState;
     } else if (serverState.ticks >= this.state.ticks) {
       // TODO calculate proper value to extrapolate to instead, based on average client perf lag,
       // plus do the rebase not reflected actions
@@ -232,7 +247,8 @@ export class StateSyncer implements IStateSyncer {
   private rebaseStateUsingCurrentActions(
     state: GameState,
     elapsedTicks: number,
-    visibleArea: AABB
+    visibleArea: AABB,
+    context: string
   ): GameState | null {
     const alreadyExecutedTagsInState = new Set(
       state.processed_player_actions.map(({ packet_tag }) => packet_tag)
@@ -261,7 +277,12 @@ export class StateSyncer implements IStateSyncer {
     ) as unknown) as [Action, null, number][];
 
     state.player_actions.push(...actionsToRebase);
-    return this.updateState(state, elapsedTicks, visibleArea);
+    return this.updateState(
+      state,
+      elapsedTicks,
+      visibleArea,
+      `${context} rebase`
+    );
   }
 
   private onTimeUpdate(event: {
@@ -272,16 +293,30 @@ export class StateSyncer implements IStateSyncer {
     if (!this.state) {
       return this.successCurrent();
     }
-    this.replaceCurrentState(
-      this.updateState(this.state, event.elapsedTicks, event.visibleArea) ||
-        this.state
-    );
+
+    const clientAheadTicks =
+      this.state.ticks + event.elapsedTicks - this.trueState.ticks;
+    if (clientAheadTicks <= MAX_ALLOWED_CLIENT_AHEAD_TICKS) {
+      this.replaceCurrentState(
+        this.updateState(
+          this.state,
+          event.elapsedTicks,
+          event.visibleArea,
+          'onTimeUpdate current'
+        ) || this.state
+      );
+    } else {
+      console.warn(
+        `frame skip due to client too much ahead, ${clientAheadTicks} > ${MAX_ALLOWED_CLIENT_AHEAD_TICKS} ticks`
+      );
+    }
     // time has to pass for the server state as well
     this.trueState =
       this.rebaseStateUsingCurrentActions(
         this.trueState,
         event.elapsedTicks,
-        event.visibleArea
+        event.visibleArea,
+        'onTimeUpdate true'
       ) || this.trueState;
     this.violations = this.checkViolations(
       this.state,
@@ -477,7 +512,7 @@ export class StateSyncer implements IStateSyncer {
         violation.diff / elapsedTicks >
         this.CORRECTION_TELEPORT_BAIL_PER_TICK
       ) {
-        console.warn('teleport correction bail');
+        console.warn(`teleport correction bail, dist = ${violation.diff}`);
         jumpCorrectionToOldPosBack = jumpDir;
       } else {
         jumpCorrectionToOldPosBack = jumpDir
