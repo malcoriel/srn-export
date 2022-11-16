@@ -4,7 +4,7 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import NetState, { VisualState } from '../NetState';
 import { height_units, Ship, width_units } from '../world';
 import { unitsToPixels_min } from '../coord';
-import { IVector } from '../utils/Vector';
+import Vector, { IVector } from '../utils/Vector';
 import { ShaderMaterial } from 'three';
 
 export const CAMERA_HEIGHT = 100;

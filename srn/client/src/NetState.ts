@@ -321,6 +321,7 @@ export default class NetState extends EventEmitter {
             elapsedTicks,
             visibleArea,
           }); // ignore errors from syncer for now
+          this.reindexNetState();
           this.state = this.syncer.getCurrentState() || this.state;
           if (this.debugSpaceTime) {
             this.addSpaceTimeBreadcrumbs();
