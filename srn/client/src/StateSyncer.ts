@@ -99,6 +99,8 @@ type PendingActionPack = {
 const MAX_ALLOWED_CORRECTION_JUMP_CONST = 15 / 1000 / 1000;
 // max 'too fast client' desync value, to skip too eager client frame. Since 1 update is roughly 16ms, then we must allow 1 frame ahead, but not 2
 const MAX_ALLOWED_CLIENT_AHEAD_TICKS = 17 * 1000;
+// if client is too much ahead, complete frame skipping may be notices, but what if we slow down the frame by factor X?
+const CLIENT_AHEAD_DILATION_FACTOR = 0.5;
 
 // due to frame skipping and network desync artifacts, to make UX better I suppress the displayed state changes when it's lower than this value. Essentially, lying about true state
 const MAX_ALLOWED_VISUAL_DESYNC_UNITS = 0.3;
@@ -220,6 +222,7 @@ export class StateSyncer implements IStateSyncer {
     this.dropPendingActionsFullyCommittedOnServer(serverState);
     this.trueState = serverState;
     if (serverState.ticks < this.state.ticks) {
+      // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
       const diff = this.state.ticks - serverState.ticks;
       const rebasedState = this.rebaseStateUsingCurrentActions(
         serverState,
@@ -229,8 +232,8 @@ export class StateSyncer implements IStateSyncer {
       );
       this.trueState = rebasedState || serverState;
     } else if (serverState.ticks >= this.state.ticks) {
-      // TODO calculate proper value to extrapolate to instead, based on average client perf lag,
-      // plus do the rebase not reflected actions
+      // TODO maybe calculate proper value to extrapolate to instead, based on average client perf lag,
+      // plus do the rebase not reflected actions?
       this.trueState = serverState;
     }
 
@@ -300,20 +303,21 @@ export class StateSyncer implements IStateSyncer {
 
     const clientAheadTicks =
       this.state.ticks + event.elapsedTicks - this.trueState.ticks;
-    if (clientAheadTicks <= MAX_ALLOWED_CLIENT_AHEAD_TICKS) {
-      this.replaceCurrentState(
-        this.updateState(
-          this.state,
-          event.elapsedTicks,
-          event.visibleArea,
-          'onTimeUpdate current'
-        ) || this.state
-      );
-    } else {
-      console.warn(
-        `frame skip due to client too much ahead, ${clientAheadTicks} > ${MAX_ALLOWED_CLIENT_AHEAD_TICKS} ticks`
-      );
+    let targetDiff = event.elapsedTicks;
+    if (clientAheadTicks > MAX_ALLOWED_CLIENT_AHEAD_TICKS) {
+      // console.warn(
+      //   `frame dilation due to client too much ahead, ${clientAheadTicks} > ${MAX_ALLOWED_CLIENT_AHEAD_TICKS} ticks`
+      // );
+      targetDiff *= CLIENT_AHEAD_DILATION_FACTOR;
     }
+    this.replaceCurrentState(
+      this.updateState(
+        this.state,
+        targetDiff,
+        event.visibleArea,
+        'onTimeUpdate current'
+      ) || this.state
+    );
     // time has to pass for the server state as well
     this.trueState =
       this.rebaseStateUsingCurrentActions(
