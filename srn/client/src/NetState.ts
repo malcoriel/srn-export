@@ -84,11 +84,10 @@ export type BreadcrumbLine = {
 
 export type VisualState = {
   boundCameraMovement: boolean;
-  // real coordinates of the camera in the world
-  cameraPosition: {
-    x: number;
-    y: number;
-  };
+  // delayed (synced from Three) real coordinates of the camera in the world
+  cameraPosition: IVector;
+  // declarative-imperative api to force normal smooth updater to pick up the coordinates. will be reset after use
+  forcedCameraPosition?: IVector;
   // proportion from default zoom
   targetZoomShift: number;
   currentZoomShift: number;

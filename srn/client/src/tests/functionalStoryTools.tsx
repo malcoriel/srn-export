@@ -67,7 +67,7 @@ export const buildStory = async ({
   await delay(100);
   if (forceCameraPosition) {
     nsRef.visualState.boundCameraMovement = false;
-    nsRef.visualState.cameraPosition = forceCameraPosition;
+    nsRef.visualState.forcedCameraPosition = forceCameraPosition;
   }
   nsRef.visualState.targetZoomShift = initialZoom;
   // stop init immediately, then all actions are async
