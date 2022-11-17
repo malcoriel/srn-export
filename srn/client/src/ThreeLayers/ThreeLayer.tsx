@@ -7,11 +7,9 @@ import 'loaders.css';
 import { GameMode, max_x, min_x } from '../world';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
-  BoundCameraMover,
+  CameraController,
   CAMERA_DEFAULT_ZOOM,
   CAMERA_HEIGHT,
-  CameraZoomer,
-  ExternalCameraControl,
 } from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState, { DISPLAY_BREADCRUMBS_LAST_TICKS } from '../NetState';
@@ -110,7 +108,6 @@ export const ThreeLayer: React.FC<{
           {/*background plane serves to be a click helper, as otherwise
           three will not register clicks (through empty space)*/}
           <OrthographicCamera
-            key={visualState.zoomShift}
             makeDefault
             position={initialCameraPosition}
             zoom={CAMERA_DEFAULT_ZOOM()}
@@ -125,12 +122,12 @@ export const ThreeLayer: React.FC<{
               cameraBound
             />
           </OrthographicCamera>
-          <ExternalCameraControl />
-          <CameraZoomer
-            overrideMin={cameraMinZoomShiftOverride}
-            overrideMax={cameraMaxZoomShiftOverride}
-          />
-          {overridenCameraRef.current && <BoundCameraMover />}
+          {overridenCameraRef.current && (
+            <CameraController
+              overrideMin={cameraMinZoomShiftOverride}
+              overrideMax={cameraMaxZoomShiftOverride}
+            />
+          )}
           <ambientLight />
           {showGrid && (
             <gridHelper

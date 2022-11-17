@@ -8,7 +8,12 @@ export const CameraCoordinatesBox: React.FC = () => {
   if (!ns) {
     return null;
   }
-  const line = Vector.fromIVector(ns.visualState.cameraPosition).toKey('/', 2);
+  let line: string = Vector.fromIVector(ns.visualState.cameraPosition).toKey(
+    '/',
+    2
+  );
+  line += ` x${ns.visualState.zoomShift.toFixed(2)} `;
+  if (ns.visualState.boundCameraMovement) line += '!';
   return (
     <div className="coordinate-box">
       <div>{line}</div>

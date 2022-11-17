@@ -2,7 +2,7 @@
 .coordinate-box {
   position: absolute;
   right: 2px;
-  bottom: 2px;
+  bottom: 6px;
   height: 12px;
   pointer-events: none;
   font-size: 12px;
@@ -11,6 +11,6 @@
   display:flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
+  width: 120px;
   overflow: hidden;
 }
