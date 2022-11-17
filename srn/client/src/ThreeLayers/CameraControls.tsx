@@ -30,15 +30,15 @@ export const getOnWheel = (
     return;
   }
   const delta = adaptedEvent.y;
-  visualState.zoomShift = visualState.zoomShift || 1.0;
+  visualState.targetZoomShift = visualState.targetZoomShift || 1.0;
   const deltaZoom = delta * CAMERA_ZOOM_CHANGE_SPEED;
-  visualState.zoomShift -= deltaZoom;
-  visualState.zoomShift = Math.min(
-    visualState.zoomShift,
+  visualState.targetZoomShift -= deltaZoom;
+  visualState.targetZoomShift = Math.min(
+    visualState.targetZoomShift,
     overrideMax || CAMERA_MAX_ZOOM
   );
-  visualState.zoomShift = Math.max(
-    visualState.zoomShift,
+  visualState.targetZoomShift = Math.max(
+    visualState.targetZoomShift,
     overrideMin || CAMERA_MIN_ZOOM
   );
 };
@@ -57,12 +57,13 @@ export const CameraController: React.FC<CameraZoomerProps> = ({
   const syncDataToCamera = () => {
     visualState.cameraPosition.x = camera.position.x;
     visualState.cameraPosition.y = -camera.position.y;
+    visualState.currentZoomShift = camera.zoom / CAMERA_DEFAULT_ZOOM();
   };
 
   useHotkeys(
     'c',
     () => {
-      visualState.zoomShift = 1.0;
+      visualState.targetZoomShift = 1.0;
       visualState.boundCameraMovement = !visualState.boundCameraMovement;
     },
     [ns]
@@ -101,7 +102,7 @@ export const CameraController: React.FC<CameraZoomerProps> = ({
     syncDataToCamera();
     camera.zoom = MathUtils.lerp(
       camera.zoom,
-      visualState.zoomShift * CAMERA_DEFAULT_ZOOM(),
+      visualState.targetZoomShift * CAMERA_DEFAULT_ZOOM(),
       0.1
     );
   });

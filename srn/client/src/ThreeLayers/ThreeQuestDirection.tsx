@@ -114,8 +114,8 @@ export const ThreeQuestDirection: React.FC<{
   const arrowActiveIndex = Math.floor(state.milliseconds_remaining / 500) % 3;
 
   const lineShaderResolutionVec = new Vector2(
-    size.width_px / visualState.zoomShift,
-    size.height_px / visualState.zoomShift
+    size.width_px / visualState.currentZoomShift,
+    size.height_px / visualState.currentZoomShift
   );
   return ThreeQuestDirectionImpl({
     arrowPoints,

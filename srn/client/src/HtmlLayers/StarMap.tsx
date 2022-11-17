@@ -75,9 +75,10 @@ export const StarMap: React.FC<StarMapProps> = ({
               timeScale={0.5}
               visualState={{
                 boundCameraMovement: false,
-                zoomShift: 1,
+                targetZoomShift: 1,
                 cameraPosition: new Vector(0, 0),
-                breadcrumbs:[]
+                breadcrumbs: [],
+                currentZoomShift: 1,
               }}
             />
             <Text

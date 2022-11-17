@@ -295,9 +295,9 @@ export const MinimapPanel = React.memo(() => {
   }, [get_minimap_size_x(), get_minimap_size_y()]);
 
   const minimap_viewport_size_x =
-    realLenToScreenLen(viewPortSizeMeters().x) / visualState.zoomShift;
+    realLenToScreenLen(viewPortSizeMeters().x) / visualState.currentZoomShift;
   const minimap_viewport_size_y =
-    realLenToScreenLen(viewPortSizeMeters().y) / visualState.zoomShift;
+    realLenToScreenLen(viewPortSizeMeters().y) / visualState.currentZoomShift;
 
   const moveCamera = (dragEvent: any) => {
     const mouseEvent = dragEvent.evt as any;

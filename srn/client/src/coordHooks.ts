@@ -16,20 +16,22 @@ export const useRealToScreen = (ns: NetState) => {
     const realLenToScreenLen = calcRealLenToScreenLen(
       viewPortSizeMeters(),
       viewPortSizePixels(),
-      visualState.zoomShift
+      visualState.currentZoomShift
     );
     const realPosToScreenPos = calcRealPosToScreenPos(
       visualState.cameraPosition,
       viewPortSizeMeters(),
       viewPortSizePixels(),
-      visualState.zoomShift
+      visualState.currentZoomShift
     );
     return { realLenToScreenLen, realPosToScreenPos };
   }, [
     visualState.cameraPosition,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     viewPortSizeMeters(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     viewPortSizePixels(),
-    visualState.zoomShift,
+    visualState.currentZoomShift,
   ]);
 };
 
@@ -41,19 +43,21 @@ export const useScreenToReal = (ns: NetState) => {
     const screenLenToRealLen = calcScreenLenToRealLen(
       viewPortSizeMeters(),
       viewPortSizePixels(),
-      visualState.zoomShift
+      visualState.currentZoomShift
     );
     const screenPosToRealPos = calcScreenPosToRealPos(
       visualState.cameraPosition,
       viewPortSizeMeters(),
       viewPortSizePixels(),
-      visualState.zoomShift
+      visualState.currentZoomShift
     );
     return { screenLenToRealLen, screenPosToRealPos };
   }, [
     visualState.cameraPosition,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     viewPortSizeMeters(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     viewPortSizePixels(),
-    visualState.zoomShift,
+    visualState.currentZoomShift,
   ]);
 };

@@ -90,7 +90,8 @@ export type VisualState = {
     y: number;
   };
   // proportion from default zoom
-  zoomShift: number;
+  targetZoomShift: number;
+  currentZoomShift: number;
   breadcrumbs: (Breadcrumb | BreadcrumbLine)[];
 };
 
@@ -226,7 +227,8 @@ export default class NetState extends EventEmitter {
         x: 0,
         y: 0,
       },
-      zoomShift: 1,
+      targetZoomShift: 1,
+      currentZoomShift: 1,
       breadcrumbs: [],
     };
     this.visMap = {};
@@ -741,7 +743,7 @@ export default class NetState extends EventEmitter {
 
   private getSimulationArea(): AABB {
     const viewportSize = viewPortSizeMeters()
-      .scale(1 / this.visualState.zoomShift)
+      .scale(1 / this.visualState.currentZoomShift)
       .scale(AREA_BUFF_TO_COVER_SIZE);
     const center = this.visualState.cameraPosition;
     return {

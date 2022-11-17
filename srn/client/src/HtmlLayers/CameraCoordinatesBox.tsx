@@ -12,7 +12,7 @@ export const CameraCoordinatesBox: React.FC = () => {
     '/',
     2
   );
-  line += ` x${ns.visualState.zoomShift.toFixed(2)} `;
+  line += ` x${ns.visualState.currentZoomShift.toFixed(2)} `;
   if (ns.visualState.boundCameraMovement) line += '!';
   return (
     <div className="coordinate-box">

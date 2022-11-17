@@ -29,7 +29,8 @@ const Template: Story = (args) => {
           key={revision + JSON.stringify(args)}
           visualState={{
             boundCameraMovement: false,
-            zoomShift: 1,
+            targetZoomShift: 1,
+            currentZoomShift: 1,
             cameraPosition: new Vector(0, 0),
             breadcrumbs: [],
           }}
