@@ -4,7 +4,7 @@ import { GameMode } from '../world';
 import NetState from '../NetState';
 import { SandboxCommandBuilder } from '../../../world/pkg/world.extra';
 import { IVector } from '../utils/Vector';
-import { Action, SBSetupState } from '../../../world/pkg/world';
+import { Action, GameState, SBSetupState } from '../../../world/pkg/world';
 import { Story } from '@storybook/react';
 import { useCallback, useEffect, useState } from 'react';
 import * as uuid from 'uuid';
@@ -16,13 +16,19 @@ import { executeSyncAction } from '../utils/ShipControls';
 
 let nsRef: NetState | undefined;
 
+export type ActionIterator = Iterator<
+  { wait: number; action: Action | null },
+  { wait: number; action: Action | null },
+  GameState
+>;
+
 export interface BuildStoryParams {
   initialState: SBSetupState;
   initialPos: IVector;
   initialZoom: number;
   forceCameraPosition?: IVector;
   storyName: string;
-  actions?: Iterable<{ wait: number; action: Action }>;
+  actions?: (initialState: GameState) => ActionIterator;
 }
 
 const patchAction = (action: Action, nsRef: NetState) => {
@@ -73,13 +79,22 @@ export const buildStory = async ({
   // stop init immediately, then all actions are async
   setTimeout(async () => {
     if (actions && nsRef) {
-      for (const { action, wait } of actions) {
-        await delay(wait);
+      const iterator = actions(nsRef.state);
+      while (true) {
+        const { done, value } = iterator.next(nsRef.state);
+        if (done) {
+          break;
+        }
+        if (value.wait) {
+          await delay(value.wait);
+        }
         if (storyName !== currentStoryName) {
           break;
         }
-        patchAction(action, nsRef);
-        executeSyncAction(action);
+        if (value.action) {
+          patchAction(value.action, nsRef);
+          executeSyncAction(value.action);
+        }
       }
     }
   }, 0);
