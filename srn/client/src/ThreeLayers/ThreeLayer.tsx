@@ -130,10 +130,16 @@ export const ThreeLayer: React.FC<{
           )}
           <ambientLight />
           {showGrid && (
-            <gridHelper
-              args={[max_x - min_x, (max_x - min_x) / 10]}
-              rotation={[Math.PI / 2, 0, 0]}
-            />
+            <group>
+              <gridHelper
+                args={[max_x - min_x, (max_x - min_x) / 10]}
+                rotation={[Math.PI / 2, 0, 0]}
+              />
+              <gridHelper
+                args={[max_x - min_x, (max_x - min_x) / 50, 'red', 'blue']}
+                rotation={[Math.PI / 2, 0, 0]}
+              />
+            </group>
           )}
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <ThreeBodiesLayer
