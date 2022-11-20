@@ -82,7 +82,7 @@ export const buildStory = async ({
       const iterator = actions(nsRef.state);
       while (true) {
         const { done, value } = iterator.next(nsRef.state);
-        if (done) {
+        if (done || nsRef.disconnecting) {
           break;
         }
         if (value.wait) {
@@ -110,7 +110,7 @@ export const startTestGame = async (
   const ns = NetState.make();
   await ns.init(GameMode.Sandbox);
   nsRef = ns;
-  nsRef.debugSpaceTime = !!debugSpaceTime;
+  // nsRef.debugSpaceTime = !!debugSpaceTime;
   await buildStory(params);
 };
 

@@ -81,7 +81,6 @@ interface IStateSyncer {
   handleBatch: (events: StateSyncerEvent[]) => StateSyncerResult;
   handle(StateSyncerEvent: StateSyncerEvent): StateSyncerResult;
   getCurrentState(): GameState;
-  getPrevState(): GameState;
   flushViolations(): SyncerViolation[];
   flushLog(): any[];
 }
@@ -175,6 +174,10 @@ export class StateSyncer implements IStateSyncer {
       );
       return from;
     }
+    // if (this.pendingActionPacks.length > 0) {
+    //   this.log.push(`Pending actions: ${this.pendingActionPacks.length}`);
+    // }
+
     return this.wasmUpdateWorld(
       {
         state: from,
@@ -209,7 +212,7 @@ export class StateSyncer implements IStateSyncer {
           ]
       )
     );
-    this.trueState = _.cloneDeep(this.state);
+    this.trueState = this.state; // this will be handled in update correclty by skipping
     return this.successCurrent();
   }
 
@@ -219,7 +222,7 @@ export class StateSyncer implements IStateSyncer {
     state: serverState,
     visibleArea,
   }: StateSyncerEventServerState) {
-    this.dropPendingActionsFullyCommittedOnServer(serverState);
+    this.dropCommitedAndOutdatedPendingActions(serverState);
     this.trueState = serverState;
     if (serverState.ticks < this.state.ticks) {
       // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
@@ -242,9 +245,17 @@ export class StateSyncer implements IStateSyncer {
     return this.successCurrent();
   }
 
-  private dropPendingActionsFullyCommittedOnServer(serverState: GameState) {
+  private dropCommitedAndOutdatedPendingActions(serverState: GameState) {
     const confirmedActionPacks = new Set(
       serverState.processed_player_actions.map((a: any) => a.packet_tag)
+    );
+    this.log.push(
+      `pending: ${this.pendingActionPacks.map((a) => a.packet_tag).join(',')}`
+    );
+    this.log.push(
+      `processed: ${serverState.processed_player_actions
+        .map((a) => a.packet_tag)
+        .join(',')}`
     );
     this.pendingActionPacks = this.pendingActionPacks.filter(
       (a) => !confirmedActionPacks.has(a.packet_tag)
@@ -319,13 +330,16 @@ export class StateSyncer implements IStateSyncer {
       ) || this.state
     );
     // time has to pass for the server state as well
-    this.trueState =
-      this.rebaseStateUsingCurrentActions(
-        this.trueState,
-        event.elapsedTicks,
-        event.visibleArea,
-        'onTimeUpdate true'
-      ) || this.trueState;
+    if (this.trueState !== this.state) {
+      // on player action, we replace true state with the current state completely, so object identity should work
+      this.trueState =
+        this.rebaseStateUsingCurrentActions(
+          this.trueState,
+          event.elapsedTicks,
+          event.visibleArea,
+          'onTimeUpdate true'
+        ) || this.trueState;
+    }
     this.violations = this.checkViolations(
       this.state,
       this.trueState,
@@ -362,13 +376,13 @@ export class StateSyncer implements IStateSyncer {
   }
 
   private replaceCurrentState(newState: GameState) {
-    this.prevState = _.cloneDeep(this.state);
+    // this.prevState = _.cloneDeep(this.state);
     this.state = newState;
   }
 
   private onInit(event: { tag: 'init'; state: GameState }) {
     this.state = event.state;
-    this.prevState = _.cloneDeep(this.state);
+    // this.prevState = _.cloneDeep(this.state);
     this.trueState = _.cloneDeep(this.state);
     return this.successCurrent();
   }
@@ -393,10 +407,6 @@ export class StateSyncer implements IStateSyncer {
 
   getCurrentState() {
     return this.state;
-  }
-
-  getPrevState() {
-    return this.prevState;
   }
 
   private violations: SyncerViolation[] = [];
@@ -515,7 +525,6 @@ export class StateSyncer implements IStateSyncer {
       elapsedTicks * this.MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK;
     const correctedObjectIds = new Set();
     for (const violation of violations) {
-      this.log.push(JSON.stringify(violation));
       const jumpDir = Vector.fromIVector(violation.to).subtract(
         Vector.fromIVector(violation.from)
       );
@@ -542,7 +551,6 @@ export class StateSyncer implements IStateSyncer {
       const objId = getObjSpecId(violation.obj)!;
       const newObj = findObjectById(correctedState, objId)?.object;
       const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
-      this.log.push(jumpCorrectionToOldPosBack.toFix());
       const correctedPos = newObjectPos.add(jumpCorrectionToOldPosBack);
       setObjectPosition(newObj, correctedPos);
       correctedObjectIds.add(objId);
@@ -552,9 +560,9 @@ export class StateSyncer implements IStateSyncer {
         v.tag === 'ObjectJump' && correctedObjectIds.has(getObjSpecId(v.obj))
       );
     });
-    if (correctedObjectIds.size > 0) {
-      this.log.push(`corrected ${correctedObjectIds.size} violations`);
-    }
+    // if (correctedObjectIds.size > 0) {
+    //   this.log.push(`corrected ${correctedObjectIds.size} violations`);
+    // }
     this.violations = this.checkViolations(
       currentState,
       correctedState,

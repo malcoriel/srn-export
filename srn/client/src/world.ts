@@ -358,6 +358,8 @@ export type ManualMovementAction =
   | ActionTurnRight
   | ActionTurnLeft;
 
+export const ManualMovementInactivityDropMs = 500;
+
 export const isManualMovement = (act: Action): act is ManualMovementAction => {
   return (
     act.tag === 'Gas' ||

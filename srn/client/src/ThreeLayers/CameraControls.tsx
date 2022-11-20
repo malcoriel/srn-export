@@ -99,7 +99,6 @@ export const CameraController: React.FC<CameraZoomerProps> = ({
     if (visualState.boundCameraMovement) {
       forceMoveCameraToShip(delta, scene);
     } else if (visualState.forcedCameraPosition) {
-      console.log('force set!');
       camera.position.set(
         visualState.forcedCameraPosition.x,
         -visualState.forcedCameraPosition.y,

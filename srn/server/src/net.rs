@@ -46,7 +46,9 @@ pub enum ServerToClientMessage {
     RoomLeave(Uuid),
 }
 
-pub const MAX_PROCESSED_ACTIONS_SHARE_TIME: f64 = 10.0 * 1000.0 * 1000.0;
+// actions in the server state will live a bit longer, but also will be cleaned up.
+// see PROCESSED_ACTION_LIFETIME_TICKS
+pub const MAX_PROCESSED_ACTIONS_SHARE_TIME_TICKS: f64 = 5.0 * 1000.0 * 1000.0;
 
 pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> GameState {
     state.my_id = player_id;
@@ -85,7 +87,7 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
         .into_iter()
         .filter(|a| {
             (a.processed_at_ticks as f64 - current_ticks as f64).abs()
-                < MAX_PROCESSED_ACTIONS_SHARE_TIME
+                < MAX_PROCESSED_ACTIONS_SHARE_TIME_TICKS
         })
         .collect();
     state.dialogue_states.retain(|k, _| *k == player_id);

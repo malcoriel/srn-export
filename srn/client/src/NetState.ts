@@ -4,8 +4,10 @@ import {
   GameMode,
   GameState,
   isInAABB,
+  isManualMovement,
   loadReplayIntoWasm,
   ManualMovementActionTags,
+  ManualMovementInactivityDropMs,
   rawUpdateWorld,
   restoreReplayFrame,
   TradeAction,
@@ -126,7 +128,7 @@ const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
 const normalLog = (...args: any[]) => console.log(...args);
 const normalWarn = (...args: any[]) => console.warn(...args);
 const normalErr = (...args: any[]) => console.error(...args);
-export const DISPLAY_BREADCRUMBS_LAST_TICKS = 10 * 1000 * 1000; // 10s
+export const DISPLAY_BREADCRUMBS_LAST_TICKS = 5 * 1000 * 1000;
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -202,6 +204,8 @@ export default class NetState extends EventEmitter {
   }
 
   private time: vsyncedCoupledTime;
+
+  private absoluteTimerTicks = 0;
 
   public visMap: Record<string, boolean>;
 
@@ -301,6 +305,7 @@ export default class NetState extends EventEmitter {
     normalLog(`initializing NS ${this.id}`);
     this.connecting = true;
     Perf.start();
+    this.absoluteTimerTicks = 0;
     this.time.setInterval(
       (_elapsedMs: number) => {
         Perf.markEvent(Measure.PhysicsFrameEvent);
@@ -311,9 +316,10 @@ export default class NetState extends EventEmitter {
       (elapsedMs) => {
         Perf.markEvent(Measure.RenderFrameEvent);
         Perf.usingMeasure(Measure.RenderFrameTime, () => {
+          const elapsedTicks = Math.round(elapsedMs * 1000);
+          this.absoluteTimerTicks += elapsedTicks;
           const ns = NetState.get();
           if (!ns) return;
-          const elapsedTicks = Math.round(elapsedMs * 1000);
           const actionsActive = getActiveSyncActions();
           const visibleArea = this.getSimulationArea();
           this.applyCurrentPlayerActions(actionsActive, visibleArea);
@@ -347,13 +353,13 @@ export default class NetState extends EventEmitter {
           );
           this.lastSlowChangedState = _.clone(this.state);
           this.lastSlowChangedIndexes = _.clone(this.indexes);
-          // const syncerLogEntries = this.syncer.flushLog();
-          // if (syncerLogEntries.length > 0) {
-          //   for (const entry of syncerLogEntries) {
-          //     console.log(entry);
-          //   }
-          //   console.log('---');
-          // }
+          const syncerLogEntries = this.syncer.flushLog();
+          if (syncerLogEntries.length > 0) {
+            for (const entry of syncerLogEntries) {
+              console.log(entry);
+            }
+            console.log('---');
+          }
           this.cleanupBreadcrumbs();
         });
       },
@@ -366,29 +372,30 @@ export default class NetState extends EventEmitter {
     actionsActive: Action[],
     visibleArea: AABB
   ) {
-    if (actionsActive.length <= 0) {
+    const usedActions = this.throttleManualMovementActions(actionsActive);
+    if (usedActions.length <= 0) {
       return;
     }
     const packetTag = uuid.v4();
     this.syncer.handle({
       tag: 'player action',
-      actions: actionsActive,
+      actions: usedActions,
       packetTag,
       visibleArea,
     });
     if (this.debugSpaceTime) {
       const myShip = findMyShip(this.state);
       if (myShip) {
-        this.visualState.breadcrumbs.push({
-          tag: 'spaceTime',
-          timestamp_ticks: this.state.ticks,
-          position: Vector.fromIVector(myShip),
-          color: 'orange',
-        });
+        // this.visualState.breadcrumbs.push({
+        //   tag: 'spaceTime',
+        //   timestamp_ticks: this.state.ticks,
+        //   position: Vector.fromIVector(myShip),
+        //   color: 'orange',
+        // });
       }
     }
     resetActiveSyncActions();
-    this.sendSchedulePlayerActionBatch(actionsActive, packetTag);
+    this.sendSchedulePlayerActionBatch(usedActions, packetTag);
   }
 
   rewindReplayToMs = (markInMs: number) => {
@@ -522,7 +529,7 @@ export default class NetState extends EventEmitter {
   };
 
   private addSpaceTimeBreadcrumbs = () => {
-    const SPACING_TICKS = 50 * 1000;
+    const SPACING_TICKS = 100 * 1000;
     // @ts-ignore
     const lastBreadcrumb = this.visualState.breadcrumbs.findLast(
       (b: Breadcrumb | BreadcrumbLine) => b.tag === 'spaceTime'
@@ -854,5 +861,22 @@ export default class NetState extends EventEmitter {
       return [keys[keys.length - 1], null];
     }
     return [null, null];
+  }
+
+  private throttleManualMovementActions(actionsActive: Action[]): Action[] {
+    return actionsActive.filter((action) => {
+      if (!isManualMovement(action)) {
+        return true;
+      }
+      const lastSent = this.lastSendOfManualMovementMap[action.tag] || 0;
+      if (
+        Math.abs(this.absoluteTimerTicks - lastSent) <
+        (ManualMovementInactivityDropMs * 1000) / 2.05 // let's send at least 2 times more often than necessary
+      ) {
+        return false;
+      }
+      this.lastSendOfManualMovementMap[action.tag] = this.absoluteTimerTicks;
+      return true;
+    });
   }
 }

@@ -882,6 +882,8 @@ fn update_world_iter(
     (state, sampler)
 }
 
+pub const PROCESSED_ACTION_LIFETIME_TICKS: u64 = 10 * 1000 * 1000;
+
 fn update_player_actions(state: &mut GameState, prng: &mut Pcg64Mcg, d_table: &DialogueTable) {
     let state_clone = state.clone();
     let mut actions_to_process = vec![];
@@ -905,6 +907,14 @@ fn update_player_actions(state: &mut GameState, prng: &mut Pcg64Mcg, d_table: &D
         };
         processed_actions.push(processed_action);
     }
+    let cutoff = if state.ticks > PROCESSED_ACTION_LIFETIME_TICKS {
+        state.ticks - PROCESSED_ACTION_LIFETIME_TICKS
+    } else {
+        0
+    };
+    state
+        .processed_player_actions
+        .retain(|pa| pa.processed_at_ticks >= cutoff);
     state
         .processed_player_actions
         .append(&mut processed_actions);
