@@ -306,7 +306,7 @@ export const MinimapPanel = React.memo(() => {
 
     const newPos = screenPosToRealPos(currentPosition);
     setCameraPos(newPos);
-    visualState.cameraPosition = newPos;
+    visualState.forcedCameraPosition = newPos;
   };
 
   if (!shown) return null;
