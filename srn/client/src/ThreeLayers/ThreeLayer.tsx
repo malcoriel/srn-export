@@ -13,7 +13,7 @@ import {
 } from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState, { DISPLAY_BREADCRUMBS_LAST_TICKS } from '../NetState';
-import Vector from '../utils/Vector';
+import Vector, { VectorF } from '../utils/Vector';
 import { useToggleHotkey } from '../utils/useToggleHotkey';
 import { useStore } from '../store';
 import { size, viewPortSizeMeters } from '../coord';
@@ -24,13 +24,14 @@ import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
 import { ActionBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
-import { seedToNumber, threeVectorToVector } from './util';
+import { seedToNumber, threeVectorToVector, vecToThreePos } from './util';
 import { ThreeLoadingIndicator } from './Resources';
 import { useNSForceChange } from '../NetStateHooks';
 import { ThreeBreadcrumbs } from './ThreeBreadcrumbs';
 import { executeSyncAction } from '../utils/ShipControls';
-import { OrthographicCamera } from '@react-three/drei';
+import { OrthographicCamera, Text } from '@react-three/drei';
 import { ThreeCameraUi } from './ThreeCameraUi';
+import { teal } from '../utils/palette';
 
 THREE.Cache.enabled = true;
 
@@ -139,6 +140,46 @@ export const ThreeLayer: React.FC<{
                 args={[max_x - min_x, (max_x - min_x) / 50, 'red', 'blue']}
                 rotation={[Math.PI / 2, 0, 0]}
               />
+              <group position={[10, 10, 10]}>
+                <Text
+                  position={[0, 2, 0]}
+                  visible
+                  color="white"
+                  fontSize={1.3}
+                  maxWidth={20}
+                  lineHeight={1}
+                  letterSpacing={0.02}
+                  textAlign="center"
+                  anchorX="center"
+                  anchorY="bottom" // default
+                >
+                  Coord 10/10
+                </Text>
+                <mesh>
+                  <circleBufferGeometry args={[1, 16]} />
+                  <meshBasicMaterial color="red" />
+                </mesh>
+              </group>
+              <group position={[0, 0, 0]}>
+                <Text
+                  position={[-5, 2, 0]}
+                  visible
+                  color="white"
+                  fontSize={1.3}
+                  maxWidth={20}
+                  lineHeight={1}
+                  letterSpacing={0.02}
+                  textAlign="center"
+                  anchorX="center"
+                  anchorY="bottom" // default
+                >
+                  Coord 0/0
+                </Text>
+                <mesh>
+                  <circleBufferGeometry args={[1, 16]} />
+                  <meshBasicMaterial color="red" />
+                </mesh>
+              </group>
             </group>
           )}
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
