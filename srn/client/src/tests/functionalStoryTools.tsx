@@ -17,9 +17,9 @@ import { executeSyncAction } from '../utils/ShipControls';
 let nsRef: NetState | undefined;
 
 export type ActionIterator = Iterator<
-  { wait: number; action: Action | null },
-  { wait: number; action: Action | null },
-  GameState
+  { wait?: number; waitAfter?: number; action: Action | null },
+  { wait?: number; waitAfter?: number; action: Action | null },
+  GameState | null
 >;
 
 export interface BuildStoryParams {
@@ -28,7 +28,7 @@ export interface BuildStoryParams {
   initialZoom: number;
   forceCameraPosition?: IVector;
   storyName: string;
-  actions?: (initialState: GameState) => ActionIterator;
+  actions?: (initialState: GameState | null) => ActionIterator;
 }
 
 const patchAction = (action: Action, nsRef: NetState) => {
@@ -79,21 +79,29 @@ export const buildStory = async ({
   // stop init immediately, then all actions are async
   setTimeout(async () => {
     if (actions && nsRef) {
-      const iterator = actions(nsRef.state);
+      const iterator = actions(nsRef.disconnecting ? null : nsRef.state);
       while (true) {
-        const { done, value } = iterator.next(nsRef.state);
+        const { done, value } = iterator.next(
+          nsRef.disconnecting ? null : nsRef.state
+        );
         if (done || nsRef.disconnecting) {
           break;
         }
         if (value.wait) {
+          console.log('wait', value.wait);
           await delay(value.wait);
         }
         if (storyName !== currentStoryName) {
           break;
         }
         if (value.action) {
+          console.log('act', value.action.tag);
           patchAction(value.action, nsRef);
           executeSyncAction(value.action);
+        }
+        if (value.waitAfter) {
+          console.log('wait', value.waitAfter);
+          await delay(value.waitAfter);
         }
       }
     }
@@ -110,7 +118,7 @@ export const startTestGame = async (
   const ns = NetState.make();
   await ns.init(GameMode.Sandbox);
   nsRef = ns;
-  // nsRef.debugSpaceTime = !!debugSpaceTime;
+  nsRef.debugSpaceTime = !!debugSpaceTime;
   await buildStory(params);
 };
 

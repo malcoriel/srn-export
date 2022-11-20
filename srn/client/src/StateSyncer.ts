@@ -249,14 +249,14 @@ export class StateSyncer implements IStateSyncer {
     const confirmedActionPacks = new Set(
       serverState.processed_player_actions.map((a: any) => a.packet_tag)
     );
-    this.log.push(
-      `pending: ${this.pendingActionPacks.map((a) => a.packet_tag).join(',')}`
-    );
-    this.log.push(
-      `processed: ${serverState.processed_player_actions
-        .map((a) => a.packet_tag)
-        .join(',')}`
-    );
+    // this.log.push(
+    //   `pending: ${this.pendingActionPacks.map((a) => a.packet_tag).join(',')}`
+    // );
+    // this.log.push(
+    //   `processed: ${serverState.processed_player_actions
+    //     .map((a) => a.packet_tag)
+    //     .join(',')}`
+    // );
     this.pendingActionPacks = this.pendingActionPacks.filter(
       (a) => !confirmedActionPacks.has(a.packet_tag)
     );

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Meta } from '@storybook/react';
 import {
   ActionIterator,
@@ -101,8 +100,10 @@ const manualCyclicalMovementStory = (
     },
     initialPos,
     initialZoom: 1.1,
-    actions: function* makeSequence(initialState: GameState): ActionIterator {
-      let currentState: GameState = initialState;
+    actions: function* makeSequence(
+      initialState: GameState | null
+    ): ActionIterator {
+      let currentState: GameState | null = initialState;
       const MIN_DIST = 5;
       let manualMovesDone = 0;
       yield { wait, action: null };
@@ -112,13 +113,20 @@ const manualCyclicalMovementStory = (
           wait,
           action: null,
         };
+        if (!currentState) {
+          break;
+        }
         const myShip = findMyShip(currentState);
         if (myShip) {
           break;
         }
         console.log('waiting for ship in state...');
       }
+      let isPressing = false;
       while (true) {
+        if (!currentState) {
+          break;
+        }
         const currentTarget = positions[currentIdx];
         const myShip = findMyShip(currentState);
         if (!myShip) {
@@ -129,31 +137,50 @@ const manualCyclicalMovementStory = (
           Vector.fromIVector(currentTarget).euDistTo(
             Vector.fromIVector(myShipPos)
           ) <= MIN_DIST ||
-          manualMovesDone > maxManualMoves
+          manualMovesDone >= maxManualMoves
         ) {
           // too close or didn't arrive with maxManual moves - let's click-navigate
           currentState = yield {
-            wait,
+            action: ActionBuilder.ActionStopGas({
+              ship_id: myShip.id,
+            }),
+          };
+          currentState = yield {
             action: ActionBuilder.ActionNavigate({
               ship_id: myShip.id,
               target: positions[currentIdx],
             }),
+            waitAfter: 4000,
           };
           currentIdx++;
           currentIdx %= positions.length;
           manualMovesDone = 0;
-          console.log('auto');
         } else {
-          console.log('manual');
-          manualMovesDone++;
-          currentState = yield {
-            wait,
-            action: ActionBuilder.ActionGas({
-              ship_id: myShip.id,
-            }),
-          };
+          // eslint-disable-next-line no-lonely-if
+          if (!isPressing) {
+            isPressing = true;
+            manualMovesDone++;
+            currentState = yield {
+              action: ActionBuilder.ActionGas({
+                ship_id: myShip.id,
+              }),
+              waitAfter: pressDuration,
+            };
+          } else {
+            isPressing = false;
+            currentState = yield {
+              action: ActionBuilder.ActionStopGas({
+                ship_id: myShip.id,
+              }),
+              waitAfter: wait,
+            };
+          }
         }
       }
+      return {
+        wait: 0,
+        action: null,
+      };
     },
   };
 };
@@ -192,16 +219,17 @@ getStartGameParams[manualSpaceTime] = manualCyclicalMovementStory(
     { x: 150.0, y: 75.0 },
     { x: 150.0, y: 125.0 },
   ],
-  500,
+  100,
   manualSpaceTime,
-  10,
+  2,
   {
     x: 150,
     y: 125,
   },
-  500
+  2000
 );
 
+// noinspection JSUnusedGlobalSymbols
 export default {
   title: 'Functional/Movement',
   argTypes: {},

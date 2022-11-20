@@ -529,7 +529,7 @@ export default class NetState extends EventEmitter {
   };
 
   private addSpaceTimeBreadcrumbs = () => {
-    const SPACING_TICKS = 100 * 1000;
+    const SPACING_TICKS = 50 * 1000;
     // @ts-ignore
     const lastBreadcrumb = this.visualState.breadcrumbs.findLast(
       (b: Breadcrumb | BreadcrumbLine) => b.tag === 'spaceTime'
