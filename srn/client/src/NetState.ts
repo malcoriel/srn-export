@@ -371,16 +371,26 @@ export default class NetState extends EventEmitter {
     return this.connect();
   };
 
-  private secondsSinceMidnight(): number {
+  private timeSingMidnight(): { seconds: number; millis: number } {
     const d = new Date();
-    const msSinceMidnight = d.getTime() - d.setHours(0, 0, 0, 0);
-    return Math.round(msSinceMidnight / 1000);
+    const msSinceMidnight = d.getTime() - d.setHours(1, 0, 0, 0);
+    const hours = Math.floor(msSinceMidnight / 1000 / 60 / 60);
+    const minutes = Math.floor(msSinceMidnight / 1000 / 60 - hours * 60);
+
+    return {
+      seconds: Math.round(msSinceMidnight / 1000),
+      millis: msSinceMidnight,
+    };
   }
 
   private sendPing() {
+    const time = this.timeSingMidnight();
     this.send({
       code: ClientOpCode.Ping,
-      value: { ping_at_midnight_secs: this.secondsSinceMidnight() },
+      value: {
+        ping_at_midnight_secs: time.seconds,
+        ping_at_midnight_ms: time.millis,
+      },
     });
   }
 

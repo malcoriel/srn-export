@@ -78,23 +78,26 @@ const PING_LIFETIME_SECONDS: u32 = 30;
 
 pub struct PingInstance {
     pub ping_at_midnight_secs: u32,
-    pub client_at_day_secs: u32,
+    pub ping_at_midnight_ms: u32,
+    pub client_at_midnight_secs: u32,
+    pub client_at_midnight_ms: u32,
     pub ping_value_secs: u32,
+    pub ping_value_ms: i32,
 }
 
 pub struct PingData {
     pub client_id: Uuid,
     pub last_pings: Vec<PingInstance>,
-    pub ping_average: u32,
+    pub ping_average: i32,
 }
 
 impl PingData {
-    pub fn recalc_average(&mut self) -> u32 {
+    pub fn recalc_average(&mut self) -> i32 {
         let sum = self
             .last_pings
             .iter()
-            .fold(0, |acc, curr| acc + curr.ping_value_secs);
-        self.ping_average = ((sum as f32) / (self.last_pings.len() as f32)) as u32;
+            .fold(0, |acc, curr| acc + curr.ping_value_ms);
+        self.ping_average = ((sum as f32) / (self.last_pings.len() as f32)) as i32;
         self.ping_average
     }
 }
@@ -356,6 +359,7 @@ fn on_client_room_join(client_id: Uuid) {
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
 pub struct ClientPing {
     ping_at_midnight_secs: u32,
+    ping_at_midnight_ms: u32,
 }
 
 fn on_client_ping(client_id: Uuid, data: &&str) {
@@ -365,20 +369,38 @@ fn on_client_ping(client_id: Uuid, data: &&str) {
     }
     let client_ping = parsed.unwrap();
     let mut store = PING_STORE.write().unwrap();
-    let now = Utc::now().num_seconds_from_midnight();
+    let now = Utc::now();
+    let now_seconds = now.num_seconds_from_midnight();
+    let hours = (now_seconds as f64 / 60.0 / 60.0).floor();
+    let minutes = (now_seconds as f64 / 60.0 - hours * 60.0).floor();
+    let now_milliseconds = now_seconds * 1000 + now.timestamp_subsec_millis();
     let entry = store.entry(client_id).or_insert(PingData {
         client_id,
         last_pings: vec![],
         ping_average: 0,
     });
-    entry.last_pings.push(PingInstance {
-        ping_at_midnight_secs: now,
-        client_at_day_secs: client_ping.ping_at_midnight_secs,
-        ping_value_secs: ((now as i32) - (client_ping.ping_at_midnight_secs as i32)).max(0) as u32,
-    });
+    let instance = PingInstance {
+        ping_at_midnight_secs: now_seconds,
+        ping_at_midnight_ms: now_milliseconds,
+        client_at_midnight_secs: client_ping.ping_at_midnight_secs,
+        client_at_midnight_ms: client_ping.ping_at_midnight_ms,
+        ping_value_secs: ((now_seconds as i32) - (client_ping.ping_at_midnight_secs as i32)).max(0)
+            as u32,
+        ping_value_ms: ((now_milliseconds as i32) - (client_ping.ping_at_midnight_ms as i32))
+            as i32,
+    };
+    // log!(format!(
+    //     "server {} client {} diff {} hours {} minutes {}",
+    //     instance.ping_at_midnight_ms,
+    //     instance.client_at_midnight_ms,
+    //     instance.ping_value_ms,
+    //     hours,
+    //     minutes
+    // ));
+    entry.last_pings.push(instance);
     entry
         .last_pings
-        .retain(|pi| now - pi.ping_at_midnight_secs <= PING_LIFETIME_SECONDS);
+        .retain(|pi| now_seconds - pi.ping_at_midnight_secs <= PING_LIFETIME_SECONDS);
 
     let average = entry.recalc_average();
     DISPATCHER
