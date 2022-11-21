@@ -12,7 +12,11 @@ pub enum XCast {
     Unicast(Uuid, Uuid),
 }
 
-pub fn check_message_casting(client_id: Uuid, message: &ServerToClientMessage, current_state_id: Uuid) -> bool {
+pub fn check_message_casting(
+    client_id: Uuid,
+    message: &ServerToClientMessage,
+    current_state_id: Uuid,
+) -> bool {
     match message.clone() {
         ServerToClientMessage::ObsoleteStateBroadcast(state) => {
             if current_state_id == state.id {
@@ -61,14 +65,17 @@ pub fn check_message_casting(client_id: Uuid, message: &ServerToClientMessage, c
                 }
             }
         }
-        ServerToClientMessage::XCastGameEvent(_, x_cast) => should_send_xcast(client_id, x_cast, current_state_id),
-        ServerToClientMessage::RoomSwitched(x_cast) => should_send_xcast(client_id, x_cast, current_state_id),
+        ServerToClientMessage::XCastGameEvent(_, x_cast) => {
+            should_send_xcast(client_id, x_cast, current_state_id)
+        }
+        ServerToClientMessage::RoomSwitched(x_cast) => {
+            should_send_xcast(client_id, x_cast, current_state_id)
+        }
         ServerToClientMessage::XCastStateChange(_, x_cast) => {
             should_send_xcast(client_id, x_cast, current_state_id)
         }
-        ServerToClientMessage::RoomLeave(target_player) => {
-            target_player == client_id
-        }
+        ServerToClientMessage::RoomLeave(target_player) => target_player == client_id,
+        ServerToClientMessage::Pong(pong) => pong.target_player_id == client_id,
     }
 }
 

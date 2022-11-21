@@ -4,10 +4,11 @@ use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuar
 use std::thread;
 use std::time::Duration;
 
-use chrono::Utc;
+use chrono::{DateTime, NaiveDate, Timelike, Utc};
 use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 use lockfree::set::Set as LockFreeSet;
+use mut_static::MutStatic;
 use num_traits::FromPrimitive;
 use uuid::Uuid;
 use websocket::client::sync::Writer;
@@ -20,7 +21,7 @@ use crate::get_prng;
 use crate::indexing::find_my_player;
 use crate::indexing::ObjectSpecifier;
 use crate::net::{
-    ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
+    ClientOpCode, PersonalizeUpdate, Pong, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
     TagConfirm, Wrapper,
 };
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
@@ -71,6 +72,35 @@ lazy_static! {
 lazy_static! {
     static ref CLIENT_MESSAGE_COUNTS: Arc<Mutex<HashMap<Uuid, u32>>> =
         Arc::new(Mutex::new(HashMap::new()));
+}
+
+const PING_LIFETIME_SECONDS: u32 = 30;
+
+pub struct PingInstance {
+    pub ping_at_midnight_secs: u32,
+    pub client_at_day_secs: u32,
+    pub ping_value_secs: u32,
+}
+
+pub struct PingData {
+    pub client_id: Uuid,
+    pub last_pings: Vec<PingInstance>,
+    pub ping_average: u32,
+}
+
+impl PingData {
+    pub fn recalc_average(&mut self) -> u32 {
+        let sum = self
+            .last_pings
+            .iter()
+            .fold(0, |acc, curr| acc + curr.ping_value_secs);
+        self.ping_average = ((sum as f32) / (self.last_pings.len() as f32)) as u32;
+        self.ping_average
+    }
+}
+
+lazy_static! {
+    pub static ref PING_STORE: MutStatic<HashMap<Uuid, PingData>> = MutStatic::from(HashMap::new());
 }
 
 pub fn websocket_server() {
@@ -299,6 +329,9 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
         ClientOpCode::SchedulePlayerActionBatch => {
             on_client_schedule_player_action_batch(client_id, second, third);
         }
+        ClientOpCode::Ping => {
+            on_client_ping(client_id, second);
+        }
     };
 }
 
@@ -321,13 +354,54 @@ fn on_client_room_join(client_id: Uuid) {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
+pub struct ClientPing {
+    ping_at_midnight_secs: u32,
+}
+
+fn on_client_ping(client_id: Uuid, data: &&str) {
+    let parsed = serde_json::from_str::<ClientPing>(data);
+    if !parsed.is_ok() {
+        return;
+    }
+    let client_ping = parsed.unwrap();
+    let mut store = PING_STORE.write().unwrap();
+    let now = Utc::now().num_seconds_from_midnight();
+    let entry = store.entry(client_id).or_insert(PingData {
+        client_id,
+        last_pings: vec![],
+        ping_average: 0,
+    });
+    entry.last_pings.push(PingInstance {
+        ping_at_midnight_secs: now,
+        client_at_day_secs: client_ping.ping_at_midnight_secs,
+        ping_value_secs: ((now as i32) - (client_ping.ping_at_midnight_secs as i32)).max(0) as u32,
+    });
+    entry
+        .last_pings
+        .retain(|pi| now - pi.ping_at_midnight_secs <= PING_LIFETIME_SECONDS);
+
+    let average = entry.recalc_average();
+    DISPATCHER
+        .0
+        .lock()
+        .unwrap()
+        .send(ServerToClientMessage::Pong(Pong {
+            your_average_for_server: average,
+            target_player_id: client_id,
+        }))
+        .unwrap();
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
 pub struct SchedulePlayerAction {
     action: Action,
+    happened_at_ticks: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
 pub struct SchedulePlayerActionBatch {
     actions: Vec<Action>,
+    happened_at_ticks: Option<u64>,
 }
 
 fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&str>) {
@@ -343,9 +417,11 @@ fn on_client_schedule_player_action(client_id: Uuid, data: &&str, tag: Option<&&
             let state = state.unwrap();
             let packet_tag = tag.unwrap().to_string();
             if is_world_update_action(&action.action) {
-                state
-                    .player_actions
-                    .push_back((action.action, Some(packet_tag.clone()), None));
+                state.player_actions.push_back((
+                    action.action,
+                    Some(packet_tag.clone()),
+                    action.happened_at_ticks,
+                ));
             } else {
                 warn!(format!(
                     "schedule player action does not support that player action: {:?}",
@@ -377,9 +453,11 @@ fn on_client_schedule_player_action_batch(client_id: Uuid, data: &&str, tag: Opt
             let packet_tag = tag.unwrap().to_string();
             for action in parsed.actions {
                 if is_world_update_action(&action) {
-                    state
-                        .player_actions
-                        .push_back((action, Some(packet_tag.clone()), None));
+                    state.player_actions.push_back((
+                        action,
+                        Some(packet_tag.clone()),
+                        parsed.happened_at_ticks,
+                    ));
                 } else {
                     warn!(format!(
                         "schedule player action does not support that player action: {:?}",

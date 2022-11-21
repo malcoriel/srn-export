@@ -10,7 +10,8 @@ use crate::market::TradeAction;
 use crate::notifications::NotificationActionR;
 use crate::sandbox::SandboxCommand;
 use crate::world::{
-    fire_saved_event, undock_ship, GameState, ManualMoveUpdate, ObjectProperty, Ship, ShipWithTime,
+    fire_saved_event, undock_ship, update_ship_manual_movement, GameState, ManualMoveUpdate,
+    ObjectProperty, Ship, ShipWithTime,
 };
 use crate::world_events::GameEvent;
 use crate::{
@@ -31,7 +32,10 @@ pub fn world_update_handle_action(
     prng: &mut Pcg64Mcg,
     state_clone: &GameState,
     d_table: &DialogueTable,
+    _happened_at_ticks: Option<u64>,
+    _client: bool,
 ) {
+    // let current_ticks = state.ticks;
     match action {
         Action::LongActionStart {
             long_action_start,
@@ -55,6 +59,22 @@ pub fn world_update_handle_action(
                 ship.navigate_target = None;
                 ship.dock_target = None;
                 ship.trajectory = vec![];
+                // if let Some(happened_at_ticks) = happened_at_ticks {
+                //     let diff = current_ticks - happened_at_ticks;
+                //     if diff > 0 && !client {
+                //         warn!(format!(
+                //             "diff apply {} = server {} - client {}",
+                //             diff, current_ticks, happened_at_ticks
+                //         ));
+                //         update_ship_manual_movement(
+                //             diff as i64,
+                //             current_ticks as u32,
+                //             ship,
+                //             false,
+                //             true,
+                //         );
+                //     }
+                // }
             }
         }
         Action::StopGas { ship_id } => {

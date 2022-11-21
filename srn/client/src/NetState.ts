@@ -65,6 +65,7 @@ enum ClientOpCode {
   ObsoleteNotificationAction,
   SchedulePlayerAction,
   SchedulePlayerActionBatch,
+  Ping,
 }
 
 interface Cmd {
@@ -110,6 +111,7 @@ export enum ServerToClientMessageCode {
   RoomSwitched = 7,
   XCastGameState = 8,
   LeaveRoom = 9,
+  Pong = 10,
 }
 
 const EXTRAPOLATE_AHEAD_MS = 500 * 2;
@@ -361,12 +363,26 @@ export default class NetState extends EventEmitter {
             console.log('---');
           }
           this.cleanupBreadcrumbs();
+          this.sendPing();
         });
       },
       () => {}
     );
     return this.connect();
   };
+
+  private secondsSinceMidnight(): number {
+    const d = new Date();
+    const msSinceMidnight = d.getTime() - d.setHours(0, 0, 0, 0);
+    return Math.round(msSinceMidnight / 1000);
+  }
+
+  private sendPing() {
+    this.send({
+      code: ClientOpCode.Ping,
+      value: { ping_at_midnight_secs: this.secondsSinceMidnight() },
+    });
+  }
 
   private applyCurrentPlayerActions(
     actionsActive: Action[],
@@ -377,6 +393,11 @@ export default class NetState extends EventEmitter {
       return;
     }
     const packetTag = uuid.v4();
+    this.sendSchedulePlayerActionBatch(
+      usedActions,
+      packetTag,
+      this.state.ticks
+    );
     this.syncer.handle({
       tag: 'player action',
       actions: usedActions,
@@ -395,7 +416,6 @@ export default class NetState extends EventEmitter {
       }
     }
     resetActiveSyncActions();
-    this.sendSchedulePlayerActionBatch(usedActions, packetTag);
   }
 
   rewindReplayToMs = (markInMs: number) => {
@@ -666,6 +686,9 @@ export default class NetState extends EventEmitter {
         this.disconnectAndDestroy();
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
         // nothing for now
+      } else if (messageCode === ServerToClientMessageCode.Pong) {
+        console.log('pong', data);
+        // nothing for now
       } else {
         normalWarn('unknown message code', messageCode);
       }
@@ -714,6 +737,10 @@ export default class NetState extends EventEmitter {
           );
           break;
         }
+        case ClientOpCode.Ping: {
+          this.socket.send(`${cmd.code}_%_${JSON.stringify(cmd.value)}`);
+          break;
+        }
         default:
           throw new UnreachableCaseError(cmd.code);
       }
@@ -739,10 +766,14 @@ export default class NetState extends EventEmitter {
     });
   }
 
-  public sendSchedulePlayerActionBatch(actions: Action[], tag: string) {
+  public sendSchedulePlayerActionBatch(
+    actions: Action[],
+    tag: string,
+    currentTicks: number
+  ) {
     this.send({
       code: ClientOpCode.SchedulePlayerActionBatch,
-      value: { actions },
+      value: { actions, happened_at_ticks: currentTicks },
       tag,
     });
   }

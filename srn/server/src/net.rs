@@ -34,6 +34,12 @@ impl<T> Wrapper<T> {
 }
 
 #[derive(Debug, Clone)]
+pub struct Pong {
+    pub your_average_for_server: u32,
+    pub target_player_id: Uuid,
+}
+
+#[derive(Debug, Clone)]
 pub enum ServerToClientMessage {
     ObsoleteStateBroadcast(GameState),
     ObsoleteStateChangeExclusive(GameState, Uuid),
@@ -44,6 +50,7 @@ pub enum ServerToClientMessage {
     XCastStateChange(GameState, XCast),
     RoomSwitched(XCast),
     RoomLeave(Uuid),
+    Pong(Pong),
 }
 
 // actions in the server state will live a bit longer, but also will be cleaned up.
@@ -142,6 +149,7 @@ impl ServerToClientMessage {
                 (8, serde_json::to_string(&state).unwrap())
             }
             ServerToClientMessage::RoomLeave(_) => (9, "".to_owned()),
+            ServerToClientMessage::Pong(msg) => (10, msg.your_average_for_server.to_string()),
         };
         format!("{}_%_{}", code, serialized)
     }
@@ -181,4 +189,5 @@ pub enum ClientOpCode {
     NotificationAction = 12,
     SchedulePlayerAction = 13,
     SchedulePlayerActionBatch = 14,
+    Ping = 15,
 }

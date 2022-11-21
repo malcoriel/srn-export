@@ -10,7 +10,11 @@ import {
 } from '../util';
 import * as uuid from 'uuid';
 
-export const mockNullPacketTagged = (act) => [act, null, null];
+export const mockNullPacketTagged = (act, happenedAtTicks = null) => [
+  act,
+  null,
+  happenedAtTicks,
+];
 
 export const mockPlayerActionTransSystemJump = (toLocId, byPlayerId, shipId) =>
   mockNullPacketTagged({
@@ -33,11 +37,14 @@ export const mockMineral = () => ({
   color: '#ff00ff',
 });
 
-export const mockPlayerActionMove = (type, shipId) =>
-  mockNullPacketTagged({
-    tag: type, // Gas | StopGas | Turn | StopTurn | Reverse
-    ship_id: shipId,
-  });
+export const mockPlayerActionMove = (type, shipId, happenedAtTicks = null) =>
+  mockNullPacketTagged(
+    {
+      tag: type, // Gas | StopGas | Turn | StopTurn | Reverse
+      ship_id: shipId,
+    },
+    happenedAtTicks
+  );
 
 export const mockPlayerActionNavigate = (shipId, to) =>
   mockNullPacketTagged({
@@ -217,7 +224,37 @@ describe('player actions logic', () => {
       state.player_actions.push(mockPlayerActionMove('TurnLeft', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.y).toBeGreaterThan(Math.PI);
+      expect(ship.rotation).toBeGreaterThan(Math.PI);
+    });
+
+    // TODO this is a very dumb version of lag compensation mechanism, that also will not consider
+    // true order of actions, instead simply 'boosting' the movement actions.
+    // 1. For the sake of shooting, this will be a problem, as it cannot do the counter-strike-like shooting in the past
+    // 2. Even for client own actions, like move + turn this will be a problem, since it will not reapply them and mutual influence will be lost
+    //
+    // ideally, server should track the past state delayed by average halftrip,
+    // and then when sending out actions received, send them adjusted with 2HT - UT time in the future,
+    // where HT = half trip time, and UT - update time, both calculated statistically
+    // TODO currently disabled due to bugs of sync
+    xit('can apply a movement action in the past', () => {
+      // eslint-disable-next-line prefer-const
+      let { state, player, ship } = createStateWithAShip();
+      const TIME_PASSED = 500;
+      state = updateWorld(state, TIME_PASSED);
+      ship.x = 100.0;
+      ship.y = 100.0;
+      const SIMULATE_PING = 250;
+      state.player_actions.push(
+        mockPlayerActionMove('Gas', ship.id, TIME_PASSED - SIMULATE_PING)
+      );
+      state = updateWorld(state, 250);
+      // since 250 + 250 = 500, which is gas timeout delay, the ship should move to 500ms distance
+      ship = getShipByPlayerId(state, player.id);
+      const EPSILON = 0.01;
+      console.log('resulting ship y =', ship.y);
+      expect(ship.y).toBeGreaterThan(
+        100.0 + ship.movement_definition.move_speed * 1000 * 500 - EPSILON
+      );
     });
   });
 

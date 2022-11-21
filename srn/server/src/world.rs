@@ -754,7 +754,7 @@ fn update_world_iter(
     sampler.end(events_id);
 
     let player_actions_id = sampler.start(SamplerMarks::UpdatePlayerActions as u32);
-    update_player_actions(&mut state, prng, d_table);
+    update_player_actions(&mut state, prng, d_table, client);
     sampler.end(player_actions_id);
 
     let rules_id = sampler.start(SamplerMarks::UpdateRuleSpecific as u32);
@@ -884,7 +884,12 @@ fn update_world_iter(
 
 pub const PROCESSED_ACTION_LIFETIME_TICKS: u64 = 10 * 1000 * 1000;
 
-fn update_player_actions(state: &mut GameState, prng: &mut Pcg64Mcg, d_table: &DialogueTable) {
+fn update_player_actions(
+    state: &mut GameState,
+    prng: &mut Pcg64Mcg,
+    d_table: &DialogueTable,
+    client: bool,
+) {
     let state_clone = state.clone();
     let mut actions_to_process = vec![];
     while let Some(event) = state.player_actions.pop_front() {
@@ -899,7 +904,15 @@ fn update_player_actions(state: &mut GameState, prng: &mut Pcg64Mcg, d_table: &D
                 continue;
             }
         }
-        world_update_handle_action(state, action.0.clone(), prng, &state_clone, d_table);
+        world_update_handle_action(
+            state,
+            action.0.clone(),
+            prng,
+            &state_clone,
+            d_table,
+            action.2.clone(),
+            client,
+        );
         let processed_action = ProcessedPlayerAction {
             action: action.0,
             packet_tag: action.1,
@@ -1298,22 +1311,25 @@ fn update_ships_manual_movement(
     client: bool,
 ) {
     for ship in ships.iter_mut() {
-        update_ship_manual_movement(elapsed_micro, current_tick, ship, client);
+        update_ship_manual_movement(elapsed_micro, current_tick, ship, client, false);
     }
 }
 
-fn update_ship_manual_movement(
-    elapsed_micro: i64,
+pub fn update_ship_manual_movement(
+    elapsed_micro: i64, // can be negative for the sake of applying StopGas in the past
     current_tick: u32,
     ship: &mut Ship,
     client: bool,
+    skip_throttle_drop: bool, // special param for action-in-the-past lag compensation
 ) {
     let (new_move, new_pos) = if let Some(params) = &mut ship.movement_markers.gas {
         if (params.last_tick as i32 - current_tick as i32).abs()
             > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
             && !client
         // assume that on client, we always hold the button - this one is only a server optimization
+            && !skip_throttle_drop
         {
+            // warn!("throttle drop");
             (None, None)
         } else {
             let sign = if params.forward { 1.0 } else { -1.0 };
