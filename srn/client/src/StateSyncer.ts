@@ -107,8 +107,6 @@ const MAX_ALLOWED_VISUAL_DESYNC_UNITS = 0.3;
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
 
-  private clientLagsAtTicks: number[] = [];
-
   constructor(deps: WasmDeps) {
     this.wasmUpdateWorld = deps.wasmUpdateWorld;
     this.desyncedCorrectState = null;
@@ -117,8 +115,6 @@ export class StateSyncer implements IStateSyncer {
   private state!: GameState;
 
   private trueState!: GameState;
-
-  private prevState!: GameState;
 
   private desyncedCorrectState: GameState | null;
 
@@ -565,38 +561,7 @@ export class StateSyncer implements IStateSyncer {
     // if (correctedObjectIds.size > 0) {
     //   this.log.push(`corrected ${correctedObjectIds.size} violations`);
     // }
-    // this.violations = this.checkViolations(
-    //   currentState,
-    //   correctedState,
-    //   elapsedTicks
-    // );
     return currentState;
-  }
-
-  private compensateClientLag(
-    serverState: GameState,
-    visibleArea: AABB,
-    clientLagTicks: number
-  ): StateSyncerResult {
-    this.clientLagsAtTicks.push(this.state.ticks);
-    // assume that if we lagged once for a certain value, then it should go forward to the same value
-    return this.successDesynced(serverState);
-  }
-
-  private updateClientLagCounter(current_ticks: number, elapsedTicks: number) {
-    const MAX_CLIENT_LAG_AGE_TICKS = 1000 * 1000 * 10;
-    const MAX_ALLOWED_CLIENT_LAG_PER_PERIOD = 30; // 30 lags in last 10 seconds
-    this.clientLagsAtTicks = this.clientLagsAtTicks.filter((point) => {
-      return point >= current_ticks + elapsedTicks - MAX_CLIENT_LAG_AGE_TICKS;
-    });
-    if (this.clientLagsAtTicks.length > MAX_ALLOWED_CLIENT_LAG_PER_PERIOD) {
-      console.warn(
-        'client lags at',
-        current_ticks,
-        'x',
-        this.clientLagsAtTicks.length
-      );
-    }
   }
 
   private overrideRotationsInstantly(state: GameState, trueState: GameState) {
