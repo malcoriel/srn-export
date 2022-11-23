@@ -35,7 +35,7 @@ impl<T> Wrapper<T> {
 
 #[derive(Debug, Clone)]
 pub struct Pong {
-    pub your_average_for_server: u32,
+    pub your_average_for_server: i32,
     pub target_player_id: Uuid,
 }
 

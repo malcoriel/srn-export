@@ -49,6 +49,79 @@ export const getBackgroundSize = (cameraZoomFactor = 1.0) => {
 
 const initialCameraPosition = new Vector3(0, 0, CAMERA_HEIGHT);
 
+const RenderGridHelper = () => (
+  <group>
+    <gridHelper
+      args={[max_x - min_x, (max_x - min_x) / 10]}
+      rotation={[Math.PI / 2, 0, 0]}
+    />
+    <gridHelper
+      args={[max_x - min_x, (max_x - min_x) / 50, 'red', 'blue']}
+      rotation={[Math.PI / 2, 0, 0]}
+    />
+    <group position={[10, 10, 10]}>
+      <Text
+        position={[0, 2, 0]}
+        visible
+        color="white"
+        fontSize={1.3}
+        maxWidth={20}
+        lineHeight={1}
+        letterSpacing={0.02}
+        textAlign="center"
+        anchorX="center"
+        anchorY="bottom" // default
+      >
+        Three coord 10/10
+      </Text>
+      <mesh>
+        <circleBufferGeometry args={[1, 16]} />
+        <meshBasicMaterial color="red" />
+      </mesh>
+    </group>
+    <group position={[10, -10, 10]}>
+      <Text
+        position={[0, 2, 0]}
+        visible
+        color="white"
+        fontSize={1.3}
+        maxWidth={20}
+        lineHeight={1}
+        letterSpacing={0.02}
+        textAlign="center"
+        anchorX="center"
+        anchorY="bottom" // default
+      >
+        Game coord 10/10
+      </Text>
+      <mesh>
+        <circleBufferGeometry args={[1, 16]} />
+        <meshBasicMaterial color="red" />
+      </mesh>
+    </group>
+    <group position={[0, 0, 0]}>
+      <Text
+        position={[-5, 2, 0]}
+        visible
+        color="white"
+        fontSize={1.3}
+        maxWidth={20}
+        lineHeight={1}
+        letterSpacing={0.02}
+        textAlign="center"
+        anchorX="center"
+        anchorY="bottom" // default
+      >
+        Coord 0/0
+      </Text>
+      <mesh>
+        <circleBufferGeometry args={[1, 16]} />
+        <meshBasicMaterial color="red" />
+      </mesh>
+    </group>
+  </group>
+);
+
 export const ThreeLayer: React.FC<{
   visible: boolean;
   desiredMode: GameMode;
@@ -130,58 +203,7 @@ export const ThreeLayer: React.FC<{
             />
           )}
           <ambientLight />
-          {showGrid && (
-            <group>
-              <gridHelper
-                args={[max_x - min_x, (max_x - min_x) / 10]}
-                rotation={[Math.PI / 2, 0, 0]}
-              />
-              <gridHelper
-                args={[max_x - min_x, (max_x - min_x) / 50, 'red', 'blue']}
-                rotation={[Math.PI / 2, 0, 0]}
-              />
-              <group position={[10, 10, 10]}>
-                <Text
-                  position={[0, 2, 0]}
-                  visible
-                  color="white"
-                  fontSize={1.3}
-                  maxWidth={20}
-                  lineHeight={1}
-                  letterSpacing={0.02}
-                  textAlign="center"
-                  anchorX="center"
-                  anchorY="bottom" // default
-                >
-                  Coord 10/10
-                </Text>
-                <mesh>
-                  <circleBufferGeometry args={[1, 16]} />
-                  <meshBasicMaterial color="red" />
-                </mesh>
-              </group>
-              <group position={[0, 0, 0]}>
-                <Text
-                  position={[-5, 2, 0]}
-                  visible
-                  color="white"
-                  fontSize={1.3}
-                  maxWidth={20}
-                  lineHeight={1}
-                  letterSpacing={0.02}
-                  textAlign="center"
-                  anchorX="center"
-                  anchorY="bottom" // default
-                >
-                  Coord 0/0
-                </Text>
-                <mesh>
-                  <circleBufferGeometry args={[1, 16]} />
-                  <meshBasicMaterial color="red" />
-                </mesh>
-              </group>
-            </group>
-          )}
+          {showGrid && <RenderGridHelper />}
           <pointLight position={[0, 0, CAMERA_HEIGHT]} />
           <ThreeBodiesLayer
             state={state}

@@ -363,7 +363,7 @@ export default class NetState extends EventEmitter {
             console.log('---');
           }
           this.cleanupBreadcrumbs();
-          this.sendPing();
+          // this.sendPing();
         });
       },
       () => {}
