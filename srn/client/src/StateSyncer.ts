@@ -602,12 +602,9 @@ export class StateSyncer implements IStateSyncer {
   private overrideRotationsInstantly(state: GameState, trueState: GameState) {
     const checkableObjects = this.enumerateCheckableObjects(state);
     for (const { spec, obj } of checkableObjects) {
-      const obj = this.findOldVersionOfObject(trueState, spec);
-      if (obj) {
-        const correctObj = obj.object;
-        if (correctObj) {
-          setObjectRotation(obj, getObjectRotation(correctObj));
-        }
+      const correctObj = this.findOldVersionOfObject(trueState, spec)?.object;
+      if (correctObj) {
+        setObjectRotation(obj, getObjectRotation(correctObj));
       }
     }
   }
