@@ -340,7 +340,6 @@ export class StateSyncer implements IStateSyncer {
 
     if (weAreDesynced) {
       Perf.usingMeasure(Measure.DesyncedStateUpdate, () => {
-        console.log('desync at', performance.now());
         // time has to pass for the server state as well
         this.trueState =
           this.rebaseStateUsingCurrentActions(
