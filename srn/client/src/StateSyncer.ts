@@ -432,15 +432,18 @@ export class StateSyncer implements IStateSyncer {
     const res = [];
     const checkableObjects = this.enumerateCheckableObjects(newState);
     for (const { spec, obj } of checkableObjects) {
-      const oldObj = this.findOldVersionOfObject(prevState, spec).object;
-      if (oldObj) {
-        const posVio = this.checkPositionViolation(
-          elapsedTicks,
-          obj,
-          oldObj,
-          spec
-        );
-        if (posVio) res.push(posVio);
+      const oldObjInstance = this.findOldVersionOfObject(prevState, spec);
+      if (oldObjInstance) {
+        const oldObj = oldObjInstance.object;
+        if (oldObj) {
+          const posVio = this.checkPositionViolation(
+            elapsedTicks,
+            obj,
+            oldObj,
+            spec
+          );
+          if (posVio) res.push(posVio);
+        }
       }
     }
     if (prevState.ticks > newState.ticks) {
