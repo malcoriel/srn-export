@@ -522,7 +522,6 @@ export class StateSyncer implements IStateSyncer {
     currentState: GameState,
     elapsedTicks: number
   ) {
-    const correctedState = _.cloneDeep(currentState);
     const myShipId = findMyShip(currentState)?.id;
     const maxShiftLen =
       elapsedTicks * this.MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK;
@@ -552,7 +551,7 @@ export class StateSyncer implements IStateSyncer {
           );
       }
       const objId = getObjSpecId(violation.obj)!;
-      const newObj = findObjectById(correctedState, objId)?.object;
+      const newObj = findObjectById(currentState, objId)?.object;
       const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
       const correctedPos = newObjectPos.add(jumpCorrectionToOldPosBack);
       setObjectPosition(newObj, correctedPos);
@@ -566,12 +565,12 @@ export class StateSyncer implements IStateSyncer {
     // if (correctedObjectIds.size > 0) {
     //   this.log.push(`corrected ${correctedObjectIds.size} violations`);
     // }
-    this.violations = this.checkViolations(
-      currentState,
-      correctedState,
-      elapsedTicks
-    );
-    return correctedState;
+    // this.violations = this.checkViolations(
+    //   currentState,
+    //   correctedState,
+    //   elapsedTicks
+    // );
+    return currentState;
   }
 
   private compensateClientLag(
@@ -603,9 +602,12 @@ export class StateSyncer implements IStateSyncer {
   private overrideRotationsInstantly(state: GameState, trueState: GameState) {
     const checkableObjects = this.enumerateCheckableObjects(state);
     for (const { spec, obj } of checkableObjects) {
-      const correctObj = this.findOldVersionOfObject(trueState, spec).object;
-      if (correctObj) {
-        setObjectRotation(obj, getObjectRotation(correctObj));
+      let obj = this.findOldVersionOfObject(trueState, spec);
+      if (obj) {
+        const correctObj = obj.object;
+        if (correctObj) {
+          setObjectRotation(obj, getObjectRotation(correctObj));
+        }
       }
     }
   }
