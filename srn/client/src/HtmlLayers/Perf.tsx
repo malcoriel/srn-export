@@ -26,6 +26,9 @@ const buffers: Record<Measure, number[]> = {
   RenderFrameEvent: [],
   RenderFrameTime: [],
   RootComponentRender: [],
+  SyncedStateUpdate: [],
+  DesyncedStateUpdate: [],
+  NetStateEmitChange: [],
 };
 
 let counters: Record<string, number> = {};
@@ -41,6 +44,9 @@ export enum Measure {
   SocketFrameTime = 'SocketFrameTime',
   RealFrameEvent = 'RealFrameEvent',
   RootComponentRender = 'RootComponentRender',
+  DesyncedStateUpdate = 'DesyncedStateUpdate',
+  SyncedStateUpdate = 'SyncedStateUpdate',
+  NetStateEmitChange = 'NetStateEmitChange',
 }
 
 export enum Stat {
@@ -216,6 +222,20 @@ const Perf = {
   markCounter: (name: string) => {
     counters[name] = counters[name] || 0;
     counters[name]++;
+  },
+
+  // measure must be unique! if they intersect, it's a mess
+  markArtificialTiming: (measure: string) => {
+    const start = `${measure}-start`;
+    const end = `${measure}-end`;
+    performance.mark(start);
+    setTimeout(() => {
+      performance.mark(end);
+      performance.measure(measure, start, end);
+      performance.clearMarks(start);
+      performance.clearMarks(end);
+      performance.clearMeasures(measure);
+    }, 0);
   },
 };
 

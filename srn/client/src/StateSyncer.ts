@@ -1,5 +1,4 @@
 import Vector, { IVector } from './utils/Vector';
-import * as _ from 'lodash';
 import {
   findMyShip,
   findObjectById,
@@ -16,6 +15,7 @@ import {
   getObjSpecId,
   ObjectSpecifier,
 } from './world';
+import { Measure, Perf } from './HtmlLayers/Perf';
 
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = { tag: 'success desynced'; state: GameState };
@@ -106,6 +106,8 @@ const MAX_ALLOWED_VISUAL_DESYNC_UNITS = 0.3;
 
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
+
+  private eventCounter = 0;
 
   constructor(deps: WasmDeps) {
     this.wasmUpdateWorld = deps.wasmUpdateWorld;
@@ -220,6 +222,8 @@ export class StateSyncer implements IStateSyncer {
   }: StateSyncerEventServerState) {
     this.dropCommitedAndOutdatedPendingActions(serverState);
     this.trueState = serverState;
+    this.eventCounter += 1;
+    this.eventCounter = Math.max(10);
     if (serverState.ticks < this.state.ticks) {
       // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
       // or do the true server-in-the-past schema
@@ -231,10 +235,12 @@ export class StateSyncer implements IStateSyncer {
         'onServerState'
       );
       this.trueState = rebasedState || serverState;
+      Perf.markArtificialTiming(`ServerBehind ${this.eventCounter}`);
     } else if (serverState.ticks >= this.state.ticks) {
       // TODO maybe calculate proper value to extrapolate to instead, based on average client perf lag,
       // plus do the rebase not reflected actions?
       this.trueState = serverState;
+      Perf.markArtificialTiming(`ServerAhead ${this.eventCounter}`);
     }
 
     // this.state = this.trueState;
@@ -308,6 +314,9 @@ export class StateSyncer implements IStateSyncer {
     if (!this.state) {
       return this.successCurrent();
     }
+    // sometimes there is no need to update state, e.g. right after the player action (optimistic updates)
+    // or if there is no desync (everything got compensated)
+    const weAreDesynced = this.trueState !== this.state;
 
     const clientAheadTicks =
       this.state.ticks + event.elapsedTicks - this.trueState.ticks;
@@ -318,37 +327,44 @@ export class StateSyncer implements IStateSyncer {
       // );
       targetDiff *= CLIENT_AHEAD_DILATION_FACTOR;
     }
-    this.replaceCurrentState(
-      this.updateState(
-        this.state,
-        targetDiff,
-        event.visibleArea,
-        'onTimeUpdate current'
-      ) || this.state
-    );
-    // on player action, we replace true state with the current state completely, so object identity should work
-    if (this.trueState !== this.state) {
-      // time has to pass for the server state as well
-      this.trueState =
-        this.rebaseStateUsingCurrentActions(
-          this.trueState,
-          event.elapsedTicks,
+    Perf.usingMeasure(Measure.SyncedStateUpdate, () => {
+      this.replaceCurrentState(
+        this.updateState(
+          this.state,
+          targetDiff,
           event.visibleArea,
-          'onTimeUpdate true'
-        ) || this.trueState;
-      this.violations = this.checkViolations(
-        this.state,
-        this.trueState,
-        event.elapsedTicks
+          'onTimeUpdate current'
+        ) || this.state
       );
-      this.state = this.applyMaxPossibleDesyncCorrection(
-        this.violations.filter(
-          (v) => v.tag === 'ObjectJump'
-        ) as SyncerViolationObjectJump[],
-        this.state,
-        event.elapsedTicks
-      );
-      this.overrideRotationsInstantly(this.state, this.trueState);
+    });
+
+    if (weAreDesynced) {
+      Perf.usingMeasure(Measure.DesyncedStateUpdate, () => {
+        console.log('desync at', performance.now());
+        // time has to pass for the server state as well
+        this.trueState =
+          this.rebaseStateUsingCurrentActions(
+            this.trueState,
+            event.elapsedTicks,
+            event.visibleArea,
+            'onTimeUpdate true'
+          ) || this.trueState;
+        this.violations = this.checkViolations(
+          this.state,
+          this.trueState,
+          event.elapsedTicks
+        );
+        this.state = this.applyMaxPossibleDesyncCorrection(
+          this.violations.filter(
+            (v) => v.tag === 'ObjectJump'
+          ) as SyncerViolationObjectJump[],
+          this.state,
+          event.elapsedTicks
+        );
+        this.overrideRotationsInstantly(this.state, this.trueState);
+      });
+    } else {
+      this.trueState = this.state;
     }
     return this.successCurrent();
   }

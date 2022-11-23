@@ -335,7 +335,10 @@ export default class NetState extends EventEmitter {
           if (this.debugSpaceTime) {
             this.addSpaceTimeBreadcrumbs();
           }
-          ns.emit('change');
+          Perf.usingMeasure(Measure.NetStateEmitChange, () => {
+            // this is where all react render and reconciliation will happen
+            ns.emit('change');
+          });
         });
       }
     );
