@@ -208,7 +208,7 @@ export class StateSyncer implements IStateSyncer {
           ]
       )
     );
-    this.trueState = this.state; // this will be handled in update correclty by skipping
+    this.trueState = this.state; // invalidate whatever we had previously during correction, as client view has to win immediately, then get compensated
     return this.successCurrent();
   }
 
@@ -222,6 +222,7 @@ export class StateSyncer implements IStateSyncer {
     this.trueState = serverState;
     if (serverState.ticks < this.state.ticks) {
       // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
+      // or do the true server-in-the-past schema
       const diff = this.state.ticks - serverState.ticks;
       const rebasedState = this.rebaseStateUsingCurrentActions(
         serverState,
@@ -325,9 +326,9 @@ export class StateSyncer implements IStateSyncer {
         'onTimeUpdate current'
       ) || this.state
     );
-    // time has to pass for the server state as well
+    // on player action, we replace true state with the current state completely, so object identity should work
     if (this.trueState !== this.state) {
-      // on player action, we replace true state with the current state completely, so object identity should work
+      // time has to pass for the server state as well
       this.trueState =
         this.rebaseStateUsingCurrentActions(
           this.trueState,
@@ -335,40 +336,21 @@ export class StateSyncer implements IStateSyncer {
           event.visibleArea,
           'onTimeUpdate true'
         ) || this.trueState;
+      this.violations = this.checkViolations(
+        this.state,
+        this.trueState,
+        event.elapsedTicks
+      );
+      this.state = this.applyMaxPossibleDesyncCorrection(
+        this.violations.filter(
+          (v) => v.tag === 'ObjectJump'
+        ) as SyncerViolationObjectJump[],
+        this.state,
+        event.elapsedTicks
+      );
+      this.overrideRotationsInstantly(this.state, this.trueState);
     }
-    this.violations = this.checkViolations(
-      this.state,
-      this.trueState,
-      event.elapsedTicks
-    );
-    // without updating prevState, since it was already updated above
-    this.state = this.applyMaxPossibleDesyncCorrection(
-      this.violations.filter(
-        (v) => v.tag === 'ObjectJump'
-      ) as SyncerViolationObjectJump[],
-      this.state,
-      event.elapsedTicks
-    );
-    this.overrideRotationsInstantly(this.state, this.trueState);
     return this.successCurrent();
-  }
-
-  private flushNotYetAppliedPendingActionsIntoLocalState() {
-    const alreadyExecutedTagsInState = new Set(
-      this.state.processed_player_actions.map(({ packet_tag }) => packet_tag)
-    );
-    if (this.pendingActionPacks.length > 0) {
-      const flattenedActions = _.flatMap(
-        this.pendingActionPacks,
-        ({ actions, packet_tag }) => {
-          if (alreadyExecutedTagsInState.has(packet_tag)) {
-            return [];
-          }
-          return actions.map((a) => [a, packet_tag, null]);
-        }
-      ) as [Action, string, null][];
-      this.state.player_actions.push(...flattenedActions);
-    }
   }
 
   private replaceCurrentState(newState: GameState) {
@@ -378,8 +360,7 @@ export class StateSyncer implements IStateSyncer {
 
   private onInit(event: { tag: 'init'; state: GameState }) {
     this.state = event.state;
-    // this.prevState = _.cloneDeep(this.state);
-    this.trueState = _.cloneDeep(this.state);
+    this.trueState = this.state;
     return this.successCurrent();
   }
 
@@ -561,6 +542,11 @@ export class StateSyncer implements IStateSyncer {
     // if (correctedObjectIds.size > 0) {
     //   this.log.push(`corrected ${correctedObjectIds.size} violations`);
     // }
+    if (this.violations.length > 0) {
+      this.log.push(`remaining ${this.violations.length} violations`);
+    } else {
+      this.trueState = this.state; // bail out of independent update, it's resource-intensive and it only needed for correction
+    }
     return currentState;
   }
 
