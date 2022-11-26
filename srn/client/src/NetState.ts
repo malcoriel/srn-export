@@ -693,7 +693,7 @@ export default class NetState extends EventEmitter {
         normalLog('Received disconnect request from server');
         this.disconnectAndDestroy();
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
-        // nothing for now
+        this.syncer.handleServerConfirmedPacket(JSON.parse(data).tag);
       } else if (messageCode === ServerToClientMessageCode.Pong) {
         console.log('pong', data);
         // nothing for now

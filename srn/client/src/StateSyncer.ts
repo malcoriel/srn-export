@@ -87,6 +87,7 @@ export interface IStateSyncer {
   handle(StateSyncerEvent: StateSyncerEvent): StateSyncerResult;
   getCurrentState(): GameState;
   flushLog(): any[];
+  handleServerConfirmedPacket(tag: string): void;
 }
 
 export interface WasmDeps {
@@ -97,6 +98,7 @@ type PendingActionPack = {
   actions: Action[];
   packet_tag: string | null;
   happened_at_ticks: number;
+  server_acknowledged: boolean;
 };
 
 const MAX_ALLOWED_CORRECTION_JUMP_CONST = 15 / 1000 / 1000;
@@ -108,6 +110,11 @@ const CLIENT_AHEAD_DILATION_FACTOR = 0.5;
 // due to frame skipping and network desync artifacts, to make UX better I suppress the displayed state changes when it's lower than this value. Essentially, lying about true state
 const MAX_ALLOWED_VISUAL_DESYNC_UNITS = 0.3;
 const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up, client will keep them indefinitely and if server truly lost them, we're in trouble
+
+type TagConfirm = {
+  atClientTicks: number;
+  tag: string;
+};
 
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
@@ -163,9 +170,11 @@ export class StateSyncer implements IStateSyncer {
     const desyncedShadow = this.getTrueMyShipState();
     if (desyncedShadow) {
       desyncedShadow.id = SHADOW_ID;
-      desyncedShadow.color = new Color(desyncedShadow.color)
-        .darken(2.0) // actually lighten
+      const shadowColor = new Color(desyncedShadow.color)
+        .lighten(2.0) // actually lighten
+        .hex()
         .toString();
+      desyncedShadow.color = shadowColor;
       desyncedShadow.name = ' ';
       this.state.locations[0].ships.push(desyncedShadow);
     }
@@ -190,8 +199,8 @@ export class StateSyncer implements IStateSyncer {
     if (elapsedTicks > LONG_UPDATE_BAIL) {
       const clientAheadTicks =
         this.state.ticks + elapsedTicks - this.trueState.ticks;
-      console.warn(
-        `too long update bail for ${Math.round(
+      this.log.push(
+        `warn: too long update bail for ${Math.round(
           elapsedTicks / 1000
         )}ms (max ${Math.round(
           LONG_UPDATE_BAIL / 1000
@@ -228,6 +237,7 @@ export class StateSyncer implements IStateSyncer {
       actions: event.actions,
       packet_tag: event.packetTag,
       happened_at_ticks: this.state.ticks,
+      server_acknowledged: false,
     });
     this.state.player_actions.push(
       ...event.actions.map(
@@ -297,13 +307,18 @@ export class StateSyncer implements IStateSyncer {
     // if for some reason we just have trash in pending actions, or if server somehow explicitly dropped our action
     this.pendingActionPacks = this.pendingActionPacks.filter((a) => {
       if (
-        Math.abs(serverState.ticks - a.happened_at_ticks) >
+        Math.abs(this.state.ticks - a.happened_at_ticks) >
         MAX_PENDING_ACTIONS_LIFETIME_TICKS
       ) {
         // this is especially bad since it will lead to drastical desync between client and server state, due to
         // 'divergence' at some point back in time. In this situation, we should full bail out of client state and accept
         // the server state
-        console.warn('Dropping outdated or server-ignored pending action', a);
+        console.warn(
+          'Dropping outdated or server-ignored pending action',
+          a.actions,
+          a.packet_tag,
+          a.packet_tag ? `confirmed: ${a.server_acknowledged}` : 'untagged'
+        );
         hadHugeViolation = true;
         return false;
       }
@@ -378,7 +393,9 @@ export class StateSyncer implements IStateSyncer {
       //   `frame dilation due to client too much ahead, ${clientAheadTicks} > ${MAX_ALLOWED_CLIENT_AHEAD_TICKS} ticks`
       // );
       targetDiff *= CLIENT_AHEAD_DILATION_FACTOR;
-      console.log(`dilate, ${event.elapsedTicks} -> ${targetDiff}`);
+      this.log.push(
+        `client update dilate, ${event.elapsedTicks} -> ${targetDiff}`
+      );
     }
 
     Perf.usingMeasure(Measure.SyncedStateUpdate, () => {
@@ -421,7 +438,7 @@ export class StateSyncer implements IStateSyncer {
           event.elapsedTicks
         );
         if (this.violations.length > 0) {
-          this.log.push(`remaining ${this.violations.length} violations`);
+          // this.log.push(`remaining ${this.violations.length} violations`);
         } else {
           this.trueState = this.state; // bail out of independent update, it's resource-intensive and it only needed for correction
         }
@@ -622,5 +639,18 @@ export class StateSyncer implements IStateSyncer {
         setObjectRotation(obj, getObjectRotation(correctObj));
       }
     }
+  }
+
+  handleServerConfirmedPacket(tag: string): void {
+    const targetAp = this.pendingActionPacks.find(
+      (ap) => ap.packet_tag === tag
+    );
+    if (!targetAp) {
+      this.log.push(
+        'warn: server tag for non-pending action received, probably there is a huge packet delay'
+      );
+      return;
+    }
+    targetAp.server_acknowledged = true;
   }
 }
