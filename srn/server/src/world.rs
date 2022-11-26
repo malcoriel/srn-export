@@ -929,6 +929,8 @@ fn update_player_actions(
         .append(&mut processed_actions);
 }
 
+const PROCESSED_EVENT_LIFETIME_TICKS: i32 = 60 * 1000 * 1000;
+
 fn update_events(
     state: &mut GameState,
     prng: &mut Pcg64Mcg,
@@ -943,14 +945,19 @@ fn update_events(
         events_to_process.push(event);
     }
     let mut processed_events = vec![];
+    let current_state_ticks = state.ticks;
     for event in events_to_process.into_iter() {
         world_update_handle_event(state, prng, event.clone(), d_table);
         let processed_event = ProcessedGameEvent {
             event,
-            processed_at_ticks: state.ticks,
+            processed_at_ticks: current_state_ticks,
         };
         processed_events.push(processed_event);
     }
+    state.processed_events.retain(|pe| {
+        (pe.processed_at_ticks as i32 - current_state_ticks as i32).abs()
+            <= PROCESSED_EVENT_LIFETIME_TICKS
+    });
     state.processed_events.append(&mut processed_events);
 }
 
@@ -1495,6 +1502,7 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
     match event {
         // list of the events that should only be handled inside world events, and not
         // as global events
+        GameEvent::ShipDocked { .. } => {}
         GameEvent::DialogueTriggerRequest { .. } => {}
         GameEvent::TradeDialogueTriggerRequest { .. } => {}
         GameEvent::PirateSpawn { .. } => {}
@@ -1502,7 +1510,6 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
         // something on them. typically, server just does retransmitting them to the client ahead of the normal update
         GameEvent::ShipSpawned { .. } => fire_event(event),
         GameEvent::ShipDied { .. } => fire_event(event),
-        GameEvent::ShipDocked { .. } => fire_event(event),
         GameEvent::SandboxCommandRequest { .. } => fire_event(event),
         _ => fire_event(event),
     }

@@ -106,17 +106,8 @@ pub fn handle_events(
                     GameEvent::Unknown => {
                         // intentionally do nothing
                     }
-                    GameEvent::ShipDocked {
-                        state_id,
-                        player_id,
-                        ..
-                    } => {
-                        if let Some(player_id) = player_id {
-                            crate::main_ws_server::send_event_to_client(
-                                event.clone(),
-                                XCast::Unicast(state_id, player_id),
-                            );
-                        }
+                    GameEvent::ShipDocked { .. } => {
+                        warn!("Ship docking should happen in world events, there's some bug here");
                     }
                     GameEvent::ShipUndocked { .. } => {
                         // intentionally do nothing

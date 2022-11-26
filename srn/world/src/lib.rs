@@ -704,7 +704,14 @@ pub fn interpolate_states(
     let state_a: GameState = custom_deserialize(state_a)?;
     let state_b: GameState = custom_deserialize(state_b)?;
     let options: UpdateOptionsV2 = serde_wasm_bindgen::from_value(options)?;
-    let result = interpolation::interpolate_states(&state_a, &state_b, value, &mut guard, options);
+    let result = interpolation::interpolate_states(
+        &state_a,
+        &state_b,
+        value,
+        &mut guard,
+        options,
+        &mut Sampler::empty(),
+    );
     Ok(custom_serialize(&result)?)
 }
 
