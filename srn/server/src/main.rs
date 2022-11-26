@@ -63,10 +63,11 @@ use crate::indexing::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
 };
 use crate::perf::{ConsumeOptions, Sampler};
-use crate::rooms_api::{cleanup_empty_rooms, find_room_state_id_by_player_id};
+use crate::rooms_api::{cleanup_empty_rooms, find_room_state_id_by_player_id, reindex_rooms};
 use crate::sandbox::mutate_state;
 use crate::states::{
-    get_rooms_iter_read, get_state_id_cont, get_state_id_cont_mut, select_state, select_state_mut,
+    get_rooms_iter_mut, get_rooms_iter_read, get_state_id_cont, get_state_id_cont_mut,
+    select_state, select_state_mut,
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::vec2::Vec2f64;
@@ -365,7 +366,7 @@ fn make_thread(name: &str) -> std::thread::Builder {
 const PERF_CONSUME_TIME: i64 = 15 * 1000 * 1000;
 const EVENT_TRIGGER_TIME: i64 = 500 * 1000;
 const FRAME_BUDGET_TICKS: i32 = 15 * 1000;
-const FRAME_STATS_COUNT: i32 = 2000;
+// const FRAME_STATS_COUNT: i32 = 2000;
 
 lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
@@ -397,8 +398,13 @@ fn main_thread() {
     let mut shortcut_frame = 0;
 
     loop {
-        frame_count += 1;
-        if frame_count >= FRAME_STATS_COUNT {
+        let now = Local::now();
+        let elapsed = now - last;
+        last = now;
+        let elapsed_micro = elapsed.num_milliseconds() * 1000;
+
+        sampler_consume_elapsed += elapsed_micro;
+        if sampler_consume_elapsed > PERF_CONSUME_TIME {
             let over_budget_pct = over_budget_frame as f32 / frame_count as f32 * 100.0;
             let shortcut_pct = shortcut_frame as f32 / frame_count as f32 * 100.0;
             if *DEBUG_FRAME_STATS {
@@ -410,7 +416,31 @@ fn main_thread() {
             frame_count = 0;
             over_budget_frame = 0;
             shortcut_frame = 0;
+            sampler_consume_elapsed = 0;
+            let (sampler_out, metrics) = sampler.consume(ConsumeOptions {
+                max_mean_ticks: 1000,
+                max_delta_ticks: 1000,
+                max_max: 1000,
+            });
+            sampler = sampler_out;
+            if *ENABLE_PERF {
+                log!("------");
+                log!(format!(
+                    "performance stats over {} sec \n{}",
+                    PERF_CONSUME_TIME / 1000 / 1000,
+                    metrics
+                        .into_iter()
+                        .map(|(line, has_warning)| if !has_warning {
+                            line
+                        } else {
+                            console::style(line).yellow().to_string()
+                        })
+                        .join("\n")
+                ));
+                log!("------");
+            }
         }
+        frame_count += 1;
         sampler.init_budget(FRAME_BUDGET_TICKS);
         let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
         let locks_id = sampler.start(SamplerMarks::Locks as u32);
@@ -421,24 +451,16 @@ fn main_thread() {
             continue;
         }
 
-        let now = Local::now();
-        let elapsed = now - last;
-        last = now;
-        let elapsed_micro = elapsed.num_milliseconds() * 1000;
-
         let update_rooms_id = sampler.start(SamplerMarks::Update as u32);
         cleanup_empty_rooms(&mut cont);
-        let mut updated_rooms = vec![];
         let mut spatial_indexes_by_room_id = HashMap::new();
-        for room in get_rooms_iter(&cont) {
-            let (spatial_indexes, room_clone, new_sampler) =
-                world::update_room(&mut prng, sampler, elapsed_micro, &room, &d_table, None);
+        for room in get_rooms_iter_mut(&mut cont) {
+            let (spatial_indexes, new_sampler) =
+                world::update_room(&mut prng, sampler, elapsed_micro, room, &d_table, None);
             sampler = new_sampler;
-            updated_rooms.push(room_clone);
             spatial_indexes_by_room_id.insert(room.id, spatial_indexes);
         }
-
-        update_rooms(&mut cont, updated_rooms);
+        reindex_rooms(&mut cont.rooms);
         if sampler.end_top(update_rooms_id) < 0 {
             shortcut_frame += 1;
             sampler.end(total_mark);
@@ -524,33 +546,6 @@ fn main_thread() {
         }
 
         sampler.end(total_mark);
-
-        sampler_consume_elapsed += elapsed_micro;
-        if sampler_consume_elapsed > PERF_CONSUME_TIME {
-            sampler_consume_elapsed = 0;
-            let (sampler_out, metrics) = sampler.consume(ConsumeOptions {
-                max_mean_ticks: 1000,
-                max_delta_ticks: 1000,
-                max_max: 1000,
-            });
-            sampler = sampler_out;
-            if *ENABLE_PERF {
-                log!("------");
-                log!(format!(
-                    "performance stats over {} sec \n{}",
-                    PERF_CONSUME_TIME / 1000 / 1000,
-                    metrics
-                        .into_iter()
-                        .map(|(line, has_warning)| if !has_warning {
-                            line
-                        } else {
-                            console::style(line).yellow().to_string()
-                        })
-                        .join("\n")
-                ));
-                log!("------");
-            }
-        }
 
         if sampler.budget <= 0 {
             over_budget_frame += 1;

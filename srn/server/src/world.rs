@@ -711,6 +711,7 @@ pub fn update_world(
     let update_interval = state.update_every_ticks as i64;
     let (mut curr_state, mut curr_sampler) = (state, sampler);
     while remaining >= update_interval {
+        let iter_mark = curr_sampler.start(SamplerMarks::UpdateWorldIter as u32);
         let pair = update_world_iter(
             curr_state,
             update_interval,
@@ -725,6 +726,7 @@ pub fn update_world(
         remaining -= update_interval;
         curr_state = pair.0;
         curr_sampler = pair.1;
+        curr_sampler.end(iter_mark);
     }
     curr_state.accumulated_not_updated_ticks = remaining as u32;
     (curr_state, curr_sampler)
@@ -2281,16 +2283,21 @@ pub fn update_room(
     mut prng: &mut Pcg64Mcg,
     mut sampler: Sampler,
     elapsed_micro: i64,
-    room: &Room,
+    room: &mut Room,
     d_table: &DialogueTable,
     external_caches: Option<&mut GameStateCaches>,
-) -> (SpatialIndexes, Room, Sampler) {
+) -> (SpatialIndexes, Sampler) {
     let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
     let mut spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
     sampler.end(spatial_indexes_id);
-    let mut caches_clone = external_caches
-        .as_ref()
-        .map_or(room.caches.clone(), |caches| (**caches).clone());
+    let caches_mark = sampler.start(SamplerMarks::UpdateCacheClone as u32);
+    let caches = if let Some(external_caches) = external_caches {
+        external_caches
+    } else {
+        &mut room.caches
+    };
+    sampler.end(caches_mark);
+    let update_full_mark = sampler.start(SamplerMarks::UpdateWorldFull as u32);
     let (new_state, mut sampler) = update_world(
         room.state.clone(),
         elapsed_micro,
@@ -2303,17 +2310,19 @@ pub fn update_room(
         &mut spatial_indexes,
         &mut prng,
         &d_table,
-        &mut caches_clone,
+        caches,
     );
-    let mut room = room.clone();
-    if let Some(external_cache) = external_caches {
-        *external_cache = caches_clone;
-    } else {
-        room.caches = caches_clone;
-    }
+    sampler.end(update_full_mark);
+    let update_room_caches_mark = sampler.start(SamplerMarks::UpdateRoomCaches as u32);
+    // if let Some(external_cache) = external_caches {
+    //     *external_cache = *caches;
+    // }
     room.state = new_state;
+    sampler.end(update_room_caches_mark);
 
+    let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
     spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
+    sampler.end(spatial_indexes_id);
 
     // by default, bot behavior is non-deterministic, unless we explicitly requested it in room setup
     let mut bot_prng = room.bots_seed.clone().map_or(get_prng(), |s| seed_prng(s));
@@ -2332,7 +2341,7 @@ pub fn update_room(
         let bots_mark = sampler.start(SamplerMarks::UpdateBots as u32);
         let bot_players_mark = sampler.start(SamplerMarks::UpdateBotsPlayers as u32);
         do_bot_players_actions(
-            &mut room,
+            room,
             &d_table,
             bot_action_elapsed as i64,
             &spatial_indexes,
@@ -2341,7 +2350,7 @@ pub fn update_room(
         sampler.end(bot_players_mark);
         let npcs_mark = sampler.start(SamplerMarks::UpdateBotsNPCs as u32);
         do_bot_npcs_actions(
-            &mut room,
+            room,
             bot_action_elapsed as i64,
             &spatial_indexes,
             &mut bot_prng,
@@ -2350,5 +2359,5 @@ pub fn update_room(
         sampler.end(bots_mark);
     }
 
-    (spatial_indexes, room, sampler)
+    (spatial_indexes, sampler)
 }

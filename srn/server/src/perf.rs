@@ -340,6 +340,10 @@ pub enum SamplerMarks {
     UpdateShipHistory = 52,
     EventsLocks = 53,
     EventsCreateRoom = 54,
+    UpdateCacheClone = 55,
+    UpdateWorldFull = 56,
+    UpdateWorldIter = 57,
+    UpdateRoomCaches = 58,
 }
 
 impl Display for SamplerMarks {

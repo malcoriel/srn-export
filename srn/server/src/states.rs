@@ -1,3 +1,4 @@
+use core::slice::IterMut;
 use std::collections::HashMap;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -56,6 +57,10 @@ pub fn select_room_mut<'a>(
 
 pub fn get_rooms_iter<'a>(cont: &'a RwLockWriteGuard<StateContainer>) -> Iter<'a, Room> {
     return cont.rooms.values.iter();
+}
+
+pub fn get_rooms_iter_mut<'a>(cont: &'a mut RwLockWriteGuard<StateContainer>) -> IterMut<'a, Room> {
+    return cont.rooms.values.iter_mut();
 }
 
 pub fn get_rooms_iter_read<'a>(cont: &'a RwLockReadGuard<StateContainer>) -> Iter<'a, Room> {
