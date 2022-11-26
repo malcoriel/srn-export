@@ -230,11 +230,16 @@ const Perf = {
     const end = `${measure}-end`;
     performance.mark(start);
     setTimeout(() => {
-      performance.mark(end);
-      performance.measure(measure, start, end);
-      performance.clearMarks(start);
-      performance.clearMarks(end);
-      performance.clearMeasures(measure);
+      try {
+        performance.mark(end);
+        performance.measure(measure, start, end);
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        performance.clearMarks(start);
+        performance.clearMarks(end);
+        performance.clearMeasures(measure);
+      }
     }, 0);
   },
 };
