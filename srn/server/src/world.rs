@@ -741,6 +741,7 @@ fn update_world_iter(
     d_table: &DialogueTable,
     caches: &mut GameStateCaches,
 ) -> (GameState, Sampler) {
+    // log!("update world iter");
     state.ticks += elapsed as u64;
     state.millis = (state.ticks as f64 / 1000.0) as u32;
     if state.mode != GameMode::Tutorial {

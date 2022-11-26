@@ -206,7 +206,7 @@ fn should_skip_pos(options: &&UpdateOptionsV2, pos_to_skip: &Vec2f64) -> bool {
     return false;
 }
 
-pub const REL_ORBIT_CACHE_KEY_PRECISION: f64 = 1.0e14;
+pub const REL_ORBIT_CACHE_KEY_PRECISION: f64 = 1.0e6;
 
 fn interpolate_planet_relative_movement(
     result: &mut Movement,
@@ -251,7 +251,12 @@ fn interpolate_planet_relative_movement(
         .anchor_distances
         .get(&planet_spec)
         .expect(format!("no anchor distance in cache for {:?}", planet_spec).as_str());
-    let phase_table = get_orbit_phase_table(rel_orbit_cache, &res_fixed, *radius_to_anchor);
+    let phase_table = get_orbit_phase_table(
+        rel_orbit_cache,
+        &res_fixed,
+        *radius_to_anchor,
+        "interpolation".to_string(),
+    );
     let result_idx = interpolation_hint_result.unwrap_or_else(|| {
         calculate_phase(&phase_table, &result_pos).expect("could not calculate phase hint")
     });
@@ -316,10 +321,16 @@ pub fn get_orbit_phase_table<'a, 'b>(
     rel_orbit_cache: &'a mut HashMap<u64, Vec<Vec2f64>>,
     movement_def: &'b Movement,
     orbit_radius: f64,
+    context: String,
 ) -> &'a mut Vec<Vec2f64> {
-    rel_orbit_cache
-        .entry(coerce_phase_table_cache_key(orbit_radius))
-        .or_insert_with(|| gen_rel_position_orbit_phase_table(&movement_def, orbit_radius))
+    let key = coerce_phase_table_cache_key(orbit_radius);
+    rel_orbit_cache.entry(key).or_insert_with(|| {
+        log!(format!(
+            "cache miss for orbit phase table key {} when {}",
+            key, context
+        ));
+        gen_rel_position_orbit_phase_table(&movement_def, orbit_radius)
+    })
 }
 
 pub fn get_rotation_phase_table<'a, 'b>(

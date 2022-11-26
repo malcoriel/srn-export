@@ -1,4 +1,4 @@
-import { swapGlobals, updateWorld, wasm, writeTmpJson } from '../util';
+import { getLoc0, swapGlobals, updateWorld, wasm, writeTmpJson } from '../util';
 
 describe('sample smoke test', () => {
   beforeAll(swapGlobals);

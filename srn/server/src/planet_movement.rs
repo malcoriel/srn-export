@@ -327,7 +327,12 @@ pub fn project_movement_relative_position(
     movement_mut: &mut Movement,
     specifier: ObjectSpecifier,
 ) {
-    let phase_table = get_orbit_phase_table(&mut caches.rel_orbit_cache, movement_mut, anchor_dist);
+    let phase_table = get_orbit_phase_table(
+        &mut caches.rel_orbit_cache,
+        movement_mut,
+        anchor_dist,
+        format!("project for {:?}", specifier),
+    );
     match movement_mut {
         Movement::RadialMonotonous {
             relative_position,

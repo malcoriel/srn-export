@@ -667,8 +667,12 @@ fn gen_state(
             let anchor_dist = *anchor_distances
                 .get(&planet_spec)
                 .expect(format!("No distance to anchor for {:?}", planet_spec).as_str());
-            let table =
-                get_orbit_phase_table(&mut caches.rel_orbit_cache, &planet.movement, anchor_dist);
+            let table = get_orbit_phase_table(
+                &mut caches.rel_orbit_cache,
+                &planet.movement,
+                anchor_dist,
+                format!("system gen for planet id {}", planet.id).to_string(),
+            );
             planet
                 .movement
                 .set_start_phase(prng.gen_range(0, table.len()) as u32);
