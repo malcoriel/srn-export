@@ -498,14 +498,14 @@ export class StateSyncer implements IStateSyncer {
     MAX_ALLOWED_CORRECTION_JUMP_CONST * 30; // sometimes we need to teleport, e.g. in case of an actual teleport
 
   private checkViolations(
-    prevState: GameState,
-    newState: GameState,
+    currState: GameState,
+    serverState: GameState,
     elapsedTicks: number
   ): SyncerViolation[] {
     const res = [];
-    const checkableObjects = this.enumerateCheckableObjects(newState);
+    const checkableObjects = this.enumerateCheckableObjects(serverState);
     for (const { spec, obj } of checkableObjects) {
-      const oldObjInstance = this.findOldVersionOfObject(prevState, spec);
+      const oldObjInstance = this.findOldVersionOfObject(currState, spec);
       if (oldObjInstance) {
         const oldObj = oldObjInstance.object;
         if (oldObj) {
@@ -519,12 +519,12 @@ export class StateSyncer implements IStateSyncer {
         }
       }
     }
-    if (prevState.ticks > newState.ticks) {
+    if (currState.ticks > serverState.ticks) {
       res.push({
         tag: 'TimeRollback' as const,
-        from: prevState.ticks,
-        to: newState.ticks,
-        diff: prevState.ticks - newState.ticks,
+        from: currState.ticks,
+        to: serverState.ticks,
+        diff: currState.ticks - serverState.ticks,
       });
     }
     return res;
@@ -544,10 +544,15 @@ export class StateSyncer implements IStateSyncer {
     state: GameState
   ): { spec: ObjectSpecifier; obj: any }[] {
     const res = [];
-    const ships = state.locations[0].ships.map((s) => ({
-      spec: { tag: 'Ship', id: s.id },
-      obj: s,
-    }));
+    const ships = state.locations[0].ships
+      .map((s) => {
+        if (!s.docked_at) return null;
+        return {
+          spec: { tag: 'Ship', id: s.id },
+          obj: s,
+        };
+      })
+      .filter((s) => !!s);
     res.push(...ships);
     return res as { spec: ObjectSpecifier; obj: any }[];
   }

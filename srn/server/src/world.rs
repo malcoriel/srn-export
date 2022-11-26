@@ -988,13 +988,14 @@ pub fn update_location(
     state.locations[location_idx] = location;
     sampler = sampler_out;
     sampler.end(update_radials_id);
-
+    let update_docked_ships_id = sampler.start(SamplerMarks::UpdateDockedShipsPosition as u32);
+    // strictly speaking, indexes are outdated here because we have just updated the planet rotation, but we'll deliberately use 'previous frame location' as good enough
+    update_docked_ships_position(&mut state.locations[location_idx], indexes);
+    sampler.end(update_docked_ships_id);
     let update_ships_navigation_id = sampler.start(SamplerMarks::UpdateShipsNavigation as u32);
-    let my_ship_id = find_my_ship(&state, state.my_id).map(|s| s.id);
     state.locations[location_idx].ships = update_ships_navigation(
         &state.locations[location_idx].ships,
         elapsed,
-        my_ship_id,
         client,
         update_options,
         indexes,
@@ -1124,6 +1125,17 @@ pub fn update_location(
         sampler.end(wreck_decay_id);
     }
     sampler
+}
+
+fn update_docked_ships_position(loc: &mut Location, indexes: &GameStateIndexes) {
+    for ship in loc.ships.iter_mut() {
+        if let Some(docked_at) = ship.docked_at {
+            if let Some(planet) = indexes.planets_by_id.get(&docked_at) {
+                ship.x = planet.spatial.position.x;
+                ship.y = planet.spatial.position.y;
+            }
+        }
+    }
 }
 
 fn update_wreck_decay(state: &mut GameState, location_idx: usize, elapsed_ticks: i64) {
@@ -1912,7 +1924,6 @@ pub fn spawn_ship<'a>(
 pub fn update_ships_navigation(
     ships: &Vec<Ship>,
     elapsed_micro: i64,
-    _my_ship_id: Option<Uuid>,
     _client: bool,
     update_options: &UpdateOptions,
     indexes: &GameStateIndexes,
@@ -1945,13 +1956,6 @@ pub fn update_ships_navigation(
     }));
 
     for mut ship in ships.clone() {
-        // impossible to optimize yet, simply because the
-        // movement by trajectory is coupled with trajectory building,
-        // so this is required for smooth client movement of other ships
-        // if client && ship.id != my_ship_id.unwrap_or(Uuid::default()) {
-        //     res.push(ship);
-        //     continue;
-        // }
         if docking_ship_ids.contains(&ship.id)
             || undocking_ship_ids.contains(&ship.id)
             || !update_options.limit_area.contains_vec(&Vec2f64 {

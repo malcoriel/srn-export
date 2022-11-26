@@ -348,6 +348,7 @@ pub enum SamplerMarks {
     RestoreAbsolutePositionTier2 = 60,
     RestoreAbsolutePositionTier3 = 61,
     GenRadialBodies = 62,
+    UpdateDockedShipsPosition = 63,
 }
 
 impl Display for SamplerMarks {
