@@ -62,7 +62,7 @@ use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, Dialogu
 use crate::indexing::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
 };
-use crate::perf::Sampler;
+use crate::perf::{ConsumeOptions, Sampler};
 use crate::rooms_api::{cleanup_empty_rooms, find_room_state_id_by_player_id};
 use crate::sandbox::mutate_state;
 use crate::states::{
@@ -522,7 +522,11 @@ fn main_thread() {
         sampler_consume_elapsed += elapsed_micro;
         if sampler_consume_elapsed > PERF_CONSUME_TIME {
             sampler_consume_elapsed = 0;
-            let (sampler_out, metrics) = sampler.consume();
+            let (sampler_out, metrics) = sampler.consume(ConsumeOptions {
+                max_mean_ticks: 1000,
+                max_delta_ticks: 1000,
+                max_max: 1000,
+            });
             sampler = sampler_out;
             if *ENABLE_PERF {
                 log!("------");

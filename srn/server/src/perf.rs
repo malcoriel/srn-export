@@ -25,6 +25,13 @@ pub struct Sampler {
 // over PERF_CONSUME_TIME
 pub const ENTRY_CAPACITY: usize = 1024 * 8 * 8;
 
+#[derive(Clone, Default)]
+pub struct ConsumeOptions {
+    pub max_mean_ticks: i32,
+    pub max_delta_ticks: i32,
+    pub max_max: i32,
+}
+
 impl Sampler {
     pub fn new(labels: Vec<String>) -> Sampler {
         let mut buckets = HashMap::new();
@@ -67,7 +74,7 @@ impl Sampler {
         }
     }
 
-    pub fn consume(mut self) -> (Self, Vec<String>) {
+    pub fn consume(mut self, options: ConsumeOptions) -> (Self, Vec<String>) {
         let mut result = vec![];
         if self.labels.len() != self.buckets.len() {
             warn!(format!(
@@ -87,18 +94,31 @@ impl Sampler {
                     .map(|v| v as f64)
                     .collect::<Vec<_>>();
                 if bucket.len() > 0 {
+                    let mean = bucket.iter().sum::<u64>() as f64 / bucket.len() as f64;
+                    let std_dev = if f64bucket.len() >= 2 {
+                        standard_deviation(&f64bucket, None)
+                    } else {
+                        0.0
+                    };
+                    let max = *max(bucket).unwrap_or(&0);
+                    let min = *min(bucket).unwrap_or(&0);
+                    let mut warning_sign = "";
+                    if options.max_mean_ticks > 0 && mean as i32 > options.max_mean_ticks {
+                        warning_sign = "!mean "; 
+                    } else if options.max_max > 0 && max as i32 > options.max_max {
+                        warning_sign = "!max ";
+                    } else if options.max_delta_ticks > 0 && std_dev as i32 > options.max_delta_ticks {
+                        warning_sign = "!delta ";
+                    }
                     result.push(format!(
-                        "{}(µs):n={} mn={:.2} σ={:.2} max={:.2} min={:.2}",
+                        "{}{}(µs):n={} mn={:.2} σ={:.2} max={:.2} min={:.2}",
+                        warning_sign,
                         &self.labels[i],
                         bucket.len(),
-                        bucket.iter().sum::<u64>() as f64 / bucket.len() as f64,
-                        if f64bucket.len() >= 2 {
-                            standard_deviation(&f64bucket, None)
-                        } else {
-                            0.0
-                        },
-                        max(bucket).unwrap_or(&0),
-                        min(bucket).unwrap_or(&0),
+                        mean,
+                        std_dev,
+                        max,
+                        min,
                     ));
                 }
             }

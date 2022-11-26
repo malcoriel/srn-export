@@ -261,7 +261,7 @@ pub fn parse_state(serialized_args: &str) -> String {
 use crate::api_struct::Room;
 use crate::dialogue::{parse_dialogue_script_from_file, Dialogue, DialogueState, DialogueTable};
 use crate::indexing::{find_my_ship_index, GameStateCaches, ObjectSpecifier};
-use crate::perf::{Sampler, SamplerMarks};
+use crate::perf::{ConsumeOptions, Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
 use crate::world::{GameMode, GameState, UpdateOptions, UpdateOptionsV2, AABB};
 use mut_static::MutStatic;
@@ -374,7 +374,11 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
 #[wasm_bindgen]
 pub fn flush_sampler_stats() {
     if *ENABLE_PERF {
-        let (sampler_out, metrics) = global_sampler.write().unwrap().clone().consume();
+        let (sampler_out, metrics) = global_sampler
+            .write()
+            .unwrap()
+            .clone()
+            .consume(ConsumeOptions::default());
         mem::replace(global_sampler.write().unwrap().deref_mut(), sampler_out);
         log!("------");
         log!(format!(
