@@ -1495,7 +1495,6 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
     match event {
         // list of the events that should only be handled inside world events, and not
         // as global events
-        GameEvent::ShipDocked { .. } => {}
         GameEvent::DialogueTriggerRequest { .. } => {}
         GameEvent::TradeDialogueTriggerRequest { .. } => {}
         GameEvent::PirateSpawn { .. } => {}
@@ -1503,6 +1502,7 @@ pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
         // something on them. typically, server just does retransmitting them to the client ahead of the normal update
         GameEvent::ShipSpawned { .. } => fire_event(event),
         GameEvent::ShipDied { .. } => fire_event(event),
+        GameEvent::ShipDocked { .. } => fire_event(event),
         GameEvent::SandboxCommandRequest { .. } => fire_event(event),
         _ => fire_event(event),
     }
@@ -2061,13 +2061,21 @@ pub fn dock_ship(
         ship.trajectory = vec![];
         ship.clone()
     };
+    let player_id = player_idx.map(|idx| state.players[idx].id);
+    let player_name = player_idx.map(|idx| state.players[idx].name.clone());
+    let planet_name = body.get_name().clone();
     fire_saved_event(
         state,
         GameEvent::ShipDocked {
             ship: ship_clone,
             planet: PlanetV2::from(body),
-            player_id: player_idx.map(|idx| state.players[idx].id),
+            player_id: player_id,
             state_id: state.id,
+            text_representation: if let Some(player_name) = player_name {
+                format!("Player {} docked at {}", player_name, planet_name)
+            } else {
+                "".to_string()
+            },
         },
     );
 }

@@ -7,7 +7,7 @@ export type ChatMessage = {
   message: string;
 };
 
-type ChatMessageFromServer = {
+export type ChatMessageFromServer = {
   channel: string;
   message: ChatMessage;
 };
@@ -38,12 +38,18 @@ export class ChatState extends EventEmitter {
     this.id = uuid.v4();
     console.log(`created CS ${this.id}`);
     this.connected = false;
-    this.messages = { global: [], inGame: [] };
+    this.messages = { global: [], inGame: [], events: [] };
   }
 
   tryConnect(playerName: string) {
     if (this.connected) return;
     this.connect(playerName);
+  }
+
+  onMessage(parsedMsg: ChatMessageFromServer) {
+    const channel = parsedMsg.channel;
+    this.messages[channel].push(parsedMsg.message);
+    this.emit('message', this.messages);
   }
 
   connect(playerName: string) {
@@ -52,9 +58,7 @@ export class ChatState extends EventEmitter {
     this.socket.onmessage = (message) => {
       try {
         const parsedMsg = JSON.parse(message.data) as ChatMessageFromServer;
-        const channel = parsedMsg.channel;
-        this.messages[channel].push(parsedMsg.message);
-        this.emit('message', this.messages);
+        this.onMessage(parsedMsg);
       } catch (e) {
         console.warn(e);
       }

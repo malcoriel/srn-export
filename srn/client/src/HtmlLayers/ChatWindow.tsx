@@ -21,19 +21,23 @@ export const ChatWindow = () => {
       thickness={10}
       storeKey="chatWindow"
       minimizedClassname="chat-window-minimized"
-      minimized={<Chat channelName="inGame" />}
+      minimized={<Chat channelName="events" />}
     >
       <div className="chat-window">
         <Tabs className="tabs">
           <TabList className="tabs-header">
             <Tab className="tab">In-Game chat</Tab>
             <Tab className="tab">Global chat</Tab>
+            <Tab className="tab">Events</Tab>
           </TabList>
           <TabPanel className="tabs-panel">
             <Chat channelName="inGame" />
           </TabPanel>
           <TabPanel className="tabs-panel">
             <Chat channelName="global" />
+          </TabPanel>
+          <TabPanel className="tabs-panel">
+            <Chat channelName="events" />
           </TabPanel>
         </Tabs>
       </div>

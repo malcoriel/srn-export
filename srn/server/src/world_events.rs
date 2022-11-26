@@ -1,21 +1,21 @@
-use std::collections::HashMap;
-use crate::{dialogue};
+use crate::dialogue;
 use crate::dialogue::DialogueStates;
+use crate::indexing::ObjectSpecifier;
 use crate::pirate_defence;
-use crate::indexing::{ObjectSpecifier};
-use crate::world::{ PlanetV2, Player, Ship};
+use crate::world::{PlanetV2, Player, Ship};
 use crate::{cargo_rush, tutorial, world, GameMode, Vec2f64};
 use dialogue::DialogueTable;
 use serde_derive::{Deserialize, Serialize};
+use std::collections::HashMap;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 use world::GameState;
 
-use crate::sandbox;
-use rand_pcg::Pcg64Mcg;
-use rand::prelude::*;
 use crate::indexing::{find_ship_index, find_ship_mut};
-use crate::sandbox::{SandboxCommand};
+use crate::sandbox;
+use crate::sandbox::SandboxCommand;
+use rand::prelude::*;
+use rand_pcg::Pcg64Mcg;
 
 pub fn world_update_handle_event(
     state: &mut GameState,
@@ -89,9 +89,11 @@ pub fn world_update_handle_event(
         GameEvent::CargoQuestTriggerRequest { .. } => {
             // sever-only, do nothing - only for tutorial purposes
         }
-        GameEvent::TradeDialogueTriggerRequest { ship_id, planet_id, .. } => {
+        GameEvent::TradeDialogueTriggerRequest {
+            ship_id, planet_id, ..
+        } => {
             if let Some(ship) = find_ship_mut(state, ship_id) {
-                ship.trading_with = Some(ObjectSpecifier::Planet { id: planet_id})
+                ship.trading_with = Some(ObjectSpecifier::Planet { id: planet_id })
             }
         }
         GameEvent::CreateRoomRequest { .. } => {
@@ -117,6 +119,7 @@ pub enum GameEvent {
         ship: Ship,
         planet: PlanetV2,
         player_id: Option<Uuid>,
+        text_representation: String,
     },
     ShipUndocked {
         state_id: Uuid,
@@ -172,7 +175,7 @@ pub enum GameEvent {
     },
     SandboxCommandRequest {
         player_id: Uuid,
-        command: SandboxCommand
+        command: SandboxCommand,
     },
 }
 

@@ -42,6 +42,7 @@ import {
   resetActiveSyncActions,
 } from './utils/ShipControls';
 import Color from 'color';
+import { ChatState } from './ChatState';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -132,7 +133,6 @@ const normalLog = (...args: any[]) => console.log(...args);
 const normalWarn = (...args: any[]) => console.warn(...args);
 const normalErr = (...args: any[]) => console.error(...args);
 export const DISPLAY_BREADCRUMBS_LAST_TICKS = 5 * 1000 * 1000;
-
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -689,6 +689,16 @@ export default class NetState extends EventEmitter {
       } else if (messageCode === ServerToClientMessageCode.XCastGameEvent) {
         const event = JSON.parse(data).value;
         this.emit('gameEvent', event);
+        const chat = ChatState.get();
+        if (chat && event.text_representation) {
+          chat.onMessage({
+            channel: 'events',
+            message: {
+              name: 'Event:',
+              message: event.text_representation,
+            },
+          });
+        }
       } else if (messageCode === ServerToClientMessageCode.LeaveRoom) {
         normalLog('Received disconnect request from server');
         this.disconnectAndDestroy();
