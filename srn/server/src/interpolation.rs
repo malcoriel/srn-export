@@ -7,6 +7,7 @@ use crate::vec2::{Precision, Vec2f64};
 use crate::world::{
     lerp, GameState, Location, Movement, PlanetV2, RotationMovement, Ship, UpdateOptionsV2, AABB,
 };
+use crate::{Sampler, SamplerMarks};
 use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::mem;
@@ -19,6 +20,7 @@ pub fn interpolate_states(
     value: f64,
     caches: &mut GameStateCaches,
     options: UpdateOptionsV2,
+    sampler: &mut Sampler,
 ) -> GameState {
     let mut result = state_a.clone();
     let result_indexes = index_state(&state_a);
@@ -42,6 +44,7 @@ pub fn interpolate_states(
                 &target_indexes,
                 state_a.ticks,
                 state_b.ticks,
+                sampler,
             );
         }
     }
@@ -67,6 +70,7 @@ fn interpolate_location(
     target_indexes: &GameStateIndexes,
     result_ticks: u64,
     target_ticks: u64,
+    sampler: &mut Sampler,
 ) {
     let ships_by_id_target = index_ships_by_id(target);
     for i in 0..result.ships.len() {
@@ -133,6 +137,7 @@ fn interpolate_location(
                 .iter_mut()
                 .map(|p| Box::new(p as &mut dyn IBodyV2))
                 .collect(),
+            sampler,
         )
     }
 }
@@ -169,8 +174,12 @@ fn interpolate_asteroid_belt_rotation_movement(
     return table[lerped_idx];
 }
 
-pub fn restore_absolute_positions(root: Box<&dyn IBodyV2>, mut bodies: Vec<Box<&mut dyn IBodyV2>>) {
-    let mut anchor_pos_by_id = HashMap::new();
+pub fn restore_absolute_positions(
+    root: Box<&dyn IBodyV2>,
+    mut bodies: Vec<Box<&mut dyn IBodyV2>>,
+    _sampler: &mut Sampler,
+) {
+    let mut anchor_pos_by_id = HashMap::with_capacity(bodies.len());
     anchor_pos_by_id.insert(root.get_id(), root.get_spatial().position.clone());
     for tier in 1..3 {
         for i in 0..bodies.len() {
@@ -255,7 +264,7 @@ fn interpolate_planet_relative_movement(
         rel_orbit_cache,
         &res_fixed,
         *radius_to_anchor,
-        "interpolation".to_string(),
+        Some("interpolation".to_string()),
     );
     let result_idx = interpolation_hint_result.unwrap_or_else(|| {
         calculate_phase(&phase_table, &result_pos).expect("could not calculate phase hint")
@@ -321,13 +330,14 @@ pub fn get_orbit_phase_table<'a, 'b>(
     rel_orbit_cache: &'a mut HashMap<u64, Vec<Vec2f64>>,
     movement_def: &'b Movement,
     orbit_radius: f64,
-    context: String,
+    context: Option<String>,
 ) -> &'a mut Vec<Vec2f64> {
     let key = coerce_phase_table_cache_key(orbit_radius);
     rel_orbit_cache.entry(key).or_insert_with(|| {
         log!(format!(
-            "cache miss for orbit phase table key {} when {}",
-            key, context
+            "cache miss for orbit phase table key {} when doing {}",
+            key,
+            context.unwrap_or("<unknown>".to_string())
         ));
         gen_rel_position_orbit_phase_table(&movement_def, orbit_radius)
     })

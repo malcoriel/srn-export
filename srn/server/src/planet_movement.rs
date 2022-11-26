@@ -331,7 +331,8 @@ pub fn project_movement_relative_position(
         &mut caches.rel_orbit_cache,
         movement_mut,
         anchor_dist,
-        format!("project for {:?}", specifier),
+        None,
+        // format!("project for {:?}", specifier),
     );
     match movement_mut {
         Movement::RadialMonotonous {
@@ -375,9 +376,10 @@ pub fn update_radial_moving_entities(
         bodies,
     );
     if let Some(star_clone) = location.star.clone() {
-        let mark = sampler.start(SamplerMarks::RestoreAbsolutePosition as u32);
         let star_root: Box<&dyn IBodyV2> = Box::new(&star_clone as &dyn IBodyV2);
-        restore_absolute_positions(star_root, get_radial_bodies_mut(&mut res));
+        let radial_bodies_updated = get_radial_bodies_mut(&mut res);
+        let mark = sampler.start(SamplerMarks::RestoreAbsolutePosition as u32);
+        restore_absolute_positions(star_root, radial_bodies_updated, &mut sampler);
         sampler.end(mark);
         let mark = sampler.start(SamplerMarks::UpdateSelfRotatingMovement as u32);
         let bodies = get_rotating_bodies_mut(&mut res);
@@ -438,7 +440,8 @@ pub fn project_rotation(
 }
 
 pub fn get_radial_bodies_mut(res: &mut Location) -> Vec<Box<&mut dyn IBodyV2>> {
-    let mut bodies: Vec<Box<&mut dyn IBodyV2>> = vec![];
+    let mut bodies: Vec<Box<&mut dyn IBodyV2>> =
+        Vec::with_capacity(res.planets.len() + res.asteroids.len());
     let mut planet_bodies = res
         .planets
         .iter_mut()

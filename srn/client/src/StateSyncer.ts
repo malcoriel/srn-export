@@ -393,9 +393,9 @@ export class StateSyncer implements IStateSyncer {
       //   `frame dilation due to client too much ahead, ${clientAheadTicks} > ${MAX_ALLOWED_CLIENT_AHEAD_TICKS} ticks`
       // );
       targetDiff *= CLIENT_AHEAD_DILATION_FACTOR;
-      this.log.push(
-        `client update dilate, ${event.elapsedTicks} -> ${targetDiff}`
-      );
+      // this.log.push(
+      //   `client update dilate, ${event.elapsedTicks} -> ${targetDiff}`
+      // );
     }
 
     Perf.usingMeasure(Measure.SyncedStateUpdate, () => {

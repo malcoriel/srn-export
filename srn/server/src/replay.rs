@@ -392,8 +392,15 @@ impl ReplayDiffed {
     ) -> Result<(PrevState, NextState, CurrState), ReplayError> {
         let prev = self.get_state_at(prev_ticks, sampler)?;
         let next = self.get_state_at(next_ticks, sampler)?;
-        let curr =
-            interpolation::interpolate_states(&prev, &next, value, caches, UpdateOptionsV2::new());
+        let mut empty_sampler = Sampler::empty();
+        let curr = interpolation::interpolate_states(
+            &prev,
+            &next,
+            value,
+            caches,
+            UpdateOptionsV2::new(),
+            sampler.as_mut().unwrap_or(&mut empty_sampler),
+        );
         Ok((prev, next, curr))
     }
 

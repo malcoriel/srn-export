@@ -424,7 +424,7 @@ fn make_cargo_rush_state(
     caches: &mut GameStateCaches,
 ) -> GameState {
     let mut default_opts = GenStateOpts::default();
-    default_opts.system_count = 5;
+    default_opts.system_count = 2;
     let mut state = gen_state(seed, opts.unwrap_or(default_opts), &mut prng, caches);
     init_all_planets_market(&mut state);
     state.id = prng_id(&mut prng);
@@ -671,7 +671,7 @@ fn gen_state(
                 &mut caches.rel_orbit_cache,
                 &planet.movement,
                 anchor_dist,
-                format!("system gen for planet id {}", planet.id).to_string(),
+                Some(format!("system gen for planet id {}", planet.id).to_string()),
             );
             planet
                 .movement

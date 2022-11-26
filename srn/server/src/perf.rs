@@ -344,6 +344,10 @@ pub enum SamplerMarks {
     UpdateWorldFull = 56,
     UpdateWorldIter = 57,
     UpdateRoomCaches = 58,
+    RestoreAbsolutePositionTier1 = 59,
+    RestoreAbsolutePositionTier2 = 60,
+    RestoreAbsolutePositionTier3 = 61,
+    GenRadialBodies = 62,
 }
 
 impl Display for SamplerMarks {
