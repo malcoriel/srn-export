@@ -30,6 +30,7 @@ pub fn world_update_handle_action(
     state: &mut GameState,
     action: Action,
     prng: &mut Pcg64Mcg,
+    // potentially can be optimized further to avoid cloning here
     state_clone: &GameState,
     d_table: &DialogueTable,
     _happened_at_ticks: Option<u64>,

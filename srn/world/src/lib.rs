@@ -376,11 +376,13 @@ pub fn flush_sampler_stats() {
     if *ENABLE_PERF {
         let (sampler_out, metrics) = global_sampler.write().unwrap().clone().consume();
         mem::replace(global_sampler.write().unwrap().deref_mut(), sampler_out);
+        log!("------");
         log!(format!(
             "performance stats over {} sec \n{}",
             PERF_CONSUME_TIME_MS / 1000 / 1000,
             metrics.join("\n")
         ));
+        log!("------");
     }
 }
 

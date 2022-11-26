@@ -1,17 +1,17 @@
 [package]
 name = "world"
 version = "0.8.6"
-authors = [ "Valeriy Kuzmin <malcoriel@gmail.com>" ]
+authors = ["Valeriy Kuzmin <malcoriel@gmail.com>"]
 edition = "2018"
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = [ "-Oz", "--enable-mutable-globals" ]
+wasm-opt = ["-Oz", "--enable-mutable-globals"]
 
 [lib]
-crate-type = [ "cdylib", "rlib" ]
+crate-type = ["cdylib", "rlib"]
 
 [features]
-default = [ "console_error_panic_hook" ]
+default = ["console_error_panic_hook"]
 
 [dependencies]
 lazy_static = "1.4.0"
@@ -35,37 +35,37 @@ json-patch = "0.2.4"
 rand_pcg = "0.1.2"
 serde_path_to_error = "0.1"
 
-  [dependencies.treediff]
-  version = "4.0.2"
-  features = [ "with-serde-json" ]
+[dependencies.treediff]
+version = "4.0.2"
+features = ["with-serde-json"]
 
-  [dependencies.typescript-definitions]
-  version = "0.1.10"
-  features = [ "type-guards" ]
+[dependencies.typescript-definitions]
+version = "0.1.10"
+features = ["type-guards"]
 
-  [dependencies.uuid]
-  version = "0.8.1"
-  features = [ "serde", "wasm-bindgen" ]
+[dependencies.uuid]
+version = "0.8.1"
+features = ["serde", "wasm-bindgen"]
 
-  [dependencies.console_error_panic_hook]
-  version = "0.1.6"
-  optional = true
+[dependencies.console_error_panic_hook]
+version = "0.1.6"
+optional = true
 
-  [dependencies.wee_alloc]
-  version = "0.4.5"
-  optional = true
+[dependencies.wee_alloc]
+version = "0.4.5"
+optional = true
 
-  [dependencies.rand]
-  version = "0.6.5"
-  features = [ "wasm-bindgen" ]
+[dependencies.rand]
+version = "0.6.5"
+features = ["wasm-bindgen"]
 
-  [dependencies.chrono]
-  version = "0.4.19"
-  features = [ "wasmbind" ]
+[dependencies.chrono]
+version = "0.4.19"
+features = ["wasmbind"]
 
-  [dependencies.getrandom]
-  version = "0.2.2"
-  features = [ "js" ]
+[dependencies.getrandom]
+version = "0.2.2"
+features = ["js"]
 
 [target.wasm32-unknown-unknown.dependencies]
 wasm-bindgen = "0.2.71"

@@ -290,34 +290,34 @@ pub fn do_bot_npcs_actions(
     spatial_indexes: &SpatialIndexes,
     _prng: &mut Pcg64Mcg,
 ) {
-    let mut ship_updates: HashMap<Uuid, (Vec<Action>, ShipIdx)> = HashMap::new();
+    let mut ship_updates: HashMap<Uuid, (Vec<Action>, ShipIdx, Option<Bot>)> = HashMap::new();
 
     for i in 0..room.state.locations.len() {
-        let room_state_clone = room.state.clone();
+        let room_state_read = &room.state;
         let ship_len = room.state.locations[i].ships.len();
-        let loc = &mut room.state.locations[i];
+        let loc = &room.state.locations[i];
         for j in 0..ship_len {
             let ship_idx = ShipIdx {
                 location_idx: i,
                 ship_idx: j,
             };
-            let ship = &mut loc.ships[j];
+            let ship = &loc.ships[j];
             if ship.npc.is_some() {
                 let (npc, bot_acts) = npc_act(
                     &ship.clone(),
-                    &room_state_clone,
+                    room_state_read,
                     elapsed_micro,
                     &ship_idx,
                     spatial_indexes,
                 );
-                ship.npc = npc;
-                ship_updates.insert(ship.id, (bot_acts, ship_idx));
+                ship_updates.insert(ship.id, (bot_acts, ship_idx, npc));
             }
         }
     }
 
-    for (_ship_id, (acts, _idx)) in ship_updates.into_iter() {
+    for (_ship_id, (acts, idx, npc_update)) in ship_updates.into_iter() {
         for act in acts {
+            room.state.locations[idx.location_idx].ships[idx.ship_idx].npc = npc_update.clone();
             room.state.player_actions.push_back((act, None, None));
         }
     }

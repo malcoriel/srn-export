@@ -525,11 +525,13 @@ fn main_thread() {
             let (sampler_out, metrics) = sampler.consume();
             sampler = sampler_out;
             if *ENABLE_PERF {
+                log!("------");
                 log!(format!(
                     "performance stats over {} sec \n{}",
                     PERF_CONSUME_TIME / 1000 / 1000,
                     metrics.join("\n")
                 ));
+                log!("------");
             }
         }
 
