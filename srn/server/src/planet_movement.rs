@@ -369,8 +369,8 @@ pub fn update_radial_moving_entities(
         caches,
         bodies,
     );
-    let mark = sampler.start(SamplerMarks::RestoreAbsolutePosition as u32);
     if let Some(star_clone) = location.star.clone() {
+        let mark = sampler.start(SamplerMarks::RestoreAbsolutePosition as u32);
         let star_root: Box<&dyn IBodyV2> = Box::new(&star_clone as &dyn IBodyV2);
         restore_absolute_positions(star_root, get_radial_bodies_mut(&mut res));
         sampler.end(mark);

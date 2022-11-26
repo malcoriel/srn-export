@@ -384,7 +384,7 @@ pub fn flush_sampler_stats() {
         log!(format!(
             "performance stats over {} sec \n{}",
             PERF_CONSUME_TIME_MS / 1000 / 1000,
-            metrics.join("\n")
+            metrics.into_iter().map(|m| m.0).collect::<Vec<_>>().join("\n")
         ));
         log!("------");
     }

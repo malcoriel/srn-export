@@ -4,19 +4,18 @@ use std::sync::{mpsc, Arc, Mutex, RwLock};
 use std::sync::{MutexGuard, RwLockWriteGuard};
 
 use crate::api_struct::AiTrait;
+use crate::indexing::ObjectSpecifier;
 use crate::world_events::GameEvent;
-use crate::indexing::{ObjectSpecifier};
 use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 
-use rand_pcg::Pcg64Mcg;
 use rand::prelude::*;
+use rand_pcg::Pcg64Mcg;
 use uuid::Uuid;
 
 use crate::abilities::*;
-use crate::dialogue::DialogueTable;
 use crate::dialogue::Dialogue;
-use crate::get_prng;
+use crate::dialogue::DialogueTable;
 use crate::perf::Sampler;
 use crate::rooms_api::create_room_impl;
 use crate::states::StateContainer;
@@ -25,6 +24,7 @@ use crate::world;
 use crate::world::{spawn_ship, GameMode, GameState, Player};
 use crate::xcast::XCast;
 use crate::{cargo_rush, indexing, pirate_defence, tutorial};
+use crate::{get_prng, SamplerMarks};
 
 lazy_static! {
     pub static ref EVENTS: (
@@ -39,7 +39,8 @@ lazy_static! {
 pub fn handle_events(
     receiver: &mut Receiver<GameEvent>,
     cont: &mut RwLockWriteGuard<StateContainer>,
-) -> Vec<(Uuid, Option<Dialogue>)> {
+    mut sampler: Sampler,
+) -> Sampler {
     let mut prng = get_prng();
 
     loop {
@@ -74,7 +75,7 @@ pub fn handle_events(
                             fire_event(GameEvent::DialogueTriggerRequest {
                                 dialogue_name: "tutorial_start".to_owned(),
                                 player_id,
-                                target: None
+                                target: None,
                             });
                         }
                     }
@@ -143,7 +144,9 @@ pub fn handle_events(
                         room_id,
                         bots_seed,
                     } => {
+                        let mark = sampler.start(SamplerMarks::EventsCreateRoom as u32);
                         create_room_impl(cont, &mode, room_id, bots_seed);
+                        sampler.end(mark);
                     }
                     GameEvent::PirateSpawn { .. } => {
                         warn!(
@@ -163,7 +166,7 @@ pub fn handle_events(
             }
         }
     }
-    vec![]
+    sampler
 }
 
 pub fn fire_event(ev: GameEvent) {

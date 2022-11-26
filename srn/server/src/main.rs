@@ -380,6 +380,15 @@ fn main_thread() {
         marks_holder.push(mark.to_string());
     }
     let mut sampler = Sampler::new(marks_holder);
+    sampler
+        .ignore_warning_for_marks
+        .insert(SamplerMarks::MainTotal as u32);
+    sampler
+        .ignore_warning_for_marks
+        .insert(SamplerMarks::Update as u32);
+    sampler
+        .ignore_warning_for_marks
+        .insert(SamplerMarks::FrameBudgetTicks as u32);
     let mut sampler_consume_elapsed = 0;
     let mut bot_action_elapsed = 0;
     let mut events_elapsed = 0;
@@ -469,19 +478,16 @@ fn main_thread() {
         }
 
         if events_elapsed > EVENT_TRIGGER_TIME {
-            let events_mark = sampler.start(SamplerMarks::Events as u32);
+            let event_locks_mark = sampler.start(SamplerMarks::EventsLocks as u32);
             let receiver = &mut server_events::EVENTS.1.lock().unwrap();
-            let res = server_events::handle_events(receiver, &mut cont);
-            for (client_id, dialogue) in res {
-                let corresponding_state_id = get_state_id_cont_mut(&mut cont, client_id);
-                corresponding_state_id.map(|corresponding_state_id| {
-                    main_ws_server::unicast_dialogue_state(
-                        client_id,
-                        dialogue,
-                        corresponding_state_id,
-                    )
-                });
+            if sampler.end_top(event_locks_mark) < 0 {
+                shortcut_frame += 1;
+                sampler.end(total_mark);
+                continue;
             }
+            let events_mark = sampler.start(SamplerMarks::Events as u32);
+            let sampler_new = server_events::handle_events(receiver, &mut cont, sampler);
+            sampler = sampler_new;
             if sampler.end_top(events_mark) < 0 {
                 shortcut_frame += 1;
                 sampler.end(total_mark);
@@ -533,7 +539,14 @@ fn main_thread() {
                 log!(format!(
                     "performance stats over {} sec \n{}",
                     PERF_CONSUME_TIME / 1000 / 1000,
-                    metrics.join("\n")
+                    metrics
+                        .into_iter()
+                        .map(|(line, has_warning)| if !has_warning {
+                            line
+                        } else {
+                            console::style(line).yellow().to_string()
+                        })
+                        .join("\n")
                 ));
                 log!("------");
             }

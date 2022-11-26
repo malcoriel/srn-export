@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
@@ -14,6 +14,7 @@ pub struct Sampler {
     buckets: HashMap<u32, Vec<u64>>,
     labels: Vec<String>,
     marks: HashMap<Uuid, (u32, DateTime<Local>)>,
+    pub ignore_warning_for_marks: HashSet<u32>,
     empty: bool,
     initial_budget: i32,
     pub budget: i32,
@@ -41,6 +42,7 @@ impl Sampler {
             labels,
             buckets,
             marks: HashMap::with_capacity(ENTRY_CAPACITY),
+            ignore_warning_for_marks: Default::default(),
             empty: false,
             initial_budget: 0,
         }
@@ -52,6 +54,7 @@ impl Sampler {
             labels: vec![],
             buckets: HashMap::new(),
             marks: HashMap::with_capacity(ENTRY_CAPACITY),
+            ignore_warning_for_marks: Default::default(),
             empty: true,
             initial_budget: 0,
         }
@@ -74,7 +77,7 @@ impl Sampler {
         }
     }
 
-    pub fn consume(mut self, options: ConsumeOptions) -> (Self, Vec<String>) {
+    pub fn consume(mut self, options: ConsumeOptions) -> (Self, Vec<(String, bool)>) {
         let mut result = vec![];
         if self.labels.len() != self.buckets.len() {
             warn!(format!(
@@ -102,23 +105,31 @@ impl Sampler {
                     };
                     let max = *max(bucket).unwrap_or(&0);
                     let min = *min(bucket).unwrap_or(&0);
+
                     let mut warning_sign = "";
-                    if options.max_mean_ticks > 0 && mean as i32 > options.max_mean_ticks {
-                        warning_sign = "!mean "; 
-                    } else if options.max_max > 0 && max as i32 > options.max_max {
-                        warning_sign = "!max ";
-                    } else if options.max_delta_ticks > 0 && std_dev as i32 > options.max_delta_ticks {
-                        warning_sign = "!delta ";
+                    if !self.ignore_warning_for_marks.contains(&(i as u32)) {
+                        if options.max_mean_ticks > 0 && mean as i32 > options.max_mean_ticks {
+                            warning_sign = "!mean ";
+                        } else if options.max_max > 0 && max as i32 > options.max_max {
+                            warning_sign = "!max ";
+                        } else if options.max_delta_ticks > 0
+                            && std_dev as i32 > options.max_delta_ticks
+                        {
+                            warning_sign = "!delta ";
+                        }
                     }
-                    result.push(format!(
-                        "{}{}(µs):n={} mn={:.2} σ={:.2} max={:.2} min={:.2}",
-                        warning_sign,
-                        &self.labels[i],
-                        bucket.len(),
-                        mean,
-                        std_dev,
-                        max,
-                        min,
+                    result.push((
+                        format!(
+                            "{}{}(µs):n={} mn={:.2} σ={:.2} max={:.2} min={:.2}",
+                            warning_sign,
+                            &self.labels[i],
+                            bucket.len(),
+                            mean,
+                            std_dev,
+                            max,
+                            min,
+                        ),
+                        warning_sign != "",
                     ));
                 }
             }
@@ -327,6 +338,8 @@ pub enum SamplerMarks {
     GetDiffReplayStateAtPreloaded = 50,
     GetDiffReplayStateAtPreloadedInterpolated = 51,
     UpdateShipHistory = 52,
+    EventsLocks = 53,
+    EventsCreateRoom = 54,
 }
 
 impl Display for SamplerMarks {
