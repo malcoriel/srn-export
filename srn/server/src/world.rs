@@ -897,13 +897,6 @@ fn update_player_actions(
     }
     let mut processed_actions = vec![];
     for action in actions_to_process.into_iter() {
-        // special case for client extrapolation - skip some actions that are in the future
-        if action.2.is_some() {
-            let moment = action.2.unwrap();
-            if moment > state.ticks {
-                continue;
-            }
-        }
         world_update_handle_action(
             state,
             action.0.clone(),

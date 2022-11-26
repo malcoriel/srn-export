@@ -14,8 +14,12 @@ import {
   GameState,
   getObjSpecId,
   ObjectSpecifier,
+  Ship,
 } from './world';
 import { Measure, Perf } from './HtmlLayers/Perf';
+import _ from 'lodash';
+import Color from 'color';
+import * as uuid from 'uuid';
 
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = { tag: 'success desynced'; state: GameState };
@@ -77,11 +81,11 @@ type SyncerViolationTimeRollback = {
 };
 type SyncerViolation = SyncerViolationObjectJump | SyncerViolationTimeRollback;
 
-interface IStateSyncer {
-  handleBatch: (events: StateSyncerEvent[]) => StateSyncerResult;
+export const SHADOW_ID = uuid.v4();
+
+export interface IStateSyncer {
   handle(StateSyncerEvent: StateSyncerEvent): StateSyncerResult;
   getCurrentState(): GameState;
-  flushViolations(): SyncerViolation[];
   flushLog(): any[];
 }
 
@@ -97,12 +101,13 @@ type PendingActionPack = {
 
 const MAX_ALLOWED_CORRECTION_JUMP_CONST = 15 / 1000 / 1000;
 // max 'too fast client' desync value, to skip too eager client frame. Since 1 update is roughly 16ms, then we must allow 1 frame ahead, but not 2
-const MAX_ALLOWED_CLIENT_AHEAD_TICKS = 17 * 1000;
+const MAX_ALLOWED_CLIENT_AHEAD_TICKS = 2 * 17 * 1000;
 // if client is too much ahead, complete frame skipping may be notices, but what if we slow down the frame by factor X?
 const CLIENT_AHEAD_DILATION_FACTOR = 0.5;
 
 // due to frame skipping and network desync artifacts, to make UX better I suppress the displayed state changes when it's lower than this value. Essentially, lying about true state
 const MAX_ALLOWED_VISUAL_DESYNC_UNITS = 0.3;
+const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up, client will keep them indefinitely and if server truly lost them, we're in trouble
 
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
@@ -114,6 +119,13 @@ export class StateSyncer implements IStateSyncer {
     this.desyncedCorrectState = null;
   }
 
+  getTrueMyShipState(): Ship | null {
+    if (!this.trueState) {
+      return null;
+    }
+    return _.cloneDeep(findMyShip(this.trueState));
+  }
+
   private state!: GameState;
 
   private trueState!: GameState;
@@ -121,35 +133,52 @@ export class StateSyncer implements IStateSyncer {
   private desyncedCorrectState: GameState | null;
 
   public handle = (event: StateSyncerEvent): StateSyncerResult => {
-    switch (event.tag) {
-      case 'init': {
-        return this.onInit(event);
-      }
-      case 'time update': {
-        return this.onTimeUpdate(event);
-      }
-      case 'server state': {
-        if (!this.state) {
-          return this.onInit({ tag: 'init', state: event.state });
+    try {
+      this.cleanShadow();
+      switch (event.tag) {
+        case 'init': {
+          return this.onInit(event);
         }
-        return this.onServerState(event);
+        case 'time update': {
+          return this.onTimeUpdate(event);
+        }
+        case 'server state': {
+          if (!this.state) {
+            return this.onInit({ tag: 'init', state: event.state });
+          }
+          return this.onServerState(event);
+        }
+        case 'player action': {
+          return this.onPlayerAction(event);
+        }
+        default:
+          throw new Error(`bad case ${(event as any).tag}`);
       }
-      case 'player action': {
-        return this.onPlayerAction(event);
-      }
-      default:
-        throw new Error(`bad case ${(event as any).tag}`);
+    } finally {
+      this.addShadow();
     }
   };
 
-  public handleBatch = (events: StateSyncerEvent[]): StateSyncerResult => {
-    let result;
-    for (const event of events) {
-      result = this.handle(event);
+  private addShadow() {
+    const desyncedShadow = this.getTrueMyShipState();
+    if (desyncedShadow) {
+      desyncedShadow.id = SHADOW_ID;
+      desyncedShadow.color = new Color(desyncedShadow.color)
+        .darken(2.0) // actually lighten
+        .toString();
+      desyncedShadow.name = ' ';
+      this.state.locations[0].ships.push(desyncedShadow);
     }
-    // intentionally return only the last one
-    return result || { tag: 'error', message: 'no handle result' };
-  };
+  }
+
+  private cleanShadow() {
+    if (!this.state) {
+      return;
+    }
+    this.state.locations[0].ships = this.state.locations[0].ships.filter(
+      (ship) => ship.id !== SHADOW_ID
+    );
+  }
 
   private updateState(
     from: GameState,
@@ -220,49 +249,67 @@ export class StateSyncer implements IStateSyncer {
     state: serverState,
     visibleArea,
   }: StateSyncerEventServerState) {
-    this.dropCommitedAndOutdatedPendingActions(serverState);
+    const hadHugeViolation = this.cleanupCommitedAndOutdatedPendingActions(
+      serverState
+    );
     this.trueState = serverState;
-    this.eventCounter += 1;
-    this.eventCounter = Math.max(10);
-    if (serverState.ticks < this.state.ticks) {
-      // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
-      // or do the true server-in-the-past schema
-      const diff = this.state.ticks - serverState.ticks;
-      const rebasedState = this.rebaseStateUsingCurrentActions(
-        serverState,
-        diff,
-        visibleArea,
-        'onServerState'
-      );
-      this.trueState = rebasedState || serverState;
-      Perf.markArtificialTiming(`ServerBehind ${this.eventCounter}`);
-    } else if (serverState.ticks >= this.state.ticks) {
-      // TODO maybe calculate proper value to extrapolate to instead, based on average client perf lag,
-      // plus do the rebase not reflected actions?
-      this.trueState = serverState;
-      Perf.markArtificialTiming(`ServerAhead ${this.eventCounter}`);
+    if (hadHugeViolation) {
+      // happens when there was a desync in history of actions, after which all compensations do not make sense
+      this.state = this.trueState;
+    } else {
+      this.eventCounter += 1;
+      this.eventCounter = Math.max(10);
+      // console.log(`server ${serverState.ticks} client ${this.state.ticks}`);
+      if (serverState.ticks < this.state.ticks) {
+        // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
+        // or do the true server-in-the-past schema
+        const diff = this.state.ticks - serverState.ticks;
+        const rebasedState = this.rebaseStateUsingCurrentActions(
+          serverState,
+          diff,
+          visibleArea,
+          'onServerState'
+        );
+        this.trueState = rebasedState || serverState;
+        Perf.markArtificialTiming(`ServerBehind ${this.eventCounter}`);
+      } else if (serverState.ticks >= this.state.ticks) {
+        // TODO maybe calculate proper value to extrapolate to instead, based on average client perf lag,
+        // plus do the rebase not reflected actions?
+        this.trueState = serverState;
+        Perf.markArtificialTiming(`ServerAhead ${this.eventCounter}`);
+      }
     }
-
-    // this.state = this.trueState;
 
     return this.successCurrent();
   }
 
-  private dropCommitedAndOutdatedPendingActions(serverState: GameState) {
-    const confirmedActionPacks = new Set(
+  private cleanupCommitedAndOutdatedPendingActions(
+    serverState: GameState
+  ): boolean {
+    let hadHugeViolation = false;
+    const confirmedOnServerActionPacks = new Set(
       serverState.processed_player_actions.map((a: any) => a.packet_tag)
     );
-    // this.log.push(
-    //   `pending: ${this.pendingActionPacks.map((a) => a.packet_tag).join(',')}`
-    // );
-    // this.log.push(
-    //   `processed: ${serverState.processed_player_actions
-    //     .map((a) => a.packet_tag)
-    //     .join(',')}`
-    // );
+    // dropping confirmed ones. this is normal operation
     this.pendingActionPacks = this.pendingActionPacks.filter(
-      (a) => !confirmedActionPacks.has(a.packet_tag)
+      (a) => !confirmedOnServerActionPacks.has(a.packet_tag)
     );
+    // if for some reason we just have trash in pending actions, or if server somehow explicitly dropped our action
+    this.pendingActionPacks = this.pendingActionPacks.filter((a) => {
+      if (
+        Math.abs(serverState.ticks - a.happened_at_ticks) >
+        MAX_PENDING_ACTIONS_LIFETIME_TICKS
+      ) {
+        // this is especially bad since it will lead to drastical desync between client and server state, due to
+        // 'divergence' at some point back in time. In this situation, we should full bail out of client state and accept
+        // the server state
+        console.warn('Dropping outdated or server-ignored pending action', a);
+        hadHugeViolation = true;
+        return false;
+      }
+      return true;
+    });
+    return hadHugeViolation;
   }
 
   private rebaseStateUsingCurrentActions(
@@ -318,6 +365,11 @@ export class StateSyncer implements IStateSyncer {
     // or if there is no desync (everything got compensated)
     const weAreDesynced = this.trueState !== this.state;
 
+    // console.log(
+    //   `${weAreDesynced ? '! ' : ''}${this.trueState.ticks} client ${
+    //     this.state.ticks
+    //   }`
+    // );
     const clientAheadTicks =
       this.state.ticks + event.elapsedTicks - this.trueState.ticks;
     let targetDiff = event.elapsedTicks;
@@ -326,7 +378,9 @@ export class StateSyncer implements IStateSyncer {
       //   `frame dilation due to client too much ahead, ${clientAheadTicks} > ${MAX_ALLOWED_CLIENT_AHEAD_TICKS} ticks`
       // );
       targetDiff *= CLIENT_AHEAD_DILATION_FACTOR;
+      console.log(`dilate, ${event.elapsedTicks} -> ${targetDiff}`);
     }
+
     Perf.usingMeasure(Measure.SyncedStateUpdate, () => {
       this.replaceCurrentState(
         this.updateState(
@@ -361,6 +415,16 @@ export class StateSyncer implements IStateSyncer {
           event.elapsedTicks
         );
         this.overrideRotationsInstantly(this.state, this.trueState);
+        this.violations = this.checkViolations(
+          this.state,
+          this.trueState,
+          event.elapsedTicks
+        );
+        if (this.violations.length > 0) {
+          this.log.push(`remaining ${this.violations.length} violations`);
+        } else {
+          this.trueState = this.state; // bail out of independent update, it's resource-intensive and it only needed for correction
+        }
       });
     } else {
       this.trueState = this.state;
@@ -517,12 +581,11 @@ export class StateSyncer implements IStateSyncer {
     const myShipId = findMyShip(currentState)?.id;
     const maxShiftLen =
       elapsedTicks * this.MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK;
-    const correctedObjectIds = new Set();
     for (const violation of violations) {
       const jumpDir = Vector.fromIVector(violation.to).subtract(
         Vector.fromIVector(violation.from)
       );
-      let jumpCorrectionToOldPosBack: Vector;
+      let jumpCorrectionToTruePos: Vector;
       if (
         violation.diff / elapsedTicks >
         this.CORRECTION_TELEPORT_BAIL_PER_TICK
@@ -530,9 +593,9 @@ export class StateSyncer implements IStateSyncer {
         if (myShipId === getObjSpecId(violation.obj)) {
           console.warn(`teleport correction bail, dist = ${violation.diff}`);
         }
-        jumpCorrectionToOldPosBack = jumpDir;
+        jumpCorrectionToTruePos = jumpDir;
       } else {
-        jumpCorrectionToOldPosBack = jumpDir
+        jumpCorrectionToTruePos = jumpDir
           .normalize()
           .scale(
             Math.min(
@@ -545,22 +608,8 @@ export class StateSyncer implements IStateSyncer {
       const objId = getObjSpecId(violation.obj)!;
       const newObj = findObjectById(currentState, objId)?.object;
       const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
-      const correctedPos = newObjectPos.add(jumpCorrectionToOldPosBack);
+      const correctedPos = newObjectPos.add(jumpCorrectionToTruePos);
       setObjectPosition(newObj, correctedPos);
-      correctedObjectIds.add(objId);
-    }
-    this.violations = this.violations.filter((v) => {
-      return !(
-        v.tag === 'ObjectJump' && correctedObjectIds.has(getObjSpecId(v.obj))
-      );
-    });
-    // if (correctedObjectIds.size > 0) {
-    //   this.log.push(`corrected ${correctedObjectIds.size} violations`);
-    // }
-    if (this.violations.length > 0) {
-      this.log.push(`remaining ${this.violations.length} violations`);
-    } else {
-      this.trueState = this.state; // bail out of independent update, it's resource-intensive and it only needed for correction
     }
     return currentState;
   }

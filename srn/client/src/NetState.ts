@@ -36,11 +36,12 @@ import {
   findMyShip,
 } from './ClientStateIndexing';
 import { ActionBuilder } from '../../world/pkg/world.extra';
-import { StateSyncer } from './StateSyncer';
+import { StateSyncer, IStateSyncer } from './StateSyncer';
 import {
   getActiveSyncActions,
   resetActiveSyncActions,
 } from './utils/ShipControls';
+import Color from 'color';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -132,13 +133,14 @@ const normalWarn = (...args: any[]) => console.warn(...args);
 const normalErr = (...args: any[]) => console.error(...args);
 export const DISPLAY_BREADCRUMBS_LAST_TICKS = 5 * 1000 * 1000;
 
+
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
 
   // actual state used for rendering = interpolate(prevState, nextState, value=0..1)
   state!: GameState;
 
-  syncer: StateSyncer;
+  syncer: IStateSyncer;
 
   // last calculated state, either result of local actions,
   // updated by timer
@@ -267,20 +269,13 @@ export default class NetState extends EventEmitter {
     }
   }
 
-  private reindexNetState = () => {
-    this.reindexCurrentState();
-    this.nextIndexes = buildClientStateIndexes(this.nextState);
-  };
-
   private reindexCurrentState() {
     this.indexes = buildClientStateIndexes(this.state);
   }
 
   private resetState() {
     this.state = _.clone(DEFAULT_STATE);
-    this.nextState = _.clone(DEFAULT_STATE);
-    this.prevState = _.clone(DEFAULT_STATE);
-    this.reindexNetState();
+    this.reindexCurrentState();
   }
 
   disconnectAndDestroy = () => {
@@ -330,8 +325,8 @@ export default class NetState extends EventEmitter {
             elapsedTicks,
             visibleArea,
           }); // ignore errors from syncer for now
-          this.reindexNetState();
           this.state = this.syncer.getCurrentState() || this.state;
+          this.reindexCurrentState();
           if (this.debugSpaceTime) {
             this.addSpaceTimeBreadcrumbs();
           }
@@ -450,7 +445,7 @@ export default class NetState extends EventEmitter {
         );
         this.state = this.replay.current_state;
         this.updateVisMap();
-        this.reindexNetState();
+        this.reindexCurrentState();
       }
     } else {
       normalWarn(`No best mark for ${markInMs}`);
@@ -705,7 +700,7 @@ export default class NetState extends EventEmitter {
       } else {
         normalWarn('unknown message code', messageCode);
       }
-      this.reindexNetState();
+      this.reindexCurrentState();
     } catch (e) {
       normalWarn('error handling message', e);
     } finally {
@@ -867,27 +862,6 @@ export default class NetState extends EventEmitter {
   private lastMyShipPos: null | Vector = null;
 
   private MAX_ALLOWED_JUMP_PER_MS = 0.03;
-
-  private detectJumpInMyShipPos = (
-    elapsedMs: number,
-    newShipPos: Vector,
-    color: string
-  ) => {
-    if (this.lastMyShipPos && newShipPos) {
-      if (
-        this.lastMyShipPos.euDistTo(newShipPos) >
-        elapsedMs * this.MAX_ALLOWED_JUMP_PER_MS
-      ) {
-        this.visualState.breadcrumbs.push({
-          position: this.lastMyShipPos,
-          to: newShipPos,
-          color,
-          timestamp_ticks: this.state.ticks,
-        });
-      }
-    }
-    this.lastMyShipPos = newShipPos;
-  };
 
   private findClosestMarks(
     keys: number[],

@@ -4,6 +4,7 @@ import { Geometry } from 'three/examples/jsm/deprecated/Geometry';
 import { posToThreePos, Vector3Arr } from './util';
 import Vector, { VectorF } from '../utils/Vector';
 import * as THREE from 'three';
+import { SHADOW_ID } from '../StateSyncer';
 
 const STLLoader = require('three-stl-loader')(THREE);
 // ships are always 'above' the stuff
@@ -37,8 +38,9 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
   // to shifted weight center
   const shift = VectorF(0, radius / 5.0).turnCounterClockwise(rotation);
 
+  const shipZ = gid === SHADOW_ID ? -10 : SHIP_FIXED_Z;
   return (
-    <group position={posToThreePos(position.x, position.y, SHIP_FIXED_Z)}>
+    <group position={posToThreePos(position.x, position.y, shipZ)}>
       <mesh
         name={`ship-${gid}`}
         position={[-shift.x, shift.y, 0]}
