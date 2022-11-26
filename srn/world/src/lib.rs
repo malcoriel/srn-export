@@ -384,7 +384,11 @@ pub fn flush_sampler_stats() {
         log!(format!(
             "performance stats over {} sec \n{}",
             PERF_CONSUME_TIME_MS / 1000 / 1000,
-            metrics.into_iter().map(|m| m.0).collect::<Vec<_>>().join("\n")
+            metrics
+                .into_iter()
+                .map(|m| m.0)
+                .collect::<Vec<_>>()
+                .join("\n")
         ));
         log!("------");
     }
@@ -457,15 +461,15 @@ pub fn update_room(
     elapsed_micro: i64,
     d_table: JsValue,
 ) -> Result<JsValue, JsValue> {
-    let room: Room = serde_wasm_bindgen::from_value(room)?;
+    let mut room: Room = serde_wasm_bindgen::from_value(room)?;
     let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
     let seed = room.state.seed.clone();
     let mut prng = seed_prng(seed);
-    let (_indexes, room, _sampler) = world::update_room(
+    let (_indexes, _sampler) = world::update_room(
         &mut prng,
         get_sampler_clone(),
         elapsed_micro,
-        &room,
+        &mut room,
         &d_table,
         Some(&mut game_state_caches.write().unwrap()),
     );
@@ -485,16 +489,15 @@ pub fn update_room_full(
     let mut remaining = total_ticks;
     while remaining > 0 {
         remaining -= step_ticks;
-        let (_indexes, _room, _sampler) = world::update_room(
+        let (_indexes, _sampler) = world::update_room(
             &mut prng,
             sampler,
             step_ticks,
-            &room,
+            &mut room,
             &get_current_d_table(),
             Some(&mut game_state_caches.write().unwrap()),
         );
         sampler = _sampler;
-        room = _room;
     }
     Ok(custom_serialize(&room)?)
 }
