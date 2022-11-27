@@ -92,7 +92,7 @@ const renderContent = (
         )}
       </div>
       <div className="options">
-        {dialogue.options.map((option, i) => (
+        {dialogue.options.map((option: DialogueElem, i: number) => (
           <div
             key={i}
             className="line"
@@ -127,7 +127,7 @@ const renderMinimized = (
     </div>
     <div className="options">
       <WithScrollbars>
-        {dialogue.options.map((option, i) => (
+        {dialogue.options.map((option: DialogueElem, i: number) => (
           <div
             key={i}
             className="line"
