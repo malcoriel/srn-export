@@ -26,6 +26,7 @@
     .tabs-header {
       margin: 0;
       height: 30px;
+      border-color: $teal;
     }
 
     .tab {
@@ -38,7 +39,7 @@
 
     .react-tabs__tab:focus {
       box-shadow: none;
-      border-color: #aaa;
+      border-color: $teal;
       outline: none;
     }
 
@@ -49,7 +50,7 @@
 
     .tab.keep-selected-style {
       box-shadow: none;
-      border-color: #aaa;
+      border-color: $teal;
       outline: none;
       margin-bottom: 10px;
     }

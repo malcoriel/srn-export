@@ -14,7 +14,14 @@ export const WithScrollbars: React.FC<{
   noAutoHide?: boolean;
   autoScrollDown?: boolean;
   paddedRight?: boolean;
-}> = ({ children, noAutoHide, autoScrollDown, paddedRight }) => {
+  shadowRgbOverride?: string;
+}> = ({
+  children,
+  noAutoHide,
+  autoScrollDown,
+  paddedRight,
+  shadowRgbOverride,
+}) => {
   const ref = useRef<Scrollbars>(null);
   const [shadowOpacity, setShadowed] = useState(0);
 
@@ -24,7 +31,10 @@ export const WithScrollbars: React.FC<{
     } else if (ref && ref.current) {
       setShadowed(shouldShadow(ref.current.getValues()));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [children]);
+
+  const shadowRgb = shadowRgbOverride || '0,0,0';
 
   return (
     <div
@@ -34,7 +44,7 @@ export const WithScrollbars: React.FC<{
       <div
         className="scroll-shadow"
         style={{
-          boxShadow: `0px -25px 32px 3px rgba(0,0,0,${shadowOpacity}) inset`,
+          boxShadow: `0px -25px 32px 3px rgba(${shadowRgb},${shadowOpacity}) inset`,
         }}
       />
       <Scrollbars

@@ -3,7 +3,7 @@
   width: 300px;
   padding: 10px;
   color: white;
-  background-color: #555;
+  background-color: rgba(100, 100, 100, 1);
   border-radius: 5px;
   border: solid blue 1px;
 }
@@ -52,8 +52,6 @@
   height: 500px;
   overflow-y: auto;
   overflow-x: hidden;
-  opacity: 0.9;
-  padding-right: 30px;
 }
 
 .final-leaderboard {

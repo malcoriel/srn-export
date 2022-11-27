@@ -1,6 +1,10 @@
 @import "../utils/palette.scss";
 
 .chat {
+  * {
+    user-select:text;
+  }
+
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -25,7 +29,7 @@
       color: $teal;
 
       .line {
-        line-height: 24px;
+        min-height: 24px;
       }
 
       display: flex;
