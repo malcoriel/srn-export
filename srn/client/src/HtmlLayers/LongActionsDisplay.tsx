@@ -12,9 +12,9 @@ import { useNSForceChange } from '../NetStateHooks';
 const getActionName = (a: LongAction): string | undefined => {
   switch (a.tag) {
     case 'Dock':
-      return undefined;
+      return 'Docking...';
     case 'Undock':
-      return undefined;
+      return 'Undocking...';
     case 'Unknown':
       return undefined;
     case 'TransSystemJump':
@@ -61,6 +61,7 @@ export const LongActionsDisplay = () => {
   }
   const { long_actions } = myPlayer;
   const myShip = ns.indexes.myShip;
+  console.log('render', myShip?.long_actions);
   return (
     <div className="long-actions-display">
       <div className="container">

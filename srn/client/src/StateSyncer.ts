@@ -186,7 +186,7 @@ export class StateSyncer implements IStateSyncer {
       return;
     }
     this.state.locations[0].ships = this.state.locations[0].ships.filter(
-      (ship) => ship.id !== SHADOW_ID
+      (ship: Ship) => ship.id !== SHADOW_ID
     );
   }
 
@@ -334,8 +334,10 @@ export class StateSyncer implements IStateSyncer {
     visibleArea: AABB,
     context: string
   ): GameState | null {
-    const alreadyExecutedTagsInState = new Set(
-      state.processed_player_actions.map(({ packet_tag }) => packet_tag)
+    const alreadyExecutedTagsInState = new Set<string | null>(
+      state.processed_player_actions.map(
+        ({ packet_tag }: { packet_tag: string }) => packet_tag
+      )
     );
     const actionsToRebase: [
       Action,
@@ -420,7 +422,7 @@ export class StateSyncer implements IStateSyncer {
             event.visibleArea,
             'onTimeUpdate true'
           ) || this.trueState;
-        this.overrideDockedShipsInstantly(this.state, this.trueState);
+        this.overrideNonMergeableKeysInstantly(this.state, this.trueState);
         this.violations = this.checkViolations(
           this.state,
           this.trueState,
@@ -433,8 +435,6 @@ export class StateSyncer implements IStateSyncer {
           this.state,
           event.elapsedTicks
         );
-        this.overrideRotationsInstantly(this.state, this.trueState);
-        this.overrideNonMergeableKeysInstantly(this.state, this.trueState);
         this.violations = this.checkViolations(
           this.state,
           this.trueState,
@@ -443,12 +443,13 @@ export class StateSyncer implements IStateSyncer {
         if (this.violations.length > 0) {
           // this.log.push(`remaining ${this.violations.length} violations`);
         } else {
-          this.trueState = this.state; // bail out of independent update, it's resource-intensive and it only needed for correction
+          // bail out of independent update, it's resource-intensive, and it is only needed for correction
+          // that's why we need to 'preserve' overrides via overrideNonMergeableKeysInstantly
+          this.trueState = this.state;
         }
       });
-    } else {
-      this.trueState = this.state;
     }
+
     return this.successCurrent();
   }
 
@@ -548,14 +549,14 @@ export class StateSyncer implements IStateSyncer {
   ): { spec: ObjectSpecifier; obj: any }[] {
     const res = [];
     const ships = state.locations[0].ships
-      .map((s) => {
+      .map((s: any) => {
         if (!s.docked_at) return null;
         return {
           spec: { tag: 'Ship', id: s.id },
           obj: s,
         };
       })
-      .filter((s) => !!s);
+      .filter((s: any) => !!s);
     res.push(...ships);
     return res as { spec: ObjectSpecifier; obj: any }[];
   }
@@ -639,33 +640,6 @@ export class StateSyncer implements IStateSyncer {
     return currentState;
   }
 
-  private overrideRotationsInstantly(state: GameState, trueState: GameState) {
-    const checkableObjects = this.enumerateCheckableObjects(state);
-    for (const { spec, obj } of checkableObjects) {
-      const correctObj = this.findOldVersionOfObject(trueState, spec)?.object;
-      if (correctObj) {
-        setObjectRotation(obj, getObjectRotation(correctObj));
-      }
-    }
-  }
-
-  private overrideDockedShipsInstantly(state: GameState, trueState: GameState) {
-    const ships = trueState.locations[0].ships;
-    for (const trueShip of ships) {
-      if (trueShip.docked_at) {
-        const currentShip = this.findOldVersionOfObject<Ship>(state, {
-          tag: 'Ship',
-          id: trueShip.id,
-        })?.object;
-        if (currentShip) {
-          currentShip.docked_at = trueShip.docked_at;
-          currentShip.x = trueShip.x;
-          currentShip.y = trueShip.y;
-        }
-      }
-    }
-  }
-
   handleServerConfirmedPacket(tag: string): void {
     const targetAp = this.pendingActionPacks.find(
       (ap) => ap.packet_tag === tag
@@ -689,6 +663,33 @@ export class StateSyncer implements IStateSyncer {
       if (!blacklistedKeys.has(key)) {
         // typescript's object.entries is very dumb
         (state as any)[key] = value;
+      }
+    }
+    const blacklistedShipKeys = new Set([
+      'x',
+      'y',
+      'trajectory',
+      'navigate_target',
+      'dock_target',
+    ]);
+    // there are some ship fields that have to be overwritten no matter what
+    for (const trueShip of trueState.locations[0].ships) {
+      const currentShip = this.findOldVersionOfObject<Ship>(state, {
+        tag: 'Ship',
+        id: trueShip.id,
+      })?.object;
+      if (currentShip) {
+        for (const [key, value] of Object.entries(trueShip)) {
+          if (blacklistedShipKeys.has(key)) {
+            continue;
+          }
+          (currentShip as any)[key] = value;
+          if (trueShip.docked_at !== currentShip.docked_at) {
+            currentShip.docked_at = trueShip.docked_at;
+            currentShip.x = trueShip.x;
+            currentShip.y = trueShip.y;
+          }
+        }
       }
     }
   }
