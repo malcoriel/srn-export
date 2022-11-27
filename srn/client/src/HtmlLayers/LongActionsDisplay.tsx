@@ -12,9 +12,9 @@ import { useNSForceChange } from '../NetStateHooks';
 const getActionName = (a: LongAction): string | undefined => {
   switch (a.tag) {
     case 'Dock':
-      return 'Docking...';
+      return undefined;
     case 'Undock':
-      return 'Undocking...';
+      return undefined;
     case 'Unknown':
       return undefined;
     case 'TransSystemJump':
