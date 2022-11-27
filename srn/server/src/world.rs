@@ -2162,7 +2162,7 @@ pub fn update_rule_specifics(
     state: &mut GameState,
     prng: &mut Pcg64Mcg,
     sampler: &mut Sampler,
-    _client: bool,
+    client: bool,
 ) {
     let sampler_mark_type = match state.mode {
         GameMode::Unknown => None,
@@ -2176,7 +2176,9 @@ pub fn update_rule_specifics(
         GameMode::Unknown => {}
         GameMode::CargoRush => {
             let quests_id = sampler.start(SamplerMarks::ModeCargoRushQuests as u32);
-            cargo_rush::update_quests(state, prng);
+            if !client {
+                cargo_rush::update_quests(state, prng);
+            }
             sampler.end(quests_id);
         }
         GameMode::Tutorial => {}

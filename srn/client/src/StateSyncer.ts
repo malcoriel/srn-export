@@ -432,6 +432,7 @@ export class StateSyncer implements IStateSyncer {
           event.elapsedTicks
         );
         this.overrideRotationsInstantly(this.state, this.trueState);
+        this.overrideNonMergeableKeysInstantly(this.state, this.trueState);
         this.violations = this.checkViolations(
           this.state,
           this.trueState,
@@ -657,5 +658,19 @@ export class StateSyncer implements IStateSyncer {
       return;
     }
     targetAp.server_acknowledged = true;
+  }
+
+  // some keys have to be always synced to the server
+  private overrideNonMergeableKeysInstantly(
+    state: GameState,
+    trueState: GameState
+  ) {
+    const blacklistedKeys = new Set(['ticks', 'millis', 'locations']);
+    for (const [key, value] of Object.entries(trueState)) {
+      if (!blacklistedKeys.has(key)) {
+        // typescript's object.entries is very dumb
+        (state as any)[key] = value;
+      }
+    }
   }
 }
