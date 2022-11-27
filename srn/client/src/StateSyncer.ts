@@ -2,6 +2,7 @@ import Vector, { IVector } from './utils/Vector';
 import {
   findMyShip,
   findObjectById,
+  FindObjectResult,
   getObjectPosition,
   getObjectRotation,
   setObjectPosition,
@@ -419,6 +420,7 @@ export class StateSyncer implements IStateSyncer {
             event.visibleArea,
             'onTimeUpdate true'
           ) || this.trueState;
+        this.overrideDockedShipsInstantly(this.state, this.trueState);
         this.violations = this.checkViolations(
           this.state,
           this.trueState,
@@ -558,10 +560,10 @@ export class StateSyncer implements IStateSyncer {
     return res as { spec: ObjectSpecifier; obj: any }[];
   }
 
-  private findOldVersionOfObject(
+  private findOldVersionOfObject<T = any>(
     prevState: GameState,
     spec: ObjectSpecifier
-  ): any {
+  ): null | FindObjectResult<T> {
     if (spec.tag !== 'Unknown') {
       return findObjectById(prevState, spec.id);
     }
@@ -643,6 +645,23 @@ export class StateSyncer implements IStateSyncer {
       const correctObj = this.findOldVersionOfObject(trueState, spec)?.object;
       if (correctObj) {
         setObjectRotation(obj, getObjectRotation(correctObj));
+      }
+    }
+  }
+
+  private overrideDockedShipsInstantly(state: GameState, trueState: GameState) {
+    const ships = trueState.locations[0].ships;
+    for (const trueShip of ships) {
+      if (trueShip.docked_at) {
+        const currentShip = this.findOldVersionOfObject<Ship>(state, {
+          tag: 'Ship',
+          id: trueShip.id,
+        })?.object;
+        if (currentShip) {
+          currentShip.docked_at = trueShip.docked_at;
+          currentShip.x = trueShip.x;
+          currentShip.y = trueShip.y;
+        }
       }
     }
   }

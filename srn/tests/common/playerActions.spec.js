@@ -313,7 +313,7 @@ describe('player actions logic', () => {
   });
 
   describe('dialogue actions', () => {
-    it('can select dialogue options', () => {
+    fit('can select dialogue options', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
       state = dockToPlanet(state, ship, player);
@@ -325,6 +325,7 @@ describe('player actions logic', () => {
         player.id,
         state
       );
+      console.log(dialogue);
       state.player_actions.push(
         mockSelectDialogueOption(
           player.id,

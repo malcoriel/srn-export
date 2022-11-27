@@ -186,10 +186,10 @@ export enum FindObjectHint {
   Planet,
 }
 
-type FindableObject = PlanetV2 | NatSpawnMineral | Container | Ship;
-type FindObjectResult =
+export type FindableObject = PlanetV2 | NatSpawnMineral | Container | Ship;
+export type FindObjectResult<T = any> =
   | {
-      object: FindableObject;
+      object: T;
       locIndex: number;
     }
   | undefined;

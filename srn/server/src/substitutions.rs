@@ -1,15 +1,15 @@
 use std::collections::{HashMap, HashSet};
 use std::mem;
 
+use crate::dialogue::{Substitution, SubstitutionType};
 use regex::{Captures, Match};
 use uuid::Uuid;
-use crate::dialogue::{Substitution, SubstitutionType};
 
 use crate::indexing::{
     index_all_planets_by_id, index_all_ships_by_id, index_planets_by_id, index_players_by_id,
     index_ships_by_id,
 };
-use crate::inventory::{count_items_of_types, MINERAL_TYPES, value_items_of_types};
+use crate::inventory::{count_items_of_types, value_items_of_types, MINERAL_TYPES};
 use crate::new_id;
 use crate::random_stuff::gen_random_character_name;
 use crate::world::{GameState, PlanetV2, Player, Ship};
@@ -38,7 +38,7 @@ pub fn substitute_text(
                 });
                 injects.push((cap.get(0).clone(), id));
             } else {
-                eprintln!("s_current_planet used without current planet");
+                warn!("s_current_planet used without current planet");
             }
         } else if cap[0] == *"s_current_planet_body_type" {
             if let Some(current_planet) = players_to_current_planets.get(&player_id) {
@@ -56,7 +56,7 @@ pub fn substitute_text(
                 });
                 injects.push((cap.get(0).clone(), id));
             } else {
-                eprintln!("s_current_planet_body_type used without current planet");
+                warn!("s_current_planet_body_type used without current planet");
             }
         } else if cap[0] == *"s_cargo_destination_planet" {
             if let Some(cargo_destination_planet) = players_by_id
@@ -90,7 +90,7 @@ pub fn substitute_text(
                 });
                 injects.push((cap.get(0).clone(), id));
             } else {
-                eprintln!("s_cargo_destination_planet used without destination planet!");
+                warn!("s_cargo_destination_planet used without destination planet!");
             }
         } else if cap[0] == *"s_random_name" {
             let uuid = new_id();
@@ -113,7 +113,7 @@ pub fn substitute_text(
                 });
                 injects.push((cap.get(0).clone(), uuid));
             } else {
-                err!("s_minerals_amount used without ship");
+                warn!("s_minerals_amount used without ship");
             }
         } else if cap[0] == *"s_minerals_value" {
             if let Some(ship) = ships_by_player_id.get(&player_id) {
@@ -127,10 +127,10 @@ pub fn substitute_text(
                 });
                 injects.push((cap.get(0).clone(), uuid));
             } else {
-                err!("s_minerals_value used without ship");
+                warn!("s_minerals_value used without ship");
             }
         } else {
-            eprintln!("Unknown substitution {}", cap[0].to_string());
+            warn!("Unknown substitution {}", cap[0].to_string());
         }
     }
     const ID_LENGTH: usize = 36;

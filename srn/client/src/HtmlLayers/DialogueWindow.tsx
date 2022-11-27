@@ -11,7 +11,12 @@ import {
 } from '../ThreeLayers/CameraControls';
 import NetState from '../NetState';
 import { makePortraitPath } from './StartMenu';
-import { buildDialogueFromState, Dialogue, DialogueElem } from '../world';
+import {
+  buildDialogueFromState,
+  Dialogue,
+  DialogueElem,
+  GameState,
+} from '../world';
 import { useStore, WindowState } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
 import { Vector3 } from 'three';
@@ -19,6 +24,7 @@ import { ThreePlanetShape } from '../ThreeLayers/ThreePlanetShape';
 import Vector from '../utils/Vector';
 import { transformAllTextSubstitutions } from '../utils/substitutions';
 import { useNSForceChange } from '../NetStateHooks';
+import { findMyShip } from '../ClientStateIndexing';
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
   <span className="dialogue-option">
@@ -143,6 +149,14 @@ const renderMinimized = (
   </div>
 );
 
+const filterDialogueRelevantPropsObject = (state: GameState): any => {
+  const myShip = findMyShip(state);
+  if (!myShip) {
+    return 'no ship';
+  }
+  return myShip.docked_at;
+};
+
 export const DialogueWindow: React.FC = () => {
   const ns = useNSForceChange('DialogueWindow');
   if (!ns) return null;
@@ -165,6 +179,11 @@ export const DialogueWindow: React.FC = () => {
     }
   }, [dialogue_id, setDialogueWindowState]);
 
+  // Use ns.state's my ship as the only thing that can influence the buildDialogueFromState. Might change in the future
+  // There's a bug in either NetState or syncer currently that lead to rending this component before actual docking takes place
+  const dialogueRerenderKey = JSON.stringify(
+    filterDialogueRelevantPropsObject(ns.state)
+  );
   const dialogue: null | Dialogue = useMemo(() => {
     if (!dialogue_id || !dialogue_state) {
       return null;
@@ -176,10 +195,8 @@ export const DialogueWindow: React.FC = () => {
       ns.state
     );
     return dialogueStruct;
-    // deliberately ignore ns.state dependency as it only matters at the point of dialogue creation,
-    // and shouldn't lead to recreation of the view every frame
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dialogue_id, dialogue_state]);
+  }, [dialogue_id, dialogue_state, dialogueRerenderKey]);
 
   const tryDoOption = (i: number) => () => {
     if (!dialogue) return;
