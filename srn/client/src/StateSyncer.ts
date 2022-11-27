@@ -267,6 +267,7 @@ export class StateSyncer implements IStateSyncer {
     if (hadHugeViolation) {
       // happens when there was a desync in history of actions, after which all compensations do not make sense
       this.state = this.trueState;
+      console.warn('huge violation detected, state overwrite by server state');
     } else {
       this.eventCounter += 1;
       this.eventCounter = Math.max(10);
@@ -428,10 +429,11 @@ export class StateSyncer implements IStateSyncer {
           this.trueState,
           event.elapsedTicks
         );
+        const violations = this.violations.filter(
+          (v) => v.tag === 'ObjectJump'
+        ) as SyncerViolationObjectJump[];
         this.state = this.applyMaxPossibleDesyncCorrection(
-          this.violations.filter(
-            (v) => v.tag === 'ObjectJump'
-          ) as SyncerViolationObjectJump[],
+          violations,
           this.state,
           event.elapsedTicks
         );
@@ -448,6 +450,8 @@ export class StateSyncer implements IStateSyncer {
           this.trueState = this.state;
         }
       });
+    } else {
+      this.trueState = this.state;
     }
 
     return this.successCurrent();
@@ -550,7 +554,7 @@ export class StateSyncer implements IStateSyncer {
     const res = [];
     const ships = state.locations[0].ships
       .map((s: any) => {
-        if (!s.docked_at) return null;
+        if (s.docked_at) return null;
         return {
           spec: { tag: 'Ship', id: s.id },
           obj: s,
