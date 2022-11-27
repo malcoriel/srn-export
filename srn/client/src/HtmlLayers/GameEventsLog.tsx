@@ -17,13 +17,15 @@ export const GameEventsLog = () => {
     return null;
   }
 
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
+  const [myOnly, setMyOnly] = useState(true);
 
   const messages = ns.state.processed_events
     // cloning is necessary to avoid accidental modification of the state
-    .map((e) => _.cloneDeep(e))
-    .filter((e) => showAll || !!e.text_representation)
-    .map((e) => {
+    .map((e: any) => _.cloneDeep(e))
+    .filter((e: any) => showAll || !!e.text_representation)
+    .filter((e: any) => !myOnly || e.event.player_id === ns.state.my_id)
+    .map((e: any) => {
       if (!e.text_representation) {
         const name = e.event.tag;
         delete e.event.tag;
@@ -54,6 +56,9 @@ export const GameEventsLog = () => {
         <div style={{ marginBottom: 5 }}>
           <Label>Show all events:&nbsp;</Label>
           <Checkbox size={16} value={showAll} onChange={setShowAll} />
+          <span>&nbsp;</span>
+          <Label>Only my events:&nbsp;</Label>
+          <Checkbox size={16} value={myOnly} onChange={setMyOnly} />
         </div>
         <WithScrollbars>
           <div className="chat-contents">
