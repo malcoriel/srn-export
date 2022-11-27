@@ -130,7 +130,7 @@ pub fn substitute_text(
                 warn!("s_minerals_value used without ship");
             }
         } else {
-            warn!("Unknown substitution {}", cap[0].to_string());
+            warn!(format!("Unknown substitution {}", cap[0].to_string()));
         }
     }
     const ID_LENGTH: usize = 36;
