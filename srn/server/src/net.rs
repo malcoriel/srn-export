@@ -87,7 +87,7 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
     );
     let current_ticks = state.ticks;
     state.events = Default::default();
-    state.processed_events = Default::default();
+    // state.processed_events = Default::default();
     state.player_actions = Default::default();
     state.processed_player_actions = state
         .processed_player_actions

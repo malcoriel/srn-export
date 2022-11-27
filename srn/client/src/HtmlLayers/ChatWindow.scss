@@ -1,41 +1,79 @@
 @import "../utils/palette";
 
+.css-window-marker-chatWindow {
+  .ui-window-controls {
+    top: -1px;
+  }
+}
+
 .chat-window {
   padding: 10px;
   height: calc(100% - 20px);
+  position: relative;
+  color: $teal;
+  background: black;
+  outline: none;
+
+
 
   .tabs {
     height: 100%;
+    -webkit-tap-highlight-color: transparent;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: stretch;
-
-    .tabs-panel {
-      height: 360px;
-    }
+    user-select: none;
 
     .tabs-header {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      height: 40px;
-      border-bottom: solid 1px $teal;
-      padding: 3px;
+      margin: 0;
+      height: 30px;
     }
 
     .tab {
       background: black;
       color: $teal;
-      border: none;
-      width: 50%;
-      text-align: center;
+      //border: none;
+      //width: 50%;
+      //text-align: center;
     }
 
-    .tab:hover {
-      background: $teal;
-      color: black;
+    .react-tabs__tab:focus {
+      box-shadow: none;
+      border-color: #aaa;
+      outline: none;
     }
+
+    .react-tabs__tab:focus:after {
+      content: none;
+    }
+
+
+    .tab.keep-selected-style {
+      box-shadow: none;
+      border-color: #aaa;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    // react-tabs has a pretty bad UX solution where when the tab loses :focus, it loses important styling. this is a hack around it
+    .tab.keep-selected-style:after {
+      content: "";
+      position: absolute;
+      height: 5px;
+      left: -1px;
+      right: -1px;
+      bottom: -5px;
+      background: black;
+    }
+
+    .tabs-panel {
+      flex: 1 0;
+      //background: black;
+    }
+
+    //.tab:hover {
+    //  background: $teal;
+    //  color: black;
+    //}
   }
 }
 

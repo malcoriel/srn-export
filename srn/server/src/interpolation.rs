@@ -334,11 +334,11 @@ pub fn get_orbit_phase_table<'a, 'b>(
 ) -> &'a mut Vec<Vec2f64> {
     let key = coerce_phase_table_cache_key(orbit_radius);
     rel_orbit_cache.entry(key).or_insert_with(|| {
-        log!(format!(
-            "cache miss for orbit phase table key {} when doing {}",
-            key,
-            context.unwrap_or("<unknown>".to_string())
-        ));
+        // log!(format!(
+        //     "cache miss for orbit phase table key {} when doing {}",
+        //     key,
+        //     context.unwrap_or("<unknown>".to_string())
+        // ));
         gen_rel_position_orbit_phase_table(&movement_def, orbit_radius)
     })
 }

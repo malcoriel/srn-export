@@ -4,31 +4,12 @@ import { Input } from './ui/Input';
 import { ChatMessage, Chats, ChatState } from '../ChatState';
 import { useStore } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
-import { useNSForceChange } from '../NetStateHooks';
-import NetState from '../NetState';
 
 export const Chat: React.FC<{ channelName: string; header?: string }> = ({
   channelName,
   header,
 }) => {
   const preferredName = useStore((state) => state.preferredName);
-
-  const eventsFromState = [];
-  if (channelName === 'events') {
-    const ns = NetState.get();
-    if (ns) {
-      const state = ns.state;
-      const events = state.processed_events.filter(
-        (e: any) => !!e.text_representation
-      );
-      eventsFromState.push(
-        ...events.map((e: any) => ({
-          name: 'event',
-          message: e.text_representation,
-        }))
-      );
-    }
-  }
 
   const [, setForceUpdate] = useState(false);
   const forceUpdate = () => {
