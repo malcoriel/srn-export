@@ -61,7 +61,6 @@ export const LongActionsDisplay = () => {
   }
   const { long_actions } = myPlayer;
   const myShip = ns.indexes.myShip;
-  console.log('render', myShip?.long_actions);
   return (
     <div className="long-actions-display">
       <div className="container">
