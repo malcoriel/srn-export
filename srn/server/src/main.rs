@@ -178,7 +178,7 @@ lazy_static! {
 }
 
 const DEFAULT_SLEEP_MS: u64 = 2;
-const BROADCAST_FULL_SYNC_SLEEP_MS: u64 = 500;
+const BROADCAST_FULL_SYNC_SLEEP_MS: u64 = 50;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const MAX_MESSAGES_PER_INTERVAL: u32 = 10;
@@ -287,11 +287,11 @@ fn rocket() -> rocket::Rocket {
             main_thread();
         })
         .ok();
-    make_thread("broadcast_state")
-        .spawn(|| {
-            broadcast_state_thread();
-        })
-        .ok();
+    // make_thread("broadcast_state")
+    //     .spawn(|| {
+    //         broadcast_state_thread();
+    //     })
+    //     .ok();
 
     make_thread("dispatcher")
         .spawn(move || main_ws_server::dispatcher_thread())
@@ -340,24 +340,19 @@ fn rocket() -> rocket::Rocket {
         )
 }
 
-fn broadcast_state_thread() {
-    loop {
-        let diff = {
-            let start = Local::now();
-            for guard in ROOMS_READ.iter() {
-                main_ws_server::x_cast_state(
-                    guard.val().state.clone(),
-                    XCast::Broadcast(guard.val().state.id.clone()),
-                );
-            }
-            (Local::now() - start).num_milliseconds()
-        };
-        // log!(format!("broadcast duration={}ms", diff));
-        thread::sleep(Duration::from_millis(
-            (BROADCAST_FULL_SYNC_SLEEP_MS as i64 - diff).max(0) as u64,
-        ));
-    }
-}
+// fn broadcast_state_thread() {
+//     loop {
+//         let diff = {
+//             let start = Local::now();
+//             for guard in ROOMS_READ.iter() {}
+//             (Local::now() - start).num_nanoseconds().unwrap() as f64 / 1000.0
+//         };
+//         // log!(format!("broadcast duration={}ticks", diff));
+//         thread::sleep(Duration::from_millis(
+//             (BROADCAST_FULL_SYNC_SLEEP_MS as i64 - diff as i64).max(0) as u64,
+//         ));
+//     }
+// }
 
 fn make_thread(name: &str) -> std::thread::Builder {
     std::thread::Builder::new().name(name.to_string())
@@ -400,9 +395,9 @@ fn main_thread() {
     loop {
         let now = Local::now();
         let elapsed = now - last;
+        log!(format!("iter {}", now));
         last = now;
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
-
         sampler_consume_elapsed += elapsed_micro;
         if sampler_consume_elapsed > PERF_CONSUME_TIME {
             let over_budget_pct = over_budget_frame as f32 / frame_count as f32 * 100.0;
@@ -440,6 +435,7 @@ fn main_thread() {
                 log!("------");
             }
         }
+        log!(format!("consumed {}", now));
         frame_count += 1;
         sampler.init_budget(FRAME_BUDGET_TICKS);
         let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
@@ -450,6 +446,16 @@ fn main_thread() {
             sampler.end(total_mark);
             continue;
         }
+        log!(format!("locked {}", now));
+
+        let broadcast_mark = sampler.start(SamplerMarks::BroadcastState as u32);
+        // broadcast first, then update, to ensure that broadcast always happens even if update is shortcutted
+        for room in get_rooms_iter(&cont) {
+            let state_id = room.state.id.clone();
+            main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(state_id));
+        }
+        log!(format!("broadcast {}", now));
+        sampler.end(broadcast_mark);
 
         let update_rooms_id = sampler.start(SamplerMarks::Update as u32);
         cleanup_empty_rooms(&mut cont);
@@ -547,7 +553,7 @@ fn main_thread() {
 
         sampler.end(total_mark);
 
-        if sampler.budget <= 0 {
+        if sampler.budget < 0 {
             over_budget_frame += 1;
             log!(format!("Frame over budget by {}µs", -sampler.budget));
         }
