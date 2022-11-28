@@ -73,7 +73,7 @@ const MainTemplate: Story = (args) => {
           opacity={1.0}
           rotation={args.rotation}
           visible
-          tractorTargetPosition={args.tractoring ? VectorF(25, 25) : null}
+          tractorTargetPosition={args.tractoring ? VectorF(-5, -5) : null}
           longActions={longActions}
           turrets={args.shooting ? genTurrets(2) : []}
           findObjectPositionByIdBound={() => target}
