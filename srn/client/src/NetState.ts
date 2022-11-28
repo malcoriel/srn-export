@@ -8,7 +8,6 @@ import {
   loadReplayIntoWasm,
   ManualMovementActionTags,
   ManualMovementInactivityDropMs,
-  rawUpdateWorld,
   restoreReplayFrame,
   TradeAction,
   updateWorld,
@@ -36,12 +35,11 @@ import {
   findMyShip,
 } from './ClientStateIndexing';
 import { ActionBuilder } from '../../world/pkg/world.extra';
-import { StateSyncer, IStateSyncer } from './StateSyncer';
+import { IStateSyncer, StateSyncer } from './StateSyncer';
 import {
   getActiveSyncActions,
   resetActiveSyncActions,
 } from './utils/ShipControls';
-import Color from 'color';
 import { ChatState } from './ChatState';
 
 export type Timeout = ReturnType<typeof setTimeout>;
@@ -116,18 +114,10 @@ export enum ServerToClientMessageCode {
   Pong = 10,
 }
 
-const EXTRAPOLATE_AHEAD_MS = 500 * 2;
-
-const MAX_PENDING_TICKS = 2000;
 // it's completely ignored in actual render, since vsynced time is used
 const LOCAL_SIM_TIME_STEP = Math.floor(1000 / 30);
 const SLOW_TIME_STEP = Math.floor(1000 / 8);
 statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
-// when either a game was restarted, or loaded in sandbox mode, all timings will be off and normal lag-compensation will go crazy
-// or if it lagged so hard that it's pointless to compensate
-const FULL_DESYNC_DETECT_MS = 500.0;
-// this has to be less than expiry (500ms) minus ping
-const MANUAL_MOVEMENT_SYNC_INTERVAL_MS = 200;
 
 const normalLog = (...args: any[]) => console.log(...args);
 const normalWarn = (...args: any[]) => console.warn(...args);
@@ -142,16 +132,7 @@ export default class NetState extends EventEmitter {
 
   syncer: IStateSyncer;
 
-  // last calculated state, either result of local actions,
-  // updated by timer
-  prevState!: GameState;
-
-  // extrapolated state used for calculating the actual state via interpolation
-  nextState!: GameState;
-
   indexes!: ClientStateIndexes;
-
-  nextIndexes!: ClientStateIndexes;
 
   public connecting = true;
 
@@ -589,39 +570,6 @@ export default class NetState extends EventEmitter {
     }
   };
 
-  private addExtrapolateBreadcrumbs = () => {
-    this.visualState.breadcrumbs = this.visualState.breadcrumbs.filter(
-      (b) => b.tag !== 'extrapolate'
-    );
-    const myNextShip = this.nextIndexes.myShip;
-    if (myNextShip) {
-      this.visualState.breadcrumbs.push({
-        position: Vector.fromIVector(myNextShip),
-        color: 'green',
-        timestamp_ticks: this.state.ticks,
-        tag: 'extrapolate',
-      });
-    }
-    const myPrevShip = findMyShip(this.prevState);
-    if (myPrevShip) {
-      this.visualState.breadcrumbs.push({
-        position: Vector.fromIVector(myPrevShip),
-        color: 'yellow',
-        timestamp_ticks: this.state.ticks,
-        tag: 'extrapolate',
-      });
-    }
-    if (myNextShip && myPrevShip) {
-      this.visualState.breadcrumbs.push({
-        position: Vector.fromIVector(myPrevShip),
-        to: Vector.fromIVector(myNextShip),
-        color: 'yellow',
-        timestamp_ticks: this.state.ticks,
-        tag: 'extrapolate',
-      });
-    }
-  };
-
   private cleanupBreadcrumbs = () => {
     this.visualState.breadcrumbs = this.visualState.breadcrumbs.filter(
       ({ timestamp_ticks }) =>
@@ -782,9 +730,15 @@ export default class NetState extends EventEmitter {
       value: { action },
       tag,
     });
+    this.syncer.handle({
+      tag: 'player action',
+      actions: [action],
+      packetTag: tag,
+      visibleArea: this.getSimulationArea(),
+    });
   }
 
-  public sendSchedulePlayerActionBatch(
+  private sendSchedulePlayerActionBatch(
     actions: Action[],
     tag: string,
     currentTicks: number
@@ -868,10 +822,6 @@ export default class NetState extends EventEmitter {
   resumeReplay = () => {
     this.playingReplay = true;
   };
-
-  private lastMyShipPos: null | Vector = null;
-
-  private MAX_ALLOWED_JUMP_PER_MS = 0.03;
 
   private findClosestMarks(
     keys: number[],
