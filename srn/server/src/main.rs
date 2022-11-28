@@ -395,7 +395,7 @@ fn main_thread() {
     loop {
         let now = Local::now();
         let elapsed = now - last;
-        log!(format!("iter {}", now));
+        // log!(format!("iter {}", now));
         last = now;
         let elapsed_micro = elapsed.num_milliseconds() * 1000;
         sampler_consume_elapsed += elapsed_micro;
@@ -435,7 +435,7 @@ fn main_thread() {
                 log!("------");
             }
         }
-        log!(format!("consumed {}", now));
+        // log!(format!("consumed {}", now));
         frame_count += 1;
         sampler.init_budget(FRAME_BUDGET_TICKS);
         let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
@@ -446,7 +446,7 @@ fn main_thread() {
             sampler.end(total_mark);
             continue;
         }
-        log!(format!("locked {}", now));
+        // log!(format!("locked {}", now));
 
         let broadcast_mark = sampler.start(SamplerMarks::BroadcastState as u32);
         // broadcast first, then update, to ensure that broadcast always happens even if update is shortcutted
@@ -454,7 +454,7 @@ fn main_thread() {
             let state_id = room.state.id.clone();
             main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(state_id));
         }
-        log!(format!("broadcast {}", now));
+        // log!(format!("broadcast {}", now));
         sampler.end(broadcast_mark);
 
         let update_rooms_id = sampler.start(SamplerMarks::Update as u32);

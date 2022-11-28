@@ -5,7 +5,7 @@ use std::thread;
 use std::time::Duration;
 
 use chrono::{DateTime, NaiveDate, Timelike, Utc};
-use crossbeam::channel::{bounded, Receiver, Sender};
+use crossbeam::channel::{bounded, Receiver, Sender, TrySendError};
 use lazy_static::lazy_static;
 use lockfree::set::Set as LockFreeSet;
 use mut_static::MutStatic;
@@ -14,7 +14,7 @@ use uuid::Uuid;
 use websocket::client::sync::Writer;
 use websocket::server::sync::Server;
 use websocket::server::upgrade::WsUpgrade;
-use websocket::{Message, OwnedMessage};
+use websocket::{Message, OwnedMessage, WebSocketResult};
 
 use crate::dialogue::{execute_dialog_option, Dialogue, DialogueUpdate};
 use crate::get_prng;
@@ -38,11 +38,11 @@ use crate::{
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 
 lazy_static! {
-    pub static ref DISPATCHER: (
+    pub static ref MAIN_DISPATCHER: (
         Arc<Mutex<Sender<ServerToClientMessage>>>,
         Arc<Mutex<Receiver<ServerToClientMessage>>>
     ) = {
-        let (sender, receiver) = bounded::<ServerToClientMessage>(128);
+        let (sender, receiver) = bounded::<ServerToClientMessage>(128 * 128);
         (Arc::new(Mutex::new(sender)), Arc::new(Mutex::new(receiver)))
     };
 }
@@ -152,9 +152,12 @@ fn handle_request(request: WSRequest) {
 
         let message = socket_receiver.recv_message();
         match message {
-            Ok(m) => {
-                inner_client_sender.send(m).ok();
-            }
+            Ok(m) => match inner_client_sender.try_send(m) {
+                Ok(_) => {}
+                Err(_) => {
+                    warn!("failed to send to inner client sender")
+                }
+            },
             Err(e) => {
                 eprintln!("err {} receiving ws {}", client_id, e);
                 increment_client_errors(client_id);
@@ -182,7 +185,12 @@ fn handle_request(request: WSRequest) {
                 }
                 OwnedMessage::Ping(msg) => {
                     let message = Message::pong(msg);
-                    socket_sender.send_message(&message).unwrap();
+                    match socket_sender.send_message(&message) {
+                        Ok(_) => {}
+                        Err(_) => {
+                            warn!("failed to respond to ping from client");
+                        }
+                    };
                 }
                 OwnedMessage::Text(msg) => on_client_text_message(client_id, msg),
                 _ => {}
@@ -197,24 +205,33 @@ fn handle_request(request: WSRequest) {
 }
 
 pub fn x_cast_state(state: GameState, x_cast: XCast) {
-    DISPATCHER
+    match MAIN_DISPATCHER
         .0
         .lock()
         .unwrap()
-        .send(ServerToClientMessage::XCastStateChange(state, x_cast))
-        .unwrap();
+        .try_send(ServerToClientMessage::XCastStateChange(state, x_cast))
+    {
+        Ok(_) => {}
+        Err(_) => {
+            warn!("failed to x_cast_state");
+        }
+    }
 }
 
 pub fn send_tag_confirm(tag: String, client_id: Uuid) {
-    DISPATCHER
+    match MAIN_DISPATCHER
         .0
         .lock()
         .unwrap()
-        .send(ServerToClientMessage::TagConfirm(
+        .try_send(ServerToClientMessage::TagConfirm(
             TagConfirm { tag },
             client_id,
-        ))
-        .unwrap();
+        )) {
+        Ok(_) => {}
+        Err(_) => {
+            warn!("failed to x_cast_send_tag_confirm");
+        }
+    }
 }
 
 fn on_message_to_send_to_client(
@@ -235,7 +252,7 @@ fn on_message_to_send_to_client(
         sender
             .send_message(&message)
             .map_err(|e| {
-                eprintln!("Err {} sending {}", client_id, e);
+                warn!(format!("Err {} sending {}", client_id, e));
                 increment_client_errors(client_id);
                 disconnect_if_bad(client_id);
             })
@@ -403,7 +420,7 @@ fn on_client_ping(client_id: Uuid, data: &&str) {
         .retain(|pi| now_seconds - pi.ping_at_midnight_secs <= PING_LIFETIME_SECONDS);
 
     let average = entry.recalc_average();
-    DISPATCHER
+    MAIN_DISPATCHER
         .0
         .lock()
         .unwrap()
@@ -576,7 +593,7 @@ pub fn dispatcher_thread() {
     // due to some magic, cloning the Arc-Mutex gives me a permanent link to
     // the non-cloned contents
     let client_senders = CLIENT_SENDERS.clone();
-    let unwrapped = DISPATCHER.1.lock().unwrap();
+    let unwrapped = MAIN_DISPATCHER.1.lock().unwrap();
     while let Ok(msg) = unwrapped.recv() {
         for sender in client_senders.lock().unwrap().iter() {
             let send = sender.1.send(msg.clone());
@@ -629,7 +646,7 @@ pub fn is_disconnected(client_id: Uuid) -> bool {
 }
 
 pub fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {
-    DISPATCHER
+    MAIN_DISPATCHER
         .0
         .lock()
         .unwrap()
@@ -645,7 +662,7 @@ pub fn unicast_dialogue_state(
     dialogue_state: Option<Dialogue>,
     current_state_id: Uuid,
 ) {
-    DISPATCHER
+    MAIN_DISPATCHER
         .0
         .lock()
         .unwrap()
@@ -658,7 +675,7 @@ pub fn unicast_dialogue_state(
 }
 
 fn dispatch(message: ServerToClientMessage) {
-    DISPATCHER.0.lock().unwrap().send(message).unwrap();
+    MAIN_DISPATCHER.0.lock().unwrap().send(message).unwrap();
 }
 
 pub fn multicast_ships_update_excluding(
@@ -666,7 +683,7 @@ pub fn multicast_ships_update_excluding(
     client_id: Option<Uuid>,
     current_state_id: Uuid,
 ) {
-    DISPATCHER
+    MAIN_DISPATCHER
         .0
         .lock()
         .unwrap()
@@ -695,7 +712,7 @@ pub fn cleanup_bad_clients_thread() {
 }
 
 pub fn send_event_to_client(ev: GameEvent, x_cast: XCast) {
-    let sender = DISPATCHER.0.lock().unwrap();
+    let sender = MAIN_DISPATCHER.0.lock().unwrap();
     sender
         .send(ServerToClientMessage::XCastGameEvent(
             Wrapper::new(ev),

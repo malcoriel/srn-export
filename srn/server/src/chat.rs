@@ -28,7 +28,7 @@ fn init() -> (
 }
 
 lazy_static! {
-    static ref DISPATCHER_PAIR: (
+    static ref CHAT_DISPATCHER_CHANNEL: (
         Arc<Mutex<Sender<ServerChatMessage>>>,
         Arc<Mutex<Receiver<ServerChatMessage>>>
     ) = init();
@@ -68,13 +68,13 @@ impl ChatMessage {
 }
 
 fn broadcast_message(msg: ServerChatMessage) {
-    let sender = DISPATCHER_PAIR.0.lock().unwrap();
+    let sender = CHAT_DISPATCHER_CHANNEL.0.lock().unwrap();
     sender.send(msg).unwrap();
 }
 
 fn dispatcher_thread() {
     let client_senders = CHAT_CLIENT_SENDERS.clone();
-    let unwrapped = DISPATCHER_PAIR.1.lock().unwrap();
+    let unwrapped = CHAT_DISPATCHER_CHANNEL.1.lock().unwrap();
     while let Ok(msg) = unwrapped.recv() {
         for sender in client_senders.lock().unwrap().iter() {
             let send = sender.1.send(msg.clone());
