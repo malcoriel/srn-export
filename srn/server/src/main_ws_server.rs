@@ -221,7 +221,9 @@ fn handle_request(request: WSRequest) {
         while let Ok(message) = public_client_receiver.try_recv() {
             on_message_to_send_to_client(client_id, &mut socket_sender, &message)
         }
-        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
+        // 1ms spacing between client message processing to not overload server accidentally.
+        // this value should be fairly low, as it is a guaranteed ping
+        thread::sleep(Duration::from_millis(1));
     }
 }
 
