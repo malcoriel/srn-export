@@ -186,7 +186,6 @@ fn handle_request(request: WSRequest) {
                 disconnect_if_bad(client_id);
             }
         }
-        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     });
 
     loop {
