@@ -21,7 +21,7 @@ use crate::rooms_api::create_room_impl;
 use crate::states::StateContainer;
 use crate::substitutions::substitute_notification_texts;
 use crate::world;
-use crate::world::{spawn_ship, GameMode, GameState, Player};
+use crate::world::{fire_saved_event, spawn_ship, GameMode, GameState, Player};
 use crate::xcast::XCast;
 use crate::{cargo_rush, indexing, pirate_defence, tutorial};
 use crate::{get_prng, SamplerMarks};
@@ -72,11 +72,20 @@ pub fn handle_events(
                         ..
                     } => {
                         if personal && mode == GameMode::Tutorial {
-                            fire_event(GameEvent::DialogueTriggerRequest {
-                                dialogue_name: "tutorial_start".to_owned(),
-                                player_id,
-                                target: None,
-                            });
+                            let state = crate::states::select_state_mut(cont, player_id);
+                            if state.is_none() {
+                                warn!("event in non-existent state");
+                                continue;
+                            }
+                            let state = state.unwrap();
+                            fire_saved_event(
+                                state,
+                                GameEvent::DialogueTriggerRequest {
+                                    dialogue_name: "tutorial_start".to_owned(),
+                                    player_id,
+                                    target: None,
+                                },
+                            );
                         }
                     }
                     GameEvent::ShipDied { state_id, .. } => {

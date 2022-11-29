@@ -501,7 +501,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
             health: None,
             properties: Default::default(),
             movement: Movement::RadialMonotonous {
-                full_period_ticks: gen_period(prng, 1.0),
+                full_period_ticks: gen_period(prng, 30.0),
                 anchor: ObjectSpecifier::Star { id: star_id },
                 relative_position: Default::default(),
                 phase: None,
@@ -522,7 +522,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
             health: None,
             properties: Default::default(),
             movement: Movement::RadialMonotonous {
-                full_period_ticks: gen_period(prng, 0.25),
+                full_period_ticks: gen_period(prng, 31.0),
                 anchor: ObjectSpecifier::Planet { id: planet_id },
                 relative_position: Default::default(),
                 phase: None,
