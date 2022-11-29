@@ -1,11 +1,12 @@
 use std::collections::HashMap;
+use std::io::Error;
 use std::net::{SocketAddr, TcpStream};
 use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::thread;
 use std::time::Duration;
 
 use chrono::{DateTime, NaiveDate, Timelike, Utc};
-use crossbeam::channel::{bounded, Receiver, Sender, TrySendError};
+use crossbeam::channel::{bounded, Receiver, SendError, Sender, TrySendError};
 use lazy_static::lazy_static;
 use lockfree::set::Set as LockFreeSet;
 use mut_static::MutStatic;
@@ -36,6 +37,7 @@ use crate::{
     MAX_ERRORS_SAMPLE_INTERVAL, MAX_MESSAGES_PER_INTERVAL, MAX_MESSAGE_SAMPLE_INTERVAL_MS,
 };
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use websocket::sync::Client;
 
 lazy_static! {
     pub static ref MAIN_DISPATCHER: (
@@ -108,8 +110,9 @@ lazy_static! {
 
 pub fn websocket_server() {
     let addr = "0.0.0.0:2794";
-    let server = Server::bind(addr).unwrap();
-    println!("WS server has launched on {}", addr);
+    let server =
+        Server::bind(addr).expect(format!("failed to bind to {}, cannot start", addr).as_str());
+    log!(format!("WS server has launched on {}", addr));
 
     for request in server.filter_map(Result::ok) {
         thread::spawn(|| handle_request(request));
@@ -118,13 +121,32 @@ pub fn websocket_server() {
 
 fn handle_request(request: WSRequest) {
     if !request.protocols().contains(&"rust-websocket".to_string()) {
-        request.reject().unwrap();
+        match request.reject() {
+            Ok(_) => {}
+            Err(_) => {
+                warn!("failed to reject websocket connection")
+            }
+        }
         return;
     }
 
-    let client = request.use_protocol("rust-websocket").accept().unwrap();
+    let accept_result = request.use_protocol("rust-websocket").accept();
+    let client = match accept_result {
+        Ok(client) => client,
+        Err(_) => {
+            warn!("failed to accept websocket connection");
+            return;
+        }
+    };
 
-    let ip = client.peer_addr().unwrap();
+    let peer_addr_result = client.peer_addr();
+    let ip = match peer_addr_result {
+        Ok(ip) => ip,
+        Err(_) => {
+            warn!("failed to get peer ip address");
+            return;
+        }
+    };
 
     let client_id = Uuid::new_v4();
     println!("Connection from {}, id={}", ip, client_id);
@@ -289,7 +311,7 @@ fn on_client_text_message(client_id: Uuid, msg: String) {
     }
     let parts = msg.split("_%_").collect::<Vec<&str>>();
     if parts.len() < 2 || parts.len() > 3 {
-        eprintln!("Corrupt message (not 2-3 parts) {}", msg);
+        eprintln!("Corrupted message (not 2-3 parts) {}", msg);
         return;
     }
     let first = parts.iter().nth(0).unwrap();
@@ -420,15 +442,19 @@ fn on_client_ping(client_id: Uuid, data: &&str) {
         .retain(|pi| now_seconds - pi.ping_at_midnight_secs <= PING_LIFETIME_SECONDS);
 
     let average = entry.recalc_average();
-    MAIN_DISPATCHER
+    match MAIN_DISPATCHER
         .0
         .lock()
         .unwrap()
-        .send(ServerToClientMessage::Pong(Pong {
+        .try_send(ServerToClientMessage::Pong(Pong {
             your_average_for_server: average,
             target_player_id: client_id,
-        }))
-        .unwrap();
+        })) {
+        Ok(_) => {}
+        Err(_) => {
+            warn!("failed to respond to client ping");
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
@@ -594,11 +620,11 @@ pub fn dispatcher_thread() {
     // the non-cloned contents
     let client_senders = CLIENT_SENDERS.clone();
     let unwrapped = MAIN_DISPATCHER.1.lock().unwrap();
-    while let Ok(msg) = unwrapped.recv() {
+    while let Ok(msg) = unwrapped.try_recv() {
         for sender in client_senders.lock().unwrap().iter() {
             let send = sender.1.send(msg.clone());
             if let Err(e) = send {
-                eprintln!("err {} sending {}", sender.0, e);
+                warn!(format!("err sending from dispatcher to client {}", e));
                 increment_client_errors(sender.0);
                 disconnect_if_bad(sender.0);
             }
@@ -609,7 +635,17 @@ pub fn dispatcher_thread() {
 }
 
 pub fn kick_player(player_id: Uuid) {
-    dispatch(ServerToClientMessage::RoomLeave(player_id));
+    match MAIN_DISPATCHER
+        .0
+        .lock()
+        .unwrap()
+        .try_send(ServerToClientMessage::RoomLeave(player_id))
+    {
+        Ok(_) => {}
+        Err(_) => {
+            warn!("failed send kick_player")
+        }
+    }
 }
 
 fn on_client_close(ip: SocketAddr, client_id: Uuid, sender: &mut Writer<TcpStream>) {
@@ -646,53 +682,19 @@ pub fn is_disconnected(client_id: Uuid) -> bool {
 }
 
 pub fn notify_state_changed(state_id: Uuid, target_client_id: Uuid) {
-    MAIN_DISPATCHER
+    match MAIN_DISPATCHER
         .0
         .lock()
         .unwrap()
-        .send(ServerToClientMessage::RoomSwitched(XCast::Unicast(
+        .try_send(ServerToClientMessage::RoomSwitched(XCast::Unicast(
             state_id,
             target_client_id,
-        )))
-        .unwrap();
-}
-
-pub fn unicast_dialogue_state(
-    client_id: Uuid,
-    dialogue_state: Option<Dialogue>,
-    current_state_id: Uuid,
-) {
-    MAIN_DISPATCHER
-        .0
-        .lock()
-        .unwrap()
-        .send(ServerToClientMessage::DialogueStateChange(
-            Wrapper::new(dialogue_state),
-            client_id,
-            current_state_id,
-        ))
-        .unwrap();
-}
-
-fn dispatch(message: ServerToClientMessage) {
-    MAIN_DISPATCHER.0.lock().unwrap().send(message).unwrap();
-}
-
-pub fn multicast_ships_update_excluding(
-    ships: Vec<Ship>,
-    client_id: Option<Uuid>,
-    current_state_id: Uuid,
-) {
-    MAIN_DISPATCHER
-        .0
-        .lock()
-        .unwrap()
-        .send(ServerToClientMessage::MulticastPartialShipUpdate(
-            ShipsWrapper { ships },
-            client_id,
-            current_state_id,
-        ))
-        .unwrap();
+        ))) {
+        Ok(_) => {}
+        Err(_) => {
+            warn!("failed to notify_state_changed")
+        }
+    }
 }
 
 pub fn cleanup_bad_clients_thread() {
@@ -713,10 +715,13 @@ pub fn cleanup_bad_clients_thread() {
 
 pub fn send_event_to_client(ev: GameEvent, x_cast: XCast) {
     let sender = MAIN_DISPATCHER.0.lock().unwrap();
-    sender
-        .send(ServerToClientMessage::XCastGameEvent(
-            Wrapper::new(ev),
-            x_cast,
-        ))
-        .unwrap();
+    match sender.send(ServerToClientMessage::XCastGameEvent(
+        Wrapper::new(ev),
+        x_cast,
+    )) {
+        Ok(_) => {}
+        Err(_) => {
+            warn!("failed to send game event to client")
+        }
+    }
 }
