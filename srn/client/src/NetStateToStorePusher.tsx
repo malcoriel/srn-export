@@ -3,7 +3,11 @@ import { useStore } from './store';
 import { getSpecifierId } from './world';
 import { useNSForceChange } from './NetStateHooks';
 
-export const StateStoreSyncer: React.FC = () => {
+// this is a connection between zustand's store that controls the Srn component / global React app state,
+// and the NetState, which controls the true game state, primarily for the sake of various UI purposes getting immdediately reflected
+// strictly speaking, it's not needed for components because they can simply use even subscription via useNSForceChange, but sometimes
+// when binding is not direct and some other stuff neeeds to modify the store, it's better to sync through here
+export const NetStateToStorePusher: React.FC = () => {
   const {
     autoFocusSpecifier,
     setAutoFocusSpecifier,

@@ -91,8 +91,9 @@ export interface IStateSyncer {
   handleServerConfirmedPacket(tag: string): void;
 }
 
-export interface WasmDeps {
+export interface SyncerDeps {
   wasmUpdateWorld: any;
+  getShowShadow: () => boolean;
 }
 
 type PendingActionPack = {
@@ -120,10 +121,13 @@ type TagConfirm = {
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
 
+  private readonly getShowShadow;
+
   private eventCounter = 0;
 
-  constructor(deps: WasmDeps) {
+  constructor(deps: SyncerDeps) {
     this.wasmUpdateWorld = deps.wasmUpdateWorld;
+    this.getShowShadow = deps.getShowShadow;
     this.desyncedCorrectState = null;
   }
 
@@ -168,6 +172,9 @@ export class StateSyncer implements IStateSyncer {
   };
 
   private addShadow() {
+    if (!this.getShowShadow()) {
+      return;
+    }
     const desyncedShadow = this.getTrueMyShipState();
     if (desyncedShadow) {
       desyncedShadow.id = SHADOW_ID;

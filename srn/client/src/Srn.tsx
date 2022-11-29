@@ -36,7 +36,7 @@ import { PromptWindow } from './HtmlLayers/PromptWindow';
 import { StarMapWindow } from './HtmlLayers/StarMapWindow';
 import { LongActionsDisplay } from './HtmlLayers/LongActionsDisplay';
 import { StartMenuBackground } from './StartMenuBackground';
-import { StateStoreSyncer } from './StateStoreSyncer';
+import { NetStateToStorePusher } from './NetStateToStorePusher';
 import {
   MenuLoadingIndicator,
   SuspendedPreloader,
@@ -77,7 +77,7 @@ const renderPlayingElements = (mode: GameMode) => (
       <StarMapWindow />
       <TradeWindow />
       <PromptWindow />
-      <StateStoreSyncer />
+      <NetStateToStorePusher />
       <SandboxQuickMenu />
       <CameraCoordinatesBox />
     </>
@@ -101,7 +101,7 @@ const renderWatchingElements = (mode: GameMode) => (
       <StatsPanel />
       <WindowContainers />
       <OverheadPanel />
-      <StateStoreSyncer />
+      <NetStateToStorePusher />
       <ReplayControlsSrnContainer />
       <CameraCoordinatesBox />
     </>

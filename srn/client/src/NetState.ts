@@ -41,6 +41,7 @@ import {
   resetActiveSyncActions,
 } from './utils/ShipControls';
 import { ChatState } from './ChatState';
+import { getSrnState } from './store';
 
 export type Timeout = ReturnType<typeof setTimeout>;
 
@@ -224,6 +225,7 @@ export default class NetState extends EventEmitter {
     this.slowTime = new vsyncedCoupledThrottledTime(SLOW_TIME_STEP);
     this.syncer = new StateSyncer({
       wasmUpdateWorld: updateWorld,
+      getShowShadow: () => getSrnState().hotkeysPressed['show grid'], // bind to the same hotkey store as grid
     });
   }
 

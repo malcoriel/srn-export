@@ -53,6 +53,7 @@ export type SrnState = {
   musicEnabled: boolean;
   setMusicEnabled: (value: boolean) => void;
   portrait: string;
+  hotkeysPressed: Record<string, boolean>;
 
   setPortrait: (value: string) => void;
   nextPortrait: () => void;
@@ -105,6 +106,7 @@ export type SrnState = {
   setAutoFocusSpecifier: (sp?: ObjectSpecifier | null) => void;
   hostileAutoFocusSpecifier?: ObjectSpecifier | null;
   setHostileAutoFocusSpecifier: (sp?: ObjectSpecifier | null) => void;
+  setHotkeyPressed: (key: string, value: boolean) => void;
 };
 
 export enum TestMenuMode {
@@ -136,154 +138,160 @@ function toggleWindowState(old: WindowState, hasMinimized = false) {
   }
   return WindowState.Shown;
 }
+import { devtools } from 'zustand/middleware';
+export const useStore = create<SrnState>(
+  devtools((set) => ({
+    mainUiState: MainUiState.Idle,
+    testMenuMode: TestMenuMode.Hidden,
+    menu: true,
+    skipMenu: lsSkipMenu,
+    preferredName: lsPreferredName,
+    musicEnabled: lsMusicEnabled,
+    portrait: lsPortrait,
+    trigger: 0,
+    volume: lsMusicVolume,
+    questWindow: WindowState.Hidden,
+    promptWindow: WindowState.Hidden,
+    chatWindow: WindowState.Minimized,
+    dialogueWindow: WindowState.Hidden,
+    inventoryWindow: WindowState.Hidden,
+    tradeWindow: WindowState.Hidden,
+    helpWindow: WindowState.Hidden,
+    mapWindow: WindowState.Hidden,
+    leaderboardWindow: WindowState.Hidden,
+    showTractorCircle: undefined,
+    selectedObjectId: undefined,
+    contextMenuItems: [],
+    contextMenuRef: { current: null },
+    autoFocusSpecifier: undefined,
+    hostileAutoFocusSpecifier: undefined,
+    hotkeysPressed: {},
 
-export const useStore = create<SrnState>((set) => ({
-  mainUiState: MainUiState.Idle,
-  testMenuMode: TestMenuMode.Hidden,
-  menu: true,
-  skipMenu: lsSkipMenu,
-  preferredName: lsPreferredName,
-  musicEnabled: lsMusicEnabled,
-  portrait: lsPortrait,
-  trigger: 0,
-  volume: lsMusicVolume,
-  questWindow: WindowState.Hidden,
-  promptWindow: WindowState.Hidden,
-  chatWindow: WindowState.Minimized,
-  dialogueWindow: WindowState.Hidden,
-  inventoryWindow: WindowState.Hidden,
-  tradeWindow: WindowState.Hidden,
-  helpWindow: WindowState.Hidden,
-  mapWindow: WindowState.Hidden,
-  leaderboardWindow: WindowState.Hidden,
-  showTractorCircle: undefined,
-  selectedObjectId: undefined,
-  contextMenuItems: [],
-  contextMenuRef: { current: null },
-  autoFocusSpecifier: undefined,
-  hostileAutoFocusSpecifier: undefined,
+    promptWindowParams: ['', () => {}, () => {}],
+    setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
+    setMapWindow: (val: WindowState) => set({ mapWindow: val }),
+    setShowTractorCircle: (val) => set({ showTractorCircle: val }),
+    setPreferredName: (val: string) =>
+      set(() => {
+        setLSValue('preferredName', val);
+        return { preferredName: val };
+      }),
+    setVolume: (val: number) =>
+      set(() => {
+        setLSValue('musicVolume', val);
+        return { volume: val };
+      }),
+    setQuestWindow: (val: WindowState) => set({ questWindow: val }),
+    setHelpWindow: (val: WindowState) => set({ helpWindow: val }),
+    setChatWindow: (val: WindowState) => set({ chatWindow: val }),
+    setInventoryWindow: (val: WindowState) => set({ inventoryWindow: val }),
+    setPromptWindow: (val: WindowState) => set({ promptWindow: val }),
+    setPromptWindowParams: (
+      prompt: string,
+      resolve: (val: string) => void,
+      reject: () => void
+    ) => set({ promptWindowParams: [prompt, resolve, reject] }),
+    setTradeWindow: (val: WindowState) => set({ tradeWindow: val }),
+    setLeaderboardWindow: (val: WindowState) => set({ leaderboardWindow: val }),
+    setDialogueWindow: (val: WindowState) => set({ dialogueWindow: val }),
+    toggleQuestWindow: () =>
+      set((state) => {
+        return { questWindow: toggleWindowState(state.questWindow, true) };
+      }),
+    toggleHelpWindow: () =>
+      set((state) => {
+        return { helpWindow: toggleWindowState(state.helpWindow) };
+      }),
+    toggleInventoryWindow: () =>
+      set((state) => {
+        return { inventoryWindow: toggleWindowState(state.inventoryWindow) };
+      }),
+    toggleTradeWindow: () =>
+      set((state) => {
+        return { inventoryWindow: toggleWindowState(state.tradeWindow) };
+      }),
+    toggleMapWindow: () =>
+      set((state) => {
+        return { mapWindow: toggleWindowState(state.mapWindow) };
+      }),
+    toggleChatWindow: () =>
+      set((state) => {
+        return { chatWindow: toggleWindowState(state.chatWindow, true) };
+      }),
+    toggleLeaderboardWindow: () =>
+      set((state) => {
+        return {
+          leaderboardWindow: toggleWindowState(state.leaderboardWindow, true),
+        };
+      }),
+    setMenu: (val: boolean) => set({ menu: val }),
+    toggleMenu: () => set((state) => ({ menu: !state.menu })),
+    setSkipMenu: (val: boolean) =>
+      set(() => {
+        setLSValue('skipMenu', val);
+        return { skipMenu: val };
+      }),
+    setMusicEnabled: (val: boolean) =>
+      set(() => {
+        setLSValue('musicEnabled', val);
+        return { musicEnabled: val };
+      }),
+    setPortrait: (val: string) => set({ portrait: val }),
+    forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
+    setMainUiState: (val: MainUiState) => set({ mainUiState: val }),
 
-  promptWindowParams: ['', () => {}, () => {}],
-  setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
-  setMapWindow: (val: WindowState) => set({ mapWindow: val }),
-  setShowTractorCircle: (val) => set({ showTractorCircle: val }),
-  setPreferredName: (val: string) =>
-    set(() => {
-      setLSValue('preferredName', val);
-      return { preferredName: val };
-    }),
-  setVolume: (val: number) =>
-    set(() => {
-      setLSValue('musicVolume', val);
-      return { volume: val };
-    }),
-  setQuestWindow: (val: WindowState) => set({ questWindow: val }),
-  setHelpWindow: (val: WindowState) => set({ helpWindow: val }),
-  setChatWindow: (val: WindowState) => set({ chatWindow: val }),
-  setInventoryWindow: (val: WindowState) => set({ inventoryWindow: val }),
-  setPromptWindow: (val: WindowState) => set({ promptWindow: val }),
-  setPromptWindowParams: (
-    prompt: string,
-    resolve: (val: string) => void,
-    reject: () => void
-  ) => set({ promptWindowParams: [prompt, resolve, reject] }),
-  setTradeWindow: (val: WindowState) => set({ tradeWindow: val }),
-  setLeaderboardWindow: (val: WindowState) => set({ leaderboardWindow: val }),
-  setDialogueWindow: (val: WindowState) => set({ dialogueWindow: val }),
-  toggleQuestWindow: () =>
-    set((state) => {
-      return { questWindow: toggleWindowState(state.questWindow, true) };
-    }),
-  toggleHelpWindow: () =>
-    set((state) => {
-      return { helpWindow: toggleWindowState(state.helpWindow) };
-    }),
-  toggleInventoryWindow: () =>
-    set((state) => {
-      return { inventoryWindow: toggleWindowState(state.inventoryWindow) };
-    }),
-  toggleTradeWindow: () =>
-    set((state) => {
-      return { inventoryWindow: toggleWindowState(state.tradeWindow) };
-    }),
-  toggleMapWindow: () =>
-    set((state) => {
-      return { mapWindow: toggleWindowState(state.mapWindow) };
-    }),
-  toggleChatWindow: () =>
-    set((state) => {
-      return { chatWindow: toggleWindowState(state.chatWindow, true) };
-    }),
-  toggleLeaderboardWindow: () =>
-    set((state) => {
-      return {
-        leaderboardWindow: toggleWindowState(state.leaderboardWindow, true),
-      };
-    }),
-  setMenu: (val: boolean) => set({ menu: val }),
-  toggleMenu: () => set((state) => ({ menu: !state.menu })),
-  setSkipMenu: (val: boolean) =>
-    set(() => {
-      setLSValue('skipMenu', val);
-      return { skipMenu: val };
-    }),
-  setMusicEnabled: (val: boolean) =>
-    set(() => {
-      setLSValue('musicEnabled', val);
-      return { musicEnabled: val };
-    }),
-  setPortrait: (val: string) => set({ portrait: val }),
-  forceUpdate: () => set((state) => ({ trigger: state.trigger + 1 })),
-  setMainUiState: (val: MainUiState) => set({ mainUiState: val }),
+    nextPortrait: () =>
+      set((state) => {
+        const locIndex = (portraitIndex + 1) % portraits.length;
+        const locPort = portraitPath(locIndex);
+        state.setPortrait(locPort);
+        setLSValue('portrait', locPort);
+        portraitIndex = locIndex;
+        return {};
+      }),
 
-  nextPortrait: () =>
-    set((state) => {
-      const locIndex = (portraitIndex + 1) % portraits.length;
-      const locPort = portraitPath(locIndex);
-      state.setPortrait(locPort);
-      setLSValue('portrait', locPort);
-      portraitIndex = locIndex;
-      return {};
-    }),
+    prevPortrait: () =>
+      set((state) => {
+        let number = portraitIndex - 1;
+        if (number < 0) number = portraits.length + number;
+        const locIndex = number % portraits.length;
+        const locPort = portraitPath(locIndex);
+        setLSValue('portrait', locPort);
+        state.setPortrait(locPort);
+        portraitIndex = locIndex;
+        return {};
+      }),
 
-  prevPortrait: () =>
-    set((state) => {
-      let number = portraitIndex - 1;
-      if (number < 0) number = portraits.length + number;
-      const locIndex = number % portraits.length;
-      const locPort = portraitPath(locIndex);
-      setLSValue('portrait', locPort);
-      state.setPortrait(locPort);
-      portraitIndex = locIndex;
-      return {};
-    }),
-
-  makeRandomName: () =>
-    set(() => {
-      deleteLSValue('preferredName');
-      return {
-        preferredName: genRandomName(),
-      };
-    }),
-  makeRandomPortrait: () =>
-    set(() => {
-      const portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
-      const portrait = portraitPath(portraitIndex);
-      deleteLSValue('portrait');
-      return { portraitIndex, portrait };
-    }),
-  activeInteractorId: undefined,
-  activeHostileInteractorId: undefined,
-  setActiveInteractorId: (id: string | undefined) =>
-    set(() => ({ activeInteractorId: id })),
-  setActiveHostileInteractorId: (id: string | undefined) =>
-    set(() => ({ activeHostileInteractorId: id })),
-  setAutoFocusSpecifier: (sp) => set(() => ({ autoFocusSpecifier: sp })),
-  setHostileAutoFocusSpecifier: (sp) =>
-    set(() => ({ hostileAutoFocusSpecifier: sp })),
-}));
+    makeRandomName: () =>
+      set(() => {
+        deleteLSValue('preferredName');
+        return {
+          preferredName: genRandomName(),
+        };
+      }),
+    makeRandomPortrait: () =>
+      set(() => {
+        const portraitIndex = randBetweenExclusiveEnd(0, portraits.length);
+        const portrait = portraitPath(portraitIndex);
+        deleteLSValue('portrait');
+        return { portraitIndex, portrait };
+      }),
+    activeInteractorId: undefined,
+    activeHostileInteractorId: undefined,
+    setActiveInteractorId: (id: string | undefined) =>
+      set(() => ({ activeInteractorId: id })),
+    setActiveHostileInteractorId: (id: string | undefined) =>
+      set(() => ({ activeHostileInteractorId: id })),
+    setAutoFocusSpecifier: (sp) => set(() => ({ autoFocusSpecifier: sp })),
+    setHostileAutoFocusSpecifier: (sp) =>
+      set(() => ({ hostileAutoFocusSpecifier: sp })),
+    setHotkeyPressed: (key, value) =>
+      set(() => ({ hotkeysPressed: { [key]: value } })),
+  }))
+);
 
 export const store = useStore;
+export const getSrnState = store.getState;
 
 const initialState = store.getState();
 export const resetStore = () => store.setState(initialState, true);

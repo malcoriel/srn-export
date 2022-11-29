@@ -141,7 +141,9 @@ export const ThreeLayer: React.FC<{
   const [showGrid] = useToggleHotkey(
     'shift+g',
     defaultShowGrid,
-    'show helper grid'
+    'show helper grid',
+    undefined,
+    'show grid'
   );
   useNSForceChange('ThreeLayer', true);
 
