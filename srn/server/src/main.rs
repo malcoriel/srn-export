@@ -178,7 +178,7 @@ lazy_static! {
 }
 
 const DEFAULT_SLEEP_MS: u64 = 2;
-const BROADCAST_FULL_SYNC_SLEEP_MS: u64 = 50;
+const BROADCAST_EVERY_TICKS: i64 = 50 * 1000;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const MAX_MESSAGES_PER_INTERVAL: u32 = 10;
@@ -287,11 +287,6 @@ fn rocket() -> rocket::Rocket {
             main_thread();
         })
         .ok();
-    // make_thread("broadcast_state")
-    //     .spawn(|| {
-    //         broadcast_state_thread();
-    //     })
-    //     .ok();
 
     make_thread("dispatcher")
         .spawn(move || main_ws_server::dispatcher_thread())
@@ -340,20 +335,6 @@ fn rocket() -> rocket::Rocket {
         )
 }
 
-// fn broadcast_state_thread() {
-//     loop {
-//         let diff = {
-//             let start = Local::now();
-//             for guard in ROOMS_READ.iter() {}
-//             (Local::now() - start).num_nanoseconds().unwrap() as f64 / 1000.0
-//         };
-//         // log!(format!("broadcast duration={}ticks", diff));
-//         thread::sleep(Duration::from_millis(
-//             (BROADCAST_FULL_SYNC_SLEEP_MS as i64 - diff as i64).max(0) as u64,
-//         ));
-//     }
-// }
-
 fn make_thread(name: &str) -> std::thread::Builder {
     std::thread::Builder::new().name(name.to_string())
 }
@@ -388,6 +369,7 @@ fn main_thread() {
     let mut sampler_consume_elapsed = 0;
     let mut bot_action_elapsed = 0;
     let mut events_elapsed = 0;
+    let mut broadcast_elapsed: i64 = 0;
     let mut frame_count = 0;
     let mut over_budget_frame = 0;
     let mut shortcut_frame = 0;
@@ -435,7 +417,6 @@ fn main_thread() {
                 log!("------");
             }
         }
-        // log!(format!("consumed {}", now));
         frame_count += 1;
         sampler.init_budget(FRAME_BUDGET_TICKS);
         let total_mark = sampler.start(SamplerMarks::MainTotal as u32);
@@ -446,16 +427,21 @@ fn main_thread() {
             sampler.end(total_mark);
             continue;
         }
-        // log!(format!("locked {}", now));
 
-        let broadcast_mark = sampler.start(SamplerMarks::BroadcastState as u32);
-        // broadcast first, then update, to ensure that broadcast always happens even if update is shortcutted
-        for room in get_rooms_iter(&cont) {
-            let state_id = room.state.id.clone();
-            main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(state_id));
+        // For now it seems that due to WS being full-duplex, sending state also clogs client sending commands,
+        // therefore not going to send it every update. Should be solved when I split sending and receiving channels
+        if broadcast_elapsed > BROADCAST_EVERY_TICKS {
+            let broadcast_mark = sampler.start(SamplerMarks::BroadcastState as u32);
+            // broadcast first, then update, to ensure that broadcast always happens even if update is shortcut
+            for room in get_rooms_iter(&cont) {
+                let state_id = room.state.id.clone();
+                main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(state_id));
+            }
+            sampler.end(broadcast_mark);
+            broadcast_elapsed = 0;
+        } else {
+            broadcast_elapsed += elapsed_micro;
         }
-        // log!(format!("broadcast {}", now));
-        sampler.end(broadcast_mark);
 
         let update_rooms_id = sampler.start(SamplerMarks::Update as u32);
         cleanup_empty_rooms(&mut cont);

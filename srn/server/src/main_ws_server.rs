@@ -234,8 +234,8 @@ pub fn x_cast_state(state: GameState, x_cast: XCast) {
         .try_send(ServerToClientMessage::XCastStateChange(state, x_cast))
     {
         Ok(_) => {}
-        Err(_) => {
-            warn!("failed to x_cast_state");
+        Err(e) => {
+            warn!(format!("failed to x_cast_state {}", e));
         }
     }
 }
