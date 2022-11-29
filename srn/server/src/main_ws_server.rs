@@ -198,7 +198,7 @@ fn handle_request(request: WSRequest) {
 
         // whenever we get something from inner queue (means from socket), we have to trigger
         // some logic
-        if let Ok(message) = inner_incoming_client_receiver.try_recv() {
+        while let Ok(message) = inner_incoming_client_receiver.try_recv() {
             match message {
                 OwnedMessage::Close(_) => {
                     on_client_close(ip, client_id, &mut socket_sender);
@@ -218,7 +218,7 @@ fn handle_request(request: WSRequest) {
             }
         }
         // whenever some other function sends a message, we have to put it to socket
-        if let Ok(message) = public_client_receiver.try_recv() {
+        while let Ok(message) = public_client_receiver.try_recv() {
             on_message_to_send_to_client(client_id, &mut socket_sender, &message)
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
