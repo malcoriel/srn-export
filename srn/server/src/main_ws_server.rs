@@ -620,18 +620,19 @@ pub fn dispatcher_thread() {
     // the non-cloned contents
     let client_senders = CLIENT_SENDERS.clone();
     let unwrapped = MAIN_DISPATCHER.1.lock().unwrap();
-    while let Ok(msg) = unwrapped.try_recv() {
-        for sender in client_senders.lock().unwrap().iter() {
-            let send = sender.1.send(msg.clone());
-            if let Err(e) = send {
-                warn!(format!("err sending from dispatcher to client {}", e));
-                increment_client_errors(sender.0);
-                disconnect_if_bad(sender.0);
+    loop {
+        while let Ok(msg) = unwrapped.try_recv() {
+            for sender in client_senders.lock().unwrap().iter() {
+                let send = sender.1.send(msg.clone());
+                if let Err(e) = send {
+                    warn!(format!("err sending from dispatcher to client {}", e));
+                    increment_client_errors(sender.0);
+                    disconnect_if_bad(sender.0);
+                }
             }
         }
         thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
     }
-    thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS))
 }
 
 pub fn kick_player(player_id: Uuid) {
