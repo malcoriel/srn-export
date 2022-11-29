@@ -177,7 +177,7 @@ lazy_static! {
     pub static ref DEBUG_FRAME_STATS: bool = env::var("DEBUG_FRAME_STATS").is_ok();
 }
 
-const DEFAULT_SLEEP_MS: u64 = 2;
+const DEFAULT_SLEEP_MS: u64 = 1;
 const BROADCAST_EVERY_TICKS: i64 = 500 * 1000;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;

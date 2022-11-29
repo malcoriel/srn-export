@@ -223,7 +223,7 @@ fn handle_request(request: WSRequest) {
         }
         // 1ms spacing between client message processing to not overload server accidentally.
         // this value should be fairly low, as it is a guaranteed ping
-        thread::sleep(Duration::from_millis(1));
+        thread::sleep(Duration::from_millis(DEFAULT_SLEEP_MS));
     }
 }
 
