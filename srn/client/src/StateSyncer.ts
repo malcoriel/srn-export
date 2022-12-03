@@ -818,10 +818,10 @@ export class StateSyncer implements IStateSyncer {
     ['locations.*.wrecks', 'Wreck'],
   ]);
 
-  private normalizePath(pathParts: string[]): string {
+  private normalizePath(pathParts: (string | number)[]): string {
     const result = pathParts
-      .filter((p) => !!p)
-      .map((part) => (!_.isNaN(parseInt(part, 10)) ? '*' : part))
+      .map((part) => (_.isNumber(part) ? '*' : part))
+      .filter((p) => !_.isNil(p))
       .join('.');
     if (result === '*') {
       console.warn('reduced to *', pathParts);
@@ -830,9 +830,9 @@ export class StateSyncer implements IStateSyncer {
   }
 
   private getPathReconStrategy(
-    pathParts: string[]
+    normalized: string,
+    trueKey: (string | number)[]
   ): 'client' | 'server' | 'merge' | 'server if id' {
-    const normalized = this.normalizePath(pathParts);
     if (this.reconciliation.alwaysClient.has(normalized)) {
       return 'client';
     }
@@ -845,7 +845,9 @@ export class StateSyncer implements IStateSyncer {
     if (this.reconciliation.serverIfId.has(normalized)) {
       return 'merge';
     }
-    this.log.push(`warn: no reconciliation strategy for path ${normalized}`);
+    this.log.push(
+      `warn: no reconciliation strategy for path ${normalized} ${trueKey}`
+    );
     return 'server';
   }
 
@@ -853,7 +855,7 @@ export class StateSyncer implements IStateSyncer {
     currState: any,
     trueState: any,
     rootCurrState: GameState,
-    currentPath: string[]
+    currentPath: (string | number)[]
   ) {
     if (!_.isObject(trueState || !_.isObject(currState))) {
       console.warn('not obj', currentPath, currState, trueState);
@@ -862,7 +864,10 @@ export class StateSyncer implements IStateSyncer {
     for (const [key, trueValue] of Object.entries(trueState)) {
       const extendedKey = [...currentPath, key];
       const normalizedExtendedKey = this.normalizePath(extendedKey);
-      const strategy = this.getPathReconStrategy(extendedKey);
+      const strategy = this.getPathReconStrategy(
+        normalizedExtendedKey,
+        extendedKey
+      );
       switch (strategy) {
         case 'client':
           // do nothing, state is ok
@@ -919,7 +924,7 @@ export class StateSyncer implements IStateSyncer {
               if (currentObj) {
                 this.overrideKeysRecursive(currentObj, trueObj, rootCurrState, [
                   ...extendedKey,
-                  `${i}`,
+                  i,
                 ]);
               } else {
                 // add new objects
@@ -947,6 +952,8 @@ export class StateSyncer implements IStateSyncer {
   }
 
   // some keys have to be always synced to the server
+  // unused for now, kept in case recursive one fails
+  // noinspection JSUnusedLocalSymbols
   private overrideNonMergeableKeysInstantly(
     state: GameState,
     trueState: GameState
