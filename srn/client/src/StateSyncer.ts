@@ -155,7 +155,7 @@ export class StateSyncer implements IStateSyncer {
           return this.onTimeUpdate(event);
         }
         case 'server state': {
-          if (!this.state) {
+          if (!this.state || this.state.id !== event.state.id) {
             return this.onInit({ tag: 'init', state: event.state });
           }
           return this.onServerState(event);
