@@ -11,7 +11,10 @@ import type {
 import Vector, { isIVector, IVector } from './utils/Vector';
 import { ObjectSpecifierBuilder } from '../../world/pkg/world.extra';
 import { UnreachableCaseError } from 'ts-essentials';
-import { Container } from '../../world/pkg/world';
+import {
+  Container,
+  ObjectSpecifier,
+} from '../../world/pkg/world';
 
 export interface ClientStateIndexes {
   myShip: Ship | null;
@@ -49,7 +52,7 @@ export const findObjectBySpecifier = (
   const loc = state.locations[specifier.loc_idx];
   switch (specifier.obj_spec.tag) {
     case 'Unknown':
-      return undefined;
+      return null;
     case 'Mineral': {
       const spec = specifier.obj_spec;
       return loc.minerals.find((m) => m.id === spec.id);
@@ -81,6 +84,15 @@ export const findObjectBySpecifier = (
       throw new UnreachableCaseError(specifier.obj_spec);
   }
 };
+
+// there's almost 0 cases where client needs anything but the current location for now
+export const findObjectBySpecifierLoc0 = (
+  state: GameState,
+  spec: ObjectSpecifier
+) => {
+  return findObjectBySpecifier(state, { loc_idx: 0, obj_spec: spec });
+};
+
 export const findObjectPosition = (obj: any): IVector | null => {
   if (isIVector(obj)) {
     return {
@@ -193,6 +205,9 @@ export type FindObjectResult<T = any> =
       locIndex: number;
     }
   | undefined;
+/*
+  @deprecated this function is REALLY bad performance-wise. Use findByObjectSpec
+ */
 export const findObjectById = (
   state: GameState,
   objId: string,

@@ -1,10 +1,9 @@
 use itertools::Itertools;
 use std::f64::consts::PI;
 
-
-use rand_pcg::Pcg64Mcg;
 use rand::prelude::*;
 use rand::Rng;
+use rand_pcg::Pcg64Mcg;
 use uuid::Uuid;
 
 use crate::abilities::{Ability, SHOOT_DEFAULT_DISTANCE};
@@ -20,10 +19,13 @@ use crate::indexing::{
     ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::long_actions::LongActionStart;
-use crate::world_actions::Action;
 use crate::vec2::Vec2f64;
 use crate::world::TimeMarks::BotAction;
-use crate::world::{fire_saved_event, GameOver, GameState, ObjectProperty, PlanetV2, Ship, ShipTemplate, SpatialIndexes, TimeMarks};
+use crate::world::{
+    fire_saved_event, GameOver, GameState, ObjectProperty, PlanetV2, Ship, ShipTemplate,
+    SpatialIndexes, TimeMarks,
+};
+use crate::world_actions::Action;
 use crate::world_events::GameEvent;
 use crate::{fire_event, fof, indexing, prng_id, world, DialogueTable};
 
@@ -97,10 +99,11 @@ pub fn update_state_pirate_defence(state: &mut GameState, prng: &mut Pcg64Mcg) {
         current_ticks,
         state.interval_data.get(&TimeMarks::PirateSpawn).map(|m| *m),
     ) {
+        let target_count = PIRATE_SPAWN_COUNT * state.players.len();
         state
             .interval_data
             .insert(TimeMarks::PirateSpawn, current_ticks);
-        for _i in 0..PIRATE_SPAWN_COUNT * state.players.len() {
+        for _i in 0..target_count {
             fire_saved_event(
                 state,
                 GameEvent::PirateSpawn {

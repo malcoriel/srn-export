@@ -633,7 +633,7 @@ fn gen_state(
         id: prng_id(prng),
         seed: seed.clone(),
         tag: None,
-        milliseconds_remaining: 10 * 1000,
+        milliseconds_remaining: 3 * 60 * 1000,
         paused: false,
         my_id: Default::default(),
         millis: 0,

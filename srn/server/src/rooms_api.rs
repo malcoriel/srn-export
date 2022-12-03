@@ -58,7 +58,7 @@ pub fn get_rooms_for_mode(game_mode: String) -> Json<Vec<RoomHeader>> {
 
 #[post("/create/<game_mode>")]
 pub fn create_room(game_mode: String) -> Json<RoomIdResponse> {
-    log!("create room");
+    log!(format!("create room request for game mode {}", game_mode));
     let mode =
         serde_json::from_str::<crate::world::GameMode>(format!("\"{}\"", game_mode).as_str());
     if mode.is_err() {

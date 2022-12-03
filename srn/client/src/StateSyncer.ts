@@ -1,7 +1,7 @@
 import Vector, { IVector } from './utils/Vector';
 import {
   findMyShip,
-  findObjectById,
+  findObjectBySpecifierLoc0,
   FindObjectResult,
   getObjectPosition,
   setObjectPosition,
@@ -502,9 +502,9 @@ export class StateSyncer implements IStateSyncer {
     const res = [];
     const checkableObjects = this.enumerateCheckableObjects(serverState);
     for (const { spec, obj } of checkableObjects) {
-      const oldObjInstance = this.findOldVersionOfObject(currState, spec);
+      const oldObjInstance = this.findOldVersionOfObjectV2(currState, spec);
       if (oldObjInstance) {
-        const oldObj = oldObjInstance.object;
+        const oldObj = oldObjInstance;
         if (oldObj) {
           const posVio = this.checkPositionViolation(
             elapsedTicks,
@@ -515,14 +515,6 @@ export class StateSyncer implements IStateSyncer {
           if (posVio) res.push(posVio);
         }
       }
-    }
-    if (currState.ticks > serverState.ticks) {
-      res.push({
-        tag: 'TimeRollback' as const,
-        from: currState.ticks,
-        to: serverState.ticks,
-        diff: currState.ticks - serverState.ticks,
-      });
     }
     return res;
   }
@@ -555,13 +547,27 @@ export class StateSyncer implements IStateSyncer {
   }
 
   private findOldVersionOfObject<T = any>(
-    prevState: GameState,
+    targetState: GameState,
     spec: ObjectSpecifier
   ): null | FindObjectResult<T> {
     if (spec.tag !== 'Unknown') {
-      return findObjectById(prevState, spec.id);
+      const res = findObjectBySpecifierLoc0(targetState, spec);
+      if (!res) {
+        return null;
+      }
+      return {
+        locIndex: 0,
+        object: res,
+      };
     }
     return null;
+  }
+
+  private findOldVersionOfObjectV2<T = any>(
+    targetState: GameState,
+    spec: ObjectSpecifier
+  ): null | T {
+    return findObjectBySpecifierLoc0(targetState, spec);
   }
 
   private checkPositionViolation(
@@ -624,8 +630,7 @@ export class StateSyncer implements IStateSyncer {
             )
           );
       }
-      const objId = getObjSpecId(violation.obj)!;
-      const newObj = findObjectById(currentState, objId)?.object;
+      const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
       const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
       const correctedPos = newObjectPos.add(jumpCorrectionToTruePos);
       setObjectPosition(newObj, correctedPos);
@@ -667,10 +672,10 @@ export class StateSyncer implements IStateSyncer {
     ]);
     // there are some ship fields that have to be overwritten no matter what
     for (const trueShip of trueState.locations[0].ships) {
-      const currentShip = this.findOldVersionOfObject<Ship>(state, {
+      const currentShip = this.findOldVersionOfObjectV2<Ship>(state, {
         tag: 'Ship',
         id: trueShip.id,
-      })?.object;
+      });
       if (currentShip) {
         for (const [key, value] of Object.entries(trueShip)) {
           if (blacklistedShipKeys.has(key)) {
