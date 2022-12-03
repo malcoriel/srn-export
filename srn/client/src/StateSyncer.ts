@@ -21,6 +21,7 @@ import Color from 'color';
 import * as uuid from 'uuid';
 import { Wreck } from '../../world/pkg/world';
 import { UnreachableCaseError } from 'ts-essentials';
+import { compare } from './compare';
 
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = {
@@ -122,74 +123,6 @@ const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up,
 //   atClientTicks: number;
 //   tag: string;
 // };
-
-const compare = function (a: any, b: any) {
-  const result = {
-    different: [],
-    missing_from_first: [],
-    missing_from_second: [],
-  };
-
-  _.reduce(
-    a,
-    (result, value, key) => {
-      // eslint-disable-next-line no-prototype-builtins
-      if (b.hasOwnProperty(key)) {
-        if (_.isEqual(value, b[key])) {
-          return result;
-        }
-        if (typeof a[key] !== typeof {} || typeof b[key] !== typeof {}) {
-          //dead end.
-          // @ts-ignore
-          result.different.push(key);
-          return result;
-        }
-        const deeper = compare(a[key], b[key]);
-        result.different = result.different.concat(
-          // @ts-ignore
-          _.map(deeper.different, (sub_path) => {
-            return `${key}.${sub_path}`;
-          })
-        );
-
-        result.missing_from_second = result.missing_from_second.concat(
-          // @ts-ignore
-          _.map(deeper.missing_from_second, (sub_path) => {
-            return `${key}.${sub_path}`;
-          })
-        );
-
-        result.missing_from_first = result.missing_from_first.concat(
-          // @ts-ignore
-          _.map(deeper.missing_from_first, (sub_path) => {
-            return `${key}.${sub_path}`;
-          })
-        );
-        return result;
-      }
-      // @ts-ignore
-      result.missing_from_second.push(key);
-      return result;
-    },
-    result
-  );
-
-  _.reduce(
-    b,
-    (result, value, key) => {
-      // eslint-disable-next-line no-prototype-builtins
-      if (a.hasOwnProperty(key)) {
-        return result;
-      }
-      // @ts-ignore
-      result.missing_from_first.push(key);
-      return result;
-    },
-    result
-  );
-
-  return result;
-};
 
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
@@ -501,11 +434,12 @@ export class StateSyncer implements IStateSyncer {
             event.visibleArea,
             'onTimeUpdate true'
           ) || this.trueState;
-        this.overrideNonMergeableKeysInstantly(this.state, this.trueState);
-        const stateClone = JSON.parse(JSON.stringify(this.state));
-        this.overrideKeysRecursive(stateClone, this.trueState, stateClone, []);
-        const diff = compare(this.state, stateClone);
-        this.log.push(JSON.stringify(diff));
+        // this.overrideNonMergeableKeysInstantly(this.state, this.trueState);
+        // const stateClone = JSON.parse(JSON.stringify(this.state));
+        // this.overrideKeysRecursive(stateClone, this.trueState, stateClone, []);
+        // const diff = compare(this.state, stateClone);
+        // this.log.push(JSON.stringify(diff));
+        this.overrideKeysRecursive(this.state, this.trueState, this.state, []);
         this.violations = this.checkViolations(
           this.state,
           this.trueState,
@@ -745,18 +679,31 @@ export class StateSyncer implements IStateSyncer {
   }
 
   private reconciliation = {
-    // aka ignore server state, no reconciliation => easiest. anything purely visual,
+    // aka ignore server state / frozen objects, no reconciliation => easiest. anything purely visual,
     // may be bad for long action that arrive from server half-done already, e.g. shoot effects
     // overwrite will ignore server fields
     // timestamps like ticks typically also need to be here
     alwaysClient: new Set([
       'id', // there is a very special hook in the top-level handle method that will handle this instead
-      'locations.*.ships.*.trajectory',
-      'navigate_target',
-      'dock_target',
       'ticks',
       'millis',
       'accumulated_not_updated_ticks',
+      'locations.*.planets.*.spatial', // ignore server updates completely, strictly speaking this is a fully derivable (right now) from ticks
+      'locations.*.planets.*.movement',
+      'locations.*.planets.*.rot_movement',
+      'locations.*.planets.*.name',
+      'locations.*.planets.*.anchor_tier',
+      'locations.*.planets.*.color',
+      'locations.*.star.name',
+      'locations.*.star.color',
+      'locations.*.star.corona_color',
+      'locations.*.star.spatial',
+      'locations.*.star.movement',
+      'locations.*.star.rot_movement',
+      // temporary to match previous impl, should be always server likely
+      'locations.*.ships.*.trajectory',
+      'locations.*.ships.*.dock_target',
+      'locations.*.asteroid_belts',
     ]),
     // overwrite state with server => bad for movement, good for numbers like hp
     // overwrite will drop client and replace it with server fields
@@ -783,9 +730,57 @@ export class StateSyncer implements IStateSyncer {
       'gen_opts',
       'dialogue_states',
       'breadcrumbs',
+      // locations
       'locations.*.seed',
       'locations.*.id',
-      'locations.*.asteroid_belts',
+      'locations.*.position',
+      'locations.*.adjacent_location_ids',
+      // ships
+      'locations.*.ships.*.id',
+      'locations.*.ships.*.docked_at',
+      'locations.*.ships.*.rotation',
+      'locations.*.ships.*.radius',
+      'locations.*.ships.*.color',
+      'locations.*.ships.*.acc_periodic_dmg',
+      'locations.*.ships.*.acc_periodic_heal',
+      'locations.*.ships.*.abilities',
+      'locations.*.ships.*.movement_definition',
+      'locations.*.ships.*.local_effects',
+      'locations.*.ships.*.long_actions',
+      'locations.*.ships.*.navigate_target',
+      'locations.*.ships.*.inventory',
+      'locations.*.ships.*.tractor_target',
+      'locations.*.ships.*.auto_focus',
+      'locations.*.ships.*.hostile_auto_focus',
+      'locations.*.ships.*.movement_markers',
+      'locations.*.ships.*.health',
+      'locations.*.ships.*.npc',
+      'locations.*.ships.*.name',
+      'locations.*.ships.*.turrets',
+      'locations.*.ships.*.properties',
+      'locations.*.ships.*.trading_with',
+      'locations.*.star.id',
+      'locations.*.planets.*.id',
+
+      'locations.*.planets.*.health',
+      'locations.*.planets.*.properties',
+      'locations.*.minerals.*.x',
+      'locations.*.minerals.*.y',
+      'locations.*.minerals.*.id',
+      'locations.*.minerals.*.radius',
+      'locations.*.minerals.*.value',
+      'locations.*.minerals.*.rarity',
+      'locations.*.minerals.*.color',
+      'locations.*.containers.*.id',
+      'locations.*.containers.*.items',
+      'locations.*.containers.*.position',
+      'locations.*.containers.*.radius',
+      'locations.*.containers.*.id',
+      'locations.*.containers.*.items',
+      'locations.*.containers.*.position',
+      'locations.*.containers.*.radius',
+
+      'locations.*.wrecks',
     ]),
     // if server id has changed, invalidate the whole tree under the key. it's somewhat an optimization of the merge strategy
     // good for rarely-changed objects that have ids, e.g. stars, but which have to be overwritten by server data occasionally
@@ -816,6 +811,11 @@ export class StateSyncer implements IStateSyncer {
     ['locations', 'Location'],
     ['locations.*.ships', 'Ship'],
     ['locations.*.planets', 'Planet'],
+    ['locations.*.asteroids', 'Asteroid'],
+    ['locations.*.asteroid_belts', 'AsteroidBelt'],
+    ['locations.*.minerals', 'Mineral'],
+    ['locations.*.containers', 'Container'],
+    ['locations.*.wrecks', 'Wreck'],
   ]);
 
   private normalizePath(pathParts: string[]): string {
@@ -861,6 +861,7 @@ export class StateSyncer implements IStateSyncer {
     }
     for (const [key, trueValue] of Object.entries(trueState)) {
       const extendedKey = [...currentPath, key];
+      const normalizedExtendedKey = this.normalizePath(extendedKey);
       const strategy = this.getPathReconStrategy(extendedKey);
       switch (strategy) {
         case 'client':
@@ -881,7 +882,7 @@ export class StateSyncer implements IStateSyncer {
           const trueType = typeof trueState[key];
           if (currType !== trueType) {
             this.log.push(
-              `warn: value type mismatch for path ${extendedKey}, curr=${currType}, true=${trueType}`
+              `warn: value type mismatch for path ${normalizedExtendedKey}, curr=${currType}, true=${trueType}`
             );
             continue;
           }
@@ -889,16 +890,16 @@ export class StateSyncer implements IStateSyncer {
             if (!trueValue.every((obj) => obj.id)) {
               // potentially, I could validate for unique ids here, or provide surrogate index ids like react
               this.log.push(
-                `warn: not every value in array at ${extendedKey} has an id - cannot merge`
+                `warn: not every value in array at ${normalizedExtendedKey} has an id - cannot merge`
               );
               continue;
             }
             const objSpecTag = this.objectSpecifierMapping.get(
-              this.normalizePath(extendedKey)
+              normalizedExtendedKey
             );
             if (!objSpecTag) {
               this.log.push(
-                `warn: refusing to merge path ${extendedKey} without object specifier mapping`
+                `warn: refusing to merge path ${normalizedExtendedKey} without object specifier mapping`
               );
               continue;
             }
@@ -929,10 +930,10 @@ export class StateSyncer implements IStateSyncer {
             currState[key] = currState[key].filter((obj: any) =>
               existingObjIds.has(obj.id)
             );
-          } else {
+          } else if (_.isObject(trueValue)) {
             this.overrideKeysRecursive(
               currState[key],
-              trueState[key],
+              trueValue,
               rootCurrState,
               extendedKey
             );
