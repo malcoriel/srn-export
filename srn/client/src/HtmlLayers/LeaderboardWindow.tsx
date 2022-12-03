@@ -13,9 +13,9 @@ export const LeaderboardWindow: React.FC = () => {
   const setLeaderboardWindow = useStore((state) => state.setLeaderboardWindow);
   useEffect(() => {
     const onGameStartEnd = (ev: any) => {
-      if (ev.GameEnded) {
+      if (ev.tag === 'GameEnded') {
         setLeaderboardWindow(WindowState.Shown);
-      } else if (ev.GameStarted) {
+      } else if (ev.tag === 'GameStarted') {
         setLeaderboardWindow(WindowState.Hidden);
       }
     };

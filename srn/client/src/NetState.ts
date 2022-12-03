@@ -655,7 +655,6 @@ export default class NetState extends EventEmitter {
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
         this.syncer.handleServerConfirmedPacket(JSON.parse(data).tag);
       } else if (messageCode === ServerToClientMessageCode.Pong) {
-        console.log('pong', data);
         // nothing for now
       } else {
         normalWarn('unknown message code', messageCode);
