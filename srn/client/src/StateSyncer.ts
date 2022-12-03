@@ -724,5 +724,33 @@ export class StateSyncer implements IStateSyncer {
     state.locations[0].wrecks = state.locations[0].wrecks.filter((wreck) =>
       existingShipWrecksIds.has(wreck.id)
     );
+
+    if (trueState.locations[0].star?.id !== state.locations[0].star?.id) {
+      state.locations[0].star = trueState.locations[0].star;
+    }
+
+    const blacklistedPlanetKeys = new Set(['spatial']);
+    const existingPlanetIds = new Set();
+    for (const truePlanet of trueState.locations[0].planets) {
+      existingPlanetIds.add(truePlanet.id);
+      const currentPlanet = this.findOldVersionOfObjectV2<Wreck>(state, {
+        tag: 'Planet',
+        id: truePlanet.id,
+      });
+      if (currentPlanet) {
+        for (const [key, value] of Object.entries(truePlanet)) {
+          if (blacklistedPlanetKeys.has(key)) {
+            continue;
+          }
+          (currentPlanet as any)[key] = value;
+        }
+      } else {
+        state.locations[0].planets.push(truePlanet);
+      }
+    }
+    // drop old planets
+    state.locations[0].planets = state.locations[0].planets.filter((planet) =>
+      existingPlanetIds.has(planet.id)
+    );
   }
 }
