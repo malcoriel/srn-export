@@ -4,9 +4,7 @@ import {
   findObjectById,
   FindObjectResult,
   getObjectPosition,
-  getObjectRotation,
   setObjectPosition,
-  setObjectRotation,
 } from './ClientStateIndexing';
 
 import {
@@ -46,10 +44,10 @@ export const invariant: Assert = (
   }
 };
 
-export const invariantAndPull = <T>(expr: any, message?: string): T => {
-  invariant(expr, message);
-  return expr as T;
-};
+// export const invariantAndPull = <T>(expr: any, message?: string): T => {
+//   invariant(expr, message);
+//   return expr as T;
+// };
 
 type StateSyncerEventServerState = {
   tag: 'server state';
@@ -113,10 +111,10 @@ const CLIENT_AHEAD_DILATION_FACTOR = 0.5;
 const MAX_ALLOWED_VISUAL_DESYNC_UNITS = 0.3;
 const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up, client will keep them indefinitely and if server truly lost them, we're in trouble
 
-type TagConfirm = {
-  atClientTicks: number;
-  tag: string;
-};
+// type TagConfirm = {
+//   atClientTicks: number;
+//   tag: string;
+// };
 
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
@@ -175,11 +173,10 @@ export class StateSyncer implements IStateSyncer {
     const desyncedShadow = this.getTrueMyShipState();
     if (desyncedShadow) {
       desyncedShadow.id = SHADOW_ID;
-      const shadowColor = new Color(desyncedShadow.color)
+      desyncedShadow.color = new Color(desyncedShadow.color)
         .lighten(2.0) // actually lighten
         .hex()
         .toString();
-      desyncedShadow.color = shadowColor;
       desyncedShadow.name = ' ';
       desyncedShadow.local_effects = [];
       this.state.locations[0].ships.push(desyncedShadow);
@@ -317,7 +314,7 @@ export class StateSyncer implements IStateSyncer {
         Math.abs(this.state.ticks - a.happened_at_ticks) >
         MAX_PENDING_ACTIONS_LIFETIME_TICKS
       ) {
-        // this is especially bad since it will lead to drastical desync between client and server state, due to
+        // this is especially bad since it will lead to drastic desync between client and server state, due to
         // 'divergence' at some point back in time. In this situation, we should full bail out of client state and accept
         // the server state
         console.warn(
@@ -408,14 +405,13 @@ export class StateSyncer implements IStateSyncer {
     }
 
     Perf.usingMeasure(Measure.SyncedStateUpdate, () => {
-      this.replaceCurrentState(
+      this.state =
         this.updateState(
           this.state,
           targetDiff,
           event.visibleArea,
           'onTimeUpdate current'
-        ) || this.state
-      );
+        ) || this.state;
     });
 
     if (weAreDesynced) {
@@ -462,11 +458,6 @@ export class StateSyncer implements IStateSyncer {
     return this.successCurrent();
   }
 
-  private replaceCurrentState(newState: GameState) {
-    // this.prevState = _.cloneDeep(this.state);
-    this.state = newState;
-  }
-
   private onInit(event: { tag: 'init'; state: GameState }) {
     this.state = event.state;
     this.trueState = this.state;
@@ -489,6 +480,7 @@ export class StateSyncer implements IStateSyncer {
 
   private violations: SyncerViolation[] = [];
 
+  // noinspection JSUnusedGlobalSymbols
   flushViolations(): SyncerViolation[] {
     const violations = this.violations;
     this.violations = [];
