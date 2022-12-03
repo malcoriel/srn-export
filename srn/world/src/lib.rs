@@ -687,7 +687,7 @@ pub fn load_replay(replay: JsValue) -> Result<(), JsValue> {
 
 #[wasm_bindgen]
 pub fn load_d_table(d_table: JsValue) -> Result<(), JsValue> {
-    let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
+    let d_table: DialogueTable = custom_deserialize(d_table)?;
     let mut r = current_d_table.write().unwrap();
     *r = Some(d_table);
     Ok(())

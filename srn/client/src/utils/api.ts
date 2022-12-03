@@ -22,6 +22,10 @@ export const api = {
     const resp = await fetch(`${apiUrl}/version`);
     return await resp.json();
   },
+  getDialogueTable: async () => {
+    const resp = await fetch(`${apiUrl}/resources/dialogue_scripts`);
+    return await resp.json();
+  },
   useSavedStates: () =>
     useSWR(`${api.getSandboxApiUrl()}/saved_states`).data || [],
   useSavedReplays: () => useSWR(`${api.getReplaysApiUrl()}`).data || [],

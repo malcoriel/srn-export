@@ -15,7 +15,7 @@ import {
   buildDialogueFromState,
   Dialogue,
   DialogueElem,
-  GameState,
+  GameState, initDialogueTable,
 } from '../world';
 import { useStore, WindowState } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
@@ -25,6 +25,7 @@ import Vector from '../utils/Vector';
 import { transformAllTextSubstitutions } from '../utils/substitutions';
 import { useNSForceChange } from '../NetStateHooks';
 import { findMyShip } from '../ClientStateIndexing';
+import { api } from '../utils/api';
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
   <span className="dialogue-option">

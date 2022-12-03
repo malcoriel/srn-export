@@ -29,7 +29,10 @@ import { ChatState } from './ChatState';
 import { ChatWindow } from './HtmlLayers/ChatWindow';
 import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 import { DialogueWindow } from './HtmlLayers/DialogueWindow';
-import { GameMode } from './world';
+import {
+  ensureDialogueTableLoaded,
+  GameMode,
+} from './world';
 import { SandboxQuickMenu } from './HtmlLayers/SandboxQuickMenu';
 import { TradeWindow } from './HtmlLayers/TradeWindow';
 import { PromptWindow } from './HtmlLayers/PromptWindow';
@@ -167,7 +170,7 @@ const Srn = () => {
 
   const [mode, setMode] = useState(GameMode.CargoRush);
 
-  const start = (mode: GameMode) => {
+  const start = async (mode: GameMode) => {
     if (!NetState.get()) {
       NetState.make();
     }
@@ -177,13 +180,14 @@ const Srn = () => {
       return;
     }
 
+    await ensureDialogueTableLoaded();
     setMainUiState(MainUiState.Playing);
     setMenu(false);
     ns.playerName = preferredName;
     ns.portraitName = portrait; // portrait files are 1-based
     ns.disconnecting = false;
     setMode(mode);
-    ns.init(mode);
+    await ns.init(mode);
     ns.on('disconnect', () => {
       setMainUiState(MainUiState.Idle);
       setMenu(true);

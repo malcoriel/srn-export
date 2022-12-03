@@ -37,9 +37,9 @@ import {
 } from '../../world/pkg/world.extra';
 import _ from 'lodash';
 import { Dictionary } from 'ts-essentials';
-import { dialogueResources } from './HtmlLayers/dialogueResources';
 import * as uuid from 'uuid';
 import Prando from 'prando';
+import { api } from './utils/api';
 
 export type {
   Action,
@@ -157,15 +157,39 @@ let wasmFunctions: any = {};
   if (wasmFunctions && wasmFunctions.set_panic_hook) {
     wasmFunctions.set_panic_hook();
   }
-  if (
-    wasmFunctions &&
-    wasmFunctions.load_d_table &&
-    wasmFunctions.make_dialogue_table
-  ) {
-    const parsedTable = wasmFunctions.make_dialogue_table(dialogueResources);
-    wasmFunctions.load_d_table(parsedTable);
-  }
 })();
+
+// the dialogue table type is intentionally opaque here, as it's passed from server to lib through js
+export const initDialogueTable = (dialogueTable: any) => {
+  if (wasmFunctions && wasmFunctions.load_d_table) {
+    try {
+      wasmFunctions.load_d_table(dialogueTable);
+    } catch (e) {
+      console.error(
+        'Cannot init dialogue table, dialogues will crash! Error loading: ',
+        e
+      );
+    }
+  } else {
+    console.error(
+      'Cannot init dialogue table, wasm is not initialized yet, dialogues will crash!'
+    );
+  }
+};
+
+let isLoadingDialogueTable = false;
+let dialogueTable: unknown;
+export const ensureDialogueTableLoaded = async () => {
+  try {
+    if (!dialogueTable) {
+      isLoadingDialogueTable = true;
+      dialogueTable = await api.getDialogueTable();
+      initDialogueTable(dialogueTable);
+    }
+  } finally {
+    isLoadingDialogueTable = false;
+  }
+};
 
 const exposeJsonParseError = (
   serializedState: string,
