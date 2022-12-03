@@ -128,7 +128,6 @@ export class StateSyncer implements IStateSyncer {
   constructor(deps: SyncerDeps) {
     this.wasmUpdateWorld = deps.wasmUpdateWorld;
     this.getShowShadow = deps.getShowShadow;
-    this.desyncedCorrectState = null;
   }
 
   getTrueMyShipState(): Ship | null {
@@ -141,8 +140,6 @@ export class StateSyncer implements IStateSyncer {
   private state!: GameState;
 
   private trueState!: GameState;
-
-  private desyncedCorrectState: GameState | null;
 
   public handle = (event: StateSyncerEvent): StateSyncerResult => {
     try {
@@ -473,20 +470,12 @@ export class StateSyncer implements IStateSyncer {
   private onInit(event: { tag: 'init'; state: GameState }) {
     this.state = event.state;
     this.trueState = this.state;
+    this.pendingActionPacks = [];
     return this.successCurrent();
   }
 
   private successCurrent() {
-    this.desyncedCorrectState = null;
     return { tag: 'success' as const, state: this.state };
-  }
-
-  private successDesynced(desyncedState: GameState, _reason?: string) {
-    this.desyncedCorrectState = desyncedState;
-    if (_reason) {
-      // console.log('desynced', _reason);
-    }
-    return { tag: 'success desynced' as const, state: this.state };
   }
 
   // noinspection JSMethodCanBeStatic
