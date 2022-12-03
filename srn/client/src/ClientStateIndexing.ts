@@ -11,10 +11,7 @@ import type {
 import Vector, { isIVector, IVector } from './utils/Vector';
 import { ObjectSpecifierBuilder } from '../../world/pkg/world.extra';
 import { UnreachableCaseError } from 'ts-essentials';
-import {
-  Container,
-  ObjectSpecifier,
-} from '../../world/pkg/world';
+import { Container, ObjectSpecifier } from '../../world/pkg/world';
 
 export interface ClientStateIndexes {
   myShip: Ship | null;
@@ -79,6 +76,10 @@ export const findObjectBySpecifier = (
     case 'AsteroidBelt': {
       const spec = specifier.obj_spec;
       return loc.asteroid_belts.find((o) => o.id === spec.id);
+    }
+    case 'Wreck': {
+      const spec = specifier.obj_spec;
+      return loc.wrecks.find((o) => o.id === spec.id);
     }
     default:
       throw new UnreachableCaseError(specifier.obj_spec);

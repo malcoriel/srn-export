@@ -390,6 +390,7 @@ pub enum ObjectSpecifier {
     Ship { id: Uuid },
     Star { id: Uuid },
     AsteroidBelt { id: Uuid },
+    Wreck { id: Uuid },
 }
 
 pub trait Spec {
@@ -413,6 +414,7 @@ impl ObjectSpecifier {
             ObjectSpecifier::Star { id } => Some(*id),
             ObjectSpecifier::Asteroid { id } => Some(*id),
             ObjectSpecifier::AsteroidBelt { id } => Some(*id),
+            ObjectSpecifier::Wreck { id } => Some(*id),
         }
     }
 }

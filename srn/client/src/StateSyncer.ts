@@ -19,6 +19,7 @@ import { Measure, Perf } from './HtmlLayers/Perf';
 import _ from 'lodash';
 import Color from 'color';
 import * as uuid from 'uuid';
+import { Wreck } from '../../world/pkg/world';
 
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = { tag: 'success desynced'; state: GameState };
@@ -671,7 +672,9 @@ export class StateSyncer implements IStateSyncer {
       'dock_target',
     ]);
     // there are some ship fields that have to be overwritten no matter what
+    const existingTrueShipIds = new Set();
     for (const trueShip of trueState.locations[0].ships) {
+      existingTrueShipIds.add(trueShip.id);
       const currentShip = this.findOldVersionOfObjectV2<Ship>(state, {
         tag: 'Ship',
         id: trueShip.id,
@@ -688,7 +691,38 @@ export class StateSyncer implements IStateSyncer {
             currentShip.y = trueShip.y;
           }
         }
+      } else {
+        // add new ships
+        state.locations[0].ships.push(trueShip);
       }
     }
+    // drop old ships
+    state.locations[0].ships = state.locations[0].ships.filter((ship) =>
+      existingTrueShipIds.has(ship.id)
+    );
+
+    const blacklistedWreckKeys = new Set();
+    const existingShipWrecksIds = new Set();
+    for (const trueWreck of trueState.locations[0].wrecks) {
+      existingShipWrecksIds.add(trueWreck.id);
+      const currentWreck = this.findOldVersionOfObjectV2<Wreck>(state, {
+        tag: 'Wreck',
+        id: trueWreck.id,
+      });
+      if (currentWreck) {
+        for (const [key, value] of Object.entries(trueWreck)) {
+          if (blacklistedWreckKeys.has(key)) {
+            continue;
+          }
+          (currentWreck as any)[key] = value;
+        }
+      } else {
+        state.locations[0].wrecks.push(trueWreck);
+      }
+    }
+    // drop old wrecks
+    state.locations[0].wrecks = state.locations[0].wrecks.filter((wreck) =>
+      existingShipWrecksIds.has(wreck.id)
+    );
   }
 }
