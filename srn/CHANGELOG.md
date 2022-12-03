@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.9.1 (next)
+### New
+* Re-introduced display of server vs client state desync time
+### Fixes
+* Fixed some synchronization bugs
+
 ## Version 0.9.0 (2022-12-03)
 ### New
 * A huge rewrite of the networking and state synchronization
