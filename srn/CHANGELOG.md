@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.9.0 (2022-12-03)
+### New
+* A huge rewrite of the networking and state synchronization
+* Likely huge amount of bugs added, fixes coming soon
+* Camera moves more smoothly now
+
+### Fixes
+* Some unknown amount of bugs fixed, mostly ship position related
+
 ## Version 0.8.6 (2022-04-06)
 ### Fixes
 * Fixed a bug when it was impossible to join the game in any mode
