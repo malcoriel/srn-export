@@ -53,12 +53,15 @@ export const NetworkStatus: React.FC = () => {
           </>
         ) : null}
       </span>
-      <span className="desync" title="desync between client and server">
+      <span
+        className="desync"
+        title="desync between client and server, negative = client is behind, positive = client is ahead"
+      >
         <GiSplitArrows />
         <span className="desync-text">
           &nbsp;
           {desync}
-          ms
+          {!_.isNaN(parseInt(desync, 10)) ? 'ms' : desync}
         </span>
       </span>
       {/*{!connecting && (*/}

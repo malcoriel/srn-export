@@ -22,13 +22,18 @@ import * as uuid from 'uuid';
 import { Wreck } from '../../world/pkg/world';
 
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
-type StateSyncerDesyncedSuccess = { tag: 'success desynced'; state: GameState };
+type StateSyncerDesyncedSuccess = {
+  tag: 'success desynced';
+  state: GameState;
+  desync: string;
+};
 type StateSyncerFullDesyncedSuccess = {
   tag: 'full desynced success';
   state: GameState;
+  desync: string;
 };
 type StateSyncerError = { tag: 'error'; message: string };
-type StateSyncerResult =
+export type StateSyncerResult =
   | StateSyncerSuccess
   | StateSyncerError
   | StateSyncerDesyncedSuccess
@@ -55,7 +60,7 @@ type StateSyncerEventServerState = {
   state: GameState;
   visibleArea: AABB;
 };
-type StateSyncerEvent =
+export type StateSyncerEvent =
   | { tag: 'init'; state: GameState; visibleArea: AABB }
   | { tag: 'time update'; elapsedTicks: number; visibleArea: AABB }
   | StateSyncerEventServerState
@@ -271,31 +276,33 @@ export class StateSyncer implements IStateSyncer {
       // happens when there was a desync in history of actions, after which all compensations do not make sense
       this.state = this.trueState;
       console.warn('huge violation detected, state overwrite by server state');
-    } else {
-      this.eventCounter += 1;
-      this.eventCounter = Math.max(10);
-      // console.log(`server ${serverState.ticks} client ${this.state.ticks}`);
-      if (serverState.ticks < this.state.ticks) {
-        // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
-        // or do the true server-in-the-past schema
-        const diff = this.state.ticks - serverState.ticks;
-        const rebasedState = this.rebaseStateUsingCurrentActions(
-          serverState,
-          diff,
-          visibleArea,
-          'onServerState'
-        );
-        this.trueState = rebasedState || serverState;
-        Perf.markArtificialTiming(`ServerBehind ${this.eventCounter}`);
-      } else if (serverState.ticks >= this.state.ticks) {
-        // TODO maybe calculate proper value to extrapolate to instead, based on average client perf lag,
-        // plus do the rebase not reflected actions?
-        this.trueState = serverState;
-        Perf.markArtificialTiming(`ServerAhead ${this.eventCounter}`);
-      }
+      return this.successFullDesynced('xx');
+    }
+    this.eventCounter += 1;
+    this.eventCounter = Math.max(10);
+    // console.log(`server ${serverState.ticks} client ${this.state.ticks}`);
+    if (serverState.ticks < this.state.ticks) {
+      // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
+      // or do the true server-in-the-past schema
+      const diff = this.state.ticks - serverState.ticks;
+      const rebasedState = this.rebaseStateUsingCurrentActions(
+        serverState,
+        diff,
+        visibleArea,
+        'onServerState'
+      );
+      this.trueState = rebasedState || serverState;
+
+      Perf.markArtificialTiming(`ServerBehind ${this.eventCounter}`);
+    } else if (serverState.ticks >= this.state.ticks) {
+      // TODO maybe calculate proper value to extrapolate to instead, based on average client perf lag,
+      // plus do the rebase not reflected actions?
+      this.trueState = serverState;
+      Perf.markArtificialTiming(`ServerAhead ${this.eventCounter}`);
     }
 
-    return this.successCurrent();
+    const desyncValue = (this.state.millis - this.trueState.millis).toString();
+    return this.successDesynced(desyncValue);
   }
 
   private cleanupCommitedAndOutdatedPendingActions(
@@ -381,7 +388,7 @@ export class StateSyncer implements IStateSyncer {
     visibleArea: AABB;
   }): StateSyncerResult {
     if (!this.state) {
-      return this.successCurrent();
+      return this.error('no state');
     }
     // sometimes there is no need to update state, e.g. right after the player action (optimistic updates)
     // or if there is no desync (everything got compensated)
@@ -456,7 +463,11 @@ export class StateSyncer implements IStateSyncer {
       this.trueState = this.state;
     }
 
-    return this.successCurrent();
+    if (this.trueState === this.state) {
+      return this.successCurrent();
+    }
+    const desyncValue = (this.state.millis - this.trueState.millis).toString();
+    return this.successDesynced(desyncValue);
   }
 
   private onInit(event: { tag: 'init'; state: GameState }) {
@@ -468,6 +479,14 @@ export class StateSyncer implements IStateSyncer {
 
   private successCurrent() {
     return { tag: 'success' as const, state: this.state };
+  }
+
+  private successDesynced(desync: string) {
+    return { tag: 'success desynced' as const, state: this.state, desync };
+  }
+
+  private successFullDesynced(desync: string) {
+    return { tag: 'full desynced success' as const, state: this.state, desync };
   }
 
   // noinspection JSMethodCanBeStatic

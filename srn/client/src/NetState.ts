@@ -35,7 +35,7 @@ import {
   findMyShip,
 } from './ClientStateIndexing';
 import { ActionBuilder } from '../../world/pkg/world.extra';
-import { IStateSyncer, StateSyncer } from './StateSyncer';
+import { IStateSyncer, StateSyncer, StateSyncerEvent } from './StateSyncer';
 import {
   getActiveSyncActions,
   resetActiveSyncActions,
@@ -159,7 +159,7 @@ export default class NetState extends EventEmitter {
 
   private slowTime: vsyncedCoupledThrottledTime;
 
-  public desync: number;
+  public desync: string;
 
   private readonly lastSendOfManualMovementMap: Record<
     ManualMovementActionTags,
@@ -203,7 +203,7 @@ export default class NetState extends EventEmitter {
     normalLog(`created NS ${this.id} ${newVar}`);
     this.resetState();
     this.ping = 0;
-    this.desync = 0;
+    this.desync = '?';
     this.lastSendOfManualMovementMap = {
       Gas: 0,
       Reverse: 0,
@@ -300,15 +300,20 @@ export default class NetState extends EventEmitter {
           this.absoluteTimerTicks += elapsedTicks;
           const ns = NetState.get();
           if (!ns) return;
+          if (!ns.state) return;
+          if (!this.syncer.getCurrentState()) {
+            // kind of a hacky way for waiting for the first server event with full state,
+            // to prevent updateWorld on an invalid state we have here by default
+            return;
+          }
           const actionsActive = getActiveSyncActions();
           const visibleArea = this.getSimulationArea();
           this.applyCurrentPlayerActions(actionsActive, visibleArea);
-          this.syncer.handle({
+          this.sync({
             tag: 'time update',
             elapsedTicks,
             visibleArea,
-          }); // ignore errors from syncer for now
-          this.state = this.syncer.getCurrentState() || this.state;
+          });
           this.reindexCurrentState();
           if (this.debugSpaceTime) {
             this.addSpaceTimeBreadcrumbs();
@@ -352,6 +357,31 @@ export default class NetState extends EventEmitter {
     return this.connect();
   };
 
+  private sync(syncerEvent: StateSyncerEvent) {
+    const syncerResult = this.syncer.handle(syncerEvent);
+    switch (syncerResult.tag) {
+      case 'success':
+        this.state = syncerResult.state;
+        this.desync = '0';
+        break;
+      case 'error':
+        console.warn('syncer failed:', syncerResult.message, new Error().stack);
+        // this.state = this.state; kind of, but it's invalid statement
+        this.desync = '!!';
+        break;
+      case 'success desynced':
+        this.state = syncerResult.state;
+        this.desync = syncerResult.desync;
+        break;
+      case 'full desynced success':
+        this.state = syncerResult.state;
+        this.desync = syncerResult.desync;
+        break;
+      default:
+        throw new UnreachableCaseError(syncerResult);
+    }
+  }
+
   private timeSingMidnight(): { seconds: number; millis: number } {
     const d = new Date();
     const msSinceMidnight = d.getTime() - d.setHours(1, 0, 0, 0);
@@ -389,7 +419,7 @@ export default class NetState extends EventEmitter {
       packetTag,
       this.state.ticks
     );
-    this.syncer.handle({
+    this.sync({
       tag: 'player action',
       actions: usedActions,
       packetTag,
@@ -609,12 +639,11 @@ export default class NetState extends EventEmitter {
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
         const parsed = JSON.parse(data);
-        this.syncer.handle({
+        this.sync({
           tag: 'server state',
           state: parsed,
           visibleArea: this.getSimulationArea(),
         });
-        this.state = this.syncer.getCurrentState();
       } else if (
         messageCode === ServerToClientMessageCode.MulticastPartialShipsUpdate
       ) {
@@ -731,7 +760,7 @@ export default class NetState extends EventEmitter {
       value: { action },
       tag,
     });
-    this.syncer.handle({
+    this.sync({
       tag: 'player action',
       actions: [action],
       packetTag: tag,
