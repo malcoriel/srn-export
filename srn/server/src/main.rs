@@ -137,6 +137,7 @@ mod random_stuff;
 mod replay;
 mod replays_api;
 mod resources;
+mod resources_api;
 mod rooms_api;
 mod sandbox;
 mod sandbox_api;
@@ -332,6 +333,10 @@ fn rocket() -> rocket::Rocket {
                 rooms_api::create_room,
                 rooms_api::get_rooms_for_mode
             ],
+        )
+        .mount(
+            "/api/resources",
+            routes![resources_api::get_dialogue_scripts],
         )
 }
 

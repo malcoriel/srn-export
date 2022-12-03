@@ -6,30 +6,31 @@ use std::slice::Iter;
 
 use itertools::Itertools;
 
-use rand_pcg::Pcg64Mcg;
-use rand::prelude::*;
-use regex::Regex;
-use serde_derive::{Deserialize, Serialize};
-use uuid::Uuid;
-use typescript_definitions::{TypescriptDefinition, TypeScriptify};
-use wasm_bindgen::prelude::*;
-use crate::cargo_rush::{CargoDeliveryQuestState, generate_random_quest};
+use crate::cargo_rush::{generate_random_quest, CargoDeliveryQuestState};
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship, find_my_ship_index, find_my_ship_mut,
     find_planet, find_player_and_ship, find_player_and_ship_mut, find_player_idx,
     index_planets_by_id,
 };
 use crate::inventory::{
-    add_item, consume_items_of_types, count_items_of_types, InventoryItem,
-    InventoryItemType, MINERAL_TYPES, remove_quest_item, value_items_of_types,
+    add_item, consume_items_of_types, count_items_of_types, remove_quest_item,
+    value_items_of_types, InventoryItem, InventoryItemType, MINERAL_TYPES,
 };
-use crate::{prng_id, seed_prng};
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
 use crate::world::{fire_saved_event, GameState, PlanetV2, Player, PlayerId, Ship};
 use crate::world_events::GameEvent;
 use crate::{fire_event, world};
+use crate::{prng_id, seed_prng};
+use rand::prelude::*;
+use rand_pcg::Pcg64Mcg;
+use regex::Regex;
+use serde_derive::{Deserialize, Serialize};
+use serde_json_any_key::*;
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use uuid::Uuid;
+use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueUpdate {
@@ -39,6 +40,7 @@ pub struct DialogueUpdate {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct DialogueTable {
+    #[serde(with = "any_key_map")]
     pub scripts: HashMap<DialogueId, DialogueScript>,
 }
 
@@ -97,8 +99,11 @@ pub fn check_trigger_conditions(state: &GameState, player_id: Uuid) -> HashSet<T
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DialogueScript {
     pub id: Uuid,
+    #[serde(with = "any_key_map")]
     pub transitions: HashMap<(StateId, OptionId), (Option<StateId>, Vec<DialogueOptionSideEffect>)>,
+    #[serde(with = "any_key_map")]
     pub prompts: HashMap<StateId, String>,
+    #[serde(with = "any_key_map")]
     pub options: HashMap<StateId, Vec<(OptionId, String, Option<TriggerCondition>)>>,
     pub initial_state: StateId,
     pub is_planetary: bool,
@@ -107,7 +112,9 @@ pub struct DialogueScript {
     pub is_default: bool,
     pub name: String,
     pub bot_path: Vec<(StateId, OptionId, Option<TriggerCondition>)>,
+    #[serde(with = "any_key_map")]
     pub names_db: HashMap<Uuid, String>,
+    #[serde(with = "any_key_map")]
     ids_db: HashMap<String, Uuid>,
 }
 
@@ -233,7 +240,8 @@ impl DialogueTable {
         player_id: Uuid,
         game_state: &mut GameState,
     ) {
-        let player_d_states = DialogueTable::get_player_d_states(&mut game_state.dialogue_states, player_id);
+        let player_d_states =
+            DialogueTable::get_player_d_states(&mut game_state.dialogue_states, player_id);
         player_d_states.insert(script.id, Box::new(Some(script.initial_state)));
     }
 
@@ -250,8 +258,7 @@ impl DialogueTable {
         d_states: &HashMap<Uuid, (Option<Uuid>, HashMap<Uuid, Box<Option<Uuid>>>)>,
         player_id: Uuid,
     ) -> Option<&HashMap<Uuid, Box<Option<Uuid>>>> {
-        if let Some((_curr, all)) =
-            d_states.get(&player_id) {
+        if let Some((_curr, all)) = d_states.get(&player_id) {
             return Some(all);
         }
         return None;
@@ -280,9 +287,11 @@ pub fn execute_dialog_option(
                 prng,
             );
             // log!(format!("after applying, states are {:?}", state.dialogue_states.get(&player_id)));
-        }
-        else {
-            log!(format!("no state for dialogue for {} in {:?}", player_id, all_dialogues));
+        } else {
+            log!(format!(
+                "no state for dialogue for {} in {:?}",
+                player_id, all_dialogues
+            ));
         }
     } else {
         log!("not state for player");
@@ -294,7 +303,7 @@ pub fn build_dialogue_from_state(
     current_state: &Box<Option<StateId>>,
     dialogue_table: &DialogueTable,
     player_id: PlayerId,
-    game_state: &GameState
+    game_state: &GameState,
 ) -> Option<Dialogue> {
     let (planets_by_id, players_by_id, players_to_current_planets, ships_by_player_id, _) =
         index_state_for_substitution(game_state);
@@ -305,8 +314,24 @@ pub fn build_dialogue_from_state(
     if let Some(script) = script {
         let mut prng = seed_prng(script.name.clone() + game_state.id.to_string().as_str());
         if let Some(state) = **current_state {
-            let prompt = script.prompts.get(&state).unwrap();
-            let options = script.options.get(&state).unwrap();
+            let prompt = if let Some(prompt) = script.prompts.get(&state) {
+                prompt
+            } else {
+                warn!(format!(
+                    "no prompt for script {} and state {}",
+                    script.id, state
+                ));
+                return None;
+            };
+            let options = if let Some(options) = script.options.get(&state) {
+                options
+            } else {
+                warn!(format!(
+                    "no options for script {} and state {}",
+                    script.id, state
+                ));
+                return None;
+            };
             let current_planet = if script.is_planetary {
                 let my_ship = find_my_ship(game_state, player_id);
                 my_ship
@@ -427,7 +452,10 @@ fn apply_dialogue_option(
             let next_state = script.transitions.get(&(current_state, update.option_id));
             if let Some(next_state) = next_state {
                 apply_side_effects(state, next_state.1.clone(), player_id, prng);
-                let player_states = DialogueTable::get_player_d_states(&mut state.dialogue_states, player_id).entry(update.dialogue_id).or_insert(Box::new(None));
+                let player_states =
+                    DialogueTable::get_player_d_states(&mut state.dialogue_states, player_id)
+                        .entry(update.dialogue_id)
+                        .or_insert(Box::new(None));
                 *player_states = Box::new(next_state.0);
             } else {
                 warn!("invalid dialogue transition, no outcome");
@@ -512,7 +540,7 @@ fn apply_side_effects(
                         GameEvent::DialogueTriggerRequest {
                             dialogue_name: name,
                             player_id: player_clone.id,
-                            target: None
+                            target: None,
                         },
                     )
                 }
@@ -533,11 +561,14 @@ fn apply_side_effects(
                 let ship_clone = find_result.1.map(|v| v.clone());
                 if let (Some(player), Some(ship)) = (player_clone, ship_clone) {
                     if ship.docked_at.is_some() {
-                        fire_saved_event(state, GameEvent::TradeDialogueTriggerRequest {
-                            player_id: player.id,
-                            ship_id: ship.id,
-                            planet_id: ship.docked_at.unwrap(),
-                        })
+                        fire_saved_event(
+                            state,
+                            GameEvent::TradeDialogueTriggerRequest {
+                                player_id: player.id,
+                                ship_id: ship.id,
+                                planet_id: ship.docked_at.unwrap(),
+                            },
+                        )
                     }
                 }
             }
@@ -565,10 +596,7 @@ pub fn read_from_resource(file: &str) -> DialogueScript {
     parse_dialogue_script_from_file(file, json)
 }
 
-pub fn parse_dialogue_script_from_file(
-    file_name: &str,
-    json_contents: String,
-) -> DialogueScript {
+pub fn parse_dialogue_script_from_file(file_name: &str, json_contents: String) -> DialogueScript {
     let seed = file_name.to_string();
     let mut prng = seed_prng(seed.clone());
 
@@ -634,7 +662,7 @@ pub fn short_decrypt(ss: ShortScript, prng: &mut Pcg64Mcg) -> DialogueScript {
     for (state_name, (_, options)) in ss.table.into_iter() {
         let state_id = script.ids_db.get(&state_name).unwrap().clone();
         for (option_name, option_text, next_state_name, side_effects, option_condition) in
-        options.into_iter()
+            options.into_iter()
         {
             let option_id = script.ids_db.get(&option_name).unwrap().clone();
             let next_state_id = if next_state_name != "" {

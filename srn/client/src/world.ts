@@ -308,13 +308,18 @@ export const buildDialogueFromState = (
   currentStateId: string,
   playerId: string,
   state: GameState
-) => {
-  return wasmFunctions.build_dialogue_from_state(
-    dialogueId,
-    currentStateId,
-    playerId,
-    state
-  );
+): null | Dialogue => {
+  try {
+    return wasmFunctions.build_dialogue_from_state(
+      dialogueId,
+      currentStateId,
+      playerId,
+      state
+    );
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
 };
 
 export const findPlanet = (
