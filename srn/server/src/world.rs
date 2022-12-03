@@ -2252,6 +2252,7 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
             .asteroid_belts
             .retain(|m| m.id != id),
         ObjectSpecifier::Wreck { id } => state.locations[loc_idx].wrecks.retain(|w| w.id != id),
+        ObjectSpecifier::Location { id } => state.locations.retain(|l| l.id != id),
     }
 }
 

@@ -81,6 +81,10 @@ export const findObjectBySpecifier = (
       const spec = specifier.obj_spec;
       return loc.wrecks.find((o) => o.id === spec.id);
     }
+    case 'Location': {
+      const spec = specifier.obj_spec;
+      return state.locations.find((l) => l.id === spec.id);
+    }
     default:
       throw new UnreachableCaseError(specifier.obj_spec);
   }

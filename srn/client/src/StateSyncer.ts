@@ -20,6 +20,7 @@ import _ from 'lodash';
 import Color from 'color';
 import * as uuid from 'uuid';
 import { Wreck } from '../../world/pkg/world';
+import { UnreachableCaseError } from 'ts-essentials';
 
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = {
@@ -121,6 +122,74 @@ const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up,
 //   atClientTicks: number;
 //   tag: string;
 // };
+
+const compare = function (a: any, b: any) {
+  const result = {
+    different: [],
+    missing_from_first: [],
+    missing_from_second: [],
+  };
+
+  _.reduce(
+    a,
+    (result, value, key) => {
+      // eslint-disable-next-line no-prototype-builtins
+      if (b.hasOwnProperty(key)) {
+        if (_.isEqual(value, b[key])) {
+          return result;
+        }
+        if (typeof a[key] !== typeof {} || typeof b[key] !== typeof {}) {
+          //dead end.
+          // @ts-ignore
+          result.different.push(key);
+          return result;
+        }
+        const deeper = compare(a[key], b[key]);
+        result.different = result.different.concat(
+          // @ts-ignore
+          _.map(deeper.different, (sub_path) => {
+            return `${key}.${sub_path}`;
+          })
+        );
+
+        result.missing_from_second = result.missing_from_second.concat(
+          // @ts-ignore
+          _.map(deeper.missing_from_second, (sub_path) => {
+            return `${key}.${sub_path}`;
+          })
+        );
+
+        result.missing_from_first = result.missing_from_first.concat(
+          // @ts-ignore
+          _.map(deeper.missing_from_first, (sub_path) => {
+            return `${key}.${sub_path}`;
+          })
+        );
+        return result;
+      }
+      // @ts-ignore
+      result.missing_from_second.push(key);
+      return result;
+    },
+    result
+  );
+
+  _.reduce(
+    b,
+    (result, value, key) => {
+      // eslint-disable-next-line no-prototype-builtins
+      if (a.hasOwnProperty(key)) {
+        return result;
+      }
+      // @ts-ignore
+      result.missing_from_first.push(key);
+      return result;
+    },
+    result
+  );
+
+  return result;
+};
 
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
@@ -433,6 +502,10 @@ export class StateSyncer implements IStateSyncer {
             'onTimeUpdate true'
           ) || this.trueState;
         this.overrideNonMergeableKeysInstantly(this.state, this.trueState);
+        const stateClone = JSON.parse(JSON.stringify(this.state));
+        this.overrideKeysRecursive(stateClone, this.trueState, stateClone, []);
+        const diff = compare(this.state, stateClone);
+        this.log.push(JSON.stringify(diff));
         this.violations = this.checkViolations(
           this.state,
           this.trueState,
@@ -669,6 +742,207 @@ export class StateSyncer implements IStateSyncer {
       return;
     }
     targetAp.server_acknowledged = true;
+  }
+
+  private reconciliation = {
+    // aka ignore server state, no reconciliation => easiest. anything purely visual,
+    // may be bad for long action that arrive from server half-done already, e.g. shoot effects
+    // overwrite will ignore server fields
+    // timestamps like ticks typically also need to be here
+    alwaysClient: new Set([
+      'id', // there is a very special hook in the top-level handle method that will handle this instead
+      'locations.*.ships.*.trajectory',
+      'navigate_target',
+      'dock_target',
+      'ticks',
+      'millis',
+      'accumulated_not_updated_ticks',
+    ]),
+    // overwrite state with server => bad for movement, good for numbers like hp
+    // overwrite will drop client and replace it with server fields
+    alwaysServer: new Set([
+      'version',
+      'mode',
+      'tag',
+      'seed',
+      'my_id',
+      'start_time_ticks',
+      'players',
+      'milliseconds_remaining',
+      'paused',
+      'leaderboard',
+      'disable_hp_effects',
+      'market',
+      'interval_data',
+      'game_over',
+      'events',
+      'processed_events',
+      'player_actions',
+      'processed_player_actions',
+      'update_every_ticks',
+      'gen_opts',
+      'dialogue_states',
+      'breadcrumbs',
+      'locations.*.seed',
+      'locations.*.id',
+      'locations.*.asteroid_belts',
+    ]),
+    // if server id has changed, invalidate the whole tree under the key. it's somewhat an optimization of the merge strategy
+    // good for rarely-changed objects that have ids, e.g. stars, but which have to be overwritten by server data occasionally
+    serverIfId: new Set([
+      'locations.*.star',
+      '123123123',
+      '123123123',
+      '123123123',
+      '123123123',
+    ]),
+    // significant compensation effort, produces server shadows => needed for movement
+    // overwrite will do nothing with those fields
+    merge: new Set([
+      'locations',
+      'locations.*.planets',
+      'locations.*.asteroids',
+      'locations.*.minerals',
+      'locations.*.containers',
+      'locations.*.ships',
+      'locations.*.wrecks',
+      'locations.*.ships.*.x',
+      'locations.*.ships.*.y',
+    ]),
+  };
+
+  // what object specifiers should be used for paths
+  private objectSpecifierMapping = new Map<string, ObjectSpecifier['tag']>([
+    ['locations', 'Location'],
+    ['locations.*.ships', 'Ship'],
+    ['locations.*.planets', 'Planet'],
+  ]);
+
+  private normalizePath(pathParts: string[]): string {
+    const result = pathParts
+      .filter((p) => !!p)
+      .map((part) => (!_.isNaN(parseInt(part, 10)) ? '*' : part))
+      .join('.');
+    if (result === '*') {
+      console.warn('reduced to *', pathParts);
+    }
+    return result;
+  }
+
+  private getPathReconStrategy(
+    pathParts: string[]
+  ): 'client' | 'server' | 'merge' | 'server if id' {
+    const normalized = this.normalizePath(pathParts);
+    if (this.reconciliation.alwaysClient.has(normalized)) {
+      return 'client';
+    }
+    if (this.reconciliation.alwaysServer.has(normalized)) {
+      return 'server';
+    }
+    if (this.reconciliation.merge.has(normalized)) {
+      return 'merge';
+    }
+    if (this.reconciliation.serverIfId.has(normalized)) {
+      return 'merge';
+    }
+    this.log.push(`warn: no reconciliation strategy for path ${normalized}`);
+    return 'server';
+  }
+
+  private overrideKeysRecursive(
+    currState: any,
+    trueState: any,
+    rootCurrState: GameState,
+    currentPath: string[]
+  ) {
+    if (!_.isObject(trueState || !_.isObject(currState))) {
+      console.warn('not obj', currentPath, currState, trueState);
+      return;
+    }
+    for (const [key, trueValue] of Object.entries(trueState)) {
+      const extendedKey = [...currentPath, key];
+      const strategy = this.getPathReconStrategy(extendedKey);
+      switch (strategy) {
+        case 'client':
+          // do nothing, state is ok
+          break;
+        case 'server':
+          // full overwrite
+          (currState as any)[key] = trueValue;
+          break;
+        case 'server if id': {
+          if (currState[key]?.id !== trueState[key]?.id) {
+            (currState as any)[key] = trueValue;
+          }
+          break;
+        }
+        case 'merge': {
+          const currType = typeof currState[key];
+          const trueType = typeof trueState[key];
+          if (currType !== trueType) {
+            this.log.push(
+              `warn: value type mismatch for path ${extendedKey}, curr=${currType}, true=${trueType}`
+            );
+            continue;
+          }
+          if (_.isArray(trueValue)) {
+            if (!trueValue.every((obj) => obj.id)) {
+              // potentially, I could validate for unique ids here, or provide surrogate index ids like react
+              this.log.push(
+                `warn: not every value in array at ${extendedKey} has an id - cannot merge`
+              );
+              continue;
+            }
+            const objSpecTag = this.objectSpecifierMapping.get(
+              this.normalizePath(extendedKey)
+            );
+            if (!objSpecTag) {
+              this.log.push(
+                `warn: refusing to merge path ${extendedKey} without object specifier mapping`
+              );
+              continue;
+            }
+
+            // ships, planets, etc. - the most complex and expensive case
+            const existingObjIds = new Set();
+            for (let i = 0; i < trueValue.length; i++) {
+              const trueObj = trueValue[i];
+              existingObjIds.add(trueObj.id);
+              const currentObj = this.findOldVersionOfObjectV2<any>(
+                rootCurrState,
+                {
+                  tag: objSpecTag,
+                  id: trueObj.id,
+                }
+              );
+              if (currentObj) {
+                this.overrideKeysRecursive(currentObj, trueObj, rootCurrState, [
+                  ...extendedKey,
+                  `${i}`,
+                ]);
+              } else {
+                // add new objects
+                currState[key].push(trueObj);
+              }
+            }
+            // drop old objects
+            currState[key] = currState[key].filter((obj: any) =>
+              existingObjIds.has(obj.id)
+            );
+          } else {
+            this.overrideKeysRecursive(
+              currState[key],
+              trueState[key],
+              rootCurrState,
+              extendedKey
+            );
+          }
+          break;
+        }
+        default:
+          throw new UnreachableCaseError(strategy);
+      }
+    }
   }
 
   // some keys have to be always synced to the server
