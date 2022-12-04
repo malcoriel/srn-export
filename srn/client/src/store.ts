@@ -54,6 +54,7 @@ export type SrnState = {
   setMusicEnabled: (value: boolean) => void;
   portrait: string;
   hotkeysPressed: Record<string, boolean>;
+  hotkeyScope: string;
 
   setPortrait: (value: string) => void;
   nextPortrait: () => void;
@@ -107,6 +108,8 @@ export type SrnState = {
   hostileAutoFocusSpecifier?: ObjectSpecifier | null;
   setHostileAutoFocusSpecifier: (sp?: ObjectSpecifier | null) => void;
   setHotkeyPressed: (key: string, value: boolean) => void;
+  setHotkeyScope: (key: string) => void;
+  hideAllWindows: () => void;
 };
 
 export enum TestMenuMode {
@@ -166,6 +169,7 @@ export const useStore = create<SrnState>(
     autoFocusSpecifier: undefined,
     hostileAutoFocusSpecifier: undefined,
     hotkeysPressed: {},
+    hotkeyScope: 'game',
 
     promptWindowParams: ['', () => {}, () => {}],
     setTestMenuMode: (val: TestMenuMode) => set({ testMenuMode: val }),
@@ -287,6 +291,23 @@ export const useStore = create<SrnState>(
       set(() => ({ hostileAutoFocusSpecifier: sp })),
     setHotkeyPressed: (key, value) =>
       set(() => ({ hotkeysPressed: { [key]: value } })),
+    setHotkeyScope: (key) => set(() => ({ hotkeyScope: key })),
+    hideAllWindows: () =>
+      set((state) => {
+        const targetWindows = Object.entries(state).filter(([key, value]) => {
+          return value === WindowState.Shown;
+        });
+        // modify state directly instead of returning
+        for (const [key] of targetWindows) {
+          const setterKey = `set${_.upperFirst(key)}`;
+          try {
+            (state as any)[setterKey](WindowState.Hidden);
+          } catch (e) {
+            console.warn(`hiding window ${setterKey} failed: ${e}`);
+          }
+        }
+        return {};
+      }),
   }))
 );
 

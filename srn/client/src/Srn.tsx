@@ -46,6 +46,7 @@ import {
 } from './ThreeLayers/Resources';
 import { ReplayControlsSrnContainer } from './ReplayControlsSrnContainer';
 import { CameraCoordinatesBox } from './HtmlLayers/CameraCoordinatesBox';
+import { useScopedHotkey } from './utils/hotkeyHooks';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -154,7 +155,7 @@ const Srn = () => {
     }
   };
 
-  useHotkeys(
+  useScopedHotkey(
     'esc',
     () => {
       try {
@@ -165,6 +166,8 @@ const Srn = () => {
         console.error(e);
       }
     },
+    'game',
+    {},
     [mainUiState, toggleMenu]
   );
 

@@ -4,7 +4,7 @@ import _ from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { variableDeltaTime as Time } from '../utils/Times';
 import './StatsPanel.css';
-import { useToggleHotkey } from '../utils/useToggleHotkey';
+import { useToggleHotkey } from '../utils/hotkeyHooks';
 
 export const DEV_PERF_COUNTERS_ENABLED = true;
 

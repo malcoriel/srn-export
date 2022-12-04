@@ -2,7 +2,7 @@ import { Arc, Circle, Group, Layer, Rect, Stage, Star } from 'react-konva';
 import color from 'color';
 import React, { useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
-import { useToggleHotkey } from '../utils/useToggleHotkey';
+import { useToggleHotkey } from '../utils/hotkeyHooks';
 import { crimson, dirtyGray, gray, mint, teal, yellow } from '../utils/palette';
 
 import NetState from '../NetState';

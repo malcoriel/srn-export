@@ -14,7 +14,7 @@ import {
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState, { DISPLAY_BREADCRUMBS_LAST_TICKS } from '../NetState';
 import Vector, { VectorF } from '../utils/Vector';
-import { useToggleHotkey } from '../utils/useToggleHotkey';
+import { useToggleHotkey } from '../utils/hotkeyHooks';
 import { useStore } from '../store';
 import { size, viewPortSizeMeters } from '../coord';
 import { ThreeQuestDirection } from './ThreeQuestDirection';

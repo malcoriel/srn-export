@@ -15,7 +15,8 @@ import {
   buildDialogueFromState,
   Dialogue,
   DialogueElem,
-  GameState, initDialogueTable,
+  GameState,
+  initDialogueTable,
 } from '../world';
 import { useStore, WindowState } from '../store';
 import { WithScrollbars } from './ui/WithScrollbars';
@@ -26,6 +27,7 @@ import { transformAllTextSubstitutions } from '../utils/substitutions';
 import { useNSForceChange } from '../NetStateHooks';
 import { findMyShip } from '../ClientStateIndexing';
 import { api } from '../utils/api';
+import { useScopedHotkey } from '../utils/hotkeyHooks';
 
 export const DialogueElemView: React.FC<DialogueElem> = (dialogue) => (
   <span className="dialogue-option">
@@ -210,7 +212,10 @@ export const DialogueWindow: React.FC = () => {
   };
 
   for (const i of _.times(9)) {
-    useHotkeys(String(i + 1), tryDoOption(i), [tryDoOption, dialogue]);
+    useScopedHotkey(String(i + 1), tryDoOption(i), 'window', {}, [
+      tryDoOption,
+      dialogue,
+    ]);
   }
 
   useEffect(() => {

@@ -1,8 +1,8 @@
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { Button } from './Button';
 import './QuickMenu.scss';
 import { ImCross } from 'react-icons/all';
+import { useScopedHotkey } from '../../utils/hotkeyHooks';
 
 type SingleMenuAction = {
   icon?: ReactNode;
@@ -136,7 +136,7 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
     setCurrentAction(null);
   };
 
-  useHotkeys(
+  useScopedHotkey(
     mainHotkey,
     () => {
       if (!shown) {
@@ -146,6 +146,8 @@ export const QuickMenu: React.FC<QuickMenuProps> = ({
         }, 0);
       }
     },
+    'game',
+    {},
     [setShown, shown]
   );
   if (!shown) return null;

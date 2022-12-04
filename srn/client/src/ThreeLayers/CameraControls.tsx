@@ -8,6 +8,7 @@ import Vector, { IVector, VectorF } from '../utils/Vector';
 import { MathUtils, Scene, ShaderMaterial, Vector3 } from 'three';
 import _ from 'lodash';
 import { threePosToVector, threeVectorToVector } from './util';
+import { useScopedHotkey } from '../utils/hotkeyHooks';
 
 export const CAMERA_HEIGHT = 100;
 export const CAMERA_DEFAULT_ZOOM = () => unitsToPixels_min();
@@ -60,12 +61,14 @@ export const CameraController: React.FC<CameraZoomerProps> = ({
     visualState.currentZoomShift = camera.zoom / CAMERA_DEFAULT_ZOOM();
   };
 
-  useHotkeys(
+  useScopedHotkey(
     'c',
     () => {
       visualState.targetZoomShift = 1.0;
       visualState.boundCameraMovement = !visualState.boundCameraMovement;
     },
+    'game',
+    {},
     [ns]
   );
 

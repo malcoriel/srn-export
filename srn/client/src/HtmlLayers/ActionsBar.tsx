@@ -33,6 +33,7 @@ export const ActionsBar: React.FC<ActionsBarProps> = ({
               className="action-button"
               text={text}
               hotkey={indexByNumbers ? String(i + 1) : hotkey}
+              hotkeyScope="game"
               onClick={action}
               cooldownAreaHeight={actionSize}
               cooldownAreaWidth={actionSize}

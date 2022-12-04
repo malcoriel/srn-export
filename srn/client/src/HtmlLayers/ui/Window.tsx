@@ -7,6 +7,7 @@ import { StyledRect } from './StyledRect';
 import ReactDOM from 'react-dom';
 import './Window.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
+import { useBoundHotkeyScope, useScopedHotkey } from '../../utils/hotkeyHooks';
 
 export const Window: React.FC<{
   storeKey: string;
@@ -57,6 +58,7 @@ export const Window: React.FC<{
   };
   const isShown = state === WindowState.Shown;
   const isMinimized = state === WindowState.Minimized;
+  useBoundHotkeyScope('window', isShown);
 
   const windowButtons = (
     <div

@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { useCallback, useEffect, useState } from 'react';
+import { useHotkeys, Options } from 'react-hotkeys-hook';
 import { useStore } from '../store';
 
+export type HotkeyOptions = Options;
 export const hotkeyRegistry: Record<string, string> = {};
 
 export const useToggleHotkey = (
@@ -34,4 +35,35 @@ export const useToggleHotkey = (
     [shown, onSetShown, syncedSetShown]
   );
   return [shown, syncedSetShown];
+};
+
+const inScope = (currentScope: string, targetScope: string): boolean =>
+  currentScope.startsWith(targetScope);
+
+export const useScopedHotkey = (
+  hotkey: string,
+  onActivate: () => void,
+  scope: string,
+  options: HotkeyOptions,
+  deps: any[]
+) => {
+  const hotkeyScope = useStore((store) => store.hotkeyScope);
+  useHotkeys(
+    hotkey,
+    onActivate,
+    { ...options, enabled: inScope(hotkeyScope, scope) && options.enabled },
+    deps
+  );
+};
+
+export const useBoundHotkeyScope = (boundScope: string, shown: boolean) => {
+  const setScope = useStore((store) => store.setHotkeyScope);
+  useEffect(() => {
+    if (shown) {
+      setScope(boundScope);
+    } else {
+      setScope('game');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shown]);
 };

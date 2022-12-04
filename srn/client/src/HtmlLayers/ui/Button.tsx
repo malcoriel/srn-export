@@ -3,6 +3,7 @@ import './Button.scss';
 import { useHotkeys } from 'react-hotkeys-hook';
 import classNames from 'classnames';
 import { semiTransparentWhite } from '../../utils/palette';
+import { useScopedHotkey } from '../../utils/hotkeyHooks';
 
 const formatText = (
   text: string,
@@ -49,6 +50,7 @@ export type ButtonProps = {
   disabled?: boolean;
   toggled?: boolean | null;
   hotkey?: string;
+  hotkeyScope?: string;
   text?: string;
   round?: boolean;
   thin?: boolean;
@@ -62,6 +64,7 @@ export type ButtonProps = {
 };
 export const Button: React.FC<ButtonProps> = ({
   hotkey,
+  hotkeyScope,
   noHotkeyHint,
   noInlineHotkey,
   round,
@@ -91,7 +94,8 @@ export const Button: React.FC<ButtonProps> = ({
       }
     }, 0);
   };
-  useHotkeys(
+  const scope = hotkeyScope || '';
+  useScopedHotkey(
     targetHotKey,
     () => {
       if (onClick && !disabled) {
@@ -99,16 +103,18 @@ export const Button: React.FC<ButtonProps> = ({
       }
       setPseudoActive(false);
     },
+    scope,
     {
       keyup: true,
     },
     [onClick, targetHotKey, pseudoActive]
   );
-  useHotkeys(
+  useScopedHotkey(
     targetHotKey,
     () => {
       setPseudoActive(true);
     },
+    scope,
     { keydown: true },
     [onClick, targetHotKey, pseudoActive]
   );

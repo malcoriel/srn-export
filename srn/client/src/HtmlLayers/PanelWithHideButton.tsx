@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { useToggleHotkey } from '../utils/useToggleHotkey';
+import { useToggleHotkey } from '../utils/hotkeyHooks';
 import { useLocalStorage } from '../utils/useLocalStorage';
 
 export enum PanelPosition {

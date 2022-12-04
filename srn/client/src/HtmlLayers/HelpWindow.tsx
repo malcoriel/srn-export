@@ -1,5 +1,5 @@
 import React from 'react';
-import { hotkeyRegistry } from '../utils/useToggleHotkey';
+import { hotkeyRegistry } from '../utils/hotkeyHooks';
 import { Window } from './ui/Window';
 import './HelpWindow.scss';
 import { useStore } from '../store';

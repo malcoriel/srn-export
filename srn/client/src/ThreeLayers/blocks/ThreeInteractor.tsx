@@ -17,6 +17,7 @@ import { vecToThreePos } from '../util';
 import { suppressEvent } from '../suppressEvent';
 // eslint-disable-next-line import/named
 import { Ability } from '../../../../world/pkg/world';
+import { useScopedHotkey } from '../../utils/hotkeyHooks';
 
 export enum InteractorActionType {
   Unknown,
@@ -56,12 +57,18 @@ const KbAction: React.FC<{
   hotkey: string;
   objectId: string;
 }> = ({ objectId, action, hotkey }) => {
-  useHotkeys(hotkey, () => {
-    if (!action) {
-      return;
-    }
-    action(objectId);
-  });
+  useScopedHotkey(
+    hotkey,
+    () => {
+      if (!action) {
+        return;
+      }
+      action(objectId);
+    },
+    'game',
+    {},
+    []
+  );
   return null;
 };
 
