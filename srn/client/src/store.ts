@@ -295,7 +295,10 @@ export const useStore = create<SrnState>(
     hideAllWindows: () =>
       set((state) => {
         const targetWindows = Object.entries(state).filter(([key, value]) => {
-          return value === WindowState.Shown;
+          return (
+            value === WindowState.Shown &&
+            key.toLowerCase().indexOf('window') > -1
+          );
         });
         // modify state directly instead of returning
         for (const [key] of targetWindows) {
