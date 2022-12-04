@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.9.1 (next)
+## Version 0.9.1 (2022-12-04)
 ### New
 * Re-introduced display of server vs client state desync time
 * Introduced closing UI windows by pressing esc
