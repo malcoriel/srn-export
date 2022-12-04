@@ -3,8 +3,11 @@
 ## Version 0.9.1 (next)
 ### New
 * Re-introduced display of server vs client state desync time
+* Introduced closing UI windows by pressing esc
 ### Fixes
 * Fixed some synchronization bugs
+* Fixed server crash issue for long-running rooms
+* Fixed a bug where active dialogue and other windows hotkeys were triggering background actions like shooting when pressing 1-2 and other keys.
 
 ## Version 0.9.0 (2022-12-03)
 ### New
