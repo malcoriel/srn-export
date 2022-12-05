@@ -28,7 +28,9 @@ const buffers: Record<Measure, number[]> = {
   RootComponentRender: [],
   SyncedStateUpdate: [],
   DesyncedStateUpdate: [],
-  NetStateEmitChange: [],
+  NetStateEmitChangeTime: [],
+  ServerStateSize: [],
+  WasmStateSize: [],
 };
 
 let counters: Record<string, number> = {};
@@ -46,7 +48,9 @@ export enum Measure {
   RootComponentRender = 'RootComponentRender',
   DesyncedStateUpdate = 'DesyncedStateUpdate',
   SyncedStateUpdate = 'SyncedStateUpdate',
-  NetStateEmitChange = 'NetStateEmitChange',
+  NetStateEmitChangeTime = 'NetStateEmitChangeTime',
+  ServerStateSize = 'ServerStateSize',
+  WasmStateSize = 'WasmStateSize',
 }
 
 export enum Stat {
@@ -60,6 +64,9 @@ export enum Stat {
   SlowUpdateFPS,
   SocketFPS,
   RealFPS,
+  AvgNetStateEmitChangeTime,
+  AvgServerStateSize,
+  AvgWasmStateSize,
 }
 
 _.each(_.keys(Stat), (s) => {
@@ -123,13 +130,10 @@ const Perf = {
     statsHeap[fpsStat] = measuredFrameEvents.length / (flushInterval / 1000);
     buffers[frameEvent] = newFrameEvents;
   },
-  measureAvgFrameTimeStat: (
-    frameTimeMeasure: Measure,
-    avgFrameTimeStat: Stat
-  ) => {
-    const frameTimes = buffers[frameTimeMeasure] || [];
+  measureMean: (measure: Measure, avgFrameTimeStat: Stat) => {
+    const frameTimes = buffers[measure] || [];
     statsHeap[avgFrameTimeStat] = frameTimes.length ? mean(frameTimes) : 0;
-    buffers[frameTimeMeasure] = [];
+    buffers[measure] = [];
   },
   measureFrameStats: (
     avgFrameTimeStat: Stat,
@@ -139,7 +143,7 @@ const Perf = {
     fpsStat: Stat,
     debug = false
   ) => {
-    Perf.measureAvgFrameTimeStat(frameTimeMeasure, avgFrameTimeStat);
+    Perf.measureMean(frameTimeMeasure, avgFrameTimeStat);
     Perf.measureFPSStat(frameEvent, debug, debugName, fpsStat);
   },
   flushBuffer: (timeElapsed: number) => {
@@ -157,9 +161,14 @@ const Perf = {
           Stat.AvgRenderFrameTime,
           Measure.RenderFrameTime,
           Measure.RenderFrameEvent,
-          'render',
+          'periodic action on every frame',
           Stat.RenderFPS
         );
+        Perf.measureMean(
+          Measure.NetStateEmitChangeTime,
+          Stat.AvgNetStateEmitChangeTime
+        );
+        Perf.measureMean(Measure.ServerStateSize, Stat.AvgServerStateSize);
         Perf.measureFrameStats(
           Stat.AvgSlowUpdateFrameTime,
           Measure.SlowUpdateFrameTime,
@@ -216,8 +225,8 @@ const Perf = {
     return value;
   },
 
-  markEvent: (measure: Measure) => {
-    buffers[measure].push(performance.now());
+  markEvent: (measure: Measure, value: number = performance.now()) => {
+    buffers[measure].push(value);
   },
   markCounter: (name: string) => {
     counters[name] = counters[name] || 0;
@@ -263,22 +272,16 @@ const StatsPanel = () => {
     <div className="stats panel aux-panel">
       <div className="header">Debug info:</div>
       <div className="row">
-        <span className="name">Root renders:</span>
+        <span className="name">Avg render frame time:</span>
         <span className="value">
-          {buffers[Measure.RootComponentRender].length}
-        </span>
-      </div>
-      <div className="row">
-        <span className="name">Avg physics frame time:</span>
-        <span className="value">
-          {formatNumber(statsHeap[Stat.AvgPhysicsFrameTime])}
+          {formatNumber(statsHeap[Stat.AvgRenderFrameTime])}
           ms
         </span>
       </div>
       <div className="row">
-        <span className="name">Avg render frame time:</span>
+        <span className="name">Emit change time:</span>
         <span className="value">
-          {formatNumber(statsHeap[Stat.AvgRenderFrameTime])}
+          {formatNumber(statsHeap[Stat.AvgNetStateEmitChangeTime])}
           ms
         </span>
       </div>
@@ -290,23 +293,18 @@ const StatsPanel = () => {
         </span>
       </div>
       <div className="row">
-        <span className="name">Avg socket frame time:</span>
-        <span className="value">
-          {formatNumber(statsHeap[Stat.AvgSocketFrameTime])}
-          ms
-        </span>
-      </div>
-      <div className="row">
         <span className="name">Slow updates:</span>
         <span className="value">
           {formatNumber(statsHeap[Stat.SlowUpdateFPS])}
         </span>
       </div>
-
       <div className="row">
-        <span className="name">FPS:</span>
-        <span className="value">{formatNumber(statsHeap[Stat.RealFPS])}</span>
+        <span className="name">State size from server</span>
+        <span className="value">
+          {formatNumber(statsHeap[Stat.AvgServerStateSize] / 1024)}KiB
+        </span>
       </div>
+
       {/*<div className="row">*/}
       {/*<span className="name">JS Heap:</span>*/}
       {/*<span className="value">{formatNumber(statsHeap[Stats.JSMemUsed])}/*/}

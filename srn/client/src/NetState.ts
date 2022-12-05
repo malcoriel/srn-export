@@ -318,7 +318,7 @@ export default class NetState extends EventEmitter {
           if (this.debugSpaceTime) {
             this.addSpaceTimeBreadcrumbs();
           }
-          Perf.usingMeasure(Measure.NetStateEmitChange, () => {
+          Perf.usingMeasure(Measure.NetStateEmitChangeTime, () => {
             // this is where all react render and reconciliation will happen
             ns.emit('change');
           });
@@ -638,6 +638,7 @@ export default class NetState extends EventEmitter {
           ServerToClientMessageCode.ObsoleteStateChangeExclusive ||
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
+        Perf.markEvent(Measure.ServerStateSize, data.length);
         // console.log(`state size=${(data.length / 1024).toFixed(2)}KiB`);
         const parsed = JSON.parse(data);
         this.sync({
