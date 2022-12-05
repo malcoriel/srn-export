@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Local, Timelike};
 use itertools::{max, min};
 use statistical::standard_deviation;
 use strum::IntoEnumIterator;
@@ -13,11 +13,10 @@ use uuid::Uuid;
 pub struct Sampler {
     buckets: HashMap<u32, Vec<u64>>,
     labels: Vec<String>,
-    marks: HashMap<Uuid, (u32, DateTime<Local>)>,
+    marks: HashMap<Uuid, (u32, u64)>,
     pub ignore_warning_for_marks: HashSet<u32>,
     empty: bool,
     initial_budget: i32,
-    pub micro_precision: bool,
     pub budget: i32,
 }
 
@@ -46,7 +45,6 @@ impl Sampler {
             ignore_warning_for_marks: Default::default(),
             empty: false,
             initial_budget: 0,
-            micro_precision: false,
         }
     }
 
@@ -59,7 +57,6 @@ impl Sampler {
             ignore_warning_for_marks: Default::default(),
             empty: true,
             initial_budget: 0,
-            micro_precision: false,
         }
     }
 
@@ -146,12 +143,17 @@ impl Sampler {
     pub fn start(&mut self, label_idx: u32) -> Uuid {
         return if !self.empty {
             let id = crate::new_id();
-            let start = Local::now();
+            let start = Self::get_now().max(0) as u64;
             self.mark(label_idx, start, id);
             id
         } else {
             Default::default()
         };
+    }
+
+    fn get_now() -> i64 {
+        // this just have to use common reference point, as it will be only used for diffing, not for absolute time
+        crate::get_now_nano() as i64
     }
 
     pub fn end(&mut self, id: Uuid) -> i32 {
@@ -166,13 +168,13 @@ impl Sampler {
         let res = 0;
         if !self.empty {
             if let Some((label_idx, start)) = self.extract_mark(id) {
-                let diff = self.get_nanos(start, Local::now());
-                self.add(label_idx, diff as u64);
+                let diff = (Self::get_now() - start as i64).max(0) as u64;
+                self.add(label_idx, diff);
                 // since marks can be inside each other,
                 // subtracting twice might happen for the inside
                 // marks
                 if top_level {
-                    self.budget -= (diff / 1000.0) as i32;
+                    self.budget -= (diff as f64 / 1000.0) as i32;
                 }
                 if self.budget <= 0 {
                     self.try_finalize_budget();
@@ -181,14 +183,6 @@ impl Sampler {
             }
         }
         return res;
-    }
-
-    fn get_nanos(&self, start: DateTime<Local>, end: DateTime<Local>) -> f64 {
-        if self.micro_precision {
-            (end - start).num_milliseconds() as f64 * 1000.0
-        } else {
-            (end - start).num_nanoseconds().unwrap() as f64
-        }
     }
 
     pub fn init_budget(&mut self, value: i32) {
@@ -209,10 +203,10 @@ impl Sampler {
         self.initial_budget = 0;
     }
 
-    fn mark(&mut self, label_idx: u32, start: DateTime<Local>, id: Uuid) {
-        self.marks.insert(id, (label_idx, start));
+    fn mark(&mut self, label_idx: u32, start_nano: u64, id: Uuid) {
+        self.marks.insert(id, (label_idx, start_nano));
     }
-    fn extract_mark(&self, id: Uuid) -> Option<(u32, DateTime<Local>)> {
+    fn extract_mark(&self, id: Uuid) -> Option<(u32, u64)> {
         let pair = self.marks.get(&id);
         pair.map(|pair| (pair.0.clone(), pair.1.clone()))
     }

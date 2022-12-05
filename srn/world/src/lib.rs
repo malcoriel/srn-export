@@ -5,7 +5,6 @@
 #![allow(warnings)]
 
 extern crate uuid;
-
 use std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -48,6 +47,7 @@ extern "C" {
     #[no_mangle]
     #[used]
     static process: node_sys::Process;
+
 }
 
 macro_rules! log {
@@ -272,11 +272,16 @@ use crate::indexing::{find_my_ship_index, GameStateCaches, ObjectSpecifier};
 use crate::perf::{ConsumeOptions, Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
 use crate::world::{GameMode, GameState, UpdateOptions, UpdateOptionsV2, AABB};
+use chrono::Timelike;
 use mut_static::MutStatic;
 use rand::prelude::*;
 use rand_pcg::Pcg64Mcg;
 use std::ops::DerefMut;
 use std::{env, mem};
+
+pub fn get_now_nano() -> u64 {
+    get_nanos_web() as u64
+}
 
 lazy_static! {
     pub static ref global_sampler: MutStatic<perf::Sampler> = {
@@ -284,7 +289,8 @@ lazy_static! {
         for mark in perf::SamplerMarks::iter() {
             marks_holder.push(mark.to_string());
         }
-        MutStatic::from(perf::Sampler::new(marks_holder))
+        let mut sampler = perf::Sampler::new(marks_holder);
+        MutStatic::from(sampler)
     };
 }
 
@@ -330,12 +336,25 @@ pub struct UpdateWorldArgs {
 }
 
 use crate::fof::FofActor;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast, JsObject};
+
+fn print_type_of<T>(_: &T) {
+    log!(format!("{}", std::any::type_name::<T>()))
+}
 
 #[wasm_bindgen]
-pub fn test_timestamp() {
+pub fn get_nanos_node() -> u64 {
     let hrtime = unsafe { process.hr_time() };
-    log!(format!("{:?}", hrtime.to_string()));
+    let val = hrtime.call0(&JsValue::NULL).unwrap();
+    let arr = js_sys::Uint32Array::new(&val);
+    let vec = arr.to_vec();
+    return vec[0] as u64 * 1000 * 1000 + vec[1] as u64 / 1000;
+}
+
+#[wasm_bindgen]
+pub fn get_nanos_web() -> f64 {
+    let now = unsafe { performance.now() };
+    return now as f64 * 1000.0 * 1000.0;
 }
 
 #[wasm_bindgen]

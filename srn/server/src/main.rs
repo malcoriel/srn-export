@@ -15,7 +15,7 @@ use std::sync::{Arc, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuar
 use std::time::Duration;
 use std::{env, fmt, thread};
 
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local, Timelike, Utc};
 use crossbeam::channel::{bounded, Receiver, Sender};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -213,6 +213,11 @@ fn personalize_player(state: &mut GameState, conn_id: Uuid, update: PersonalizeU
 
 fn remove_player(conn_id: Uuid, state: &mut GameState) {
     world::remove_player_from_state(conn_id, state);
+}
+
+pub fn get_now_nano() -> u64 {
+    let now = chrono::Local::now();
+    now.second() as u64 * 1_000_000_000 + now.nanosecond() as u64
 }
 
 pub fn get_prng() -> Pcg64Mcg {

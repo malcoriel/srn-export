@@ -3,8 +3,23 @@ import { getLoc0, swapGlobals, updateWorld, wasm, writeTmpJson } from '../util';
 describe('sample smoke test', () => {
   beforeAll(swapGlobals);
 
-  fit('can get hrtime', async () => {
-    console.log(wasm.testTimestamp());
+  xit('can get hrtime', async () => {
+    const native = () => {
+      const [secs, picos] = process.hrtime();
+      return secs * 1000 * 1000 + picos / 1000;
+    };
+    console.log('native', native());
+    console.log('native', native());
+    console.log('native', native());
+    console.log('wasm', wasm.getNanosNode());
+    console.log('wasm', wasm.getNanosNode());
+    console.log('wasm', wasm.getNanosNode());
+    console.log('web', wasm.getNanosWeb());
+    console.log('web', wasm.getNanosWeb());
+    console.log('web', wasm.getNanosWeb());
+    console.log('web', wasm.getNanosWeb());
+    console.log('web', wasm.getNanosWeb());
+    console.log('web', wasm.getNanosWeb());
   });
 
   it('can seed and update world', async () => {

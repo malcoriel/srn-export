@@ -150,7 +150,7 @@ export const findContainer = (state: GameState, cont_id: string) => {
 
 let wasmFunctions: any = {};
 
-const PERF_FLUSH_INTERVAL_MS = 5 * 1000;
+const PERF_FLUSH_INTERVAL_MS = 30 * 1000;
 let lastEnablePerf = false;
 
 const forceEnablePerfRecheck = () => {
@@ -187,7 +187,6 @@ window.enablePerf = () => {
   // jest would complain otherwise, due to the hack with resolver that I had to do
   // the world/pkg/world_bg.js does not get imported when this file (world.ts) is imported via jest
   if (wasmFunctions && wasmFunctions.set_panic_hook) {
-    console.log({set_panic_hook: wasmFunctions.set_panic_hook});
     wasmFunctions.set_panic_hook();
   }
   // auto-sync global variable enable perf to enable/disable performance metrics manually
@@ -198,6 +197,10 @@ window.enablePerf = () => {
     forceEnablePerfRecheck();
   }, PERF_FLUSH_INTERVAL_MS);
   console.log('loading world wasm done.');
+  // @ts-ignore
+  window.getNanosWeb = wasmFunctions.get_nanos_web;
+  // @ts-ignore
+  window.getNanosNode = wasmFunctions.get_nanos_node;
 })();
 
 // the dialogue table type is intentionally opaque here, as it's passed from server to lib through js

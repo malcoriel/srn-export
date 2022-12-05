@@ -60,7 +60,10 @@ export const wasm = {
     throw new Error(notLoadedError);
   },
 
-  testTimestamp: () => {
+  getNanosNode: () => {
+    throw new Error(notLoadedError);
+  },
+  getNanosWeb: () => {
     throw new Error(notLoadedError);
   },
 };
@@ -145,7 +148,8 @@ export const loadWasm = timerify(async function loadWasm() {
     wasm.applySinglePatch = wasmFunctions.apply_single_patch;
     wasm.interpolateStates = wasmFunctions.interpolate_states;
     wasm.buildDialogueFromState = wasmFunctions.build_dialogue_from_state;
-    wasm.testTimestamp = wasmFunctions.test_timestamp;
+    wasm.getNanosNode = wasmFunctions.get_nanos_node;
+    wasm.getNanosWeb = wasmFunctions.get_nanos_web;
     wasm.resources = resources;
     wasm.dialogueTable = wasm.makeDialogueTable(
       wasm.resources.dialogue_scripts

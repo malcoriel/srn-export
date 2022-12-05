@@ -638,6 +638,7 @@ export default class NetState extends EventEmitter {
           ServerToClientMessageCode.ObsoleteStateChangeExclusive ||
         messageCode === ServerToClientMessageCode.XCastGameState
       ) {
+        // console.log(`state size=${(data.length / 1024).toFixed(2)}KiB`);
         const parsed = JSON.parse(data);
         this.sync({
           tag: 'server state',
