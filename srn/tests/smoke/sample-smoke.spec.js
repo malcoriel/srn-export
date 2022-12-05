@@ -3,6 +3,10 @@ import { getLoc0, swapGlobals, updateWorld, wasm, writeTmpJson } from '../util';
 describe('sample smoke test', () => {
   beforeAll(swapGlobals);
 
+  fit('can get hrtime', async () => {
+    console.log(wasm.testTimestamp());
+  });
+
   it('can seed and update world', async () => {
     let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
     expect(world.mode).toEqual('PirateDefence');

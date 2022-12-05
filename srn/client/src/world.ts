@@ -150,13 +150,54 @@ export const findContainer = (state: GameState, cont_id: string) => {
 
 let wasmFunctions: any = {};
 
-(async function () {
+const PERF_FLUSH_INTERVAL_MS = 5 * 1000;
+let lastEnablePerf = false;
+
+const forceEnablePerfRecheck = () => {
+  // @ts-ignore
+  const newEnablePerf = !!window.ENABLE_PERF;
+  if (lastEnablePerf !== newEnablePerf) {
+    console.warn(
+      `ENABLE_PERF changed to ${newEnablePerf}.` +
+        'Beware that it will only work before any updateWorld calls, ' +
+        'so basically you can only call it before starting any game and cannot disable afterwards.' +
+        'Restart the whole app to disable it'
+    );
+    wasmFunctions.set_enable_perf(newEnablePerf);
+    if (newEnablePerf && !lastEnablePerf) {
+      // last part of condition is redundant, but is here for readability
+      console.warn(
+        `Performance stats will be flushed at most after ${PERF_FLUSH_INTERVAL_MS}ms`
+      );
+    }
+    lastEnablePerf = newEnablePerf;
+  }
+};
+
+// @ts-ignore
+window.enablePerf = () => {
+  // @ts-ignore
+  window.ENABLE_PERF = 1;
+  forceEnablePerfRecheck();
+};
+
+(async function initWorldWasm() {
+  console.log('loading world wasm....');
   wasmFunctions = await import('../../world/pkg');
   // jest would complain otherwise, due to the hack with resolver that I had to do
   // the world/pkg/world_bg.js does not get imported when this file (world.ts) is imported via jest
   if (wasmFunctions && wasmFunctions.set_panic_hook) {
+    console.log({set_panic_hook: wasmFunctions.set_panic_hook});
     wasmFunctions.set_panic_hook();
   }
+  // auto-sync global variable enable perf to enable/disable performance metrics manually
+  setInterval(() => {
+    if (lastEnablePerf) {
+      wasmFunctions.flush_sampler_stats();
+    }
+    forceEnablePerfRecheck();
+  }, PERF_FLUSH_INTERVAL_MS);
+  console.log('loading world wasm done.');
 })();
 
 // the dialogue table type is intentionally opaque here, as it's passed from server to lib through js

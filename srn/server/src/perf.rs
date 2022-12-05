@@ -17,6 +17,7 @@ pub struct Sampler {
     pub ignore_warning_for_marks: HashSet<u32>,
     empty: bool,
     initial_budget: i32,
+    pub micro_precision: bool,
     pub budget: i32,
 }
 
@@ -45,6 +46,7 @@ impl Sampler {
             ignore_warning_for_marks: Default::default(),
             empty: false,
             initial_budget: 0,
+            micro_precision: false,
         }
     }
 
@@ -57,6 +59,7 @@ impl Sampler {
             ignore_warning_for_marks: Default::default(),
             empty: true,
             initial_budget: 0,
+            micro_precision: false,
         }
     }
 
@@ -163,7 +166,7 @@ impl Sampler {
         let res = 0;
         if !self.empty {
             if let Some((label_idx, start)) = self.extract_mark(id) {
-                let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
+                let diff = self.get_nanos(start, Local::now());
                 self.add(label_idx, diff as u64);
                 // since marks can be inside each other,
                 // subtracting twice might happen for the inside
@@ -178,6 +181,14 @@ impl Sampler {
             }
         }
         return res;
+    }
+
+    fn get_nanos(&self, start: DateTime<Local>, end: DateTime<Local>) -> f64 {
+        if self.micro_precision {
+            (end - start).num_milliseconds() as f64 * 1000.0
+        } else {
+            (end - start).num_nanoseconds().unwrap() as f64
+        }
     }
 
     pub fn init_budget(&mut self, value: i32) {
@@ -198,40 +209,6 @@ impl Sampler {
         self.initial_budget = 0;
     }
 
-    pub fn measure<T, F>(&mut self, target_fn: &F, label_idx: u32) -> T
-    where
-        F: Fn() -> T,
-    {
-        if *crate::ENABLE_PERF && !self.empty {
-            let start = Local::now();
-            let res = target_fn();
-            let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
-            self.add(label_idx, diff as u64);
-            return res;
-        }
-        return target_fn();
-    }
-
-    pub fn nmeasure<T, F>(&mut self, target_fn: &F, _label_idx: u32) -> T
-    where
-        F: Fn() -> T,
-    {
-        return target_fn();
-    }
-
-    pub fn measure_mut<T, F>(&mut self, target_fn: &mut F, label_idx: u32) -> T
-    where
-        F: FnMut() -> T,
-    {
-        if *crate::ENABLE_PERF && !self.empty {
-            let start = Local::now();
-            let res = target_fn();
-            let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
-            self.add(label_idx, diff as u64);
-            return res;
-        }
-        return target_fn();
-    }
     fn mark(&mut self, label_idx: u32, start: DateTime<Local>, id: Uuid) {
         self.marks.insert(id, (label_idx, start));
     }
@@ -239,48 +216,6 @@ impl Sampler {
         let pair = self.marks.get(&id);
         pair.map(|pair| (pair.0.clone(), pair.1.clone()))
     }
-}
-
-pub fn measure_mut<T, F>(target_fn: &mut F, label: &str) -> T
-where
-    F: FnMut() -> T,
-{
-    if *crate::ENABLE_PERF {
-        let start = Local::now();
-        let res = target_fn();
-        let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
-        eprintln!("PERF:{} {:.3}ms", label, diff / 1000.0 / 1000.0);
-        return res;
-    }
-    return target_fn();
-}
-
-pub fn measure<T, F>(target_fn: &F, label: &str) -> T
-where
-    F: Fn() -> T,
-{
-    if *crate::ENABLE_PERF {
-        let start = Local::now();
-        let res = target_fn();
-        let diff = (Local::now() - start).num_nanoseconds().unwrap() as f64;
-        eprintln!("PERF:{} {:.3}ms", label, diff / 1000.0 / 1000.0);
-        return res;
-    }
-    return target_fn();
-}
-
-pub fn nmeasure<T, F>(target_fn: &F, _label: &str) -> T
-where
-    F: Fn() -> T,
-{
-    return target_fn();
-}
-
-pub fn nmeasure_mut<T, F>(target_fn: &mut F, _label: &str) -> T
-where
-    F: FnMut() -> T,
-{
-    return target_fn();
 }
 
 #[derive(Debug, EnumIter, Clone)]

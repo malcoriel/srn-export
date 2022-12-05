@@ -3,7 +3,7 @@ const fs = require('fs-extra');
 const isWin = process.platform === 'win32';
 const yargs = require('yargs');
 
-async function buildForWeb({ noTransform, transformOnly, noCleanTmp }) {
+async function buildForWeb({ noTransform, transformOnly, noCleanTmp, debug }) {
   if (!transformOnly) {
     console.log('Building rust code for extracting TS definitions...');
     await spawnWatched(
@@ -29,11 +29,31 @@ async function buildForWeb({ noTransform, transformOnly, noCleanTmp }) {
     });
     await fs.remove('world/pkg-bindgen');
     console.log('Done, now building actual wasm...');
-    await spawnWatched('wasm-pack build --release', {
+    console.log('wasm-pack version used:');
+    await spawnWatched('wasm-pack --version');
+    await spawnWatched(`wasm-pack build ${debug ? '--debug' : '--release'} `, {
       spawnOptions: {
         cwd: 'world',
       },
     });
+    console.log('Patching code...');
+    let file = (await fs.readFile('world/pkg/world_bg.js')).toString();
+    // wasm-pack 0.2.83 generates somehow invalid binding to some _free functions, but it depends on if they are used
+    // so for my code specifically, I have to monkey-patch some generated potentially-unused code that triggers webpack errors
+    file = file.replace(
+      'wasm.__wbg_writestream_free(ptr)',
+      "console.warn('attempt to use a snipped out function'); // patch for non-existent import"
+    );
+    file = file.replace(
+      'wasm.__wbg_readstream_free(ptr);',
+      "console.warn('attempt to use a snipped out function'); // patch for non-existent import"
+    );
+    if (file.indexOf('patch for non-existent import') === -1) {
+      throw new Error(
+        'wasm-pack patch failed, webpack import might not work! Likely wasm-pack version used is not the one that is required.'
+      );
+    }
+    await fs.writeFile('world/pkg/world_bg.js', file);
   }
   if (!noTransform) {
     console.log('Copying extracted d.ts into pkg...');
@@ -106,22 +126,20 @@ async function buildForTests() {
   );
   console.log('Patching code...');
   let file = (await fs.readFile('world/pkg-nomodule/world.js')).toString();
-  file = file.replace('let wasm_bindgen;', 'export let wasm_bindgen;');
-  // module.require is broken for some reason form wasm-bindgen, and it fails rust/getrandom requiring global crypto api
-  // file = file.replace(
-  //   'module.require(getStringFromWasm0(arg0, arg1));',
-  //   'require(getStringFromWasm0(arg0, arg1));'
-  // );
-
-  // new version of require-patching for jest in wasm-bindgen 0.2.79 (may differ for other versions)
   file = file.replace(
-    'var ret = getObject(arg0).require(getStringFromWasm0(arg1, arg2));',
-    'var ret = require(getStringFromWasm0(arg1, arg2)); // patch for wasm-bindgen+jest'
+    'let wasm_bindgen;',
+    'export let wasm_bindgen; // patch for wasm-bindgen+jest'
   );
+
+  // // new version of require-patching for jest in wasm-bindgen 0.2.79 (may differ for other versions)
+  // file = file.replace(
+  //   'var ret = getObject(arg0).require(getStringFromWasm0(arg1, arg2));',
+  //   'var ret = require(getStringFromWasm0(arg1, arg2)); '
+  // );
 
   if (file.indexOf('patch for wasm-bindgen+jest') === -1) {
     throw new Error(
-      "wasm-bindgen require patch has failed, the require calls from rust won't work!"
+      'wasm-bindgen export patch has failed, wasm init from jest will not work!'
     );
   }
 
@@ -158,13 +176,18 @@ export const getBindgen = () => {
           .option('noCleanTmp', {
             type: 'boolean',
             default: false,
+          })
+          .option('debug', {
+            type: 'boolean',
+            default: false,
           }),
-      async ({ noTransform, transformOnly, noCleanTmp }) => {
+      async ({ noTransform, transformOnly, noCleanTmp, debug }) => {
         try {
           await buildForWeb({
             noTransform,
             transformOnly,
             noCleanTmp,
+            debug,
           });
         } catch (e) {
           console.error(e);

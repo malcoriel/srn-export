@@ -700,13 +700,14 @@ pub fn update_world(
     state: GameState,
     elapsed: i64,
     client: bool,
-    sampler: Sampler,
+    mut sampler: Sampler,
     update_options: UpdateOptions,
     spatial_indexes: &mut SpatialIndexes,
     prng: &mut Pcg64Mcg,
     d_table: &DialogueTable,
     caches: &mut GameStateCaches,
 ) -> (GameState, Sampler) {
+    let update_full_mark = sampler.start(SamplerMarks::UpdateWorldFull as u32);
     let mut remaining = elapsed + state.accumulated_not_updated_ticks as i64;
     let update_interval = state.update_every_ticks as i64;
     let (mut curr_state, mut curr_sampler) = (state, sampler);
@@ -729,6 +730,7 @@ pub fn update_world(
         curr_sampler.end(iter_mark);
     }
     curr_state.accumulated_not_updated_ticks = remaining as u32;
+    curr_sampler.end(update_full_mark);
     (curr_state, curr_sampler)
 }
 
@@ -2320,7 +2322,6 @@ pub fn update_room(
         &mut room.caches
     };
     sampler.end(caches_mark);
-    let update_full_mark = sampler.start(SamplerMarks::UpdateWorldFull as u32);
     let (new_state, mut sampler) = update_world(
         room.state.clone(),
         elapsed_micro,
@@ -2335,7 +2336,6 @@ pub fn update_room(
         &d_table,
         caches,
     );
-    sampler.end(update_full_mark);
     let update_room_caches_mark = sampler.start(SamplerMarks::UpdateRoomCaches as u32);
     // if let Some(external_cache) = external_caches {
     //     *external_cache = *caches;

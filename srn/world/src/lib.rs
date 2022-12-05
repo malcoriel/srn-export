@@ -40,6 +40,14 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = console)]
     pub fn error(s: &str);
+
+    #[no_mangle]
+    #[used]
+    static performance: web_sys::Performance;
+
+    #[no_mangle]
+    #[used]
+    static process: node_sys::Process;
 }
 
 macro_rules! log {
@@ -325,6 +333,12 @@ use crate::fof::FofActor;
 use wasm_bindgen::JsCast;
 
 #[wasm_bindgen]
+pub fn test_timestamp() {
+    let hrtime = unsafe { process.hr_time() };
+    log!(format!("{:?}", hrtime.to_string()));
+}
+
+#[wasm_bindgen]
 pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
     let (args, return_result) = extract_args::<UpdateWorldArgs>(serialized_args);
     if return_result.is_some() {
@@ -391,6 +405,8 @@ pub fn flush_sampler_stats() {
                 .join("\n")
         ));
         log!("------");
+    } else {
+        log!("ENABLE_PERF is disabled, flushing stats is useless");
     }
 }
 

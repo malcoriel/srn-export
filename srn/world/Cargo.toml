@@ -15,7 +15,7 @@ default = [ "console_error_panic_hook" ]
 
 [dependencies]
 lazy_static = "1.4.0"
-wasm-bindgen = "0.2.71"
+wasm-bindgen = "0.2.79"
 serde = "1.0.118"
 serde_json = "1.0.60"
 serde_derive = "1.0.118"
@@ -35,6 +35,16 @@ json-patch = "0.2.4"
 rand_pcg = "0.1.2"
 serde_path_to_error = "0.1"
 serde_json_any_key = "2.0.0"
+
+[dependencies.node-sys]
+version = "0.4.2"
+
+[dependencies.web-sys]
+version = "0.3.55"
+features = [
+  'Performance'
+]
+
 
   [dependencies.treediff]
   version = "4.0.2"
@@ -69,7 +79,7 @@ serde_json_any_key = "2.0.0"
   features = [ "js" ]
 
 [target.wasm32-unknown-unknown.dependencies]
-wasm-bindgen = "0.2.71"
+wasm-bindgen = "0.2.79"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
