@@ -217,12 +217,13 @@ module.exports = function (webpackEnv) {
         : isEnvDevelopment &&
           ((info) =>
             path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
+      // chunkLoading: 'jsonp',
       // Prevents conflicts when multiple webpack runtimes (from different apps)
       // are used on the same page.
-      // jsonpFunction: `webpackJsonp${appPackageJson.name}`,
+      //jsonpFunction: `webpackJsonp${appPackageJson.name}`,
       // this defaults to 'window', but by setting it to 'this' then
       // module chunks which are built will work in web workers as well.
-      globalObject: 'this',
+      // globalObject: 'this',
     },
     optimization: {
       minimize: isEnvProduction,
@@ -579,12 +580,12 @@ module.exports = function (webpackEnv) {
             }
           : undefined),
       }),
-      // Inlines the webpack runtime script. This script is too small to warrant
-      // a network request.
-      // https://github.com/facebook/create-react-app/issues/5358
-      isEnvProduction &&
-        shouldInlineRuntimeChunk &&
-        new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/runtime-.+[.]js/]),
+      // // Inlines the webpack runtime script. This script is too small to warrant
+      // // a network request.
+      // // https://github.com/facebook/create-react-app/issues/5358
+      // isEnvProduction &&
+      //   shouldInlineRuntimeChunk &&
+      //   new InlineChunkHtmlPlugin(HtmlWebpackPlugin, [/runtime-.+[.]js/]),
       // Makes some environment variables available in index.html.
       // The public URL is available as %PUBLIC_URL% in index.html, e.g.:
       // <link rel="icon" href="%PUBLIC_URL%/favicon.ico">
