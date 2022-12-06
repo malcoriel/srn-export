@@ -4,7 +4,7 @@ import { ActionBarAction, ActionsBar } from './ActionsBar';
 import { Player, Ship } from '../world';
 // eslint-disable-next-line import/named
 import { Ability } from '../../../world/pkg/world';
-import { FaBullseye } from 'react-icons/all';
+import { FaBullseye } from 'react-icons/fa';
 import { UnreachableCaseError } from 'ts-essentials';
 import { useActiveInteractors } from '../store';
 import {

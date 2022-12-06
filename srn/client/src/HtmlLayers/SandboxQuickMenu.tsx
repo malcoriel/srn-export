@@ -8,22 +8,20 @@ import {
   PlanetType,
   SandboxTeleportTarget,
 } from '../world';
+import { BiReset } from 'react-icons/bi';
+import { FaCreativeCommonsZero, FaShapes } from 'react-icons/fa';
+import { FiBox } from 'react-icons/fi';
 import {
-  BiReset,
-  FaCreativeCommonsZero,
-  FaShapes,
-  FiBox,
   GiAppleSeeds,
   GiCardJoker,
   GiStarProminences,
   GiStarSattelites,
   GiStoneSphere,
   GiWoodenCrate,
-  ImFloppyDisk,
-  RiDownloadCloudLine,
-  RiUploadCloudLine,
-  SiGodotengine,
-} from 'react-icons/all';
+} from 'react-icons/gi';
+import { ImFloppyDisk } from 'react-icons/im';
+import { RiDownloadCloudLine, RiUploadCloudLine } from 'react-icons/ri';
+import { SiGodotengine } from 'react-icons/si';
 import Vector, { VectorF } from '../utils/Vector';
 import _ from 'lodash';
 import { FaDiceD20 } from 'react-icons/fa';

@@ -7,7 +7,7 @@ import {
   Substitution,
 } from '../../../world/pkg';
 import { UnreachableCaseError } from 'ts-essentials';
-import { FaQuestion, FaTasks } from 'react-icons/all';
+import { FaQuestion, FaTasks } from 'react-icons/fa';
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
 import { StyledRect } from './ui/StyledRect';

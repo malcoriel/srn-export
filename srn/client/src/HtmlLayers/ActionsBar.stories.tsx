@@ -3,7 +3,7 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { gray } from '../utils/palette';
 import { ActionsBar } from './ActionsBar';
-import { FaBullseye } from 'react-icons/all';
+import { FaBullseye } from 'react-icons/fa';
 import { useInterval } from 'usehooks-ts';
 
 const Template: Story = (args) => {

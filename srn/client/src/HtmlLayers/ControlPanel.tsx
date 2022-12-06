@@ -1,13 +1,11 @@
 import './ControlPanel.scss';
 import React from 'react';
-import {
-  AiOutlineSolution,
-  BsFillChatDotsFill,
-  CgScreen,
-  FaBullseye,
-  FcMindMap,
-  FiBox,
-} from 'react-icons/all';
+import { AiOutlineSolution } from 'react-icons/ai';
+import { BsFillChatDotsFill } from 'react-icons/bs';
+import { CgScreen } from 'react-icons/cg';
+import { FaBullseye } from 'react-icons/fa';
+import { FcMindMap } from 'react-icons/fc';
+import { FiBox } from 'react-icons/fi';
 import { StyledRect } from './ui/StyledRect';
 import { Button } from './ui/Button';
 import { useStore } from '../store';
@@ -16,7 +14,12 @@ import { Ship } from '../world';
 import { NotificationPanel } from './NotificationPanel';
 import { GameState, NotificationActionR } from '../../../world/pkg';
 import { PlayerActionsBar } from './PlayerActionsBar';
-import { findMyPlayer, findMyShip, findObjectById, getObjectPosition } from '../ClientStateIndexing';
+import {
+  findMyPlayer,
+  findMyShip,
+  findObjectById,
+  getObjectPosition,
+} from '../ClientStateIndexing';
 import { useNSForceChange } from '../NetStateHooks';
 
 const BUTTON_SIZE = 53;

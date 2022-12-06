@@ -1,7 +1,7 @@
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { Button } from './Button';
 import './QuickMenu.scss';
-import { ImCross } from 'react-icons/all';
+import { ImCross } from 'react-icons/im';
 import { useScopedHotkey } from '../../utils/hotkeyHooks';
 
 type SingleMenuAction = {

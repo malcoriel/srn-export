@@ -1,7 +1,7 @@
 import { QuickMenu } from './ui/QuickMenu';
 import React from 'react';
 import NetState from '../NetState';
-import { ImFloppyDisk } from 'react-icons/all';
+import { ImFloppyDisk } from 'react-icons/im';
 import _ from 'lodash';
 import { LongActionStartBuilder } from '../../../world/pkg/world.extra';
 import { useNSForceChange } from '../NetStateHooks';
