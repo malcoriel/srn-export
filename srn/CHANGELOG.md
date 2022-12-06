@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.9.2 (2022-12-06)
+### New
+* Introduced better performance metrics
+### Fixes
+* Improved PirateDefence performance
+
 ## Version 0.9.1 (2022-12-04)
 ### New
 * Re-introduced display of server vs client state desync time
