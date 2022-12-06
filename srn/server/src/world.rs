@@ -931,7 +931,7 @@ fn update_player_actions(
         .append(&mut processed_actions);
 }
 
-const PROCESSED_EVENT_LIFETIME_TICKS: i32 = 60 * 1000 * 1000;
+const PROCESSED_EVENT_LIFETIME_TICKS: i32 = 10 * 1000 * 1000;
 
 fn update_events(
     state: &mut GameState,
@@ -950,14 +950,11 @@ fn update_events(
     let current_state_ticks = state.ticks;
     for event in events_to_process.into_iter() {
         world_update_handle_event(state, prng, event.clone(), d_table);
-        let processed_event = ProcessedGameEvent {
-            event,
-            processed_at_ticks: current_state_ticks,
-        };
+        let processed_event = ProcessedGameEvent::from(event, current_state_ticks);
         processed_events.push(processed_event);
     }
     state.processed_events.retain(|pe| {
-        (pe.processed_at_ticks as i32 - current_state_ticks as i32).abs()
+        (pe.get_processed_at_ticks() as i32 - current_state_ticks as i32).abs()
             <= PROCESSED_EVENT_LIFETIME_TICKS
     });
     state.processed_events.append(&mut processed_events);
@@ -1398,7 +1395,7 @@ fn apply_tractored_items_consumption(
 ) {
     for pup in consume_updates {
         let ticks = state.millis.clone();
-        let pair = indexing::find_player_and_ship_mut(&mut state, pup.0);
+        let pair = find_player_and_ship_mut(&mut state, pup.0);
         let picked_items = InventoryItem::from(pup.1);
         if let Some(ship) = pair.1 {
             ship.local_effects.push(LocalEffect::PickUp {

@@ -112,6 +112,7 @@ pub fn world_update_handle_event(
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
+// those events are intended to be fat, meaning containing all information needed to process them
 pub enum GameEvent {
     Unknown,
     ShipDocked {
@@ -181,7 +182,211 @@ pub enum GameEvent {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
-pub struct ProcessedGameEvent {
-    pub event: GameEvent,
-    pub processed_at_ticks: u64,
+// those events are intended to be lean, meaning containing minimal info for historical purposes
+pub enum ProcessedGameEvent {
+    Unknown {
+        processed_at_ticks: u64,
+    },
+    ShipDocked {
+        ship_id: Uuid,
+        planet_id: Uuid,
+        player_id: Option<Uuid>,
+        text_representation: String,
+        processed_at_ticks: u64,
+    },
+    ShipUndocked {
+        ship_id: Uuid,
+        planet_id: Uuid,
+        player_id: Option<Uuid>,
+        processed_at_ticks: u64,
+    },
+    ShipSpawned {
+        ship_id: Uuid,
+        player_id: Option<Uuid>,
+        processed_at_ticks: u64,
+    },
+    RoomJoined {
+        personal: bool,
+        mode: GameMode,
+        player_id: Uuid,
+        processed_at_ticks: u64,
+    },
+    ShipDied {
+        ship_id: Uuid,
+        player_id: Option<Uuid>,
+        processed_at_ticks: u64,
+    },
+    GameEnded {
+        processed_at_ticks: u64,
+    },
+    GameStarted {
+        processed_at_ticks: u64,
+    },
+    CargoQuestTriggerRequest {
+        player_id: Uuid,
+        processed_at_ticks: u64,
+    },
+    TradeDialogueTriggerRequest {
+        player_id: Uuid,
+        ship_id: Uuid,
+        planet_id: Uuid,
+        processed_at_ticks: u64,
+    },
+    DialogueTriggerRequest {
+        dialogue_name: String,
+        player_id: Uuid,
+        target: Option<ObjectSpecifier>,
+        processed_at_ticks: u64,
+    },
+    PirateSpawn {
+        at: Vec2f64,
+        processed_at_ticks: u64,
+    },
+    SandboxCommandRequest {
+        player_id: Uuid,
+        command: SandboxCommand,
+        processed_at_ticks: u64,
+    },
+}
+
+impl ProcessedGameEvent {
+    pub fn from(value: GameEvent, at_ticks: u64) -> Self {
+        match value {
+            GameEvent::Unknown => ProcessedGameEvent::Unknown {
+                processed_at_ticks: at_ticks,
+            },
+            GameEvent::ShipDocked {
+                ship,
+                planet,
+                player_id,
+                text_representation,
+                ..
+            } => ProcessedGameEvent::ShipDocked {
+                ship_id: ship.id,
+                planet_id: planet.id,
+                player_id,
+                text_representation,
+                processed_at_ticks: at_ticks,
+            },
+            GameEvent::ShipUndocked {
+                ship,
+                planet,
+                player_id,
+                ..
+            } => ProcessedGameEvent::ShipUndocked {
+                ship_id: ship.id,
+                planet_id: planet.id,
+                player_id,
+                processed_at_ticks: at_ticks,
+            },
+            GameEvent::ShipSpawned {
+                player_id, ship, ..
+            } => ProcessedGameEvent::ShipSpawned {
+                ship_id: ship.id,
+                player_id,
+                processed_at_ticks: at_ticks,
+            },
+            GameEvent::RoomJoined { .. } => {
+                panic!("cannot convert non-world event to a processed event");
+            }
+            GameEvent::ShipDied {
+                ship, player_id, ..
+            } => ProcessedGameEvent::ShipDied {
+                ship_id: ship.id,
+                player_id,
+                processed_at_ticks: at_ticks,
+            },
+            GameEvent::GameEnded { .. } => ProcessedGameEvent::GameEnded {
+                processed_at_ticks: at_ticks,
+            },
+            GameEvent::GameStarted { .. } => ProcessedGameEvent::GameStarted {
+                processed_at_ticks: at_ticks,
+            },
+            GameEvent::CargoQuestTriggerRequest { player_id, .. } => {
+                ProcessedGameEvent::CargoQuestTriggerRequest {
+                    player_id,
+                    processed_at_ticks: at_ticks,
+                }
+            }
+            GameEvent::TradeDialogueTriggerRequest {
+                player_id,
+                ship_id,
+                planet_id,
+                ..
+            } => ProcessedGameEvent::TradeDialogueTriggerRequest {
+                player_id,
+                ship_id,
+                planet_id,
+                processed_at_ticks: at_ticks,
+            },
+            GameEvent::DialogueTriggerRequest { .. } => {
+                ProcessedGameEvent::DialogueTriggerRequest {
+                    dialogue_name: "".to_string(),
+                    player_id: Default::default(),
+                    target: None,
+                    processed_at_ticks: 0,
+                }
+            }
+            GameEvent::PirateSpawn { at, .. } => ProcessedGameEvent::PirateSpawn {
+                at,
+                processed_at_ticks: at_ticks,
+            },
+            GameEvent::CreateRoomRequest { .. } => {
+                panic!("cannot convert non-world event to a processed event");
+            }
+            GameEvent::QuitPlayerRequest { .. } => {
+                panic!("cannot convert non-world event to a processed event");
+            }
+            GameEvent::SandboxCommandRequest { player_id, command } => {
+                ProcessedGameEvent::SandboxCommandRequest {
+                    player_id,
+                    command,
+                    processed_at_ticks: at_ticks,
+                }
+            }
+        }
+    }
+    pub fn get_processed_at_ticks(&self) -> u64 {
+        match self {
+            ProcessedGameEvent::Unknown {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::ShipDocked {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::ShipUndocked {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::ShipSpawned {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::RoomJoined {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::ShipDied {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::GameEnded {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::GameStarted {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::CargoQuestTriggerRequest {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::TradeDialogueTriggerRequest {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::DialogueTriggerRequest {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::PirateSpawn {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+            ProcessedGameEvent::SandboxCommandRequest {
+                processed_at_ticks, ..
+            } => *processed_at_ticks,
+        }
+    }
 }
