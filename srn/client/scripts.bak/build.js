@@ -7,7 +7,7 @@ process.env.NODE_ENV = 'production';
 // Makes the script crash on unhandled rejections instead of silently
 // ignoring them. In the future, promise rejections that are not handled will
 // terminate the Node.js process with a non-zero exit code.
-process.on('unhandledRejection', err => {
+process.on('unhandledRejection', (err) => {
   throw err;
 });
 
@@ -58,13 +58,15 @@ checkBrowsers(paths.appPath, isInteractive)
     // This lets us display how much they changed later.
     return measureFileSizesBeforeBuild(paths.appBuild);
   })
-  .then(previousFileSizes => {
+  .then((previousFileSizes) => {
     // Remove all content but keep the directory so that
     // if you're in it, you don't end up in Trash
     fs.emptyDirSync(paths.appBuild);
     // Merge with the public folder
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     copyPublicFolder();
     // Start the webpack build
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     return build(previousFileSizes);
   })
   .then(
@@ -73,14 +75,14 @@ checkBrowsers(paths.appPath, isInteractive)
         console.log(chalk.yellow('Compiled with warnings.\n'));
         console.log(warnings.join('\n\n'));
         console.log(
-          '\nSearch for the ' +
-            chalk.underline(chalk.yellow('keywords')) +
-            ' to learn more about each warning.'
+          `\nSearch for the ${chalk.underline(
+            chalk.yellow('keywords')
+          )} to learn more about each warning.`
         );
         console.log(
-          'To ignore, add ' +
-            chalk.cyan('// eslint-disable-next-line') +
-            ' to the line before.\n'
+          `To ignore, add ${chalk.cyan(
+            '// eslint-disable-next-line'
+          )} to the line before.\n`
         );
       } else {
         console.log(chalk.green('Compiled successfully.\n'));
@@ -96,6 +98,7 @@ checkBrowsers(paths.appPath, isInteractive)
       );
       console.log();
 
+      // eslint-disable-next-line import/no-dynamic-require
       const appPackage = require(paths.appPackageJson);
       const publicUrl = paths.publicUrlOrPath;
       const publicPath = config.output.publicPath;
@@ -108,7 +111,7 @@ checkBrowsers(paths.appPath, isInteractive)
         useYarn
       );
     },
-    err => {
+    (err) => {
       const tscCompileOnError = process.env.TSC_COMPILE_ON_ERROR === 'true';
       if (tscCompileOnError) {
         console.log(
@@ -124,7 +127,7 @@ checkBrowsers(paths.appPath, isInteractive)
       }
     }
   )
-  .catch(err => {
+  .catch((err) => {
     if (err && err.message) {
       console.log(err.message);
     }
@@ -148,9 +151,7 @@ function build(previousFileSizes) {
 
         // Add additional information for postcss errors
         if (Object.prototype.hasOwnProperty.call(err, 'postcssNode')) {
-          errMessage +=
-            '\nCompileError: Begins at CSS selector ' +
-            err['postcssNode'].selector;
+          errMessage += `\nCompileError: Begins at CSS selector ${err.postcssNode.selector}`;
         }
 
         messages = formatWebpackMessages({
@@ -176,19 +177,13 @@ function build(previousFileSizes) {
           process.env.CI.toLowerCase() !== 'false') &&
         messages.warnings.length
       ) {
-        // Ignore sourcemap warnings in CI builds. See #8227 for more info.
-        const filteredWarnings = messages.warnings.filter(
-          w => !/Failed to parse source map/.test(w)
+        console.log(
+          chalk.yellow(
+            '\nTreating warnings as errors because process.env.CI = true.\n' +
+              'Most CI servers set it automatically.\n'
+          )
         );
-        if (filteredWarnings.length) {
-          console.log(
-            chalk.yellow(
-              '\nTreating warnings as errors because process.env.CI = true.\n' +
-                'Most CI servers set it automatically.\n'
-            )
-          );
-          return reject(new Error(filteredWarnings.join('\n\n')));
-        }
+        return reject(new Error(messages.warnings.join('\n\n')));
       }
 
       const resolveArgs = {
@@ -199,9 +194,9 @@ function build(previousFileSizes) {
 
       if (writeStatsJson) {
         return bfj
-          .write(paths.appBuild + '/bundle-stats.json', stats.toJson())
+          .write(`${paths.appBuild}/bundle-stats.json`, stats.toJson())
           .then(() => resolve(resolveArgs))
-          .catch(error => reject(new Error(error)));
+          .catch((error) => reject(new Error(error)));
       }
 
       return resolve(resolveArgs);
@@ -212,6 +207,6 @@ function build(previousFileSizes) {
 function copyPublicFolder() {
   fs.copySync(paths.appPublic, paths.appBuild, {
     dereference: true,
-    filter: file => file !== paths.appHtml,
+    filter: (file) => file !== paths.appHtml,
   });
 }
