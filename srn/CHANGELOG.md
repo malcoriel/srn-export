@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.9.4 (2022-12-07) - failed release
+### Fixes
+* Build chain issues fixes that prevented previous releases
+
+## Version 0.9.3 (2022-12-06) - failed release
+
 ## Version 0.9.2 (2022-12-06)
 ### New
 * Introduced better performance metrics
