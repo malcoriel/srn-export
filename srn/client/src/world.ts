@@ -199,8 +199,6 @@ window.enablePerf = () => {
   console.log('loading world wasm done.');
   // @ts-ignore
   window.getNanosWeb = wasmFunctions.get_nanos_web;
-  // @ts-ignore
-  window.getNanosNode = wasmFunctions.get_nanos_node;
 })();
 
 // the dialogue table type is intentionally opaque here, as it's passed from server to lib through js

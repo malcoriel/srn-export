@@ -343,12 +343,12 @@ fn print_type_of<T>(_: &T) {
 }
 
 #[wasm_bindgen]
-pub fn get_nanos_node() -> u64 {
+pub fn get_nanos_node() -> f64 {
     let hrtime = unsafe { process.hr_time() };
     let val = hrtime.call0(&JsValue::NULL).unwrap();
     let arr = js_sys::Uint32Array::new(&val);
     let vec = arr.to_vec();
-    return vec[0] as u64 * 1000 * 1000 + vec[1] as u64 / 1000;
+    return vec[0] as f64 * 1000.0 * 1000.0 + vec[1] as f64 / 1000.0;
 }
 
 #[wasm_bindgen]
