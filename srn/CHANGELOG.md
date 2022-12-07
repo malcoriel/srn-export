@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.9.5 (2022-12-07)
+### Fixes
+* Changelog text fix
+* Fixed the width of the random portrait button on the main screen
+
 ## Version 0.9.4 (2022-12-07)
 ### Fixes
 * Build chain issues fixes that prevented previous releases
