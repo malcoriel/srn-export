@@ -128,7 +128,7 @@
   },
   "scripts": {
     "env": "cross-env BROWSERSLIST_IGNORE_OLD_DATA=1",
-    "start": "yarn env cross-env REACT_EDITOR=none BROWSER=chrome node scripts/start.js",
+    "start": "yarn env cross-env REACT_EDITOR=none BROWSER=none node scripts/start.js",
     "build": "yarn env node scripts/build.js",
     "test": "yarn env node scripts/test.js",
     "touch-client": "touch package.json",
