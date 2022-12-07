@@ -343,7 +343,7 @@ module.exports = function (webpackEnv) {
         // Handle node_modules packages that contain sourcemaps
         shouldUseSourceMap && {
           enforce: 'pre',
-          exclude: /@babel(?:\/|\\{1,2})runtime|world\/pkg|usehooks-ts|ts-essentials|node_modules\/random/,
+          exclude: /@babel(?:\/|\\{1,2})runtime|world\/pkg|usehooks-ts|ts-essentials|node_modules\/random|@chevrotain\/utils/,
           test: /\.(js|mjs|jsx|ts|tsx|css)$/,
           loader: require.resolve('source-map-loader'),
         },
