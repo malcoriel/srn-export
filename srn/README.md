@@ -19,6 +19,9 @@ The project is in perpetual alpha state by design, with somewhat periodic releas
 5. yarn v1 (may work with npm, but the lockfiles are for yarn v1)
 6. `docker` is needed for releasing, and normally is not required.
 
+### Environment (optional)
+1. rsgen-avro - for generating avro schemas
+
 ### Setup
 1. Run `yarn install` in the root folder, `client`, `server`, `world`, `tests`.
 2. Go to root folder.

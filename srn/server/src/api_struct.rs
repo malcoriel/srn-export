@@ -1,10 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
+use crate::indexing::GameStateCaches;
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
-use crate::indexing::GameStateCaches;
 
 use crate::world::{GameMode, GameState, PlayerId};
 
@@ -13,7 +13,7 @@ pub enum AiTrait {
     Unknown,
     ImmediatePlanetLand,
     PirateDefencePlanetDefender,
-    CargoRushHauler
+    CargoRushHauler,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

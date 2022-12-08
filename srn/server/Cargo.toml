@@ -38,6 +38,7 @@ rand_pcg = "0.1.2"
 serde_path_to_error = "0.1"
 console = "0.15.2"
 serde_json_any_key = "2.0.0"
+apache-avro = "0.14.0"
 
   [dependencies.treediff]
   version = "4.0.2"

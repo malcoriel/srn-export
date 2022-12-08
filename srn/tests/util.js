@@ -59,11 +59,16 @@ export const wasm = {
   buildDialogueFromState: () => {
     throw new Error(notLoadedError);
   },
-
   getNanosNode: () => {
     throw new Error(notLoadedError);
   },
   getNanosWeb: () => {
+    throw new Error(notLoadedError);
+  },
+  avroTest: () => {
+    throw new Error(notLoadedError);
+  },
+  getAvroSchemas: () => {
     throw new Error(notLoadedError);
   },
 };
@@ -133,6 +138,8 @@ export const loadWasm = timerify(async function loadWasm() {
     wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
     wasm.packReplay = wasmFunctions.pack_replay;
     wasm.loadReplay = wasmFunctions.load_replay;
+    wasm.avroTest = wasmFunctions.avro_test;
+    wasm.getAvroSchemas = wasmFunctions.get_avro_schemas;
     wasm.getDiffReplayStateAt = timerifySync(function getDiffReplayStateAt(
       ...args
     ) {

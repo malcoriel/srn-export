@@ -74,6 +74,9 @@ macro_rules! err {
     }
 }
 
+#[path = "../../server/src/avro.rs"]
+mod avro;
+
 #[path = "../../server/src/world.rs"]
 mod world;
 
@@ -276,6 +279,7 @@ use chrono::Timelike;
 use mut_static::MutStatic;
 use rand::prelude::*;
 use rand_pcg::Pcg64Mcg;
+use std::any::Any;
 use std::ops::DerefMut;
 use std::{env, mem};
 
@@ -796,4 +800,40 @@ pub fn build_dialogue_from_state(
         None => Err(JsValue::from_str("couldn't build dialogue state")),
         Some(v) => Ok(custom_serialize(&v)?),
     }
+}
+
+use apache_avro::{Codec, Writer};
+
+#[derive(Debug, Serialize)]
+struct Test {
+    a: i64,
+    b: String,
+    c: i64,
+}
+
+use crate::avro::*;
+use apache_avro::Schema;
+
+#[wasm_bindgen]
+pub fn get_avro_schemas() -> Result<JsValue, JsValue> {
+    let schemas = avro::AVRO_SCHEMAS.read().unwrap().clone();
+    return Ok(custom_serialize(&schemas)?);
+}
+
+use apache_avro::*;
+
+#[wasm_bindgen]
+pub fn avro_test() -> Vec<u8> {
+    let schema_cont = avro::AVRO_SCHEMAS
+        .read()
+        .unwrap()
+        .get(&SchemaId::TestV1)
+        .unwrap()
+        .clone();
+    let test = Test {
+        a: 27,
+        b: "foo123123123".to_owned(),
+        c: 32,
+    };
+    serialize_schemaless(&schema_cont.schema, schema_cont.header_len, test)
 }

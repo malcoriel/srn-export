@@ -114,6 +114,7 @@ mod abilities;
 mod api;
 mod api_struct;
 mod autofocus;
+mod avro;
 mod bots;
 mod cargo_rush;
 mod chat;
