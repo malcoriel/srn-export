@@ -834,3 +834,10 @@ pub fn avro_test(mut arg: Vec<u8>) -> Vec<u8> {
     test.a = 72;
     avro_serialize(&schema_cont, test)
 }
+
+#[wasm_bindgen]
+pub fn json_test(mut arg: JsValue) -> Result<JsValue, JsValue> {
+    let mut test = custom_deserialize::<Test>(arg)?;
+    test.a = 72;
+    Ok(custom_serialize(&test)?)
+}
