@@ -2,6 +2,7 @@ use crate::avro::SchemaId::TestV1;
 use apache_avro::{to_avro_datum, Codec, Schema, Writer};
 use lazy_static::lazy_static;
 use mut_static::MutStatic;
+use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -105,4 +106,18 @@ pub fn serialize_schemaless<S: serde::ser::Serialize>(
         .take(true_size)
         .collect::<Vec<u8>>();
     return no_header;
+}
+
+pub fn avro_serialize<T: serde::Serialize>(schema_cont: &SchemaContainer, test: T) -> Vec<u8> {
+    to_avro_datum(&schema_cont.schema, apache_avro::to_value(test).unwrap()).unwrap()
+}
+
+pub fn avro_deserialize<T: DeserializeOwned>(
+    mut arg: &mut Vec<u8>,
+    schema_cont: &SchemaContainer,
+) -> T {
+    apache_avro::from_value::<T>(
+        &apache_avro::from_avro_datum(&schema_cont.schema, &mut arg.as_slice(), None).unwrap(),
+    )
+    .unwrap()
 }

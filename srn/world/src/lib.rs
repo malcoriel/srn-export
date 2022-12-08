@@ -804,7 +804,7 @@ pub fn build_dialogue_from_state(
 
 use apache_avro::{Codec, Writer};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Test {
     a: i64,
     b: String,
@@ -823,17 +823,14 @@ pub fn get_avro_schemas() -> Result<JsValue, JsValue> {
 use apache_avro::*;
 
 #[wasm_bindgen]
-pub fn avro_test() -> Vec<u8> {
+pub fn avro_test(mut arg: Vec<u8>) -> Vec<u8> {
     let schema_cont = avro::AVRO_SCHEMAS
         .read()
         .unwrap()
         .get(&SchemaId::TestV1)
         .unwrap()
         .clone();
-    let test = Test {
-        a: 27,
-        b: "foo123123123".to_owned(),
-        c: 32,
-    };
-    serialize_schemaless(&schema_cont.schema, schema_cont.header_len, test)
+    let mut test = avro_deserialize::<Test>(&mut arg, &schema_cont);
+    test.a = 72;
+    avro_serialize(&schema_cont, test)
 }
