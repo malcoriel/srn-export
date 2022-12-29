@@ -52,6 +52,7 @@ impl Serialize for BoxRecord {
         S: Serializer,
     {
         let mut map = serializer.serialize_map(Some(4))?;
+        map.serialize_entry("type", "record")?;
         map.serialize_entry("name", &self.0.name)?;
         map.serialize_entry("namespace", &self.0.namespace)?;
         map.serialize_entry("fields", &self.0.fields)?;

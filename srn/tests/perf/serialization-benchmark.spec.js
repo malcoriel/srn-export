@@ -5,21 +5,23 @@ const avro = require('avsc');
 
 describe('serialization-benchmark', () => {
   beforeAll(swapGlobals);
-  let avroType;
+  let avroTypeTest;
+  let avroTypeState;
   beforeAll(() => {
     const schemas = wasm.getAvroSchemas();
-    const schema = schemas.TestV1.schema;
-    avroType = avro.Type.forSchema(schema);
+    avroTypeTest = avro.Type.forSchema(schemas.Test_V1.schema);
+    avroTypeState = avro.Type.forSchema(schemas.Vec2f64_V1.schema);
   });
 
-  const callTestAvro = (value) => {
-    const ser = avroType.toBuffer(value);
+  const callTestAvro = (value, state = false) => {
+    const targetType = state ? avroTypeState : avroTypeTest;
+    const ser = targetType.toBuffer(value);
     const binary = wasm.avroTest(ser);
-    return avroType.fromBuffer(Buffer.from(binary), undefined, false);
+    return targetType.fromBuffer(Buffer.from(binary), undefined, false);
   };
 
-  const callTestJson = (value) => {
-    return wasm.jsonTest(value);
+  const callTestJson = (value, state = false) => {
+    return (state ? wasm.jsonTestState : wasm.jsonTest)(value);
   };
 
   const testVal = {
@@ -28,9 +30,19 @@ describe('serialization-benchmark', () => {
     c: 32,
   };
 
+  const testState = {
+    x: 5,
+    y: 0,
+  };
+
   it('can modify data with avro', () => {
     const val = callTestAvro(testVal);
     expect(val.a).toEqual(72);
+  });
+
+  it('can modify state with avro', () => {
+    const val = callTestAvro(testState, true);
+    expect(val.x).toEqual(10);
   });
 
   it('can modify data with json', () => {
@@ -38,7 +50,7 @@ describe('serialization-benchmark', () => {
     expect(val.a).toEqual(72);
   });
 
-  const ITER_COUNT = 10000;
+  const ITER_COUNT = 1000;
 
   function stressTestMillis(testFn) {
     const now = performance.now();

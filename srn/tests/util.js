@@ -71,6 +71,12 @@ export const wasm = {
   jsonTest: () => {
     throw new Error(notLoadedError);
   },
+  avroTestState: () => {
+    throw new Error(notLoadedError);
+  },
+  jsonTestState: () => {
+    throw new Error(notLoadedError);
+  },
   getAvroSchemas: () => {
     throw new Error(notLoadedError);
   },
@@ -161,6 +167,8 @@ export const loadWasm = timerify(async function loadWasm() {
     wasm.getNanosNode = wasmFunctions.get_nanos_node;
     wasm.getNanosWeb = wasmFunctions.get_nanos_web;
     wasm.jsonTest = wasmFunctions.json_test;
+    wasm.avroTestState = wasmFunctions.avro_test_state;
+    wasm.jsonTestState = wasmFunctions.json_test_state;
     wasm.resources = resources;
     wasm.dialogueTable = wasm.makeDialogueTable(
       wasm.resources.dialogue_scripts

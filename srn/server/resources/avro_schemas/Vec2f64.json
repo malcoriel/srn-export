@@ -1,4 +1,5 @@
 {
+  "type": "record",
   "name": "Vec2f64",
   "namespace": null,
   "fields": [

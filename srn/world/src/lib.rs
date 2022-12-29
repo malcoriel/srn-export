@@ -827,7 +827,7 @@ pub fn avro_test(mut arg: Vec<u8>) -> Vec<u8> {
     let schema_cont = avro::AVRO_SCHEMAS
         .read()
         .unwrap()
-        .get(&SchemaId::TestV1)
+        .get(&SchemaId::Test_V1)
         .unwrap()
         .clone();
     let mut test = avro_deserialize::<Test>(&mut arg, &schema_cont);
@@ -836,8 +836,28 @@ pub fn avro_test(mut arg: Vec<u8>) -> Vec<u8> {
 }
 
 #[wasm_bindgen]
+pub fn avro_test_state(mut arg: Vec<u8>) -> Vec<u8> {
+    let schema_cont = avro::AVRO_SCHEMAS
+        .read()
+        .unwrap()
+        .get(&SchemaId::Vec2f64_V1)
+        .unwrap()
+        .clone();
+    let mut test = avro_deserialize::<Vec2f64>(&mut arg, &schema_cont);
+    test.x = 10.0;
+    avro_serialize(&schema_cont, test)
+}
+
+#[wasm_bindgen]
 pub fn json_test(mut arg: JsValue) -> Result<JsValue, JsValue> {
     let mut test = custom_deserialize::<Test>(arg)?;
     test.a = 72;
+    Ok(custom_serialize(&test)?)
+}
+
+#[wasm_bindgen]
+pub fn json_test_state(mut arg: JsValue) -> Result<JsValue, JsValue> {
+    let mut test = custom_deserialize::<Vec2f64>(arg)?;
+    test.x = 10.0;
     Ok(custom_serialize(&test)?)
 }

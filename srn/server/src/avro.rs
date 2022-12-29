@@ -1,4 +1,4 @@
-use crate::avro::SchemaId::TestV1;
+use crate::avro::SchemaId::Test_V1;
 use apache_avro::{to_avro_datum, Codec, Schema, Writer};
 use lazy_static::lazy_static;
 use mut_static::MutStatic;
@@ -12,8 +12,9 @@ use wasm_bindgen::prelude::*;
     Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
 )]
 pub enum SchemaId {
-    TestV1,
-    StateV1,
+    Test_V1,
+    State_V1,
+    Vec2f64_V1,
 }
 // for some reason, serde_derive cannot derive Deserialize here
 #[derive(Serialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -40,9 +41,31 @@ pub fn gen_avro_schemas() -> AvroSchemaMap {
     }
     "#;
     let schema = Schema::parse_str(raw_schema).unwrap();
-    let header_len = gen_same_header_as_avro(&schema, AVRO_CODEC).unwrap().len();
-    res.insert(SchemaId::TestV1, SchemaContainer { schema, header_len });
+    res.insert(
+        SchemaId::Test_V1,
+        SchemaContainer {
+            header_len: get_header_len(&schema),
+            schema,
+        },
+    );
+    let schema = Schema::parse_str(
+        std::str::from_utf8(include_bytes!("../resources/avro_schemas/Vec2f64.json"))
+            .expect("could not parse schema"),
+    )
+    .unwrap();
+    res.insert(
+        SchemaId::Vec2f64_V1,
+        SchemaContainer {
+            header_len: get_header_len(&schema),
+            schema,
+        },
+    );
+
     return res;
+}
+
+fn get_header_len(schema: &Schema) -> usize {
+    gen_same_header_as_avro(&schema, AVRO_CODEC).unwrap().len()
 }
 
 lazy_static! {
