@@ -111,26 +111,6 @@ pub fn gen_same_header_as_avro(
     Ok(header)
 }
 
-pub fn serialize_schemaless<S: serde::ser::Serialize>(
-    schema: &Schema,
-    header_len: usize,
-    value: S,
-) -> Vec<u8> {
-    let mut writer = Writer::with_codec(&schema, Vec::new(), AVRO_CODEC);
-    writer.append_ser(value).unwrap();
-    let encoded = writer.into_inner().unwrap();
-    let initial_len = encoded.len();
-    let prefix_len = 18;
-    let suffix_len = 16;
-    let true_size = initial_len - header_len - prefix_len - suffix_len;
-    let no_header = encoded
-        .into_iter()
-        .skip(header_len + prefix_len)
-        .take(true_size)
-        .collect::<Vec<u8>>();
-    return no_header;
-}
-
 pub fn avro_serialize<T: serde::Serialize>(schema_cont: &SchemaContainer, test: T) -> Vec<u8> {
     to_avro_datum(&schema_cont.schema, apache_avro::to_value(test).unwrap()).unwrap()
 }
