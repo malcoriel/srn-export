@@ -1,17 +1,15 @@
-const fs = require('fs-extra');
-const path = require('path');
+const { spawnWatched } = require('./shellspawn');
 (async () => {
-  const tpl = (
-    await fs.readFile('scripts/dialogueResources.template')
-  ).toString();
-  const resources = await fs.readdir('./server/resources/dialogue_scripts');
-  let injected = '';
-  for (const file of resources.filter((f) => f.endsWith('json'))) {
-    const name = file.replace(path.extname(file), '');
-    injected += `  ${name}: JSON.stringify(\r\n    require('../../../server/resources/dialogue_scripts/${file}')\r\n  ),\r\n`;
+  const filesToTypes = {
+    'vec2.rs': ['Vec2f64'],
+    'world.rs': ['SpatialProps'],
+  };
+  for (const [file, types] of Object.entries(filesToTypes)) {
+    await spawnWatched(
+      `cargo run generate --from ../server/src/${file} --filter="${types.join(
+        ','
+      )}" --to ../server/resources/avro_schemas`,
+      { spawnOptions: { cwd: './avro-genschema' } }
+    );
   }
-  await fs.writeFile(
-    './client/src/HtmlLayers/dialogueResources.ts',
-    tpl.replace('$INJECT', injected.replace(/\r\n$/, ''))
-  );
 })();

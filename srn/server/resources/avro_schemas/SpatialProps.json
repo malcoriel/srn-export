@@ -1,18 +1,25 @@
 {
   "type": "record",
-  "name": "Vec2f64",
+  "name": "SpatialProps",
   "namespace": null,
   "fields": [
     {
-      "type": "double",
-      "name": "x",
+      "type": "Vec2f64",
+      "name": "position",
       "default": null,
       "doc": null,
       "aliases": []
     },
     {
       "type": "double",
-      "name": "y",
+      "name": "rotation_rad",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    },
+    {
+      "type": "double",
+      "name": "radius",
       "default": null,
       "doc": null,
       "aliases": []

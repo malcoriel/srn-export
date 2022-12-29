@@ -1,8 +1,8 @@
 use avro_schema::schema;
 use avro_schema::schema::*;
 use clap::command;
-use serde::ser::SerializeMap;
 use serde::ser::SerializeSeq;
+use serde::ser::{SerializeMap, SerializeStruct};
 use serde::{Serialize, Serializer};
 use std::collections::HashMap;
 use std::fs;
@@ -14,7 +14,7 @@ use uuid::*;
 #[derive(Debug)]
 struct Visitor {
     pub records: HashMap<String, BoxRecord>,
-    filter: Option<String>,
+    filter: Option<Vec<String>>,
 }
 
 pub struct SpatialProps {
@@ -46,16 +46,73 @@ pub struct PlanetV2 {
 #[derive(Debug)]
 pub struct BoxRecord(Record);
 
+#[derive(Debug)]
+pub struct BoxField(schema::Field);
+
+#[derive(Debug)]
+pub enum SchemaOrRef {
+    Schema(Schema),
+    Ref(String),
+}
+
+impl Serialize for SchemaOrRef {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            SchemaOrRef::Schema(schema) => schema.serialize(serializer),
+            SchemaOrRef::Ref(str) => serializer.serialize_str(str.as_str()),
+        }
+    }
+}
+impl Serialize for BoxField {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(5))?;
+
+        let schema_clone = self.0.schema.clone();
+        let schema_fixed: SchemaOrRef = match &self.0.schema {
+            Schema::Fixed(Fixed { size, name, .. }) => {
+                if *size == 0 {
+                    SchemaOrRef::Ref(name.clone())
+                } else {
+                    SchemaOrRef::Schema(schema_clone)
+                }
+            }
+            _ => SchemaOrRef::Schema(schema_clone),
+        };
+        map.serialize_entry("type", &schema_fixed)?;
+        map.serialize_entry("name", &self.0.name)?;
+        map.serialize_entry("default", &self.0.default)?;
+        map.serialize_entry("doc", &self.0.doc)?;
+        map.serialize_entry("aliases", &self.0.aliases)?;
+        // order is ignored here
+        map.end()
+    }
+}
+
 impl Serialize for BoxRecord {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut map = serializer.serialize_map(Some(4))?;
+        let mut map = serializer.serialize_map(Some(6))?;
         map.serialize_entry("type", "record")?;
         map.serialize_entry("name", &self.0.name)?;
         map.serialize_entry("namespace", &self.0.namespace)?;
-        map.serialize_entry("fields", &self.0.fields)?;
+        map.serialize_entry(
+            "fields",
+            &self
+                .0
+                .fields
+                .clone()
+                .into_iter()
+                .map(|f| BoxField(f))
+                .collect::<Vec<_>>(),
+        )?;
         map.serialize_entry("doc", &self.0.doc)?;
         map.serialize_entry("aliases", &self.0.aliases)?;
         map.end()
@@ -86,7 +143,7 @@ impl Visitor {
     fn map_primitive(&self, prim: &str) -> Option<Schema> {
         match prim {
             "f64" => Some(Schema::Double),
-            _ => unimplemented!("Unknown primitive: {prim}"),
+            _ => None,
         }
     }
 
@@ -134,7 +191,9 @@ impl<'ast> Visit<'ast> for Visitor {
     fn visit_item_struct(&mut self, node: &'ast ItemStruct) {
         let struct_name = node.ident.to_string();
         let analyze = if let Some(filter) = &self.filter {
-            struct_name.contains(filter.as_str())
+            filter
+                .iter()
+                .any(|filter| struct_name.contains(filter.as_str()))
         } else {
             true
         };
@@ -160,7 +219,7 @@ fn main() {
         .bin_name("avro-genschema")
         .subcommand_required(true)
         .subcommand(
-            command!("check")
+            command!("generate")
                 .arg(
                     clap::arg!(--"from" <PATH>)
                         .value_parser(clap::value_parser!(std::path::PathBuf)),
@@ -173,13 +232,15 @@ fn main() {
 
     let matches = cmd.get_matches();
     let matches = match matches.subcommand() {
-        Some(("check", matches)) => matches,
+        Some(("generate", matches)) => matches,
         _ => unreachable!("clap should ensure we don't get here"),
     };
     let from = matches
         .get_one::<PathBuf>("from")
         .expect("--from arg is required");
-    let filter: Option<String> = matches.get_one::<String>("filter").map(|v| v.clone());
+    let filter: Option<Vec<String>> = matches
+        .get_one::<String>("filter")
+        .map(|v| v.clone().split(",").map(|v| v.to_string()).collect());
     let to = matches
         .get_one::<PathBuf>("to")
         .expect("--to arg is required");
