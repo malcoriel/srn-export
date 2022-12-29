@@ -1,0 +1,16 @@
+{
+  "name": "Vec2f64",
+  "namespace": null,
+  "fields": [
+    {
+      "name": "x",
+      "type": "double"
+    },
+    {
+      "name": "y",
+      "type": "double"
+    }
+  ],
+  "doc": null,
+  "aliases": []
+}

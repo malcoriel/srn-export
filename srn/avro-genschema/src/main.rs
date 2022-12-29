@@ -1,11 +1,21 @@
+use avro_schema::schema;
+use avro_schema::schema::*;
 use clap::command;
+use serde::ser::SerializeMap;
+use serde::ser::SerializeSeq;
+use serde::{Serialize, Serializer};
 use std::collections::HashMap;
 use std::fs;
+use std::path::PathBuf;
 use syn::visit::Visit;
-use syn::{visit, Field, ItemFn};
+use syn::{visit, Field, ItemFn, ItemStruct, Type};
 use uuid::*;
 
-struct FnVisitor;
+#[derive(Debug)]
+struct Visitor {
+    pub records: HashMap<String, BoxRecord>,
+    filter: Option<String>,
+}
 
 pub struct SpatialProps {
     pub foo: i32,
@@ -33,16 +43,114 @@ pub struct PlanetV2 {
     pub properties2: HashMap<String, ObjectProperty>,
 }
 
-impl<'ast> Visit<'ast> for FnVisitor {
-    fn visit_field(&mut self, node: &'ast Field) {
-        println!(
-            "Field with name={}",
-            node.ident
-                .as_ref()
-                .map(|i| i.to_string())
-                .unwrap_or("unnamed".to_string())
-        );
-        visit::visit_field(self, node);
+#[derive(Debug)]
+pub struct BoxRecord(Record);
+
+impl Serialize for BoxRecord {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(4))?;
+        map.serialize_entry("name", &self.0.name)?;
+        map.serialize_entry("namespace", &self.0.namespace)?;
+        map.serialize_entry("fields", &self.0.fields)?;
+        map.serialize_entry("doc", &self.0.doc)?;
+        map.serialize_entry("aliases", &self.0.aliases)?;
+        map.end()
+    }
+}
+
+impl Visitor {
+    fn grab_fields(&self, record: &mut Record, node: &ItemStruct) {
+        let mut unnamed_index = 0;
+        for field in node.fields.iter() {
+            record.fields.push(schema::Field {
+                name: field.ident.as_ref().map_or_else(
+                    || {
+                        unnamed_index += 1;
+                        unnamed_index.to_string()
+                    },
+                    |id| id.to_string(),
+                ),
+                doc: None,
+                schema: self.map_type(&field.ty),
+                default: None,
+                order: None,
+                aliases: vec![],
+            })
+        }
+    }
+
+    fn map_primitive(&self, prim: &str) -> Option<Schema> {
+        match prim {
+            "f64" => Some(Schema::Double),
+            _ => unimplemented!("Unknown primitive: {prim}"),
+        }
+    }
+
+    fn map_type(&self, ty: &Type) -> Schema {
+        match ty {
+            // Type::Array(_) => {}
+            // Type::BareFn(_) => {}
+            // Type::Group(_) => {}
+            // Type::ImplTrait(_) => {}
+            // Type::Infer(_) => {}
+            // Type::Macro(_) => {}
+            // Type::Never(_) => {}
+            // Type::Paren(_) => {}
+            Type::Path(tp) => {
+                let first_segment_name = tp.path.segments[0].ident.to_string();
+                return self
+                    .map_primitive(first_segment_name.as_str())
+                    .unwrap_or_else(|| self.map_reference(first_segment_name.as_str()));
+            }
+            // Type::Ptr(_) => {}
+            // Type::Reference(_) => {}
+            // Type::Slice(_) => {}
+            // Type::TraitObject(_) => {}
+            // Type::Tuple(_) => {}
+            // Type::Verbatim(_) => {}
+            // _ => Schema::Null,
+            _ => unimplemented!("Unknown type: {ty:?}"),
+        }
+    }
+    fn map_reference(&self, reference: &str) -> Schema {
+        // I am abusing Fixed here because there is no schema-reference ability in avro-schema
+        // This field will not be a true avro Fixed, but rather 0-size name-reference to another schema
+        Schema::Fixed(Fixed {
+            name: reference.to_string(),
+            namespace: None,
+            doc: None,
+            aliases: vec![],
+            size: 0,
+            logical: None,
+        })
+    }
+}
+
+impl<'ast> Visit<'ast> for Visitor {
+    fn visit_item_struct(&mut self, node: &'ast ItemStruct) {
+        let struct_name = node.ident.to_string();
+        let analyze = if let Some(filter) = &self.filter {
+            struct_name.contains(filter.as_str())
+        } else {
+            true
+        };
+        if analyze {
+            let mut record = Record {
+                name: struct_name.clone(),
+                namespace: None,
+                doc: None,
+                aliases: vec![],
+                fields: vec![],
+            };
+
+            self.grab_fields(&mut record, node);
+
+            self.records.insert(struct_name.clone(), BoxRecord(record));
+        }
+        visit::visit_item_struct(self, node);
     }
 }
 
@@ -56,6 +164,7 @@ fn main() {
                     clap::arg!(--"from" <PATH>)
                         .value_parser(clap::value_parser!(std::path::PathBuf)),
                 )
+                .arg(clap::arg!(--"filter" <SUBSTR>))
                 .arg(
                     clap::arg!(--"to" <PATH>).value_parser(clap::value_parser!(std::path::PathBuf)),
                 ),
@@ -66,20 +175,28 @@ fn main() {
         Some(("check", matches)) => matches,
         _ => unreachable!("clap should ensure we don't get here"),
     };
-    let from = matches.get_one::<std::path::PathBuf>("from");
-    let to = matches.get_one::<std::path::PathBuf>("to");
-    let file = if let Some(from) = from {
-        if let Some(to) = to {
-            let src = fs::read_to_string(from).expect("file not found");
-            let ast = syn::parse_file(src.as_str())
-                .expect(format!("Unable to create AST from file {:?}", from).as_str());
-            Some(ast)
-        } else {
-            None
-        }
-    } else {
-        None
+    let from = matches
+        .get_one::<PathBuf>("from")
+        .expect("--from arg is required");
+    let filter: Option<String> = matches.get_one::<String>("filter").map(|v| v.clone());
+    let to = matches
+        .get_one::<PathBuf>("to")
+        .expect("--to arg is required");
+
+    let src = fs::read_to_string(from).expect("file not found");
+    let file = syn::parse_file(src.as_str())
+        .expect(format!("Unable to create AST from file {:?}", from).as_str());
+    let mut visitor = Visitor {
+        records: HashMap::new(),
+        filter,
+    };
+    visitor.visit_file(&file);
+    for (key, value) in visitor.records.iter() {
+        let mut file_path = to.clone();
+        file_path.push(PathBuf::from(format!("{key}.json")));
+        let serialized = serde_json::to_string_pretty(value)
+            .expect(format!("could not serialize record named {key}").as_str());
+        fs::write(file_path.clone(), serialized)
+            .expect(format!("could not write to file {file_path:?}").as_str());
     }
-    .expect("could not parse file");
-    FnVisitor.visit_file(&file)
 }
