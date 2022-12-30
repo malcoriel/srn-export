@@ -24,7 +24,7 @@ objekt-clonable = "0.2.2"
 statrs = "0.13.0"
 statistical = "1.0.0"
 hex = "0.4.2"
-strum = "0.20.0"
+strum = { version = "0.20.0", features = ["derive"] }
 strum_macros = "0.20.1"
 typescript-definitions = "0.1.10"
 serde-wasm-bindgen = "0.3.1"

@@ -38,7 +38,6 @@ use crate::{
 };
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use websocket::sync::Client;
-
 lazy_static! {
     pub static ref MAIN_DISPATCHER: (
         Arc<Mutex<Sender<ServerToClientMessage>>>,

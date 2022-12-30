@@ -201,7 +201,7 @@ impl<'ast> Visit<'ast> for Visitor {
             let mut record = Record {
                 name: struct_name.clone(),
                 namespace: None,
-                doc: None,
+                doc: Some("{\"version\": 1}".to_string()),
                 aliases: vec![],
                 fields: vec![],
             };

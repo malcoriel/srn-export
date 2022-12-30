@@ -11,7 +11,7 @@ wasm-opt = [ "-Oz", "--enable-mutable-globals" ]
 crate-type = [ "cdylib", "rlib" ]
 
 [features]
-default = [ "console_error_panic_hook" ]
+default = ["console_error_panic_hook"]
 
 [dependencies]
 lazy_static = "1.4.0"
@@ -26,7 +26,7 @@ objekt-clonable = "0.2.2"
 statistical = "1.0.0"
 hex = "0.4.2"
 strum_macros = "0.20.1"
-strum = "0.20.0"
+strum = { version = "0.20.0", features = ["derive"] }
 kdbush = "0.2.0"
 mut_static = "5.0.0"
 bytemuck = "1.7.3"

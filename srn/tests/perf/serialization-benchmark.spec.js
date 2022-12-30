@@ -1,4 +1,5 @@
 import { swapGlobals, wasm } from '../util';
+import * as util from 'util';
 
 const { performance } = require('perf_hooks');
 const avro = require('avsc');
@@ -9,8 +10,8 @@ describe('serialization-benchmark', () => {
   let avroTypeState;
   beforeAll(() => {
     const schemas = wasm.getAvroSchemas();
-    avroTypeTest = avro.Type.forSchema(schemas.Test_V1.schema);
-    avroTypeState = avro.Type.forSchema(schemas.Vec2f64_V1.schema);
+    avroTypeTest = avro.Type.forSchema(schemas.Test_V1);
+    avroTypeState = avro.Type.forSchema(schemas.Vec2f64_V1);
   });
 
   const callTestAvro = (value, state = false) => {
