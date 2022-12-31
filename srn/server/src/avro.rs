@@ -118,7 +118,7 @@ fn get_doc(sc: &Schema) -> String {
 }
 
 lazy_static! {
-    pub static ref AVRO_SCHEMAS: MutStatic<AvroSchemaMap> = { MutStatic::from(gen_avro_schemas()) };
+    pub static ref AVRO_SCHEMAS: AvroSchemaMap = { gen_avro_schemas() };
 }
 
 pub fn avro_serialize<T: serde::Serialize>(schema: &Schema, test: T) -> Vec<u8> {

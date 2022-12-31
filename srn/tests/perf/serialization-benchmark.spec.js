@@ -23,7 +23,7 @@ describe('serialization-benchmark', () => {
     const targetType = state ? avroTypeState : avroTypeTest;
     const ser = targetType.toBuffer(value);
     const binary = (state ? wasm.avroTestState : wasm.avroTest)(ser);
-    return targetType.fromBuffer(Buffer.from(binary), undefined, false);
+    return targetType.fromBuffer(Buffer.from(binary), undefined, true);
   };
 
   const callTestJson = (value, state = false) => {

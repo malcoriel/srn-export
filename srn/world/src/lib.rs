@@ -816,7 +816,7 @@ use apache_avro::Schema;
 
 #[wasm_bindgen]
 pub fn get_avro_schemas() -> Result<JsValue, JsValue> {
-    let schemas = avro::AVRO_SCHEMAS.read().unwrap().elems.clone();
+    let schemas = avro::AVRO_SCHEMAS.elems.clone();
     return Ok(custom_serialize(&schemas)?);
 }
 
@@ -824,13 +824,7 @@ use apache_avro::*;
 
 #[wasm_bindgen]
 pub fn avro_test(mut arg: Vec<u8>) -> Vec<u8> {
-    let schema_cont = avro::AVRO_SCHEMAS
-        .read()
-        .unwrap()
-        .index
-        .get(&SchemaId::Test_V1)
-        .unwrap()
-        .clone();
+    let schema_cont = avro::AVRO_SCHEMAS.index.get(&SchemaId::Test_V1).unwrap();
     let mut test = avro_deserialize::<Test>(&mut arg, &schema_cont);
     test.a = 72;
     avro_serialize(&schema_cont, test)
@@ -838,13 +832,7 @@ pub fn avro_test(mut arg: Vec<u8>) -> Vec<u8> {
 
 #[wasm_bindgen]
 pub fn avro_test_state(mut arg: Vec<u8>) -> Vec<u8> {
-    let schema_cont = avro::AVRO_SCHEMAS
-        .read()
-        .unwrap()
-        .index
-        .get(&SchemaId::Vec2f64_V1)
-        .unwrap()
-        .clone();
+    let schema_cont = avro::AVRO_SCHEMAS.index.get(&SchemaId::Vec2f64_V1).unwrap();
     let mut test = avro_deserialize::<Vec2f64>(&mut arg, &schema_cont);
     test.x = 10.0;
     avro_serialize(&schema_cont, test)
