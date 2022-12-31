@@ -816,7 +816,7 @@ use apache_avro::Schema;
 
 #[wasm_bindgen]
 pub fn get_avro_schemas() -> Result<JsValue, JsValue> {
-    let schemas = avro::AVRO_SCHEMAS.read().unwrap().clone();
+    let schemas = avro::AVRO_SCHEMAS.read().unwrap().elems.clone();
     return Ok(custom_serialize(&schemas)?);
 }
 
@@ -827,6 +827,7 @@ pub fn avro_test(mut arg: Vec<u8>) -> Vec<u8> {
     let schema_cont = avro::AVRO_SCHEMAS
         .read()
         .unwrap()
+        .index
         .get(&SchemaId::Test_V1)
         .unwrap()
         .clone();
@@ -840,6 +841,7 @@ pub fn avro_test_state(mut arg: Vec<u8>) -> Vec<u8> {
     let schema_cont = avro::AVRO_SCHEMAS
         .read()
         .unwrap()
+        .index
         .get(&SchemaId::Vec2f64_V1)
         .unwrap()
         .clone();

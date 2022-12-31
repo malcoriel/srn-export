@@ -11,9 +11,12 @@ describe('serialization-benchmark', () => {
   beforeAll(() => {
     const schemas = wasm.getAvroSchemas();
     const registry = {};
-    avroTypeTest = avro.Type.forSchema(schemas.Test_V1);
-    avroTypeState = avro.Type.forSchema(schemas.Vec2f64_V1, { registry });
-    avro.Type.forSchema(schemas.SpatialProps_V1, { registry });
+    for (const schema of schemas) {
+      // avro_schemas generation is done in such a way that the structure entries here are topologically sorted
+      avro.Type.forSchema(schema, { registry });
+    }
+    avroTypeTest = avro.Type.forSchema(registry.test);
+    avroTypeState = avro.Type.forSchema(registry.Vec2f64);
   });
 
   const callTestAvro = (value, state = false) => {

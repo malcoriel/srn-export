@@ -30,14 +30,27 @@ pub enum SchemaId {
     SpatialProps_V1,
 }
 
-pub type AvroSchemaMap = HashMap<SchemaId, Schema>;
+pub struct AvroSchemaMap {
+    pub index: HashMap<SchemaId, Schema>,
+    pub elems: Vec<Schema>,
+}
+
+impl AvroSchemaMap {
+    pub fn push(&mut self, id: SchemaId, schema: Schema) {
+        self.elems.push(schema.clone());
+        self.index.insert(id, schema);
+    }
+}
 
 pub const AVRO_CODEC: Codec = Codec::Null;
 
 static SCHEMAS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../server/resources/avro_schemas");
 
 pub fn gen_avro_schemas() -> AvroSchemaMap {
-    let mut res = HashMap::new();
+    let mut map = AvroSchemaMap {
+        index: HashMap::new(),
+        elems: vec![],
+    };
     let raw_schema = r#"
     {
         "type": "record",
@@ -51,7 +64,7 @@ pub fn gen_avro_schemas() -> AvroSchemaMap {
     "#;
     let schema = Schema::parse_str(raw_schema).unwrap();
     // of course, you can retrieve a file by its full path
-    res.insert(SchemaId::Test_V1, schema);
+    map.push(SchemaId::Test_V1, schema);
     let schemas = Schema::parse_list(
         SCHEMAS_DIR
             .files()
@@ -64,10 +77,9 @@ pub fn gen_avro_schemas() -> AvroSchemaMap {
     )
     .expect("could not parse schema list");
     for schema in schemas {
-        log!(format!("{:?}", schema));
-        res.insert(get_schema_id(&schema), schema);
+        map.push(get_schema_id(&schema), schema);
     }
-    return res;
+    return map;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
