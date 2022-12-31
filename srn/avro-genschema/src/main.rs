@@ -4,12 +4,13 @@ use clap::command;
 use serde::ser::SerializeSeq;
 use serde::ser::{SerializeMap, SerializeStruct};
 use serde::{Serialize, Serializer};
+use std::any::Any;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use syn::visit::Visit;
-use syn::{visit, Field, ItemFn, ItemStruct, Type};
+use syn::{visit, Field, GenericArgument, ItemFn, ItemStruct, PathArguments, Type, TypePath};
 use topological_sort::TopologicalSort;
 use uuid::*;
 
@@ -21,6 +22,7 @@ struct Visitor {
 
 impl Visitor {
     pub fn top_sorted_records(&self) -> Vec<(String, &BoxRecord)> {
+        let mut unmapped_types = vec![];
         let mut ts = TopologicalSort::<String>::new();
         for (key, value) in self.records.iter() {
             ts.insert(key);
@@ -37,13 +39,20 @@ impl Visitor {
             sorted.append(&mut layer)
         }
         eprintln!("sorted len={} {:?}", self.records.len(), sorted);
-        sorted
+        let res = sorted
             .into_iter()
-            .map(|name| {
-                let rec = self.records.get(&name).unwrap();
-                (name, rec)
+            .filter_map(|name| {
+                let rec = self.records.get(&name);
+                if rec.is_none() {
+                    unmapped_types.push(name.clone());
+                }
+                rec.map(|rec| (name, rec))
             })
-            .collect()
+            .collect();
+        if unmapped_types.len() > 0 {
+            eprintln!("Unmapped types: {:?}", unmapped_types);
+        }
+        res
     }
 }
 
@@ -182,6 +191,41 @@ impl Visitor {
     fn map_primitive(&self, prim: &str) -> Option<(Schema, Option<String>)> {
         match prim {
             "f64" => Some((Schema::Double, None)),
+            "f32" => Some((Schema::Float, None)),
+            "u32" => Some((Schema::Int(None), None)),
+            "i32" => Some((Schema::Int(None), None)),
+            "i64" => Some((Schema::Long(None), None)),
+            "u64" => Some((Schema::Long(None), None)),
+            "String" => Some((Schema::String(None), None)),
+            "Uuid" => Some((Schema::String(Some(StringLogical::Uuid)), None)), // while not primitive, it's string-based
+            _ => None,
+        }
+    }
+
+    fn map_built_in_complex(&self, built_in: &Type) -> Option<(Schema, Option<String>)> {
+        match built_in {
+            Type::Path(tp) => {
+                let first_segment = &tp.path.segments[0];
+                let first_segment_name = first_segment.ident.to_string();
+                if first_segment_name == "Option" {
+                    let first_arg: TypePath =
+                        get_first_type_arg_type_path(&first_segment.arguments);
+                    let map_target_result = self.map_type(&Type::Path(first_arg));
+                    return Some((
+                        Schema::Union(vec![Schema::Null, map_target_result.0]),
+                        map_target_result.1,
+                    ));
+                } else if first_segment_name == "Vec" {
+                    let first_arg: TypePath =
+                        get_first_type_arg_type_path(&first_segment.arguments);
+                    let map_target_result = self.map_type(&Type::Path(first_arg));
+                    return Some((
+                        Schema::Array(Box::from(map_target_result.0)),
+                        map_target_result.1,
+                    ));
+                }
+                return None;
+            }
             _ => None,
         }
     }
@@ -198,9 +242,16 @@ impl Visitor {
             // Type::Paren(_) => {}
             Type::Path(tp) => {
                 let first_segment_name = tp.path.segments[0].ident.to_string();
-                return self
-                    .map_primitive(first_segment_name.as_str())
-                    .unwrap_or_else(|| self.map_reference(first_segment_name.as_str()));
+                let map_primitive = self.map_primitive(first_segment_name.as_str());
+                if map_primitive.is_some() {
+                    return map_primitive.unwrap();
+                }
+                let map_build_in_complex = self.map_built_in_complex(ty);
+                if map_build_in_complex.is_some() {
+                    return map_build_in_complex.unwrap();
+                }
+                let map_reference = self.map_reference(first_segment_name.as_str());
+                return map_reference;
             }
             // Type::Ptr(_) => {}
             // Type::Reference(_) => {}
@@ -227,6 +278,19 @@ impl Visitor {
             }),
             Some(ref_name),
         )
+    }
+}
+
+fn get_first_type_arg_type_path(args: &PathArguments) -> TypePath {
+    match args {
+        PathArguments::AngleBracketed(args) => match &args.args[0] {
+            GenericArgument::Type(ty) => match ty {
+                Type::Path(tp) => tp.clone(),
+                _ => panic!("Unsupported type {ty:?}"),
+            },
+            _ => panic!("Unsupported arg type: {:?}", args.args[0]),
+        },
+        _ => panic!("Unsupported path args {args:?}"),
     }
 }
 

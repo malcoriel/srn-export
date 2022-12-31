@@ -1,0 +1,89 @@
+{
+  "type": "record",
+  "name": "PlanetV2",
+  "namespace": null,
+  "fields": [
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "id",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    },
+    {
+      "type": "string",
+      "name": "name",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    },
+    {
+      "type": "SpatialProps",
+      "name": "spatial",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    },
+    {
+      "type": "Movement",
+      "name": "movement",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    },
+    {
+      "type": "RotationMovement",
+      "name": "rot_movement",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    },
+    {
+      "type": "int",
+      "name": "anchor_tier",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    },
+    {
+      "type": "string",
+      "name": "color",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "Health",
+          "size": 0
+        }
+      ],
+      "name": "health",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "ObjectProperty",
+          "size": 0
+        }
+      },
+      "name": "properties",
+      "default": null,
+      "doc": null,
+      "aliases": []
+    }
+  ],
+  "doc": "{\"version\": 1}",
+  "aliases": []
+}
