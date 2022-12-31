@@ -10,8 +10,10 @@ describe('serialization-benchmark', () => {
   let avroTypeState;
   beforeAll(() => {
     const schemas = wasm.getAvroSchemas();
+    const registry = {};
     avroTypeTest = avro.Type.forSchema(schemas.Test_V1);
-    avroTypeState = avro.Type.forSchema(schemas.Vec2f64_V1);
+    avroTypeState = avro.Type.forSchema(schemas.Vec2f64_V1, { registry });
+    avro.Type.forSchema(schemas.SpatialProps_V1, { registry });
   });
 
   const callTestAvro = (value, state = false) => {

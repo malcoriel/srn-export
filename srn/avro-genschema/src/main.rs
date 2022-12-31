@@ -4,17 +4,47 @@ use clap::command;
 use serde::ser::SerializeSeq;
 use serde::ser::{SerializeMap, SerializeStruct};
 use serde::{Serialize, Serializer};
+use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use syn::visit::Visit;
 use syn::{visit, Field, ItemFn, ItemStruct, Type};
+use topological_sort::TopologicalSort;
 use uuid::*;
 
 #[derive(Debug)]
 struct Visitor {
     pub records: HashMap<String, BoxRecord>,
     filter: Option<Vec<String>>,
+}
+
+impl Visitor {
+    pub fn top_sorted_records(&self) -> Vec<(String, &BoxRecord)> {
+        let mut ts = TopologicalSort::<String>::new();
+        for (key, value) in self.records.iter() {
+            ts.insert(key);
+            for dep in value.deps.iter() {
+                ts.add_dependency(dep.clone(), key.clone());
+            }
+        }
+        let mut sorted = vec![];
+        loop {
+            let mut layer = ts.pop_all();
+            if layer.len() == 0 {
+                break;
+            }
+            sorted.append(&mut layer)
+        }
+        eprintln!("sorted len={} {:?}", self.records.len(), sorted);
+        sorted
+            .into_iter()
+            .map(|name| {
+                let rec = self.records.get(&name).unwrap();
+                (name, rec)
+            })
+            .collect()
+    }
 }
 
 pub struct SpatialProps {
@@ -44,7 +74,10 @@ pub struct PlanetV2 {
 }
 
 #[derive(Debug)]
-pub struct BoxRecord(Record);
+pub struct BoxRecord {
+    pub deps: Vec<String>,
+    pub rec: Record,
+}
 
 #[derive(Debug)]
 pub struct BoxField(schema::Field);
@@ -101,28 +134,33 @@ impl Serialize for BoxRecord {
     {
         let mut map = serializer.serialize_map(Some(6))?;
         map.serialize_entry("type", "record")?;
-        map.serialize_entry("name", &self.0.name)?;
-        map.serialize_entry("namespace", &self.0.namespace)?;
+        map.serialize_entry("name", &self.rec.name)?;
+        map.serialize_entry("namespace", &self.rec.namespace)?;
         map.serialize_entry(
             "fields",
             &self
-                .0
+                .rec
                 .fields
                 .clone()
                 .into_iter()
                 .map(|f| BoxField(f))
                 .collect::<Vec<_>>(),
         )?;
-        map.serialize_entry("doc", &self.0.doc)?;
-        map.serialize_entry("aliases", &self.0.aliases)?;
+        map.serialize_entry("doc", &self.rec.doc)?;
+        map.serialize_entry("aliases", &self.rec.aliases)?;
         map.end()
     }
 }
 
 impl Visitor {
-    fn grab_fields(&self, record: &mut Record, node: &ItemStruct) {
+    fn grab_fields_get_deps(&self, record: &mut Record, node: &ItemStruct) -> Vec<String> {
         let mut unnamed_index = 0;
+        let mut deps = vec![];
         for field in node.fields.iter() {
+            let (schema, dep_name) = self.map_type(&field.ty);
+            if let Some(dep_name) = dep_name {
+                deps.push(dep_name);
+            }
             record.fields.push(schema::Field {
                 name: field.ident.as_ref().map_or_else(
                     || {
@@ -132,22 +170,23 @@ impl Visitor {
                     |id| id.to_string(),
                 ),
                 doc: None,
-                schema: self.map_type(&field.ty),
+                schema,
                 default: None,
                 order: None,
                 aliases: vec![],
             })
         }
+        deps
     }
 
-    fn map_primitive(&self, prim: &str) -> Option<Schema> {
+    fn map_primitive(&self, prim: &str) -> Option<(Schema, Option<String>)> {
         match prim {
-            "f64" => Some(Schema::Double),
+            "f64" => Some((Schema::Double, None)),
             _ => None,
         }
     }
 
-    fn map_type(&self, ty: &Type) -> Schema {
+    fn map_type(&self, ty: &Type) -> (Schema, Option<String>) {
         match ty {
             // Type::Array(_) => {}
             // Type::BareFn(_) => {}
@@ -173,17 +212,21 @@ impl Visitor {
             _ => unimplemented!("Unknown type: {ty:?}"),
         }
     }
-    fn map_reference(&self, reference: &str) -> Schema {
-        // I am abusing Fixed here because there is no schema-reference ability in avro-schema
+    fn map_reference(&self, reference: &str) -> (Schema, Option<String>) {
+        // I am abusing Fixed here because there is no schema-reference ability in avro-schema (Schema::Ref variant)
         // This field will not be a true avro Fixed, but rather 0-size name-reference to another schema
-        Schema::Fixed(Fixed {
-            name: reference.to_string(),
-            namespace: None,
-            doc: None,
-            aliases: vec![],
-            size: 0,
-            logical: None,
-        })
+        let ref_name = reference.to_string();
+        (
+            Schema::Fixed(Fixed {
+                name: ref_name.clone(),
+                namespace: None,
+                doc: None,
+                aliases: vec![],
+                size: 0,
+                logical: None,
+            }),
+            Some(ref_name),
+        )
     }
 }
 
@@ -206,9 +249,13 @@ impl<'ast> Visit<'ast> for Visitor {
                 fields: vec![],
             };
 
-            self.grab_fields(&mut record, node);
+            let deps = self.grab_fields_get_deps(&mut record, node);
 
-            self.records.insert(struct_name.clone(), BoxRecord(record));
+            self.records
+                .insert(struct_name.clone(), BoxRecord { rec: record, deps });
+            eprintln!("Grabbed struct {}", struct_name);
+        } else {
+            eprintln!("Skipped struct {}", struct_name);
         }
         visit::visit_item_struct(self, node);
     }
@@ -220,10 +267,7 @@ fn main() {
         .subcommand_required(true)
         .subcommand(
             command!("generate")
-                .arg(
-                    clap::arg!(--"from" <PATH>)
-                        .value_parser(clap::value_parser!(std::path::PathBuf)),
-                )
+                .arg(clap::arg!(--"from" <PATHS>))
                 .arg(clap::arg!(--"filter" <SUBSTR>))
                 .arg(
                     clap::arg!(--"to" <PATH>).value_parser(clap::value_parser!(std::path::PathBuf)),
@@ -235,8 +279,9 @@ fn main() {
         Some(("generate", matches)) => matches,
         _ => unreachable!("clap should ensure we don't get here"),
     };
-    let from = matches
-        .get_one::<PathBuf>("from")
+    let from: Vec<PathBuf> = matches
+        .get_one::<String>("from")
+        .map(|v| v.clone().split(",").map(|v| PathBuf::from(v)).collect())
         .expect("--from arg is required");
     let filter: Option<Vec<String>> = matches
         .get_one::<String>("filter")
@@ -245,17 +290,22 @@ fn main() {
         .get_one::<PathBuf>("to")
         .expect("--to arg is required");
 
-    let src = fs::read_to_string(from).expect("file not found");
-    let file = syn::parse_file(src.as_str())
-        .expect(format!("Unable to create AST from file {:?}", from).as_str());
     let mut visitor = Visitor {
         records: HashMap::new(),
-        filter,
+        filter: filter.clone(),
     };
-    visitor.visit_file(&file);
-    for (key, value) in visitor.records.iter() {
+
+    for file in from {
+        let src = fs::read_to_string(file.clone()).expect("file not found");
+        let file = syn::parse_file(src.as_str())
+            .expect(format!("Unable to create AST from file {:?}", file).as_str());
+        visitor.visit_file(&file);
+    }
+    let mut counter = 0;
+    for (key, value) in visitor.top_sorted_records() {
+        counter += 1;
         let mut file_path = to.clone();
-        file_path.push(PathBuf::from(format!("{key}.json")));
+        file_path.push(PathBuf::from(format!("{counter:0>4}-{key}.json")));
         let serialized = serde_json::to_string_pretty(value)
             .expect(format!("could not serialize record named {key}").as_str());
         fs::write(file_path.clone(), serialized)

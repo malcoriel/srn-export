@@ -1,5 +1,6 @@
 use crate::avro::SchemaId::Test_V1;
 use apache_avro::{to_avro_datum, Codec, Schema, Writer};
+use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
 use mut_static::MutStatic;
 use serde::de::DeserializeOwned;
@@ -26,11 +27,14 @@ pub enum SchemaId {
     Test_V1,
     State_V1,
     Vec2f64_V1,
+    SpatialProps_V1,
 }
 
 pub type AvroSchemaMap = HashMap<SchemaId, Schema>;
 
 pub const AVRO_CODEC: Codec = Codec::Null;
+
+static SCHEMAS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../server/resources/avro_schemas");
 
 pub fn gen_avro_schemas() -> AvroSchemaMap {
     let mut res = HashMap::new();
@@ -46,16 +50,21 @@ pub fn gen_avro_schemas() -> AvroSchemaMap {
     }
     "#;
     let schema = Schema::parse_str(raw_schema).unwrap();
+    // of course, you can retrieve a file by its full path
     res.insert(SchemaId::Test_V1, schema);
     let schemas = Schema::parse_list(
-        vec![
-            std::str::from_utf8(include_bytes!("../resources/avro_schemas/Vec2f64.json"))
-                .expect("could not read file as utf8"),
-        ]
-        .as_slice(),
+        SCHEMAS_DIR
+            .files()
+            .map(|file| {
+                std::str::from_utf8(file.contents())
+                    .expect(format!("could not parse bytes from file {:?}", file.path()).as_str())
+            })
+            .collect::<Vec<_>>()
+            .as_slice(),
     )
     .expect("could not parse schema list");
     for schema in schemas {
+        log!(format!("{:?}", schema));
         res.insert(get_schema_id(&schema), schema);
     }
     return res;
