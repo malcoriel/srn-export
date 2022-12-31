@@ -1,5 +1,4 @@
 import { swapGlobals, wasm } from '../util';
-import * as util from 'util';
 
 const { performance } = require('perf_hooks');
 const avro = require('avsc');
@@ -19,15 +18,32 @@ describe('serialization-benchmark', () => {
     avroTypeState = avro.Type.forSchema(registry.Vec2f64);
   });
 
+  let accumulatedTransferredBytes = 0;
+
   const callTestAvro = (value, state = false) => {
     const targetType = state ? avroTypeState : avroTypeTest;
     const ser = targetType.toBuffer(value);
+    accumulatedTransferredBytes += Buffer.byteLength(ser);
     const binary = (state ? wasm.avroTestState : wasm.avroTest)(ser);
-    return targetType.fromBuffer(Buffer.from(binary), undefined, true);
+    const resBuffer = Buffer.from(binary);
+    accumulatedTransferredBytes += Buffer.byteLength(resBuffer);
+    return targetType.fromBuffer(resBuffer, undefined, true);
   };
 
+  let inSize = 0;
+  let outSize = 0;
+
   const callTestJson = (value, state = false) => {
-    return (state ? wasm.jsonTestState : wasm.jsonTest)(value);
+    if (!inSize) {
+      inSize = JSON.stringify(value).length;
+    }
+    accumulatedTransferredBytes += inSize;
+    const res = (state ? wasm.jsonTestState : wasm.jsonTest)(value);
+    if (!outSize) {
+      outSize = JSON.stringify(res).length;
+    }
+    accumulatedTransferredBytes += outSize;
+    return res;
   };
 
   const testVal = {
@@ -68,20 +84,26 @@ describe('serialization-benchmark', () => {
   }
 
   it('can stress test avro', () => {
+    accumulatedTransferredBytes = 0;
     const millis = stressTestMillis(() => callTestAvro(testVal));
     console.log(
       `avro avg for ${ITER_COUNT} iter for test value is ${(
         millis * 1000
-      ).toFixed(0)}mcs`
+      ).toFixed(0)}mcs`,
+      `bytes transferred=${accumulatedTransferredBytes}`
     );
   });
 
   it('can stress test json', () => {
+    accumulatedTransferredBytes = 0;
+    inSize = 0;
+    outSize = 0;
     const millis = stressTestMillis(() => callTestJson(testVal));
     console.log(
       `json avg for ${ITER_COUNT} iter for test value is ${(
         millis * 1000
-      ).toFixed(0)}mcs`
+      ).toFixed(0)}mcs`,
+      `bytes transferred=${accumulatedTransferredBytes}`
     );
   });
 });
