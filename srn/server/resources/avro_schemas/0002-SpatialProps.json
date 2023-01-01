@@ -1,30 +1,19 @@
 {
   "type": "record",
   "name": "SpatialProps",
-  "namespace": null,
   "fields": [
     {
       "type": "Vec2f64",
-      "name": "position",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "position"
     },
     {
       "type": "double",
-      "name": "rotation_rad",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "rotation_rad"
     },
     {
       "type": "double",
-      "name": "radius",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "radius"
     }
   ],
-  "doc": "{\"version\": 1}",
-  "aliases": []
+  "doc": "{\"version\": 1}"
 }

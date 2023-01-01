@@ -1,59 +1,37 @@
 {
   "type": "record",
   "name": "PlanetV2",
-  "namespace": null,
   "fields": [
     {
       "type": {
         "type": "string",
         "logicalType": "uuid"
       },
-      "name": "id",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "id"
     },
     {
       "type": "string",
-      "name": "name",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "name"
     },
     {
       "type": "SpatialProps",
-      "name": "spatial",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "spatial"
     },
     {
       "type": "Movement",
-      "name": "movement",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "movement"
     },
     {
       "type": "RotationMovement",
-      "name": "rot_movement",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "rot_movement"
     },
     {
       "type": "int",
-      "name": "anchor_tier",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "anchor_tier"
     },
     {
       "type": "string",
-      "name": "color",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "color"
     },
     {
       "type": [
@@ -64,10 +42,7 @@
           "size": 0
         }
       ],
-      "name": "health",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "health"
     },
     {
       "type": {
@@ -78,12 +53,8 @@
           "size": 0
         }
       },
-      "name": "properties",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "properties"
     }
   ],
-  "doc": "{\"version\": 1}",
-  "aliases": []
+  "doc": "{\"version\": 1}"
 }

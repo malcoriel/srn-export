@@ -1,23 +1,15 @@
 {
   "type": "record",
   "name": "Vec2f64",
-  "namespace": null,
   "fields": [
     {
       "type": "double",
-      "name": "x",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "x"
     },
     {
       "type": "double",
-      "name": "y",
-      "default": null,
-      "doc": null,
-      "aliases": []
+      "name": "y"
     }
   ],
-  "doc": "{\"version\": 1}",
-  "aliases": []
+  "doc": "{\"version\": 1}"
 }

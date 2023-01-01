@@ -9,24 +9,44 @@ use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use syn::token::Union;
 use syn::visit::Visit;
-use syn::{visit, Field, GenericArgument, ItemFn, ItemStruct, PathArguments, Type, TypePath};
+use syn::{
+    visit, Field, Fields, GenericArgument, ItemEnum, ItemFn, ItemStruct, PathArguments, Type,
+    TypePath,
+};
 use topological_sort::TopologicalSort;
-use uuid::*;
 
 #[derive(Debug)]
 struct Visitor {
-    pub records: HashMap<String, BoxRecord>,
+    pub entities: HashMap<String, BoxEntity>,
     filter: Option<Vec<String>>,
 }
 
 impl Visitor {
-    pub fn top_sorted_records(&self) -> Vec<(String, &BoxRecord)> {
+    fn grab_fields_get_deps_enum_variant(
+        &self,
+        en_var: &syn::Variant,
+        collected_vars: &mut Vec<BoxRecord>,
+        into_deps: &mut Vec<String>,
+    ) {
+        let mut record = BoxRecord {
+            deps: vec![],
+            name: en_var.ident.to_string(),
+            namespace: None,
+            doc: Some("{\"version\": 1}".to_string()),
+            fields: vec![],
+        };
+        self.grab_fields_get_deps_any(&mut record.fields, into_deps, &en_var.fields);
+        collected_vars.push(record)
+    }
+
+    pub fn top_sorted_records(&self) -> Vec<(String, &BoxEntity)> {
         let mut unmapped_types = vec![];
         let mut ts = TopologicalSort::<String>::new();
-        for (key, value) in self.records.iter() {
+        for (key, value) in self.entities.iter() {
             ts.insert(key);
-            for dep in value.deps.iter() {
+            for dep in value.get_deps().iter() {
                 ts.add_dependency(dep.clone(), key.clone());
             }
         }
@@ -38,11 +58,11 @@ impl Visitor {
             }
             sorted.append(&mut layer)
         }
-        eprintln!("sorted len={} {:?}", self.records.len(), sorted);
+        eprintln!("sorted len={} {:?}", self.entities.len(), sorted);
         let res = sorted
             .into_iter()
             .filter_map(|name| {
-                let rec = self.records.get(&name);
+                let rec = self.entities.get(&name);
                 if rec.is_none() {
                     unmapped_types.push(name.clone());
                 }
@@ -56,36 +76,34 @@ impl Visitor {
     }
 }
 
-pub struct SpatialProps {
-    pub foo: i32,
-    pub bar: String,
-}
-
-pub enum Movement {
-    Alpha(i32),
-    Beta { baz: f64 },
-}
-
-pub struct ObjectProperty {
-    pub empty: f32,
-}
-
-pub struct PlanetV2 {
-    pub id: Uuid,
-    pub name: String,
-    pub spatial: SpatialProps,
-    pub movement: Movement,
-    pub anchor_tier: u32,
-    pub color: String,
-    pub health: Option<ObjectProperty>,
-    pub properties: Vec<ObjectProperty>,
-    pub properties2: HashMap<String, ObjectProperty>,
-}
-
 #[derive(Debug)]
 pub struct BoxRecord {
     pub deps: Vec<String>,
-    pub rec: Record,
+    pub name: String,
+    pub namespace: Option<String>,
+    pub doc: Option<String>,
+    pub fields: Vec<BoxField>,
+}
+
+#[derive(Debug)]
+pub struct BoxEnum {
+    pub deps: Vec<String>,
+    pub enum_name: String,
+    pub enum_variants: Vec<Schema>,
+}
+#[derive(Debug)]
+pub enum BoxEntity {
+    Record(BoxRecord),
+    Enum(BoxEnum),
+}
+
+impl BoxEntity {
+    fn get_deps(&self) -> &Vec<String> {
+        match self {
+            BoxEntity::Record(v) => &v.deps,
+            BoxEntity::Enum(v) => &v.deps,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -113,7 +131,7 @@ impl Serialize for BoxField {
     where
         S: Serializer,
     {
-        let mut map = serializer.serialize_map(Some(5))?;
+        let mut map = serializer.serialize_map(None)?;
 
         let schema_clone = self.0.schema.clone();
         let schema_fixed: SchemaOrRef = match &self.0.schema {
@@ -128,49 +146,65 @@ impl Serialize for BoxField {
         };
         map.serialize_entry("type", &schema_fixed)?;
         map.serialize_entry("name", &self.0.name)?;
-        map.serialize_entry("default", &self.0.default)?;
-        map.serialize_entry("doc", &self.0.doc)?;
-        map.serialize_entry("aliases", &self.0.aliases)?;
+        if self.0.default.is_some() {
+            map.serialize_entry("default", &self.0.default)?;
+        }
+        if self.0.doc.is_some() {
+            map.serialize_entry("doc", &self.0.doc)?;
+        }
+        if self.0.aliases.len() > 0 {
+            map.serialize_entry("aliases", &self.0.aliases)?;
+        }
         // order is ignored here
         map.end()
     }
 }
 
-impl Serialize for BoxRecord {
+impl Serialize for BoxEntity {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut map = serializer.serialize_map(Some(6))?;
-        map.serialize_entry("type", "record")?;
-        map.serialize_entry("name", &self.rec.name)?;
-        map.serialize_entry("namespace", &self.rec.namespace)?;
-        map.serialize_entry(
-            "fields",
-            &self
-                .rec
-                .fields
-                .clone()
-                .into_iter()
-                .map(|f| BoxField(f))
-                .collect::<Vec<_>>(),
-        )?;
-        map.serialize_entry("doc", &self.rec.doc)?;
-        map.serialize_entry("aliases", &self.rec.aliases)?;
-        map.end()
+        match self {
+            BoxEntity::Record(record) => {
+                let mut map = serializer.serialize_map(Some(4))?;
+                map.serialize_entry("type", "record")?;
+                map.serialize_entry("name", &record.name)?;
+                map.serialize_entry("fields", &record.fields)?;
+                map.serialize_entry("doc", &record.doc)?;
+                // order is ignored here
+                map.end()
+            }
+            BoxEntity::Enum(en) => {
+                todo!()
+            }
+        }
     }
 }
 
 impl Visitor {
-    fn grab_fields_get_deps(&self, record: &mut Record, node: &ItemStruct) -> Vec<String> {
+    fn grab_fields_get_deps_record(
+        &self,
+        into_fields: &mut Vec<BoxField>,
+        into_deps: &mut Vec<String>,
+        node: &ItemStruct,
+    ) {
+        self.grab_fields_get_deps_any(into_fields, into_deps, &node.fields);
+    }
+
+    fn grab_fields_get_deps_any(
+        &self,
+        into_fields: &mut Vec<BoxField>,
+        into_deps: &mut Vec<String>,
+        fields: &Fields,
+    ) {
         let mut unnamed_index = 0;
-        let mut deps = vec![];
-        for field in node.fields.iter() {
+        for field in fields.iter() {
             let (schema, dep_name) = self.map_type(&field.ty);
             if let Some(dep_name) = dep_name {
-                deps.push(dep_name);
+                into_deps.push(dep_name);
             }
-            record.fields.push(schema::Field {
+            into_fields.push(BoxField(schema::Field {
                 name: field.ident.as_ref().map_or_else(
                     || {
                         unnamed_index += 1;
@@ -183,9 +217,8 @@ impl Visitor {
                 default: None,
                 order: None,
                 aliases: vec![],
-            })
+            }))
         }
-        deps
     }
 
     fn map_primitive(&self, prim: &str) -> Option<(Schema, Option<String>)> {
@@ -305,23 +338,53 @@ impl<'ast> Visit<'ast> for Visitor {
             true
         };
         if analyze {
-            let mut record = Record {
+            let mut record = BoxRecord {
+                deps: vec![],
                 name: struct_name.clone(),
                 namespace: None,
                 doc: Some("{\"version\": 1}".to_string()),
-                aliases: vec![],
                 fields: vec![],
             };
 
-            let deps = self.grab_fields_get_deps(&mut record, node);
-
-            self.records
-                .insert(struct_name.clone(), BoxRecord { rec: record, deps });
+            self.grab_fields_get_deps_record(&mut record.fields, &mut record.deps, node);
+            self.entities
+                .insert(struct_name.clone(), BoxEntity::Record(record));
             eprintln!("Grabbed struct {}", struct_name);
         } else {
             eprintln!("Skipped struct {}", struct_name);
         }
         visit::visit_item_struct(self, node);
+    }
+
+    fn visit_item_enum(&mut self, node: &'ast ItemEnum) {
+        return;
+        // let enum_name = node.ident.to_string();
+        // let analyze = if let Some(filter) = &self.filter {
+        //     filter
+        //         .iter()
+        //         .any(|filter| enum_name.contains(filter.as_str()))
+        // } else {
+        //     true
+        // };
+        // if analyze {
+        //     let mut union: Vec<Schema> = vec![];
+        //     let mut deps: Vec<String> = vec![];
+        //     for item in &node.variants {
+        //         self.grab_fields_get_deps_enum_variant(&item, &mut union, &mut deps);
+        //     }
+        //     self.entities.insert(
+        //         enum_name.clone(),
+        //         BoxEntity::Enum(BoxEnum {
+        //             enum_name: enum_name.clone(),
+        //             deps,
+        //             enum_variants: union,
+        //         }),
+        //     );
+        //     eprintln!("Grabbed enum {}", enum_name);
+        // } else {
+        //     eprintln!("Skipped enum {}", enum_name);
+        // }
+        // visit::visit_item_enum(self, node);
     }
 }
 
@@ -355,7 +418,7 @@ fn main() {
         .expect("--to arg is required");
 
     let mut visitor = Visitor {
-        records: HashMap::new(),
+        entities: HashMap::new(),
         filter: filter.clone(),
     };
 

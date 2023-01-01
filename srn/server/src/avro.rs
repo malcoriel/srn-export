@@ -5,7 +5,9 @@ use lazy_static::lazy_static;
 use mut_static::MutStatic;
 use serde::de::DeserializeOwned;
 use serde_derive::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::iter::FromIterator;
+use std::path::Path;
 use std::str::FromStr;
 use strum_macros::EnumString;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -65,17 +67,26 @@ pub fn gen_avro_schemas() -> AvroSchemaMap {
     let schema = Schema::parse_str(raw_schema).unwrap();
     // of course, you can retrieve a file by its full path
     map.push(SchemaId::Test_V1, schema);
-    let schemas = Schema::parse_list(
-        SCHEMAS_DIR
-            .files()
-            .map(|file| {
-                std::str::from_utf8(file.contents())
-                    .expect(format!("could not parse bytes from file {:?}", file.path()).as_str())
-            })
-            .collect::<Vec<_>>()
-            .as_slice(),
-    )
-    .expect("could not parse schema list");
+    let blacklist: HashSet<String> = HashSet::from_iter(vec!["PlanetV2.json".to_string()]);
+    let schemas =
+        Schema::parse_list(
+            SCHEMAS_DIR
+                .files()
+                .filter_map(|file| {
+                    if blacklist
+                        .iter()
+                        .any(|black_item| file.path().to_string_lossy().ends_with(black_item))
+                    {
+                        return None;
+                    }
+                    Some(std::str::from_utf8(file.contents()).expect(
+                        format!("could not parse bytes from file {:?}", file.path()).as_str(),
+                    ))
+                })
+                .collect::<Vec<_>>()
+                .as_slice(),
+        )
+        .expect("could not parse schema list");
     for schema in schemas {
         map.push(get_schema_id(&schema), schema);
     }
