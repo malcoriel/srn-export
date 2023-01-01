@@ -1,0 +1,15 @@
+{
+  "name": "SandboxTeleportTarget",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Zero",
+      "fields": []
+    }
+  ]
+}

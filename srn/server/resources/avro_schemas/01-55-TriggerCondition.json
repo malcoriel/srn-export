@@ -1,0 +1,20 @@
+{
+  "name": "TriggerCondition",
+  "type": [
+    {
+      "type": "record",
+      "name": "CurrentPlanetIsPickup",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "CurrentPlanetIsDropoff",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "AnyMineralsInCargo",
+      "fields": []
+    }
+  ]
+}

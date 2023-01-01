@@ -1,0 +1,60 @@
+{
+  "name": "DialogueOptionSideEffect",
+  "type": [
+    {
+      "type": "record",
+      "name": "Nothing",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Undock",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "QuestCargoPickup",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "QuestCargoDropOff",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "QuestCollectReward",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "SellMinerals",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "QuitTutorial",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "SwitchDialogue",
+      "fields": [
+        {
+          "type": "string",
+          "name": "1"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "TriggerTutorialQuest",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "TriggerTrade",
+      "fields": []
+    }
+  ]
+}

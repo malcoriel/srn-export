@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "RoomHeader",
+  "fields": [
+    {
+      "type": "RoomId",
+      "name": "id"
+    },
+    {
+      "type": "string",
+      "name": "name"
+    }
+  ]
+}

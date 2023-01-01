@@ -1,0 +1,15 @@
+{
+  "name": "IMovableType",
+  "type": [
+    {
+      "type": "record",
+      "name": "NatSpawnMineral",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Container",
+      "fields": []
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "DialogueTable",
+  "fields": [
+    {
+      "type": "HashMap",
+      "name": "scripts"
+    }
+  ]
+}

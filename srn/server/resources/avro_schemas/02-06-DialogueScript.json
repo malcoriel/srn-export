@@ -1,0 +1,96 @@
+{
+  "type": "record",
+  "name": "DialogueScript",
+  "fields": [
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "id"
+    },
+    {
+      "type": "HashMap",
+      "name": "transitions"
+    },
+    {
+      "type": "HashMap",
+      "name": "prompts"
+    },
+    {
+      "type": "HashMap",
+      "name": "options"
+    },
+    {
+      "type": "StateId",
+      "name": "initial_state"
+    },
+    {
+      "type": "boolean",
+      "name": "is_planetary"
+    },
+    {
+      "type": "string",
+      "name": "portrait"
+    },
+    {
+      "type": "int",
+      "name": "priority"
+    },
+    {
+      "type": "boolean",
+      "name": "is_default"
+    },
+    {
+      "type": "string",
+      "name": "name"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "tuple-87b50a61-8d2c-40bc-9ae7-f2574d44bc53",
+          "fields": [
+            {
+              "name": "0",
+              "type": {
+                "type": "fixed",
+                "name": "StateId",
+                "size": 0
+              }
+            },
+            {
+              "name": "1",
+              "type": {
+                "type": "fixed",
+                "name": "OptionId",
+                "size": 0
+              }
+            },
+            {
+              "name": "2",
+              "type": [
+                "null",
+                {
+                  "type": "fixed",
+                  "name": "TriggerCondition",
+                  "size": 0
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "name": "bot_path"
+    },
+    {
+      "type": "HashMap",
+      "name": "names_db"
+    },
+    {
+      "type": "HashMap",
+      "name": "ids_db"
+    }
+  ]
+}

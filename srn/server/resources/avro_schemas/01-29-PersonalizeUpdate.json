@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "PersonalizeUpdate",
+  "fields": [
+    {
+      "type": "string",
+      "name": "name"
+    },
+    {
+      "type": "string",
+      "name": "portrait_name"
+    }
+  ]
+}

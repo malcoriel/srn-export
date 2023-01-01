@@ -1,0 +1,40 @@
+{
+  "name": "QuantityVariant",
+  "type": [
+    {
+      "type": "record",
+      "name": "Zero",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Scarce",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Low",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Normal",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Abundant",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Booming",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Overwhelming",
+      "fields": []
+    }
+  ]
+}

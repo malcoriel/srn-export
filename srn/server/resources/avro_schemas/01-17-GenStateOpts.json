@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "GenStateOpts",
+  "fields": [
+    {
+      "type": "int",
+      "name": "system_count"
+    },
+    {
+      "type": "int",
+      "name": "max_planets_in_system"
+    },
+    {
+      "type": "int",
+      "name": "max_satellites_for_planet"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "FofActor",
+  "type": [
+    {
+      "type": "record",
+      "name": "Player",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Object",
+      "fields": [
+        {
+          "type": "ObjectSpecifier",
+          "name": "spec"
+        }
+      ]
+    }
+  ]
+}

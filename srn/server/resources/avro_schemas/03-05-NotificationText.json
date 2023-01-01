@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "NotificationText",
+  "fields": [
+    {
+      "type": "string",
+      "name": "text"
+    },
+    {
+      "type": "boolean",
+      "name": "substituted"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Substitution",
+          "size": 0
+        }
+      },
+      "name": "substitutions"
+    }
+  ]
+}

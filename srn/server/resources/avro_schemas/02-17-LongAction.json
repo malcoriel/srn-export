@@ -1,0 +1,146 @@
+{
+  "name": "LongAction",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "TransSystemJump",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "to"
+        },
+        {
+          "type": "int",
+          "name": "micro_left"
+        },
+        {
+          "type": "int",
+          "name": "percentage"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Shoot",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        },
+        {
+          "type": "ShootTarget",
+          "name": "target"
+        },
+        {
+          "type": "int",
+          "name": "micro_left"
+        },
+        {
+          "type": "int",
+          "name": "percentage"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "turret_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Dock",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "to_planet"
+        },
+        {
+          "type": "Vec2f64",
+          "name": "start_pos"
+        },
+        {
+          "type": "int",
+          "name": "micro_left"
+        },
+        {
+          "type": "int",
+          "name": "percentage"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Undock",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "from_planet"
+        },
+        {
+          "type": "Vec2f64",
+          "name": "start_pos"
+        },
+        {
+          "type": "Vec2f64",
+          "name": "end_pos"
+        },
+        {
+          "type": "int",
+          "name": "micro_left"
+        },
+        {
+          "type": "int",
+          "name": "percentage"
+        }
+      ]
+    }
+  ]
+}

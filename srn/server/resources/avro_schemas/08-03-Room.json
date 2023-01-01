@@ -1,0 +1,47 @@
+{
+  "type": "record",
+  "name": "Room",
+  "fields": [
+    {
+      "type": "RoomId",
+      "name": "id"
+    },
+    {
+      "type": "string",
+      "name": "name"
+    },
+    {
+      "type": "GameState",
+      "name": "state"
+    },
+    {
+      "type": [
+        "null",
+        "long"
+      ],
+      "name": "last_players_mark"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Bot",
+          "size": 0
+        }
+      },
+      "name": "bots"
+    },
+    {
+      "type": [
+        "null",
+        "string"
+      ],
+      "name": "bots_seed"
+    },
+    {
+      "type": "GameStateCaches",
+      "name": "caches"
+    }
+  ]
+}

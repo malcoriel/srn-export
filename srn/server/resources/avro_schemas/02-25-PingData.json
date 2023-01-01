@@ -1,0 +1,28 @@
+{
+  "type": "record",
+  "name": "PingData",
+  "fields": [
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "client_id"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "PingInstance",
+          "size": 0
+        }
+      },
+      "name": "last_pings"
+    },
+    {
+      "type": "int",
+      "name": "ping_average"
+    }
+  ]
+}

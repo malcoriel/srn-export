@@ -1,0 +1,30 @@
+{
+  "name": "PlanetType",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Ice",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Jovian",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Jungle",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Barren",
+      "fields": []
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "ReferencableId",
+  "type": [
+    {
+      "type": "record",
+      "name": "Id",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Reference",
+      "fields": [
+        {
+          "type": "string",
+          "name": "reference"
+        }
+      ]
+    }
+  ]
+}

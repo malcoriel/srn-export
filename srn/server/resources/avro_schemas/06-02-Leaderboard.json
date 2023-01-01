@@ -7,7 +7,7 @@
         "type": "array",
         "items": {
           "type": "record",
-          "name": "tuple-4bf78e95-303a-409e-833b-0e012a2b98e6",
+          "name": "tuple-22693e6e-6a0c-4bd6-ab65-4cfa057405c2",
           "fields": [
             {
               "name": "0",

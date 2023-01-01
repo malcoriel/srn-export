@@ -1,0 +1,37 @@
+{
+  "type": "record",
+  "name": "RoomsState",
+  "fields": [
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Room",
+          "size": 0
+        }
+      },
+      "name": "values"
+    },
+    {
+      "type": "HashMap",
+      "name": "state_id_by_player_id"
+    },
+    {
+      "type": "HashMap",
+      "name": "state_id_by_room_id"
+    },
+    {
+      "type": "HashMap",
+      "name": "idx_by_state_id"
+    },
+    {
+      "type": "HashMap",
+      "name": "idx_by_room_id"
+    },
+    {
+      "type": "HashMap",
+      "name": "idx_by_player_id"
+    }
+  ]
+}

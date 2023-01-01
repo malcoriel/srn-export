@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "ChatMessage",
+  "fields": [
+    {
+      "type": "string",
+      "name": "name"
+    },
+    {
+      "type": "string",
+      "name": "message"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "type": "record",
+  "name": "Health",
+  "fields": [
+    {
+      "type": "double",
+      "name": "current"
+    },
+    {
+      "type": "double",
+      "name": "max"
+    },
+    {
+      "type": [
+        "null",
+        "double"
+      ],
+      "name": "regen_per_tick"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "ObjectSpecifier",
+          "size": 0
+        }
+      ],
+      "name": "last_damage_dealer"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "SchedulePlayerActionBatch",
+  "fields": [
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Action",
+          "size": 0
+        }
+      },
+      "name": "actions"
+    },
+    {
+      "type": [
+        "null",
+        "long"
+      ],
+      "name": "happened_at_ticks"
+    }
+  ]
+}

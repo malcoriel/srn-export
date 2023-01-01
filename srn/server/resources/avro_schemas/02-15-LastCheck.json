@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "LastCheck",
+  "fields": [
+    {
+      "type": "DateTime",
+      "name": "time"
+    }
+  ]
+}

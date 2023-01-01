@@ -1,0 +1,21 @@
+{
+  "type": "record",
+  "name": "AvroSchemaMap",
+  "fields": [
+    {
+      "type": "HashMap",
+      "name": "index"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Schema",
+          "size": 0
+        }
+      },
+      "name": "elems"
+    }
+  ]
+}

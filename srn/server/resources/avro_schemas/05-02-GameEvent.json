@@ -1,0 +1,316 @@
+{
+  "name": "GameEvent",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "ShipDocked",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "state_id"
+        },
+        {
+          "type": "Ship",
+          "name": "ship"
+        },
+        {
+          "type": "PlanetV2",
+          "name": "planet"
+        },
+        {
+          "type": [
+            "null",
+            {
+              "type": "string",
+              "logicalType": "uuid"
+            }
+          ],
+          "name": "player_id"
+        },
+        {
+          "type": "string",
+          "name": "text_representation"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "ShipUndocked",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "state_id"
+        },
+        {
+          "type": "Ship",
+          "name": "ship"
+        },
+        {
+          "type": "PlanetV2",
+          "name": "planet"
+        },
+        {
+          "type": [
+            "null",
+            {
+              "type": "string",
+              "logicalType": "uuid"
+            }
+          ],
+          "name": "player_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "ShipSpawned",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "state_id"
+        },
+        {
+          "type": "Ship",
+          "name": "ship"
+        },
+        {
+          "type": [
+            "null",
+            {
+              "type": "string",
+              "logicalType": "uuid"
+            }
+          ],
+          "name": "player_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "RoomJoined",
+      "fields": [
+        {
+          "type": "boolean",
+          "name": "personal"
+        },
+        {
+          "type": "GameMode",
+          "name": "mode"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "player_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "ShipDied",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "state_id"
+        },
+        {
+          "type": "Ship",
+          "name": "ship"
+        },
+        {
+          "type": [
+            "null",
+            {
+              "type": "string",
+              "logicalType": "uuid"
+            }
+          ],
+          "name": "player_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "GameEnded",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "state_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "GameStarted",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "state_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "CargoQuestTriggerRequest",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "player_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "TradeDialogueTriggerRequest",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "player_id"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "ship_id"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "planet_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "DialogueTriggerRequest",
+      "fields": [
+        {
+          "type": "string",
+          "name": "dialogue_name"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "player_id"
+        },
+        {
+          "type": [
+            "null",
+            {
+              "type": "fixed",
+              "name": "ObjectSpecifier",
+              "size": 0
+            }
+          ],
+          "name": "target"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "PirateSpawn",
+      "fields": [
+        {
+          "type": "Vec2f64",
+          "name": "at"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "state_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "CreateRoomRequest",
+      "fields": [
+        {
+          "type": "GameMode",
+          "name": "mode"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "room_id"
+        },
+        {
+          "type": [
+            "null",
+            "string"
+          ],
+          "name": "bots_seed"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "QuitPlayerRequest",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "player_id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "SandboxCommandRequest",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "player_id"
+        },
+        {
+          "type": "SandboxCommand",
+          "name": "command"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "Pong",
+  "fields": [
+    {
+      "type": "int",
+      "name": "your_average_for_server"
+    },
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "target_player_id"
+    }
+  ]
+}

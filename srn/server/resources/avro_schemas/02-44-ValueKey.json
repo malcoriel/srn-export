@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "ValueKey",
+  "fields": [
+    {
+      "type": "Key",
+      "name": "1"
+    }
+  ]
+}

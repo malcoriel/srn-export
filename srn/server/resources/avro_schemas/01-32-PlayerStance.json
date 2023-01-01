@@ -1,0 +1,20 @@
+{
+  "name": "PlayerStance",
+  "type": [
+    {
+      "type": "record",
+      "name": "Normal",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Scavenge",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Combat",
+      "fields": []
+    }
+  ]
+}

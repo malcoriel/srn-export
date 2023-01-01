@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "TagConfirm",
+  "fields": [
+    {
+      "type": "string",
+      "name": "tag"
+    }
+  ]
+}

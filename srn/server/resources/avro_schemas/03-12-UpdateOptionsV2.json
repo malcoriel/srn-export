@@ -5,11 +5,7 @@
     {
       "type": [
         "null",
-        {
-          "type": "fixed",
-          "name": "bool",
-          "size": 0
-        }
+        "boolean"
       ],
       "name": "disable_hp_effects"
     },
@@ -27,11 +23,7 @@
     {
       "type": [
         "null",
-        {
-          "type": "fixed",
-          "name": "usize",
-          "size": 0
-        }
+        "int"
       ],
       "name": "limit_to_loc_idx"
     }

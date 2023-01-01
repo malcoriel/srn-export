@@ -10,7 +10,7 @@
       "name": "id"
     },
     {
-      "type": "bool",
+      "type": "boolean",
       "name": "is_bot"
     },
     {

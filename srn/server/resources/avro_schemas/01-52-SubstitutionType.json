@@ -1,0 +1,25 @@
+{
+  "name": "SubstitutionType",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "PlanetName",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "CharacterName",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Generic",
+      "fields": []
+    }
+  ]
+}

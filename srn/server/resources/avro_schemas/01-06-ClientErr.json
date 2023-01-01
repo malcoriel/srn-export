@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "ClientErr",
+  "fields": [
+    {
+      "type": "string",
+      "name": "message"
+    }
+  ]
+}

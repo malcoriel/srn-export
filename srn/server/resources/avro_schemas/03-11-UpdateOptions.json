@@ -3,7 +3,7 @@
   "name": "UpdateOptions",
   "fields": [
     {
-      "type": "bool",
+      "type": "boolean",
       "name": "disable_hp_effects"
     },
     {

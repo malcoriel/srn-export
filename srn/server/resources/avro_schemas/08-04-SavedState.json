@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "SavedState",
+  "fields": [
+    {
+      "type": "string",
+      "name": "name"
+    },
+    {
+      "type": "GameState",
+      "name": "state"
+    }
+  ]
+}

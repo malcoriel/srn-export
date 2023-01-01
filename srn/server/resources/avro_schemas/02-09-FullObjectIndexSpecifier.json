@@ -3,7 +3,7 @@
   "name": "FullObjectIndexSpecifier",
   "fields": [
     {
-      "type": "usize",
+      "type": "int",
       "name": "loc_idx"
     },
     {

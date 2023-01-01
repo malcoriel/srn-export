@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "SchemaDocMeta",
+  "fields": [
+    {
+      "type": [
+        "null",
+        "int"
+      ],
+      "name": "version"
+    }
+  ]
+}

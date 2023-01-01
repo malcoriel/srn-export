@@ -1,0 +1,52 @@
+{
+  "name": "Notification",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Help",
+      "fields": [
+        {
+          "type": "string",
+          "name": "header"
+        },
+        {
+          "type": "NotificationText",
+          "name": "text"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Task",
+      "fields": [
+        {
+          "type": "string",
+          "name": "header"
+        },
+        {
+          "type": "NotificationText",
+          "name": "text"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        }
+      ]
+    }
+  ]
+}

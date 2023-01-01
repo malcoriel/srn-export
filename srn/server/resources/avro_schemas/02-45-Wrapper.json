@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "Wrapper",
+  "fields": [
+    {
+      "type": "T",
+      "name": "value"
+    }
+  ]
+}

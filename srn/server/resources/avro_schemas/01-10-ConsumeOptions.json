@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "ConsumeOptions",
+  "fields": [
+    {
+      "type": "int",
+      "name": "max_mean_ticks"
+    },
+    {
+      "type": "int",
+      "name": "max_delta_ticks"
+    },
+    {
+      "type": "int",
+      "name": "max_max"
+    }
+  ]
+}

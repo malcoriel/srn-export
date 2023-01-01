@@ -1,0 +1,35 @@
+{
+  "name": "PriceVariant",
+  "type": [
+    {
+      "type": "record",
+      "name": "Normal",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Stagnated",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Booming",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Prospering",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Deficit",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Abundance",
+      "fields": []
+    }
+  ]
+}

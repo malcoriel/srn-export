@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "SBTeleport",
+  "fields": [
+    {
+      "type": "Vec2f64",
+      "name": "target"
+    }
+  ]
+}

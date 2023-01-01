@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "StateContainer",
+  "fields": [
+    {
+      "type": "RoomsState",
+      "name": "rooms"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "Ability",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Shoot",
+      "fields": [
+        {
+          "type": "int",
+          "name": "cooldown_ticks_remaining"
+        },
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "turret_id"
+        },
+        {
+          "type": "double",
+          "name": "cooldown_normalized"
+        },
+        {
+          "type": "int",
+          "name": "cooldown_ticks_max"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "ShootAll",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "BlowUpOnLand",
+      "fields": []
+    }
+  ]
+}

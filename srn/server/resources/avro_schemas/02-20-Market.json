@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "Market",
+  "fields": [
+    {
+      "type": "HashMap",
+      "name": "wares"
+    },
+    {
+      "type": "HashMap",
+      "name": "prices"
+    },
+    {
+      "type": "long",
+      "name": "time_before_next_shake"
+    }
+  ]
+}

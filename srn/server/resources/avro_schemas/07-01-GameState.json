@@ -55,7 +55,7 @@
       "name": "milliseconds_remaining"
     },
     {
-      "type": "bool",
+      "type": "boolean",
       "name": "paused"
     },
     {
@@ -78,7 +78,7 @@
       "name": "ticks"
     },
     {
-      "type": "bool",
+      "type": "boolean",
       "name": "disable_hp_effects"
     },
     {

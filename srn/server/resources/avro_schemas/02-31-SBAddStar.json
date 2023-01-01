@@ -1,0 +1,21 @@
+{
+  "type": "record",
+  "name": "SBAddStar",
+  "fields": [
+    {
+      "type": "double",
+      "name": "radius"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "ReferencableId",
+          "size": 0
+        }
+      ],
+      "name": "id"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "SchedulePlayerAction",
+  "fields": [
+    {
+      "type": "Action",
+      "name": "action"
+    },
+    {
+      "type": [
+        "null",
+        "long"
+      ],
+      "name": "happened_at_ticks"
+    }
+  ]
+}

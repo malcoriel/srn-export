@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "ContainersContainer",
+  "fields": [
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Box",
+          "size": 0
+        }
+      },
+      "name": "containers"
+    }
+  ]
+}

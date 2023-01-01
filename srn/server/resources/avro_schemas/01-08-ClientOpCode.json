@@ -1,0 +1,85 @@
+{
+  "name": "ClientOpCode",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Sync",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "MutateMyShip",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Name",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "DialogueOption",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "SwitchRoom",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "SandboxCommand",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "TradeAction",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "DialogueRequest",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "InventoryAction",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "ObsoleteLongActionStart",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "ObsoleteRoomJoin",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "NotificationAction",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "SchedulePlayerAction",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "SchedulePlayerActionBatch",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Ping",
+      "fields": []
+    }
+  ]
+}

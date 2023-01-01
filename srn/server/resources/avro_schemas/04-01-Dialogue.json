@@ -1,0 +1,47 @@
+{
+  "type": "record",
+  "name": "Dialogue",
+  "fields": [
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "id"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "DialogueElem",
+          "size": 0
+        }
+      },
+      "name": "options"
+    },
+    {
+      "type": "DialogueElem",
+      "name": "prompt"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "PlanetV2",
+          "size": 0
+        }
+      ],
+      "name": "planet"
+    },
+    {
+      "type": "string",
+      "name": "left_character"
+    },
+    {
+      "type": "string",
+      "name": "right_character"
+    }
+  ]
+}

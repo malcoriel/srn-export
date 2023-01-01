@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "ServerChatMessage",
+  "fields": [
+    {
+      "type": "string",
+      "name": "channel"
+    },
+    {
+      "type": "ChatMessage",
+      "name": "message"
+    }
+  ]
+}

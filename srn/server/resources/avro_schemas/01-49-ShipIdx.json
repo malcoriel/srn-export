@@ -3,11 +3,11 @@
   "name": "ShipIdx",
   "fields": [
     {
-      "type": "usize",
+      "type": "int",
       "name": "location_idx"
     },
     {
-      "type": "usize",
+      "type": "int",
       "name": "ship_idx"
     }
   ]

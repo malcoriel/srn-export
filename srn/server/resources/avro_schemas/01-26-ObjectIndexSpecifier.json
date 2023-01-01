@@ -11,7 +11,7 @@
       "name": "Mineral",
       "fields": [
         {
-          "type": "usize",
+          "type": "int",
           "name": "idx"
         }
       ]
@@ -21,7 +21,7 @@
       "name": "Container",
       "fields": [
         {
-          "type": "usize",
+          "type": "int",
           "name": "idx"
         }
       ]
@@ -31,7 +31,7 @@
       "name": "Planet",
       "fields": [
         {
-          "type": "usize",
+          "type": "int",
           "name": "idx"
         }
       ]
@@ -41,7 +41,7 @@
       "name": "Ship",
       "fields": [
         {
-          "type": "usize",
+          "type": "int",
           "name": "idx"
         }
       ]

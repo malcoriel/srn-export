@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "ReplayFrame",
+  "fields": [
+    {
+      "type": "int",
+      "name": "ticks"
+    },
+    {
+      "type": "GameState",
+      "name": "state"
+    }
+  ]
+}

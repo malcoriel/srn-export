@@ -1,0 +1,31 @@
+{
+  "type": "record",
+  "name": "Substitution",
+  "fields": [
+    {
+      "type": "SubstitutionType",
+      "name": "s_type"
+    },
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "id"
+    },
+    {
+      "type": "string",
+      "name": "text"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "string",
+          "logicalType": "uuid"
+        }
+      ],
+      "name": "target_id"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "FriendOrFoe",
+  "type": [
+    {
+      "type": "record",
+      "name": "Neutral",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Friend",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Foe",
+      "fields": []
+    }
+  ]
+}

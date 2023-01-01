@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "MoveAxisParam",
+  "fields": [
+    {
+      "type": "boolean",
+      "name": "forward"
+    },
+    {
+      "type": "int",
+      "name": "last_tick"
+    }
+  ]
+}

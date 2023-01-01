@@ -1,0 +1,25 @@
+{
+  "name": "CargoDeliveryQuestState",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Started",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Picked",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Delivered",
+      "fields": []
+    }
+  ]
+}

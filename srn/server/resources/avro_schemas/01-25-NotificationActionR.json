@@ -1,0 +1,23 @@
+{
+  "name": "NotificationActionR",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Dismiss",
+      "fields": [
+        {
+          "type": {
+            "type": "string",
+            "logicalType": "uuid"
+          },
+          "name": "id"
+        }
+      ]
+    }
+  ]
+}

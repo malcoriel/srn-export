@@ -1,0 +1,30 @@
+{
+  "name": "ReplayError",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "BadPatch",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "InvalidRewind",
+      "fields": [
+        {
+          "type": "int",
+          "name": "1"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "NotImplemented",
+      "fields": []
+    }
+  ]
+}

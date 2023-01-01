@@ -251,9 +251,8 @@ impl Visitor {
                 },
                 |id| id.to_string(),
             );
-            let (schema, dep_name) =
-                self.map_type(&field.ty, Some(field_name.clone()), side_effect_types);
-            if let Some(dep_name) = dep_name {
+            let (schema, dep_name) = self.map_type(&field.ty, side_effect_types);
+            for dep_name in dep_name {
                 into_deps.push(dep_name);
             }
             into_fields.push(BoxField(schema::Field {
@@ -267,18 +266,18 @@ impl Visitor {
         }
     }
 
-    fn map_primitive(&self, prim: &str) -> Option<(Schema, Option<String>)> {
+    fn map_primitive(&self, prim: &str) -> Option<(Schema, Vec<String>)> {
         match prim {
-            "f64" => Some((Schema::Double, None)),
-            "f32" => Some((Schema::Float, None)),
-            "u32" => Some((Schema::Int(None), None)),
-            "i32" => Some((Schema::Int(None), None)),
-            "usize" => Some((Schema::Int(None), None)),
-            "bool" => Some((Schema::Boolean, None)),
-            "i64" => Some((Schema::Long(None), None)),
-            "u64" => Some((Schema::Long(None), None)),
-            "String" => Some((Schema::String(None), None)),
-            "Uuid" => Some((Schema::String(Some(StringLogical::Uuid)), None)), // while not primitive, it's string-based
+            "f64" => Some((Schema::Double, vec![])),
+            "f32" => Some((Schema::Float, vec![])),
+            "u32" => Some((Schema::Int(None), vec![])),
+            "i32" => Some((Schema::Int(None), vec![])),
+            "usize" => Some((Schema::Int(None), vec![])),
+            "bool" => Some((Schema::Boolean, vec![])),
+            "i64" => Some((Schema::Long(None), vec![])),
+            "u64" => Some((Schema::Long(None), vec![])),
+            "String" => Some((Schema::String(None), vec![])),
+            "Uuid" => Some((Schema::String(Some(StringLogical::Uuid)), vec![])), // while not primitive, it's string-based
             _ => None,
         }
     }
@@ -286,25 +285,22 @@ impl Visitor {
     fn map_built_in_complex(
         &self,
         built_in: &Type,
-        prepend_name: Option<String>,
         side_effect_types: &mut Vec<BoxEntity>,
-    ) -> Option<(Schema, Option<String>)> {
+    ) -> Option<(Schema, Vec<String>)> {
         match built_in {
             Type::Path(tp) => {
                 let first_segment = &tp.path.segments[0];
                 let first_segment_name = first_segment.ident.to_string();
                 if first_segment_name == "Option" {
                     let first_arg = get_first_type_arg_type_path(&first_segment.arguments);
-                    let map_target_result =
-                        self.map_type(&first_arg, prepend_name, side_effect_types);
+                    let map_target_result = self.map_type(&first_arg, side_effect_types);
                     return Some((
                         Schema::Union(vec![Schema::Null, map_target_result.0]),
                         map_target_result.1,
                     ));
                 } else if first_segment_name == "Vec" {
                     let first_arg = get_first_type_arg_type_path(&first_segment.arguments);
-                    let map_target_result =
-                        self.map_type(&first_arg, prepend_name, side_effect_types);
+                    let map_target_result = self.map_type(&first_arg, side_effect_types);
                     return Some((
                         Schema::Array(Box::from(map_target_result.0)),
                         map_target_result.1,
@@ -316,12 +312,7 @@ impl Visitor {
         }
     }
 
-    fn map_type(
-        &self,
-        ty: &Type,
-        prepend_name: Option<String>,
-        side_effect_types: &mut Vec<BoxEntity>,
-    ) -> (Schema, Option<String>) {
+    fn map_type(&self, ty: &Type, side_effect_types: &mut Vec<BoxEntity>) -> (Schema, Vec<String>) {
         match ty {
             // Type::Array(_) => {}
             // Type::BareFn(_) => {}
@@ -337,8 +328,7 @@ impl Visitor {
                 if map_primitive.is_some() {
                     return map_primitive.unwrap();
                 }
-                let map_build_in_complex =
-                    self.map_built_in_complex(ty, prepend_name, side_effect_types);
+                let map_build_in_complex = self.map_built_in_complex(ty, side_effect_types);
                 if map_build_in_complex.is_some() {
                     return map_build_in_complex.unwrap();
                 }
@@ -362,9 +352,11 @@ impl Visitor {
                         .elems
                         .iter()
                         .map(|e| {
-                            let mapped_type = self.map_type(e, None, side_effect_types);
+                            let mapped_type = self.map_type(e, side_effect_types);
                             let type_dep = mapped_type.1;
-                            type_dep.map(|td| collected_deps.push(td));
+                            type_dep
+                                .iter()
+                                .for_each(|td| collected_deps.push(td.clone()));
                             let field = schema::Field {
                                 name: counter.to_string(),
                                 doc: None,
@@ -378,23 +370,14 @@ impl Visitor {
                         })
                         .collect(),
                 });
-                return (
-                    schema_record,
-                    if collected_deps.len() == 0 {
-                        None
-                    } else if collected_deps.len() == 1 {
-                        Some(collected_deps[0].clone())
-                    } else {
-                        todo!("Need to support multiple type deps")
-                    },
-                );
+                return (schema_record, collected_deps);
             }
             // Type::Verbatim(_) => {}
             // _ => Schema::Null,
             _ => unimplemented!("Unknown type: {ty:?}"),
         }
     }
-    fn map_reference(&self, reference: &str) -> (Schema, Option<String>) {
+    fn map_reference(&self, reference: &str) -> (Schema, Vec<String>) {
         // I am abusing Fixed here because there is no schema-reference ability in avro-schema (Schema::Ref variant)
         // This field will not be a true avro Fixed, but rather 0-size name-reference to another schema
         let ref_name = reference.to_string();
@@ -407,7 +390,7 @@ impl Visitor {
                 size: 0,
                 logical: None,
             }),
-            Some(ref_name),
+            vec![ref_name],
         )
     }
 }
