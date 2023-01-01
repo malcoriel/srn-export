@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "AABB",
+  "fields": [
+    {
+      "type": "Vec2f64",
+      "name": "top_left"
+    },
+    {
+      "type": "Vec2f64",
+      "name": "bottom_right"
+    }
+  ]
+}

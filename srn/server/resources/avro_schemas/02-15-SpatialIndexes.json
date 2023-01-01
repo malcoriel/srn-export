@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "SpatialIndexes",
+  "fields": [
+    {
+      "type": "HashMap",
+      "name": "values"
+    }
+  ]
+}

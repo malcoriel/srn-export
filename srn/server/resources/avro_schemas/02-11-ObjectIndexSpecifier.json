@@ -1,0 +1,55 @@
+{
+  "name": "ObjectIndexSpecifier",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Mineral",
+      "fields": [
+        {
+          "type": "usize",
+          "name": "idx"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Container",
+      "fields": [
+        {
+          "type": "usize",
+          "name": "idx"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Planet",
+      "fields": [
+        {
+          "type": "usize",
+          "name": "idx"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Ship",
+      "fields": [
+        {
+          "type": "usize",
+          "name": "idx"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "Star",
+      "fields": []
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "RotationMovement",
+  "type": [
+    {
+      "type": "record",
+      "name": "None",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "Monotonous",
+      "fields": [
+        {
+          "type": "double",
+          "name": "full_period_ticks"
+        },
+        {
+          "type": [
+            "null",
+            "int"
+          ],
+          "name": "phase"
+        },
+        {
+          "type": "int",
+          "name": "start_phase"
+        }
+      ]
+    }
+  ]
+}

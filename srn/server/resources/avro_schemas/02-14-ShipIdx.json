@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "ShipIdx",
+  "fields": [
+    {
+      "type": "usize",
+      "name": "location_idx"
+    },
+    {
+      "type": "usize",
+      "name": "ship_idx"
+    }
+  ]
+}

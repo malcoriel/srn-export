@@ -1,0 +1,26 @@
+{
+  "type": "record",
+  "name": "GameStateIndexes",
+  "fields": [
+    {
+      "type": "HashMap",
+      "name": "planets_by_id"
+    },
+    {
+      "type": "HashMap",
+      "name": "players_by_id"
+    },
+    {
+      "type": "HashMap",
+      "name": "ships_by_id"
+    },
+    {
+      "type": "HashMap",
+      "name": "anchor_distances"
+    },
+    {
+      "type": "HashMap",
+      "name": "bodies_by_id"
+    }
+  ]
+}

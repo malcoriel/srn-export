@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "GameStateCaches",
+  "fields": [
+    {
+      "type": "HashMap",
+      "name": "rel_orbit_cache"
+    },
+    {
+      "type": "HashMap",
+      "name": "rotation_cache"
+    }
+  ]
+}

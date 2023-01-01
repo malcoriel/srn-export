@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "ShipWithTime",
+  "fields": [
+    {
+      "type": "Ship",
+      "name": "ship"
+    },
+    {
+      "type": "long",
+      "name": "at_ticks"
+    }
+  ]
+}

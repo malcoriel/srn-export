@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "Breadcrumb",
+  "fields": [
+    {
+      "type": "Vec2f64",
+      "name": "position"
+    },
+    {
+      "type": "string",
+      "name": "color"
+    },
+    {
+      "type": "long",
+      "name": "timestamp_ticks"
+    },
+    {
+      "type": [
+        "null",
+        "string"
+      ],
+      "name": "tag"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "record",
+  "name": "ProcessedPlayerAction",
+  "fields": [
+    {
+      "type": "Action",
+      "name": "action"
+    },
+    {
+      "type": "long",
+      "name": "processed_at_ticks"
+    },
+    {
+      "type": [
+        "null",
+        "string"
+      ],
+      "name": "packet_tag"
+    }
+  ]
+}

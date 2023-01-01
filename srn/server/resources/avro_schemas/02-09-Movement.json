@@ -1,0 +1,108 @@
+{
+  "name": "Movement",
+  "type": [
+    {
+      "type": "record",
+      "name": "None",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "ShipMonotonous",
+      "fields": [
+        {
+          "type": "double",
+          "name": "move_speed"
+        },
+        {
+          "type": "double",
+          "name": "turn_speed"
+        },
+        {
+          "type": "double",
+          "name": "current_move_speed"
+        },
+        {
+          "type": "double",
+          "name": "current_turn_speed"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "ShipAccelerated",
+      "fields": [
+        {
+          "type": "double",
+          "name": "max_move_speed"
+        },
+        {
+          "type": "double",
+          "name": "current_move_speed"
+        },
+        {
+          "type": "double",
+          "name": "current_turn_speed"
+        },
+        {
+          "type": "double",
+          "name": "acc_move"
+        },
+        {
+          "type": "double",
+          "name": "max_turn_speed"
+        },
+        {
+          "type": "double",
+          "name": "acc_turn"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "RadialMonotonous",
+      "fields": [
+        {
+          "type": "double",
+          "name": "full_period_ticks"
+        },
+        {
+          "type": "ObjectSpecifier",
+          "name": "anchor"
+        },
+        {
+          "type": [
+            "null",
+            {
+              "type": "fixed",
+              "name": "Vec2f64",
+              "size": 0
+            }
+          ],
+          "name": "relative_position"
+        },
+        {
+          "type": [
+            "null",
+            "int"
+          ],
+          "name": "phase"
+        },
+        {
+          "type": "int",
+          "name": "start_phase"
+        }
+      ]
+    },
+    {
+      "type": "record",
+      "name": "AnchoredStatic",
+      "fields": [
+        {
+          "type": "ObjectSpecifier",
+          "name": "anchor"
+        }
+      ]
+    }
+  ]
+}

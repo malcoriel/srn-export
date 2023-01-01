@@ -1,0 +1,172 @@
+{
+  "type": "record",
+  "name": "GameState",
+  "fields": [
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "id"
+    },
+    {
+      "type": "int",
+      "name": "version"
+    },
+    {
+      "type": "GameMode",
+      "name": "mode"
+    },
+    {
+      "type": [
+        "null",
+        "string"
+      ],
+      "name": "tag"
+    },
+    {
+      "type": "string",
+      "name": "seed"
+    },
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "my_id"
+    },
+    {
+      "type": "long",
+      "name": "start_time_ticks"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Player",
+          "size": 0
+        }
+      },
+      "name": "players"
+    },
+    {
+      "type": "int",
+      "name": "milliseconds_remaining"
+    },
+    {
+      "type": "bool",
+      "name": "paused"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "Leaderboard",
+          "size": 0
+        }
+      ],
+      "name": "leaderboard"
+    },
+    {
+      "type": "int",
+      "name": "millis"
+    },
+    {
+      "type": "long",
+      "name": "ticks"
+    },
+    {
+      "type": "bool",
+      "name": "disable_hp_effects"
+    },
+    {
+      "type": "Market",
+      "name": "market"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Location",
+          "size": 0
+        }
+      },
+      "name": "locations"
+    },
+    {
+      "type": "HashMap",
+      "name": "interval_data"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "GameOver",
+          "size": 0
+        }
+      ],
+      "name": "game_over"
+    },
+    {
+      "type": "VecDeque",
+      "name": "events"
+    },
+    {
+      "type": "VecDeque",
+      "name": "player_actions"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "ProcessedGameEvent",
+          "size": 0
+        }
+      },
+      "name": "processed_events"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "ProcessedPlayerAction",
+          "size": 0
+        }
+      },
+      "name": "processed_player_actions"
+    },
+    {
+      "type": "long",
+      "name": "update_every_ticks"
+    },
+    {
+      "type": "int",
+      "name": "accumulated_not_updated_ticks"
+    },
+    {
+      "type": "GenStateOpts",
+      "name": "gen_opts"
+    },
+    {
+      "type": "DialogueStates",
+      "name": "dialogue_states"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Breadcrumb",
+          "size": 0
+        }
+      },
+      "name": "breadcrumbs"
+    }
+  ]
+}

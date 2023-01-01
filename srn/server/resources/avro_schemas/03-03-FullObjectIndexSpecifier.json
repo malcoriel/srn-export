@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "FullObjectIndexSpecifier",
+  "fields": [
+    {
+      "type": "usize",
+      "name": "loc_idx"
+    },
+    {
+      "type": "ObjectIndexSpecifier",
+      "name": "obj_idx"
+    }
+  ]
+}

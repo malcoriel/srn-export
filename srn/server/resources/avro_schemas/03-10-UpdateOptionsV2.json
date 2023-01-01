@@ -1,0 +1,39 @@
+{
+  "type": "record",
+  "name": "UpdateOptionsV2",
+  "fields": [
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "bool",
+          "size": 0
+        }
+      ],
+      "name": "disable_hp_effects"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "AABB",
+          "size": 0
+        }
+      ],
+      "name": "limit_area"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "usize",
+          "size": 0
+        }
+      ],
+      "name": "limit_to_loc_idx"
+    }
+  ]
+}

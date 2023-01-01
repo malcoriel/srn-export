@@ -1,6 +1,8 @@
 const { spawnWatched } = require('./shellspawn');
+const fs = require('fs-extra');
 (async () => {
-  const files = ['vec2.rs', 'world.rs']
+  const files = fs
+    .readdirSync('./server/src')
     .map((f) => `../server/src/${f}`)
     .join(',');
   const filter = [
@@ -12,7 +14,7 @@ const { spawnWatched } = require('./shellspawn');
   ].join(',');
 
   await spawnWatched(
-    `cargo run generate --from="${files}" --filter="${filter}" --to ../server/resources/avro_schemas`,
+    `cargo run generate --from="${files}" --to ../server/resources/avro_schemas`,
     { spawnOptions: { cwd: './avro-genschema' } }
   );
 })();

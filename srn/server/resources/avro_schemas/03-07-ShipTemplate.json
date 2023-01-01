@@ -1,0 +1,88 @@
+{
+  "type": "record",
+  "name": "ShipTemplate",
+  "fields": [
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "Vec2f64",
+          "size": 0
+        }
+      ],
+      "name": "at"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "fixed",
+            "name": "AiTrait",
+            "size": 0
+          }
+        }
+      ],
+      "name": "npc_traits"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "fixed",
+            "name": "Ability",
+            "size": 0
+          }
+        }
+      ],
+      "name": "abilities"
+    },
+    {
+      "type": [
+        "null",
+        "string"
+      ],
+      "name": "name"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "Health",
+          "size": 0
+        }
+      ],
+      "name": "health"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "Movement",
+          "size": 0
+        }
+      ],
+      "name": "movement"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "array",
+          "items": {
+            "type": "fixed",
+            "name": "ObjectProperty",
+            "size": 0
+          }
+        }
+      ],
+      "name": "properties"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+use crate::BoxEntity::Record;
 use avro_schema::schema;
 use avro_schema::schema::*;
 use clap::command;
@@ -16,14 +17,21 @@ use syn::{
     TypePath,
 };
 use topological_sort::TopologicalSort;
+use uuid::Uuid;
 
 #[derive(Debug)]
 struct Visitor {
-    pub entities: HashMap<String, BoxEntity>,
+    entities: Vec<(String, BoxEntity)>,
+    pub entities_index: HashMap<String, BoxEntity>,
     filter: Option<Vec<String>>,
 }
 
 impl Visitor {
+    fn add(&mut self, key: String, ent: BoxEntity) {
+        self.entities_index.insert(key.clone(), ent.clone());
+        self.entities.push((key, ent));
+    }
+
     fn grab_fields_get_deps_enum_variant(
         &self,
         en_var: &syn::Variant,
@@ -34,14 +42,19 @@ impl Visitor {
             deps: vec![],
             name: en_var.ident.to_string(),
             namespace: None,
-            doc: Some("{\"version\": 1}".to_string()),
             fields: vec![],
         };
-        self.grab_fields_get_deps_any(&mut record.fields, into_deps, &en_var.fields);
+        let mut side_effect_types = vec![];
+        self.grab_fields_get_deps_any(
+            &mut record.fields,
+            into_deps,
+            &mut side_effect_types,
+            &en_var.fields,
+        );
         collected_vars.push(record)
     }
 
-    pub fn top_sorted_records(&self) -> Vec<(String, &BoxEntity)> {
+    pub fn top_sorted_records(&self) -> Vec<Vec<(String, &BoxEntity)>> {
         let mut unmapped_types = vec![];
         let mut ts = TopologicalSort::<String>::new();
         for (key, value) in self.entities.iter() {
@@ -53,45 +66,53 @@ impl Visitor {
         let mut sorted = vec![];
         loop {
             let mut layer = ts.pop_all();
+            layer.sort();
             if layer.len() == 0 {
                 break;
             }
-            sorted.append(&mut layer)
+            sorted.push(layer)
         }
         eprintln!("sorted len={} {:?}", self.entities.len(), sorted);
-        let res = sorted
+        let res: Vec<Vec<(String, &BoxEntity)>> = sorted
             .into_iter()
-            .filter_map(|name| {
-                let rec = self.entities.get(&name);
-                if rec.is_none() {
-                    unmapped_types.push(name.clone());
-                }
-                rec.map(|rec| (name, rec))
+            .map(|layer| {
+                layer
+                    .into_iter()
+                    .filter_map(|name| {
+                        let rec = self.entities_index.get(name.as_str());
+                        if rec.is_none() {
+                            unmapped_types.push(name.clone());
+                        }
+                        rec.map(|rec| (name.clone(), rec))
+                    })
+                    .collect()
             })
             .collect();
         if unmapped_types.len() > 0 {
-            eprintln!("Unmapped types: {:?}", unmapped_types);
+            eprintln!(
+                "\n========================\nUnmapped types: {:?}",
+                unmapped_types
+            );
         }
         res
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BoxRecord {
     pub deps: Vec<String>,
     pub name: String,
     pub namespace: Option<String>,
-    pub doc: Option<String>,
     pub fields: Vec<BoxField>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BoxEnum {
     pub deps: Vec<String>,
     pub enum_name: String,
-    pub enum_variants: Vec<Schema>,
+    pub enum_variants: Vec<BoxRecord>,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BoxEntity {
     Record(BoxRecord),
     Enum(BoxEnum),
@@ -104,12 +125,18 @@ impl BoxEntity {
             BoxEntity::Enum(v) => &v.deps,
         }
     }
+    fn get_name(&self) -> String {
+        match self {
+            BoxEntity::Record(r) => r.name.clone(),
+            BoxEntity::Enum(e) => e.enum_name.clone(),
+        }
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BoxField(schema::Field);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SchemaOrRef {
     Schema(Schema),
     Ref(String),
@@ -126,6 +153,7 @@ impl Serialize for SchemaOrRef {
         }
     }
 }
+
 impl Serialize for BoxField {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -160,23 +188,37 @@ impl Serialize for BoxField {
     }
 }
 
+impl Serialize for BoxRecord {
+    fn serialize<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("type", "record")?;
+        map.serialize_entry("name", &self.name)?;
+        map.serialize_entry("fields", &self.fields)?;
+        map.end()
+    }
+}
+
 impl Serialize for BoxEntity {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, mut serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
         match self {
             BoxEntity::Record(record) => {
-                let mut map = serializer.serialize_map(Some(4))?;
+                let mut map = serializer.serialize_map(None)?;
                 map.serialize_entry("type", "record")?;
                 map.serialize_entry("name", &record.name)?;
                 map.serialize_entry("fields", &record.fields)?;
-                map.serialize_entry("doc", &record.doc)?;
-                // order is ignored here
                 map.end()
             }
             BoxEntity::Enum(en) => {
-                todo!()
+                let mut map = serializer.serialize_map(None)?;
+                map.serialize_entry("name", &en.enum_name)?;
+                map.serialize_entry("type", &en.enum_variants)?;
+                map.end()
             }
         }
     }
@@ -188,30 +230,34 @@ impl Visitor {
         into_fields: &mut Vec<BoxField>,
         into_deps: &mut Vec<String>,
         node: &ItemStruct,
+        side_effect_types: &mut Vec<BoxEntity>,
     ) {
-        self.grab_fields_get_deps_any(into_fields, into_deps, &node.fields);
+        self.grab_fields_get_deps_any(into_fields, into_deps, side_effect_types, &node.fields);
     }
 
     fn grab_fields_get_deps_any(
         &self,
         into_fields: &mut Vec<BoxField>,
         into_deps: &mut Vec<String>,
+        side_effect_types: &mut Vec<BoxEntity>,
         fields: &Fields,
     ) {
         let mut unnamed_index = 0;
         for field in fields.iter() {
-            let (schema, dep_name) = self.map_type(&field.ty);
+            let field_name = field.ident.as_ref().map_or_else(
+                || {
+                    unnamed_index += 1;
+                    unnamed_index.to_string()
+                },
+                |id| id.to_string(),
+            );
+            let (schema, dep_name) =
+                self.map_type(&field.ty, Some(field_name.clone()), side_effect_types);
             if let Some(dep_name) = dep_name {
                 into_deps.push(dep_name);
             }
             into_fields.push(BoxField(schema::Field {
-                name: field.ident.as_ref().map_or_else(
-                    || {
-                        unnamed_index += 1;
-                        unnamed_index.to_string()
-                    },
-                    |id| id.to_string(),
-                ),
+                name: field_name,
                 doc: None,
                 schema,
                 default: None,
@@ -227,6 +273,8 @@ impl Visitor {
             "f32" => Some((Schema::Float, None)),
             "u32" => Some((Schema::Int(None), None)),
             "i32" => Some((Schema::Int(None), None)),
+            "usize" => Some((Schema::Int(None), None)),
+            "bool" => Some((Schema::Boolean, None)),
             "i64" => Some((Schema::Long(None), None)),
             "u64" => Some((Schema::Long(None), None)),
             "String" => Some((Schema::String(None), None)),
@@ -235,23 +283,28 @@ impl Visitor {
         }
     }
 
-    fn map_built_in_complex(&self, built_in: &Type) -> Option<(Schema, Option<String>)> {
+    fn map_built_in_complex(
+        &self,
+        built_in: &Type,
+        prepend_name: Option<String>,
+        side_effect_types: &mut Vec<BoxEntity>,
+    ) -> Option<(Schema, Option<String>)> {
         match built_in {
             Type::Path(tp) => {
                 let first_segment = &tp.path.segments[0];
                 let first_segment_name = first_segment.ident.to_string();
                 if first_segment_name == "Option" {
-                    let first_arg: TypePath =
-                        get_first_type_arg_type_path(&first_segment.arguments);
-                    let map_target_result = self.map_type(&Type::Path(first_arg));
+                    let first_arg = get_first_type_arg_type_path(&first_segment.arguments);
+                    let map_target_result =
+                        self.map_type(&first_arg, prepend_name, side_effect_types);
                     return Some((
                         Schema::Union(vec![Schema::Null, map_target_result.0]),
                         map_target_result.1,
                     ));
                 } else if first_segment_name == "Vec" {
-                    let first_arg: TypePath =
-                        get_first_type_arg_type_path(&first_segment.arguments);
-                    let map_target_result = self.map_type(&Type::Path(first_arg));
+                    let first_arg = get_first_type_arg_type_path(&first_segment.arguments);
+                    let map_target_result =
+                        self.map_type(&first_arg, prepend_name, side_effect_types);
                     return Some((
                         Schema::Array(Box::from(map_target_result.0)),
                         map_target_result.1,
@@ -263,7 +316,12 @@ impl Visitor {
         }
     }
 
-    fn map_type(&self, ty: &Type) -> (Schema, Option<String>) {
+    fn map_type(
+        &self,
+        ty: &Type,
+        prepend_name: Option<String>,
+        side_effect_types: &mut Vec<BoxEntity>,
+    ) -> (Schema, Option<String>) {
         match ty {
             // Type::Array(_) => {}
             // Type::BareFn(_) => {}
@@ -279,7 +337,8 @@ impl Visitor {
                 if map_primitive.is_some() {
                     return map_primitive.unwrap();
                 }
-                let map_build_in_complex = self.map_built_in_complex(ty);
+                let map_build_in_complex =
+                    self.map_built_in_complex(ty, prepend_name, side_effect_types);
                 if map_build_in_complex.is_some() {
                     return map_build_in_complex.unwrap();
                 }
@@ -290,7 +349,46 @@ impl Visitor {
             // Type::Reference(_) => {}
             // Type::Slice(_) => {}
             // Type::TraitObject(_) => {}
-            // Type::Tuple(_) => {}
+            Type::Tuple(tup) => {
+                // tuple has to emit an anonymous type along the way,
+                let mut counter = 0;
+                let mut collected_deps = vec![];
+                let schema_record = Schema::Record(schema::Record {
+                    name: format!("tuple-{}", Uuid::new_v4()),
+                    namespace: None,
+                    doc: None,
+                    aliases: vec![],
+                    fields: tup
+                        .elems
+                        .iter()
+                        .map(|e| {
+                            let mapped_type = self.map_type(e, None, side_effect_types);
+                            let type_dep = mapped_type.1;
+                            type_dep.map(|td| collected_deps.push(td));
+                            let field = schema::Field {
+                                name: counter.to_string(),
+                                doc: None,
+                                schema: mapped_type.0,
+                                default: None,
+                                order: None,
+                                aliases: vec![],
+                            };
+                            counter += 1;
+                            field
+                        })
+                        .collect(),
+                });
+                return (
+                    schema_record,
+                    if collected_deps.len() == 0 {
+                        None
+                    } else if collected_deps.len() == 1 {
+                        Some(collected_deps[0].clone())
+                    } else {
+                        todo!("Need to support multiple type deps")
+                    },
+                );
+            }
             // Type::Verbatim(_) => {}
             // _ => Schema::Null,
             _ => unimplemented!("Unknown type: {ty:?}"),
@@ -314,12 +412,11 @@ impl Visitor {
     }
 }
 
-fn get_first_type_arg_type_path(args: &PathArguments) -> TypePath {
+fn get_first_type_arg_type_path(args: &PathArguments) -> Type {
     match args {
         PathArguments::AngleBracketed(args) => match &args.args[0] {
             GenericArgument::Type(ty) => match ty {
-                Type::Path(tp) => tp.clone(),
-                _ => panic!("Unsupported type {ty:?}"),
+                _ => ty.clone(),
             },
             _ => panic!("Unsupported arg type: {:?}", args.args[0]),
         },
@@ -328,8 +425,40 @@ fn get_first_type_arg_type_path(args: &PathArguments) -> TypePath {
 }
 
 impl<'ast> Visit<'ast> for Visitor {
+    fn visit_item_enum(&mut self, node: &'ast ItemEnum) {
+        let enum_name = node.ident.to_string();
+        eprintln!("Started enum {}", enum_name);
+        let analyze = if let Some(filter) = &self.filter {
+            filter
+                .iter()
+                .any(|filter| enum_name.contains(filter.as_str()))
+        } else {
+            true
+        };
+        if analyze {
+            let mut union: Vec<BoxRecord> = vec![];
+            let mut deps: Vec<String> = vec![];
+            for item in &node.variants {
+                self.grab_fields_get_deps_enum_variant(&item, &mut union, &mut deps);
+            }
+            self.add(
+                enum_name.clone(),
+                BoxEntity::Enum(BoxEnum {
+                    enum_name: enum_name.clone(),
+                    deps,
+                    enum_variants: union,
+                }),
+            );
+            eprintln!("Grabbed enum {}", enum_name);
+        } else {
+            eprintln!("Skipped enum {}", enum_name);
+        }
+        visit::visit_item_enum(self, node);
+    }
+
     fn visit_item_struct(&mut self, node: &'ast ItemStruct) {
         let struct_name = node.ident.to_string();
+        eprintln!("Started struct {}", struct_name);
         let analyze = if let Some(filter) = &self.filter {
             filter
                 .iter()
@@ -342,49 +471,25 @@ impl<'ast> Visit<'ast> for Visitor {
                 deps: vec![],
                 name: struct_name.clone(),
                 namespace: None,
-                doc: Some("{\"version\": 1}".to_string()),
                 fields: vec![],
             };
 
-            self.grab_fields_get_deps_record(&mut record.fields, &mut record.deps, node);
-            self.entities
-                .insert(struct_name.clone(), BoxEntity::Record(record));
+            let mut side_effect_types = vec![];
+            self.grab_fields_get_deps_record(
+                &mut record.fields,
+                &mut record.deps,
+                node,
+                &mut side_effect_types,
+            );
+            self.add(struct_name.clone(), BoxEntity::Record(record));
+            for side_effect_type in side_effect_types.into_iter() {
+                self.add(side_effect_type.get_name(), side_effect_type);
+            }
             eprintln!("Grabbed struct {}", struct_name);
         } else {
             eprintln!("Skipped struct {}", struct_name);
         }
         visit::visit_item_struct(self, node);
-    }
-
-    fn visit_item_enum(&mut self, node: &'ast ItemEnum) {
-        return;
-        // let enum_name = node.ident.to_string();
-        // let analyze = if let Some(filter) = &self.filter {
-        //     filter
-        //         .iter()
-        //         .any(|filter| enum_name.contains(filter.as_str()))
-        // } else {
-        //     true
-        // };
-        // if analyze {
-        //     let mut union: Vec<Schema> = vec![];
-        //     let mut deps: Vec<String> = vec![];
-        //     for item in &node.variants {
-        //         self.grab_fields_get_deps_enum_variant(&item, &mut union, &mut deps);
-        //     }
-        //     self.entities.insert(
-        //         enum_name.clone(),
-        //         BoxEntity::Enum(BoxEnum {
-        //             enum_name: enum_name.clone(),
-        //             deps,
-        //             enum_variants: union,
-        //         }),
-        //     );
-        //     eprintln!("Grabbed enum {}", enum_name);
-        // } else {
-        //     eprintln!("Skipped enum {}", enum_name);
-        // }
-        // visit::visit_item_enum(self, node);
     }
 }
 
@@ -418,7 +523,8 @@ fn main() {
         .expect("--to arg is required");
 
     let mut visitor = Visitor {
-        entities: HashMap::new(),
+        entities: vec![],
+        entities_index: Default::default(),
         filter: filter.clone(),
     };
 
@@ -428,14 +534,24 @@ fn main() {
             .expect(format!("Unable to create AST from file {:?}", file).as_str());
         visitor.visit_file(&file);
     }
-    let mut counter = 0;
-    for (key, value) in visitor.top_sorted_records() {
-        counter += 1;
-        let mut file_path = to.clone();
-        file_path.push(PathBuf::from(format!("{counter:0>4}-{key}.json")));
-        let serialized = serde_json::to_string_pretty(value)
-            .expect(format!("could not serialize record named {key}").as_str());
-        fs::write(file_path.clone(), serialized)
-            .expect(format!("could not write to file {file_path:?}").as_str());
+    if to.exists() {
+        fs::remove_dir_all(to).expect("could not clean destination dir");
+    }
+    fs::create_dir(to).expect("could not create destination dir");
+    let mut layer_counter = 0;
+    for layer in visitor.top_sorted_records() {
+        let mut item_counter = 0;
+        layer_counter += 1;
+        for (key, value) in layer {
+            item_counter += 1;
+            let mut file_path = to.clone();
+            file_path.push(PathBuf::from(format!(
+                "{layer_counter:0>2}-{item_counter:0>2}-{key}.json"
+            )));
+            let serialized = serde_json::to_string_pretty(value)
+                .expect(format!("could not serialize record named {key}").as_str());
+            fs::write(file_path.clone(), serialized)
+                .expect(format!("could not write to file {file_path:?}").as_str());
+        }
     }
 }

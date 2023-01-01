@@ -1,0 +1,20 @@
+{
+  "name": "TimeMarks",
+  "type": [
+    {
+      "type": "record",
+      "name": "PirateSpawn",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "BotAction",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "UpdateShipHistory",
+      "fields": []
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "type": "record",
+  "name": "Player",
+  "fields": [
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "id"
+    },
+    {
+      "type": "bool",
+      "name": "is_bot"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "string",
+          "logicalType": "uuid"
+        }
+      ],
+      "name": "ship_id"
+    },
+    {
+      "type": "string",
+      "name": "name"
+    },
+    {
+      "type": [
+        "null",
+        {
+          "type": "fixed",
+          "name": "Quest",
+          "size": 0
+        }
+      ],
+      "name": "quest"
+    },
+    {
+      "type": "int",
+      "name": "money"
+    },
+    {
+      "type": "string",
+      "name": "portrait_name"
+    },
+    {
+      "type": "int",
+      "name": "respawn_ms_left"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "LongActionPlayer",
+          "size": 0
+        }
+      },
+      "name": "long_actions"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "Notification",
+          "size": 0
+        }
+      },
+      "name": "notifications"
+    }
+  ]
+}

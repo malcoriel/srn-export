@@ -1,0 +1,35 @@
+{
+  "name": "ObjectProperty",
+  "type": [
+    {
+      "type": "record",
+      "name": "Unknown",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "UnlandablePlanet",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "PirateDefencePlayersHomePlanet",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "PirateShip",
+      "fields": []
+    },
+    {
+      "type": "record",
+      "name": "MoneyOnKill",
+      "fields": [
+        {
+          "type": "int",
+          "name": "amount"
+        }
+      ]
+    }
+  ]
+}
