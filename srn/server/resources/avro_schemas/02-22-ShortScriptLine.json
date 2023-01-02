@@ -1,0 +1,43 @@
+{
+  "name": "ShortScriptLine",
+  "type": {
+    "type": "record",
+    "name": "tuple_ef1d8bfb_37c6_4a4b_b118_951b2eb2b975",
+    "fields": [
+      {
+        "name": "0",
+        "type": "string"
+      },
+      {
+        "name": "1",
+        "type": "string"
+      },
+      {
+        "name": "2",
+        "type": "string"
+      },
+      {
+        "name": "3",
+        "type": {
+          "type": "array",
+          "items": {
+            "type": "fixed",
+            "name": "DialogueOptionSideEffect",
+            "size": 0
+          }
+        }
+      },
+      {
+        "name": "4",
+        "type": [
+          "null",
+          {
+            "type": "fixed",
+            "name": "TriggerCondition",
+            "size": 0
+          }
+        ]
+      }
+    ]
+  }
+}

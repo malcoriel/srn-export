@@ -1,0 +1,14 @@
+{
+  "name": "Prices",
+  "type": {
+    "type": "map",
+    "values": {
+      "type": "map",
+      "values": {
+        "type": "fixed",
+        "name": "Price",
+        "size": 0
+      }
+    }
+  }
+}

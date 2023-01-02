@@ -234,8 +234,7 @@ pub struct Star {
     pub rot_movement: RotationMovement,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag = "tag")]
+#[derive(Serialize, Deserialize, Debug, Clone, TypeScriptify, TypescriptDefinition)]
 pub struct ProcessedPlayerAction {
     pub action: Action,
     pub processed_at_ticks: u64,

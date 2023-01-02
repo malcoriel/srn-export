@@ -16,6 +16,8 @@ use crate::sandbox;
 use crate::sandbox::SandboxCommand;
 use rand::prelude::*;
 use rand_pcg::Pcg64Mcg;
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use wasm_bindgen::prelude::*;
 
 pub fn world_update_handle_event(
     state: &mut GameState,
@@ -110,7 +112,7 @@ pub fn world_update_handle_event(
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypeScriptify, TypescriptDefinition)]
 #[serde(tag = "tag")]
 // those events are intended to be fat, meaning containing all information needed to process them
 pub enum GameEvent {
@@ -180,7 +182,7 @@ pub enum GameEvent {
     },
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypeScriptify, TypescriptDefinition)]
 #[serde(tag = "tag")]
 // those events are intended to be lean, meaning containing minimal info for historical purposes
 pub enum ProcessedGameEvent {

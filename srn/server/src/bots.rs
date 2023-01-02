@@ -13,8 +13,8 @@ use crate::api_struct::{new_bot, AiTrait, Bot, Room};
 use crate::autofocus::{object_index_into_object_id, object_index_into_object_pos};
 use crate::cargo_rush::CargoDeliveryQuestState;
 use crate::dialogue::{
-    check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueState,
-    DialogueStates, DialogueStatesForPlayer, DialogueTable, DialogueUpdate, TriggerCondition,
+    check_trigger_conditions, execute_dialog_option, DialogueId, DialogueScript, DialogueStates,
+    DialogueStatesForPlayer, DialogueTable, DialogueUpdate, StateId, TriggerCondition,
 };
 use crate::indexing::{
     find_my_player, find_my_ship, find_planet, GameStateIndexes, ObjectIndexSpecifier,
@@ -201,7 +201,7 @@ pub fn add_bot(room: &mut Room, bot: Bot, prng: &mut Pcg64Mcg) {
 }
 
 pub fn format_d_states(
-    d_states: &HashMap<DialogueId, DialogueState>,
+    d_states: &HashMap<DialogueId, Box<Option<StateId>>>,
     d_table: &DialogueTable,
 ) -> HashMap<String, String> {
     let mut res = HashMap::new();

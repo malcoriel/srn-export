@@ -1,0 +1,7 @@
+{
+  "name": "StateId",
+  "type": {
+    "type": "string",
+    "logicalType": "uuid"
+  }
+}

@@ -97,7 +97,10 @@
       "name": "locations"
     },
     {
-      "type": "HashMap",
+      "type": {
+        "type": "map",
+        "values": "int"
+      },
       "name": "interval_data"
     },
     {
@@ -112,11 +115,48 @@
       "name": "game_over"
     },
     {
-      "type": "VecDeque",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "fixed",
+          "name": "GameEvent",
+          "size": 0
+        }
+      },
       "name": "events"
     },
     {
-      "type": "VecDeque",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "tuple_b063f26e_bc30_45c4_8afc_5b82f6ec0860",
+          "fields": [
+            {
+              "name": "0",
+              "type": {
+                "type": "fixed",
+                "name": "Action",
+                "size": 0
+              }
+            },
+            {
+              "name": "1",
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            {
+              "name": "2",
+              "type": [
+                "null",
+                "long"
+              ]
+            }
+          ]
+        }
+      },
       "name": "player_actions"
     },
     {

@@ -8,7 +8,9 @@ use wasm_bindgen::prelude::*;
 
 use crate::world::{GameMode, GameState, PlayerId};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, TypeScriptify, TypescriptDefinition,
+)]
 pub enum AiTrait {
     Unknown,
     ImmediatePlanetLand,
@@ -16,7 +18,7 @@ pub enum AiTrait {
     CargoRushHauler,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypeScriptify, TypescriptDefinition)]
 pub struct Bot {
     pub id: Uuid,
     pub traits: Vec<AiTrait>,

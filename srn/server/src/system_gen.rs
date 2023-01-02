@@ -30,7 +30,7 @@ use crate::{planet_movement, prng_id, seed_prng, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypeScriptify, TypescriptDefinition)]
 pub enum PlanetType {
     Unknown,
     Ice,

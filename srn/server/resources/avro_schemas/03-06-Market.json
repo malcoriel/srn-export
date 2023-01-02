@@ -1,0 +1,38 @@
+{
+  "type": "record",
+  "name": "Market",
+  "fields": [
+    {
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "fixed",
+            "name": "InventoryItem",
+            "size": 0
+          }
+        }
+      },
+      "name": "wares"
+    },
+    {
+      "type": {
+        "type": "map",
+        "values": {
+          "type": "map",
+          "values": {
+            "type": "fixed",
+            "name": "Price",
+            "size": 0
+          }
+        }
+      },
+      "name": "prices"
+    },
+    {
+      "type": "long",
+      "name": "time_before_next_shake"
+    }
+  ]
+}

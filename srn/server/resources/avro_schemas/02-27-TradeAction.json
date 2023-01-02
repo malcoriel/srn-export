@@ -1,0 +1,61 @@
+{
+  "type": "record",
+  "name": "TradeAction",
+  "fields": [
+    {
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      },
+      "name": "planet_id"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "tuple_9f55b617_63ca_4d66_a28a_3f3b70922d1a",
+          "fields": [
+            {
+              "name": "0",
+              "type": {
+                "type": "fixed",
+                "name": "InventoryItemType",
+                "size": 0
+              }
+            },
+            {
+              "name": "1",
+              "type": "int"
+            }
+          ]
+        }
+      },
+      "name": "sells_to_planet"
+    },
+    {
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "tuple_cf70cc6e_ad2b_4968_abe2_54e78af0e75a",
+          "fields": [
+            {
+              "name": "0",
+              "type": {
+                "type": "fixed",
+                "name": "InventoryItemType",
+                "size": 0
+              }
+            },
+            {
+              "name": "1",
+              "type": "int"
+            }
+          ]
+        }
+      },
+      "name": "buys_from_planet"
+    }
+  ]
+}

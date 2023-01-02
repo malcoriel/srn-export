@@ -1,0 +1,11 @@
+{
+  "name": "DialogueStates",
+  "type": {
+    "type": "map",
+    "values": {
+      "type": "fixed",
+      "name": "DialogueStatesForPlayer",
+      "size": 0
+    }
+  }
+}

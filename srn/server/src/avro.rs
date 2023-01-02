@@ -67,7 +67,7 @@ pub fn gen_avro_schemas() -> AvroSchemaMap {
     let schema = Schema::parse_str(raw_schema).unwrap();
     // of course, you can retrieve a file by its full path
     map.push(SchemaId::Test_V1, schema);
-    let blacklist: HashSet<String> = HashSet::from_iter(vec!["PlanetV2.json".to_string()]);
+    let blacklist: HashSet<String> = HashSet::from_iter(vec![]);
     let schemas =
         Schema::parse_list(
             SCHEMAS_DIR
@@ -88,7 +88,10 @@ pub fn gen_avro_schemas() -> AvroSchemaMap {
         )
         .expect("could not parse schema list");
     for schema in schemas {
-        map.push(get_schema_id(&schema), schema);
+        let id = get_schema_id(&schema);
+        if let Some(id) = id {
+            map.push(id, schema);
+        }
     }
     return map;
 }
@@ -98,33 +101,39 @@ struct SchemaDocMeta {
     pub version: Option<u32>,
 }
 
-fn get_schema_id(sc: &Schema) -> SchemaId {
-    let default_meta = SchemaDocMeta { version: None };
-    let doc_as_meta: SchemaDocMeta =
-        serde_json::from_str(get_doc(sc).as_str()).unwrap_or(default_meta);
-    let version = doc_as_meta
+fn get_schema_id(sc: &Schema) -> Option<SchemaId> {
+    let name = get_name(sc);
+    if name.is_none() {
+        return None;
+    }
+    let name = name.unwrap();
+    let version = SchemaDocMeta { version: None }
         .version
         .map_or("".to_string(), |v| format!("_V{}", v));
-    let str_id = format!("{}{}", get_name(sc), version);
-    return SchemaId::from_str(str_id.as_str())
-        .map_err(|e| {
-            warn!(format!("failed to parse {}", str_id));
-            e
-        })
-        .unwrap();
+    let str_id = format!("{}{}", name, version);
+    return Some(
+        SchemaId::from_str(str_id.as_str())
+            .map_err(|e| {
+                warn!(format!("failed to parse {}", str_id));
+                e
+            })
+            .unwrap(),
+    );
 }
 
-fn get_name(sc: &Schema) -> String {
+fn get_name(sc: &Schema) -> Option<String> {
     match sc {
-        Schema::Record { name, .. } => name.to_string(),
-        _ => panic!("Cannot get name for non-record schema"),
+        Schema::Enum { name, .. } => Some(name.to_string()),
+        Schema::Ref { name, .. } => Some(name.to_string()),
+        Schema::Record { name, .. } => Some(name.to_string()),
+        _ => None,
     }
 }
 
-fn get_doc(sc: &Schema) -> String {
+fn get_doc(sc: &Schema) -> Option<String> {
     match sc {
-        Schema::Record { doc, .. } => doc.as_ref().map_or("".to_string(), |d| d.to_string()),
-        _ => panic!("Cannot get doc for non-record schema"),
+        Schema::Record { doc, .. } => Some(doc.as_ref().map_or("".to_string(), |d| d.to_string())),
+        _ => None,
     }
 }
 

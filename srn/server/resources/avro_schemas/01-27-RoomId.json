@@ -1,0 +1,7 @@
+{
+  "name": "RoomId",
+  "type": {
+    "type": "string",
+    "logicalType": "uuid"
+  }
+}

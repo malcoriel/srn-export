@@ -7,26 +7,27 @@ use serde::ser::{SerializeMap, SerializeStruct};
 use serde::{Serialize, Serializer};
 use std::any::Any;
 use std::collections::hash_map::Iter;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::PathBuf;
 use syn::token::Union;
 use syn::visit::Visit;
 use syn::{
-    visit, Field, Fields, GenericArgument, ItemEnum, ItemFn, ItemStruct, PathArguments, Type,
-    TypePath,
+    visit, Attribute, Field, Fields, GenericArgument, ItemEnum, ItemFn, ItemStruct, ItemType,
+    PathArguments, Type, TypePath,
 };
 use topological_sort::TopologicalSort;
 use uuid::Uuid;
 
 #[derive(Debug)]
-struct Visitor {
+struct TypeTransformVisitor {
     entities: Vec<(String, BoxEntity)>,
     pub entities_index: HashMap<String, BoxEntity>,
-    filter: Option<Vec<String>>,
+    whitelist: Option<Vec<String>>,
+    blacklist: Option<Vec<String>>,
 }
 
-impl Visitor {
+impl TypeTransformVisitor {
     fn add(&mut self, key: String, ent: BoxEntity) {
         self.entities_index.insert(key.clone(), ent.clone());
         self.entities.push((key, ent));
@@ -96,6 +97,38 @@ impl Visitor {
         }
         res
     }
+
+    fn check_analyze(
+        &mut self,
+        enum_name: &String,
+        attributes: &Vec<Attribute>,
+        ignore_attrs: bool,
+    ) -> bool {
+        let blacklisted = if let Some(blacklist) = &self.blacklist {
+            blacklist.iter().any(|filter| enum_name == filter.as_str())
+        } else {
+            false
+        };
+
+        let whitelisted = if let Some(filter) = &self.whitelist {
+            filter
+                .iter()
+                .any(|filter| enum_name.contains(filter.as_str()))
+        } else {
+            false
+        };
+
+        let has_typescript_definition_attribute = attributes.iter().any(|attr| {
+            let id = attr.path.segments[0].ident.to_string();
+            if id != "derive" {
+                return false;
+            }
+            attr.tokens.to_string().contains("TypescriptDefinition")
+        });
+        let analyze =
+            (!blacklisted || whitelisted) && (has_typescript_definition_attribute || ignore_attrs);
+        analyze
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -112,10 +145,18 @@ pub struct BoxEnum {
     pub enum_name: String,
     pub enum_variants: Vec<BoxRecord>,
 }
+
+#[derive(Debug, Clone)]
+pub struct BoxSchema {
+    pub deps: Vec<String>,
+    pub name: String,
+    pub schema: Schema,
+}
 #[derive(Debug, Clone)]
 pub enum BoxEntity {
     Record(BoxRecord),
     Enum(BoxEnum),
+    RawType(BoxSchema),
 }
 
 impl BoxEntity {
@@ -123,12 +164,14 @@ impl BoxEntity {
         match self {
             BoxEntity::Record(v) => &v.deps,
             BoxEntity::Enum(v) => &v.deps,
+            BoxEntity::RawType(v) => &v.deps,
         }
     }
     fn get_name(&self) -> String {
         match self {
             BoxEntity::Record(r) => r.name.clone(),
             BoxEntity::Enum(e) => e.enum_name.clone(),
+            BoxEntity::RawType(rt) => rt.name.clone(),
         }
     }
 }
@@ -220,11 +263,17 @@ impl Serialize for BoxEntity {
                 map.serialize_entry("type", &en.enum_variants)?;
                 map.end()
             }
+            BoxEntity::RawType(rt) => {
+                let mut map = serializer.serialize_map(None)?;
+                map.serialize_entry("name", &rt.name)?;
+                map.serialize_entry("type", &rt.schema)?;
+                map.end()
+            }
         }
     }
 }
 
-impl Visitor {
+impl TypeTransformVisitor {
     fn grab_fields_get_deps_record(
         &self,
         into_fields: &mut Vec<BoxField>,
@@ -292,19 +341,45 @@ impl Visitor {
                 let first_segment = &tp.path.segments[0];
                 let first_segment_name = first_segment.ident.to_string();
                 if first_segment_name == "Option" {
-                    let first_arg = get_first_type_arg_type_path(&first_segment.arguments);
+                    let first_arg = get_nth_type_arg_type_path(&first_segment.arguments, 0);
                     let map_target_result = self.map_type(&first_arg, side_effect_types);
                     return Some((
                         Schema::Union(vec![Schema::Null, map_target_result.0]),
                         map_target_result.1,
                     ));
-                } else if first_segment_name == "Vec" {
-                    let first_arg = get_first_type_arg_type_path(&first_segment.arguments);
+                } else if first_segment_name == "Vec" || first_segment_name == "VecDeque" {
+                    let first_arg = get_nth_type_arg_type_path(&first_segment.arguments, 0);
                     let map_target_result = self.map_type(&first_arg, side_effect_types);
                     return Some((
                         Schema::Array(Box::from(map_target_result.0)),
                         map_target_result.1,
                     ));
+                } else if first_segment_name == "HashMap" {
+                    let first_arg = get_nth_type_arg_type_path(&first_segment.arguments, 0);
+                    let mut map_first = self.map_type(&first_arg, side_effect_types);
+                    let second_arg = get_nth_type_arg_type_path(&first_segment.arguments, 1);
+                    let mut map_second = self.map_type(&second_arg, side_effect_types);
+                    let mut deps = vec![];
+                    deps.append(&mut map_first.1);
+                    // // strictly speaking, this has to be checked - in case the key is not string, it cannot be mapped
+                    // // but this requires analysing aliases and their mappings, which is kind of complex - probably cannot be done here
+                    // if match &map_first.0 {
+                    //     Schema::String(_) => "String",
+                    //     Schema::Fixed(fr) => {
+                    //         if fr.name == "Uuid" {
+                    //             "String"
+                    //         } else {
+                    //             "Unknown"
+                    //         }
+                    //     }
+                    //     _ => "Unsupported",
+                    // } != "String"
+                    // {
+                    //     panic!("Unsupported by avro map key {:?}", map_first);
+                    // }
+                    deps.append(&mut map_second.1);
+                    let schema = Schema::Map(Box::new(map_second.0));
+                    return Some((schema, deps));
                 }
                 return None;
             }
@@ -344,7 +419,7 @@ impl Visitor {
                 let mut counter = 0;
                 let mut collected_deps = vec![];
                 let schema_record = Schema::Record(schema::Record {
-                    name: format!("tuple-{}", Uuid::new_v4()),
+                    name: format!("tuple-{}", Uuid::new_v4()).replace("-", "_"),
                     namespace: None,
                     doc: None,
                     aliases: vec![],
@@ -395,29 +470,47 @@ impl Visitor {
     }
 }
 
-fn get_first_type_arg_type_path(args: &PathArguments) -> Type {
+fn get_nth_type_arg_type_path(args: &PathArguments, idx: usize) -> Type {
     match args {
-        PathArguments::AngleBracketed(args) => match &args.args[0] {
+        PathArguments::AngleBracketed(args) => match &args.args[idx] {
             GenericArgument::Type(ty) => match ty {
                 _ => ty.clone(),
             },
-            _ => panic!("Unsupported arg type: {:?}", args.args[0]),
+            _ => panic!("Unsupported arg type: {:?}", args.args[idx]),
         },
         _ => panic!("Unsupported path args {args:?}"),
     }
 }
 
-impl<'ast> Visit<'ast> for Visitor {
+impl<'ast> Visit<'ast> for TypeTransformVisitor {
+    fn visit_item_type(&mut self, node: &'ast ItemType) {
+        let type_name = node.ident.to_string();
+        eprintln!("Started type alias {}", type_name);
+        let analyze = self.check_analyze(&type_name, &node.attrs, true);
+        if analyze {
+            eprintln!("Grabbed type alias {}", type_name);
+            let mut se = vec![];
+            let mapped = self.map_type(&node.ty, &mut se);
+            self.add(
+                type_name.clone(),
+                BoxEntity::RawType(BoxSchema {
+                    deps: mapped.1,
+                    name: type_name,
+                    schema: mapped.0,
+                }),
+            )
+        } else {
+            eprintln!("Skipped type alias {}", type_name);
+        }
+        visit::visit_item_type(self, node);
+    }
+
     fn visit_item_enum(&mut self, node: &'ast ItemEnum) {
         let enum_name = node.ident.to_string();
         eprintln!("Started enum {}", enum_name);
-        let analyze = if let Some(filter) = &self.filter {
-            filter
-                .iter()
-                .any(|filter| enum_name.contains(filter.as_str()))
-        } else {
-            true
-        };
+
+        let analyze = self.check_analyze(&enum_name, &node.attrs, false);
+
         if analyze {
             let mut union: Vec<BoxRecord> = vec![];
             let mut deps: Vec<String> = vec![];
@@ -442,13 +535,7 @@ impl<'ast> Visit<'ast> for Visitor {
     fn visit_item_struct(&mut self, node: &'ast ItemStruct) {
         let struct_name = node.ident.to_string();
         eprintln!("Started struct {}", struct_name);
-        let analyze = if let Some(filter) = &self.filter {
-            filter
-                .iter()
-                .any(|filter| struct_name.contains(filter.as_str()))
-        } else {
-            true
-        };
+        let analyze = self.check_analyze(&struct_name, &node.attrs, false);
         if analyze {
             let mut record = BoxRecord {
                 deps: vec![],
@@ -484,6 +571,7 @@ fn main() {
             command!("generate")
                 .arg(clap::arg!(--"from" <PATHS>))
                 .arg(clap::arg!(--"filter" <SUBSTR>))
+                .arg(clap::arg!(--"blacklist" <EXACT_NAMES>))
                 .arg(
                     clap::arg!(--"to" <PATH>).value_parser(clap::value_parser!(std::path::PathBuf)),
                 ),
@@ -501,14 +589,18 @@ fn main() {
     let filter: Option<Vec<String>> = matches
         .get_one::<String>("filter")
         .map(|v| v.clone().split(",").map(|v| v.to_string()).collect());
+    let blacklist: Option<Vec<String>> = matches
+        .get_one::<String>("blacklist")
+        .map(|v| v.clone().split(",").map(|v| v.to_string()).collect());
     let to = matches
         .get_one::<PathBuf>("to")
         .expect("--to arg is required");
 
-    let mut visitor = Visitor {
+    let mut visitor = TypeTransformVisitor {
         entities: vec![],
         entities_index: Default::default(),
-        filter: filter.clone(),
+        whitelist: filter.clone(),
+        blacklist: blacklist.clone(),
     };
 
     for file in from {

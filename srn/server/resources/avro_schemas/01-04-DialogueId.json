@@ -1,0 +1,7 @@
+{
+  "name": "DialogueId",
+  "type": {
+    "type": "string",
+    "logicalType": "uuid"
+  }
+}

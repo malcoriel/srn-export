@@ -1,0 +1,10 @@
+{
+  "name": "ReferencableIdStorage",
+  "type": {
+    "type": "map",
+    "values": {
+      "type": "string",
+      "logicalType": "uuid"
+    }
+  }
+}

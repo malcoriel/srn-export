@@ -44,9 +44,10 @@ pub struct DialogueTable {
     pub scripts: HashMap<DialogueId, DialogueScript>,
 }
 
-pub type DialogueState = Box<Option<StateId>>;
-
-pub type DialogueStatesForPlayer = (Option<DialogueId>, HashMap<DialogueId, DialogueState>);
+pub type DialogueStatesForPlayer = (
+    Option<DialogueId>,
+    HashMap<DialogueId, Box<Option<StateId>>>,
+);
 
 // player -> (activeDialogue?, dialogue -> state?)
 pub type DialogueStates = HashMap<PlayerId, DialogueStatesForPlayer>;
@@ -54,7 +55,7 @@ pub type DialogueId = Uuid;
 pub type StateId = Uuid;
 pub type OptionId = Uuid;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypeScriptify, TypescriptDefinition)]
 pub enum DialogueOptionSideEffect {
     Nothing,
     Undock,
@@ -68,7 +69,9 @@ pub enum DialogueOptionSideEffect {
     TriggerTrade,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, TypeScriptify, TypescriptDefinition,
+)]
 pub enum TriggerCondition {
     CurrentPlanetIsPickup,
     CurrentPlanetIsDropoff,
@@ -169,7 +172,7 @@ impl DialogueScript {
         &self,
         game_state: &GameState,
         player: &Player,
-        _d_state: Option<&DialogueState>,
+        _d_state: Option<&Box<Option<StateId>>>,
     ) -> bool {
         /*
         Ideally, this should be remade into a trigger system like this:
@@ -438,7 +441,7 @@ fn build_dialogue_options(
 }
 
 fn apply_dialogue_option(
-    current_state: DialogueState,
+    current_state: Box<Option<StateId>>,
     update: &DialogueUpdate,
     dialogue_table: &DialogueTable,
     state: &mut GameState,

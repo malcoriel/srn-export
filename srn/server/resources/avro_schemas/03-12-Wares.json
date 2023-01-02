@@ -1,0 +1,14 @@
+{
+  "name": "Wares",
+  "type": {
+    "type": "map",
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "fixed",
+        "name": "InventoryItem",
+        "size": 0
+      }
+    }
+  }
+}
