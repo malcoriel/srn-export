@@ -1,7 +1,0 @@
-{
-  "name": "PlayerId",
-  "type": {
-    "type": "string",
-    "logicalType": "uuid"
-  }
-}

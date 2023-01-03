@@ -1,7 +1,0 @@
-{
-  "name": "OptionId",
-  "type": {
-    "type": "string",
-    "logicalType": "uuid"
-  }
-}

@@ -259,8 +259,33 @@ impl Serialize for BoxEntity {
             }
             BoxEntity::Enum(en) => {
                 let mut map = serializer.serialize_map(None)?;
+                // avro has a very dumb way of serializing tagged unions - make a record, make all fields optional, and make a bag
                 map.serialize_entry("name", &en.enum_name)?;
-                map.serialize_entry("type", &en.enum_variants)?;
+                map.serialize_entry("type", "record")?;
+                map.serialize_entry("fields", &{
+                    let mut field_mix =
+                        en.enum_variants
+                            .iter()
+                            .fold(Vec::<BoxField>::new(), |mut acc, curr| {
+                                for field in curr.fields.iter() {
+                                    let mut field_clone = field.clone();
+                                    field_clone.0.schema =
+                                        Schema::Union(vec![field_clone.0.schema, Schema::Null]);
+                                    acc.push(field_clone)
+                                }
+                                acc
+                            });
+                    // attempt to support serde + avro
+                    field_mix.push(BoxField(schema::Field {
+                        name: "tag".to_string(),
+                        doc: None,
+                        schema: Schema::String(None),
+                        default: None,
+                        order: None,
+                        aliases: vec![],
+                    }));
+                    field_mix
+                })?;
                 map.end()
             }
             BoxEntity::RawType(rt) => {

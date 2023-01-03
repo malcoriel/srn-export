@@ -68,31 +68,32 @@ pub fn gen_avro_schemas() -> AvroSchemaMap {
     // of course, you can retrieve a file by its full path
     map.push(SchemaId::Test_V1, schema);
     let blacklist: HashSet<String> = HashSet::from_iter(vec![]);
-    let schemas =
-        Schema::parse_list(
-            SCHEMAS_DIR
-                .files()
-                .filter_map(|file| {
-                    if blacklist
-                        .iter()
-                        .any(|black_item| file.path().to_string_lossy().ends_with(black_item))
-                    {
-                        return None;
-                    }
-                    Some(std::str::from_utf8(file.contents()).expect(
-                        format!("could not parse bytes from file {:?}", file.path()).as_str(),
-                    ))
-                })
-                .collect::<Vec<_>>()
-                .as_slice(),
-        )
-        .expect("could not parse schema list");
-    for schema in schemas {
-        let id = get_schema_id(&schema);
-        if let Some(id) = id {
-            map.push(id, schema);
-        }
-    }
+    // let schemas =
+    //     Schema::parse_list(
+    //         SCHEMAS_DIR
+    //             .files()
+    //             .filter_map(|file| {
+    //                 if blacklist
+    //                     .iter()
+    //                     .any(|black_item| file.path().to_string_lossy().ends_with(black_item))
+    //                 {
+    //                     return None;
+    //                 }
+    //                 Some(std::str::from_utf8(file.contents()).expect(
+    //                     format!("could not parse bytes from file {:?}", file.path()).as_str(),
+    //                 ))
+    //             })
+    //             .collect::<Vec<_>>()
+    //             .as_slice(),
+    //     )
+    //     .expect("could not parse schema list");
+    // for schema in schemas {
+    //     let id = get_schema_id(&schema);
+    //     if let Some(id) = id {
+    //         log!(format!("Pushing schema {id:?}"));
+    //         map.push(id, schema);
+    //     }
+    // }
     return map;
 }
 
@@ -104,6 +105,7 @@ struct SchemaDocMeta {
 fn get_schema_id(sc: &Schema) -> Option<SchemaId> {
     let name = get_name(sc);
     if name.is_none() {
+        warn!(format!("No name for {:?}", sc));
         return None;
     }
     let name = name.unwrap();
@@ -111,14 +113,16 @@ fn get_schema_id(sc: &Schema) -> Option<SchemaId> {
         .version
         .map_or("".to_string(), |v| format!("_V{}", v));
     let str_id = format!("{}{}", name, version);
-    return Some(
-        SchemaId::from_str(str_id.as_str())
-            .map_err(|e| {
-                warn!(format!("failed to parse {}", str_id));
-                e
-            })
-            .unwrap(),
-    );
+    log!(format!("checking {str_id}"));
+    SchemaId::from_str(str_id.as_str())
+        .map_err(|e| {
+            warn!(format!(
+                "failed to identify schema id for schema {}",
+                str_id
+            ));
+            e
+        })
+        .ok()
 }
 
 fn get_name(sc: &Schema) -> Option<String> {

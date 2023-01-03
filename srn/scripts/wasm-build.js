@@ -103,10 +103,12 @@ async function buildForWeb({ noTransform, transformOnly, noCleanTmp, debug }) {
   }
 }
 
-async function buildForTests() {
+async function buildForTests({ release }) {
   console.log('Building rust code...');
   await spawnWatched(
-    'yarn cross-env-shell WASM32=1 "cd world && cargo +nightly build --target wasm32-unknown-unknown"',
+    `yarn cross-env-shell WASM32=1 "cd world && cargo +nightly build ${
+      release ? '--release' : ''
+    } --target wasm32-unknown-unknown"`,
     {
       spawnOptions: {
         cwd: 'world',
@@ -198,10 +200,14 @@ export const getBindgen = () => {
     .command(
       'forTests',
       'build no-module version with some extras for jest consumption',
-      (argv) => argv,
-      async () => {
+      (argv) =>
+        argv.option('release', {
+          type: 'boolean',
+          default: false,
+        }),
+      async ({ release }) => {
         try {
-          await buildForTests();
+          await buildForTests({ release });
         } catch (e) {
           console.error(e);
           process.exit(1);

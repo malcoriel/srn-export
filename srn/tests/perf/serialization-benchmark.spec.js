@@ -10,21 +10,23 @@ describe('serialization-benchmark', () => {
   beforeAll(() => {
     const schemas = wasm.getAvroSchemas();
     const registry = {};
+
     for (const schema of schemas) {
+      console.log('avsc parse schema', schema.name || 'unnamed');
       // avro_schemas generation is done in such a way that the structure entries here are topologically sorted
       avro.Type.forSchema(schema, { registry });
     }
+
     avroTypeTest = avro.Type.forSchema(registry.test);
-    avroTypeState = avro.Type.forSchema(registry.Vec2f64);
   });
 
   let accumulatedTransferredBytes = 0;
 
-  const callTestAvro = (value, state = false) => {
-    const targetType = state ? avroTypeState : avroTypeTest;
+  const callTestAvro = (value) => {
+    const targetType = avroTypeTest;
     const ser = targetType.toBuffer(value);
     accumulatedTransferredBytes += Buffer.byteLength(ser);
-    const binary = (state ? wasm.avroTestState : wasm.avroTest)(ser);
+    const binary = wasm.avroTest(ser);
     const resBuffer = Buffer.from(binary);
     accumulatedTransferredBytes += Buffer.byteLength(resBuffer);
     return targetType.fromBuffer(resBuffer, undefined, true);
@@ -33,12 +35,12 @@ describe('serialization-benchmark', () => {
   let inSize = 0;
   let outSize = 0;
 
-  const callTestJson = (value, state = false) => {
+  const callTestJson = (value) => {
     if (!inSize) {
       inSize = JSON.stringify(value).length;
     }
     accumulatedTransferredBytes += inSize;
-    const res = (state ? wasm.jsonTestState : wasm.jsonTest)(value);
+    const res = wasm.jsonTest(value);
     if (!outSize) {
       outSize = JSON.stringify(res).length;
     }
@@ -52,19 +54,9 @@ describe('serialization-benchmark', () => {
     c: 32,
   };
 
-  const testState = {
-    x: 5,
-    y: 0,
-  };
-
   it('can modify data with avro', () => {
     const val = callTestAvro(testVal);
     expect(val.a).toEqual(72);
-  });
-
-  it('can modify state with avro', () => {
-    const val = callTestAvro(testState, true);
-    expect(val.x).toEqual(10);
   });
 
   it('can modify data with json', () => {
