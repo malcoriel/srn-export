@@ -46,8 +46,6 @@ impl AvroSchemaMap {
 
 pub const AVRO_CODEC: Codec = Codec::Null;
 
-static SCHEMAS_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../server/resources/avro_schemas");
-
 pub fn gen_avro_schemas() -> AvroSchemaMap {
     let mut map = AvroSchemaMap {
         index: HashMap::new(),
@@ -67,33 +65,6 @@ pub fn gen_avro_schemas() -> AvroSchemaMap {
     let schema = Schema::parse_str(raw_schema).unwrap();
     // of course, you can retrieve a file by its full path
     map.push(SchemaId::Test_V1, schema);
-    let blacklist: HashSet<String> = HashSet::from_iter(vec![]);
-    // let schemas =
-    //     Schema::parse_list(
-    //         SCHEMAS_DIR
-    //             .files()
-    //             .filter_map(|file| {
-    //                 if blacklist
-    //                     .iter()
-    //                     .any(|black_item| file.path().to_string_lossy().ends_with(black_item))
-    //                 {
-    //                     return None;
-    //                 }
-    //                 Some(std::str::from_utf8(file.contents()).expect(
-    //                     format!("could not parse bytes from file {:?}", file.path()).as_str(),
-    //                 ))
-    //             })
-    //             .collect::<Vec<_>>()
-    //             .as_slice(),
-    //     )
-    //     .expect("could not parse schema list");
-    // for schema in schemas {
-    //     let id = get_schema_id(&schema);
-    //     if let Some(id) = id {
-    //         log!(format!("Pushing schema {id:?}"));
-    //         map.push(id, schema);
-    //     }
-    // }
     return map;
 }
 

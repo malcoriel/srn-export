@@ -318,7 +318,7 @@ export const updateWorld = (
 ): GameState | undefined => {
   return doWasmCall<GameState>(
     'update_world',
-    JSON.stringify({ state, limit_area, client }, null, 2),
+    JSON.stringify({ state, limit_area, client }),
     BigInt(elapsedTicks)
   );
 };
@@ -340,7 +340,7 @@ export const seedWorld = (seed: string, mode: GameMode): GameState => {
 };
 
 const parseState = (inState: GameState): GameState | undefined => {
-  return doWasmCall<GameState>('parse_state', JSON.stringify(inState, null, 2));
+  return doWasmCall<GameState>('parse_state', JSON.stringify(inState));
 };
 
 export const validateState = (inState: GameState): boolean => {
