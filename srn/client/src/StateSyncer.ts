@@ -21,7 +21,6 @@ import Color from 'color';
 import * as uuid from 'uuid';
 import { Wreck } from '../../world/pkg/world';
 import { UnreachableCaseError } from 'ts-essentials';
-import { compare } from './compare';
 
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = {
@@ -349,7 +348,7 @@ export class StateSyncer implements IStateSyncer {
   ): GameState | null {
     const alreadyExecutedTagsInState = new Set<string | null>(
       state.processed_player_actions.map(
-        ({ packet_tag }: { packet_tag: string }) => packet_tag
+        ({ packet_tag }: { packet_tag: string | null }) => packet_tag
       )
     );
     const actionsToRebase: [

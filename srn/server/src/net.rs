@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use crate::api_struct::RoomId;
 use crate::dialogue::Dialogue;
-use crate::indexing::{find_my_player, find_player_location_idx};
+use crate::indexing::{find_my_player, find_my_ship, find_player_location_idx};
 use crate::world::{GameMode, GameState, Location, Ship};
 use crate::world_events::GameEvent;
 use crate::xcast::XCast;
@@ -59,6 +59,7 @@ pub const MAX_PROCESSED_ACTIONS_SHARE_TIME_TICKS: f64 = 5.0 * 1000.0 * 1000.0;
 
 pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> GameState {
     state.my_id = player_id;
+    let my_ship_id = find_my_ship(&state, player_id).map(|s| s.id);
     let player_loc_idx = find_player_location_idx(&state, player_id);
     let map_enough_info = state
         .locations
@@ -87,7 +88,11 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
     );
     let current_ticks = state.ticks;
     state.events = Default::default();
-    // state.processed_events = Default::default();
+    state.processed_events = state
+        .processed_events
+        .into_iter()
+        .filter(|pe| pe.is_for_client(my_ship_id, player_id))
+        .collect();
     state.player_actions = Default::default();
     state.processed_player_actions = state
         .processed_player_actions
@@ -95,6 +100,7 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
         .filter(|a| {
             (a.processed_at_ticks as f64 - current_ticks as f64).abs()
                 < MAX_PROCESSED_ACTIONS_SHARE_TIME_TICKS
+                && a.action.is_for_client(my_ship_id, player_id)
         })
         .collect();
     state.dialogue_states.retain(|k, _| *k == player_id);

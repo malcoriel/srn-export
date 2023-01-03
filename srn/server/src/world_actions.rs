@@ -11,7 +11,7 @@ use crate::notifications::NotificationActionR;
 use crate::sandbox::SandboxCommand;
 use crate::world::{
     fire_saved_event, undock_ship, update_ship_manual_movement, GameState, ManualMoveUpdate,
-    ObjectProperty, Ship, ShipWithTime,
+    ObjectProperty, PlayerId, Ship, ShipWithTime,
 };
 use crate::world_events::GameEvent;
 use crate::{
@@ -356,6 +356,35 @@ pub enum Action {
         player_id: Uuid,
         action: TradeAction,
     },
+}
+
+impl Action {
+    pub fn is_for_client(&self, my_ship_id: Option<Uuid>, my_player_id: PlayerId) -> bool {
+        match self {
+            Action::Unknown => false,
+            Action::Move { .. } => false, // obsolete anyway
+            Action::Gas { ship_id } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::StopGas { ship_id } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::StopTurn { ship_id } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::Reverse { ship_id } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::TurnRight { ship_id } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::TurnLeft { ship_id } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::Dock => false, // obsolete and unused
+            Action::Navigate { ship_id, .. } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::DockNavigate { ship_id, .. } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::Tractor { ship_id, .. } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::LongActionStart { ship_id, .. } => {
+                my_ship_id.map_or(false, |sid| sid == *ship_id)
+            }
+            Action::SelectDialogueOption { player_id, .. } => *player_id == my_player_id,
+            Action::RequestDialogue { player_id, .. } => *player_id == my_player_id,
+            Action::CancelTrade { player_id, .. } => *player_id == my_player_id,
+            Action::Inventory { player_id, .. } => *player_id == my_player_id,
+            Action::Notification { player_id, .. } => *player_id == my_player_id,
+            Action::SandboxCommand { player_id, .. } => *player_id == my_player_id,
+            Action::Trade { player_id, .. } => *player_id == my_player_id,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]

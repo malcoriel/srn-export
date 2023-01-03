@@ -240,7 +240,6 @@ pub struct ProcessedPlayerAction {
     pub processed_at_ticks: u64,
     pub packet_tag: Option<String>,
 }
-
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct ShipTurret {
     id: Uuid,

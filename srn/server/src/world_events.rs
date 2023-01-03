@@ -252,6 +252,32 @@ pub enum ProcessedGameEvent {
 }
 
 impl ProcessedGameEvent {
+    pub fn is_for_client(&self, my_ship_id: Option<Uuid>, my_player_id: Uuid) -> bool {
+        match self {
+            ProcessedGameEvent::Unknown { .. } => false,
+            ProcessedGameEvent::ShipDocked { ship_id, .. } => {
+                my_ship_id.map_or(false, |sid| sid == *ship_id)
+            }
+            ProcessedGameEvent::ShipUndocked { ship_id, .. } => {
+                my_ship_id.map_or(false, |sid| sid == *ship_id)
+            }
+            ProcessedGameEvent::ShipSpawned { ship_id, .. } => {
+                my_ship_id.map_or(false, |sid| sid == *ship_id)
+            }
+            ProcessedGameEvent::RoomJoined { player_id, .. } => *player_id == my_player_id,
+            ProcessedGameEvent::ShipDied { .. } => true,
+            ProcessedGameEvent::GameEnded { .. } => true,
+            ProcessedGameEvent::GameStarted { .. } => true,
+            ProcessedGameEvent::CargoQuestTriggerRequest { .. } => false,
+            ProcessedGameEvent::TradeDialogueTriggerRequest { .. } => false,
+            ProcessedGameEvent::DialogueTriggerRequest { .. } => false,
+            ProcessedGameEvent::PirateSpawn { .. } => false,
+            ProcessedGameEvent::SandboxCommandRequest { .. } => false,
+        }
+    }
+}
+
+impl ProcessedGameEvent {
     pub fn from(value: GameEvent, at_ticks: u64) -> Self {
         match value {
             GameEvent::Unknown => ProcessedGameEvent::Unknown {
