@@ -169,6 +169,7 @@ const Perf = {
           Stat.AvgNetStateEmitChangeTime
         );
         Perf.measureMean(Measure.ServerStateSize, Stat.AvgServerStateSize);
+        Perf.measureMean(Measure.WasmStateSize, Stat.AvgWasmStateSize);
         Perf.measureFrameStats(
           Stat.AvgSlowUpdateFrameTime,
           Measure.SlowUpdateFrameTime,
@@ -302,6 +303,12 @@ const StatsPanel = () => {
         <span className="name">State size from server</span>
         <span className="value">
           {formatNumber(statsHeap[Stat.AvgServerStateSize] / 1024)}KiB
+        </span>
+      </div>
+      <div className="row">
+        <span className="name">State size to/from wasm</span>
+        <span className="value">
+          {formatNumber(statsHeap[Stat.AvgWasmStateSize] / 1024)}KiB
         </span>
       </div>
 

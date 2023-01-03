@@ -40,6 +40,7 @@ import { Dictionary } from 'ts-essentials';
 import * as uuid from 'uuid';
 import Prando from 'prando';
 import { api } from './utils/api';
+import { Measure, Perf } from './HtmlLayers/Perf';
 
 export type {
   Action,
@@ -285,6 +286,7 @@ const doWasmCall = <R>(fnName: string, ...args: any[]): R | undefined => {
     console.warn(`wasm function ${fnName} returned nothing`);
     return undefined;
   }
+  Perf.markEvent(Measure.WasmStateSize, res.length);
   let result;
   try {
     result = JSON.parse(res);
@@ -316,9 +318,11 @@ export const updateWorld = (
   }: { state: GameState; limit_area: AABB; client: boolean },
   elapsedTicks: number
 ): GameState | undefined => {
+  const world_state = JSON.stringify({ state, limit_area, client });
+  Perf.markEvent(Measure.WasmStateSize, world_state.length);
   return doWasmCall<GameState>(
     'update_world',
-    JSON.stringify({ state, limit_area, client }),
+    world_state,
     BigInt(elapsedTicks)
   );
 };

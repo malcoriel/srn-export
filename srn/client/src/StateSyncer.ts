@@ -223,10 +223,9 @@ export class StateSyncer implements IStateSyncer {
     // if (this.pendingActionPacks.length > 0) {
     //   this.log.push(`Pending actions: ${this.pendingActionPacks.length}`);
     // }
-
     return this.wasmUpdateWorld(
       {
-        state: from,
+        state: this.optimizeStateForWasmCall(from),
         limit_area: area,
         client: true,
       },
@@ -1052,5 +1051,21 @@ export class StateSyncer implements IStateSyncer {
     state.locations[0].planets = state.locations[0].planets.filter((planet) =>
       existingPlanetIds.has(planet.id)
     );
+  }
+
+  // this is quite a dangerous optimization, that is nevertheless necessary
+  // it hides some data form wasm update world completely, meaning that it won't ever be updated. This can only be done for the data that:
+  // 1. Can be fully restored from something else (e.g. leaderboard)
+  // 2. Never changes and was saved to wasm somehow (caching there, e.g. replay state)
+  // 3. Something that doesn't matter to be updated for client (e.g. breadcrumbs)
+  // 4. Something that is client-only, and somehow represents some UI state (also breadcrumbs)
+  // 5. Something that cannot be processed by client update anyway but has to be received (e.g. events)
+  private optimizeStateForWasmCall(state: GameState): GameState {
+    state.breadcrumbs = [];
+    state.processed_events = [];
+    state.processed_player_actions = [];
+    state.events = [];
+    state.leaderboard = { rating: [], winner: '' };
+    return state;
   }
 }
