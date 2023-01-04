@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.9.7 (2023-01-05)
+### Fixes
+* Repaired the build problems that broke the last release
+
 ## Version 0.9.6 (2023-01-05)
 ### Fixes
 * Significantly improved performance of pirate defence
