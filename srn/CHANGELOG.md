@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.9.6 (2023-01-05)
+### Fixes
+* Significantly improved performance of pirate defence
+* Generally optimized network traffic consumption
+
 ## Version 0.9.5 (2022-12-07)
 ### Fixes
 * Changelog text fix

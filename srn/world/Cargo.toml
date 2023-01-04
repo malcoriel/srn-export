@@ -1,6 +1,6 @@
 [package]
 name = "world"
-version = "0.9.5"
+version = "0.9.6"
 authors = [ "Valeriy Kuzmin <malcoriel@gmail.com>" ]
 edition = "2018"
 
@@ -11,7 +11,7 @@ wasm-opt = [ "-Oz", "--enable-mutable-globals" ]
 crate-type = [ "cdylib", "rlib" ]
 
 [features]
-default = ["console_error_panic_hook"]
+default = [ "console_error_panic_hook" ]
 
 [dependencies]
 lazy_static = "1.4.0"
@@ -26,7 +26,6 @@ objekt-clonable = "0.2.2"
 statistical = "1.0.0"
 hex = "0.4.2"
 strum_macros = "0.20.1"
-strum = { version = "0.20.0", features = ["derive"] }
 kdbush = "0.2.0"
 mut_static = "5.0.0"
 bytemuck = "1.7.3"
@@ -38,6 +37,10 @@ serde_json_any_key = "2.0.0"
 js-sys = "0.3.60"
 include_dir = "0.7.3"
 serde_with = "2.1.0"
+
+  [dependencies.strum]
+  version = "0.20.0"
+  features = [ "derive" ]
 
   [dependencies.node-sys]
   version = "0.4.2"
