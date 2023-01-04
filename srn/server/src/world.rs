@@ -802,24 +802,26 @@ fn update_world_iter(
             state.leaderboard = cargo_rush::make_leaderboard(&state.players);
             sampler.end(update_leaderboard_id);
 
-            if state.market.time_before_next_shake > 0 {
-                state.market.time_before_next_shake -= elapsed;
-            } else {
-                let market_update_start = sampler.start(SamplerMarks::UpdateMarket as u32);
-                let mut wares = state.market.wares.clone();
-                let mut prices = state.market.prices.clone();
-                let planets = state.locations[0]
-                    .planets
-                    .iter()
-                    .map(|p| p.clone())
-                    .collect::<Vec<_>>();
-                market::shake_market(planets, &mut wares, &mut prices, prng);
-                state.market = Market {
-                    wares,
-                    prices,
-                    time_before_next_shake: market::SHAKE_MARKET_EVERY_TICKS,
-                };
-                sampler.end(market_update_start);
+            if state.mode == GameMode::CargoRush {
+                if state.market.time_before_next_shake > 0 {
+                    state.market.time_before_next_shake -= elapsed;
+                } else {
+                    let market_update_start = sampler.start(SamplerMarks::UpdateMarket as u32);
+                    let mut wares = state.market.wares.clone();
+                    let mut prices = state.market.prices.clone();
+                    let planets = state.locations[0]
+                        .planets
+                        .iter()
+                        .map(|p| p.clone())
+                        .collect::<Vec<_>>();
+                    market::shake_market(planets, &mut wares, &mut prices, prng);
+                    state.market = Market {
+                        wares,
+                        prices,
+                        time_before_next_shake: market::SHAKE_MARKET_EVERY_TICKS,
+                    };
+                    sampler.end(market_update_start);
+                }
             }
         }
 
