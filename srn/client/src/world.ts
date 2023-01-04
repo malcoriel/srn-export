@@ -295,10 +295,6 @@ export const interpolateWorld = (
   });
 };
 
-export const seedWorld = (seed: string, mode: GameMode): GameState => {
-  return wasmFunctions.seed_world({ mode, seed });
-};
-
 export const restoreReplayFrame = (
   prevTicks: number,
   nextTicks: number | null,
