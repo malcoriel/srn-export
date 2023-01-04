@@ -269,47 +269,6 @@ export const rawUpdateWorld = (...args: any[]) => {
   return wasmFunctions.update_world(...args);
 };
 
-const doWasmCall = <R>(fnName: string, ...args: any[]): R | undefined => {
-  const fn = wasmFunctions[fnName];
-  if (!fn) {
-    console.warn(`wasm function ${fnName} is not yet initialized`);
-    return undefined;
-  }
-  if (fn.length !== args.length) {
-    console.warn(
-      `wasm function ${fnName} length ${fn.length} does not equal args length ${args.length}`
-    );
-    return undefined;
-  }
-  const res = fn(...args);
-  if (!res) {
-    console.warn(`wasm function ${fnName} returned nothing`);
-    return undefined;
-  }
-  Perf.markEvent(Measure.WasmStateSize, res.length);
-  let result;
-  try {
-    result = JSON.parse(res);
-  } catch (e) {
-    console.warn(`wasm function ${fnName} produced an invalid json`);
-  }
-  if (!result) {
-    console.warn(`wasm function ${fnName} produced no result:`, result);
-    return undefined;
-  }
-  if (result.message) {
-    console.warn(
-      `wasm function ${fnName} produced an error with message:\n`,
-      result.message
-    );
-    console.warn(new Error());
-    exposeJsonParseError(args[0], result.message);
-
-    return undefined;
-  }
-  return result;
-};
-
 export const updateWorld = (
   {
     state,
@@ -318,11 +277,8 @@ export const updateWorld = (
   }: { state: GameState; limit_area: AABB; client: boolean },
   elapsedTicks: number
 ): GameState | undefined => {
-  const world_state = JSON.stringify({ state, limit_area, client });
-  Perf.markEvent(Measure.WasmStateSize, world_state.length);
-  return doWasmCall<GameState>(
-    'update_world',
-    world_state,
+  return wasmFunctions.update_world(
+    { state, limit_area, client },
     BigInt(elapsedTicks)
   );
 };
@@ -341,15 +297,6 @@ export const interpolateWorld = (
 
 export const seedWorld = (seed: string, mode: GameMode): GameState => {
   return wasmFunctions.seed_world({ mode, seed });
-};
-
-const parseState = (inState: GameState): GameState | undefined => {
-  return doWasmCall<GameState>('parse_state', JSON.stringify(inState));
-};
-
-export const validateState = (inState: GameState): boolean => {
-  const parsed = parseState(inState);
-  return !!parsed;
 };
 
 export const restoreReplayFrame = (

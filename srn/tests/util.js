@@ -64,7 +64,7 @@ export const wasm = {
   },
   getNanosWeb: () => {
     throw new Error(notLoadedError);
-  }
+  },
 };
 const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
   const result = JSON.parse(fn(JSON.stringify(args), ...extraArgs));
@@ -122,7 +122,7 @@ export const loadWasm = timerify(async function loadWasm() {
     const wasmFunctions = getBindgen();
     wasmFunctions.set_panic_hook();
     wasmFunctions.set_enable_perf(!!process.env.ENABLE_PERF);
-    wasm.updateWorld = serializedWasmCaller(wasmFunctions.update_world);
+    wasm.updateWorld = wasmFunctions.update_world;
     wasm.seedWorld = wasmFunctions.seed_world;
     wasm.createRoom = wasmFunctions.create_room;
     wasm.updateRoom = wasmFunctions.update_room;

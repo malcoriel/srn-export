@@ -359,15 +359,13 @@ pub fn get_nanos_web() -> f64 {
 }
 
 #[wasm_bindgen]
-pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
-    let (args, return_result) = extract_args::<UpdateWorldArgs>(serialized_args);
-    if return_result.is_some() {
-        return return_result.unwrap();
-    }
-    let args = args.ok().unwrap();
+pub fn update_world(args: JsValue, elapsed_micro: i64) -> Result<JsValue, JsValue> {
+    let args = custom_deserialize::<UpdateWorldArgs>(args)?;
 
     if elapsed_micro < 0 {
-        return format!("Negative elapsed_micro: {}, can't update", elapsed_micro);
+        return Err(JsValue::from_str(
+            format!("Negative elapsed_micro: {}, can't update", elapsed_micro).as_str(),
+        ));
     }
     let mut indexes = world::SpatialIndexes {
         values: HashMap::new(),
@@ -402,7 +400,7 @@ pub fn update_world(serialized_args: &str, elapsed_micro: i64) -> String {
         }
     }
 
-    return serde_json::to_string(&new_state).unwrap_or(DEFAULT_ERR.to_string());
+    Ok(custom_serialize(&new_state)?)
 }
 
 #[wasm_bindgen]
