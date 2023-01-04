@@ -305,18 +305,6 @@ const StatsPanel = () => {
           {formatNumber(statsHeap[Stat.AvgServerStateSize] / 1024)}KiB
         </span>
       </div>
-      <div className="row">
-        <span className="name">State size to/from wasm</span>
-        <span className="value">
-          {formatNumber(statsHeap[Stat.AvgWasmStateSize] / 1024)}KiB
-        </span>
-      </div>
-
-      {/*<div className="row">*/}
-      {/*<span className="name">JS Heap:</span>*/}
-      {/*<span className="value">{formatNumber(statsHeap[Stats.JSMemUsed])}/*/}
-      {/*{formatNumber(statsHeap[Stats.JSMemTotal])}MB</span>*/}
-      {/*</div>*/}
     </div>
   );
 };
