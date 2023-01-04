@@ -86,6 +86,18 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
             .filter_map(|l| if l.id != current_id { Some(l) } else { None })
             .collect::<Vec<_>>(),
     );
+    state.locations = state
+        .locations
+        .into_iter()
+        .map(|mut l| {
+            for ship in l.ships.iter_mut() {
+                if my_ship_id.map_or(false, |my_ship_id| ship.id != my_ship_id) {
+                    ship.trajectory = vec![];
+                }
+            }
+            l
+        })
+        .collect();
     let current_ticks = state.ticks;
     state.events = Default::default();
     state.processed_events = state

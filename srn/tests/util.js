@@ -64,22 +64,7 @@ export const wasm = {
   },
   getNanosWeb: () => {
     throw new Error(notLoadedError);
-  },
-  avroTest: () => {
-    throw new Error(notLoadedError);
-  },
-  jsonTest: () => {
-    throw new Error(notLoadedError);
-  },
-  avroTestState: () => {
-    throw new Error(notLoadedError);
-  },
-  jsonTestState: () => {
-    throw new Error(notLoadedError);
-  },
-  getAvroSchemas: () => {
-    throw new Error(notLoadedError);
-  },
+  }
 };
 const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
   const result = JSON.parse(fn(JSON.stringify(args), ...extraArgs));
@@ -147,8 +132,6 @@ export const loadWasm = timerify(async function loadWasm() {
     wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
     wasm.packReplay = wasmFunctions.pack_replay;
     wasm.loadReplay = wasmFunctions.load_replay;
-    wasm.avroTest = wasmFunctions.avro_test;
-    wasm.getAvroSchemas = wasmFunctions.get_avro_schemas;
     wasm.getDiffReplayStateAt = timerifySync(function getDiffReplayStateAt(
       ...args
     ) {
@@ -166,9 +149,6 @@ export const loadWasm = timerify(async function loadWasm() {
     wasm.buildDialogueFromState = wasmFunctions.build_dialogue_from_state;
     wasm.getNanosNode = wasmFunctions.get_nanos_node;
     wasm.getNanosWeb = wasmFunctions.get_nanos_web;
-    wasm.jsonTest = wasmFunctions.json_test;
-    wasm.avroTestState = wasmFunctions.avro_test_state;
-    wasm.jsonTestState = wasmFunctions.json_test_state;
     wasm.resources = resources;
     wasm.dialogueTable = wasm.makeDialogueTable(
       wasm.resources.dialogue_scripts

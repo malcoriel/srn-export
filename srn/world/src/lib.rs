@@ -798,17 +798,3 @@ pub fn build_dialogue_from_state(
         Some(v) => Ok(custom_serialize(&v)?),
     }
 }
-
-#[wasm_bindgen]
-pub fn json_test(mut arg: JsValue) -> Result<JsValue, JsValue> {
-    let mut test = custom_deserialize::<Test>(arg)?;
-    test.a = 72;
-    Ok(custom_serialize(&test)?)
-}
-
-#[wasm_bindgen]
-pub fn json_test_state(mut arg: JsValue) -> Result<JsValue, JsValue> {
-    let mut test = custom_deserialize::<Vec2f64>(arg)?;
-    test.x = 10.0;
-    Ok(custom_serialize(&test)?)
-}

@@ -6,15 +6,6 @@ use std::f64::{INFINITY, NEG_INFINITY};
 use std::fmt::{Display, Formatter};
 use std::iter::FromIterator;
 
-use chrono::Utc;
-use itertools::{Either, Itertools};
-use rand::prelude::*;
-use serde_derive::{Deserialize, Serialize};
-use typescript_definitions::{TypeScriptify, TypescriptDefinition};
-use uuid::Uuid;
-use uuid::*;
-use wasm_bindgen::prelude::*;
-
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, SpatialIndex};
@@ -62,8 +53,17 @@ use crate::{combat, fire_event, market, notifications, planet_movement, tractori
 use crate::{dialogue, vec2};
 use crate::{get_prng, new_id, DEBUG_PHYSICS};
 use crate::{seed_prng, DialogueTable};
+use chrono::Utc;
 use dialogue::DialogueStates;
+use itertools::{Either, Itertools};
+use rand::prelude::*;
 use rand_pcg::Pcg64Mcg;
+use serde_derive::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use uuid::Uuid;
+use uuid::*;
+use wasm_bindgen::prelude::*;
 
 const SHIP_TURN_SPEED_DEG: f64 = 90.0;
 const ORB_SPEED_MULT: f64 = 1.0;
@@ -341,6 +341,7 @@ impl Ship {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Player {
     pub id: Uuid,
@@ -526,6 +527,7 @@ pub struct Breadcrumb {
     pub tag: Option<String>,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct GameState {
     pub id: Uuid,
