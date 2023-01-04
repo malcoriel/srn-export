@@ -36,7 +36,6 @@ rand_pcg = "0.1.2"
 serde_path_to_error = "0.1"
 serde_json_any_key = "2.0.0"
 js-sys = "0.3.60"
-apache-avro = "0.14.0"
 include_dir = "0.7.3"
 
   [dependencies.node-sys]
