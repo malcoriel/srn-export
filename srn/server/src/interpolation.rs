@@ -330,7 +330,7 @@ pub fn get_orbit_phase_table<'a, 'b>(
     rel_orbit_cache: &'a mut HashMap<u64, Vec<Vec2f64>>,
     movement_def: &'b Movement,
     orbit_radius: f64,
-    context: Option<String>,
+    _context: Option<String>,
 ) -> &'a mut Vec<Vec2f64> {
     let key = coerce_phase_table_cache_key(orbit_radius);
     rel_orbit_cache.entry(key).or_insert_with(|| {

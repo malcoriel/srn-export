@@ -411,7 +411,7 @@ fn on_client_ping(client_id: Uuid, data: &&str) {
     let now = Utc::now();
     let now_seconds = now.num_seconds_from_midnight();
     let hours = (now_seconds as f64 / 60.0 / 60.0).floor();
-    let minutes = (now_seconds as f64 / 60.0 - hours * 60.0).floor();
+    let _minutes = (now_seconds as f64 / 60.0 - hours * 60.0).floor();
     let now_milliseconds = now_seconds * 1000 + now.timestamp_subsec_millis();
     let entry = store.entry(client_id).or_insert(PingData {
         client_id,
