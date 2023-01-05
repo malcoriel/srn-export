@@ -279,6 +279,7 @@ pub enum SamplerMarks {
     GenRadialBodies = 62,
     UpdateDockedShipsPosition = 63,
     BroadcastState = 64,
+    UpdateWorldNonDetIter = 65,
 }
 
 impl Display for SamplerMarks {

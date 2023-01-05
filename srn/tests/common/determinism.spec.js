@@ -84,6 +84,21 @@ describe('update determinism', () => {
           expect(cementStateFields(stateA)).toEqual(cementStateFields(stateB));
         });
       });
+
+      describe('nondeterminism on demand', () => {
+        it('can break double-run with non-deterministic update request', () => {
+          const state = wasm.seedWorld({
+            mode,
+            seed: 'world update',
+          });
+          const stateA = updateWorld(state, 10001, undefined, false);
+          const stateB = updateWorld(state, 10001, undefined, true);
+          expect(stateA.ticks).not.toEqual(stateB.ticks);
+          expect(cementStateFields(stateA)).not.toEqual(
+            cementStateFields(stateB)
+          );
+        });
+      });
     }
   );
 
@@ -105,8 +120,8 @@ describe('update determinism', () => {
         ).toEqual(cementRoomFields(currentB));
       } catch (e) {
         console.warn('failed on serial update:', e.message);
-        await packAndWriteReplay(historyA, `${testName}-historyA`);
-        await packAndWriteReplay(historyB, `${testName}-historyB`);
+        // await packAndWriteReplay(historyA, `${testName}-historyA`);
+        // await packAndWriteReplay(historyB, `${testName}-historyB`);
         throw e;
       }
       i++;
@@ -115,14 +130,14 @@ describe('update determinism', () => {
 
   describe.each(['PirateDefence'])('room updates in %s mode', (mode) => {
     describe('room update', () => {
-      xit('can make bots deterministic if necessary', () => {
+      xit('can make bots deterministic if necessary', async () => {
         const room = wasm.createRoom({
           mode,
           seed: 'world update',
           bots_seed: 'deterministic',
           gen_state_opts: genStateOpts({ system_count: 1 }),
         });
-        serialUpdateAndCompare(
+        await serialUpdateAndCompare(
           room,
           [10000, 250, 250, 250, 1000, 1000, 1000, 10000, 10000],
           'deterministic bots test'

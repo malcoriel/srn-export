@@ -334,6 +334,7 @@ pub struct UpdateWorldArgs {
     state: world::GameState,
     limit_area: world::AABB,
     client: Option<bool>,
+    force_non_determinism: Option<bool>,
 }
 
 use crate::fof::FofActor;
@@ -379,6 +380,7 @@ pub fn update_world(args: JsValue, elapsed_micro: i32) -> Result<JsValue, JsValu
         world::UpdateOptions {
             disable_hp_effects: false,
             limit_area: args.limit_area,
+            force_non_determinism: args.force_non_determinism,
         },
         &mut indexes,
         &mut seed_prng(prng_seed),

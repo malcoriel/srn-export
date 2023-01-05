@@ -152,7 +152,12 @@ export const loadWasm = timerify(async function loadWasm() {
     console.error('loading wasm failed', e);
   }
 });
-export const updateWorld = (world, millis, isServer = true) => {
+export const updateWorld = (
+  world,
+  millis,
+  isServer = true,
+  forceNonDeterminism = false
+) => {
   return wasm.updateWorld(
     {
       state: world,
@@ -167,6 +172,7 @@ export const updateWorld = (world, millis, isServer = true) => {
         },
       },
       client: !isServer,
+      force_non_determinism: forceNonDeterminism,
     },
     millis * 1000
   );

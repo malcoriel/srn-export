@@ -656,6 +656,7 @@ impl AABB {
 pub struct UpdateOptions {
     pub disable_hp_effects: bool,
     pub limit_area: AABB,
+    pub force_non_determinism: Option<bool>,
 }
 
 impl UpdateOptions {
@@ -663,6 +664,7 @@ impl UpdateOptions {
         Self {
             disable_hp_effects: false,
             limit_area: AABB::maxed(),
+            force_non_determinism: None,
         }
     }
 }
@@ -709,13 +711,34 @@ pub fn update_world(
 ) -> (GameState, Sampler) {
     let update_full_mark = sampler.start(SamplerMarks::UpdateWorldFull as u32);
     let mut remaining = elapsed + state.accumulated_not_updated_ticks as i64;
-    let update_interval = state.update_every_ticks as i64;
     let (mut curr_state, mut curr_sampler) = (state, sampler);
-    while remaining >= update_interval {
-        let iter_mark = curr_sampler.start(SamplerMarks::UpdateWorldIter as u32);
+    let fast_nondeterministic_update = update_options.force_non_determinism.unwrap_or(false);
+    if !fast_nondeterministic_update {
+        let update_interval = curr_state.update_every_ticks as i64;
+        while remaining >= update_interval {
+            let iter_mark = curr_sampler.start(SamplerMarks::UpdateWorldIter as u32);
+            let pair = update_world_iter(
+                curr_state,
+                update_interval,
+                client,
+                curr_sampler,
+                update_options.clone(),
+                spatial_indexes,
+                prng,
+                d_table,
+                caches,
+            );
+            remaining -= update_interval;
+            curr_state = pair.0;
+            curr_sampler = pair.1;
+            curr_sampler.end(iter_mark);
+        }
+        curr_state.accumulated_not_updated_ticks = remaining as u32;
+    } else {
+        let mark = curr_sampler.start(SamplerMarks::UpdateWorldNonDetIter as u32);
         let pair = update_world_iter(
             curr_state,
-            update_interval,
+            remaining,
             client,
             curr_sampler,
             update_options.clone(),
@@ -724,12 +747,11 @@ pub fn update_world(
             d_table,
             caches,
         );
-        remaining -= update_interval;
         curr_state = pair.0;
         curr_sampler = pair.1;
-        curr_sampler.end(iter_mark);
+        curr_state.accumulated_not_updated_ticks = 0;
+        curr_sampler.end(mark);
     }
-    curr_state.accumulated_not_updated_ticks = remaining as u32;
     curr_sampler.end(update_full_mark);
     (curr_state, curr_sampler)
 }
@@ -745,7 +767,6 @@ fn update_world_iter(
     d_table: &DialogueTable,
     caches: &mut GameStateCaches,
 ) -> (GameState, Sampler) {
-    // log!("update world iter");
     state.ticks += elapsed as u64;
     state.millis = (state.ticks as f64 / 1000.0) as u32;
     if state.mode != GameMode::Tutorial {
@@ -2329,6 +2350,7 @@ pub fn update_room(
         UpdateOptions {
             disable_hp_effects: false,
             limit_area: AABB::maxed(),
+            force_non_determinism: None,
         },
         &mut spatial_indexes,
         &mut prng,
