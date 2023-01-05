@@ -9,6 +9,7 @@ import { MathUtils, Scene, ShaderMaterial, Vector3 } from 'three';
 import _ from 'lodash';
 import { threePosToVector, threeVectorToVector } from './util';
 import { useScopedHotkey } from '../utils/hotkeyHooks';
+import { SHIP_FIXED_Z } from './ShipShape';
 
 export const CAMERA_HEIGHT = 100;
 export const CAMERA_DEFAULT_ZOOM = () => unitsToPixels_min();
@@ -87,7 +88,10 @@ export const CameraController: React.FC<CameraZoomerProps> = ({
     const tmp = new Vector3();
     myShipMesh.getWorldPosition(tmp);
     tmp.z = CAMERA_HEIGHT;
-    camera.position.lerp(tmp, 0.2);
+    const dist = camera.position.distanceTo(tmp);
+    if (dist > 0.01) {
+      camera.position.lerp(tmp, 0.99);
+    }
   };
 
   useEffect(() => {

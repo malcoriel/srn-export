@@ -225,6 +225,7 @@ export class StateSyncer implements IStateSyncer {
     // }
     return this.wasmUpdateWorld(
       {
+        // the wasm code guarantees to return a copy, so it's safe to modify in-place here
         state: this.optimizeStateForWasmCall(from),
         limit_area: area,
         client: true,
