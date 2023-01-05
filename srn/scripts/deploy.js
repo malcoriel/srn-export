@@ -41,9 +41,6 @@ const doBuildServer = async () => {
   const { gitVersion, version } = await getVersions();
   console.log('building server', { gitVersion, version });
 
-  console.log('cleaning target...');
-  await fs.remove('server/target/x86_64-unknown-linux-musl');
-
   console.log('fixing permissions...');
   await spawnWatched('chmod 777 server/Cargo.lock');
 
@@ -51,17 +48,13 @@ const doBuildServer = async () => {
   await spawnWatched('docker rm -f rust-builder || true');
   await spawnWatched(
     `cd server && \
-        docker run --name="rust-builder" -it -v $(pwd):/home/rust/src \
-        -v cargo-git:/home/rust/.cargo/git \
-        -v cargo-registry:/home/rust/.cargo/registry \
-        -v target:/home/rust/src/target \
-        ekidd/rust-musl-builder:nightly-2021-12-23 \
-        /bin/bash -c "sudo chown -R rust:rust /home/rust/.cargo/git /home/rust/.cargo/registry /home/rust/src/target; cargo build --release;"\
+        docker run \
+        --name="rust-builder" -it -v $PWD:/volume \
+        -e CARGO_TARGET_DIR=target-rust-builder \
+        -v cargo-cache:/root/.cargo/registry \
+        clux/muslrust:1.67.0-nightly-2022-12-09 \
+        /bin/bash -c "cargo build --release;"\
         `
-  );
-  await fs.mkdirp('server/target/x86_64-unknown-linux-musl/release');
-  await spawnWatched(
-    'docker cp rust-builder:/home/rust/src/target/x86_64-unknown-linux-musl/release/ ./server/target/x86_64-unknown-linux-musl/'
   );
   await spawnWatched('docker rm -f rust-builder > /dev/null || true');
 
