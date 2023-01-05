@@ -66,13 +66,13 @@ const Template: Story = (args) => {
   );
 };
 
-export const ByNumbers = Template.bind({});
-ByNumbers.args = {
-  indexByNumbers: true,
-};
-
-export const ByHotkeys = Template.bind({});
-ByHotkeys.args = {};
+// export const ByNumbers = Template.bind({});
+// ByNumbers.args = {
+//   indexByNumbers: true,
+// };
+//
+// export const ByHotkeys = Template.bind({});
+// ByHotkeys.args = {};
 
 export default {
   title: 'UI/ActionsBar',
