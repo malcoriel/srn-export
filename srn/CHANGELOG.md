@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.9.8 (2023-01-05)
+### Fixes
+* Build system upgrade
+
 ## Version 0.9.7 (2023-01-05)
 ### Fixes
 * Repaired the build problems that broke the last release
