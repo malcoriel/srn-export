@@ -17,4 +17,5 @@ module.exports = {
     ...options,
     plugins: [['@babel/plugin-proposal-class-properties', { loose: true }]],
   }),
+  staticDirs: ['../public'],
 }

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
-import { StarMap } from './StarMap';
+import { StarMap, StarMapProps } from './StarMap';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
 import * as uuid from 'uuid';
-import Vector from '../utils/Vector';
+import Vector, { VectorF } from '../utils/Vector';
+import { Location } from '../world';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
@@ -26,46 +27,48 @@ const Template: Story = (args) => {
   );
 };
 
+const mockLocation = (
+  id: string,
+  starName: string,
+  starColor: string,
+  starPos: Vector,
+  starRadius: number
+): Location => ({
+  seed: '1',
+  id,
+  star: {
+    id,
+    name: starName,
+    color: starColor,
+    corona_color: starColor,
+    spatial: {
+      radius: starRadius,
+      position: VectorF(0, 0),
+      rotation_rad: 0,
+    },
+    movement: { tag: 'None' },
+    rot_movement: { tag: 'None' },
+  },
+  planets: [],
+  asteroids: [],
+  wrecks: [],
+  minerals: [],
+  containers: [],
+  position: starPos,
+  asteroid_belts: [],
+  ships: [],
+  adjacent_location_ids: [],
+});
+
 export const Main = Template.bind({});
-Main.args = {
+const args: StarMapProps = {
   systems: [
-    {
-      id: '1',
-      star: {
-        name: 'Dune',
-        color: '#ff3880',
-        radius: 20,
-      },
-      position: new Vector(50, 50),
-    },
-    {
-      id: '2',
-      star: {
-        name: 'Flop',
-        color: '#38ff94',
-        radius: 10,
-      },
-      position: new Vector(50, -50),
-    },
-    {
-      id: '3',
-      star: {
-        name: 'Boop',
-        radius: 15,
-        color: '#fff738',
-      },
-      position: new Vector(-50, 50),
-    },
-    {
-      id: '4',
-      star: {
-        name: 'Waaagh',
-        radius: 30,
-        color: '#ff6238',
-      },
-      position: new Vector(-50, -50),
-    },
+    mockLocation('1', 'Dune', '#ff3880', VectorF(50, 50), 20),
+    mockLocation('2', 'Flop', '#38ff94', new Vector(50, -50), 10),
+    mockLocation('3', 'Boop', '#fff738', new Vector(-50, 50), 15),
+    mockLocation('4', 'Waaagh', '#ff6238', new Vector(-50, -50), 30),
   ],
+  size: 600,
   links: [
     {
       from: '1',
@@ -81,6 +84,7 @@ Main.args = {
     },
   ],
 };
+Main.args = args;
 
 export default {
   title: 'UI/StarMap',

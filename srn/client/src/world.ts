@@ -65,6 +65,7 @@ export type {
   Market,
   GameState,
   FullObjectSpecifier,
+  Location,
 };
 export {
   CargoDeliveryQuestState,
