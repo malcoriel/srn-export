@@ -359,7 +359,7 @@ pub fn get_nanos_web() -> f64 {
 }
 
 #[wasm_bindgen]
-pub fn update_world(args: JsValue, elapsed_micro: i64) -> Result<JsValue, JsValue> {
+pub fn update_world(args: JsValue, elapsed_micro: i32) -> Result<JsValue, JsValue> {
     let args = custom_deserialize::<UpdateWorldArgs>(args)?;
 
     if elapsed_micro < 0 {
@@ -373,7 +373,7 @@ pub fn update_world(args: JsValue, elapsed_micro: i64) -> Result<JsValue, JsValu
     let prng_seed = args.state.seed.clone();
     let (new_state, sampler) = world::update_world(
         args.state,
-        elapsed_micro,
+        elapsed_micro as i64,
         args.client.unwrap_or(true),
         get_sampler_clone(),
         world::UpdateOptions {
@@ -424,7 +424,7 @@ pub fn flush_sampler_stats() {
         ));
         log!("------");
     } else {
-        log!("ENABLE_PERF is disabled, flushing stats is useless");
+        // log!("ENABLE_PERF is disabled, flushing stats is useless");
     }
 }
 
@@ -513,8 +513,8 @@ pub fn update_room(
 #[wasm_bindgen]
 pub fn update_room_full(
     room: JsValue,
-    total_ticks: i64,
-    step_ticks: i64,
+    total_ticks: i32,
+    step_ticks: i32,
 ) -> Result<JsValue, JsValue> {
     let mut room: Room = serde_wasm_bindgen::from_value(room)?;
     let mut sampler = get_sampler_clone();
@@ -526,7 +526,7 @@ pub fn update_room_full(
         let (_indexes, _sampler) = world::update_room(
             &mut prng,
             sampler,
-            step_ticks,
+            step_ticks as i64,
             &mut room,
             &get_current_d_table(),
             Some(&mut game_state_caches.write().unwrap()),

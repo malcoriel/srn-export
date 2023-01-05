@@ -90,7 +90,7 @@ export const CameraController: React.FC<CameraZoomerProps> = ({
     tmp.z = CAMERA_HEIGHT;
     const dist = camera.position.distanceTo(tmp);
     if (dist > 0.01) {
-      camera.position.lerp(tmp, 0.99);
+      camera.position.lerp(tmp, 1.0);
     }
   };
 

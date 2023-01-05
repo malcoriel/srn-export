@@ -132,6 +132,10 @@ async function buildForTests({ release }) {
     'let wasm_bindgen;',
     'export let wasm_bindgen; // patch for wasm-bindgen+jest'
   );
+  file = file.replace(
+    'const ret = performance',
+    'const ret = require("perf_hooks").performance;'
+  );
 
   // // new version of require-patching for jest in wasm-bindgen 0.2.79 (may differ for other versions)
   // file = file.replace(

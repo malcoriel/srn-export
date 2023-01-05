@@ -66,13 +66,6 @@ export const wasm = {
     throw new Error(notLoadedError);
   },
 };
-const serializedWasmCaller = (fn) => (args, ...extraArgs) => {
-  const result = JSON.parse(fn(JSON.stringify(args), ...extraArgs));
-  if (result.message) {
-    throw new Error(result.message);
-  }
-  return result;
-};
 
 const loadAllJsonsAsRawStringsKeyByFilename = async (path) => {
   const pairs = await Promise.all(
@@ -175,21 +168,17 @@ export const updateWorld = (world, millis, isServer = true) => {
       },
       client: !isServer,
     },
-    BigInt(millis * 1000)
+    millis * 1000
   );
 };
 
 export const updateRoom = timerifySync(function updateRoomV2(
   room,
   millis,
-  timeStepTicks = 100n * 1000n // 100ms. Much slower than the actual game, but ok for the testing performance
+  timeStepTicks = 100 * 1000 // 100ms. Much slower than the actual game, but ok for the testing performance
 ) {
   let currentRoom = room;
-  currentRoom = wasm.updateRoomFull(
-    currentRoom,
-    BigInt(millis * 1000),
-    timeStepTicks
-  );
+  currentRoom = wasm.updateRoomFull(currentRoom, millis * 1000, timeStepTicks);
   return currentRoom;
 });
 
@@ -234,7 +223,7 @@ export function findFirstEvent(world, eventName) {
 }
 
 export function findFirstProcessedEvent(world, eventName) {
-  return world.processed_events.find((e) => e.event.tag === eventName);
+  return world.processed_events.find((e) => e.tag === eventName);
 }
 
 export function mockPlayer(player_id) {

@@ -251,7 +251,6 @@ describe('player actions logic', () => {
       // since 250 + 250 = 500, which is gas timeout delay, the ship should move to 500ms distance
       ship = getShipByPlayerId(state, player.id);
       const EPSILON = 0.01;
-      console.log('resulting ship y =', ship.y);
       expect(ship.y).toBeGreaterThan(
         100.0 + ship.movement_definition.move_speed * 1000 * 500 - EPSILON
       );
@@ -325,7 +324,6 @@ describe('player actions logic', () => {
         player.id,
         state
       );
-      console.log(dialogue);
       state.player_actions.push(
         mockSelectDialogueOption(
           player.id,

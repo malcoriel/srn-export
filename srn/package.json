@@ -15,7 +15,8 @@
     "watch-wasm-tests": "cargo-watch -C world -w ../server -s 'yarn wasm-pack forTests'",
     "deploy": "yarn env node scripts/deploy.js",
     "up-version": "yarn env node scripts/up-version.js",
-    "regen-resources": "yarn env node scripts/regen-resources.js"
+    "regen-resources": "yarn env node scripts/regen-resources.js",
+    "test": "cd tests && yarn test"
   },
   "dependencies": {
     "@babel/core": "^7.7.7",

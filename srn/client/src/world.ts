@@ -279,7 +279,7 @@ export const updateWorld = (
 ): GameState | undefined => {
   return wasmFunctions.update_world(
     { state, limit_area, client },
-    BigInt(elapsedTicks)
+    elapsedTicks
   );
 };
 
