@@ -307,6 +307,7 @@ fn update_radial_movement(
     }
 }
 
+#[allow(unused_mut)]
 pub fn project_body_relative_position(
     current_ticks: u64,
     indexes: &GameStateIndexes,
