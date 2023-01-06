@@ -539,11 +539,9 @@ pub fn update_room_full(
 }
 
 fn get_current_d_table() -> DialogueTable {
-    current_d_table
-        .read()
-        .unwrap()
-        .clone()
-        .expect("no preloaded dialogue table, cannot update room. call .load_d_table first")
+    current_d_table.read().unwrap().clone().expect(
+        "no preloaded dialogue table while calling get_current_d_table. call .load_d_table first",
+    )
 }
 
 #[wasm_bindgen]

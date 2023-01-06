@@ -41,6 +41,7 @@ import * as uuid from 'uuid';
 import Prando from 'prando';
 import { api } from './utils/api';
 import { Measure, Perf } from './HtmlLayers/Perf';
+import pWaitFor from 'p-wait-for';
 
 export type {
   Action,
@@ -183,6 +184,7 @@ window.enablePerf = () => {
   forceEnablePerfRecheck();
 };
 
+let wasmLoading = true;
 (async function initWorldWasm() {
   console.log('loading world wasm....');
   wasmFunctions = await import('../../world/pkg');
@@ -199,9 +201,14 @@ window.enablePerf = () => {
     forceEnablePerfRecheck();
   }, PERF_FLUSH_INTERVAL_MS);
   console.log('loading world wasm done.');
+  wasmLoading = false; // no need for .finally, app cannot recover from it
   // @ts-ignore
   window.getNanosWeb = wasmFunctions.get_nanos_web;
 })();
+
+export const waitForWasmLoad = async () => {
+  await pWaitFor(() => !wasmLoading, { timeout: 10000 });
+};
 
 // the dialogue table type is intentionally opaque here, as it's passed from server to lib through js
 export const initDialogueTable = (dialogueTable: any) => {

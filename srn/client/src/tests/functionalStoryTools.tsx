@@ -1,6 +1,6 @@
 import React from 'react';
 import { delay } from '../utils/misc';
-import { GameMode } from '../world';
+import { ensureDialogueTableLoaded, GameMode } from '../world';
 import NetState from '../NetState';
 import { SandboxCommandBuilder } from '../../../world/pkg/world.extra';
 import { IVector } from '../utils/Vector';

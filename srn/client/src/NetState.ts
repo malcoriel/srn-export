@@ -1,6 +1,6 @@
 import {
   AABB,
-  DEFAULT_STATE,
+  DEFAULT_STATE, ensureDialogueTableLoaded,
   GameMode,
   GameState,
   isInAABB,
@@ -10,7 +10,7 @@ import {
   ManualMovementInactivityDropMs,
   restoreReplayFrame,
   TradeAction,
-  updateWorld,
+  updateWorld, waitForWasmLoad,
 } from './world';
 import EventEmitter from 'events';
 import * as uuid from 'uuid';
@@ -280,7 +280,9 @@ export default class NetState extends EventEmitter {
     NetState.instance = undefined;
   };
 
-  init = (mode: GameMode): Promise<void> => {
+  init = async (mode: GameMode): Promise<void> => {
+    await waitForWasmLoad();
+    await ensureDialogueTableLoaded();
     this.mode = mode;
     normalLog(`initializing NS ${this.id}`);
     this.connecting = true;
