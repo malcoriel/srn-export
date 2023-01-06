@@ -108,7 +108,7 @@ type PendingActionPack = {
   server_acknowledged: boolean;
 };
 
-const MAX_ALLOWED_CORRECTION_JUMP_CONST = 15 / 1000 / 1000;
+const MAX_ALLOWED_CORRECTION_JUMP_CONST = 5 / 1000 / 1000;
 // max 'too fast client' desync value, to skip too eager client frame. Since 1 update is roughly 16ms, then we must allow 1 frame ahead, but not 2
 const MAX_ALLOWED_CLIENT_AHEAD_TICKS = 2 * 17 * 1000;
 // if client is too much ahead, complete frame skipping may be notices, but what if we slow down the frame by factor X?
@@ -205,20 +205,21 @@ export class StateSyncer implements IStateSyncer {
     area: AABB,
     context: string
   ): GameState | null {
-    const LONG_UPDATE_BAIL = 500 * 1000;
-    if (elapsedTicks > LONG_UPDATE_BAIL) {
+    const LONG_UPDATE_WARN = 500 * 1000;
+    let nonDeterministic = false;
+    if (elapsedTicks > LONG_UPDATE_WARN) {
       const clientAheadTicks =
         this.state.ticks + elapsedTicks - this.trueState.ticks;
       this.log.push(
-        `warn: too long update bail for ${Math.round(
+        `warn: non deterministic update for ${Math.round(
           elapsedTicks / 1000
         )}ms (max ${Math.round(
-          LONG_UPDATE_BAIL / 1000
+          LONG_UPDATE_WARN / 1000
         )}ms) in ${context}, client ahead by ${Math.round(
           clientAheadTicks / 1000
         )}ms`
       );
-      return from;
+      nonDeterministic = true;
     }
     // if (this.pendingActionPacks.length > 0) {
     //   this.log.push(`Pending actions: ${this.pendingActionPacks.length}`);
@@ -229,6 +230,8 @@ export class StateSyncer implements IStateSyncer {
         state: this.optimizeStateForWasmCall(from),
         limit_area: area,
         client: true,
+        // since by default deterministic updates is iterative, updating for a long interval will take TIME / update_every_milliseconds of update iterations, which sucks
+        force_non_determinism: nonDeterministic,
       },
       elapsedTicks
     );
@@ -888,6 +891,7 @@ export class StateSyncer implements IStateSyncer {
             this.log.push(
               `warn: value type mismatch for path ${normalizedExtendedKey}, curr=${currType}, true=${trueType}`
             );
+            (currState as any)[key] = trueValue; // not clear how this happens, but e.g. happens for star when switching stories in storybook.
             continue;
           }
           if (_.isArray(trueValue)) {
