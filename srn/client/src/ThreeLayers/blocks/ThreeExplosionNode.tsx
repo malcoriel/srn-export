@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Color, Mesh, MeshBasicMaterial } from 'three';
+import { Color, Mesh } from 'three';
 import { Vector3Arr } from '../util';
 import { useFrame } from '@react-three/fiber';
 
-type ExplosionProps = {
+export type ExplosionProps = {
   initialSize: number;
   scaleSpeed: number;
   position?: Vector3Arr;
@@ -147,5 +147,3 @@ export const ThreeExplosionNode: React.FC<ExplosionProps> = ({
     </group>
   );
 };
-
-export const BackgroundPlane = () => {};
