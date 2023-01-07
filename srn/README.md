@@ -14,6 +14,7 @@ The project is in perpetual alpha state by design, with somewhat periodic releas
 ### Environment needed
 1. The project is primarily ran on Linux, however it may work on Windows too, and very likely will work on MacOS.
 2. Rust version: rustc 1.67.0-nightly (5f3700105 2022-03-22)
+3. `rustup target add wasm32-unknown-unknown` - necessary for wasm builds
 3. `wasm-bindgen-cli` needed in PATH: version 0.2.83 (strictly this one)
 4. `wasm-pack` needed in PATH: version 0.10.3 (may work with higher)
 5. yarn v1 (may work with npm, but the lockfiles are for yarn v1)
