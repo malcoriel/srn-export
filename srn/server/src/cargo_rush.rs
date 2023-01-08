@@ -1,9 +1,9 @@
 use crate::{bots, fire_event, indexing, notifications, prng_id, world, Room};
 use itertools::Itertools;
 
-use crate::indexing::{ObjectSpecifier};
-use rand_pcg::Pcg64Mcg;
+use crate::indexing::ObjectSpecifier;
 use rand::prelude::*;
+use rand_pcg::Pcg64Mcg;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use world::GameState;
@@ -24,9 +24,9 @@ use world::Player;
 pub fn on_create_room(room: &mut Room, prng: &mut Pcg64Mcg) {
     let traits = Some(vec![AiTrait::CargoRushHauler]);
     add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
-    // add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
-    // add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
-    // add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
+    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
+    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
+    add_bot(room, new_bot(traits.clone(), prng_id(prng)), prng);
 }
 
 pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>, planet_id: Uuid) {
@@ -36,7 +36,7 @@ pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>, planet_id:
             GameEvent::DialogueTriggerRequest {
                 dialogue_name: "basic_planet".to_owned(),
                 player_id,
-                target: Some(ObjectSpecifier::Planet {id: planet_id}),
+                target: Some(ObjectSpecifier::Planet { id: planet_id }),
             },
         );
     }
