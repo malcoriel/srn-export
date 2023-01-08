@@ -12,6 +12,7 @@ import {
   Action,
   GameState,
   getObjSpecId,
+  isInAABB,
   ObjectSpecifier,
   Ship,
 } from './world';
@@ -448,7 +449,8 @@ export class StateSyncer implements IStateSyncer {
         this.violations = this.checkViolations(
           this.state,
           this.trueState,
-          event.elapsedTicks
+          event.elapsedTicks,
+          event.visibleArea
         );
         const violations = this.violations.filter(
           (v) => v.tag === 'ObjectJump'
@@ -461,7 +463,8 @@ export class StateSyncer implements IStateSyncer {
         this.violations = this.checkViolations(
           this.state,
           this.trueState,
-          event.elapsedTicks
+          event.elapsedTicks,
+          event.visibleArea
         );
         if (this.violations.length > 0) {
           // this.log.push(`remaining ${this.violations.length} violations`);
@@ -529,11 +532,15 @@ export class StateSyncer implements IStateSyncer {
   private checkViolations(
     currState: GameState,
     serverState: GameState,
-    elapsedTicks: number
+    elapsedTicks: number,
+    visibleArea: AABB
   ): SyncerViolation[] {
     const res = [];
     const checkableObjects = this.enumerateCheckableObjects(serverState);
     for (const { spec, obj } of checkableObjects) {
+      if (!isInAABB(visibleArea, obj, 0.0)) {
+        continue;
+      }
       const oldObjInstance = this.findOldVersionOfObjectV2(currState, spec);
       if (oldObjInstance) {
         const oldObj = oldObjInstance;

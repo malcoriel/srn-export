@@ -752,16 +752,9 @@ pub fn interpolate_states(
 fn custom_deserialize<T: serde::de::DeserializeOwned + std::fmt::Debug>(
     val: JsValue,
 ) -> Result<T, JsValue> {
-    let res = serde_wasm_bindgen::from_value(val.clone());
-    res.map_err(|_| {
-        // that error sucks, retry with a better one
-        let retry_err = serde_path_to_error::deserialize::<serde_wasm_bindgen::Deserializer, T>(
-            serde_wasm_bindgen::Deserializer::from(val),
-        )
-        .expect_err("error mismatch between serde and serde_wasm_bindgen");
-
-        return JsValue::from(retry_err.to_string());
-    })
+    serde_path_to_error::deserialize::<serde_wasm_bindgen::Deserializer, T>(
+        serde_wasm_bindgen::Deserializer::from(val),
+    ).map_err(|v| JsValue::from_str(v.to_string().as_str()))
 }
 
 #[wasm_bindgen]
