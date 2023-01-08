@@ -287,6 +287,7 @@ export class StateSyncer implements IStateSyncer {
           ]
       )
     );
+    this.useCachedStateForUpdateContext = false;
     this.trueState = this.state; // invalidate whatever we had previously during correction, as client view has to win immediately, then get compensated
     return this.successCurrent();
   }

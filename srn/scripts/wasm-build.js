@@ -3,7 +3,13 @@ const fs = require('fs-extra');
 const isWin = process.platform === 'win32';
 const yargs = require('yargs');
 
-async function buildForWeb({ noTransform, transformOnly, noCleanTmp, debug }) {
+async function buildForWeb({
+  noTransform,
+  transformOnly,
+  noCleanTmp,
+  debug,
+  profiling,
+}) {
   if (!transformOnly) {
     console.log('Building rust code for extracting TS definitions...');
     await spawnWatched(
@@ -31,7 +37,13 @@ async function buildForWeb({ noTransform, transformOnly, noCleanTmp, debug }) {
     console.log('Done, now building actual wasm...');
     console.log('wasm-pack version used:');
     await spawnWatched('wasm-pack --version');
-    const wasmPackCmd = `wasm-pack build ${debug ? '--debug' : '--profiling'} `;
+    let optValue;
+    if (debug) {
+      optValue = '--debug';
+    } else {
+      optValue = profiling ? '--profiling' : '--release';
+    }
+    const wasmPackCmd = `wasm-pack build ${optValue} `;
     console.log(`Executing ${wasmPackCmd}`);
     await spawnWatched(wasmPackCmd, {
       spawnOptions: {
@@ -189,13 +201,14 @@ export const getBindgen = () => {
             type: 'boolean',
             default: false,
           }),
-      async ({ noTransform, transformOnly, noCleanTmp, debug }) => {
+      async ({ noTransform, transformOnly, noCleanTmp, debug, profiling }) => {
         try {
           await buildForWeb({
             noTransform,
             transformOnly,
             noCleanTmp,
             debug,
+            profiling,
           });
         } catch (e) {
           console.error(e);
