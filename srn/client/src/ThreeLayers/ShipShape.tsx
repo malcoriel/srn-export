@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
-import { useLoader } from '@react-three/fiber';
+import React, { useMemo, useRef } from 'react';
+import { useFrame, useLoader } from '@react-three/fiber';
 import { Geometry } from 'three/examples/jsm/deprecated/Geometry';
 import { posToThreePos, Vector3Arr } from './util';
 import Vector, { VectorF } from '../utils/Vector';
 import * as THREE from 'three';
 import { SHADOW_ID } from '../StateSyncer';
+import { MeshBasicMaterial } from 'three';
 
 const STLLoader = require('three-stl-loader')(THREE);
 // ships are always 'above' the stuff
@@ -16,6 +17,7 @@ export type ShipShapeProps = {
   color: string;
   gid: string;
   opacity: number;
+  fadeOver?: number;
 };
 export const ShipShape: React.FC<ShipShapeProps> = ({
   radius,
@@ -25,6 +27,7 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
   opacity,
   children,
   gid,
+  fadeOver = undefined,
 }) => {
   // @ts-ignore
   const shipModel = useLoader<Geometry>(STLLoader, 'resources/models/ship.stl');
@@ -34,9 +37,28 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
     [radius]
   );
 
-  // that's a hack to shift model 'forward' a little bit due
+  // that's a hack to shift model 'forward' a little due
   // to shifted weight center
   const shift = VectorF(0, radius / 5.0).turnCounterClockwise(rotation);
+
+  const material = useRef<MeshBasicMaterial>(null);
+  useFrame((_state, delta) => {
+    if (!material.current) {
+      return;
+    }
+    if (!fadeOver) {
+      return;
+    }
+    if (material.current.opacity > 0) {
+      if (typeof material.current.userData.fadeTimer === 'undefined') {
+        material.current.userData.fadeTimer = 0;
+      }
+      material.current.userData.fadeTimer += delta;
+      material.current.opacity =
+        opacity *
+        (1.0 - Math.min(material.current.userData.fadeTimer / fadeOver, 1.0));
+    }
+  });
 
   const shipZ = gid === SHADOW_ID ? -10 : SHIP_FIXED_Z;
   return (
@@ -49,7 +71,12 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
         // @ts-ignore
         geometry={shipModel}
       >
-        <meshBasicMaterial color={color} opacity={opacity} transparent />
+        <meshBasicMaterial
+          ref={material}
+          color={color}
+          opacity={opacity}
+          transparent
+        />
       </mesh>
       {children}
     </group>

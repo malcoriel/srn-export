@@ -1548,7 +1548,7 @@ const MAX_LOCAL_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
 
-const WRECK_DECAY_TICKS: i32 = 10 * 1000 * 1000;
+const WRECK_DECAY_TICKS: i32 = 3 * 1000 * 1000; // also matches fadeOver in UI
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
 pub const PLANET_HEALTH_REGEN_PER_TICK: f64 = 1.0 / 1000.0 / 1000.0;
 

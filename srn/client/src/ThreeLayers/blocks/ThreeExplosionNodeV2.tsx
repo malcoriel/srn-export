@@ -171,7 +171,7 @@ export const ThreeExplosionNodeV2: React.FC<ExplosionPropsV2> = ({
   return (
     <group position={posToThreePos(position.x, position.y)}>
       <mesh ref={blastMesh} scale={scale}>
-        <circleBufferGeometry args={[5, 10]} />
+        <circleBufferGeometry args={[1, 8]} />
         <rawShaderMaterial
           transparent
           fragmentShader={fragmentShader(
