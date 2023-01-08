@@ -705,9 +705,6 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.star.spatial',
       'locations.*.star.movement',
       'locations.*.star.rot_movement',
-      // temporary to match previous impl, should be always server likely
-      'locations.*.ships.*.trajectory',
-      'locations.*.ships.*.dock_target',
       'locations.*.asteroid_belts',
     ]),
     // overwrite state with server => bad for movement, good for numbers like hp
@@ -743,6 +740,7 @@ export class StateSyncer implements IStateSyncer {
       // ships
       'locations.*.ships.*.id',
       'locations.*.ships.*.docked_at',
+      'locations.*.ships.*.dock_target',
       'locations.*.ships.*.rotation',
       'locations.*.ships.*.radius',
       'locations.*.ships.*.color',
@@ -764,6 +762,9 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.ships.*.turrets',
       'locations.*.ships.*.properties',
       'locations.*.ships.*.trading_with',
+      'locations.*.ships.*.trajectory',
+      'locations.*.ships.*.dock_target',
+
       'locations.*.star.id',
       'locations.*.planets.*.id',
 

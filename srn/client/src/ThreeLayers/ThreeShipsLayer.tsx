@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  findContainer,
-  findMineral,
-  GameState,
-  Ship,
-} from '../world';
+import { findContainer, findMineral, GameState, Ship } from '../world';
 import { ThreeShip } from './ThreeShip';
 import Vector from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
@@ -15,7 +10,11 @@ import {
 } from '../../../world/pkg';
 import { ThreeShipWreck } from './ThreeShipWreck';
 import _ from 'lodash';
-import { ClientStateIndexes, findObjectPositionById } from '../ClientStateIndexing';
+import {
+  ClientStateIndexes,
+  findMyShip,
+  findObjectPositionById,
+} from '../ClientStateIndexing';
 
 // Right now, there's no server-side support for actual separate shooting
 // So this mapping is for visual effect only
