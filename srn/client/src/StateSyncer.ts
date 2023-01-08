@@ -91,8 +91,11 @@ export const SHADOW_ID = uuid.v4();
 
 export interface IStateSyncer {
   handle(StateSyncerEvent: StateSyncerEvent): StateSyncerResult;
+
   getCurrentState(): GameState;
+
   flushLog(): any[];
+
   handleServerConfirmedPacket(tag: string): void;
 }
 
@@ -1070,7 +1073,6 @@ export class StateSyncer implements IStateSyncer {
     state.processed_events = [];
     state.processed_player_actions = [];
     state.events = [];
-    state.leaderboard = { rating: [], winner: '' };
     return state;
   }
 }
