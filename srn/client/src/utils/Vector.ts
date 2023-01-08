@@ -182,6 +182,7 @@ export default class Vector implements IVector {
 }
 
 const memory = new Map();
+
 // noinspection TsLint
 export function VectorF(x: number, y: number) {
   const key = `${x}/${y}`;
@@ -197,6 +198,7 @@ export function VectorF(x: number, y: number) {
 
 // eslint-disable-next-line camelcase
 export const VectorFzero = VectorF(0, 0);
+export const VectorFZero = VectorFzero;
 
 // noinspection JSUnusedGlobalSymbols
 export function VectorFK(key: string) {

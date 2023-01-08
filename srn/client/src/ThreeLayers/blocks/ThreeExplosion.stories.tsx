@@ -4,8 +4,6 @@ import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { ThreeExplosionNode } from './ThreeExplosionNode';
 import { ThreeExplosion } from './ThreeExplosion';
-import { posToThreePos } from '../util';
-import { ThreeExplosionNodeV2 } from './ThreeExplosionNodeV2';
 
 // noinspection JSUnusedGlobalSymbols
 export default {
@@ -45,16 +43,6 @@ const NodeTemplate: Story = (args) => {
         scaleSpeed={1.05}
         explosionTimeSeconds={args.explosionTimeSeconds}
         autoPlay={args.autoPlay}
-        position={posToThreePos(-250, 0)}
-      />
-      <ThreeExplosionNodeV2
-        key={revision + JSON.stringify(args) + 1}
-        progressNormalized={args.progressNormalized}
-        initialSize={5.0}
-        scaleSpeed={1.05}
-        explosionTimeSeconds={args.explosionTimeSeconds}
-        autoPlay={args.autoPlay}
-        position={posToThreePos(250, 0)}
       />
     </StoryCanvas>
   );

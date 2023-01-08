@@ -1,7 +1,6 @@
-import React, { useRef, useState } from 'react';
-import { Mesh, MeshBasicMaterial, RawShaderMaterial, Vector3 } from 'three';
+import React, { useMemo, useRef, useState } from 'react';
+import { Mesh, RawShaderMaterial, Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
-import { ExplosionProps } from './ThreeExplosionNode';
 import {
   FloatArrayUniformValue,
   FloatUniformValue,
@@ -9,21 +8,25 @@ import {
   Vector3ArrayUniformValue,
 } from '../shaders/uniformTypes';
 import _ from 'lodash';
-import Material from 'component-material';
 
+const DEFAULT_BLAST_TIME = 1.0;
+const DEFAULT_DETAIL = 3;
+const DEFAULT_SEED = 1;
 const uniforms: {
   time: FloatUniformValue;
-  // colors: Vector3ArrayUniformValue;
-  // sharpness: FloatArrayUniformValue;
-  phase: IntUniformValue;
+  blastTime: FloatUniformValue;
+  seed: FloatUniformValue;
+  detail: IntUniformValue;
 } = {
   time: { value: 0 },
-  phase: { value: 0 },
-  // colors: { value: [] },
-  // sharpness: { value: [] },
+  blastTime: { value: DEFAULT_BLAST_TIME },
+  seed: { value: DEFAULT_SEED },
+  detail: { value: DEFAULT_DETAIL },
 };
 import { stripIndent } from 'common-tags';
 import { perlinNoise } from '../shaders/shaderFunctions';
+import { IVector, VectorFZero } from '../../utils/Vector';
+import { posToThreePos } from '../util';
 
 // language=Glsl
 const vertexShader = stripIndent`
@@ -57,10 +60,20 @@ const fragmentShader = (
     precision highp float;
     precision highp int;
     uniform float time;
+    uniform float seed;
+    uniform float blastTime;
+    uniform int detail;
     in vec2 relativeObjectCoord;
-    out vec4 FragColor;
+    out vec4 frag_color;
 
     ${perlinNoise}
+
+    vec2 rotate(vec2 v, float angle) {
+        vec2 res = vec2(0.0);
+        res.x = cos(angle) * v.x - sin(angle) * v.y;
+        res.y = sin(angle) * v.x + cos(angle) * v.y;
+        return res;
+    }
 
     float time_scale(float time_to_reach, float curr_time) {
         float time_remaining = max(time_to_reach - curr_time, 0.0);
@@ -81,10 +94,10 @@ const fragmentShader = (
     }
 
     void main() {
-        FragColor = vec4(vec3(0.0), 0.0);
+        frag_color = vec4(vec3(0.0), 0.0);
         vec4 color1 = vec4(${rgba1.join(',')});
         vec4 color2 = vec4(${rgba2.join(',')});
-        float blast_time = 5.0;
+        float blast_time = blastTime;
         float blast_max_radius = 0.5;
         float smoke_start_time = blast_time * 0.75;
         float decay_start_time = blast_time * 0.25;
@@ -104,29 +117,36 @@ const fragmentShader = (
 
         vec2 centered_coord = vec2(relativeObjectCoord) - vec2(0.5, 0.5);
         float dist_from_center = length(centered_coord);
-        float noise_coord = pNoise(relativeObjectCoord.xy * (1.0 - animate(0.0, 0.1, blast_time, time)), 3, 10.0);
+        float noise_coord = pNoise(rotate(relativeObjectCoord.xy, seed) * (1.0 - animate(0.0, 0.1, blast_time, time)), detail, 10.0);
         float noise_radius = + noise_coord - 0.1;
         if (dist_from_center < (blast_radius + noise_radius)) {
-            FragColor += vec4(blast_color, 1.0);
+            frag_color += vec4(blast_color, 1.0);
         }
         if (dist_from_center < (decay_radius + noise_radius)) {
             float erasion_intensity = 1.0;
-            FragColor.xyz -= vec3(erasion_intensity) * (1.0 - noise_coord);
-            FragColor.a = 0.8;
+            frag_color.xyz -= vec3(erasion_intensity) * (1.0 - noise_coord);
+            frag_color.a = 0.8;
         }
         if (dist_from_center < (smoke_radius + noise_radius)) {
-            FragColor.a = (0.5 - animate(0.0, 0.5, smoke_time, time - smoke_start_time));
+            frag_color.a = (0.5 - animate(0.0, 0.5, smoke_time, time - smoke_start_time));
         }
     }
 `;
 
-export const ThreeExplosionNodeV2: React.FC<ExplosionProps> = ({
-  initialSize,
-  scaleSpeed,
-  position,
-  progressNormalized: progressNormalizedExt = 0.0,
-  autoPlay = false,
-  explosionTimeSeconds = 4,
+export type ExplosionPropsV2 = {
+  position?: IVector;
+  scale?: number;
+  blastTime?: number;
+  detail?: number;
+  seed?: number;
+};
+const DEFAULT_SCALE = 1.0;
+export const ThreeExplosionNodeV2: React.FC<ExplosionPropsV2> = ({
+  position = VectorFZero,
+  scale = DEFAULT_SCALE,
+  blastTime = DEFAULT_BLAST_TIME,
+  detail = DEFAULT_DETAIL,
+  seed = DEFAULT_SEED,
 }) => {
   const blastMesh = useRef<Mesh>();
   useFrame((_state, deltaSeconds) => {
@@ -138,17 +158,20 @@ export const ThreeExplosionNodeV2: React.FC<ExplosionProps> = ({
       return;
     }
     material.uniforms.time.value += deltaSeconds;
-    material.uniforms.phase.value = Math.round(
-      material.uniforms.time.value / 0.2
-    );
   });
 
-  const uniformsInstance = _.cloneDeep(uniforms);
+  const uniformsInstance = useMemo(() => {
+    const val = _.cloneDeep(uniforms);
+    val.blastTime.value = blastTime;
+    val.detail.value = detail;
+    val.seed.value = seed;
+    return val;
+  }, [blastTime, detail, seed]);
 
   return (
-    <group position={position}>
-      <mesh ref={blastMesh} scale={1.0}>
-        <planeGeometry args={[300, 300]} />
+    <group position={posToThreePos(position.x, position.y)}>
+      <mesh ref={blastMesh} scale={scale}>
+        <circleBufferGeometry args={[5, 10]} />
         <rawShaderMaterial
           transparent
           fragmentShader={fragmentShader(
