@@ -1,93 +1,143 @@
 # Changelog
 
-## Version 0.9.8 (2023-01-05)
+## Version 0.9.9 (2023-01-08)
+
+### New
+
+* Added a better explosion shader
+
 ### Fixes
+
+* Improved overall client performance
+* Fixed ship explosion-related performance issues
+
+## Version 0.9.8 (2023-01-05)
+
+### Fixes
+
 * Build system upgrade
 
 ## Version 0.9.7 (2023-01-05)
+
 ### Fixes
+
 * Repaired the build problems that broke the last release
 
 ## Version 0.9.6 (2023-01-05)
+
 ### Fixes
+
 * Significantly improved performance of pirate defence
 * Generally optimized network traffic consumption
 
 ## Version 0.9.5 (2022-12-07)
+
 ### Fixes
+
 * Changelog text fix
 * Fixed the width of the random portrait button on the main screen
 
 ## Version 0.9.4 (2022-12-07)
+
 ### Fixes
+
 * Build chain issues fixes that prevented previous releases
 
 ## Version 0.9.3 (2022-12-06) - failed release
 
 ## Version 0.9.2 (2022-12-06)
+
 ### New
+
 * Introduced better performance metrics
+
 ### Fixes
+
 * Improved PirateDefence performance
 
 ## Version 0.9.1 (2022-12-04)
+
 ### New
+
 * Re-introduced display of server vs client state desync time
 * Introduced closing UI windows by pressing esc
+
 ### Fixes
+
 * Fixed some synchronization bugs
 * Fixed server crash issue for long-running rooms
-* Fixed a bug where active dialogue and other windows hotkeys were triggering background actions like shooting when pressing 1-2 and other keys.
+* Fixed a bug where active dialogue and other windows hotkeys were triggering background actions like shooting when
+  pressing 1-2 and other keys.
 
 ## Version 0.9.0 (2022-12-03)
+
 ### New
+
 * A huge rewrite of the networking and state synchronization
 * Likely huge amount of bugs added, fixes coming soon
 * Camera moves more smoothly now
 
 ### Fixes
+
 * Some unknown amount of bugs fixed, mostly ship position related
 
 ## Version 0.8.6 (2022-04-06)
+
 ### Fixes
+
 * Fixed a bug when it was impossible to join the game in any mode
 
 ## Version 0.8.5 (2022-04-05)
+
 ### Fixes
+
 * Fixed lacking help notifications in CargoRush mode
 * Improved stability of the game logic
 
 ## Version 0.8.4 (2022-03-16)
+
 ### Fixes
+
 * Made replays much smoother-looking via interpolation
 * Reduced the size of replays
 
 ## Version 0.8.3 (2022-02-27)
+
 ### Fixes
+
 * Significantly improved replay playing performance
 * Restored buttons animation
 
 ## Version 0.8.2 (2022-02-27)
+
 ### New
+
 * Very crude replay system, now only with a test replay
 
 ### Fixes
+
 * Improved test coverage
 * Significantly improved determinism of all game rules
 
 ## Version 0.8.1 (2022-01-12)
+
 ### New
+
 * 2 bots in pirate mode by default
 
 ### Fixes
+
 * Friendly bot ships in pirate defence mode are no longer auto-focusable for attack purposes.
 
 ## Version 0.8.0 (2022-01-12)
+
 ### New
+
 * Added a bot in pirate defence mode that can follow the planet and shoot the pirates.
 * Added earning money for killing pirates in pirate defence
 
 ### Fixes
+
 * Fixed broken landing on planets in cargo rush mode
 * Fixed broken tutorial dialogues
 * Fixed various annoying browser errors
@@ -97,80 +147,108 @@
 * Optimized performance of the client code added in 0.7.x
 
 ## Version 0.7.10 (2021-12-10)
+
 ### New
+
 * Added actions bar for more complex ship & player actions
 * Added support for shooting with different ship turrets via different abilities
 * Implemented showing of the shoot cooldown on those action bar buttons
 
 ## Version 0.7.9 (2021-12-04)
+
 ### New
+
 * Changed the layout of the UI, money & health are not on top of the system actions panel.
 * Leaderboard window is now hidden by default
 * New actions bar, currently the only action is shooting
 * The amount of pirate ships is now scaled by the amount of players
 
 ### Fixes
+
 * No more annoying visual flickering when hovering on buttons in Chrome
 
-
 ## Version 0.7.8 (2021-11-27)
+
 ### New
+
 * More pirate ships per wave in the pirate defence mode, but the planet now regenerates health
 
 ### Fixes
+
 * Fixed server crash in sandbox mode
 * Fixed non-blocked context menu (no more browser menu on right click)
 * Now it's impossible to shoot your own ship
 * It's impossible now to land on the planet in the pirate defence mode
 
 ## Version 0.7.7 (2021-11-27)
+
 ### New
+
 * Turrets on ships! Only visual so far, but now ships do not shoot out of their center.
 
 ## Version 0.7.6 (2021-11-26)
+
 ### New
+
 * Reworked the resources loading system
 * Implemented resource preloading during menu stage, so now joining games is faster
+
 ### Fixes
+
 * Fixed a bug with annoying screen flickering when a ship was exploding for a first time
 * Removed already-buggy 'skip menu' option
 
 ## Version 0.7.5 (2021-11-23)
+
 ### New
+
 * Explosion sounds!
 
 ### Fixes
+
 * Fixed a client freeze bug that happened either after rejoining a room or finishing pirate mode
 
 ## Version 0.7.4 (2021-11-21)
+
 ### Fixes
+
 * Improved the ship model positioning to make model weight center closer to the object center
 * Adjusted explosion parameters to be a bit bigger and noticeable
 
 ## Version 0.7.3 (2021-11-21)
+
 ### New
+
 * Ship explosions and wrecks added for more fun! For now, very modest and simple.
 
 ## Version 0.7.2 (2021-11-09)
+
 ### New
+
 * Different configuration of ships for pirate defence - more ships, faster spawn, but they are slower and more brittle.
 
 ## Version 0.7.1 (2021-11-08)
+
 ### Fixes
+
 * Auxiliary release due to infrastructure failure
 
 ## Version 0.7.0 (2021-11-08)
+
 ### New
+
 * New game mode - pirate defence. Try to shoot down some pirate ships that are going to capture your home planet.
 * Separate autofocusing mechanic for hostile ships (and a separate hotkey to shoot)
 * NPC concept, currently used in the pirate defence mode. These ships aren't really players!
 
 ### Fixes
+
 * Fixed buggy showing/hiding of leaderboard window on game start/end
 
 ## Version 0.6.23 (2021-08-31)
 
 ### Fixes
+
 * Improved server performance.
 * Fixed several bugs that led to inability to join rooms after leaving them.
 * Fixed lack of time-passing after initial state generation, that also led to invalid and unplayable systems.
@@ -178,66 +256,80 @@
 ## Version 0.6.22 (2021-08-29)
 
 ### New
+
 * Reworked room system. Now, whenever you join Cargo Rush mode, and nobody is playing, you will always join a new room.
 * Improved resource caching and loading speed.
 
 ### Fixes
+
 * It is now impossible to start playing (to enter the play menu) if the server is down or is of a different version.
 
 ## Version 0.6.21 (2021-07-24)
 
 ### Fixes
+
 * Less desync for trajectory display - it won't jump as much, specifically for planets.
 
 ## Version 0.6.20 (2021-07-23)
 
 ### New
+
 * Finally, working ship shooting. Try blowing up some bots!
 
 ### Fixes
+
 * Fixed some client crashes related to docking.
 * Fixed broken quest notifications substitutions.
 
 ## Version 0.6.19 (2021-07-22)
 
 ### Fixes
+
 * Fixed ugly max-width for ultra-wide monitors.
 * Improved client performance a bit.
 
 ## Version 0.6.18 (2021-07-21)
 
 ### New
+
 * A better-looking docking and undocking process for the ships.
 
 ## Version 0.6.17 (2021-07-04)
 
 ### Fixes
+
 * Hide names and effects of now-invisible docked ships.
 
 ## Version 0.6.16 (2021-07-04)
 
 ### New
+
 * Docked ships are now invisible.
 
 ### Fixes
+
 * Removed unnecessary console logging.
 
 ## Version 0.6.15 (2021-07-02)
 
 ### New
+
 * Space background now has a slight parallax effect relative to camera position.
 
 ### Fixes
+
 * Space background is no longer zoomed together with camera.
 
 ## Version 0.6.14 (2021-06-29)
 
 ### New
+
 * Manual ship movement is now acceleration-turn-based, rather than axis-aligned direction-based. Essentially,
-pressing W does no longer move you up, but rather forward to wherever your ship is facing.
+  pressing W does no longer move you up, but rather forward to wherever your ship is facing.
 * Disabled ping calculation due to change of the network mechanics (see fixes).
 
 ### Fixes
+
 * Improved server-side communication so less data is sent back and forth.
 * Somewhat fixed manual movement lags - no more horrible rollbacks, although there are still some little ones.
 
@@ -259,7 +351,8 @@ pressing W does no longer move you up, but rather forward to wherever your ship 
 
 * Planets and ships are now interactable with, using the new mechanism.
 * There is now an auto-focus for the closest interactable object.
-* If the object is focused either via mouse or via auto-focus, you can now execute the default (first) interaction by pressing E.
+* If the object is focused either via mouse or via auto-focus, you can now execute the default (first) interaction by
+  pressing E.
 * It is possible to shoot at ships now, but it will do nothing apart from the visual effect.
 
 ### Fixes
