@@ -37,7 +37,7 @@ const NodeTemplate: Story = (args) => {
     setRevision((old) => old + 1);
   }, []);
   return (
-    <StoryCanvas withBackground scale={2} zoom={0.5}>
+    <StoryCanvas withBackground scale={2} zoom={0.5} withRuler>
       <ThreeExplosionNode
         key={revision + JSON.stringify(args)}
         progressNormalized={args.progressNormalized}
@@ -48,7 +48,7 @@ const NodeTemplate: Story = (args) => {
         position={posToThreePos(-250, 0)}
       />
       <ThreeExplosionNodeV2
-        key={revision + JSON.stringify(args)}
+        key={revision + JSON.stringify(args) + 1}
         progressNormalized={args.progressNormalized}
         initialSize={5.0}
         scaleSpeed={1.05}

@@ -65,9 +65,9 @@ export const StoryCanvas: React.FC<{
         )}
         {withRuler && (
           <gridHelper
-            args={[256, 16]}
+            args={[256 * scale, 16]}
             rotation={[Math.PI / 2, 0, 0]}
-            position={[0, 0, 5]}
+            position={[0, 0, -5]}
           />
         )}
         {children}
