@@ -1,6 +1,7 @@
 import {
   AABB,
-  DEFAULT_STATE, ensureDialogueTableLoaded,
+  DEFAULT_STATE,
+  ensureDialogueTableLoaded,
   GameMode,
   GameState,
   isInAABB,
@@ -10,7 +11,9 @@ import {
   ManualMovementInactivityDropMs,
   restoreReplayFrame,
   TradeAction,
-  updateWorld, waitForWasmLoad,
+  updateWorld,
+  updateWorldIncremental,
+  waitForWasmLoad,
 } from './world';
 import EventEmitter from 'events';
 import * as uuid from 'uuid';
@@ -225,6 +228,7 @@ export default class NetState extends EventEmitter {
     this.slowTime = new vsyncedCoupledThrottledTime(SLOW_TIME_STEP);
     this.syncer = new StateSyncer({
       wasmUpdateWorld: updateWorld,
+      wasmUpdateWorldIncremental: updateWorldIncremental,
       getShowShadow: () => getSrnState().hotkeysPressed['show grid'], // bind to the same hotkey store as grid
     });
   }

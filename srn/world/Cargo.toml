@@ -1,18 +1,16 @@
 [package]
 name = "world"
 version = "0.9.9"
-authors = [ "Valeriy Kuzmin <malcoriel@gmail.com>" ]
+authors = ["Valeriy Kuzmin <malcoriel@gmail.com>"]
 edition = "2018"
 rust-version = "1.67"
 
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = [ "-Oz", "--enable-mutable-globals" ]
 
 [lib]
-crate-type = [ "cdylib", "rlib" ]
+crate-type = ["cdylib", "rlib"]
 
 [features]
-default = [ "console_error_panic_hook" ]
+default = ["console_error_panic_hook"]
 
 [dependencies]
 lazy_static = "1.4.0"
@@ -39,51 +37,60 @@ js-sys = "0.3.60"
 include_dir = "0.7.3"
 serde_with = "1.14.0"
 
-  [dependencies.strum]
-  version = "0.20.0"
-  features = [ "derive" ]
+[dependencies.strum]
+version = "0.20.0"
+features = ["derive"]
 
-  [dependencies.node-sys]
-  version = "0.4.2"
+[dependencies.node-sys]
+version = "0.4.2"
 
-  [dependencies.web-sys]
-  version = "0.3.55"
-  features = [ "Performance" ]
+[dependencies.web-sys]
+version = "0.3.55"
+features = ["Performance"]
 
-  [dependencies.treediff]
-  version = "4.0.2"
-  features = [ "with-serde-json" ]
+[dependencies.treediff]
+version = "4.0.2"
+features = ["with-serde-json"]
 
-  [dependencies.typescript-definitions]
-  version = "0.1.10"
-  features = [ "type-guards" ]
+[dependencies.typescript-definitions]
+version = "0.1.10"
+features = ["type-guards"]
 
-  [dependencies.uuid]
-  version = "0.8.1"
-  features = [ "serde", "wasm-bindgen" ]
+[dependencies.uuid]
+version = "0.8.1"
+features = ["serde", "wasm-bindgen"]
 
-  [dependencies.console_error_panic_hook]
-  version = "0.1.6"
-  optional = true
+[dependencies.console_error_panic_hook]
+version = "0.1.6"
+optional = true
 
-  [dependencies.wee_alloc]
-  version = "0.4.5"
-  optional = true
+[dependencies.wee_alloc]
+version = "0.4.5"
+optional = true
 
-  [dependencies.rand]
-  version = "0.6.5"
-  features = [ "wasm-bindgen" ]
+[dependencies.rand]
+version = "0.6.5"
+features = ["wasm-bindgen"]
 
-  [dependencies.chrono]
-  version = "0.4.19"
-  features = [ "wasmbind" ]
+[dependencies.chrono]
+version = "0.4.19"
+features = ["wasmbind"]
 
-  [dependencies.getrandom]
-  version = "0.2.2"
-  features = [ "js" ]
+[dependencies.getrandom]
+version = "0.2.2"
+features = ["js"]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
 
-[profile.release]
-opt-level = "s"
+
+[package.metadata.wasm-pack.profile.profiling]
+wasm-opt = ['-O', '-g', "--enable-mutable-globals"]
+
+[package.metadata.wasm-pack.profile.profiling.wasm-bindgen]
+debug-js-glue = false
+demangle-name-section = true
+dwarf-debug-info = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ['-O4', "--enable-mutable-globals"]

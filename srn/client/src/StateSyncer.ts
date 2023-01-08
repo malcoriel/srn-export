@@ -102,6 +102,7 @@ export interface IStateSyncer {
 
 export interface SyncerDeps {
   wasmUpdateWorld: any;
+  wasmUpdateWorldIncremental: any;
   getShowShadow: () => boolean;
 }
 
@@ -130,12 +131,15 @@ const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up,
 export class StateSyncer implements IStateSyncer {
   private readonly wasmUpdateWorld;
 
+  private readonly wasmUpdateWorldIncremental;
+
   private readonly getShowShadow;
 
   private eventCounter = 0;
 
   constructor(deps: SyncerDeps) {
     this.wasmUpdateWorld = deps.wasmUpdateWorld;
+    this.wasmUpdateWorldIncremental = deps.wasmUpdateWorldIncremental;
     this.getShowShadow = deps.getShowShadow;
   }
 
@@ -147,6 +151,8 @@ export class StateSyncer implements IStateSyncer {
   }
 
   private state!: GameState;
+
+  private useCachedStateForUpdateContext = false;
 
   private trueState!: GameState;
 
@@ -225,17 +231,32 @@ export class StateSyncer implements IStateSyncer {
       );
       nonDeterministic = true;
     }
-    // if (this.pendingActionPacks.length > 0) {
-    //   this.log.push(`Pending actions: ${this.pendingActionPacks.length}`);
-    // }
+    const commonUpdateArgs = {
+      limit_area: area,
+      client: true,
+      // since by default deterministic updates is iterative, updating for a long interval will take TIME / update_every_milliseconds of update iterations, which sucks
+      force_non_determinism: nonDeterministic,
+    };
+
+    if (
+      this.useCachedStateForUpdateContext &&
+      context === 'onTimeUpdate current'
+    ) {
+      return this.wasmUpdateWorldIncremental(
+        {
+          state_tag: context,
+          ...commonUpdateArgs,
+        },
+        elapsedTicks
+      );
+    }
+    this.useCachedStateForUpdateContext = true; // make sure that next updates use incremental update mechanism
     return this.wasmUpdateWorld(
       {
         // the wasm code guarantees to return a copy, so it's safe to modify in-place here
         state: this.optimizeStateForWasmCall(from),
-        limit_area: area,
-        client: true,
-        // since by default deterministic updates is iterative, updating for a long interval will take TIME / update_every_milliseconds of update iterations, which sucks
-        force_non_determinism: nonDeterministic,
+        state_tag: context,
+        ...commonUpdateArgs,
       },
       elapsedTicks
     );
@@ -283,6 +304,7 @@ export class StateSyncer implements IStateSyncer {
     if (hadHugeViolation) {
       // happens when there was a desync in history of actions, after which all compensations do not make sense
       this.state = this.trueState;
+      this.useCachedStateForUpdateContext = false;
       console.warn('huge violation detected, state overwrite by server state');
       return this.successFullDesynced('xx');
     }
@@ -421,13 +443,17 @@ export class StateSyncer implements IStateSyncer {
     }
 
     Perf.usingMeasure(Measure.SyncedStateUpdate, () => {
-      this.state =
-        this.updateState(
-          this.state,
-          targetDiff,
-          event.visibleArea,
-          'onTimeUpdate current'
-        ) || this.state;
+      const updateResult = this.updateState(
+        this.state,
+        targetDiff,
+        event.visibleArea,
+        'onTimeUpdate current'
+      );
+      if (updateResult) {
+        this.state = updateResult;
+      } else {
+        this.useCachedStateForUpdateContext = false;
+      }
     });
 
     if (weAreDesynced) {
@@ -460,6 +486,7 @@ export class StateSyncer implements IStateSyncer {
           this.state,
           event.elapsedTicks
         );
+        this.useCachedStateForUpdateContext = false;
         this.violations = this.checkViolations(
           this.state,
           this.trueState,
@@ -487,6 +514,7 @@ export class StateSyncer implements IStateSyncer {
 
   private onInit(event: { tag: 'init'; state: GameState }) {
     this.state = event.state;
+    this.useCachedStateForUpdateContext = false;
     this.trueState = this.state;
     this.pendingActionPacks = [];
     return this.successCurrent();

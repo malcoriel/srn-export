@@ -31,7 +31,9 @@ async function buildForWeb({ noTransform, transformOnly, noCleanTmp, debug }) {
     console.log('Done, now building actual wasm...');
     console.log('wasm-pack version used:');
     await spawnWatched('wasm-pack --version');
-    await spawnWatched(`wasm-pack build ${debug ? '--debug' : '--release'} `, {
+    const wasmPackCmd = `wasm-pack build ${debug ? '--debug' : '--profiling'} `;
+    console.log(`Executing ${wasmPackCmd}`);
+    await spawnWatched(wasmPackCmd, {
       spawnOptions: {
         cwd: 'world',
       },

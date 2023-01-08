@@ -5,6 +5,7 @@
 #![allow(warnings)]
 
 extern crate uuid;
+
 use std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -47,7 +48,6 @@ extern "C" {
     #[no_mangle]
     #[used]
     static process: node_sys::Process;
-
 }
 
 macro_rules! log {
@@ -300,6 +300,11 @@ lazy_static! {
 }
 
 lazy_static! {
+    pub static ref cached_states: MutStatic<HashMap<String, GameState>> =
+        { MutStatic::from(HashMap::new()) };
+}
+
+lazy_static! {
     pub static ref current_d_table: MutStatic<Option<DialogueTable>> = { MutStatic::from(None) };
 }
 
@@ -332,6 +337,15 @@ lazy_static! {
 #[derive(Clone, Debug, derive_deserialize, derive_serialize)]
 pub struct UpdateWorldArgs {
     state: world::GameState,
+    limit_area: world::AABB,
+    client: Option<bool>,
+    force_non_determinism: Option<bool>,
+    state_tag: Option<String>,
+}
+
+#[derive(Clone, Debug, derive_deserialize, derive_serialize)]
+pub struct UpdateWorldIncrementalArgs {
+    state_tag: String,
     limit_area: world::AABB,
     client: Option<bool>,
     force_non_determinism: Option<bool>,
@@ -368,6 +382,53 @@ pub fn update_world(args: JsValue, elapsed_micro: i32) -> Result<JsValue, JsValu
             format!("Negative elapsed_micro: {}, can't update", elapsed_micro).as_str(),
         ));
     }
+
+    let new_state = execute_update_world(elapsed_micro, args);
+
+    Ok(custom_serialize(&new_state)?)
+}
+
+#[wasm_bindgen]
+pub fn update_world_incremental(args: JsValue, elapsed_micro: i32) -> Result<JsValue, JsValue> {
+    let args = custom_deserialize::<UpdateWorldIncrementalArgs>(args)?;
+
+    if elapsed_micro < 0 {
+        return Err(JsValue::from_str(
+            format!("Negative elapsed_micro: {}, can't update", elapsed_micro).as_str(),
+        ));
+    }
+
+    let cached_state = {
+        let guard = cached_states.read().unwrap();
+        let cached_state = guard.get(&args.state_tag);
+
+        if cached_state.is_none() {
+            return Err(JsValue::from_str(
+                format!(
+                    "Cached state by tag {} was not found. Cannot do incremental update",
+                    args.state_tag
+                )
+                .as_str(),
+            ));
+        }
+        cached_state.unwrap().clone() // could be optimized, but for that update_world has to stop owning the argument
+    };
+
+    let new_state = execute_update_world(
+        elapsed_micro,
+        UpdateWorldArgs {
+            state: cached_state,
+            limit_area: args.limit_area,
+            client: args.client,
+            force_non_determinism: args.force_non_determinism,
+            state_tag: Some(args.state_tag),
+        },
+    );
+
+    Ok(custom_serialize(&new_state)?)
+}
+
+fn execute_update_world(elapsed_micro: i32, args: UpdateWorldArgs) -> GameState {
     let mut indexes = world::SpatialIndexes {
         values: HashMap::new(),
     };
@@ -387,6 +448,7 @@ pub fn update_world(args: JsValue, elapsed_micro: i32) -> Result<JsValue, JsValu
         &get_current_d_table(),
         &mut game_state_caches.write().unwrap(),
     );
+    try_save_cached_state(&new_state, args.state_tag);
 
     if *ENABLE_PERF {
         mem::replace(global_sampler.write().unwrap().deref_mut(), sampler);
@@ -401,8 +463,14 @@ pub fn update_world(args: JsValue, elapsed_micro: i32) -> Result<JsValue, JsValu
             flush_sampler_stats();
         }
     }
+    new_state
+}
 
-    Ok(custom_serialize(&new_state)?)
+fn try_save_cached_state(state: &GameState, state_tag: Option<String>) {
+    if let Some(tag) = state_tag {
+        let mut guard = cached_states.write().unwrap();
+        guard.insert(tag, state.clone());
+    }
 }
 
 #[wasm_bindgen]
@@ -754,7 +822,8 @@ fn custom_deserialize<T: serde::de::DeserializeOwned + std::fmt::Debug>(
 ) -> Result<T, JsValue> {
     serde_path_to_error::deserialize::<serde_wasm_bindgen::Deserializer, T>(
         serde_wasm_bindgen::Deserializer::from(val),
-    ).map_err(|v| JsValue::from_str(v.to_string().as_str()))
+    )
+    .map_err(|v| JsValue::from_str(v.to_string().as_str()))
 }
 
 #[wasm_bindgen]

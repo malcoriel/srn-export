@@ -116,6 +116,7 @@ export const loadWasm = timerify(async function loadWasm() {
     wasmFunctions.set_panic_hook();
     wasmFunctions.set_enable_perf(!!process.env.ENABLE_PERF);
     wasm.updateWorld = wasmFunctions.update_world;
+    wasm.updateWorldIncremental = wasmFunctions.update_world_incremental;
     wasm.seedWorld = wasmFunctions.seed_world;
     wasm.createRoom = wasmFunctions.create_room;
     wasm.updateRoom = wasmFunctions.update_room;
@@ -152,27 +153,51 @@ export const loadWasm = timerify(async function loadWasm() {
     console.error('loading wasm failed', e);
   }
 });
+
+function makeUpdateWorldArgs(isServer, forceNonDeterminism) {
+  return {
+    limit_area: {
+      top_left: {
+        x: -1000,
+        y: -1000,
+      },
+      bottom_right: {
+        x: 1000,
+        y: 1000,
+      },
+    },
+    client: !isServer,
+    force_non_determinism: forceNonDeterminism,
+  };
+}
+
 export const updateWorld = (
   world,
   millis,
   isServer = true,
-  forceNonDeterminism = false
+  forceNonDeterminism = false,
+  stateTag = undefined
 ) => {
   return wasm.updateWorld(
     {
       state: world,
-      limit_area: {
-        top_left: {
-          x: -1000,
-          y: -1000,
-        },
-        bottom_right: {
-          x: 1000,
-          y: 1000,
-        },
-      },
-      client: !isServer,
-      force_non_determinism: forceNonDeterminism,
+      ...makeUpdateWorldArgs(isServer, forceNonDeterminism),
+      state_tag: stateTag,
+    },
+    millis * 1000
+  );
+};
+
+export const updateWorldIncremental = (
+  stateTag,
+  millis,
+  isServer = true,
+  forceNonDeterminism = false
+) => {
+  return wasm.updateWorldIncremental(
+    {
+      state_tag: stateTag,
+      ...makeUpdateWorldArgs(isServer, forceNonDeterminism),
     },
     millis * 1000
   );

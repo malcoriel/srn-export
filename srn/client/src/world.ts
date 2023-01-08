@@ -282,11 +282,31 @@ export const updateWorld = (
     state,
     limit_area,
     client,
-  }: { state: GameState; limit_area: AABB; client: boolean },
+    state_tag,
+  }: {
+    state: GameState;
+    limit_area: AABB;
+    client: boolean;
+    state_tag: string | undefined;
+  },
   elapsedTicks: number
 ): GameState | undefined => {
   return wasmFunctions.update_world(
-    { state, limit_area, client },
+    { state, limit_area, client, state_tag },
+    elapsedTicks
+  );
+};
+
+export const updateWorldIncremental = (
+  {
+    state_tag,
+    limit_area,
+    client,
+  }: { state_tag: string; limit_area: AABB; client: boolean },
+  elapsedTicks: number
+): GameState | undefined => {
+  return wasmFunctions.update_world_incremental(
+    { state_tag, limit_area, client },
     elapsedTicks
   );
 };
