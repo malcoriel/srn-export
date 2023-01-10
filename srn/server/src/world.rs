@@ -133,6 +133,7 @@ pub fn get_random_planet<'a>(
     Some(from)
 }
 
+#[skip_serializing_none]
 #[derive(
     Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash,
 )]
@@ -153,6 +154,7 @@ pub struct SpatialProps {
     pub radius: f64,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct PlanetV2 {
     pub id: Uuid,
@@ -212,6 +214,7 @@ pub struct Asteroid {
     pub rot_movement: RotationMovement,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct AsteroidBelt {
     pub id: Uuid,
@@ -245,6 +248,7 @@ pub struct ShipTurret {
     id: Uuid,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Ship {
     pub id: Uuid,
@@ -453,6 +457,7 @@ pub struct Wreck {
     pub decay_ticks: i32,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Location {
     pub seed: String,
@@ -1715,6 +1720,7 @@ pub fn add_player(
     state.players.push(player);
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
 pub enum Movement {
@@ -1818,6 +1824,7 @@ impl Movement {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 #[serde(tag = "tag")]
 pub enum RotationMovement {

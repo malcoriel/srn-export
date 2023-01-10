@@ -7,6 +7,7 @@ use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
 use crate::world::{GameMode, GameState, PlayerId};
+use serde_with::skip_serializing_none;
 
 #[derive(
     Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, TypeScriptify, TypescriptDefinition,
@@ -18,6 +19,7 @@ pub enum AiTrait {
     CargoRushHauler,
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypeScriptify, TypescriptDefinition)]
 pub struct Bot {
     pub id: Uuid,

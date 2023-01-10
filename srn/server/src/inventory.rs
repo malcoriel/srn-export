@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::mem;
 
-use rand_pcg::Pcg64Mcg;
 use rand::{Rng, RngCore, SeedableRng};
+use rand_pcg::Pcg64Mcg;
 use serde_derive::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
@@ -10,11 +10,12 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::{new_id, prng_id};
 use crate::tractoring::{IMovable, IMovableType};
 use crate::world::{Container, NatSpawnMineral, Rarity};
+use crate::{new_id, prng_id};
 use itertools::Itertools;
 use wasm_bindgen::convert::{FromWasmAbi, WasmAbi};
+use serde_with::skip_serializing_none;
 
 #[derive(
     Serialize,
@@ -67,6 +68,7 @@ pub fn inventory_item_type_to_stackable(iit: &InventoryItemType) -> bool {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct InventoryItem {
     pub id: Uuid,
