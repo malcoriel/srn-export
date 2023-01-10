@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.9.10 (2023-01-10)
+
+### Fixes
+
+* More client-side performance improvements
+* Fixed a bug where non-player ships were not moving smoothly after leaving a planet
+* Restored 4 bots in CargoRush mode
+* Restored broken leaderboard
+
 ## Version 0.9.9 (2023-01-08)
 
 ### New

@@ -1,6 +1,6 @@
 {
   "name": "tests",
-  "version": "0.9.9",
+  "version": "0.9.10",
   "main": "index.js",
   "author": "Valeriy Kuzmin",
   "license": "MIT",
