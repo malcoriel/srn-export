@@ -77,12 +77,12 @@ pub fn make_leaderboard(all_players: &Vec<Player>) -> Option<Leaderboard> {
     let rating = all_players
         .into_iter()
         .sorted_by(|a, b| Ord::cmp(&b.money, &a.money))
-        .map(|p| (p.clone(), get_player_score(p)))
+        .map(|p| (p.id, get_player_score(p), p.name.clone()))
         .collect::<Vec<_>>();
     let winner: String = rating
         .iter()
         .nth(0)
-        .map_or("Nobody".to_string(), |p| p.0.name.clone());
+        .map_or("Nobody".to_string(), |p| p.2.clone());
     Some(Leaderboard { rating, winner })
 }
 

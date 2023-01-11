@@ -382,7 +382,7 @@ impl Player {
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Leaderboard {
-    pub rating: Vec<(Player, u32)>,
+    pub rating: Vec<(Uuid, u32, String)>,
     pub winner: String,
 }
 

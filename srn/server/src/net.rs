@@ -1,5 +1,4 @@
 use num_traits::real::Real;
-use objekt_clonable::objekt::Clone;
 use std::collections::HashMap;
 
 use crate::api_struct::RoomId;
@@ -126,6 +125,9 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
                 if my_ship_id.map_or(false, |my_ship_id| ship.id != my_ship_id) {
                     ship.trajectory = vec![];
                 }
+            }
+            for cont in l.containers.iter_mut() {
+                cont.items = vec![];
             }
             l
         })

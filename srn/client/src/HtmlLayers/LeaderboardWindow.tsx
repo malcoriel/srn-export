@@ -38,7 +38,7 @@ export const LeaderboardWindow: React.FC = () => {
     return null;
   }
 
-  const place = leaderboard.rating.findIndex(([p]) => p.id === my_id) + 1;
+  const place = leaderboard.rating.findIndex(([id]) => id === my_id) + 1;
   const totalPlaces = leaderboard.rating.length;
 
   return (
@@ -81,11 +81,13 @@ export const LeaderboardWindow: React.FC = () => {
         <div className="winner">Winner:{leaderboard.winner}</div>
       )}
       <div className="header">Leaderboard:</div>
-      {leaderboard.rating.map(([p, s], i) => (
-        <div className="line" key={p.id}>
-          {i + 1}.{p.name}&nbsp;:&nbsp;{s}
-        </div>
-      ))}
+      {leaderboard.rating.map(
+        ([id, score, name]: [string, number, string], i: number) => (
+          <div className="line" key={i}>
+            {i + 1}.{name}&nbsp;:&nbsp;{score}
+          </div>
+        )
+      )}
     </Window>
   );
 };
