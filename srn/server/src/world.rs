@@ -245,7 +245,7 @@ pub struct ProcessedPlayerAction {
 }
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct ShipTurret {
-    id: Uuid,
+    id: String,
 }
 
 #[skip_serializing_none]
@@ -282,12 +282,12 @@ pub struct Ship {
 
 pub fn gen_turrets(count: usize, prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
     let mut res = vec![];
-    for _i in 0..count {
-        let id = prng_id(prng);
+    for i in 0..count {
+        let id = i.to_string();
         res.push((
             Ability::Shoot {
                 cooldown_ticks_remaining: 0,
-                turret_id: id,
+                turret_id: id.clone(), // only needs to be locally-unique
                 cooldown_normalized: 0.0,
                 cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
             },

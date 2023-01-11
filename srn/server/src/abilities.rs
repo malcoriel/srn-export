@@ -9,12 +9,16 @@ pub const SHOOT_COOLDOWN_TICKS: i32 = 500 * 1000;
 pub const SHOOT_ABILITY_DURATION: i32 = 25 * 1000;
 pub const SHOOT_DEFAULT_DISTANCE: f64 = 50.0;
 
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq)]
 #[serde(tag = "tag")]
 pub enum Ability {
     Unknown,
-    Shoot { cooldown_ticks_remaining: i32, turret_id: Uuid, cooldown_normalized: f64, cooldown_ticks_max: i32 },
+    Shoot {
+        cooldown_ticks_remaining: i32,
+        turret_id: String,
+        cooldown_normalized: f64,
+        cooldown_ticks_max: i32,
+    },
     ShootAll,
     BlowUpOnLand,
 }
@@ -29,7 +33,7 @@ impl Ability {
             Ability::Unknown => 0,
             Ability::Shoot { .. } => SHOOT_COOLDOWN_TICKS,
             Ability::BlowUpOnLand => 0,
-            Ability::ShootAll => 0
+            Ability::ShootAll => 0,
         }
     }
 
@@ -38,7 +42,7 @@ impl Ability {
             Ability::Unknown => 0.0,
             Ability::Shoot { .. } => SHOOT_DEFAULT_DISTANCE,
             Ability::BlowUpOnLand => 0.0,
-            Ability::ShootAll => 0.0
+            Ability::ShootAll => 0.0,
         }
     }
 
@@ -50,7 +54,7 @@ impl Ability {
                 ..
             } => *cooldown_ticks_remaining,
             Ability::BlowUpOnLand => 0,
-            Ability::ShootAll => 0
+            Ability::ShootAll => 0,
         };
     }
 
@@ -79,7 +83,10 @@ impl Ability {
             } => {
                 *cooldown_ticks_remaining =
                     (*cooldown_ticks_remaining - ticks_elapsed as i32).max(0);
-                *cooldown_normalized = (*cooldown_ticks_remaining as f64 / *cooldown_ticks_max as f64).max(0.0).min(1.0);
+                *cooldown_normalized = (*cooldown_ticks_remaining as f64
+                    / *cooldown_ticks_max as f64)
+                    .max(0.0)
+                    .min(1.0);
             }
             Ability::BlowUpOnLand => {}
             Ability::ShootAll => {}

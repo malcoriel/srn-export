@@ -11,16 +11,16 @@ use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
     find_player_by_ship_id, find_player_idx_by_ship_id,
 };
-use crate::planet_movement::{IBodyV2};
+use crate::planet_movement::IBodyV2;
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, ShipIdx, ShipTemplate, PLAYER_RESPAWN_TIME_MC};
 use crate::{combat, indexing, locations, prng_id, world};
 
-use rand_pcg::Pcg64Mcg;
 use rand::prelude::*;
+use rand_pcg::Pcg64Mcg;
 use std::f64::consts::PI;
 
-#[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
 #[serde(tag = "tag")]
 pub enum LongActionStart {
     Unknown,
@@ -30,7 +30,7 @@ pub enum LongActionStart {
     Respawn,
     Shoot {
         target: ShootTarget,
-        turret_id: Uuid,
+        turret_id: String,
     },
     // the process of docking itself after the ship is close enough via navigation
     DockInternal {
@@ -72,7 +72,7 @@ pub enum LongAction {
         target: ShootTarget,
         micro_left: i32,
         percentage: u32,
-        turret_id: Uuid,
+        turret_id: String,
     },
     Dock {
         id: Uuid,
@@ -330,7 +330,7 @@ fn try_start_shoot(
     state: &mut GameState,
     target: ShootTarget,
     ship_idx: Option<ShipIdx>,
-    shooting_turret_id: Uuid,
+    shooting_turret_id: String,
     prng: &mut Pcg64Mcg,
 ) -> bool {
     let ship_idx = ship_idx.unwrap();
@@ -338,7 +338,7 @@ fn try_start_shoot(
         target.clone(),
         &state.locations[ship_idx.location_idx],
         &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
-        shooting_turret_id,
+        shooting_turret_id.clone(),
     ) {
         return false;
     }
@@ -349,7 +349,7 @@ fn try_start_shoot(
         target,
         micro_left: SHOOT_COOLDOWN_TICKS,
         percentage: 0,
-        turret_id: shooting_turret_id,
+        turret_id: shooting_turret_id.clone(),
     });
     revalidate(&mut ship.long_actions);
     for ability in ship.abilities.iter_mut() {

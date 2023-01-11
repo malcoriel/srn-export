@@ -24,9 +24,7 @@ impl Default for ShootTarget {
     }
 }
 
-#[derive(
-    Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Default,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Default)]
 pub struct Health {
     pub current: f64,
     pub max: f64,
@@ -36,15 +34,30 @@ pub struct Health {
 
 impl Health {
     pub fn new(max: f64) -> Health {
-        Health { current: max, max, regen_per_tick: None, last_damage_dealer: None }
+        Health {
+            current: max,
+            max,
+            regen_per_tick: None,
+            last_damage_dealer: None,
+        }
     }
 
     pub fn new_regen(max: f64, regen_per_tick: f64) -> Health {
-        Health { current: max, max, regen_per_tick: Some(regen_per_tick), last_damage_dealer: None }
+        Health {
+            current: max,
+            max,
+            regen_per_tick: Some(regen_per_tick),
+            last_damage_dealer: None,
+        }
     }
 }
 
-pub fn validate_shoot(target: ShootTarget, loc: &world::Location, ship: &Ship, active_turret_id: Uuid) -> bool {
+pub fn validate_shoot(
+    target: ShootTarget,
+    loc: &world::Location,
+    ship: &Ship,
+    active_turret_id: String,
+) -> bool {
     let shoot_ability = find_shoot_ability(ship, active_turret_id);
     if shoot_ability.is_none() {
         return false;
@@ -80,16 +93,11 @@ pub fn validate_shoot(target: ShootTarget, loc: &world::Location, ship: &Ship, a
     return true;
 }
 
-fn find_shoot_ability(ship: &Ship, active_turret_id: Uuid) -> Option<&Ability> {
-    ship
-        .abilities
-        .iter()
-        .find(|a| match a {
-            Ability::Shoot { turret_id, .. } => {
-                *turret_id == active_turret_id
-            }
-            _ => false
-        })
+fn find_shoot_ability(ship: &Ship, active_turret_id: String) -> Option<&Ability> {
+    ship.abilities.iter().find(|a| match a {
+        Ability::Shoot { turret_id, .. } => *turret_id == active_turret_id,
+        _ => false,
+    })
 }
 
 fn check_distance(ship: &Ship, shoot_ability: &Ability, min_pos: Vec2f64) -> bool {
@@ -105,7 +113,12 @@ fn check_distance(ship: &Ship, shoot_ability: &Ability, min_pos: Vec2f64) -> boo
 
 pub const SHIP_SHOOT_STRENGTH: f64 = 20.0;
 
-pub fn resolve_shoot(state: &mut GameState, player_shooting: Uuid, target: ShootTarget, active_turret_id: Uuid) {
+pub fn resolve_shoot(
+    state: &mut GameState,
+    player_shooting: Uuid,
+    target: ShootTarget,
+    active_turret_id: String,
+) {
     if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &state.locations[ship_loc.location_idx];
         let shooting_ship = &loc.ships[ship_loc.ship_idx];
@@ -127,7 +140,7 @@ pub fn resolve_shoot(state: &mut GameState, player_shooting: Uuid, target: Shoot
                 if let Some(target_ship) = target_ship {
                     target_ship.health.current -= dmg;
                     target_ship.health.last_damage_dealer = Some(ObjectSpecifier::Ship {
-                        id: shooting_ship_id
+                        id: shooting_ship_id,
                     });
                     let effect = LocalEffect::DmgDone {
                         id: new_id(),

@@ -157,6 +157,7 @@ mod world_actions;
 mod world_events;
 mod world_test;
 mod xcast;
+mod tid;
 
 struct LastCheck {
     time: DateTime<Utc>,
