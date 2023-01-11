@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.9.11 (2023-01-11)
+
+### Fixes
+
+* Optimized client performance and network bandwidth usage.
+
 ## Version 0.9.10 (2023-01-10)
 
 ### Fixes
