@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use crate::api_struct::RoomId;
 use crate::dialogue::Dialogue;
 use crate::indexing::{find_my_player, find_my_ship, find_player_location_idx};
+use crate::market::Market;
 use crate::world::{GameMode, GameState, Location, Ship};
 use crate::world_events::GameEvent;
 use crate::xcast::XCast;
@@ -59,7 +60,8 @@ pub const MAX_PROCESSED_ACTIONS_SHARE_TIME_TICKS: f64 = 5.0 * 1000.0 * 1000.0;
 
 pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> GameState {
     state.my_id = player_id;
-    let my_ship_id = find_my_ship(&state, player_id).map(|s| s.id);
+    let my_ship = find_my_ship(&state, player_id).map(|v| v.clone());
+    let my_ship_id = my_ship.as_ref().map(|s| s.id.clone());
     let player_loc_idx = find_player_location_idx(&state, player_id);
     let map_enough_info = state
         .locations
@@ -79,6 +81,36 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
         // The zero location can be some kind of limbo or just default location.
         state.locations = vec![state.locations.into_iter().nth(0).unwrap()];
     }
+
+    if let Some(docked_at) = my_ship.and_then(|s| s.docked_at) {
+        state.market.prices = state
+            .market
+            .prices
+            .into_iter()
+            .filter(|(k, _v)| *k == docked_at)
+            .collect();
+        state.market.wares = state
+            .market
+            .wares
+            .into_iter()
+            .filter(|(k, _v)| *k == docked_at)
+            .collect();
+    } else {
+        state.market = Market::new();
+    }
+
+    state.players = state
+        .players
+        .into_iter()
+        .map(|mut p| {
+            if p.id != player_id {
+                p.quest = None;
+                p.notifications = vec![];
+            }
+            return p;
+        })
+        .collect();
+
     let current_id = state.locations[0].id;
     state.locations.append(
         &mut map_enough_info
