@@ -126,6 +126,7 @@ export const loadWasm = timerify(async function loadWasm() {
     wasm.makeDialogueTable = wasmFunctions.make_dialogue_table;
     wasm.packReplay = wasmFunctions.pack_replay;
     wasm.loadReplay = wasmFunctions.load_replay;
+    wasm.generatePhaseTable = wasmFunctions.generate_phase_table;
     wasm.getDiffReplayStateAt = timerifySync(function getDiffReplayStateAt(
       ...args
     ) {

@@ -391,7 +391,7 @@ pub const REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER: f64 = 16000.0;
 // build a list of coordinates of the linear (segment) approximation of the circle, where every point
 // is a vertex of the resulting polygon, in an assumption that precision is enough (subdivided to enough amount of points)
 // so lerp(A,B) =~ the real circle point with some precision, but at the same time as low as possible
-fn gen_rel_position_orbit_phase_table(def: &Movement, radius_to_anchor: f64) -> Vec<Vec2f64> {
+pub fn gen_rel_position_orbit_phase_table(def: &Movement, radius_to_anchor: f64) -> Vec<Vec2f64> {
     // log!(format!("calculate call {def:?} {radius_to_anchor:?}"));
     match def {
         Movement::RadialMonotonous {
@@ -415,11 +415,10 @@ fn gen_rel_position_orbit_phase_table(def: &Movement, radius_to_anchor: f64) -> 
     }
 }
 
-fn choose_radial_amount(radius_to_anchor: f64, full_period_ticks: f64) -> usize {
+pub fn choose_radial_amount(radius_to_anchor: f64, full_period_ticks: f64) -> usize {
     let ideal_amount = radius_to_anchor * IDEAL_RELATIVE_ROTATION_PRECISION_MULTIPLIER; // completely arbitrary for now, without targeting specific precision
-    let amount_from_period = full_period_ticks; // every tick is a point. However, it's super-unlikely that I will ever have an update every tick, and even every cycle of 16ms is unnecessary
+    let amount_from_period = full_period_ticks.abs(); // every tick is a point. However, it's super-unlikely that I will ever have an update every tick, and even every cycle of 16ms is unnecessary
     let realistic_amount = amount_from_period / REALISTIC_RELATIVE_ROTATION_PRECISION_DIVIDER; // precision with 1ms is probably fine-grained enough, equivalent to every cycle of 16ms
-
     let mut chosen_amount: usize = {
         if realistic_amount < 0.5 * ideal_amount {
             // this is bad, and will lead to horrible visual artifacts likely, so will reuse the ideal * 0.5 instead

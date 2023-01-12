@@ -271,7 +271,7 @@ use crate::dialogue::{parse_dialogue_script_from_file, Dialogue, DialogueTable};
 use crate::indexing::{find_my_ship_index, GameStateCaches, ObjectSpecifier};
 use crate::perf::{ConsumeOptions, Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
-use crate::world::{GameMode, GameState, UpdateOptions, UpdateOptionsV2, AABB};
+use crate::world::{GameMode, GameState, Movement, UpdateOptions, UpdateOptionsV2, AABB};
 use chrono::Timelike;
 use mut_static::MutStatic;
 use rand::prelude::*;
@@ -513,6 +513,7 @@ struct SeedWorldArgs {
     gen_state_opts: Option<GenStateOpts>,
 }
 
+use crate::interpolation::gen_rel_position_orbit_phase_table;
 use crate::replay::{ReplayDiffed, ReplayRaw, ValueDiff};
 use serde_wasm_bindgen::*;
 
@@ -857,4 +858,19 @@ pub fn build_dialogue_from_state(
         None => Err(JsValue::from_str("couldn't build dialogue state")),
         Some(v) => Ok(custom_serialize(&v)?),
     }
+}
+
+#[wasm_bindgen]
+pub fn generate_phase_table(period: f64, dist: f64) -> Result<JsValue, JsValue> {
+    let res = gen_rel_position_orbit_phase_table(
+        &Movement::RadialMonotonous {
+            full_period_ticks: period,
+            anchor: ObjectSpecifier::Unknown,
+            relative_position: None,
+            phase: None,
+            start_phase: 0,
+        },
+        dist,
+    );
+    Ok(custom_serialize(&res)?)
 }
