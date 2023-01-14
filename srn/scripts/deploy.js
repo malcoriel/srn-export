@@ -45,7 +45,7 @@ const doBuildServer = async () => {
     );
   }
 
-  await setupBuilderEnv({
+  const envValues = await setupBuilderEnv({
     buildMethod: 'muslrust',
     buildOpt: 'release',
   });
@@ -60,11 +60,15 @@ const doBuildServer = async () => {
 
   console.log('building the binary...');
   await spawnWatched('docker rm -f rust-builder || true');
+  const injectedEnv = Object.entries(envValues)
+    .map(([k, v]) => `${k}="${v}"`)
+    .join(' ');
   await spawnWatched(
     `cd server && \
         docker run \
         --name="rust-builder" -it -v $PWD:/volume \
         -e CARGO_TARGET_DIR=target-rust-builder \
+        ${injectedEnv} \
         -v cargo-cache:/root/.cargo/registry \
         clux/muslrust:1.67.0-nightly-2022-12-09 \
         /bin/bash -c "cargo build --release;"\
