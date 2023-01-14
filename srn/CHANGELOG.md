@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.9.13 (2023-01-15)
+
+### Fixes
+
+* Restored replay capabilities and the test replay
+* Fixed a bug that led to jerky planet movement in case of counter-clockwise rotation
+* Augmented build system for better observability of versions
+
 ## Version 0.9.12 (2023-01-11)
 
 ### Fixes
