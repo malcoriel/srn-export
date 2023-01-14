@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.9.14 (2023-01-15)
+
+### Fixes
+
+* Added an explanation for play button being disabled in case of version mismatch
+* Fixed a problem with server version observability
+
 ## Version 0.9.13 (2023-01-15)
 
 ### Fixes
