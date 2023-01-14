@@ -207,6 +207,11 @@ export const StartMenu: React.FC<{
                   text="PLAY"
                   hotkey="P"
                   disabled={serverIsDownOrDiffVersion}
+                  title={
+                    serverIsDownOrDiffVersion
+                      ? 'Server is down or has a different version. If the latter is the case, ry refreshing the page with ctrl+R or cleaning the cache. In the worst case, unregister the service worker.'
+                      : undefined
+                  }
                 />
               )}
               {menuState === StartMenuState.MainStartScreen && (

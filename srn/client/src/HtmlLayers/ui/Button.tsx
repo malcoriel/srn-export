@@ -61,6 +61,7 @@ export type ButtonProps = {
   cooldownNormalized?: number;
   cooldownAreaWidth?: number;
   cooldownAreaHeight?: number;
+  title?: string;
 };
 export const Button: React.FC<ButtonProps> = ({
   hotkey,
@@ -80,6 +81,7 @@ export const Button: React.FC<ButtonProps> = ({
   cooldownNormalized = 0.0,
   cooldownAreaWidth,
   cooldownAreaHeight,
+  title,
 }) => {
   if (cooldownNormalized < 0.0) {
     // eslint-disable-next-line no-param-reassign
@@ -173,6 +175,7 @@ export const Button: React.FC<ButtonProps> = ({
     ) : null;
   return (
     <span
+      title={title}
       className={classNames({
         'ui-button': true,
         'pseudo-active': pseudoActive,
