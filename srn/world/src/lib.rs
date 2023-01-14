@@ -275,7 +275,7 @@ use crate::world::{GameMode, GameState, Movement, UpdateOptions, UpdateOptionsV2
 use chrono::Timelike;
 use mut_static::MutStatic;
 use rand::prelude::*;
-use rand_pcg::Pcg64Mcg;
+use rand_pcg::{Mcg128Xsl64, Pcg64Mcg};
 use std::any::Any;
 use std::ops::DerefMut;
 use std::{env, mem};
@@ -568,8 +568,7 @@ pub fn update_room(
 ) -> Result<JsValue, JsValue> {
     let mut room: Room = serde_wasm_bindgen::from_value(room)?;
     let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
-    let seed = room.state.seed.clone();
-    let mut prng = seed_prng(seed);
+    let mut prng = get_continuous_room_seed(&mut room);
     let (_indexes, _sampler) = world::update_room(
         &mut prng,
         get_sampler_clone(),
@@ -581,6 +580,17 @@ pub fn update_room(
     Ok(custom_serialize(&room)?)
 }
 
+fn get_continuous_room_seed(room: &mut Room) -> Mcg128Xsl64 {
+    let mut prng = if let Some(next_seed) = room.next_seed.as_ref() {
+        Pcg64Mcg::seed_from_u64((*next_seed as u64))
+    } else {
+        let seed = room.state.seed.clone();
+        seed_prng(seed)
+    };
+    room.next_seed = Some(prng.next_u32());
+    prng
+}
+
 #[wasm_bindgen]
 pub fn update_room_full(
     room: JsValue,
@@ -589,8 +599,7 @@ pub fn update_room_full(
 ) -> Result<JsValue, JsValue> {
     let mut room: Room = serde_wasm_bindgen::from_value(room)?;
     let mut sampler = get_sampler_clone();
-    let seed = room.state.seed.clone();
-    let mut prng = seed_prng(seed);
+    let mut prng = get_continuous_room_seed(&mut room);
     let mut remaining = total_ticks;
     while remaining > 0 {
         remaining -= step_ticks;

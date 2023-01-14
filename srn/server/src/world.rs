@@ -2311,6 +2311,7 @@ pub fn make_room(
         last_players_mark: None,
         bots: vec![],
         bots_seed,
+        next_seed: None,
         caches: if use_external_caches {
             GameStateCaches::new()
         } else {

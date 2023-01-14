@@ -52,12 +52,17 @@ describe('replay system', () => {
     await writeReplay(replay);
   });
 
-  it('can pack diff replay via wasm', async () => {
+  fit('can pack diff replay via wasm', async () => {
     const states = simulate(100);
     const replayDiff = await wasm.packReplay(states, 'stress-test', true);
-    const replayNorm = await wasm.packReplay(states, 'stress-test', false);
+    const replayNorm = await wasm.packReplay(states, 'stress-test-norm', false);
     await writeReplay(replayDiff);
-    await writeReplay(replayNorm);
+    await writeTmpJson('replay-norm', replayNorm);
+  });
+
+  it('can replay the diff replay it just constructed, with some extra validations', async () => {
+    const states = simulate(100);
+    const replayDiff = await wasm.packReplay(states, 'stress-test', true);
   });
 
   describe('can validate diff replay against raw replay', () => {

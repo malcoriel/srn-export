@@ -66,6 +66,7 @@ pub struct Room {
     pub last_players_mark: Option<i64>,
     pub bots: Vec<Bot>,
     pub bots_seed: Option<String>,
+    pub next_seed: Option<u32>,
     pub caches: GameStateCaches,
 }
 
