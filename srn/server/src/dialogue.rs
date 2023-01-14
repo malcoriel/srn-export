@@ -638,7 +638,6 @@ pub struct ShortScript {
 }
 
 pub fn short_decrypt(ss: ShortScript, prng: &mut Pcg64Mcg) -> DialogueScript {
-    println!("loading {} dialogue...", ss.name);
     let mut script = DialogueScript::new();
     script.id = prng_id(prng);
     script.is_default = ss.is_default;

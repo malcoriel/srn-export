@@ -114,6 +114,7 @@ export const loadWasm = timerify(async function loadWasm() {
     await init(wasmBytes);
     const wasmFunctions = getBindgen();
     wasmFunctions.set_panic_hook();
+    wasmFunctions.self_inspect();
     wasmFunctions.set_enable_perf(!!process.env.ENABLE_PERF);
     wasm.updateWorld = wasmFunctions.update_world;
     wasm.updateWorldIncremental = wasmFunctions.update_world_incremental;

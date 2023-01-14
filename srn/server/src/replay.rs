@@ -91,8 +91,15 @@ pub fn to_patch_path(path: Vec<ValueKey>) -> String {
     return format!("/{}", path.into_iter().map(|k| k.0.to_string()).join("/"));
 }
 
-pub fn to_patch_path_k(path: Vec<Key>) -> String {
-    return format!("/{}", path.into_iter().map(|k| k.to_string()).join("/"));
+pub fn to_patch_path_k(path: Vec<Key>, skip: usize) -> String {
+    let path_len = path.len();
+    return format!(
+        "/{}",
+        path.into_iter()
+            .take(path_len - skip)
+            .map(|k| k.to_string())
+            .join("/")
+    );
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -106,15 +113,31 @@ pub enum ValueDiff {
 impl ValueDiff {
     pub fn from_change_type(ct: &ChangeType<Key, serde_json::Value>) -> ValueDiff {
         match ct {
-            Removed(k, _) => ValueDiff::Removed(Self::map_key(k.clone())),
-            Added(k, v) => ValueDiff::Added(Self::map_key(k.clone()), (*v).clone()),
+            Removed(k, _) => {
+                let k1 = k.clone();
+                ValueDiff::Removed(to_patch_path_k(k1, 0))
+            }
+            Added(k, v) => {
+                let k1 = k.clone();
+                ValueDiff::Added(to_patch_path_k(k1, 0), (*v).clone())
+            }
             ChangeType::Unchanged(_, _) => ValueDiff::Unchanged,
-            Modified(k, _, v) => ValueDiff::Modified(Self::map_key(k.clone()), (*v).clone()),
+            Modified(k, old_val, new_val) => {
+                let old_null = matches!(old_val, serde_json::Value::Null);
+                let new_null = matches!(new_val, serde_json::Value::Null);
+                let new_value = (*new_val).clone();
+                let key = to_patch_path_k(k.clone(), 0);
+                return if old_null && new_null {
+                    ValueDiff::Unchanged
+                } else if old_null && !new_null {
+                    ValueDiff::Added(key, new_value)
+                } else if !old_null && new_null {
+                    ValueDiff::Removed(key)
+                } else {
+                    ValueDiff::Modified(key, new_value)
+                };
+            }
         }
-    }
-
-    fn map_key(k: Vec<Key>) -> String {
-        to_patch_path_k(k)
     }
 }
 
@@ -129,7 +152,8 @@ pub struct ReplayDiffed {
     pub initial_state: GameState,
     pub current_state: Option<GameState>,
     pub next_state: Option<GameState>,
-    pub diffs: Vec<Vec<ValueDiff>>,
+    // (diff_mark, diffs)
+    pub diffs: Vec<(u32, Vec<ValueDiff>)>,
     pub max_time_ms: u32,
     pub current_millis: f64,
     pub marks_ticks: Vec<u32>,
@@ -192,7 +216,7 @@ impl ReplayDiffed {
         }
         let new_diff = ReplayDiffed::calc_diff_batch(&self.current_state.clone().unwrap(), &state);
         self.update_current(&new_diff)?;
-        self.diffs.push(new_diff);
+        self.diffs.push((ticks as u32, new_diff));
         self.max_time_ms = millis as u32;
         self.marks_ticks.push(ticks as u32);
         Ok(())
@@ -212,8 +236,13 @@ impl ReplayDiffed {
             let mut current = state.clone();
             let new_patch = Patch(p.0.iter().take(i + 1).map(|o| o.clone()).collect());
             let last_op = new_patch.0.last().unwrap().clone();
+            let current_before_patch = current.clone();
             if patch(&mut current, &new_patch).is_err() {
-                warn!(format!("Found bad op {:?}", last_op));
+                warn!(format!(
+                    "Found bad op {:?} when applying to {:?}",
+                    last_op,
+                    serde_json::to_string(&current_before_patch).unwrap()
+                ));
                 return;
             }
         }
@@ -336,7 +365,7 @@ impl ReplayDiffed {
             .iter()
             .skip(from_idx)
             .take(count)
-            .map(|d| d.clone())
+            .map(|d| d.1.clone())
             .collect();
         let mut current = if from_idx > 0 {
             self.current_state

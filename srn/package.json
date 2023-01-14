@@ -10,7 +10,7 @@
     "start-client": "cd client && yarn start",
     "storybook": "cd client && yarn storybook",
     "touch-client": "cd client && touch package.json",
-    "start-server": "cd server && (killall -9 srn-server || true) && RUST_BACKTRACE=1 cargo run",
+    "start-server": "yarn env node scripts/start-server.js",
     "watch-server": "cd server && (killall -9 srn-server || true) && cargo-watch -x run",
     "watch-wasm-tests": "cargo-watch -C world -w ../server -s 'yarn wasm-pack forTests'",
     "deploy": "yarn env node scripts/deploy.js",

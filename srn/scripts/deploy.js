@@ -2,6 +2,8 @@ const yargs = require('yargs');
 const { spawnWatched } = require('./shellspawn');
 
 const fs = require('fs-extra');
+const { getVersions } = require('./git');
+const { setupBuilderEnv } = require('./builder-env');
 const sshPort = '2233';
 const sshHost = 'root@bubblegum.malcoriel.de';
 const latestServerImageName = 'srn-server:latest';
@@ -14,32 +16,44 @@ const makeServerPaths = (version, gitVersion) => {
   const fullImageName = `srn-server:${version}-${gitVersion}`;
   const fullImageNamePathFriendly = fullImageName.replace(/:/g, '-');
   const builtImagePath = `server/docker-image/${fullImageNamePathFriendly}.tar`;
-  return { fullImageName, builtImagePath, fullImageNamePathFriendly };
+  return {
+    fullImageName,
+    builtImagePath,
+    fullImageNamePathFriendly,
+  };
 };
 
 const makeClientPaths = (version, gitVersion) => {
   const fullImageName = `srn-client:${version}-${gitVersion}`;
   const fullImageNamePathFriendly = fullImageName.replace(/:/g, '-');
   const builtImagePath = `client/docker-image/${fullImageNamePathFriendly}.tar`;
-  return { fullImageName, builtImagePath, fullImageNamePathFriendly };
+  return {
+    fullImageName,
+    builtImagePath,
+    fullImageNamePathFriendly,
+  };
 };
-
-async function getVersions() {
-  const gitVersion = (
-    await spawnWatched('git rev-parse --short HEAD', {
-      pipeStdout: true,
-    })
-  ).trim();
-  const version = require('../package.json').version;
-  return { gitVersion, version };
-}
 
 const makeRemoteImagePath = (fullImageNamePathFriendly) =>
   `/opt/srn-docker/${fullImageNamePathFriendly}.tar`;
 
 const doBuildServer = async () => {
-  const { gitVersion, version } = await getVersions();
-  console.log('building server', { gitVersion, version });
+  const { gitVersion, version, gitLocalChanges } = await getVersions();
+  if (gitLocalChanges) {
+    throw new Error(
+      'Cannot deploy when there are local changes. Commit first to make the git version accurate'
+    );
+  }
+
+  await setupBuilderEnv({
+    buildMethod: 'muslrust',
+    buildOpt: 'release',
+  });
+
+  console.log('building server', {
+    gitVersion,
+    version,
+  });
 
   console.log('fixing permissions...');
   await spawnWatched('chmod 777 server/Cargo.lock');
@@ -78,7 +92,10 @@ const doPushServer = async () => {
     fullImageNamePathFriendly,
     fullImageName,
   } = makeServerPaths(version, gitVersion);
-  console.log('pushing to remote', { gitVersion, version });
+  console.log('pushing to remote', {
+    gitVersion,
+    version,
+  });
 
   console.log('uploading to remote...');
   const remoteImagePath = makeRemoteImagePath(fullImageNamePathFriendly);
@@ -108,7 +125,10 @@ const doPushClient = async () => {
     fullImageNamePathFriendly,
     fullImageName,
   } = makeClientPaths(version, gitVersion);
-  console.log('pushing to remote', { gitVersion, version });
+  console.log('pushing to remote', {
+    gitVersion,
+    version,
+  });
 
   console.log('uploading to remote...');
 
@@ -187,8 +207,17 @@ const doRemoteRestartClient = async () => {
 };
 
 const doBuildClient = async () => {
-  const { gitVersion, version } = await getVersions();
-  console.log('building client', { gitVersion, version });
+  const { gitVersion, version, gitLocalChanges } = await getVersions();
+  if (gitLocalChanges) {
+    throw new Error(
+      'Cannot deploy when there are local changes. Commit first to make the git version accurate'
+    );
+  }
+
+  console.log('building client', {
+    gitVersion,
+    version,
+  });
 
   console.log('building wasm...');
   await spawnWatched('yarn wasm-pack');

@@ -62,7 +62,7 @@ export const NetworkStatus: React.FC = () => {
         <span className="desync-text">
           &nbsp;
           {desync}
-          {!_.isNaN(parseInt(desync, 10)) ? 'ms' : desync}
+          {!_.isNaN(parseInt(desync, 10)) ? 'ms' : ''}
         </span>
       </span>
       {/*{!connecting && (*/}

@@ -496,6 +496,7 @@ export default class NetState extends EventEmitter {
           if (!this.playingReplay) {
             return;
           }
+          this.desync = 'rep';
           const markInMs = this.replay.current_millis + elapsedMs;
           ns.rewindReplayToMs(markInMs);
         });

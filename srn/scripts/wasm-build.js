@@ -2,6 +2,8 @@ const { spawnWatched } = require('./shellspawn');
 const fs = require('fs-extra');
 const isWin = process.platform === 'win32';
 const yargs = require('yargs');
+const { getVersions } = require('./git');
+const { setupBuilderEnv } = require('./builder-env');
 
 async function buildForWeb({
   noTransform,
@@ -10,6 +12,18 @@ async function buildForWeb({
   debug,
   profiling,
 }) {
+  let optValue;
+  if (debug) {
+    optValue = '--debug';
+  } else {
+    optValue = profiling ? '--profiling' : '--release';
+  }
+
+  await setupBuilderEnv({
+    buildMethod: 'web',
+    buildOpt: optValue.replace('--', ''),
+  });
+
   if (!transformOnly) {
     console.log('Building rust code for extracting TS definitions...');
     await spawnWatched(
@@ -37,12 +51,6 @@ async function buildForWeb({
     console.log('Done, now building actual wasm...');
     console.log('wasm-pack version used:');
     await spawnWatched('wasm-pack --version');
-    let optValue;
-    if (debug) {
-      optValue = '--debug';
-    } else {
-      optValue = profiling ? '--profiling' : '--release';
-    }
     const wasmPackCmd = `wasm-pack build ${optValue} `;
     console.log(`Executing ${wasmPackCmd}`);
     await spawnWatched(wasmPackCmd, {
@@ -118,6 +126,10 @@ async function buildForWeb({
 }
 
 async function buildForTests({ release }) {
+  await setupBuilderEnv({
+    buildMethod: 'tests',
+    buildOpt: 'debug-wasm-bindgen-only',
+  });
   console.log('Building rust code...');
   await spawnWatched(
     `yarn cross-env-shell WASM32=1 "cd world && cargo +nightly build ${

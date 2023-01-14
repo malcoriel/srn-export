@@ -164,6 +164,9 @@ mod trajectory;
 #[path = "../../server/src/sandbox.rs"]
 mod sandbox;
 
+#[path = "../../server/src/self_inspect.rs"]
+mod self_inspect;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -882,4 +885,9 @@ pub fn generate_phase_table(period: f64, dist: f64) -> Result<JsValue, JsValue> 
         dist,
     );
     Ok(custom_serialize(&res)?)
+}
+
+#[wasm_bindgen]
+pub fn self_inspect() {
+    self_inspect::declare();
 }

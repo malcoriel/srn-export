@@ -141,11 +141,13 @@ mod resources_api;
 mod rooms_api;
 mod sandbox;
 mod sandbox_api;
+mod self_inspect;
 mod server_events;
 mod states;
 mod substitutions;
 mod substitutions_test;
 mod system_gen;
+mod tid;
 mod tractoring;
 mod trajectory;
 mod tutorial;
@@ -157,7 +159,6 @@ mod world_actions;
 mod world_events;
 mod world_test;
 mod xcast;
-mod tid;
 
 struct LastCheck {
     time: DateTime<Utc>,
@@ -269,6 +270,7 @@ impl Fairing for CORS {
 
 #[launch]
 fn rocket() -> rocket::Rocket {
+    self_inspect::declare();
     {
         let mut d_table = DIALOGUE_TABLE.lock().unwrap();
         let scripts: Vec<DialogueScript> = dialogue::gen_scripts();

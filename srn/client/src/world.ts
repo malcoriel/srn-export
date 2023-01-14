@@ -202,6 +202,7 @@ let wasmLoading = true;
   }, PERF_FLUSH_INTERVAL_MS);
   console.log('loading world wasm done.');
   wasmLoading = false; // no need for .finally, app cannot recover from it
+  wasmFunctions.self_inspect();
   // @ts-ignore
   window.getNanosWeb = wasmFunctions.get_nanos_web;
 })();
