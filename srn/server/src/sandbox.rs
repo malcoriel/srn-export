@@ -133,7 +133,7 @@ pub fn init_saved_states() {
 
 fn get_pos(state: &mut GameState, player_id: Uuid) -> Option<Vec2f64> {
     let ship = find_my_ship(state, player_id);
-    ship.map(|s| Vec2f64 { x: s.x, y: s.y })
+    ship.map(|s| s.spatial.position.clone())
 }
 
 pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand) {
@@ -176,8 +176,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
         }
         SandboxCommand::Teleport(args) => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
-                ship.x = args.target.x;
-                ship.y = args.target.y;
+                ship.spatial.position = args.target.clone();
             } else {
                 warn!("couldn't find player ship to teleport")
             }
@@ -195,10 +194,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
         SandboxCommand::AddMineral => {
             if let Some(loc) = indexing::find_my_ship_index(state, player_id) {
                 let ship = &state.locations[loc.location_idx].ships[loc.ship_idx];
-                let pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                };
+                let pos = ship.spatial.position.clone();
                 let location = &mut state.locations[loc.location_idx];
                 world::spawn_mineral(location, world::Rarity::Common, pos, &mut prng);
             }
@@ -206,10 +202,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
         SandboxCommand::AddContainer => {
             if let Some(loc) = indexing::find_my_ship_index(state, player_id) {
                 let ship = &state.locations[loc.location_idx].ships[loc.ship_idx];
-                let pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                };
+                let pos = ship.spatial.position.clone();
                 let location = &mut state.locations[loc.location_idx];
                 world::spawn_container(location, pos);
             }

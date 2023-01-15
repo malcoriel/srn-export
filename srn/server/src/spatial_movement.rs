@@ -53,14 +53,14 @@ pub fn update_ship_manual_movement(
             let sign = if params.forward { 1.0 } else { -1.0 };
             let diff =
                 deg_to_rad(SHIP_TURN_SPEED_DEG * elapsed_micro as f64 / 1000.0 / 1000.0 * sign);
-            (Some(params.clone()), Some(ship.rotation + diff))
+            (Some(params.clone()), Some(ship.spatial.rotation_rad + diff))
         }
     } else {
         (None, None)
     };
     ship.movement_markers.turn = new_move;
     if let Some(new_rotation) = new_rotation {
-        ship.rotation = new_rotation;
+        ship.spatial.rotation_rad = new_rotation;
     }
 }
 
@@ -116,13 +116,9 @@ fn project_ship_movement_by_speed(elapsed_micro: i64, ship: &Ship, sign: f64) ->
     let distance =
         ship.movement_definition.get_current_linear_speed_per_tick() * elapsed_micro as f64 * sign;
     let shift = Vec2f64 { x: 0.0, y: 1.0 }
-        .rotate(ship.rotation)
+        .rotate(ship.spatial.rotation_rad)
         .scalar_mul(distance);
-    let new_pos = Vec2f64 {
-        x: ship.x,
-        y: ship.y,
-    }
-    .add(&shift);
+    let new_pos = ship.spatial.position.add(&shift);
     new_pos
 }
 

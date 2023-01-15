@@ -101,10 +101,7 @@ fn find_shoot_ability(ship: &Ship, active_turret_id: String) -> Option<&Ability>
 }
 
 fn check_distance(ship: &Ship, shoot_ability: &Ability, min_pos: Vec2f64) -> bool {
-    let ship_pos = Vec2f64 {
-        x: ship.x,
-        y: ship.y,
-    };
+    let ship_pos = ship.spatial.position.clone();
     if min_pos.euclidean_distance(&ship_pos) > shoot_ability.get_distance() {
         return false;
     }

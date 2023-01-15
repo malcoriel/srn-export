@@ -348,10 +348,7 @@ fn npc_act(
         && ship.docked_at.is_none()
     {
         let closest_planet = find_closest_planet(
-            &Vec2f64 {
-                x: ship.x,
-                y: ship.y,
-            },
+            &ship.spatial.position,
             state,
             ship_idx.location_idx,
             spatial_indexes,

@@ -36,11 +36,7 @@ pub fn update_ship_tractor(
     containers: &Vec<Container>,
 ) {
     if let Some(position) = find_tractorable_item_position(&minerals, &containers, t) {
-        let dist = Vec2f64 {
-            x: ship.x,
-            y: ship.y,
-        }
-        .euclidean_distance(&position);
+        let dist = ship.spatial.position.euclidean_distance(&position);
         if dist <= MAX_TRACTOR_DIST {
             ship.tractor_target = Some(t);
         } else {
@@ -69,11 +65,7 @@ pub fn update_tractored_objects(
             let old_pos = object.get_position();
             let mut is_consumed = false;
             for ship in ships {
-                let dist = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                }
-                .subtract(&old_pos);
+                let dist = ship.spatial.position.subtract(&old_pos);
                 let dir = dist.normalize();
                 if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
                     if let Some(p) = players_by_ship_id.get(&ship.id) {

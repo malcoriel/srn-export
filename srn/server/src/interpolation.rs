@@ -483,6 +483,6 @@ fn interpolate_ship(
         value *= multiplication;
         value = value.max(0.0).min(1.0);
     }
-    result.x = lerp(result.x, target.x, value);
-    result.y = lerp(result.y, target.y, value);
+    result.spatial.position.x = lerp(result.spatial.position.x, target.spatial.position.x, value);
+    result.spatial.position.y = lerp(result.spatial.position.y, target.spatial.position.y, value);
 }

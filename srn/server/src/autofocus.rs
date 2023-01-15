@@ -1,3 +1,5 @@
+use crate::fof;
+use crate::fof::{FofActor, FriendOrFoe};
 use crate::indexing::{GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier};
 use crate::vec2::Vec2f64;
 use crate::world::{GameState, Location, SpatialIndexes};
@@ -7,8 +9,6 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use uuid::Uuid;
-use crate::{fof};
-use crate::fof::{FofActor, FriendOrFoe};
 
 // pub struct DistPair {
 //     pub from: ObjectSpecifier,
@@ -118,9 +118,9 @@ pub fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
         points.push((p.spatial.position.x, p.spatial.position.y));
     }
     for i in 0..loc.ships.len() {
-        let s = &loc.ships[i];
+        let ship = &loc.ships[i];
         refs.push(ObjectIndexSpecifier::Ship { idx: i });
-        points.push((s.x, s.y));
+        points.push((ship.spatial.position.x, ship.spatial.position.y));
     }
     for i in 0..loc.minerals.len() {
         let m = &loc.minerals[i];
@@ -154,7 +154,12 @@ pub fn update_autofocus_full(state: &mut GameState, spatial_indexes: &mut Spatia
 pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &SpatialIndex) {
     let loc_clone = state.locations[loc_idx].clone();
     let loc_clone_ref = &loc_clone;
-    if loc_clone_ref.planets.len() + loc_clone_ref.ships.len() + loc_clone_ref.minerals.len() + loc_clone_ref.containers.len() == 0 {
+    if loc_clone_ref.planets.len()
+        + loc_clone_ref.ships.len()
+        + loc_clone_ref.minerals.len()
+        + loc_clone_ref.containers.len()
+        == 0
+    {
         return;
     }
     let mut ship_mods_neutral = vec![];
@@ -163,14 +168,11 @@ pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &
         let current_ship = &loc_clone_ref.ships[i];
         let current_ship_fof_actor = FofActor::Object {
             spec: ObjectSpecifier::Ship {
-                id: current_ship.id
-            }
+                id: current_ship.id,
+            },
         };
 
-        let ship_pos = Vec2f64 {
-            x: current_ship.x,
-            y: current_ship.y,
-        };
+        let ship_pos = current_ship.spatial.position.clone();
         let around_unfiltered = index.rad_search(&ship_pos, AUTOFOCUS_RADIUS);
         let mut around_neutral = vec![];
         let mut around_hostile = vec![];
@@ -180,9 +182,11 @@ pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &
                 ObjectIndexSpecifier::Ship { .. } => {
                     let should_pick_ship = {
                         if let Some(osp) = object_index_into_object_id(&sp, loc_clone_ref) {
-                            fof::friend_or_foe(state, current_ship_fof_actor.clone(), FofActor::Object {
-                                spec: osp
-                            }) == FriendOrFoe::Foe
+                            fof::friend_or_foe(
+                                state,
+                                current_ship_fof_actor.clone(),
+                                FofActor::Object { spec: osp },
+                            ) == FriendOrFoe::Foe
                         } else {
                             // potentially impossible
                             false
@@ -194,7 +198,7 @@ pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &
                 }
                 _ => {
                     around_neutral.push(sp);
-                },
+                }
             };
         }
         let sorter = |a, b| {
@@ -209,21 +213,18 @@ pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &
         };
         around_neutral.sort_by(|a, b| sorter(a, b));
         around_hostile.sort_by(|a, b| sorter(a, b));
-        ship_mods_neutral.push(
-            (
-                around_neutral
+        ship_mods_neutral.push((
+            around_neutral
                 .get(0)
                 .and_then(|ois| object_index_into_object_id(ois, &loc_clone_ref)),
-                i,
-            )
-        );
-        ship_mods_hostile.push(
-            (around_hostile
+            i,
+        ));
+        ship_mods_hostile.push((
+            around_hostile
                 .get(0)
                 .and_then(|ois| object_index_into_object_id(ois, &loc_clone_ref)),
-             i
-            )
-        );
+            i,
+        ));
     }
     for (new_val, i) in ship_mods_neutral.into_iter() {
         let ship = &mut state.locations[loc_idx].ships[i];
@@ -276,9 +277,10 @@ pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) 
         ObjectIndexSpecifier::Planet { idx } => {
             loc.planets.get(*idx).map(|o| o.spatial.position.clone())
         }
-        ObjectIndexSpecifier::Ship { idx } => {
-            loc.ships.get(*idx).map(|o| Vec2f64 { x: o.x, y: o.y })
-        }
+        ObjectIndexSpecifier::Ship { idx } => loc
+            .ships
+            .get(*idx)
+            .map(|ship| ship.spatial.position.clone()),
         ObjectIndexSpecifier::Star => loc.star.as_ref().map(|o| o.spatial.position.clone()),
     }
 }
@@ -295,9 +297,10 @@ fn get_position(loc: &Location, sp: &ObjectIndexSpecifier) -> Option<Vec2f64> {
         ObjectIndexSpecifier::Planet { idx } => {
             loc.planets.get(*idx).map(|o| o.spatial.position.clone())
         }
-        ObjectIndexSpecifier::Ship { idx } => {
-            loc.ships.get(*idx).map(|s| Vec2f64 { x: s.x, y: s.y })
-        }
+        ObjectIndexSpecifier::Ship { idx } => loc
+            .ships
+            .get(*idx)
+            .map(|ship| ship.spatial.position.clone()),
         ObjectIndexSpecifier::Star => loc.star.as_ref().map(|s| s.spatial.position.clone()),
     }
 }

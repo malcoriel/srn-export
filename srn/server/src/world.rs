@@ -257,12 +257,9 @@ pub struct ShipTurret {
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Ship {
     pub id: Uuid,
-    pub x: f64,
-    pub y: f64,
+    pub spatial: SpatialProps,
     pub acc_periodic_dmg: f64,
     pub acc_periodic_heal: f64,
-    pub rotation: f64,
-    pub radius: f64,
     pub color: String,
     pub docked_at: Option<Uuid>,
     pub tractor_target: Option<Uuid>,
@@ -308,12 +305,17 @@ impl Ship {
         Ship {
             id: prng_id(prng),
             color: gen_color(prng).to_string(),
-            x: if at.is_some() { at.unwrap().x } else { 100.0 },
-            y: if at.is_some() { at.unwrap().y } else { 100.0 },
+            spatial: SpatialProps {
+                position: Vec2f64 {
+                    x: if at.is_some() { at.unwrap().x } else { 100.0 },
+                    y: if at.is_some() { at.unwrap().y } else { 100.0 },
+                },
+                velocity: Default::default(),
+                rotation_rad: 0.0,
+                radius: 2.0,
+            },
             acc_periodic_dmg: 0.0,
             acc_periodic_heal: 0.0,
-            rotation: 0.0,
-            radius: 2.0,
             docked_at: None,
             tractor_target: None,
             navigate_target: None,
@@ -339,14 +341,11 @@ impl Ship {
 
 impl Ship {
     pub fn set_from(&mut self, pos: &Vec2f64) {
-        self.x = pos.x;
-        self.y = pos.y;
+        self.spatial.position.x = pos.x;
+        self.spatial.position.y = pos.y;
     }
     pub fn as_vec(&self) -> Vec2f64 {
-        Vec2f64 {
-            x: self.x,
-            y: self.y,
-        }
+        self.spatial.position.clone()
     }
 }
 
@@ -1169,8 +1168,8 @@ fn update_docked_ships_position(loc: &mut Location, indexes: &GameStateIndexes) 
     for ship in loc.ships.iter_mut() {
         if let Some(docked_at) = ship.docked_at {
             if let Some(planet) = indexes.planets_by_id.get(&docked_at) {
-                ship.x = planet.spatial.position.x;
-                ship.y = planet.spatial.position.y;
+                ship.spatial.position.x = planet.spatial.position.x;
+                ship.spatial.position.y = planet.spatial.position.y;
             }
         }
     }
@@ -1226,10 +1225,10 @@ fn interpolate_docking_ships_position(
             return None;
         }));
     for ship in state.locations[location_idx].ships.iter_mut() {
-        if !update_options.limit_area.contains_vec(&Vec2f64 {
-            x: ship.x,
-            y: ship.y,
-        }) {
+        if !update_options
+            .limit_area
+            .contains_vec(&ship.spatial.position)
+        {
             continue;
         }
         if let Some(long_act) = docking_ship_ids.get(&ship.id) {
@@ -1242,22 +1241,19 @@ fn interpolate_docking_ships_position(
                 } => {
                     if let Some(planet) = planets_by_id.get(&to_planet) {
                         let target = planet.spatial.position.clone();
-                        let ship_pos = Vec2f64 {
-                            x: ship.x,
-                            y: ship.y,
-                        };
+                        let ship_pos = ship.spatial.position.clone();
                         let dir = target.subtract(&ship_pos);
-                        ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
+                        ship.spatial.rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
                         if dir.x < 0.0 {
-                            ship.rotation = -ship.rotation;
+                            ship.spatial.rotation_rad = -ship.spatial.rotation_rad;
                         }
 
-                        ship.x = lerp(
+                        ship.spatial.position.x = lerp(
                             start_pos.x,
                             planet.spatial.position.x,
                             *percentage as f64 / 100.0,
                         );
-                        ship.y = lerp(
+                        ship.spatial.position.y = lerp(
                             start_pos.y,
                             planet.spatial.position.y,
                             *percentage as f64 / 100.0,
@@ -1276,18 +1272,17 @@ fn interpolate_docking_ships_position(
                 } => {
                     if let Some(planet) = planets_by_id.get(&from_planet) {
                         let from_pos = planet.spatial.position.clone();
-                        let ship_pos = Vec2f64 {
-                            x: ship.x,
-                            y: ship.y,
-                        };
+                        let ship_pos = ship.spatial.position.clone();
                         let dir = ship_pos.subtract(&from_pos);
-                        ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
+                        ship.spatial.rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
                         if dir.x < 0.0 {
-                            ship.rotation = -ship.rotation;
+                            ship.spatial.rotation_rad = -ship.spatial.rotation_rad;
                         }
 
-                        ship.x = lerp(from_pos.x, end_pos.x, *percentage as f64 / 100.0);
-                        ship.y = lerp(from_pos.y, end_pos.y, *percentage as f64 / 100.0);
+                        ship.spatial.position.x =
+                            lerp(from_pos.x, end_pos.x, *percentage as f64 / 100.0);
+                        ship.spatial.position.y =
+                            lerp(from_pos.y, end_pos.y, *percentage as f64 / 100.0);
                     }
                 }
                 _ => {}
@@ -1309,10 +1304,7 @@ fn update_initiate_ship_docking_by_navigation(
         if let Some(t) = ship.dock_target {
             if let Some(planet) = planets_by_id.get(&t) {
                 let planet_pos = planet.spatial.position.clone();
-                let ship_pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                };
+                let ship_pos = ship.spatial.position.clone();
                 if planet_pos.euclidean_distance(&ship_pos)
                     < (planet.spatial.radius * planet.spatial.radius * SHIP_DOCKING_RADIUS_COEFF)
                         .max(MIN_SHIP_DOCKING_RADIUS)
@@ -1500,10 +1492,7 @@ pub fn update_hp_effects(
     if let Some(star) = state.locations[location_idx].star.clone() {
         let star_center = star.spatial.position.clone();
         for mut ship in state.locations[location_idx].ships.iter_mut() {
-            let ship_pos = Vec2f64 {
-                x: ship.x,
-                y: ship.y,
-            };
+            let ship_pos = ship.spatial.position.clone();
 
             let dist_to_star = ship_pos.euclidean_distance(&star_center);
             let rr = dist_to_star / star.spatial.radius;
@@ -1591,10 +1580,10 @@ pub fn update_hp_effects(
                 position: ship_clone.as_vec(),
                 velocity: ship_clone
                     .movement_definition
-                    .get_spatial_velocity(ship_clone.rotation)
+                    .get_spatial_velocity(ship_clone.spatial.rotation_rad)
                     .scalar_mul(0.25),
-                rotation_rad: ship_clone.rotation,
-                radius: ship_clone.radius,
+                rotation_rad: ship_clone.spatial.rotation_rad,
+                radius: ship_clone.spatial.radius,
             },
             id: prng_id(prng),
             color: ship_clone.color.clone(),
@@ -1999,10 +1988,9 @@ pub fn update_ships_navigation(
     for mut ship in ships.clone() {
         if docking_ship_ids.contains(&ship.id)
             || undocking_ship_ids.contains(&ship.id)
-            || !update_options.limit_area.contains_vec(&Vec2f64 {
-                x: ship.x,
-                y: ship.y,
-            })
+            || !update_options
+                .limit_area
+                .contains_vec(&ship.spatial.position)
         {
             ship.trajectory = vec![];
             res.push(ship);
@@ -2013,15 +2001,12 @@ pub fn update_ships_navigation(
                 ship.movement_definition.get_current_linear_speed_per_tick() * elapsed_micro as f64;
 
             if let Some(target) = ship.navigate_target {
-                let ship_pos = Vec2f64 {
-                    x: ship.x,
-                    y: ship.y,
-                };
+                let ship_pos = ship.spatial.position.clone();
                 let dist = target.euclidean_distance(&ship_pos);
                 let dir = target.subtract(&ship_pos);
-                ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
+                ship.spatial.rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
                 if dir.x < 0.0 {
-                    ship.rotation = -ship.rotation;
+                    ship.spatial.rotation_rad = -ship.spatial.rotation_rad;
                 }
                 if dist > 0.0 {
                     ship.trajectory = trajectory::build_trajectory_to_point(
@@ -2045,10 +2030,7 @@ pub fn update_ships_navigation(
                     .bodies_by_id
                     .get(&ObjectSpecifier::Planet { id: target })
                 {
-                    let ship_pos = Vec2f64 {
-                        x: ship.x,
-                        y: ship.y,
-                    };
+                    let ship_pos = ship.spatial.position.clone();
                     let planet_anchor = indexes
                         .bodies_by_id
                         .get(&planet.get_movement().get_anchor_spec())
@@ -2065,9 +2047,9 @@ pub fn update_ships_navigation(
                     );
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
-                        ship.rotation = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
+                        ship.spatial.rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
                         if dir.x < 0.0 {
-                            ship.rotation = -ship.rotation;
+                            ship.spatial.rotation_rad = -ship.spatial.rotation_rad;
                         }
                         let new_pos = move_ship_towards(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
@@ -2095,8 +2077,7 @@ pub fn dock_ship(
         let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
         ship.docked_at = Some(body.get_id());
         ship.dock_target = None;
-        ship.x = body.get_spatial().position.x;
-        ship.y = body.get_spatial().position.y;
+        ship.spatial.position = body.get_spatial().position.clone();
         ship.trajectory = vec![];
         ship.clone()
     };
@@ -2108,7 +2089,7 @@ pub fn dock_ship(
         GameEvent::ShipDocked {
             ship: ship_clone,
             planet: PlanetV2::from(body),
-            player_id: player_id,
+            player_id,
             state_id: state.id,
             text_representation: if let Some(player_name) = player_name {
                 format!("Player {} docked at {}", player_name, planet_name)
@@ -2132,8 +2113,7 @@ pub fn undock_ship(
         ship.docked_at = None;
         if let Some(planet) = find_planet(&state_read, &planet_id) {
             let planet = planet.clone();
-            ship.x = planet.spatial.position.x;
-            ship.y = planet.spatial.position.y;
+            ship.spatial.position = planet.spatial.position.clone();
             if !client {
                 fire_event(GameEvent::ShipUndocked {
                     state_id: state.id,
@@ -2231,7 +2211,7 @@ pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
 }
 
 pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
-    let old_ship_index = indexing::find_my_ship_index(&state, player_id);
+    let old_ship_index = find_my_ship_index(&state, player_id);
     return if let Some(old_ship_index) = old_ship_index {
         state.locations[old_ship_index.location_idx]
             .ships
@@ -2300,7 +2280,7 @@ pub fn make_room(
     let mut new_caches = GameStateCaches::new();
     let use_external_caches = external_caches.is_some();
     let caches = external_caches.unwrap_or(&mut new_caches);
-    let state = system_gen::seed_state(
+    let state = seed_state(
         &mode,
         random_stuff::random_hex_seed_seeded(prng),
         opts,

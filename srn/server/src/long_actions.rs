@@ -314,14 +314,8 @@ fn try_start_dock(
     }
     let planet = planet.unwrap();
     // currently, docking can only be initiated in the planet radius
-    let ship_pos = Vec2f64 {
-        x: ship.x,
-        y: ship.y,
-    };
-    let planet_pos = Vec2f64 {
-        x: planet.spatial.position.x,
-        y: planet.spatial.position.y,
-    };
+    let ship_pos = ship.spatial.position.clone();
+    let planet_pos = planet.spatial.position.clone();
     if planet_pos.euclidean_distance(&ship_pos)
         > (planet.spatial.radius * SHIP_DOCKING_RADIUS_COEFF).max(MIN_SHIP_DOCKING_RADIUS)
     {
