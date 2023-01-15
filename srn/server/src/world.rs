@@ -36,6 +36,7 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
+use crate::spatial_movement::SHIP_TURN_SPEED_DEG;
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
 use crate::tractoring::{
@@ -46,8 +47,8 @@ use crate::world_actions::*;
 use crate::world_actions::{Action, ShipMovementMarkers};
 use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEvent};
 use crate::{
-    abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, random_stuff, system_gen,
-    trajectory, world_events,
+    abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, random_stuff,
+    spatial_movement, system_gen, trajectory, world_events,
 };
 use crate::{combat, fire_event, market, notifications, planet_movement, tractoring};
 use crate::{dialogue, vec2};
@@ -64,9 +65,6 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use uuid::*;
 use wasm_bindgen::prelude::*;
-
-const SHIP_TURN_SPEED_DEG: f64 = 90.0;
-const ORB_SPEED_MULT: f64 = 1.0;
 
 pub type PlayerId = Uuid;
 
@@ -150,8 +148,14 @@ pub enum ObjectProperty {
 // derive Serialize-Deserialize will add constraints itself, no need to explicitly mark them
 pub struct SpatialProps {
     pub position: Vec2f64,
+    pub velocity: Vec2f64,
     pub rotation_rad: f64,
     pub radius: f64,
+}
+
+pub trait WithSpatial {
+    fn get_spatial(&self) -> &SpatialProps;
+    fn get_spatial_mut(&mut self) -> &mut SpatialProps;
 }
 
 #[skip_serializing_none]
@@ -449,10 +453,8 @@ impl Container {
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Wreck {
-    pub position: Vec2f64,
+    pub spatial: SpatialProps,
     pub id: Uuid,
-    pub rotation: f64,
-    pub radius: f64,
     pub color: String,
     pub decay_normalized: f64,
     pub decay_ticks: i32,
@@ -1050,9 +1052,9 @@ pub fn update_location(
     interpolate_docking_ships_position(state, location_idx, update_options);
     sampler.end(interpolate_docking_id);
     let update_ship_manual_movement_id =
-        sampler.start(SamplerMarks::UpdateShipsManualMovement as u32);
-    update_ships_manual_movement(
-        &mut state.locations[location_idx].ships,
+        sampler.start(SamplerMarks::UpdateObjectsSpatialMovement as u32);
+    spatial_movement::update_objects_spatial_movement(
+        &mut state.locations[location_idx],
         elapsed,
         state.millis,
         client,
@@ -1345,146 +1347,6 @@ fn update_initiate_ship_docking_by_navigation(
     }
 }
 
-// keep synced with world.ts
-const MANUAL_MOVEMENT_INACTIVITY_DROP_MS: i32 = 500;
-
-fn update_ships_manual_movement(
-    ships: &mut Vec<Ship>,
-    elapsed_micro: i64,
-    current_tick: u32,
-    client: bool,
-) {
-    for ship in ships.iter_mut() {
-        update_ship_manual_movement(elapsed_micro, current_tick, ship, client, false);
-    }
-}
-
-pub fn update_ship_manual_movement(
-    elapsed_micro: i64, // can be negative for the sake of applying StopGas in the past
-    current_tick: u32,
-    ship: &mut Ship,
-    client: bool,
-    skip_throttle_drop: bool, // special param for action-in-the-past lag compensation
-) {
-    let move_read = ship.movement_definition.clone();
-    match move_read {
-        Movement::None => {}
-        Movement::ShipMonotonous { .. } => {
-            if !maybe_drop_outdated_movement_marker(current_tick, ship, client, skip_throttle_drop)
-            {
-                let gas_marker = &ship.movement_markers.gas;
-                let sign: f64 = gas_marker
-                    .as_ref()
-                    .map_or(0.0, |m| if m.forward { 1.0 } else { -1.0 });
-                if sign != 0.0 {
-                    let new_pos = project_ship_movement_by_speed(elapsed_micro, ship, sign);
-                    ship.set_from(&new_pos);
-                }
-            }
-        }
-        Movement::ShipAccelerated { .. } => {
-            maybe_drop_outdated_movement_marker(current_tick, ship, client, skip_throttle_drop);
-            let gas_marker = &ship.movement_markers.gas;
-            let sign: f64 = gas_marker
-                .as_ref()
-                .map_or(0.0, |m| if m.forward { 1.0 } else { -1.0 });
-            // even if sign is zero (no gas), the drag still has to apply
-            let new_speed = project_ship_linear_speed_by_acceleration(elapsed_micro, ship, sign);
-            ship.movement_definition.set_linear_speed(new_speed);
-            let new_pos = project_ship_movement_by_speed(elapsed_micro, ship, 1.0);
-            ship.set_from(&new_pos);
-        }
-        Movement::RadialMonotonous { .. } => {}
-        Movement::AnchoredStatic { .. } => {}
-    }
-
-    let (new_move, new_rotation) = if let Some(params) = &ship.movement_markers.turn {
-        if (params.last_tick as i32 - current_tick as i32).abs()
-            > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
-        {
-            (None, None)
-        } else {
-            let sign = if params.forward { 1.0 } else { -1.0 };
-            let diff =
-                deg_to_rad(SHIP_TURN_SPEED_DEG * elapsed_micro as f64 / 1000.0 / 1000.0 * sign);
-            (Some(params.clone()), Some(ship.rotation + diff))
-        }
-    } else {
-        (None, None)
-    };
-    ship.movement_markers.turn = new_move;
-    if let Some(new_rotation) = new_rotation {
-        ship.rotation = new_rotation;
-    }
-}
-
-fn maybe_drop_outdated_movement_marker(
-    current_tick: u32,
-    ship: &mut Ship,
-    client: bool,
-    skip_throttle_drop: bool,
-) -> bool {
-    // returns true if dropped
-    let new_move = if let Some(params) = &mut ship.movement_markers.gas {
-        if should_throttle_drop_manual_gas(current_tick, client, skip_throttle_drop, params) {
-            None
-        } else {
-            Some(params.clone())
-        }
-    } else {
-        None
-    };
-    return if let Some(new_move) = new_move {
-        ship.movement_markers.gas = Some(new_move);
-        false
-    } else {
-        true
-    };
-}
-
-fn should_throttle_drop_manual_gas(
-    current_tick: u32,
-    client: bool,
-    skip_throttle_drop: bool,
-    params: &mut MoveAxisParam,
-) -> bool {
-    (params.last_tick as i32 - current_tick as i32).abs()
-        > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
-        && !client
-        // assume that on client, we always hold the button - this one is only a server optimization
-        && !skip_throttle_drop
-}
-
-fn project_ship_movement_by_speed(elapsed_micro: i64, ship: &Ship, sign: f64) -> Vec2f64 {
-    let distance =
-        ship.movement_definition.get_current_linear_speed_per_tick() * elapsed_micro as f64 * sign;
-    let shift = Vec2f64 { x: 0.0, y: 1.0 }
-        .rotate(ship.rotation)
-        .scalar_mul(distance);
-    let new_pos = Vec2f64 {
-        x: ship.x,
-        y: ship.y,
-    }
-    .add(&shift);
-    new_pos
-}
-
-fn project_ship_linear_speed_by_acceleration(elapsed_micro: i64, ship: &Ship, sign: f64) -> f64 {
-    let current_speed = ship.movement_definition.get_current_linear_speed_per_tick();
-    let apply_drag = if sign == 0.0 { 1.0 } else { 0.0 };
-    let change =
-        ship.movement_definition.get_current_linear_acceleration() * elapsed_micro as f64 * sign
-            - ship.movement_definition.get_linear_drag()
-                * apply_drag
-                * elapsed_micro as f64
-                * (current_speed.signum());
-    // eprintln!(
-    //     "current {current_speed} change {change} elapsed {elapsed_micro} acc {}",
-    //     ship.movement_definition.get_current_linear_acceleration()
-    // );
-    current_speed + change
-}
-
 fn apply_tractored_items_consumption(
     mut state: &mut &mut GameState,
     consume_updates: Vec<(Uuid, Box<dyn IMovable>)>,
@@ -1725,10 +1587,16 @@ pub fn update_hp_effects(
         .collect::<Vec<_>>();
     for (ship_clone, pid) in ships_to_die.into_iter() {
         state.locations[location_idx].wrecks.push(Wreck {
-            position: ship_clone.as_vec(),
+            spatial: SpatialProps {
+                position: ship_clone.as_vec(),
+                velocity: ship_clone
+                    .movement_definition
+                    .get_spatial_velocity(ship_clone.rotation)
+                    .scalar_mul(0.25),
+                rotation_rad: ship_clone.rotation,
+                radius: ship_clone.radius,
+            },
             id: prng_id(prng),
-            rotation: ship_clone.rotation,
-            radius: ship_clone.radius,
             color: ship_clone.color.clone(),
             decay_normalized: 0.0,
             decay_ticks: WRECK_DECAY_TICKS,
@@ -1830,6 +1698,11 @@ pub enum Movement {
 pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13; // 0.1 unit per second per second (to allow speeding up from zero)
 
 impl Movement {
+    pub fn get_spatial_velocity(&self, rotation_rad: f64) -> Vec2f64 {
+        Vec2f64 { x: 0.0, y: 1.0 }
+            .rotate(rotation_rad)
+            .scalar_mul(self.get_current_linear_speed_per_tick())
+    }
     pub fn get_current_linear_acceleration(&self) -> f64 {
         match self {
             Movement::None => 0.0,

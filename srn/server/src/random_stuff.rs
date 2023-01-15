@@ -58,11 +58,48 @@ pub const STAR_COLORS: [(&str, &str); 8] = [
     ("#80B7FF", "#80B7FF"), // full-blue
 ];
 
-pub const PLANET_NAMES: [&str; 32] = [
-    "Scarol", "Dailla", "Tapella", "Agland", "Ceonine", "Depes", "Mazsea", "Brova", "Legcan",
-    "Tolopa", "Intum", "Bettose", "Harutlis", "Intfiner", "Arudros", "Whimox", "Wonuria",
-    "Wimnicus", "Grenfar", "Lenis", "Kerenna", "Furtate", "Vhilnea", "Sangre", "Polyku", "Mois",
-    "Takcon", "Dekma", "Khalassa", "Taruk", "Synocon", "Valyti",
+pub const PLANET_NAMES: [&str; 41] = [
+    "Scarol",
+    "Dailla",
+    "Tapella",
+    "Agland",
+    "Ceonine",
+    "Depes",
+    "Mazsea",
+    "Brova",
+    "Legcan",
+    "Tolopa",
+    "Intum",
+    "Bettose",
+    "Harutlis",
+    "Intfiner",
+    "Arudros",
+    "Whimox",
+    "Wonuria",
+    "Wimnicus",
+    "Grenfar",
+    "Lenis",
+    "Kerenna",
+    "Furtate",
+    "Vhilnea",
+    "Sangre",
+    "Polyku",
+    "Mois",
+    "Takcon",
+    "Dekma",
+    "Khalassa",
+    "Taruk",
+    "Synocon",
+    "Valyti",
+    "Nova",
+    "Starfall",
+    "Astralis",
+    "Stellar Wind",
+    "Aurora",
+    "Hyperion",
+    "Galaxia",
+    "Lunar",
+    "Celestialis",
 ];
 
 pub const SAT_NAMES: [&str; 32] = [
@@ -155,7 +192,7 @@ pub fn gen_star_name(rng: &mut Pcg64Mcg) -> &'static str {
 }
 
 pub fn gen_planet_name(rng: &mut Pcg64Mcg) -> &'static str {
-    PLANET_NAMES[rand_32(rng)]
+    PLANET_NAMES[rng.gen_range(0, PLANET_NAMES.len())]
 }
 
 pub fn gen_random_character_name() -> &'static str {
@@ -294,6 +331,7 @@ pub fn seed_asteroids(star: &Star, prng: &mut Pcg64Mcg) -> Vec<Asteroid> {
                     x: x + shift.0,
                     y: y + shift.1,
                 },
+                velocity: Default::default(),
                 rotation_rad: 0.0,
                 radius: gen_asteroid_radius(prng),
             },

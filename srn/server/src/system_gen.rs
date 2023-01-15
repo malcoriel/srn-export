@@ -195,6 +195,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                                     x: current_sat_x,
                                     y: 0.0,
                                 },
+                                velocity: Default::default(),
                                 rotation_rad: 0.0,
                                 radius: gen_sat_radius(&mut prng),
                             },
@@ -225,6 +226,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                         scale_mod: 1.0,
                         spatial: SpatialProps {
                             position: Vec2f64::zero(),
+                            velocity: Default::default(),
                             rotation_rad: 0.0,
                             radius: middle,
                         },
@@ -247,6 +249,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                         scale_mod: 2.0,
                         spatial: SpatialProps {
                             position: Default::default(),
+                            velocity: Default::default(),
                             rotation_rad: 0.0,
                             radius: middle - 3.0,
                         },
@@ -269,6 +272,7 @@ fn gen_star_system_location(seed: &String, opts: &GenStateOpts) -> Location {
                         scale_mod: 0.5,
                         spatial: SpatialProps {
                             position: Default::default(),
+                            velocity: Default::default(),
                             rotation_rad: 0.0,
                             radius: middle + 5.0,
                         },
@@ -338,6 +342,7 @@ pub fn gen_planet(
             },
             radius: planet_radius,
             rotation_rad: 0.0,
+            velocity: Default::default(),
         },
         anchor_tier: 1,
         color: gen_color(&mut prng).to_string(),
@@ -360,6 +365,7 @@ pub fn gen_planet_typed(p_type: PlanetType, id: Uuid) -> PlanetV2 {
         name: "".to_string(),
         spatial: SpatialProps {
             position: Vec2f64 { x: 0.0, y: 0.0 },
+            velocity: Default::default(),
             rotation_rad: 0.0,
             radius: 0.0,
         },
@@ -389,6 +395,7 @@ pub fn gen_star(star_id: Uuid, mut prng: &mut Pcg64Mcg, radius: f64, pos: Vec2f6
         corona_color: colors.1.to_string(),
         spatial: SpatialProps {
             position: Vec2f64 { x: pos.x, y: pos.y },
+            velocity: Default::default(),
             rotation_rad: 0.0,
             radius,
         },
@@ -473,6 +480,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
         corona_color: "rgb(100, 200, 85)".to_string(),
         spatial: SpatialProps {
             position: Vec2f64 { x: 0.0, y: 0.0 },
+            velocity: Default::default(),
             rotation_rad: 0.0,
             radius: 30.0,
         },
@@ -493,6 +501,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
 
             spatial: SpatialProps {
                 position: Vec2f64 { x: 100.0, y: 0.0 },
+                velocity: Default::default(),
                 rotation_rad: 0.0,
                 radius: 8.0,
             },
@@ -514,6 +523,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
             name: "Sat".to_string(),
             spatial: SpatialProps {
                 position: Vec2f64 { x: 120.0, y: 0.0 },
+                velocity: Default::default(),
                 rotation_rad: 0.0,
                 radius: 1.5,
             },

@@ -167,6 +167,9 @@ mod sandbox;
 #[path = "../../server/src/self_inspect.rs"]
 mod self_inspect;
 
+#[path = "../../server/src/spatial_movement.rs"]
+mod spatial_movement;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};

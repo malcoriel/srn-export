@@ -143,6 +143,7 @@ mod sandbox;
 mod sandbox_api;
 mod self_inspect;
 mod server_events;
+mod spatial_movement;
 mod states;
 mod substitutions;
 mod substitutions_test;

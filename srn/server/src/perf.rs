@@ -240,7 +240,7 @@ pub enum SamplerMarks {
     UpdateTractoredContainers = 23,
     UpdateAbilityCooldowns = 24,
     UpdateAutofocus = 25,
-    UpdateShipsManualMovement = 26,
+    UpdateObjectsSpatialMovement = 26,
     UpdateInitiateShipsDockingByNavigation = 27,
     UpdateInterpolateDockingShips = 28,
     UpdateTickLongActionsShips = 29,

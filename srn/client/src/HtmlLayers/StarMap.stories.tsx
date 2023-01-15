@@ -44,6 +44,7 @@ const mockLocation = (
     spatial: {
       radius: starRadius,
       position: VectorF(0, 0),
+      velocity: VectorF(0, 0),
       rotation_rad: 0,
     },
     movement: { tag: 'None' },

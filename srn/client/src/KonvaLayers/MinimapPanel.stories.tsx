@@ -10,7 +10,7 @@ import {
   RotationMovementBuilder,
 } from '../../../world/pkg/world.extra';
 import { ObjectSpecifier } from '../../../world/pkg/world';
-import { IVector } from '../utils/Vector';
+import { IVector, VectorF } from '../utils/Vector';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
@@ -63,6 +63,7 @@ const makePlanet = (
   rot_movement: RotationMovementBuilder.RotationMovementNone(),
   anchor_tier,
   spatial: {
+    velocity: VectorF(0, 0),
     position: pos,
     radius,
     rotation_rad: 0,

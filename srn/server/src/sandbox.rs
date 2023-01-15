@@ -232,6 +232,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     corona_color: star_color.1.to_string(),
                     spatial: SpatialProps {
                         position: Vec2f64 { x: 0.0, y: 0.0 },
+                        velocity: Default::default(),
                         rotation_rad: 0.0,
                         radius: args.star.radius,
                     },
@@ -247,6 +248,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     id: map_id_opt(sbb.id.clone(), &mut id_storage, &mut prng),
                     spatial: SpatialProps {
                         position: Vec2f64::zero(),
+                        velocity: Default::default(),
                         rotation_rad: 0.0,
                         radius: sbb.radius,
                     },
@@ -281,6 +283,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                                 x: spb.position.x,
                                 y: spb.position.y,
                             },
+                            velocity: Default::default(),
                             rotation_rad: 0.0,
                             radius: spb.radius,
                         },

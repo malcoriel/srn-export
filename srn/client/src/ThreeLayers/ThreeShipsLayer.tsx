@@ -104,9 +104,9 @@ export const ThreeShipsLayer: React.FC<{
             color={w.color}
             gid={w.id}
             opacity={1.0}
-            position={Vector.fromIVector(w.position)}
-            radius={w.radius}
-            rotation={w.rotation}
+            position={Vector.fromIVector(w.spatial.position)}
+            radius={w.spatial.radius}
+            rotation={w.spatial.rotation_rad}
           />
         );
       })}
