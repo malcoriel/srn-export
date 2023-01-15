@@ -61,7 +61,7 @@ const doBuildServer = async () => {
   console.log('building the binary...');
   await spawnWatched('docker rm -f rust-builder || true');
   const injectedEnv = Object.entries(envValues)
-    .map(([k, v]) => `${k}="${v}"`)
+    .map(([k, v]) => `-e ${k}="${v}"`)
     .join(' ');
   await spawnWatched(
     `cd server && \
@@ -244,9 +244,9 @@ const doBuildClient = async () => {
   );
 };
 
-const tryAndLog = (fn) => () => {
+const tryAndLog = (fn) => async () => {
   try {
-    fn();
+    await fn();
   } catch (e) {
     console.error(e);
     process.exit(1);
@@ -255,7 +255,7 @@ const tryAndLog = (fn) => () => {
 
 (async function () {
   try {
-    await yargs
+    yargs
       .command(
         'server',
         'builds and deploys the server',
