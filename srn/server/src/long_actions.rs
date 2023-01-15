@@ -14,10 +14,11 @@ use crate::indexing::{
 use crate::planet_movement::IBodyV2;
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, ShipIdx, ShipTemplate, PLAYER_RESPAWN_TIME_MC};
-use crate::{combat, indexing, locations, prng_id, world};
+use crate::{abilities, combat, indexing, locations, prng_id, world};
 
 use rand::prelude::*;
 use rand_pcg::Pcg64Mcg;
+use serde_json::Value;
 use std::f64::consts::PI;
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
@@ -39,6 +40,10 @@ pub enum LongActionStart {
     // the process of undocking
     UndockInternal {
         from_planet: Uuid,
+    },
+    UseAbility {
+        ability_idx: usize,
+        params: serde_json::Value,
     },
 }
 
@@ -241,6 +246,17 @@ pub fn try_start_long_action(
             let ship_idx = ship_idx.unwrap();
             return try_start_undock(state, prng, from_planet, ship_idx);
         }
+        LongActionStart::UseAbility {
+            ability_idx,
+            params,
+        } => {
+            let ship_idx = find_my_ship_index(state, player_id);
+            if ship_idx.is_none() {
+                return false;
+            }
+            let ship_idx = ship_idx.unwrap();
+            return abilities::try_invoke(state, ship_idx, ability_idx, params);
+        }
     }
     return true;
 }
@@ -362,6 +378,7 @@ fn try_start_shoot(
             }
             Ability::BlowUpOnLand => {}
             Ability::ShootAll => {}
+            Ability::ToggleMovement { .. } => {}
         }
     }
     return true;

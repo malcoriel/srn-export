@@ -13,9 +13,11 @@ import {
 } from '../../../world/pkg/world.extra';
 import { findMyPlayer, findMyShip } from '../ClientStateIndexing';
 import { useNSForceChange } from '../NetStateHooks';
+import { BsGearFill } from 'react-icons/bs';
 
 const mapShipAbility = (interactorIds: InteractorIds) => (
-  ability: Ability
+  ability: Ability,
+  abilityIndex: number
 ): ActionBarAction | null => {
   switch (ability.tag) {
     case 'Unknown':
@@ -44,6 +46,24 @@ const mapShipAbility = (interactorIds: InteractorIds) => (
       return null;
     case 'ShootAll':
       return null;
+    case 'ToggleMovement':
+      return {
+        action: () => {
+          const ns = NetState.get();
+          if (!ns) {
+            return;
+          }
+          ns.startLongAction(
+            LongActionStartBuilder.LongActionStartUseAbility({
+              ability_idx: abilityIndex,
+              params: null,
+            })
+          );
+        },
+        cooldownNormalized: 0,
+        icon: <BsGearFill />,
+      };
+
     default:
       throw new UnreachableCaseError(ability);
   }
@@ -57,7 +77,7 @@ const populateActionsByShip = (
   if (!myShip) return;
   actions.push(
     ...(myShip.abilities
-      .map(mapShipAbility(interactorIds))
+      .map((ab, idx) => mapShipAbility(interactorIds)(ab, idx))
       .filter((a) => !!a) as ActionBarAction[])
   );
 };

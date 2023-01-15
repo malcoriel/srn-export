@@ -8,7 +8,7 @@ import {
   TSTypeAliasDeclaration,
   TSTypeLiteral,
   TSTypeReference,
-} from 'jscodeshift/src/core';
+} from 'jscodeshift';
 
 import { FlowKind, FlowTypeKind, TSTypeKind } from 'ast-types/gen/kinds';
 import { namedTypes } from 'ast-types/gen/namedTypes';
@@ -88,6 +88,24 @@ const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
             }
           }
           newMemberValue = j.unionTypeAnnotation(resultMapped);
+        } else if (memberValue.type === 'TSArrayType') {
+          const elemType = memberValue.elementType;
+          if (elemType.type !== 'TSTypeReference') {
+            throw new Error(
+              `Unsupported array element type ${JSON.stringify(elemType)}`
+            );
+          }
+          const elemTypeType = elemType.typeName;
+          if (elemTypeType.type !== 'Identifier') {
+            throw new Error(
+              `Unsupported array element type's type name ${JSON.stringify(
+                elemTypeType
+              )}`
+            );
+          }
+          newMemberValue = j.arrayTypeAnnotation(
+            j.typeParameter(elemTypeType.name)
+          );
         } else if (memberValue.type === 'TSTypeLiteral') {
           console.log(
             'cannot support TSTypeLiteral as an enum member, instead extract to its own rust newtype',
@@ -97,7 +115,11 @@ const convertTsTypeIntoFlowType = (t: TSTypeKind, j: JSCodeshift): FlowKind => {
 
         if (!newMemberValue) {
           throw new Error(
-            `Unsupported member value type: ${memberValue.type} at ${memberValue.loc.start}-${memberValue.loc.end}`
+            `Unsupported member value type: ${
+              memberValue.type
+            } at ${JSON.stringify(memberValue.loc.start)}-${JSON.stringify(
+              memberValue.loc.end
+            )}`
           );
         }
 

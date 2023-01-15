@@ -243,6 +243,7 @@ pub struct ProcessedPlayerAction {
     pub processed_at_ticks: u64,
     pub packet_tag: Option<String>,
 }
+
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct ShipTurret {
     id: String,
@@ -280,7 +281,7 @@ pub struct Ship {
     pub trading_with: Option<ObjectSpecifier>,
 }
 
-pub fn gen_turrets(count: usize, prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
+pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
     let mut res = vec![];
     for i in 0..count {
         let id = i.to_string();
@@ -554,7 +555,8 @@ pub struct GameState {
     pub interval_data: HashMap<TimeMarks, u32>,
     pub game_over: Option<GameOver>,
     pub events: VecDeque<GameEvent>,
-    pub player_actions: VecDeque<(Action, Option<String>, Option<u64>)>, // (action, packet_tag_that_received_it, ticks_at)
+    pub player_actions: VecDeque<(Action, Option<String>, Option<u64>)>,
+    // (action, packet_tag_that_received_it, ticks_at)
     pub processed_events: Vec<ProcessedGameEvent>,
     pub processed_player_actions: Vec<ProcessedPlayerAction>,
     pub update_every_ticks: u64,
@@ -1364,39 +1366,38 @@ pub fn update_ship_manual_movement(
     client: bool,
     skip_throttle_drop: bool, // special param for action-in-the-past lag compensation
 ) {
-    let (new_move, new_pos) = if let Some(params) = &mut ship.movement_markers.gas {
-        if (params.last_tick as i32 - current_tick as i32).abs()
-            > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
-            && !client
-        // assume that on client, we always hold the button - this one is only a server optimization
-            && !skip_throttle_drop
-        {
-            // warn!("throttle drop");
-            (None, None)
-        } else {
-            let sign = if params.forward { 1.0 } else { -1.0 };
-            let distance = ship
-                .movement_definition
-                .get_current_linear_move_speed_per_tick()
-                * elapsed_micro as f64
-                * sign;
-            let shift = Vec2f64 { x: 0.0, y: 1.0 }
-                .rotate(ship.rotation)
-                .scalar_mul(distance);
-            let new_pos = Vec2f64 {
-                x: ship.x,
-                y: ship.y,
+    let move_read = ship.movement_definition.clone();
+    match move_read {
+        Movement::None => {}
+        Movement::ShipMonotonous { .. } => {
+            if !maybe_drop_outdated_movement_marker(current_tick, ship, client, skip_throttle_drop)
+            {
+                let gas_marker = &ship.movement_markers.gas;
+                let sign: f64 = gas_marker
+                    .as_ref()
+                    .map_or(0.0, |m| if m.forward { 1.0 } else { -1.0 });
+                if sign != 0.0 {
+                    let new_pos = project_ship_movement_by_speed(elapsed_micro, ship, sign);
+                    ship.set_from(&new_pos);
+                }
             }
-            .add(&shift);
-            (Some(params.clone()), Some(new_pos))
         }
-    } else {
-        (None, None)
-    };
-    ship.movement_markers.gas = new_move;
-    if let Some(new_pos) = new_pos {
-        ship.set_from(&new_pos);
+        Movement::ShipAccelerated { .. } => {
+            maybe_drop_outdated_movement_marker(current_tick, ship, client, skip_throttle_drop);
+            let gas_marker = &ship.movement_markers.gas;
+            let sign: f64 = gas_marker
+                .as_ref()
+                .map_or(0.0, |m| if m.forward { 1.0 } else { -1.0 });
+            // even if sign is zero (no gas), the drag still has to apply
+            let new_speed = project_ship_linear_speed_by_acceleration(elapsed_micro, ship, sign);
+            ship.movement_definition.set_linear_speed(new_speed);
+            let new_pos = project_ship_movement_by_speed(elapsed_micro, ship, 1.0);
+            ship.set_from(&new_pos);
+        }
+        Movement::RadialMonotonous { .. } => {}
+        Movement::AnchoredStatic { .. } => {}
     }
+
     let (new_move, new_rotation) = if let Some(params) = &ship.movement_markers.turn {
         if (params.last_tick as i32 - current_tick as i32).abs()
             > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
@@ -1415,6 +1416,73 @@ pub fn update_ship_manual_movement(
     if let Some(new_rotation) = new_rotation {
         ship.rotation = new_rotation;
     }
+}
+
+fn maybe_drop_outdated_movement_marker(
+    current_tick: u32,
+    ship: &mut Ship,
+    client: bool,
+    skip_throttle_drop: bool,
+) -> bool {
+    // returns true if dropped
+    let new_move = if let Some(params) = &mut ship.movement_markers.gas {
+        if should_throttle_drop_manual_gas(current_tick, client, skip_throttle_drop, params) {
+            None
+        } else {
+            Some(params.clone())
+        }
+    } else {
+        None
+    };
+    return if let Some(new_move) = new_move {
+        ship.movement_markers.gas = Some(new_move);
+        false
+    } else {
+        true
+    };
+}
+
+fn should_throttle_drop_manual_gas(
+    current_tick: u32,
+    client: bool,
+    skip_throttle_drop: bool,
+    params: &mut MoveAxisParam,
+) -> bool {
+    (params.last_tick as i32 - current_tick as i32).abs()
+        > MANUAL_MOVEMENT_INACTIVITY_DROP_MS
+        && !client
+        // assume that on client, we always hold the button - this one is only a server optimization
+        && !skip_throttle_drop
+}
+
+fn project_ship_movement_by_speed(elapsed_micro: i64, ship: &Ship, sign: f64) -> Vec2f64 {
+    let distance =
+        ship.movement_definition.get_current_linear_speed_per_tick() * elapsed_micro as f64 * sign;
+    let shift = Vec2f64 { x: 0.0, y: 1.0 }
+        .rotate(ship.rotation)
+        .scalar_mul(distance);
+    let new_pos = Vec2f64 {
+        x: ship.x,
+        y: ship.y,
+    }
+    .add(&shift);
+    new_pos
+}
+
+fn project_ship_linear_speed_by_acceleration(elapsed_micro: i64, ship: &Ship, sign: f64) -> f64 {
+    let current_speed = ship.movement_definition.get_current_linear_speed_per_tick();
+    let apply_drag = if sign == 0.0 { 1.0 } else { 0.0 };
+    let change =
+        ship.movement_definition.get_current_linear_acceleration() * elapsed_micro as f64 * sign
+            - ship.movement_definition.get_linear_drag()
+                * apply_drag
+                * elapsed_micro as f64
+                * (current_speed.signum());
+    // eprintln!(
+    //     "current {current_speed} change {change} elapsed {elapsed_micro} acc {}",
+    //     ship.movement_definition.get_current_linear_acceleration()
+    // );
+    current_speed + change
 }
 
 fn apply_tractored_items_consumption(
@@ -1553,7 +1621,8 @@ const MAX_LOCAL_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
 
-const WRECK_DECAY_TICKS: i32 = 3 * 1000 * 1000; // also matches fadeOver in UI
+const WRECK_DECAY_TICKS: i32 = 3 * 1000 * 1000;
+// also matches fadeOver in UI
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
 pub const PLANET_HEALTH_REGEN_PER_TICK: f64 = 1.0 / 1000.0 / 1000.0;
 
@@ -1721,7 +1790,7 @@ pub fn add_player(
 }
 
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq)]
 #[serde(tag = "tag")]
 pub enum Movement {
     None,
@@ -1733,12 +1802,13 @@ pub enum Movement {
     },
     // no handling implemented for this one yet, it's just a design
     ShipAccelerated {
-        max_move_speed: f64,
-        current_move_speed: f64,
-        current_turn_speed: f64,
-        acc_move: f64,
+        max_linear_speed: f64,
+        current_linear_speed: f64,
+        linear_drag: f64,
+        current_angular_speed: f64,
+        acc_linear: f64,
         max_turn_speed: f64,
-        acc_turn: f64,
+        acc_angular: f64,
     },
     RadialMonotonous {
         // instead of defining the speed, in order
@@ -1757,7 +1827,50 @@ pub enum Movement {
     },
 }
 
+pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13; // 0.1 unit per second per second (to allow speeding up from zero)
+
 impl Movement {
+    pub fn get_current_linear_acceleration(&self) -> f64 {
+        match self {
+            Movement::None => 0.0,
+            Movement::ShipMonotonous { .. } => 0.0,
+            Movement::ShipAccelerated { acc_linear, .. } => *acc_linear,
+            Movement::RadialMonotonous { .. } => 0.0,
+            Movement::AnchoredStatic { .. } => 0.0,
+        }
+    }
+
+    pub fn get_linear_drag(&self) -> f64 {
+        match self {
+            Movement::None => 0.0,
+            Movement::ShipMonotonous { .. } => 0.0,
+            Movement::ShipAccelerated { linear_drag, .. } => *linear_drag,
+            Movement::RadialMonotonous { .. } => 0.0,
+            Movement::AnchoredStatic { .. } => 0.0,
+        }
+    }
+    pub fn set_linear_speed(&mut self, new_value: f64) {
+        match self {
+            Movement::ShipAccelerated {
+                current_linear_speed,
+                max_linear_speed,
+                ..
+            } => {
+                let max_val = *max_linear_speed;
+                let mut new_value = new_value;
+                if new_value > 0.0 {
+                    new_value = new_value.min(max_val);
+                } else if new_value < 0.0 {
+                    new_value = new_value.max(-max_val);
+                }
+                if new_value.abs() <= MIN_OBJECT_SPEED_PER_TICK {
+                    new_value = 0.0;
+                }
+                *current_linear_speed = new_value;
+            }
+            _ => panic!("cannot set linear speed if the movement is not accelerated"),
+        }
+    }
     pub fn get_anchor_relative_position(&self) -> &Option<Vec2f64> {
         match self {
             Movement::RadialMonotonous {
@@ -1767,7 +1880,7 @@ impl Movement {
         }
     }
 
-    pub fn get_current_linear_move_speed_per_tick(&self) -> f64 {
+    pub fn get_current_linear_speed_per_tick(&self) -> f64 {
         match self {
             Movement::None => 0.0,
             Movement::ShipMonotonous { move_speed, .. } => {
@@ -1776,7 +1889,8 @@ impl Movement {
                 *move_speed
             }
             Movement::ShipAccelerated {
-                current_move_speed, ..
+                current_linear_speed: current_move_speed,
+                ..
             } => *current_move_speed,
             Movement::RadialMonotonous { .. } => 0.0,
             Movement::AnchoredStatic { .. } => 0.0,
@@ -1830,7 +1944,8 @@ impl Movement {
 pub enum RotationMovement {
     None,
     Monotonous {
-        full_period_ticks: f64, // positive => counter-clockwise
+        full_period_ticks: f64,
+        // positive => counter-clockwise
         phase: Option<u32>,
         start_phase: u32,
     },
@@ -1884,21 +1999,38 @@ impl ShipTemplate {
     }
 
     pub fn player(at: Option<Vec2f64>) -> ShipTemplate {
+        let max_linear_speed = 20.0 / 1000.0 / 1000.0;
+        let max_angular_speed = SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0;
+        let default_movement = Movement::ShipMonotonous {
+            move_speed: max_linear_speed,
+            turn_speed: max_angular_speed,
+            current_move_speed: 0.0,
+            current_turn_speed: 0.0,
+        };
         ShipTemplate {
             at,
             npc_traits: None,
-            abilities: None,
+            abilities: Some(vec![Ability::ToggleMovement {
+                movements: vec![
+                    default_movement.clone(),
+                    Movement::ShipAccelerated {
+                        max_linear_speed,
+                        current_linear_speed: 0.0,
+                        linear_drag: max_linear_speed * 0.025 / 1e6, // 2.5% per second
+                        current_angular_speed: 0.0,
+                        acc_linear: max_linear_speed * 0.25 / 1e6, // 25% per second
+                        max_turn_speed: max_angular_speed,
+                        acc_angular: max_angular_speed * 0.025,
+                    },
+                ],
+                current_idx: 0,
+            }]),
             name: None,
             health: Some(Health::new_regen(
                 100.0,
                 SHIP_REGEN_PER_SEC / 1000.0 / 1000.0,
             )),
-            movement: Some(Movement::ShipMonotonous {
-                move_speed: 20.0 / 1000.0 / 1000.0,
-                turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0,
-                current_move_speed: 0.0,
-                current_turn_speed: 0.0,
-            }),
+            movement: Some(default_movement),
             properties: None,
         }
     }
@@ -2004,10 +2136,8 @@ pub fn update_ships_navigation(
             continue;
         }
         if !ship.docked_at.is_some() {
-            let max_shift = ship
-                .movement_definition
-                .get_current_linear_move_speed_per_tick()
-                * elapsed_micro as f64;
+            let max_shift =
+                ship.movement_definition.get_current_linear_speed_per_tick() * elapsed_micro as f64;
 
             if let Some(target) = ship.navigate_target {
                 let ship_pos = Vec2f64 {

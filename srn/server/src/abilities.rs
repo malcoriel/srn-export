@@ -1,6 +1,7 @@
-use crate::world::Ship;
+use crate::world::{GameState, Movement, Ship, ShipIdx};
 use core::mem;
 use serde_derive::{Deserialize, Serialize};
+use serde_json::Value;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
@@ -21,9 +22,40 @@ pub enum Ability {
     },
     ShootAll,
     BlowUpOnLand,
+    ToggleMovement {
+        movements: Vec<Movement>,
+        current_idx: usize,
+    },
 }
 
 impl Ability {
+    pub fn try_apply(&self, state: &mut GameState, ship_idx: ShipIdx, _params: Value) -> bool {
+        let ship_mut = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+        return match self {
+            Ability::ToggleMovement {
+                movements,
+                current_idx,
+            } => {
+                let new_index = (current_idx + 1) % movements.len();
+                let new_movement = &movements[new_index];
+                ship_mut.movement_definition = new_movement.clone();
+                for ab in ship_mut.abilities.iter_mut() {
+                    match ab {
+                        Ability::ToggleMovement { current_idx, .. } => {
+                            *current_idx = new_index;
+                        }
+                        _ => {}
+                    }
+                }
+                true
+            }
+            _ => {
+                warn!(format!("Cannot apply ability {self:?}"));
+                false
+            }
+        };
+    }
+
     pub fn set_max_cooldown(&mut self) {
         self.set_current_cooldown(self.get_cooldown_ticks());
     }
@@ -34,6 +66,7 @@ impl Ability {
             Ability::Shoot { .. } => SHOOT_COOLDOWN_TICKS,
             Ability::BlowUpOnLand => 0,
             Ability::ShootAll => 0,
+            Ability::ToggleMovement { .. } => 0,
         }
     }
 
@@ -43,6 +76,7 @@ impl Ability {
             Ability::Shoot { .. } => SHOOT_DEFAULT_DISTANCE,
             Ability::BlowUpOnLand => 0.0,
             Ability::ShootAll => 0.0,
+            Ability::ToggleMovement { .. } => 0.0,
         }
     }
 
@@ -55,6 +89,7 @@ impl Ability {
             } => *cooldown_ticks_remaining,
             Ability::BlowUpOnLand => 0,
             Ability::ShootAll => 0,
+            Ability::ToggleMovement { .. } => 0,
         };
     }
 
@@ -69,6 +104,7 @@ impl Ability {
             }
             Ability::BlowUpOnLand => {}
             Ability::ShootAll => {}
+            Ability::ToggleMovement { .. } => {}
         };
     }
 
@@ -90,6 +126,7 @@ impl Ability {
             }
             Ability::BlowUpOnLand => {}
             Ability::ShootAll => {}
+            Ability::ToggleMovement { .. } => {}
         };
     }
 }
@@ -100,4 +137,23 @@ pub fn update_ships_ability_cooldowns(ships: &mut Vec<Ship>, ticks_passed: i64) 
             ability.decrease_cooldown(ticks_passed);
         }
     }
+}
+
+pub fn try_invoke(
+    state: &mut GameState,
+    ship_idx: ShipIdx,
+    ability_idx: usize,
+    ability_params: Value,
+) -> bool {
+    if state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx]
+        .abilities
+        .get(ability_idx)
+        .is_none()
+    {
+        return false;
+    }
+    let ability_read = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].abilities
+        [ability_idx]
+        .clone();
+    return ability_read.try_apply(state, ship_idx, ability_params);
 }
