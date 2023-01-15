@@ -2,12 +2,19 @@ import React from 'react';
 import './CameraCoordinatesBox.scss';
 import { useNSForceChange } from '../NetStateHooks';
 import Vector from '../utils/Vector';
+import { getSrnState } from '../store';
 
 export const CameraCoordinatesBox: React.FC = () => {
   const ns = useNSForceChange('CameraCoordinatesBox', false);
   if (!ns) {
     return null;
   }
+
+  const showingGrid = getSrnState().hotkeysPressed['show grid'];
+  if (!showingGrid) {
+    return null;
+  }
+
   const myShip = ns.indexes.myShip;
   let line = '';
   if (myShip) {

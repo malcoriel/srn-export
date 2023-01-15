@@ -19,7 +19,13 @@ import './HtmlLayers/Panel.scss';
 import { MinimapPanel } from './KonvaLayers/MinimapPanel';
 import 'react-jinke-music-player/assets/index.css';
 import { MusicControls } from './MusicControls';
-import { MainUiState, SrnState, useStore, WindowState } from './store';
+import {
+  MainUiState,
+  resetStore,
+  SrnState,
+  useStore,
+  WindowState,
+} from './store';
 import { ControlPanel } from './HtmlLayers/ControlPanel';
 import { QuestWindow } from './HtmlLayers/QuestWindow';
 import { WindowContainers } from './HtmlLayers/WindowContainers';
@@ -29,10 +35,7 @@ import { ChatState } from './ChatState';
 import { ChatWindow } from './HtmlLayers/ChatWindow';
 import { InventoryWindow } from './HtmlLayers/InventoryWindow';
 import { DialogueWindow } from './HtmlLayers/DialogueWindow';
-import {
-  ensureDialogueTableLoaded,
-  GameMode,
-} from './world';
+import { ensureDialogueTableLoaded, GameMode } from './world';
 import { SandboxQuickMenu } from './HtmlLayers/SandboxQuickMenu';
 import { TradeWindow } from './HtmlLayers/TradeWindow';
 import { PromptWindow } from './HtmlLayers/PromptWindow';
@@ -273,6 +276,7 @@ const Srn = () => {
     const ns = NetState.get();
     if (!ns) return;
     ns.disconnectAndDestroy();
+    resetStore(); // resets absolutely everything in the UI global state
     setMainUiState(MainUiState.Idle);
   };
 
