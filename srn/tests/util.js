@@ -222,10 +222,18 @@ export const exposePerfStats = () => {
 
 export const mockShip = (id) => ({
   id,
-  x: 0,
-  y: 0,
-  rotation: Math.PI,
-  radius: 1,
+  spatial: {
+    position: {
+      x: 0,
+      y: 0,
+    },
+    velocity: {
+      x: 0,
+      y: 0,
+    },
+    rotation_rad: Math.PI,
+    radius: 1,
+  },
   acc_periodic_dmg: 0,
   acc_periodic_heal: 0,
   color: 'red',
@@ -369,8 +377,8 @@ export const createStateWithAShip = (mode = 'CargoRush') => {
   const loc = getLoc0(state);
   loc.ships.push(ship);
   // to not blow up due to being in the star
-  ship.x = 100;
-  ship.y = 100;
+  ship.spatial.position.x = 100;
+  ship.spatial.position.y = 100;
   return {
     state,
     player,

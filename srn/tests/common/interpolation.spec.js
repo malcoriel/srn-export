@@ -22,6 +22,10 @@ export const mockPlanet = (starId) => ({
     },
     rotation_rad: 0,
     radius: 1.0,
+    velocity: {
+      x: 0,
+      y: 0,
+    },
   },
   movement: {
     tag: 'RadialMonotonous',
@@ -77,10 +81,18 @@ describe('state interpolation', () => {
     const playerId = roomA.state.players[0].id;
     const shipA = getShipByPlayerId(roomA.state, playerId);
     const shipB = getShipByPlayerId(roomB.state, playerId);
-    shipB.x += 10;
-    shipB.y += 10;
-    const targetShipX_05 = lerp(shipA.x, shipB.x, 0.5);
-    const targetShipY_05 = lerp(shipA.y, shipB.y, 0.5);
+    shipB.spatial.position.x += 10;
+    shipB.spatial.position.y += 10;
+    const targetShipX_05 = lerp(
+      shipA.spatial.position.x,
+      shipB.spatial.position.x,
+      0.5
+    );
+    const targetShipY_05 = lerp(
+      shipA.spatial.position.y,
+      shipB.spatial.position.y,
+      0.5
+    );
     const stateC = wasm.interpolateStates(
       roomA.state,
       roomB.state,
@@ -88,8 +100,8 @@ describe('state interpolation', () => {
       mockUpdateOptions()
     );
     const shipC = getShipByPlayerId(stateC, playerId);
-    expect(shipC.x).toBeCloseTo(targetShipX_05);
-    expect(shipC.y).toBeCloseTo(targetShipY_05);
+    expect(shipC.spatial.position.x).toBeCloseTo(targetShipX_05);
+    expect(shipC.spatial.position.y).toBeCloseTo(targetShipY_05);
 
     const stateD = wasm.interpolateStates(
       roomA.state,
@@ -97,11 +109,19 @@ describe('state interpolation', () => {
       0.7,
       mockUpdateOptions()
     );
-    const targetShipX_07 = lerp(shipA.x, shipB.x, 0.7);
-    const targetShipY_07 = lerp(shipA.y, shipB.y, 0.7);
+    const targetShipX_07 = lerp(
+      shipA.spatial.position.x,
+      shipB.spatial.position.x,
+      0.7
+    );
+    const targetShipY_07 = lerp(
+      shipA.spatial.position.y,
+      shipB.spatial.position.y,
+      0.7
+    );
     const shipD = getShipByPlayerId(stateD, playerId);
-    expect(shipD.x).toBeCloseTo(targetShipX_07);
-    expect(shipD.y).toBeCloseTo(targetShipY_07);
+    expect(shipD.spatial.position.x).toBeCloseTo(targetShipX_07);
+    expect(shipD.spatial.position.y).toBeCloseTo(targetShipY_07);
   });
 
   it('can interpolate planet orbit movement', () => {
@@ -305,9 +325,12 @@ describe('state interpolation', () => {
     const ratio = 0.2;
     const arrival_diff = (end - start) * ratio;
     const distance_diff = arrival_diff * speed;
-    ship.x = 100;
-    ship.y = 100;
-    const newPos = { x: ship.x, y: ship.y };
+    ship.spatial.position.x = 100;
+    ship.spatial.position.y = 100;
+    const newPos = {
+      x: ship.spatial.position.x,
+      y: ship.spatial.position.y,
+    };
     newPos.x += distance_diff;
     ship.navigate_target = newPos;
     const stateB = _.cloneDeep(state);
@@ -320,7 +343,7 @@ describe('state interpolation', () => {
       ratio,
       mockUpdateOptions()
     );
-    const newShipPosX = stateC.locations[0].ships[0].x;
+    const newShipPosX = stateC.locations[0].ships[0].spatial.position.x;
     expect(newShipPosX).toBeCloseTo(newPos.x);
   });
 
