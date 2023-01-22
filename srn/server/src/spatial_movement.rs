@@ -35,10 +35,7 @@ pub fn update_ship_manual_movement(
                 .as_ref()
                 .map_or(0.0, |m| if m.forward { 1.0 } else { -1.0 });
             // even if sign is zero (no gas), the drag still has to apply
-            let new_speed = project_ship_linear_speed_by_acceleration(elapsed_micro, ship, sign);
-            ship.movement_definition.set_linear_speed(new_speed);
-            let new_pos = project_ship_movement_by_speed(elapsed_micro, ship, 1.0);
-            ship.set_from(&new_pos);
+            update_accelerated_ship_movement(elapsed_micro, ship, sign);
         }
         Movement::RadialMonotonous { .. } => {}
         Movement::AnchoredStatic { .. } => {}
@@ -72,7 +69,7 @@ pub fn update_spatial_of_object(
         spatial.velocity = Vec2f64::zero();
         return;
     }
-    project_spatial_position_by_velocity(elapsed_micro, spatial);
+    update_spatial_position_by_velocity(elapsed_micro, spatial);
 }
 
 fn maybe_drop_outdated_movement_marker(
@@ -122,28 +119,43 @@ fn project_ship_movement_by_speed(elapsed_micro: i64, ship: &Ship, sign: f64) ->
     new_pos
 }
 
-fn project_spatial_position_by_velocity(elapsed_micro: i64, spatial: &mut SpatialProps) {
-    let distance = spatial.velocity.euclidean_len() * elapsed_micro as f64;
-    let shift = Vec2f64 { x: 0.0, y: 1.0 }
-        .rotate(spatial.rotation_rad)
-        .scalar_mul(distance);
+// somewhat an artificial drag to prevent infinite movement. It is a = m/s^2
+pub const DRAG_PER_TICK_PER_TICK: f64 = 1.0 / 1e6 / 1e6;
+
+fn update_spatial_position_by_velocity(elapsed_micro: i64, spatial: &mut SpatialProps) {
+    let drag = &spatial
+        .velocity
+        .normalize()
+        .unwrap_or(Vec2f64::zero())
+        .scalar_mul(DRAG_PER_TICK_PER_TICK * elapsed_micro as f64);
+    spatial.velocity = spatial.velocity.subtract(&drag);
+    let shift = &spatial.velocity.scalar_mul(elapsed_micro as f64);
     spatial.position = spatial.position.add(&shift);
+    if spatial.velocity.abs() <= MIN_OBJECT_SPEED_PER_TICK {
+        spatial.velocity = Vec2f64::zero();
+    }
 }
 
-fn project_ship_linear_speed_by_acceleration(elapsed_micro: i64, ship: &Ship, sign: f64) -> f64 {
-    let current_speed = ship.movement_definition.get_current_linear_speed_per_tick();
-    let apply_drag = if sign == 0.0 { 1.0 } else { 0.0 };
-    let change =
-        ship.movement_definition.get_current_linear_acceleration() * elapsed_micro as f64 * sign
-            - ship.movement_definition.get_linear_drag()
-                * apply_drag
-                * elapsed_micro as f64
-                * (current_speed.signum());
-    // eprintln!(
-    //     "current {current_speed} change {change} elapsed {elapsed_micro} acc {}",
-    //     ship.movement_definition.get_current_linear_acceleration()
-    // );
-    current_speed + change
+fn update_accelerated_ship_movement(elapsed_micro: i64, ship: &mut Ship, gas_sign: f64) {
+    if gas_sign != 0.0 {
+        let drag = ship
+            .spatial
+            .velocity
+            .normalize()
+            .unwrap_or(Vec2f64::zero())
+            .scalar_mul(DRAG_PER_TICK_PER_TICK * elapsed_micro as f64);
+        // negate drag if ship is actively moving to prevent wrong expectations
+        ship.spatial.velocity.add(&drag);
+    }
+    let thrust_dir = Vec2f64 { x: 0.0, y: 1.0 }.rotate(ship.spatial.rotation_rad);
+
+    let acceleration = thrust_dir.scalar_mul(
+        ship.movement_definition.get_current_linear_acceleration()
+            * elapsed_micro as f64
+            * gas_sign,
+    );
+    ship.spatial.velocity = ship.spatial.velocity.add(&acceleration);
+    update_spatial_position_by_velocity(elapsed_micro, &mut ship.spatial);
 }
 
 pub const SHIP_TURN_SPEED_DEG: f64 = 90.0;
@@ -155,9 +167,11 @@ pub fn update_objects_spatial_movement(
     current_tick: u32,
     client: bool,
 ) {
+    // ships follow fairly special rules, although similar to normal object
     for ship in location.ships.iter_mut() {
         update_ship_manual_movement(elapsed_micro, current_tick, ship, client, false);
     }
+    // every other object that cannot change its speed itself, will drift
     for wreck in location.wrecks.iter_mut() {
         update_spatial_of_object(elapsed_micro, &mut wreck.spatial)
     }

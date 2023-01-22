@@ -227,15 +227,15 @@ const FastEntitiesLayer = React.memo(
       <Layer>
         {state.locations[0].ships.map((s) => {
           if (s.docked_at) return null;
-          const pos = realPosToScreenPos(s);
+          const pos = realPosToScreenPos(s.spatial.position);
           const isMy = myShip && s.id === myShip.id;
           return (
             <Star
               key={s.id}
               x={pos.x}
               y={pos.y}
-              innerRadius={realLenToScreenLen(s.radius * 4)}
-              outerRadius={realLenToScreenLen(s.radius + 15)}
+              innerRadius={realLenToScreenLen(s.spatial.radius * 4)}
+              outerRadius={realLenToScreenLen(s.spatial.radius + 15)}
               fill={isMy ? crimson : mint}
               stroke="black"
               strokeWidth={0.5}

@@ -71,12 +71,12 @@ export const ThreeShipsLayer: React.FC<{
         return (
           <ThreeShip
             gid={ship.id}
-            radius={ship.radius * (opacity / 2 + 0.5)}
+            radius={ship.spatial.radius * (opacity / 2 + 0.5)}
             visible={visMap[ship.id]}
             tractorTargetPosition={tractorTargetPosition}
             key={ship.id + i}
-            position={Vector.fromIVector(ship)}
-            rotation={ship.rotation}
+            position={Vector.fromIVector(ship.spatial.position)}
+            rotation={ship.spatial.rotation_rad}
             color={ship.color}
             opacity={opacity}
             interactor={

@@ -777,8 +777,6 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.ships.*.id',
       'locations.*.ships.*.docked_at',
       'locations.*.ships.*.dock_target',
-      'locations.*.ships.*.rotation',
-      'locations.*.ships.*.radius',
       'locations.*.ships.*.color',
       'locations.*.ships.*.acc_periodic_dmg',
       'locations.*.ships.*.acc_periodic_heal',
@@ -823,16 +821,14 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.containers.*.radius',
 
       'locations.*.wrecks',
+
+      'locations.*.ships.*.spatial.velocity',
+      'locations.*.ships.*.spatial.radius',
+      'locations.*.ships.*.spatial.rotation_rad',
     ]),
     // if server id has changed, invalidate the whole tree under the key. it's somewhat an optimization of the merge strategy
     // good for rarely-changed objects that have ids, e.g. stars, but which have to be overwritten by server data occasionally
-    serverIfId: new Set([
-      'locations.*.star',
-      '123123123',
-      '123123123',
-      '123123123',
-      '123123123',
-    ]),
+    serverIfId: new Set(['locations.*.star']),
     // significant compensation effort, produces server shadows => needed for movement
     // overwrite will do nothing with those fields
     merge: new Set([
@@ -842,9 +838,11 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.minerals',
       'locations.*.containers',
       'locations.*.ships',
+      'locations.*.ships.*.spatial',
+      'locations.*.ships.*.spatial.position',
+      'locations.*.ships.*.spatial.position.x',
+      'locations.*.ships.*.spatial.position.y',
       'locations.*.wrecks',
-      'locations.*.ships.*.x',
-      'locations.*.ships.*.y',
     ]),
   };
 
@@ -1031,8 +1029,8 @@ export class StateSyncer implements IStateSyncer {
           (currentShip as any)[key] = value;
           if (trueShip.docked_at !== currentShip.docked_at) {
             currentShip.docked_at = trueShip.docked_at;
-            currentShip.x = trueShip.x;
-            currentShip.y = trueShip.y;
+            currentShip.spatial.position.x = trueShip.spatial.position.x;
+            currentShip.spatial.position.y = trueShip.spatial.position.y;
           }
         }
       } else {

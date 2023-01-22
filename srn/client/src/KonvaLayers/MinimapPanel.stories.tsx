@@ -19,6 +19,7 @@ const Template: Story = (args) => {
     ns.state.locations[0].star = args.star;
     ns.state.locations[0].planets = args.planets;
     setRevision((old) => old + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
     <div

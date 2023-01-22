@@ -32,7 +32,7 @@ const extractEffectsPositions = (
   const res: VisLocalEffect[] = [];
 
   for (const ship of state.locations[0].ships) {
-    const namePos = shiftPos(ship);
+    const namePos = shiftPos(ship.spatial.position);
 
     res.push(
       ...(ship.local_effects
@@ -102,12 +102,17 @@ export const KonvaOverlay: React.FC = React.memo(() => {
     realLenToScreenLen
   );
 
+  if (myShip) {
+    if (!myShip.spatial.position.x) {
+      console.warn('weird spatial for my ship:', myShip.spatial);
+    }
+  }
   const tractorDistanceCircle = myShip && (
     <Circle
       radius={realLenToScreenLen(TRACTOR_DIST)}
       stroke={teal}
       strokeWidth={1}
-      position={realPosToScreenPos(myShip)}
+      position={realPosToScreenPos(myShip.spatial.position)}
       dash={[5, 10]}
     />
   );

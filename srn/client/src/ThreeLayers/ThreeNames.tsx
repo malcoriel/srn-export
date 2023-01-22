@@ -53,8 +53,8 @@ const getNamesWithPos = (
     res.push({
       id: ship.id,
       name,
-      pos: Vector.fromIVector(ship),
-      radius: ship.radius,
+      pos: Vector.fromIVector(ship.spatial.position),
+      radius: ship.spatial.radius,
     });
   }
   return res;

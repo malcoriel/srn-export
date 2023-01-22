@@ -143,12 +143,16 @@ impl Vec2f64 {
         }
     }
 
-    pub fn normalize(&self) -> Vec2f64 {
+    pub fn normalize(&self) -> Option<Vec2f64> {
         let len = self.euclidean_len();
-        Vec2f64 {
-            x: self.x / len,
-            y: self.y / len,
-        }
+        return if len != 0.0 {
+            Some(Vec2f64 {
+                x: self.x / len,
+                y: self.y / len,
+            })
+        } else {
+            None
+        };
     }
 
     pub fn euclidean_distance(&self, other: &Vec2f64) -> f64 {

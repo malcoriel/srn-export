@@ -132,7 +132,7 @@ const manualCyclicalMovementStory = (
         if (!myShip) {
           throw new Error('Ship disappeared');
         }
-        const myShipPos = Vector.fromIVector(myShip);
+        const myShipPos = Vector.fromIVector(myShip.spatial.position);
         if (
           Vector.fromIVector(currentTarget).euDistTo(
             Vector.fromIVector(myShipPos)

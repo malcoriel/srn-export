@@ -2135,11 +2135,13 @@ pub fn undock_ship(
 }
 
 pub fn move_ship_towards(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
-    let dir = target.subtract(&ship_pos).normalize();
-
-    let shift = dir.scalar_mul(max_shift);
-    let new_pos = ship_pos.add(&shift);
-    new_pos
+    return if let Some(dir) = target.subtract(&ship_pos).normalize() {
+        let shift = dir.scalar_mul(max_shift);
+        let new_pos = ship_pos.add(&shift);
+        new_pos
+    } else {
+        ship_pos.clone()
+    };
 }
 
 #[derive(Clone)]

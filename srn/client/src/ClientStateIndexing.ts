@@ -178,7 +178,7 @@ export const buildClientStateIndexes = (state: GameState) => {
         indexes.myShipPosition = Vector.fromIVector(myShipPosition);
       }
     } else {
-      indexes.myShipPosition = Vector.fromIVector(myShip);
+      indexes.myShipPosition = Vector.fromIVector(myShip.spatial.position);
     }
   }
   for (const player of state.players) {

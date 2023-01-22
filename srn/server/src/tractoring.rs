@@ -67,16 +67,18 @@ pub fn update_tractored_objects(
             for ship in ships {
                 let dist = ship.spatial.position.subtract(&old_pos);
                 let dir = dist.normalize();
-                if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
-                    if let Some(p) = players_by_ship_id.get(&ship.id) {
-                        players_update.push((p.id, object.clone()))
-                    }
-                    is_consumed = true;
-                } else {
-                    let scaled =
-                        dir.scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
+                if let Some(dir) = dir {
+                    if dist.euclidean_len() < TRACTOR_PICKUP_DIST {
+                        if let Some(p) = players_by_ship_id.get(&ship.id) {
+                            players_update.push((p.id, object.clone()))
+                        }
+                        is_consumed = true;
+                    } else {
+                        let scaled = dir
+                            .scalar_mul(TRACTOR_SPEED_PER_SEC * elapsed as f64 / 1000.0 / 1000.0);
 
-                    object.set_position(old_pos.add(&scaled));
+                        object.set_position(old_pos.add(&scaled));
+                    }
                 }
             }
             if is_consumed {

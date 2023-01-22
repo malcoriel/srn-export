@@ -237,7 +237,11 @@ export default class NetState extends EventEmitter {
     const AABB = this.getSimulationArea();
     this.visMap = {};
     for (const ship of this.state.locations[0].ships) {
-      this.visMap[ship.id] = isInAABB(AABB, ship, ship.radius);
+      this.visMap[ship.id] = isInAABB(
+        AABB,
+        ship.spatial.position,
+        ship.spatial.radius
+      );
     }
     for (const planet of this.state.locations[0].planets) {
       this.visMap[planet.id] = isInAABB(
@@ -601,7 +605,7 @@ export default class NetState extends EventEmitter {
     const myShip = findMyShip(this.state);
     if (myShip) {
       this.visualState.breadcrumbs.push({
-        position: Vector.fromIVector(myShip),
+        position: Vector.fromIVector(myShip.spatial.position),
         color: myShip.navigate_target ? 'green' : 'pink',
         timestamp_ticks: this.state.ticks,
         tag: 'spaceTime',
