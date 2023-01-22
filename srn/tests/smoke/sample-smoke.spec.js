@@ -3,27 +3,11 @@ import { getLoc0, swapGlobals, updateWorld, wasm, writeTmpJson } from '../util';
 describe('sample smoke test', () => {
   beforeAll(swapGlobals);
 
-  xit('can get hrtime', async () => {
-    const native = () => {
-      const [secs, picos] = process.hrtime();
-      return secs * 1000 * 1000 + picos / 1000;
-    };
-    console.log('native', native());
-    console.log('native', native());
-    console.log('native', native());
-    console.log('wasm', wasm.getNanosNode());
-    console.log('wasm', wasm.getNanosNode());
-    console.log('wasm', wasm.getNanosNode());
-    console.log('web', wasm.getNanosWeb());
-    console.log('web', wasm.getNanosWeb());
-    console.log('web', wasm.getNanosWeb());
-    console.log('web', wasm.getNanosWeb());
-    console.log('web', wasm.getNanosWeb());
-    console.log('web', wasm.getNanosWeb());
-  });
-
   it('can seed and update world', async () => {
-    let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
+    let world = wasm.seedWorld({
+      mode: 'PirateDefence',
+      seed: '123',
+    });
     expect(world.mode).toEqual('PirateDefence');
     expect(world.seed).toEqual('123');
     world = updateWorld(world, 100);
@@ -31,7 +15,10 @@ describe('sample smoke test', () => {
   });
 
   it('can rotate planet', async () => {
-    let world = wasm.seedWorld({ mode: 'PirateDefence', seed: '123' });
+    let world = wasm.seedWorld({
+      mode: 'PirateDefence',
+      seed: '123',
+    });
     expect(world.mode).toEqual('PirateDefence');
     expect(world.seed).toEqual('123');
     const oldX = world.locations[0].planets[0].spatial.position.x;
@@ -39,10 +26,5 @@ describe('sample smoke test', () => {
     expect(world.locations[0].planets[0].spatial.position.x).not.toBeCloseTo(
       oldX
     );
-  });
-
-  xit('can generate and save temp state', async () => {
-    const world = wasm.seedWorld({ mode: 'CargoRush', seed: '123' });
-    await writeTmpJson('test-state', world);
   });
 });
