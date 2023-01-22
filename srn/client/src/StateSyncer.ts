@@ -98,6 +98,8 @@ export interface IStateSyncer {
   flushLog(): any[];
 
   handleServerConfirmedPacket(tag: string): void;
+
+  validateArrayUniqueness(arr: { id: any }[], arrayKey: string): void;
 }
 
 export interface SyncerDeps {
@@ -753,6 +755,7 @@ export class StateSyncer implements IStateSyncer {
       'mode',
       'tag',
       'seed',
+      'next_seed',
       'my_id',
       'start_time_ticks',
       'players',
@@ -832,6 +835,7 @@ export class StateSyncer implements IStateSyncer {
     serverIfId: new Set(['locations.*.star']),
     // significant compensation effort, produces server shadows => needed for movement
     // overwrite will do nothing with those fields
+    // OR -> reconciliate further, since subkeys can still be merged
     merge: new Set([
       'locations',
       'locations.*.planets',
@@ -933,6 +937,9 @@ export class StateSyncer implements IStateSyncer {
             continue;
           }
           if (_.isArray(trueValue)) {
+            if (key.indexOf('wrecks') > -1) {
+              console.log('merging wrecks');
+            }
             if (!trueValue.every((obj) => obj.id)) {
               // potentially, I could validate for unique ids here, or provide surrogate index ids like react
               this.log.push(
@@ -1131,6 +1138,19 @@ export class StateSyncer implements IStateSyncer {
           )} but should appear only once`
         );
       }
+    }
+  }
+
+  public validateArrayUniqueness(arr: { id: any }[], arrayKey: string) {
+    const mapped = new Map();
+    for (const elem of arr) {
+      const strId = elem.id.toString();
+      if (mapped.has(strId)) {
+        console.warn(`Duplicate id ${strId} for ${arrayKey}`);
+        console.warn('obj1', elem);
+        console.warn('obj2', mapped.get(strId));
+      }
+      mapped.set(strId, elem);
     }
   }
 }

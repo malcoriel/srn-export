@@ -434,11 +434,11 @@ pub fn update_world_incremental(args: JsValue, elapsed_micro: i32) -> Result<JsV
     Ok(custom_serialize(&new_state)?)
 }
 
-fn execute_update_world(elapsed_micro: i32, args: UpdateWorldArgs) -> GameState {
+fn execute_update_world(elapsed_micro: i32, mut args: UpdateWorldArgs) -> GameState {
     let mut indexes = world::SpatialIndexes {
         values: HashMap::new(),
     };
-    let prng_seed = args.state.seed.clone();
+    let mut prng = get_continuous_state_prng(&mut args.state);
     let (new_state, sampler) = world::update_world(
         args.state,
         elapsed_micro as i64,
@@ -450,7 +450,7 @@ fn execute_update_world(elapsed_micro: i32, args: UpdateWorldArgs) -> GameState 
             force_non_determinism: args.force_non_determinism,
         },
         &mut indexes,
-        &mut seed_prng(prng_seed),
+        &mut prng,
         &get_current_d_table(),
         &mut game_state_caches.write().unwrap(),
     );
@@ -574,7 +574,7 @@ pub fn update_room(
 ) -> Result<JsValue, JsValue> {
     let mut room: Room = serde_wasm_bindgen::from_value(room)?;
     let d_table: DialogueTable = serde_wasm_bindgen::from_value(d_table)?;
-    let mut prng = get_continuous_room_seed(&mut room);
+    let mut prng = get_continuous_room_prng(&mut room);
     let (_indexes, _sampler) = world::update_room(
         &mut prng,
         get_sampler_clone(),
@@ -586,7 +586,7 @@ pub fn update_room(
     Ok(custom_serialize(&room)?)
 }
 
-fn get_continuous_room_seed(room: &mut Room) -> Mcg128Xsl64 {
+fn get_continuous_room_prng(room: &mut Room) -> Mcg128Xsl64 {
     let mut prng = if let Some(next_seed) = room.next_seed.as_ref() {
         Pcg64Mcg::seed_from_u64((*next_seed as u64))
     } else {
@@ -594,6 +594,17 @@ fn get_continuous_room_seed(room: &mut Room) -> Mcg128Xsl64 {
         seed_prng(seed)
     };
     room.next_seed = Some(prng.next_u32());
+    prng
+}
+
+fn get_continuous_state_prng(state: &mut GameState) -> Mcg128Xsl64 {
+    let mut prng = if let Some(next_seed) = state.next_seed.as_ref() {
+        Pcg64Mcg::seed_from_u64((*next_seed as u64))
+    } else {
+        let seed = state.seed.clone();
+        seed_prng(seed)
+    };
+    state.next_seed = Some(prng.next_u32());
     prng
 }
 
@@ -605,7 +616,7 @@ pub fn update_room_full(
 ) -> Result<JsValue, JsValue> {
     let mut room: Room = serde_wasm_bindgen::from_value(room)?;
     let mut sampler = get_sampler_clone();
-    let mut prng = get_continuous_room_seed(&mut room);
+    let mut prng = get_continuous_room_prng(&mut room);
     let mut remaining = total_ticks;
     while remaining > 0 {
         remaining -= step_ticks;

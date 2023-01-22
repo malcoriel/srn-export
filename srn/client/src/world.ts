@@ -442,6 +442,7 @@ export const DEFAULT_STATE = {
   },
   mode: GameMode.Unknown,
   seed: '',
+  next_seed: null,
   tag: '',
   version: 0,
   locations: [

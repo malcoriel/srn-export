@@ -548,6 +548,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
         mode: GameMode::Tutorial,
         tag: None,
         seed: seed.clone(),
+        next_seed: None,
         my_id: Default::default(),
         start_time_ticks: now,
         locations: vec![location],
@@ -583,6 +584,7 @@ pub fn make_sandbox_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> Ga
         mode: GameMode::Sandbox,
         tag: None,
         seed: seed.clone(),
+        next_seed: None,
         my_id: Default::default(),
         start_time_ticks: now,
         locations: vec![Location::new_empty(prng_id(prng))],
@@ -667,6 +669,7 @@ fn gen_state(
         gen_opts: opts,
         dialogue_states: Default::default(),
         breadcrumbs: vec![],
+        next_seed: None,
     };
 
     let anchor_distances = index_state(&state).anchor_distances.clone();

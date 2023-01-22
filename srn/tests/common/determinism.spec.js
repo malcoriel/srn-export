@@ -1,6 +1,5 @@
 import {
   genStateOpts,
-  packAndWriteReplay,
   swapGlobals,
   updateRoom,
   updateWorld,
@@ -80,7 +79,9 @@ describe('update determinism', () => {
             seed: 'world update',
           });
           const stateA = updateWorld(state, 10000);
-          const stateB = updateWorld(updateWorld(state, 5000), 5000);
+          const step = updateWorld(state, 5000);
+          step.next_seed = null; // strictly speaking, it's a violation of determinism, but it's also necessary to prevent duplicate ids
+          const stateB = updateWorld(step, 5000);
           expect(cementStateFields(stateA)).toEqual(cementStateFields(stateB));
         });
       });

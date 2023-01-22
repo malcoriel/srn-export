@@ -252,6 +252,7 @@ export const mockShip = (id) => ({
     max: 10,
   },
   local_effects: [],
+  local_effects_counter: 0,
   long_actions: [],
   turrets: [],
   properties: [],

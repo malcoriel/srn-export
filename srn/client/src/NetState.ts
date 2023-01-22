@@ -390,6 +390,10 @@ export default class NetState extends EventEmitter {
       default:
         throw new UnreachableCaseError(syncerResult);
     }
+    // this.syncer.validateArrayUniqueness(
+    //   this.state.locations[0].wrecks,
+    //   `wrecks after ${syncerEvent.tag}`
+    // );
   }
 
   private timeSingMidnight(): { seconds: number; millis: number } {
