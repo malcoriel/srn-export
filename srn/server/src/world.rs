@@ -1692,6 +1692,16 @@ impl Movement {
             .rotate(rotation_rad)
             .scalar_mul(self.get_current_linear_speed_per_tick())
     }
+
+    pub fn get_max_speed(&self) -> f64 {
+        match self {
+            Movement::ShipAccelerated {
+                max_linear_speed, ..
+            } => *max_linear_speed,
+            _ => 0.0,
+        }
+    }
+
     pub fn get_current_linear_acceleration(&self) -> f64 {
         match self {
             Movement::None => 0.0,

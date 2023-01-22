@@ -131,7 +131,7 @@ fn update_spatial_position_by_velocity(elapsed_micro: i64, spatial: &mut Spatial
     spatial.velocity = spatial.velocity.subtract(&drag);
     let shift = &spatial.velocity.scalar_mul(elapsed_micro as f64);
     spatial.position = spatial.position.add(&shift);
-    if spatial.velocity.abs() <= MIN_OBJECT_SPEED_PER_TICK {
+    if spatial.velocity.euclidean_len() <= MIN_OBJECT_SPEED_PER_TICK {
         spatial.velocity = Vec2f64::zero();
     }
 }
@@ -155,6 +155,15 @@ fn update_accelerated_ship_movement(elapsed_micro: i64, ship: &mut Ship, gas_sig
             * gas_sign,
     );
     ship.spatial.velocity = ship.spatial.velocity.add(&acceleration);
+    let max_speed = ship.movement_definition.get_max_speed();
+    if ship.spatial.velocity.euclidean_len() > max_speed {
+        ship.spatial.velocity = ship
+            .spatial
+            .velocity
+            .normalize()
+            .unwrap_or(Vec2f64::zero())
+            .scalar_mul(max_speed);
+    }
     update_spatial_position_by_velocity(elapsed_micro, &mut ship.spatial);
 }
 
