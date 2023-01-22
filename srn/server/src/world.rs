@@ -1102,7 +1102,7 @@ pub fn update_location(
     }
     sampler.end(update_containers_id);
 
-    if !client && !update_options.disable_hp_effects && !state.disable_hp_effects {
+    if !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
         update_hp_effects(state, location_idx, elapsed, state.millis, prng);
         sampler.end(hp_effects_id);
