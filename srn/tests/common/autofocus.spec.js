@@ -11,7 +11,10 @@ describe('autofocus behavior', () => {
   beforeAll(swapGlobals);
   it('in pirate defence, bot ships are not in hostile autofocus of each other', async () => {
     const room = updateRoom(
-      wasm.createRoom({ mode: 'PirateDefence', seed: 'autofocus' }),
+      wasm.createRoom({
+        mode: 'PirateDefence',
+        seed: 'autofocus',
+      }),
       100
     );
     const { state } = room;
@@ -24,7 +27,10 @@ describe('autofocus behavior', () => {
 
   it('in pirate defence, pirate npc ships are in hostile autofocus of bot ships', async () => {
     const room = updateRoom(
-      wasm.createRoom({ mode: 'PirateDefence', seed: 'autofocus' }),
+      wasm.createRoom({
+        mode: 'PirateDefence',
+        seed: 'autofocus',
+      }),
       100
     );
 
@@ -47,8 +53,8 @@ describe('autofocus behavior', () => {
     const planet = getLoc0(room.state).planets[0];
     // this relies on the indexing to be keeping the reference to the original ship (and not copies)
     // so modifying indexed results actually modifies the ship
-    botShipBeforeUpdate.x = planet.spatial.position.x; // teleport ship to planet
-    botShipBeforeUpdate.y = planet.spatial.position.y;
+    botShipBeforeUpdate.spatial.position.x = planet.spatial.position.x; // teleport ship to planet
+    botShipBeforeUpdate.spatial.position.y = planet.spatial.position.y;
     room = updateRoom(room, 100);
     const botShipAfterUpdate = getShipByPlayerId(room.state, firstBotId);
     expect(botShipAfterUpdate.auto_focus?.id).toEqual(planet.id);
