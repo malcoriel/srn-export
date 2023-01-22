@@ -170,7 +170,7 @@ describe('player actions logic', () => {
       room.state.player_actions.push(
         mockPlayerActionTransSystemJump(loc.id, player.id, shipId)
       );
-      room = updateRoom(room, 10000, 1000n * 1000n);
+      room = updateRoom(room, 10000, 1000 * 1000);
       const shipInLoc1 = room.state.locations[1].ships.find(
         (s) => s.id === shipId
       );
@@ -186,45 +186,45 @@ describe('player actions logic', () => {
     it('can gas & stop & reverse', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
-      ship.x = 100.0;
-      ship.y = 100.0;
+      ship.spatial.position.x = 100.0;
+      ship.spatial.position.y = 100.0;
       state.player_actions.push(mockPlayerActionMove('Gas', ship.id));
       // movement inactivity is 500ms, so update has to be less than that
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.y).toBeGreaterThan(100.0);
-      ship.y = 100.0;
+      expect(ship.spatial.position.y).toBeGreaterThan(100.0);
+      ship.spatial.position.y = 100.0;
       state.player_actions.push(mockPlayerActionMove('StopGas', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.y).toBeCloseTo(100.0);
-      ship.y = 100.0;
+      expect(ship.spatial.position.y).toBeCloseTo(100.0);
+      ship.spatial.position.y = 100.0;
       state.player_actions.push(mockPlayerActionMove('Reverse', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.y).toBeLessThan(100.0);
+      expect(ship.spatial.position.y).toBeLessThan(100.0);
     });
 
     it('can turn & stop', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
-      ship.x = 100.0;
-      ship.y = 100.0;
-      ship.rotation = Math.PI;
+      ship.spatial.position.x = 100.0;
+      ship.spatial.position.y = 100.0;
+      ship.spatial.rotation_rad = Math.PI;
       state.player_actions.push(mockPlayerActionMove('TurnRight', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.rotation).toBeLessThan(Math.PI);
-      const result_rotation = ship.rotation;
+      expect(ship.spatial.rotation_rad).toBeLessThan(Math.PI);
+      const result_rotation = ship.spatial.rotation_rad;
       state.player_actions.push(mockPlayerActionMove('StopTurn', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.rotation).toBeCloseTo(result_rotation);
-      ship.rotation = Math.PI;
+      expect(ship.spatial.rotation_rad).toBeCloseTo(result_rotation);
+      ship.spatial.rotation_rad = Math.PI;
       state.player_actions.push(mockPlayerActionMove('TurnLeft', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.rotation).toBeGreaterThan(Math.PI);
+      expect(ship.spatial.rotation_rad).toBeGreaterThan(Math.PI);
     });
 
     // TODO this is a very dumb version of lag compensation mechanism, that also will not consider
