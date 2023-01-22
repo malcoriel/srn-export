@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 0.9.15 (2023-01-22)
+
+### New
+
+* Added experimental movement mode for ships with more realistic speed, acceleration and momentum conservation
+* Added velocity capabilities for game object and used them to make ship wrecks continue flying forward after being
+  destroyed
+* Potentially introduced some bugs with health and item pickup effects, which will be fixed later
+
+### Fixes
+
+* Fixed a time discrepancy between ship blow up moment and ship wreck appearance, which should lead to better UX
+
 ## Version 0.9.14 (2023-01-15)
 
 ### Fixes
