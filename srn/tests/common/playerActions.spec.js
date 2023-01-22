@@ -125,8 +125,8 @@ export const mockPlayerActionDockNavigate = (shipId, to) =>
 const dockToPlanet = (state, ship) => {
   let currState = state;
   const planet = getLoc0(currState).planets[0];
-  ship.x = planet.spatial.position.x;
-  ship.y = planet.spatial.position.y;
+  ship.spatial.position.x = planet.spatial.position.x;
+  ship.spatial.position.y = planet.spatial.position.y;
   currState.player_actions.push(
     mockPlayerActionDockNavigate(ship.id, planet.id)
   );
@@ -261,8 +261,8 @@ describe('player actions logic', () => {
     it('can navigate to a point', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
-      ship.x = 100.0;
-      ship.y = 100.0;
+      ship.spatial.position.x = 100.0;
+      ship.spatial.position.y = 100.0;
       state.player_actions.push(
         mockPlayerActionNavigate(ship.id, {
           x: 110,
@@ -271,8 +271,8 @@ describe('player actions logic', () => {
       );
       state = updateWorld(state, 1500);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.x).toBeCloseTo(110.0);
-      expect(ship.y).toBeCloseTo(110.0);
+      expect(ship.spatial.position.x).toBeCloseTo(110.0);
+      expect(ship.spatial.position.y).toBeCloseTo(110.0);
     });
 
     it('can navigate and dock', () => {
@@ -298,8 +298,8 @@ describe('player actions logic', () => {
       getLoc0(state).minerals.push(mineral);
       mineral.x = 102.0;
       mineral.y = 102.0;
-      ship.x = 100.0;
-      ship.y = 100.0;
+      ship.spatial.position.x = 100.0;
+      ship.spatial.position.y = 100.0;
       state.player_actions.push(mockPlayerActionTractor(ship.id, mineral.id));
       state = updateWorld(state, 3000);
       ship = getShipByPlayerId(state, player.id);
