@@ -141,6 +141,7 @@ export class StateSyncer implements IStateSyncer {
     this.wasmUpdateWorld = deps.wasmUpdateWorld;
     this.wasmUpdateWorldIncremental = deps.wasmUpdateWorldIncremental;
     this.getShowShadow = deps.getShowShadow;
+    this.validateReconciliationConfig();
   }
 
   getTrueMyShipState(): Ship | null {
@@ -742,6 +743,8 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.star.movement',
       'locations.*.star.rot_movement',
       'locations.*.asteroid_belts',
+      'locations.*.ships.*.local_effects', // forcefully updated only for client in update world
+      'locations.*.ships.*.local_effects_counter',
     ]),
     // overwrite state with server => bad for movement, good for numbers like hp
     // overwrite will drop client and replace it with server fields
@@ -782,7 +785,6 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.ships.*.acc_periodic_heal',
       'locations.*.ships.*.abilities',
       'locations.*.ships.*.movement_definition',
-      'locations.*.ships.*.local_effects',
       'locations.*.ships.*.long_actions',
       'locations.*.ships.*.navigate_target',
       'locations.*.ships.*.inventory',
@@ -820,11 +822,10 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.containers.*.position',
       'locations.*.containers.*.radius',
 
-      'locations.*.wrecks',
-
       'locations.*.ships.*.spatial.velocity',
       'locations.*.ships.*.spatial.radius',
       'locations.*.ships.*.spatial.rotation_rad',
+      'locations.*.wrecks',
     ]),
     // if server id has changed, invalidate the whole tree under the key. it's somewhat an optimization of the merge strategy
     // good for rarely-changed objects that have ids, e.g. stars, but which have to be overwritten by server data occasionally
@@ -842,7 +843,6 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.ships.*.spatial.position',
       'locations.*.ships.*.spatial.position.x',
       'locations.*.ships.*.spatial.position.y',
-      'locations.*.wrecks',
     ]),
   };
 
@@ -1109,5 +1109,28 @@ export class StateSyncer implements IStateSyncer {
     state.processed_player_actions = [];
     state.events = [];
     return state;
+  }
+
+  private validateReconciliationConfig() {
+    const occurredAt = new Map<string, string[]>();
+    const addKeys = (subKey: string) => {
+      for (const key of (this.reconciliation as any)[subKey].keys()) {
+        const current = occurredAt.get(key) || [];
+        current.push(subKey);
+        occurredAt.set(key, current);
+      }
+    };
+    for (const key of Object.keys(this.reconciliation)) {
+      addKeys(key);
+    }
+    for (const [key, occurrences] of occurredAt.entries()) {
+      if (occurrences.length > 1) {
+        console.warn(
+          `Invalid reconciliation, key ${key} occurred in ${occurrences.join(
+            ','
+          )} but should appear only once`
+        );
+      }
+    }
   }
 }

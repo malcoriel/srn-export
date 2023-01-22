@@ -97,18 +97,18 @@ pub enum LocalEffect {
     Unknown {},
     DmgDone {
         hp: i32,
-        id: Uuid,
+        id: u32,
         tick: u32,
         ship_id: Uuid,
     },
     Heal {
         hp: i32,
-        id: Uuid,
+        id: u32,
         tick: u32,
         ship_id: Uuid,
     },
     PickUp {
-        id: Uuid,
+        id: u32,
         text: String,
         position: Vec2f64,
         tick: u32,
@@ -274,6 +274,7 @@ pub struct Ship {
     pub movement_definition: Movement,
     pub health: Health,
     pub local_effects: Vec<LocalEffect>,
+    pub local_effects_counter: u32,
     pub long_actions: Vec<LongAction>,
     pub npc: Option<Bot>,
     pub name: Option<String>,
@@ -330,6 +331,7 @@ impl Ship {
             movement_definition: Movement::None,
             health: Health::new(100.0),
             local_effects: vec![],
+            local_effects_counter: 0,
             long_actions: vec![],
             npc: None,
             name: None,
@@ -1084,7 +1086,7 @@ pub fn update_location(
     );
     state.locations[location_idx].minerals = container.get_minerals();
     if !client {
-        apply_tractored_items_consumption(&mut state, consume_updates)
+        apply_tractored_items_consumption(&mut state, consume_updates, client)
     }
     sampler.end(update_minerals_id);
     let update_containers_id = sampler.start(SamplerMarks::UpdateTractoredContainers as u32);
@@ -1098,13 +1100,13 @@ pub fn update_location(
     );
     state.locations[location_idx].containers = container.get_containers();
     if !client {
-        apply_tractored_items_consumption(&mut state, consume_updates)
+        apply_tractored_items_consumption(&mut state, consume_updates, client)
     }
     sampler.end(update_containers_id);
 
     if !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
-        update_hp_effects(state, location_idx, elapsed, state.millis, prng);
+        update_hp_effects(state, location_idx, elapsed, state.millis, prng, client);
         sampler.end(hp_effects_id);
 
         let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
@@ -1342,18 +1344,22 @@ fn update_initiate_ship_docking_by_navigation(
 fn apply_tractored_items_consumption(
     mut state: &mut &mut GameState,
     consume_updates: Vec<(Uuid, Box<dyn IMovable>)>,
+    client: bool,
 ) {
     for pup in consume_updates {
         let ticks = state.millis.clone();
         let pair = find_player_and_ship_mut(&mut state, pup.0);
         let picked_items = InventoryItem::from(pup.1);
         if let Some(ship) = pair.1 {
-            ship.local_effects.push(LocalEffect::PickUp {
-                id: new_id(),
-                text: format!("Pick up: {}", InventoryItem::format(&picked_items)),
-                position: Default::default(),
-                tick: ticks,
-            });
+            if client {
+                ship.local_effects_counter = (ship.local_effects_counter + 1) % u32::MAX;
+                ship.local_effects.push(LocalEffect::PickUp {
+                    id: ship.local_effects_counter,
+                    text: format!("Pick up: {}", InventoryItem::format(&picked_items)),
+                    position: Default::default(),
+                    tick: ticks,
+                });
+            }
             add_items(&mut ship.inventory, picked_items);
         }
     }
@@ -1486,6 +1492,7 @@ pub fn update_hp_effects(
     elapsed_micro: i64,
     current_tick: u32,
     prng: &mut Pcg64Mcg,
+    client: bool,
 ) {
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
@@ -1514,12 +1521,15 @@ pub fn update_hp_effects(
                 let dmg_done = ship.acc_periodic_dmg.floor() as i32;
                 ship.acc_periodic_dmg = 0.0;
                 ship.health.current = (ship.health.current - dmg_done as f64).max(0.0);
-                ship.local_effects.push(LocalEffect::DmgDone {
-                    id: prng_id(prng),
-                    hp: -dmg_done,
-                    tick: current_tick,
-                    ship_id: ship.id,
-                });
+                if client {
+                    ship.local_effects_counter = (ship.local_effects_counter + 1) % u32::MAX;
+                    ship.local_effects.push(LocalEffect::DmgDone {
+                        id: ship.local_effects_counter,
+                        hp: -dmg_done,
+                        tick: current_tick,
+                        ship_id: ship.id,
+                    });
+                }
             }
 
             if star_damage <= 0.0
@@ -1534,30 +1544,36 @@ pub fn update_hp_effects(
                 let heal = ship.acc_periodic_heal.floor() as i32;
                 ship.acc_periodic_heal = 0.0;
                 ship.health.current = ship.health.max.min(ship.health.current + heal as f64);
-                ship.local_effects.push(LocalEffect::Heal {
-                    id: prng_id(prng),
-                    hp: heal as i32,
-                    tick: current_tick,
-                    ship_id: ship.id,
-                });
+                if client {
+                    ship.local_effects_counter = (ship.local_effects_counter + 1) % u32::MAX;
+                    ship.local_effects.push(LocalEffect::Heal {
+                        id: ship.local_effects_counter,
+                        hp: heal as i32,
+                        tick: current_tick,
+                        ship_id: ship.id,
+                    });
+                }
             }
 
-            ship.local_effects = ship
-                .local_effects
-                .iter()
-                .filter(|e| {
-                    if let Some(tick) = match &e {
-                        LocalEffect::Unknown { .. } => None,
-                        LocalEffect::DmgDone { tick, .. } => Some(tick),
-                        LocalEffect::Heal { tick, .. } => Some(tick),
-                        LocalEffect::PickUp { tick, .. } => Some(tick),
-                    } {
-                        return (*tick as i32 - current_tick as i32).abs() < MAX_LOCAL_EFF_LIFE_MS;
-                    }
-                    return false;
-                })
-                .map(|e| e.clone())
-                .collect::<Vec<_>>()
+            if client {
+                ship.local_effects = ship
+                    .local_effects
+                    .iter()
+                    .filter(|e| {
+                        if let Some(tick) = match &e {
+                            LocalEffect::Unknown { .. } => None,
+                            LocalEffect::DmgDone { tick, .. } => Some(tick),
+                            LocalEffect::Heal { tick, .. } => Some(tick),
+                            LocalEffect::PickUp { tick, .. } => Some(tick),
+                        } {
+                            return (*tick as i32 - current_tick as i32).abs()
+                                < MAX_LOCAL_EFF_LIFE_MS;
+                        }
+                        return false;
+                    })
+                    .map(|e| e.clone())
+                    .collect::<Vec<_>>()
+            }
         }
     }
 

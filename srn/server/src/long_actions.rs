@@ -464,7 +464,7 @@ pub fn finish_long_act(
             target, turret_id, ..
         } => {
             if player_id.is_some() {
-                combat::resolve_shoot(state, player_id.unwrap(), target, turret_id);
+                combat::resolve_shoot(state, player_id.unwrap(), target, turret_id, client);
             }
         }
         LongAction::Dock { to_planet, .. } => {

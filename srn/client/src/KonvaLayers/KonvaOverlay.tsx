@@ -65,7 +65,7 @@ const extractEffectsPositions = (
               throw new UnreachableCaseError(e);
           }
           return {
-            id: e.id,
+            id: `${ship.id}_${e.id}`,
             text,
             opacity,
             color,

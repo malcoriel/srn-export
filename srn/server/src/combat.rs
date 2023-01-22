@@ -115,6 +115,7 @@ pub fn resolve_shoot(
     player_shooting: Uuid,
     target: ShootTarget,
     active_turret_id: String,
+    client: bool,
 ) {
     if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &state.locations[ship_loc.location_idx];
@@ -139,14 +140,18 @@ pub fn resolve_shoot(
                     target_ship.health.last_damage_dealer = Some(ObjectSpecifier::Ship {
                         id: shooting_ship_id,
                     });
+                    target_ship.local_effects_counter =
+                        (target_ship.local_effects_counter + 1) % u32::MAX;
                     let effect = LocalEffect::DmgDone {
-                        id: new_id(),
+                        id: target_ship.local_effects_counter,
                         hp: dmg as i32,
                         ship_id: target_ship_id,
                         tick: state.millis,
                     };
 
-                    target_ship.local_effects.push(effect.clone())
+                    if client {
+                        target_ship.local_effects.push(effect.clone())
+                    }
                 }
             }
             ShootTarget::Mineral { id } => {
