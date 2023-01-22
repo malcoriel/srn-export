@@ -74,7 +74,7 @@ export type StateSyncerEvent =
     };
 
 type SyncerViolationObjectJump = {
-  tag: 'ObjectJump';
+  tag: 'ObjectJump' | 'InvisibleObjectJump';
   obj: ObjectSpecifier;
   from: IVector;
   to: IVector;
@@ -483,7 +483,7 @@ export class StateSyncer implements IStateSyncer {
           event.visibleArea
         );
         const violations = this.violations.filter(
-          (v) => v.tag === 'ObjectJump'
+          (v) => v.tag === 'ObjectJump' || v.tag === 'InvisibleObjectJump'
         ) as SyncerViolationObjectJump[];
         this.state = this.applyMaxPossibleDesyncCorrection(
           violations,
@@ -567,12 +567,9 @@ export class StateSyncer implements IStateSyncer {
     elapsedTicks: number,
     visibleArea: AABB
   ): SyncerViolation[] {
-    const res = [];
+    const res: SyncerViolationObjectJump[] = [];
     const checkableObjects = this.enumerateCheckableObjects(serverState);
     for (const { spec, obj } of checkableObjects) {
-      if (!isInAABB(visibleArea, obj, 0.0)) {
-        continue;
-      }
       const oldObjInstance = this.findOldVersionOfObjectV2(currState, spec);
       if (oldObjInstance) {
         const oldObj = oldObjInstance;
@@ -581,12 +578,17 @@ export class StateSyncer implements IStateSyncer {
             elapsedTicks,
             obj,
             oldObj,
-            spec
+            spec,
+            visibleArea
           );
           if (posVio) res.push(posVio);
         }
       }
     }
+    // this.log.push(
+    //   'vio ships:',
+    //   res.map((v) => `${getObjSpecId(v.obj)}: ${v.tag}`)
+    // );
     return res;
   }
 
@@ -645,8 +647,9 @@ export class StateSyncer implements IStateSyncer {
     elapsedTicks: number,
     newObj: any,
     oldObj: any,
-    spec: ObjectSpecifier
-  ): SyncerViolation | null {
+    spec: ObjectSpecifier,
+    visibleArea: AABB
+  ): SyncerViolationObjectJump | null {
     const oldPos = Vector.fromIVector(getObjectPosition(oldObj));
     const newPos = Vector.fromIVector(getObjectPosition(newObj));
     const dist = oldPos.euDistTo(newPos);
@@ -654,8 +657,12 @@ export class StateSyncer implements IStateSyncer {
       dist > elapsedTicks * this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK &&
       dist > MAX_ALLOWED_VISUAL_DESYNC_UNITS
     ) {
+      let type: 'ObjectJump' | 'InvisibleObjectJump' = 'ObjectJump';
+      if (!isInAABB(visibleArea, oldPos, 0.0)) {
+        type = 'InvisibleObjectJump'; // including jumping into the screen, but hopefully the visible area is slightly bigger than screen
+      }
       return {
-        tag: 'ObjectJump',
+        tag: type,
         obj: spec,
         from: oldPos,
         to: newPos,
@@ -678,33 +685,40 @@ export class StateSyncer implements IStateSyncer {
     const maxShiftLen =
       elapsedTicks * this.MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK;
     for (const violation of violations) {
-      const jumpDir = Vector.fromIVector(violation.to).subtract(
-        Vector.fromIVector(violation.from)
-      );
-      let jumpCorrectionToTruePos: Vector;
-      if (
-        violation.diff / elapsedTicks >
-        this.CORRECTION_TELEPORT_BAIL_PER_TICK
-      ) {
-        if (myShipId === getObjSpecId(violation.obj)) {
-          console.warn(`teleport correction bail, dist = ${violation.diff}`);
+      if (violation.tag === 'ObjectJump') {
+        const jumpDir = Vector.fromIVector(violation.to).subtract(
+          Vector.fromIVector(violation.from)
+        );
+        let jumpCorrectionToTruePos: Vector;
+        if (
+          violation.diff / elapsedTicks >
+          this.CORRECTION_TELEPORT_BAIL_PER_TICK
+        ) {
+          if (myShipId === getObjSpecId(violation.obj)) {
+            console.warn(`teleport correction bail, dist = ${violation.diff}`);
+          }
+          jumpCorrectionToTruePos = jumpDir;
+        } else {
+          jumpCorrectionToTruePos = jumpDir
+            .normalize()
+            .scale(
+              Math.min(
+                maxShiftLen,
+                jumpDir.length() -
+                  this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK * elapsedTicks
+              )
+            );
         }
-        jumpCorrectionToTruePos = jumpDir;
-      } else {
-        jumpCorrectionToTruePos = jumpDir
-          .normalize()
-          .scale(
-            Math.min(
-              maxShiftLen,
-              jumpDir.length() -
-                this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK * elapsedTicks
-            )
-          );
+        const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
+        const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
+        const correctedPos = newObjectPos.add(jumpCorrectionToTruePos);
+        setObjectPosition(newObj, correctedPos);
+      } else if (violation.tag === 'InvisibleObjectJump') {
+        // if we don't do that, since objects are not simulated outside the visible area, they will get frozen
+        // until camera pans onto them
+        const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
+        setObjectPosition(newObj, violation.to);
       }
-      const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
-      const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
-      const correctedPos = newObjectPos.add(jumpCorrectionToTruePos);
-      setObjectPosition(newObj, correctedPos);
     }
     return currentState;
   }
@@ -838,7 +852,7 @@ export class StateSyncer implements IStateSyncer {
     // OR -> reconciliate further, since subkeys can still be merged
     merge: new Set([
       'locations',
-      'locations.*.planets',
+      'locations.*.planets', // merge into player-only
       'locations.*.asteroids',
       'locations.*.minerals',
       'locations.*.containers',

@@ -1,18 +1,18 @@
 export function shallowEqual(
-  newObj: Record<string, any>,
-  prevObj: Record<string, any>
+  newProps: Record<string, any>,
+  prevProps: Record<string, any>
 ): boolean {
-  if (!newObj && !prevObj) {
+  if (!newProps && !prevProps) {
     return true;
   }
-  if (!newObj && prevObj) {
+  if (!newProps && prevProps) {
     return false;
   }
-  if (newObj && !prevObj) {
+  if (newProps && !prevProps) {
     return false;
   }
-  for (const key of Object.keys(newObj)) {
-    if (newObj[key] !== prevObj[key]) return false;
+  for (const key of Object.keys(newProps)) {
+    if (newProps[key] !== prevProps[key]) return false;
   }
   return true;
 }
