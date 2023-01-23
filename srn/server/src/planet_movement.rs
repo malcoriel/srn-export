@@ -27,6 +27,7 @@ use crate::{vec2, world};
 pub trait IBodyV2: Clone + Anchored + Spec {
     fn get_id(&self) -> Uuid;
     fn get_name(&self) -> &String;
+    fn always_project_movement(&self) -> bool;
     fn get_spatial(&self) -> &SpatialProps;
     fn get_spatial_mut(&mut self) -> &mut SpatialProps;
     fn get_movement(&self) -> &Movement;
@@ -45,6 +46,10 @@ impl IBodyV2 for PlanetV2 {
 
     fn get_name(&self) -> &String {
         &self.name
+    }
+
+    fn always_project_movement(&self) -> bool {
+        true
     }
 
     fn get_spatial(&self) -> &SpatialProps {
@@ -105,6 +110,10 @@ impl IBodyV2 for AsteroidBelt {
         unimplemented!()
     }
 
+    fn always_project_movement(&self) -> bool {
+        true
+    }
+
     fn get_spatial(&self) -> &SpatialProps {
         &self.spatial
     }
@@ -161,6 +170,10 @@ impl IBodyV2 for Star {
 
     fn get_name(&self) -> &String {
         &self.name
+    }
+
+    fn always_project_movement(&self) -> bool {
+        true
     }
 
     fn get_spatial(&self) -> &SpatialProps {
@@ -232,6 +245,10 @@ impl IBodyV2 for Asteroid {
         unimplemented!()
     }
 
+    fn always_project_movement(&self) -> bool {
+        false
+    }
+
     fn get_spatial(&self) -> &SpatialProps {
         &self.spatial
     }
@@ -300,7 +317,7 @@ fn update_radial_movement(
 ) {
     for body in bodies {
         let mark = sampler.start(SamplerMarks::UpdateRadialMovement as u32);
-        if limit_area.contains_vec(&body.get_spatial().position) {
+        if limit_area.contains_vec(&body.get_spatial().position) || body.always_project_movement() {
             project_body_relative_position(current_ticks, indexes, caches, body);
         }
         sampler.end(mark);
