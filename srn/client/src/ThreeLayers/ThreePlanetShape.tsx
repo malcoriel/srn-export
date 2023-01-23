@@ -35,7 +35,7 @@ export const ThreePlanetShape: React.FC<{
   spotsRandomizingFactor?: number;
   spotsIntensity?: number;
   yStretchFactor?: number;
-  visible: boolean;
+  visible?: boolean;
   texture?: Texture;
   interactor?: ThreeInteractorProps;
   hpNormalized?: number;
@@ -53,7 +53,7 @@ export const ThreePlanetShape: React.FC<{
     yStretchFactor,
     spotsIntensity,
     color,
-    visible,
+    visible = true,
     atmospherePercent,
     texture,
     interactor,
@@ -137,7 +137,7 @@ export const ThreePlanetShape: React.FC<{
     }, [unitsToPixels_min(), texture, atmospherePercent, atmosphereColor]);
 
     return (
-      <group position={vecToThreePos(position, 10)}>
+      <group position={vecToThreePos(position, 10)} visible={visible}>
         {interactor && (
           <ThreeInteractor
             perfId={`planet-${gid}`}
@@ -177,7 +177,6 @@ export const ThreePlanetShape: React.FC<{
   },
   (prev, next) => {
     if (prev && !prev.visible && next && !next.visible) {
-      // allow one last update when switching from visible to not visible
       return true;
     }
     return shallowEqual(prev, next);

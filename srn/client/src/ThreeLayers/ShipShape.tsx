@@ -18,6 +18,7 @@ export type ShipShapeProps = {
   gid: string;
   opacity: number;
   fadeOver?: number;
+  visible?: boolean;
 };
 export const ShipShape: React.FC<ShipShapeProps> = ({
   radius,
@@ -27,6 +28,7 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
   opacity,
   children,
   gid,
+  visible = true,
   fadeOver = undefined,
 }) => {
   // @ts-ignore
@@ -62,7 +64,10 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
 
   const shipZ = gid === SHADOW_ID ? -10 : SHIP_FIXED_Z;
   return (
-    <group position={posToThreePos(position.x, position.y, shipZ)}>
+    <group
+      position={posToThreePos(position.x, position.y, shipZ)}
+      visible={visible}
+    >
       <mesh
         name={`ship-${gid}`}
         position={[-shift.x, shift.y, 0]}

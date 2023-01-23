@@ -77,7 +77,7 @@ export const ThreeStar: React.FC<
     );
   },
   (prevProps, nextProps) => {
-    if (!nextProps.visible) {
+    if (!nextProps.visible && !prevProps.visible) {
       return true;
     }
     return shallowEqual(prevProps, nextProps);

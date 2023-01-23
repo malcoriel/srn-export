@@ -41,7 +41,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     position,
     rotation,
     color,
-    visible,
+    visible = true,
     interactor,
     radius,
     gid,
@@ -128,7 +128,9 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     );
 
     return (
-      <ShipShape {...{ radius, position, rotation, color, opacity, gid }}>
+      <ShipShape
+        {...{ radius, position, rotation, color, opacity, gid, visible }}
+      >
         {healthBar}
         {interactorElem}
         {tractorBeam}
@@ -148,7 +150,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    if (!nextProps.visible) {
+    if (!nextProps.visible && !prevProps.visible) {
       return true;
     }
     return shallowEqual(prevProps, nextProps);
