@@ -1,3 +1,4 @@
+use crate::api_struct::PerfStats;
 use pkg_version::*;
 use rocket::http::Status;
 use rocket_contrib::json::Json;
@@ -30,4 +31,10 @@ pub fn head_health() -> Status {
     } else {
         Status::InternalServerError
     };
+}
+
+#[get("/perf")]
+pub fn get_perf() -> Json<PerfStats> {
+    let stats = crate::FRAME_STATS.read().unwrap().clone();
+    return Json(stats);
 }

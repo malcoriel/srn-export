@@ -106,3 +106,10 @@ impl RoomsState {
             .and_then(|r| Some(&mut r.state))
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, TypescriptDefinition, TypeScriptify)]
+pub struct PerfStats {
+    pub shortcut_pct: f32,
+    pub over_budget_pct: f32,
+    pub frame_count: i32,
+}

@@ -63,7 +63,7 @@ export const Window: React.FC<{
   useBoundHotkeyScope('window', isShown);
   useScopedHotkey(
     toggleHotkey || '<nothing>',
-    (event, hotkeysEvent) => {
+    (event) => {
       if (toggleHotkey) {
         if (event.type === 'keyup') {
           event.preventDefault();
@@ -83,7 +83,7 @@ export const Window: React.FC<{
     [toggleHotkey, isShown]
   );
 
-  const windowButtons = (
+  const windowButtons = toggleHotkey ? null : (
     <div
       className="ui-window-controls"
       style={{ height: isShown ? thickness + 2 : undefined }}

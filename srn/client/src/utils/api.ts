@@ -1,7 +1,7 @@
 import { GameMode } from '../../../world/pkg/world.extra';
 import useSWR, { mutate } from 'swr';
 // eslint-disable-next-line import/named
-import { Room, RoomIdResponse } from '../../../world/pkg/world';
+import { PerfStats, Room, RoomIdResponse } from '../../../world/pkg/world';
 import pWaitFor from 'p-wait-for';
 
 const patchParams = (url: string, params: Record<string, string>) => {
@@ -22,6 +22,9 @@ export const api = {
     const resp = await fetch(`${apiUrl}/version`);
     return await resp.json();
   },
+
+  usePerf: (): PerfStats => useSWR(`${apiUrl}/perf`).data || {},
+
   getDialogueTable: async () => {
     const resp = await fetch(`${apiUrl}/resources/dialogue_scripts`);
     return await resp.json();

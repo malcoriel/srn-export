@@ -258,20 +258,10 @@ export const formatNumber = (x: any) => {
   return Number(x).toFixed(3);
 };
 
-const STATS_REFRESH_TIME = 5000;
-const StatsPanel = () => {
-  const [shown] = useToggleHotkey('shift+f', false, 'show FPS & stats');
-  const [force, setForce] = useState(0);
-  useEffect(() => {
-    const timer = setInterval(() => setForce(force + 1), STATS_REFRESH_TIME);
-    return () => clearInterval(timer);
-  }, [setForce, force]);
-
-  if (!shown) return null;
-
+export const StatsPanel = () => {
   return (
-    <div className="stats panel aux-panel">
-      <div className="header">Debug info:</div>
+    <div className="stats">
+      <div className="header">Client stats:</div>
       <div className="row">
         <span className="name">Avg render frame time:</span>
         <span className="value">
@@ -308,8 +298,6 @@ const StatsPanel = () => {
     </div>
   );
 };
-
-export { StatsPanel };
 
 export { Perf };
 

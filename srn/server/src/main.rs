@@ -42,6 +42,7 @@ use bots::BOT_ACTION_TIME_TICKS;
 use dialogue::{Dialogue, DialogueStates, DialogueTable};
 use lockfree::map::Map as LockFreeMap;
 use lockfree::set::Set as LockFreeSet;
+use mut_static::MutStatic;
 use net::{
     ClientErr, ClientOpCode, PersonalizeUpdate, ServerToClientMessage, ShipsWrapper,
     SwitchRoomPayload, TagConfirm, Wrapper,
@@ -54,7 +55,7 @@ use world::{GameMode, GameState, Player, Ship, SpatialIndexes};
 use world_events::GameEvent;
 use xcast::XCast;
 
-use crate::api_struct::Room;
+use crate::api_struct::{PerfStats, Room};
 use crate::autofocus::build_spatial_index;
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions};
 use crate::chat::chat_server;
@@ -314,7 +315,12 @@ fn rocket() -> rocket::Rocket {
         .attach(CORS())
         .mount(
             "/api",
-            routes![api::get_version, api::get_health, api::head_health],
+            routes![
+                api::get_version,
+                api::get_health,
+                api::head_health,
+                api::get_perf
+            ],
         )
         .mount(
             "/api/sandbox",
@@ -362,6 +368,14 @@ lazy_static! {
     pub static ref SUB_RE: Regex = Regex::new(r"s_\w+").unwrap();
 }
 
+lazy_static! {
+    pub static ref FRAME_STATS: MutStatic<PerfStats> = MutStatic::from(PerfStats {
+        shortcut_pct: 0.0,
+        over_budget_pct: 0.0,
+        frame_count: 0,
+    });
+}
+
 fn main_thread() {
     let mut prng = get_prng();
     let d_table = *DIALOGUE_TABLE.lock().unwrap().clone();
@@ -398,6 +412,12 @@ fn main_thread() {
         if sampler_consume_elapsed > PERF_CONSUME_TIME {
             let over_budget_pct = over_budget_frame as f32 / frame_count as f32 * 100.0;
             let shortcut_pct = shortcut_frame as f32 / frame_count as f32 * 100.0;
+            {
+                let mut stats = FRAME_STATS.write().unwrap();
+                stats.shortcut_pct = shortcut_pct;
+                stats.over_budget_pct = over_budget_pct;
+                stats.frame_count = frame_count;
+            }
             if *DEBUG_FRAME_STATS {
                 log!(format!(
                     "Frame stats: shortcut {:.2}%, over-budget {:.2}% for {}",

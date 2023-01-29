@@ -75,7 +75,6 @@ const renderPlayingElements = (mode: GameMode) => (
       <QuestWindow />
       <ChatWindow />
       <DebugStateLayer />
-      <StatsPanel />
       <ControlPanel />
       <WindowContainers />
       <OverheadPanel />
@@ -107,7 +106,6 @@ const renderWatchingElements = (mode: GameMode) => (
       <MinimapPanel />
       <NetworkStatus />
       <DebugStateLayer />
-      <StatsPanel />
       <WindowContainers />
       <OverheadPanel />
       <NetStateToStorePusher />
