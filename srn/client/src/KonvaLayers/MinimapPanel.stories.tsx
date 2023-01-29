@@ -68,6 +68,7 @@ const makePlanet = (
     position: pos,
     radius,
     rotation_rad: 0,
+    angular_velocity: 0,
   },
 });
 

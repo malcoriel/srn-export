@@ -332,6 +332,7 @@ pub fn seed_asteroids(star: &Star, prng: &mut Pcg64Mcg) -> Vec<Asteroid> {
                     y: y + shift.1,
                 },
                 velocity: Default::default(),
+                angular_velocity: 0.0,
                 rotation_rad: 0.0,
                 radius: gen_asteroid_radius(prng),
             },

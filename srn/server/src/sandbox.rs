@@ -226,6 +226,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     spatial: SpatialProps {
                         position: Vec2f64 { x: 0.0, y: 0.0 },
                         velocity: Default::default(),
+                        angular_velocity: 0.0,
                         rotation_rad: 0.0,
                         radius: args.star.radius,
                     },
@@ -242,6 +243,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     spatial: SpatialProps {
                         position: Vec2f64::zero(),
                         velocity: Default::default(),
+                        angular_velocity: 0.0,
                         rotation_rad: 0.0,
                         radius: sbb.radius,
                     },
@@ -277,6 +279,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                                 y: spb.position.y,
                             },
                             velocity: Default::default(),
+                            angular_velocity: 0.0,
                             rotation_rad: 0.0,
                             radius: spb.radius,
                         },

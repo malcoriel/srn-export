@@ -840,6 +840,7 @@ export class StateSyncer implements IStateSyncer {
       'locations.*.containers.*.radius',
 
       'locations.*.ships.*.spatial.velocity',
+      'locations.*.ships.*.spatial.angular_velocity',
       'locations.*.ships.*.spatial.radius',
       'locations.*.ships.*.spatial.rotation_rad',
       'locations.*.wrecks',

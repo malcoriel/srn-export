@@ -36,7 +36,6 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::spatial_movement::SHIP_TURN_SPEED_DEG;
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
 use crate::tractoring::{
@@ -144,11 +143,12 @@ pub enum ObjectProperty {
     MoneyOnKill { amount: i32 },
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Default)]
 // derive Serialize-Deserialize will add constraints itself, no need to explicitly mark them
 pub struct SpatialProps {
     pub position: Vec2f64,
     pub velocity: Vec2f64,
+    pub angular_velocity: f64,
     pub rotation_rad: f64,
     pub radius: f64,
 }
@@ -312,6 +312,7 @@ impl Ship {
                     y: if at.is_some() { at.unwrap().y } else { 100.0 },
                 },
                 velocity: Default::default(),
+                angular_velocity: 0.0,
                 rotation_rad: 0.0,
                 radius: 2.0,
             },
@@ -1600,6 +1601,7 @@ pub fn update_hp_effects(
                     .movement_definition
                     .get_spatial_velocity(ship_clone.spatial.rotation_rad)
                     .scalar_mul(0.25),
+                angular_velocity: 0.0,
                 rotation_rad: ship_clone.spatial.rotation_rad,
                 radius: ship_clone.spatial.radius,
             },
@@ -1678,6 +1680,7 @@ pub enum Movement {
     // no handling implemented for this one yet, it's just a design
     ShipAccelerated {
         max_linear_speed: f64,
+        max_rotation_speed: f64,
         current_linear_speed: f64,
         linear_drag: f64,
         current_angular_speed: f64,
@@ -1702,7 +1705,9 @@ pub enum Movement {
     },
 }
 
-pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13; // 0.1 unit per second per second (to allow speeding up from zero)
+pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13;
+// 0.1 unit per second per second (to allow speeding up from zero)
+pub const MIN_OBJECT_TURN_SPEED_RAD_PER_TICK: f64 = 1e-14; // 0.01 radian per second per second (to allow speeding up from zero)
 
 impl Movement {
     pub fn get_spatial_velocity(&self, rotation_rad: f64) -> Vec2f64 {
@@ -1716,6 +1721,35 @@ impl Movement {
             Movement::ShipAccelerated {
                 max_linear_speed, ..
             } => *max_linear_speed,
+            _ => 0.0,
+        }
+    }
+
+    pub fn get_max_rotation_speed(&self) -> f64 {
+        match self {
+            Movement::ShipAccelerated {
+                max_rotation_speed, ..
+            } => *max_rotation_speed,
+            _ => 0.0,
+        }
+    }
+
+    pub fn get_current_angular_acceleration(&self) -> f64 {
+        match self {
+            Movement::ShipAccelerated { acc_angular, .. } => *acc_angular,
+            _ => 0.0,
+        }
+    }
+
+    pub fn get_angular_speed(&self) -> f64 {
+        match self {
+            Movement::ShipMonotonous {
+                current_turn_speed, ..
+            } => *current_turn_speed,
+            Movement::ShipAccelerated {
+                current_angular_speed,
+                ..
+            } => *current_angular_speed,
             _ => 0.0,
         }
     }
@@ -1877,7 +1911,7 @@ impl ShipTemplate {
             health: Some(Health::new(40.0)),
             movement: Some(Movement::ShipMonotonous {
                 move_speed: 10.0 / 1000.0 / 1000.0,
-                turn_speed: SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0,
+                turn_speed: PI / 1000.0 / 1000.0,
                 current_move_speed: 0.0,
                 current_turn_speed: 0.0,
             }),
@@ -1890,7 +1924,7 @@ impl ShipTemplate {
 
     pub fn player(at: Option<Vec2f64>) -> ShipTemplate {
         let max_linear_speed = 20.0 / 1000.0 / 1000.0;
-        let max_angular_speed = SHIP_TURN_SPEED_DEG / 1000.0 / 1000.0;
+        let max_angular_speed = PI / 2.0 / 1000.0 / 1000.0;
         let default_movement = Movement::ShipMonotonous {
             move_speed: max_linear_speed,
             turn_speed: max_angular_speed,
@@ -1905,12 +1939,13 @@ impl ShipTemplate {
                     default_movement.clone(),
                     Movement::ShipAccelerated {
                         max_linear_speed,
+                        max_rotation_speed: max_angular_speed,
                         current_linear_speed: 0.0,
                         linear_drag: max_linear_speed * 0.025 / 1e6, // 2.5% per second
                         current_angular_speed: 0.0,
                         acc_linear: max_linear_speed * 0.25 / 1e6, // 25% per second
                         max_turn_speed: max_angular_speed,
-                        acc_angular: max_angular_speed * 0.025,
+                        acc_angular: max_angular_speed * 0.0125,
                     },
                 ],
                 current_idx: 0,

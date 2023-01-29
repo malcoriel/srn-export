@@ -4,6 +4,10 @@ import { useNSForceChange } from '../NetStateHooks';
 import Vector from '../utils/Vector';
 import { getSrnState } from '../store';
 
+const trimMax = (velValue: number) => {
+  return velValue <= 100.0 ? velValue.toFixed(2) : '100+';
+};
+
 export const CameraCoordinatesBox: React.FC = () => {
   const ns = useNSForceChange('CameraCoordinatesBox', false);
   if (!ns) {
@@ -18,11 +22,10 @@ export const CameraCoordinatesBox: React.FC = () => {
   const myShip = ns.indexes.myShip;
   let line = '';
   if (myShip) {
-    line += `s=${(
-      Vector.fromIVector(myShip.spatial.velocity).length() *
-      1000 *
-      1000
-    ).toFixed(2)} `;
+    line += `v=${trimMax(
+      Vector.fromIVector(myShip.spatial.velocity).length() * 1000 * 1000
+    )} `;
+    line += `av=${trimMax(myShip.spatial.angular_velocity * 1000 * 1000)} `;
   }
   line += `c=${Vector.fromIVector(ns.visualState.cameraPosition).toKey(
     '/',
