@@ -13,6 +13,7 @@ import {
   GameState,
   getObjSpecId,
   isInAABB,
+  isManualMovement,
   ObjectSpecifier,
   Ship,
 } from './world';
@@ -291,7 +292,10 @@ export class StateSyncer implements IStateSyncer {
       )
     );
     this.useCachedStateForUpdateContext = false;
-    this.trueState = this.state; // invalidate whatever we had previously during correction, as client view has to win immediately, then get compensated
+    if (!this.allAreRepeatedActions(event.actions)) {
+      console.log('optimistic update');
+      this.trueState = this.state; // invalidate whatever we had previously during correction, as client view has to win immediately, then get compensated
+    }
     return this.successCurrent();
   }
 
@@ -1167,5 +1171,39 @@ export class StateSyncer implements IStateSyncer {
       }
       mapped.set(strId, elem);
     }
+  }
+
+  private allAreRepeatedActions(actions: Action[]) {
+    const myShip = findMyShip(this.state);
+    if (!myShip) {
+      return false; // if there's anything, then it's definitely not a manual movement
+    }
+    for (const act of actions) {
+      if (!isManualMovement(act)) {
+        return false;
+      }
+      if (act.tag === 'Gas' && myShip.movement_markers.gas?.forward !== true) {
+        return false;
+      }
+      if (
+        act.tag === 'Reverse' &&
+        myShip.movement_markers.gas?.forward !== false
+      ) {
+        return false;
+      }
+      if (
+        act.tag === 'TurnRight' &&
+        myShip.movement_markers.turn?.forward !== false
+      ) {
+        return false;
+      }
+      if (
+        act.tag === 'TurnLeft' &&
+        myShip.movement_markers.turn?.forward !== true
+      ) {
+        return false;
+      }
+    }
+    return true;
   }
 }

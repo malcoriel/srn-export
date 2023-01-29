@@ -1,7 +1,7 @@
 import React from 'react';
 import { Window } from './ui/Window';
 import './StatsWindow.scss';
-import { formatNumber, Stat, statsHeap, StatsPanel } from './Perf';
+import { formatNumber, StatsPanel } from './Perf';
 import { useNSForceChange } from '../NetStateHooks';
 import { getSrnState, WindowState } from '../store';
 import { api } from '../utils/api';
