@@ -73,6 +73,7 @@ export type SrnState = {
   toggleInventoryWindow: () => void;
   toggleMapWindow: () => void;
   toggleTradeWindow: () => void;
+  toggleStatsWindow: () => void;
   helpWindow: WindowState;
   inventoryWindow: WindowState;
   tradeWindow: WindowState;
@@ -80,6 +81,8 @@ export type SrnState = {
   setInventoryWindow: (val: WindowState) => void;
   chatWindow: WindowState;
   setChatWindow: (val: WindowState) => void;
+  statsWindow: WindowState;
+  setStatsWindow: (val: WindowState) => void;
   leaderboardWindow: WindowState;
   setLeaderboardWindow: (val: WindowState) => void;
   toggleLeaderboardWindow: () => void;
@@ -141,7 +144,9 @@ function toggleWindowState(old: WindowState, hasMinimized = false) {
   }
   return WindowState.Shown;
 }
+
 import { devtools } from 'zustand/middleware';
+
 export const useStore = create<SrnState>(
   devtools((set) => ({
     mainUiState: MainUiState.Idle,
@@ -162,6 +167,7 @@ export const useStore = create<SrnState>(
     helpWindow: WindowState.Hidden,
     mapWindow: WindowState.Hidden,
     leaderboardWindow: WindowState.Hidden,
+    statsWindow: WindowState.Hidden,
     showTractorCircle: undefined,
     selectedObjectId: undefined,
     contextMenuItems: [],
@@ -188,6 +194,7 @@ export const useStore = create<SrnState>(
     setQuestWindow: (val: WindowState) => set({ questWindow: val }),
     setHelpWindow: (val: WindowState) => set({ helpWindow: val }),
     setChatWindow: (val: WindowState) => set({ chatWindow: val }),
+    setStatsWindow: (val: WindowState) => set({ statsWindow: val }),
     setInventoryWindow: (val: WindowState) => set({ inventoryWindow: val }),
     setPromptWindow: (val: WindowState) => set({ promptWindow: val }),
     setPromptWindowParams: (
@@ -209,6 +216,10 @@ export const useStore = create<SrnState>(
     toggleInventoryWindow: () =>
       set((state) => {
         return { inventoryWindow: toggleWindowState(state.inventoryWindow) };
+      }),
+    toggleStatsWindow: () =>
+      set((state) => {
+        return { statsWindow: toggleWindowState(state.statsWindow) };
       }),
     toggleTradeWindow: () =>
       set((state) => {

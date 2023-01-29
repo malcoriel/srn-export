@@ -50,6 +50,7 @@ import {
 import { ReplayControlsSrnContainer } from './ReplayControlsSrnContainer';
 import { CameraCoordinatesBox } from './HtmlLayers/CameraCoordinatesBox';
 import { useScopedHotkey } from './utils/hotkeyHooks';
+import { StatsWindow } from './HtmlLayers/StatsWindow';
 
 const MONITOR_SIZE_INTERVAL = 1000;
 let monitorSizeInterval: Timeout | undefined;
@@ -87,6 +88,7 @@ const renderPlayingElements = (mode: GameMode) => (
       <NetStateToStorePusher />
       <SandboxQuickMenu />
       <CameraCoordinatesBox />
+      <StatsWindow />
     </>
   </>
 );

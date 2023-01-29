@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useHotkeys, Options } from 'react-hotkeys-hook';
 import { useStore } from '../store';
+import { KeyHandler } from 'hotkeys-js';
 
 export type HotkeyOptions = Options;
 export const hotkeyRegistry: Record<string, string> = {};
@@ -37,12 +38,16 @@ export const useToggleHotkey = (
   return [shown, syncedSetShown];
 };
 
-const inScope = (currentScope: string, targetScope: string): boolean =>
-  currentScope.startsWith(targetScope);
+const inScope = (currentScope: string, targetScope: string): boolean => {
+  if (targetScope === 'global') {
+    return true;
+  }
+  return currentScope.startsWith(targetScope);
+};
 
 export const useScopedHotkey = (
   hotkey: string,
-  onActivate: () => void,
+  onActivate: KeyHandler,
   scope: string,
   options: HotkeyOptions,
   deps: any[]

@@ -7,7 +7,6 @@ import { CgClose } from 'react-icons/cg';
 import { StyledRect } from './StyledRect';
 import ReactDOM from 'react-dom';
 import './Window.scss';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { useBoundHotkeyScope, useScopedHotkey } from '../../utils/hotkeyHooks';
 
 export const Window: React.FC<{
@@ -25,6 +24,7 @@ export const Window: React.FC<{
   className?: string;
   minimizedClassname?: string;
   onClose?: () => void;
+  toggleHotkey?: string;
 }> = ({
   onClose,
   storeKey,
@@ -40,6 +40,7 @@ export const Window: React.FC<{
   contentClassName,
   minimizedClassname,
   highPriority,
+  toggleHotkey,
 }) => {
   const key = storeKey;
   const setKey = `set${_.upperFirst(key)}`;
@@ -60,6 +61,27 @@ export const Window: React.FC<{
   const isShown = state === WindowState.Shown;
   const isMinimized = state === WindowState.Minimized;
   useBoundHotkeyScope('window', isShown);
+  useScopedHotkey(
+    toggleHotkey || '<nothing>',
+    (event, hotkeysEvent) => {
+      if (toggleHotkey) {
+        if (event.type === 'keyup') {
+          event.preventDefault();
+          if (isShown) {
+            hide();
+          }
+        } else if (event.type === 'keydown') {
+          event.preventDefault();
+          if (!isShown) {
+            maximize();
+          }
+        }
+      }
+    },
+    'global',
+    { keydown: true, keyup: true },
+    [toggleHotkey, isShown]
+  );
 
   const windowButtons = (
     <div
