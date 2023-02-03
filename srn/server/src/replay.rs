@@ -291,7 +291,7 @@ impl ReplayDiffed {
         };
     }
 
-    fn calc_diff_batch<'a>(from: &'a GameState, to: &'a GameState) -> Vec<ValueDiff> {
+    pub fn calc_diff_batch<'a>(from: &'a GameState, to: &'a GameState) -> Vec<ValueDiff> {
         let from: serde_json::Value = serde_json::to_value(from).expect("Couldn't erase typing");
         let to: serde_json::Value = serde_json::to_value(to).expect("Couldn't erase typing");
         let mut d = Recorder::default();

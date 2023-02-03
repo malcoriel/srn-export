@@ -280,6 +280,7 @@ pub enum SamplerMarks {
     UpdateDockedShipsPosition = 63,
     BroadcastState = 64,
     UpdateWorldNonDetIter = 65,
+    BroadcastStateDiff = 66,
 }
 
 impl Display for SamplerMarks {

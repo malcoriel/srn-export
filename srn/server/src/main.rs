@@ -63,7 +63,9 @@ use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, Dialogu
 use crate::indexing::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
 };
+use crate::net::XCastStateDiff;
 use crate::perf::{ConsumeOptions, Sampler};
+use crate::replay::ReplayDiffed;
 use crate::rooms_api::{cleanup_empty_rooms, find_room_state_id_by_player_id, reindex_rooms};
 use crate::sandbox::mutate_state;
 use crate::states::{
@@ -183,6 +185,7 @@ lazy_static! {
 }
 
 const DEFAULT_SLEEP_MS: u64 = 1;
+const DIFF_BROADCAST_EVERY_TICKS: i64 = 16 * 1000;
 const BROADCAST_EVERY_TICKS: i64 = 500 * 1000;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
@@ -571,6 +574,20 @@ fn main_thread() {
             continue;
         }
 
+        let broadcast_mark = sampler.start(SamplerMarks::BroadcastStateDiff as u32);
+        for room in get_rooms_iter_mut(&mut cont) {
+            let diff = make_state_diff(room);
+            if diff.diffs.len() > 0 {
+                main_ws_server::x_cast_state_diff(diff)
+            }
+        }
+
+        if sampler.end_top(broadcast_mark) < 0 {
+            shortcut_frame += 1;
+            sampler.end(total_mark);
+            continue;
+        }
+
         sampler.end(total_mark);
 
         if sampler.budget < 0 {
@@ -584,6 +601,16 @@ fn main_thread() {
         if sleep_remaining > MIN_SLEEP_TICKS {
             thread::sleep(Duration::from_micros(sleep_remaining as u64));
         }
+    }
+}
+
+fn make_state_diff(room: &mut Room) -> XCastStateDiff {
+    let diffs = ReplayDiffed::calc_diff_batch(&room.last_diff_state, &room.state);
+    room.last_diff_state = room.state.clone();
+    XCastStateDiff {
+        diffs,
+        state_id: room.state.id,
+        xcast: XCast::Broadcast(room.state.id),
     }
 }
 

@@ -2355,7 +2355,8 @@ pub fn make_room(
     let mut room = Room {
         id: room_id,
         name: room_name,
-        state,
+        state: state.clone(),
+        last_diff_state: state,
         last_players_mark: None,
         bots: vec![],
         bots_seed,

@@ -5,6 +5,7 @@ use crate::api_struct::RoomId;
 use crate::dialogue::Dialogue;
 use crate::indexing::{find_my_player, find_my_ship, find_player_location_idx};
 use crate::market::Market;
+use crate::replay::ValueDiff;
 use crate::world::{GameMode, GameState, Location, Ship};
 use crate::world_events::GameEvent;
 use crate::xcast::XCast;
@@ -39,15 +40,23 @@ pub struct Pong {
     pub target_player_id: Uuid,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct XCastStateDiff {
+    pub state_id: Uuid,
+    pub diffs: Vec<ValueDiff>,
+    pub xcast: XCast,
+}
+
 #[derive(Debug, Clone)]
 pub enum ServerToClientMessage {
     ObsoleteStateBroadcast(GameState),
     ObsoleteStateChangeExclusive(GameState, Uuid),
     TagConfirm(TagConfirm, Uuid),
-    MulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>, Uuid),
+    ObsoleteMulticastPartialShipUpdate(ShipsWrapper, Option<Uuid>, Uuid),
     DialogueStateChange(Wrapper<Option<Dialogue>>, Uuid, Uuid),
     XCastGameEvent(Wrapper<GameEvent>, XCast),
     XCastStateChange(GameState, XCast),
+    XCastStateDiff(XCastStateDiff),
     RoomSwitched(XCast),
     RoomLeave(Uuid),
     Pong(Pong),
@@ -187,7 +196,7 @@ impl ServerToClientMessage {
             ServerToClientMessage::TagConfirm(tag_confirm, _unused) => {
                 (3, serde_json::to_string(&tag_confirm).unwrap())
             }
-            ServerToClientMessage::MulticastPartialShipUpdate(ships, _, _) => {
+            ServerToClientMessage::ObsoleteMulticastPartialShipUpdate(ships, _, _) => {
                 (4, serde_json::to_string(ships).unwrap())
             }
             ServerToClientMessage::DialogueStateChange(dialogue, _, _) => {
@@ -202,6 +211,9 @@ impl ServerToClientMessage {
             }
             ServerToClientMessage::RoomLeave(_) => (9, "".to_owned()),
             ServerToClientMessage::Pong(msg) => (10, msg.your_average_for_server.to_string()),
+            ServerToClientMessage::XCastStateDiff(val) => {
+                (11, serde_json::to_string(&val).unwrap())
+            }
         };
         format!("{}_%_{}", code, serialized)
     }

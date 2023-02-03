@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::net::ServerToClientMessage;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum XCast {
     // state_id
     Broadcast(Uuid),
@@ -43,7 +43,11 @@ pub fn check_message_casting(
                 false
             }
         }
-        ServerToClientMessage::MulticastPartialShipUpdate(_, exclude_client_id, state_id) => {
+        ServerToClientMessage::ObsoleteMulticastPartialShipUpdate(
+            _,
+            exclude_client_id,
+            state_id,
+        ) => {
             if state_id != current_state_id {
                 false
             } else {
@@ -76,6 +80,9 @@ pub fn check_message_casting(
         }
         ServerToClientMessage::RoomLeave(target_player) => target_player == client_id,
         ServerToClientMessage::Pong(pong) => pong.target_player_id == client_id,
+        ServerToClientMessage::XCastStateDiff(val) => {
+            should_send_xcast(client_id, val.xcast, val.state_id)
+        }
     }
 }
 

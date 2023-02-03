@@ -21,10 +21,7 @@ use crate::dialogue::{execute_dialog_option, Dialogue, DialogueUpdate};
 use crate::get_prng;
 use crate::indexing::find_my_player;
 use crate::indexing::ObjectSpecifier;
-use crate::net::{
-    ClientOpCode, PersonalizeUpdate, Pong, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
-    TagConfirm, Wrapper,
-};
+use crate::net::{ClientOpCode, PersonalizeUpdate, Pong, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload, TagConfirm, Wrapper, XCastStateDiff};
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
 use crate::world::{GameState, Player, Ship};
 use crate::world_actions::is_world_update_action;
@@ -236,6 +233,20 @@ pub fn x_cast_state(state: GameState, x_cast: XCast) {
         Ok(_) => {}
         Err(e) => {
             warn!(format!("failed to x_cast_state {}", e));
+        }
+    }
+}
+
+pub fn x_cast_state_diff(diff: XCastStateDiff) {
+    match MAIN_DISPATCHER
+        .0
+        .lock()
+        .unwrap()
+        .try_send(ServerToClientMessage::XCastStateDiff(diff))
+    {
+        Ok(_) => {}
+        Err(e) => {
+            warn!(format!("failed to x_cast_state_diff {}", e));
         }
     }
 }
@@ -616,7 +627,7 @@ pub fn increment_client_errors(client_id: Uuid) {
 }
 
 pub fn dispatcher_thread() {
-    // due to some magic, cloning the Arc-Mutex gives me a permanent link to
+    // due to some magick, cloning the Arc-Mutex gives me a permanent link to
     // the non-cloned contents
     let client_senders = CLIENT_SENDERS.clone();
     let unwrapped = MAIN_DISPATCHER.1.lock().unwrap();

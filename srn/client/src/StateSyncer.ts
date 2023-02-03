@@ -63,8 +63,13 @@ type StateSyncerEventServerState = {
   state: GameState;
   visibleArea: AABB;
 };
+
+export type Diff = {
+  todo: string;
+};
 export type StateSyncerEvent =
   | { tag: 'init'; state: GameState; visibleArea: AABB }
+  | { tag: 'diff'; diffs: Diff[]; visibleArea: AABB }
   | { tag: 'time update'; elapsedTicks: number; visibleArea: AABB }
   | StateSyncerEventServerState
   | {
@@ -178,6 +183,9 @@ export class StateSyncer implements IStateSyncer {
         }
         case 'player action': {
           return this.onPlayerAction(event);
+        }
+        case 'diff': {
+          return this.onServerDiff(event);
         }
         default:
           throw new Error(`bad case ${(event as any).tag}`);
@@ -1205,5 +1213,21 @@ export class StateSyncer implements IStateSyncer {
       }
     }
     return true;
+  }
+
+  private onServerDiff(event: {
+    tag: 'diff';
+    diffs: Diff[];
+    visibleArea: AABB;
+  }) {
+    if (this.state === this.trueState) {
+      this.log.push('clone due to diff');
+      this.trueState = JSON.parse(JSON.stringify(this.state));
+    }
+    for (const diff of event.diffs) {
+      if (diff.Modified) {
+        _.set(this.trueState, diff.Modified[0], diff.Modified[1])
+      }
+    }
   }
 }

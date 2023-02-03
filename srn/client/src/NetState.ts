@@ -38,7 +38,12 @@ import {
   findMyShip,
 } from './ClientStateIndexing';
 import { ActionBuilder } from '../../world/pkg/world.extra';
-import { IStateSyncer, StateSyncer, StateSyncerEvent } from './StateSyncer';
+import {
+  Diff,
+  IStateSyncer,
+  StateSyncer,
+  StateSyncerEvent,
+} from './StateSyncer';
 import {
   getActiveSyncActions,
   resetActiveSyncActions,
@@ -108,7 +113,7 @@ export enum ServerToClientMessageCode {
   ObsoleteStateBroadcast,
   ObsoleteStateChangeExclusive,
   TagConfirm = 3,
-  MulticastPartialShipsUpdate = 4,
+  ObsoleteMulticastPartialShipsUpdate = 4,
   // intentionally unused
   UnicastDialogueStateChange = 5,
   XCastGameEvent = 6,
@@ -116,6 +121,7 @@ export enum ServerToClientMessageCode {
   XCastGameState = 8,
   LeaveRoom = 9,
   Pong = 10,
+  XcastStateDiff = 11,
 }
 
 // it's completely ignored in actual render, since vsynced time is used
@@ -662,26 +668,10 @@ export default class NetState extends EventEmitter {
           visibleArea: this.getSimulationArea(),
         });
       } else if (
-        messageCode === ServerToClientMessageCode.MulticastPartialShipsUpdate
+        messageCode ===
+        ServerToClientMessageCode.ObsoleteMulticastPartialShipsUpdate
       ) {
-        // 1. it is always about other ships, since server always excludes the updater from the update recipients
-        // so to avoid juggling actions above and so on, just skip my own ship update
-        // 2. it is also mostly an optimization to avoid sending the whole state because of other's actions
-        // 3. it can be further optimized by only sending the changed ship
-        // 4. without it, manual movement updates not so often (only via full syncs), so this leads to very bad look
-        const ships = JSON.parse(data).ships;
-        const myOldShip = findMyShip(this.state);
-        this.state.locations[0].ships = ships;
-        if (myOldShip) {
-          this.state.locations[0].ships = this.state.locations[0].ships.map(
-            (s: any) => {
-              if (s.id === myOldShip.id) {
-                return myOldShip;
-              }
-              return s;
-            }
-          );
-        }
+        normalLog('Received obsolete multicast partial ships update message');
       } else if (messageCode === ServerToClientMessageCode.XCastGameEvent) {
         const event = JSON.parse(data).value;
         this.emit('gameEvent', event);
@@ -700,6 +690,12 @@ export default class NetState extends EventEmitter {
         this.disconnectAndDestroy();
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
         this.syncer.handleServerConfirmedPacket(JSON.parse(data).tag);
+      } else if (messageCode === ServerToClientMessageCode.XcastStateDiff) {
+        this.syncer.handle({
+          tag: 'diff',
+          diffs: JSON.parse(data).diffs as Diff[],
+          visibleArea: this.getSimulationArea(),
+        });
       } else if (messageCode === ServerToClientMessageCode.Pong) {
         // nothing for now
       } else {
