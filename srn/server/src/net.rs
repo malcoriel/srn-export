@@ -212,7 +212,7 @@ impl ServerToClientMessage {
             ServerToClientMessage::RoomLeave(_) => (9, "".to_owned()),
             ServerToClientMessage::Pong(msg) => (10, msg.your_average_for_server.to_string()),
             ServerToClientMessage::XCastStateDiff(val) => {
-                (11, serde_json::to_string(&val).unwrap())
+                (11, serde_json::to_string(&val.diffs).unwrap())
             }
         };
         format!("{}_%_{}", code, serialized)

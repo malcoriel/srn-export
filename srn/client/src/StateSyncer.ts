@@ -23,6 +23,7 @@ import Color from 'color';
 import * as uuid from 'uuid';
 import { Wreck } from '../../world/pkg/world';
 import { UnreachableCaseError } from 'ts-essentials';
+import { EventEmitter } from 'events';
 
 type StateSyncerSuccess = { tag: 'success'; state: GameState };
 type StateSyncerDesyncedSuccess = {
@@ -64,9 +65,17 @@ type StateSyncerEventServerState = {
   visibleArea: AABB;
 };
 
-export type Diff = {
-  todo: string;
+type DiffRemoved = {
+  Removed: [string, unknown];
 };
+type DiffAdded = {
+  Added: [string, unknown];
+};
+type DiffModified = {
+  Modified: [string, unknown];
+};
+
+export type Diff = DiffRemoved | DiffAdded | DiffModified;
 export type StateSyncerEvent =
   | { tag: 'init'; state: GameState; visibleArea: AABB }
   | { tag: 'diff'; diffs: Diff[]; visibleArea: AABB }
@@ -96,18 +105,6 @@ type SyncerViolation = SyncerViolationObjectJump | SyncerViolationTimeRollback;
 
 export const SHADOW_ID = uuid.v4();
 
-export interface IStateSyncer {
-  handle(StateSyncerEvent: StateSyncerEvent): StateSyncerResult;
-
-  getCurrentState(): GameState;
-
-  flushLog(): any[];
-
-  handleServerConfirmedPacket(tag: string): void;
-
-  validateArrayUniqueness(arr: { id: any }[], arrayKey: string): void;
-}
-
 export interface SyncerDeps {
   wasmUpdateWorld: any;
   wasmUpdateWorldIncremental: any;
@@ -136,7 +133,7 @@ const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up,
 //   tag: string;
 // };
 
-export class StateSyncer implements IStateSyncer {
+export class StateSyncer extends EventEmitter {
   private readonly wasmUpdateWorld;
 
   private readonly wasmUpdateWorldIncremental;
@@ -145,7 +142,10 @@ export class StateSyncer implements IStateSyncer {
 
   private eventCounter = 0;
 
+  public emitMyShipServerPosition = false;
+
   constructor(deps: SyncerDeps) {
+    super();
     this.wasmUpdateWorld = deps.wasmUpdateWorld;
     this.wasmUpdateWorldIncremental = deps.wasmUpdateWorldIncremental;
     this.getShowShadow = deps.getShowShadow;
@@ -300,23 +300,30 @@ export class StateSyncer implements IStateSyncer {
       )
     );
     this.useCachedStateForUpdateContext = false;
-    if (!this.allAreRepeatedActions(event.actions)) {
-      console.log('optimistic update');
-      this.trueState = this.state; // invalidate whatever we had previously during correction, as client view has to win immediately, then get compensated
-    }
+    // if (!this.allAreRepeatedActions(event.actions)) {
+    //   console.log('optimistic update');
+    //   this.trueState = this.state; // invalidate whatever we had previously during correction, as client view has to win immediately, then get compensated
+    // }
     return this.successCurrent();
   }
 
   private pendingActionPacks: PendingActionPack[] = [];
 
-  private onServerState({
-    state: serverState,
-    visibleArea,
-  }: StateSyncerEventServerState) {
+  private onServerState(
+    { state: serverState, visibleArea }: StateSyncerEventServerState,
+    isDiff = false
+  ) {
+    // this.log.push(`onServer ${isDiff ? 'diff' : ''}`);
     const hadHugeViolation = this.cleanupCommitedAndOutdatedPendingActions(
       serverState
     );
     this.trueState = serverState;
+    if (this.emitMyShipServerPosition) {
+      const myShip = findMyShip(serverState);
+      if (myShip) {
+        this.emit('myShipServerPosition', myShip.spatial.position, isDiff);
+      }
+    }
     if (hadHugeViolation) {
       // happens when there was a desync in history of actions, after which all compensations do not make sense
       this.state = this.trueState;
@@ -324,29 +331,29 @@ export class StateSyncer implements IStateSyncer {
       console.warn('huge violation detected, state overwrite by server state');
       return this.successFullDesynced('xx');
     }
-    this.eventCounter += 1;
-    this.eventCounter = Math.max(10);
-    // console.log(`server ${serverState.ticks} client ${this.state.ticks}`);
-    if (serverState.ticks < this.state.ticks) {
-      // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
-      // or do the true server-in-the-past schema
-      const diff = this.state.ticks - serverState.ticks;
-      const rebasedState = this.rebaseStateUsingCurrentActions(
-        serverState,
-        diff,
-        visibleArea,
-        'onServerState'
-      );
-      this.trueState = rebasedState || serverState;
-
-      Perf.markArtificialTiming(`ServerBehind ${this.eventCounter}`);
-    } else if (serverState.ticks >= this.state.ticks) {
-      // TODO maybe calculate proper value to extrapolate to instead, based on average client perf lag,
-      // plus do the rebase not reflected actions?
-      this.trueState = serverState;
-      Perf.markArtificialTiming(`ServerAhead ${this.eventCounter}`);
-    }
-
+    // this.eventCounter += 1;
+    // this.eventCounter %= 10;
+    // // console.log(`server ${serverState.ticks} client ${this.state.ticks}`);
+    // if (serverState.ticks < this.state.ticks) {
+    //   // TODO to properly avoid rollbacks from this one, server needs to use the 3rd player action argument of 'when it happened', to apply action in the past
+    //   // or do the true server-in-the-past schema
+    //   const diff = this.state.ticks - serverState.ticks;
+    //   const rebasedState = this.rebaseStateUsingCurrentActions(
+    //     serverState,
+    //     diff,
+    //     visibleArea,
+    //     'onServerState'
+    //   );
+    //   this.trueState = rebasedState || serverState;
+    //
+    //   Perf.markArtificialTiming(`ServerBehind ${this.eventCounter}`);
+    // } else if (serverState.ticks >= this.state.ticks) {
+    //   // TODO maybe calculate proper value to extrapolate to instead, based on average client perf lag,
+    //   // plus do the rebase not reflected actions?
+    //   this.trueState = serverState;
+    //   // Perf.markArtificialTiming(`ServerAhead ${this.eventCounter}`);
+    // }
+    //
     const desyncValue = (this.state.millis - this.trueState.millis).toString();
     return this.successDesynced(desyncValue);
   }
@@ -433,6 +440,7 @@ export class StateSyncer implements IStateSyncer {
     elapsedTicks: number;
     visibleArea: AABB;
   }): StateSyncerResult {
+    // this.log.push('onTimeUpdate');
     if (!this.state) {
       return this.error('no state');
     }
@@ -568,10 +576,10 @@ export class StateSyncer implements IStateSyncer {
 
   private MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK = 10 / 1000 / 1000; // in units = 10 units/second is max allowed speed
 
-  private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = MAX_ALLOWED_CORRECTION_JUMP_CONST; // in units = 10 units/second is max allowed speed
+  private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = MAX_ALLOWED_CORRECTION_JUMP_CONST;
 
   private CORRECTION_TELEPORT_BAIL_PER_TICK =
-    MAX_ALLOWED_CORRECTION_JUMP_CONST * 30; // sometimes we need to teleport, e.g. in case of an actual teleport
+    MAX_ALLOWED_CORRECTION_JUMP_CONST * 100; // sometimes we need to teleport, e.g. in case of an actual teleport
 
   private checkViolations(
     currState: GameState,
@@ -693,7 +701,7 @@ export class StateSyncer implements IStateSyncer {
     currentState: GameState,
     elapsedTicks: number
   ) {
-    const myShipId = findMyShip(currentState)?.id;
+    // const myShipId = findMyShip(currentState)?.id;
     const maxShiftLen =
       elapsedTicks * this.MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK;
     for (const violation of violations) {
@@ -701,26 +709,17 @@ export class StateSyncer implements IStateSyncer {
         const jumpDir = Vector.fromIVector(violation.to).subtract(
           Vector.fromIVector(violation.from)
         );
-        let jumpCorrectionToTruePos: Vector;
-        if (
-          violation.diff / elapsedTicks >
-          this.CORRECTION_TELEPORT_BAIL_PER_TICK
-        ) {
-          if (myShipId === getObjSpecId(violation.obj)) {
-            console.warn(`teleport correction bail, dist = ${violation.diff}`);
-          }
-          jumpCorrectionToTruePos = jumpDir;
-        } else {
-          jumpCorrectionToTruePos = jumpDir
-            .normalize()
-            .scale(
-              Math.min(
-                maxShiftLen,
-                jumpDir.length() -
-                  this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK * elapsedTicks
-              )
-            );
+        const correctionShiftLength =
+          this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK * elapsedTicks;
+        let usedMaxShiftLen = maxShiftLen;
+        if (jumpDir.length() > this.CORRECTION_TELEPORT_BAIL_PER_TICK) {
+          usedMaxShiftLen *= 5;
         }
+        const jumpCorrectionToTruePos = jumpDir
+          .normalize()
+          .scale(
+            Math.min(usedMaxShiftLen, jumpDir.length() - correctionShiftLength)
+          );
         const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
         const newObjectPos = Vector.fromIVector(getObjectPosition(newObj));
         const correctedPos = newObjectPos.add(jumpCorrectionToTruePos);
@@ -740,9 +739,10 @@ export class StateSyncer implements IStateSyncer {
       (ap) => ap.packet_tag === tag
     );
     if (!targetAp) {
-      this.log.push(
-        'warn: server tag for non-pending action received, probably there is a huge packet delay'
-      );
+      // this might be ok with new diff-based updates, as server broadcast packet might arrive before confirm packet
+      // this.log.push(
+      //   'warn: server tag for non-pending action received, probably there is a huge packet delay'
+      // );
       return;
     }
     targetAp.server_acknowledged = true;
@@ -1215,19 +1215,66 @@ export class StateSyncer implements IStateSyncer {
     return true;
   }
 
+  private normalizeKey(key: string): string {
+    return key.replace('/', '.');
+  }
+
+  private getParentChildKey(key: string): [string, string] {
+    const arr = key.split('/');
+    if (arr.length <= 1) {
+      return ['', key];
+    }
+    if (arr.length === 2) {
+      return [arr[0], arr[1]];
+    }
+    return [arr.slice(0, arr.length - 2).join('.'), arr[arr.length - 1]];
+  }
+
   private onServerDiff(event: {
     tag: 'diff';
-    diffs: Diff[];
+    diffs: any[];
     visibleArea: AABB;
-  }) {
+  }): StateSyncerResult {
+    if (this.trueState === undefined || this.state === undefined) {
+      if (!this.state) {
+        return this.successCurrent();
+      }
+    }
     if (this.state === this.trueState) {
-      this.log.push('clone due to diff');
+      // this.log.push('clone due to diff');
       this.trueState = JSON.parse(JSON.stringify(this.state));
     }
     for (const diff of event.diffs) {
       if (diff.Modified) {
-        _.set(this.trueState, diff.Modified[0], diff.Modified[1])
+        _.set(
+          this.trueState,
+          this.normalizeKey(diff.Modified[0]),
+          diff.Modified[1]
+        );
+      }
+      if (diff.Added) {
+        _.set(this.trueState, this.normalizeKey(diff.Added[0]), diff.Added[1]);
+        // strictly speaking, I should validate that it didn't create sparse arrays
+        // however, the validation will happen automatically if we try to update state using badly patched state
+      }
+      if (diff.Removed) {
+        const key = this.normalizeKey(diff.Removed[0]);
+        const [parentKey, childKey] = this.getParentChildKey(key);
+        const parent = _.get(this.trueState, parentKey);
+        if (Array.isArray(parent)) {
+          parent.splice(Number(childKey), 1);
+        } else if (_.isObject(parent)) {
+          delete (parent as any)[childKey];
+        }
       }
     }
+    return this.onServerState(
+      {
+        state: this.trueState,
+        visibleArea: event.visibleArea,
+        tag: 'server state',
+      },
+      true
+    );
   }
 }

@@ -535,6 +535,7 @@ pub struct Breadcrumb {
     pub color: String,
     pub timestamp_ticks: u64,
     pub tag: Option<String>,
+    pub extra_size: i32,
 }
 
 #[skip_serializing_none]

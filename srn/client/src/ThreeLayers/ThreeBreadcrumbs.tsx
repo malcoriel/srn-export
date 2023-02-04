@@ -41,7 +41,10 @@ export const ThreeBreadcrumbs = ({
         return (
           <group key={key}>
             {breadcrumbs.map(
-              ({ color, position, timestamp_ticks, ...rest }, i) => {
+              (
+                { color, position, timestamp_ticks, extra_size, ...rest },
+                i
+              ) => {
                 if (currentTicks >= timestamp_ticks + displayForLastTicks) {
                   return null;
                 }
@@ -63,7 +66,9 @@ export const ThreeBreadcrumbs = ({
                       key={i}
                       position={posToThreePos(pos.x, pos.y, SHIP_FIXED_Z + 10)}
                     >
-                      <circleBufferGeometry args={[0.125, 8]} />
+                      <circleBufferGeometry
+                        args={[((extra_size || 0) + 1) * 0.125, 8]}
+                      />
                       <meshBasicMaterial color={color} />
                     </mesh>
                   );

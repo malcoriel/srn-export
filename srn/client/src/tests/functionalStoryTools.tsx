@@ -119,6 +119,7 @@ export const startTestGame = async (
   await ns.init(GameMode.Sandbox);
   nsRef = ns;
   nsRef.debugSpaceTime = !!debugSpaceTime;
+  nsRef.syncer.emitMyShipServerPosition = !!debugSpaceTime;
   await buildStory(params);
 };
 

@@ -9,6 +9,7 @@ import {
   loadReplayIntoWasm,
   ManualMovementActionTags,
   ManualMovementInactivityDropMs,
+  MaxedAABB,
   restoreReplayFrame,
   TradeAction,
   updateWorld,
@@ -17,7 +18,7 @@ import {
 } from './world';
 import EventEmitter from 'events';
 import * as uuid from 'uuid';
-import Vector, { IVector } from './utils/Vector';
+import Vector, { IVector, VectorF } from './utils/Vector';
 import { Measure, Perf, statsHeap } from './HtmlLayers/Perf';
 import { vsyncedCoupledThrottledTime, vsyncedCoupledTime } from './utils/Times';
 import { api } from './utils/api';
@@ -38,12 +39,7 @@ import {
   findMyShip,
 } from './ClientStateIndexing';
 import { ActionBuilder } from '../../world/pkg/world.extra';
-import {
-  Diff,
-  IStateSyncer,
-  StateSyncer,
-  StateSyncerEvent,
-} from './StateSyncer';
+import { Diff, StateSyncer, StateSyncerEvent } from './StateSyncer';
 import {
   getActiveSyncActions,
   resetActiveSyncActions,
@@ -92,6 +88,7 @@ export type BreadcrumbLine = {
   color: string;
   timestamp_ticks: number;
   tag?: string;
+  extra_size?: number;
 };
 
 export type VisualState = {
@@ -132,7 +129,7 @@ statsHeap.timeStep = LOCAL_SIM_TIME_STEP;
 const normalLog = (...args: any[]) => console.log(...args);
 const normalWarn = (...args: any[]) => console.warn(...args);
 const normalErr = (...args: any[]) => console.error(...args);
-export const DISPLAY_BREADCRUMBS_LAST_TICKS = 5 * 1000 * 1000;
+export const DISPLAY_BREADCRUMBS_LAST_TICKS = 2.5 * 1000 * 1000;
 
 export default class NetState extends EventEmitter {
   private socket: WebSocket | null = null;
@@ -140,7 +137,7 @@ export default class NetState extends EventEmitter {
   // actual state used for rendering = interpolate(prevState, nextState, value=0..1)
   state!: GameState;
 
-  syncer: IStateSyncer;
+  syncer: StateSyncer;
 
   indexes!: ClientStateIndexes;
 
@@ -237,6 +234,9 @@ export default class NetState extends EventEmitter {
       wasmUpdateWorldIncremental: updateWorldIncremental,
       getShowShadow: () => getSrnState().hotkeysPressed['show grid'], // bind to the same hotkey store as grid
     });
+    this.syncer.on('myShipServerPosition', (pos: IVector, diff: boolean) =>
+      this.addMyShipServerPositionBreadcrumbs(pos, diff)
+    );
   }
 
   private updateVisMap() {
@@ -590,6 +590,8 @@ export default class NetState extends EventEmitter {
     });
   };
 
+  private lastAddSpaceTimeBreadcrumbsPerfTicks = performance.now() * 1000;
+
   private addSpaceTimeBreadcrumbs = () => {
     const SPACING_TICKS = 50 * 1000;
     // @ts-ignore
@@ -604,12 +606,15 @@ export default class NetState extends EventEmitter {
       // console.log('skip', this.state.ticks - lastBreadcrumb.timestamp_ticks);
       return;
     }
+    const now = performance.now() * 1000;
+    const elapsedTicks = now - this.lastAddSpaceTimeBreadcrumbsPerfTicks;
+    this.lastAddSpaceTimeBreadcrumbsPerfTicks = now;
     const SPACE_TIME_SHIFT_SPEED = 5 / 1000 / 1000;
     this.visualState.breadcrumbs = this.visualState.breadcrumbs.map((b) => {
       if (b.tag !== 'spaceTime') {
         return b;
       }
-      b.position.x -= SPACING_TICKS * SPACE_TIME_SHIFT_SPEED;
+      b.position.x -= elapsedTicks * SPACE_TIME_SHIFT_SPEED;
       return b;
     });
     const myShip = findMyShip(this.state);
@@ -619,8 +624,44 @@ export default class NetState extends EventEmitter {
         color: myShip.navigate_target ? 'green' : 'pink',
         timestamp_ticks: this.state.ticks,
         tag: 'spaceTime',
+        extra_size: 0,
       });
     }
+  };
+
+  private lastAddMyShipServerPositionBreadcrumbsPerfTicks =
+    performance.now() * 1000;
+
+  private addMyShipServerPositionBreadcrumbs = (
+    pos: IVector,
+    diff: boolean
+  ) => {
+    const SPACING_TICKS = 50 * 1000;
+    const now = performance.now() * 1000;
+    const elapsedTicks =
+      now - this.lastAddMyShipServerPositionBreadcrumbsPerfTicks;
+
+    if (elapsedTicks < SPACING_TICKS && diff) {
+      // do not ignore the non-diff important full updates
+      return;
+    }
+    this.lastAddMyShipServerPositionBreadcrumbsPerfTicks = now;
+
+    const SPACE_TIME_SHIFT_SPEED = 5 / 1000 / 1000;
+    this.visualState.breadcrumbs = this.visualState.breadcrumbs.map((b) => {
+      if (b.tag !== 'spaceTimeMyShipServer') {
+        return b;
+      }
+      b.position.x -= elapsedTicks * SPACE_TIME_SHIFT_SPEED;
+      return b;
+    });
+    this.visualState.breadcrumbs.push({
+      position: Vector.fromIVector(pos).add(VectorF(0.5, 0)),
+      color: diff ? 'white' : 'red',
+      timestamp_ticks: this.state.ticks,
+      tag: 'spaceTimeMyShipServer',
+      extra_size: !diff ? 1 : 0,
+    });
   };
 
   private cleanupBreadcrumbs = () => {
@@ -693,7 +734,7 @@ export default class NetState extends EventEmitter {
       } else if (messageCode === ServerToClientMessageCode.XcastStateDiff) {
         this.syncer.handle({
           tag: 'diff',
-          diffs: JSON.parse(data).diffs as Diff[],
+          diffs: JSON.parse(data) as Diff[],
           visibleArea: this.getSimulationArea(),
         });
       } else if (messageCode === ServerToClientMessageCode.Pong) {
@@ -766,19 +807,21 @@ export default class NetState extends EventEmitter {
     );
   }
 
-  public sendSchedulePlayerAction(action: Action) {
+  public sendSchedulePlayerAction(action: Action, doNotSync = false) {
     const tag = uuid.v4();
     this.send({
       code: ClientOpCode.SchedulePlayerAction,
       value: { action },
       tag,
     });
-    this.sync({
-      tag: 'player action',
-      actions: [action],
-      packetTag: tag,
-      visibleArea: this.getSimulationArea(),
-    });
+    if (!doNotSync) {
+      this.sync({
+        tag: 'player action',
+        actions: [action],
+        packetTag: tag,
+        visibleArea: this.getSimulationArea(),
+      });
+    }
   }
 
   private sendSchedulePlayerActionBatch(
@@ -815,7 +858,8 @@ export default class NetState extends EventEmitter {
       ActionBuilder.ActionSandboxCommand({
         player_id: this.state?.my_id,
         command: cmd,
-      })
+      }),
+      true
     );
   }
 

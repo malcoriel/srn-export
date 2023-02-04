@@ -153,6 +153,7 @@ pub fn handle_events(
                     } => {
                         let mark = sampler.start(SamplerMarks::EventsCreateRoom as u32);
                         create_room_impl(cont, &mode, room_id, bots_seed);
+                        log!(format!("room {room_id} created"));
                         sampler.end(mark);
                     }
                     GameEvent::PirateSpawn { .. } => {

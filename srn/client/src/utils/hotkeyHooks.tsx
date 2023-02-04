@@ -24,6 +24,10 @@ export const useToggleHotkey = (
     },
     [setShown, setGlobalState, globalStoreKey]
   );
+  useEffect(() => {
+    // sync once to ensure the global state value matches the default value from hook
+    syncedSetShown(defaultValue);
+  }, []);
   useHotkeys(
     hotkey,
     () => {
