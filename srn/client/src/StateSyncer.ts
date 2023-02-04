@@ -713,7 +713,7 @@ export class StateSyncer extends EventEmitter {
           this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK * elapsedTicks;
         let usedMaxShiftLen = maxShiftLen;
         if (jumpDir.length() > this.CORRECTION_TELEPORT_BAIL_PER_TICK) {
-          usedMaxShiftLen *= 5;
+          usedMaxShiftLen *= jumpDir.length();
         }
         const jumpCorrectionToTruePos = jumpDir
           .normalize()
