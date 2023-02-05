@@ -309,11 +309,24 @@ export class StateSyncer extends EventEmitter {
 
   private pendingActionPacks: PendingActionPack[] = [];
 
+  private lastServerTicks = 0;
+
   private onServerState(
     { state: serverState, visibleArea }: StateSyncerEventServerState,
     isDiff = false
   ) {
     // this.log.push(`onServer ${isDiff ? 'diff' : ''}`);
+    if (this.lastServerTicks > serverState.ticks) {
+      this.log.push(
+        `warn: Server state rollback for ticks, from ${
+          this.lastServerTicks
+        } to ${serverState.ticks} during diff=${JSON.stringify(
+          isDiff
+        )} at ${new Date()}`
+      );
+    }
+    this.lastServerTicks = serverState.ticks;
+
     const hadHugeViolation = this.cleanupCommitedAndOutdatedPendingActions(
       serverState
     );
@@ -548,8 +561,16 @@ export class StateSyncer extends EventEmitter {
     return { tag: 'success' as const, state: this.state };
   }
 
-  private successDesynced(desync: string) {
-    return { tag: 'success desynced' as const, state: this.state, desync };
+  private successDesynced(desync?: string) {
+    let usedDesyncValue = desync;
+    if (!usedDesyncValue) {
+      usedDesyncValue = (this.state.millis - this.trueState.millis).toString();
+    }
+    return {
+      tag: 'success desynced' as const,
+      state: this.state,
+      desync: usedDesyncValue,
+    };
   }
 
   private successFullDesynced(desync: string) {
@@ -1216,7 +1237,7 @@ export class StateSyncer extends EventEmitter {
   }
 
   private normalizeKey(key: string): string {
-    return key.replace('/', '.');
+    return _.trim(key.replace('/', '.'), '.');
   }
 
   private getParentChildKey(key: string): [string, string] {
@@ -1236,12 +1257,12 @@ export class StateSyncer extends EventEmitter {
     visibleArea: AABB;
   }): StateSyncerResult {
     if (this.trueState === undefined || this.state === undefined) {
-      if (!this.state) {
-        return this.successCurrent();
-      }
+      return this.successCurrent();
     }
+    let wasCloned = false;
     if (this.state === this.trueState) {
       // this.log.push('clone due to diff');
+      wasCloned = true;
       this.trueState = JSON.parse(JSON.stringify(this.state));
     }
     for (const diff of event.diffs) {
@@ -1268,13 +1289,21 @@ export class StateSyncer extends EventEmitter {
         }
       }
     }
+    if (
+      event.diffs.length === 1 &&
+      event.diffs[0]?.Modified?.[0] === '/accumulated_not_updated_ticks'
+    ) {
+      // special optimization to only modify state but not rebase, since update will not work
+      return this.successDesynced();
+    }
     return this.onServerState(
       {
         state: this.trueState,
         visibleArea: event.visibleArea,
         tag: 'server state',
       },
-      true
+      // @ts-ignore
+      { wasCloned, diffs: event.diffs }
     );
   }
 }

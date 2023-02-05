@@ -185,8 +185,7 @@ lazy_static! {
 }
 
 const DEFAULT_SLEEP_MS: u64 = 1;
-const DIFF_BROADCAST_EVERY_TICKS: i64 = 16 * 1000;
-const BROADCAST_EVERY_TICKS: i64 = 500 * 1000;
+const FULL_BROADCAST_EVERY_TICKS: i64 = 500 * 1000;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const MAX_MESSAGES_PER_INTERVAL: u32 = 10;
@@ -465,15 +464,18 @@ fn main_thread() {
             continue;
         }
 
+        let mut broadcast_happened = false;
         // For now it seems that due to WS being full-duplex, sending state also clogs client sending commands,
         // therefore not going to send it every update. Should be solved when I split sending and receiving channels
-        if broadcast_elapsed > BROADCAST_EVERY_TICKS {
+        if broadcast_elapsed > FULL_BROADCAST_EVERY_TICKS {
             let broadcast_mark = sampler.start(SamplerMarks::BroadcastState as u32);
             // broadcast first, then update, to ensure that broadcast always happens even if update is shortcut
-            for room in get_rooms_iter(&cont) {
+            for room in get_rooms_iter_mut(&mut cont) {
                 let state_id = room.state.id.clone();
                 main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(state_id));
+                room.last_diff_state = room.state.clone(); // necessary to correclty calculate diff
             }
+            broadcast_happened = true;
             sampler.end(broadcast_mark);
             broadcast_elapsed = 0;
         } else {
@@ -574,18 +576,19 @@ fn main_thread() {
             continue;
         }
 
-        let broadcast_mark = sampler.start(SamplerMarks::BroadcastStateDiff as u32);
-        for room in get_rooms_iter_mut(&mut cont) {
-            let diff = make_state_diff(room);
-            if diff.diffs.len() > 0 {
-                main_ws_server::x_cast_state_diff(diff)
+        if !broadcast_happened {
+            let broadcast_diff_mark = sampler.start(SamplerMarks::BroadcastStateDiff as u32);
+            for room in get_rooms_iter_mut(&mut cont) {
+                let diff = make_state_diff(room);
+                if diff.diffs.len() > 0 {
+                    main_ws_server::x_cast_state_diff(diff)
+                }
             }
-        }
-
-        if sampler.end_top(broadcast_mark) < 0 {
-            shortcut_frame += 1;
-            sampler.end(total_mark);
-            continue;
+            if sampler.end_top(broadcast_diff_mark) < 0 {
+                shortcut_frame += 1;
+                sampler.end(total_mark);
+                continue;
+            }
         }
 
         sampler.end(total_mark);
@@ -611,19 +614,6 @@ fn make_state_diff(room: &mut Room) -> XCastStateDiff {
         diffs,
         state_id: room.state.id,
         xcast: XCast::Broadcast(room.state.id),
-    }
-}
-
-fn broadcast_all_states(cont: &mut RwLockReadGuard<StateContainer>) {
-    for room in get_rooms_iter_read(cont) {
-        main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(room.state.id));
-    }
-}
-
-fn broadcast_all_states_rooms(rooms: Vec<Room>) {
-    for room in rooms.into_iter() {
-        let state_id = room.state.id;
-        main_ws_server::x_cast_state(room.state, XCast::Broadcast(state_id));
     }
 }
 
