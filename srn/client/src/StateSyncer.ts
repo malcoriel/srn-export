@@ -734,7 +734,7 @@ export class StateSyncer extends EventEmitter {
           this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK * elapsedTicks;
         let usedMaxShiftLen = maxShiftLen;
         if (jumpDir.length() > this.CORRECTION_TELEPORT_BAIL_PER_TICK) {
-          usedMaxShiftLen *= jumpDir.length();
+          usedMaxShiftLen *= jumpDir.length() ** 1.5;
         }
         const jumpCorrectionToTruePos = jumpDir
           .normalize()
@@ -1259,6 +1259,10 @@ export class StateSyncer extends EventEmitter {
     if (this.trueState === undefined || this.state === undefined) {
       return this.successCurrent();
     }
+    // if (this.pendingActionPacks.length > 0) {
+    //   // use optimistic updates and do not accept diffs from server until everything is confirmed - just use local sim
+    //   return this.successDesynced();
+    // }
     let wasCloned = false;
     if (this.state === this.trueState) {
       // this.log.push('clone due to diff');
