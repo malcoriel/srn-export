@@ -81,7 +81,7 @@ pub fn check_message_casting(
         ServerToClientMessage::RoomLeave(target_player) => target_player == client_id,
         ServerToClientMessage::Pong(pong) => pong.target_player_id == client_id,
         ServerToClientMessage::XCastStateDiff(val) => {
-            should_send_xcast(client_id, val.xcast, val.state_id)
+            should_send_xcast(client_id, val.xcast, val.state.id)
         }
     }
 }

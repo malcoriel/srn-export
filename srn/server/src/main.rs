@@ -63,7 +63,7 @@ use crate::dialogue::{execute_dialog_option, DialogueId, DialogueScript, Dialogu
 use crate::indexing::{
     find_and_extract_ship, find_my_player, find_my_player_mut, find_my_ship, find_planet,
 };
-use crate::net::XCastStateDiff;
+use crate::net::{patch_diffs_for_client_impl, patch_state_for_all_clients, XCastStateDiff};
 use crate::perf::{ConsumeOptions, Sampler};
 use crate::replay::ReplayDiffed;
 use crate::rooms_api::{cleanup_empty_rooms, find_room_state_id_by_player_id, reindex_rooms};
@@ -399,7 +399,7 @@ fn main_thread() {
     let mut sampler_consume_elapsed = 0;
     let mut bot_action_elapsed = 0;
     let mut events_elapsed = 0;
-    let mut broadcast_elapsed: i64 = 0;
+    let mut full_broadcast_elapsed: i64 = 0;
     let mut frame_count = 0;
     let mut over_budget_frame = 0;
     let mut shortcut_frame = 0;
@@ -464,22 +464,35 @@ fn main_thread() {
             continue;
         }
 
-        let mut broadcast_happened = false;
         // For now it seems that due to WS being full-duplex, sending state also clogs client sending commands,
         // therefore not going to send it every update. Should be solved when I split sending and receiving channels
-        if broadcast_elapsed > FULL_BROADCAST_EVERY_TICKS {
+        if full_broadcast_elapsed > FULL_BROADCAST_EVERY_TICKS {
             let broadcast_mark = sampler.start(SamplerMarks::BroadcastState as u32);
             // broadcast first, then update, to ensure that broadcast always happens even if update is shortcut
             for room in get_rooms_iter_mut(&mut cont) {
                 let state_id = room.state.id.clone();
-                main_ws_server::x_cast_state(room.state.clone(), XCast::Broadcast(state_id));
-                room.last_diff_state = room.state.clone(); // necessary to correclty calculate diff
+                let mut cloned = room.state.clone();
+                patch_state_for_all_clients(&mut cloned);
+                // double-cloning because the message is sent to the channel, and reference is not an option for now (I don't know how to work with Rcs)
+                main_ws_server::x_cast_state(cloned.clone(), XCast::Broadcast(state_id));
+                room.last_diff_state = cloned; // necessary to correctly calculate diffs in non-full update
             }
-            broadcast_happened = true;
             sampler.end(broadcast_mark);
-            broadcast_elapsed = 0;
+            full_broadcast_elapsed = 0;
         } else {
-            broadcast_elapsed += elapsed_micro;
+            full_broadcast_elapsed += elapsed_micro;
+            let broadcast_diff_mark = sampler.start(SamplerMarks::BroadcastStateDiff as u32);
+            for room in get_rooms_iter_mut(&mut cont) {
+                let diff = make_state_diff(room);
+                if diff.diffs.len() > 0 {
+                    main_ws_server::x_cast_state_diff(diff)
+                }
+            }
+            if sampler.end_top(broadcast_diff_mark) < 0 {
+                shortcut_frame += 1;
+                sampler.end(total_mark);
+                continue;
+            }
         }
 
         let update_rooms_id = sampler.start(SamplerMarks::Update as u32);
@@ -576,21 +589,6 @@ fn main_thread() {
             continue;
         }
 
-        if !broadcast_happened {
-            let broadcast_diff_mark = sampler.start(SamplerMarks::BroadcastStateDiff as u32);
-            for room in get_rooms_iter_mut(&mut cont) {
-                let diff = make_state_diff(room);
-                if diff.diffs.len() > 0 {
-                    main_ws_server::x_cast_state_diff(diff)
-                }
-            }
-            if sampler.end_top(broadcast_diff_mark) < 0 {
-                shortcut_frame += 1;
-                sampler.end(total_mark);
-                continue;
-            }
-        }
-
         sampler.end(total_mark);
 
         if sampler.budget < 0 {
@@ -608,11 +606,13 @@ fn main_thread() {
 }
 
 fn make_state_diff(room: &mut Room) -> XCastStateDiff {
-    let diffs = ReplayDiffed::calc_diff_batch(&room.last_diff_state, &room.state);
-    room.last_diff_state = room.state.clone();
+    let mut cloned = room.state.clone();
+    patch_state_for_all_clients(&mut cloned); // remove unnecessary keys
+    let diffs = ReplayDiffed::calc_diff_batch(&room.last_diff_state, &cloned);
+    room.last_diff_state = cloned;
     XCastStateDiff {
         diffs,
-        state_id: room.state.id,
+        state: room.state.clone(),
         xcast: XCast::Broadcast(room.state.id),
     }
 }

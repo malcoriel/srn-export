@@ -311,19 +311,24 @@ export class StateSyncer extends EventEmitter {
 
   private lastServerTicks = 0;
 
+  private serverStateWithPatches: GameState | null = null;
+
   private onServerState(
     { state: serverState, visibleArea }: StateSyncerEventServerState,
     isDiff = false
   ) {
+    if (!isDiff) {
+      this.serverStateWithPatches = serverState;
+    }
     // this.log.push(`onServer ${isDiff ? 'diff' : ''}`);
     if (this.lastServerTicks > serverState.ticks) {
-      this.log.push(
-        `warn: Server state rollback for ticks, from ${
-          this.lastServerTicks
-        } to ${serverState.ticks} during diff=${JSON.stringify(
-          isDiff
-        )} at ${new Date()}`
-      );
+      // this.log.push(
+      //   `warn: Server state rollback for ticks, from ${
+      //     this.lastServerTicks
+      //   } to ${serverState.ticks} during diff=${JSON.stringify(
+      //     isDiff
+      //   )} at ${new Date()}`
+      // );
     }
     this.lastServerTicks = serverState.ticks;
 
@@ -1237,7 +1242,7 @@ export class StateSyncer extends EventEmitter {
   }
 
   private normalizeKey(key: string): string {
-    return _.trim(key.replace('/', '.'), '.');
+    return _.trim(key.replace(/\//g, '.'), '.');
   }
 
   private getParentChildKey(key: string): [string, string] {
@@ -1256,41 +1261,39 @@ export class StateSyncer extends EventEmitter {
     diffs: any[];
     visibleArea: AABB;
   }): StateSyncerResult {
-    if (this.trueState === undefined || this.state === undefined) {
+    if (!this.serverStateWithPatches) {
       return this.successCurrent();
     }
-    // if (this.pendingActionPacks.length > 0) {
-    //   // use optimistic updates and do not accept diffs from server until everything is confirmed - just use local sim
-    //   return this.successDesynced();
-    // }
-    let wasCloned = false;
-    if (this.state === this.trueState) {
-      // this.log.push('clone due to diff');
-      wasCloned = true;
-      this.trueState = JSON.parse(JSON.stringify(this.state));
-    }
     for (const diff of event.diffs) {
-      if (diff.Modified) {
-        _.set(
-          this.trueState,
-          this.normalizeKey(diff.Modified[0]),
-          diff.Modified[1]
-        );
-      }
-      if (diff.Added) {
-        _.set(this.trueState, this.normalizeKey(diff.Added[0]), diff.Added[1]);
-        // strictly speaking, I should validate that it didn't create sparse arrays
-        // however, the validation will happen automatically if we try to update state using badly patched state
-      }
-      if (diff.Removed) {
-        const key = this.normalizeKey(diff.Removed[0]);
-        const [parentKey, childKey] = this.getParentChildKey(key);
-        const parent = _.get(this.trueState, parentKey);
-        if (Array.isArray(parent)) {
-          parent.splice(Number(childKey), 1);
-        } else if (_.isObject(parent)) {
-          delete (parent as any)[childKey];
+      try {
+        if (diff.Modified) {
+          _.set(
+            this.serverStateWithPatches,
+            this.normalizeKey(diff.Modified[0]),
+            diff.Modified[1]
+          );
         }
+        if (diff.Added) {
+          _.set(
+            this.serverStateWithPatches,
+            this.normalizeKey(diff.Added[0]),
+            diff.Added[1]
+          );
+          // strictly speaking, I should validate that it didn't create sparse arrays
+          // however, the validation will happen automatically if we try to update state using badly patched state
+        }
+        if (diff.Removed) {
+          const key = this.normalizeKey(diff.Removed[0]);
+          const [parentKey, childKey] = this.getParentChildKey(key);
+          const parent = _.get(this.serverStateWithPatches, parentKey);
+          if (Array.isArray(parent)) {
+            parent.splice(Number(childKey), 1);
+          } else if (_.isObject(parent)) {
+            delete (parent as any)[childKey];
+          }
+        }
+      } catch (e) {
+        this.log.push(`warn: failed to apply diff ${JSON.stringify(diff)}`);
       }
     }
     if (
@@ -1302,12 +1305,12 @@ export class StateSyncer extends EventEmitter {
     }
     return this.onServerState(
       {
-        state: this.trueState,
+        state: this.serverStateWithPatches,
         visibleArea: event.visibleArea,
         tag: 'server state',
       },
       // @ts-ignore
-      { wasCloned, diffs: event.diffs }
+      { diffs: event.diffs }
     );
   }
 }

@@ -6,7 +6,8 @@ use crate::dialogue::Dialogue;
 use crate::indexing::{find_my_player, find_my_ship, find_player_location_idx};
 use crate::market::Market;
 use crate::replay::ValueDiff;
-use crate::world::{GameMode, GameState, Location, Ship};
+use crate::system_gen::GenStateOpts;
+use crate::world::{GameMode, GameState, Location, ProcessedPlayerAction, Ship};
 use crate::world_events::GameEvent;
 use crate::xcast::XCast;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -42,7 +43,7 @@ pub struct Pong {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct XCastStateDiff {
-    pub state_id: Uuid,
+    pub state: GameState, // the original state is needed in order to patch diffs for target client correctly
     pub diffs: Vec<ValueDiff>,
     pub xcast: XCast,
 }
@@ -66,7 +67,125 @@ pub enum ServerToClientMessage {
 // see PROCESSED_ACTION_LIFETIME_TICKS
 pub const MAX_PROCESSED_ACTIONS_SHARE_TIME_TICKS: f64 = 5.0 * 1000.0 * 1000.0;
 
+// state is guaranteed to not be needed for all clients (not filtered!)
+pub fn patch_state_for_all_clients(state: &mut GameState) {
+    state.market = Market::new();
+    state.breadcrumbs = vec![];
+    state.events = Default::default();
+    state.player_actions = Default::default();
+    state.gen_opts = Default::default();
+    state.interval_data = Default::default();
+    state.next_seed = None;
+}
+
+pub fn patch_diffs_for_client_impl(diffs: &mut Vec<ValueDiff>, player_id: Uuid, state: &GameState) {
+    // because of hardcore location-fitlering that is done in patch_state_for_client_impl, it's absolutely necessary to
+    // at least index-shift the location in all the keys, as well as hardcore-filter-out all irrelevant locations in the same way
+    let my_ship = find_my_ship(state, player_id).map(|v| v.clone());
+    let my_ship_id = my_ship.as_ref().map(|s| s.id.clone());
+    let player_loc_idx = find_player_location_idx(state, player_id);
+
+    let any_loc_prefix = "/locations/";
+    let any_processed_player_action_prefix = "/processed_player_actions";
+    let zero_loc_prefix = "/locations/0/";
+    let target_loc_prefix = if let Some(player_loc_idx) = player_loc_idx {
+        // completely ignore everything apart from that specific location
+        format!("/locations/{}/", player_loc_idx)
+    } else {
+        "/locations/0/".to_string() // default to location 0 as in patch
+    };
+
+    let mut processed_actions_changed = false;
+    diffs.retain_mut(|diff| match diff {
+        ValueDiff::Added(key, _) => {
+            return if key.starts_with(&any_loc_prefix) {
+                if key.starts_with(&target_loc_prefix) {
+                    *key = key.replace(&target_loc_prefix, zero_loc_prefix);
+                    true
+                } else {
+                    false
+                }
+            } else if key.starts_with(&any_processed_player_action_prefix) {
+                processed_actions_changed = true;
+                false
+            } else {
+                !is_key_patched(key)
+            }
+        }
+        ValueDiff::Modified(key, _) => {
+            return if key.starts_with(&any_loc_prefix) {
+                if key.starts_with(&target_loc_prefix) {
+                    *key = key.replace(&target_loc_prefix, zero_loc_prefix);
+                    true
+                } else {
+                    false
+                }
+            } else if key.starts_with(&any_processed_player_action_prefix) {
+                processed_actions_changed = true;
+                false
+            } else {
+                !is_key_patched(key)
+            }
+        }
+        ValueDiff::Removed(key) => {
+            return if key.starts_with(&any_loc_prefix) {
+                if key.starts_with(&target_loc_prefix) {
+                    *key = key.replace(&target_loc_prefix, zero_loc_prefix);
+                    true
+                } else {
+                    false
+                }
+            } else if key.starts_with(&any_processed_player_action_prefix) {
+                processed_actions_changed = true;
+                false
+            } else {
+                !is_key_patched(key)
+            }
+        }
+        _ => false,
+    });
+    if processed_actions_changed {
+        // to not patch keys since it's complicated, but still send changes here faster since they are important
+        // for StateSyncer, we'll just send the whole re-fitlered action list instead
+        let patched_act = state
+            .processed_player_actions
+            .iter()
+            .filter(|pa| {
+                should_processed_player_action_be_sent(player_id, my_ship_id, state.ticks, pa)
+            })
+            .map(|pa| pa.clone())
+            .collect::<Vec<_>>();
+        let result = serde_json::to_value(patched_act);
+        if result.is_ok() {
+            diffs.push(ValueDiff::Modified(
+                any_processed_player_action_prefix.to_string(),
+                result.unwrap(),
+            ))
+        } else {
+            warn!(format!(
+                "Could not send changed processed player actions in a diff"
+            ));
+        }
+    }
+}
+
+// should be kept in sync with patch_state_for_client_impl
+pub fn is_key_patched(key: &String) -> bool {
+    // if a key is patched and not deleted, diff patching should not be applied to it, apart from those subtrees that are important to be realtime
+    // and where I'm begrudgingly ok implementing diff filtering
+    if key.starts_with("/market")
+        || key.starts_with("/players")
+        || key.starts_with("/processed_events")
+        || key.starts_with("/dialogue_states")
+    {
+        return true;
+    }
+    return false;
+}
+
+// should be kept in sync with is_key_patched
 pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> GameState {
+    // at this point, patch_state_for_all_clients was already applied, so no need to re-patch
     state.my_id = player_id;
     let my_ship = find_my_ship(&state, player_id).map(|v| v.clone());
     let my_ship_id = my_ship.as_ref().map(|s| s.id.clone());
@@ -142,24 +261,31 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
         })
         .collect();
     let current_ticks = state.ticks;
-    state.events = Default::default();
     state.processed_events = state
         .processed_events
         .into_iter()
         .filter(|pe| pe.is_for_client(my_ship_id, player_id))
         .collect();
-    state.player_actions = Default::default();
     state.processed_player_actions = state
         .processed_player_actions
         .into_iter()
-        .filter(|a| {
-            (a.processed_at_ticks as f64 - current_ticks as f64).abs()
-                < MAX_PROCESSED_ACTIONS_SHARE_TIME_TICKS
-                && a.action.is_for_client(my_ship_id, player_id)
+        .filter(|action| {
+            should_processed_player_action_be_sent(player_id, my_ship_id, current_ticks, action)
         })
         .collect();
     state.dialogue_states.retain(|k, _| *k == player_id);
     return state;
+}
+
+fn should_processed_player_action_be_sent(
+    player_id: Uuid,
+    my_ship_id: Option<Uuid>,
+    current_ticks: u64,
+    a: &ProcessedPlayerAction,
+) -> bool {
+    (a.processed_at_ticks as f64 - current_ticks as f64).abs()
+        < MAX_PROCESSED_ACTIONS_SHARE_TIME_TICKS
+        && a.action.is_for_client(my_ship_id, player_id)
 }
 
 impl ServerToClientMessage {
@@ -182,6 +308,14 @@ impl ServerToClientMessage {
                     x_cast,
                 ),
             },
+            ServerToClientMessage::XCastStateDiff(mut diff) => {
+                patch_diffs_for_client_impl(&mut diff.diffs, client_id, &diff.state);
+                ServerToClientMessage::XCastStateDiff(XCastStateDiff {
+                    state: diff.state,
+                    diffs: diff.diffs,
+                    xcast: diff.xcast,
+                })
+            }
             m => m,
         }
     }
