@@ -2231,7 +2231,7 @@ pub fn every_diff(
     last_trigger: Option<u32>,
 ) -> Option<u32> {
     let last_trigger = last_trigger.unwrap_or(0);
-    let diff = (current_ticks as i32 - last_trigger as i32).max(0) as u32;
+    let diff = (current_ticks as i64 - last_trigger as i64).max(0) as u32;
     let trigger = diff > interval_ticks;
     return if trigger { Some(diff) } else { None };
 }
