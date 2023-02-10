@@ -732,11 +732,7 @@ export default class NetState extends EventEmitter {
       } else if (messageCode === ServerToClientMessageCode.TagConfirm) {
         this.syncer.handleServerConfirmedPacket(JSON.parse(data).tag);
       } else if (messageCode === ServerToClientMessageCode.XcastStateDiff) {
-        this.syncer.handle({
-          tag: 'diff',
-          diffs: JSON.parse(data) as Diff[],
-          visibleArea: this.getSimulationArea(),
-        });
+        normalWarn('diffs are not supported anymore');
       } else if (messageCode === ServerToClientMessageCode.Pong) {
         // nothing for now
       } else {

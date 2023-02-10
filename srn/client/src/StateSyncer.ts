@@ -78,7 +78,6 @@ type DiffModified = {
 export type Diff = DiffRemoved | DiffAdded | DiffModified;
 export type StateSyncerEvent =
   | { tag: 'init'; state: GameState; visibleArea: AABB }
-  | { tag: 'diff'; diffs: Diff[]; visibleArea: AABB }
   | { tag: 'time update'; elapsedTicks: number; visibleArea: AABB }
   | StateSyncerEventServerState
   | {
@@ -183,9 +182,6 @@ export class StateSyncer extends EventEmitter {
         }
         case 'player action': {
           return this.onPlayerAction(event);
-        }
-        case 'diff': {
-          return this.onServerDiff(event);
         }
         default:
           throw new Error(`bad case ${(event as any).tag}`);
@@ -300,10 +296,6 @@ export class StateSyncer extends EventEmitter {
       )
     );
     this.useCachedStateForUpdateContext = false;
-    // if (!this.allAreRepeatedActions(event.actions)) {
-    //   console.log('optimistic update');
-    //   this.trueState = this.state; // invalidate whatever we had previously during correction, as client view has to win immediately, then get compensated
-    // }
     return this.successCurrent();
   }
 
@@ -313,14 +305,11 @@ export class StateSyncer extends EventEmitter {
 
   private serverStateWithPatches: GameState | null = null;
 
-  private onServerState(
-    { state: serverState, visibleArea }: StateSyncerEventServerState,
-    isDiff = false
-  ) {
-    if (!isDiff) {
-      this.serverStateWithPatches = serverState;
-    }
-    // this.log.push(`onServer ${isDiff ? 'diff' : ''}`);
+  private onServerState({
+    state: serverState,
+    visibleArea,
+  }: StateSyncerEventServerState) {
+    this.serverStateWithPatches = serverState;
     if (this.lastServerTicks > serverState.ticks) {
       // this.log.push(
       //   `warn: Server state rollback for ticks, from ${
@@ -339,7 +328,7 @@ export class StateSyncer extends EventEmitter {
     if (this.emitMyShipServerPosition) {
       const myShip = findMyShip(serverState);
       if (myShip) {
-        this.emit('myShipServerPosition', myShip.spatial.position, isDiff);
+        this.emit('myShipServerPosition', myShip.spatial.position);
       }
     }
     if (hadHugeViolation) {
@@ -1205,112 +1194,5 @@ export class StateSyncer extends EventEmitter {
       }
       mapped.set(strId, elem);
     }
-  }
-
-  private allAreRepeatedActions(actions: Action[]) {
-    const myShip = findMyShip(this.state);
-    if (!myShip) {
-      return false; // if there's anything, then it's definitely not a manual movement
-    }
-    for (const act of actions) {
-      if (!isManualMovement(act)) {
-        return false;
-      }
-      if (act.tag === 'Gas' && myShip.movement_markers.gas?.forward !== true) {
-        return false;
-      }
-      if (
-        act.tag === 'Reverse' &&
-        myShip.movement_markers.gas?.forward !== false
-      ) {
-        return false;
-      }
-      if (
-        act.tag === 'TurnRight' &&
-        myShip.movement_markers.turn?.forward !== false
-      ) {
-        return false;
-      }
-      if (
-        act.tag === 'TurnLeft' &&
-        myShip.movement_markers.turn?.forward !== true
-      ) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private normalizeKey(key: string): string {
-    return _.trim(key.replace(/\//g, '.'), '.');
-  }
-
-  private getParentChildKey(key: string): [string, string] {
-    const arr = key.split('/');
-    if (arr.length <= 1) {
-      return ['', key];
-    }
-    if (arr.length === 2) {
-      return [arr[0], arr[1]];
-    }
-    return [arr.slice(0, arr.length - 2).join('.'), arr[arr.length - 1]];
-  }
-
-  private onServerDiff(event: {
-    tag: 'diff';
-    diffs: any[];
-    visibleArea: AABB;
-  }): StateSyncerResult {
-    if (!this.serverStateWithPatches) {
-      return this.successCurrent();
-    }
-    for (const diff of event.diffs) {
-      try {
-        if (diff.Modified) {
-          _.set(
-            this.serverStateWithPatches,
-            this.normalizeKey(diff.Modified[0]),
-            diff.Modified[1]
-          );
-        }
-        if (diff.Added) {
-          _.set(
-            this.serverStateWithPatches,
-            this.normalizeKey(diff.Added[0]),
-            diff.Added[1]
-          );
-          // strictly speaking, I should validate that it didn't create sparse arrays
-          // however, the validation will happen automatically if we try to update state using badly patched state
-        }
-        if (diff.Removed) {
-          const key = this.normalizeKey(diff.Removed[0]);
-          const [parentKey, childKey] = this.getParentChildKey(key);
-          const parent = _.get(this.serverStateWithPatches, parentKey);
-          if (Array.isArray(parent)) {
-            parent.splice(Number(childKey), 1);
-          } else if (_.isObject(parent)) {
-            delete (parent as any)[childKey];
-          }
-        }
-      } catch (e) {
-        this.log.push(`warn: failed to apply diff ${JSON.stringify(diff)}`);
-      }
-    }
-    if (
-      event.diffs.length === 1 &&
-      event.diffs[0]?.Modified?.[0] === '/accumulated_not_updated_ticks'
-    ) {
-      // special optimization to only modify state but not rebase, since update will not work
-      return this.successDesynced();
-    }
-    return this.onServerState(
-      {
-        state: this.serverStateWithPatches,
-        visibleArea: event.visibleArea,
-        tag: 'server state',
-      },
-      // @ts-ignore
-      { diffs: event.diffs }
-    );
   }
 }
