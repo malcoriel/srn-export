@@ -475,24 +475,11 @@ fn main_thread() {
                 patch_state_for_all_clients(&mut cloned);
                 // double-cloning because the message is sent to the channel, and reference is not an option for now (I don't know how to work with Rcs)
                 main_ws_server::x_cast_state(cloned.clone(), XCast::Broadcast(state_id));
-                room.last_diff_state = cloned; // necessary to correctly calculate diffs in non-full update
             }
             sampler.end(broadcast_mark);
             full_broadcast_elapsed = 0;
         } else {
             full_broadcast_elapsed += elapsed_micro;
-            let broadcast_diff_mark = sampler.start(SamplerMarks::BroadcastStateDiff as u32);
-            for room in get_rooms_iter_mut(&mut cont) {
-                let diff = make_state_diff(room);
-                if diff.diffs.len() > 0 {
-                    main_ws_server::x_cast_state_diff(diff)
-                }
-            }
-            if sampler.end_top(broadcast_diff_mark) < 0 {
-                shortcut_frame += 1;
-                sampler.end(total_mark);
-                continue;
-            }
         }
 
         let update_rooms_id = sampler.start(SamplerMarks::Update as u32);
@@ -602,18 +589,6 @@ fn main_thread() {
         if sleep_remaining > MIN_SLEEP_TICKS {
             thread::sleep(Duration::from_micros(sleep_remaining as u64));
         }
-    }
-}
-
-fn make_state_diff(room: &mut Room) -> XCastStateDiff {
-    let mut cloned = room.state.clone();
-    patch_state_for_all_clients(&mut cloned); // remove unnecessary keys
-    let diffs = ReplayDiffed::calc_diff_batch(&room.last_diff_state, &cloned);
-    room.last_diff_state = cloned;
-    XCastStateDiff {
-        diffs,
-        state: room.state.clone(),
-        xcast: XCast::Broadcast(room.state.id),
     }
 }
 
