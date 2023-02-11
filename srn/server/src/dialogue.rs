@@ -241,11 +241,13 @@ impl DialogueTable {
         &self,
         script: &DialogueScript,
         player_id: Uuid,
-        game_state: &mut GameState,
+        state: &mut GameState,
     ) {
-        let player_d_states =
-            DialogueTable::get_player_d_states(&mut game_state.dialogue_states, player_id);
-        player_d_states.insert(script.id, Box::new(Some(script.initial_state)));
+        let player_d_states = state
+            .dialogue_states
+            .as_mut()
+            .map(|ds| DialogueTable::get_player_d_states(ds, player_id));
+        player_d_states.map(|pds| pds.insert(script.id, Box::new(Some(script.initial_state))));
     }
 
     pub fn get_player_d_states(
@@ -275,7 +277,10 @@ pub fn execute_dialog_option(
     dialogue_table: &DialogueTable,
     prng: &mut Pcg64Mcg,
 ) {
-    let player_d_states = state.dialogue_states.get(&player_id).map(|v| (*v).clone());
+    let player_d_states = state
+        .dialogue_states
+        .as_ref()
+        .and_then(|ds| ds.get(&player_id).map(|v| (*v).clone()));
     if let Some(all_dialogues) = player_d_states {
         if let Some(dialogue_state) = all_dialogues.1.get(&update.dialogue_id) {
             // let script = dialogue_table.scripts.get(&update.dialogue_id).unwrap();
@@ -455,11 +460,12 @@ fn apply_dialogue_option(
             let next_state = script.transitions.get(&(current_state, update.option_id));
             if let Some(next_state) = next_state {
                 apply_side_effects(state, next_state.1.clone(), player_id, prng);
-                let player_states =
-                    DialogueTable::get_player_d_states(&mut state.dialogue_states, player_id)
+                let player_states = state.dialogue_states.as_mut().map(|ds| {
+                    DialogueTable::get_player_d_states(ds, player_id)
                         .entry(update.dialogue_id)
-                        .or_insert(Box::new(None));
-                *player_states = Box::new(next_state.0);
+                        .or_insert(Box::new(None))
+                });
+                player_states.map(|pds| *pds = Box::new(next_state.0));
             } else {
                 warn!("invalid dialogue transition, no outcome");
             }

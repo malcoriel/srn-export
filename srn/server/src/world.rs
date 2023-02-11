@@ -556,20 +556,20 @@ pub struct GameState {
     pub millis: u32,
     pub ticks: u64,
     pub disable_hp_effects: bool,
-    pub market: Market,
+    pub market: Option<Market>,
     pub locations: Vec<Location>,
-    pub interval_data: HashMap<TimeMarks, u32>,
+    pub interval_data: Option<HashMap<TimeMarks, u32>>,
     pub game_over: Option<GameOver>,
-    pub events: VecDeque<GameEvent>,
-    pub player_actions: VecDeque<(Action, Option<String>, Option<u64>)>,
+    pub events: Option<VecDeque<GameEvent>>,
     // (action, packet_tag_that_received_it, ticks_at)
+    pub player_actions: VecDeque<(Action, Option<String>, Option<u64>)>,
     pub processed_events: Vec<ProcessedGameEvent>,
     pub processed_player_actions: Vec<ProcessedPlayerAction>,
     pub update_every_ticks: u64,
     pub accumulated_not_updated_ticks: u32,
-    pub gen_opts: GenStateOpts,
-    pub dialogue_states: DialogueStates,
-    pub breadcrumbs: Vec<Breadcrumb>,
+    pub gen_opts: Option<GenStateOpts>,
+    pub dialogue_states: Option<DialogueStates>,
+    pub breadcrumbs: Option<Vec<Breadcrumb>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -597,24 +597,20 @@ impl GameState {
             millis: 0,
             ticks: 0,
             disable_hp_effects: false,
-            market: Market {
-                wares: Default::default(),
-                prices: Default::default(),
-                time_before_next_shake: 0,
-            },
+            market: None,
             locations: vec![],
-            interval_data: Default::default(),
+            interval_data: Some(Default::default()),
             game_over: None,
 
-            events: Default::default(),
+            events: Some(Default::default()),
             player_actions: Default::default(),
             processed_events: vec![],
             processed_player_actions: vec![],
             update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
             accumulated_not_updated_ticks: 0,
             gen_opts: Default::default(),
-            dialogue_states: Default::default(),
-            breadcrumbs: vec![],
+            dialogue_states: Some(Default::default()),
+            breadcrumbs: None,
         }
     }
 }
@@ -817,7 +813,7 @@ fn update_world_iter(
                 state = seed_state(
                     &state.mode,
                     random_stuff::random_hex_seed(),
-                    Some(state.gen_opts),
+                    state.gen_opts,
                     caches,
                 );
                 state.players = players.clone();
@@ -840,23 +836,35 @@ fn update_world_iter(
             sampler.end(update_leaderboard_id);
 
             if state.mode == GameMode::CargoRush {
-                if state.market.time_before_next_shake > 0 {
-                    state.market.time_before_next_shake -= elapsed;
+                if state
+                    .market
+                    .as_ref()
+                    .map_or(false, |m| m.time_before_next_shake > 0)
+                {
+                    state
+                        .market
+                        .as_mut()
+                        .map(|m| m.time_before_next_shake -= elapsed);
                 } else {
                     let market_update_start = sampler.start(SamplerMarks::UpdateMarket as u32);
-                    let mut wares = state.market.wares.clone();
-                    let mut prices = state.market.prices.clone();
-                    let planets = state.locations[0]
+                    let planets_clone = state.locations[0]
                         .planets
                         .iter()
                         .map(|p| p.clone())
                         .collect::<Vec<_>>();
-                    market::shake_market(planets, &mut wares, &mut prices, prng);
-                    state.market = Market {
-                        wares,
-                        prices,
-                        time_before_next_shake: market::SHAKE_MARKET_EVERY_TICKS,
+                    let new_market = if let Some(market) = &state.market {
+                        let mut wares = market.wares.clone();
+                        let mut prices = market.prices.clone();
+                        market::shake_market(planets_clone, &mut wares, &mut prices, prng);
+                        Some(Market {
+                            wares,
+                            prices,
+                            time_before_next_shake: market::SHAKE_MARKET_EVERY_TICKS,
+                        })
+                    } else {
+                        None
                     };
+                    state.market = new_market;
                     sampler.end(market_update_start);
                 }
             }
@@ -980,7 +988,7 @@ fn update_events(
         return;
     }
     let mut events_to_process = vec![];
-    while let Some(event) = state.events.pop_front() {
+    while let Some(event) = state.events.as_mut().and_then(|ev| ev.pop_front()) {
         events_to_process.push(event);
     }
     let mut processed_events = vec![];
@@ -1457,7 +1465,7 @@ fn update_ships_respawn(state: &mut GameState, prng: &mut Pcg64Mcg) {
 }
 
 pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
-    state.events.push_back(event.clone());
+    state.events.as_mut().map(|ev| ev.push_back(event.clone()));
     match event {
         // list of the events that should only be handled inside world events, and not
         // as global events
@@ -2433,12 +2441,16 @@ pub fn update_room(
         room.state.ticks as u32,
         room.state
             .interval_data
-            .get(&TimeMarks::BotAction)
+            .as_ref()
+            .and_then(|id| id.get(&TimeMarks::BotAction))
             .map(|m| *m),
     ) {
+        let state_ticks = room.state.ticks as u32;
         room.state
             .interval_data
-            .insert(TimeMarks::BotAction, room.state.ticks as u32);
+            .as_mut()
+            .map(|idata| idata.insert(TimeMarks::BotAction, state_ticks));
+
         let bots_mark = sampler.start(SamplerMarks::UpdateBots as u32);
         let bot_players_mark = sampler.start(SamplerMarks::UpdateBotsPlayers as u32);
         do_bot_players_actions(

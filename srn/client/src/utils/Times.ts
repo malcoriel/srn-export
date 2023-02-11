@@ -243,13 +243,8 @@ export class vsyncedDecoupledTime extends BasicTime {
       }
     };
     const framedWork = () => {
-      try {
-        timerWork();
-        this.requestId = requestAnimationFrame(framedWork);
-      } catch (e) {
-        console.log('BREAK!');
-        throw e;
-      }
+      timerWork();
+      this.requestId = requestAnimationFrame(framedWork);
     };
     this.requestId = requestAnimationFrame(framedWork);
   }
@@ -339,13 +334,8 @@ export class vsyncedCoupledTime extends BasicTime {
       physics(frameTime);
     };
     const framedWork = () => {
-      try {
-        timerWork();
-        this.requestId = requestAnimationFrame(framedWork);
-      } catch (e) {
-        console.log('BREAK!');
-        throw e;
-      }
+      timerWork();
+      this.requestId = requestAnimationFrame(framedWork);
     };
     this.requestId = requestAnimationFrame(framedWork);
   }

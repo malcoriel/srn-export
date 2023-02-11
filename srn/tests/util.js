@@ -226,6 +226,7 @@ export const mockShip = (id) => ({
       x: 0,
       y: 0,
     },
+    angular_velocity: 0,
     velocity: {
       x: 0,
       y: 0,

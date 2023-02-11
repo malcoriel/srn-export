@@ -16,7 +16,7 @@ const tryKillServer = async () => {
       buildMethod: 'cargo run',
       buildOpt: 'debug',
     });
-    await spawnWatched('RUST_BACKTRACE=1 cargo run', {
+    await spawnWatched('RUST_BACKTRACE=1 cargo run -- --srn-server', {
       spawnOptions: {
         cwd: 'server',
       },

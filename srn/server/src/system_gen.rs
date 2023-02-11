@@ -440,6 +440,7 @@ fn make_cargo_rush_state(
     let mut default_opts = GenStateOpts::default();
     default_opts.system_count = 2;
     let mut state = gen_state(seed, opts.unwrap_or(default_opts), &mut prng, caches);
+    state.market = Some(Market::new());
     init_all_planets_market(&mut state);
     state.id = prng_id(&mut prng);
     state.mode = GameMode::CargoRush;
@@ -569,18 +570,18 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
         millis: 0,
         ticks: 0,
         disable_hp_effects: false,
-        market: Market::new(),
-        interval_data: Default::default(),
+        market: None,
+        interval_data: Some(Default::default()),
         game_over: None,
-        events: Default::default(),
+        events: Some(Default::default()),
         player_actions: Default::default(),
         processed_events: vec![],
         processed_player_actions: vec![],
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
-        gen_opts: opts.unwrap_or_default(),
-        dialogue_states: Default::default(),
-        breadcrumbs: vec![],
+        gen_opts: Some(opts.unwrap_or_default()),
+        dialogue_states: Some(Default::default()),
+        breadcrumbs: None,
     }
 }
 
@@ -605,18 +606,18 @@ pub fn make_sandbox_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> Ga
         millis: 0,
         ticks: 0,
         disable_hp_effects: true,
-        market: Market::new(),
+        market: None,
         interval_data: Default::default(),
         game_over: None,
-        events: Default::default(),
+        events: Some(Default::default()),
         player_actions: Default::default(),
         processed_events: vec![],
         processed_player_actions: vec![],
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
-        gen_opts: opts.unwrap_or_default(),
+        gen_opts: Some(opts.unwrap_or_default()),
         dialogue_states: Default::default(),
-        breadcrumbs: vec![],
+        breadcrumbs: None,
     }
 }
 
@@ -665,20 +666,20 @@ fn gen_state(
         start_time_ticks: now,
         mode: GameMode::Unknown,
         disable_hp_effects: false,
-        market: Market::new(),
+        market: None,
         version: GAME_STATE_VERSION,
-        interval_data: Default::default(),
+        interval_data: Some(Default::default()),
         game_over: None,
-        events: Default::default(),
+        events: Some(Default::default()),
         player_actions: Default::default(),
         processed_events: vec![],
         ticks: 0,
         processed_player_actions: vec![],
         update_every_ticks: DEFAULT_WORLD_UPDATE_EVERY_TICKS,
         accumulated_not_updated_ticks: 0,
-        gen_opts: opts,
-        dialogue_states: Default::default(),
-        breadcrumbs: vec![],
+        gen_opts: Some(opts),
+        dialogue_states: Some(Default::default()),
+        breadcrumbs: None,
         next_seed: None,
     };
 

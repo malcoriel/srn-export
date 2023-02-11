@@ -20,6 +20,7 @@ export const mockPlanet = (starId) => ({
       x: 0,
       y: 0,
     },
+    angular_velocity: 0,
     rotation_rad: 0,
     radius: 1.0,
     velocity: {

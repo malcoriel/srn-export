@@ -98,52 +98,56 @@ fn bot_cargo_rush_hauler_act(
     let mut result_actions = vec![];
 
     let empty = HashMap::new();
-    let bot_d_states =
-        DialogueTable::get_player_d_states_read(&state.dialogue_states, bot.id).unwrap_or(&empty);
-    let not_empty_d_states = bot_d_states
-        .iter()
-        .filter(|(_, v)| v.is_some())
-        .collect::<Vec<_>>();
-    if not_empty_d_states.len() > 0 {
-        // log!(format!("bot {} is talking since there are some dialogues {:?}", bot.id, bot_d_states));
-        // stop all other actions when talking
-        if bot.timer.is_none() {
-            bot.timer = Some(BOT_QUEST_ACT_DELAY_MC + prng.gen_range(-500, 500) * 1000);
-        } else {
-            bot.timer = Some(bot.timer.unwrap() - bot_elapsed_micro);
-            if bot.timer.unwrap() <= 0 {
-                bot.timer = Some(BOT_QUEST_ACT_DELAY_MC);
-                // time to act on all the dialogues
-                for (dialogue_id, _) in not_empty_d_states.iter() {
-                    let act = make_dialogue_act(&bot, d_table, bot_d_states, **dialogue_id, state);
-                    if let Some(act) = act {
-                        result_actions.push(act);
-                    }
-                }
+    if let Some(dialogue_states) = state.dialogue_states.as_ref() {
+        let bot_d_states =
+            DialogueTable::get_player_d_states_read(dialogue_states, bot.id).unwrap_or(&empty);
+        let not_empty_d_states = bot_d_states
+            .iter()
+            .filter(|(_, v)| v.is_some())
+            .collect::<Vec<_>>();
+
+        if not_empty_d_states.len() > 0 {
+            // log!(format!("bot {} is talking since there are some dialogues {:?}", bot.id, bot_d_states));
+            // stop all other actions when talking
+            if bot.timer.is_none() {
+                bot.timer = Some(BOT_QUEST_ACT_DELAY_MC + prng.gen_range(-500, 500) * 1000);
             } else {
-                // still waiting
+                bot.timer = Some(bot.timer.unwrap() - bot_elapsed_micro);
+                if bot.timer.unwrap() <= 0 {
+                    bot.timer = Some(BOT_QUEST_ACT_DELAY_MC);
+                    // time to act on all the dialogues
+                    for (dialogue_id, _) in not_empty_d_states.iter() {
+                        let act =
+                            make_dialogue_act(&bot, d_table, bot_d_states, **dialogue_id, state);
+                        if let Some(act) = act {
+                            result_actions.push(act);
+                        }
+                    }
+                } else {
+                    // still waiting
+                }
             }
-        }
-    } else {
-        if quest.state == CargoDeliveryQuestState::Started
-            && !conditions.contains(&TriggerCondition::CurrentPlanetIsPickup)
-        {
-            let desired_target = quest.from_id;
-            if not_already_there(ship, desired_target) {
-                result_actions.push(BotAct::Act(Action::DockNavigate {
-                    ship_id: ship.id,
-                    target: desired_target,
-                }));
-            }
-        } else if quest.state == CargoDeliveryQuestState::Picked
-            && !conditions.contains(&TriggerCondition::CurrentPlanetIsDropoff)
-        {
-            let desired_target = quest.to_id;
-            if not_already_there(ship, desired_target) {
-                result_actions.push(BotAct::Act(Action::DockNavigate {
-                    ship_id: ship.id,
-                    target: desired_target,
-                }));
+        } else {
+            if quest.state == CargoDeliveryQuestState::Started
+                && !conditions.contains(&TriggerCondition::CurrentPlanetIsPickup)
+            {
+                let desired_target = quest.from_id;
+                if not_already_there(ship, desired_target) {
+                    result_actions.push(BotAct::Act(Action::DockNavigate {
+                        ship_id: ship.id,
+                        target: desired_target,
+                    }));
+                }
+            } else if quest.state == CargoDeliveryQuestState::Picked
+                && !conditions.contains(&TriggerCondition::CurrentPlanetIsDropoff)
+            {
+                let desired_target = quest.to_id;
+                if not_already_there(ship, desired_target) {
+                    result_actions.push(BotAct::Act(Action::DockNavigate {
+                        ship_id: ship.id,
+                        target: desired_target,
+                    }));
+                }
             }
         }
     }

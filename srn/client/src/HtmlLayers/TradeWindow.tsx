@@ -32,7 +32,7 @@ const WINDOW_HEIGHT =
 const WINDOW_WIDTH = cellsToPixels(COLUMNS) + SCROLL_OFFSET + 1;
 const EXTRA_ROWS = 3;
 
-const selectWares = (market: Market, planetId: string) => {
+const selectWares = (market: Market | undefined | null, planetId: string) => {
   if (!market) {
     return [];
   }

@@ -1,5 +1,5 @@
 use num_traits::real::Real;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use crate::api_struct::RoomId;
 use crate::dialogue::Dialogue;
@@ -69,11 +69,11 @@ pub const MAX_PROCESSED_ACTIONS_SHARE_TIME_TICKS: f64 = 5.0 * 1000.0 * 1000.0;
 
 // state is guaranteed to not be needed for all clients (not filtered!)
 pub fn patch_state_for_all_clients(state: &mut GameState) {
-    state.market = Market::new();
-    state.breadcrumbs = vec![];
-    state.events = Default::default();
-    state.player_actions = Default::default();
-    state.gen_opts = Default::default();
+    state.market = None;
+    state.breadcrumbs = None;
+    state.events = None;
+    state.player_actions = VecDeque::with_capacity(0);
+    state.gen_opts = None;
     state.interval_data = Default::default();
     state.next_seed = None;
 }
@@ -210,20 +210,22 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
     }
 
     if let Some(docked_at) = my_ship.and_then(|s| s.docked_at) {
-        state.market.prices = state
-            .market
-            .prices
-            .into_iter()
-            .filter(|(k, _v)| *k == docked_at)
-            .collect();
-        state.market.wares = state
-            .market
-            .wares
-            .into_iter()
-            .filter(|(k, _v)| *k == docked_at)
-            .collect();
+        if let Some(market) = state.market.as_mut() {
+            market.prices = market
+                .prices
+                .clone()
+                .into_iter()
+                .filter(|(k, _v)| *k == docked_at)
+                .collect();
+            market.wares = market
+                .wares
+                .clone()
+                .into_iter()
+                .filter(|(k, _v)| *k == docked_at)
+                .collect();
+        }
     } else {
-        state.market = Market::new();
+        state.market = None;
     }
 
     state.players = state
@@ -273,7 +275,10 @@ pub fn patch_state_for_client_impl(mut state: GameState, player_id: Uuid) -> Gam
             should_processed_player_action_be_sent(player_id, my_ship_id, current_ticks, action)
         })
         .collect();
-    state.dialogue_states.retain(|k, _| *k == player_id);
+    state
+        .dialogue_states
+        .as_mut()
+        .map(|ds| ds.retain(|k, _| *k == player_id));
     return state;
 }
 

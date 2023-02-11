@@ -185,7 +185,7 @@ lazy_static! {
 }
 
 const DEFAULT_SLEEP_MS: u64 = 1;
-const FULL_BROADCAST_EVERY_TICKS: i64 = 500 * 1000;
+const FULL_BROADCAST_EVERY_TICKS: i64 = 100 * 1000;
 const MAX_ERRORS: u32 = 10;
 const MAX_ERRORS_SAMPLE_INTERVAL: i64 = 5000;
 const MAX_MESSAGES_PER_INTERVAL: u32 = 10;
@@ -283,13 +283,13 @@ fn rocket() -> rocket::Rocket {
         }
     }
 
-    make_thread("websocket_server")
+    make_thread("ws_s")
         .spawn(|| {
             main_ws_server::websocket_server();
         })
         .ok();
 
-    make_thread("chat_server")
+    make_thread("ch_s")
         .spawn(|| {
             chat_server();
         })
@@ -301,14 +301,14 @@ fn rocket() -> rocket::Rocket {
         })
         .ok();
 
-    make_thread("dispatcher")
+    make_thread("disp")
         .spawn(move || main_ws_server::dispatcher_thread())
         .ok();
 
-    make_thread("websocket_server_cleanup")
+    make_thread("ws_clean")
         .spawn(|| main_ws_server::cleanup_bad_clients_thread())
         .ok();
-    make_thread("watch_replay_folder")
+    make_thread("watch_repl")
         .spawn(|| replays_api::watch_replay_folder())
         .ok();
 
@@ -358,7 +358,8 @@ fn rocket() -> rocket::Rocket {
 }
 
 fn make_thread(name: &str) -> std::thread::Builder {
-    std::thread::Builder::new().name(name.to_string())
+    // thread name includes srn-server for easier filtering in htop
+    std::thread::Builder::new().name(format!("{}-srn", name.to_string()))
 }
 
 const PERF_CONSUME_TIME: i64 = 15 * 1000 * 1000;

@@ -97,12 +97,17 @@ pub fn update_state_pirate_defence(state: &mut GameState, prng: &mut Pcg64Mcg) {
     if world::every(
         PIRATE_SPAWN_INTERVAL_TICKS,
         current_ticks,
-        state.interval_data.get(&TimeMarks::PirateSpawn).map(|m| *m),
+        state
+            .interval_data
+            .as_ref()
+            .and_then(|id| id.get(&TimeMarks::PirateSpawn))
+            .map(|m| *m),
     ) {
         let target_count = PIRATE_SPAWN_COUNT * state.players.len();
         state
             .interval_data
-            .insert(TimeMarks::PirateSpawn, current_ticks);
+            .as_mut()
+            .map(|id| id.insert(TimeMarks::PirateSpawn, current_ticks));
         for _i in 0..target_count {
             fire_saved_event(
                 state,

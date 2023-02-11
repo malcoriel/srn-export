@@ -21,7 +21,10 @@ use crate::dialogue::{execute_dialog_option, Dialogue, DialogueUpdate};
 use crate::get_prng;
 use crate::indexing::find_my_player;
 use crate::indexing::ObjectSpecifier;
-use crate::net::{ClientOpCode, PersonalizeUpdate, Pong, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload, TagConfirm, Wrapper, XCastStateDiff};
+use crate::net::{
+    ClientOpCode, PersonalizeUpdate, Pong, ServerToClientMessage, ShipsWrapper, SwitchRoomPayload,
+    TagConfirm, Wrapper, XCastStateDiff,
+};
 use crate::states::{get_state_id_cont, select_state, select_state_mut, STATE};
 use crate::world::{GameState, Player, Ship};
 use crate::world_actions::is_world_update_action;
@@ -520,17 +523,17 @@ fn on_client_schedule_player_action_batch(client_id: Uuid, data: &&str, tag: Opt
     match parsed {
         Ok(parsed) => {
             let mut cont = STATE.write().unwrap();
-            let state = states::select_state_mut(&mut cont, client_id);
+            let state = select_state_mut(&mut cont, client_id);
             if state.is_none() {
                 warn!("schedule player action in non-existent state");
                 return;
             }
             let state = state.unwrap();
             let packet_tag = tag.unwrap().to_string();
-            for action in parsed.actions {
+            for action in parsed.actions.iter() {
                 if is_world_update_action(&action) {
                     state.player_actions.push_back((
-                        action,
+                        action.clone(),
                         Some(packet_tag.clone()),
                         parsed.happened_at_ticks,
                     ));
@@ -717,7 +720,7 @@ pub fn cleanup_bad_clients_thread() {
             .keys()
             .map(|k| k.clone())
             .collect::<Vec<_>>();
-        std::mem::drop(client_errors);
+        drop(client_errors);
         for client_id in clients {
             disconnect_if_bad(client_id);
         }

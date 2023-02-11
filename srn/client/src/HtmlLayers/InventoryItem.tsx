@@ -162,9 +162,11 @@ export const ItemElem: React.FC<{
   const itemRef = useRef(null);
   let price: Price | undefined;
   if (tradeModePlanet) {
-    const planetPrices = ns.state.market.prices[tradeModePlanet];
-    if (planetPrices) {
-      price = planetPrices[item.item_type];
+    if (ns.state.market) {
+      const planetPrices = ns.state.market.prices[tradeModePlanet];
+      if (planetPrices) {
+        price = planetPrices[item.item_type];
+      }
     }
   }
 
