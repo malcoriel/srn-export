@@ -1606,10 +1606,7 @@ pub fn update_hp_effects(
         state.locations[location_idx].wrecks.push(Wreck {
             spatial: SpatialProps {
                 position: ship_clone.as_vec(),
-                velocity: ship_clone
-                    .movement_definition
-                    .get_spatial_velocity(ship_clone.spatial.rotation_rad)
-                    .scalar_mul(0.25),
+                velocity: ship_clone.spatial.velocity.clone().scalar_mul(0.25),
                 angular_velocity: 0.0,
                 rotation_rad: ship_clone.spatial.rotation_rad,
                 radius: ship_clone.spatial.radius,
@@ -1683,16 +1680,12 @@ pub enum Movement {
     ShipMonotonous {
         move_speed: f64,
         turn_speed: f64,
-        current_move_speed: f64,
-        current_turn_speed: f64,
     },
     // no handling implemented for this one yet, it's just a design
     ShipAccelerated {
         max_linear_speed: f64,
         max_rotation_speed: f64,
-        current_linear_speed: f64,
         linear_drag: f64,
-        current_angular_speed: f64,
         acc_linear: f64,
         max_turn_speed: f64,
         acc_angular: f64,
@@ -1719,17 +1712,12 @@ pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13;
 pub const MIN_OBJECT_TURN_SPEED_RAD_PER_TICK: f64 = 1e-14; // 0.01 radian per second per second (to allow speeding up from zero)
 
 impl Movement {
-    pub fn get_spatial_velocity(&self, rotation_rad: f64) -> Vec2f64 {
-        Vec2f64 { x: 0.0, y: 1.0 }
-            .rotate(rotation_rad)
-            .scalar_mul(self.get_current_linear_speed_per_tick())
-    }
-
     pub fn get_max_speed(&self) -> f64 {
         match self {
             Movement::ShipAccelerated {
                 max_linear_speed, ..
             } => *max_linear_speed,
+            Movement::ShipMonotonous { move_speed, .. } => *move_speed,
             _ => 0.0,
         }
     }
@@ -1739,6 +1727,7 @@ impl Movement {
             Movement::ShipAccelerated {
                 max_rotation_speed, ..
             } => *max_rotation_speed,
+            Movement::ShipMonotonous { turn_speed, .. } => *turn_speed,
             _ => 0.0,
         }
     }
@@ -1752,13 +1741,8 @@ impl Movement {
 
     pub fn get_angular_speed(&self) -> f64 {
         match self {
-            Movement::ShipMonotonous {
-                current_turn_speed, ..
-            } => *current_turn_speed,
-            Movement::ShipAccelerated {
-                current_angular_speed,
-                ..
-            } => *current_angular_speed,
+            Movement::ShipMonotonous { turn_speed, .. } => *turn_speed,
+            Movement::ShipAccelerated { max_turn_speed, .. } => *max_turn_speed,
             _ => 0.0,
         }
     }
@@ -1782,51 +1766,12 @@ impl Movement {
             Movement::AnchoredStatic { .. } => 0.0,
         }
     }
-    pub fn set_linear_speed(&mut self, new_value: f64) {
-        match self {
-            Movement::ShipAccelerated {
-                current_linear_speed,
-                max_linear_speed,
-                ..
-            } => {
-                let max_val = *max_linear_speed;
-                let mut new_value = new_value;
-                if new_value > 0.0 {
-                    new_value = new_value.min(max_val);
-                } else if new_value < 0.0 {
-                    new_value = new_value.max(-max_val);
-                }
-                if new_value.abs() <= MIN_OBJECT_SPEED_PER_TICK {
-                    new_value = 0.0;
-                }
-                *current_linear_speed = new_value;
-            }
-            _ => panic!("cannot set linear speed if the movement is not accelerated"),
-        }
-    }
     pub fn get_anchor_relative_position(&self) -> &Option<Vec2f64> {
         match self {
             Movement::RadialMonotonous {
                 relative_position, ..
             } => relative_position,
             _ => panic!("bad movement, it doesn't have anchor relative position"),
-        }
-    }
-
-    pub fn get_current_linear_speed_per_tick(&self) -> f64 {
-        match self {
-            Movement::None => 0.0,
-            Movement::ShipMonotonous { move_speed, .. } => {
-                // This is kind of incorrect for a stopped ship, but to get it we need
-                // to unify movement markers with movement definition
-                *move_speed
-            }
-            Movement::ShipAccelerated {
-                current_linear_speed: current_move_speed,
-                ..
-            } => *current_move_speed,
-            Movement::RadialMonotonous { .. } => 0.0,
-            Movement::AnchoredStatic { .. } => 0.0,
         }
     }
 
@@ -1912,6 +1857,8 @@ pub struct ShipTemplate {
 
 impl ShipTemplate {
     pub fn pirate(at: Option<Vec2f64>) -> ShipTemplate {
+        let max_linear_speed = 20.0 / 1000.0 / 1000.0;
+        let max_angular_speed = PI / 2.0 / 1000.0 / 1000.0;
         ShipTemplate {
             at,
             npc_traits: Some(vec![AiTrait::ImmediatePlanetLand]),
@@ -1919,10 +1866,8 @@ impl ShipTemplate {
             name: Some("Pirate".to_string()),
             health: Some(Health::new(40.0)),
             movement: Some(Movement::ShipMonotonous {
-                move_speed: 10.0 / 1000.0 / 1000.0,
-                turn_speed: PI / 1000.0 / 1000.0,
-                current_move_speed: 0.0,
-                current_turn_speed: 0.0,
+                move_speed: max_linear_speed,
+                turn_speed: max_angular_speed,
             }),
             properties: Some(vec![
                 ObjectProperty::MoneyOnKill { amount: 100 },
@@ -1937,8 +1882,6 @@ impl ShipTemplate {
         let default_movement = Movement::ShipMonotonous {
             move_speed: max_linear_speed,
             turn_speed: max_angular_speed,
-            current_move_speed: 0.0,
-            current_turn_speed: 0.0,
         };
         ShipTemplate {
             at,
@@ -1949,10 +1892,8 @@ impl ShipTemplate {
                     Movement::ShipAccelerated {
                         max_linear_speed,
                         max_rotation_speed: max_angular_speed,
-                        current_linear_speed: 0.0,
                         linear_drag: max_linear_speed * 0.025 / 1e6, // 2.5% per second
-                        current_angular_speed: 0.0,
-                        acc_linear: max_linear_speed * 0.25 / 1e6, // 25% per second
+                        acc_linear: max_linear_speed * 0.25 / 1e6,   // 25% per second
                         max_turn_speed: max_angular_speed,
                         acc_angular: max_angular_speed * 0.0125,
                     },
@@ -2069,8 +2010,7 @@ pub fn update_ships_navigation(
             continue;
         }
         if !ship.docked_at.is_some() {
-            let max_shift =
-                ship.movement_definition.get_current_linear_speed_per_tick() * elapsed_micro as f64;
+            let max_shift = ship.movement_definition.get_max_speed() * elapsed_micro as f64;
 
             if let Some(target) = ship.navigate_target {
                 let ship_pos = ship.spatial.position.clone();

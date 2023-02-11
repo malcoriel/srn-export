@@ -38,13 +38,13 @@ pub fn update_ship_manual_movement(
                     (None, None)
                 } else {
                     let sign = if params.forward { 1.0 } else { -1.0 };
-                    let diff = deg_to_rad(
-                        ship.movement_definition.get_angular_speed() * elapsed_micro as f64
-                            / 1000.0
-                            / 1000.0
-                            * sign,
-                    );
-                    (Some(params.clone()), Some(ship.spatial.rotation_rad + diff))
+                    let diff =
+                        ship.movement_definition.get_angular_speed() * elapsed_micro as f64 * sign;
+
+                    (
+                        Some(params.clone()),
+                        Some((ship.spatial.rotation_rad + diff) % (2.0 * PI)),
+                    )
                 }
             } else {
                 (None, None)
@@ -155,8 +155,7 @@ fn should_throttle_drop_manual_movement_marker(
 }
 
 fn project_ship_movement_by_speed(elapsed_micro: i64, ship: &Ship, sign: f64) -> Vec2f64 {
-    let distance =
-        ship.movement_definition.get_current_linear_speed_per_tick() * elapsed_micro as f64 * sign;
+    let distance = ship.movement_definition.get_max_speed() * elapsed_micro as f64 * sign;
     let shift = Vec2f64 { x: 0.0, y: 1.0 }
         .rotate(ship.spatial.rotation_rad)
         .scalar_mul(distance);
@@ -185,6 +184,7 @@ fn update_spatial_by_velocities(elapsed_micro: i64, spatial: &mut SpatialProps) 
         spatial.angular_velocity.signum() * TURN_DRAG_RAD_PER_TICK * elapsed_micro as f64;
     spatial.angular_velocity -= angular_drag;
     spatial.rotation_rad += spatial.angular_velocity * elapsed_micro as f64;
+    spatial.rotation_rad = spatial.rotation_rad % (2.0 * PI);
     if spatial.angular_velocity.abs() <= MIN_OBJECT_TURN_SPEED_RAD_PER_TICK {
         spatial.angular_velocity = 0.0;
     }

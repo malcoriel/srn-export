@@ -21,9 +21,8 @@ pub fn build_trajectory_to_point(
     let current_target = to.clone();
     let mut current_from = from.clone();
     let mut result = vec![];
-    let max_shift = TRAJECTORY_STEP_ITERS as f64
-        * update_every_ticks as f64
-        * for_movement.get_current_linear_speed_per_tick();
+    let max_shift =
+        TRAJECTORY_STEP_ITERS as f64 * update_every_ticks as f64 * for_movement.get_max_speed();
     loop {
         let target_pos = Vec2f64 {
             x: current_target.x,
@@ -55,7 +54,7 @@ pub fn build_trajectory_to_planet(
     let mut current_from = current_pos;
     let mut result = vec![];
     let step_ticks = TRAJECTORY_STEP_ITERS as f64 * update_every_ticks as f64;
-    let max_shift = step_ticks * ship_movement.get_current_linear_speed_per_tick();
+    let max_shift = step_ticks * ship_movement.get_max_speed();
     let mut current_ticks = initial_ticks;
     let planet_radius = planet.get_spatial().radius;
     let anchor_dist = planet.get_anchor_dist(indexes);

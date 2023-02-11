@@ -462,9 +462,7 @@ fn interpolate_ship(
     target_ticks: u64,
 ) {
     let time_diff = target_ticks - result_ticks;
-    let linear_speed = result
-        .movement_definition
-        .get_current_linear_speed_per_tick();
+    let linear_speed = result.movement_definition.get_max_speed();
     let time_to_target = if let Some(navigate_target) = &result.navigate_target {
         let distance_to_target = navigate_target.subtract(&result.as_vec()).euclidean_len();
         let time_to_target = distance_to_target / linear_speed;

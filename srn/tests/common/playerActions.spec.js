@@ -225,6 +225,7 @@ describe('player actions logic', () => {
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
       expect(ship.spatial.rotation_rad).toBeGreaterThan(Math.PI);
+      console.log(ship.spatial.rotation_rad, 'vs', Math.PI);
     });
 
     // TODO this is a very dumb version of lag compensation mechanism, that also will not consider
