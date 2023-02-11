@@ -166,7 +166,7 @@ export const DialogueWindow: React.FC = () => {
 
   const setDialogueWindowState = useStore((state) => state.setDialogueWindow);
   const [history, setHistory] = useState<DialogueElem[]>([]);
-  const { dialogue_states } = ns.state;
+  const { dialogue_states = [] } = ns.state;
 
   const myPlayerId = ns.state.my_id;
   // technically [0] of the states was intended to show the active dialogue, but this is not supported yet
