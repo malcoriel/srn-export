@@ -6,6 +6,7 @@ import {
   getObjectPosition,
   getObjectRotation,
   setObjectPosition,
+  setObjectRotation,
 } from './ClientStateIndexing';
 
 import {
@@ -96,7 +97,7 @@ type SyncerViolationObjectJump = {
   diff: number;
 };
 type SyncerViolationObjectRotationJump = {
-  tag: 'ObjectRotationJump';
+  tag: 'ObjectRotationJump' | 'InvisibleObjectRotationJump';
   obj: ObjectSpecifier;
   from: number;
   to: number;
@@ -108,7 +109,10 @@ type SyncerViolationTimeRollback = {
   to: number;
   diff: number;
 };
-type SyncerViolation = SyncerViolationObjectJump | SyncerViolationTimeRollback;
+type SyncerViolation =
+  | SyncerViolationObjectJump
+  | SyncerViolationTimeRollback
+  | SyncerViolationObjectRotationJump;
 
 export const SHADOW_ID = uuid.v4();
 
@@ -610,7 +614,10 @@ export class StateSyncer extends EventEmitter {
     elapsedTicks: number,
     visibleArea: AABB
   ): SyncerViolation[] {
-    const res: SyncerViolationObjectJump[] = [];
+    const res: (
+      | SyncerViolationObjectJump
+      | SyncerViolationObjectRotationJump
+    )[] = [];
     const checkableObjects = this.enumerateCheckableObjects(serverState);
     for (const { spec, obj } of checkableObjects) {
       const oldObjInstance = this.findOldVersionOfObjectV2(currState, spec);
@@ -733,35 +740,33 @@ export class StateSyncer extends EventEmitter {
     oldObj: any,
     spec: ObjectSpecifier,
     visibleArea: AABB
-  ): SyncerViolationObjectJump | null {
+  ): SyncerViolationObjectRotationJump | null {
     const oldRot = getObjectRotation(oldObj) % (Math.PI * 2);
-    const newRot = getObjectRotation(newRot) % (Math.PI * 2);
-    const dist = getRadialDistance(oldRot, toRot);
+    const oldPos = getObjectPosition(oldObj);
+    const newRot = getObjectRotation(newObj) % (Math.PI * 2);
+    const dist = getRadialDistance(oldRot, newRot);
     if (
       dist > elapsedTicks * this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK &&
       dist > MAX_ALLOWED_VISUAL_DESYNC_UNITS
     ) {
-      let type: 'ObjectJump' | 'InvisibleObjectJump' = 'ObjectJump';
+      let type: 'ObjectRotationJump' | 'InvisibleObjectRotationJump' =
+        'ObjectRotationJump';
       if (!isInAABB(visibleArea, oldPos, 0.0)) {
-        type = 'InvisibleObjectJump'; // including jumping into the screen, but hopefully the visible area is slightly bigger than screen
+        type = 'InvisibleObjectRotationJump'; // including jumping into the screen, but hopefully the visible area is slightly bigger than screen
       }
       return {
         tag: type,
         obj: spec,
-        from: oldPos,
-        to: newPos,
+        from: oldRot,
+        to: newRot,
         diff: dist,
-        // @ts-ignore
-        diffX: newPos.x - oldPos.x,
-        // @ts-ignore
-        diffY: newPos.y - oldPos.y,
       };
     }
     return null;
   }
 
   private applyMaxPossibleDesyncCorrection(
-    violations: SyncerViolationObjectJump[],
+    violations: SyncerViolation[],
     currentState: GameState,
     elapsedTicks: number
   ) {
@@ -793,6 +798,11 @@ export class StateSyncer extends EventEmitter {
         // until camera pans onto them
         const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
         setObjectPosition(newObj, violation.to);
+      } else if (violation.tag === 'ObjectRotationJump') {
+        // TODO
+      } else if (violation.tag === 'InvisibleObjectRotationJump') {
+        const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
+        setObjectRotation(newObj, violation.to);
       }
     }
     return currentState;

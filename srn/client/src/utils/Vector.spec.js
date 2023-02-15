@@ -82,5 +82,8 @@ describe('vector', () => {
     const left = degToRad(180);
     const bottom = degToRad(270);
     expect(getRadialDistance(right, top)).toBeCloseTo(ninety);
+    expect(getRadialDistance(top, right)).toBeCloseTo(-ninety); // rotate 90d clockwise
+    expect(getRadialDistance(top, bottom)).toBeCloseTo(left); // rotate 180d counter-clockwise (default rotation)
+    expect(getRadialDistance(top, bottom + 0.001)).toBeCloseTo(-left + 0.001); // rotate 179deg clockwise
   });
 });
