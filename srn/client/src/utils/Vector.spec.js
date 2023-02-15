@@ -3,6 +3,7 @@ const {
   VectorF,
   getCounterClockwiseAngleMath,
   getCounterClockwiseAngleGraphics,
+  getRadialDistance,
 } = require('./Vector');
 
 const approxN = (c, precision) => Number(c.toPrecision(precision));
@@ -72,5 +73,14 @@ describe('vector', () => {
     const right = VectorF(5, 0);
     expect(radToDeg(getCounterClockwiseAngleGraphics(top, left))).toEqual(90);
     expect(radToDeg(getCounterClockwiseAngleGraphics(top, right))).toEqual(-90);
+  });
+
+  it('can calculate distance between angles in radians', () => {
+    const ninety = degToRad(90);
+    const right = degToRad(0);
+    const top = degToRad(90);
+    const left = degToRad(180);
+    const bottom = degToRad(270);
+    expect(getRadialDistance(right, top)).toBeCloseTo(ninety);
   });
 });

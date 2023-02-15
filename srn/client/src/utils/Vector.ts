@@ -274,3 +274,19 @@ export const getRadialCoordsGraphics = (
   const y = radius * Math.sin(theta);
   return VectorF(x, -y);
 };
+
+// positive distance -> rotate clockwise to get from fromRad to toRad
+export const getRadialDistance = (fromRad: number, toRad: number): number => {
+  let sign;
+  if (fromRad <= toRad) {
+    sign = 1;
+  } else {
+    sign = -1;
+  }
+  let diff = Math.abs(toRad - fromRad);
+  if (diff > Math.PI) {
+    sign = -sign;
+    diff = Math.abs(Math.PI * 2 - diff);
+  }
+  return diff * sign;
+};

@@ -1,9 +1,10 @@
-import Vector, { IVector } from './utils/Vector';
+import Vector, { getRadialDistance, IVector } from './utils/Vector';
 import {
   findMyShip,
   findObjectBySpecifierLoc0,
   FindObjectResult,
   getObjectPosition,
+  getObjectRotation,
   setObjectPosition,
 } from './ClientStateIndexing';
 
@@ -92,6 +93,13 @@ type SyncerViolationObjectJump = {
   obj: ObjectSpecifier;
   from: IVector;
   to: IVector;
+  diff: number;
+};
+type SyncerViolationObjectRotationJump = {
+  tag: 'ObjectRotationJump';
+  obj: ObjectSpecifier;
+  from: number;
+  to: number;
   diff: number;
 };
 type SyncerViolationTimeRollback = {
@@ -617,6 +625,14 @@ export class StateSyncer extends EventEmitter {
             visibleArea
           );
           if (posVio) res.push(posVio);
+          const rotVio = this.checkRotationViolation(
+            elapsedTicks,
+            obj,
+            oldObj,
+            spec,
+            visibleArea
+          );
+          if (rotVio) res.push(rotVio);
         }
       }
     }
@@ -688,6 +704,39 @@ export class StateSyncer extends EventEmitter {
     const oldPos = Vector.fromIVector(getObjectPosition(oldObj));
     const newPos = Vector.fromIVector(getObjectPosition(newObj));
     const dist = oldPos.euDistTo(newPos);
+    if (
+      dist > elapsedTicks * this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK &&
+      dist > MAX_ALLOWED_VISUAL_DESYNC_UNITS
+    ) {
+      let type: 'ObjectJump' | 'InvisibleObjectJump' = 'ObjectJump';
+      if (!isInAABB(visibleArea, oldPos, 0.0)) {
+        type = 'InvisibleObjectJump'; // including jumping into the screen, but hopefully the visible area is slightly bigger than screen
+      }
+      return {
+        tag: type,
+        obj: spec,
+        from: oldPos,
+        to: newPos,
+        diff: dist,
+        // @ts-ignore
+        diffX: newPos.x - oldPos.x,
+        // @ts-ignore
+        diffY: newPos.y - oldPos.y,
+      };
+    }
+    return null;
+  }
+
+  private checkRotationViolation(
+    elapsedTicks: number,
+    newObj: any,
+    oldObj: any,
+    spec: ObjectSpecifier,
+    visibleArea: AABB
+  ): SyncerViolationObjectJump | null {
+    const oldRot = getObjectRotation(oldObj) % (Math.PI * 2);
+    const newRot = getObjectRotation(newRot) % (Math.PI * 2);
+    const dist = getRadialDistance(oldRot, toRot);
     if (
       dist > elapsedTicks * this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK &&
       dist > MAX_ALLOWED_VISUAL_DESYNC_UNITS
@@ -869,7 +918,6 @@ export class StateSyncer extends EventEmitter {
       'locations.*.ships.*.spatial.velocity',
       'locations.*.ships.*.spatial.angular_velocity',
       'locations.*.ships.*.spatial.radius',
-      'locations.*.ships.*.spatial.rotation_rad',
       'locations.*.wrecks',
     ]),
     // if server id has changed, invalidate the whole tree under the key. it's somewhat an optimization of the merge strategy
@@ -889,6 +937,7 @@ export class StateSyncer extends EventEmitter {
       'locations.*.ships.*.spatial.position',
       'locations.*.ships.*.spatial.position.x',
       'locations.*.ships.*.spatial.position.y',
+      'locations.*.ships.*.spatial.rotation_rad',
     ]),
   };
 
