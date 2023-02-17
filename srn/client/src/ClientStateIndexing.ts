@@ -12,6 +12,7 @@ import Vector, { isIVector, IVector } from './utils/Vector';
 import { ObjectSpecifierBuilder } from '../../world/pkg/world.extra';
 import { UnreachableCaseError } from 'ts-essentials';
 import { Container, ObjectSpecifier } from '../../world/pkg/world';
+import _ from 'lodash';
 
 export interface ClientStateIndexes {
   myShip: Ship | null;
@@ -99,6 +100,12 @@ export const findObjectBySpecifierLoc0 = (
 };
 
 export const findObjectPosition = (obj: any): IVector | null => {
+  if (obj.spatial && isIVector(obj.spatial.position)) {
+    return {
+      x: obj.spatial.position.x,
+      y: obj.spatial.position.y,
+    };
+  }
   if (isIVector(obj)) {
     return {
       x: obj.x,
@@ -111,18 +118,18 @@ export const findObjectPosition = (obj: any): IVector | null => {
       y: obj.position.y,
     };
   }
-  if (obj.spatial && isIVector(obj.spatial.position)) {
-    return {
-      x: obj.spatial.position.x,
-      y: obj.spatial.position.y,
-    };
-  }
   return null;
 };
 
 export const findObjectRotation = (obj: any): number | null => {
+  if (!obj) {
+    return null;
+  }
   if (typeof obj.rotation !== 'undefined') {
     return obj.rotation;
+  }
+  if (typeof obj.spatial?.rotation_rad !== 'undefined') {
+    return obj.spatial.rotation_rad;
   }
   return null;
 };
@@ -149,6 +156,10 @@ export const setObjectPosition = (obj: any, newVal: IVector): void => {
 export const setObjectRotation = (obj: any, newVal: number): void => {
   if (typeof obj.rotation !== 'undefined') {
     obj.rotation = newVal;
+    return;
+  }
+  if (typeof obj.spatial?.rotation_rad !== 'undefined') {
+    obj.spatial.rotation_rad = newVal;
     return;
   }
   throw new Error('Could not set object rotation');

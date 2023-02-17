@@ -144,6 +144,8 @@ const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up,
 //   tag: string;
 // };
 
+const MAX_ALLOWED_ROTATION_DESYNC_RADIANS_PER_TICK = Math.PI / 8 / 1000 / 1000;
+
 export class StateSyncer extends EventEmitter {
   private readonly wasmUpdateWorld;
 
@@ -522,7 +524,7 @@ export class StateSyncer extends EventEmitter {
           event.visibleArea
         );
         const violations = this.violations.filter(
-          (v) => v.tag === 'ObjectJump' || v.tag === 'InvisibleObjectJump'
+          (v) => v.tag !== 'TimeRollback'
         ) as SyncerViolationObjectJump[];
         this.state = this.applyMaxPossibleDesyncCorrection(
           violations,
@@ -603,7 +605,12 @@ export class StateSyncer extends EventEmitter {
 
   private MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK = 10 / 1000 / 1000; // in units = 10 units/second is max allowed speed
 
+  private MAX_ALLOWED_ROTATION_DESYNC_RADIANS_PER_TICK = MAX_ALLOWED_ROTATION_DESYNC_RADIANS_PER_TICK; // 1 full rotations per 2 seconds
+
   private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = MAX_ALLOWED_CORRECTION_JUMP_CONST;
+
+  private MAX_ALLOWED_CORRECTION_ROTATIONS_UNITS_PER_TICK =
+    MAX_ALLOWED_ROTATION_DESYNC_RADIANS_PER_TICK / 4;
 
   private CORRECTION_TELEPORT_BAIL_PER_TICK =
     MAX_ALLOWED_CORRECTION_JUMP_CONST * 100; // sometimes we need to teleport, e.g. in case of an actual teleport
@@ -746,8 +753,8 @@ export class StateSyncer extends EventEmitter {
     const newRot = getObjectRotation(newObj) % (Math.PI * 2);
     const dist = getRadialDistance(oldRot, newRot);
     if (
-      dist > elapsedTicks * this.MAX_ALLOWED_JUMP_DESYNC_UNITS_PER_TICK &&
-      dist > MAX_ALLOWED_VISUAL_DESYNC_UNITS
+      Math.abs(dist) >
+      elapsedTicks * MAX_ALLOWED_ROTATION_DESYNC_RADIANS_PER_TICK
     ) {
       let type: 'ObjectRotationJump' | 'InvisibleObjectRotationJump' =
         'ObjectRotationJump';
@@ -799,7 +806,15 @@ export class StateSyncer extends EventEmitter {
         const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
         setObjectPosition(newObj, violation.to);
       } else if (violation.tag === 'ObjectRotationJump') {
-        // TODO
+        let shift =
+          elapsedTicks * this.MAX_ALLOWED_CORRECTION_ROTATIONS_UNITS_PER_TICK;
+        if (Math.abs(shift) > Math.abs(violation.diff)) {
+          shift = violation.diff;
+        }
+        shift *= Math.abs(violation.diff) ** 1.5;
+        console.log('shift', shift);
+        const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
+        setObjectRotation(newObj, violation.to + shift);
       } else if (violation.tag === 'InvisibleObjectRotationJump') {
         const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
         setObjectRotation(newObj, violation.to);
@@ -988,7 +1003,7 @@ export class StateSyncer extends EventEmitter {
       return 'merge';
     }
     if (this.reconciliation.serverIfId.has(normalized)) {
-      return 'merge';
+      return 'server if id';
     }
     this.log.push(
       `warn: no reconciliation strategy for path ${normalized} ${trueKey}`
@@ -1013,6 +1028,9 @@ export class StateSyncer extends EventEmitter {
         normalizedExtendedKey,
         extendedKey
       );
+      if (normalizedExtendedKey.includes('rotation')) {
+        // console.log(normalizedExtendedKey, strategy);
+      }
       switch (strategy) {
         case 'client':
           // do nothing, state is ok
@@ -1098,110 +1116,6 @@ export class StateSyncer extends EventEmitter {
           throw new UnreachableCaseError(strategy);
       }
     }
-  }
-
-  // some keys have to be always synced to the server
-  // unused for now, kept in case recursive one fails
-  // noinspection JSUnusedLocalSymbols
-  private overrideNonMergeableKeysInstantly(
-    state: GameState,
-    trueState: GameState
-  ) {
-    const blacklistedKeys = new Set(['ticks', 'millis', 'locations']);
-    for (const [key, value] of Object.entries(trueState)) {
-      if (!blacklistedKeys.has(key)) {
-        // typescript's object.entries is very dumb
-        (state as any)[key] = value;
-      }
-    }
-    const blacklistedShipKeys = new Set([
-      'x',
-      'y',
-      'trajectory',
-      'navigate_target',
-      'dock_target',
-    ]);
-    // there are some ship fields that have to be overwritten no matter what
-    const existingTrueShipIds = new Set();
-    for (const trueShip of trueState.locations[0].ships) {
-      existingTrueShipIds.add(trueShip.id);
-      const currentShip = this.findOldVersionOfObjectV2<Ship>(state, {
-        tag: 'Ship',
-        id: trueShip.id,
-      });
-      if (currentShip) {
-        for (const [key, value] of Object.entries(trueShip)) {
-          if (blacklistedShipKeys.has(key)) {
-            continue;
-          }
-          (currentShip as any)[key] = value;
-          if (trueShip.docked_at !== currentShip.docked_at) {
-            currentShip.docked_at = trueShip.docked_at;
-            currentShip.spatial.position.x = trueShip.spatial.position.x;
-            currentShip.spatial.position.y = trueShip.spatial.position.y;
-          }
-        }
-      } else {
-        // add new ships
-        state.locations[0].ships.push(trueShip);
-      }
-    }
-    // drop old ships
-    state.locations[0].ships = state.locations[0].ships.filter((ship) =>
-      existingTrueShipIds.has(ship.id)
-    );
-
-    const blacklistedWreckKeys = new Set();
-    const existingShipWrecksIds = new Set();
-    for (const trueWreck of trueState.locations[0].wrecks) {
-      existingShipWrecksIds.add(trueWreck.id);
-      const currentWreck = this.findOldVersionOfObjectV2<Wreck>(state, {
-        tag: 'Wreck',
-        id: trueWreck.id,
-      });
-      if (currentWreck) {
-        for (const [key, value] of Object.entries(trueWreck)) {
-          if (blacklistedWreckKeys.has(key)) {
-            continue;
-          }
-          (currentWreck as any)[key] = value;
-        }
-      } else {
-        state.locations[0].wrecks.push(trueWreck);
-      }
-    }
-    // drop old wrecks
-    state.locations[0].wrecks = state.locations[0].wrecks.filter((wreck) =>
-      existingShipWrecksIds.has(wreck.id)
-    );
-
-    if (trueState.locations[0].star?.id !== state.locations[0].star?.id) {
-      state.locations[0].star = trueState.locations[0].star;
-    }
-
-    const blacklistedPlanetKeys = new Set(['spatial']);
-    const existingPlanetIds = new Set();
-    for (const truePlanet of trueState.locations[0].planets) {
-      existingPlanetIds.add(truePlanet.id);
-      const currentPlanet = this.findOldVersionOfObjectV2<Wreck>(state, {
-        tag: 'Planet',
-        id: truePlanet.id,
-      });
-      if (currentPlanet) {
-        for (const [key, value] of Object.entries(truePlanet)) {
-          if (blacklistedPlanetKeys.has(key)) {
-            continue;
-          }
-          (currentPlanet as any)[key] = value;
-        }
-      } else {
-        state.locations[0].planets.push(truePlanet);
-      }
-    }
-    // drop old planets
-    state.locations[0].planets = state.locations[0].planets.filter((planet) =>
-      existingPlanetIds.has(planet.id)
-    );
   }
 
   // this is quite a dangerous optimization, that is nevertheless necessary
