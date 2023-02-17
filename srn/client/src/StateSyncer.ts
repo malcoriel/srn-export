@@ -144,7 +144,7 @@ const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up,
 //   tag: string;
 // };
 
-const MAX_ALLOWED_ROTATION_DESYNC_RADIANS_PER_TICK = Math.PI / 8 / 1000 / 1000;
+const MAX_ALLOWED_ROTATION_DESYNC_RADIANS_PER_TICK = Math.PI / 16 / 1000 / 1000;
 
 export class StateSyncer extends EventEmitter {
   private readonly wasmUpdateWorld;
@@ -610,7 +610,7 @@ export class StateSyncer extends EventEmitter {
   private MAX_ALLOWED_CORRECTION_JUMP_UNITS_PER_TICK = MAX_ALLOWED_CORRECTION_JUMP_CONST;
 
   private MAX_ALLOWED_CORRECTION_ROTATIONS_UNITS_PER_TICK =
-    MAX_ALLOWED_ROTATION_DESYNC_RADIANS_PER_TICK / 4;
+    MAX_ALLOWED_ROTATION_DESYNC_RADIANS_PER_TICK * 4;
 
   private CORRECTION_TELEPORT_BAIL_PER_TICK =
     MAX_ALLOWED_CORRECTION_JUMP_CONST * 100; // sometimes we need to teleport, e.g. in case of an actual teleport
@@ -807,14 +807,18 @@ export class StateSyncer extends EventEmitter {
         setObjectPosition(newObj, violation.to);
       } else if (violation.tag === 'ObjectRotationJump') {
         let shift =
-          elapsedTicks * this.MAX_ALLOWED_CORRECTION_ROTATIONS_UNITS_PER_TICK;
+          elapsedTicks *
+          this.MAX_ALLOWED_CORRECTION_ROTATIONS_UNITS_PER_TICK *
+          Math.sign(violation.diff);
+        if (Math.abs(violation.diff) > 0.5) {
+          // too big, need to speed up
+          shift *= Math.abs(violation.diff) ** 1.5;
+        }
         if (Math.abs(shift) > Math.abs(violation.diff)) {
           shift = violation.diff;
         }
-        shift *= Math.abs(violation.diff) ** 1.5;
-        console.log('shift', shift);
         const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
-        setObjectRotation(newObj, violation.to + shift);
+        setObjectRotation(newObj, violation.from + shift);
       } else if (violation.tag === 'InvisibleObjectRotationJump') {
         const newObj = findObjectBySpecifierLoc0(currentState, violation.obj);
         setObjectRotation(newObj, violation.to);
@@ -1056,9 +1060,6 @@ export class StateSyncer extends EventEmitter {
             continue;
           }
           if (_.isArray(trueValue)) {
-            if (key.indexOf('wrecks') > -1) {
-              console.log('merging wrecks');
-            }
             if (!trueValue.every((obj) => obj.id)) {
               // potentially, I could validate for unique ids here, or provide surrogate index ids like react
               this.log.push(
