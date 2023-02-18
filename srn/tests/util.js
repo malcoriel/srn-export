@@ -148,6 +148,7 @@ export const loadWasm = timerify(async function loadWasm() {
     wasm.dialogueTable = wasm.makeDialogueTable(
       wasm.resources.dialogue_scripts
     );
+    wasm.buildTrajectory = wasmFunctions.build_trajectory;
     wasmFunctions.load_d_table(wasm.dialogueTable);
     return wasmFunctions;
   } catch (e) {

@@ -1,12 +1,12 @@
 [package]
 name = "srn-server"
 version = "0.9.16"
-authors = [ "Valeriy Kuzmin <malcoriel@gmail.com>" ]
+authors = ["Valeriy Kuzmin <malcoriel@gmail.com>"]
 edition = "2018"
 rust-version = "1.67"
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = [ "-Oz", "--enable-mutable-globals" ]
+wasm-opt = ["-Oz", "--enable-mutable-globals"]
 
 [dependencies]
 num-traits = "0.2"
@@ -41,26 +41,27 @@ serde_json_any_key = "2.0.0"
 include_dir = "0.7.3"
 serde_with = "1.14.0"
 
-  [dependencies.strum]
-  version = "0.20.0"
-  features = [ "derive" ]
+optimization_engine = { version = "0.7.7", features = ["wasm"] }
+[dependencies.strum]
+version = "0.20.0"
+features = ["derive"]
 
-  [dependencies.treediff]
-  version = "4.0.2"
-  features = [ "with-serde-json" ]
+[dependencies.treediff]
+version = "4.0.2"
+features = ["with-serde-json"]
 
-  [dependencies.rocket]
-  git = "https://github.com/SergioBenitez/Rocket"
-  rev = "c24f15c18f02319be83af4f3c1951dc220b52c5e"
+[dependencies.rocket]
+git = "https://github.com/SergioBenitez/Rocket"
+rev = "c24f15c18f02319be83af4f3c1951dc220b52c5e"
 
-  [dependencies.rocket_contrib]
-  git = "https://github.com/SergioBenitez/Rocket"
-  rev = "c24f15c18f02319be83af4f3c1951dc220b52c5e"
+[dependencies.rocket_contrib]
+git = "https://github.com/SergioBenitez/Rocket"
+rev = "c24f15c18f02319be83af4f3c1951dc220b52c5e"
 
-  [dependencies.uuid]
-  version = "0.8.1"
-  features = [ "serde", "v4" ]
+[dependencies.uuid]
+version = "0.8.1"
+features = ["serde", "v4"]
 
-  [dependencies.rand]
-  version = "0.6.5"
-  features = [ "wasm-bindgen" ]
+[dependencies.rand]
+version = "0.6.5"
+features = ["wasm-bindgen"]

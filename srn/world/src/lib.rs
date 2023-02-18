@@ -277,7 +277,9 @@ use crate::dialogue::{parse_dialogue_script_from_file, Dialogue, DialogueTable};
 use crate::indexing::{find_my_ship_index, GameStateCaches, ObjectSpecifier};
 use crate::perf::{ConsumeOptions, Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
-use crate::world::{GameMode, GameState, Movement, UpdateOptions, UpdateOptionsV2, AABB};
+use crate::world::{
+    GameMode, GameState, Movement, SpatialProps, UpdateOptions, UpdateOptionsV2, AABB,
+};
 use chrono::Timelike;
 use mut_static::MutStatic;
 use rand::prelude::*;
@@ -521,6 +523,7 @@ struct SeedWorldArgs {
 
 use crate::interpolation::gen_rel_position_orbit_phase_table;
 use crate::replay::{ReplayDiffed, ReplayRaw, ValueDiff};
+use crate::trajectory::TrajectoryRequest;
 use serde_wasm_bindgen::*;
 
 pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
@@ -904,4 +907,14 @@ pub fn generate_phase_table(period: f64, dist: f64) -> Result<JsValue, JsValue> 
 #[wasm_bindgen]
 pub fn self_inspect() {
     self_inspect::declare();
+}
+
+#[wasm_bindgen]
+pub fn build_trajectory(req: JsValue, mov: JsValue, spat: JsValue) -> Result<JsValue, JsValue> {
+    let res = trajectory::build_trajectory(
+        custom_deserialize::<TrajectoryRequest>(req)?,
+        &custom_deserialize::<Movement>(mov)?,
+        &custom_deserialize::<SpatialProps>(spat)?,
+    );
+    Ok(custom_serialize(&res)?)
 }
