@@ -18,6 +18,17 @@ describe('trajectory building', () => {
       x: 100,
       y: 100,
     };
+    const max_linear_speed = 20.0 / 1000.0 / 1000.0;
+    const max_angular_speed = Math.PI / 2.0 / 1000.0 / 1000.0;
+    ship.movement_definition = {
+      tag: 'ShipAccelerated',
+      max_linear_speed,
+      max_rotation_speed: max_angular_speed,
+      linear_drag: (max_linear_speed * 0.025) / 1e6, // 2.5% per second
+      acc_linear: (max_linear_speed * 0.25) / 1e6, // 25% per second
+      max_turn_speed: max_angular_speed,
+      acc_angular: max_angular_speed * 0.0125,
+    };
     wasm.buildTrajectory(
       {
         tag: 'StartAndStop',
@@ -26,7 +37,7 @@ describe('trajectory building', () => {
           y: 100,
         },
       },
-      ship.movement,
+      ship.movement_definition,
       ship.spatial
     );
   });
