@@ -104,17 +104,22 @@ pub struct TrajectoryItem {
     pub spatial: SpatialProps,
 }
 
-pub fn distance(u: &[f64]) -> f64 {
-    return ((u[0] * u[0]) + (u[1] * u[1])).sqrt();
+#[derive(Debug, Clone, TypescriptDefinition, TypeScriptify, Serialize, Deserialize)]
+pub struct Trajectory {
+    pub points: Vec<TrajectoryItem>,
+    pub total_ticks: i32,
 }
 
-pub fn distance_cost_gradient(u: &[f64], grad: &mut [f64]) {}
+pub fn acc_time_for_dist(acc: f64, dist: f64, vmax: f64) -> f64 {
+    // TODO: this is for a real physical movement without vmax, but I have to cap it somehow
+    return (Math.abs(dist / acc)).sqrt();
+}
 
 pub fn build_trajectory(
     tr: TrajectoryRequest,
     mov: &Movement,
     spatial: &SpatialProps,
-) -> Vec<TrajectoryItem> {
+) -> Trajectory {
     match mov {
         Movement::ShipAccelerated {
             max_linear_speed,
@@ -125,56 +130,41 @@ pub fn build_trajectory(
             acc_angular,
         } => match tr {
             TrajectoryRequest::StartAndStop { to } => {
-                /*
-                let's assume we are in 1 dimension (moving in a straight line),
-                and the ship is already facing the target
-                if we start from velocity 0
-                then t1 is the moment at which we accelerate to max
-                and t2 is the moment when we start decelerating
-                and t3 is the moment when we reach the target
-                and a is acceleration and deceleration
+                if spatial.velocity.euclidean_len() != 0.0 {
+                    panic!("need to stabilize");
+                }
 
-                  / ------ \    velocity from time graph
-                 /          \
-                /            \
+                let mut points = vec![TrajectoryItem {
+                    ticks: 0,
+                    spatial: spatial.clone(),
+                }];
 
-                then t3 - t2 = t1 - t0
-                and t0 = 0
-                so t3 = t1 + t2
-                then distance is S = a * (t1 * t1 + t1 * t2)
-                u0 = t1
-                u1 = t2
-                then we try to minimize the difference between target point and the distance resulting form the formula
-                */
-                let s = to.euclidean_distance(&spatial.position);
-                let a = *acc_linear;
-                let cost = move |u: &[f64], c: &mut f64| -> Result<(), SolverError> {
-                    *c = (a * (u[0] * u[0] + u[0] * u[1]) - s).abs();
-                    Ok(())
+                let dir = to.subtract(&spatial.position).normalize();
+                if dir.is_none() {
+                    // already there
+                    return Trajectory {
+                        points,
+                        total_ticks: 0,
+                    };
+                }
+                let dir = dir.unwrap();
+                let angle_dir = Vec2f64 { x: 1.0, y: 0.0 }.angle_rad(&dir);
+                let diff = angle_dir - spatial.rotation_rad;
+                let time = acc_time_for_dist(diff);
+
+                // turn first
+                // TODO
+
+                return Trajectory {
+                    points: points,
+                    total_ticks: 0,
                 };
-                let cost_gradient = move |u: &[f64], grad: &mut [f64]| -> Result<(), SolverError> {
-                    let x = u[0];
-                    let y = u[1];
-                    let denom_x = (a * (x * x + x * y) - s).abs();
-                    let nom_x = (2.0 * x + y) * (a * (x * x + x * y) - s) * a;
-                    grad[0] = nom_x / denom_x;
-                    let denom_y = denom_x;
-                    let nom_y = a * x * (a * (x * x + x * y) - s);
-                    grad[1] = nom_y / denom_y;
-                    Ok(())
-                };
-                let problem = Problem::new(&constraints::NoConstraints {}, cost_gradient, cost);
-                let mut panoc_cache = PANOCCache::new(2, 1e-14, 10);
-                let mut panoc = PANOCOptimizer::new(problem, &mut panoc_cache).with_max_iter(80);
-
-                let mut u = [1.0, 2.0];
-                // Invoke the solver
-                let status = panoc.solve(&mut u);
-                log!(format!("status {:?}", status));
-                return vec![];
             }
             TrajectoryRequest::Impact { .. } => {
-                return vec![];
+                return Trajectory {
+                    points: vec![],
+                    total_ticks: 0,
+                }
             }
         },
         _ => panic!("cannot build trajectory for such movement"),
