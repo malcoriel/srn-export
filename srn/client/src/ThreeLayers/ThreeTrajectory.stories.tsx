@@ -1,94 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
-import Vector, {
-  getCounterClockwiseAngleMath,
-  IVector,
-  VectorF,
-} from '../utils/Vector';
-import { posToThreePos } from './util';
-import Color from 'color';
-import _ from 'lodash';
+import Vector, { VectorF, VectorFZero } from '../utils/Vector';
+import {
+  ThreeTrajectoryItem,
+  ThreeTrajectoryItemProps,
+} from './ThreeTrajectoryItem';
+import { ThreeTrajectory } from './ThreeTrajectory';
 
-export interface ThreeTrajectoryItemProps {
-  position: IVector;
-  velocityNormalized: Vector; // len 0.0 - no speed, 1.0 - maximal speed, direction = speed direciton
-  accNormalized: Vector; // len 0.0 - no acc, 1.0 - maximal acceleration
-  mainColor: string;
-  accColor: string;
-}
-
-const lerp = (a: number, b: number, v: number) => a + (b - a) * v;
-
-const ThreeTrajectoryItem: React.FC<ThreeTrajectoryItemProps> = ({
-  position,
-  mainColor,
-  accColor,
-  velocityNormalized,
-  accNormalized,
-}) => {
-  const showAcc = Math.abs(accNormalized.length()) > 1e-6;
-  const showVel = Math.abs(velocityNormalized.length()) > 1e-6;
-  const [angleVel, angleAcc] = useMemo(() => {
-    const vel = showVel
-      ? getCounterClockwiseAngleMath(VectorF(1, 0), velocityNormalized)
-      : 0;
-    const acc = showAcc
-      ? getCounterClockwiseAngleMath(VectorF(1, 0), accNormalized)
-      : 0;
-    return [vel - Math.PI / 2, acc - Math.PI / 2];
-  }, [accNormalized, velocityNormalized]);
-  const [minColorL, maxColorL, baseColor] = useMemo(() => {
-    const base = new Color(mainColor);
-    return [base.darken(0.5).lightness(), base.lighten(0.5).lightness(), base];
-  }, [mainColor]);
-  const color = useMemo(() => {
-    let len = Vector.fromIVector(velocityNormalized).length();
-    len = Math.max(0.0, Math.min(1.0, len));
-    const lerped = lerp(minColorL, maxColorL, len);
-    return _.cloneDeep(baseColor).lightness(lerped);
-  }, [minColorL, maxColorL, baseColor, velocityNormalized]);
-  return (
-    <group position={posToThreePos(position.x, position.y)}>
-      <mesh rotation={[0, 0, angleVel]}>
-        <mesh>
-          <circleBufferGeometry args={[3, 16]} />
-          <meshBasicMaterial
-            opacity={1.0}
-            transparent
-            color={color.hex().toString()}
-          />
-        </mesh>
-        {showVel && (
-          <mesh
-            rotation={[Math.PI * (1.66 + 0.66), Math.PI, Math.PI * 1.25]}
-            position={[0, 2.7, -2]}
-            scale={[1.5, 1.5, 1.0]}
-          >
-            <tetrahedronGeometry args={[2, 0]} />
-            <meshBasicMaterial opacity={1.0} color={color.hex().toString()} />
-          </mesh>
-        )}
-      </mesh>
-      {showAcc && (
-        <mesh rotation={[0, 0, angleAcc]}>
-          <mesh
-            rotation={[Math.PI * (1.66 + 0.66), Math.PI, Math.PI * 1.25]}
-            position={[0, 3.0, -1]}
-            scale={[0.75, 0.75, 0.5]}
-          >
-            <tetrahedronGeometry args={[2, 0]} />
-            <meshBasicMaterial opacity={1.0} color={accColor} />
-          </mesh>
-        </mesh>
-      )}
-    </group>
-  );
-};
-
-const Template: Story = (args) => {
+const SingleItemTemplate: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
   useEffect(() => {
     setRevision((old) => old + 1);
@@ -102,20 +24,80 @@ const Template: Story = (args) => {
           position={VectorF(0, 0)}
           velocityNormalized={VectorF(args.velX, args.velY)}
           accNormalized={VectorF(args.accX, args.accY)}
-          mainColor="red"
-          accColor="green"
+          mainColor="teal"
+          accColor="red"
         />
       </StoryCanvas>
     </div>
   );
 };
 
-export const SingleItem = Template.bind({});
+export const SingleItem = SingleItemTemplate.bind({});
 SingleItem.args = {
   velX: 0.7,
   velY: 1,
   accX: 0,
   accY: 1,
+};
+
+const StartAndStopTemplate: Story = (args) => {
+  const [revision, setRevision] = useState(uuid.v4());
+  useEffect(() => {
+    setRevision((old) => old + 1);
+  }, []);
+  return (
+    <div>
+      <StoryCanvas zoom={1.0}>
+        <ThreeSpaceBackground size={256} shaderShift={0} />
+        <ThreeTrajectory
+          key={`${revision}+${JSON.stringify(args)}`}
+          items={args.items}
+        />
+      </StoryCanvas>
+    </div>
+  );
+};
+
+export const StartAndStop = StartAndStopTemplate.bind({});
+const startAndStopTrajectory: ThreeTrajectoryItemProps[] = [
+  {
+    position: VectorF(-50, 0),
+    velocityNormalized: VectorFZero,
+    accNormalized: VectorFZero,
+  },
+  {
+    position: VectorF(-40, 0),
+    velocityNormalized: VectorF(0.25, 0),
+    accNormalized: VectorF(1, 0),
+  },
+  {
+    position: VectorF(-20, 0),
+    velocityNormalized: VectorF(0.5, 0),
+    accNormalized: VectorF(1, 0),
+  },
+  {
+    position: VectorF(0, 0),
+    velocityNormalized: VectorF(1, 0),
+    accNormalized: VectorFZero,
+  },
+  {
+    position: VectorF(20, 0),
+    velocityNormalized: VectorF(0.5, 0),
+    accNormalized: VectorF(-1, 0),
+  },
+  {
+    position: VectorF(40, 0),
+    velocityNormalized: VectorF(0.25, 0),
+    accNormalized: VectorF(-1, 0),
+  },
+  {
+    position: VectorF(50, 0),
+    velocityNormalized: VectorFZero,
+    accNormalized: VectorFZero,
+  },
+];
+StartAndStop.args = {
+  items: startAndStopTrajectory,
 };
 
 // noinspection JSUnusedGlobalSymbols

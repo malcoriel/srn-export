@@ -112,7 +112,8 @@ pub struct Trajectory {
 
 pub fn acc_time_for_dist(acc: f64, dist: f64, vmax: f64) -> f64 {
     // TODO: this is for a real physical movement without vmax, but I have to cap it somehow
-    return (Math.abs(dist / acc)).sqrt();
+    // return (Math.abs(dist / acc)).sqrt();
+    return 0.0;
 }
 
 pub fn build_trajectory(
@@ -150,7 +151,7 @@ pub fn build_trajectory(
                 let dir = dir.unwrap();
                 let angle_dir = Vec2f64 { x: 1.0, y: 0.0 }.angle_rad(&dir);
                 let diff = angle_dir - spatial.rotation_rad;
-                let time = acc_time_for_dist(diff);
+                let time = acc_time_for_dist(diff, 0.0, 0.0);
 
                 // turn first
                 // TODO
