@@ -94,6 +94,8 @@ const ThreeFloatingObjectImpl: React.FC<{
   );
 };
 
+const model_fix_coeff = 1 / 5;
+
 export const ThreeFloatingObject = UpdateStrategy(
   ThreeFloatingObjectImpl,
   'ThreeFloatingObject',

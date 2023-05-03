@@ -51,11 +51,11 @@ export const ThreeBodiesLayer: React.FC<{
       {asteroids.map((a: Asteroid) => (
         <ThreeFloatingObject
           gid={a.id}
-          scale={1.0}
+          scale={1 / 5}
           key={a.id}
           radius={a.spatial.radius}
           position={posToThreePos(a.spatial.position.x, a.spatial.position.y)}
-          colors={['#eee']}
+          colors={['#473232']}
           modelName="asteroid.glb"
         />
       ))}
