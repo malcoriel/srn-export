@@ -23,6 +23,7 @@ const getStartGameParamsPlanets = () => {
         id: star_ref_id,
       },
       asteroid_belts: [],
+      asteroids: [],
       planets: [
         {
           p_type: PlanetType.Jovian,
@@ -112,6 +113,7 @@ const getStartGameParamsAsteroidBelt = () => {
         id: star_ref_id,
       },
       planets: [],
+      asteroids: [],
       asteroid_belts: [
         {
           id: ReferencableIdBuilder.ReferencableIdReference({

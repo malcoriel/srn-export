@@ -1,11 +1,18 @@
 import React from 'react';
 import { Meta } from '@storybook/react';
-import { genPeriod, PlanetType } from '../world';
+import { GameState, genPeriod, PlanetType } from '../world';
 import {
+  ActionIterator,
   FunctionalStoryTemplate,
   getStartGameParams,
 } from './functionalStoryTools';
-import { ReferencableIdBuilder } from '../../../world/pkg/world.extra';
+import {
+  ActionBuilder,
+  LongActionStartBuilder,
+  ReferencableIdBuilder,
+  ShootTargetBuilder,
+} from '../../../world/pkg/world.extra';
+import { findMyShip } from '../ClientStateIndexing';
 
 const rocketShootingStory = 'Functional/Combat/RocketShooting';
 const getStartGameParamsRocketShooting = () => {
@@ -14,6 +21,7 @@ const getStartGameParamsRocketShooting = () => {
     reference: 'star',
   };
 
+  const asteroidId = '7d840590-01ce-4b37-a32a-037264da2e50';
   return {
     storyName: rocketShootingStory,
     forceCameraPosition: {
@@ -30,6 +38,9 @@ const getStartGameParamsRocketShooting = () => {
       planets: [],
       asteroids: [
         {
+          id: ReferencableIdBuilder.ReferencableIdId({
+            id: asteroidId,
+          }),
           position: {
             x: 175,
             y: 0,
@@ -44,6 +55,44 @@ const getStartGameParamsRocketShooting = () => {
     },
     initialRotation: Math.PI / 4,
     initialZoom: 0.8,
+    actions: function* makeSequence(): ActionIterator {
+      let currentState: GameState | null = null;
+      while (true) {
+        if (!currentState) {
+          currentState = yield {
+            wait: 100,
+            action: null,
+          };
+          continue;
+        }
+        let myShip = findMyShip(currentState);
+        if (!myShip) {
+          currentState = yield {
+            wait: 100,
+            action: null,
+          };
+          continue;
+        }
+        const launchAbility = myShip.abilities.find(a => a.tag === "Launch");
+        if (!launchAbility) {
+          console.warn('no launch ability, cannot continue');
+          break;
+        }
+        currentState = yield {
+          wait: 1000,
+          action: ActionBuilder.ActionLongActionStart({
+            ship_id: '$my_ship_id',
+            long_action_start: LongActionStartBuilder.LongActionStartShoot({
+              target: ShootTargetBuilder.ShootTargetShip({
+                id: asteroidId,
+              }),
+              turret_id: launchAbility.turret_id,
+            }),
+            player_id: '$my_player_id',
+          }),
+        };
+      }
+    },
   };
 };
 export const RocketShooting = FunctionalStoryTemplate.bind({});

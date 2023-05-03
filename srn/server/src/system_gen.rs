@@ -24,7 +24,7 @@ use crate::random_stuff::{
 use crate::vec2::Vec2f64;
 use crate::world::{
     AsteroidBelt, Container, GameMode, GameState, Location, Movement, ObjectProperty, PlanetV2,
-    RotationMovement, SpatialProps, Star, AABB, GAME_STATE_VERSION,
+    RotationMovement, SpatialProps, Star, Templated, AABB, GAME_STATE_VERSION,
 };
 use crate::{planet_movement, prng_id, seed_prng, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -582,6 +582,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
         gen_opts: Some(opts.unwrap_or_default()),
         dialogue_states: Some(Default::default()),
         breadcrumbs: None,
+        projectile_templates: None,
     }
 }
 
@@ -618,6 +619,7 @@ pub fn make_sandbox_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> Ga
         gen_opts: Some(opts.unwrap_or_default()),
         dialogue_states: Default::default(),
         breadcrumbs: None,
+        projectile_templates: None,
     }
 }
 
@@ -681,6 +683,7 @@ fn gen_state(
         dialogue_states: Some(Default::default()),
         breadcrumbs: None,
         next_seed: None,
+        projectile_templates: None,
     };
 
     let anchor_distances = index_state(&state).anchor_distances.clone();

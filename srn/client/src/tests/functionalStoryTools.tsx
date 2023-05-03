@@ -14,6 +14,7 @@ import { CameraCoordinatesBox } from '../HtmlLayers/CameraCoordinatesBox';
 import { Button } from '../HtmlLayers/ui/Button';
 import { executeSyncAction } from '../utils/ShipControls';
 import _ from 'lodash';
+import pWaitFor from 'p-wait-for';
 
 let nsRef: NetState | undefined;
 
@@ -44,6 +45,14 @@ const patchAction = (action: Action, nsRef: NetState) => {
       action.ship_id = nsRef.indexes.myShip.id;
     }
   }
+  if (action.tag === 'LongActionStart') {
+    if (action.ship_id === '$my_ship_id') {
+      action.ship_id = nsRef.indexes.myShip.id;
+    }
+    if (action.player_id === '$my_player_id') {
+      action.player_id = nsRef.state.my_id;
+    }
+  }
 };
 
 let currentStoryName = '';
@@ -64,7 +73,21 @@ export const buildStory = async ({
   nsRef.sendSandboxCmd(
     SandboxCommandBuilder.SandboxCommandSetupState({ fields: initialState })
   );
-  await delay(1000);
+  await pWaitFor(
+    async () => {
+      if (!nsRef) {
+        return false;
+      }
+      if (!initialState.force_seed) {
+        // no way to check for sure
+        await delay(1000);
+        return true;
+      }
+      const { seed } = nsRef.state;
+      return seed === initialState.force_seed;
+    },
+    { interval: 100, timeout: 5000 }
+  );
 
   nsRef.sendSandboxCmd(
     SandboxCommandBuilder.SandboxCommandTeleport({
@@ -80,9 +103,12 @@ export const buildStory = async ({
     nsRef.visualState.forcedCameraPosition = forceCameraPosition;
   }
   nsRef.visualState.targetZoomShift = initialZoom;
-  // stop init immediately, then all actions are async
+  // The function here must end, as otherwise it blocks the init - so the action triggering should be in setTimeout
   setTimeout(async () => {
     if (actions && nsRef) {
+      console.log('actions iterator will start soon...');
+      await delay(2000);
+      console.log('actions iterator initialized');
       const iterator = actions(nsRef.disconnecting ? null : nsRef.state);
       while (true) {
         const { done, value } = iterator.next(

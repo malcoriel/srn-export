@@ -82,6 +82,29 @@ async function buildForWeb({
     await fs.copy('world/world.d.ts.tmp', 'world/pkg/world.d.ts', {
       overwrite: true,
     });
+    console.log('Fixing duplicate typeguards bug...');
+    const preFile = (await fs.readFile('world/pkg/world.d.ts')).toString();
+
+    // the bug is somewhere in typescript-definitions, and this approach is non-generic monkeypatch for just my code
+    const targetTypes = ['TemplatedItem'];
+
+    const duplicateTypeGuardsFinders = targetTypes.map(
+      // export const isTemplatedItem =<TemplatedItem>(x: any, typename: string): x is TemplatedItem => { return typeof x === typename }
+      (tt) => new RegExp(`^export const is${tt} =.+$`, 'gm')
+    );
+    const cleanedPreFile = preFile.split('');
+    for (const finder of duplicateTypeGuardsFinders) {
+      const occurences = preFile.match(finder);
+      if (occurences && occurences.length > 1) {
+        console.log('caught duplicate typeguard, patching...');
+        const index = preFile.indexOf(occurences[0]);
+        const length = occurences[0].length;
+        cleanedPreFile.splice(index, length);
+      } else {
+        console.log(`No patching is necessary for ${finder}`);
+      }
+    }
+    await fs.writeFile('world/pkg/world.d.ts', cleanedPreFile.join(''));
     console.log('Running codemods...');
     await spawnWatched(
       'yarn jscodeshift -t codeshift/make-smart-enums.ts --extensions=ts world/pkg/world.d.ts'
@@ -89,6 +112,7 @@ async function buildForWeb({
     await spawnWatched(
       'yarn jscodeshift -t codeshift/make-builder-classes.ts --extensions=ts world/pkg/world.d.ts'
     );
+    console.log('Running post-codemod patching...');
     const file = (await fs.readFile('world/pkg/world.d.ts')).toString();
     const builderClassFinder = /\/\/ start builder class (\w+)(?:.|\n|\r)*export class \1(?:.|\n|\r)*end builder class \1/gm;
     const enumFinder = /^export enum .+$/gm;

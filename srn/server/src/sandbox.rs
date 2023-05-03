@@ -221,6 +221,9 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
         }
         SandboxCommand::SetupState(args) => {
             let loc_idx = 0;
+            if let Some(force_seed) = &args.force_seed {
+                state.seed = force_seed.clone();
+            }
             let mut prng = Pcg64Mcg::seed_from_u64(
                 args.force_seed
                     .map(|s| str_to_hash(s))

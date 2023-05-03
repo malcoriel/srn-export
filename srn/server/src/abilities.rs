@@ -20,6 +20,13 @@ pub enum Ability {
         cooldown_normalized: f64,
         cooldown_ticks_max: i32,
     },
+    Launch {
+        cooldown_ticks_remaining: i32,
+        turret_id: String,
+        projectile_template_id: i32,
+        cooldown_normalized: f64,
+        cooldown_ticks_max: i32,
+    },
     ShootAll,
     BlowUpOnLand,
     ToggleMovement {
@@ -67,6 +74,7 @@ impl Ability {
             Ability::BlowUpOnLand => 0,
             Ability::ShootAll => 0,
             Ability::ToggleMovement { .. } => 0,
+            Ability::Launch { .. } => SHOOT_COOLDOWN_TICKS,
         }
     }
 
@@ -77,6 +85,7 @@ impl Ability {
             Ability::BlowUpOnLand => 0.0,
             Ability::ShootAll => 0.0,
             Ability::ToggleMovement { .. } => 0.0,
+            Ability::Launch { .. } => SHOOT_DEFAULT_DISTANCE,
         }
     }
 
@@ -90,6 +99,10 @@ impl Ability {
             Ability::BlowUpOnLand => 0,
             Ability::ShootAll => 0,
             Ability::ToggleMovement { .. } => 0,
+            Ability::Launch {
+                cooldown_ticks_remaining,
+                ..
+            } => *cooldown_ticks_remaining,
         };
     }
 
@@ -105,6 +118,12 @@ impl Ability {
             Ability::BlowUpOnLand => {}
             Ability::ShootAll => {}
             Ability::ToggleMovement { .. } => {}
+            Ability::Launch {
+                cooldown_ticks_remaining,
+                ..
+            } => {
+                *cooldown_ticks_remaining = val;
+            }
         };
     }
 
@@ -127,6 +146,19 @@ impl Ability {
             Ability::BlowUpOnLand => {}
             Ability::ShootAll => {}
             Ability::ToggleMovement { .. } => {}
+            Ability::Launch {
+                cooldown_ticks_remaining,
+                cooldown_normalized,
+                cooldown_ticks_max,
+                ..
+            } => {
+                *cooldown_ticks_remaining =
+                    (*cooldown_ticks_remaining - ticks_elapsed as i32).max(0);
+                *cooldown_normalized = (*cooldown_ticks_remaining as f64
+                    / *cooldown_ticks_max as f64)
+                    .max(0.0)
+                    .min(1.0);
+            }
         };
     }
 }

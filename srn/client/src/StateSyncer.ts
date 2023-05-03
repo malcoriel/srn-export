@@ -949,8 +949,10 @@ export class StateSyncer extends EventEmitter {
       'locations.*.ships.*.spatial.radius',
       'locations.*.wrecks',
 
-      // full for asteroids - for now
+      // full server for asteroids - for now
       'locations.*.asteroids',
+      // full server for projectiles - for now
+      'locations.*.projectiles',
     ]),
     // if server id has changed, invalidate the whole tree under the key. it's somewhat an optimization of the merge strategy
     // good for rarely-changed objects that have ids, e.g. stars, but which have to be overwritten by server data occasionally

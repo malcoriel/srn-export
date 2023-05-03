@@ -283,7 +283,35 @@ pub struct Ship {
     pub trading_with: Option<ObjectSpecifier>,
 }
 
-pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[serde(tag = "tag")]
+pub enum Projectile {
+    Rocket(RocketProps),
+}
+
+impl Projectile {
+    pub fn get_id(&self) -> i32 {
+        match self {
+            Projectile::Rocket(RocketProps { id, .. }) => *id,
+        }
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct RocketProps {
+    pub id: i32,
+    pub spatial: SpatialProps,
+    pub movement: Movement,
+    pub properties: Vec<ObjectProperty>,
+}
+
+pub fn gen_turrets(
+    count: usize,
+    _prng: &mut Pcg64Mcg,
+    rocket_template: &Projectile,
+) -> Vec<(Ability, ShipTurret)> {
     let mut res = vec![];
     for i in 0..count {
         let id = i.to_string();
@@ -295,14 +323,31 @@ pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurr
                 cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
             },
             ShipTurret { id },
-        ))
+        ));
     }
+    let id = res.len().to_string();
+    res.push((
+        Ability::Launch {
+            cooldown_ticks_remaining: 0,
+            turret_id: id.clone(),
+            projectile_template_id: rocket_template.get_id(),
+            cooldown_normalized: 0.0,
+            cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
+        },
+        ShipTurret { id },
+    ));
     res
 }
 
 impl Ship {
     pub fn new(prng: &mut Pcg64Mcg, at: &mut Option<Vec2f64>) -> Ship {
-        let turrets = gen_turrets(2, prng);
+        let rocket_template = Projectile::Rocket(RocketProps {
+            id: 1,
+            spatial: Default::default(),
+            movement: Movement::None,
+            properties: vec![],
+        });
+        let turrets = gen_turrets(2, prng, &rocket_template);
         Ship {
             id: prng_id(prng),
             color: gen_color(prng).to_string(),
@@ -477,6 +522,7 @@ pub struct Location {
     pub asteroid_belts: Vec<AsteroidBelt>,
     pub ships: Vec<Ship>,
     pub adjacent_location_ids: Vec<Uuid>,
+    pub projectiles: Vec<Projectile>,
 }
 
 impl Location {
@@ -494,6 +540,7 @@ impl Location {
             asteroid_belts: vec![],
             ships: vec![],
             adjacent_location_ids: vec![],
+            projectiles: Default::default(),
         }
     }
 
@@ -511,6 +558,7 @@ impl Location {
             position: Vec2f64 { x: 0.0, y: 0.0 },
             asteroid_belts: vec![],
             ships: vec![],
+            projectiles: Default::default(),
         }
     }
 }
@@ -570,6 +618,7 @@ pub struct GameState {
     pub gen_opts: Option<GenStateOpts>,
     pub dialogue_states: Option<DialogueStates>,
     pub breadcrumbs: Option<Vec<Breadcrumb>>,
+    pub projectile_templates: Option<Vec<Projectile>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -611,6 +660,7 @@ impl GameState {
             gen_opts: Default::default(),
             dialogue_states: Some(Default::default()),
             breadcrumbs: None,
+            projectile_templates: None,
         }
     }
 }

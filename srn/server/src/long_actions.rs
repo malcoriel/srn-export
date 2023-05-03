@@ -1,4 +1,5 @@
 use core::mem;
+use std::collections::HashSet;
 
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -79,6 +80,14 @@ pub enum LongAction {
         percentage: u32,
         turret_id: String,
     },
+    Launch {
+        id: Uuid,
+        target: ShootTarget,
+        micro_left: i32,
+        percentage: u32,
+        turret_id: String,
+        projectile_template_id: i32,
+    },
     Dock {
         id: Uuid,
         to_planet: Uuid,
@@ -128,6 +137,14 @@ pub fn erase_details(la: LongAction) -> LongAction {
             end_pos: Default::default(),
             micro_left: 0,
             percentage: 0,
+        },
+        LongAction::Launch { .. } => LongAction::Launch {
+            id: Default::default(),
+            target: Default::default(),
+            micro_left: 0,
+            percentage: 0,
+            turret_id: Default::default(),
+            projectile_template_id: 0,
         },
     };
 }
@@ -373,16 +390,24 @@ fn try_start_shoot(
             Ability::BlowUpOnLand => {}
             Ability::ShootAll => {}
             Ability::ToggleMovement { .. } => {}
+            Ability::Launch { turret_id, .. } => {
+                if *turret_id == shooting_turret_id {
+                    ability.set_max_cooldown();
+                }
+            }
         }
     }
     return true;
 }
 
+// protect against repetition of actions,
+// for those that must be unique - keep the first
+// for multiple - unique by some criteria, e.g. turret_id
 fn revalidate(long_actions: &mut Vec<LongAction>) {
     let mut has_jump = false;
     let mut has_dock = false;
     let mut has_undock = false;
-    let mut has_shoot = false;
+    let mut active_turret_ids: HashSet<String> = HashSet::new();
     let mut new_actions = long_actions
         .clone()
         .into_iter()
@@ -395,9 +420,12 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                 has_jump = true;
                 Some(a)
             }
-            LongAction::Shoot { .. } => {
-                has_shoot = true;
-                Some(a)
+            LongAction::Shoot { turret_id, .. } => {
+                if active_turret_ids.contains(&turret_id) {
+                    return None;
+                }
+                active_turret_ids.insert(turret_id.clone());
+                Some(a.clone())
             }
             LongAction::Dock { .. } => {
                 if has_dock || has_undock {
@@ -412,6 +440,13 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                 }
                 has_undock = true;
                 Some(a)
+            }
+            LongAction::Launch { .. } => {
+                if active_turret_ids.contains(&turret_id) {
+                    return None;
+                }
+                active_turret_ids.insert(turret_id.clone());
+                Some(a.clone())
             }
         })
         .collect();
@@ -481,6 +516,11 @@ pub fn finish_long_act(
             let player = find_player_idx_by_ship_id(state, ship_id).map(|p| p.clone());
             world::undock_ship(state, ship_idx, client, player, prng);
         }
+        LongAction::Launch { .. } => {
+            if player_id.is_some() {
+                combat::resolve_launch(state, player_id.unwrap(), target, turret_id, client);
+            }
+        }
     }
 }
 
@@ -522,6 +562,25 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
             )
         }
         LongAction::Shoot {
+            micro_left,
+            id,
+            target,
+            turret_id,
+            ..
+        } => {
+            let left = micro_left - micro_passed as i32;
+            (
+                LongAction::Shoot {
+                    id,
+                    micro_left: left,
+                    target,
+                    percentage: calc_percentage(left, SHOOT_ABILITY_DURATION),
+                    turret_id,
+                },
+                left > 0,
+            )
+        }
+        LongAction::Launch {
             micro_left,
             id,
             target,

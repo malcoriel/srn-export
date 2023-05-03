@@ -186,3 +186,35 @@ pub fn resolve_shoot(
         }
     }
 }
+
+pub fn resolve_launch(
+    state: &mut GameState,
+    player_shooting: Uuid,
+    target: ShootTarget,
+    active_turret_id: String,
+    client: bool,
+) {
+    if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
+        let loc = &mut state.locations[ship_loc.location_idx];
+        let shooting_ship = &mut loc.ships[ship_loc.ship_idx];
+        let shooting_ship_id = shooting_ship.id;
+        let shoot_ability = find_shoot_ability(shooting_ship, active_turret_id);
+        if shoot_ability.is_none() {
+            return;
+        }
+        let shoot_ability = shoot_ability.unwrap();
+        let proj_template = match shoot_ability {
+            Ability::Launch {
+                projectile_template_id,
+                ..
+            } => Some(projectile_template_id),
+            _ => None,
+        };
+        if proj_template.is_none() {
+            return;
+        }
+        let proj_template_id = proj_template.unwrap();
+        let proj_template = loc.p
+        loc.projectiles.instances.push();
+    }
+}
