@@ -20,8 +20,8 @@ use crate::system_gen::{
 };
 use crate::vec2::Vec2f64;
 use crate::world::{
-    AsteroidBelt, GameState, Location, Movement, PlanetV2, RotationMovement, Ship, SpatialProps,
-    Star,
+    Asteroid, AsteroidBelt, GameState, Location, Movement, PlanetV2, RotationMovement, Ship,
+    SpatialProps, Star,
 };
 use crate::{indexing, prng_id};
 use crate::{new_id, world};
@@ -67,6 +67,7 @@ pub struct SBAddStar {
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct SBTeleport {
     target: Vec2f64,
+    rotation_rad: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -79,10 +80,18 @@ pub struct SBAddAsteroidBelt {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct SBAddAsteroid {
+    id: Option<ReferencableId>,
+    radius: f64,
+    position: Vec2f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct SBSetupState {
     star: SBAddStar,
     planets: Vec<SBAddPlanet>,
     asteroid_belts: Vec<SBAddAsteroidBelt>,
+    asteroids: Vec<SBAddAsteroid>,
     force_seed: Option<String>,
 }
 
@@ -177,6 +186,9 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
         SandboxCommand::Teleport(args) => {
             if let Some(ship) = find_my_ship_mut(state, player_id) {
                 ship.spatial.position = args.target.clone();
+                if let Some(rotation_rad) = args.rotation_rad {
+                    ship.spatial.rotation_rad = rotation_rad;
+                }
             } else {
                 warn!("couldn't find player ship to teleport")
             }
@@ -258,6 +270,22 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                         phase: Some(0),
                         start_phase: 0,
                     },
+                })
+                .collect();
+            loc.asteroids = args
+                .asteroids
+                .iter()
+                .map(|s| Asteroid {
+                    id: map_id_opt(s.id.clone(), &mut id_storage, &mut prng),
+                    spatial: SpatialProps {
+                        position: s.position,
+                        velocity: Default::default(),
+                        angular_velocity: 0.0,
+                        rotation_rad: 0.0,
+                        radius: s.radius,
+                    },
+                    movement: Movement::None,
+                    rot_movement: RotationMovement::None,
                 })
                 .collect();
             loc.planets = args

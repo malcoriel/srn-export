@@ -317,7 +317,9 @@ fn update_radial_movement(
 ) {
     for body in bodies {
         let mark = sampler.start(SamplerMarks::UpdateRadialMovement as u32);
-        if limit_area.contains_vec(&body.get_spatial().position) || body.always_project_movement() {
+        if limit_area.contains_vec(&body.get_spatial().position)
+            || body.always_project_movement() && !body.get_movement().is_none()
+        {
             project_body_relative_position(current_ticks, indexes, caches, body);
         }
         sampler.end(mark);
@@ -468,7 +470,13 @@ pub fn get_radial_bodies_mut(res: &mut Location) -> Vec<Box<&mut dyn IBodyV2>> {
     let mut asteroid_bodies = res
         .asteroids
         .iter_mut()
-        .map(|p| Box::new(p as &mut dyn IBodyV2))
+        .filter_map(|p| {
+            if p.movement.is_none() {
+                None
+            } else {
+                Some(Box::new(p as &mut dyn IBodyV2))
+            }
+        })
         .collect();
     bodies.append(&mut planet_bodies);
     bodies.append(&mut asteroid_bodies);
@@ -496,7 +504,13 @@ pub fn get_radial_bodies(res: &Location) -> Vec<Box<&dyn IBodyV2>> {
     let mut asteroid_bodies = res
         .asteroids
         .iter()
-        .map(|p| Box::new(p as &dyn IBodyV2))
+        .filter_map(|p| {
+            if p.movement.is_none() {
+                None
+            } else {
+                Some(Box::new(p as &dyn IBodyV2))
+            }
+        })
         .collect();
     let mut asteroid_belt_bodies = res
         .asteroid_belts

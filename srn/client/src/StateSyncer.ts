@@ -948,6 +948,9 @@ export class StateSyncer extends EventEmitter {
       'locations.*.ships.*.spatial.angular_velocity',
       'locations.*.ships.*.spatial.radius',
       'locations.*.wrecks',
+
+      // full for asteroids - for now
+      'locations.*.asteroids',
     ]),
     // if server id has changed, invalidate the whole tree under the key. it's somewhat an optimization of the merge strategy
     // good for rarely-changed objects that have ids, e.g. stars, but which have to be overwritten by server data occasionally
@@ -958,7 +961,7 @@ export class StateSyncer extends EventEmitter {
     merge: new Set([
       'locations',
       'locations.*.planets', // merge into player-only
-      'locations.*.asteroids',
+      // 'locations.*.asteroids',
       'locations.*.minerals',
       'locations.*.containers',
       'locations.*.ships',

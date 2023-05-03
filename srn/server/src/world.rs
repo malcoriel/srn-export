@@ -1707,6 +1707,15 @@ pub enum Movement {
     },
 }
 
+impl Movement {
+    pub fn is_none(&self) -> bool {
+        match self {
+            Movement::None => true,
+            _ => false,
+        }
+    }
+}
+
 pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13;
 // 0.1 unit per second per second (to allow speeding up from zero)
 pub const MIN_OBJECT_TURN_SPEED_RAD_PER_TICK: f64 = 1e-14; // 0.01 radian per second per second (to allow speeding up from zero)

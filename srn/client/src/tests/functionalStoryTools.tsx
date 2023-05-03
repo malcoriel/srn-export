@@ -13,6 +13,7 @@ import { ThreeLayer } from '../ThreeLayers/ThreeLayer';
 import { CameraCoordinatesBox } from '../HtmlLayers/CameraCoordinatesBox';
 import { Button } from '../HtmlLayers/ui/Button';
 import { executeSyncAction } from '../utils/ShipControls';
+import _ from 'lodash';
 
 let nsRef: NetState | undefined;
 
@@ -24,6 +25,7 @@ export type ActionIterator = Iterator<
 
 export interface BuildStoryParams {
   initialState: SBSetupState;
+  initialRotation?: number;
   initialPos: IVector;
   initialZoom: number;
   forceCameraPosition?: IVector;
@@ -48,6 +50,7 @@ let currentStoryName = '';
 export const buildStory = async ({
   initialState,
   initialPos,
+  initialRotation,
   initialZoom,
   forceCameraPosition,
   actions,
@@ -67,6 +70,7 @@ export const buildStory = async ({
     SandboxCommandBuilder.SandboxCommandTeleport({
       fields: {
         target: initialPos,
+        rotation_rad: _.isNil(initialRotation) ? null : initialRotation,
       },
     })
   );

@@ -1,13 +1,15 @@
 import React from 'react';
 import _ from 'lodash';
-import { GameState } from '../world';
+import { Asteroid, GameState } from '../world';
 import { ThreeStar } from './ThreeStar';
 import { VisualState } from '../NetState';
-import { MineralsLayer } from './MineralsLayer';
+import { MineralsLayer, rarityToColorArr } from './MineralsLayer';
 import { ContainersLayer } from './ContainersLayer';
 import { ThreePlanetsLayer } from './ThreePlanetsLayer';
 import { AsteroidBeltsLayer } from './AsteroidBeltsLayer';
 import { posToThreePos } from './util';
+import { InteractorMap } from './InteractorMap';
+import { ThreeFloatingObject } from './ThreeFloatingObject';
 
 export const ThreeBodiesLayer: React.FC<{
   state: GameState;
@@ -20,6 +22,7 @@ export const ThreeBodiesLayer: React.FC<{
     minerals,
     asteroid_belts,
     containers,
+    asteroids,
   } = state.locations[0];
 
   return (
@@ -45,13 +48,17 @@ export const ThreeBodiesLayer: React.FC<{
       <AsteroidBeltsLayer asteroid_belts={asteroid_belts} />
       <MineralsLayer minerals={minerals} />
       <ContainersLayer containers={containers} />
-      {/*{asteroids.map((a: Asteroid) => (*/}
-      {/*  <ThreeRock*/}
-      {/*    key={a.id}*/}
-      {/*    position={posToThreePos(a.x, a.y)}*/}
-      {/*    scale={_.times(3, () => a.radius) as [number, number, number]}*/}
-      {/*  />*/}
-      {/*))}*/}
+      {asteroids.map((a: Asteroid) => (
+        <ThreeFloatingObject
+          gid={a.id}
+          scale={1.0}
+          key={a.id}
+          radius={a.spatial.radius}
+          position={posToThreePos(a.spatial.position.x, a.spatial.position.y)}
+          colors={['#eee']}
+          modelName="asteroid.glb"
+        />
+      ))}
     </group>
   );
 };
