@@ -317,7 +317,13 @@ pub fn resolve_launch(
         let new_velocity = new_velocity
             .unwrap()
             .scalar_mul(proj_template.get_spatial().velocity.euclidean_len());
+
         instance.get_spatial_mut().velocity = new_velocity;
+        instance.get_spatial_mut().rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: 1.0 });
+        if target_pos.position.x < shooting_ship.spatial.position.x {
+            instance.get_spatial_mut().rotation_rad =
+                PI * 2.0 - instance.get_spatial_mut().rotation_rad;
+        }
         loc.projectiles.push(instance);
     }
 }

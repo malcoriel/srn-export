@@ -18,7 +18,7 @@ const ThreeRocket: React.FC<ThreeRocketProps> = ({ spatial }) => {
   const r = spatial.rotation_rad;
   return (
     <mesh position={vecToThreePos(spatial.position)} rotation={[0, 0, r]}>
-      <planeBufferGeometry args={[0.5, 1.0]} />
+      <planeBufferGeometry args={[0.5, 1.5]} />
       <meshBasicMaterial color="red" />
     </mesh>
   );
