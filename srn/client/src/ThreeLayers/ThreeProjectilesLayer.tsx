@@ -17,10 +17,16 @@ export interface ThreeRocketProps {
 const ThreeRocket: React.FC<ThreeRocketProps> = ({ spatial }) => {
   const r = spatial.rotation_rad;
   return (
-    <mesh position={vecToThreePos(spatial.position)} rotation={[0, 0, r]}>
-      <planeBufferGeometry args={[0.5, 1.5]} />
-      <meshBasicMaterial color="red" />
-    </mesh>
+    <group position={vecToThreePos(spatial.position)} rotation={[0, 0, r]}>
+      <mesh>
+        <planeBufferGeometry args={[0.5, 1.5]} />
+        <meshBasicMaterial color="red" />
+      </mesh>
+      <mesh rotation={[0, 0, Math.PI / 4]} position={[0, 0.8, -0.25]}>
+        <planeBufferGeometry args={[0.5, 0.5]} />
+        <meshBasicMaterial color="yellow" />
+      </mesh>
+    </group>
   );
 };
 

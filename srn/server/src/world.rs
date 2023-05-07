@@ -8,7 +8,7 @@ use std::iter::FromIterator;
 
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
-use crate::autofocus::{build_spatial_index, SpatialIndex};
+use crate::autofocus::{build_spatial_index, object_index_into_object_id, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
 use crate::combat::{Health, ShootTarget};
@@ -16,7 +16,7 @@ use crate::dialogue::Dialogue;
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
     index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, GameStateCaches,
-    GameStateIndexes, ObjectSpecifier,
+    GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
@@ -292,9 +292,20 @@ pub enum Projectile {
 }
 
 impl Projectile {
+    pub(crate) fn get_blow_radius(&self) -> f64 {
+        match self {
+            Projectile::Rocket(props) => props.damage_radius,
+        }
+    }
     pub(crate) fn get_spatial(&self) -> &SpatialProps {
         match self {
             Projectile::Rocket(props) => &props.spatial,
+        }
+    }
+
+    pub(crate) fn get_damage(&self) -> f64 {
+        match self {
+            Projectile::Rocket(props) => props.damage,
         }
     }
 
@@ -340,6 +351,8 @@ pub struct RocketProps {
     pub movement: Movement,
     pub properties: Vec<ObjectProperty>,
     pub target: Option<ObjectSpecifier>,
+    pub damage: f64,
+    pub damage_radius: f64,
 }
 
 pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
@@ -1196,9 +1209,26 @@ pub fn update_location(
     }
     sampler.end(update_containers_id);
 
+    let collisions_id = sampler.start(SamplerMarks::UpdateProjectileCollisions as u32);
+    let extra_damages = update_proj_collisions(
+        &mut state.locations[location_idx],
+        update_options,
+        spatial_index,
+        location_idx,
+    );
+    sampler.end(collisions_id);
+
     if !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
-        update_hp_effects(state, location_idx, elapsed, state.millis, prng, client);
+        update_hp_effects(
+            state,
+            location_idx,
+            elapsed,
+            state.millis,
+            prng,
+            client,
+            extra_damages,
+        );
         sampler.end(hp_effects_id);
 
         let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
@@ -1256,6 +1286,32 @@ pub fn update_location(
         sampler.end(wreck_decay_id);
     }
     sampler
+}
+
+fn update_proj_collisions(
+    loc: &mut Location,
+    _options: &UpdateOptions,
+    sp_idx: &SpatialIndex,
+    _location_idx: usize,
+) -> Vec<(ObjectSpecifier, f64)> {
+    let mut damages: Vec<(ObjectIndexSpecifier, f64)> = vec![];
+    loc.projectiles.retain(|proj| {
+        let any_coll = sp_idx.rad_search(&proj.get_spatial().position, proj.get_spatial().radius);
+        if any_coll.len() > 0 {
+            let mut damaged: Vec<(ObjectIndexSpecifier, f64)> = sp_idx
+                .rad_search(&proj.get_spatial().position, proj.get_spatial().radius)
+                .into_iter()
+                .map(|os| (os, proj.get_damage()))
+                .collect();
+            damages.append(&mut damaged);
+            return false;
+        }
+        return true;
+    });
+    damages
+        .into_iter()
+        .filter_map(|(ois, d)| object_index_into_object_id(&ois, loc).map(|os| (os, d)))
+        .collect()
 }
 
 fn update_docked_ships_position(loc: &mut Location, indexes: &GameStateIndexes) {
@@ -1585,6 +1641,7 @@ pub fn update_hp_effects(
     current_tick: u32,
     prng: &mut Pcg64Mcg,
     client: bool,
+    extra_damages: Vec<(ObjectSpecifier, f64)>,
 ) {
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
@@ -2368,6 +2425,9 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
             .retain(|m| m.id != id),
         ObjectSpecifier::Wreck { id } => state.locations[loc_idx].wrecks.retain(|w| w.id != id),
         ObjectSpecifier::Location { id } => state.locations.retain(|l| l.id != id),
+        ObjectSpecifier::Projectile { id } => state.locations[loc_idx]
+            .projectiles
+            .retain(|p| p.get_id() != id),
     }
 }
 

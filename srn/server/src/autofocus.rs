@@ -132,6 +132,16 @@ pub fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
         refs.push(ObjectIndexSpecifier::Container { idx: i });
         points.push((c.position.x, c.position.y));
     }
+    for i in 0..loc.asteroids.len() {
+        let c = &loc.asteroids[i];
+        refs.push(ObjectIndexSpecifier::Asteroid { idx: i });
+        points.push((c.spatial.position.x, c.spatial.position.y));
+    }
+    for i in 0..loc.projectiles.len() {
+        let c = &loc.projectiles[i];
+        refs.push(ObjectIndexSpecifier::Projectile { idx: i });
+        points.push((c.get_spatial().position.x, c.get_spatial().position.y));
+    }
     // in case of no objects (e.g. sandbox) kdbush will crash
     points.push((0.0, 0.0));
     let index = KDBush::create(points, kdbush::DEFAULT_NODE_SIZE);
@@ -202,9 +212,9 @@ pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &
             };
         }
         let sorter = |a, b| {
-            let a_pos = get_position(&loc_clone_ref, a);
+            let a_pos = object_index_into_object_pos(a, &loc_clone_ref);
             let a_dist = a_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
-            let b_pos = get_position(&loc_clone_ref, b);
+            let b_pos = object_index_into_object_pos(b, &loc_clone_ref);
             let b_dist = b_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
             if !b_dist.is_finite() || !a_dist.is_finite() {
                 return Ordering::Equal;
@@ -246,6 +256,11 @@ pub fn object_index_into_object_id(
             .minerals
             .get(*idx)
             .map(|o| ObjectSpecifier::Mineral { id: o.id }),
+        ObjectIndexSpecifier::Asteroid { idx } => loc
+            .asteroids
+            .get(*idx)
+            .map(|o| ObjectSpecifier::Asteroid { id: o.id }),
+        ObjectIndexSpecifier::Projectile { idx } => None, // projectiles do not have uuid ids, so only indexes for them
         ObjectIndexSpecifier::Container { idx } => loc
             .containers
             .get(*idx)
@@ -282,26 +297,14 @@ pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) 
             .get(*idx)
             .map(|ship| ship.spatial.position.clone()),
         ObjectIndexSpecifier::Star => loc.star.as_ref().map(|o| o.spatial.position.clone()),
-    }
-}
-
-fn get_position(loc: &Location, sp: &ObjectIndexSpecifier) -> Option<Vec2f64> {
-    match sp {
-        ObjectIndexSpecifier::Unknown => None,
-        ObjectIndexSpecifier::Mineral { idx } => {
-            loc.minerals.get(*idx).map(|m| Vec2f64 { x: m.x, y: m.y })
-        }
-        ObjectIndexSpecifier::Container { idx } => {
-            loc.containers.get(*idx).map(|c| c.position.clone())
-        }
-        ObjectIndexSpecifier::Planet { idx } => {
-            loc.planets.get(*idx).map(|o| o.spatial.position.clone())
-        }
-        ObjectIndexSpecifier::Ship { idx } => loc
-            .ships
+        ObjectIndexSpecifier::Projectile { idx } => loc
+            .projectiles
+            .get(*idx)
+            .map(|proj| proj.get_spatial().position.clone()),
+        ObjectIndexSpecifier::Asteroid { idx } => loc
+            .asteroids
             .get(*idx)
             .map(|ship| ship.spatial.position.clone()),
-        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|s| s.spatial.position.clone()),
     }
 }
 

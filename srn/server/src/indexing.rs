@@ -389,6 +389,7 @@ pub enum ObjectSpecifier {
     Unknown,
     Mineral { id: Uuid },
     Asteroid { id: Uuid },
+    Projectile { id: i32 },
     Container { id: Uuid },
     Planet { id: Uuid },
     Ship { id: Uuid },
@@ -421,6 +422,7 @@ impl ObjectSpecifier {
             ObjectSpecifier::AsteroidBelt { id } => Some(*id),
             ObjectSpecifier::Wreck { id } => Some(*id),
             ObjectSpecifier::Location { id } => Some(*id),
+            ObjectSpecifier::Projectile { id } => None,
         }
     }
 }
@@ -433,6 +435,8 @@ pub enum ObjectIndexSpecifier {
     Unknown,
     Mineral { idx: usize },
     Container { idx: usize },
+    Projectile { idx: usize },
+    Asteroid { idx: usize },
     Planet { idx: usize },
     Ship { idx: usize },
     Star,
@@ -593,5 +597,6 @@ pub fn find_spatial_ref_by_spec<'a>(
         ObjectSpecifier::AsteroidBelt { .. } => None,
         ObjectSpecifier::Wreck { .. } => None,
         ObjectSpecifier::Location { .. } => None,
+        ObjectSpecifier::Projectile { .. } => None,
     }
 }
