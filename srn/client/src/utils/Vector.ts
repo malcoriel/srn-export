@@ -256,9 +256,10 @@ export const getCounterClockwiseAngleGraphics = (
 export const getRadialCoordsMath = (
   radius: number,
   count: number,
-  i: number
+  i: number,
+  angleShift?: number
 ) => {
-  const theta = ((2 * Math.PI) / count) * i;
+  const theta = ((2 * Math.PI) / count) * i + (angleShift || 0);
   const x = radius * Math.cos(theta);
   const y = radius * Math.sin(theta);
   return VectorF(x, y);

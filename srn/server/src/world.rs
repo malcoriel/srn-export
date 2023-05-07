@@ -296,6 +296,12 @@ impl Projectile {
             Projectile::Rocket(RocketProps { id, .. }) => *id,
         }
     }
+
+    pub fn set_id(&mut self, val: i32) {
+        match self {
+            Projectile::Rocket(RocketProps { id, .. }) => *id = val,
+        };
+    }
 }
 
 #[skip_serializing_none]
@@ -307,11 +313,7 @@ pub struct RocketProps {
     pub properties: Vec<ObjectProperty>,
 }
 
-pub fn gen_turrets(
-    count: usize,
-    _prng: &mut Pcg64Mcg,
-    rocket_template: &Projectile,
-) -> Vec<(Ability, ShipTurret)> {
+pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
     let mut res = vec![];
     for i in 0..count {
         let id = i.to_string();
@@ -330,7 +332,7 @@ pub fn gen_turrets(
         Ability::Launch {
             cooldown_ticks_remaining: 0,
             turret_id: id.clone(),
-            projectile_template_id: rocket_template.get_id(),
+            projectile_template_id: TemplateId::Rocket as i32,
             cooldown_normalized: 0.0,
             cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
         },
@@ -339,15 +341,14 @@ pub fn gen_turrets(
     res
 }
 
+pub enum TemplateId {
+    Unknown,
+    Rocket,
+}
+
 impl Ship {
     pub fn new(prng: &mut Pcg64Mcg, at: &mut Option<Vec2f64>) -> Ship {
-        let rocket_template = Projectile::Rocket(RocketProps {
-            id: 1,
-            spatial: Default::default(),
-            movement: Movement::None,
-            properties: vec![],
-        });
-        let turrets = gen_turrets(2, prng, &rocket_template);
+        let turrets = gen_turrets(2, prng);
         Ship {
             id: prng_id(prng),
             color: gen_color(prng).to_string(),

@@ -24,7 +24,8 @@ use crate::random_stuff::{
 use crate::vec2::Vec2f64;
 use crate::world::{
     AsteroidBelt, Container, GameMode, GameState, Location, Movement, ObjectProperty, PlanetV2,
-    RotationMovement, SpatialProps, Star, Templated, AABB, GAME_STATE_VERSION,
+    Projectile, RocketProps, RotationMovement, SpatialProps, Star, TemplateId, AABB,
+    GAME_STATE_VERSION,
 };
 use crate::{planet_movement, prng_id, seed_prng, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -472,6 +473,7 @@ pub fn make_pirate_defence_state(
         .push(ObjectProperty::PirateDefencePlayersHomePlanet);
     state.milliseconds_remaining = 5 * 1000 * 60;
     state.mode = GameMode::PirateDefence;
+    add_default_templates(&mut state);
     state
 }
 
@@ -553,7 +555,7 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
         },
     ];
 
-    GameState {
+    let mut state = GameState {
         id: prng_id(prng),
         version: GAME_STATE_VERSION,
         mode: GameMode::Tutorial,
@@ -583,6 +585,22 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
         dialogue_states: Some(Default::default()),
         breadcrumbs: None,
         projectile_templates: None,
+    };
+    add_default_templates(&mut state);
+    state
+}
+
+fn add_default_templates(state: &mut GameState) {
+    let rocket_template = Projectile::Rocket(RocketProps {
+        id: TemplateId::Rocket as i32,
+        spatial: Default::default(),
+        movement: Movement::None,
+        properties: vec![],
+    });
+    if let Some(templates) = &mut state.projectile_templates {
+        templates.push(rocket_template);
+    } else {
+        state.projectile_templates = Some(vec![rocket_template]);
     }
 }
 

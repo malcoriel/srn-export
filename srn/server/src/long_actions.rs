@@ -411,42 +411,42 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
     let mut new_actions = long_actions
         .clone()
         .into_iter()
-        .filter_map(|a| match a {
-            LongAction::Unknown { .. } => Some(a),
+        .filter(|a| match &a {
+            LongAction::Unknown { .. } => false,
             LongAction::TransSystemJump { .. } => {
                 if has_jump {
-                    return None;
+                    return false;
                 }
                 has_jump = true;
-                Some(a)
+                return true;
             }
             LongAction::Shoot { turret_id, .. } => {
-                if active_turret_ids.contains(&turret_id) {
-                    return None;
+                if active_turret_ids.contains(turret_id) {
+                    return false;
                 }
                 active_turret_ids.insert(turret_id.clone());
-                Some(a.clone())
+                return true;
             }
             LongAction::Dock { .. } => {
                 if has_dock || has_undock {
-                    return None;
+                    return false;
                 }
                 has_dock = true;
-                Some(a)
+                return true;
             }
             LongAction::Undock { .. } => {
                 if has_dock || has_undock {
-                    return None;
+                    return false;
                 }
                 has_undock = true;
-                Some(a)
+                return true;
             }
-            LongAction::Launch { .. } => {
-                if active_turret_ids.contains(&turret_id) {
-                    return None;
+            LongAction::Launch { turret_id, .. } => {
+                if active_turret_ids.contains(turret_id) {
+                    return false;
                 }
                 active_turret_ids.insert(turret_id.clone());
-                Some(a.clone())
+                return true;
             }
         })
         .collect();
@@ -516,7 +516,9 @@ pub fn finish_long_act(
             let player = find_player_idx_by_ship_id(state, ship_id).map(|p| p.clone());
             world::undock_ship(state, ship_idx, client, player, prng);
         }
-        LongAction::Launch { .. } => {
+        LongAction::Launch {
+            target, turret_id, ..
+        } => {
             if player_id.is_some() {
                 combat::resolve_launch(state, player_id.unwrap(), target, turret_id, client);
             }

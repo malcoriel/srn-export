@@ -86,12 +86,15 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
       ),
     [longActions, findObjectPositionByIdBound, parentPosition, rotation]
   );
+  const centralAlignmentFix = Math.PI / 2;
+
   const nodes = useMemo(() => {
     return _.map(turrets, (turretProps, i) => {
       const coords = getRadialCoordsMath(
         positionRadius / 1.5,
         turrets.length,
-        i
+        i,
+        Math.PI / 2
       );
       const shootProps = shoots[turretProps.id];
       let shootTargetV: Vector | null = null;

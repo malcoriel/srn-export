@@ -6,7 +6,9 @@ use wasm_bindgen::prelude::*;
 use crate::abilities::Ability;
 use crate::indexing::{find_my_player_mut, find_my_ship_index, find_my_ship_mut, ObjectSpecifier};
 use crate::vec2::Vec2f64;
-use crate::world::{remove_object, GameState, LocalEffect, Location, Player, Ship};
+use crate::world::{
+    remove_object, GameState, LocalEffect, Location, Player, Projectile, Ship, TemplateId,
+};
 use crate::{indexing, new_id, world};
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy)]
@@ -190,9 +192,9 @@ pub fn resolve_shoot(
 pub fn resolve_launch(
     state: &mut GameState,
     player_shooting: Uuid,
-    target: ShootTarget,
+    _target: ShootTarget,
     active_turret_id: String,
-    client: bool,
+    _client: bool,
 ) {
     if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &mut state.locations[ship_loc.location_idx];
@@ -214,7 +216,20 @@ pub fn resolve_launch(
             return;
         }
         let proj_template_id = proj_template.unwrap();
-        let proj_template = loc.p
-        loc.projectiles.instances.push();
+        let proj_template = if let Some(proj_templates) = &state.projectile_templates {
+            proj_templates
+                .iter()
+                .find(|t| t.get_id() == *proj_template_id)
+        } else {
+            None
+        };
+        if proj_template.is_none() {
+            return;
+        }
+        let proj_template = proj_template.unwrap();
+
+        let mut instance = proj_template.clone();
+        instance.set_id(loc.projectiles.len() as i32 % i32::MAX);
+        loc.projectiles.push(instance);
     }
 }

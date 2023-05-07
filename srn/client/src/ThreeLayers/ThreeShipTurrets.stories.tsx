@@ -73,10 +73,10 @@ const MainTemplate: Story = (args) => {
   const longActions = genLongActions(args.shootMode, progressNormalized * 100);
 
   return (
-    <StoryCanvas withBackground zoom={15.0}>
+    <StoryCanvas withBackground zoom={25.0}>
       <ThreeShipTurrets
         beamWidth={0.2}
-        turrets={genTurrets(4)}
+        turrets={genTurrets(3)}
         rotation={args.rotation}
         positionRadius={2.0}
         color="red"
