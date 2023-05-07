@@ -596,6 +596,7 @@ pub fn finish_long_act(
                     turret_id,
                     client,
                     indexes,
+                    prng,
                 );
             }
         }

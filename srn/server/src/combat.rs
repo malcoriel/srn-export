@@ -1,3 +1,4 @@
+use rand_pcg::Pcg64Mcg;
 use serde_derive::{Deserialize, Serialize};
 use std::f64::consts::PI;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -10,6 +11,7 @@ use crate::indexing::{
     GameStateIndexes, ObjectSpecifier,
 };
 use crate::planet_movement::project_body_relative_position;
+use crate::random_stuff::generate_normal_random;
 use crate::vec2::Vec2f64;
 use crate::world::{
     remove_object, GameState, LocalEffect, Location, Player, Projectile, Ship, TemplateId,
@@ -257,6 +259,7 @@ pub fn resolve_launch(
     active_turret_id: String,
     _client: bool,
     indexes: &GameStateIndexes,
+    prng: &mut Pcg64Mcg,
 ) {
     let spec = target.to_specifier();
     if spec.is_none() {
@@ -314,12 +317,16 @@ pub fn resolve_launch(
         if new_velocity.is_none() {
             return;
         }
-        let new_velocity = new_velocity
+        let mut new_velocity = new_velocity
             .unwrap()
             .scalar_mul(proj_template.get_spatial().velocity.euclidean_len());
 
+        let mut new_rot = dir.angle_rad(&Vec2f64 { x: 0.0, y: 1.0 });
+        let deviation = generate_normal_random(0.0, 0.05, prng);
+        new_rot += deviation;
+        new_velocity = new_velocity.rotate(deviation);
         instance.get_spatial_mut().velocity = new_velocity;
-        instance.get_spatial_mut().rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: 1.0 });
+        instance.get_spatial_mut().rotation_rad = new_rot;
         if target_pos.position.x < shooting_ship.spatial.position.x {
             instance.get_spatial_mut().rotation_rad =
                 PI * 2.0 - instance.get_spatial_mut().rotation_rad;

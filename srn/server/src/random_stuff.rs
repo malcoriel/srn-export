@@ -349,3 +349,10 @@ pub fn seed_asteroids(star: &Star, prng: &mut Pcg64Mcg) -> Vec<Asteroid> {
     }
     res
 }
+
+use rand::distributions::{Distribution, Normal};
+
+pub fn generate_normal_random(mean: f64, standard_deviation: f64, prng: &mut Pcg64Mcg) -> f64 {
+    let normal = Normal::new(mean, standard_deviation);
+    normal.sample(prng)
+}
