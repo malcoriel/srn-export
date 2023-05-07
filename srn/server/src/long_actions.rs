@@ -10,7 +10,7 @@ use crate::abilities::{Ability, SHOOT_ABILITY_DURATION, SHOOT_COOLDOWN_TICKS};
 use crate::combat::ShootTarget;
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
-    find_player_by_ship_id, find_player_idx_by_ship_id,
+    find_player_by_ship_id, find_player_idx_by_ship_id, GameStateIndexes,
 };
 use crate::planet_movement::IBodyV2;
 use crate::vec2::Vec2f64;
@@ -31,6 +31,10 @@ pub enum LongActionStart {
     },
     Respawn,
     Shoot {
+        target: ShootTarget,
+        turret_id: String,
+    },
+    Launch {
         target: ShootTarget,
         turret_id: String,
     },
@@ -167,7 +171,7 @@ pub fn cancel_all_long_actions_of_type(la: &mut Vec<LongAction>, template: LongA
     mem::swap(la, &mut new_la);
 }
 
-pub fn try_start_long_action_ship(
+pub fn try_start_long_action_ship_only(
     state: &mut GameState,
     ship_idx: &ShipIdx,
     action: LongActionStart,
@@ -196,7 +200,7 @@ pub fn try_start_long_action_ship(
     }
 }
 
-pub fn try_start_long_action(
+pub fn try_start_long_action_player_owned(
     state: &mut GameState,
     player_id: Uuid,
     action: LongActionStart,
@@ -246,6 +250,13 @@ pub fn try_start_long_action(
                 return false;
             }
             return try_start_shoot(state, target, ship_idx, turret_id, prng);
+        }
+        LongActionStart::Launch { target, turret_id } => {
+            let ship_idx = find_my_ship_index(state, player_id);
+            if ship_idx.is_none() {
+                return false;
+            }
+            return try_start_launch(state, target, ship_idx, turret_id, prng);
         }
         LongActionStart::DockInternal { to_planet, .. } => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -400,6 +411,63 @@ fn try_start_shoot(
     return true;
 }
 
+fn try_start_launch(
+    state: &mut GameState,
+    target: ShootTarget,
+    ship_idx: Option<ShipIdx>,
+    shooting_turret_id: String,
+    prng: &mut Pcg64Mcg,
+) -> bool {
+    let ship_idx = ship_idx.unwrap();
+    if !combat::validate_launch(
+        target.clone(),
+        &state.locations[ship_idx.location_idx],
+        &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
+        shooting_turret_id.clone(),
+    ) {
+        return false;
+    }
+
+    let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
+    let shoot_ability = combat::find_turret_ability(ship, shooting_turret_id.clone())
+        .map(|a| a.clone())
+        .unwrap(); // checked by validate
+    ship.long_actions.push(LongAction::Launch {
+        id: prng_id(prng),
+        target,
+        micro_left: SHOOT_COOLDOWN_TICKS,
+        percentage: 0,
+        turret_id: shooting_turret_id.clone(),
+        projectile_template_id: match shoot_ability {
+            Ability::Launch {
+                projectile_template_id,
+                ..
+            } => projectile_template_id,
+            _ => panic!("No projectile template id for launch ability start"),
+        },
+    });
+    revalidate(&mut ship.long_actions);
+    for ability in ship.abilities.iter_mut() {
+        match ability {
+            Ability::Unknown => {}
+            Ability::Shoot { turret_id, .. } => {
+                if *turret_id == shooting_turret_id {
+                    ability.set_max_cooldown();
+                }
+            }
+            Ability::BlowUpOnLand => {}
+            Ability::ShootAll => {}
+            Ability::ToggleMovement { .. } => {}
+            Ability::Launch { turret_id, .. } => {
+                if *turret_id == shooting_turret_id {
+                    ability.set_max_cooldown();
+                }
+            }
+        }
+    }
+    return true;
+}
+
 // protect against repetition of actions,
 // for those that must be unique - keep the first
 // for multiple - unique by some criteria, e.g. turret_id
@@ -485,6 +553,7 @@ pub fn finish_long_act(
     client: bool,
     ship_idx: ShipIdx,
     prng: &mut Pcg64Mcg,
+    indexes: &GameStateIndexes,
 ) {
     match act {
         LongAction::Unknown { .. } => {
@@ -520,7 +589,14 @@ pub fn finish_long_act(
             target, turret_id, ..
         } => {
             if player_id.is_some() {
-                combat::resolve_launch(state, player_id.unwrap(), target, turret_id, client);
+                combat::resolve_launch(
+                    state,
+                    player_id.unwrap(),
+                    target,
+                    turret_id,
+                    client,
+                    indexes,
+                );
             }
         }
     }
@@ -587,16 +663,18 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
             id,
             target,
             turret_id,
+            projectile_template_id,
             ..
         } => {
             let left = micro_left - micro_passed as i32;
             (
-                LongAction::Shoot {
+                LongAction::Launch {
                     id,
                     micro_left: left,
                     target,
                     percentage: calc_percentage(left, SHOOT_ABILITY_DURATION),
                     turret_id,
+                    projectile_template_id,
                 },
                 left > 0,
             )

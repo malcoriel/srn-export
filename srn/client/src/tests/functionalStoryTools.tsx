@@ -12,7 +12,7 @@ import { size } from '../coord';
 import { ThreeLayer } from '../ThreeLayers/ThreeLayer';
 import { CameraCoordinatesBox } from '../HtmlLayers/CameraCoordinatesBox';
 import { Button } from '../HtmlLayers/ui/Button';
-import { executeSyncAction } from '../utils/ShipControls';
+import { executeSyncAction, isSyncAction } from '../utils/ShipControls';
 import _ from 'lodash';
 import pWaitFor from 'p-wait-for';
 
@@ -127,7 +127,11 @@ export const buildStory = async ({
         if (value.action) {
           console.log('act', value.action.tag);
           patchAction(value.action, nsRef);
-          executeSyncAction(value.action);
+          if (isSyncAction(value.action)) {
+            executeSyncAction(value.action);
+          } else {
+            nsRef.sendSchedulePlayerAction(value.action);
+          }
         }
         if (value.waitAfter) {
           console.log('wait', value.waitAfter);

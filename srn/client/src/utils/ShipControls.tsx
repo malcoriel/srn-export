@@ -29,6 +29,9 @@ const syncActionTags = new Set([
   'StopTurn',
 ]);
 
+export const isSyncAction = (action: Action): boolean =>
+  syncActionTags.has(action.tag);
+
 const actionsActive: Record<SynchronousActionTags, Action | undefined> = {
   Gas: undefined,
   TurnRight: undefined,

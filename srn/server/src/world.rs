@@ -23,8 +23,9 @@ use crate::inventory::{
 };
 use crate::long_actions::{
     cancel_all_long_actions_of_type, finish_long_act, finish_long_act_player, tick_long_act,
-    tick_long_act_player, try_start_long_action, try_start_long_action_ship, LongAction,
-    LongActionPlayer, LongActionStart, MIN_SHIP_DOCKING_RADIUS, SHIP_DOCKING_RADIUS_COEFF,
+    tick_long_act_player, try_start_long_action_player_owned, try_start_long_action_ship_only,
+    LongAction, LongActionPlayer, LongActionStart, MIN_SHIP_DOCKING_RADIUS,
+    SHIP_DOCKING_RADIUS_COEFF,
 };
 use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
@@ -285,9 +286,36 @@ pub struct Ship {
 
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-#[serde(tag = "tag")]
+#[serde(tag = "tag", content = "fields")]
 pub enum Projectile {
     Rocket(RocketProps),
+}
+
+impl Projectile {
+    pub(crate) fn get_spatial(&self) -> &SpatialProps {
+        match self {
+            Projectile::Rocket(props) => &props.spatial,
+        }
+    }
+
+    pub fn get_spatial_mut(&mut self) -> &mut SpatialProps {
+        match self {
+            Projectile::Rocket(props) => &mut props.spatial,
+        }
+    }
+
+    pub fn set_target(&mut self, t: &ShootTarget) {
+        match self {
+            Projectile::Rocket(props) => props.target = t.to_specifier(),
+        }
+    }
+    pub fn set_position_from(&mut self, from: &Vec2f64) {
+        match self {
+            Projectile::Rocket(props) => {
+                props.spatial.position = from.clone();
+            }
+        }
+    }
 }
 
 impl Projectile {
@@ -311,6 +339,7 @@ pub struct RocketProps {
     pub spatial: SpatialProps,
     pub movement: Movement,
     pub properties: Vec<ObjectProperty>,
+    pub target: Option<ObjectSpecifier>,
 }
 
 pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
@@ -1216,7 +1245,7 @@ pub fn update_location(
             .collect();
     }
     for (act, player_id, ship_idx) in to_finish.into_iter() {
-        finish_long_act(&mut state, player_id, act, client, ship_idx, prng);
+        finish_long_act(&mut state, player_id, act, client, ship_idx, prng, indexes);
     }
 
     sampler.end(long_act_ticks);
@@ -1393,7 +1422,7 @@ fn update_initiate_ship_docking_by_navigation(
         }
     }
     for (ship_idx, planet_id) in to_dock {
-        try_start_long_action_ship(
+        try_start_long_action_ship_only(
             state,
             &ship_idx,
             LongActionStart::DockInternal {
@@ -1511,7 +1540,7 @@ fn update_ships_respawn(state: &mut GameState, prng: &mut Pcg64Mcg) {
     }
 
     for player_id in to_spawn {
-        try_start_long_action(state, player_id, LongActionStart::Respawn, prng);
+        try_start_long_action_player_owned(state, player_id, LongActionStart::Respawn, prng);
     }
 }
 
@@ -2193,7 +2222,7 @@ pub fn undock_ship(
                     planet,
                     player_id: player_idx.map(|player_idx| state.players[player_idx].id),
                 });
-                try_start_long_action_ship(
+                try_start_long_action_ship_only(
                     state,
                     &ship_idx,
                     LongActionStart::UndockInternal {

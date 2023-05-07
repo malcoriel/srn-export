@@ -7,13 +7,13 @@ import 'loaders.css';
 import { GameMode, max_x, min_x } from '../world';
 import { ThreeShipsLayer } from './ThreeShipsLayer';
 import {
-  CameraController,
   CAMERA_DEFAULT_ZOOM,
   CAMERA_HEIGHT,
+  CameraController,
 } from './CameraControls';
 import { ThreeBodiesLayer } from './ThreeBodiesLayer';
 import NetState, { DISPLAY_BREADCRUMBS_LAST_TICKS } from '../NetState';
-import Vector, { VectorF } from '../utils/Vector';
+import Vector from '../utils/Vector';
 import { useToggleHotkey } from '../utils/hotkeyHooks';
 import { useStore } from '../store';
 import { size, viewPortSizeMeters } from '../coord';
@@ -24,14 +24,14 @@ import { ThreeWeaponEffectsLayer } from './ThreeWeaponEffectsLayer';
 import { ActionBuilder } from '../../../world/pkg/world.extra';
 import { ThreeTrajectoryLayer } from './ThreeTrajectoryLayer';
 import { ThreeEvent } from '@react-three/fiber/dist/declarations/src/core/events';
-import { seedToNumber, threeVectorToVector, vecToThreePos } from './util';
+import { seedToNumber, threeVectorToVector } from './util';
 import { ThreeLoadingIndicator } from './Resources';
 import { useNSForceChange } from '../NetStateHooks';
 import { ThreeBreadcrumbs } from './ThreeBreadcrumbs';
 import { executeSyncAction } from '../utils/ShipControls';
 import { OrthographicCamera, Text } from '@react-three/drei';
 import { ThreeCameraUi } from './ThreeCameraUi';
-import { teal } from '../utils/palette';
+import { ThreeProjectilesLayer } from './ThreeProjectilesLayer';
 
 THREE.Cache.enabled = true;
 
@@ -213,6 +213,11 @@ export const ThreeLayer: React.FC<{
             visualState={visualState}
           />
           <ThreeShipsLayer state={state} visMap={visMap} indexes={indexes} />
+          <ThreeProjectilesLayer
+            state={state}
+            visMap={visMap}
+            indexes={indexes}
+          />
           <ThreeQuestDirection state={state} visualState={visualState} />
           <ThreeNames netState={ns} visMap={visMap} />
           <ThreeWeaponEffectsLayer />

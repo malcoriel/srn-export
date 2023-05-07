@@ -1,10 +1,15 @@
 use serde_derive::{Deserialize, Serialize};
+use std::f64::consts::PI;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
-use crate::indexing::{find_my_player_mut, find_my_ship_index, find_my_ship_mut, ObjectSpecifier};
+use crate::indexing::{
+    find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
+    GameStateIndexes, ObjectSpecifier,
+};
+use crate::planet_movement::project_body_relative_position;
 use crate::vec2::Vec2f64;
 use crate::world::{
     remove_object, GameState, LocalEffect, Location, Player, Projectile, Ship, TemplateId,
@@ -17,7 +22,20 @@ pub enum ShootTarget {
     Unknown,
     Ship { id: Uuid },
     Mineral { id: Uuid },
+    Asteroid { id: Uuid },
     Container { id: Uuid },
+}
+
+impl ShootTarget {
+    pub fn to_specifier(&self) -> Option<ObjectSpecifier> {
+        return match &self {
+            ShootTarget::Unknown => None,
+            ShootTarget::Ship { id } => Some(ObjectSpecifier::Ship { id: *id }),
+            ShootTarget::Mineral { id } => Some(ObjectSpecifier::Mineral { id: *id }),
+            ShootTarget::Asteroid { id } => Some(ObjectSpecifier::Asteroid { id: *id }),
+            ShootTarget::Container { id } => Some(ObjectSpecifier::Container { id: *id }),
+        };
+    }
 }
 
 impl Default for ShootTarget {
@@ -56,11 +74,11 @@ impl Health {
 
 pub fn validate_shoot(
     target: ShootTarget,
-    loc: &world::Location,
+    loc: &Location,
     ship: &Ship,
     active_turret_id: String,
 ) -> bool {
-    let shoot_ability = find_shoot_ability(ship, active_turret_id);
+    let shoot_ability = find_turret_ability(ship, active_turret_id);
     if shoot_ability.is_none() {
         return false;
     }
@@ -91,13 +109,42 @@ pub fn validate_shoot(
                 return false;
             }
         }
+        ShootTarget::Asteroid { id } => {
+            if let Some(ast) = indexing::find_asteroid(loc, id) {
+                if !check_distance(ship, shoot_ability, ast.spatial.position) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
     };
     return true;
 }
 
-fn find_shoot_ability(ship: &Ship, active_turret_id: String) -> Option<&Ability> {
+pub fn validate_launch(
+    _target: ShootTarget,
+    _loc: &Location,
+    ship: &Ship,
+    active_turret_id: String,
+) -> bool {
+    let shoot_ability = find_turret_ability(ship, active_turret_id);
+    if shoot_ability.is_none() {
+        return false;
+    }
+    let shoot_ability = shoot_ability.unwrap();
+
+    if shoot_ability.get_current_cooldown() > 0 {
+        return false;
+    }
+    // no distance checking, because you can launch even if it's too far
+    return true;
+}
+
+pub fn find_turret_ability(ship: &Ship, active_turret_id: String) -> Option<&Ability> {
     ship.abilities.iter().find(|a| match a {
         Ability::Shoot { turret_id, .. } => *turret_id == active_turret_id,
+        Ability::Launch { turret_id, .. } => *turret_id == active_turret_id,
         _ => false,
     })
 }
@@ -123,7 +170,7 @@ pub fn resolve_shoot(
         let loc = &state.locations[ship_loc.location_idx];
         let shooting_ship = &loc.ships[ship_loc.ship_idx];
         let shooting_ship_id = shooting_ship.id;
-        let shoot_ability = find_shoot_ability(shooting_ship, active_turret_id);
+        let shoot_ability = find_turret_ability(shooting_ship, active_turret_id);
         if shoot_ability.is_none() {
             return;
         }
@@ -185,6 +232,20 @@ pub fn resolve_shoot(
                     return;
                 }
             }
+            ShootTarget::Asteroid { id } => {
+                if let Some(ast) = indexing::find_asteroid(loc, id) {
+                    if !check_distance(shooting_ship, shoot_ability, ast.spatial.position) {
+                        return;
+                    }
+                    remove_object(
+                        state,
+                        ship_loc.location_idx,
+                        ObjectSpecifier::Asteroid { id },
+                    )
+                } else {
+                    return;
+                }
+            }
         }
     }
 }
@@ -192,30 +253,44 @@ pub fn resolve_shoot(
 pub fn resolve_launch(
     state: &mut GameState,
     player_shooting: Uuid,
-    _target: ShootTarget,
+    target: ShootTarget,
     active_turret_id: String,
     _client: bool,
+    indexes: &GameStateIndexes,
 ) {
+    let spec = target.to_specifier();
+    if spec.is_none() {
+        warn!("no target spec");
+        return;
+    }
+    let spec = spec.unwrap();
+    let target_pos = find_spatial_ref_by_spec(indexes, spec.clone());
+    if target_pos.is_none() {
+        warn!(format!("no target pos: {:?}", spec));
+        return;
+    }
+    let target_pos = target_pos.unwrap().clone();
+
     if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &mut state.locations[ship_loc.location_idx];
         let shooting_ship = &mut loc.ships[ship_loc.ship_idx];
         let shooting_ship_id = shooting_ship.id;
-        let shoot_ability = find_shoot_ability(shooting_ship, active_turret_id);
-        if shoot_ability.is_none() {
+        let launch_ability = find_turret_ability(shooting_ship, active_turret_id);
+        if launch_ability.is_none() {
             return;
         }
-        let shoot_ability = shoot_ability.unwrap();
-        let proj_template = match shoot_ability {
+        let launch_ability = launch_ability.unwrap();
+        let proj_template_id = match launch_ability {
             Ability::Launch {
                 projectile_template_id,
                 ..
             } => Some(projectile_template_id),
             _ => None,
         };
-        if proj_template.is_none() {
+        if proj_template_id.is_none() {
             return;
         }
-        let proj_template_id = proj_template.unwrap();
+        let proj_template_id = proj_template_id.unwrap();
         let proj_template = if let Some(proj_templates) = &state.projectile_templates {
             proj_templates
                 .iter()
@@ -230,6 +305,24 @@ pub fn resolve_launch(
 
         let mut instance = proj_template.clone();
         instance.set_id(loc.projectiles.len() as i32 % i32::MAX);
+        instance.set_position_from(&shooting_ship.spatial.position);
+        instance.set_target(&target);
+        let dir = target_pos
+            .position
+            .subtract(&shooting_ship.spatial.position);
+        let new_velocity = dir.normalize();
+        if new_velocity.is_none() {
+            return;
+        }
+        let new_velocity = new_velocity
+            .unwrap()
+            .scalar_mul(proj_template.get_spatial().velocity.euclidean_len());
+        instance.get_spatial_mut().velocity = new_velocity;
         loc.projectiles.push(instance);
     }
 }
+
+pub const DEFAULT_PROJECTILE_SPEED: f64 = 50.0 / 1000.0 / 1000.0;
+pub const DEFAULT_PROJECTILE_ACC: f64 = 25.0 / 1e6 / 1e6;
+pub const DEFAULT_PROJECTILE_ROT_SPEED: f64 = PI / 4.0 / 1000.0 / 1000.0;
+pub const DEFAULT_PROJECTILE_ROT_ACC: f64 = PI / 8.0 / 1e6 / 1e6;

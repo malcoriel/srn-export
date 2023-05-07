@@ -251,8 +251,11 @@ pub fn update_objects_spatial_movement(
     for ship in location.ships.iter_mut() {
         update_ship_manual_movement(elapsed_micro, current_tick, ship, client, false);
     }
-    // every other object that cannot change its speed itself, will drift
+    // every other object that cannot change its speed itself, will drift - basically, unguided physics
     for wreck in location.wrecks.iter_mut() {
         update_spatial_of_object(elapsed_micro, &mut wreck.spatial)
+    }
+    for projectile in location.projectiles.iter_mut() {
+        update_spatial_of_object(elapsed_micro, projectile.get_spatial_mut())
     }
 }

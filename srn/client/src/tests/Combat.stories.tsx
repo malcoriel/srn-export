@@ -65,7 +65,7 @@ const getStartGameParamsRocketShooting = () => {
           };
           continue;
         }
-        let myShip = findMyShip(currentState);
+        const myShip = findMyShip(currentState);
         if (!myShip) {
           currentState = yield {
             wait: 100,
@@ -73,8 +73,8 @@ const getStartGameParamsRocketShooting = () => {
           };
           continue;
         }
-        const launchAbility = myShip.abilities.find(a => a.tag === "Launch");
-        if (!launchAbility) {
+        const launchAbility = myShip.abilities.find((a) => a.tag === 'Launch');
+        if (!launchAbility || launchAbility.tag !== 'Launch') {
           console.warn('no launch ability, cannot continue');
           break;
         }
@@ -82,8 +82,8 @@ const getStartGameParamsRocketShooting = () => {
           wait: 1000,
           action: ActionBuilder.ActionLongActionStart({
             ship_id: '$my_ship_id',
-            long_action_start: LongActionStartBuilder.LongActionStartShoot({
-              target: ShootTargetBuilder.ShootTargetShip({
+            long_action_start: LongActionStartBuilder.LongActionStartLaunch({
+              target: ShootTargetBuilder.ShootTargetAsteroid({
                 id: asteroidId,
               }),
               turret_id: launchAbility.turret_id,
@@ -92,6 +92,10 @@ const getStartGameParamsRocketShooting = () => {
           }),
         };
       }
+      return {
+        wait: 100,
+        action: null,
+      };
     },
   };
 };

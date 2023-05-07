@@ -5,7 +5,9 @@ use crate::indexing::{
     find_my_ship_mut, find_player_idx_by_ship_id, find_ship_index, find_ship_mut, GameStateIndexes,
 };
 use crate::inventory::InventoryAction;
-use crate::long_actions::{try_start_long_action, try_start_long_action_ship, LongActionStart};
+use crate::long_actions::{
+    try_start_long_action_player_owned, try_start_long_action_ship_only, LongActionStart,
+};
 use crate::market::TradeAction;
 use crate::notifications::NotificationActionR;
 use crate::sandbox::SandboxCommand;
@@ -44,10 +46,10 @@ pub fn world_update_handle_action(
             ship_id,
         } => {
             if let Some(player_id) = player_id {
-                try_start_long_action(state, player_id, long_action_start, prng);
+                try_start_long_action_player_owned(state, player_id, long_action_start, prng);
             } else {
                 if let Some(ship_idx) = find_ship_index(state_clone, ship_id) {
-                    try_start_long_action_ship(state, &ship_idx, long_action_start, prng);
+                    try_start_long_action_ship_only(state, &ship_idx, long_action_start, prng);
                 }
             }
         }

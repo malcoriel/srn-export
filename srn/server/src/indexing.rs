@@ -9,8 +9,8 @@ use wasm_bindgen::prelude::*;
 
 use crate::planet_movement::{get_radial_bodies, IBodyV2};
 use crate::world::{
-    Container, GameState, Location, NatSpawnMineral, PlanetV2, Player, Ship, ShipIdx,
-    SpatialIndexes,
+    Asteroid, Container, GameState, Location, NatSpawnMineral, PlanetV2, Player, Ship, ShipIdx,
+    SpatialIndexes, SpatialProps,
 };
 use crate::{world, Vec2f64};
 
@@ -20,6 +20,10 @@ pub fn find_mineral(loc: &world::Location, id: Uuid) -> Option<&NatSpawnMineral>
 
 pub fn find_container(loc: &world::Location, id: Uuid) -> Option<&Container> {
     loc.containers.iter().find(|m| m.id == id)
+}
+
+pub fn find_asteroid(loc: &world::Location, id: Uuid) -> Option<&Asteroid> {
+    loc.asteroids.iter().find(|m| m.id == id)
 }
 
 pub fn index_ships_by_tractor_target(ships: &Vec<Ship>) -> HashMap<Uuid, Vec<&Ship>> {
@@ -454,6 +458,7 @@ pub struct FullObjectSpecifier {
 pub struct GameStateIndexes<'a> {
     pub planets_by_id: HashMap<Uuid, &'a PlanetV2>,
     pub players_by_id: HashMap<Uuid, &'a Player>,
+    pub non_body_spatials_by_id: HashMap<ObjectSpecifier, &'a SpatialProps>,
     pub ships_by_id: HashMap<Uuid, &'a Ship>,
     pub anchor_distances: HashMap<ObjectSpecifier, f64>,
     pub bodies_by_id: HashMap<ObjectSpecifier, Box<&'a dyn IBodyV2>>,
@@ -485,6 +490,7 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
             )
         })
         .collect();
+    let mut non_body_spatials_by_id = HashMap::new();
     for loc in state.locations.iter() {
         if let Some(star) = &loc.star {
             bodies_by_id.insert(
@@ -492,7 +498,14 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
                 Box::new(star as &dyn IBodyV2),
             );
         }
+        for asteroid in loc.asteroids.iter() {
+            non_body_spatials_by_id.insert(
+                ObjectSpecifier::Asteroid { id: asteroid.id },
+                &asteroid.spatial,
+            );
+        }
     }
+
     let players_by_id = index_players_by_id(&state.players);
     let ships_by_id = index_all_ships_by_id(&state.locations);
     let anchor_distances = index_anchor_distances(&state.locations, &bodies_by_id);
@@ -501,6 +514,7 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
         planets_by_id,
         bodies_by_id,
         players_by_id,
+        non_body_spatials_by_id,
         ships_by_id,
         anchor_distances,
     }
@@ -562,4 +576,22 @@ pub fn build_full_spatial_indexes(state: &GameState) -> SpatialIndexes {
         values.insert(i, build_spatial_index(loc, i));
     }
     SpatialIndexes { values }
+}
+
+pub fn find_spatial_ref_by_spec<'a>(
+    indexes: &'a GameStateIndexes,
+    spec: ObjectSpecifier,
+) -> Option<&'a SpatialProps> {
+    match &spec {
+        ObjectSpecifier::Unknown => None,
+        ObjectSpecifier::Mineral { .. } => None,
+        ObjectSpecifier::Asteroid { .. } => indexes.non_body_spatials_by_id.get(&spec).map(|b| *b),
+        ObjectSpecifier::Container { .. } => None,
+        ObjectSpecifier::Planet { .. } => indexes.bodies_by_id.get(&spec).map(|b| b.get_spatial()),
+        ObjectSpecifier::Ship { .. } => indexes.bodies_by_id.get(&spec).map(|b| b.get_spatial()),
+        ObjectSpecifier::Star { .. } => indexes.bodies_by_id.get(&spec).map(|b| b.get_spatial()),
+        ObjectSpecifier::AsteroidBelt { .. } => None,
+        ObjectSpecifier::Wreck { .. } => None,
+        ObjectSpecifier::Location { .. } => None,
+    }
 }

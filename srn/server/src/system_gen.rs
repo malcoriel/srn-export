@@ -10,7 +10,7 @@ use rand_pcg::Pcg64Mcg;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::combat::Health;
+use crate::combat::{Health, DEFAULT_PROJECTILE_ROT_SPEED, DEFAULT_PROJECTILE_SPEED};
 use crate::indexing::{index_state, GameStateCaches, ObjectSpecifier, Spec};
 use crate::interpolation::get_orbit_phase_table;
 use crate::market::{init_all_planets_market, Market};
@@ -593,9 +593,27 @@ fn make_tutorial_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> GameS
 fn add_default_templates(state: &mut GameState) {
     let rocket_template = Projectile::Rocket(RocketProps {
         id: TemplateId::Rocket as i32,
-        spatial: Default::default(),
-        movement: Movement::None,
+        spatial: SpatialProps {
+            position: Default::default(),
+            velocity: Vec2f64 {
+                // will be turned correctly on launch, we only need length
+                x: DEFAULT_PROJECTILE_SPEED,
+                y: 0.0,
+            },
+            angular_velocity: 0.0,
+            rotation_rad: 0.0,
+            radius: 0.0,
+        },
+        movement: Movement::ShipAccelerated {
+            max_linear_speed: DEFAULT_PROJECTILE_SPEED,
+            max_rotation_speed: DEFAULT_PROJECTILE_ROT_SPEED,
+            linear_drag: 0.0,
+            acc_linear: 0.0,
+            max_turn_speed: DEFAULT_PROJECTILE_ROT_SPEED,
+            acc_angular: 0.0,
+        },
         properties: vec![],
+        target: None,
     });
     if let Some(templates) = &mut state.projectile_templates {
         templates.push(rocket_template);
@@ -608,7 +626,7 @@ pub fn make_sandbox_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> Ga
     let seed = "sandbox".to_owned();
     let now = Utc::now().timestamp_millis() as u64;
 
-    GameState {
+    let mut state = GameState {
         id: prng_id(prng),
         version: GAME_STATE_VERSION,
         mode: GameMode::Sandbox,
@@ -638,7 +656,9 @@ pub fn make_sandbox_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> Ga
         dialogue_states: Default::default(),
         breadcrumbs: None,
         projectile_templates: None,
-    }
+    };
+    add_default_templates(&mut state);
+    state
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
