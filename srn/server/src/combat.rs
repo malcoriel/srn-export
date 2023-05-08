@@ -277,7 +277,6 @@ pub fn resolve_launch(
     if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &mut state.locations[ship_loc.location_idx];
         let shooting_ship = &mut loc.ships[ship_loc.ship_idx];
-        let shooting_ship_id = shooting_ship.id;
         let launch_ability = find_turret_ability(shooting_ship, active_turret_id);
         if launch_ability.is_none() {
             return;
@@ -307,7 +306,8 @@ pub fn resolve_launch(
         let proj_template = proj_template.unwrap();
 
         let mut instance = proj_template.clone();
-        instance.set_id(loc.projectiles.len() as i32 % i32::MAX);
+        loc.projectile_counter = (loc.projectile_counter + 1) % i32::MAX;
+        instance.set_id(loc.projectile_counter);
         instance.set_position_from(&shooting_ship.spatial.position);
         instance.set_target(&target);
         let dir = target_pos
@@ -323,8 +323,9 @@ pub fn resolve_launch(
 
         let mut new_rot = dir.angle_rad(&Vec2f64 { x: 0.0, y: 1.0 });
         let deviation = generate_normal_random(0.0, 0.05, prng);
-        new_rot += deviation;
+        new_rot -= deviation;
         new_velocity = new_velocity.rotate(deviation);
+        new_velocity.y = -new_velocity.y;
         instance.get_spatial_mut().velocity = new_velocity;
         instance.get_spatial_mut().rotation_rad = new_rot;
         if target_pos.position.x < shooting_ship.spatial.position.x {

@@ -566,6 +566,7 @@ pub struct Location {
     pub ships: Vec<Ship>,
     pub adjacent_location_ids: Vec<Uuid>,
     pub projectiles: Vec<Projectile>,
+    pub projectile_counter: i32,
 }
 
 impl Location {
@@ -584,6 +585,7 @@ impl Location {
             ships: vec![],
             adjacent_location_ids: vec![],
             projectiles: Default::default(),
+            projectile_counter: 0,
         }
     }
 
@@ -602,6 +604,7 @@ impl Location {
             asteroid_belts: vec![],
             ships: vec![],
             projectiles: Default::default(),
+            projectile_counter: 0,
         }
     }
 }

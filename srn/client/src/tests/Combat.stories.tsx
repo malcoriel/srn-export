@@ -79,7 +79,7 @@ const getStartGameParamsRocketShooting = () => {
           break;
         }
         currentState = yield {
-          wait: 1000,
+          wait: 500,
           action: ActionBuilder.ActionLongActionStart({
             ship_id: '$my_ship_id',
             long_action_start: LongActionStartBuilder.LongActionStartLaunch({
