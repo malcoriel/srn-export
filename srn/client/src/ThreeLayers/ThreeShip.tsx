@@ -32,7 +32,7 @@ export type ThreeShipProps = {
   interactor?: ThreeInteractorProps;
   longActions?: LongAction[];
   turrets?: TurretProps[];
-  findObjectPositionByIdBound?: (id: string) => Vector | null;
+  findObjectPositionByIdBound?: (id: string | number) => Vector | null;
 };
 
 export const ThreeShip: React.FC<ThreeShipProps> = React.memo(

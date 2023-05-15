@@ -21,6 +21,8 @@ const getActionName = (a: LongAction): string | undefined => {
       return 'Jumping...';
     case 'Shoot':
       return undefined;
+    case 'Launch':
+      return undefined;
     default:
       throw new UnreachableCaseError(a);
   }

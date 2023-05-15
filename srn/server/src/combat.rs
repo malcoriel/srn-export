@@ -6,15 +6,18 @@ use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::Ability;
+use crate::autofocus::{object_index_into_object_id, SpatialIndex};
 use crate::indexing::{
     find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
-    GameStateIndexes, ObjectSpecifier,
+    GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::planet_movement::project_body_relative_position;
 use crate::random_stuff::generate_normal_random;
+use crate::spatial_movement::align_rotation_with_velocity;
 use crate::vec2::Vec2f64;
 use crate::world::{
-    remove_object, GameState, LocalEffect, Location, Player, Projectile, Ship, TemplateId,
+    remove_object, GameState, LocalEffect, Location, Player, Projectile, Ship, SpatialProps,
+    TemplateId, UpdateOptions,
 };
 use crate::{indexing, new_id, world};
 
@@ -310,29 +313,62 @@ pub fn resolve_launch(
         instance.set_id(loc.projectile_counter);
         instance.set_position_from(&shooting_ship.spatial.position);
         instance.set_target(&target);
-        let dir = target_pos
-            .position
-            .subtract(&shooting_ship.spatial.position);
-        let new_velocity = dir.normalize();
-        if new_velocity.is_none() {
-            return;
-        }
-        let mut new_velocity = new_velocity
-            .unwrap()
-            .scalar_mul(proj_template.get_spatial().velocity.euclidean_len());
-
-        let mut new_rot = dir.angle_rad(&Vec2f64 { x: 0.0, y: 1.0 });
-        let deviation = generate_normal_random(0.0, 0.05, prng);
+        let mut new_rot = shooting_ship.spatial.rotation_rad;
+        let deviation = generate_normal_random(0.0, 0.15, prng);
         new_rot -= deviation;
-        new_velocity = new_velocity.rotate(deviation);
-        new_velocity.y = -new_velocity.y;
+        let new_velocity = Vec2f64 { x: 0.0, y: 1.0 }.rotate(new_rot);
+        let mut new_velocity =
+            new_velocity.scalar_mul(proj_template.get_spatial().velocity.euclidean_len());
+        // ensure that new projectile is not launched inside the ship, as otherwise it can collide and blow immediately
+        instance.get_spatial_mut().position = instance.get_spatial().position.add(
+            &new_velocity
+                .normalize()
+                .expect("new velocity should be non-zero")
+                .scalar_mul(shooting_ship.spatial.radius + proj_template.get_spatial().radius),
+        );
         instance.get_spatial_mut().velocity = new_velocity;
         instance.get_spatial_mut().rotation_rad = new_rot;
-        if target_pos.position.x < shooting_ship.spatial.position.x {
-            instance.get_spatial_mut().rotation_rad =
-                PI * 2.0 - instance.get_spatial_mut().rotation_rad;
-        }
         loc.projectiles.push(instance);
+    }
+}
+
+pub fn guide_projectile(proj: &mut Projectile, target_spatial: &SpatialProps, elapsed_micro: i64) {
+    match proj {
+        Projectile::Rocket(props) => {
+            let current_dir = props.spatial.velocity;
+
+            let desired_dir_norm = target_spatial
+                .position
+                .subtract(&props.spatial.position)
+                .normalize();
+
+            if let Some(desired_dir_norm) = desired_dir_norm {
+                let mut desired_dir = desired_dir_norm.scalar_mul(current_dir.euclidean_len());
+                let max_guidance_angle = PI * 0.25;
+                let diff_angle = desired_dir_norm.angle_rad(&current_dir);
+                if diff_angle.abs() > max_guidance_angle {
+                    desired_dir = current_dir
+                        .rotate(-max_guidance_angle * diff_angle.signum())
+                        .normalize()
+                        .unwrap();
+                }
+                let diff = desired_dir.subtract(&current_dir);
+                let len = diff.euclidean_len();
+                let max_shift_len = props.guidance_acceleration * (elapsed_micro as f64);
+                let shift_len = if len > max_shift_len {
+                    max_shift_len
+                } else {
+                    len
+                };
+                if let Some(diff) = diff.normalize() {
+                    if shift_len > 1e-9 {
+                        let scaled_shift = diff.scalar_mul(shift_len);
+                        props.spatial.velocity = props.spatial.velocity.add(&scaled_shift);
+                        align_rotation_with_velocity(&mut props.spatial);
+                    }
+                };
+            }
+        }
     }
 }
 
@@ -340,3 +376,44 @@ pub const DEFAULT_PROJECTILE_SPEED: f64 = 50.0 / 1000.0 / 1000.0;
 pub const DEFAULT_PROJECTILE_ACC: f64 = 25.0 / 1e6 / 1e6;
 pub const DEFAULT_PROJECTILE_ROT_SPEED: f64 = PI / 4.0 / 1000.0 / 1000.0;
 pub const DEFAULT_PROJECTILE_ROT_ACC: f64 = PI / 8.0 / 1e6 / 1e6;
+
+pub fn update_proj_collisions(
+    loc: &mut Location,
+    _options: &UpdateOptions,
+    sp_idx: &SpatialIndex,
+    _location_idx: usize,
+) -> Vec<(ObjectSpecifier, f64)> {
+    let mut damages: Vec<(ObjectIndexSpecifier, f64)> = vec![];
+    let mut current_idx = -1;
+    loc.projectiles.retain(|proj| {
+        current_idx += 1;
+        let any_coll = sp_idx
+            .rad_search(&proj.get_spatial().position, proj.get_spatial().radius)
+            .into_iter()
+            .filter(|os| match os {
+                // prevent collision detection with itself
+                ObjectIndexSpecifier::Projectile { idx } => *idx != (current_idx as usize),
+                _ => true,
+            })
+            .collect::<Vec<ObjectIndexSpecifier>>();
+        if any_coll.len() > 0 {
+            let mut damaged: Vec<(ObjectIndexSpecifier, f64)> = sp_idx
+                .rad_search(&proj.get_spatial().position, proj.get_spatial().radius)
+                .into_iter()
+                .map(|os| (os, proj.get_damage()))
+                .collect();
+            // warn!(format!(
+            //     "boom {} on {:?}",
+            //     proj.get_id(),
+            //     damaged.iter().map(|(os, _)| os.clone()).collect::<Vec<_>>()
+            // ));
+            damages.append(&mut damaged);
+            return false;
+        }
+        return true;
+    });
+    damages
+        .into_iter()
+        .filter_map(|(ois, d)| object_index_into_object_id(&ois, loc).map(|os| (os, d)))
+        .collect()
+}

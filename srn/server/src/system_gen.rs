@@ -604,18 +604,12 @@ fn add_default_templates(state: &mut GameState) {
             rotation_rad: 0.0,
             radius: 0.75,
         },
-        movement: Movement::ShipAccelerated {
-            max_linear_speed: DEFAULT_PROJECTILE_SPEED,
-            max_rotation_speed: DEFAULT_PROJECTILE_ROT_SPEED,
-            linear_drag: 0.0,
-            acc_linear: 0.0,
-            max_turn_speed: DEFAULT_PROJECTILE_ROT_SPEED,
-            acc_angular: 0.0,
-        },
+        movement: Movement::None, // instead, we use simplified movement model via guidance
         properties: vec![],
         target: None,
         damage: 50.0,
         damage_radius: 1.0,
+        guidance_acceleration: DEFAULT_PROJECTILE_SPEED * 2.0 / 1e6,
     });
     if let Some(templates) = &mut state.projectile_templates {
         templates.push(rocket_template);

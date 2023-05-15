@@ -223,6 +223,7 @@ export const SandboxQuickMenu = () => {
           SandboxCommandBuilder.SandboxCommandTeleport({
             fields: {
               target: VectorF(0, 0),
+              rotation_rad: 0.0,
             },
           })
         ),

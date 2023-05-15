@@ -30,7 +30,7 @@ export interface ThreeShipTurretsProps {
   color: string;
   ownRadius: number;
   longActions: LongAction[];
-  findObjectPositionByIdBound: (id: string) => Vector | null;
+  findObjectPositionByIdBound: (id: string | number) => Vector | null;
 }
 
 const circularLerp = (a: number, b: number, pct: number) => {

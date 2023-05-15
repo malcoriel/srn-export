@@ -60,6 +60,8 @@ const mockLocation = (
   asteroid_belts: [],
   ships: [],
   adjacent_location_ids: [],
+  projectiles: [],
+  projectile_counter: 0,
 });
 
 export const Main = Template.bind({});

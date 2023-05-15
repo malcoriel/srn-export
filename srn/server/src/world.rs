@@ -11,12 +11,12 @@ use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, object_index_into_object_id, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
-use crate::combat::{Health, ShootTarget};
+use crate::combat::{guide_projectile, Health, ShootTarget};
 use crate::dialogue::Dialogue;
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
-    index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, GameStateCaches,
-    GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
+    find_spatial_ref_by_spec, index_planets_by_id, index_players_by_ship_id, index_ships_by_id,
+    index_state, GameStateCaches, GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
@@ -47,11 +47,11 @@ use crate::world_actions::*;
 use crate::world_actions::{Action, ShipMovementMarkers};
 use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEvent};
 use crate::{
-    abilities, autofocus, cargo_rush, indexing, pirate_defence, prng_id, random_stuff,
+    abilities, autofocus, cargo_rush, combat, indexing, pirate_defence, prng_id, random_stuff,
     spatial_movement, system_gen, trajectory, world_events,
 };
-use crate::{combat, fire_event, market, notifications, planet_movement, tractoring};
 use crate::{dialogue, vec2};
+use crate::{fire_event, market, notifications, planet_movement, tractoring};
 use crate::{get_prng, new_id, DEBUG_PHYSICS};
 use crate::{seed_prng, DialogueTable};
 use chrono::Utc;
@@ -292,6 +292,12 @@ pub enum Projectile {
 }
 
 impl Projectile {
+    pub(crate) fn get_target(&self) -> Option<ObjectSpecifier> {
+        match self {
+            Projectile::Rocket(props) => props.target.clone(),
+        }
+    }
+
     pub(crate) fn get_blow_radius(&self) -> f64 {
         match self {
             Projectile::Rocket(props) => props.damage_radius,
@@ -353,6 +359,7 @@ pub struct RocketProps {
     pub target: Option<ObjectSpecifier>,
     pub damage: f64,
     pub damage_radius: f64,
+    pub guidance_acceleration: f64,
 }
 
 pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
@@ -1212,8 +1219,34 @@ pub fn update_location(
     }
     sampler.end(update_containers_id);
 
+    let guidance_id = sampler.start(SamplerMarks::UpdateProjectileGuidance as u32);
+
+    let mut spatials = vec![];
+    for (idx, proj) in state.locations[location_idx].projectiles.iter().enumerate() {
+        let spatial = if let Some(target) = proj.get_target() {
+            if let Some(target_spatial) = find_spatial_ref_by_spec(indexes, target) {
+                Some(target_spatial)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        spatials.push(spatial);
+    }
+    for (idx, proj) in state.locations[location_idx]
+        .projectiles
+        .iter_mut()
+        .enumerate()
+    {
+        if let Some(target_spatial) = spatials[idx] {
+            guide_projectile(proj, target_spatial, elapsed);
+        }
+    }
+    sampler.end(guidance_id);
+
     let collisions_id = sampler.start(SamplerMarks::UpdateProjectileCollisions as u32);
-    let extra_damages = update_proj_collisions(
+    let extra_damages = combat::update_proj_collisions(
         &mut state.locations[location_idx],
         update_options,
         spatial_index,
@@ -1289,32 +1322,6 @@ pub fn update_location(
         sampler.end(wreck_decay_id);
     }
     sampler
-}
-
-fn update_proj_collisions(
-    loc: &mut Location,
-    _options: &UpdateOptions,
-    sp_idx: &SpatialIndex,
-    _location_idx: usize,
-) -> Vec<(ObjectSpecifier, f64)> {
-    let mut damages: Vec<(ObjectIndexSpecifier, f64)> = vec![];
-    loc.projectiles.retain(|proj| {
-        let any_coll = sp_idx.rad_search(&proj.get_spatial().position, proj.get_spatial().radius);
-        if any_coll.len() > 0 {
-            let mut damaged: Vec<(ObjectIndexSpecifier, f64)> = sp_idx
-                .rad_search(&proj.get_spatial().position, proj.get_spatial().radius)
-                .into_iter()
-                .map(|os| (os, proj.get_damage()))
-                .collect();
-            damages.append(&mut damaged);
-            return false;
-        }
-        return true;
-    });
-    damages
-        .into_iter()
-        .filter_map(|(ois, d)| object_index_into_object_id(&ois, loc).map(|os| (os, d)))
-        .collect()
 }
 
 fn update_docked_ships_position(loc: &mut Location, indexes: &GameStateIndexes) {

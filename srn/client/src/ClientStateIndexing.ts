@@ -12,7 +12,6 @@ import Vector, { isIVector, IVector } from './utils/Vector';
 import { ObjectSpecifierBuilder } from '../../world/pkg/world.extra';
 import { UnreachableCaseError } from 'ts-essentials';
 import { Container, ObjectSpecifier } from '../../world/pkg/world';
-import _ from 'lodash';
 
 export interface ClientStateIndexes {
   myShip: Ship | null;
@@ -85,6 +84,10 @@ export const findObjectBySpecifier = (
     case 'Location': {
       const spec = specifier.obj_spec;
       return state.locations.find((l) => l.id === spec.id);
+    }
+    case 'Projectile': {
+      const spec = specifier.obj_spec;
+      return loc.projectiles.find((p) => p.fields.id === spec.id);
     }
     default:
       throw new UnreachableCaseError(specifier.obj_spec);
@@ -226,7 +229,7 @@ export type FindObjectResult<T = any> =
  */
 export const findObjectById = (
   state: GameState,
-  objId: string,
+  objId: string | number,
   // for further optimizations like what type & location, but for now just pure search
   _hints?: FindObjectHint[]
 ): FindObjectResult => {
@@ -282,7 +285,7 @@ export const getObjectRotation = (obj: any): number => {
 };
 export const findObjectPositionById = (
   state: GameState,
-  objId: string
+  objId: string | number
 ): Vector | null => {
   const objRes = findObjectById(state, objId);
   if (!objRes) {

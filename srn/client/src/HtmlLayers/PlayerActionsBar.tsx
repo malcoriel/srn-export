@@ -63,7 +63,8 @@ const mapShipAbility = (interactorIds: InteractorIds) => (
         cooldownNormalized: 0,
         icon: <BsGearFill />,
       };
-
+    case 'Launch':
+      return null;
     default:
       throw new UnreachableCaseError(ability);
   }

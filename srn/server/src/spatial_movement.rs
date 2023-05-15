@@ -66,7 +66,13 @@ pub fn update_ship_manual_movement(
                     .turn
                     .as_ref()
                     .map_or(0.0, |m| if m.forward { 1.0 } else { -1.0 });
-            update_accelerated_ship_movement(elapsed_micro, ship, gas_sign, turn_sign);
+            update_accelerated_ship_movement(
+                elapsed_micro,
+                &mut ship.spatial,
+                &mut ship.movement_definition,
+                gas_sign,
+                turn_sign,
+            );
         }
         Movement::RadialMonotonous { .. } => {}
         Movement::AnchoredStatic { .. } => {}
@@ -76,12 +82,13 @@ pub fn update_ship_manual_movement(
 pub fn update_spatial_of_object(
     elapsed_micro: i64, // can be negative for the sake of applying StopGas in the past
     spatial: &mut SpatialProps,
+    debug: bool,
 ) {
     if spatial.velocity.euclidean_len() < MIN_OBJECT_SPEED_PER_TICK {
         spatial.velocity = Vec2f64::zero();
         return;
     }
-    update_spatial_by_velocities(elapsed_micro, spatial);
+    update_spatial_by_velocities(elapsed_micro, spatial, debug);
 }
 
 fn maybe_drop_outdated_movement_marker(
@@ -167,7 +174,7 @@ fn project_ship_movement_by_speed(elapsed_micro: i64, ship: &Ship, sign: f64) ->
 pub const SPACE_DRAG_PER_TICK_PER_TICK: f64 = 1.0 / 1e6 / 1e6;
 pub const TURN_DRAG_RAD_PER_TICK: f64 = PI / 1e6 / 1e6; // really high drag to prevent too much drifting
 
-fn update_spatial_by_velocities(elapsed_micro: i64, spatial: &mut SpatialProps) {
+fn update_spatial_by_velocities(elapsed_micro: i64, spatial: &mut SpatialProps, _debug: bool) {
     let linear_drag = &spatial
         .velocity
         .normalize()
@@ -192,51 +199,47 @@ fn update_spatial_by_velocities(elapsed_micro: i64, spatial: &mut SpatialProps) 
 
 fn update_accelerated_ship_movement(
     elapsed_micro: i64,
-    ship: &mut Ship,
+    spatial: &mut SpatialProps,
+    movement_definition: &mut Movement,
     gas_sign: f64,
     turn_sign: f64,
 ) {
     if gas_sign != 0.0 {
-        let linear_drag = ship
-            .spatial
+        let linear_drag = spatial
             .velocity
             .normalize()
             .unwrap_or(Vec2f64::zero())
             .scalar_mul(SPACE_DRAG_PER_TICK_PER_TICK * elapsed_micro as f64);
         // negate drag if ship is actively moving to prevent wrong expectations
-        ship.spatial.velocity.add(&linear_drag);
+        spatial.velocity.add(&linear_drag);
     }
     if turn_sign != 0.0 {
         let angular_drag =
-            ship.spatial.angular_velocity.signum() * TURN_DRAG_RAD_PER_TICK * elapsed_micro as f64;
+            spatial.angular_velocity.signum() * TURN_DRAG_RAD_PER_TICK * elapsed_micro as f64;
         // negate drag if ship is actively turning to prevent wrong expectations
-        ship.spatial.angular_velocity += angular_drag;
+        spatial.angular_velocity += angular_drag;
     }
-    let thrust_dir = Vec2f64 { x: 0.0, y: 1.0 }.rotate(ship.spatial.rotation_rad);
+    let thrust_dir = Vec2f64 { x: 0.0, y: 1.0 }.rotate(spatial.rotation_rad);
     let space_acceleration = thrust_dir.scalar_mul(
-        ship.movement_definition.get_current_linear_acceleration()
-            * elapsed_micro as f64
-            * gas_sign,
+        movement_definition.get_current_linear_acceleration() * elapsed_micro as f64 * gas_sign,
     );
-    ship.spatial.velocity = ship.spatial.velocity.add(&space_acceleration);
-    let max_speed = ship.movement_definition.get_max_speed();
-    if ship.spatial.velocity.euclidean_len() > max_speed {
-        ship.spatial.velocity = ship
-            .spatial
+    spatial.velocity = spatial.velocity.add(&space_acceleration);
+    let max_speed = movement_definition.get_max_speed();
+    if spatial.velocity.euclidean_len() > max_speed {
+        spatial.velocity = spatial
             .velocity
             .normalize()
             .unwrap_or(Vec2f64::zero())
             .scalar_mul(max_speed);
     }
-    ship.spatial.angular_velocity += turn_sign
-        * ship.movement_definition.get_current_angular_acceleration()
-        * elapsed_micro as f64;
-    let max_rotation_speed = ship.movement_definition.get_max_rotation_speed();
-    if ship.spatial.angular_velocity.abs() > max_rotation_speed {
-        ship.spatial.angular_velocity = ship.spatial.angular_velocity.signum() * max_rotation_speed;
+    spatial.angular_velocity +=
+        turn_sign * movement_definition.get_current_angular_acceleration() * elapsed_micro as f64;
+    let max_rotation_speed = movement_definition.get_max_rotation_speed();
+    if spatial.angular_velocity.abs() > max_rotation_speed {
+        spatial.angular_velocity = spatial.angular_velocity.signum() * max_rotation_speed;
     }
 
-    update_spatial_by_velocities(elapsed_micro, &mut ship.spatial);
+    update_spatial_by_velocities(elapsed_micro, spatial, false);
 }
 
 pub const ORB_SPEED_MULT: f64 = 1.0;
@@ -253,9 +256,15 @@ pub fn update_objects_spatial_movement(
     }
     // every other object that cannot change its speed itself, will drift - basically, unguided physics
     for wreck in location.wrecks.iter_mut() {
-        update_spatial_of_object(elapsed_micro, &mut wreck.spatial)
+        update_spatial_of_object(elapsed_micro, &mut wreck.spatial, false)
     }
     for projectile in location.projectiles.iter_mut() {
-        update_spatial_of_object(elapsed_micro, projectile.get_spatial_mut())
+        update_spatial_of_object(elapsed_micro, projectile.get_spatial_mut(), true)
     }
+}
+
+pub fn align_rotation_with_velocity(sp: &mut SpatialProps) {
+    let base = Vec2f64 { x: 1.0, y: 0.0 };
+    let velocity_angle = sp.velocity.angle_rad(&base);
+    sp.rotation_rad = velocity_angle + PI / 2.0;
 }

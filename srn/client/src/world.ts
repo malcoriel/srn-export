@@ -390,7 +390,7 @@ export const indexShipsByPlayerId = (
 
 export const getSpecifierId = (os?: ObjectSpecifier | null): string | null => {
   if (!os || os.tag === 'Unknown') return null;
-  return os.id || null;
+  return String(os.id) || null;
 };
 
 export type ManualMovementActionTags =
@@ -459,6 +459,8 @@ export const DEFAULT_STATE = {
       star: null,
       position: new Vector(0, 0),
       wrecks: [],
+      projectiles: [],
+      projectile_counter: 0,
     },
   ],
   players: [],
@@ -477,6 +479,7 @@ export const DEFAULT_STATE = {
   accumulated_not_updated_ticks: 0,
   dialogue_states: {},
   breadcrumbs: [],
+  projectile_templates: [],
 };
 
 const periodPrimes = [7, 11, 13, 17, 19, 23];
@@ -507,5 +510,5 @@ export const getObjSpecId = (objSpec: ObjectSpecifier): string | null => {
   if (objSpec.tag === 'Unknown') {
     return null;
   }
-  return objSpec.id;
+  return String(objSpec.id);
 };

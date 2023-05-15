@@ -282,6 +282,7 @@ pub enum SamplerMarks {
     UpdateWorldNonDetIter = 65,
     BroadcastStateDiff = 66,
     UpdateProjectileCollisions = 67,
+    UpdateProjectileGuidance = 68,
 }
 
 impl Display for SamplerMarks {
