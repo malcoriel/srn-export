@@ -278,7 +278,7 @@ use crate::indexing::{find_my_ship_index, GameStateCaches, ObjectSpecifier};
 use crate::perf::{ConsumeOptions, Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
 use crate::world::{
-    GameMode, GameState, Movement, SpatialProps, UpdateOptions, UpdateOptionsV2, AABB,
+    GameMode, GameState, Movement, Projectile, SpatialProps, UpdateOptions, UpdateOptionsV2, AABB,
 };
 use chrono::Timelike;
 use mut_static::MutStatic;
@@ -917,4 +917,28 @@ pub fn build_trajectory(req: JsValue, mov: JsValue, spat: JsValue) -> Result<JsV
         &custom_deserialize::<SpatialProps>(spat)?,
     );
     Ok(custom_serialize(&res)?)
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct GuidedProjectileArgs {
+    projectile: Projectile,
+    target_spatial: SpatialProps,
+    elapsed_micro: i32,
+}
+
+#[derive(Serialize, Deserialize)]
+struct GuidedProjectileRes {
+    gas: f64,
+    turn: f64,
+}
+
+#[wasm_bindgen]
+pub fn guide_projectile(val: JsValue) -> Result<JsValue, JsValue> {
+    let mut args = custom_deserialize::<GuidedProjectileArgs>(val)?;
+    let (gas, turn) = combat::guide_projectile(
+        &mut args.projectile,
+        &args.target_spatial,
+        args.elapsed_micro as i64,
+    );
+    Ok(custom_serialize(&GuidedProjectileRes { gas, turn })?)
 }

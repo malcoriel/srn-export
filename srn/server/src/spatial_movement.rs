@@ -66,7 +66,7 @@ pub fn update_ship_manual_movement(
                     .turn
                     .as_ref()
                     .map_or(0.0, |m| if m.forward { 1.0 } else { -1.0 });
-            update_accelerated_ship_movement(
+            update_accelerated_shiplike_movement(
                 elapsed_micro,
                 &mut ship.spatial,
                 &mut ship.movement_definition,
@@ -197,10 +197,10 @@ fn update_spatial_by_velocities(elapsed_micro: i64, spatial: &mut SpatialProps, 
     }
 }
 
-fn update_accelerated_ship_movement(
+pub fn update_accelerated_shiplike_movement(
     elapsed_micro: i64,
     spatial: &mut SpatialProps,
-    movement_definition: &mut Movement,
+    movement_definition: &Movement,
     gas_sign: f64,
     turn_sign: f64,
 ) {
@@ -257,9 +257,6 @@ pub fn update_objects_spatial_movement(
     // every other object that cannot change its speed itself, will drift - basically, unguided physics
     for wreck in location.wrecks.iter_mut() {
         update_spatial_of_object(elapsed_micro, &mut wreck.spatial, false)
-    }
-    for projectile in location.projectiles.iter_mut() {
-        update_spatial_of_object(elapsed_micro, projectile.get_spatial_mut(), true)
     }
 }
 

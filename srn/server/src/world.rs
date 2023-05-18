@@ -37,6 +37,7 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
+use crate::spatial_movement::update_accelerated_shiplike_movement;
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
 use crate::tractoring::{
@@ -292,24 +293,35 @@ pub enum Projectile {
 }
 
 impl Projectile {
-    pub(crate) fn get_target(&self) -> Option<ObjectSpecifier> {
+    pub fn get_markers_mut(&mut self) -> &mut Option<String> {
+        match self {
+            Projectile::Rocket(props) => &mut props.markers,
+        }
+    }
+    pub fn get_target(&self) -> Option<ObjectSpecifier> {
         match self {
             Projectile::Rocket(props) => props.target.clone(),
         }
     }
 
-    pub(crate) fn get_blow_radius(&self) -> f64 {
+    pub fn get_movement(&self) -> &Movement {
+        match self {
+            Projectile::Rocket(props) => &props.movement,
+        }
+    }
+
+    pub fn get_blow_radius(&self) -> f64 {
         match self {
             Projectile::Rocket(props) => props.damage_radius,
         }
     }
-    pub(crate) fn get_spatial(&self) -> &SpatialProps {
+    pub fn get_spatial(&self) -> &SpatialProps {
         match self {
             Projectile::Rocket(props) => &props.spatial,
         }
     }
 
-    pub(crate) fn get_damage(&self) -> f64 {
+    pub fn get_damage(&self) -> f64 {
         match self {
             Projectile::Rocket(props) => props.damage,
         }
@@ -359,7 +371,7 @@ pub struct RocketProps {
     pub target: Option<ObjectSpecifier>,
     pub damage: f64,
     pub damage_radius: f64,
-    pub guidance_acceleration: f64,
+    pub markers: Option<String>,
 }
 
 pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
@@ -1219,28 +1231,35 @@ pub fn update_location(
     }
     sampler.end(update_containers_id);
 
-    let guidance_id = sampler.start(SamplerMarks::UpdateProjectileGuidance as u32);
+    let guidance_id = sampler.start(SamplerMarks::UpdateObjectAutocontrol as u32);
 
     let mut spatials = vec![];
-    for (idx, proj) in state.locations[location_idx].projectiles.iter().enumerate() {
-        let spatial = if let Some(target) = proj.get_target() {
-            if let Some(target_spatial) = find_spatial_ref_by_spec(indexes, target) {
-                Some(target_spatial)
+    for proj in state.locations[location_idx].projectiles.iter() {
+        if let Some(target) = &proj.get_target() {
+            if let Some(spatial) = find_spatial_ref_by_spec(indexes, target.clone()) {
+                spatials.push(Some(spatial));
             } else {
-                None
+                spatials.push(None);
             }
         } else {
-            None
-        };
-        spatials.push(spatial);
+            spatials.push(None);
+        }
     }
     for (idx, proj) in state.locations[location_idx]
         .projectiles
         .iter_mut()
         .enumerate()
     {
-        if let Some(target_spatial) = spatials[idx] {
-            guide_projectile(proj, target_spatial, elapsed);
+        if let Some(target_spatial) = &spatials[idx] {
+            let (gas, turn) = guide_projectile(proj, target_spatial, elapsed);
+            let movement_clone = proj.get_movement().clone();
+            update_accelerated_shiplike_movement(
+                elapsed,
+                proj.get_spatial_mut(),
+                &movement_clone,
+                gas,
+                turn,
+            );
         }
     }
     sampler.end(guidance_id);

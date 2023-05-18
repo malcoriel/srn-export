@@ -65,6 +65,10 @@ export const wasm = {
   getNanosWeb: () => {
     throw new Error(notLoadedError);
   },
+
+  guideProjectile: () => {
+    throw new Error(notLoadedError);
+  },
 };
 
 const loadAllJsonsAsRawStringsKeyByFilename = async (path) => {
@@ -144,6 +148,7 @@ export const loadWasm = timerify(async function loadWasm() {
     wasm.buildDialogueFromState = wasmFunctions.build_dialogue_from_state;
     wasm.getNanosNode = wasmFunctions.get_nanos_node;
     wasm.getNanosWeb = wasmFunctions.get_nanos_web;
+    wasm.guideProjectile = wasmFunctions.guide_projectile;
     wasm.resources = resources;
     wasm.dialogueTable = wasm.makeDialogueTable(
       wasm.resources.dialogue_scripts

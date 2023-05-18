@@ -275,7 +275,7 @@ pub fn resolve_launch(
         warn!(format!("no target pos: {:?}", spec));
         return;
     }
-    let target_pos = target_pos.unwrap().clone();
+    let _target_pos = target_pos.unwrap().clone();
 
     if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &mut state.locations[ship_loc.location_idx];
@@ -313,10 +313,13 @@ pub fn resolve_launch(
         instance.set_id(loc.projectile_counter);
         instance.set_position_from(&shooting_ship.spatial.position);
         instance.set_target(&target);
-        let mut new_rot = shooting_ship.spatial.rotation_rad;
-        let deviation = generate_normal_random(0.0, 0.15, prng);
+
+        // ship visual model is shifted by PI/2 rotation incorrectly, and has inverted rotation view
+        let mut new_rot = -shooting_ship.spatial.rotation_rad + PI / 2.0;
+        let deviation = 0.0;
+        generate_normal_random(0.0, 0.15, prng);
         new_rot -= deviation;
-        let new_velocity = Vec2f64 { x: 0.0, y: 1.0 }.rotate(new_rot);
+        let new_velocity = Vec2f64 { x: 1.0, y: 0.0 }.rotate(new_rot);
         let mut new_velocity =
             new_velocity.scalar_mul(proj_template.get_spatial().velocity.euclidean_len());
         // ensure that new projectile is not launched inside the ship, as otherwise it can collide and blow immediately
@@ -332,43 +335,55 @@ pub fn resolve_launch(
     }
 }
 
-pub fn guide_projectile(proj: &mut Projectile, target_spatial: &SpatialProps, elapsed_micro: i64) {
-    match proj {
+// (signum_gas, signum_turn)
+pub fn guide_projectile(
+    proj: &mut Projectile,
+    target_spatial: &SpatialProps,
+    _elapsed_micro: i64,
+) -> (f64, f64) {
+    return match proj {
         Projectile::Rocket(props) => {
-            let current_dir = props.spatial.velocity;
-
-            let desired_dir_norm = target_spatial
-                .position
-                .subtract(&props.spatial.position)
-                .normalize();
-
-            if let Some(desired_dir_norm) = desired_dir_norm {
-                let mut desired_dir = desired_dir_norm.scalar_mul(current_dir.euclidean_len());
-                let max_guidance_angle = PI * 0.25;
-                let diff_angle = desired_dir_norm.angle_rad(&current_dir);
-                if diff_angle.abs() > max_guidance_angle {
-                    desired_dir = current_dir
-                        .rotate(-max_guidance_angle * diff_angle.signum())
-                        .normalize()
-                        .unwrap();
-                }
-                let diff = desired_dir.subtract(&current_dir);
-                let len = diff.euclidean_len();
-                let max_shift_len = props.guidance_acceleration * (elapsed_micro as f64);
-                let shift_len = if len > max_shift_len {
-                    max_shift_len
-                } else {
-                    len
-                };
-                if let Some(diff) = diff.normalize() {
-                    if shift_len > 1e-9 {
-                        let scaled_shift = diff.scalar_mul(shift_len);
-                        props.spatial.velocity = props.spatial.velocity.add(&scaled_shift);
-                        align_rotation_with_velocity(&mut props.spatial);
-                    }
-                };
+            let mut gas = 0.0;
+            let mut turn = 0.0;
+            let dir_to_target = target_spatial.position.subtract(&props.spatial.position);
+            let angle_dir = dir_to_target.angle_rad_circular_rotation(&Vec2f64 { x: 1.0, y: 0.0 });
+            let mut angle_with_target =
+                (angle_dir - props.spatial.rotation_rad % (PI * 2.0)) % (PI * 2.0);
+            if angle_with_target > PI {
+                angle_with_target -= (PI * 2.0)
             }
+            if angle_with_target.abs() <= PI / 4.0 + 1e-6 {
+                gas = 1.0;
+            } else {
+                gas = -1.0;
+            }
+            if angle_with_target > 1e-6 {
+                turn = 1.0;
+            } else if angle_with_target < 1e-6 {
+                turn = -1.0;
+            }
+            *proj.get_markers_mut() = markers_to_string(gas, turn);
+            (gas, turn)
         }
+    };
+}
+
+fn markers_to_string(gas: f64, turn: f64) -> Option<String> {
+    if gas != 0.0 || turn != 0.0 {
+        let mut str: String = "".to_string();
+        if gas > 0.0 {
+            str += "↑"
+        } else if gas < 0.0 {
+            str += "↓"
+        }
+        if turn > 0.0 {
+            str += "↶"
+        } else if turn < 0.0 {
+            str += "↷"
+        }
+        Some(str)
+    } else {
+        None
     }
 }
 

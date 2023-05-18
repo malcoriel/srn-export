@@ -175,6 +175,7 @@ impl Vec2f64 {
         (a.x * a.x + a.y * a.y).sqrt()
     }
 
+    // Does not distinguish angle 'direction' - will always give from 0 to PI
     pub fn angle_rad(&self, b: &Vec2f64) -> f64 {
         let mut acos_arg = self.scalar_multiply(b) / self.euclidean_len() / b.euclidean_len();
         if acos_arg.is_infinite() || acos_arg.is_nan() {
@@ -196,6 +197,24 @@ impl Vec2f64 {
             };
         }
         val
+    }
+
+    // Returns angle from -PI to PI, positive values -> counterclockwise assuming Y is up (math coordinates)
+    pub fn angle_rad_signed(&self, b: &Vec2f64) -> f64 {
+        let angle_abs = self.angle_rad(b);
+        let cross_product = self.x * b.y + self.y * b.x;
+        let sin = cross_product / self.euclidean_len() / b.euclidean_len();
+        return if sin < 0.0 { -angle_abs } else { angle_abs };
+    }
+
+    // Returns angle from 0 to 2PI, positive values -> counterclockwise assuming Y is up (math coordinates), 1.5 PI -> looks down
+    pub fn angle_rad_circular_rotation(&self, b: &Vec2f64) -> f64 {
+        let angle = self.angle_rad_signed(b);
+        if angle < 0.0 {
+            angle + 2.0 * PI
+        } else {
+            angle
+        }
     }
 
     pub fn angle_deg(&self, b: &Vec2f64) -> f64 {
