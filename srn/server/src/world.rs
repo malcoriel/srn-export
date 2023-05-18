@@ -31,6 +31,7 @@ use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::planet_movement::IBodyV2;
+use crate::properties::ObjectProperty;
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
     gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
@@ -48,8 +49,8 @@ use crate::world_actions::*;
 use crate::world_actions::{Action, ShipMovementMarkers};
 use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEvent};
 use crate::{
-    abilities, autofocus, cargo_rush, combat, indexing, pirate_defence, prng_id, random_stuff,
-    spatial_movement, system_gen, trajectory, world_events,
+    abilities, autofocus, cargo_rush, combat, indexing, pirate_defence, prng_id, properties,
+    random_stuff, spatial_movement, system_gen, trajectory, world_events,
 };
 use crate::{dialogue, vec2};
 use crate::{fire_event, market, notifications, planet_movement, tractoring};
@@ -130,19 +131,6 @@ pub fn get_random_planet<'a>(
         .collect::<Vec<_>>();
     let from = &pickup[rng.gen_range(0, pickup.len())];
     Some(from)
-}
-
-#[skip_serializing_none]
-#[derive(
-    Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq, Eq, Hash,
-)]
-#[serde(tag = "tag")]
-pub enum ObjectProperty {
-    Unknown,
-    UnlandablePlanet,
-    PirateDefencePlayersHomePlanet,
-    PirateShip,
-    MoneyOnKill { amount: i32 },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Default)]
@@ -293,11 +281,35 @@ pub enum Projectile {
 }
 
 impl Projectile {
+    pub fn get_to_clean_mut(&mut self) -> &mut bool {
+        match self {
+            Projectile::Rocket(props) => &mut props.to_clean,
+        }
+    }
+
+    pub fn get_to_clean(&self) -> &bool {
+        match self {
+            Projectile::Rocket(props) => &props.to_clean,
+        }
+    }
     pub fn get_markers_mut(&mut self) -> &mut Option<String> {
         match self {
             Projectile::Rocket(props) => &mut props.markers,
         }
     }
+
+    pub fn get_properties(&self) -> &Vec<ObjectProperty> {
+        match self {
+            Projectile::Rocket(props) => &props.properties,
+        }
+    }
+
+    pub fn get_properties_mut(&mut self) -> &mut Vec<ObjectProperty> {
+        match self {
+            Projectile::Rocket(props) => &mut props.properties,
+        }
+    }
+
     pub fn get_target(&self) -> Option<ObjectSpecifier> {
         match self {
             Projectile::Rocket(props) => props.target.clone(),
@@ -372,6 +384,7 @@ pub struct RocketProps {
     pub damage: f64,
     pub damage_radius: f64,
     pub markers: Option<String>,
+    pub to_clean: bool,
 }
 
 pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
@@ -1273,6 +1286,17 @@ pub fn update_location(
     );
     sampler.end(collisions_id);
 
+    let props_id = sampler.start(SamplerMarks::UpdatePropertiesRules as u32);
+    properties::update_properties_rules(
+        &mut state.locations[location_idx],
+        update_options,
+        spatial_index,
+        indexes,
+        location_idx,
+        elapsed as i32,
+    );
+    sampler.end(props_id);
+
     if !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
         update_hp_effects(
@@ -1340,6 +1364,10 @@ pub fn update_location(
         update_wreck_decay(state, location_idx, elapsed);
         sampler.end(wreck_decay_id);
     }
+
+    let clean = sampler.start(SamplerMarks::UpdateCleanup as u32);
+    properties::cleanup_objects(&mut state, location_idx);
+    sampler.end(clean);
     sampler
 }
 

@@ -134,6 +134,9 @@ mod pirate_defence;
 #[path = "../../server/src/cargo_rush.rs"]
 mod cargo_rush;
 
+#[path = "../../server/src/properties.rs"]
+mod properties;
+
 #[path = "../../server/src/tutorial.rs"]
 mod tutorial;
 

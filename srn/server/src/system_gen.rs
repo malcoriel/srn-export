@@ -10,11 +10,15 @@ use rand_pcg::Pcg64Mcg;
 use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::combat::{Health, DEFAULT_PROJECTILE_ROT_SPEED, DEFAULT_PROJECTILE_SPEED};
+use crate::combat::{
+    Health, DEFAULT_PROJECTILE_EXPIRATION_TICKS, DEFAULT_PROJECTILE_ROT_SPEED,
+    DEFAULT_PROJECTILE_SPEED,
+};
 use crate::indexing::{index_state, GameStateCaches, ObjectSpecifier, Spec};
 use crate::interpolation::get_orbit_phase_table;
 use crate::market::{init_all_planets_market, Market};
 use crate::perf::Sampler;
+use crate::properties::ObjectProperty;
 use crate::random_stuff::{
     gen_color, gen_period, gen_planet_count, gen_planet_orbit_period, gen_planet_orbit_speed,
     gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_period, gen_sat_orbit_speed,
@@ -23,9 +27,8 @@ use crate::random_stuff::{
 };
 use crate::vec2::Vec2f64;
 use crate::world::{
-    AsteroidBelt, Container, GameMode, GameState, Location, Movement, ObjectProperty, PlanetV2,
-    Projectile, RocketProps, RotationMovement, SpatialProps, Star, TemplateId, AABB,
-    GAME_STATE_VERSION,
+    AsteroidBelt, Container, GameMode, GameState, Location, Movement, PlanetV2, Projectile,
+    RocketProps, RotationMovement, SpatialProps, Star, TemplateId, AABB, GAME_STATE_VERSION,
 };
 use crate::{planet_movement, prng_id, seed_prng, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -612,11 +615,14 @@ fn add_default_templates(state: &mut GameState) {
             max_turn_speed: DEFAULT_PROJECTILE_ROT_SPEED,
             acc_angular: DEFAULT_PROJECTILE_ROT_SPEED * 2.0 / 1e6,
         },
-        properties: vec![],
+        properties: vec![ObjectProperty::Expires {
+            remaining_ticks: DEFAULT_PROJECTILE_EXPIRATION_TICKS,
+        }],
         target: None,
         damage: 50.0,
         damage_radius: 1.0,
         markers: None,
+        to_clean: false,
     });
     if let Some(templates) = &mut state.projectile_templates {
         templates.push(rocket_template);

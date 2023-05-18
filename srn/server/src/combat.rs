@@ -350,7 +350,7 @@ pub fn guide_projectile(
             let mut angle_with_target =
                 (angle_dir - props.spatial.rotation_rad % (PI * 2.0)) % (PI * 2.0);
             if angle_with_target > PI {
-                angle_with_target -= (PI * 2.0)
+                angle_with_target -= PI * 2.0
             }
             if angle_with_target.abs() <= PI / 4.0 + 1e-6 {
                 gas = 1.0;
@@ -391,6 +391,7 @@ pub const DEFAULT_PROJECTILE_SPEED: f64 = 50.0 / 1000.0 / 1000.0;
 pub const DEFAULT_PROJECTILE_ACC: f64 = 25.0 / 1e6 / 1e6;
 pub const DEFAULT_PROJECTILE_ROT_SPEED: f64 = PI / 4.0 / 1000.0 / 1000.0;
 pub const DEFAULT_PROJECTILE_ROT_ACC: f64 = PI / 8.0 / 1e6 / 1e6;
+pub const DEFAULT_PROJECTILE_EXPIRATION_TICKS: i32 = 5 * 1000 * 1000;
 
 pub fn update_proj_collisions(
     loc: &mut Location,
@@ -400,7 +401,7 @@ pub fn update_proj_collisions(
 ) -> Vec<(ObjectSpecifier, f64)> {
     let mut damages: Vec<(ObjectIndexSpecifier, f64)> = vec![];
     let mut current_idx = -1;
-    loc.projectiles.retain(|proj| {
+    for proj in loc.projectiles.iter_mut() {
         current_idx += 1;
         let any_coll = sp_idx
             .rad_search(&proj.get_spatial().position, proj.get_spatial().radius)
@@ -423,10 +424,9 @@ pub fn update_proj_collisions(
             //     damaged.iter().map(|(os, _)| os.clone()).collect::<Vec<_>>()
             // ));
             damages.append(&mut damaged);
-            return false;
+            *proj.get_to_clean_mut() = true;
         }
-        return true;
-    });
+    }
     damages
         .into_iter()
         .filter_map(|(ois, d)| object_index_into_object_id(&ois, loc).map(|os| (os, d)))

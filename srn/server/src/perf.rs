@@ -283,6 +283,8 @@ pub enum SamplerMarks {
     BroadcastStateDiff = 66,
     UpdateProjectileCollisions = 67,
     UpdateObjectAutocontrol = 68,
+    UpdatePropertiesRules = 69,
+    UpdateCleanup = 70,
 }
 
 impl Display for SamplerMarks {

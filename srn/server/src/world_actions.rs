@@ -10,10 +10,10 @@ use crate::long_actions::{
 };
 use crate::market::TradeAction;
 use crate::notifications::NotificationActionR;
+use crate::properties::ObjectProperty;
 use crate::sandbox::SandboxCommand;
 use crate::world::{
-    fire_saved_event, undock_ship, GameState, ManualMoveUpdate, ObjectProperty, PlayerId, Ship,
-    ShipWithTime,
+    fire_saved_event, undock_ship, GameState, ManualMoveUpdate, PlayerId, Ship, ShipWithTime,
 };
 use crate::world_events::GameEvent;
 use crate::{

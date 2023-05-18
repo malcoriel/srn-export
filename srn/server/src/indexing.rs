@@ -8,6 +8,7 @@ use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::planet_movement::{get_radial_bodies, IBodyV2};
+use crate::properties::ObjectProperty;
 use crate::world::{
     Asteroid, Container, GameState, Location, NatSpawnMineral, PlanetV2, Player, Ship, ShipIdx,
     SpatialIndexes, SpatialProps,
@@ -466,6 +467,7 @@ pub struct GameStateIndexes<'a> {
     pub ships_by_id: HashMap<Uuid, &'a Ship>,
     pub anchor_distances: HashMap<ObjectSpecifier, f64>,
     pub bodies_by_id: HashMap<ObjectSpecifier, Box<&'a dyn IBodyV2>>,
+    pub objects_by_property_type: Vec<HashMap<ObjectProperty, Vec<ObjectIndexSpecifier>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -513,6 +515,7 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
     let players_by_id = index_players_by_id(&state.players);
     let ships_by_id = index_all_ships_by_id(&state.locations);
     let anchor_distances = index_anchor_distances(&state.locations, &bodies_by_id);
+    let objects_by_property_type = index_objects_by_property_type(&state.locations);
 
     GameStateIndexes {
         planets_by_id,
@@ -521,7 +524,25 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
         non_body_spatials_by_id,
         ships_by_id,
         anchor_distances,
+        objects_by_property_type,
     }
+}
+
+fn index_objects_by_property_type(
+    locs: &Vec<Location>,
+) -> Vec<HashMap<ObjectProperty, Vec<ObjectIndexSpecifier>>> {
+    let mut all_loc_res = vec![];
+    for loc in locs {
+        let mut res = HashMap::new();
+        for (proj_idx, proj) in loc.projectiles.iter().enumerate() {
+            for prop in proj.get_properties().iter() {
+                let entry = res.entry(prop.key()).or_insert(Vec::new());
+                entry.push(ObjectIndexSpecifier::Projectile { idx: proj_idx })
+            }
+        }
+        all_loc_res.push(res);
+    }
+    all_loc_res
 }
 
 fn index_anchor_distances(
