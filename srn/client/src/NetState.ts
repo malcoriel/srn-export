@@ -215,6 +215,7 @@ export default class NetState extends EventEmitter {
       Reverse: 0,
       TurnRight: 0,
       TurnLeft: 0,
+      MoveAxis: 0,
     };
     this.visualState = {
       boundCameraMovement: true,
@@ -924,6 +925,7 @@ export default class NetState extends EventEmitter {
     return [null, null];
   }
 
+  // prevent DOS of server and client by applying actions too fast
   private throttleManualMovementActions(actionsActive: Action[]): Action[] {
     return actionsActive.filter((action) => {
       if (!isManualMovement(action)) {

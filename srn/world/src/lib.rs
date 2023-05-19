@@ -957,15 +957,16 @@ struct GuidedProjectileArgs {
 struct GuidedProjectileRes {
     gas: f64,
     turn: f64,
+    brake: f64,
 }
 
 #[wasm_bindgen]
 pub fn guide_projectile(val: JsValue) -> Result<JsValue, JsValue> {
     let mut args = custom_deserialize::<GuidedProjectileArgs>(val)?;
-    let (gas, turn) = combat::guide_projectile(
+    let (gas, turn, brake) = combat::guide_projectile(
         &mut args.projectile,
         &args.target_spatial,
         args.elapsed_micro as i64,
     );
-    Ok(custom_serialize(&GuidedProjectileRes { gas, turn })?)
+    Ok(custom_serialize(&GuidedProjectileRes { gas, turn, brake })?)
 }

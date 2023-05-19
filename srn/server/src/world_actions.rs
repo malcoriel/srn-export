@@ -62,22 +62,26 @@ pub fn world_update_handle_action(
                 ship.navigate_target = None;
                 ship.dock_target = None;
                 ship.trajectory = vec![];
-                // if let Some(happened_at_ticks) = happened_at_ticks {
-                //     let diff = current_ticks - happened_at_ticks;
-                //     if diff > 0 && !client {
-                //         warn!(format!(
-                //             "diff apply {} = server {} - client {}",
-                //             diff, current_ticks, happened_at_ticks
-                //         ));
-                //         update_ship_manual_movement(
-                //             diff as i64,
-                //             current_ticks as u32,
-                //             ship,
-                //             false,
-                //             true,
-                //         );
-                //     }
-                // }
+            }
+        }
+        Action::MoveAxis { ship_id, brake } => {
+            if let Some(ship) = find_ship_mut(state, ship_id) {
+                if brake {
+                    ship.movement_markers.brake = Some(MoveAxisParam {
+                        forward: true,
+                        last_tick: state_clone.millis,
+                    });
+                    ship.navigate_target = None;
+                    ship.dock_target = None;
+                    ship.trajectory = vec![];
+                }
+            }
+        }
+        Action::StopMoveAxis { ship_id, brake } => {
+            if let Some(ship) = find_ship_mut(state, ship_id) {
+                if brake {
+                    ship.movement_markers.brake = None;
+                }
             }
         }
         Action::StopGas { ship_id } => {
@@ -271,6 +275,8 @@ pub fn is_world_update_action(act: &Action) -> bool {
             | Action::Navigate { .. }
             | Action::Gas { .. }
             | Action::StopGas { .. }
+            | Action::MoveAxis { .. }
+            | Action::StopMoveAxis { .. }
             | Action::Reverse { .. }
             | Action::TurnLeft { .. }
             | Action::TurnRight { .. }
@@ -291,9 +297,6 @@ pub fn is_world_update_action(act: &Action) -> bool {
 #[serde(tag = "tag")]
 pub enum Action {
     Unknown,
-    Move {
-        update: ManualMoveUpdate,
-    },
     Gas {
         ship_id: Uuid,
     },
@@ -311,6 +314,18 @@ pub enum Action {
     },
     TurnLeft {
         ship_id: Uuid,
+    },
+    MoveAxis {
+        brake: bool,
+        ship_id: Uuid,
+    },
+    StopMoveAxis {
+        ship_id: Uuid,
+        // for some reason Option<bool> gets a buggy type null in TypeScriptify
+        brake: bool,
+        // gas: bool,
+        // strafe: bool,
+        // turn: bool,
     },
     Dock,
     Navigate {
@@ -364,7 +379,6 @@ impl Action {
     pub fn is_for_client(&self, my_ship_id: Option<Uuid>, my_player_id: PlayerId) -> bool {
         match self {
             Action::Unknown => false,
-            Action::Move { .. } => false, // obsolete anyway
             Action::Gas { ship_id } => my_ship_id.map_or(false, |sid| sid == *ship_id),
             Action::StopGas { ship_id } => my_ship_id.map_or(false, |sid| sid == *ship_id),
             Action::StopTurn { ship_id } => my_ship_id.map_or(false, |sid| sid == *ship_id),
@@ -385,6 +399,8 @@ impl Action {
             Action::Notification { player_id, .. } => *player_id == my_player_id,
             Action::SandboxCommand { player_id, .. } => *player_id == my_player_id,
             Action::Trade { player_id, .. } => *player_id == my_player_id,
+            Action::MoveAxis { ship_id, .. } => my_ship_id.map_or(false, |sid| sid == *ship_id),
+            Action::StopMoveAxis { ship_id, .. } => my_ship_id.map_or(false, |sid| sid == *ship_id),
         }
     }
 }
@@ -396,22 +412,26 @@ pub struct MoveAxisParam {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct ShipMovementMarkers {
+pub struct ControlMarkers {
     pub gas: Option<MoveAxisParam>,
     pub turn: Option<MoveAxisParam>,
+    pub strafe: Option<MoveAxisParam>,
+    pub brake: Option<MoveAxisParam>,
 }
 
-impl ShipMovementMarkers {
+impl ControlMarkers {
     pub fn new() -> Self {
         Self {
             gas: None,
             turn: None,
+            strafe: None,
+            brake: None,
         }
     }
 }
 
-impl Default for ShipMovementMarkers {
+impl Default for ControlMarkers {
     fn default() -> Self {
-        ShipMovementMarkers::new()
+        ControlMarkers::new()
     }
 }

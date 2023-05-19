@@ -9,7 +9,8 @@ type SynchronousActionTags =
   | 'TurnRight'
   | 'TurnLeft'
   | 'Reverse'
-  | 'Move'
+  | 'MoveAxis'
+  | 'StopMoveAxis'
   | 'Navigate'
   | 'DockNavigate'
   | 'Tractor'
@@ -21,7 +22,8 @@ const syncActionTags = new Set([
   'TurnRight',
   'TurnLeft',
   'Reverse',
-  'Move',
+  'MoveAxis',
+  'StopMoveAxis',
   'Navigate',
   'DockNavigate',
   'Tractor',
@@ -37,12 +39,13 @@ const actionsActive: Record<SynchronousActionTags, Action | undefined> = {
   TurnRight: undefined,
   TurnLeft: undefined,
   Reverse: undefined,
-  Move: undefined,
+  MoveAxis: undefined,
   Navigate: undefined,
   DockNavigate: undefined,
   Tractor: undefined,
   StopGas: undefined,
   StopTurn: undefined,
+  StopMoveAxis: undefined,
 };
 
 export const getActiveSyncActions = () => {
@@ -120,6 +123,20 @@ const refreshActiveActions = () => {
       ship_id: myShipId,
     });
   }
+
+  if (keysActive.KeyX) {
+    actionsActive.MoveAxis = ActionBuilder.ActionMoveAxis({
+      ship_id: myShipId,
+      brake: true,
+    });
+    actionsActive.StopMoveAxis = undefined;
+  } else if (actionsActive.MoveAxis) {
+    actionsActive.StopMoveAxis = ActionBuilder.ActionStopMoveAxis({
+      ship_id: myShipId,
+      brake: true,
+    });
+    actionsActive.MoveAxis = undefined;
+  }
 };
 
 const keydownHandler = (keyDownEvent: KeyboardEvent) => {
@@ -138,6 +155,7 @@ const singleUseActions: SynchronousActionTags[] = [
   'Tractor',
   'StopGas',
   'StopTurn',
+  'StopMoveAxis',
 ];
 
 export const resetActiveSyncActions = () => {

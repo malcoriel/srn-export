@@ -2,6 +2,7 @@ import Vector, { IVector } from './utils/Vector';
 import {
   Action,
   ActionGas,
+  ActionMoveAxis,
   ActionReverse,
   ActionTurnLeft,
   ActionTurnRight,
@@ -397,12 +398,14 @@ export type ManualMovementActionTags =
   | 'Gas'
   | 'Reverse'
   | 'TurnRight'
-  | 'TurnLeft';
+  | 'TurnLeft'
+  | 'MoveAxis';
 
 export type ManualMovementAction =
   | ActionGas
   | ActionReverse
   | ActionTurnRight
+  | ActionMoveAxis
   | ActionTurnLeft;
 
 export const ManualMovementInactivityDropMs = 500;
@@ -412,7 +415,8 @@ export const isManualMovement = (act: Action): act is ManualMovementAction => {
     act.tag === 'Gas' ||
     act.tag === 'Reverse' ||
     act.tag === 'TurnRight' ||
-    act.tag === 'TurnLeft'
+    act.tag === 'TurnLeft' ||
+    act.tag === 'MoveAxis'
   );
 };
 

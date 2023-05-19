@@ -614,6 +614,7 @@ fn add_default_templates(state: &mut GameState) {
             acc_linear: DEFAULT_PROJECTILE_SPEED * 2.0 / 1e6,
             max_turn_speed: DEFAULT_PROJECTILE_ROT_SPEED,
             acc_angular: DEFAULT_PROJECTILE_ROT_SPEED * 2.0 / 1e6,
+            brake_acc: DEFAULT_PROJECTILE_SPEED / 1e6,
         },
         properties: vec![ObjectProperty::Expires {
             remaining_ticks: DEFAULT_PROJECTILE_EXPIRATION_TICKS,

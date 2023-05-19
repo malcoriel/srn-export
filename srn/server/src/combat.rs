@@ -14,6 +14,7 @@ use crate::indexing::{
 use crate::planet_movement::project_body_relative_position;
 use crate::random_stuff::generate_normal_random;
 use crate::spatial_movement::align_rotation_with_velocity;
+use crate::system_gen::DEFAULT_WORLD_UPDATE_EVERY_TICKS;
 use crate::vec2::Vec2f64;
 use crate::world::{
     remove_object, GameState, LocalEffect, Location, Player, Projectile, Ship, SpatialProps,
@@ -340,13 +341,14 @@ pub fn resolve_launch(
 pub fn guide_projectile(
     proj: &mut Projectile,
     target_spatial: &SpatialProps,
-    _elapsed_micro: i64,
-) -> (f64, f64) {
+    elapsed_micro: i64,
+) -> (f64, f64, f64) {
     let eps = 1e-6;
     return match proj {
         Projectile::Rocket(props) => {
             let mut gas = 0.0;
             let mut turn = 0.0;
+            let mut brake = 0.0;
             let dir_to_target = target_spatial.position.subtract(&props.spatial.position);
             let rot_dir_to_target =
                 dir_to_target.angle_rad_circular_rotation(&Vec2f64 { x: 1.0, y: 0.0 });
@@ -361,19 +363,20 @@ pub fn guide_projectile(
                 // if props.spatial.velocity.euclidean_len() < props.movement.get_max_speed() - eps {
                 gas = 1.0;
                 // }
+            } else if rot_angle_with_target.abs() >= PI / 2.0 - 1e6
+                // only try to stop if misaligned
+                && vel_angle_dir.abs() >= PI / 4.0 - 1e6
+                // don't stop, ever
+                && props.spatial.velocity.euclidean_len() >= props.movement.get_max_speed() * 0.5
+            {
+                brake = 1.0;
             }
-            // else if rot_angle_with_target.abs() >= PI / 2.0 - 1e6
-            //     // only try to stop if misaligned
-            //     && vel_angle_dir.abs() >= PI / 4.0 - 1e6
-            //     // don't stop, ever
-            //     && props.spatial.velocity.euclidean_len() >= props.movement.get_max_speed() * 0.5
-            // {
-            //     gas = -1.0;
-            // }
             if rot_angle_with_target.abs() >= eps {
-                if rot_angle_with_target > eps {
+                let shift_till_next_approx =
+                    props.movement.get_angular_speed() * elapsed_micro as f64;
+                if rot_angle_with_target > eps - shift_till_next_approx {
                     turn = 1.0;
-                } else if rot_angle_with_target < eps {
+                } else if rot_angle_with_target < eps - shift_till_next_approx {
                     turn = -1.0;
                 }
             }
@@ -382,7 +385,7 @@ pub fn guide_projectile(
             //     rot_dir_to_target,
             //     rot_angle_with_target
             // );
-            *proj.get_markers_mut() = markers_to_string(gas, turn);
+            *proj.get_markers_mut() = markers_to_string(gas, turn, brake);
             // *proj.get_markers_mut() = proj.get_markers_mut().as_mut().map(|v| {
             //     v.clone()
             //         + format!(
@@ -391,12 +394,12 @@ pub fn guide_projectile(
             //         )
             //         .as_str()
             // });
-            (gas, turn)
+            (gas, turn, brake)
         }
     };
 }
 
-fn markers_to_string(gas: f64, turn: f64) -> Option<String> {
+fn markers_to_string(gas: f64, turn: f64, brake: f64) -> Option<String> {
     if gas != 0.0 || turn != 0.0 {
         let mut str: String = "".to_string();
         if gas > 0.0 {
@@ -410,6 +413,9 @@ fn markers_to_string(gas: f64, turn: f64) -> Option<String> {
         } else if turn < 0.0 {
             str += "↶"
         }
+        if brake > 0.0 {
+            str += "‖"
+        }
         Some(str)
     } else {
         None
@@ -420,7 +426,7 @@ pub const DEFAULT_PROJECTILE_SPEED: f64 = 25.0 / 1e6;
 pub const DEFAULT_PROJECTILE_ACC: f64 = 75.0 / 1e6 / 1e6;
 pub const DEFAULT_PROJECTILE_ROT_SPEED: f64 = PI / 2.0 / 1e6;
 pub const DEFAULT_PROJECTILE_ROT_ACC: f64 = PI / 1e6 / 1e6;
-pub const DEFAULT_PROJECTILE_EXPIRATION_TICKS: i32 = 5 * 1000 * 1000;
+pub const DEFAULT_PROJECTILE_EXPIRATION_TICKS: i32 = 15 * 1000 * 1000;
 
 pub fn update_proj_collisions(
     loc: &mut Location,

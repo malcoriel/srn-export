@@ -122,14 +122,7 @@ pub fn build_trajectory(
     spatial: &SpatialProps,
 ) -> Trajectory {
     match mov {
-        Movement::ShipAccelerated {
-            max_linear_speed,
-            max_rotation_speed,
-            linear_drag,
-            acc_linear,
-            max_turn_speed,
-            acc_angular,
-        } => match tr {
+        Movement::ShipAccelerated { .. } => match tr {
             TrajectoryRequest::StartAndStop { to } => {
                 if spatial.velocity.euclidean_len() != 0.0 {
                     panic!("need to stabilize");

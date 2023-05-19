@@ -101,27 +101,21 @@ macro_rules! err {
 #[allow(unused_macros)]
 macro_rules! log2 {
     ($($arg:tt)*) => {
-        unsafe {
-            println!("log: {}", format_args!($($arg)*));
-        }
+        println!("log: {}", format_args!($($arg)*));
     }
 }
 
 #[allow(unused_macros)]
 macro_rules! warn2 {
     ($($arg:tt)*) => {
-        unsafe {
-            println!("wasm log: {}", format_args!($($arg)*));
-        }
+        println!("warn: {}", format_args!($($arg)*));
     }
 }
 
 #[allow(unused_macros)]
 macro_rules! err2 {
     ($($arg:tt)*) => {
-        unsafe {
-            println!("wasm log: {}", format_args!($($arg)*));
-        }
+        println!("err: {}", format_args!($($arg)*));
     }
 }
 

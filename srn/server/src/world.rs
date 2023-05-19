@@ -48,7 +48,7 @@ use crate::tractoring::{
 };
 use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
 use crate::world_actions::*;
-use crate::world_actions::{Action, ShipMovementMarkers};
+use crate::world_actions::{Action, ControlMarkers};
 use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEvent};
 use crate::{
     abilities, autofocus, cargo_rush, combat, indexing, pirate_defence, prng_id, properties,
@@ -262,7 +262,7 @@ pub struct Ship {
     pub abilities: Vec<Ability>,
     pub auto_focus: Option<ObjectSpecifier>,
     pub hostile_auto_focus: Option<ObjectSpecifier>,
-    pub movement_markers: ShipMovementMarkers,
+    pub movement_markers: ControlMarkers,
     pub movement_definition: Movement,
     pub health: Health,
     pub local_effects: Vec<LocalEffect>,
@@ -1266,7 +1266,7 @@ pub fn update_location(
         .enumerate()
     {
         if let Some(target_spatial) = &spatials[idx] {
-            let (gas, turn) = guide_projectile(proj, target_spatial, elapsed);
+            let (gas, turn, brake) = guide_projectile(proj, target_spatial, elapsed);
             let movement_clone = proj.get_movement().clone();
             update_accelerated_projectile_movement(
                 elapsed,
@@ -1274,6 +1274,7 @@ pub fn update_location(
                 &movement_clone,
                 gas,
                 turn,
+                brake,
             );
         }
     }
@@ -1885,6 +1886,7 @@ pub enum Movement {
         acc_linear: f64,
         max_turn_speed: f64,
         acc_angular: f64,
+        brake_acc: f64,
     },
     RadialMonotonous {
         // instead of defining the speed, in order
@@ -1903,6 +1905,10 @@ pub enum Movement {
     },
 }
 
+pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13;
+// 0.1 unit per second per second (to allow speeding up from zero)
+pub const MIN_OBJECT_TURN_SPEED_RAD_PER_TICK: f64 = 1e-14; // 0.01 radian per second per second (to allow speeding up from zero)
+
 impl Movement {
     pub fn is_none(&self) -> bool {
         match self {
@@ -1910,13 +1916,13 @@ impl Movement {
             _ => false,
         }
     }
-}
 
-pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13;
-// 0.1 unit per second per second (to allow speeding up from zero)
-pub const MIN_OBJECT_TURN_SPEED_RAD_PER_TICK: f64 = 1e-14; // 0.01 radian per second per second (to allow speeding up from zero)
-
-impl Movement {
+    pub fn get_brake_acc(&self) -> f64 {
+        match self {
+            Movement::ShipAccelerated { brake_acc, .. } => *brake_acc,
+            _ => 0.0,
+        }
+    }
     pub fn get_max_speed(&self) -> f64 {
         match self {
             Movement::ShipAccelerated {
@@ -2099,6 +2105,7 @@ impl ShipTemplate {
                         max_rotation_speed: max_angular_speed,
                         linear_drag: max_linear_speed * 0.025 / 1e6, // 2.5% per second
                         acc_linear: max_linear_speed * 0.25 / 1e6,   // 25% per second
+                        brake_acc: max_linear_speed * 0.5 / 1e6,     // 50% per second
                         max_turn_speed: max_angular_speed,
                         acc_angular: max_angular_speed * 0.0125,
                     },
