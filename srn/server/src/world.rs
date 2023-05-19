@@ -38,7 +38,9 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
-use crate::spatial_movement::update_accelerated_shiplike_movement;
+use crate::spatial_movement::{
+    update_accelerated_projectile_movement, update_accelerated_ship_movement,
+};
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
 use crate::tractoring::{
@@ -1266,7 +1268,7 @@ pub fn update_location(
         if let Some(target_spatial) = &spatials[idx] {
             let (gas, turn) = guide_projectile(proj, target_spatial, elapsed);
             let movement_clone = proj.get_movement().clone();
-            update_accelerated_shiplike_movement(
+            update_accelerated_projectile_movement(
                 elapsed,
                 proj.get_spatial_mut(),
                 &movement_clone,

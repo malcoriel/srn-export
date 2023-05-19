@@ -118,14 +118,12 @@ export const buildStory = async ({
           break;
         }
         if (value.wait) {
-          console.log('wait', value.wait);
           await delay(value.wait);
         }
         if (storyName !== currentStoryName) {
           break;
         }
         if (value.action) {
-          console.log('act', value.action.tag);
           patchAction(value.action, nsRef);
           if (isSyncAction(value.action)) {
             executeSyncAction(value.action);
@@ -134,7 +132,6 @@ export const buildStory = async ({
           }
         }
         if (value.waitAfter) {
-          console.log('wait', value.waitAfter);
           await delay(value.waitAfter);
         }
       }

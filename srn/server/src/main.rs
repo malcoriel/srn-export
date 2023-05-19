@@ -77,12 +77,14 @@ use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, update_rule_specifics, UpdateOptions, AABB};
 use world_actions::Action;
 
+#[allow(unused_macros)]
 macro_rules! log {
     ($($t:tt)*) => {
         (println!("log: {}", ($($t)*).to_string()))
     }
 }
 
+#[allow(unused_macros)]
 macro_rules! warn {
     ($($t:tt)*) => {
         (eprintln!("warn: {}", ($($t)*).to_string()))
@@ -93,6 +95,33 @@ macro_rules! warn {
 macro_rules! err {
     ($($t:tt)*) => {
         (eprintln!("err: {}", ($($t)*).to_string()))
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! log2 {
+    ($($arg:tt)*) => {
+        unsafe {
+            println!("log: {}", format_args!($($arg)*));
+        }
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! warn2 {
+    ($($arg:tt)*) => {
+        unsafe {
+            println!("wasm log: {}", format_args!($($arg)*));
+        }
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! err2 {
+    ($($arg:tt)*) => {
+        unsafe {
+            println!("wasm log: {}", format_args!($($arg)*));
+        }
     }
 }
 

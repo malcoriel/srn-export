@@ -314,23 +314,24 @@ pub fn resolve_launch(
         instance.set_position_from(&shooting_ship.spatial.position);
         instance.set_target(&target);
 
-        // ship visual model is shifted by PI/2 rotation incorrectly, and has inverted rotation view
+        // ship visual model is shifted by PI/2 rotation incorrectly
         let mut new_rot = -shooting_ship.spatial.rotation_rad + PI / 2.0;
-        let deviation = 0.0;
-        generate_normal_random(0.0, 0.15, prng);
+        let deviation = generate_normal_random(0.0, 0.15, prng);
         new_rot -= deviation;
-        let new_velocity = Vec2f64 { x: 1.0, y: 0.0 }.rotate(new_rot);
+        let new_velocity = Vec2f64 { x: 1.0, y: 0.0 }.rotate(new_rot + PI / 2.0);
         let mut new_velocity =
-            new_velocity.scalar_mul(proj_template.get_spatial().velocity.euclidean_len());
+            new_velocity.scalar_mul(proj_template.get_spatial().velocity.euclidean_len() * 0.3);
         // ensure that new projectile is not launched inside the ship, as otherwise it can collide and blow immediately
         instance.get_spatial_mut().position = instance.get_spatial().position.add(
             &new_velocity
+                .rotate(-PI / 2.0)
                 .normalize()
                 .expect("new velocity should be non-zero")
                 .scalar_mul(shooting_ship.spatial.radius + proj_template.get_spatial().radius),
         );
         instance.get_spatial_mut().velocity = new_velocity;
-        instance.get_spatial_mut().rotation_rad = new_rot;
+        // because visual coordinates are inverted, we need negation here while not negating the velocity
+        instance.get_spatial_mut().rotation_rad = -new_rot;
         loc.projectiles.push(instance);
     }
 }
@@ -341,28 +342,55 @@ pub fn guide_projectile(
     target_spatial: &SpatialProps,
     _elapsed_micro: i64,
 ) -> (f64, f64) {
+    let eps = 1e-6;
     return match proj {
         Projectile::Rocket(props) => {
             let mut gas = 0.0;
             let mut turn = 0.0;
             let dir_to_target = target_spatial.position.subtract(&props.spatial.position);
-            let angle_dir = dir_to_target.angle_rad_circular_rotation(&Vec2f64 { x: 1.0, y: 0.0 });
-            let mut angle_with_target =
-                (angle_dir - props.spatial.rotation_rad % (PI * 2.0)) % (PI * 2.0);
-            if angle_with_target > PI {
-                angle_with_target -= PI * 2.0
+            let rot_dir_to_target =
+                dir_to_target.angle_rad_circular_rotation(&Vec2f64 { x: 1.0, y: 0.0 });
+            let vel_angle_dir = props.spatial.velocity.angle_rad_signed(&dir_to_target);
+            let mut rot_angle_with_target =
+                (rot_dir_to_target - props.spatial.rotation_rad % (PI * 2.0));
+            if rot_angle_with_target > PI {
+                // transform rotation angle into absolute diff angle for 180+ deg
+                rot_angle_with_target = -2.0 * PI + rot_angle_with_target
             }
-            if angle_with_target.abs() <= PI / 4.0 + 1e-6 {
+            if rot_angle_with_target.abs() <= PI / 8.0 + eps {
+                // if props.spatial.velocity.euclidean_len() < props.movement.get_max_speed() - eps {
                 gas = 1.0;
-            } else {
-                gas = -1.0;
+                // }
             }
-            if angle_with_target > 1e-6 {
-                turn = 1.0;
-            } else if angle_with_target < 1e-6 {
-                turn = -1.0;
+            // else if rot_angle_with_target.abs() >= PI / 2.0 - 1e6
+            //     // only try to stop if misaligned
+            //     && vel_angle_dir.abs() >= PI / 4.0 - 1e6
+            //     // don't stop, ever
+            //     && props.spatial.velocity.euclidean_len() >= props.movement.get_max_speed() * 0.5
+            // {
+            //     gas = -1.0;
+            // }
+            if rot_angle_with_target.abs() >= eps {
+                if rot_angle_with_target > eps {
+                    turn = 1.0;
+                } else if rot_angle_with_target < eps {
+                    turn = -1.0;
+                }
             }
+            // log2!(
+            //     " a:{:.2}, at:{:.2}",
+            //     rot_dir_to_target,
+            //     rot_angle_with_target
+            // );
             *proj.get_markers_mut() = markers_to_string(gas, turn);
+            // *proj.get_markers_mut() = proj.get_markers_mut().as_mut().map(|v| {
+            //     v.clone()
+            //         + format!(
+            //             " a:{:.2}, at:{:.2}",
+            //             rot_dir_to_target, rot_angle_with_target
+            //         )
+            //         .as_str()
+            // });
             (gas, turn)
         }
     };
@@ -376,10 +404,11 @@ fn markers_to_string(gas: f64, turn: f64) -> Option<String> {
         } else if gas < 0.0 {
             str += "↓"
         }
+        // visual rotation is inverted
         if turn > 0.0 {
-            str += "↶"
-        } else if turn < 0.0 {
             str += "↷"
+        } else if turn < 0.0 {
+            str += "↶"
         }
         Some(str)
     } else {
@@ -387,10 +416,10 @@ fn markers_to_string(gas: f64, turn: f64) -> Option<String> {
     }
 }
 
-pub const DEFAULT_PROJECTILE_SPEED: f64 = 50.0 / 1000.0 / 1000.0;
-pub const DEFAULT_PROJECTILE_ACC: f64 = 25.0 / 1e6 / 1e6;
-pub const DEFAULT_PROJECTILE_ROT_SPEED: f64 = PI / 4.0 / 1000.0 / 1000.0;
-pub const DEFAULT_PROJECTILE_ROT_ACC: f64 = PI / 8.0 / 1e6 / 1e6;
+pub const DEFAULT_PROJECTILE_SPEED: f64 = 25.0 / 1e6;
+pub const DEFAULT_PROJECTILE_ACC: f64 = 75.0 / 1e6 / 1e6;
+pub const DEFAULT_PROJECTILE_ROT_SPEED: f64 = PI / 2.0 / 1e6;
+pub const DEFAULT_PROJECTILE_ROT_ACC: f64 = PI / 1e6 / 1e6;
 pub const DEFAULT_PROJECTILE_EXPIRATION_TICKS: i32 = 5 * 1000 * 1000;
 
 pub fn update_proj_collisions(

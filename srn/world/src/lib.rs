@@ -58,6 +58,30 @@ macro_rules! log {
     }
 }
 
+macro_rules! log2 {
+    ($($arg:tt)*) => {
+        unsafe {
+            crate::log(&format!("wasm log: {}", format_args!($($arg)*)));
+        }
+    }
+}
+
+macro_rules! warn2 {
+    ($($arg:tt)*) => {
+        unsafe {
+            crate::warn(&format!("wasm log: {}", format_args!($($arg)*)));
+        }
+    }
+}
+
+macro_rules! err2 {
+    ($($arg:tt)*) => {
+        unsafe {
+            crate::error(&format!("wasm log: {}", format_args!($($arg)*)));
+        }
+    }
+}
+
 macro_rules! warn {
     ($($t:tt)*) => {
         unsafe {
