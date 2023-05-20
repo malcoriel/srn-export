@@ -27,6 +27,7 @@ describe('trajectory building', () => {
       linear_drag: (max_linear_speed * 0.025) / 1e6, // 2.5% per second
       acc_linear: (max_linear_speed * 0.25) / 1e6, // 25% per second
       max_turn_speed: max_angular_speed,
+      brake_acc: max_angular_speed / 1e6,
       acc_angular: max_angular_speed * 0.0125,
     };
     wasm.buildTrajectory(

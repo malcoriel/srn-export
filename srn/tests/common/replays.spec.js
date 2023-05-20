@@ -36,7 +36,7 @@ const patchDiscrepancies = (state) => {
     for (const belt of loc.asteroid_belts) {
       // eslint-disable-next-line no-compare-neg-zero
       if (belt.spatial.rotation_rad === -0) {
-        belt.spatial.rotation = 0;
+        belt.spatial.rotation_rad = 0;
       }
     }
   }
