@@ -4,23 +4,23 @@ export type Vector3Arr = [number, number, number];
 export type ThreeVectorArr = Vector3Arr;
 export const vecToThreePos = (v: IVector, lift = 0): Vector3Arr => [
   v.x,
-  -v.y,
+  v.y,
   lift,
 ];
 
 export const vecToThreePosInv = (v: IVector, lift = 0): Vector3Arr => [
   v.x,
-  v.y,
+  -v.y,
   lift,
 ];
 
 // noinspection JSUnusedGlobalSymbols
 export const threePosToVector = (x: number, y: number, _z: number): Vector =>
-  new Vector(x, -y);
+  new Vector(x, y);
 
 // noinspection JSUnusedGlobalSymbols
 export const threePosToVectorInv = (x: number, y: number, _z: number): Vector =>
-  new Vector(x, y);
+  new Vector(x, -y);
 
 // noinspection JSUnusedLocalSymbols
 export const threeVectorToVector = ({
@@ -32,7 +32,7 @@ export const threeVectorToVector = ({
   x: number;
   y: number;
   z: number;
-}): Vector => new Vector(x, -y);
+}): Vector => new Vector(x, y);
 
 export const liftThreePos = (zShift: number) => (
   threeArrVec: [number, number, number]
@@ -51,6 +51,6 @@ export const seedToNumber = (seed: string) => {
 // xy is visible plane, z towards camera
 export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
   x,
-  -y,
+  y,
   z || 0,
 ];

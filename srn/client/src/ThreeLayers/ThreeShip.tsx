@@ -142,7 +142,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           beamWidth={radius / 20.0}
           longActions={longActions}
           findObjectPositionByIdBound={findObjectPositionByIdBound}
-          rotation={-rotation}
+          rotation={rotation}
           turrets={turrets}
           parentPosition={[-position.x, position.y, 0]}
         />

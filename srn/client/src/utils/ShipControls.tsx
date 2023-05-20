@@ -105,14 +105,14 @@ const refreshActiveActions = () => {
   if (!keysActive.KeyA && keysActive.KeyD) {
     // while it may be counterintuitive, it's not a mistake.
     // due to Y-inversion (in the visual part), right or counterclockwise direction is clockwise/left in proper game logic
-    actionsActive.TurnLeft = ActionBuilder.ActionTurnLeft({
+    actionsActive.TurnRight = ActionBuilder.ActionTurnRight({
       ship_id: myShipId,
     });
-    actionsActive.TurnRight = undefined;
+    actionsActive.TurnLeft = undefined;
     actionsActive.StopTurn = undefined;
   } else if (keysActive.KeyA && !keysActive.KeyD) {
-    actionsActive.TurnLeft = undefined;
-    actionsActive.TurnRight = ActionBuilder.ActionTurnRight({
+    actionsActive.TurnRight = undefined;
+    actionsActive.TurnLeft = ActionBuilder.ActionTurnLeft({
       ship_id: myShipId,
     });
     actionsActive.StopTurn = undefined;

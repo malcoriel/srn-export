@@ -72,7 +72,7 @@ const RenderGridHelper = () => (
         anchorX="center"
         anchorY="bottom" // default
       >
-        Three coord 10/10
+        Coord 10/10
       </Text>
       <mesh>
         <circleBufferGeometry args={[1, 16]} />
@@ -92,7 +92,7 @@ const RenderGridHelper = () => (
         anchorX="center"
         anchorY="bottom" // default
       >
-        Game coord 10/10
+        Coord 10/-10
       </Text>
       <mesh>
         <circleBufferGeometry args={[1, 16]} />
