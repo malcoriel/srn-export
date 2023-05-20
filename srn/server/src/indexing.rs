@@ -423,7 +423,7 @@ impl ObjectSpecifier {
             ObjectSpecifier::AsteroidBelt { id } => Some(*id),
             ObjectSpecifier::Wreck { id } => Some(*id),
             ObjectSpecifier::Location { id } => Some(*id),
-            ObjectSpecifier::Projectile { id } => None,
+            ObjectSpecifier::Projectile { .. } => None,
         }
     }
 }

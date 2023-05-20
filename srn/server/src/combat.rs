@@ -320,7 +320,7 @@ pub fn resolve_launch(
         let deviation = generate_normal_random(0.0, 0.15, prng);
         new_rot -= deviation;
         let new_velocity = Vec2f64 { x: 1.0, y: 0.0 }.rotate(new_rot + PI / 2.0);
-        let mut new_velocity =
+        let new_velocity =
             new_velocity.scalar_mul(proj_template.get_spatial().velocity.euclidean_len() * 0.3);
         // ensure that new projectile is not launched inside the ship, as otherwise it can collide and blow immediately
         instance.get_spatial_mut().position = instance.get_spatial().position.add(
@@ -354,7 +354,7 @@ pub fn guide_projectile(
                 dir_to_target.angle_rad_circular_rotation(&Vec2f64 { x: 1.0, y: 0.0 });
             let vel_angle_dir = props.spatial.velocity.angle_rad_signed(&dir_to_target);
             let mut rot_angle_with_target =
-                (rot_dir_to_target - props.spatial.rotation_rad % (PI * 2.0));
+                rot_dir_to_target - props.spatial.rotation_rad % (PI * 2.0);
             if rot_angle_with_target > PI {
                 // transform rotation angle into absolute diff angle for 180+ deg
                 rot_angle_with_target = -2.0 * PI + rot_angle_with_target

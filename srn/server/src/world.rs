@@ -1701,7 +1701,7 @@ pub fn update_hp_effects(
     current_tick: u32,
     prng: &mut Pcg64Mcg,
     client: bool,
-    extra_damages: Vec<(ObjectSpecifier, f64)>,
+    _extra_damages: Vec<(ObjectSpecifier, f64)>,
 ) {
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();

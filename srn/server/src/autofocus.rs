@@ -260,7 +260,7 @@ pub fn object_index_into_object_id(
             .asteroids
             .get(*idx)
             .map(|o| ObjectSpecifier::Asteroid { id: o.id }),
-        ObjectIndexSpecifier::Projectile { idx } => None, // projectiles do not have uuid ids, so only indexes for them
+        ObjectIndexSpecifier::Projectile { .. } => None, // projectiles do not have uuid ids, so only indexes for them
         ObjectIndexSpecifier::Container { idx } => loc
             .containers
             .get(*idx)

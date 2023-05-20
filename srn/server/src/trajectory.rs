@@ -110,7 +110,7 @@ pub struct Trajectory {
     pub total_ticks: i32,
 }
 
-pub fn acc_time_for_dist(acc: f64, dist: f64, vmax: f64) -> f64 {
+pub fn acc_time_for_dist(_acc: f64, _dist: f64, _vmax: f64) -> f64 {
     // TODO: this is for a real physical movement without vmax, but I have to cap it somehow
     // return (Math.abs(dist / acc)).sqrt();
     return 0.0;
@@ -128,7 +128,7 @@ pub fn build_trajectory(
                     panic!("need to stabilize");
                 }
 
-                let mut points = vec![TrajectoryItem {
+                let points = vec![TrajectoryItem {
                     ticks: 0,
                     spatial: spatial.clone(),
                 }];
@@ -144,7 +144,7 @@ pub fn build_trajectory(
                 let dir = dir.unwrap();
                 let angle_dir = Vec2f64 { x: 1.0, y: 0.0 }.angle_rad(&dir);
                 let diff = angle_dir - spatial.rotation_rad;
-                let time = acc_time_for_dist(diff, 0.0, 0.0);
+                let _time = acc_time_for_dist(diff, 0.0, 0.0);
 
                 // turn first
                 // TODO
