@@ -12,6 +12,10 @@ export default class Vector implements IVector {
     return `${xVal}${separator}${yVal}`;
   }
 
+  invertY(center = 0) {
+    return new Vector(this.x, center - this.y);
+  }
+
   static fromIVector(from: IVector) {
     return new Vector(from.x, from.y);
   }

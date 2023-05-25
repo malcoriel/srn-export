@@ -13,11 +13,11 @@ describe('real to screen', () => {
       it.each`
         realX   | realY  | screenX | screenY | run
         ${0}    | ${0}   | ${50}   | ${50}   | ${false}
-        ${5}    | ${5}   | ${100}  | ${100}  | ${false}
-        ${5}    | ${-5}  | ${100}  | ${0}    | ${false}
+        ${5}    | ${5}   | ${100}  | ${0}    | ${false}
+        ${5}    | ${-5}  | ${100}  | ${100}  | ${false}
         ${5}    | ${0}   | ${100}  | ${50}   | ${false}
-        ${2.5}  | ${2.5} | ${75}   | ${75}   | ${false}
-        ${-2.5} | ${2.5} | ${25}   | ${75}   | ${false}
+        ${2.5}  | ${2.5} | ${75}   | ${25}   | ${false}
+        ${-2.5} | ${2.5} | ${25}   | ${25}   | ${false}
       `(
         'can convert $realX/$realY',
         ({ realX, realY, screenX, screenY, run }) => {

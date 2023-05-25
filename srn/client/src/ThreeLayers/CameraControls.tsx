@@ -58,7 +58,7 @@ export const CameraController: React.FC<CameraZoomerProps> = ({
 
   const syncDataToCamera = () => {
     visualState.cameraPosition.x = camera.position.x;
-    visualState.cameraPosition.y = -camera.position.y;
+    visualState.cameraPosition.y = camera.position.y;
     visualState.currentZoomShift = camera.zoom / CAMERA_DEFAULT_ZOOM();
   };
 
@@ -108,7 +108,7 @@ export const CameraController: React.FC<CameraZoomerProps> = ({
     } else if (visualState.forcedCameraPosition) {
       camera.position.set(
         visualState.forcedCameraPosition.x,
-        -visualState.forcedCameraPosition.y,
+        visualState.forcedCameraPosition.y,
         CAMERA_HEIGHT
       );
       visualState.forcedCameraPosition = undefined;
@@ -139,35 +139,3 @@ export const CameraController: React.FC<CameraZoomerProps> = ({
     </group>
   );
 };
-
-// export const ExternalCameraControl: React.FC = () => {
-//   const ns = NetState.get();
-//   if (!ns) return null;
-//   const { visualState } = ns;
-//   const { camera } = useThree();
-//   if (!visualState.boundCameraMovement) {
-//     // manual camera movement, e.g. by Minimap
-//     camera.position.set(
-//       visualState.cameraPosition.x,
-//       -visualState.cameraPosition.y,
-//       CAMERA_HEIGHT
-//     );
-//   }
-//   if (visualState.zoomShift) {
-//     const oldZoom = camera.zoom;
-//     const newZoom = visualState.zoomShift * CAMERA_DEFAULT_ZOOM();
-//     if (oldZoom !== newZoom) {
-//       // override smooth transition of camera
-//       console.log(Vector.fromIVector(visualState.cameraPosition));
-//       camera.position.set(
-//         visualState.cameraPosition.x,
-//         -visualState.cameraPosition.y,
-//         CAMERA_HEIGHT
-//       );
-//       camera.zoom = newZoom;
-//       camera.updateProjectionMatrix();
-//     }
-//   }
-//
-//   return null;
-// };

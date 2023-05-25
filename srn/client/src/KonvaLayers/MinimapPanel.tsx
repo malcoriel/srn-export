@@ -311,6 +311,10 @@ export const MinimapPanel = React.memo(() => {
 
   if (!shown) return null;
 
+  const rectPos = realPosToScreenPos(cameraPosition).subtract(
+    new Vector(minimap_viewport_size_x, minimap_viewport_size_y).scale(0.5)
+  );
+
   return (
     <Stage
       onWheel={getOnWheel(visualState, ({ evt }: any) => {
@@ -345,11 +349,7 @@ export const MinimapPanel = React.memo(() => {
           draggable
           onDragMove={moveCamera}
           onDragEnd={moveCamera}
-          position={realPosToScreenPos(cameraPosition).subtract(
-            new Vector(minimap_viewport_size_x, minimap_viewport_size_y).scale(
-              0.5
-            )
-          )}
+          position={rectPos}
         />
       </Layer>
       <StaticEntitiesLayer

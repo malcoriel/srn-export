@@ -18,7 +18,7 @@ export const calcScreenPosToRealPos = (
   return (screenPos: IVector) => {
     return Vector.fromIVector(screenPos)
       .subtract(halfWidthHeight)
-      .scaleXY(meterPerPixel.x, meterPerPixel.y)
+      .scaleXY(meterPerPixel.x, -meterPerPixel.y)
       .add(cameraShift);
   };
 };
@@ -75,7 +75,7 @@ export const calcRealPosToScreenPos = (
   return (objPos: IVector) => {
     return Vector.fromIVector(objPos)
       .subtract(cameraShift)
-      .scaleXY(pixelPerMeter.x, pixelPerMeter.y)
+      .scaleXY(pixelPerMeter.x, -pixelPerMeter.y)
       .add(halfWidthHeight);
   };
 };

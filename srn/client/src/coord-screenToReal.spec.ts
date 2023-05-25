@@ -11,13 +11,13 @@ describe('screen to real', () => {
       const focus = false;
 
       it.each`
-        mouseX | mouseY | realX   | realY  | run
-        ${50}  | ${50}  | ${0}    | ${0}   | ${false}
-        ${100} | ${0}   | ${5}    | ${-5}  | ${false}
-        ${100} | ${90}  | ${5}    | ${4}   | ${false}
-        ${0}   | ${0}   | ${-5}   | ${-5}  | ${false}
-        ${0}   | ${50}  | ${-5}   | ${0}   | ${false}
-        ${25}  | ${75}  | ${-2.5} | ${2.5} | ${false}
+        mouseX | mouseY | realX   | realY   | run
+        ${50}  | ${50}  | ${0}    | ${0}    | ${false}
+        ${100} | ${0}   | ${5}    | ${5}    | ${false}
+        ${100} | ${90}  | ${5}    | ${-4}   | ${false}
+        ${0}   | ${0}   | ${-5}   | ${5}    | ${false}
+        ${0}   | ${50}  | ${-5}   | ${0}    | ${false}
+        ${25}  | ${75}  | ${-2.5} | ${-2.5} | ${false}
       `(
         'can convert $mouseX/$mouseY',
         ({ mouseX, mouseY, realX, realY, run }) => {
@@ -40,13 +40,13 @@ describe('screen to real', () => {
       const focus = false;
 
       it.each`
-        mouseX | mouseY | realX   | realY  | run
-        ${50}  | ${50}  | ${0}    | ${0}   | ${false}
-        ${100} | ${0}   | ${5}    | ${-5}  | ${false}
-        ${100} | ${90}  | ${5}    | ${4}   | ${false}
-        ${0}   | ${0}   | ${-5}   | ${-5}  | ${false}
-        ${0}   | ${50}  | ${-5}   | ${0}   | ${false}
-        ${25}  | ${75}  | ${-2.5} | ${2.5} | ${false}
+        mouseX | mouseY | realX   | realY   | run
+        ${50}  | ${50}  | ${0}    | ${0}    | ${false}
+        ${100} | ${0}   | ${5}    | ${5}    | ${false}
+        ${100} | ${90}  | ${5}    | ${-4}   | ${false}
+        ${0}   | ${0}   | ${-5}   | ${5}    | ${false}
+        ${0}   | ${50}  | ${-5}   | ${0}    | ${false}
+        ${25}  | ${75}  | ${-2.5} | ${-2.5} | ${false}
       `(
         'can convert $mouseX/$mouseY',
         ({ mouseX, mouseY, realX, realY, run }) => {
@@ -74,11 +74,11 @@ describe('screen to real', () => {
       const focus = false;
 
       it.each`
-        mouseX | mouseY | realX | realY | run
-        ${50}  | ${50}  | ${0}  | ${0}  | ${false}
-        ${100} | ${100} | ${10} | ${10} | ${false}
-        ${75}  | ${25}  | ${5}  | ${-5} | ${false}
-        ${30}  | ${60}  | ${-4} | ${2}  | ${false}
+        mouseX | mouseY | realX | realY  | run
+        ${50}  | ${50}  | ${0}  | ${0}   | ${false}
+        ${100} | ${100} | ${10} | ${-10} | ${false}
+        ${75}  | ${25}  | ${5}  | ${5}   | ${false}
+        ${30}  | ${60}  | ${-4} | ${-2}  | ${false}
       `(
         'can convert $mouseX/$mouseY',
         ({ mouseX, mouseY, realX, realY, run }) => {
@@ -101,11 +101,11 @@ describe('screen to real', () => {
       const focus = false;
 
       it.each`
-        mouseX | mouseY | realX | realY | run
-        ${50}  | ${50}  | ${0}  | ${0}  | ${false}
-        ${100} | ${100} | ${10} | ${10} | ${false}
-        ${75}  | ${25}  | ${5}  | ${-5} | ${false}
-        ${30}  | ${60}  | ${-4} | ${2}  | ${false}
+        mouseX | mouseY | realX | realY  | run
+        ${50}  | ${50}  | ${0}  | ${0}   | ${false}
+        ${100} | ${100} | ${10} | ${-10} | ${false}
+        ${75}  | ${25}  | ${5}  | ${5}   | ${false}
+        ${30}  | ${60}  | ${-4} | ${-2}  | ${false}
       `(
         'can convert $mouseX/$mouseY',
         ({ mouseX, mouseY, realX, realY, run }) => {
@@ -135,10 +135,10 @@ describe('screen to real', () => {
       it.each`
         mouseX | mouseY | realX | realY   | run
         ${50}  | ${25}  | ${0}  | ${0}    | ${false}
-        ${50}  | ${50}  | ${0}  | ${2.5}  | ${false}
-        ${100} | ${50}  | ${5}  | ${2.5}  | ${false}
-        ${0}   | ${0}   | ${-5} | ${-2.5} | ${false}
-        ${60}  | ${30}  | ${1}  | ${0.5}  | ${false}
+        ${50}  | ${50}  | ${0}  | ${-2.5} | ${false}
+        ${100} | ${50}  | ${5}  | ${-2.5} | ${false}
+        ${0}   | ${0}   | ${-5} | ${2.5}  | ${false}
+        ${60}  | ${30}  | ${1}  | ${-0.5} | ${false}
       `(
         // last case is unclear, maybe realY should be 1
         'can convert $mouseX/$mouseY',
@@ -167,8 +167,8 @@ describe('screen to real', () => {
       const focus = false;
 
       it.each`
-        mouseX | mouseY | realX | realY | run
-        ${971} | ${0}   | ${0}  | ${0}  | ${false}
+        mouseX | mouseY | realX | realY  | run
+        ${971} | ${0}   | ${0}  | ${100} | ${false}
       `(
         // last case is unclear, maybe realY should be 1
         'can convert $mouseX/$mouseY',
