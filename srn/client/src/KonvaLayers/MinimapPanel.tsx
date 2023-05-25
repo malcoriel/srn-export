@@ -138,10 +138,6 @@ const SlowEntitiesLayer = React.memo(
             const orbitDist = realLenToScreenLen(pPos.euDistTo(anchorPos));
             const angleRad = pPos.angleRad(anchorPos.add(VectorF(1, 0)));
             const negativeRotation = isNegativeRotation(p);
-            // let arcDirMultiplier = 1;
-            // if (negativeRotation) {
-            //   //arcDirMultiplier = -1;
-            // }
 
             const rotationDeg = radToDeg(angleRad);
             const b = p.spatial.radius;
@@ -172,19 +168,19 @@ const SlowEntitiesLayer = React.memo(
                 {p.anchor_tier === 1 && (
                   <Group>
                     {_.times(arcCount, (i) => {
+                      const rotation =
+                        -rotationDeg +
+                        (negativeRotation ? -totalArc : 0) +
+                        // shaderShift for the planet radius
+                        radToDeg(beta) +
+                        // shaderShift for every arc part
+                        (i * totalArc) / arcCount;
                       return (
                         <Arc
                           onMouseDown={moveCamera}
                           key={i}
                           {...arcCommonProps}
-                          rotation={
-                            -rotationDeg +
-                            (negativeRotation ? -totalArc : 0) +
-                            // shaderShift for the planet radius
-                            radToDeg(beta) +
-                            // shaderShift for every arc part
-                            (i * totalArc) / arcCount
-                          }
+                          rotation={-rotation}
                           opacity={
                             negativeRotation
                               ? innerOpacity * (i * (1 / arcCount))
