@@ -16,7 +16,6 @@ import { cycle } from '../utils/cycle';
 
 export default {
   title: 'Three/Ship',
-  component: ThreeShip,
   argTypes: {
     hpNormalized: {
       control: {

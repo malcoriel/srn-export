@@ -22,7 +22,7 @@ export const calcBeamParams = (start: Vector, end: Vector) => {
   return {
     length: vector.length(),
     rotation,
-    position: vecToThreePosInv(medianPoint),
+    position: vecToThreePos(medianPoint),
   };
 };
 

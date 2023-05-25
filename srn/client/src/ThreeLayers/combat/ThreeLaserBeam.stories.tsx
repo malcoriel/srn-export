@@ -27,6 +27,11 @@ const Template: Story = (args) => {
           end={new Vector(50, 25)}
           progression={ticks}
         />
+        <ThreeLaserBeam
+          start={new Vector(60, 0)}
+          end={new Vector(40, -10)}
+          progression={ticks}
+        />
       </StoryCanvas>
     </div>
   );
@@ -45,6 +50,5 @@ Fast.args = {
 // noinspection JSUnusedGlobalSymbols
 export default {
   title: 'Three/LaserBeam',
-  component: ThreeSpaceBackground,
   argTypes: {},
 } as Meta;

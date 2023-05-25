@@ -41,7 +41,7 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
 
   // that's a hack to shift model 'forward' a little due
   // to shifted weight center
-  const shift = VectorF(0, -radius / 5.0).turnCounterClockwise(-rotation);
+  const shift = VectorF(radius / 5.0, 0).turnOn(rotation);
 
   const material = useRef<MeshBasicMaterial>(null);
   useFrame((_state, delta) => {
@@ -70,9 +70,9 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
     >
       <mesh
         name={`ship-${gid}`}
-        position={[-shift.x, shift.y, 0]}
+        position={[shift.x, shift.y, 0]}
         scale={memoScale}
-        rotation={[0, 0, rotation]}
+        rotation={[0, 0, rotation + Math.PI / 2]}
         // @ts-ignore
         geometry={shipModel}
       >
