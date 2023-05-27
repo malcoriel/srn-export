@@ -1453,11 +1453,8 @@ fn interpolate_docking_ships_position(
                         let target = planet.spatial.position.clone();
                         let ship_pos = ship.spatial.position.clone();
                         let dir = target.subtract(&ship_pos);
-                        ship.spatial.rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
-                        if dir.x < 0.0 {
-                            ship.spatial.rotation_rad = -ship.spatial.rotation_rad;
-                        }
-
+                        ship.spatial.rotation_rad =
+                            dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
                         ship.spatial.position.x = lerp(
                             start_pos.x,
                             planet.spatial.position.x,
@@ -1484,11 +1481,8 @@ fn interpolate_docking_ships_position(
                         let from_pos = planet.spatial.position.clone();
                         let ship_pos = ship.spatial.position.clone();
                         let dir = ship_pos.subtract(&from_pos);
-                        ship.spatial.rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
-                        if dir.x < 0.0 {
-                            ship.spatial.rotation_rad = -ship.spatial.rotation_rad;
-                        }
-
+                        ship.spatial.rotation_rad =
+                            dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
                         ship.spatial.position.x =
                             lerp(from_pos.x, end_pos.x, *percentage as f64 / 100.0);
                         ship.spatial.position.y =
@@ -2228,10 +2222,7 @@ pub fn update_ships_navigation(
                 let ship_pos = ship.spatial.position.clone();
                 let dist = target.euclidean_distance(&ship_pos);
                 let dir = target.subtract(&ship_pos);
-                ship.spatial.rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
-                if dir.x < 0.0 {
-                    ship.spatial.rotation_rad = -ship.spatial.rotation_rad;
-                }
+                ship.spatial.rotation_rad = dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
                 if dist > 0.0 {
                     ship.trajectory = trajectory::build_trajectory_to_point(
                         ship_pos,
@@ -2271,10 +2262,8 @@ pub fn update_ships_navigation(
                     );
                     if let Some(first) = ship.trajectory.clone().get(0) {
                         let dir = first.subtract(&ship_pos);
-                        ship.spatial.rotation_rad = dir.angle_rad(&Vec2f64 { x: 0.0, y: -1.0 });
-                        if dir.x < 0.0 {
-                            ship.spatial.rotation_rad = -ship.spatial.rotation_rad;
-                        }
+                        ship.spatial.rotation_rad =
+                            dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
                         let new_pos = move_ship_towards(first, &ship_pos, max_shift);
                         ship.set_from(&new_pos);
                     }

@@ -51,7 +51,7 @@ pub fn update_ship_manual_movement(
             };
             ship.movement_markers.turn = new_move;
             if let Some(new_rotation) = new_rotation {
-                ship.spatial.rotation_rad = new_rotation;
+                ship.spatial.rotation_rad = new_rotation % (2.0 * PI);
             }
         }
         Movement::ShipAccelerated { .. } => {
@@ -179,8 +179,8 @@ fn should_throttle_drop_manual_movement_marker(
 
 fn project_ship_movement_by_speed(elapsed_micro: i64, ship: &Ship, sign: f64) -> Vec2f64 {
     let distance = ship.movement_definition.get_max_speed() * elapsed_micro as f64 * sign;
-    let shift = Vec2f64 { x: 0.0, y: 1.0 }
-        .rotate(ship.spatial.rotation_rad)
+    let shift = Vec2f64 { x: 1.0, y: 0.0 }
+        .rotate(-ship.spatial.rotation_rad)
         .scalar_mul(distance);
     let new_pos = ship.spatial.position.add(&shift);
     new_pos
@@ -276,7 +276,7 @@ pub fn update_accelerated_ship_movement(
         // negate drag if ship is actively turning to prevent wrong expectations
         spatial.angular_velocity += angular_drag;
     }
-    let thrust_dir = Vec2f64 { x: 0.0, y: 1.0 }.rotate(spatial.rotation_rad);
+    let thrust_dir = Vec2f64 { x: 1.0, y: 0.0 }.rotate(-spatial.rotation_rad);
     let space_acceleration = thrust_dir.scalar_mul(
         movement_definition.get_current_linear_acceleration() * elapsed_micro as f64 * gas_sign,
     );

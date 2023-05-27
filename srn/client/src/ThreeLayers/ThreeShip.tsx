@@ -61,7 +61,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
       const angle = VectorF(0, 1).angleRad(vector);
       return {
         length: vector.length(),
-        rotation: angle,
+        rotation: -angle,
         position: vecToThreePos(vector.scale(0.5)),
         patchedUniforms: {
           ...jellyfish.uniforms,

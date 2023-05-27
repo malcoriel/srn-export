@@ -65,7 +65,7 @@ export const ThreeRocket: React.FC<ThreeRocketProps> = ({
   return (
     <group position={vecToThreePos(position, 0)}>
       <group
-        rotation={[0, 0, -(rotation - Math.PI / 2)]}
+        rotation={[0, 0, rotation + Math.PI / 2]}
         scale={[radius, radius, radius]}
       >
         <mesh>

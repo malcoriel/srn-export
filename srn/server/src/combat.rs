@@ -316,10 +316,10 @@ pub fn resolve_launch(
         instance.set_target(&target);
 
         // ship visual model is shifted by PI/2 rotation incorrectly
-        let mut new_rot = -shooting_ship.spatial.rotation_rad + PI / 2.0;
+        let mut new_rot = -shooting_ship.spatial.rotation_rad;
         let deviation = generate_normal_random(0.0, 0.15, prng);
         new_rot -= deviation;
-        let new_velocity = Vec2f64 { x: 1.0, y: 0.0 }.rotate(new_rot + PI / 2.0);
+        let new_velocity = Vec2f64 { x: 1.0, y: 0.0 }.rotate(new_rot);
         let new_velocity =
             new_velocity.scalar_mul(proj_template.get_spatial().velocity.euclidean_len() * 0.3);
         // ensure that new projectile is not launched inside the ship, as otherwise it can collide and blow immediately
