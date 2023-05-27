@@ -5,7 +5,7 @@ import * as uuid from 'uuid';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { ThreeRocket } from './ThreeProjectilesLayer';
-import { VectorFZero } from '../utils/Vector';
+import { VectorF, VectorFZero } from '../utils/Vector';
 
 export default {
   title: 'Three/Projectiles',
