@@ -32,6 +32,7 @@ const Template: Story = (args) => {
         <ThreeSpaceBackground size={1024} shaderShift={0} />
         <ThreeRocket
           position={VectorFZero}
+          velocity={VectorF(1.0, 1.0)}
           rotation={args.rotation}
           radius={1}
           markers="abcdef"
