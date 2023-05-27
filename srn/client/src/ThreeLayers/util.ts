@@ -54,3 +54,5 @@ export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
   y,
   z || 0,
 ];
+
+export const vec3repeat = (x: number): Vector3Arr => [x, x, x];

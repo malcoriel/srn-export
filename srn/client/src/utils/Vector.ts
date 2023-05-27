@@ -173,7 +173,12 @@ export default class Vector implements IVector {
   }
 
   normalize() {
-    return this.scale(1 / this.length());
+    const len = this.length();
+    if (Math.abs(len) > 0.0) {
+      return this.scale(1 / len);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    return VectorFZero;
   }
 
   map(fn: (c: number) => number) {

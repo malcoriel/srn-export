@@ -315,7 +315,6 @@ pub fn resolve_launch(
         instance.set_position_from(&shooting_ship.spatial.position);
         instance.set_target(&target);
 
-        // ship visual model is shifted by PI/2 rotation incorrectly
         let mut new_rot = -shooting_ship.spatial.rotation_rad;
         let deviation = generate_normal_random(0.0, 0.15, prng);
         new_rot -= deviation;
@@ -325,7 +324,6 @@ pub fn resolve_launch(
         // ensure that new projectile is not launched inside the ship, as otherwise it can collide and blow immediately
         instance.get_spatial_mut().position = instance.get_spatial().position.add(
             &new_velocity
-                .rotate(-PI / 2.0)
                 .normalize()
                 .expect("new velocity should be non-zero")
                 .scalar_mul(shooting_ship.spatial.radius + proj_template.get_spatial().radius),
@@ -414,7 +412,7 @@ fn markers_to_string(gas: f64, turn: f64, brake: f64) -> Option<String> {
             str += "↶"
         }
         if brake > 0.0 {
-            str += "‖"
+            str += "⨯"
         }
         Some(str)
     } else {

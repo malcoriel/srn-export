@@ -218,8 +218,7 @@ fn update_spatial_by_velocities_projectile(
     spatial: &mut SpatialProps,
     _debug: bool,
 ) {
-    let correction_hack = -PI / 2.0;
-    let mut true_velocity = spatial.velocity.rotate(correction_hack);
+    let mut true_velocity = spatial.velocity.clone();
     let linear_drag = &true_velocity
         .normalize()
         .unwrap_or(Vec2f64::zero())
@@ -230,7 +229,7 @@ fn update_spatial_by_velocities_projectile(
     if true_velocity.euclidean_len() <= MIN_OBJECT_SPEED_PER_TICK {
         true_velocity = Vec2f64::zero();
     }
-    spatial.velocity = true_velocity.rotate(-correction_hack);
+    spatial.velocity = true_velocity;
 
     // intentionally make angular drag x 10 to prevent complexity in swaying guided projectiles
     let angular_drag =
@@ -276,7 +275,7 @@ pub fn update_accelerated_ship_movement(
         // negate drag if ship is actively turning to prevent wrong expectations
         spatial.angular_velocity += angular_drag;
     }
-    let thrust_dir = Vec2f64 { x: 1.0, y: 0.0 }.rotate(-spatial.rotation_rad);
+    let thrust_dir = Vec2f64 { x: 1.0, y: 0.0 }.rotate(spatial.rotation_rad);
     let space_acceleration = thrust_dir.scalar_mul(
         movement_definition.get_current_linear_acceleration() * elapsed_micro as f64 * gas_sign,
     );
@@ -334,7 +333,7 @@ pub fn update_accelerated_projectile_movement(
         // negate drag if ship is actively turning to prevent wrong expectations
         spatial.angular_velocity += angular_drag;
     }
-    let thrust_dir = Vec2f64 { x: 0.0, y: 1.0 }.rotate(spatial.rotation_rad);
+    let thrust_dir = Vec2f64 { x: 1.0, y: 0.0 }.rotate(-spatial.rotation_rad);
     let space_acceleration = thrust_dir.scalar_mul(
         movement_definition.get_current_linear_acceleration() * elapsed_micro as f64 * gas_sign,
     );
@@ -378,5 +377,5 @@ pub fn update_objects_spatial_movement(
 pub fn align_rotation_with_velocity(sp: &mut SpatialProps) {
     let base = Vec2f64 { x: 1.0, y: 0.0 };
     let velocity_angle = sp.velocity.angle_rad(&base);
-    sp.rotation_rad = velocity_angle + PI / 2.0;
+    sp.rotation_rad = velocity_angle;
 }

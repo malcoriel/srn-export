@@ -6,7 +6,7 @@ import Vector, {
 import React, { useMemo } from 'react';
 import Color from 'color';
 import _ from 'lodash';
-import { posToThreePos } from './util';
+import { posToThreePos, vec3repeat } from './util';
 
 export interface ThreeTrajectoryItemProps {
   position: IVector;
@@ -14,6 +14,7 @@ export interface ThreeTrajectoryItemProps {
   accNormalized: Vector; // len 0.0 - no acc, 1.0 - maximal acceleration
   mainColor?: string;
   accColor?: string;
+  radius?: number;
 }
 
 export const lerp = (a: number, b: number, v: number) => a + (b - a) * v;
@@ -23,6 +24,7 @@ export const ThreeTrajectoryItem: React.FC<ThreeTrajectoryItemProps> = ({
   accColor,
   velocityNormalized,
   accNormalized,
+  radius = 1.0,
 }) => {
   const showAcc = Math.abs(accNormalized.length()) > 1e-6;
   const showVel = Math.abs(velocityNormalized.length()) > 1e-6;
@@ -48,7 +50,7 @@ export const ThreeTrajectoryItem: React.FC<ThreeTrajectoryItemProps> = ({
   return (
     <group
       position={posToThreePos(position.x, position.y)}
-      scale={[1.25, 1.25, 1.25]}
+      scale={vec3repeat((1.25 / 10.0) * radius)}
     >
       <mesh rotation={[0, 0, angleVel]}>
         <mesh>

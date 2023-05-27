@@ -2,11 +2,10 @@ import React from 'react';
 import { ClientStateIndexes } from '../ClientStateIndexing';
 import { GameState } from '../world';
 import { vecToThreePos } from './util';
-import { IVector, VectorF, VectorFZero } from '../utils/Vector';
+import Vector, { IVector, VectorF, VectorFZero } from '../utils/Vector';
 import { Text } from '@react-three/drei';
 import { teal } from '../utils/palette';
-import { useLoader } from '@react-three/fiber';
-import { TTFLoader } from 'three/examples/jsm/loaders/TTFLoader';
+import { ThreeTrajectoryItem } from './ThreeTrajectoryItem';
 
 export type ThreeProjectilesLayerParams = {
   visMap: Record<string, boolean>;
@@ -16,6 +15,7 @@ export type ThreeProjectilesLayerParams = {
 
 export interface ThreeRocketProps {
   position: IVector;
+  velocity: IVector;
   rotation: number;
   radius: number;
   markers?: string | null;
@@ -33,8 +33,10 @@ export interface ThreeRocketProps {
 export const MovementMarkers: React.FC<{
   markers: string;
   position: IVector;
+  velocity: IVector;
   radius: number;
-}> = ({ markers, position, radius }) => {
+}> = ({ markers, position, radius, velocity }) => {
+  // noinspection PointlessArithmeticExpressionJS
   return (
     <group position={vecToThreePos(position, 0)}>
       <Text
@@ -52,6 +54,13 @@ export const MovementMarkers: React.FC<{
       >
         {markers}
       </Text>
+      <ThreeTrajectoryItem
+        mainColor={teal}
+        accNormalized={VectorF(0, 0)}
+        position={VectorF(radius, radius)}
+        velocityNormalized={Vector.fromIVector(velocity).normalize()}
+        radius={radius * 1.0} // radius of the speed display
+      />
     </group>
   );
 };
@@ -60,6 +69,7 @@ export const ThreeRocket: React.FC<ThreeRocketProps> = ({
   position,
   rotation,
   radius,
+  velocity,
   markers,
 }) => {
   return (
@@ -81,6 +91,7 @@ export const ThreeRocket: React.FC<ThreeRocketProps> = ({
         <MovementMarkers
           markers={markers}
           position={VectorFZero}
+          velocity={velocity}
           radius={radius}
         />
       )}
@@ -98,6 +109,7 @@ export const ThreeProjectilesLayer: React.FC<ThreeProjectilesLayerParams> = ({
         <ThreeRocket
           position={projectile.fields.spatial.position}
           rotation={projectile.fields.spatial.rotation_rad}
+          velocity={projectile.fields.spatial.velocity}
           radius={projectile.fields.spatial.radius}
           markers={projectile.fields.markers}
           key={projectile.fields.id}
