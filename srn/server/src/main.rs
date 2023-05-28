@@ -191,6 +191,8 @@ mod world_events;
 mod world_test;
 mod xcast;
 
+use properties::*;
+
 struct LastCheck {
     time: DateTime<Utc>,
 }

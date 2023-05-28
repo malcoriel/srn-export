@@ -31,7 +31,7 @@ use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::planet_movement::IBodyV2;
-use crate::properties::ObjectProperty;
+use crate::properties::{cleanup_objects, update_properties_rules, ObjectProperty};
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
     gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
@@ -52,8 +52,8 @@ use crate::world_actions::*;
 use crate::world_actions::{Action, ControlMarkers};
 use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEvent};
 use crate::{
-    abilities, autofocus, cargo_rush, combat, indexing, pirate_defence, prng_id, properties,
-    random_stuff, spatial_movement, system_gen, trajectory, world_events,
+    abilities, autofocus, cargo_rush, combat, indexing, pirate_defence, prng_id, random_stuff,
+    spatial_movement, system_gen, trajectory, world_events,
 };
 use crate::{dialogue, vec2};
 use crate::{fire_event, market, notifications, planet_movement, tractoring};
@@ -1144,7 +1144,7 @@ pub fn update_location(
     sampler.end(collisions_id);
 
     let props_id = sampler.start(SamplerMarks::UpdatePropertiesRules as u32);
-    properties::update_properties_rules(
+    update_properties_rules(
         &mut state.locations[location_idx],
         update_options,
         spatial_index,
@@ -1217,7 +1217,7 @@ pub fn update_location(
     sampler.end(long_act_ticks);
 
     let clean = sampler.start(SamplerMarks::UpdateCleanup as u32);
-    properties::cleanup_objects(&mut state, location_idx);
+    cleanup_objects(&mut state, location_idx);
     sampler.end(clean);
     sampler
 }
