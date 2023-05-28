@@ -1,39 +1,53 @@
 # Changelog
 
+## Version 0.9.17 (2023-05-28)
+
+### New
+
+* Experimental and not-yet-controllable rocket shooting mode.
+
+### Fixes
+
+* A lot of visual positioning issues for game objects were fixed, the coordinate system is now y-axis-up everywhere.
+* Fixed more issues with not updating planets properly outside of camera view.
+* Optimized network usage a lot, improved both client and server performance.
+* Fixed bugs where main menu couldn't be opened after closing the dialogue window.
+* Fixed a bug where it was possible to dismiss otherwise non-closable dialogue window via esc.
+
 ## Version 0.9.16 (2023-01-23)
 
 ### Fixes
 
-* Fixed a bug where ships were not updated properly when they were outside the camera view
-* Fixed a bug where planets were not updated properly when they were outside the camera view
+* Fixed a bug where ships were not updated properly when they were outside the camera view.
+* Fixed a bug where planets were not updated properly when they were outside the camera view.
 
 ## Version 0.9.15 (2023-01-22)
 
 ### New
 
-* Added experimental movement mode for ships with more realistic speed, acceleration and momentum conservation
+* Added experimental movement mode for ships with more realistic speed, acceleration and momentum conservation.
 * Added velocity capabilities for game object and used them to make ship wrecks continue flying forward after being
-  destroyed
-* Potentially introduced some bugs with health and item pickup effects, which will be fixed later
+  destroyed.
+* Potentially introduced some bugs with health and item pickup effects, which will be fixed later.
 
 ### Fixes
 
-* Fixed a time discrepancy between ship blow up moment and ship wreck appearance, which should lead to better UX
+* Fixed a time discrepancy between ship blow up moment and ship wreck appearance, which should lead to better UX.
 
 ## Version 0.9.14 (2023-01-15)
 
 ### Fixes
 
-* Added an explanation for play button being disabled in case of version mismatch
-* Fixed a problem with server version observability
+* Added an explanation for play button being disabled in case of version mismatch.
+* Fixed a problem with server version observability.
 
 ## Version 0.9.13 (2023-01-15)
 
 ### Fixes
 
-* Restored replay capabilities and the test replay
-* Fixed a bug that led to jerky planet movement in case of counter-clockwise rotation
-* Augmented build system for better observability of versions
+* Restored replay capabilities and the test replay.
+* Fixed a bug that led to jerky planet movement in case of counter-clockwise rotation.
+* Augmented build system for better observability of versions.
 
 ## Version 0.9.12 (2023-01-11)
 
@@ -51,10 +65,10 @@
 
 ### Fixes
 
-* More client-side performance improvements
-* Fixed a bug where non-player ships were not moving smoothly after leaving a planet
-* Restored 4 bots in CargoRush mode
-* Restored broken leaderboard
+* More client-side performance improvements.
+* Fixed a bug where non-player ships were not moving smoothly after leaving a planet.
+* Restored 4 bots in CargoRush mode.
+* Restored broken leaderboard.
 
 ## Version 0.9.9 (2023-01-08)
 
