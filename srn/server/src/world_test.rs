@@ -8,11 +8,12 @@ mod world_test {
     use crate::new_id;
     use crate::perf::Sampler;
     use crate::planet_movement::update_radial_moving_entities;
+    use crate::spatial_movement::update_ships_navigation;
     use crate::system_gen::seed_state_test;
     use crate::vec2::Vec2f64;
     use crate::world::{
-        add_player, spawn_ship, update_ships_navigation, update_world, GameMode, GameState,
-        Location, Planet, Star, UpdateOptions, AABB,
+        add_player, spawn_ship, update_world, GameMode, GameState, Location, Planet, Star,
+        UpdateOptions, AABB,
     };
 
     #[test]

@@ -15,7 +15,7 @@ use crate::indexing::{
 use crate::planet_movement::IBodyV2;
 use crate::vec2::Vec2f64;
 use crate::world::{spawn_ship, GameState, ShipIdx, ShipTemplate, PLAYER_RESPAWN_TIME_MC};
-use crate::{abilities, combat, indexing, locations, prng_id, world};
+use crate::{abilities, combat, indexing, locations, prng_id, spatial_movement, world};
 
 use rand::prelude::*;
 use rand_pcg::Pcg64Mcg;
@@ -577,13 +577,13 @@ pub fn finish_long_act(
             let player_idx = find_player_idx_by_ship_id(state, ship_id);
             if let Some(planet) = planet {
                 let body = Box::new(planet) as Box<dyn IBodyV2>;
-                world::dock_ship(state, ship_idx, player_idx, body);
+                spatial_movement::dock_ship(state, ship_idx, player_idx, body);
             }
         }
         LongAction::Undock { .. } => {
             let ship_id = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx].id;
             let player = find_player_idx_by_ship_id(state, ship_id).map(|p| p.clone());
-            world::undock_ship(state, ship_idx, client, player, prng);
+            spatial_movement::undock_ship(state, ship_idx, client, player, prng);
         }
         LongAction::Launch {
             target, turret_id, ..

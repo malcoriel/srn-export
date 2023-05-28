@@ -11,7 +11,7 @@ use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, object_index_into_object_id, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
-use crate::combat::{guide_projectile, Health, ShootTarget};
+use crate::combat::{guide_projectile, Health, Projectile, ShipTurret, ShootTarget};
 use crate::dialogue::Dialogue;
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
@@ -39,7 +39,8 @@ use crate::random_stuff::{
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
 use crate::spatial_movement::{
-    update_accelerated_projectile_movement, update_accelerated_ship_movement,
+    update_accelerated_projectile_movement, update_accelerated_ship_movement, Movement,
+    RotationMovement,
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
@@ -87,12 +88,6 @@ impl Display for GameMode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct ManualMoveUpdate {
-    pub position: Vec2f64,
-    pub rotation: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -240,11 +235,6 @@ pub struct ProcessedPlayerAction {
     pub packet_tag: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct ShipTurret {
-    id: String,
-}
-
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Ship {
@@ -275,148 +265,6 @@ pub struct Ship {
     pub trading_with: Option<ObjectSpecifier>,
 }
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-#[serde(tag = "tag", content = "fields")]
-pub enum Projectile {
-    Rocket(RocketProps),
-}
-
-impl Projectile {
-    pub fn get_to_clean_mut(&mut self) -> &mut bool {
-        match self {
-            Projectile::Rocket(props) => &mut props.to_clean,
-        }
-    }
-
-    pub fn get_to_clean(&self) -> &bool {
-        match self {
-            Projectile::Rocket(props) => &props.to_clean,
-        }
-    }
-    pub fn get_markers_mut(&mut self) -> &mut Option<String> {
-        match self {
-            Projectile::Rocket(props) => &mut props.markers,
-        }
-    }
-
-    pub fn get_properties(&self) -> &Vec<ObjectProperty> {
-        match self {
-            Projectile::Rocket(props) => &props.properties,
-        }
-    }
-
-    pub fn get_properties_mut(&mut self) -> &mut Vec<ObjectProperty> {
-        match self {
-            Projectile::Rocket(props) => &mut props.properties,
-        }
-    }
-
-    pub fn get_target(&self) -> Option<ObjectSpecifier> {
-        match self {
-            Projectile::Rocket(props) => props.target.clone(),
-        }
-    }
-
-    pub fn get_movement(&self) -> &Movement {
-        match self {
-            Projectile::Rocket(props) => &props.movement,
-        }
-    }
-
-    pub fn get_blow_radius(&self) -> f64 {
-        match self {
-            Projectile::Rocket(props) => props.damage_radius,
-        }
-    }
-    pub fn get_spatial(&self) -> &SpatialProps {
-        match self {
-            Projectile::Rocket(props) => &props.spatial,
-        }
-    }
-
-    pub fn get_damage(&self) -> f64 {
-        match self {
-            Projectile::Rocket(props) => props.damage,
-        }
-    }
-
-    pub fn get_spatial_mut(&mut self) -> &mut SpatialProps {
-        match self {
-            Projectile::Rocket(props) => &mut props.spatial,
-        }
-    }
-
-    pub fn set_target(&mut self, t: &ShootTarget) {
-        match self {
-            Projectile::Rocket(props) => props.target = t.to_specifier(),
-        }
-    }
-    pub fn set_position_from(&mut self, from: &Vec2f64) {
-        match self {
-            Projectile::Rocket(props) => {
-                props.spatial.position = from.clone();
-            }
-        }
-    }
-}
-
-impl Projectile {
-    pub fn get_id(&self) -> i32 {
-        match self {
-            Projectile::Rocket(RocketProps { id, .. }) => *id,
-        }
-    }
-
-    pub fn set_id(&mut self, val: i32) {
-        match self {
-            Projectile::Rocket(RocketProps { id, .. }) => *id = val,
-        };
-    }
-}
-
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct RocketProps {
-    pub id: i32,
-    pub spatial: SpatialProps,
-    pub movement: Movement,
-    pub properties: Vec<ObjectProperty>,
-    pub target: Option<ObjectSpecifier>,
-    pub damage: f64,
-    pub damage_radius: f64,
-    pub markers: Option<String>,
-    pub to_clean: bool,
-}
-
-pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
-    let mut res = vec![];
-    for i in 0..count {
-        let id = i.to_string();
-        res.push((
-            Ability::Shoot {
-                cooldown_ticks_remaining: 0,
-                turret_id: id.clone(), // only needs to be locally-unique
-                cooldown_normalized: 0.0,
-                cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
-            },
-            ShipTurret { id },
-        ));
-    }
-    let id = res.len().to_string();
-    res.push((
-        Ability::Launch {
-            cooldown_ticks_remaining: 0,
-            turret_id: id.clone(),
-            projectile_template_id: TemplateId::Rocket as i32,
-            cooldown_normalized: 0.0,
-            cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
-        },
-        ShipTurret { id },
-    ));
-    res
-}
-
 pub enum TemplateId {
     Unknown,
     Rocket,
@@ -424,7 +272,7 @@ pub enum TemplateId {
 
 impl Ship {
     pub fn new(prng: &mut Pcg64Mcg, at: &mut Option<Vec2f64>) -> Ship {
-        let turrets = gen_turrets(2, prng);
+        let turrets = combat::gen_turrets(2, prng);
         Ship {
             id: prng_id(prng),
             color: gen_color(prng).to_string(),
@@ -1171,10 +1019,10 @@ pub fn update_location(
     sampler.end(update_radials_id);
     let update_docked_ships_id = sampler.start(SamplerMarks::UpdateDockedShipsPosition as u32);
     // strictly speaking, indexes are outdated here because we have just updated the planet rotation, but we'll deliberately use 'previous frame location' as good enough
-    update_docked_ships_position(&mut state.locations[location_idx], indexes);
+    spatial_movement::update_docked_ships_position(&mut state.locations[location_idx], indexes);
     sampler.end(update_docked_ships_id);
     let update_ships_navigation_id = sampler.start(SamplerMarks::UpdateShipsNavigation as u32);
-    state.locations[location_idx].ships = update_ships_navigation(
+    state.locations[location_idx].ships = spatial_movement::update_ships_navigation(
         &state.locations[location_idx].ships,
         elapsed,
         client,
@@ -1188,11 +1036,11 @@ pub fn update_location(
     if !client {
         let initiate_docking_id =
             sampler.start(SamplerMarks::UpdateInitiateShipsDockingByNavigation as u32);
-        update_initiate_ship_docking_by_navigation(state, location_idx, prng);
+        spatial_movement::update_initiate_ship_docking_by_navigation(state, location_idx, prng);
         sampler.end(initiate_docking_id);
     }
     let interpolate_docking_id = sampler.start(SamplerMarks::UpdateInterpolateDockingShips as u32);
-    interpolate_docking_ships_position(state, location_idx, update_options);
+    spatial_movement::interpolate_docking_ships_position(state, location_idx, update_options);
     sampler.end(interpolate_docking_id);
     let update_ship_manual_movement_id =
         sampler.start(SamplerMarks::UpdateObjectsSpatialMovement as u32);
@@ -1374,17 +1222,6 @@ pub fn update_location(
     sampler
 }
 
-fn update_docked_ships_position(loc: &mut Location, indexes: &GameStateIndexes) {
-    for ship in loc.ships.iter_mut() {
-        if let Some(docked_at) = ship.docked_at {
-            if let Some(planet) = indexes.planets_by_id.get(&docked_at) {
-                ship.spatial.position.x = planet.spatial.position.x;
-                ship.spatial.position.y = planet.spatial.position.y;
-            }
-        }
-    }
-}
-
 fn update_wreck_decay(state: &mut GameState, location_idx: usize, elapsed_ticks: i64) {
     let mut to_delete = HashSet::new();
     for wreck in state.locations[location_idx].wrecks.iter_mut() {
@@ -1400,147 +1237,6 @@ fn update_wreck_decay(state: &mut GameState, location_idx: usize, elapsed_ticks:
 
 pub fn lerp(from: f64, to: f64, percentage: f64) -> f64 {
     return vec2::reduce_precision((to - from) * (percentage.max(0.0).min(1.0)) + from);
-}
-
-// and undocking!
-fn interpolate_docking_ships_position(
-    state: &mut GameState,
-    location_idx: usize,
-    update_options: &UpdateOptions,
-) {
-    let planets_read = state.locations[location_idx].planets.clone();
-    let planets_by_id = index_planets_by_id(&planets_read);
-    let docking_ship_ids: HashMap<Uuid, LongAction> =
-        HashMap::from_iter(state.locations[location_idx].ships.iter().filter_map(|s| {
-            let long_act = s
-                .long_actions
-                .iter()
-                .filter(|la| matches!(la, LongAction::Dock { .. }))
-                .nth(0);
-            if let Some(la) = long_act {
-                return Some((s.id, la.clone()));
-            }
-            return None;
-        }));
-    let undocking_ship_ids: HashMap<Uuid, LongAction> =
-        HashMap::from_iter(state.locations[location_idx].ships.iter().filter_map(|s| {
-            let long_act = s
-                .long_actions
-                .iter()
-                .filter(|la| matches!(la, LongAction::Undock { .. }))
-                .nth(0);
-            if let Some(la) = long_act {
-                return Some((s.id, la.clone()));
-            }
-            return None;
-        }));
-    for ship in state.locations[location_idx].ships.iter_mut() {
-        if !update_options
-            .limit_area
-            .contains_vec(&ship.spatial.position)
-        {
-            continue;
-        }
-        if let Some(long_act) = docking_ship_ids.get(&ship.id) {
-            match long_act {
-                LongAction::Dock {
-                    start_pos,
-                    to_planet,
-                    percentage,
-                    ..
-                } => {
-                    if let Some(planet) = planets_by_id.get(&to_planet) {
-                        let target = planet.spatial.position.clone();
-                        let ship_pos = ship.spatial.position.clone();
-                        let dir = target.subtract(&ship_pos);
-                        ship.spatial.rotation_rad =
-                            dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
-                        ship.spatial.position.x = lerp(
-                            start_pos.x,
-                            planet.spatial.position.x,
-                            *percentage as f64 / 100.0,
-                        );
-                        ship.spatial.position.y = lerp(
-                            start_pos.y,
-                            planet.spatial.position.y,
-                            *percentage as f64 / 100.0,
-                        );
-                    }
-                }
-                _ => {}
-            }
-        } else if let Some(long_act) = undocking_ship_ids.get(&ship.id) {
-            match long_act {
-                LongAction::Undock {
-                    from_planet,
-                    end_pos,
-                    percentage,
-                    ..
-                } => {
-                    if let Some(planet) = planets_by_id.get(&from_planet) {
-                        let from_pos = planet.spatial.position.clone();
-                        let ship_pos = ship.spatial.position.clone();
-                        let dir = ship_pos.subtract(&from_pos);
-                        ship.spatial.rotation_rad =
-                            dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
-                        ship.spatial.position.x =
-                            lerp(from_pos.x, end_pos.x, *percentage as f64 / 100.0);
-                        ship.spatial.position.y =
-                            lerp(from_pos.y, end_pos.y, *percentage as f64 / 100.0);
-                    }
-                }
-                _ => {}
-            }
-        }
-    }
-}
-
-fn update_initiate_ship_docking_by_navigation(
-    state: &mut GameState,
-    location_idx: usize,
-    prng: &mut Pcg64Mcg,
-) {
-    let ships = &state.locations[location_idx].ships;
-    let planets_by_id = index_planets_by_id(&state.locations[location_idx].planets);
-    let mut to_dock = vec![];
-    for i in 0..ships.len() {
-        let ship = &ships[i];
-        if let Some(t) = ship.dock_target {
-            if let Some(planet) = planets_by_id.get(&t) {
-                let planet_pos = planet.spatial.position.clone();
-                let ship_pos = ship.spatial.position.clone();
-                if planet_pos.euclidean_distance(&ship_pos)
-                    < (planet.spatial.radius * planet.spatial.radius * SHIP_DOCKING_RADIUS_COEFF)
-                        .max(MIN_SHIP_DOCKING_RADIUS)
-                {
-                    let docks_in_progress = ship
-                        .long_actions
-                        .iter()
-                        .any(|a| matches!(a, LongAction::Dock { .. }));
-
-                    if !docks_in_progress {
-                        to_dock.push((
-                            ShipIdx {
-                                location_idx,
-                                ship_idx: i,
-                            },
-                            planet.id,
-                        ))
-                    }
-                }
-            }
-        }
-    }
-    for (ship_idx, planet_id) in to_dock {
-        try_start_long_action_ship_only(
-            state,
-            &ship_idx,
-            LongActionStart::DockInternal {
-                to_planet: planet_id,
-            },
-            prng,
-        );
-    }
 }
 
 fn apply_tractored_items_consumption(
@@ -1651,24 +1347,6 @@ fn update_ships_respawn(state: &mut GameState, prng: &mut Pcg64Mcg) {
 
     for player_id in to_spawn {
         try_start_long_action_player_owned(state, player_id, LongActionStart::Respawn, prng);
-    }
-}
-
-pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
-    state.events.as_mut().map(|ev| ev.push_back(event.clone()));
-    match event {
-        // list of the events that should only be handled inside world events, and not
-        // as global events
-        GameEvent::ShipDocked { .. } => {}
-        GameEvent::DialogueTriggerRequest { .. } => {}
-        GameEvent::TradeDialogueTriggerRequest { .. } => {}
-        GameEvent::PirateSpawn { .. } => {}
-        // events that has to be duplicated to the system, e.g. both server and world can do
-        // something on them. typically, server just does retransmitting them to the client ahead of the normal update
-        GameEvent::ShipSpawned { .. } => fire_event(event),
-        GameEvent::ShipDied { .. } => fire_event(event),
-        GameEvent::SandboxCommandRequest { .. } => fire_event(event),
-        _ => fire_event(event),
     }
 }
 
@@ -1824,7 +1502,7 @@ pub fn update_hp_effects(
                     player_id: None,
                 }
             };
-        fire_saved_event(state, event);
+        world_events::fire_saved_event(state, event);
     }
 
     for planet in state.locations[location_idx].planets.iter_mut() {
@@ -1861,194 +1539,7 @@ pub fn add_player(
     player.is_bot = is_bot;
     player.name = name.unwrap_or(player_id.to_string());
     state.players.push(player);
-}
-
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq)]
-#[serde(tag = "tag")]
-pub enum Movement {
-    None,
-    ShipMonotonous {
-        move_speed: f64,
-        turn_speed: f64,
-    },
-    // no handling implemented for this one yet, it's just a design
-    ShipAccelerated {
-        max_linear_speed: f64,
-        max_rotation_speed: f64,
-        linear_drag: f64,
-        acc_linear: f64,
-        max_turn_speed: f64,
-        acc_angular: f64,
-        brake_acc: f64,
-    },
-    RadialMonotonous {
-        // instead of defining the speed, in order
-        // for interpolation optimization to work, we
-        // need to restrict possible locations of the planet
-        // so it's fully periodical, e.g. such P exists that position(t = P) = initial,
-        // position (t  = 2P) = initial, etc
-        full_period_ticks: f64,
-        anchor: ObjectSpecifier,
-        relative_position: Option<Vec2f64>,
-        phase: Option<u32>,
-        start_phase: u32,
-    },
-    AnchoredStatic {
-        anchor: ObjectSpecifier,
-    },
-}
-
-pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13;
-// 0.1 unit per second per second (to allow speeding up from zero)
-pub const MIN_OBJECT_TURN_SPEED_RAD_PER_TICK: f64 = 1e-14; // 0.01 radian per second per second (to allow speeding up from zero)
-
-impl Movement {
-    pub fn is_none(&self) -> bool {
-        match self {
-            Movement::None => true,
-            _ => false,
-        }
-    }
-
-    pub fn get_brake_acc(&self) -> f64 {
-        match self {
-            Movement::ShipAccelerated { brake_acc, .. } => *brake_acc,
-            _ => 0.0,
-        }
-    }
-    pub fn get_max_speed(&self) -> f64 {
-        match self {
-            Movement::ShipAccelerated {
-                max_linear_speed, ..
-            } => *max_linear_speed,
-            Movement::ShipMonotonous { move_speed, .. } => *move_speed,
-            _ => 0.0,
-        }
-    }
-
-    pub fn get_max_rotation_speed(&self) -> f64 {
-        match self {
-            Movement::ShipAccelerated {
-                max_rotation_speed, ..
-            } => *max_rotation_speed,
-            Movement::ShipMonotonous { turn_speed, .. } => *turn_speed,
-            _ => 0.0,
-        }
-    }
-
-    pub fn get_current_angular_acceleration(&self) -> f64 {
-        match self {
-            Movement::ShipAccelerated { acc_angular, .. } => *acc_angular,
-            _ => 0.0,
-        }
-    }
-
-    pub fn get_angular_speed(&self) -> f64 {
-        match self {
-            Movement::ShipMonotonous { turn_speed, .. } => *turn_speed,
-            Movement::ShipAccelerated { max_turn_speed, .. } => *max_turn_speed,
-            _ => 0.0,
-        }
-    }
-
-    pub fn get_current_linear_acceleration(&self) -> f64 {
-        match self {
-            Movement::None => 0.0,
-            Movement::ShipMonotonous { .. } => 0.0,
-            Movement::ShipAccelerated { acc_linear, .. } => *acc_linear,
-            Movement::RadialMonotonous { .. } => 0.0,
-            Movement::AnchoredStatic { .. } => 0.0,
-        }
-    }
-
-    pub fn get_linear_drag(&self) -> f64 {
-        match self {
-            Movement::None => 0.0,
-            Movement::ShipMonotonous { .. } => 0.0,
-            Movement::ShipAccelerated { linear_drag, .. } => *linear_drag,
-            Movement::RadialMonotonous { .. } => 0.0,
-            Movement::AnchoredStatic { .. } => 0.0,
-        }
-    }
-    pub fn get_anchor_relative_position(&self) -> &Option<Vec2f64> {
-        match self {
-            Movement::RadialMonotonous {
-                relative_position, ..
-            } => relative_position,
-            _ => panic!("bad movement, it doesn't have anchor relative position"),
-        }
-    }
-
-    pub fn get_anchor_id(&self) -> Uuid {
-        match self {
-            Movement::RadialMonotonous { anchor, .. } => {
-                anchor.get_id().expect("anchor without id for movement")
-            }
-            Movement::AnchoredStatic { anchor } => {
-                anchor.get_id().expect("anchor without id for movement")
-            }
-            _ => panic!("cannot get anchor for movement without an anchor"),
-        }
-    }
-
-    pub fn get_anchor_spec(&self) -> &ObjectSpecifier {
-        match self {
-            Movement::RadialMonotonous { anchor, .. } => anchor,
-            Movement::AnchoredStatic { anchor } => anchor,
-            _ => panic!("cannot get anchor for movement without an anchor"),
-        }
-    }
-
-    #[deprecated(
-        since = "0.8.7",
-        note = "this method is needed for non-periodic orbit movements support, however they should not exist"
-    )]
-    pub fn get_orbit_speed(&self) -> f64 {
-        todo!()
-    }
-
-    pub fn set_start_phase(&mut self, new_phase: u32) {
-        match self {
-            Movement::RadialMonotonous {
-                phase, start_phase, ..
-            } => {
-                *phase = Some(new_phase);
-                *start_phase = new_phase;
-            }
-            _ => panic!("Cannot set phase to movement without phase"),
-        }
-    }
-}
-
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-#[serde(tag = "tag")]
-pub enum RotationMovement {
-    None,
-    Monotonous {
-        full_period_ticks: f64,
-        // positive => counter-clockwise
-        phase: Option<u32>,
-        start_phase: u32,
-    },
-}
-
-impl RotationMovement {
-    pub fn set_phase(&mut self, new_phase: Option<u32>) {
-        match self {
-            RotationMovement::None => {}
-            RotationMovement::Monotonous { phase, .. } => *phase = new_phase,
-        }
-    }
-
-    pub fn get_phase(&self) -> &Option<u32> {
-        match self {
-            RotationMovement::None => &None,
-            RotationMovement::Monotonous { phase, .. } => phase,
-        }
-    }
-}
+} // 0.01 radian per second per second (to allow speeding up from zero)
 
 pub struct ShipTemplate {
     at: Option<Vec2f64>,
@@ -2164,197 +1655,10 @@ pub fn spawn_ship<'a>(
             }),
     };
     if let Some(event) = event {
-        fire_saved_event(state, event);
+        world_events::fire_saved_event(state, event);
     }
     state.locations[0].ships.push(ship);
     &state.locations[0].ships[state.locations[0].ships.len() - 1]
-}
-
-pub fn update_ships_navigation(
-    ships: &Vec<Ship>,
-    elapsed_micro: i64,
-    _client: bool,
-    update_options: &UpdateOptions,
-    indexes: &GameStateIndexes,
-    update_every_ticks: u64,
-    caches: &mut GameStateCaches,
-    current_ticks: u64,
-) -> Vec<Ship> {
-    let mut res = vec![];
-    let docking_ship_ids: HashSet<Uuid> = HashSet::from_iter(ships.iter().filter_map(|s| {
-        let long_act = s
-            .long_actions
-            .iter()
-            .filter(|la| matches!(la, LongAction::Dock { .. }))
-            .nth(0);
-        if let Some(_la) = long_act {
-            return Some(s.id);
-        }
-        return None;
-    }));
-    let undocking_ship_ids: HashSet<Uuid> = HashSet::from_iter(ships.iter().filter_map(|s| {
-        let long_act = s
-            .long_actions
-            .iter()
-            .filter(|la| matches!(la, LongAction::Undock { .. }))
-            .nth(0);
-        if let Some(_la) = long_act {
-            return Some(s.id);
-        }
-        return None;
-    }));
-
-    for mut ship in ships.clone() {
-        if docking_ship_ids.contains(&ship.id)
-            || undocking_ship_ids.contains(&ship.id)
-            || !update_options
-                .limit_area
-                .contains_vec(&ship.spatial.position)
-        {
-            ship.trajectory = vec![];
-            res.push(ship);
-            continue;
-        }
-        if !ship.docked_at.is_some() {
-            let max_shift = ship.movement_definition.get_max_speed() * elapsed_micro as f64;
-
-            if let Some(target) = ship.navigate_target {
-                let ship_pos = ship.spatial.position.clone();
-                let dist = target.euclidean_distance(&ship_pos);
-                let dir = target.subtract(&ship_pos);
-                ship.spatial.rotation_rad = dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
-                if dist > 0.0 {
-                    ship.trajectory = trajectory::build_trajectory_to_point(
-                        ship_pos,
-                        &target,
-                        &ship.movement_definition,
-                        update_every_ticks,
-                    );
-                    if dist > max_shift {
-                        let new_pos = move_ship_towards(&target, &ship_pos, max_shift);
-                        ship.set_from(&new_pos);
-                    } else {
-                        ship.set_from(&target);
-                        ship.navigate_target = None;
-                    }
-                } else {
-                    ship.navigate_target = None;
-                }
-            } else if let Some(target) = ship.dock_target {
-                if let Some(planet) = indexes
-                    .bodies_by_id
-                    .get(&ObjectSpecifier::Planet { id: target })
-                {
-                    let ship_pos = ship.spatial.position.clone();
-                    let planet_anchor = indexes
-                        .bodies_by_id
-                        .get(&planet.get_movement().get_anchor_spec())
-                        .unwrap();
-                    ship.trajectory = trajectory::build_trajectory_to_planet(
-                        ship_pos,
-                        planet,
-                        planet_anchor,
-                        &ship.movement_definition,
-                        update_every_ticks,
-                        current_ticks,
-                        indexes,
-                        caches,
-                    );
-                    if let Some(first) = ship.trajectory.clone().get(0) {
-                        let dir = first.subtract(&ship_pos);
-                        ship.spatial.rotation_rad =
-                            dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
-                        let new_pos = move_ship_towards(first, &ship_pos, max_shift);
-                        ship.set_from(&new_pos);
-                    }
-                } else {
-                    eprintln!("Attempt to navigate to non-existent planet {}", target);
-                    ship.dock_target = None;
-                }
-            } else {
-                ship.navigate_target = None;
-            }
-        }
-        res.push(ship);
-    }
-    res
-}
-
-pub fn dock_ship(
-    state: &mut GameState,
-    ship_idx: ShipIdx,
-    player_idx: Option<usize>,
-    body: Box<dyn IBodyV2>,
-) {
-    let ship_clone = {
-        let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
-        ship.docked_at = Some(body.get_id());
-        ship.dock_target = None;
-        ship.spatial.position = body.get_spatial().position.clone();
-        ship.trajectory = vec![];
-        ship.clone()
-    };
-    let player_id = player_idx.map(|idx| state.players[idx].id);
-    let player_name = player_idx.map(|idx| state.players[idx].name.clone());
-    let planet_name = body.get_name().clone();
-    fire_saved_event(
-        state,
-        GameEvent::ShipDocked {
-            ship: ship_clone,
-            planet: PlanetV2::from(body),
-            player_id,
-            state_id: state.id,
-            text_representation: if let Some(player_name) = player_name {
-                format!("Player {} docked at {}", player_name, planet_name)
-            } else {
-                "".to_string()
-            },
-        },
-    );
-}
-
-pub fn undock_ship(
-    state: &mut GameState,
-    ship_idx: ShipIdx,
-    client: bool,
-    player_idx: Option<usize>,
-    prng: &mut Pcg64Mcg,
-) {
-    let state_read = state.clone();
-    let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
-    if let Some(planet_id) = ship.docked_at {
-        ship.docked_at = None;
-        if let Some(planet) = find_planet(&state_read, &planet_id) {
-            let planet = planet.clone();
-            ship.spatial.position = planet.spatial.position.clone();
-            if !client {
-                fire_event(GameEvent::ShipUndocked {
-                    state_id: state.id,
-                    ship: ship.clone(),
-                    planet,
-                    player_id: player_idx.map(|player_idx| state.players[player_idx].id),
-                });
-                try_start_long_action_ship_only(
-                    state,
-                    &ship_idx,
-                    LongActionStart::UndockInternal {
-                        from_planet: planet_id,
-                    },
-                    prng,
-                );
-            }
-        }
-    }
-}
-
-pub fn move_ship_towards(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -> Vec2f64 {
-    return if let Some(dir) = target.subtract(&ship_pos).normalize() {
-        let shift = dir.scalar_mul(max_shift);
-        let new_pos = ship_pos.add(&shift);
-        new_pos
-    } else {
-        ship_pos.clone()
-    };
 }
 
 #[derive(Clone)]

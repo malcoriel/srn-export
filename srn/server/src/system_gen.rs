@@ -11,8 +11,8 @@ use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::combat::{
-    Health, DEFAULT_PROJECTILE_EXPIRATION_TICKS, DEFAULT_PROJECTILE_ROT_SPEED,
-    DEFAULT_PROJECTILE_SPEED,
+    Health, Projectile, RocketProps, DEFAULT_PROJECTILE_EXPIRATION_TICKS,
+    DEFAULT_PROJECTILE_ROT_SPEED, DEFAULT_PROJECTILE_SPEED,
 };
 use crate::indexing::{index_state, GameStateCaches, ObjectSpecifier, Spec};
 use crate::interpolation::get_orbit_phase_table;
@@ -25,10 +25,11 @@ use crate::random_stuff::{
     gen_sat_radius, gen_star_color, gen_star_name, gen_star_radius, random_hex_seed_seeded,
     PLANET_NAMES, SAT_NAMES,
 };
+use crate::spatial_movement::{Movement, RotationMovement};
 use crate::vec2::Vec2f64;
 use crate::world::{
-    AsteroidBelt, Container, GameMode, GameState, Location, Movement, PlanetV2, Projectile,
-    RocketProps, RotationMovement, SpatialProps, Star, TemplateId, AABB, GAME_STATE_VERSION,
+    AsteroidBelt, Container, GameMode, GameState, Location, PlanetV2, SpatialProps, Star,
+    TemplateId, AABB, GAME_STATE_VERSION,
 };
 use crate::{planet_movement, prng_id, seed_prng, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};

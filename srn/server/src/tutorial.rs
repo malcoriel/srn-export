@@ -1,8 +1,8 @@
-use crate::world::{fire_saved_event, GameState, Player};
-use crate::world_events::GameEvent;
+use crate::world::{GameState, Player};
+use crate::world_events::{fire_saved_event, GameEvent};
 use uuid::Uuid;
 
-use crate::indexing::{ObjectSpecifier};
+use crate::indexing::ObjectSpecifier;
 
 pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>, planet_id: Uuid) {
     if let Some(player_id) = player_id {
@@ -11,7 +11,7 @@ pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>, planet_id:
             GameEvent::DialogueTriggerRequest {
                 dialogue_name: "basic_planet".to_owned(),
                 player_id,
-                target: Some(ObjectSpecifier::Planet { id: planet_id})
+                target: Some(ObjectSpecifier::Planet { id: planet_id }),
             },
         );
     }

@@ -304,9 +304,7 @@ use crate::dialogue::{parse_dialogue_script_from_file, Dialogue, DialogueTable};
 use crate::indexing::{find_my_ship_index, GameStateCaches, ObjectSpecifier};
 use crate::perf::{ConsumeOptions, Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
-use crate::world::{
-    GameMode, GameState, Movement, Projectile, SpatialProps, UpdateOptions, UpdateOptionsV2, AABB,
-};
+use crate::world::{GameMode, GameState, SpatialProps, UpdateOptions, UpdateOptionsV2, AABB};
 use chrono::Timelike;
 use mut_static::MutStatic;
 use rand::prelude::*;
@@ -551,7 +549,9 @@ struct SeedWorldArgs {
 use crate::interpolation::gen_rel_position_orbit_phase_table;
 use crate::replay::{ReplayDiffed, ReplayRaw, ValueDiff};
 use crate::trajectory::TrajectoryRequest;
+use combat::Projectile;
 use serde_wasm_bindgen::*;
+use spatial_movement::Movement;
 
 pub fn custom_serialize<T: Serialize>(arg: &T) -> Result<JsValue, JsValue> {
     let ser = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);

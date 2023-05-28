@@ -15,13 +15,13 @@ use crate::market::get_default_value;
 use crate::random_stuff::{
     gen_color, gen_planet_name, gen_star_color, gen_star_name, random_hex_seed, PLANET_NAMES,
 };
+use crate::spatial_movement::{Movement, RotationMovement};
 use crate::system_gen::{
     gen_planet, gen_planet_typed, gen_star, str_to_hash, PlanetType, PoolRandomPicker,
 };
 use crate::vec2::Vec2f64;
 use crate::world::{
-    Asteroid, AsteroidBelt, GameState, Location, Movement, PlanetV2, RotationMovement, Ship,
-    SpatialProps, Star,
+    Asteroid, AsteroidBelt, GameState, Location, PlanetV2, Ship, SpatialProps, Star,
 };
 use crate::{indexing, prng_id};
 use crate::{new_id, world};

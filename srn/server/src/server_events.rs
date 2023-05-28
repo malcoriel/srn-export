@@ -5,7 +5,7 @@ use std::sync::{MutexGuard, RwLockWriteGuard};
 
 use crate::api_struct::AiTrait;
 use crate::indexing::ObjectSpecifier;
-use crate::world_events::GameEvent;
+use crate::world_events::{fire_saved_event, GameEvent};
 use crossbeam::channel::{bounded, Receiver, Sender};
 use lazy_static::lazy_static;
 
@@ -21,7 +21,7 @@ use crate::rooms_api::create_room_impl;
 use crate::states::StateContainer;
 use crate::substitutions::substitute_notification_texts;
 use crate::world;
-use crate::world::{fire_saved_event, spawn_ship, GameMode, GameState, Player};
+use crate::world::{spawn_ship, GameMode, GameState, Player};
 use crate::xcast::XCast;
 use crate::{cargo_rush, indexing, pirate_defence, tutorial};
 use crate::{get_prng, SamplerMarks};

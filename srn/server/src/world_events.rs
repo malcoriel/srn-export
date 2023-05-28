@@ -1,9 +1,9 @@
-use crate::dialogue;
 use crate::dialogue::DialogueStates;
 use crate::indexing::ObjectSpecifier;
 use crate::pirate_defence;
 use crate::world::{PlanetV2, Player, Ship};
 use crate::{cargo_rush, tutorial, world, GameMode, Vec2f64};
+use crate::{dialogue, fire_event};
 use dialogue::DialogueTable;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -416,5 +416,23 @@ impl ProcessedGameEvent {
                 processed_at_ticks, ..
             } => *processed_at_ticks,
         }
+    }
+}
+
+pub fn fire_saved_event(state: &mut GameState, event: GameEvent) {
+    state.events.as_mut().map(|ev| ev.push_back(event.clone()));
+    match event {
+        // list of the events that should only be handled inside world events, and not
+        // as global events
+        GameEvent::ShipDocked { .. } => {}
+        GameEvent::DialogueTriggerRequest { .. } => {}
+        GameEvent::TradeDialogueTriggerRequest { .. } => {}
+        GameEvent::PirateSpawn { .. } => {}
+        // events that has to be duplicated to the system, e.g. both server and world can do
+        // something on them. typically, server just does retransmitting them to the client ahead of the normal update
+        GameEvent::ShipSpawned { .. } => fire_event(event),
+        GameEvent::ShipDied { .. } => fire_event(event),
+        GameEvent::SandboxCommandRequest { .. } => fire_event(event),
+        _ => fire_event(event),
     }
 }

@@ -1,24 +1,26 @@
 use rand_pcg::Pcg64Mcg;
 use serde_derive::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 use std::f64::consts::PI;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::abilities::Ability;
+use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::autofocus::{object_index_into_object_id, SpatialIndex};
 use crate::indexing::{
     find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
     GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::planet_movement::project_body_relative_position;
+use crate::properties::ObjectProperty;
 use crate::random_stuff::generate_normal_random;
-use crate::spatial_movement::align_rotation_with_velocity;
+use crate::spatial_movement::{align_rotation_with_velocity, Movement};
 use crate::system_gen::DEFAULT_WORLD_UPDATE_EVERY_TICKS;
 use crate::vec2::Vec2f64;
 use crate::world::{
-    remove_object, GameState, LocalEffect, Location, Player, Projectile, Ship, SpatialProps,
-    TemplateId, UpdateOptions,
+    remove_object, GameState, LocalEffect, Location, Player, Ship, SpatialProps, TemplateId,
+    UpdateOptions,
 };
 use crate::{indexing, new_id, world};
 
@@ -464,4 +466,151 @@ pub fn update_proj_collisions(
         .into_iter()
         .filter_map(|(ois, d)| object_index_into_object_id(&ois, loc).map(|os| (os, d)))
         .collect()
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+#[serde(tag = "tag", content = "fields")]
+pub enum Projectile {
+    Rocket(RocketProps),
+}
+
+impl Projectile {
+    pub fn get_to_clean_mut(&mut self) -> &mut bool {
+        match self {
+            Projectile::Rocket(props) => &mut props.to_clean,
+        }
+    }
+
+    pub fn get_to_clean(&self) -> &bool {
+        match self {
+            Projectile::Rocket(props) => &props.to_clean,
+        }
+    }
+    pub fn get_markers_mut(&mut self) -> &mut Option<String> {
+        match self {
+            Projectile::Rocket(props) => &mut props.markers,
+        }
+    }
+
+    pub fn get_properties(&self) -> &Vec<ObjectProperty> {
+        match self {
+            Projectile::Rocket(props) => &props.properties,
+        }
+    }
+
+    pub fn get_properties_mut(&mut self) -> &mut Vec<ObjectProperty> {
+        match self {
+            Projectile::Rocket(props) => &mut props.properties,
+        }
+    }
+
+    pub fn get_target(&self) -> Option<ObjectSpecifier> {
+        match self {
+            Projectile::Rocket(props) => props.target.clone(),
+        }
+    }
+
+    pub fn get_movement(&self) -> &Movement {
+        match self {
+            Projectile::Rocket(props) => &props.movement,
+        }
+    }
+
+    pub fn get_blow_radius(&self) -> f64 {
+        match self {
+            Projectile::Rocket(props) => props.damage_radius,
+        }
+    }
+    pub fn get_spatial(&self) -> &SpatialProps {
+        match self {
+            Projectile::Rocket(props) => &props.spatial,
+        }
+    }
+
+    pub fn get_damage(&self) -> f64 {
+        match self {
+            Projectile::Rocket(props) => props.damage,
+        }
+    }
+
+    pub fn get_spatial_mut(&mut self) -> &mut SpatialProps {
+        match self {
+            Projectile::Rocket(props) => &mut props.spatial,
+        }
+    }
+
+    pub fn set_target(&mut self, t: &ShootTarget) {
+        match self {
+            Projectile::Rocket(props) => props.target = t.to_specifier(),
+        }
+    }
+    pub fn set_position_from(&mut self, from: &Vec2f64) {
+        match self {
+            Projectile::Rocket(props) => {
+                props.spatial.position = from.clone();
+            }
+        }
+    }
+}
+
+impl Projectile {
+    pub fn get_id(&self) -> i32 {
+        match self {
+            Projectile::Rocket(RocketProps { id, .. }) => *id,
+        }
+    }
+
+    pub fn set_id(&mut self, val: i32) {
+        match self {
+            Projectile::Rocket(RocketProps { id, .. }) => *id = val,
+        };
+    }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct RocketProps {
+    pub id: i32,
+    pub spatial: SpatialProps,
+    pub movement: Movement,
+    pub properties: Vec<ObjectProperty>,
+    pub target: Option<ObjectSpecifier>,
+    pub damage: f64,
+    pub damage_radius: f64,
+    pub markers: Option<String>,
+    pub to_clean: bool,
+}
+
+pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
+    let mut res = vec![];
+    for i in 0..count {
+        let id = i.to_string();
+        res.push((
+            Ability::Shoot {
+                cooldown_ticks_remaining: 0,
+                turret_id: id.clone(), // only needs to be locally-unique
+                cooldown_normalized: 0.0,
+                cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
+            },
+            ShipTurret { id },
+        ));
+    }
+    let id = res.len().to_string();
+    res.push((
+        Ability::Launch {
+            cooldown_ticks_remaining: 0,
+            turret_id: id.clone(),
+            projectile_template_id: TemplateId::Rocket as i32,
+            cooldown_normalized: 0.0,
+            cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
+        },
+        ShipTurret { id },
+    ));
+    res
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct ShipTurret {
+    pub id: String,
 }

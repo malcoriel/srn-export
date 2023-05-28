@@ -12,10 +12,9 @@ use crate::market::TradeAction;
 use crate::notifications::NotificationActionR;
 use crate::properties::ObjectProperty;
 use crate::sandbox::SandboxCommand;
-use crate::world::{
-    fire_saved_event, undock_ship, GameState, ManualMoveUpdate, PlayerId, Ship, ShipWithTime,
-};
-use crate::world_events::GameEvent;
+use crate::spatial_movement::{undock_ship, ManualMoveUpdate};
+use crate::world::{GameState, PlayerId, Ship, ShipWithTime};
+use crate::world_events::{fire_saved_event, GameEvent};
 use crate::{
     fire_event, indexing, inventory, market, notifications, tractoring, trajectory, Vec2f64,
 };

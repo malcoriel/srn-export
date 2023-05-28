@@ -1,5 +1,5 @@
 use crate::indexing::ObjectSpecifier;
-use crate::world::{Asteroid, Movement, Rarity, RotationMovement, SpatialProps, Star};
+use crate::world::{Asteroid, Rarity, SpatialProps, Star};
 use crate::{get_prng, prng_id, Vec2f64};
 use rand::prelude::*;
 use rand_pcg::Pcg64Mcg;
@@ -350,6 +350,7 @@ pub fn seed_asteroids(star: &Star, prng: &mut Pcg64Mcg) -> Vec<Asteroid> {
     res
 }
 
+use crate::spatial_movement::{Movement, RotationMovement};
 use rand::distributions::{Distribution, Normal};
 
 pub fn generate_normal_random(mean: f64, standard_deviation: f64, prng: &mut Pcg64Mcg) -> f64 {

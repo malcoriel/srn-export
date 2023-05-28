@@ -16,11 +16,9 @@ use crate::interpolation::{
 use crate::perf::Sampler;
 use crate::perf::SamplerMarks;
 use crate::properties::ObjectProperty;
+use crate::spatial_movement::{Movement, RotationMovement};
 use crate::vec2::{AsVec2f64, Precision, Vec2f64};
-use crate::world::{
-    Asteroid, AsteroidBelt, Location, Movement, PlanetV2, RotationMovement, SpatialProps, Star,
-    AABB,
-};
+use crate::world::{Asteroid, AsteroidBelt, Location, PlanetV2, SpatialProps, Star, AABB};
 use crate::DEBUG_PHYSICS;
 use crate::{vec2, world};
 

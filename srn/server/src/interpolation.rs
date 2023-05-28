@@ -3,10 +3,9 @@ use crate::indexing::{
     ObjectSpecifier, Spec,
 };
 use crate::planet_movement::{project_rotation, IBodyV2};
+use crate::spatial_movement::{Movement, RotationMovement};
 use crate::vec2::{Precision, Vec2f64};
-use crate::world::{
-    lerp, GameState, Location, Movement, PlanetV2, RotationMovement, Ship, UpdateOptionsV2, AABB,
-};
+use crate::world::{lerp, GameState, Location, PlanetV2, Ship, UpdateOptionsV2, AABB};
 use crate::{Sampler, SamplerMarks};
 use std::collections::HashMap;
 use std::f64::consts::PI;

@@ -19,9 +19,9 @@ use crate::inventory::{
 use crate::perf::Sampler;
 use crate::random_stuff::gen_random_character_name;
 use crate::substitutions::{index_state_for_substitution, substitute_text};
-use crate::world::{fire_saved_event, GameState, PlanetV2, Player, PlayerId, Ship};
-use crate::world_events::GameEvent;
-use crate::{fire_event, world};
+use crate::world::{GameState, PlanetV2, Player, PlayerId, Ship};
+use crate::world_events::{fire_saved_event, GameEvent};
+use crate::{fire_event, spatial_movement, world};
 use crate::{prng_id, seed_prng};
 use rand::prelude::*;
 use rand_pcg::Pcg64Mcg;
@@ -492,7 +492,7 @@ fn apply_side_effects(
             DialogueOptionSideEffect::Undock => {
                 let my_ship_idx = find_my_ship_index(state, player_id);
                 if let Some(my_ship_idx) = my_ship_idx {
-                    world::undock_ship(state, my_ship_idx, false, player_idx, prng);
+                    spatial_movement::undock_ship(state, my_ship_idx, false, player_idx, prng);
                     state_changed = true;
                 }
             }

@@ -22,11 +22,9 @@ use crate::long_actions::LongActionStart;
 use crate::properties::ObjectProperty;
 use crate::vec2::Vec2f64;
 use crate::world::TimeMarks::BotAction;
-use crate::world::{
-    fire_saved_event, GameOver, GameState, PlanetV2, Ship, ShipTemplate, SpatialIndexes, TimeMarks,
-};
+use crate::world::{GameOver, GameState, PlanetV2, Ship, ShipTemplate, SpatialIndexes, TimeMarks};
 use crate::world_actions::Action;
-use crate::world_events::GameEvent;
+use crate::world_events::{fire_saved_event, GameEvent};
 use crate::{fire_event, fof, indexing, prng_id, world, DialogueTable};
 
 pub fn on_pirate_spawn(state: &mut GameState, at: &Vec2f64, prng: &mut Pcg64Mcg) {

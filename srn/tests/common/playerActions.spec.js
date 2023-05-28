@@ -186,23 +186,24 @@ describe('player actions logic', () => {
     it('can gas & stop & reverse', () => {
       // eslint-disable-next-line prefer-const
       let { state, player, ship } = createStateWithAShip();
+      ship.spatial.rotation_rad = 0;
       ship.spatial.position.x = 100.0;
       ship.spatial.position.y = 100.0;
       state.player_actions.push(mockPlayerActionMove('Gas', ship.id));
       // movement inactivity is 500ms, so update has to be less than that
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.spatial.position.y).toBeGreaterThan(100.0);
-      ship.spatial.position.y = 100.0;
+      expect(ship.spatial.position.x).toBeGreaterThan(100.0);
+      ship.spatial.position.x = 100.0;
       state.player_actions.push(mockPlayerActionMove('StopGas', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.spatial.position.y).toBeCloseTo(100.0);
-      ship.spatial.position.y = 100.0;
+      expect(ship.spatial.position.x).toBeCloseTo(100.0);
+      ship.spatial.position.x = 100.0;
       state.player_actions.push(mockPlayerActionMove('Reverse', ship.id));
       state = updateWorld(state, 250);
       ship = getShipByPlayerId(state, player.id);
-      expect(ship.spatial.position.y).toBeLessThan(100.0);
+      expect(ship.spatial.position.x).toBeLessThan(100.0);
     });
 
     it('can turn & stop', () => {

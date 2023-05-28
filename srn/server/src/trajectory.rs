@@ -2,8 +2,9 @@ use crate::indexing::{GameStateCaches, GameStateIndexes};
 use crate::planet_movement::{
     project_body_relative_position, project_movement_relative_position, IBodyV2,
 };
-use crate::world::{Movement, PlanetV2, SpatialProps};
-use crate::{planet_movement, world, Vec2f64};
+use crate::spatial_movement::Movement;
+use crate::world::{PlanetV2, SpatialProps};
+use crate::{planet_movement, spatial_movement, world, Vec2f64};
 use optimization_engine::panoc::{PANOCCache, PANOCOptimizer};
 use optimization_engine::{constraints, Optimizer, Problem, SolverError};
 use serde_derive::Deserialize;
@@ -39,7 +40,7 @@ pub fn build_trajectory_to_point(
         if should_break {
             break;
         }
-        current_from = world::move_ship_towards(&target_pos, &current_from, max_shift);
+        current_from = spatial_movement::move_ship_towards(&target_pos, &current_from, max_shift);
         result.push(current_from);
         counter += 1;
     }
@@ -83,7 +84,8 @@ pub fn build_trajectory_to_planet(
         if should_break {
             break;
         }
-        current_from = world::move_ship_towards(&new_absolute_position, &current_from, max_shift);
+        current_from =
+            spatial_movement::move_ship_towards(&new_absolute_position, &current_from, max_shift);
         result.push(current_from);
         counter += 1;
     }

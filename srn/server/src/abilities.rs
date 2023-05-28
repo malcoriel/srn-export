@@ -1,4 +1,5 @@
-use crate::world::{GameState, Movement, Ship, ShipIdx};
+use crate::spatial_movement::Movement;
+use crate::world::{GameState, Ship, ShipIdx};
 use core::mem;
 use serde_derive::{Deserialize, Serialize};
 use serde_json::Value;
