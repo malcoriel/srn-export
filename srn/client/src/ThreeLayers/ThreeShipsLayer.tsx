@@ -9,10 +9,8 @@ import {
   LongActionUndock,
 } from '../../../world/pkg';
 import { ThreeShipWreck } from './ThreeShipWreck';
-import _ from 'lodash';
 import {
   ClientStateIndexes,
-  findMyShip,
   findObjectPositionById,
 } from '../ClientStateIndexing';
 
@@ -87,11 +85,7 @@ export const ThreeShipsLayer: React.FC<{
             hpNormalized={ship.health.current / ship.health.max}
             longActions={mapLongActions(ship.long_actions)}
             findObjectPositionByIdBound={(id) => {
-              const pos = findObjectPositionById(state, id);
-              if (pos) {
-                pos.y = -pos.y;
-              }
-              return pos;
+              return findObjectPositionById(state, id);
             }}
             turrets={ship.turrets}
           />
