@@ -10,7 +10,7 @@ use crate::long_actions::{
 };
 use crate::market::TradeAction;
 use crate::notifications::NotificationActionR;
-use crate::properties::ObjectProperty;
+use crate::properties::{find_property, has_property, ObjectProperty, ObjectPropertyKey};
 use crate::sandbox::SandboxCommand;
 use crate::spatial_movement::{undock_ship, ManualMoveUpdate};
 use crate::world::{GameState, PlayerId, Ship, ShipWithTime};
@@ -155,9 +155,7 @@ pub fn world_update_handle_action(
                 let ship = &state_clone.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
 
                 if let Some(planet) = indexing::find_planet(state_clone, &target) {
-                    if planet
-                        .properties
-                        .contains(&ObjectProperty::UnlandablePlanet)
+                    if has_property(&planet.properties, ObjectPropertyKey::UnlandablePlanet)
                         && !ship.abilities.contains(&Ability::BlowUpOnLand)
                     {
                         // technically some logic bug signifier, but it also conflicts with one of the test hacks

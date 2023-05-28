@@ -98,6 +98,10 @@ macro_rules! err {
     }
 }
 
+#[macro_use]
+#[path = "../../server/src/macros.rs"]
+mod macros;
+
 #[path = "../../server/src/world.rs"]
 mod world;
 

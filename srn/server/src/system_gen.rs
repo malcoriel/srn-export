@@ -28,8 +28,8 @@ use crate::random_stuff::{
 use crate::spatial_movement::{Movement, RotationMovement};
 use crate::vec2::Vec2f64;
 use crate::world::{
-    AsteroidBelt, Container, GameMode, GameState, Location, PlanetV2, SpatialProps, Star,
-    TemplateId, AABB, GAME_STATE_VERSION,
+    AsteroidBelt, Container, GameMode, GameState, Location, PlanetV2, ProcessProps, SpatialProps,
+    Star, TemplateId, AABB, GAME_STATE_VERSION,
 };
 use crate::{planet_movement, prng_id, seed_prng, world};
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -617,9 +617,10 @@ fn add_default_templates(state: &mut GameState) {
             acc_angular: DEFAULT_PROJECTILE_ROT_SPEED * 2.0 / 1e6,
             brake_acc: DEFAULT_PROJECTILE_SPEED / 1e6,
         },
-        properties: vec![ObjectProperty::Expires {
+        properties: vec![ObjectProperty::Decays(ProcessProps {
+            progress_normalized: 0.0,
             remaining_ticks: DEFAULT_PROJECTILE_EXPIRATION_TICKS,
-        }],
+        })],
         target: None,
         damage: 50.0,
         damage_radius: 1.0,

@@ -423,13 +423,19 @@ impl Container {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Default)]
+pub struct ProcessProps {
+    pub progress_normalized: f64,
+    pub remaining_ticks: i32,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct Wreck {
     pub spatial: SpatialProps,
     pub id: Uuid,
     pub color: String,
-    pub decay_normalized: f64,
-    pub decay_ticks: i32,
+    pub properties: Vec<ObjectProperty>,
+    pub to_clean: bool,
 }
 
 #[skip_serializing_none]
@@ -1210,29 +1216,10 @@ pub fn update_location(
 
     sampler.end(long_act_ticks);
 
-    if !client {
-        let wreck_decay_id = sampler.start(SamplerMarks::UpdateWreckDecay as u32);
-        update_wreck_decay(state, location_idx, elapsed);
-        sampler.end(wreck_decay_id);
-    }
-
     let clean = sampler.start(SamplerMarks::UpdateCleanup as u32);
     properties::cleanup_objects(&mut state, location_idx);
     sampler.end(clean);
     sampler
-}
-
-fn update_wreck_decay(state: &mut GameState, location_idx: usize, elapsed_ticks: i64) {
-    let mut to_delete = HashSet::new();
-    for wreck in state.locations[location_idx].wrecks.iter_mut() {
-        wreck.decay_ticks = wreck.decay_ticks - elapsed_ticks as i32;
-        if wreck.decay_ticks <= 0 {
-            to_delete.insert(wreck.id);
-        }
-    }
-    state.locations[location_idx]
-        .wrecks
-        .retain(|w| !to_delete.contains(&w.id));
 }
 
 pub fn lerp(from: f64, to: f64, percentage: f64) -> f64 {
@@ -1482,8 +1469,11 @@ pub fn update_hp_effects(
             },
             id: prng_id(prng),
             color: ship_clone.color.clone(),
-            decay_normalized: 0.0,
-            decay_ticks: WRECK_DECAY_TICKS,
+            properties: vec![ObjectProperty::Decays(ProcessProps {
+                remaining_ticks: WRECK_DECAY_TICKS,
+                progress_normalized: 0.0,
+            })],
+            to_clean: false,
         });
         let event =
             if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)) {

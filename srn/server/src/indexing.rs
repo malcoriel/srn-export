@@ -8,7 +8,7 @@ use uuid::*;
 use wasm_bindgen::prelude::*;
 
 use crate::planet_movement::{get_radial_bodies, IBodyV2};
-use crate::properties::ObjectProperty;
+use crate::properties::{ObjectProperty, ObjectPropertyKey};
 use crate::world::{
     Asteroid, Container, GameState, Location, NatSpawnMineral, PlanetV2, Player, Ship, ShipIdx,
     SpatialIndexes, SpatialProps,
@@ -435,6 +435,7 @@ impl ObjectSpecifier {
 pub enum ObjectIndexSpecifier {
     Unknown,
     Mineral { idx: usize },
+    Wreck { idx: usize },
     Container { idx: usize },
     Projectile { idx: usize },
     Asteroid { idx: usize },
@@ -467,7 +468,7 @@ pub struct GameStateIndexes<'a> {
     pub ships_by_id: HashMap<Uuid, &'a Ship>,
     pub anchor_distances: HashMap<ObjectSpecifier, f64>,
     pub bodies_by_id: HashMap<ObjectSpecifier, Box<&'a dyn IBodyV2>>,
-    pub objects_by_property_type: Vec<HashMap<ObjectProperty, Vec<ObjectIndexSpecifier>>>,
+    pub objects_by_property_type: Vec<HashMap<ObjectPropertyKey, Vec<ObjectIndexSpecifier>>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -530,7 +531,7 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
 
 fn index_objects_by_property_type(
     locs: &Vec<Location>,
-) -> Vec<HashMap<ObjectProperty, Vec<ObjectIndexSpecifier>>> {
+) -> Vec<HashMap<ObjectPropertyKey, Vec<ObjectIndexSpecifier>>> {
     let mut all_loc_res = vec![];
     for loc in locs {
         let mut res = HashMap::new();
@@ -538,6 +539,12 @@ fn index_objects_by_property_type(
             for prop in proj.get_properties().iter() {
                 let entry = res.entry(prop.key()).or_insert(Vec::new());
                 entry.push(ObjectIndexSpecifier::Projectile { idx: proj_idx })
+            }
+        }
+        for (idx, wreck) in loc.wrecks.iter().enumerate() {
+            for prop in wreck.properties.iter() {
+                let entry = res.entry(prop.key()).or_insert(Vec::new());
+                entry.push(ObjectIndexSpecifier::Wreck { idx })
             }
         }
         all_loc_res.push(res);

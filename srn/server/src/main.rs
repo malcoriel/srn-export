@@ -131,6 +131,9 @@ macro_rules! cast {
 }
 
 #[macro_use]
+mod macros;
+
+#[macro_use]
 extern crate rocket;
 extern crate websocket;
 #[macro_use]

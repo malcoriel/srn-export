@@ -277,6 +277,10 @@ pub fn object_index_into_object_id(
             .star
             .as_ref()
             .map(|s| ObjectSpecifier::Star { id: s.id }),
+        ObjectIndexSpecifier::Wreck { idx } => loc
+            .wrecks
+            .get(*idx)
+            .map(|o| ObjectSpecifier::Wreck { id: o.id }),
     }
 }
 
@@ -305,6 +309,9 @@ pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) 
             .asteroids
             .get(*idx)
             .map(|ship| ship.spatial.position.clone()),
+        ObjectIndexSpecifier::Wreck { idx } => {
+            loc.wrecks.get(*idx).map(|wr| wr.spatial.position.clone())
+        }
     }
 }
 
