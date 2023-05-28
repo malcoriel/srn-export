@@ -31,6 +31,8 @@ export enum WindowState {
   Hidden,
   Shown,
   Minimized,
+  ShownUnclosable,
+  MinimizedUnclosable,
 }
 
 export enum MainUiState {
@@ -112,7 +114,7 @@ export type SrnState = {
   setHostileAutoFocusSpecifier: (sp?: ObjectSpecifier | null) => void;
   setHotkeyPressed: (key: string, value: boolean) => void;
   setHotkeyScope: (key: string) => void;
-  hideAllWindows: () => void;
+  tryHideAllWindows: () => void;
 };
 
 export enum TestMenuMode {
@@ -128,7 +130,7 @@ const lsSkipMenu = extractLSValue('skipMenu', false);
 const lsMusicEnabled = extractLSValue('musicEnabled', false);
 const lsMusicVolume = extractLSValue('musicVolume', 30);
 
-function toggleWindowState(old: WindowState, hasMinimized = false) {
+const toggleWindowState = (old: WindowState, hasMinimized = false) => {
   if (hasMinimized) {
     if (old === WindowState.Shown) {
       return WindowState.Minimized;
@@ -136,14 +138,27 @@ function toggleWindowState(old: WindowState, hasMinimized = false) {
     if (old === WindowState.Minimized) {
       return WindowState.Hidden;
     }
+    if (old === WindowState.ShownUnclosable) {
+      return WindowState.MinimizedUnclosable;
+    }
+    if (old === WindowState.MinimizedUnclosable) {
+      return WindowState.ShownUnclosable;
+    }
+
     return WindowState.Shown;
   }
 
   if (old === WindowState.Shown) {
     return WindowState.Hidden;
   }
+  if (old === WindowState.Hidden) {
+    return WindowState.Shown;
+  }
+  if (old === WindowState.ShownUnclosable) {
+    return WindowState.ShownUnclosable;
+  }
   return WindowState.Shown;
-}
+};
 
 import { devtools } from 'zustand/middleware';
 
@@ -303,10 +318,11 @@ export const useStore = create<SrnState>(
     setHotkeyPressed: (key, value) =>
       set(() => ({ hotkeysPressed: { [key]: value } })),
     setHotkeyScope: (key) => set(() => ({ hotkeyScope: key })),
-    hideAllWindows: () =>
+    tryHideAllWindows: () =>
       set((state) => {
         const targetWindows = Object.entries(state).filter(([key, value]) => {
           return (
+            // deliberately ignore unclosable shown and minimized
             value === WindowState.Shown &&
             key.toLowerCase().indexOf('window') > -1
           );

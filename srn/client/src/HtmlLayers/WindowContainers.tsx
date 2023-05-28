@@ -4,11 +4,11 @@ import { useScopedHotkey } from '../utils/hotkeyHooks';
 import { useStore } from '../store';
 
 export const WindowContainers: React.FC = () => {
-  const hideAllWindows = useStore((store) => store.hideAllWindows);
+  const tryHideAllWindows = useStore((store) => store.tryHideAllWindows);
   useScopedHotkey(
     'esc',
     () => {
-      hideAllWindows();
+      tryHideAllWindows();
     },
     'window',
     {},

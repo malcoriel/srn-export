@@ -73,6 +73,7 @@ export const useBoundHotkeyScope = (boundScope: string, shown: boolean) => {
     } else {
       setScope('game');
     }
+    return () => setScope('game');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown]);
 };

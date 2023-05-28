@@ -49,8 +49,14 @@ export const Window: React.FC<{
     [setKey]: (state as Record<string, any>)[setKey],
   }));
   const state = fixedState || (storeParts[key] as WindowState);
-  const minimize = () => storeParts[setKey](WindowState.Minimized);
-  const maximize = () => storeParts[setKey](WindowState.Shown);
+  const minimize = () =>
+    storeParts[setKey](
+      unclosable ? WindowState.MinimizedUnclosable : WindowState.Minimized
+    );
+  const maximize = () =>
+    storeParts[setKey](
+      unclosable ? WindowState.ShownUnclosable : WindowState.Shown
+    );
   const hide = () => {
     if (onClose) onClose();
 
@@ -58,8 +64,11 @@ export const Window: React.FC<{
       unclosable ? WindowState.Minimized : WindowState.Hidden
     );
   };
-  const isShown = state === WindowState.Shown;
-  const isMinimized = state === WindowState.Minimized;
+  const isShown =
+    state === WindowState.Shown || state === WindowState.ShownUnclosable;
+  const isMinimized =
+    state === WindowState.Minimized ||
+    state === WindowState.MinimizedUnclosable;
   useBoundHotkeyScope('window', isShown);
   useScopedHotkey(
     toggleHotkey || '<nothing>',

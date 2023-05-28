@@ -176,7 +176,7 @@ export const DialogueWindow: React.FC = () => {
 
   useEffect(() => {
     if (dialogue_id) {
-      setDialogueWindowState(WindowState.Shown);
+      setDialogueWindowState(WindowState.ShownUnclosable);
     } else {
       setDialogueWindowState(WindowState.Hidden);
     }

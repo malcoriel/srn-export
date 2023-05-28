@@ -33,6 +33,14 @@ export default {
         step: 0.01,
       },
     },
+    turretCount: {
+      control: {
+        type: 'range',
+        min: 0,
+        max: 4,
+        step: 1,
+      },
+    },
   },
 } as Meta;
 
@@ -74,7 +82,7 @@ const MainTemplate: Story = (args) => {
           visible
           tractorTargetPosition={args.tractoring ? VectorF(-5, -5) : null}
           longActions={args.shooting ? longActions : []}
-          turrets={genTurrets(3)}
+          turrets={genTurrets(args.turretCount)}
           findObjectPositionByIdBound={() => target}
         />
       ) : (
@@ -97,6 +105,7 @@ Main.args = {
   blow: false,
   hpNormalized: 1.0,
   tractoring: false,
-  shooting: false,
+  shooting: true,
+  turretCount: 3,
   rotation: 0.0,
 };
