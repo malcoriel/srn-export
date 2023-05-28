@@ -12,7 +12,10 @@ import { ThreeShipWreck } from './ThreeShipWreck';
 import {
   ClientStateIndexes,
   findObjectPositionById,
+  findProperty,
 } from '../ClientStateIndexing';
+import { ObjectPropertyKey } from '../../../world/pkg/world.extra';
+import { ObjectPropertyDecays } from '../../../world/pkg/world';
 
 // Right now, there's no server-side support for actual separate shooting
 // So this mapping is for visual effect only
@@ -92,11 +95,17 @@ export const ThreeShipsLayer: React.FC<{
         );
       })}
       {wrecks.map((w) => {
+        const decayProp = findProperty<ObjectPropertyDecays>(
+          w.properties,
+          ObjectPropertyKey.Decays
+        );
         return (
           <ThreeShipWreck
             key={w.id}
             color={w.color}
             gid={w.id}
+            // only considers max ticks to prevent accidental update, even if it means a bit of desync
+            fadeOver={decayProp ? decayProp.fields.max_ticks : undefined}
             opacity={1.0}
             position={Vector.fromIVector(w.spatial.position)}
             radius={w.spatial.radius}

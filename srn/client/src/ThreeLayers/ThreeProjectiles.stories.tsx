@@ -18,6 +18,11 @@ export default {
         step: 0.01,
       },
     },
+    decay: {
+      control: {
+        type: 'boolean',
+      },
+    },
   },
 } as Meta;
 
@@ -35,6 +40,7 @@ const Template: Story = (args) => {
           velocity={VectorF(1.0, 1.0)}
           rotation={args.rotation}
           radius={1}
+          fadeOver={args.decay ? 3e6 : undefined}
           markers="abcdef"
           key={JSON.stringify(args) + revision}
         />
@@ -46,4 +52,5 @@ const Template: Story = (args) => {
 export const Rocket = Template.bind({});
 Rocket.args = {
   rotation: 0.0,
+  decay: false,
 };

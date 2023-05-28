@@ -31,7 +31,9 @@ use crate::market::{init_all_planets_market, Market};
 use crate::notifications::{get_new_player_notifications, Notification, NotificationText};
 use crate::perf::{Sampler, SamplerMarks};
 use crate::planet_movement::IBodyV2;
-use crate::properties::{cleanup_objects, update_properties_rules, ObjectProperty};
+use crate::properties::{
+    cleanup_objects, update_properties_rules, MoneyOnKillProps, ObjectProperty, WRECK_DECAY_TICKS,
+};
 use crate::random_stuff::{
     gen_asteroid_radius, gen_asteroid_shift, gen_color, gen_mineral_props, gen_planet_count,
     gen_planet_gap, gen_planet_name, gen_planet_orbit_speed, gen_planet_radius,
@@ -427,6 +429,22 @@ impl Container {
 pub struct ProcessProps {
     pub progress_normalized: f64,
     pub remaining_ticks: i32,
+    pub max_ticks: i32,
+}
+
+impl ProcessProps {
+    pub fn from(ticks: i32) -> ProcessProps {
+        ProcessProps {
+            progress_normalized: 0.0,
+            remaining_ticks: ticks,
+            max_ticks: ticks,
+        }
+    }
+    pub fn apply(&mut self, elapsed: i32) -> bool {
+        self.remaining_ticks = (self.remaining_ticks - elapsed).max(0);
+        self.progress_normalized = 1.0 - (self.remaining_ticks as f64 / self.max_ticks as f64);
+        self.remaining_ticks <= 0
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -1347,8 +1365,6 @@ const STAR_FAR_RADIUS: f64 = 1.1;
 const MAX_LOCAL_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
-
-const WRECK_DECAY_TICKS: i32 = 3 * 1000 * 1000;
 // also matches fadeOver in UI
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
 pub const PLANET_HEALTH_REGEN_PER_TICK: f64 = 1.0 / 1000.0 / 1000.0;
@@ -1469,10 +1485,9 @@ pub fn update_hp_effects(
             },
             id: prng_id(prng),
             color: ship_clone.color.clone(),
-            properties: vec![ObjectProperty::Decays(ProcessProps {
-                remaining_ticks: WRECK_DECAY_TICKS,
-                progress_normalized: 0.0,
-            })],
+            properties: vec![ObjectProperty::Decays(ProcessProps::from(
+                WRECK_DECAY_TICKS,
+            ))],
             to_clean: false,
         });
         let event =
@@ -1556,7 +1571,7 @@ impl ShipTemplate {
                 turn_speed: max_angular_speed,
             }),
             properties: Some(vec![
-                ObjectProperty::MoneyOnKill { amount: 100 },
+                ObjectProperty::MoneyOnKill(MoneyOnKillProps { amount: 100 }),
                 ObjectProperty::PirateShip,
             ]),
         }

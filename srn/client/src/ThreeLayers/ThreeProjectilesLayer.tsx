@@ -1,11 +1,14 @@
 import React from 'react';
-import { ClientStateIndexes } from '../ClientStateIndexing';
+import { ClientStateIndexes, findProperty } from '../ClientStateIndexing';
 import { GameState } from '../world';
 import { vecToThreePos } from './util';
 import Vector, { IVector, VectorF, VectorFZero } from '../utils/Vector';
 import { Text } from '@react-three/drei';
 import { teal } from '../utils/palette';
 import { ThreeTrajectoryItem } from './ThreeTrajectoryItem';
+import { useFadingMaterial } from './UseFadingMaterial';
+import { ObjectPropertyKey } from '../../../world/pkg/world.extra';
+import { ObjectPropertyDecays } from '../../../world/pkg/world';
 
 export type ThreeProjectilesLayerParams = {
   visMap: Record<string, boolean>;
@@ -18,6 +21,7 @@ export interface ThreeRocketProps {
   velocity: IVector;
   rotation: number;
   radius: number;
+  fadeOver?: number;
   markers?: string | null;
 }
 
@@ -70,8 +74,11 @@ export const ThreeRocket: React.FC<ThreeRocketProps> = ({
   rotation,
   radius,
   velocity,
+  fadeOver,
   markers,
 }) => {
+  const materialRef1 = useFadingMaterial(fadeOver, 1.0);
+  const materialRef2 = useFadingMaterial(fadeOver, 1.0);
   return (
     <group position={vecToThreePos(position, 0)}>
       <group
@@ -80,11 +87,11 @@ export const ThreeRocket: React.FC<ThreeRocketProps> = ({
       >
         <mesh>
           <planeBufferGeometry args={[0.5, 1.5]} />
-          <meshBasicMaterial color="red" />
+          <meshBasicMaterial color="red" transparent ref={materialRef1} />
         </mesh>
         <mesh rotation={[0, 0, Math.PI / 4]} position={[0, 0.8, -0.25]}>
           <planeBufferGeometry args={[0.5, 0.5]} />
-          <meshBasicMaterial color="yellow" />
+          <meshBasicMaterial color="yellow" transparent ref={materialRef2} />
         </mesh>
       </group>
       {markers && (
@@ -105,16 +112,23 @@ export const ThreeProjectilesLayer: React.FC<ThreeProjectilesLayerParams> = ({
   const { projectiles } = state.locations[0];
   return (
     <>
-      {projectiles.map((projectile) => (
-        <ThreeRocket
-          position={projectile.fields.spatial.position}
-          rotation={projectile.fields.spatial.rotation_rad}
-          velocity={projectile.fields.spatial.velocity}
-          radius={projectile.fields.spatial.radius}
-          markers={projectile.fields.markers}
-          key={projectile.fields.id}
-        />
-      ))}
+      {projectiles.map((projectile) => {
+        const decayProp = findProperty<ObjectPropertyDecays>(
+          projectile.fields.properties,
+          ObjectPropertyKey.Decays
+        );
+        return (
+          <ThreeRocket
+            position={projectile.fields.spatial.position}
+            rotation={projectile.fields.spatial.rotation_rad}
+            velocity={projectile.fields.spatial.velocity}
+            fadeOver={decayProp ? decayProp.fields.max_ticks : undefined}
+            radius={projectile.fields.spatial.radius}
+            markers={projectile.fields.markers}
+            key={projectile.fields.id}
+          />
+        );
+      })}
     </>
   );
 };

@@ -26,7 +26,6 @@ export const ThreeShipWreck: React.FC<ThreeShipWreckProps> = (props) => {
   });
   return (
     <ShipShape
-      fadeOver={3.0}
       {...props}
       color={new Color(props.color).darken(0.5).hex().toString()}
     >

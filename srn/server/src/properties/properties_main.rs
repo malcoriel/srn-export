@@ -7,16 +7,22 @@ use serde_with::skip_serializing_none;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
 
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct MoneyOnKillProps {
+    pub amount: i32,
+}
+
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-#[serde(tag = "tag")]
+#[serde(tag = "tag", content = "fields")]
 pub enum ObjectProperty {
     Unknown,
     UnlandablePlanet,
     PirateDefencePlayersHomePlanet,
     PirateShip,
-    MoneyOnKill { amount: i32 },
+    MoneyOnKill(MoneyOnKillProps),
     Decays(ProcessProps),
+    Lifetime(ProcessProps),
 }
 
 #[skip_serializing_none]
@@ -30,6 +36,7 @@ pub enum ObjectPropertyKey {
     PirateShip,
     MoneyOnKill,
     Decays,
+    Lifetime,
 }
 
 impl ObjectProperty {
@@ -43,6 +50,7 @@ impl ObjectProperty {
                 ObjectPropertyKey::PirateDefencePlayersHomePlanet
             }
             ObjectProperty::PirateShip => ObjectPropertyKey::PirateShip,
+            ObjectProperty::Lifetime { .. } => ObjectPropertyKey::Lifetime,
         }
     }
 }
@@ -75,4 +83,24 @@ pub fn find_property_mut(
 
 pub fn has_property(props: &Vec<ObjectProperty>, key: ObjectPropertyKey) -> bool {
     find_property(props, key).is_some()
+}
+
+pub fn ensure_property(props: &mut Vec<ObjectProperty>, prop: ObjectProperty) {
+    if has_property(props, prop.key()) {
+        return;
+    }
+    props.push(prop);
+}
+
+pub fn ensure_no_property(props: &mut Vec<ObjectProperty>, prop: ObjectPropertyKey) {
+    props.retain(|p| p.key() != prop);
+}
+
+pub fn replace_property(
+    props: &mut Vec<ObjectProperty>,
+    from: ObjectPropertyKey,
+    to: ObjectProperty,
+) {
+    ensure_no_property(props, from);
+    ensure_property(props, to);
 }

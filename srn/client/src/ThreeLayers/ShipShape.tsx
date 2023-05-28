@@ -1,11 +1,11 @@
-import React, { useMemo, useRef } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
+import React, { useMemo } from 'react';
+import { useLoader } from '@react-three/fiber';
 import { Geometry } from 'three/examples/jsm/deprecated/Geometry';
 import { posToThreePos, Vector3Arr } from './util';
 import Vector, { VectorF } from '../utils/Vector';
 import * as THREE from 'three';
 import { SHADOW_ID } from '../StateSyncer';
-import { MeshBasicMaterial } from 'three';
+import { useFadingMaterial } from './UseFadingMaterial';
 
 const STLLoader = require('three-stl-loader')(THREE);
 // ships are always 'above' the stuff
@@ -20,6 +20,7 @@ export type ShipShapeProps = {
   fadeOver?: number;
   visible?: boolean;
 };
+
 export const ShipShape: React.FC<ShipShapeProps> = ({
   radius,
   position,
@@ -43,24 +44,7 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
   // to shifted weight center
   const shift = VectorF(radius / 5.0, 0).turnOn(rotation);
 
-  const material = useRef<MeshBasicMaterial>(null);
-  useFrame((_state, delta) => {
-    if (!material.current) {
-      return;
-    }
-    if (!fadeOver) {
-      return;
-    }
-    if (material.current.opacity > 0) {
-      if (typeof material.current.userData.fadeTimer === 'undefined') {
-        material.current.userData.fadeTimer = 0;
-      }
-      material.current.userData.fadeTimer += delta;
-      material.current.opacity =
-        opacity *
-        (1.0 - Math.min(material.current.userData.fadeTimer / fadeOver, 1.0));
-    }
-  });
+  const materialRef = useFadingMaterial(fadeOver, opacity);
 
   const shipZ = gid === SHADOW_ID ? -10 : SHIP_FIXED_Z;
   return (
@@ -76,12 +60,7 @@ export const ShipShape: React.FC<ShipShapeProps> = ({
         // @ts-ignore
         geometry={shipModel}
       >
-        <meshBasicMaterial
-          ref={material}
-          color={color}
-          opacity={opacity}
-          transparent
-        />
+        <meshBasicMaterial ref={materialRef} color={color} transparent />
       </mesh>
       {children}
     </group>

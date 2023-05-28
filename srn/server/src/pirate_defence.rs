@@ -65,7 +65,7 @@ pub fn on_ship_died(state: &mut GameState, ship: Ship) {
         .find(|a| matches!(a, ObjectProperty::MoneyOnKill { .. }))
     {
         match prop {
-            ObjectProperty::MoneyOnKill { amount } => {
+            ObjectProperty::MoneyOnKill(props) => {
                 if let Some(killer) = ship.health.last_damage_dealer {
                     let player_id = match killer {
                         ObjectSpecifier::Ship { id } => {
@@ -80,7 +80,7 @@ pub fn on_ship_died(state: &mut GameState, ship: Ship) {
                     };
                     if let Some(player_id) = player_id {
                         if let Some(player) = state.players.iter_mut().find(|p| p.id == player_id) {
-                            player.money += amount;
+                            player.money += props.amount;
                         }
                     }
                 }

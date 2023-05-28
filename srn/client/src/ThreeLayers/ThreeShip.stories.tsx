@@ -92,6 +92,7 @@ const MainTemplate: Story = (args) => {
           gid="11231231231232"
           radius={2.0}
           opacity={1.0}
+          fadeOver={3 * 1e6}
           rotation={args.rotation}
           position={VectorF(0, 0)}
         />

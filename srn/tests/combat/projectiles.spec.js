@@ -1,4 +1,15 @@
-import { swapGlobals, wasm } from '../util';
+import { createStateWithAShip, swapGlobals, updateWorld, wasm } from '../util';
+
+const mockProjMovement = {
+  tag: 'ShipAccelerated',
+  max_linear_speed: 1.0,
+  max_rotation_speed: 1.0,
+  linear_drag: 1.0,
+  acc_linear: 1.0,
+  brake_acc: 1.0,
+  max_turn_speed: 1.0,
+  acc_angular: 1.0,
+};
 
 function makeGuideCall(proj_pos, proj_vel, proj_rot, targetPos) {
   return wasm.guideProjectile({
@@ -13,16 +24,7 @@ function makeGuideCall(proj_pos, proj_vel, proj_rot, targetPos) {
           rotation_rad: proj_rot,
           radius: 1.0,
         },
-        movement: {
-          tag: 'ShipAccelerated',
-          max_linear_speed: 1.0,
-          max_rotation_speed: 1.0,
-          linear_drag: 1.0,
-          acc_linear: 1.0,
-          brake_acc: 1.0,
-          max_turn_speed: 1.0,
-          acc_angular: 1.0,
-        },
+        movement: mockProjMovement,
         properties: [],
         target: {
           tag: 'Ship',
@@ -46,6 +48,12 @@ function makeGuideCall(proj_pos, proj_vel, proj_rot, targetPos) {
     },
     elapsed_micro: 16000,
   });
+}
+
+function expectPropertyPresence(props, propName) {
+  expect(props).toEqual(
+    expect.arrayContaining([expect.objectContaining({ tag: propName })])
+  );
 }
 
 describe('combat projectiles', () => {
@@ -188,6 +196,53 @@ describe('combat projectiles', () => {
 
       expect(counterclockwise.gas).toBeCloseTo(-1); // decelerate to not desync further
       expect(counterclockwise.turn).toBeCloseTo(1); // turn counter-clockwise in math coords
+    });
+
+    it('can expire after specified time + 3s', () => {
+      const { state } = createStateWithAShip('Sandbox');
+      state.locations[0].projectiles.push({
+        tag: 'Rocket',
+        fields: {
+          id: 1,
+          spatial: {
+            position: {
+              x: -100.0,
+              y: -100.0,
+            },
+            velocity: {
+              x: 0.0,
+              y: 0.0,
+            },
+            angular_velocity: 0.0,
+            rotation_rad: 0,
+            radius: 1.0,
+          },
+          movement: mockProjMovement,
+          properties: [
+            {
+              tag: 'Lifetime',
+              fields: {
+                progress_normalized: 0.0,
+                remaining_ticks: 1e6,
+                max_ticks: 1e6,
+              },
+            },
+          ],
+          damage: 1.0,
+          damage_radius: 1.0,
+          to_clean: false,
+        },
+      });
+      const stillAlive = updateWorld(state, 900);
+      expect(stillAlive.locations[0].projectiles.length).toEqual(1);
+      const decaying = updateWorld(stillAlive, 200);
+      expect(decaying.locations[0].projectiles.length).toEqual(1);
+      expectPropertyPresence(
+        decaying.locations[0].projectiles[0].fields.properties,
+        'Decays'
+      );
+      const expired = updateWorld(decaying, 3000);
+      expect(expired.locations[0].projectiles.length).toEqual(0);
     });
   });
 });

@@ -13,6 +13,7 @@ use crate::indexing::{
     GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::planet_movement::project_body_relative_position;
+use crate::properties::properties_main::ObjectProperty;
 use crate::properties::*;
 use crate::random_stuff::generate_normal_random;
 use crate::spatial_movement::{align_rotation_with_velocity, Movement};

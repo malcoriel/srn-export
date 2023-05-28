@@ -9,9 +9,23 @@ import type {
   Ship,
 } from './world';
 import Vector, { isIVector, IVector } from './utils/Vector';
-import { ObjectSpecifierBuilder } from '../../world/pkg/world.extra';
+import {
+  ObjectPropertyKey,
+  ObjectSpecifierBuilder,
+} from '../../world/pkg/world.extra';
 import { UnreachableCaseError } from 'ts-essentials';
-import { Container, ObjectSpecifier } from '../../world/pkg/world';
+import {
+  Container,
+  ObjectProperty,
+  ObjectPropertyDecays,
+  ObjectPropertyLifetime,
+  ObjectPropertyMoneyOnKill,
+  ObjectPropertyPirateDefencePlayersHomePlanet,
+  ObjectPropertyPirateShip,
+  ObjectPropertyUnknown,
+  ObjectPropertyUnlandablePlanet,
+  ObjectSpecifier,
+} from '../../world/pkg/world';
 
 export interface ClientStateIndexes {
   myShip: Ship | null;
@@ -293,4 +307,11 @@ export const findObjectPositionById = (
   }
   const { object } = objRes;
   return Vector.fromIVector(getObjectPosition(object));
+};
+
+export const findProperty = <T extends ObjectProperty>(
+  props: ObjectProperty[],
+  key: ObjectPropertyKey
+): T | null => {
+  return (props.find((p) => p.tag === key) as T) || null;
 };

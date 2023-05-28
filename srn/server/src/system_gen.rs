@@ -18,7 +18,7 @@ use crate::indexing::{index_state, GameStateCaches, ObjectSpecifier, Spec};
 use crate::interpolation::get_orbit_phase_table;
 use crate::market::{init_all_planets_market, Market};
 use crate::perf::Sampler;
-use crate::properties::ObjectProperty;
+use crate::properties::{ObjectProperty, PROJECTILE_LIFETIME_TICKS, WRECK_DECAY_TICKS};
 use crate::random_stuff::{
     gen_color, gen_period, gen_planet_count, gen_planet_orbit_period, gen_planet_orbit_speed,
     gen_planet_radius, gen_sat_count, gen_sat_gap, gen_sat_orbit_period, gen_sat_orbit_speed,
@@ -617,9 +617,10 @@ fn add_default_templates(state: &mut GameState) {
             acc_angular: DEFAULT_PROJECTILE_ROT_SPEED * 2.0 / 1e6,
             brake_acc: DEFAULT_PROJECTILE_SPEED / 1e6,
         },
-        properties: vec![ObjectProperty::Decays(ProcessProps {
+        properties: vec![ObjectProperty::Lifetime(ProcessProps {
             progress_normalized: 0.0,
-            remaining_ticks: DEFAULT_PROJECTILE_EXPIRATION_TICKS,
+            remaining_ticks: PROJECTILE_LIFETIME_TICKS,
+            max_ticks: PROJECTILE_LIFETIME_TICKS,
         })],
         target: None,
         damage: 50.0,
