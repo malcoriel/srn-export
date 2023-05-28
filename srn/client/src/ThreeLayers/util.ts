@@ -56,3 +56,8 @@ export const posToThreePos = (x: number, y: number, z?: number): Vector3Arr => [
 ];
 
 export const vec3repeat = (x: number): Vector3Arr => [x, x, x];
+
+export const circularLerp = (a: number, b: number, pct: number) => {
+  const newVal = (b - a) * pct + a;
+  return newVal > Math.PI * 2 ? newVal - Math.PI * 2 : newVal;
+};

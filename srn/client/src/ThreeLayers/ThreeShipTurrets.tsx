@@ -1,11 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import _ from 'lodash';
-import {
-  threePosToVectorInv,
-  ThreeVectorArr,
-  Vector3Arr,
-  vecToThreePosInv,
-} from './util';
+import { threePosToVectorInv, ThreeVectorArr, Vector3Arr } from './util';
 import Vector, {
   getCounterClockwiseAngleMath,
   getRadialCoordsMath,
@@ -33,11 +28,6 @@ export interface ThreeShipTurretsProps {
   findObjectPositionByIdBound: (id: string | number) => Vector | null;
 }
 
-const circularLerp = (a: number, b: number, pct: number) => {
-  const newVal = (b - a) * pct + a;
-  return newVal > Math.PI * 2 ? newVal - Math.PI * 2 : newVal;
-};
-
 export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
   positionRadius,
   turrets,
@@ -50,13 +40,7 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
   ownRadius,
   color,
 }) => {
-  // const [rotationStates, setRotationStates] = useState(
-  //   turrets.reduce((acc, curr) => ({ [curr.id]: 0 }), {}) as Record<
-  //     string,
-  //     number
-  //   >
-  // );
-
+  const rotationCorrection = Math.PI / 2;
   const shoots: Record<string, any> = useMemo(
     () =>
       _.keyBy(
@@ -77,16 +61,23 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
             const endShift = threePosToVectorInv(...parentPosition);
             return {
               startTurretId: shootLongAct.turret_id,
-              end: end.add(endShift).turnCounterClockwise(-rotation),
+              end: end
+                .add(endShift)
+                .turnCounterClockwise(-(rotation - rotationCorrection)),
               progression: shootLongAct.percentage,
             };
           })
           .filter((v) => !!v),
         'startTurretId'
       ),
-    [longActions, findObjectPositionByIdBound, parentPosition, rotation]
+    [
+      longActions,
+      findObjectPositionByIdBound,
+      parentPosition,
+      rotation,
+      rotationCorrection,
+    ]
   );
-  const centralAlignmentFix = Math.PI / 2;
 
   const nodes = useMemo(() => {
     return _.map(turrets, (turretProps, i) => {
@@ -125,26 +116,8 @@ export const ThreeShipTurrets: React.FC<ThreeShipTurretsProps> = ({
       };
     });
   }, [positionRadius, turrets, shoots, findObjectPositionByIdBound]);
-  // useEffect(() => {
-  //   const rotationStatesClone = _.clone(rotationStates);
-  //   for (const node of nodes) {
-  //     // when progress is less than 0.2, interpolate 0-0.2
-  //     // when more, jump immediately
-  //     if (node && node.progression < 50) {
-  //       const number = circularLerp(
-  //         rotationStatesClone[node.key],
-  //         node.tRotation,
-  //         (node.progression * 2) / 100
-  //       );
-  //       rotationStatesClone[node.key] = number;
-  //     } else {
-  //       rotationStatesClone[node.key] = node.tRotation;
-  //     }
-  //   }
-  //   setRotationStates(rotationStatesClone);
-  // }, [nodes, setRotationStates]);
   return (
-    <group rotation={[0, 0, rotation]} position={position}>
+    <group rotation={[0, 0, rotation - rotationCorrection]} position={position}>
       {nodes.map(({ position, key, vPosition, tRotation }) => {
         const r = ownRadius;
         const shootProps = shoots[key];
