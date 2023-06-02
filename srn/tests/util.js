@@ -240,8 +240,6 @@ export const mockShip = (id) => ({
     rotation_rad: Math.PI,
     radius: 1,
   },
-  acc_periodic_dmg: 0,
-  acc_periodic_heal: 0,
   color: 'red',
   trajectory: [],
   inventory: [],
@@ -257,6 +255,8 @@ export const mockShip = (id) => ({
   health: {
     current: 10,
     max: 10,
+    acc_periodic_dmg: 0,
+    acc_periodic_heal: 0,
   },
   local_effects: [],
   local_effects_counter: 0,

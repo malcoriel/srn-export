@@ -11,8 +11,9 @@ use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, object_index_into_object_id, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
-use crate::combat::{guide_projectile, Health, Projectile, ShipTurret, ShootTarget};
+use crate::combat::{guide_projectile, Explosion, Health, Projectile, ShipTurret, ShootTarget};
 use crate::dialogue::Dialogue;
+use crate::hp::SHIP_REGEN_PER_SEC;
 use crate::indexing::{
     find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
     find_spatial_ref_by_spec, index_planets_by_id, index_players_by_ship_id, index_ships_by_id,
@@ -54,7 +55,7 @@ use crate::world_actions::*;
 use crate::world_actions::{Action, ControlMarkers};
 use crate::world_events::{world_update_handle_event, GameEvent, ProcessedGameEvent};
 use crate::{
-    abilities, autofocus, cargo_rush, combat, indexing, pirate_defence, prng_id, random_stuff,
+    abilities, autofocus, cargo_rush, combat, hp, indexing, pirate_defence, prng_id, random_stuff,
     spatial_movement, system_gen, trajectory, world_events,
 };
 use crate::{dialogue, vec2};
@@ -114,6 +115,23 @@ pub enum LocalEffect {
         position: Vec2f64,
         tick: u32,
     },
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub enum LocalEffectKind {
+    Unknown,
+    Damage,
+    Heal,
+    Pickup,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct LocalEffectV2 {
+    pub text: String,
+    pub num_value: f64,
+    pub relative_pos: Vec2f64,
+    pub kind: LocalEffectKind,
+    pub timestamp_ticks: u32,
 }
 
 pub fn get_random_planet<'a>(
@@ -242,8 +260,6 @@ pub struct ProcessedPlayerAction {
 pub struct Ship {
     pub id: Uuid,
     pub spatial: SpatialProps,
-    pub acc_periodic_dmg: f64,
-    pub acc_periodic_heal: f64,
     pub color: String,
     pub docked_at: Option<Uuid>,
     pub tractor_target: Option<Uuid>,
@@ -288,8 +304,6 @@ impl Ship {
                 rotation_rad: 0.0,
                 radius: 2.0,
             },
-            acc_periodic_dmg: 0.0,
-            acc_periodic_heal: 0.0,
             docked_at: None,
             tractor_target: None,
             navigate_target: None,
@@ -472,6 +486,7 @@ pub struct Location {
     pub ships: Vec<Ship>,
     pub adjacent_location_ids: Vec<Uuid>,
     pub projectiles: Vec<Projectile>,
+    pub explosions: Vec<Explosion>,
     pub projectile_counter: i32,
 }
 
@@ -491,6 +506,7 @@ impl Location {
             ships: vec![],
             adjacent_location_ids: vec![],
             projectiles: Default::default(),
+            explosions: vec![],
             projectile_counter: 0,
         }
     }
@@ -510,6 +526,7 @@ impl Location {
             asteroid_belts: vec![],
             ships: vec![],
             projectiles: Default::default(),
+            explosions: vec![],
             projectile_counter: 0,
         }
     }
@@ -1174,7 +1191,7 @@ pub fn update_location(
 
     if !update_options.disable_hp_effects && !state.disable_hp_effects {
         let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
-        update_hp_effects(
+        hp::update_hp_effects(
             state,
             location_idx,
             elapsed,
@@ -1182,6 +1199,7 @@ pub fn update_location(
             prng,
             client,
             extra_damages,
+            spatial_index,
         );
         sampler.end(hp_effects_id);
 
@@ -1355,170 +1373,8 @@ fn update_ships_respawn(state: &mut GameState, prng: &mut Pcg64Mcg) {
     }
 }
 
-const SHIP_REGEN_PER_SEC: f64 = 5.0;
-const STAR_INSIDE_DAMAGE_PER_SEC: f64 = 50.0;
-const STAR_DAMAGE_PER_SEC_NEAR: f64 = 25.0;
-const STAR_DAMAGE_PER_SEC_FAR: f64 = 7.5;
-const STAR_INSIDE_RADIUS: f64 = 0.5;
-const STAR_CLOSE_RADIUS: f64 = 0.68;
-const STAR_FAR_RADIUS: f64 = 1.1;
-const MAX_LOCAL_EFF_LIFE_MS: i32 = 10 * 1000;
-const DMG_EFFECT_MIN: f64 = 5.0;
-const HEAL_EFFECT_MIN: f64 = 5.0;
-// also matches fadeOver in UI
 pub const PLAYER_RESPAWN_TIME_MC: i32 = 10 * 1000 * 1000;
 pub const PLANET_HEALTH_REGEN_PER_TICK: f64 = 1.0 / 1000.0 / 1000.0;
-
-pub fn update_hp_effects(
-    state: &mut GameState,
-    location_idx: usize,
-    elapsed_micro: i64,
-    current_tick: u32,
-    prng: &mut Pcg64Mcg,
-    client: bool,
-    _extra_damages: Vec<(ObjectSpecifier, f64)>,
-) {
-    let state_id = state.id;
-    let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
-    if let Some(star) = state.locations[location_idx].star.clone() {
-        let star_center = star.spatial.position.clone();
-        for mut ship in state.locations[location_idx].ships.iter_mut() {
-            let ship_pos = ship.spatial.position.clone();
-
-            let dist_to_star = ship_pos.euclidean_distance(&star_center);
-            let rr = dist_to_star / star.spatial.radius;
-
-            let star_damage = if rr < STAR_INSIDE_RADIUS {
-                STAR_INSIDE_DAMAGE_PER_SEC
-            } else if rr < STAR_CLOSE_RADIUS {
-                STAR_DAMAGE_PER_SEC_NEAR
-            } else if rr < STAR_FAR_RADIUS {
-                STAR_DAMAGE_PER_SEC_FAR
-            } else {
-                0.0
-            };
-            //eprintln!("star_damage {}", star_damage);
-            let star_damage = star_damage * elapsed_micro as f64 / 1000.0 / 1000.0;
-            ship.acc_periodic_dmg += star_damage;
-
-            if ship.acc_periodic_dmg >= DMG_EFFECT_MIN {
-                let dmg_done = ship.acc_periodic_dmg.floor() as i32;
-                ship.acc_periodic_dmg = 0.0;
-                ship.health.current = (ship.health.current - dmg_done as f64).max(0.0);
-                if client {
-                    ship.local_effects_counter = (ship.local_effects_counter + 1) % u32::MAX;
-                    ship.local_effects.push(LocalEffect::DmgDone {
-                        id: ship.local_effects_counter,
-                        hp: -dmg_done,
-                        tick: current_tick,
-                        ship_id: ship.id,
-                    });
-                }
-            }
-
-            if star_damage <= 0.0
-                && ship.health.current < ship.health.max
-                && ship.health.regen_per_tick.is_some()
-            {
-                let regen = ship.health.regen_per_tick.unwrap_or(0.0) * elapsed_micro as f64;
-                ship.acc_periodic_heal += regen;
-            }
-
-            if ship.acc_periodic_heal >= HEAL_EFFECT_MIN {
-                let heal = ship.acc_periodic_heal.floor() as i32;
-                ship.acc_periodic_heal = 0.0;
-                ship.health.current = ship.health.max.min(ship.health.current + heal as f64);
-                if client {
-                    ship.local_effects_counter = (ship.local_effects_counter + 1) % u32::MAX;
-                    ship.local_effects.push(LocalEffect::Heal {
-                        id: ship.local_effects_counter,
-                        hp: heal as i32,
-                        tick: current_tick,
-                        ship_id: ship.id,
-                    });
-                }
-            }
-
-            if client {
-                ship.local_effects = ship
-                    .local_effects
-                    .iter()
-                    .filter(|e| {
-                        if let Some(tick) = match &e {
-                            LocalEffect::Unknown { .. } => None,
-                            LocalEffect::DmgDone { tick, .. } => Some(tick),
-                            LocalEffect::Heal { tick, .. } => Some(tick),
-                            LocalEffect::PickUp { tick, .. } => Some(tick),
-                        } {
-                            return (*tick as i32 - current_tick as i32).abs()
-                                < MAX_LOCAL_EFF_LIFE_MS;
-                        }
-                        return false;
-                    })
-                    .map(|e| e.clone())
-                    .collect::<Vec<_>>()
-            }
-        }
-    }
-
-    let mut ships_to_die = vec![];
-    state.locations[location_idx].ships = state.locations[location_idx]
-        .ships
-        .iter()
-        .filter_map(|ship| {
-            if ship.health.current > 0.0 {
-                Some(ship.clone())
-            } else {
-                ships_to_die.push((ship.clone(), players_by_ship_id.get(&ship.id).map(|p| p.id)));
-                None
-            }
-        })
-        .collect::<Vec<_>>();
-    for (ship_clone, pid) in ships_to_die.into_iter() {
-        state.locations[location_idx].wrecks.push(Wreck {
-            spatial: SpatialProps {
-                position: ship_clone.as_vec(),
-                velocity: ship_clone.spatial.velocity.clone().scalar_mul(0.25),
-                angular_velocity: 0.0,
-                rotation_rad: ship_clone.spatial.rotation_rad,
-                radius: ship_clone.spatial.radius,
-            },
-            id: prng_id(prng),
-            color: ship_clone.color.clone(),
-            properties: vec![ObjectProperty::Decays(ProcessProps::from(
-                WRECK_DECAY_TICKS,
-            ))],
-            to_clean: false,
-        });
-        let event =
-            if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)) {
-                player.ship_id = None;
-                player.money -= 1000;
-                player.money = player.money.max(0);
-                GameEvent::ShipDied {
-                    state_id,
-                    ship: ship_clone,
-                    player_id: Some(player.id),
-                }
-            } else {
-                GameEvent::ShipDied {
-                    state_id,
-                    ship: ship_clone,
-                    player_id: None,
-                }
-            };
-        world_events::fire_saved_event(state, event);
-    }
-
-    for planet in state.locations[location_idx].planets.iter_mut() {
-        if let Some(health) = &mut planet.health {
-            if health.current < health.max {
-                health.current += PLANET_HEALTH_REGEN_PER_TICK * elapsed_micro as f64;
-                health.current = health.current.min(health.max);
-            }
-        }
-    }
-}
 
 fn apply_players_ship_death(ship: Ship, player: Option<&mut Player>, state_id: Uuid) {
     match player {
@@ -1544,7 +1400,7 @@ pub fn add_player(
     player.is_bot = is_bot;
     player.name = name.unwrap_or(player_id.to_string());
     state.players.push(player);
-} // 0.01 radian per second per second (to allow speeding up from zero)
+}
 
 pub struct ShipTemplate {
     at: Option<Vec2f64>,

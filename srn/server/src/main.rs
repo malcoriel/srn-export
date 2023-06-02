@@ -149,6 +149,7 @@ mod chat;
 mod combat;
 mod dialogue;
 mod fof;
+mod hp;
 mod indexing;
 mod interpolation;
 mod inventory;

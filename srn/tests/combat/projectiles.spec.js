@@ -1,4 +1,10 @@
-import { createStateWithAShip, swapGlobals, updateWorld, wasm } from '../util';
+import {
+  createStateWithAShip,
+  genStateOpts,
+  swapGlobals,
+  updateWorld,
+  wasm,
+} from '../util';
 
 const mockProjMovement = {
   tag: 'ShipAccelerated',
@@ -54,6 +60,39 @@ function expectPropertyPresence(props, propName) {
   expect(props).toEqual(
     expect.arrayContaining([expect.objectContaining({ tag: propName })])
   );
+}
+
+function mockRocket(position, lifetime) {
+  return {
+    tag: 'Rocket',
+    fields: {
+      id: 1,
+      spatial: {
+        position,
+        velocity: {
+          x: 0.0,
+          y: 0.0,
+        },
+        angular_velocity: 0.0,
+        rotation_rad: 0,
+        radius: 1.0,
+      },
+      movement: mockProjMovement,
+      properties: [
+        {
+          tag: 'Lifetime',
+          fields: {
+            progress_normalized: 0.0,
+            remaining_ticks: lifetime,
+            max_ticks: lifetime,
+          },
+        },
+      ],
+      damage: 1.0,
+      damage_radius: 5.0,
+      to_clean: false,
+    },
+  };
 }
 
 describe('combat projectiles', () => {
@@ -200,39 +239,15 @@ describe('combat projectiles', () => {
 
     it('can expire after specified time + 3s', () => {
       const { state } = createStateWithAShip('Sandbox');
-      state.locations[0].projectiles.push({
-        tag: 'Rocket',
-        fields: {
-          id: 1,
-          spatial: {
-            position: {
-              x: -100.0,
-              y: -100.0,
-            },
-            velocity: {
-              x: 0.0,
-              y: 0.0,
-            },
-            angular_velocity: 0.0,
-            rotation_rad: 0,
-            radius: 1.0,
+      state.locations[0].projectiles.push(
+        mockRocket(
+          {
+            x: -100.0,
+            y: -100.0,
           },
-          movement: mockProjMovement,
-          properties: [
-            {
-              tag: 'Lifetime',
-              fields: {
-                progress_normalized: 0.0,
-                remaining_ticks: 1e6,
-                max_ticks: 1e6,
-              },
-            },
-          ],
-          damage: 1.0,
-          damage_radius: 1.0,
-          to_clean: false,
-        },
-      });
+          1e6
+        )
+      );
       const stillAlive = updateWorld(state, 900);
       expect(stillAlive.locations[0].projectiles.length).toEqual(1);
       const decaying = updateWorld(stillAlive, 200);
@@ -243,6 +258,33 @@ describe('combat projectiles', () => {
       );
       const expired = updateWorld(decaying, 3000);
       expect(expired.locations[0].projectiles.length).toEqual(0);
+    });
+    it('can blow up another missile with explosion', () => {
+      let state = wasm.seedWorld({
+        seed: 'projectiles',
+        mode: 'Sandbox',
+        gen_state_opts: genStateOpts({ system_count: 1 }),
+      });
+      state.locations[0].projectiles.push(
+        mockRocket(
+          {
+            x: 100.0,
+            y: 0.0,
+          },
+          1e6
+        )
+      );
+      state.locations[0].projectiles.push(
+        mockRocket(
+          {
+            x: 105.0,
+            y: 0.0,
+          },
+          1e6
+        )
+      );
+      state = updateWorld(state, 5000);
+      expect(state.locations[0].projectiles.length).toEqual(0);
     });
   });
 });

@@ -59,6 +59,8 @@ pub struct Health {
     pub max: f64,
     pub regen_per_tick: Option<f64>,
     pub last_damage_dealer: Option<ObjectSpecifier>,
+    pub acc_periodic_dmg: f64,
+    pub acc_periodic_heal: f64,
 }
 
 impl Health {
@@ -68,6 +70,8 @@ impl Health {
             max,
             regen_per_tick: None,
             last_damage_dealer: None,
+            acc_periodic_dmg: 0.0,
+            acc_periodic_heal: 0.0,
         }
     }
 
@@ -77,6 +81,8 @@ impl Health {
             max,
             regen_per_tick: Some(regen_per_tick),
             last_damage_dealer: None,
+            acc_periodic_dmg: 0.0,
+            acc_periodic_heal: 0.0,
         }
     }
 }
@@ -581,6 +587,16 @@ pub struct RocketProps {
     pub damage_radius: f64,
     pub markers: Option<String>,
     pub to_clean: bool,
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct Explosion {
+    pub id: i32,
+    pub spatial: SpatialProps,
+    pub damage: f64,
+    pub damaged: Vec<ObjectSpecifier>,
+    pub radius_limit: f64,
 }
 
 pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
