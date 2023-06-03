@@ -460,11 +460,11 @@ pub fn update_proj_collisions(
                 .into_iter()
                 .map(|os| (os, proj.get_damage()))
                 .collect();
-            // warn!(format!(
-            //     "boom {} on {:?}",
-            //     proj.get_id(),
-            //     damaged.iter().map(|(os, _)| os.clone()).collect::<Vec<_>>()
-            // ));
+            warn2!(
+                "boom proj {} on {:?}",
+                proj.get_id(),
+                damaged.iter().map(|(os, _)| os.clone()).collect::<Vec<_>>()
+            );
             damages.append(&mut damaged);
             *proj.get_to_clean_mut() = true;
         }

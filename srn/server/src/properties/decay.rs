@@ -32,7 +32,9 @@ pub fn apply_decay(elapsed_ticks: i32, props: &mut Vec<ObjectProperty>) -> bool 
 
 pub fn cleanup_objects(state: &mut GameState, loc_idx: usize) {
     let loc = &mut state.locations[loc_idx];
+    let before = loc.projectiles.len();
     loc.projectiles.retain(|p| !*p.get_to_clean());
+    let after = loc.projectiles.len();
     loc.wrecks.retain(|w| !w.to_clean);
 }
 

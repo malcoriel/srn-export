@@ -15,9 +15,10 @@ use crate::combat::{guide_projectile, Explosion, Health, Projectile, ShipTurret,
 use crate::dialogue::Dialogue;
 use crate::hp::SHIP_REGEN_PER_SEC;
 use crate::indexing::{
-    find_my_player, find_my_ship, find_my_ship_index, find_planet, find_player_and_ship_mut,
-    find_spatial_ref_by_spec, index_planets_by_id, index_players_by_ship_id, index_ships_by_id,
-    index_state, GameStateCaches, GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
+    build_full_spatial_indexes, find_my_player, find_my_ship, find_my_ship_index, find_planet,
+    find_player_and_ship_mut, find_spatial_ref_by_spec, index_planets_by_id,
+    index_players_by_ship_id, index_ships_by_id, index_state, GameStateCaches, GameStateIndexes,
+    ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
@@ -733,18 +734,23 @@ pub fn update_world(
     client: bool,
     mut sampler: Sampler,
     update_options: UpdateOptions,
-    spatial_indexes: &mut SpatialIndexes,
     prng: &mut Pcg64Mcg,
     d_table: &DialogueTable,
     caches: &mut GameStateCaches,
-) -> (GameState, Sampler) {
+) -> (GameState, Sampler, SpatialIndexes) {
     let update_full_mark = sampler.start(SamplerMarks::UpdateWorldFull as u32);
     let mut remaining = elapsed + state.accumulated_not_updated_ticks as i64;
     let (mut curr_state, mut curr_sampler) = (state, sampler);
     let fast_nondeterministic_update = update_options.force_non_determinism.unwrap_or(false);
-    if !fast_nondeterministic_update {
+
+    let spatial_index_result: SpatialIndexes = if !fast_nondeterministic_update {
         let update_interval = curr_state.update_every_ticks as i64;
+        let mut spatial_index_result: Option<SpatialIndexes> = None;
         while remaining >= update_interval {
+            // executes update 'as one', which may be especially invalid
+            let spatial_indexes_id = curr_sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
+            let mut spatial_indexes = indexing::build_full_spatial_indexes(&curr_state);
+            curr_sampler.end(spatial_indexes_id);
             let iter_mark = curr_sampler.start(SamplerMarks::UpdateWorldIter as u32);
             let pair = update_world_iter(
                 curr_state,
@@ -752,7 +758,7 @@ pub fn update_world(
                 client,
                 curr_sampler,
                 update_options.clone(),
-                spatial_indexes,
+                &mut spatial_indexes,
                 prng,
                 d_table,
                 caches,
@@ -761,9 +767,17 @@ pub fn update_world(
             curr_state = pair.0;
             curr_sampler = pair.1;
             curr_sampler.end(iter_mark);
+            spatial_index_result = Some(spatial_indexes);
         }
         curr_state.accumulated_not_updated_ticks = remaining as u32;
+        spatial_index_result.unwrap_or_else(|| build_full_spatial_indexes(&curr_state))
     } else {
+        // executes update 'as one', which may be especially invalid for big intervals with relation to spatial indexes
+        // as they won't get updated between small intervals, meaning that some events depending on that, e.g.
+        // sequence of explosions won't work as expected
+        let spatial_indexes_id = curr_sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
+        let mut spatial_indexes = indexing::build_full_spatial_indexes(&curr_state);
+        curr_sampler.end(spatial_indexes_id);
         let mark = curr_sampler.start(SamplerMarks::UpdateWorldNonDetIter as u32);
         let pair = update_world_iter(
             curr_state,
@@ -771,7 +785,7 @@ pub fn update_world(
             client,
             curr_sampler,
             update_options.clone(),
-            spatial_indexes,
+            &mut spatial_indexes,
             prng,
             d_table,
             caches,
@@ -780,9 +794,10 @@ pub fn update_world(
         curr_sampler = pair.1;
         curr_state.accumulated_not_updated_ticks = 0;
         curr_sampler.end(mark);
-    }
+        spatial_indexes
+    };
     curr_sampler.end(update_full_mark);
-    (curr_state, curr_sampler)
+    (curr_state, curr_sampler, spatial_index_result)
 }
 
 fn update_world_iter(
@@ -1041,10 +1056,11 @@ pub fn update_location(
     let spatial_index = spatial_indexes
         .values
         .entry(location_idx)
-        .or_insert(build_spatial_index(
-            &state.locations[location_idx],
-            location_idx,
-        ));
+        // lazily build the spatial indexes if this function wasn't executed with pre-building full ones
+        .or_insert_with(|| {
+            warn2!("spatial index cache miss");
+            build_spatial_index(&state.locations[location_idx], location_idx)
+        });
     sampler.end(spatial_index_id);
     let update_radials_id = sampler.start(SamplerMarks::UpdateLocationRadialMovement as u32);
     let (location, sampler_out) = planet_movement::update_radial_moving_entities(
@@ -1706,9 +1722,6 @@ pub fn update_room(
     d_table: &DialogueTable,
     external_caches: Option<&mut GameStateCaches>,
 ) -> (SpatialIndexes, Sampler) {
-    let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
-    let mut spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
-    sampler.end(spatial_indexes_id);
     let caches_mark = sampler.start(SamplerMarks::UpdateCacheClone as u32);
     let caches = if let Some(external_caches) = external_caches {
         external_caches
@@ -1716,7 +1729,7 @@ pub fn update_room(
         &mut room.caches
     };
     sampler.end(caches_mark);
-    let (new_state, mut sampler) = update_world(
+    let (new_state, mut sampler, spatial_indexes) = update_world(
         room.state.clone(),
         elapsed_micro,
         false,
@@ -1726,7 +1739,6 @@ pub fn update_room(
             limit_area: AABB::maxed(),
             force_non_determinism: None,
         },
-        &mut spatial_indexes,
         &mut prng,
         &d_table,
         caches,
@@ -1737,10 +1749,6 @@ pub fn update_room(
     // }
     room.state = new_state;
     sampler.end(update_room_caches_mark);
-
-    let spatial_indexes_id = sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
-    spatial_indexes = indexing::build_full_spatial_indexes(&room.state);
-    sampler.end(spatial_indexes_id);
 
     // by default, bot behavior is non-deterministic, unless we explicitly requested it in room setup
     let mut bot_prng = room.bots_seed.clone().map_or(get_prng(), |s| seed_prng(s));

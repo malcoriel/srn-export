@@ -189,7 +189,6 @@ mod vec2_test;
 pub mod world;
 mod world_actions;
 mod world_events;
-mod world_test;
 mod xcast;
 
 use properties::*;

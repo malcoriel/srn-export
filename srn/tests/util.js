@@ -12,6 +12,8 @@ import {
 } from '../client/src/ClientStateIndexing';
 import * as uuid from 'uuid';
 
+require('util').inspect.defaultOptions.depth = 5;
+
 const fs = require('fs-extra');
 const notLoadedError = 'wasm did not load, call await loadWasm() first';
 const { timerify, flushPerfStats } = require('./perf');

@@ -469,11 +469,8 @@ pub fn update_world_incremental(args: JsValue, elapsed_micro: i32) -> Result<JsV
 }
 
 fn execute_update_world(elapsed_micro: i32, mut args: UpdateWorldArgs) -> GameState {
-    let mut indexes = world::SpatialIndexes {
-        values: HashMap::new(),
-    };
     let mut prng = get_continuous_state_prng(&mut args.state);
-    let (new_state, sampler) = world::update_world(
+    let (new_state, sampler, _) = world::update_world(
         args.state,
         elapsed_micro as i64,
         args.client.unwrap_or(true),
@@ -483,7 +480,6 @@ fn execute_update_world(elapsed_micro: i32, mut args: UpdateWorldArgs) -> GameSt
             limit_area: args.limit_area,
             force_non_determinism: args.force_non_determinism,
         },
-        &mut indexes,
         &mut prng,
         &get_current_d_table(),
         &mut game_state_caches.write().unwrap(),

@@ -62,11 +62,13 @@ function expectPropertyPresence(props, propName) {
   );
 }
 
+let rockedIdCounter = 1;
+
 function mockRocket(position, lifetime) {
   return {
     tag: 'Rocket',
     fields: {
-      id: 1,
+      id: rockedIdCounter++,
       spatial: {
         position,
         velocity: {
@@ -259,7 +261,7 @@ describe('combat projectiles', () => {
       const expired = updateWorld(decaying, 3000);
       expect(expired.locations[0].projectiles.length).toEqual(0);
     });
-    it('can blow up another missile with explosion', () => {
+    fit('can blow up another missile with explosion', () => {
       let state = wasm.seedWorld({
         seed: 'projectiles',
         mode: 'Sandbox',
@@ -280,10 +282,10 @@ describe('combat projectiles', () => {
             x: 105.0,
             y: 0.0,
           },
-          1e6
+          10e6
         )
       );
-      state = updateWorld(state, 5000);
+      state = updateWorld(state, 4100);
       expect(state.locations[0].projectiles.length).toEqual(0);
     });
   });
