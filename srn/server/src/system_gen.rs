@@ -11,7 +11,7 @@ use serde_derive::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::combat::{
-    Health, Projectile, RocketProps, DEFAULT_PROJECTILE_EXPIRATION_TICKS,
+    ExplosionProps, Health, Projectile, RocketProps, DEFAULT_PROJECTILE_EXPIRATION_TICKS,
     DEFAULT_PROJECTILE_ROT_SPEED, DEFAULT_PROJECTILE_SPEED,
 };
 use crate::indexing::{index_state, GameStateCaches, ObjectSpecifier, Spec};
@@ -623,8 +623,12 @@ fn add_default_templates(state: &mut GameState) {
             max_ticks: PROJECTILE_LIFETIME_TICKS,
         })],
         target: None,
-        damage: 50.0,
-        damage_radius: 1.0,
+        explosion_props: ExplosionProps {
+            damage: 50.0,
+            radius: 5.0,
+            applied_force: 1e-6,
+            spread_speed: 1e-3,
+        },
         markers: None,
         to_clean: false,
     });

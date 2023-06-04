@@ -285,6 +285,7 @@ pub enum SamplerMarks {
     UpdateObjectAutocontrol = 68,
     UpdatePropertiesRules = 69,
     UpdateCleanup = 70,
+    UpdateExplosions = 71,
 }
 
 impl Display for SamplerMarks {

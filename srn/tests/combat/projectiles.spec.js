@@ -90,8 +90,12 @@ function mockRocket(position, lifetime) {
           },
         },
       ],
-      damage: 1.0,
-      damage_radius: 5.0,
+      explosion_props: {
+        damage: 10.0,
+        radius: 5.0,
+        applied_force: 5.0e-6,
+        spread_speed: 5.0e-3,
+      },
       to_clean: false,
     },
   };
@@ -99,194 +103,203 @@ function mockRocket(position, lifetime) {
 
 describe('combat projectiles', () => {
   beforeAll(swapGlobals);
-  describe('approach', () => {
-    xit('can turn towards target', () => {
-      const counterClockwise = makeGuideCall(
-        {
-          x: 0,
-          y: 0,
-        },
-        {
-          x: 0,
-          y: 0,
-        },
-        0.0,
-        {
-          x: 1.0,
-          y: 1.0,
-        }
-      );
+  xit('can turn towards target', () => {
+    const counterClockwise = makeGuideCall(
+      {
+        x: 0,
+        y: 0,
+      },
+      {
+        x: 0,
+        y: 0,
+      },
+      0.0,
+      {
+        x: 1.0,
+        y: 1.0,
+      }
+    );
 
-      expect(counterClockwise.gas).toBeCloseTo(0.0);
-      expect(counterClockwise.turn).toBeCloseTo(1.0); // turn counterclockwise in math coords
-      const clockwise = makeGuideCall(
-        {
-          x: 0,
-          y: 0,
-        },
-        {
-          x: 0,
-          y: 0,
-        },
-        Math.PI / 2,
-        {
-          x: 1.0,
-          y: 1.0,
-        }
-      );
+    expect(counterClockwise.gas).toBeCloseTo(0.0);
+    expect(counterClockwise.turn).toBeCloseTo(1.0); // turn counterclockwise in math coords
+    const clockwise = makeGuideCall(
+      {
+        x: 0,
+        y: 0,
+      },
+      {
+        x: 0,
+        y: 0,
+      },
+      Math.PI / 2,
+      {
+        x: 1.0,
+        y: 1.0,
+      }
+    );
 
-      expect(clockwise.gas).toBeCloseTo(0.0);
-      expect(clockwise.turn).toBeCloseTo(-1.0);
+    expect(clockwise.gas).toBeCloseTo(0.0);
+    expect(clockwise.turn).toBeCloseTo(-1.0);
+  });
+
+  xit('can stay on course', () => {
+    const result = makeGuideCall(
+      {
+        x: 0,
+        y: 0,
+      },
+      {
+        x: Math.sqrt(2),
+        y: Math.sqrt(2),
+      },
+      Math.PI / 4,
+      {
+        x: 1.0,
+        y: 1.0,
+      }
+    );
+
+    expect(result.gas).toBeCloseTo(0.0); // no accelerate since already max speed
+    expect(result.turn).toBeCloseTo(0.0); // no turn because ideal direction and velocity
+  });
+
+  xit('can turn for 90 deg angles', () => {
+    const clockwise = makeGuideCall(
+      {
+        x: 0,
+        y: 0,
+      },
+      {
+        x: Math.sqrt(2),
+        y: Math.sqrt(2),
+      },
+      Math.PI * 0.75,
+      {
+        x: 1.0,
+        y: 1.0,
+      }
+    );
+
+    expect(clockwise.gas).toBeCloseTo(-1); // decelerate to not desync further
+    expect(clockwise.turn).toBeCloseTo(-1); // turn clockwise in math coords
+    const counterClockwise = makeGuideCall(
+      {
+        x: 0,
+        y: 0,
+      },
+      {
+        x: Math.sqrt(2),
+        y: Math.sqrt(2),
+      },
+      -Math.PI * 0.25,
+      {
+        x: 1.0,
+        y: 1.0,
+      }
+    );
+
+    expect(counterClockwise.gas).toBeCloseTo(-1); // decelerate to not desync further
+    expect(counterClockwise.turn).toBeCloseTo(1); // turn counter-clockwise in math coords
+  });
+
+  xit('can turn for 90 deg angles but for different positions', () => {
+    const clockwise = makeGuideCall(
+      {
+        x: 0,
+        y: 1,
+      },
+      {
+        x: Math.sqrt(2),
+        y: Math.sqrt(2),
+      },
+      Math.PI * 0.25,
+      {
+        x: 1.0,
+        y: 0.0,
+      }
+    );
+
+    expect(clockwise.gas).toBeCloseTo(-1); // decelerate to not desync further
+    expect(clockwise.turn).toBeCloseTo(-1); // turn clockwise in math coords
+
+    const counterclockwise = makeGuideCall(
+      {
+        x: 0,
+        y: -1,
+      },
+      {
+        x: Math.sqrt(2),
+        y: -Math.sqrt(2),
+      },
+      -Math.PI * 0.25,
+      {
+        x: 1.0,
+        y: 0.0,
+      }
+    );
+
+    expect(counterclockwise.gas).toBeCloseTo(-1); // decelerate to not desync further
+    expect(counterclockwise.turn).toBeCloseTo(1); // turn counter-clockwise in math coords
+  });
+
+  it('can expire after specified time + 3s', () => {
+    const { state } = createStateWithAShip('Sandbox');
+    state.locations[0].projectiles.push(
+      mockRocket(
+        {
+          x: -100.0,
+          y: -100.0,
+        },
+        1e6
+      )
+    );
+    const stillAlive = updateWorld(state, 900);
+    expect(stillAlive.locations[0].projectiles.length).toEqual(1);
+    const decaying = updateWorld(stillAlive, 200);
+    expect(decaying.locations[0].projectiles.length).toEqual(1);
+    expectPropertyPresence(
+      decaying.locations[0].projectiles[0].fields.properties,
+      'Decays'
+    );
+    const expired = updateWorld(decaying, 3000);
+    expect(expired.locations[0].projectiles.length).toEqual(0);
+  });
+
+  fit('can blow up another missile with explosion', () => {
+    let state = wasm.seedWorld({
+      seed: 'projectiles',
+      mode: 'Sandbox',
+      gen_state_opts: genStateOpts({ system_count: 1 }),
     });
-
-    xit('can stay on course', () => {
-      const result = makeGuideCall(
+    // create 2 rockets to collide
+    state.locations[0].projectiles.push(
+      mockRocket(
         {
-          x: 0,
-          y: 0,
-        },
-        {
-          x: Math.sqrt(2),
-          y: Math.sqrt(2),
-        },
-        Math.PI / 4,
-        {
-          x: 1.0,
-          y: 1.0,
-        }
-      );
-
-      expect(result.gas).toBeCloseTo(0.0); // no accelerate since already max speed
-      expect(result.turn).toBeCloseTo(0.0); // no turn because ideal direction and velocity
-    });
-
-    xit('can turn for 90 deg angles', () => {
-      const clockwise = makeGuideCall(
-        {
-          x: 0,
-          y: 0,
-        },
-        {
-          x: Math.sqrt(2),
-          y: Math.sqrt(2),
-        },
-        Math.PI * 0.75,
-        {
-          x: 1.0,
-          y: 1.0,
-        }
-      );
-
-      expect(clockwise.gas).toBeCloseTo(-1); // decelerate to not desync further
-      expect(clockwise.turn).toBeCloseTo(-1); // turn clockwise in math coords
-      const counterClockwise = makeGuideCall(
-        {
-          x: 0,
-          y: 0,
-        },
-        {
-          x: Math.sqrt(2),
-          y: Math.sqrt(2),
-        },
-        -Math.PI * 0.25,
-        {
-          x: 1.0,
-          y: 1.0,
-        }
-      );
-
-      expect(counterClockwise.gas).toBeCloseTo(-1); // decelerate to not desync further
-      expect(counterClockwise.turn).toBeCloseTo(1); // turn counter-clockwise in math coords
-    });
-
-    xit('can turn for 90 deg angles but for different positions', () => {
-      const clockwise = makeGuideCall(
-        {
-          x: 0,
-          y: 1,
-        },
-        {
-          x: Math.sqrt(2),
-          y: Math.sqrt(2),
-        },
-        Math.PI * 0.25,
-        {
-          x: 1.0,
+          x: 100.0,
           y: 0.0,
-        }
-      );
-
-      expect(clockwise.gas).toBeCloseTo(-1); // decelerate to not desync further
-      expect(clockwise.turn).toBeCloseTo(-1); // turn clockwise in math coords
-
-      const counterclockwise = makeGuideCall(
-        {
-          x: 0,
-          y: -1,
         },
+        1e6
+      )
+    );
+    state.locations[0].projectiles.push(
+      mockRocket(
         {
-          x: Math.sqrt(2),
-          y: -Math.sqrt(2),
-        },
-        -Math.PI * 0.25,
-        {
-          x: 1.0,
+          x: 100.0,
           y: 0.0,
-        }
-      );
-
-      expect(counterclockwise.gas).toBeCloseTo(-1); // decelerate to not desync further
-      expect(counterclockwise.turn).toBeCloseTo(1); // turn counter-clockwise in math coords
-    });
-
-    it('can expire after specified time + 3s', () => {
-      const { state } = createStateWithAShip('Sandbox');
-      state.locations[0].projectiles.push(
-        mockRocket(
-          {
-            x: -100.0,
-            y: -100.0,
-          },
-          1e6
-        )
-      );
-      const stillAlive = updateWorld(state, 900);
-      expect(stillAlive.locations[0].projectiles.length).toEqual(1);
-      const decaying = updateWorld(stillAlive, 200);
-      expect(decaying.locations[0].projectiles.length).toEqual(1);
-      expectPropertyPresence(
-        decaying.locations[0].projectiles[0].fields.properties,
-        'Decays'
-      );
-      const expired = updateWorld(decaying, 3000);
-      expect(expired.locations[0].projectiles.length).toEqual(0);
-    });
-    fit('can blow up another missile with explosion', () => {
-      let state = wasm.seedWorld({
-        seed: 'projectiles',
-        mode: 'Sandbox',
-        gen_state_opts: genStateOpts({ system_count: 1 }),
-      });
-      state.locations[0].projectiles.push(
-        mockRocket(
-          {
-            x: 100.0,
-            y: 0.0,
-          },
-          1e6
-        )
-      );
-      state.locations[0].projectiles.push(
-        mockRocket(
-          {
-            x: 105.0,
-            y: 0.0,
-          },
-          10e6
-        )
-      );
-      state = updateWorld(state, 4100);
-      expect(state.locations[0].projectiles.length).toEqual(0);
-    });
+        },
+        1e6
+      )
+    );
+    state.locations[0].projectiles.push(
+      mockRocket(
+        {
+          x: 105.0,
+          y: 0.0,
+        },
+        10e6
+      )
+    );
+    state = updateWorld(state, 4100);
+    expect(state.locations[0].projectiles.length).toEqual(0);
   });
 });

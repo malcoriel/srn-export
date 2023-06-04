@@ -11,7 +11,9 @@ use crate::api_struct::{new_bot, AiTrait, Bot, Room, RoomId};
 use crate::autofocus::{build_spatial_index, object_index_into_object_id, SpatialIndex};
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
-use crate::combat::{guide_projectile, Explosion, Health, Projectile, ShipTurret, ShootTarget};
+use crate::combat::{
+    guide_projectile, update_explosions, Explosion, Health, Projectile, ShipTurret, ShootTarget,
+};
 use crate::dialogue::Dialogue;
 use crate::hp::SHIP_REGEN_PER_SEC;
 use crate::indexing::{
@@ -488,7 +490,7 @@ pub struct Location {
     pub adjacent_location_ids: Vec<Uuid>,
     pub projectiles: Vec<Projectile>,
     pub explosions: Vec<Explosion>,
-    pub projectile_counter: i32,
+    pub short_counter: i32,
 }
 
 impl Location {
@@ -508,7 +510,7 @@ impl Location {
             adjacent_location_ids: vec![],
             projectiles: Default::default(),
             explosions: vec![],
-            projectile_counter: 0,
+            short_counter: 0,
         }
     }
 
@@ -528,7 +530,7 @@ impl Location {
             ships: vec![],
             projectiles: Default::default(),
             explosions: vec![],
-            projectile_counter: 0,
+            short_counter: 0,
         }
     }
 }
@@ -1265,8 +1267,15 @@ pub fn update_location(
     for (act, player_id, ship_idx) in to_finish.into_iter() {
         finish_long_act(&mut state, player_id, act, client, ship_idx, prng, indexes);
     }
-
     sampler.end(long_act_ticks);
+
+    let exp_id = sampler.start(SamplerMarks::UpdateExplosions as u32);
+    update_explosions(
+        &mut state.locations[location_idx],
+        elapsed as i32,
+        spatial_index,
+    );
+    sampler.end(exp_id);
 
     let clean = sampler.start(SamplerMarks::UpdateCleanup as u32);
     cleanup_objects(&mut state, location_idx);

@@ -1,3 +1,4 @@
+use crate::combat::{Health, MAX_COLLIDER_RADIUS};
 use crate::fof;
 use crate::fof::{FofActor, FriendOrFoe};
 use crate::indexing::{GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier};
@@ -97,6 +98,30 @@ impl SpatialIndex {
             }
         });
         results
+    }
+
+    // attempt to optimize search by first querying by radius + max possible radius of a collider,
+    // and then filtering out smaller objects via comparing actual distance between centers
+    // vs sum of radiuses
+    pub fn rad_search_consider_obj_radius(
+        &self,
+        around: &Vec2f64,
+        radius: f64,
+        loc: &Location,
+    ) -> Vec<ObjectIndexSpecifier> {
+        self.rad_search(around, radius + MAX_COLLIDER_RADIUS)
+            .into_iter()
+            .filter(|ois| {
+                if let Some(pos) = object_index_into_object_pos(ois, loc) {
+                    if let Some(target_rad) = object_index_into_object_radius(ois, loc) {
+                        if pos.euclidean_distance(around) < target_rad + radius {
+                            return true;
+                        }
+                    }
+                };
+                false
+            })
+            .collect()
     }
 
     pub fn aabb_search(
@@ -284,6 +309,22 @@ pub fn object_index_into_object_id(
     }
 }
 
+pub fn object_index_into_object_radius(ois: &ObjectIndexSpecifier, loc: &Location) -> Option<f64> {
+    match ois {
+        ObjectIndexSpecifier::Unknown => None,
+        ObjectIndexSpecifier::Mineral { idx } => loc.minerals.get(*idx).map(|o| o.radius),
+        ObjectIndexSpecifier::Asteroid { idx } => loc.asteroids.get(*idx).map(|o| o.spatial.radius),
+        ObjectIndexSpecifier::Projectile { idx } => {
+            loc.projectiles.get(*idx).map(|p| p.get_spatial().radius)
+        }
+        ObjectIndexSpecifier::Container { idx } => loc.containers.get(*idx).map(|o| o.radius),
+        ObjectIndexSpecifier::Planet { idx } => loc.planets.get(*idx).map(|o| o.spatial.radius),
+        ObjectIndexSpecifier::Ship { idx } => loc.ships.get(*idx).map(|o| o.spatial.radius),
+        ObjectIndexSpecifier::Star => loc.star.as_ref().map(|s| s.spatial.radius),
+        ObjectIndexSpecifier::Wreck { idx } => loc.wrecks.get(*idx).map(|o| o.spatial.radius),
+    }
+}
+
 pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) -> Option<Vec2f64> {
     match ois {
         ObjectIndexSpecifier::Unknown => None,
@@ -312,6 +353,25 @@ pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) 
         ObjectIndexSpecifier::Wreck { idx } => {
             loc.wrecks.get(*idx).map(|wr| wr.spatial.position.clone())
         }
+    }
+}
+
+pub fn object_index_into_health_mut<'a, 'b>(
+    ois: &'a ObjectIndexSpecifier,
+    loc: &'b mut Location,
+) -> Option<&'b mut Health> {
+    match ois {
+        ObjectIndexSpecifier::Unknown => None,
+        ObjectIndexSpecifier::Mineral { idx } => None,
+        ObjectIndexSpecifier::Container { idx } => None,
+        ObjectIndexSpecifier::Planet { idx } => {
+            loc.planets.get_mut(*idx).and_then(|o| o.health.as_mut())
+        }
+        ObjectIndexSpecifier::Ship { idx } => loc.ships.get_mut(*idx).map(|ship| &mut ship.health),
+        ObjectIndexSpecifier::Star => None,
+        ObjectIndexSpecifier::Projectile { idx } => None,
+        ObjectIndexSpecifier::Asteroid { idx } => None,
+        ObjectIndexSpecifier::Wreck { idx } => None,
     }
 }
 
