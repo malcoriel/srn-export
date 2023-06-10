@@ -80,12 +80,14 @@ const fragmentShader = (
         return 1.0 - (time_remaining / time_to_reach);
     }
 
+    // normal lerp
     float animate(float from, float to, float time_to_reach, float curr_time) {
         float x = time_scale(time_to_reach, curr_time);
         float value = from + (to - from) * x;
         return value;
     }
 
+    // hyperbolic-like growth https://www.math3d.org/TDiPANp8i
     float animate_explosive(float from, float to, float time_to_reach, float curr_time) {
         float x = time_scale(time_to_reach, curr_time);
         x = (3.0 - (0.5 / (x + 0.15))) / 3.0;
@@ -122,6 +124,10 @@ const fragmentShader = (
         if (dist_from_center < (blast_radius + noise_radius)) {
             frag_color += vec4(blast_color, 1.0);
         }
+        // debug main, blast radius without noise
+        // if (dist_from_center < blast_radius) {
+        //   frag_color.xyz = vec3(1.0);
+        // }
         if (dist_from_center < (decay_radius + noise_radius)) {
             float erasion_intensity = 1.0;
             frag_color.xyz -= vec3(erasion_intensity) * (1.0 - noise_coord);
@@ -130,6 +136,7 @@ const fragmentShader = (
         if (dist_from_center < (smoke_radius + noise_radius)) {
             frag_color.a = (0.5 - animate(0.0, 0.5, smoke_time, time - smoke_start_time));
         }
+
     }
 `;
 

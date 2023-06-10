@@ -698,12 +698,23 @@ pub fn create_explosion(
 pub const MIN_COLLIDER_RADIUS: f64 = 1.0;
 pub const MAX_COLLIDER_RADIUS: f64 = 1.0;
 
+// hyperbolic-like growth https://www.math3d.org/TDiPANp8i
+// should be synced with explosion visual formula from the shader in ThreeExplosionNodeV2.tsx
+pub fn calculate_radius(progress_normalized: f64, explosion_radius: f64) -> f64 {
+    let from = 0.05;
+    let to = explosion_radius;
+    let x = progress_normalized;
+    let x = (3.0 - (0.5 / (x + 0.15))) / 3.0;
+    return from + (to - from) * x;
+}
+
 pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: &SpatialIndex) {
     for exp in loc.explosions.iter_mut() {
         if exp.decay_expand.apply(elapsed_ticks) {
             exp.to_clean = true;
         }
-        exp.spatial.radius = exp.base.radius * exp.decay_expand.progress_normalized;
+        exp.spatial.radius =
+            calculate_radius(exp.decay_expand.progress_normalized, exp.base.radius);
     }
     for i in 0..loc.explosions.len() {
         let exp_r = &loc.explosions[i].clone();
