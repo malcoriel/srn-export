@@ -685,19 +685,19 @@ pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: 
         exp.spatial.radius = exp.base.radius * exp.decay_expand.progress_normalized;
     }
     for i in 0..loc.explosions.len() {
-        let exp = &loc.explosions[i];
+        let exp_r = &loc.explosions[i].clone();
         let all_affected = spatial_index.rad_search_consider_obj_radius(
-            &exp.spatial.position,
-            exp.spatial.radius,
+            &exp_r.spatial.position,
+            exp_r.spatial.radius,
             loc,
         );
         log2!("all_affected: {:?}", all_affected);
-        log2!("already damaged {:?}", exp.damaged);
+        log2!("already damaged {:?}", exp_r.damaged);
         let shockwave_damaged = all_affected
-            .into_iter()
+            .iter()
             .filter_map(|ois| {
                 object_index_into_object_id(&ois, loc).map_or(None, |oid| {
-                    if !exp.damaged.contains(&oid) {
+                    if !exp_r.damaged.contains(&oid) {
                         Some((ois.clone(), oid.clone()))
                     } else {
                         None
@@ -705,16 +705,17 @@ pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: 
                 })
             })
             .collect::<Vec<_>>();
-        // apply shockwave but only once
-        let mut exp = &mut loc.explosions[i];
-        for (ois, oid) in shockwave_damaged.iter() {
-            exp.damaged.insert(oid.clone());
+        {
+            // apply shockwave but only once
+            let mut exp = &mut loc.explosions[i];
+            for (ois, oid) in shockwave_damaged.iter() {
+                exp.damaged.insert(oid.clone());
+            }
         }
-        let exp = &loc.explosions[i];
         damage_objects(
             loc,
-            shockwave_damaged.iter().map(|p| p.0).collect(),
-            exp.base.damage,
+            shockwave_damaged.clone().into_iter().map(|p| p.0).collect(),
+            exp_r.base.damage,
         );
 
         // apply constant push
@@ -722,8 +723,8 @@ pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: 
             loc,
             all_affected,
             elapsed_ticks,
-            exp.base.applied_force,
-            &exp.spatial.position,
+            exp_r.base.applied_force,
+            &exp_r.spatial.position,
         );
     }
 }
