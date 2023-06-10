@@ -458,16 +458,16 @@ pub fn update_proj_collisions(
             })
             .collect::<Vec<ObjectIndexSpecifier>>();
         if any_coll.len() > 0 {
-            let mut damaged: Vec<(ObjectIndexSpecifier, f64)> = sp_idx
-                .rad_search(&proj.get_spatial().position, proj.get_spatial().radius)
-                .into_iter()
-                .filter(|os| match os {
-                    // prevent collision detection with itself
-                    ObjectIndexSpecifier::Projectile { idx } => *idx != (current_idx as usize),
-                    _ => true,
-                })
-                .map(|os| (os, proj.get_direct_damage()))
-                .collect();
+            // let mut damaged: Vec<(ObjectIndexSpecifier, f64)> = sp_idx
+            //     .rad_search(&proj.get_spatial().position, proj.get_spatial().radius)
+            //     .into_iter()
+            //     .filter(|os| match os {
+            //         // prevent collision detection with itself
+            //         ObjectIndexSpecifier::Projectile { idx } => *idx != (current_idx as usize),
+            //         _ => true,
+            //     })
+            //     .map(|os| (os, proj.get_direct_damage()))
+            //     .collect();
             // warn2!(
             //     "boom proj {} on {:?}",
             //     proj.get_id(),
@@ -672,7 +672,7 @@ pub fn create_explosion(
     from_projectile_id: Option<i32>,
 ) {
     loc.short_counter += 1;
-    let time_to_expand = (props.radius / props.spread_speed);
+    let time_to_expand = props.radius / props.spread_speed;
     let exp = Explosion {
         id: loc.short_counter,
         spatial: SpatialProps {
@@ -698,7 +698,7 @@ pub fn create_explosion(
 pub const MIN_COLLIDER_RADIUS: f64 = 1.0;
 pub const MAX_COLLIDER_RADIUS: f64 = 1.0;
 
-// hyperbolic-like growth https://www.math3d.org/TDiPANp8i
+// Hyperbolic growth https://www.math3d.org/SiBxZxAdk
 // should be synced with explosion visual formula from the shader in ThreeExplosionNodeV2.tsx
 pub fn calculate_radius(progress_normalized: f64, explosion_radius: f64) -> f64 {
     let from = 0.05;
@@ -745,7 +745,7 @@ pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: 
         {
             // apply shockwave but only once
             let mut exp = &mut loc.explosions[i];
-            for (ois, oid) in shockwave_damaged.iter() {
+            for (_ois, oid) in shockwave_damaged.iter() {
                 exp.damaged.insert(oid.clone());
             }
         }
@@ -832,10 +832,10 @@ pub fn damage_objects(
     loc: &mut Location,
     targets: &Vec<(ObjectIndexSpecifier, ObjectSpecifier)>,
     amount: f64,
-    source: &ObjectSpecifier,
+    _source: &ObjectSpecifier,
 ) {
     for ois in targets {
-        // log2!("damage {:?} from {:?}", ois.1, source);
+        // log2!("damage {:?} from {:?}", ois.1, _source);
         if let Some(health) = object_index_into_health_mut(&ois.0, loc) {
             health.current -= amount;
         }

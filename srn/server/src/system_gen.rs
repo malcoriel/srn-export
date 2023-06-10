@@ -624,10 +624,10 @@ fn add_default_templates(state: &mut GameState) {
         })],
         target: None,
         explosion_props: ExplosionProps {
-            damage: 50.0,
+            damage: 25.0,
             radius: 5.0,
-            applied_force: 1e-12,
-            spread_speed: 1e-6,
+            applied_force: 6e-12,
+            spread_speed: 1e-5,
         },
         markers: None,
         health: Health {
@@ -667,7 +667,7 @@ pub fn make_sandbox_state(prng: &mut Pcg64Mcg, opts: Option<GenStateOpts>) -> Ga
         leaderboard: None,
         millis: 0,
         ticks: 0,
-        disable_hp_effects: true,
+        disable_hp_effects: false,
         market: None,
         interval_data: Default::default(),
         game_over: None,

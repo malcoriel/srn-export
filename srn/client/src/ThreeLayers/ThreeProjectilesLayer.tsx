@@ -1,7 +1,7 @@
 import React from 'react';
 import { ClientStateIndexes, findProperty } from '../ClientStateIndexing';
 import { GameState } from '../world';
-import { vecToThreePos } from './util';
+import { posToThreePos, vecToThreePos } from './util';
 import Vector, { IVector, VectorF, VectorFZero } from '../utils/Vector';
 import { Text } from '@react-three/drei';
 import { teal } from '../utils/palette';
@@ -9,6 +9,7 @@ import { ThreeTrajectoryItem } from './ThreeTrajectoryItem';
 import { useFadingMaterial } from './UseFadingMaterial';
 import { ObjectPropertyKey } from '../../../world/pkg/world.extra';
 import { ObjectPropertyDecays } from '../../../world/pkg/world';
+import { ThreeExplosionNodeV2 } from './blocks/ThreeExplosionNodeV2';
 
 export type ThreeProjectilesLayerParams = {
   visMap: Record<string, boolean>;
@@ -109,26 +110,54 @@ export const ThreeRocket: React.FC<ThreeRocketProps> = ({
 export const ThreeProjectilesLayer: React.FC<ThreeProjectilesLayerParams> = ({
   state,
 }: ThreeProjectilesLayerParams) => {
-  const { projectiles } = state.locations[0];
+  const { projectiles, explosions } = state.locations[0];
   return (
-    <>
-      {projectiles.map((projectile) => {
-        const decayProp = findProperty<ObjectPropertyDecays>(
-          projectile.fields.properties,
-          ObjectPropertyKey.Decays
-        );
-        return (
-          <ThreeRocket
-            position={projectile.fields.spatial.position}
-            rotation={projectile.fields.spatial.rotation_rad}
-            velocity={projectile.fields.spatial.velocity}
-            fadeOver={decayProp ? decayProp.fields.max_ticks : undefined}
-            radius={projectile.fields.spatial.radius}
-            markers={projectile.fields.markers}
-            key={projectile.fields.id}
-          />
-        );
-      })}
-    </>
+    <group>
+      <group>
+        {explosions.map((explosion) => {
+          return (
+            <group
+              key={explosion.id}
+              position={posToThreePos(
+                explosion.spatial.position.x,
+                explosion.spatial.position.y,
+                3
+              )}
+            >
+              {/*<mesh>*/}
+              {/*  <circleBufferGeometry args={[explosion.spatial.radius, 256]} />*/}
+              {/*  <meshBasicMaterial color="white" />*/}
+              {/*</mesh>*/}
+              <ThreeExplosionNodeV2
+                position={VectorFZero}
+                scale={explosion.base.radius}
+                seed={explosion.id}
+                detail={4}
+                blastTime={explosion.decay_expand.max_ticks / 1e6}
+              />
+            </group>
+          );
+        })}
+      </group>
+      <group>
+        {projectiles.map((projectile) => {
+          const decayProp = findProperty<ObjectPropertyDecays>(
+            projectile.fields.properties,
+            ObjectPropertyKey.Decays
+          );
+          return (
+            <ThreeRocket
+              position={projectile.fields.spatial.position}
+              rotation={projectile.fields.spatial.rotation_rad}
+              velocity={projectile.fields.spatial.velocity}
+              fadeOver={decayProp ? decayProp.fields.max_ticks : undefined}
+              radius={projectile.fields.spatial.radius}
+              markers={projectile.fields.markers}
+              key={projectile.fields.id}
+            />
+          );
+        })}
+      </group>
+    </group>
   );
 };

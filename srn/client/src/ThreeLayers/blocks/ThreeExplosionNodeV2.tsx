@@ -9,7 +9,7 @@ import {
 } from '../shaders/uniformTypes';
 import _ from 'lodash';
 
-const DEFAULT_BLAST_TIME = 1.0;
+const DEFAULT_BLAST_TIME_SECONDS = 1.0;
 const DEFAULT_DETAIL = 3;
 const DEFAULT_SEED = 1;
 const uniforms: {
@@ -19,7 +19,7 @@ const uniforms: {
   detail: IntUniformValue;
 } = {
   time: { value: 0 },
-  blastTime: { value: DEFAULT_BLAST_TIME },
+  blastTime: { value: DEFAULT_BLAST_TIME_SECONDS },
   seed: { value: DEFAULT_SEED },
   detail: { value: DEFAULT_DETAIL },
 };
@@ -87,7 +87,7 @@ const fragmentShader = (
         return value;
     }
 
-    // hyperbolic-like growth https://www.math3d.org/TDiPANp8i
+    // hyperbolic-like growth https://www.math3d.org/SiBxZxAdk
     float animate_explosive(float from, float to, float time_to_reach, float curr_time) {
         float x = time_scale(time_to_reach, curr_time);
         x = (3.0 - (0.5 / (x + 0.15))) / 3.0;
@@ -151,7 +151,7 @@ const DEFAULT_SCALE = 1.0;
 export const ThreeExplosionNodeV2: React.FC<ExplosionPropsV2> = ({
   position = VectorFZero,
   scale = DEFAULT_SCALE,
-  blastTime = DEFAULT_BLAST_TIME,
+  blastTime = DEFAULT_BLAST_TIME_SECONDS,
   detail = DEFAULT_DETAIL,
   seed = DEFAULT_SEED,
 }) => {
