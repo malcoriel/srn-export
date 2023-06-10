@@ -238,6 +238,11 @@ export class StateSyncer extends EventEmitter {
     context: string
   ): GameState | null {
     const LONG_UPDATE_WARN = 500 * 1000;
+    const CRITICAL_UPDATE_BAIL = 2000 * 1000; // in case of such big lag, just overwrite with server state
+    if (elapsedTicks > CRITICAL_UPDATE_BAIL) {
+      this.forceOverwriteByServerDueToLag(true);
+      return this.trueState;
+    }
     let nonDeterministic = false;
     if (elapsedTicks > LONG_UPDATE_WARN) {
       const clientAheadTicks =
@@ -256,7 +261,7 @@ export class StateSyncer extends EventEmitter {
     const commonUpdateArgs = {
       limit_area: area,
       client: true,
-      // since by default deterministic updates is iterative, updating for a long interval will take TIME / update_every_milliseconds of update iterations, which sucks
+      // since by default deterministic updates is iterative, updating for a long interval will take TIME / update_every_milliseconds of update iterations, which sucks for client
       force_non_determinism: nonDeterministic,
     };
 
@@ -347,10 +352,7 @@ export class StateSyncer extends EventEmitter {
     }
     if (hadHugeViolation) {
       // happens when there was a desync in history of actions, after which all compensations do not make sense
-      this.state = this.trueState;
-      this.useCachedStateForUpdateContext = false;
-      console.warn('huge violation detected, state overwrite by server state');
-      return this.successFullDesynced('xx');
+      return this.forceOverwriteByServerDueToLag();
     }
     // this.eventCounter += 1;
     // this.eventCounter %= 10;
@@ -377,6 +379,17 @@ export class StateSyncer extends EventEmitter {
     //
     const desyncValue = (this.state.millis - this.trueState.millis).toString();
     return this.successDesynced(desyncValue);
+  }
+
+  private forceOverwriteByServerDueToLag(clientLag = false) {
+    this.state = this.trueState;
+    this.useCachedStateForUpdateContext = false;
+    console.warn(
+      clientLag
+        ? 'huge client lag, state overwrite by server state'
+        : 'huge violation detected, state overwrite by server state'
+    );
+    return this.successFullDesynced('xx');
   }
 
   private cleanupCommitedAndOutdatedPendingActions(
