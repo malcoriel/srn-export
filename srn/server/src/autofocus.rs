@@ -285,7 +285,10 @@ pub fn object_index_into_object_id(
             .asteroids
             .get(*idx)
             .map(|o| ObjectSpecifier::Asteroid { id: o.id }),
-        ObjectIndexSpecifier::Projectile { .. } => None, // projectiles do not have uuid ids, so only indexes for them
+        ObjectIndexSpecifier::Projectile { idx } => loc
+            .projectiles
+            .get(*idx)
+            .map(|o| ObjectSpecifier::Projectile { id: o.get_id() }),
         ObjectIndexSpecifier::Container { idx } => loc
             .containers
             .get(*idx)
@@ -306,6 +309,10 @@ pub fn object_index_into_object_id(
             .wrecks
             .get(*idx)
             .map(|o| ObjectSpecifier::Wreck { id: o.id }),
+        ObjectIndexSpecifier::Explosion { idx } => loc
+            .explosions
+            .get(*idx)
+            .map(|e| ObjectSpecifier::Explosion { id: e.id }),
     }
 }
 
@@ -322,6 +329,9 @@ pub fn object_index_into_object_radius(ois: &ObjectIndexSpecifier, loc: &Locatio
         ObjectIndexSpecifier::Ship { idx } => loc.ships.get(*idx).map(|o| o.spatial.radius),
         ObjectIndexSpecifier::Star => loc.star.as_ref().map(|s| s.spatial.radius),
         ObjectIndexSpecifier::Wreck { idx } => loc.wrecks.get(*idx).map(|o| o.spatial.radius),
+        ObjectIndexSpecifier::Explosion { idx } => {
+            loc.explosions.get(*idx).map(|p| p.spatial.radius)
+        }
     }
 }
 
@@ -346,32 +356,15 @@ pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) 
             .projectiles
             .get(*idx)
             .map(|proj| proj.get_spatial().position.clone()),
-        ObjectIndexSpecifier::Asteroid { idx } => loc
-            .asteroids
-            .get(*idx)
-            .map(|ship| ship.spatial.position.clone()),
+        ObjectIndexSpecifier::Asteroid { idx } => {
+            loc.asteroids.get(*idx).map(|a| a.spatial.position.clone())
+        }
         ObjectIndexSpecifier::Wreck { idx } => {
             loc.wrecks.get(*idx).map(|wr| wr.spatial.position.clone())
         }
-    }
-}
-
-pub fn object_index_into_health_mut<'a, 'b>(
-    ois: &'a ObjectIndexSpecifier,
-    loc: &'b mut Location,
-) -> Option<&'b mut Health> {
-    match ois {
-        ObjectIndexSpecifier::Unknown => None,
-        ObjectIndexSpecifier::Mineral { idx } => None,
-        ObjectIndexSpecifier::Container { idx } => None,
-        ObjectIndexSpecifier::Planet { idx } => {
-            loc.planets.get_mut(*idx).and_then(|o| o.health.as_mut())
+        ObjectIndexSpecifier::Explosion { idx } => {
+            loc.explosions.get(*idx).map(|e| e.spatial.position.clone())
         }
-        ObjectIndexSpecifier::Ship { idx } => loc.ships.get_mut(*idx).map(|ship| &mut ship.health),
-        ObjectIndexSpecifier::Star => None,
-        ObjectIndexSpecifier::Projectile { idx } => None,
-        ObjectIndexSpecifier::Asteroid { idx } => None,
-        ObjectIndexSpecifier::Wreck { idx } => None,
     }
 }
 

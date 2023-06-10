@@ -77,6 +77,9 @@ fn apply_decay_to_spec(loc: &mut Location, elapsed_ticks: i32, spec: &ObjectInde
                 loc.wrecks[*idx].to_clean = true;
             }
         }
+        ObjectIndexSpecifier::Explosion { .. } => {
+            // will be applied by special update_explosion instead, as it's not only decay
+        }
     }
 }
 

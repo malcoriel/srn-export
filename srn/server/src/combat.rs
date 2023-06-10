@@ -8,10 +8,8 @@ use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
-use crate::autofocus::{
-    object_index_into_health_mut, object_index_into_object_id, object_index_into_object_pos,
-    SpatialIndex,
-};
+use crate::autofocus::{object_index_into_object_id, object_index_into_object_pos, SpatialIndex};
+use crate::hp::object_index_into_health_mut;
 use crate::indexing::{
     find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
     GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
@@ -463,22 +461,31 @@ pub fn update_proj_collisions(
             let mut damaged: Vec<(ObjectIndexSpecifier, f64)> = sp_idx
                 .rad_search(&proj.get_spatial().position, proj.get_spatial().radius)
                 .into_iter()
+                .filter(|os| match os {
+                    // prevent collision detection with itself
+                    ObjectIndexSpecifier::Projectile { idx } => *idx != (current_idx as usize),
+                    _ => true,
+                })
                 .map(|os| (os, proj.get_direct_damage()))
                 .collect();
-            warn2!(
-                "boom proj {} on {:?}",
-                proj.get_id(),
-                damaged.iter().map(|(os, _)| os.clone()).collect::<Vec<_>>()
-            );
+            // warn2!(
+            //     "boom proj {} on {:?}",
+            //     proj.get_id(),
+            //     any_coll.iter().map(|os| os.clone()).collect::<Vec<_>>()
+            // );
             if let Some(exp) = proj.get_explosion_props() {
-                explosions.push((exp.clone(), proj.get_spatial().position.clone()))
+                explosions.push((
+                    exp.clone(),
+                    proj.get_spatial().position.clone(),
+                    Some(proj.get_id()),
+                ))
             }
             // damages.append(&mut damaged);
             *proj.get_to_clean_mut() = true;
         }
     }
-    for (exp, pos) in explosions.into_iter() {
-        create_explosion(&exp, &pos, loc);
+    for (exp, pos, proj_id) in explosions.into_iter() {
+        create_explosion(&exp, &pos, loc, proj_id);
     }
     damages
         .into_iter()
@@ -494,6 +501,11 @@ pub enum Projectile {
 }
 
 impl Projectile {
+    pub fn get_health_mut(&mut self) -> Option<&mut Health> {
+        match self {
+            Projectile::Rocket(props) => Some(&mut props.health),
+        }
+    }
     pub fn get_explosion_props(&self) -> Option<&ExplosionProps> {
         match self {
             Projectile::Rocket(rocketProps) => Some(&rocketProps.explosion_props),
@@ -596,6 +608,7 @@ pub struct RocketProps {
     pub target: Option<ObjectSpecifier>,
     pub explosion_props: ExplosionProps,
     pub markers: Option<String>,
+    pub health: Health,
     pub to_clean: bool,
 }
 
@@ -605,6 +618,7 @@ pub struct Explosion {
     pub id: i32,
     pub spatial: SpatialProps,
     pub base: ExplosionProps,
+    pub parent_projectile_id: Option<i32>,
     pub decay_expand: ProcessProps,
     pub damaged: HashSet<ObjectSpecifier>,
     pub to_clean: bool,
@@ -651,8 +665,14 @@ pub struct ExplosionProps {
     pub spread_speed: f64,
 }
 
-pub fn create_explosion(props: &ExplosionProps, at: &Vec2f64, loc: &mut Location) {
+pub fn create_explosion(
+    props: &ExplosionProps,
+    at: &Vec2f64,
+    loc: &mut Location,
+    from_projectile_id: Option<i32>,
+) {
     loc.short_counter += 1;
+    let time_to_expand = (props.radius / props.spread_speed);
     let exp = Explosion {
         id: loc.short_counter,
         spatial: SpatialProps {
@@ -663,10 +683,11 @@ pub fn create_explosion(props: &ExplosionProps, at: &Vec2f64, loc: &mut Location
             radius: 0.0,
         },
         base: props.clone(),
+        parent_projectile_id: from_projectile_id,
         decay_expand: ProcessProps {
             progress_normalized: 0.0,
-            remaining_ticks: (props.radius / props.spread_speed) as i32,
-            max_ticks: (props.radius / props.spread_speed) as i32,
+            remaining_ticks: time_to_expand as i32,
+            max_ticks: time_to_expand as i32,
         },
         damaged: HashSet::new(),
         to_clean: false,
@@ -691,14 +712,19 @@ pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: 
             exp_r.spatial.radius,
             loc,
         );
-        log2!("all_affected: {:?}", all_affected);
-        log2!("already damaged {:?}", exp_r.damaged);
         let shockwave_damaged = all_affected
             .iter()
             .filter_map(|ois| {
                 object_index_into_object_id(&ois, loc).map_or(None, |oid| {
                     if !exp_r.damaged.contains(&oid) {
-                        Some((ois.clone(), oid.clone()))
+                        if (*ois != ObjectIndexSpecifier::Explosion { idx: i })
+                            // special trick to prevent explosion created from projectile from damaging the same projectile
+                            // while it's ok technically it doesn't make much sense to do
+                            && exp_r.parent_projectile_id.map_or(true, |ppid| (oid != ObjectSpecifier::Projectile { id: ppid}))  {
+                            Some((ois.clone(), oid.clone()))
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     }
@@ -714,8 +740,9 @@ pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: 
         }
         damage_objects(
             loc,
-            shockwave_damaged.clone().into_iter().map(|p| p.0).collect(),
+            &shockwave_damaged,
             exp_r.base.damage,
+            &ObjectSpecifier::Explosion { id: exp_r.id },
         );
 
         // apply constant push
@@ -781,16 +808,24 @@ pub fn push_objects(
                     ObjectIndexSpecifier::Star => {
                         // stars cannot be pushed
                     }
+                    ObjectIndexSpecifier::Explosion { .. } => {
+                        // projectiles cannot be pushed
+                    }
                 }
             }
         }
     }
 }
 
-pub fn damage_objects(loc: &mut Location, targets: Vec<ObjectIndexSpecifier>, amount: f64) {
+pub fn damage_objects(
+    loc: &mut Location,
+    targets: &Vec<(ObjectIndexSpecifier, ObjectSpecifier)>,
+    amount: f64,
+    source: &ObjectSpecifier,
+) {
     for ois in targets {
-        log2!("damage {:?}", ois);
-        if let Some(health) = object_index_into_health_mut(&ois, loc) {
+        // log2!("damage {:?} from {:?}", ois.1, source);
+        if let Some(health) = object_index_into_health_mut(&ois.0, loc) {
             health.current -= amount;
         }
     }

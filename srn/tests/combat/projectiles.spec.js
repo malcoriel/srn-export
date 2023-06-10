@@ -93,8 +93,16 @@ function mockRocket(position, lifetime) {
       explosion_props: {
         damage: 10.0,
         radius: 5.0,
-        applied_force: 5.0e-6,
-        spread_speed: 5.0e-3,
+        applied_force: 5.0e-12,
+        spread_speed: 5.0e-6,
+      },
+      health: {
+        current: 10.0,
+        max: 10.0,
+        regen_per_tick: null,
+        last_damage_dealer: null,
+        acc_periodic_dmg: 0.0,
+        acc_periodic_heal: 0.0,
       },
       to_clean: false,
     },
@@ -271,6 +279,7 @@ describe('combat projectiles', () => {
       mode: 'Sandbox',
       gen_state_opts: genStateOpts({ system_count: 1 }),
     });
+    state.disable_hp_effects = false;
     // create 2 rockets to collide
     state.locations[0].projectiles.push(
       mockRocket(
@@ -300,6 +309,7 @@ describe('combat projectiles', () => {
       )
     );
     state = updateWorld(state, 4100);
+    console.log(state.locations[0].projectiles);
     expect(state.locations[0].projectiles.length).toEqual(0);
   });
 });

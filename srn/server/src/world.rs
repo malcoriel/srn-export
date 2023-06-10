@@ -1673,6 +1673,9 @@ pub fn remove_object(state: &mut GameState, loc_idx: usize, remove: ObjectSpecif
         ObjectSpecifier::Projectile { id } => state.locations[loc_idx]
             .projectiles
             .retain(|p| p.get_id() != id),
+        ObjectSpecifier::Explosion { id } => {
+            state.locations[loc_idx].explosions.retain(|e| e.id != id)
+        }
     }
 }
 

@@ -626,10 +626,18 @@ fn add_default_templates(state: &mut GameState) {
         explosion_props: ExplosionProps {
             damage: 50.0,
             radius: 5.0,
-            applied_force: 1e-6,
-            spread_speed: 1e-3,
+            applied_force: 1e-12,
+            spread_speed: 1e-6,
         },
         markers: None,
+        health: Health {
+            current: 10.0,
+            max: 10.0,
+            regen_per_tick: None,
+            last_damage_dealer: None,
+            acc_periodic_dmg: 0.0,
+            acc_periodic_heal: 0.0,
+        },
         to_clean: false,
     });
     if let Some(templates) = &mut state.projectile_templates {

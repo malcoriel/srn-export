@@ -1,8 +1,10 @@
 use crate::autofocus::SpatialIndex;
-use crate::indexing::{index_players_by_ship_id, ObjectSpecifier};
+use crate::combat::{create_explosion, Health};
+use crate::indexing::{index_players_by_ship_id, ObjectIndexSpecifier, ObjectSpecifier};
 use crate::properties::{ObjectProperty, WRECK_DECAY_TICKS};
 use crate::world::{
-    GameState, LocalEffect, ProcessProps, SpatialProps, Wreck, PLANET_HEALTH_REGEN_PER_TICK,
+    GameState, LocalEffect, Location, ProcessProps, SpatialProps, Wreck,
+    PLANET_HEALTH_REGEN_PER_TICK,
 };
 use crate::world_events::GameEvent;
 use crate::{indexing, prng_id, world_events};
@@ -170,5 +172,56 @@ pub fn update_hp_effects(
                 health.current = health.current.min(health.max);
             }
         }
+    }
+
+    let mut exp = vec![];
+    for i in 0..state.locations[location_idx].projectiles.len() {
+        let projectile = &mut state.locations[location_idx].projectiles[i];
+        let blow = if let Some(health) = projectile.get_health_mut() {
+            health.current < 0.0
+        } else {
+            false
+        };
+        if blow {
+            if let Some(exp_props) = projectile.get_explosion_props() {
+                exp.push((
+                    Some(projectile.get_id()),
+                    exp_props.clone(),
+                    projectile.get_spatial().position,
+                ));
+            }
+            *projectile.get_to_clean_mut() = true;
+        }
+    }
+    for blown in exp.into_iter() {
+        create_explosion(
+            &blown.1,
+            &blown.2,
+            &mut state.locations[location_idx],
+            blown.0,
+        );
+    }
+}
+
+pub fn object_index_into_health_mut<'a, 'b>(
+    ois: &'a ObjectIndexSpecifier,
+    loc: &'b mut Location,
+) -> Option<&'b mut Health> {
+    match ois {
+        ObjectIndexSpecifier::Unknown => None,
+        ObjectIndexSpecifier::Mineral { idx } => None,
+        ObjectIndexSpecifier::Container { idx } => None,
+        ObjectIndexSpecifier::Planet { idx } => {
+            loc.planets.get_mut(*idx).and_then(|o| o.health.as_mut())
+        }
+        ObjectIndexSpecifier::Ship { idx } => loc.ships.get_mut(*idx).map(|ship| &mut ship.health),
+        ObjectIndexSpecifier::Star => None,
+        ObjectIndexSpecifier::Projectile { idx } => loc
+            .projectiles
+            .get_mut(*idx)
+            .and_then(|p| p.get_health_mut()),
+        ObjectIndexSpecifier::Asteroid { idx } => None,
+        ObjectIndexSpecifier::Wreck { idx } => None,
+        ObjectIndexSpecifier::Explosion { .. } => None,
     }
 }
