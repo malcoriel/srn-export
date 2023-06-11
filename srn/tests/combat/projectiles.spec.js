@@ -279,7 +279,6 @@ describe('combat projectiles', () => {
       mode: 'Sandbox',
       gen_state_opts: genStateOpts({ system_count: 1 }),
     });
-    state.disable_hp_effects = false;
     // create 2 rockets to collide
     state.locations[0].projectiles.push(
       mockRocket(

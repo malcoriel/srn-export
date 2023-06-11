@@ -182,7 +182,6 @@
     "paused": false,
     "millis": 0,
     "ticks": 0,
-    "disable_hp_effects": false,
     "market": {
       "wares": {},
       "prices": {

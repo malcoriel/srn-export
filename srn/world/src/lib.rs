@@ -476,7 +476,6 @@ fn execute_update_world(elapsed_micro: i32, mut args: UpdateWorldArgs) -> GameSt
         args.client.unwrap_or(true),
         get_sampler_clone(),
         world::UpdateOptions {
-            disable_hp_effects: false,
             limit_area: args.limit_area,
             force_non_determinism: args.force_non_determinism,
         },

@@ -124,6 +124,7 @@ export const ThreeProjectilesLayer: React.FC<ThreeProjectilesLayerParams> = ({
                 3
               )}
             >
+              {/*Debugging circle to show the actual explosion radius and damage zone*/}
               {/*<mesh>*/}
               {/*  <circleBufferGeometry args={[explosion.spatial.radius, 256]} />*/}
               {/*  <meshBasicMaterial color="white" />*/}

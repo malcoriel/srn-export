@@ -155,7 +155,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
             }
         }
         SandboxCommand::ToggleGodMode => {
-            state.disable_hp_effects = !state.disable_hp_effects;
+            // TODO: different implementation, add property Invulnerable
         }
         SandboxCommand::AddPlanet(args) => {
             if let Some(pos) = get_pos(state, player_id) {

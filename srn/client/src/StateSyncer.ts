@@ -894,7 +894,6 @@ export class StateSyncer extends EventEmitter {
       'milliseconds_remaining',
       'paused',
       'leaderboard',
-      'disable_hp_effects',
       'market',
       'interval_data',
       'game_over',

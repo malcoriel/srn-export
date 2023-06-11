@@ -575,7 +575,6 @@ pub struct GameState {
     pub leaderboard: Option<Leaderboard>,
     pub millis: u32,
     pub ticks: u64,
-    pub disable_hp_effects: bool,
     pub market: Option<Market>,
     pub locations: Vec<Location>,
     pub interval_data: Option<HashMap<TimeMarks, u32>>,
@@ -617,7 +616,6 @@ impl GameState {
             leaderboard: None,
             millis: 0,
             ticks: 0,
-            disable_hp_effects: false,
             market: None,
             locations: vec![],
             interval_data: Some(Default::default()),
@@ -686,7 +684,6 @@ impl AABB {
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct UpdateOptions {
-    pub disable_hp_effects: bool,
     pub limit_area: AABB,
     pub force_non_determinism: Option<bool>,
 }
@@ -694,7 +691,6 @@ pub struct UpdateOptions {
 impl UpdateOptions {
     pub fn new() -> Self {
         Self {
-            disable_hp_effects: false,
             limit_area: AABB::maxed(),
             force_non_determinism: None,
         }
@@ -703,7 +699,6 @@ impl UpdateOptions {
 
 #[derive(Default, Clone, Debug, Serialize, Deserialize)]
 pub struct UpdateOptionsV2 {
-    pub disable_hp_effects: Option<bool>,
     pub limit_area: Option<AABB>,
     pub limit_to_loc_idx: Option<usize>,
 }
@@ -711,7 +706,6 @@ pub struct UpdateOptionsV2 {
 impl UpdateOptionsV2 {
     pub fn new() -> Self {
         Self {
-            disable_hp_effects: None,
             limit_area: None,
             limit_to_loc_idx: None,
         }
@@ -1207,31 +1201,30 @@ pub fn update_location(
     );
     sampler.end(props_id);
 
-    if !update_options.disable_hp_effects && !state.disable_hp_effects {
-        let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
-        hp::update_hp_effects(
-            state,
-            location_idx,
-            elapsed,
-            state.millis,
-            prng,
-            client,
-            extra_damages,
-            spatial_index,
-        );
-        sampler.end(hp_effects_id);
+    let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
+    hp::update_hp_effects(
+        state,
+        location_idx,
+        elapsed,
+        state.millis,
+        prng,
+        client,
+        extra_damages,
+        spatial_index,
+    );
+    sampler.end(hp_effects_id);
 
-        let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
-        state.locations[location_idx].minerals = update_state_minerals(
-            &state.locations[location_idx].minerals,
-            &state.locations[location_idx].asteroid_belts,
-            prng,
-        );
-        sampler.end(update_minerals_respawn_id);
-        let respawn_id = sampler.start(SamplerMarks::UpdateShipsRespawn as u32);
-        update_ships_respawn(&mut state, prng);
-        sampler.end(respawn_id);
-    }
+    let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
+    state.locations[location_idx].minerals = update_state_minerals(
+        &state.locations[location_idx].minerals,
+        &state.locations[location_idx].asteroid_belts,
+        prng,
+    );
+    sampler.end(update_minerals_respawn_id);
+    let respawn_id = sampler.start(SamplerMarks::UpdateShipsRespawn as u32);
+    update_ships_respawn(&mut state, prng);
+    sampler.end(respawn_id);
+
     let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
     autofocus::update_location_autofocus(&mut state, location_idx, &spatial_index);
     sampler.end(autofocus_id);
@@ -1747,7 +1740,6 @@ pub fn update_room(
         false,
         sampler,
         UpdateOptions {
-            disable_hp_effects: false,
             limit_area: AABB::maxed(),
             force_non_determinism: None,
         },

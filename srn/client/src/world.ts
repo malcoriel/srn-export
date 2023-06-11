@@ -433,7 +433,6 @@ export const DEFAULT_STATE = {
     max_planets_in_system: 10,
     max_satellites_for_planet: 3,
   },
-  disable_hp_effects: false,
   id: '',
   leaderboard: {
     rating: [],
