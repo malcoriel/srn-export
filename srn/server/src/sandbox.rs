@@ -12,6 +12,7 @@ use uuid::Uuid;
 use crate::indexing::{find_my_ship, find_my_ship_mut, ObjectSpecifier};
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;
+use crate::properties::{toggle_property, ObjectProperty, ObjectPropertyKey};
 use crate::random_stuff::{
     gen_color, gen_planet_name, gen_star_color, gen_star_name, random_hex_seed, PLANET_NAMES,
 };
@@ -155,7 +156,8 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
             }
         }
         SandboxCommand::ToggleGodMode => {
-            // TODO: different implementation, add property Invulnerable
+            let ship = find_my_ship_mut(state, player_id);
+            ship.map(|s| toggle_property(&mut s.properties, ObjectProperty::Invulnerable));
         }
         SandboxCommand::AddPlanet(args) => {
             if let Some(pos) = get_pos(state, player_id) {

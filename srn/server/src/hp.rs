@@ -1,7 +1,7 @@
 use crate::autofocus::SpatialIndex;
 use crate::combat::{create_explosion, Health};
 use crate::indexing::{index_players_by_ship_id, ObjectIndexSpecifier, ObjectSpecifier};
-use crate::properties::{ObjectProperty, WRECK_DECAY_TICKS};
+use crate::properties::{has_property, ObjectProperty, ObjectPropertyKey, WRECK_DECAY_TICKS};
 use crate::world::{
     GameState, LocalEffect, Location, ProcessProps, SpatialProps, Wreck,
     PLANET_HEALTH_REGEN_PER_TICK,
@@ -38,6 +38,9 @@ pub fn update_hp_effects(
     if let Some(star) = state.locations[location_idx].star.clone() {
         let star_center = star.spatial.position.clone();
         for mut ship in state.locations[location_idx].ships.iter_mut() {
+            if has_property(&ship.properties, ObjectPropertyKey::Invulnerable) {
+                continue;
+            }
             let ship_pos = ship.spatial.position.clone();
 
             let dist_to_star = ship_pos.euclidean_distance(&star_center);
@@ -211,15 +214,26 @@ pub fn object_index_into_health_mut<'a, 'b>(
         ObjectIndexSpecifier::Unknown => None,
         ObjectIndexSpecifier::Mineral { .. } => None,
         ObjectIndexSpecifier::Container { .. } => None,
-        ObjectIndexSpecifier::Planet { idx } => {
-            loc.planets.get_mut(*idx).and_then(|o| o.health.as_mut())
-        }
-        ObjectIndexSpecifier::Ship { idx } => loc.ships.get_mut(*idx).map(|ship| &mut ship.health),
+        ObjectIndexSpecifier::Planet { idx } => loc.planets.get_mut(*idx).and_then(|o| {
+            if has_property(&o.properties, ObjectPropertyKey::Invulnerable) {
+                return None;
+            }
+            o.health.as_mut()
+        }),
+        ObjectIndexSpecifier::Ship { idx } => loc.ships.get_mut(*idx).and_then(|ship| {
+            if has_property(&ship.properties, ObjectPropertyKey::Invulnerable) {
+                return None;
+            }
+            Some(&mut ship.health)
+        }),
         ObjectIndexSpecifier::Star => None,
-        ObjectIndexSpecifier::Projectile { idx } => loc
-            .projectiles
-            .get_mut(*idx)
-            .and_then(|p| p.get_health_mut()),
+        ObjectIndexSpecifier::Projectile { idx } => loc.projectiles.get_mut(*idx).and_then(|p| {
+            // Let's ignore Invulnerable for projectiles for now, as they simply can have no health
+            // if has_property(&p.get_properties(), ObjectPropertyKey::Invulnerable) {
+            //     return None;
+            // }
+            p.get_health_mut()
+        }),
         ObjectIndexSpecifier::Asteroid { .. } => None,
         ObjectIndexSpecifier::Wreck { .. } => None,
         ObjectIndexSpecifier::Explosion { .. } => None,

@@ -20,6 +20,7 @@ pub enum ObjectProperty {
     UnlandablePlanet,
     PirateDefencePlayersHomePlanet,
     PirateShip,
+    Invulnerable,
     MoneyOnKill(MoneyOnKillProps),
     Decays(ProcessProps),
     Lifetime(ProcessProps),
@@ -34,6 +35,7 @@ pub enum ObjectPropertyKey {
     UnlandablePlanet,
     PirateDefencePlayersHomePlanet,
     PirateShip,
+    Invulnerable,
     MoneyOnKill,
     Decays,
     Lifetime,
@@ -51,6 +53,7 @@ impl ObjectProperty {
             }
             ObjectProperty::PirateShip => ObjectPropertyKey::PirateShip,
             ObjectProperty::Lifetime { .. } => ObjectPropertyKey::Lifetime,
+            ObjectProperty::Invulnerable => ObjectPropertyKey::Invulnerable,
         }
     }
 }
@@ -103,4 +106,12 @@ pub fn replace_property(
 ) {
     ensure_no_property(props, from);
     ensure_property(props, to);
+}
+
+pub fn toggle_property(props: &mut Vec<ObjectProperty>, val: ObjectProperty) {
+    if has_property(props, val.key()) {
+        ensure_no_property(props, val.key())
+    } else {
+        ensure_property(props, val);
+    }
 }
