@@ -209,8 +209,8 @@ pub fn object_index_into_health_mut<'a, 'b>(
 ) -> Option<&'b mut Health> {
     match ois {
         ObjectIndexSpecifier::Unknown => None,
-        ObjectIndexSpecifier::Mineral { idx } => None,
-        ObjectIndexSpecifier::Container { idx } => None,
+        ObjectIndexSpecifier::Mineral { .. } => None,
+        ObjectIndexSpecifier::Container { .. } => None,
         ObjectIndexSpecifier::Planet { idx } => {
             loc.planets.get_mut(*idx).and_then(|o| o.health.as_mut())
         }
