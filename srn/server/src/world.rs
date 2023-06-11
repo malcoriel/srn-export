@@ -15,6 +15,7 @@ use crate::combat::{
     guide_projectile, update_explosions, Explosion, Health, Projectile, ShipTurret, ShootTarget,
 };
 use crate::dialogue::Dialogue;
+use crate::effects::LocalEffect;
 use crate::hp::SHIP_REGEN_PER_SEC;
 use crate::indexing::{
     build_full_spatial_indexes, find_my_player, find_my_ship, find_my_ship_index, find_planet,
@@ -94,47 +95,6 @@ impl Display for GameMode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-#[serde(tag = "tag")]
-pub enum LocalEffect {
-    Unknown {},
-    DmgDone {
-        hp: i32,
-        id: u32,
-        tick: u32,
-        ship_id: Uuid,
-    },
-    Heal {
-        hp: i32,
-        id: u32,
-        tick: u32,
-        ship_id: Uuid,
-    },
-    PickUp {
-        id: u32,
-        text: String,
-        position: Vec2f64,
-        tick: u32,
-    },
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub enum LocalEffectKind {
-    Unknown,
-    Damage,
-    Heal,
-    Pickup,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct LocalEffectV2 {
-    pub text: String,
-    pub num_value: f64,
-    pub relative_pos: Vec2f64,
-    pub kind: LocalEffectKind,
-    pub timestamp_ticks: u32,
 }
 
 pub fn get_random_planet<'a>(
@@ -276,8 +236,6 @@ pub struct Ship {
     pub movement_markers: ControlMarkers,
     pub movement_definition: Movement,
     pub health: Health,
-    pub local_effects: Vec<LocalEffect>,
-    pub local_effects_counter: u32,
     pub long_actions: Vec<LongAction>,
     pub npc: Option<Bot>,
     pub name: Option<String>,
@@ -320,8 +278,6 @@ impl Ship {
             movement_markers: Default::default(),
             movement_definition: Movement::None,
             health: Health::new(100.0),
-            local_effects: vec![],
-            local_effects_counter: 0,
             long_actions: vec![],
             npc: None,
             name: None,
@@ -490,6 +446,7 @@ pub struct Location {
     pub adjacent_location_ids: Vec<Uuid>,
     pub projectiles: Vec<Projectile>,
     pub explosions: Vec<Explosion>,
+    pub effects: Vec<LocalEffect>,
     pub short_counter: i32,
 }
 
@@ -510,6 +467,7 @@ impl Location {
             adjacent_location_ids: vec![],
             projectiles: Default::default(),
             explosions: vec![],
+            effects: vec![],
             short_counter: 0,
         }
     }
@@ -530,6 +488,7 @@ impl Location {
             ships: vec![],
             projectiles: Default::default(),
             explosions: vec![],
+            effects: vec![],
             short_counter: 0,
         }
     }
@@ -1290,15 +1249,7 @@ fn apply_tractored_items_consumption(
         let pair = find_player_and_ship_mut(&mut state, pup.0);
         let picked_items = InventoryItem::from(pup.1);
         if let Some(ship) = pair.1 {
-            if client {
-                ship.local_effects_counter = (ship.local_effects_counter + 1) % u32::MAX;
-                ship.local_effects.push(LocalEffect::PickUp {
-                    id: ship.local_effects_counter,
-                    text: format!("Pick up: {}", InventoryItem::format(&picked_items)),
-                    position: Default::default(),
-                    tick: ticks,
-                });
-            }
+            // TODO add a pickup effect
             add_items(&mut ship.inventory, picked_items);
         }
     }

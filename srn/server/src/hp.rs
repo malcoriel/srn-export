@@ -1,10 +1,10 @@
 use crate::autofocus::SpatialIndex;
-use crate::combat::{create_explosion, Health};
+use crate::combat::{create_explosion, damage_objects, Health};
+use crate::effects::LocalEffect;
 use crate::indexing::{index_players_by_ship_id, ObjectIndexSpecifier, ObjectSpecifier};
 use crate::properties::{has_property, ObjectProperty, ObjectPropertyKey, WRECK_DECAY_TICKS};
 use crate::world::{
-    GameState, LocalEffect, Location, ProcessProps, SpatialProps, Wreck,
-    PLANET_HEALTH_REGEN_PER_TICK,
+    GameState, Location, ProcessProps, SpatialProps, Wreck, PLANET_HEALTH_REGEN_PER_TICK,
 };
 use crate::world_events::GameEvent;
 use crate::{indexing, prng_id, world_events};
@@ -25,19 +25,22 @@ pub fn update_hp_effects(
     state: &mut GameState,
     location_idx: usize,
     elapsed_micro: i64,
-    current_tick: u32,
+    _current_tick: u32,
     prng: &mut Pcg64Mcg,
-    client: bool,
+    _client: bool,
     _extra_damages: Vec<(ObjectSpecifier, f64)>,
     _spatial_index: &mut SpatialIndex,
 ) {
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
 
+    let mut health_changes = vec![];
     // apply damage from the star
     if let Some(star) = state.locations[location_idx].star.clone() {
         let star_center = star.spatial.position.clone();
+        let mut idx = 0;
         for mut ship in state.locations[location_idx].ships.iter_mut() {
+            idx += 1;
             if has_property(&ship.properties, ObjectPropertyKey::Invulnerable) {
                 continue;
             }
@@ -57,21 +60,12 @@ pub fn update_hp_effects(
             };
             //eprintln!("star_damage {}", star_damage);
             let star_damage = star_damage * elapsed_micro as f64 / 1000.0 / 1000.0;
-            ship.health.acc_periodic_dmg += star_damage;
 
+            ship.health.acc_periodic_dmg += star_damage;
             if ship.health.acc_periodic_dmg >= DMG_EFFECT_MIN {
                 let dmg_done = ship.health.acc_periodic_dmg.floor() as i32;
                 ship.health.acc_periodic_dmg = 0.0;
-                ship.health.current = (ship.health.current - dmg_done as f64).max(0.0);
-                if client {
-                    ship.local_effects_counter = (ship.local_effects_counter + 1) % u32::MAX;
-                    ship.local_effects.push(LocalEffect::DmgDone {
-                        id: ship.local_effects_counter,
-                        hp: -dmg_done,
-                        tick: current_tick,
-                        ship_id: ship.id,
-                    });
-                }
+                health_changes.push((true, ObjectIndexSpecifier::Ship { idx }, dmg_done));
             }
 
             if star_damage <= 0.0
@@ -85,36 +79,7 @@ pub fn update_hp_effects(
             if ship.health.acc_periodic_heal >= HEAL_EFFECT_MIN {
                 let heal = ship.health.acc_periodic_heal.floor() as i32;
                 ship.health.acc_periodic_heal = 0.0;
-                ship.health.current = ship.health.max.min(ship.health.current + heal as f64);
-                if client {
-                    ship.local_effects_counter = (ship.local_effects_counter + 1) % u32::MAX;
-                    ship.local_effects.push(LocalEffect::Heal {
-                        id: ship.local_effects_counter,
-                        hp: heal as i32,
-                        tick: current_tick,
-                        ship_id: ship.id,
-                    });
-                }
-            }
-
-            if client {
-                ship.local_effects = ship
-                    .local_effects
-                    .iter()
-                    .filter(|e| {
-                        if let Some(tick) = match &e {
-                            LocalEffect::Unknown { .. } => None,
-                            LocalEffect::DmgDone { tick, .. } => Some(tick),
-                            LocalEffect::Heal { tick, .. } => Some(tick),
-                            LocalEffect::PickUp { tick, .. } => Some(tick),
-                        } {
-                            return (*tick as i32 - current_tick as i32).abs()
-                                < MAX_LOCAL_EFF_LIFE_MS;
-                        }
-                        return false;
-                    })
-                    .map(|e| e.clone())
-                    .collect::<Vec<_>>()
+                health_changes.push((false, ObjectIndexSpecifier::Ship { idx }, heal));
             }
         }
     }

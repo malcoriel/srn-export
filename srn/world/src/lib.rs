@@ -204,6 +204,9 @@ mod spatial_movement;
 #[path = "../../server/src/hp.rs"]
 mod hp;
 
+#[path = "../../server/src/effects.rs"]
+mod effects;
+
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};

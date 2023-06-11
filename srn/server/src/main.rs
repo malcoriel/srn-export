@@ -148,6 +148,7 @@ mod cargo_rush;
 mod chat;
 mod combat;
 mod dialogue;
+mod effects;
 mod fof;
 mod hp;
 mod indexing;

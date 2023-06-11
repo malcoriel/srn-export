@@ -9,6 +9,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::autofocus::{object_index_into_object_id, object_index_into_object_pos, SpatialIndex};
+use crate::effects::LocalEffect;
 use crate::hp::object_index_into_health_mut;
 use crate::indexing::{
     find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
@@ -22,8 +23,8 @@ use crate::spatial_movement::{align_rotation_with_velocity, Movement};
 use crate::system_gen::DEFAULT_WORLD_UPDATE_EVERY_TICKS;
 use crate::vec2::Vec2f64;
 use crate::world::{
-    remove_object, GameState, LocalEffect, Location, Player, ProcessProps, Ship, SpatialProps,
-    TemplateId, UpdateOptions,
+    remove_object, GameState, Location, Player, ProcessProps, Ship, SpatialProps, TemplateId,
+    UpdateOptions,
 };
 use crate::{indexing, new_id, world};
 
@@ -206,18 +207,7 @@ pub fn resolve_shoot(
                     target_ship.health.last_damage_dealer = Some(ObjectSpecifier::Ship {
                         id: shooting_ship_id,
                     });
-                    target_ship.local_effects_counter =
-                        (target_ship.local_effects_counter + 1) % u32::MAX;
-                    let effect = LocalEffect::DmgDone {
-                        id: target_ship.local_effects_counter,
-                        hp: dmg as i32,
-                        ship_id: target_ship_id,
-                        tick: state.millis,
-                    };
-
-                    if client {
-                        target_ship.local_effects.push(effect.clone())
-                    }
+                    // TODO add a damage effect
                 }
             }
             ShootTarget::Mineral { id } => {
@@ -836,8 +826,12 @@ pub fn damage_objects(
 ) {
     for ois in targets {
         // log2!("damage {:?} from {:?}", ois.1, _source);
-        if let Some(health) = object_index_into_health_mut(&ois.0, loc) {
+        let _damage = if let Some(health) = object_index_into_health_mut(&ois.0, loc) {
             health.current -= amount;
-        }
+            amount
+        } else {
+            0.0
+        };
+        // TODO: local effects rework
     }
 }

@@ -2,6 +2,8 @@ use crate::autofocus::build_spatial_index;
 use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
+use strum::AsStaticRef;
+use strum::AsStaticStr;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use uuid::*;
@@ -383,7 +385,16 @@ pub fn find_player_and_ship(
 }
 
 #[derive(
-    Serialize, Deserialize, Debug, Clone, PartialEq, Eq, TypescriptDefinition, TypeScriptify, Hash,
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    TypescriptDefinition,
+    TypeScriptify,
+    Hash,
+    AsStaticStr,
 )]
 #[serde(tag = "tag")]
 pub enum ObjectSpecifier {
