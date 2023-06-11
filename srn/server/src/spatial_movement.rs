@@ -290,11 +290,10 @@ pub fn update_accelerated_ship_movement(
         // negate drag if ship is actively turning to prevent wrong expectations
         spatial.angular_velocity += angular_drag;
     }
-    let thrust_dir = Vec2f64 { x: 1.0, y: 0.0 }.rotate(spatial.rotation_rad);
+    let thrust_dir = Vec2f64 { x: 1.0, y: 0.0 }.rotate(-spatial.rotation_rad);
     let mut space_acceleration = thrust_dir.scalar_mul(
         movement_definition.get_current_linear_acceleration() * elapsed_micro as f64 * gas_sign,
     );
-    space_acceleration.y = -space_acceleration.y;
     spatial.velocity = spatial.velocity.add(&space_acceleration);
     let max_speed = movement_definition.get_max_speed();
     if spatial.velocity.euclidean_len() > max_speed {
