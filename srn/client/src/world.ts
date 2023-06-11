@@ -464,6 +464,8 @@ export const DEFAULT_STATE = {
       wrecks: [],
       projectiles: [],
       projectile_counter: 0,
+      short_counter: 0,
+      explosions: [],
     },
   ],
   players: [],

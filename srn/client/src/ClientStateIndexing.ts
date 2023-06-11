@@ -103,6 +103,10 @@ export const findObjectBySpecifier = (
       const spec = specifier.obj_spec;
       return loc.projectiles.find((p) => p.fields.id === spec.id);
     }
+    case 'Explosion': {
+      const spec = specifier.obj_spec;
+      return loc.explosions.find((p) => p.id === spec.id);
+    }
     default:
       throw new UnreachableCaseError(specifier.obj_spec);
   }
