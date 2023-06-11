@@ -308,7 +308,6 @@ describe('combat projectiles', () => {
       )
     );
     state = updateWorld(state, 4100);
-    console.log(state.locations[0].projectiles);
-    expect(state.locations[0].projectiles.length).toEqual(0);
+    expect(state.locations[0].projectiles).toBeEmpty();
   });
 });
