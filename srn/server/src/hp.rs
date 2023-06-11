@@ -29,7 +29,7 @@ pub fn update_hp_effects(
     prng: &mut Pcg64Mcg,
     client: bool,
     _extra_damages: Vec<(ObjectSpecifier, f64)>,
-    spatial_index: &mut SpatialIndex,
+    _spatial_index: &mut SpatialIndex,
 ) {
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
@@ -220,8 +220,8 @@ pub fn object_index_into_health_mut<'a, 'b>(
             .projectiles
             .get_mut(*idx)
             .and_then(|p| p.get_health_mut()),
-        ObjectIndexSpecifier::Asteroid { idx } => None,
-        ObjectIndexSpecifier::Wreck { idx } => None,
+        ObjectIndexSpecifier::Asteroid { .. } => None,
+        ObjectIndexSpecifier::Wreck { .. } => None,
         ObjectIndexSpecifier::Explosion { .. } => None,
     }
 }

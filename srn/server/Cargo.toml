@@ -40,6 +40,7 @@ console = "0.15.2"
 serde_json_any_key = "2.0.0"
 include_dir = "0.7.3"
 serde_with = "1.14.0"
+ctrlc = "3.4.0"
 
   [dependencies.optimization_engine]
   version = "0.7.7"

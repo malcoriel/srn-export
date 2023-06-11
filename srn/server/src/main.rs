@@ -303,6 +303,12 @@ impl Fairing for CORS {
 
 #[launch]
 fn rocket() -> rocket::Rocket {
+    ctrlc::set_handler(move || {
+        println!("\nReceived Ctrl+C, terminating process...");
+        std::process::exit(0);
+    })
+    .expect("Error setting Ctrl-C handler");
+
     self_inspect::declare();
     {
         let mut d_table = DIALOGUE_TABLE.lock().unwrap();

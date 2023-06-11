@@ -57,6 +57,8 @@ describe('autofocus behavior', () => {
     botShipBeforeUpdate.spatial.position.y = planet.spatial.position.y;
     room = updateRoom(room, 100);
     const botShipAfterUpdate = getShipByPlayerId(room.state, firstBotId);
+    console.log(botShipAfterUpdate.spatial.position);
+    console.log(planet.spatial.position);
     expect(botShipAfterUpdate.auto_focus?.id).toEqual(planet.id);
   });
 });

@@ -443,7 +443,7 @@ pub fn update_proj_collisions(
     sp_idx: &SpatialIndex,
     _location_idx: usize,
 ) -> Vec<(ObjectSpecifier, f64)> {
-    let mut damages: Vec<(ObjectIndexSpecifier, f64)> = vec![];
+    let damages: Vec<(ObjectIndexSpecifier, f64)> = vec![];
     let mut current_idx = -1;
     let mut explosions = vec![];
     for proj in loc.projectiles.iter_mut() {
@@ -508,7 +508,7 @@ impl Projectile {
     }
     pub fn get_explosion_props(&self) -> Option<&ExplosionProps> {
         match self {
-            Projectile::Rocket(rocketProps) => Some(&rocketProps.explosion_props),
+            Projectile::Rocket(rocket_props) => Some(&rocket_props.explosion_props),
         }
     }
     pub fn get_to_clean_mut(&mut self) -> &mut bool {
@@ -744,7 +744,7 @@ pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: 
             .collect::<Vec<_>>();
         {
             // apply shockwave but only once
-            let mut exp = &mut loc.explosions[i];
+            let exp = &mut loc.explosions[i];
             for (_ois, oid) in shockwave_damaged.iter() {
                 exp.damaged.insert(oid.clone());
             }
