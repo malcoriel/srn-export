@@ -91,11 +91,11 @@ export const ThreeVisualEffect: React.FC<ThreeVisualEffectProps> = ({
 
       if (currentExternalText && data.toText !== currentExternalText) {
         if (data.fromText) {
-          console.log(
-            `target change from ${
-              data.toText
-            } to ${currentExternalText} ${typeof currentExternalText}`
-          );
+          // console.log(
+          //   `target change from ${
+          //     data.toText
+          //   } to ${currentExternalText} ${typeof currentExternalText}`
+          // );
           data.textAnimation = 0;
           data.fromText = data.text;
           if (!_.isNaN(Number(data.fromText))) {
@@ -105,11 +105,11 @@ export const ThreeVisualEffect: React.FC<ThreeVisualEffectProps> = ({
           data.animation = 0.25; // reset the main animation on slightly below peak to show the change
         } else {
           data.toText = currentExternalText;
-          console.log(
-            `initial set to ${
-              data.toText
-            } ${typeof data.toText} ${typeof data.toText}`
-          );
+          // console.log(
+          //   `initial set to ${
+          //     data.toText
+          //   } ${typeof data.toText} ${typeof data.toText}`
+          // );
           // initial first transition
           data.fromText = data.toText;
         }

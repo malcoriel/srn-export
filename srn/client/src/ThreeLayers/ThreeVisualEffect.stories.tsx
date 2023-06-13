@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Story, Meta } from '@storybook/react';
 import { ThreeVisualEffect, ThreeVisualEffectProps } from './ThreeVisualEffect';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
@@ -31,10 +31,18 @@ const Template: Story = (args) => {
   const [revision, _setRevision] = useState(0);
   const [numericValue, setNumericValue] = useState(args.numericValue);
   const [textValue, setTextValue] = useState(args.textValue);
+  useEffect(() => {
+    setNumericValue(args.numericValue);
+  }, [args.numericValue]);
+  useEffect(() => {
+    setTextValue(args.textValue);
+  }, [args.textValue]);
   const keyValue =
     args.effect +
     revision +
     args.textMode +
+    args.numericValue +
+    args.textValue +
     args.effectTimeSeconds +
     args.textEffectTimeSeconds;
   return (
