@@ -466,6 +466,7 @@ export const DEFAULT_STATE = {
       projectile_counter: 0,
       short_counter: 0,
       explosions: [],
+      effects: [],
     },
   ],
   players: [],

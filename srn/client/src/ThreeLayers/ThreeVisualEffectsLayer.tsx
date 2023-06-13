@@ -40,7 +40,7 @@ export const ThreeVisualEffectsLayer: React.FC<{
         }
         return (
           <group
-            key={e.id}
+            key={e.key}
             position={posToThreePos(e.position.x, e.position.y)}
           >
             <ThreeVisualEffect effect={e} />

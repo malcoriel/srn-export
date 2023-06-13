@@ -217,7 +217,6 @@ export class StateSyncer extends EventEmitter {
         .hex()
         .toString();
       desyncedShadow.name = ' ';
-      desyncedShadow.local_effects = [];
       this.state.locations[0].ships.push(desyncedShadow);
     }
   }

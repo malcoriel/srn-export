@@ -4,7 +4,7 @@ import { StarMap, StarMapProps } from './StarMap';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
 import * as uuid from 'uuid';
 import Vector, { VectorF } from '../utils/Vector';
-import { Location } from '../world';
+import { DEFAULT_STATE, Location } from '../world';
 
 const Template: Story = (args) => {
   const [revision, setRevision] = useState(uuid.v4());
@@ -34,8 +34,7 @@ const mockLocation = (
   starPos: Vector,
   starRadius: number
 ): Location => ({
-  seed: '1',
-  id,
+  ...DEFAULT_STATE.locations[0],
   star: {
     id,
     name: starName,
@@ -51,18 +50,6 @@ const mockLocation = (
     movement: { tag: 'None' },
     rot_movement: { tag: 'None' },
   },
-  planets: [],
-  asteroids: [],
-  wrecks: [],
-  minerals: [],
-  containers: [],
-  position: starPos,
-  asteroid_belts: [],
-  ships: [],
-  adjacent_location_ids: [],
-  projectiles: [],
-  short_counter: 0,
-  explosions: [],
 });
 
 export const Main = Template.bind({});
