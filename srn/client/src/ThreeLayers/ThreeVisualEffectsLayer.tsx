@@ -1,34 +1,8 @@
 import React from 'react';
 import { LocalEffect } from '../../../world/pkg/world';
-import { posToThreePos, vecToThreePos } from './util';
-import { teal } from '../utils/palette';
-import { Text } from '@react-three/drei';
+import { posToThreePos } from './util';
+import { ThreeVisualEffect } from './ThreeVisualEffect';
 
-export const ThreeVisualEffect: React.FC<{ effect: LocalEffect }> = ({
-  effect,
-}) => {
-  if (effect.tag === 'Unknown') {
-    return null;
-  }
-  // @ts-ignore
-  const text = effect.hp ? effect.hp : effect.text;
-  return (
-    <Text
-      visible
-      color={teal}
-      font="resources/fonts/DejaVuSans.ttf"
-      fontSize={1.0}
-      maxWidth={20}
-      lineHeight={1}
-      letterSpacing={0.02}
-      textAlign="center"
-      anchorX="center"
-      anchorY="middle"
-    >
-      {text}
-    </Text>
-  );
-};
 export const ThreeVisualEffectsLayer: React.FC<{
   effects: LocalEffect[];
 }> = ({ effects }) => {
