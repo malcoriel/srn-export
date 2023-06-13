@@ -41,7 +41,6 @@ import { Dictionary } from 'ts-essentials';
 import * as uuid from 'uuid';
 import Prando from 'prando';
 import { api } from './utils/api';
-import { Measure, Perf } from './HtmlLayers/Perf';
 import pWaitFor from 'p-wait-for';
 
 export type {
@@ -518,3 +517,4 @@ export const getObjSpecId = (objSpec: ObjectSpecifier): string | null => {
   }
   return String(objSpec.id);
 };
+export const lerp = (a: number, b: number, v: number) => a + (b - a) * v;

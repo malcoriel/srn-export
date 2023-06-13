@@ -7,6 +7,7 @@ import React, { useMemo } from 'react';
 import Color from 'color';
 import _ from 'lodash';
 import { posToThreePos, vec3repeat } from './util';
+import { lerp } from '../world';
 
 export interface ThreeTrajectoryItemProps {
   position: IVector;
@@ -17,7 +18,6 @@ export interface ThreeTrajectoryItemProps {
   radius?: number;
 }
 
-export const lerp = (a: number, b: number, v: number) => a + (b - a) * v;
 export const ThreeTrajectoryItem: React.FC<ThreeTrajectoryItemProps> = ({
   position,
   mainColor,
