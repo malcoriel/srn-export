@@ -9,7 +9,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::autofocus::{object_index_into_object_id, object_index_into_object_pos, SpatialIndex};
-use crate::effects::LocalEffect;
+use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
 use crate::hp::object_index_into_health_mut;
 use crate::indexing::{
     find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
@@ -94,7 +94,7 @@ pub fn validate_shoot(
     target: ShootTarget,
     loc: &Location,
     ship: &Ship,
-    active_turret_id: String,
+    active_turret_id: i32,
 ) -> bool {
     let shoot_ability = find_turret_ability(ship, active_turret_id);
     if shoot_ability.is_none() {
@@ -144,7 +144,7 @@ pub fn validate_launch(
     _target: ShootTarget,
     _loc: &Location,
     ship: &Ship,
-    active_turret_id: String,
+    active_turret_id: i32,
 ) -> bool {
     let shoot_ability = find_turret_ability(ship, active_turret_id);
     if shoot_ability.is_none() {
@@ -159,7 +159,7 @@ pub fn validate_launch(
     return true;
 }
 
-pub fn find_turret_ability(ship: &Ship, active_turret_id: String) -> Option<&Ability> {
+pub fn find_turret_ability(ship: &Ship, active_turret_id: i32) -> Option<&Ability> {
     ship.abilities.iter().find(|a| match a {
         Ability::Shoot { turret_id, .. } => *turret_id == active_turret_id,
         Ability::Launch { turret_id, .. } => *turret_id == active_turret_id,
@@ -181,18 +181,18 @@ pub fn resolve_shoot(
     state: &mut GameState,
     player_shooting: Uuid,
     target: ShootTarget,
-    active_turret_id: String,
-    client: bool,
+    active_turret_id: i32,
+    indexes: &GameStateIndexes,
 ) {
     if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &state.locations[ship_loc.location_idx];
-        let shooting_ship = &loc.ships[ship_loc.ship_idx];
-        let shooting_ship_id = shooting_ship.id;
-        let shoot_ability = find_turret_ability(shooting_ship, active_turret_id);
+        let shooting_ship_read = &loc.ships[ship_loc.ship_idx].clone();
+        let shooting_ship_id = shooting_ship_read.id;
+        let shoot_ability = find_turret_ability(shooting_ship_read, active_turret_id);
         if shoot_ability.is_none() {
             return;
         }
-        let shoot_ability = shoot_ability.unwrap();
+        let shoot_ability = shoot_ability.unwrap().clone();
 
         match target {
             ShootTarget::Unknown => {}
@@ -202,18 +202,33 @@ pub fn resolve_shoot(
                     .ships
                     .iter_mut()
                     .find(|s| s.id == target_ship_id);
-                if let Some(target_ship) = target_ship {
+                let damaged = if let Some(target_ship) = target_ship {
                     target_ship.health.current -= dmg;
                     target_ship.health.last_damage_dealer = Some(ObjectSpecifier::Ship {
                         id: shooting_ship_id,
                     });
-                    // TODO add a damage effect
+                    true
+                } else {
+                    false
+                };
+                if damaged {
+                    add_effect(
+                        LocalEffectCreate::DmgDone { hp: dmg as i32 },
+                        ObjectSpecifier::Ship {
+                            id: shooting_ship_id,
+                        },
+                        Some(active_turret_id),
+                        ObjectSpecifier::Ship { id: target_ship_id },
+                        &mut state.locations[ship_loc.location_idx],
+                        indexes,
+                        state.ticks,
+                    )
                 }
             }
             ShootTarget::Mineral { id } => {
                 if let Some(min) = indexing::find_mineral(loc, id) {
                     let min_pos = Vec2f64 { x: min.x, y: min.y };
-                    if !check_distance(shooting_ship, shoot_ability, min_pos) {
+                    if !check_distance(shooting_ship_read, &shoot_ability, min_pos) {
                         return;
                     }
                     remove_object(
@@ -227,7 +242,7 @@ pub fn resolve_shoot(
             }
             ShootTarget::Container { id } => {
                 if let Some(cont) = indexing::find_container(loc, id) {
-                    if !check_distance(shooting_ship, shoot_ability, cont.position) {
+                    if !check_distance(shooting_ship_read, &shoot_ability, cont.position) {
                         return;
                     }
                     remove_object(
@@ -241,7 +256,7 @@ pub fn resolve_shoot(
             }
             ShootTarget::Asteroid { id } => {
                 if let Some(ast) = indexing::find_asteroid(loc, id) {
-                    if !check_distance(shooting_ship, shoot_ability, ast.spatial.position) {
+                    if !check_distance(shooting_ship_read, &shoot_ability, ast.spatial.position) {
                         return;
                     }
                     remove_object(
@@ -261,7 +276,7 @@ pub fn resolve_launch(
     state: &mut GameState,
     player_shooting: Uuid,
     target: ShootTarget,
-    active_turret_id: String,
+    active_turret_id: i32,
     _client: bool,
     indexes: &GameStateIndexes,
     prng: &mut Pcg64Mcg,
@@ -617,22 +632,22 @@ pub struct Explosion {
 pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurret)> {
     let mut res = vec![];
     for i in 0..count {
-        let id = i.to_string();
+        let id = i as i32;
         res.push((
             Ability::Shoot {
                 cooldown_ticks_remaining: 0,
-                turret_id: id.clone(), // only needs to be locally-unique
+                turret_id: id,
                 cooldown_normalized: 0.0,
                 cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
             },
             ShipTurret { id },
         ));
     }
-    let id = res.len().to_string();
+    let id = res.len() as i32;
     res.push((
         Ability::Launch {
             cooldown_ticks_remaining: 0,
-            turret_id: id.clone(),
+            turret_id: id,
             projectile_template_id: TemplateId::Rocket as i32,
             cooldown_normalized: 0.0,
             cooldown_ticks_max: SHOOT_COOLDOWN_TICKS,
@@ -644,7 +659,7 @@ pub fn gen_turrets(count: usize, _prng: &mut Pcg64Mcg) -> Vec<(Ability, ShipTurr
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct ShipTurret {
-    pub id: String,
+    pub id: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
@@ -811,6 +826,9 @@ pub fn push_objects(
                     }
                     ObjectIndexSpecifier::Explosion { .. } => {
                         // projectiles cannot be pushed
+                    }
+                    ObjectIndexSpecifier::AsteroidBelt { .. } => {
+                        // asteroid belts cannot be pushed
                     }
                 }
             }

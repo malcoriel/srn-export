@@ -32,11 +32,11 @@ pub enum LongActionStart {
     Respawn,
     Shoot {
         target: ShootTarget,
-        turret_id: String,
+        turret_id: i32,
     },
     Launch {
         target: ShootTarget,
-        turret_id: String,
+        turret_id: i32,
     },
     // the process of docking itself after the ship is close enough via navigation
     DockInternal {
@@ -82,14 +82,14 @@ pub enum LongAction {
         target: ShootTarget,
         micro_left: i32,
         percentage: u32,
-        turret_id: String,
+        turret_id: i32,
     },
     Launch {
         id: Uuid,
         target: ShootTarget,
         micro_left: i32,
         percentage: u32,
-        turret_id: String,
+        turret_id: i32,
         projectile_template_id: i32,
     },
     Dock {
@@ -368,7 +368,7 @@ fn try_start_shoot(
     state: &mut GameState,
     target: ShootTarget,
     ship_idx: Option<ShipIdx>,
-    shooting_turret_id: String,
+    shooting_turret_id: i32,
     prng: &mut Pcg64Mcg,
 ) -> bool {
     let ship_idx = ship_idx.unwrap();
@@ -376,7 +376,7 @@ fn try_start_shoot(
         target.clone(),
         &state.locations[ship_idx.location_idx],
         &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
-        shooting_turret_id.clone(),
+        shooting_turret_id,
     ) {
         return false;
     }
@@ -387,7 +387,7 @@ fn try_start_shoot(
         target,
         micro_left: SHOOT_COOLDOWN_TICKS,
         percentage: 0,
-        turret_id: shooting_turret_id.clone(),
+        turret_id: shooting_turret_id,
     });
     revalidate(&mut ship.long_actions);
     for ability in ship.abilities.iter_mut() {
@@ -415,7 +415,7 @@ fn try_start_launch(
     state: &mut GameState,
     target: ShootTarget,
     ship_idx: Option<ShipIdx>,
-    shooting_turret_id: String,
+    shooting_turret_id: i32,
     prng: &mut Pcg64Mcg,
 ) -> bool {
     let ship_idx = ship_idx.unwrap();
@@ -423,13 +423,13 @@ fn try_start_launch(
         target.clone(),
         &state.locations[ship_idx.location_idx],
         &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
-        shooting_turret_id.clone(),
+        shooting_turret_id,
     ) {
         return false;
     }
 
     let ship = &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
-    let shoot_ability = combat::find_turret_ability(ship, shooting_turret_id.clone())
+    let shoot_ability = combat::find_turret_ability(ship, shooting_turret_id)
         .map(|a| a.clone())
         .unwrap(); // checked by validate
     ship.long_actions.push(LongAction::Launch {
@@ -437,7 +437,7 @@ fn try_start_launch(
         target,
         micro_left: SHOOT_COOLDOWN_TICKS,
         percentage: 0,
-        turret_id: shooting_turret_id.clone(),
+        turret_id: shooting_turret_id,
         projectile_template_id: match shoot_ability {
             Ability::Launch {
                 projectile_template_id,
@@ -475,7 +475,7 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
     let mut has_jump = false;
     let mut has_dock = false;
     let mut has_undock = false;
-    let mut active_turret_ids: HashSet<String> = HashSet::new();
+    let mut active_turret_ids: HashSet<i32> = HashSet::new();
     let mut new_actions = long_actions
         .clone()
         .into_iter()
@@ -492,7 +492,7 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                 if active_turret_ids.contains(turret_id) {
                     return false;
                 }
-                active_turret_ids.insert(turret_id.clone());
+                active_turret_ids.insert(*turret_id);
                 return true;
             }
             LongAction::Dock { .. } => {
@@ -513,7 +513,7 @@ fn revalidate(long_actions: &mut Vec<LongAction>) {
                 if active_turret_ids.contains(turret_id) {
                     return false;
                 }
-                active_turret_ids.insert(turret_id.clone());
+                active_turret_ids.insert(*turret_id);
                 return true;
             }
         })
@@ -568,7 +568,7 @@ pub fn finish_long_act(
             target, turret_id, ..
         } => {
             if player_id.is_some() {
-                combat::resolve_shoot(state, player_id.unwrap(), target, turret_id, client);
+                combat::resolve_shoot(state, player_id.unwrap(), target, turret_id, indexes);
             }
         }
         LongAction::Dock { to_planet, .. } => {

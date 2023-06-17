@@ -453,6 +453,7 @@ pub enum ObjectIndexSpecifier {
     Projectile { idx: usize },
     Explosion { idx: usize },
     Asteroid { idx: usize },
+    AsteroidBelt { idx: usize },
     Planet { idx: usize },
     Ship { idx: usize },
     Star,
@@ -483,6 +484,7 @@ pub struct GameStateIndexes<'a> {
     pub anchor_distances: HashMap<ObjectSpecifier, f64>,
     pub bodies_by_id: HashMap<ObjectSpecifier, Box<&'a dyn IBodyV2>>,
     pub objects_by_property_type: Vec<HashMap<ObjectPropertyKey, Vec<ObjectIndexSpecifier>>>,
+    pub reverse_id_index: HashMap<ObjectSpecifier, ObjectIndexSpecifier>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -531,6 +533,7 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
     let ships_by_id = index_all_ships_by_id(&state.locations);
     let anchor_distances = index_anchor_distances(&state.locations, &bodies_by_id);
     let objects_by_property_type = index_objects_by_property_type(&state.locations);
+    let reverse_id_index = index_reverse_id(&state.locations);
 
     GameStateIndexes {
         planets_by_id,
@@ -540,7 +543,77 @@ pub fn index_state(state: &GameState) -> GameStateIndexes {
         ships_by_id,
         anchor_distances,
         objects_by_property_type,
+        reverse_id_index,
     }
+}
+
+fn index_reverse_id(locations: &Vec<Location>) -> HashMap<ObjectSpecifier, ObjectIndexSpecifier> {
+    let mut res = HashMap::new();
+    for loc in locations {
+        for item in loc.ships.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::Ship { id: item.1.id },
+                ObjectIndexSpecifier::Ship { idx: item.0 },
+            );
+        }
+        for item in loc.projectiles.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::Projectile {
+                    id: item.1.get_id(),
+                },
+                ObjectIndexSpecifier::Projectile { idx: item.0 },
+            );
+        }
+        for item in loc.explosions.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::Explosion { id: item.1.id },
+                ObjectIndexSpecifier::Explosion { idx: item.0 },
+            );
+        }
+        for item in loc.asteroids.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::Asteroid { id: item.1.id },
+                ObjectIndexSpecifier::Asteroid { idx: item.0 },
+            );
+        }
+        for item in loc.containers.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::Container { id: item.1.id },
+                ObjectIndexSpecifier::Container { idx: item.0 },
+            );
+        }
+        for item in loc.wrecks.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::Wreck { id: item.1.id },
+                ObjectIndexSpecifier::Wreck { idx: item.0 },
+            );
+        }
+        for item in loc.minerals.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::Mineral { id: item.1.id },
+                ObjectIndexSpecifier::Mineral { idx: item.0 },
+            );
+        }
+        for item in loc.planets.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::Planet { id: item.1.id },
+                ObjectIndexSpecifier::Planet { idx: item.0 },
+            );
+        }
+        for item in loc.star.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::Star { id: item.1.id },
+                ObjectIndexSpecifier::Star,
+            );
+        }
+        for item in loc.asteroid_belts.iter().enumerate() {
+            res.insert(
+                ObjectSpecifier::AsteroidBelt { id: item.1.id },
+                ObjectIndexSpecifier::AsteroidBelt { idx: item.0 },
+            );
+        }
+    }
+    return res;
 }
 
 fn index_objects_by_property_type(

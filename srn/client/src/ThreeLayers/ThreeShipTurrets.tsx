@@ -11,7 +11,7 @@ import { ThreeLaserBeam } from './combat/ThreeLaserBeam';
 import { LongAction, ObjectSpecifier } from '../../../world/pkg';
 
 export interface TurretProps {
-  id: string;
+  id: number;
   lockedObject?: ObjectSpecifier;
 }
 

@@ -63,6 +63,7 @@ fn apply_decay_to_spec(loc: &mut Location, elapsed_ticks: i32, spec: &ObjectInde
         ObjectIndexSpecifier::Unknown => {}
         ObjectIndexSpecifier::Mineral { .. } => {}
         ObjectIndexSpecifier::Container { .. } => {}
+        ObjectIndexSpecifier::AsteroidBelt { .. } => {}
         ObjectIndexSpecifier::Projectile { idx } => {
             if apply_decay(elapsed_ticks, loc.projectiles[*idx].get_properties_mut()) {
                 *loc.projectiles[*idx].get_to_clean_mut() = true;

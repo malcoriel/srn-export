@@ -17,7 +17,11 @@ export const ThreeVisualEffectsLayer: React.FC<{
             key={e.key}
             position={posToThreePos(e.position.x, e.position.y)}
           >
-            <ThreeVisualEffect effect={e} />
+            <ThreeVisualEffect
+              effect={e}
+              effectTimeSeconds={3}
+              textEffectTimeSeconds={0.25}
+            />
           </group>
         );
       })}

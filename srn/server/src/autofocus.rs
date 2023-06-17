@@ -313,6 +313,10 @@ pub fn object_index_into_object_id(
             .explosions
             .get(*idx)
             .map(|e| ObjectSpecifier::Explosion { id: e.id }),
+        ObjectIndexSpecifier::AsteroidBelt { idx } => loc
+            .asteroid_belts
+            .get(*idx)
+            .map(|e| ObjectSpecifier::AsteroidBelt { id: e.id }),
     }
 }
 
@@ -331,6 +335,9 @@ pub fn object_index_into_object_radius(ois: &ObjectIndexSpecifier, loc: &Locatio
         ObjectIndexSpecifier::Wreck { idx } => loc.wrecks.get(*idx).map(|o| o.spatial.radius),
         ObjectIndexSpecifier::Explosion { idx } => {
             loc.explosions.get(*idx).map(|p| p.spatial.radius)
+        }
+        ObjectIndexSpecifier::AsteroidBelt { idx } => {
+            loc.asteroid_belts.get(*idx).map(|ab| ab.spatial.radius)
         }
     }
 }
@@ -365,6 +372,10 @@ pub fn object_index_into_object_pos(ois: &ObjectIndexSpecifier, loc: &Location) 
         ObjectIndexSpecifier::Explosion { idx } => {
             loc.explosions.get(*idx).map(|e| e.spatial.position.clone())
         }
+        ObjectIndexSpecifier::AsteroidBelt { idx } => loc
+            .asteroid_belts
+            .get(*idx)
+            .map(|a| a.spatial.position.clone()),
     }
 }
 

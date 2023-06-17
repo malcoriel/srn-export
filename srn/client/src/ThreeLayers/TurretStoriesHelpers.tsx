@@ -17,13 +17,13 @@ export const shootTargets = {
   topRight: VectorF(6, 4),
   topLeft: VectorF(-6, 4),
 };
-const genLongAct = (percentage: number, turretId: string) => {
+const genLongAct = (percentage: number, turretId: number) => {
   const longActionShoot = LongActionBuilder.LongActionShoot({
     id: '1',
     micro_left: 500,
     percentage,
     target: { tag: 'Ship', id: '1' },
-    turret_id: '1',
+    turret_id: turretId,
   });
   longActionShoot.turret_id = turretId;
   return longActionShoot;
@@ -32,19 +32,19 @@ export const genLongActions = (shootMode: ShootMode, percentage: number) => {
   switch (shootMode) {
     case ShootMode.Alternating:
       return [
-        genLongAct(cycle(percentage + 50, 0, 100), '1'),
-        genLongAct(cycle(percentage + 17, 0, 100), '2'),
-        genLongAct(percentage, '3'),
-        genLongAct(cycle(percentage + 66, 0, 100), '4'),
+        genLongAct(cycle(percentage + 50, 0, 100), 1),
+        genLongAct(cycle(percentage + 17, 0, 100), 2),
+        genLongAct(percentage, 3),
+        genLongAct(cycle(percentage + 66, 0, 100), 4),
       ];
     case ShootMode.PartialSimultaneous:
-      return [genLongAct(percentage, '1'), genLongAct(percentage, '3')];
+      return [genLongAct(percentage, 1), genLongAct(percentage, 3)];
     case ShootMode.Simultaneous:
       return [
-        genLongAct(percentage, '1'),
-        genLongAct(percentage, '2'),
-        genLongAct(percentage, '3'),
-        genLongAct(percentage, '4'),
+        genLongAct(percentage, 1),
+        genLongAct(percentage, 2),
+        genLongAct(percentage, 3),
+        genLongAct(percentage, 4),
       ];
     default:
       throw new UnreachableCaseError(shootMode);
@@ -52,5 +52,5 @@ export const genLongActions = (shootMode: ShootMode, percentage: number) => {
 };
 
 export function genTurrets(count: number) {
-  return _.times(count, (i) => ({ id: (i + 1).toString() }));
+  return _.times(count, (i) => ({ id: i + 1 }));
 }

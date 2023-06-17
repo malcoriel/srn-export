@@ -17,13 +17,13 @@ pub enum Ability {
     Unknown,
     Shoot {
         cooldown_ticks_remaining: i32,
-        turret_id: String,
+        turret_id: i32,
         cooldown_normalized: f64,
         cooldown_ticks_max: i32,
     },
     Launch {
         cooldown_ticks_remaining: i32,
-        turret_id: String,
+        turret_id: i32,
         projectile_template_id: i32,
         cooldown_normalized: f64,
         cooldown_ticks_max: i32,

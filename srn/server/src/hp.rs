@@ -1,7 +1,9 @@
-use crate::autofocus::SpatialIndex;
+use crate::autofocus::{object_index_into_object_id, SpatialIndex};
 use crate::combat::{create_explosion, damage_objects, Health};
-use crate::effects::LocalEffect;
-use crate::indexing::{index_players_by_ship_id, ObjectIndexSpecifier, ObjectSpecifier};
+use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
+use crate::indexing::{
+    index_players_by_ship_id, GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
+};
 use crate::properties::{has_property, ObjectProperty, ObjectPropertyKey, WRECK_DECAY_TICKS};
 use crate::world::{
     GameState, Location, ProcessProps, SpatialProps, Wreck, PLANET_HEALTH_REGEN_PER_TICK,
@@ -25,18 +27,18 @@ pub fn update_hp_effects(
     state: &mut GameState,
     location_idx: usize,
     elapsed_micro: i64,
-    _current_tick: u32,
     prng: &mut Pcg64Mcg,
     _client: bool,
     _extra_damages: Vec<(ObjectSpecifier, f64)>,
     _spatial_index: &mut SpatialIndex,
+    indexes: &GameStateIndexes,
 ) {
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
 
     let mut health_changes = vec![];
     // apply damage from the star
-    if let Some(star) = state.locations[location_idx].star.clone() {
+    let star_id = if let Some(star) = state.locations[location_idx].star.clone() {
         let star_center = star.spatial.position.clone();
         let mut idx = 0;
         for mut ship in state.locations[location_idx].ships.iter_mut() {
@@ -80,6 +82,42 @@ pub fn update_hp_effects(
                 let heal = ship.health.acc_periodic_heal.floor() as i32;
                 ship.health.acc_periodic_heal = 0.0;
                 health_changes.push((false, ObjectIndexSpecifier::Ship { idx }, heal));
+            }
+        }
+        Some(star.id)
+    } else {
+        None
+    };
+
+    for change in health_changes.into_iter() {
+        if change.0 {
+            // star damage
+            if let (Some(id), Some(star_id)) = (
+                object_index_into_object_id(&change.1, &state.locations[location_idx]),
+                star_id,
+            ) {
+                add_effect(
+                    LocalEffectCreate::DmgDone { hp: change.2 },
+                    ObjectSpecifier::Star { id: star_id },
+                    None,
+                    id,
+                    &mut state.locations[location_idx],
+                    indexes,
+                    state.ticks,
+                )
+            }
+        } else {
+            if let Some(id) = object_index_into_object_id(&change.1, &state.locations[location_idx])
+            {
+                add_effect(
+                    LocalEffectCreate::Heal { hp: change.2 },
+                    id.clone(),
+                    None,
+                    id,
+                    &mut state.locations[location_idx],
+                    indexes,
+                    state.ticks,
+                )
             }
         }
     }
@@ -202,5 +240,6 @@ pub fn object_index_into_health_mut<'a, 'b>(
         ObjectIndexSpecifier::Asteroid { .. } => None,
         ObjectIndexSpecifier::Wreck { .. } => None,
         ObjectIndexSpecifier::Explosion { .. } => None,
+        ObjectIndexSpecifier::AsteroidBelt { .. } => None,
     }
 }

@@ -1141,7 +1141,7 @@ pub fn update_location(
     sampler.end(guidance_id);
 
     let collisions_id = sampler.start(SamplerMarks::UpdateProjectileCollisions as u32);
-    let extra_damages = combat::update_proj_collisions(
+    let projectile_hit_damages = combat::update_proj_collisions(
         &mut state.locations[location_idx],
         update_options,
         spatial_index,
@@ -1165,11 +1165,11 @@ pub fn update_location(
         state,
         location_idx,
         elapsed,
-        state.millis,
         prng,
         client,
-        extra_damages,
+        projectile_hit_damages,
         spatial_index,
+        indexes,
     );
     sampler.end(hp_effects_id);
 
