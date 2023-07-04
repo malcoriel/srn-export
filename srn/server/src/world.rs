@@ -1226,6 +1226,8 @@ pub fn update_location(
         &mut state.locations[location_idx],
         elapsed as i32,
         spatial_index,
+        indexes,
+        state.ticks,
     );
     sampler.end(exp_id);
 
@@ -1242,10 +1244,9 @@ pub fn lerp(from: f64, to: f64, percentage: f64) -> f64 {
 fn apply_tractored_items_consumption(
     mut state: &mut &mut GameState,
     consume_updates: Vec<(Uuid, Box<dyn IMovable>)>,
-    client: bool,
+    _client: bool,
 ) {
     for pup in consume_updates {
-        let ticks = state.millis.clone();
         let pair = find_player_and_ship_mut(&mut state, pup.0);
         let picked_items = InventoryItem::from(pup.1);
         if let Some(ship) = pair.1 {

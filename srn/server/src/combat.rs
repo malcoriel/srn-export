@@ -713,7 +713,13 @@ pub fn calculate_radius(progress_normalized: f64, explosion_radius: f64) -> f64 
     return from + (to - from) * x;
 }
 
-pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: &SpatialIndex) {
+pub fn update_explosions(
+    loc: &mut Location,
+    elapsed_ticks: i32,
+    spatial_index: &SpatialIndex,
+    indexes: &GameStateIndexes,
+    current_tick: u64,
+) {
     for exp in loc.explosions.iter_mut() {
         if exp.decay_expand.apply(elapsed_ticks) {
             exp.to_clean = true;
@@ -756,9 +762,11 @@ pub fn update_explosions(loc: &mut Location, elapsed_ticks: i32, spatial_index: 
         }
         damage_objects(
             loc,
-            &shockwave_damaged,
+            &shockwave_damaged.iter().map(|i| i.1.clone()).collect(),
             exp_r.base.damage,
             &ObjectSpecifier::Explosion { id: exp_r.id },
+            indexes,
+            current_tick,
         );
 
         // apply constant push
@@ -838,18 +846,72 @@ pub fn push_objects(
 
 pub fn damage_objects(
     loc: &mut Location,
-    targets: &Vec<(ObjectIndexSpecifier, ObjectSpecifier)>,
+    targets: &Vec<ObjectSpecifier>,
     amount: f64,
-    _source: &ObjectSpecifier,
+    source: &ObjectSpecifier,
+    indexes: &GameStateIndexes,
+    current_tick: u64,
 ) {
-    for ois in targets {
+    for os in targets {
         // log2!("damage {:?} from {:?}", ois.1, _source);
-        let _damage = if let Some(health) = object_index_into_health_mut(&ois.0, loc) {
+        let damage = if let Some(health) = indexes
+            .reverse_id_index
+            .get(os)
+            .and_then(|ois| object_index_into_health_mut(ois, loc))
+        {
             health.current -= amount;
+            health.current = health.current.max(0.0);
+            health.last_damage_dealer = Some(os.clone());
             amount
         } else {
             0.0
         };
-        // TODO: local effects rework
+        if damage > 0.0 {
+            add_effect(
+                LocalEffectCreate::DmgDone { hp: damage as i32 },
+                source.clone(),
+                None,
+                os.clone(),
+                loc,
+                indexes,
+                current_tick,
+            )
+        }
+    }
+}
+
+pub fn heal_objects(
+    loc: &mut Location,
+    targets: &Vec<ObjectSpecifier>,
+    amount: f64,
+    source: &ObjectSpecifier,
+    indexes: &GameStateIndexes,
+    current_tick: u64,
+) {
+    for os in targets {
+        // log2!("damage {:?} from {:?}", ois.1, _source);
+        let heal = if let Some(health) = indexes
+            .reverse_id_index
+            .get(os)
+            .and_then(|ois| object_index_into_health_mut(ois, loc))
+        {
+            health.current += amount;
+            health.current = health.current.min(health.max);
+            health.last_damage_dealer = None;
+            amount
+        } else {
+            0.0
+        };
+        if heal > 0.0 {
+            add_effect(
+                LocalEffectCreate::Heal { hp: heal as i32 },
+                source.clone(),
+                None,
+                os.clone(),
+                loc,
+                indexes,
+                current_tick,
+            )
+        }
     }
 }

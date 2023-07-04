@@ -273,7 +273,7 @@ describe('combat projectiles', () => {
     expect(expired.locations[0].projectiles.length).toEqual(0);
   });
 
-  fit('can blow up another missile with explosion', () => {
+  it('can blow up another missile with explosion', () => {
     let state = wasm.seedWorld({
       seed: 'projectiles',
       mode: 'Sandbox',
@@ -308,6 +308,6 @@ describe('combat projectiles', () => {
       )
     );
     state = updateWorld(state, 4100);
-    expect(state.locations[0].projectiles).toBeEmpty();
+    expect(state.locations[0].projectiles).toEqual([]);
   });
 });

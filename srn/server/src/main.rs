@@ -535,38 +535,6 @@ fn main_thread() {
             continue;
         }
 
-        {
-            if bot_action_elapsed > BOT_ACTION_TIME_TICKS {
-                let bots_mark = sampler.start(SamplerMarks::Bots as u32);
-                let bot_players_mark = sampler.start(SamplerMarks::BotsPlayers as u32);
-                for room in cont.rooms.values.iter_mut() {
-                    let spatial_indexes = spatial_indexes_by_room_id.get(&room.id).unwrap();
-                    do_bot_players_actions(
-                        room,
-                        &d_table,
-                        bot_action_elapsed,
-                        spatial_indexes,
-                        &mut prng,
-                    );
-                }
-                sampler.end(bot_players_mark);
-                let npcs_mark = sampler.start(SamplerMarks::BotsNPCs as u32);
-                for room in cont.rooms.values.iter_mut() {
-                    let spatial_indexes = spatial_indexes_by_room_id.get(&room.id).unwrap();
-                    do_bot_npcs_actions(room, bot_action_elapsed, spatial_indexes, &mut prng);
-                }
-                sampler.end(npcs_mark);
-                if sampler.end_top(bots_mark) < 0 {
-                    shortcut_frame += 1;
-                    sampler.end(total_mark);
-                    continue;
-                }
-                bot_action_elapsed = 0;
-            } else {
-                bot_action_elapsed += elapsed_micro;
-            }
-        }
-
         if events_elapsed > EVENT_TRIGGER_TIME {
             let event_locks_mark = sampler.start(SamplerMarks::EventsLocks as u32);
             let receiver = &mut server_events::EVENTS.1.lock().unwrap();

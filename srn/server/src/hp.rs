@@ -1,5 +1,5 @@
 use crate::autofocus::{object_index_into_object_id, SpatialIndex};
-use crate::combat::{create_explosion, damage_objects, Health};
+use crate::combat::{create_explosion, damage_objects, heal_objects, Health};
 use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
 use crate::indexing::{
     index_players_by_ship_id, GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
@@ -64,6 +64,11 @@ pub fn update_hp_effects(
             let star_damage = star_damage * elapsed_micro as f64 / 1000.0 / 1000.0;
 
             ship.health.acc_periodic_dmg += star_damage;
+            log2!(
+                "star damage {}, {}",
+                star_damage,
+                ship.health.acc_periodic_dmg
+            );
             if ship.health.acc_periodic_dmg >= DMG_EFFECT_MIN {
                 let dmg_done = ship.health.acc_periodic_dmg.floor() as i32;
                 ship.health.acc_periodic_dmg = 0.0;
@@ -96,25 +101,25 @@ pub fn update_hp_effects(
                 object_index_into_object_id(&change.1, &state.locations[location_idx]),
                 star_id,
             ) {
-                add_effect(
-                    LocalEffectCreate::DmgDone { hp: change.2 },
-                    ObjectSpecifier::Star { id: star_id },
-                    None,
-                    id,
+                // that's kind of stupid to pass array of 1 item in a loop, but because of coupling with heal which doesn't yet have the effect...
+                damage_objects(
                     &mut state.locations[location_idx],
+                    &vec![id],
+                    change.2 as f64,
+                    &ObjectSpecifier::Star { id: star_id },
                     indexes,
                     state.ticks,
-                )
+                );
             }
         } else {
             if let Some(id) = object_index_into_object_id(&change.1, &state.locations[location_idx])
             {
-                add_effect(
-                    LocalEffectCreate::Heal { hp: change.2 },
-                    id.clone(),
-                    None,
-                    id,
+                let id_clone = id.clone();
+                heal_objects(
                     &mut state.locations[location_idx],
+                    &vec![id],
+                    change.2 as f64,
+                    &id_clone,
                     indexes,
                     state.ticks,
                 )

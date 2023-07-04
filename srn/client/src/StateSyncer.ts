@@ -966,6 +966,7 @@ export class StateSyncer extends EventEmitter {
       'locations.*.projectiles',
       'locations.*.explosions',
       'locations.*.short_counter',
+      'locations.*.effects',
       'projectile_templates',
     ]),
     // if server id has changed, invalidate the whole tree under the key. it's somewhat an optimization of the merge strategy
