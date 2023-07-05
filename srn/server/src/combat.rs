@@ -442,7 +442,7 @@ pub const DEFAULT_PROJECTILE_ROT_SPEED: f64 = PI / 2.0 / 1e6;
 pub const DEFAULT_PROJECTILE_ROT_ACC: f64 = PI / 1e6 / 1e6;
 pub const DEFAULT_PROJECTILE_EXPIRATION_TICKS: i32 = 15 * 1000 * 1000;
 
-pub fn update_proj_collisions(
+pub fn update_projectile_collisions(
     loc: &mut Location,
     _options: &UpdateOptions,
     sp_idx: &SpatialIndex,

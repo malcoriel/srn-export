@@ -40,7 +40,7 @@ pub fn update_hp_effects(
     // apply damage from the star
     let star_id = if let Some(star) = state.locations[location_idx].star.clone() {
         let star_center = star.spatial.position.clone();
-        let mut idx = 0;
+        let mut idx = -1;
         for mut ship in state.locations[location_idx].ships.iter_mut() {
             idx += 1;
             if has_property(&ship.properties, ObjectPropertyKey::Invulnerable) {
@@ -64,15 +64,14 @@ pub fn update_hp_effects(
             let star_damage = star_damage * elapsed_micro as f64 / 1000.0 / 1000.0;
 
             ship.health.acc_periodic_dmg += star_damage;
-            log2!(
-                "star damage {}, {}",
-                star_damage,
-                ship.health.acc_periodic_dmg
-            );
             if ship.health.acc_periodic_dmg >= DMG_EFFECT_MIN {
                 let dmg_done = ship.health.acc_periodic_dmg.floor() as i32;
                 ship.health.acc_periodic_dmg = 0.0;
-                health_changes.push((true, ObjectIndexSpecifier::Ship { idx }, dmg_done));
+                health_changes.push((
+                    true,
+                    ObjectIndexSpecifier::Ship { idx: idx as usize },
+                    dmg_done,
+                ));
             }
 
             if star_damage <= 0.0
@@ -86,7 +85,11 @@ pub fn update_hp_effects(
             if ship.health.acc_periodic_heal >= HEAL_EFFECT_MIN {
                 let heal = ship.health.acc_periodic_heal.floor() as i32;
                 ship.health.acc_periodic_heal = 0.0;
-                health_changes.push((false, ObjectIndexSpecifier::Ship { idx }, heal));
+                health_changes.push((
+                    false,
+                    ObjectIndexSpecifier::Ship { idx: idx as usize },
+                    heal,
+                ));
             }
         }
         Some(star.id)
@@ -95,8 +98,10 @@ pub fn update_hp_effects(
     };
 
     for change in health_changes.into_iter() {
+        // is damage and not heal
+
         if change.0 {
-            // star damage
+            // star damage only here
             if let (Some(id), Some(star_id)) = (
                 object_index_into_object_id(&change.1, &state.locations[location_idx]),
                 star_id,
@@ -112,6 +117,7 @@ pub fn update_hp_effects(
                 );
             }
         } else {
+            // ship self-regen here
             if let Some(id) = object_index_into_object_id(&change.1, &state.locations[location_idx])
             {
                 let id_clone = id.clone();
@@ -185,17 +191,17 @@ pub fn update_hp_effects(
         }
     }
 
-    let mut exp = vec![];
+    let mut exploded_projectiles = vec![];
     for i in 0..state.locations[location_idx].projectiles.len() {
         let projectile = &mut state.locations[location_idx].projectiles[i];
         let blow = if let Some(health) = projectile.get_health_mut() {
-            health.current < 0.0
+            health.current <= 0.0
         } else {
             false
         };
         if blow {
             if let Some(exp_props) = projectile.get_explosion_props() {
-                exp.push((
+                exploded_projectiles.push((
                     Some(projectile.get_id()),
                     exp_props.clone(),
                     projectile.get_spatial().position,
@@ -204,7 +210,7 @@ pub fn update_hp_effects(
             *projectile.get_to_clean_mut() = true;
         }
     }
-    for blown in exp.into_iter() {
+    for blown in exploded_projectiles.into_iter() {
         create_explosion(
             &blown.1,
             &blown.2,

@@ -17,7 +17,7 @@ pub fn add_effect(
     current_tick: u64,
 ) {
     let key = form_effect_key(&from, &to, &eff, extra_from_id);
-    let effect_pos = calculate_effect_position(&from, &to, loc, indexes);
+    let effect_pos = calculate_effect_position(&from, &to, loc, indexes, false);
     if let Some(effect_pos) = effect_pos {
         if eff.is_updateable() {
             if let Some(existing) = loc
@@ -51,6 +51,7 @@ pub fn add_effect(
         })
     } else {
         warn2!("Attempt to add effect without position for from:{from:?} to:{to:?}");
+        calculate_effect_position(&from, &to, loc, indexes, true);
     }
 }
 
@@ -59,12 +60,18 @@ fn calculate_effect_position(
     to: &ObjectSpecifier,
     loc: &Location,
     indexes: &GameStateIndexes,
+    _debug: bool,
 ) -> Option<Vec2f64> {
+    if _debug {
+        log2!("reverse_index: {:?}", indexes.reverse_id_index);
+    }
     if let (Some(from_pos), Some(to_pos), Some(to_rad), Some(from_rad)) = (
-        indexes
-            .reverse_id_index
-            .get(from)
-            .and_then(|ois| object_index_into_object_pos(ois, loc)),
+        indexes.reverse_id_index.get(from).and_then(|ois| {
+            if _debug {
+                log2!("from ois: {:?}", ois);
+            }
+            object_index_into_object_pos(ois, loc)
+        }),
         indexes
             .reverse_id_index
             .get(to)

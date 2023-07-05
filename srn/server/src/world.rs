@@ -900,7 +900,7 @@ fn update_world_iter(
             // so to conserve effort we skip the others
             let max_loc = if client { 1 } else { state.locations.len() };
             let state_read_clone = state.clone();
-            let indexes = index_state(&state_read_clone);
+            let mut indexes = index_state(&state_read_clone);
 
             for location_idx in 0..max_loc {
                 sampler = update_location(
@@ -911,7 +911,7 @@ fn update_world_iter(
                     sampler,
                     location_idx,
                     spatial_indexes,
-                    &indexes,
+                    &mut indexes,
                     caches,
                     prng,
                 )
@@ -1002,7 +1002,7 @@ pub fn update_location(
     mut sampler: Sampler,
     location_idx: usize,
     spatial_indexes: &mut SpatialIndexes,
-    indexes: &GameStateIndexes,
+    indexes: &mut GameStateIndexes,
     caches: &mut GameStateCaches,
     prng: &mut Pcg64Mcg,
 ) -> Sampler {
@@ -1141,7 +1141,7 @@ pub fn update_location(
     sampler.end(guidance_id);
 
     let collisions_id = sampler.start(SamplerMarks::UpdateProjectileCollisions as u32);
-    let projectile_hit_damages = combat::update_proj_collisions(
+    let projectile_hit_damages = combat::update_projectile_collisions(
         &mut state.locations[location_idx],
         update_options,
         spatial_index,
