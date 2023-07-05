@@ -446,7 +446,8 @@ pub fn update_projectile_collisions(
     loc: &mut Location,
     _options: &UpdateOptions,
     sp_idx: &SpatialIndex,
-    _location_idx: usize,
+    loc_idx: usize,
+    indexes: &mut GameStateIndexes,
 ) -> Vec<(ObjectSpecifier, f64)> {
     let damages: Vec<(ObjectIndexSpecifier, f64)> = vec![];
     let mut current_idx = -1;
@@ -490,7 +491,7 @@ pub fn update_projectile_collisions(
         }
     }
     for (exp, pos, proj_id) in explosions.into_iter() {
-        create_explosion(&exp, &pos, loc, proj_id);
+        create_explosion(&exp, &pos, loc, proj_id, indexes, loc_idx);
     }
     damages
         .into_iter()
@@ -675,6 +676,8 @@ pub fn create_explosion(
     at: &Vec2f64,
     loc: &mut Location,
     from_projectile_id: Option<i32>,
+    indexes: &mut GameStateIndexes,
+    loc_idx: usize,
 ) {
     loc.short_counter += 1;
     let time_to_expand = props.radius / props.spread_speed;
@@ -698,6 +701,7 @@ pub fn create_explosion(
         to_clean: false,
     };
     loc.explosions.push(exp);
+    indexes.handle_explosion_added(loc_idx, loc);
 }
 
 pub const MIN_COLLIDER_RADIUS: f64 = 1.0;

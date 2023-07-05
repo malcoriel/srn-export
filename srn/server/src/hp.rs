@@ -25,23 +25,23 @@ const HEAL_EFFECT_MIN: f64 = 5.0;
 
 pub fn update_hp_effects(
     state: &mut GameState,
-    location_idx: usize,
+    loc_idx: usize,
     elapsed_micro: i64,
     prng: &mut Pcg64Mcg,
     _client: bool,
     _extra_damages: Vec<(ObjectSpecifier, f64)>,
     _spatial_index: &mut SpatialIndex,
-    indexes: &GameStateIndexes,
+    indexes: &mut GameStateIndexes,
 ) {
     let state_id = state.id;
     let players_by_ship_id = index_players_by_ship_id(&state.players).clone();
 
     let mut health_changes = vec![];
     // apply damage from the star
-    let star_id = if let Some(star) = state.locations[location_idx].star.clone() {
+    let star_id = if let Some(star) = state.locations[loc_idx].star.clone() {
         let star_center = star.spatial.position.clone();
         let mut idx = -1;
-        for mut ship in state.locations[location_idx].ships.iter_mut() {
+        for mut ship in state.locations[loc_idx].ships.iter_mut() {
             idx += 1;
             if has_property(&ship.properties, ObjectPropertyKey::Invulnerable) {
                 continue;
@@ -103,12 +103,12 @@ pub fn update_hp_effects(
         if change.0 {
             // star damage only here
             if let (Some(id), Some(star_id)) = (
-                object_index_into_object_id(&change.1, &state.locations[location_idx]),
+                object_index_into_object_id(&change.1, &state.locations[loc_idx]),
                 star_id,
             ) {
                 // that's kind of stupid to pass array of 1 item in a loop, but because of coupling with heal which doesn't yet have the effect...
                 damage_objects(
-                    &mut state.locations[location_idx],
+                    &mut state.locations[loc_idx],
                     &vec![id],
                     change.2 as f64,
                     &ObjectSpecifier::Star { id: star_id },
@@ -118,11 +118,10 @@ pub fn update_hp_effects(
             }
         } else {
             // ship self-regen here
-            if let Some(id) = object_index_into_object_id(&change.1, &state.locations[location_idx])
-            {
+            if let Some(id) = object_index_into_object_id(&change.1, &state.locations[loc_idx]) {
                 let id_clone = id.clone();
                 heal_objects(
-                    &mut state.locations[location_idx],
+                    &mut state.locations[loc_idx],
                     &vec![id],
                     change.2 as f64,
                     &id_clone,
@@ -134,7 +133,7 @@ pub fn update_hp_effects(
     }
 
     let mut ships_to_die = vec![];
-    state.locations[location_idx].ships = state.locations[location_idx]
+    state.locations[loc_idx].ships = state.locations[loc_idx]
         .ships
         .iter()
         .filter_map(|ship| {
@@ -147,7 +146,7 @@ pub fn update_hp_effects(
         })
         .collect::<Vec<_>>();
     for (ship_clone, pid) in ships_to_die.into_iter() {
-        state.locations[location_idx].wrecks.push(Wreck {
+        state.locations[loc_idx].wrecks.push(Wreck {
             spatial: SpatialProps {
                 position: ship_clone.as_vec(),
                 velocity: ship_clone.spatial.velocity.clone().scalar_mul(0.25),
@@ -182,7 +181,7 @@ pub fn update_hp_effects(
         world_events::fire_saved_event(state, event);
     }
 
-    for planet in state.locations[location_idx].planets.iter_mut() {
+    for planet in state.locations[loc_idx].planets.iter_mut() {
         if let Some(health) = &mut planet.health {
             if health.current < health.max {
                 health.current += PLANET_HEALTH_REGEN_PER_TICK * elapsed_micro as f64;
@@ -192,8 +191,8 @@ pub fn update_hp_effects(
     }
 
     let mut exploded_projectiles = vec![];
-    for i in 0..state.locations[location_idx].projectiles.len() {
-        let projectile = &mut state.locations[location_idx].projectiles[i];
+    for i in 0..state.locations[loc_idx].projectiles.len() {
+        let projectile = &mut state.locations[loc_idx].projectiles[i];
         let blow = if let Some(health) = projectile.get_health_mut() {
             health.current <= 0.0
         } else {
@@ -214,8 +213,10 @@ pub fn update_hp_effects(
         create_explosion(
             &blown.1,
             &blown.2,
-            &mut state.locations[location_idx],
+            &mut state.locations[loc_idx],
             blown.0,
+            indexes,
+            loc_idx,
         );
     }
 }

@@ -51,7 +51,6 @@ pub fn add_effect(
         })
     } else {
         warn2!("Attempt to add effect without position for from:{from:?} to:{to:?}");
-        calculate_effect_position(&from, &to, loc, indexes, true);
     }
 }
 
@@ -62,16 +61,11 @@ fn calculate_effect_position(
     indexes: &GameStateIndexes,
     _debug: bool,
 ) -> Option<Vec2f64> {
-    if _debug {
-        log2!("reverse_index: {:?}", indexes.reverse_id_index);
-    }
     if let (Some(from_pos), Some(to_pos), Some(to_rad), Some(from_rad)) = (
-        indexes.reverse_id_index.get(from).and_then(|ois| {
-            if _debug {
-                log2!("from ois: {:?}", ois);
-            }
-            object_index_into_object_pos(ois, loc)
-        }),
+        indexes
+            .reverse_id_index
+            .get(from)
+            .and_then(|ois| object_index_into_object_pos(ois, loc)),
         indexes
             .reverse_id_index
             .get(to)

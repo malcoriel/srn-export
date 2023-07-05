@@ -487,6 +487,24 @@ pub struct GameStateIndexes<'a> {
     pub reverse_id_index: HashMap<ObjectSpecifier, ObjectIndexSpecifier>,
 }
 
+impl<'a> GameStateIndexes<'a> {
+    // assumes 'pushed to the last item in the array of location
+    pub fn handle_explosion_added(&mut self, loc_idx: usize, loc: &Location) {
+        let added = loc
+            .explosions
+            .last()
+            .expect("handle_explosion_added was called without adding explosion");
+        self.reverse_id_index.insert(
+            ObjectSpecifier::Explosion { id: added.id },
+            ObjectIndexSpecifier::Explosion {
+                idx: loc.explosions.len() - 1,
+            },
+        );
+        // There may be more re-indexing of explosion if it's needed during update cycle.
+        // Otherwise, everything will be re-indexed normally during the next update start
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameStateCaches {
     pub rel_orbit_cache: HashMap<u64, Vec<Vec2f64>>,

@@ -700,7 +700,6 @@ pub fn update_world(
 
     let spatial_index_result: SpatialIndexes = if !fast_nondeterministic_update {
         let update_interval = curr_state.update_every_ticks as i64;
-        let mut spatial_index_result: Option<SpatialIndexes> = None;
         while remaining >= update_interval {
             // executes update 'as one', which may be especially invalid
             let spatial_indexes_id = curr_sampler.start(SamplerMarks::GenFullSpatialIndexes as u32);
@@ -722,10 +721,10 @@ pub fn update_world(
             curr_state = pair.0;
             curr_sampler = pair.1;
             curr_sampler.end(iter_mark);
-            spatial_index_result = Some(spatial_indexes);
         }
         curr_state.accumulated_not_updated_ticks = remaining as u32;
-        spatial_index_result.unwrap_or_else(|| build_full_spatial_indexes(&curr_state))
+        // must do the last rebuild because otherwise bot actions that come next, might end up using a corrupted index
+        build_full_spatial_indexes(&curr_state)
     } else {
         // executes update 'as one', which may be especially invalid for big intervals with relation to spatial indexes
         // as they won't get updated between small intervals, meaning that some events depending on that, e.g.
@@ -749,7 +748,8 @@ pub fn update_world(
         curr_sampler = pair.1;
         curr_state.accumulated_not_updated_ticks = 0;
         curr_sampler.end(mark);
-        spatial_indexes
+        // must do the last rebuild because otherwise bot actions that come next, might end up using a corrupted index
+        build_full_spatial_indexes(&curr_state)
     };
     curr_sampler.end(update_full_mark);
     (curr_state, curr_sampler, spatial_index_result)
@@ -1146,6 +1146,7 @@ pub fn update_location(
         update_options,
         spatial_index,
         location_idx,
+        indexes,
     );
     sampler.end(collisions_id);
 
