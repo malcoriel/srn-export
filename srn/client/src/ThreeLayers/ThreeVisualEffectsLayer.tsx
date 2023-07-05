@@ -17,9 +17,10 @@ export const ThreeVisualEffectsLayer: React.FC<{
             key={e.key}
             position={posToThreePos(e.position.x, e.position.y)}
           >
+            {/* Max possible value before effect is removed comes from MAX_LOCAL_EFFECT_LIFE_MS */}
             <ThreeVisualEffect
               effect={e}
-              effectTimeSeconds={3}
+              effectTimeSeconds={1}
               textEffectTimeSeconds={0.25}
             />
           </group>

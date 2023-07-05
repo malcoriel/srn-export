@@ -15,7 +15,7 @@ use crate::combat::{
     guide_projectile, update_explosions, Explosion, Health, Projectile, ShipTurret, ShootTarget,
 };
 use crate::dialogue::Dialogue;
-use crate::effects::LocalEffect;
+use crate::effects::{cleanup_effects, LocalEffect};
 use crate::hp::SHIP_REGEN_PER_SEC;
 use crate::indexing::{
     build_full_spatial_indexes, find_my_player, find_my_ship, find_my_ship_index, find_planet,
@@ -1233,6 +1233,7 @@ pub fn update_location(
     sampler.end(exp_id);
 
     let clean = sampler.start(SamplerMarks::UpdateCleanup as u32);
+    cleanup_effects(&mut state, location_idx);
     cleanup_objects(&mut state, location_idx);
     sampler.end(clean);
     sampler

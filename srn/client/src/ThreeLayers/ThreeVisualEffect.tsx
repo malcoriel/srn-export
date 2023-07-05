@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Text } from '@react-three/drei';
-import { teal } from '../utils/palette';
+import { crimson, darkGreen, teal } from '../utils/palette';
 import { LocalEffect } from '../../../world/pkg/world';
 import { useFrame } from '@react-three/fiber';
 import { Group } from 'three';
@@ -48,6 +48,13 @@ const interpolateText = (
   const fromNumber = fromText as number;
   const toNumber = toText as number;
   return Math.round(lerp(fromNumber, toNumber, textAnimation));
+};
+
+const effectColor: Record<LocalEffect['tag'], string> = {
+  Unknown: teal,
+  DmgDone: crimson,
+  Heal: darkGreen,
+  PickUp: teal,
 };
 
 export const ThreeVisualEffect: React.FC<ThreeVisualEffectProps> = ({
@@ -132,9 +139,9 @@ export const ThreeVisualEffect: React.FC<ThreeVisualEffectProps> = ({
       <Text
         ref={textRef}
         visible
-        color={teal}
+        color={effectColor[effect.tag]}
         font="resources/fonts/DejaVuSans.ttf"
-        fontSize={4.0}
+        fontSize={2.0}
         maxWidth={20}
         lineHeight={1}
         letterSpacing={0.02}

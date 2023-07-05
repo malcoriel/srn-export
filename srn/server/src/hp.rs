@@ -19,7 +19,6 @@ const STAR_DAMAGE_PER_SEC_FAR: f64 = 7.5;
 const STAR_INSIDE_RADIUS: f64 = 0.5;
 const STAR_CLOSE_RADIUS: f64 = 0.68;
 const STAR_FAR_RADIUS: f64 = 1.1;
-const MAX_LOCAL_EFF_LIFE_MS: i32 = 10 * 1000;
 const DMG_EFFECT_MIN: f64 = 5.0;
 const HEAL_EFFECT_MIN: f64 = 5.0;
 

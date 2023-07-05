@@ -32,6 +32,7 @@ import { executeSyncAction } from '../utils/ShipControls';
 import { OrthographicCamera, Text } from '@react-three/drei';
 import { ThreeCameraUi } from './ThreeCameraUi';
 import { ThreeProjectilesLayer } from './ThreeProjectilesLayer';
+import { ThreeVisualEffectsLayer } from './ThreeVisualEffectsLayer';
 
 THREE.Cache.enabled = true;
 
@@ -228,6 +229,7 @@ export const ThreeLayer: React.FC<{
             displayForLastTicks={DISPLAY_BREADCRUMBS_LAST_TICKS}
           />
           {/*<ThreeWormhole position={posToThreePos(50, 50)} radius={3} />*/}
+          <ThreeVisualEffectsLayer effects={state.locations[0].effects} />
         </group>
       </Suspense>
     </Canvas>

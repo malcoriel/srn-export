@@ -1,11 +1,13 @@
 use crate::autofocus::{object_index_into_object_pos, object_index_into_object_radius};
 use crate::indexing::{GameStateIndexes, ObjectSpecifier};
 use crate::vec2::Vec2f64;
-use crate::world::Location;
+use crate::world::{GameState, Location};
 use serde_derive::{Deserialize, Serialize};
 use strum::AsStaticRef;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::*;
+
+const LOCAL_EFFECT_UPDATE_PROXIMITY: f64 = 1.0;
 
 pub fn add_effect(
     eff: LocalEffectCreate,
@@ -19,16 +21,23 @@ pub fn add_effect(
     let key = form_effect_key(&from, &to, &eff, extra_from_id);
     let effect_pos = calculate_effect_position(&from, &to, loc, indexes, false);
     if let Some(effect_pos) = effect_pos {
-        if eff.is_updateable() {
-            if let Some(existing) = loc
-                .effects
-                .iter_mut()
-                .find(|e| e.get_key().map_or(false, |k| *k == key))
-            {
-                existing.update(eff, current_tick, effect_pos);
-                return;
-            }
-        }
+        // I've tried and it kind of looks cool, but it doesn't look good enough for now, and requires constant position update
+        // if eff.is_updateable() {
+        //     if let Some(existing) = loc
+        //         .effects
+        //         .iter_mut()
+        //         .find(|e| e.get_key().map_or(false, |k| {
+        //             let same_key = *k == key;
+        //             if !same_key {
+        //                 return false;
+        //             }
+        //             return true;
+        //         }))
+        //     {
+        //         existing.update(eff, current_tick, effect_pos);
+        //         return;
+        //     }
+        // }
         loc.effects.push(match eff {
             LocalEffectCreate::DmgDone { hp } => LocalEffect::DmgDone {
                 hp,
@@ -61,7 +70,7 @@ fn calculate_effect_position(
     indexes: &GameStateIndexes,
     _debug: bool,
 ) -> Option<Vec2f64> {
-    if let (Some(from_pos), Some(to_pos), Some(to_rad), Some(from_rad)) = (
+    if let (Some(from_pos), Some(to_pos), Some(from_rad), Some(to_rad)) = (
         indexes
             .reverse_id_index
             .get(from)
@@ -84,10 +93,9 @@ fn calculate_effect_position(
             return Some(from_pos.add(&up));
         }
         let dist = from_pos.euclidean_distance(&to_pos);
-        if dist < to_rad + from_rad {
-            // too close, position effect right in the middle
-            let half_dist = to_pos.subtract(&from_pos).scalar_mul(0.5);
-            return Some(from_pos.add(&half_dist));
+        if dist.abs() <= 1e-6 {
+            // So close that it doesn't matter, just return receiver position - it's likely the same obj
+            return Some(to_pos);
         }
         // otherwise, position near the edge of the receiver, unwrap is safe because dist is > 0
         let reverse_dir = from_pos
@@ -107,14 +115,14 @@ fn form_effect_key(
     extra_from_id: Option<i32>,
 ) -> String {
     format!(
-        "{}:{}:{}{}",
+        "{}:{}:{}:{}",
         match eff {
             LocalEffectCreate::DmgDone { .. } => "D",
             LocalEffectCreate::Heal { .. } => "H",
             LocalEffectCreate::PickUp { .. } => "P",
         },
-        from.as_static(),
-        to.as_static(),
+        from,
+        to,
         extra_from_id.map_or("".to_string(), |i| format!(":{}", i))
     )
 }
@@ -171,6 +179,15 @@ impl LocalEffect {
             LocalEffect::PickUp { key, .. } => Some(&key),
         }
     }
+
+    pub fn get_tick(&self) -> Option<u64> {
+        match self {
+            LocalEffect::Unknown { .. } => None,
+            LocalEffect::DmgDone { last_tick, .. } => Some(*last_tick),
+            LocalEffect::Heal { last_tick, .. } => Some(*last_tick),
+            LocalEffect::PickUp { last_tick, .. } => Some(*last_tick),
+        }
+    }
 }
 
 impl LocalEffect {
@@ -205,4 +222,15 @@ impl LocalEffect {
             _ => {}
         }
     }
+}
+
+const MAX_LOCAL_EFFECT_LIFE_MS: i64 = 2 * 1000;
+
+pub fn cleanup_effects(state: &mut GameState, loc_idx: usize) {
+    let curr_ticks = state.ticks as i64;
+    state.locations[loc_idx].effects.retain(|eff| {
+        return eff.get_tick().map_or(false, |tick| {
+            (curr_ticks - tick as i64).abs() < MAX_LOCAL_EFFECT_LIFE_MS * 1000 as i64
+        });
+    });
 }

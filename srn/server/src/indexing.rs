@@ -2,6 +2,7 @@ use crate::autofocus::build_spatial_index;
 use itertools::Itertools;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter, Write};
 use strum::AsStaticRef;
 use strum::AsStaticStr;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -422,6 +423,19 @@ impl Spec for PlanetV2 {
     }
 }
 
+impl Display for ObjectSpecifier {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(
+            format!(
+                "{}:{}",
+                self.as_static(),
+                self.get_id().map_or("?".to_string(), |i| i.to_string())
+            )
+            .as_str(),
+        )
+    }
+}
+
 impl ObjectSpecifier {
     pub fn get_id(&self) -> Option<Uuid> {
         match self {
@@ -489,7 +503,7 @@ pub struct GameStateIndexes<'a> {
 
 impl<'a> GameStateIndexes<'a> {
     // assumes 'pushed to the last item in the array of location
-    pub fn handle_explosion_added(&mut self, loc_idx: usize, loc: &Location) {
+    pub fn handle_explosion_added(&mut self, _loc_idx: usize, loc: &Location) {
         let added = loc
             .explosions
             .last()

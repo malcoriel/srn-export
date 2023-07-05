@@ -434,7 +434,6 @@ fn main_thread() {
         .ignore_warning_for_marks
         .insert(SamplerMarks::FrameBudgetTicks as u32);
     let mut sampler_consume_elapsed = 0;
-    let mut bot_action_elapsed = 0;
     let mut events_elapsed = 0;
     let mut full_broadcast_elapsed: i64 = 0;
     let mut frame_count = 0;
