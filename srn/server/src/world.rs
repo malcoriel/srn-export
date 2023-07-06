@@ -1006,6 +1006,7 @@ pub fn update_location(
     caches: &mut GameStateCaches,
     prng: &mut Pcg64Mcg,
 ) -> Sampler {
+    let current_tick = state.ticks;
     let next_ticks = state.ticks as u64 + elapsed as u64;
     let spatial_index_id = sampler.start(SamplerMarks::GenSpatialIndexOnDemand as u32);
     let spatial_index = spatial_indexes
@@ -1147,6 +1148,7 @@ pub fn update_location(
         spatial_index,
         location_idx,
         indexes,
+        current_tick,
     );
     sampler.end(collisions_id);
 

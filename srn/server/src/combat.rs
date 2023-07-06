@@ -446,12 +446,13 @@ pub fn update_projectile_collisions(
     loc: &mut Location,
     _options: &UpdateOptions,
     sp_idx: &SpatialIndex,
-    loc_idx: usize,
+    _loc_idx: usize,
     indexes: &mut GameStateIndexes,
+    current_tick: u64,
 ) -> Vec<(ObjectSpecifier, f64)> {
     let damages: Vec<(ObjectIndexSpecifier, f64)> = vec![];
     let mut current_idx = -1;
-    let mut explosions = vec![];
+    let mut exploded_ids = vec![];
     for proj in loc.projectiles.iter_mut() {
         current_idx += 1;
         let any_coll = sp_idx
@@ -479,20 +480,22 @@ pub fn update_projectile_collisions(
             //     proj.get_id(),
             //     any_coll.iter().map(|os| os.clone()).collect::<Vec<_>>()
             // );
-            if let Some(exp) = proj.get_explosion_props() {
-                explosions.push((
-                    exp.clone(),
-                    proj.get_spatial().position.clone(),
-                    Some(proj.get_id()),
-                ))
-            }
+            // if let Some(exp) = proj.get_explosion_props() {
+            //     explosions.push((
+            //         exp.clone(),
+            //         proj.get_spatial().position.clone(),
+            //         Some(proj.get_id()),
+            //     ))
+            // }
             // damages.append(&mut damaged);
-            *proj.get_to_clean_mut() = true;
+            exploded_ids.push(ObjectSpecifier::Projectile { id: proj.get_id() });
         }
     }
-    for (exp, pos, proj_id) in explosions.into_iter() {
-        create_explosion(&exp, &pos, loc, proj_id, indexes, loc_idx);
+    for exp_id in exploded_ids.into_iter() {
+        let source = &exp_id.clone();
+        damage_objects(loc, &vec![exp_id], INSTAKILL, source, indexes, current_tick);
     }
+    // kind of 'kinetic' part of the damage, not the explosion
     damages
         .into_iter()
         .filter_map(|(ois, d)| object_index_into_object_id(&ois, loc).map(|os| (os, d)))
@@ -848,6 +851,10 @@ pub fn push_objects(
     }
 }
 
+// special constant to 'unconditionally' kill objects without an effect, e.g. for rocket's sake,
+// while still using common damage_objects
+pub const INSTAKILL: f64 = 10e6;
+
 pub fn damage_objects(
     loc: &mut Location,
     targets: &Vec<ObjectSpecifier>,
@@ -870,7 +877,7 @@ pub fn damage_objects(
         } else {
             0.0
         };
-        if damage > 0.0 {
+        if damage > 0.0 && damage < INSTAKILL {
             add_effect(
                 LocalEffectCreate::DmgDone { hp: damage as i32 },
                 source.clone(),
