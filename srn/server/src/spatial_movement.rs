@@ -86,7 +86,7 @@ pub fn update_ship_manual_movement(
                     .brake
                     .as_ref()
                     .map_or(0.0, |m| if m.forward { 1.0 } else { 0.0 });
-            update_accelerated_ship_movement(
+            update_accelerated_movement(
                 elapsed_micro,
                 &mut ship.spatial,
                 &mut ship.movement_definition,
@@ -193,6 +193,7 @@ fn project_ship_movement_by_speed(elapsed_micro: i64, ship: &Ship, sign: f64) ->
 // somewhat an artificial drag to prevent infinite movement. It is a = m/s^2
 pub const SPACE_DRAG_PER_TICK_PER_TICK: f64 = 1.0 / 1e6 / 1e6;
 pub const TURN_DRAG_RAD_PER_TICK: f64 = PI / 1e6 / 1e6; // really high drag to prevent too much drifting
+pub const GAS_TURN_STABILIZATION: f64 = 2.0 * PI / 1e6 / 1e6;
 
 fn update_spatial_by_velocities(
     elapsed_micro: i64,
@@ -224,12 +225,13 @@ fn update_spatial_by_velocities(
     }
 }
 
-pub fn update_accelerated_ship_movement(
+pub const MIN_TURN_VALUE: f64 = 1e-6;
+pub fn update_accelerated_movement(
     elapsed_micro: i64,
     spatial: &mut SpatialProps,
     movement_definition: &Movement,
     gas_sign: f64,
-    turn_sign: f64,
+    turn_val: f64, // for the sake of projectile movement, it turned out to be necessary to allow fractional value
     brake_sign: f64,
     rotation_drag_multiplier: Option<f64>,
 ) {
@@ -252,14 +254,32 @@ pub fn update_accelerated_ship_movement(
         spatial.velocity = spatial.velocity.subtract(&linear_brake);
     }
 
-    if turn_sign != 0.0 {
+    if turn_val.abs() > MIN_TURN_VALUE {
         let angular_drag = spatial.angular_velocity.signum()
             * TURN_DRAG_RAD_PER_TICK
             * rotation_drag_multiplier.unwrap_or(1.0)
             * elapsed_micro as f64;
         // negate drag if ship is actively turning to prevent wrong expectations
         spatial.angular_velocity += angular_drag;
+
+        if spatial.angular_velocity.abs() <= MIN_OBJECT_TURN_SPEED_RAD_PER_TICK {
+            spatial.angular_velocity = 0.0;
+        }
     }
+
+    // else if gas_sign != 0.0 {
+    //     // add extra stabilization in case of gas sign, to suppress 'residual' movement
+    //     // makes projectile guidance better
+    //     let stabilization_drag = -spatial.angular_velocity.signum()
+    //         * GAS_TURN_STABILIZATION
+    //         * rotation_drag_multiplier.unwrap_or(1.0)
+    //         * elapsed_micro as f64;
+    //     spatial.angular_velocity += stabilization_drag;
+    //     if spatial.angular_velocity.abs() <= MIN_OBJECT_TURN_SPEED_RAD_PER_TICK {
+    //         spatial.angular_velocity = 0.0;
+    //     }
+    // }
+
     let thrust_dir = Vec2f64 { x: 1.0, y: 0.0 }.rotate(-spatial.rotation_rad);
     let space_acceleration = thrust_dir.scalar_mul(
         movement_definition.get_current_linear_acceleration() * elapsed_micro as f64 * gas_sign,
@@ -273,9 +293,15 @@ pub fn update_accelerated_ship_movement(
             .unwrap_or(Vec2f64::zero())
             .scalar_mul(max_speed);
     }
-    spatial.angular_velocity +=
-        turn_sign * movement_definition.get_current_angular_acceleration() * elapsed_micro as f64;
+
+    if turn_val.abs() > MIN_TURN_VALUE {
+        spatial.angular_velocity += turn_val
+            * movement_definition.get_current_angular_acceleration()
+            * elapsed_micro as f64;
+    }
+
     let max_rotation_speed = movement_definition.get_max_rotation_speed();
+
     if spatial.angular_velocity.abs() > max_rotation_speed {
         spatial.angular_velocity = spatial.angular_velocity.signum() * max_rotation_speed;
     }

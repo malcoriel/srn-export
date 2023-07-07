@@ -388,10 +388,19 @@ pub fn guide_projectile(
             if rot_angle_with_target.abs() >= eps {
                 let shift_till_next_approx =
                     props.movement.get_angular_speed() * elapsed_micro as f64;
-                if rot_angle_with_target > eps - shift_till_next_approx {
+                // dumb cases, full turn
+                if rot_angle_with_target > 0.0 && rot_angle_with_target > shift_till_next_approx {
                     turn = 1.0;
-                } else if rot_angle_with_target < eps - shift_till_next_approx {
+                } else if rot_angle_with_target < 0.0
+                    && rot_angle_with_target < shift_till_next_approx
+                {
                     turn = -1.0;
+                } else {
+                    // complicated case where we need -1 < x < 1, but not 1, because otherwise we overshoot
+                    turn = ((rot_angle_with_target - shift_till_next_approx)
+                        / (elapsed_micro * elapsed_micro) as f64)
+                        .min(1.0)
+                        .max(-1.0);
                 }
             }
             // log2!(
@@ -423,9 +432,9 @@ fn markers_to_string(gas: f64, turn: f64, brake: f64) -> Option<String> {
         }
         // visual rotation is inverted
         if turn > 0.0 {
-            str += "↷"
+            str += format!("↶{:.2}", turn).as_str();
         } else if turn < 0.0 {
-            str += "↶"
+            str += format!("↷{:.2}", turn).as_str();
         }
         if brake > 0.0 {
             str += "⨯"
