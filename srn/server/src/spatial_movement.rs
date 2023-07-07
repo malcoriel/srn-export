@@ -228,35 +228,6 @@ fn update_spatial_by_velocities(elapsed_micro: i64, spatial: &mut SpatialProps, 
     }
 }
 
-fn update_spatial_by_velocities_projectile(
-    elapsed_micro: i64,
-    spatial: &mut SpatialProps,
-    _debug: bool,
-) {
-    let mut true_velocity = spatial.velocity.clone();
-    let linear_drag = &true_velocity
-        .normalize()
-        .unwrap_or(Vec2f64::zero())
-        .scalar_mul(SPACE_DRAG_PER_TICK_PER_TICK * elapsed_micro as f64);
-    true_velocity = true_velocity.subtract(&linear_drag);
-    let shift = &true_velocity.scalar_mul(elapsed_micro as f64);
-    spatial.position = spatial.position.add(&shift);
-    if true_velocity.euclidean_len() <= MIN_OBJECT_SPEED_PER_TICK {
-        true_velocity = Vec2f64::zero();
-    }
-    spatial.velocity = true_velocity;
-
-    // intentionally make angular drag x 10 to prevent complexity in swaying guided projectiles
-    let angular_drag =
-        spatial.angular_velocity.signum() * TURN_DRAG_RAD_PER_TICK * 10.0 * elapsed_micro as f64;
-    spatial.angular_velocity -= angular_drag;
-    spatial.rotation_rad += spatial.angular_velocity * elapsed_micro as f64;
-    spatial.rotation_rad = spatial.rotation_rad % (2.0 * PI);
-    if spatial.angular_velocity.abs() <= MIN_OBJECT_TURN_SPEED_RAD_PER_TICK {
-        spatial.angular_velocity = 0.0;
-    }
-}
-
 pub fn update_accelerated_ship_movement(
     elapsed_micro: i64,
     spatial: &mut SpatialProps,
@@ -341,10 +312,8 @@ pub fn update_accelerated_projectile_movement(
     }
 
     if turn_sign != 0.0 {
-        let angular_drag = spatial.angular_velocity.signum()
-            * TURN_DRAG_RAD_PER_TICK
-            * 10.0
-            * elapsed_micro as f64;
+        let angular_drag =
+            spatial.angular_velocity.signum() * TURN_DRAG_RAD_PER_TICK * elapsed_micro as f64;
         // negate drag if ship is actively turning to prevent wrong expectations
         spatial.angular_velocity += angular_drag;
     }
@@ -368,7 +337,7 @@ pub fn update_accelerated_projectile_movement(
         spatial.angular_velocity = spatial.angular_velocity.signum() * max_rotation_speed;
     }
 
-    update_spatial_by_velocities_projectile(elapsed_micro, spatial, false);
+    update_spatial_by_velocities(elapsed_micro, spatial, false);
 }
 
 pub const ORB_SPEED_MULT: f64 = 1.0;
