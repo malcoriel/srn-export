@@ -9,6 +9,7 @@ use rand_pcg::rand_core::RngCore;
 use rand_pcg::Pcg64Mcg;
 use uuid::Uuid;
 
+use crate::combat::Health;
 use crate::indexing::{find_my_ship, find_my_ship_mut, ObjectSpecifier};
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;
@@ -290,7 +291,16 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                         radius: s.radius,
                     },
                     movement: Movement::None,
+                    health: Health {
+                        current: 10.0,
+                        max: 10.0,
+                        regen_per_tick: None,
+                        last_damage_dealer: None,
+                        acc_periodic_dmg: 0.0,
+                        acc_periodic_heal: 0.0,
+                    },
                     rot_movement: RotationMovement::None,
+                    to_clean: false,
                 })
                 .collect();
             loc.planets = args

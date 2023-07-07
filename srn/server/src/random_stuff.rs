@@ -343,13 +343,23 @@ pub fn seed_asteroids(star: &Star, prng: &mut Pcg64Mcg) -> Vec<Asteroid> {
                 phase: None,
                 start_phase: 0,
             },
+            health: Health {
+                current: 10.0,
+                max: 10.0,
+                regen_per_tick: None,
+                last_damage_dealer: None,
+                acc_periodic_dmg: 0.0,
+                acc_periodic_heal: 0.0,
+            },
             rot_movement: RotationMovement::None,
+            to_clean: false,
         });
         cur_angle += angle_step;
     }
     res
 }
 
+use crate::combat::Health;
 use crate::spatial_movement::{Movement, RotationMovement};
 use rand::distributions::{Distribution, Normal};
 

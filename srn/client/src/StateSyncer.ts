@@ -933,6 +933,7 @@ export class StateSyncer extends EventEmitter {
       'locations.*.ships.*.trading_with',
       'locations.*.ships.*.trajectory',
       'locations.*.ships.*.dock_target',
+      'locations.*.ships.*.to_clean',
 
       'locations.*.star.id',
       'locations.*.planets.*.id',

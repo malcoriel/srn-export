@@ -248,7 +248,40 @@ pub fn object_index_into_health_mut<'a, 'b>(
             // }
             p.get_health_mut()
         }),
-        ObjectIndexSpecifier::Asteroid { .. } => None,
+        ObjectIndexSpecifier::Asteroid { idx } => loc
+            .asteroids
+            .get_mut(*idx)
+            .and_then(|a| Some(&mut a.health)),
+        ObjectIndexSpecifier::Wreck { .. } => None,
+        ObjectIndexSpecifier::Explosion { .. } => None,
+        ObjectIndexSpecifier::AsteroidBelt { .. } => None,
+    }
+}
+
+pub fn object_index_into_to_clean_mut<'a, 'b>(
+    ois: &'a ObjectIndexSpecifier,
+    loc: &'b mut Location,
+) -> Option<&'b mut bool> {
+    match ois {
+        ObjectIndexSpecifier::Unknown => None,
+        ObjectIndexSpecifier::Mineral { .. } => None,
+        ObjectIndexSpecifier::Container { .. } => None,
+        ObjectIndexSpecifier::Planet { .. } => None,
+        ObjectIndexSpecifier::Ship { idx } => loc.ships.get_mut(*idx).and_then(|ship| {
+            if has_property(&ship.properties, ObjectPropertyKey::Invulnerable) {
+                return None;
+            }
+            Some(&mut ship.to_clean)
+        }),
+        ObjectIndexSpecifier::Star => None,
+        ObjectIndexSpecifier::Projectile { idx } => loc
+            .projectiles
+            .get_mut(*idx)
+            .and_then(|p| Some(p.get_to_clean_mut())),
+        ObjectIndexSpecifier::Asteroid { idx } => loc
+            .asteroids
+            .get_mut(*idx)
+            .and_then(|a| Some(&mut a.to_clean)),
         ObjectIndexSpecifier::Wreck { .. } => None,
         ObjectIndexSpecifier::Explosion { .. } => None,
         ObjectIndexSpecifier::AsteroidBelt { .. } => None,

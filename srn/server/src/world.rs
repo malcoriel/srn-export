@@ -184,7 +184,9 @@ pub struct Asteroid {
     pub id: Uuid,
     pub spatial: SpatialProps,
     pub movement: Movement,
+    pub health: Health,
     pub rot_movement: RotationMovement,
+    pub to_clean: bool,
 }
 
 #[skip_serializing_none]
@@ -241,6 +243,7 @@ pub struct Ship {
     pub turrets: Vec<ShipTurret>,
     pub properties: Vec<ObjectProperty>,
     pub trading_with: Option<ObjectSpecifier>,
+    pub to_clean: bool,
 }
 
 pub enum TemplateId {
@@ -282,6 +285,7 @@ impl Ship {
             name: None,
             properties: Default::default(),
             trading_with: None,
+            to_clean: false,
         }
     }
 }

@@ -10,7 +10,7 @@ use wasm_bindgen::prelude::*;
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::autofocus::{object_index_into_object_id, object_index_into_object_pos, SpatialIndex};
 use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
-use crate::hp::object_index_into_health_mut;
+use crate::hp::{object_index_into_health_mut, object_index_into_to_clean_mut};
 use crate::indexing::{
     find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
     GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
@@ -882,15 +882,20 @@ pub fn damage_objects(
     current_tick: u64,
 ) {
     for os in targets {
-        // log2!("damage {:?} from {:?}", ois.1, _source);
-        let damage = if let Some(health) = indexes
+        let damage = if let (Some(health), Some(ois)) = indexes
             .reverse_id_index
             .get(os)
-            .and_then(|ois| object_index_into_health_mut(ois, loc))
-        {
+            .map_or((None, None), |ois| {
+                (object_index_into_health_mut(ois, loc), Some(ois))
+            }) {
             health.current -= amount;
             health.current = health.current.max(0.0);
             health.last_damage_dealer = Some(os.clone());
+            if health.current == 0.0 {
+                if let Some(to_clean) = object_index_into_to_clean_mut(ois, loc) {
+                    *to_clean = true;
+                };
+            }
             amount
         } else {
             0.0

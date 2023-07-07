@@ -34,6 +34,7 @@ pub fn cleanup_objects(state: &mut GameState, loc_idx: usize) {
     let loc = &mut state.locations[loc_idx];
     loc.projectiles.retain(|p| !*p.get_to_clean());
     loc.wrecks.retain(|w| !w.to_clean);
+    loc.asteroids.retain(|w| !w.to_clean);
     loc.explosions.retain(|w| !w.to_clean);
 }
 

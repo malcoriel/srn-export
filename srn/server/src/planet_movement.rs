@@ -286,15 +286,8 @@ impl IBodyV2 for Asteroid {
 }
 
 impl From<Box<dyn IBodyV2>> for Asteroid {
-    fn from(val: Box<dyn IBodyV2>) -> Self {
-        let spatial = val.get_spatial();
-        let movement = val.get_movement();
-        Asteroid {
-            id: val.get_id(),
-            spatial: spatial.clone(),
-            movement: movement.clone(),
-            rot_movement: RotationMovement::None,
-        }
+    fn from(b: Box<dyn IBodyV2>) -> Self {
+        b.as_any().downcast_ref::<Asteroid>().unwrap().clone()
     }
 }
 
