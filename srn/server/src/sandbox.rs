@@ -61,6 +61,13 @@ pub struct SBAddPlanet {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct SBAddAsteroid {
+    radius: f64,
+    position: Vec2f64,
+    id: Option<ReferencableId>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct SBAddStar {
     radius: f64,
     id: Option<ReferencableId>,
@@ -82,13 +89,6 @@ pub struct SBAddAsteroidBelt {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
-pub struct SBAddAsteroid {
-    id: Option<ReferencableId>,
-    radius: f64,
-    position: Vec2f64,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct SBSetupState {
     star: SBAddStar,
     planets: Vec<SBAddPlanet>,
@@ -106,6 +106,7 @@ pub enum SandboxCommand {
     ToggleGodMode,
     GetSomeWares,
     AddPlanet(SBAddPlanet),
+    AddAsteroid(SBAddAsteroid),
     Teleport(SBTeleport),
     SetupState(SBSetupState),
 }
@@ -341,6 +342,19 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     }
                 })
                 .collect();
+        }
+        SandboxCommand::AddAsteroid(cmd) => {
+            if cmd.id.is_some() {
+                panic!("Cannot spawn asteroid with provided id after state setup");
+            }
+            if let Some(loc) = indexing::find_my_ship_index(state, player_id) {
+                world::spawn_asteroid(
+                    &mut state.locations[loc.location_idx],
+                    cmd.position,
+                    cmd.radius,
+                    &mut prng,
+                );
+            }
         }
     }
 }

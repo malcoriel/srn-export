@@ -133,7 +133,7 @@ async function buildForWeb({
     const extraExtraImports = `
     import { Vec2f64, ObjectSpecifier, ManualMoveUpdate, LongActionStart,
     InventoryAction, NotificationActionR, SandboxCommand, TradeAction, NotificationText, ShootTarget,
-    SBAddPlanet, SBTeleport, SBSetupState
+    SBAddPlanet, SBTeleport, SBSetupState, SBAddAsteroid, Ship, PlanetV2, MoneyOnKillProps
     } from "./world"
     `;
     console.log('writing the extra file');

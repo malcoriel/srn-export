@@ -1,4 +1,3 @@
-import React from 'react';
 import { Meta } from '@storybook/react';
 import { GameState, genPeriod, PlanetType } from '../world';
 import {
@@ -10,6 +9,7 @@ import {
   ActionBuilder,
   LongActionStartBuilder,
   ReferencableIdBuilder,
+  SandboxCommandBuilder,
   ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import { findMyShip } from '../ClientStateIndexing';
@@ -21,7 +21,12 @@ const getStartGameParamsRocketShooting = () => {
     reference: 'star',
   };
 
-  const asteroidId = '7d840590-01ce-4b37-a32a-037264da2e50';
+  let asteroidId;
+  const asteroidPos = {
+    x: 175,
+    y: 0,
+  };
+  const asteroidRad = 2.0;
   return {
     storyName: rocketShootingStory,
     forceCameraPosition: {
@@ -38,14 +43,9 @@ const getStartGameParamsRocketShooting = () => {
       planets: [],
       asteroids: [
         {
-          id: ReferencableIdBuilder.ReferencableIdId({
-            id: asteroidId,
-          }),
-          position: {
-            x: 175,
-            y: 0,
-          },
-          radius: 2.0,
+          position: asteroidPos,
+          radius: asteroidRad,
+          id: null,
         },
       ],
     },
@@ -78,19 +78,38 @@ const getStartGameParamsRocketShooting = () => {
           console.warn('no launch ability, cannot continue');
           break;
         }
-        currentState = yield {
-          wait: 500,
-          action: ActionBuilder.ActionLongActionStart({
-            ship_id: '$my_ship_id',
-            long_action_start: LongActionStartBuilder.LongActionStartLaunch({
-              target: ShootTargetBuilder.ShootTargetAsteroid({
-                id: asteroidId,
+        const firstAsteroid = currentState.locations[0].asteroids[0];
+        if (!firstAsteroid) {
+          console.log('No target, attempting to spawn a new one');
+          currentState = yield {
+            wait: 500,
+            action: ActionBuilder.ActionSandboxCommand({
+              player_id: '$my_player_id',
+              command: SandboxCommandBuilder.SandboxCommandAddAsteroid({
+                fields: {
+                  position: asteroidPos,
+                  radius: asteroidRad,
+                  id: null,
+                },
               }),
-              turret_id: launchAbility.turret_id,
             }),
-            player_id: '$my_player_id',
-          }),
-        };
+          };
+        } else {
+          asteroidId = firstAsteroid.id;
+          currentState = yield {
+            wait: 500,
+            action: ActionBuilder.ActionLongActionStart({
+              ship_id: '$my_ship_id',
+              long_action_start: LongActionStartBuilder.LongActionStartLaunch({
+                target: ShootTargetBuilder.ShootTargetAsteroid({
+                  id: asteroidId,
+                }),
+                turret_id: launchAbility.turret_id,
+              }),
+              player_id: '$my_player_id',
+            }),
+          };
+        }
       }
       return {
         wait: 100,

@@ -45,6 +45,7 @@ use crate::random_stuff::{
     gen_random_photo_id, gen_sat_count, gen_sat_gap, gen_sat_name, gen_sat_orbit_speed,
     gen_sat_radius, gen_star_name, gen_star_radius,
 };
+use crate::sandbox::ReferencableId;
 use crate::spatial_movement::{
     update_accelerated_movement, Movement, RotationMovement, EXTRA_PROJECTILE_TURN_DRAG,
 };
@@ -1289,6 +1290,12 @@ pub fn spawn_mineral(location: &mut Location, rarity: Rarity, pos: Vec2f64, prng
     location.minerals.push(min)
 }
 
+pub fn spawn_asteroid(location: &mut Location, pos: Vec2f64, radius: f64, prng: &mut Pcg64Mcg) {
+    let mut asteroid = gen_asteroid(prng, pos);
+    asteroid.spatial.radius = radius;
+    location.asteroids.push(asteroid)
+}
+
 pub fn spawn_container(loc: &mut Location, at: Vec2f64) {
     let mut prng = get_prng();
     let mut container = Container::random(&mut prng);
@@ -1314,6 +1321,30 @@ fn gen_mineral(prng: &mut Pcg64Mcg, pos: Vec2f64) -> NatSpawnMineral {
         value: mineral_props.1,
         rarity: mineral_props.3,
         color: mineral_props.2,
+    }
+}
+
+fn gen_asteroid(prng: &mut Pcg64Mcg, pos: Vec2f64) -> Asteroid {
+    Asteroid {
+        id: prng_id(prng),
+        spatial: SpatialProps {
+            position: pos,
+            velocity: Vec2f64::zero(),
+            angular_velocity: 0.0,
+            rotation_rad: 0.0,
+            radius: 1.0,
+        },
+        movement: Movement::None,
+        health: Health {
+            current: 10.0,
+            max: 10.0,
+            regen_per_tick: None,
+            last_damage_dealer: None,
+            acc_periodic_dmg: 0.0,
+            acc_periodic_heal: 0.0,
+        },
+        rot_movement: RotationMovement::None,
+        to_clean: false,
     }
 }
 

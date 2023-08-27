@@ -40,18 +40,11 @@ const patchAction = (action: Action, nsRef: NetState) => {
       'cannot patch actions due to lack of myShip in state indexes'
     );
   }
-  if (action.tag === 'Navigate') {
-    if (action.ship_id === '$my_ship_id') {
-      action.ship_id = nsRef.indexes.myShip.id;
-    }
+  if ((action as any).ship_id === '$my_ship_id') {
+    (action as any).ship_id = nsRef.indexes.myShip.id;
   }
-  if (action.tag === 'LongActionStart') {
-    if (action.ship_id === '$my_ship_id') {
-      action.ship_id = nsRef.indexes.myShip.id;
-    }
-    if (action.player_id === '$my_player_id') {
-      action.player_id = nsRef.state.my_id;
-    }
+  if ((action as any).player_id === '$my_player_id') {
+    (action as any).player_id = nsRef.state.my_id;
   }
 };
 
