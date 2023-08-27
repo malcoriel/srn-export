@@ -940,7 +940,7 @@ pub fn heal_objects(
             add_effect(
                 LocalEffectCreate::Heal { hp: heal as i32 },
                 source.clone(),
-                None,
+                Some(current_tick as i32), // extra deduplication to avoid duplicate keys for repeating heal events
                 os.clone(),
                 loc,
                 indexes,
