@@ -1,5 +1,5 @@
 use crate::indexing::{
-    find_planet, index_planets_by_id, GameStateCaches, GameStateIndexes, ObjectSpecifier,
+    find_planet, index_planets_by_id, GameStateCaches, GameStateIndexes, IdKind, ObjectSpecifier,
 };
 use crate::long_actions::{
     try_start_long_action_ship_only, LongAction, LongActionStart, MIN_SHIP_DOCKING_RADIUS,
@@ -605,12 +605,20 @@ impl Movement {
 
     pub fn get_anchor_id(&self) -> Uuid {
         match self {
-            Movement::RadialMonotonous { anchor, .. } => {
-                anchor.get_id().expect("anchor without id for movement")
-            }
-            Movement::AnchoredStatic { anchor } => {
-                anchor.get_id().expect("anchor without id for movement")
-            }
+            Movement::RadialMonotonous { anchor, .. } => anchor
+                .get_id()
+                .map(|ik| match ik {
+                    IdKind::Uuid(id) => id,
+                    IdKind::Int(_) => panic!("Unsupported int-based anchor id"),
+                })
+                .expect("anchor without id for movement"),
+            Movement::AnchoredStatic { anchor } => anchor
+                .get_id()
+                .map(|ik| match ik {
+                    IdKind::Uuid(id) => id,
+                    IdKind::Int(_) => panic!("Unsupported int-based anchor id"),
+                })
+                .expect("anchor without id for movement"),
             _ => panic!("cannot get anchor for movement without an anchor"),
         }
     }

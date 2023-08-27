@@ -1,6 +1,6 @@
 import React from 'react';
 import { delay } from '../utils/misc';
-import { ensureDialogueTableLoaded, GameMode } from '../world';
+import { GameMode } from '../world';
 import NetState from '../NetState';
 import { SandboxCommandBuilder } from '../../../world/pkg/world.extra';
 import { IVector } from '../utils/Vector';
@@ -103,6 +103,7 @@ export const buildStory = async ({
       await delay(2000);
       console.log('actions iterator initialized');
       const iterator = actions(nsRef.disconnecting ? null : nsRef.state);
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         const { done, value } = iterator.next(
           nsRef.disconnecting ? null : nsRef.state
@@ -155,7 +156,7 @@ export const stopTestGame = async (): Promise<void> => {
 export const getStartGameParams: Record<string, () => BuildStoryParams> = {};
 
 export const FunctionalStoryTemplate: Story = (args) => {
-  const [revision, setRevision] = useState(uuid.v4());
+  const [_revision, setRevision] = useState(uuid.v4());
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
     setRevision((old) => old + 1);

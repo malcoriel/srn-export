@@ -82,7 +82,8 @@ const getStartGameParamsRocketShooting = () => {
         if (!firstAsteroid) {
           console.log('No target, attempting to spawn a new one');
           currentState = yield {
-            wait: 500,
+            wait: 1000,
+            waitAfter: 1000,
             action: ActionBuilder.ActionSandboxCommand({
               player_id: '$my_player_id',
               command: SandboxCommandBuilder.SandboxCommandAddAsteroid({
@@ -97,7 +98,6 @@ const getStartGameParamsRocketShooting = () => {
         } else {
           asteroidId = firstAsteroid.id;
           currentState = yield {
-            wait: 500,
             action: ActionBuilder.ActionLongActionStart({
               ship_id: '$my_ship_id',
               long_action_start: LongActionStartBuilder.LongActionStartLaunch({
@@ -108,6 +108,7 @@ const getStartGameParamsRocketShooting = () => {
               }),
               player_id: '$my_player_id',
             }),
+            waitAfter: 500,
           };
         }
       }

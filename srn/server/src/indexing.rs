@@ -423,6 +423,26 @@ impl Spec for PlanetV2 {
     }
 }
 
+pub enum IdKind {
+    Uuid(Uuid),
+    Int(i32),
+}
+
+impl Display for IdKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(
+            format!(
+                "{}",
+                match self {
+                    IdKind::Uuid(id) => id.to_string(),
+                    IdKind::Int(id) => id.to_string(),
+                }
+            )
+            .as_str(),
+        )
+    }
+}
+
 impl Display for ObjectSpecifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(
@@ -437,20 +457,20 @@ impl Display for ObjectSpecifier {
 }
 
 impl ObjectSpecifier {
-    pub fn get_id(&self) -> Option<Uuid> {
+    pub fn get_id(&self) -> Option<IdKind> {
         match self {
             ObjectSpecifier::Unknown => None,
-            ObjectSpecifier::Mineral { id } => Some(*id),
-            ObjectSpecifier::Container { id } => Some(*id),
-            ObjectSpecifier::Planet { id } => Some(*id),
-            ObjectSpecifier::Ship { id } => Some(*id),
-            ObjectSpecifier::Star { id } => Some(*id),
-            ObjectSpecifier::Asteroid { id } => Some(*id),
-            ObjectSpecifier::AsteroidBelt { id } => Some(*id),
-            ObjectSpecifier::Wreck { id } => Some(*id),
-            ObjectSpecifier::Location { id } => Some(*id),
-            ObjectSpecifier::Projectile { .. } => None,
-            ObjectSpecifier::Explosion { .. } => None,
+            ObjectSpecifier::Mineral { id } => Some(IdKind::Uuid(*id)),
+            ObjectSpecifier::Container { id } => Some(IdKind::Uuid(*id)),
+            ObjectSpecifier::Planet { id } => Some(IdKind::Uuid(*id)),
+            ObjectSpecifier::Ship { id } => Some(IdKind::Uuid(*id)),
+            ObjectSpecifier::Star { id } => Some(IdKind::Uuid(*id)),
+            ObjectSpecifier::Asteroid { id } => Some(IdKind::Uuid(*id)),
+            ObjectSpecifier::AsteroidBelt { id } => Some(IdKind::Uuid(*id)),
+            ObjectSpecifier::Wreck { id } => Some(IdKind::Uuid(*id)),
+            ObjectSpecifier::Location { id } => Some(IdKind::Uuid(*id)),
+            ObjectSpecifier::Projectile { id } => Some(IdKind::Int(*id)),
+            ObjectSpecifier::Explosion { id } => Some(IdKind::Int(*id)),
         }
     }
 }

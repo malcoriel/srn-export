@@ -289,7 +289,7 @@ pub fn resolve_launch(
     let spec = spec.unwrap();
     let target_pos = find_spatial_ref_by_spec(indexes, spec.clone());
     if target_pos.is_none() {
-        warn!(format!("no target pos: {:?}", spec));
+        // warn!(format!("Invalid launch, no target pos: {:?}", spec));
         return;
     }
     let _target_pos = target_pos.unwrap().clone();

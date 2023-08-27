@@ -1,15 +1,12 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useHotkeys } from 'react-hotkeys-hook';
 import NetState, { VisualState } from '../NetState';
 import { height_units, Ship, width_units } from '../world';
 import { unitsToPixels_min } from '../coord';
-import Vector, { IVector, VectorF } from '../utils/Vector';
-import { MathUtils, Scene, ShaderMaterial, Vector3 } from 'three';
+import { IVector } from '../utils/Vector';
+import { MathUtils, Scene, Vector3 } from 'three';
 import _ from 'lodash';
-import { threePosToVector, threeVectorToVector } from './util';
 import { useScopedHotkey } from '../utils/hotkeyHooks';
-import { SHIP_FIXED_Z } from './ShipShape';
 
 export const CAMERA_HEIGHT = 100;
 export const CAMERA_DEFAULT_ZOOM = () => unitsToPixels_min();
