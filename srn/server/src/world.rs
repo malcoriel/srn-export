@@ -1130,9 +1130,9 @@ pub fn update_location(
         .iter_mut()
         .enumerate()
     {
+        let movement_clone = proj.get_movement().clone();
         if let Some(target_spatial) = &spatials[idx] {
             let (gas, turn, brake) = guide_projectile(proj, target_spatial, elapsed);
-            let movement_clone = proj.get_movement().clone();
             update_accelerated_movement(
                 elapsed,
                 proj.get_spatial_mut(),
@@ -1140,6 +1140,16 @@ pub fn update_location(
                 gas,
                 turn,
                 brake,
+                Some(EXTRA_PROJECTILE_TURN_DRAG),
+            );
+        } else {
+            update_accelerated_movement(
+                elapsed,
+                proj.get_spatial_mut(),
+                &movement_clone,
+                1.0,
+                0.0,
+                0.0,
                 Some(EXTRA_PROJECTILE_TURN_DRAG),
             );
         }
