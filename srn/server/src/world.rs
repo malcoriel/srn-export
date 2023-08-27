@@ -1345,14 +1345,7 @@ fn gen_asteroid(prng: &mut Pcg64Mcg, pos: Vec2f64) -> Asteroid {
             radius: 1.0,
         },
         movement: Movement::None,
-        health: Health {
-            current: 10.0,
-            max: 10.0,
-            regen_per_tick: None,
-            last_damage_dealer: None,
-            acc_periodic_dmg: 0.0,
-            acc_periodic_heal: 0.0,
-        },
+        health: Health::new(50.0),
         rot_movement: RotationMovement::None,
         to_clean: false,
     }

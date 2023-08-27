@@ -327,6 +327,9 @@ pub fn update_objects_spatial_movement(
     for wreck in location.wrecks.iter_mut() {
         update_spatial_by_velocities(elapsed_micro, &mut wreck.spatial, false, None)
     }
+    for asteroid in location.asteroids.iter_mut() {
+        update_spatial_by_velocities(elapsed_micro, &mut asteroid.spatial, false, None)
+    }
 }
 
 pub fn align_rotation_with_velocity(sp: &mut SpatialProps) {
