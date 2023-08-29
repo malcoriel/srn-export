@@ -704,12 +704,14 @@ pub fn friend_or_foe(
     state: JsValue,
     actor_a: JsValue,
     actor_b: JsValue,
+    loc_idx: usize,
 ) -> Result<JsValue, JsValue> {
     let mut state: GameState = serde_wasm_bindgen::from_value(state)?;
     let res = fof::friend_or_foe(
         &state,
         serde_wasm_bindgen::from_value::<FofActor>(actor_a)?,
         serde_wasm_bindgen::from_value::<FofActor>(actor_b)?,
+        loc_idx,
     );
     Ok(custom_serialize(&res)?)
 }

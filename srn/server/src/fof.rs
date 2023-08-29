@@ -1,4 +1,5 @@
-use crate::indexing::ObjectSpecifier;
+use crate::indexing::{find_owning_player, ObjectIndexSpecifier, ObjectSpecifier};
+use crate::world::Location;
 use crate::{pirate_defence, GameMode, GameState};
 use serde_derive::{Deserialize, Serialize};
 use typescript_definitions::*;
@@ -18,37 +19,44 @@ pub enum FriendOrFoe {
 #[serde(tag = "tag")]
 pub enum FofActor {
     Player { id: Uuid },
-    Object { spec: ObjectSpecifier },
+    ObjectIdx { spec: ObjectIndexSpecifier },
 }
 
-impl FofActor {
-    pub fn get_object(self) -> ObjectSpecifier {
-        match self {
-            FofActor::Player { .. } => {
-                panic!("FofActor::get_object on not an object actor")
-            }
-            FofActor::Object { spec } => spec,
-        }
-    }
-}
-
-pub fn friend_or_foe(state: &GameState, actor_a: FofActor, actor_b: FofActor) -> FriendOrFoe {
+pub fn friend_or_foe(
+    state: &GameState,
+    actor_a: FofActor,
+    actor_b: FofActor,
+    loc_idx: usize,
+) -> FriendOrFoe {
     match state.mode {
-        GameMode::PirateDefence => pirate_defence::friend_or_foe(state, actor_a, actor_b),
-        _ => FriendOrFoe::Neutral,
+        GameMode::PirateDefence => pirate_defence::friend_or_foe(state, actor_a, actor_b, loc_idx),
+        _ => fof_default(state, actor_a, actor_b),
     }
 }
 
-pub fn resolve_player_id(actor: &FofActor, state: &GameState) -> Option<Uuid> {
+pub fn friend_or_foe_idx(
+    state: &GameState,
+    actor_a: FofActor,
+    actor_b: &ObjectIndexSpecifier,
+    loc_idx: usize,
+) -> FriendOrFoe {
+    return friend_or_foe(
+        state,
+        actor_a,
+        FofActor::ObjectIdx {
+            spec: actor_b.clone(),
+        },
+        loc_idx,
+    );
+}
+
+pub fn fof_default(p0: &GameState, p1: FofActor, p2: FofActor) -> FriendOrFoe {
+    todo!()
+}
+
+pub fn resolve_player_id(actor: &FofActor, state: &GameState, loc_idx: usize) -> Option<Uuid> {
     match actor {
         FofActor::Player { id } => Some(*id),
-        FofActor::Object { spec } => match spec {
-            ObjectSpecifier::Ship { id: ship_id } => state
-                .players
-                .iter()
-                .find(|p| p.ship_id.map_or(false, |sid| sid == *ship_id))
-                .map(|p| p.id),
-            _ => None,
-        },
+        FofActor::ObjectIdx { spec } => find_owning_player(state, loc_idx, spec),
     }
 }

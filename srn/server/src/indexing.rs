@@ -413,6 +413,11 @@ pub enum ObjectSpecifier {
     Location { id: Uuid },
 }
 
+impl Default for ObjectSpecifier {
+    fn default() -> Self {
+        ObjectSpecifier::Unknown
+    }
+}
 pub trait Spec {
     fn spec(&self) -> ObjectSpecifier;
 }
@@ -766,5 +771,24 @@ pub fn find_spatial_ref_by_spec<'a>(
         ObjectSpecifier::Location { .. } => None,
         ObjectSpecifier::Projectile { .. } => None,
         ObjectSpecifier::Explosion { .. } => None,
+    }
+}
+
+pub fn find_owning_player(
+    state: &GameState,
+    loc_idx: usize,
+    spec: &ObjectIndexSpecifier,
+) -> Option<Uuid> {
+    match spec {
+        ObjectIndexSpecifier::Ship { idx } => {
+            let ship_id = state.locations[loc_idx].ships[*idx].id;
+            let player = state
+                .players
+                .iter()
+                .find(|p| p.ship_id.map_or(false, |sid| sid == ship_id))
+                .map(|p| p.id);
+            return player;
+        }
+        _ => None,
     }
 }

@@ -187,77 +187,42 @@ pub fn update_autofocus_full(state: &mut GameState, spatial_indexes: &mut Spatia
 }
 
 pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &SpatialIndex) {
-    let loc_clone = state.locations[loc_idx].clone();
-    let loc_clone_ref = &loc_clone;
-    if loc_clone_ref.planets.len()
-        + loc_clone_ref.ships.len()
-        + loc_clone_ref.minerals.len()
-        + loc_clone_ref.containers.len()
-        == 0
-    {
+    let loc = &state.locations[loc_idx];
+    if loc.planets.len() + loc.ships.len() + loc.minerals.len() + loc.containers.len() == 0 {
         return;
     }
     let mut ship_mods_neutral = vec![];
     let mut ship_mods_hostile = vec![];
-    for i in 0..loc_clone_ref.ships.len() {
-        let current_ship = &loc_clone_ref.ships[i];
-        let current_ship_fof_actor = FofActor::Object {
-            spec: ObjectSpecifier::Ship {
-                id: current_ship.id,
-            },
+    for i in 0..loc.ships.len() {
+        let current_ship = &loc.ships[i];
+        let current_ship_fof_actor = FofActor::ObjectIdx {
+            spec: ObjectIndexSpecifier::Ship { idx: i },
         };
 
         let ship_pos = current_ship.spatial.position.clone();
-        let around_unfiltered = index.rad_search(&ship_pos, AUTOFOCUS_RADIUS);
         let mut around_neutral = vec![];
         let mut around_hostile = vec![];
 
-        for sp in around_unfiltered.iter() {
-            match sp {
-                ObjectIndexSpecifier::Ship { .. } => {
-                    let should_pick_ship = {
-                        if let Some(osp) = object_index_into_object_id(&sp, loc_clone_ref) {
-                            fof::friend_or_foe(
-                                state,
-                                current_ship_fof_actor.clone(),
-                                FofActor::Object { spec: osp },
-                            ) == FriendOrFoe::Foe
-                        } else {
-                            // potentially impossible
-                            false
-                        }
-                    };
-                    if should_pick_ship {
-                        around_hostile.push(sp);
-                    }
-                }
-                _ => {
-                    around_neutral.push(sp);
-                }
-            };
-        }
-        let sorter = |a, b| {
-            let a_pos = object_index_into_object_pos(a, &loc_clone_ref);
-            let a_dist = a_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
-            let b_pos = object_index_into_object_pos(b, &loc_clone_ref);
-            let b_dist = b_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&ship_pos));
-            if !b_dist.is_finite() || !a_dist.is_finite() {
-                return Ordering::Equal;
-            }
-            a_dist.partial_cmp(&b_dist).unwrap()
-        };
-        around_neutral.sort_by(|a, b| sorter(a, b));
-        around_hostile.sort_by(|a, b| sorter(a, b));
+        extract_closest_into(
+            state,
+            index,
+            loc_idx,
+            current_ship_fof_actor,
+            &ship_pos,
+            &mut around_neutral,
+            &mut around_hostile,
+            AUTOFOCUS_RADIUS,
+        );
         ship_mods_neutral.push((
             around_neutral
                 .get(0)
-                .and_then(|ois| object_index_into_object_id(ois, &loc_clone_ref)),
+                .and_then(|ois| object_index_into_object_id(ois, loc)),
             i,
         ));
         ship_mods_hostile.push((
             around_hostile
                 .get(0)
-                .and_then(|ois| object_index_into_object_id(ois, &loc_clone_ref)),
+                .and_then(|ois| object_index_into_object_id(ois, loc)),
             i,
         ));
     }
@@ -269,6 +234,38 @@ pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &
         let ship = &mut state.locations[loc_idx].ships[i];
         ship.hostile_auto_focus = new_val;
     }
+}
+
+pub fn extract_closest_into(
+    state: &GameState,
+    index: &SpatialIndex,
+    loc_idx: usize,
+    fof_actor: FofActor,
+    actor_pos: &Vec2f64,
+    around_neutral: &mut Vec<ObjectIndexSpecifier>,
+    around_hostile: &mut Vec<ObjectIndexSpecifier>,
+    radius: f64,
+) {
+    let around_unfiltered = index.rad_search(&actor_pos, radius);
+    for sp in around_unfiltered.iter() {
+        if fof::friend_or_foe_idx(state, fof_actor.clone(), sp, loc_idx) == FriendOrFoe::Foe {
+            around_hostile.push(sp.clone());
+        } else {
+            around_neutral.push(sp.clone());
+        }
+    }
+    let sorter = |left: &&ObjectIndexSpecifier, right: &&ObjectIndexSpecifier| {
+        let a_pos = object_index_into_object_pos(left, &state.locations[loc_idx]);
+        let a_dist = a_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&actor_pos));
+        let b_pos = object_index_into_object_pos(right, &state.locations[loc_idx]);
+        let b_dist = b_pos.map_or(f64::INFINITY, |p| p.euclidean_distance(&actor_pos));
+        if !b_dist.is_finite() || !a_dist.is_finite() {
+            return Ordering::Equal;
+        }
+        a_dist.partial_cmp(&b_dist).unwrap()
+    };
+    around_neutral.sort_by(|a: &ObjectIndexSpecifier, b: &ObjectIndexSpecifier| sorter(&a, &b));
+    around_hostile.sort_by(|a: &ObjectIndexSpecifier, b: &ObjectIndexSpecifier| sorter(&a, &b));
 }
 
 pub fn object_index_into_object_id(

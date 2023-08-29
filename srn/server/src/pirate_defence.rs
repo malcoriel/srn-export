@@ -10,9 +10,7 @@ use crate::abilities::{Ability, SHOOT_DEFAULT_DISTANCE};
 use crate::api_struct::AiTrait;
 use crate::api_struct::{new_bot, Bot, Room};
 use crate::bots::{add_bot, BotAct};
-use crate::combat::ShootTarget;
 use crate::dialogue::DialogueStatesForPlayer;
-use crate::fof::FriendOrFoe::Friend;
 use crate::fof::{resolve_player_id, FofActor, FriendOrFoe};
 use crate::indexing::{
     find_my_ship_index, index_players_by_ship_id, index_state, GameStateIndexes,
@@ -184,7 +182,7 @@ pub fn bot_planet_defender_act(
                     if turret_ab.get_current_cooldown() == 0 {
                         let act = Action::LongActionStart {
                             long_action_start: LongActionStart::Shoot {
-                                target: ShootTarget::Ship { id: first.id },
+                                target: ObjectSpecifier::Ship { id: first.id },
                                 turret_id: match turret_ab {
                                     Ability::Shoot { turret_id, .. } => turret_id.clone(),
                                     _ => Default::default(),
@@ -225,14 +223,14 @@ pub fn bot_planet_defender_act(
 pub fn friend_or_foe_p2o(
     _state: &GameState,
     _player_id: Uuid,
-    object_b: ObjectSpecifier,
+    object_b: ObjectIndexSpecifier,
 ) -> FriendOrFoe {
     match object_b {
-        ObjectSpecifier::Planet { .. } => {
+        ObjectIndexSpecifier::Planet { .. } => {
             // all players friendly by default, although I've made a property PirateDefencePlayersHomePlanet for distinguishing
             FriendOrFoe::Friend
         }
-        ObjectSpecifier::Ship { .. } => {
+        ObjectIndexSpecifier::Ship { .. } => {
             // if we are here, then it's not a player's ship, therefore hostile
             FriendOrFoe::Foe
         }
@@ -240,10 +238,15 @@ pub fn friend_or_foe_p2o(
     }
 }
 
-pub fn friend_or_foe(state: &GameState, actor_a: FofActor, actor_b: FofActor) -> FriendOrFoe {
+pub fn friend_or_foe(
+    state: &GameState,
+    actor_a: FofActor,
+    actor_b: FofActor,
+    loc_idx: usize,
+) -> FriendOrFoe {
     // turn ships into players
-    let player_a = fof::resolve_player_id(&actor_a, state);
-    let player_b = fof::resolve_player_id(&actor_b, state);
+    let player_a = fof::resolve_player_id(&actor_a, state, loc_idx);
+    let player_b = fof::resolve_player_id(&actor_b, state, loc_idx);
     // all players & their ships are friendly
     if player_a.is_some() && player_b.is_some() {
         return FriendOrFoe::Friend;
@@ -254,10 +257,19 @@ pub fn friend_or_foe(state: &GameState, actor_a: FofActor, actor_b: FofActor) ->
         return FriendOrFoe::Neutral;
     }
     if player_b.is_some() {
-        return friend_or_foe_p2o(state, player_b.unwrap(), actor_a.get_object());
+        match actor_a {
+            FofActor::Player { .. } => {}
+            FofActor::ObjectIdx { spec } => {
+                return friend_or_foe_p2o(state, player_b.unwrap(), spec);
+            }
+        }
     } else if player_a.is_some() {
-        return friend_or_foe_p2o(state, player_a.unwrap(), actor_b.get_object());
-    } else {
-        panic!("pirate_defence::friend_or_foe - Impossible combination of data")
+        match actor_b {
+            FofActor::Player { .. } => {}
+            FofActor::ObjectIdx { spec } => {
+                return friend_or_foe_p2o(state, player_a.unwrap(), spec);
+            }
+        }
     }
+    panic!("pirate_defence::friend_or_foe - Impossible combination of data")
 }

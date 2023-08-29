@@ -8,8 +8,11 @@ use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
-use crate::autofocus::{object_index_into_object_id, object_index_into_object_pos, SpatialIndex};
+use crate::autofocus::{
+    extract_closest_into, object_index_into_object_id, object_index_into_object_pos, SpatialIndex,
+};
 use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
+use crate::fof::FofActor;
 use crate::hp::{object_index_into_health_mut, object_index_into_to_clean_mut};
 use crate::indexing::{
     find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
@@ -27,34 +30,6 @@ use crate::world::{
     UpdateOptions,
 };
 use crate::{indexing, new_id, world};
-
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Copy)]
-#[serde(tag = "tag")]
-pub enum ShootTarget {
-    Unknown,
-    Ship { id: Uuid },
-    Mineral { id: Uuid },
-    Asteroid { id: Uuid },
-    Container { id: Uuid },
-}
-
-impl ShootTarget {
-    pub fn to_specifier(&self) -> Option<ObjectSpecifier> {
-        return match &self {
-            ShootTarget::Unknown => None,
-            ShootTarget::Ship { id } => Some(ObjectSpecifier::Ship { id: *id }),
-            ShootTarget::Mineral { id } => Some(ObjectSpecifier::Mineral { id: *id }),
-            ShootTarget::Asteroid { id } => Some(ObjectSpecifier::Asteroid { id: *id }),
-            ShootTarget::Container { id } => Some(ObjectSpecifier::Container { id: *id }),
-        };
-    }
-}
-
-impl Default for ShootTarget {
-    fn default() -> Self {
-        ShootTarget::Unknown
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Default)]
 pub struct Health {
@@ -91,7 +66,7 @@ impl Health {
 }
 
 pub fn validate_shoot(
-    target: ShootTarget,
+    target: ObjectSpecifier,
     loc: &Location,
     ship: &Ship,
     active_turret_id: i32,
@@ -106,9 +81,9 @@ pub fn validate_shoot(
         return false;
     }
     match target {
-        ShootTarget::Unknown => {}
-        ShootTarget::Ship { .. } => {}
-        ShootTarget::Mineral { id } => {
+        ObjectSpecifier::Unknown => {}
+        ObjectSpecifier::Ship { .. } => {}
+        ObjectSpecifier::Mineral { id } => {
             if let Some(min) = indexing::find_mineral(loc, id) {
                 let min_pos = Vec2f64 { x: min.x, y: min.y };
                 if !check_distance(ship, shoot_ability, min_pos) {
@@ -118,7 +93,7 @@ pub fn validate_shoot(
                 return false;
             }
         }
-        ShootTarget::Container { id } => {
+        ObjectSpecifier::Container { id } => {
             if let Some(cont) = indexing::find_container(loc, id) {
                 if !check_distance(ship, shoot_ability, cont.position) {
                     return false;
@@ -127,7 +102,7 @@ pub fn validate_shoot(
                 return false;
             }
         }
-        ShootTarget::Asteroid { id } => {
+        ObjectSpecifier::Asteroid { id } => {
             if let Some(ast) = indexing::find_asteroid(loc, id) {
                 if !check_distance(ship, shoot_ability, ast.spatial.position) {
                     return false;
@@ -136,12 +111,13 @@ pub fn validate_shoot(
                 return false;
             }
         }
+        _ => return false,
     };
     return true;
 }
 
 pub fn validate_launch(
-    _target: ShootTarget,
+    _target: ObjectSpecifier,
     _loc: &Location,
     ship: &Ship,
     active_turret_id: i32,
@@ -180,7 +156,7 @@ pub const SHIP_SHOOT_STRENGTH: f64 = 20.0;
 pub fn resolve_shoot(
     state: &mut GameState,
     player_shooting: Uuid,
-    target: ShootTarget,
+    target: ObjectSpecifier,
     active_turret_id: i32,
     indexes: &GameStateIndexes,
 ) {
@@ -195,8 +171,8 @@ pub fn resolve_shoot(
         let shoot_ability = shoot_ability.unwrap().clone();
 
         match target {
-            ShootTarget::Unknown => {}
-            ShootTarget::Ship { id: target_ship_id } => {
+            ObjectSpecifier::Unknown => {}
+            ObjectSpecifier::Ship { id: target_ship_id } => {
                 let dmg = SHIP_SHOOT_STRENGTH;
                 let target_ship = state.locations[ship_loc.location_idx]
                     .ships
@@ -225,7 +201,7 @@ pub fn resolve_shoot(
                     )
                 }
             }
-            ShootTarget::Mineral { id } => {
+            ObjectSpecifier::Mineral { id } => {
                 if let Some(min) = indexing::find_mineral(loc, id) {
                     let min_pos = Vec2f64 { x: min.x, y: min.y };
                     if !check_distance(shooting_ship_read, &shoot_ability, min_pos) {
@@ -240,7 +216,7 @@ pub fn resolve_shoot(
                     return;
                 }
             }
-            ShootTarget::Container { id } => {
+            ObjectSpecifier::Container { id } => {
                 if let Some(cont) = indexing::find_container(loc, id) {
                     if !check_distance(shooting_ship_read, &shoot_ability, cont.position) {
                         return;
@@ -254,7 +230,7 @@ pub fn resolve_shoot(
                     return;
                 }
             }
-            ShootTarget::Asteroid { id } => {
+            ObjectSpecifier::Asteroid { id } => {
                 if let Some(ast) = indexing::find_asteroid(loc, id) {
                     if !check_distance(shooting_ship_read, &shoot_ability, ast.spatial.position) {
                         return;
@@ -268,6 +244,7 @@ pub fn resolve_shoot(
                     return;
                 }
             }
+            _ => {}
         }
     }
 }
@@ -275,18 +252,13 @@ pub fn resolve_shoot(
 pub fn resolve_launch(
     state: &mut GameState,
     player_shooting: Uuid,
-    target: ShootTarget,
+    target: ObjectSpecifier,
     active_turret_id: i32,
     _client: bool,
     indexes: &GameStateIndexes,
     prng: &mut Pcg64Mcg,
 ) {
-    let spec = target.to_specifier();
-    if spec.is_none() {
-        warn!("no target spec");
-        return;
-    }
-    let spec = spec.unwrap();
+    let spec = target;
     let target_pos = find_spatial_ref_by_spec(indexes, spec.clone());
     if target_pos.is_none() {
         // warn!(format!("Invalid launch, no target pos: {:?}", spec));
@@ -329,7 +301,7 @@ pub fn resolve_launch(
         loc.short_counter = (loc.short_counter + 1) % i32::MAX;
         instance.set_id(loc.short_counter);
         instance.set_position_from(&shooting_ship.spatial.position);
-        instance.set_target(&target);
+        instance.set_target(&spec);
 
         let mut new_rot = -shooting_ship.spatial.rotation_rad;
         let deviation = generate_normal_random(0.0, 0.15, prng);
@@ -597,9 +569,9 @@ impl Projectile {
         }
     }
 
-    pub fn set_target(&mut self, t: &ShootTarget) {
+    pub fn set_target(&mut self, t: &ObjectSpecifier) {
         match self {
-            Projectile::Rocket(props) => props.target = t.to_specifier(),
+            Projectile::Rocket(props) => props.target = Some(t.clone()),
         }
     }
     pub fn set_position_from(&mut self, from: &Vec2f64) {
@@ -948,4 +920,30 @@ pub fn heal_objects(
             )
         }
     }
+}
+
+pub const REACQUIRE_RADIUS: f64 = 50.0;
+pub fn try_reacquire_target(
+    proj_idx_spec: ObjectIndexSpecifier,
+    proj_pos: &Vec2f64,
+    index: &SpatialIndex,
+    state: &GameState,
+    loc_idx: usize,
+) -> Option<ObjectIndexSpecifier> {
+    let mut around_neutral = vec![];
+    let mut around_hostile = vec![];
+
+    extract_closest_into(
+        &state,
+        index,
+        loc_idx,
+        FofActor::ObjectIdx {
+            spec: proj_idx_spec,
+        },
+        proj_pos,
+        &mut around_neutral,
+        &mut around_hostile,
+        REACQUIRE_RADIUS,
+    );
+    return around_hostile.first().map(|v| (*v).clone());
 }

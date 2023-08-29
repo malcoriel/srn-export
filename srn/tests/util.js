@@ -295,26 +295,39 @@ export const getShipByPlayerId = (world, playerId) => {
   return indexes.shipByPlayerId.get(playerId);
 };
 
+export const getShipIdxByPlayerId = (world, playerId) => {
+  const s = getShipByPlayerId(world, playerId);
+  return getLoc0(world).ships.indexOf(s);
+};
+
 export { findObjectPosition };
 export const objSpecShip = (id) => ({
   tag: 'Ship',
   id,
 });
+export const objIdxSpecShip = (idx) => ({
+  tag: 'Ship',
+  idx,
+});
 export const objSpecPlanet = (id) => ({
   tag: 'Planet',
   id,
+});
+export const objIdxSpecPlanet = (idx) => ({
+  tag: 'Planet',
+  idx,
 });
 export const fofActorPlayer = (id) => ({
   tag: 'Player',
   id,
 });
-export const fofActorShip = (id) => ({
-  tag: 'Object',
-  spec: objSpecShip(id),
+export const fofActorShip = (idx) => ({
+  tag: 'ObjectIdx',
+  spec: objIdxSpecShip(idx),
 });
 export const fofActorPlanet = (id) => ({
-  tag: 'Object',
-  spec: objSpecPlanet(id),
+  tag: 'ObjectIdx',
+  spec: objIdxSpecPlanet(id),
 });
 export const findAPirateShip = (loc) =>
   loc.ships.find((s) => {

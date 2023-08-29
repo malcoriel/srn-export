@@ -7,10 +7,9 @@ use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
 use crate::abilities::{Ability, SHOOT_ABILITY_DURATION, SHOOT_COOLDOWN_TICKS};
-use crate::combat::ShootTarget;
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
-    find_player_by_ship_id, find_player_idx_by_ship_id, GameStateIndexes,
+    find_player_by_ship_id, find_player_idx_by_ship_id, GameStateIndexes, ObjectSpecifier,
 };
 use crate::planet_movement::IBodyV2;
 use crate::vec2::Vec2f64;
@@ -19,7 +18,6 @@ use crate::{abilities, combat, indexing, locations, prng_id, spatial_movement, w
 
 use rand::prelude::*;
 use rand_pcg::Pcg64Mcg;
-use serde_json::Value;
 use std::f64::consts::PI;
 
 #[derive(Serialize, TypescriptDefinition, TypeScriptify, Deserialize, Debug, Clone)]
@@ -31,11 +29,11 @@ pub enum LongActionStart {
     },
     Respawn,
     Shoot {
-        target: ShootTarget,
+        target: ObjectSpecifier,
         turret_id: i32,
     },
     Launch {
-        target: ShootTarget,
+        target: ObjectSpecifier,
         turret_id: i32,
     },
     // the process of docking itself after the ship is close enough via navigation
@@ -79,14 +77,14 @@ pub enum LongAction {
     },
     Shoot {
         id: Uuid,
-        target: ShootTarget,
+        target: ObjectSpecifier,
         micro_left: i32,
         percentage: u32,
         turret_id: i32,
     },
     Launch {
         id: Uuid,
-        target: ShootTarget,
+        target: ObjectSpecifier,
         micro_left: i32,
         percentage: u32,
         turret_id: i32,
@@ -366,7 +364,7 @@ fn try_start_dock(
 
 fn try_start_shoot(
     state: &mut GameState,
-    target: ShootTarget,
+    target: ObjectSpecifier,
     ship_idx: Option<ShipIdx>,
     shooting_turret_id: i32,
     prng: &mut Pcg64Mcg,
@@ -413,7 +411,7 @@ fn try_start_shoot(
 
 fn try_start_launch(
     state: &mut GameState,
-    target: ShootTarget,
+    target: ObjectSpecifier,
     ship_idx: Option<ShipIdx>,
     shooting_turret_id: i32,
     prng: &mut Pcg64Mcg,

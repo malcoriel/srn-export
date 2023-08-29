@@ -12,7 +12,8 @@ use crate::autofocus::{build_spatial_index, object_index_into_object_id, Spatial
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
 use crate::combat::{
-    guide_projectile, update_explosions, Explosion, Health, Projectile, ShipTurret, ShootTarget,
+    guide_projectile, try_reacquire_target, update_explosions, Explosion, Health, Projectile,
+    ShipTurret,
 };
 use crate::dialogue::Dialogue;
 use crate::effects::{cleanup_effects, LocalEffect};
@@ -1004,7 +1005,7 @@ pub fn update_location(
     client: bool,
     update_options: &UpdateOptions,
     mut sampler: Sampler,
-    location_idx: usize,
+    loc_idx: usize,
     spatial_indexes: &mut SpatialIndexes,
     indexes: &mut GameStateIndexes,
     caches: &mut GameStateCaches,
@@ -1015,32 +1016,32 @@ pub fn update_location(
     let spatial_index_id = sampler.start(SamplerMarks::GenSpatialIndexOnDemand as u32);
     let spatial_index = spatial_indexes
         .values
-        .entry(location_idx)
+        .entry(loc_idx)
         // lazily build the spatial indexes if this function wasn't executed with pre-building full ones
         .or_insert_with(|| {
             warn2!("spatial index cache miss");
-            build_spatial_index(&state.locations[location_idx], location_idx)
+            build_spatial_index(&state.locations[loc_idx], loc_idx)
         });
     sampler.end(spatial_index_id);
     let update_radials_id = sampler.start(SamplerMarks::UpdateLocationRadialMovement as u32);
     let (location, sampler_out) = planet_movement::update_radial_moving_entities(
-        &state.locations[location_idx],
+        &state.locations[loc_idx],
         next_ticks,
         sampler,
         update_options.limit_area.clone(),
         indexes,
         caches,
     );
-    state.locations[location_idx] = location;
+    state.locations[loc_idx] = location;
     sampler = sampler_out;
     sampler.end(update_radials_id);
     let update_docked_ships_id = sampler.start(SamplerMarks::UpdateDockedShipsPosition as u32);
     // strictly speaking, indexes are outdated here because we have just updated the planet rotation, but we'll deliberately use 'previous frame location' as good enough
-    spatial_movement::update_docked_ships_position(&mut state.locations[location_idx], indexes);
+    spatial_movement::update_docked_ships_position(&mut state.locations[loc_idx], indexes);
     sampler.end(update_docked_ships_id);
     let update_ships_navigation_id = sampler.start(SamplerMarks::UpdateShipsNavigation as u32);
-    state.locations[location_idx].ships = spatial_movement::update_ships_navigation(
-        &state.locations[location_idx].ships,
+    state.locations[loc_idx].ships = spatial_movement::update_ships_navigation(
+        &state.locations[loc_idx].ships,
         elapsed,
         client,
         update_options,
@@ -1053,16 +1054,16 @@ pub fn update_location(
     if !client {
         let initiate_docking_id =
             sampler.start(SamplerMarks::UpdateInitiateShipsDockingByNavigation as u32);
-        spatial_movement::update_initiate_ship_docking_by_navigation(state, location_idx, prng);
+        spatial_movement::update_initiate_ship_docking_by_navigation(state, loc_idx, prng);
         sampler.end(initiate_docking_id);
     }
     let interpolate_docking_id = sampler.start(SamplerMarks::UpdateInterpolateDockingShips as u32);
-    spatial_movement::interpolate_docking_ships_position(state, location_idx, update_options);
+    spatial_movement::interpolate_docking_ships_position(state, loc_idx, update_options);
     sampler.end(interpolate_docking_id);
     let update_ship_manual_movement_id =
         sampler.start(SamplerMarks::UpdateObjectsSpatialMovement as u32);
     spatial_movement::update_objects_spatial_movement(
-        &mut state.locations[location_idx],
+        &mut state.locations[loc_idx],
         elapsed,
         state.millis,
         client,
@@ -1071,41 +1072,41 @@ pub fn update_location(
 
     let update_ship_tractoring_id = sampler.start(SamplerMarks::UpdateShipsTractoring as u32);
     if !client {
-        state.locations[location_idx].ships = tractoring::update_ships_tractoring(
-            &state.locations[location_idx].ships,
-            &state.locations[location_idx].minerals,
-            &state.locations[location_idx].containers,
+        state.locations[loc_idx].ships = tractoring::update_ships_tractoring(
+            &state.locations[loc_idx].ships,
+            &state.locations[loc_idx].minerals,
+            &state.locations[loc_idx].containers,
         );
     }
     sampler.end(update_ship_tractoring_id);
     let cooldowns_id = sampler.start(SamplerMarks::UpdateAbilityCooldowns as u32);
-    abilities::update_ships_ability_cooldowns(&mut state.locations[location_idx].ships, elapsed);
+    abilities::update_ships_ability_cooldowns(&mut state.locations[loc_idx].ships, elapsed);
     sampler.end(cooldowns_id);
 
     let update_minerals_id = sampler.start(SamplerMarks::UpdateTractoredMinerals as u32);
     let mut container =
-        MovablesContainerBase::new_minerals(state.locations[location_idx].minerals.clone());
+        MovablesContainerBase::new_minerals(state.locations[loc_idx].minerals.clone());
     let consume_updates = tractoring::update_tractored_objects(
-        &state.locations[location_idx].ships,
+        &state.locations[loc_idx].ships,
         &mut container.movables,
         elapsed,
         &state.players,
     );
-    state.locations[location_idx].minerals = container.get_minerals();
+    state.locations[loc_idx].minerals = container.get_minerals();
     if !client {
         apply_tractored_items_consumption(&mut state, consume_updates, client)
     }
     sampler.end(update_minerals_id);
     let update_containers_id = sampler.start(SamplerMarks::UpdateTractoredContainers as u32);
     let mut container =
-        MovablesContainerBase::new_containers(state.locations[location_idx].containers.clone());
+        MovablesContainerBase::new_containers(state.locations[loc_idx].containers.clone());
     let consume_updates = tractoring::update_tractored_objects(
-        &state.locations[location_idx].ships,
+        &state.locations[loc_idx].ships,
         &mut container.movables,
         elapsed,
         &state.players,
     );
-    state.locations[location_idx].containers = container.get_containers();
+    state.locations[loc_idx].containers = container.get_containers();
     if !client {
         apply_tractored_items_consumption(&mut state, consume_updates, client)
     }
@@ -1113,25 +1114,46 @@ pub fn update_location(
 
     let guidance_id = sampler.start(SamplerMarks::UpdateObjectAutocontrol as u32);
 
-    let mut spatials = vec![];
-    for proj in state.locations[location_idx].projectiles.iter() {
+    let mut target_spatials = vec![];
+    for proj in state.locations[loc_idx].projectiles.iter() {
         if let Some(target) = &proj.get_target() {
             if let Some(spatial) = find_spatial_ref_by_spec(indexes, target.clone()) {
-                spatials.push(Some(spatial));
+                target_spatials.push(Some(spatial));
             } else {
-                spatials.push(None);
+                target_spatials.push(None);
             }
         } else {
-            spatials.push(None);
+            target_spatials.push(None);
         }
     }
-    for (idx, proj) in state.locations[location_idx]
-        .projectiles
-        .iter_mut()
-        .enumerate()
-    {
+
+    let mut proj_target_mods = vec![];
+
+    for (idx, proj) in state.locations[loc_idx].projectiles.iter().enumerate() {
+        if target_spatials[idx].is_none() {
+            if let Some(new_target_idx) = try_reacquire_target(
+                ObjectIndexSpecifier::Projectile { idx },
+                &proj.get_spatial().position,
+                spatial_index,
+                state,
+                loc_idx,
+            ) {
+                proj_target_mods.push((
+                    idx,
+                    object_index_into_object_id(&new_target_idx, &state.locations[loc_idx])
+                        .unwrap(),
+                ))
+            }
+        }
+    }
+
+    for (idx, new_target_idx) in proj_target_mods.into_iter() {
+        state.locations[loc_idx].projectiles[idx].set_target(&new_target_idx);
+    }
+
+    for (idx, proj) in state.locations[loc_idx].projectiles.iter_mut().enumerate() {
         let movement_clone = proj.get_movement().clone();
-        if let Some(target_spatial) = &spatials[idx] {
+        if let Some(target_spatial) = &target_spatials[idx] {
             let (gas, turn, brake) = guide_projectile(proj, target_spatial, elapsed);
             update_accelerated_movement(
                 elapsed,
@@ -1158,10 +1180,10 @@ pub fn update_location(
 
     let collisions_id = sampler.start(SamplerMarks::UpdateProjectileCollisions as u32);
     let projectile_hit_damages = combat::update_projectile_collisions(
-        &mut state.locations[location_idx],
+        &mut state.locations[loc_idx],
         update_options,
         spatial_index,
-        location_idx,
+        loc_idx,
         indexes,
         current_tick,
     );
@@ -1169,11 +1191,11 @@ pub fn update_location(
 
     let props_id = sampler.start(SamplerMarks::UpdatePropertiesRules as u32);
     update_properties_rules(
-        &mut state.locations[location_idx],
+        &mut state.locations[loc_idx],
         update_options,
         spatial_index,
         indexes,
-        location_idx,
+        loc_idx,
         elapsed as i32,
     );
     sampler.end(props_id);
@@ -1181,7 +1203,7 @@ pub fn update_location(
     let hp_effects_id = sampler.start(SamplerMarks::UpdateHpEffects as u32);
     hp::update_hp_effects(
         state,
-        location_idx,
+        loc_idx,
         elapsed,
         prng,
         client,
@@ -1192,9 +1214,9 @@ pub fn update_location(
     sampler.end(hp_effects_id);
 
     let update_minerals_respawn_id = sampler.start(SamplerMarks::UpdateMineralsRespawn as u32);
-    state.locations[location_idx].minerals = update_state_minerals(
-        &state.locations[location_idx].minerals,
-        &state.locations[location_idx].asteroid_belts,
+    state.locations[loc_idx].minerals = update_state_minerals(
+        &state.locations[loc_idx].minerals,
+        &state.locations[loc_idx].asteroid_belts,
         prng,
     );
     sampler.end(update_minerals_respawn_id);
@@ -1203,7 +1225,7 @@ pub fn update_location(
     sampler.end(respawn_id);
 
     let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
-    autofocus::update_location_autofocus(&mut state, location_idx, &spatial_index);
+    autofocus::update_location_autofocus(&mut state, loc_idx, &spatial_index);
     sampler.end(autofocus_id);
 
     let long_act_ticks = sampler.start(SamplerMarks::UpdateTickLongActionsShips as u32);
@@ -1211,8 +1233,8 @@ pub fn update_location(
     let players_by_ship_id_read = index_players_by_ship_id(&players_read);
     let mut to_finish = vec![];
 
-    for i in 0..state.locations[location_idx].ships.len() {
-        let ship = &mut state.locations[location_idx].ships[i];
+    for i in 0..state.locations[loc_idx].ships.len() {
+        let ship = &mut state.locations[loc_idx].ships[i];
         ship.long_actions = ship
             .long_actions
             .clone()
@@ -1226,7 +1248,7 @@ pub fn update_location(
                         player.map(|p| p.id),
                         ShipIdx {
                             ship_idx: i,
-                            location_idx,
+                            location_idx: loc_idx,
                         },
                     ));
                 }
@@ -1241,7 +1263,7 @@ pub fn update_location(
 
     let exp_id = sampler.start(SamplerMarks::UpdateExplosions as u32);
     update_explosions(
-        &mut state.locations[location_idx],
+        &mut state.locations[loc_idx],
         elapsed as i32,
         spatial_index,
         indexes,
@@ -1250,8 +1272,8 @@ pub fn update_location(
     sampler.end(exp_id);
 
     let clean = sampler.start(SamplerMarks::UpdateCleanup as u32);
-    cleanup_effects(&mut state, location_idx);
-    cleanup_objects(&mut state, location_idx);
+    cleanup_effects(&mut state, loc_idx);
+    cleanup_objects(&mut state, loc_idx);
     sampler.end(clean);
     sampler
 }
