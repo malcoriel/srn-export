@@ -10,6 +10,7 @@ use rand_pcg::Pcg64Mcg;
 use uuid::Uuid;
 
 use crate::combat::Health;
+use crate::fof::FofOverrides;
 use crate::indexing::{find_my_ship, find_my_ship_mut, ObjectSpecifier};
 use crate::inventory::{add_item, InventoryItem, InventoryItemType};
 use crate::market::get_default_value;
@@ -80,6 +81,12 @@ pub struct SBTeleport {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct SBSetFofOverrides {
+    ship_id: Uuid,
+    overrides: Option<FofOverrides>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
 pub struct SBAddAsteroidBelt {
     id: Option<ReferencableId>,
     width: f64,
@@ -108,6 +115,7 @@ pub enum SandboxCommand {
     AddPlanet(SBAddPlanet),
     AddAsteroid(SBAddAsteroid),
     Teleport(SBTeleport),
+    SetFofOverrides(SBSetFofOverrides),
     SetupState(SBSetupState),
 }
 
@@ -354,6 +362,11 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
                     cmd.radius,
                     &mut prng,
                 );
+            }
+        }
+        SandboxCommand::SetFofOverrides(cmd) => {
+            if let Some(ship) = indexing::find_ship_mut(state, cmd.ship_id) {
+                ship.fof_overrides = cmd.overrides;
             }
         }
     }

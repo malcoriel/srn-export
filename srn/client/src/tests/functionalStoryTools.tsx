@@ -43,6 +43,12 @@ const patchAction = (action: Action, nsRef: NetState) => {
   if ((action as any).ship_id === '$my_ship_id') {
     (action as any).ship_id = nsRef.indexes.myShip.id;
   }
+  if ((action as any).command?.fields?.ship_id === '$my_ship_id') {
+    (action as any).command.fields.ship_id = nsRef.indexes.myShip.id;
+  }
+  if ((action as any).command?.fields?.player_id === '$my_player_id') {
+    (action as any).command.fields.player_id = nsRef.state.my_id;
+  }
   if ((action as any).player_id === '$my_player_id') {
     (action as any).player_id = nsRef.state.my_id;
   }

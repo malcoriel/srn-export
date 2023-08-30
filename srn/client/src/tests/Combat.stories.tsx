@@ -8,11 +8,12 @@ import {
 import {
   ActionBuilder,
   LongActionStartBuilder,
+  ObjectSpecifierBuilder,
   ReferencableIdBuilder,
   SandboxCommandBuilder,
-  ShootTargetBuilder,
 } from '../../../world/pkg/world.extra';
 import { findMyShip } from '../ClientStateIndexing';
+import { Ability } from '../../../world/pkg/world';
 
 const rocketShootingStory = 'Functional/Combat/RocketShooting';
 const getStartGameParamsRocketShooting = () => {
@@ -73,11 +74,33 @@ const getStartGameParamsRocketShooting = () => {
           };
           continue;
         }
-        const launchAbility = myShip.abilities.find((a) => a.tag === 'Launch');
+        const launchAbility = myShip.abilities.find(
+          (a: Ability) => a.tag === 'Launch'
+        );
         if (!launchAbility || launchAbility.tag !== 'Launch') {
           console.warn('no launch ability, cannot continue');
           break;
         }
+        if (!myShip.fof_overrides) {
+          console.log('overriding fof');
+          currentState = yield {
+            wait: 0,
+            action: ActionBuilder.ActionSandboxCommand({
+              player_id: '$my_player_id',
+              command: SandboxCommandBuilder.SandboxCommandSetFofOverrides({
+                fields: {
+                  ship_id: '$my_ship_id',
+                  overrides: {
+                    obj_class: {
+                      Asteroids: 'Foe',
+                    },
+                  },
+                },
+              }),
+            }),
+          };
+        }
+
         const firstAsteroid = currentState.locations[0].asteroids[0];
         if (!firstAsteroid) {
           console.log('No target, attempting to spawn a new one');
@@ -101,7 +124,7 @@ const getStartGameParamsRocketShooting = () => {
             action: ActionBuilder.ActionLongActionStart({
               ship_id: '$my_ship_id',
               long_action_start: LongActionStartBuilder.LongActionStartLaunch({
-                target: ShootTargetBuilder.ShootTargetAsteroid({
+                target: ObjectSpecifierBuilder.ObjectSpecifierAsteroid({
                   id: asteroidId,
                 }),
                 turret_id: launchAbility.turret_id,

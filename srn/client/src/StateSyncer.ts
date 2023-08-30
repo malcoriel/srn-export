@@ -928,6 +928,7 @@ export class StateSyncer extends EventEmitter {
       'locations.*.ships.*.health',
       'locations.*.ships.*.npc',
       'locations.*.ships.*.name',
+      'locations.*.ships.*.fof_overrides',
       'locations.*.ships.*.turrets',
       'locations.*.ships.*.properties',
       'locations.*.ships.*.trading_with',

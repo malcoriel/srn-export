@@ -1,3 +1,4 @@
+use crate::combat::Projectile;
 use crate::indexing::{find_owning_player, ObjectIndexSpecifier, ObjectSpecifier};
 use crate::world::Location;
 use crate::{pirate_defence, GameMode, GameState};
@@ -93,6 +94,11 @@ fn find_fof_overrides<'a, 'b>(
         FofActor::ObjectIdx { spec } => match spec {
             ObjectIndexSpecifier::Ship { idx } => {
                 state.locations[loc_idx].ships[*idx].fof_overrides.as_ref()
+            }
+            ObjectIndexSpecifier::Projectile { idx } => {
+                match &state.locations[loc_idx].projectiles[*idx] {
+                    Projectile::Rocket(rocket) => rocket.fof_overrides.as_ref(),
+                }
             }
             _ => None,
         },

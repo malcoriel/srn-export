@@ -12,7 +12,7 @@ use crate::autofocus::{
     extract_closest_into, object_index_into_object_id, object_index_into_object_pos, SpatialIndex,
 };
 use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
-use crate::fof::FofActor;
+use crate::fof::{FofActor, FofOverrides};
 use crate::hp::{object_index_into_health_mut, object_index_into_to_clean_mut};
 use crate::indexing::{
     find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
@@ -302,6 +302,12 @@ pub fn resolve_launch(
         instance.set_id(loc.short_counter);
         instance.set_position_from(&shooting_ship.spatial.position);
         instance.set_target(&spec);
+
+        match &mut instance {
+            Projectile::Rocket(rocket) => {
+                rocket.fof_overrides = shooting_ship.fof_overrides.clone();
+            }
+        }
 
         let mut new_rot = -shooting_ship.spatial.rotation_rad;
         let deviation = generate_normal_random(0.0, 0.15, prng);
@@ -609,6 +615,7 @@ pub struct RocketProps {
     pub markers: Option<String>,
     pub health: Health,
     pub to_clean: bool,
+    pub fof_overrides: Option<FofOverrides>,
 }
 
 #[skip_serializing_none]
@@ -922,7 +929,7 @@ pub fn heal_objects(
     }
 }
 
-pub const REACQUIRE_RADIUS: f64 = 50.0;
+pub const REACQUIRE_RADIUS: f64 = 150.0;
 pub fn try_reacquire_target(
     proj_idx_spec: ObjectIndexSpecifier,
     proj_pos: &Vec2f64,

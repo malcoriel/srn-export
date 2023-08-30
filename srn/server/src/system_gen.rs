@@ -638,6 +638,7 @@ fn add_default_templates(state: &mut GameState) {
             acc_periodic_heal: 0.0,
         },
         to_clean: false,
+        fof_overrides: None,
     });
     if let Some(templates) = &mut state.projectile_templates {
         templates.push(rocket_template);
