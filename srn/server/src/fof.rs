@@ -51,7 +51,7 @@ pub fn friend_or_foe_idx(
 }
 
 pub fn fof_default(p0: &GameState, p1: FofActor, p2: FofActor) -> FriendOrFoe {
-    todo!()
+    return FriendOrFoe::Neutral;
 }
 
 pub fn resolve_player_id(actor: &FofActor, state: &GameState, loc_idx: usize) -> Option<Uuid> {
