@@ -929,7 +929,7 @@ pub fn heal_objects(
     }
 }
 
-pub const REACQUIRE_RADIUS: f64 = 150.0;
+pub const REACQUIRE_RADIUS: f64 = 50.0;
 pub fn try_reacquire_target(
     proj_idx_spec: ObjectIndexSpecifier,
     proj_pos: &Vec2f64,

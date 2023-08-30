@@ -12,7 +12,7 @@ import { rarityToColor } from './MineralsLayer';
 import {
   LongActionStartBuilder,
   ActionBuilder,
-  ShootTargetBuilder,
+  ObjectSpecifierBuilder,
 } from '../../../world/pkg/world.extra';
 import NetState from '../NetState';
 import { Ability, PlanetV2 } from '../../../world/pkg';
@@ -48,7 +48,7 @@ const shipActionMap = new Map([
       }
       ns.startLongAction(
         LongActionStartBuilder.LongActionStartShoot({
-          target: ShootTargetBuilder.ShootTargetShip({ id }),
+          target: ObjectSpecifierBuilder.ObjectSpecifierShip({ id }),
           turret_id: ability.turret_id,
         })
       );
@@ -79,7 +79,9 @@ export const containerActionsMap = new Map([
       if (ns && ability && ability.tag === 'Shoot') {
         ns.startLongAction(
           LongActionStartBuilder.LongActionStartShoot({
-            target: ShootTargetBuilder.ShootTargetContainer({ id: objectId }),
+            target: ObjectSpecifierBuilder.ObjectSpecifierContainer({
+              id: objectId,
+            }),
             turret_id: ability.turret_id,
           })
         );
@@ -111,7 +113,9 @@ export const mineralActionsMap = new Map([
       if (ns && ability && ability.tag === 'Shoot') {
         ns.startLongAction(
           LongActionStartBuilder.LongActionStartShoot({
-            target: ShootTargetBuilder.ShootTargetMineral({ id: objectId }),
+            target: ObjectSpecifierBuilder.ObjectSpecifierMineral({
+              id: objectId,
+            }),
             turret_id: ability.turret_id,
           })
         );

@@ -1,7 +1,7 @@
 import React from 'react';
 import NetState from '../NetState';
 import { ActionBarAction, ActionsBar } from './ActionsBar';
-import { Player, Ship } from '../world';
+import { ObjectSpecifier, Player, Ship } from '../world';
 // eslint-disable-next-line import/named
 import { Ability } from '../../../world/pkg/world';
 import { FaBullseye } from 'react-icons/fa';
@@ -9,7 +9,7 @@ import { UnreachableCaseError } from 'ts-essentials';
 import { useActiveInteractors } from '../store';
 import {
   LongActionStartBuilder,
-  ShootTargetBuilder,
+  ObjectSpecifierBuilder,
 } from '../../../world/pkg/world.extra';
 import { findMyPlayer, findMyShip } from '../ClientStateIndexing';
 import { useNSForceChange } from '../NetStateHooks';
@@ -32,7 +32,7 @@ const mapShipAbility = (interactorIds: InteractorIds) => (
           }
           ns.startLongAction(
             LongActionStartBuilder.LongActionStartShoot({
-              target: ShootTargetBuilder.ShootTargetShip({
+              target: ObjectSpecifierBuilder.ObjectSpecifierShip({
                 id: hostileId,
               }),
               turret_id: ability.turret_id,

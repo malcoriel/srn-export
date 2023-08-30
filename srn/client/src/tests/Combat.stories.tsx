@@ -101,6 +101,14 @@ const getStartGameParamsRocketShooting = () => {
           };
         }
 
+        if (!currentState) {
+          currentState = yield {
+            wait: 100,
+            action: null,
+          };
+          continue;
+        }
+
         const firstAsteroid = currentState.locations[0].asteroids[0];
         if (!firstAsteroid) {
           console.log('No target, attempting to spawn a new one');

@@ -131,10 +131,15 @@ async function buildForWeb({
     const enums = extractedEnums.join('\n\n');
     // this can, of course, be generated, but I'm lazy =)
     const extraExtraImports = `
+
     import { Vec2f64, ObjectSpecifier, ManualMoveUpdate, LongActionStart,
-    InventoryAction, NotificationActionR, SandboxCommand, TradeAction, NotificationText, ShootTarget,
-    SBAddPlanet, SBTeleport, SBSetupState, SBAddAsteroid, Ship, PlanetV2, MoneyOnKillProps
+    InventoryAction, NotificationActionR, SandboxCommand, TradeAction, NotificationText,
+    SBAddPlanet, SBTeleport, SBSetupState, SBAddAsteroid, Ship, PlanetV2, MoneyOnKillProps, ObjectIndexSpecifier,
+    SBSetFofOverrides, ProcessProps, Movement
     } from "./world"
+
+    type Value = any;
+    
     `;
     console.log('writing the extra file');
     await fs.writeFile(
