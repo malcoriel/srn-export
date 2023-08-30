@@ -17,6 +17,7 @@ use crate::combat::{
 };
 use crate::dialogue::Dialogue;
 use crate::effects::{cleanup_effects, LocalEffect};
+use crate::fof::FofOverrides;
 use crate::hp::SHIP_REGEN_PER_SEC;
 use crate::indexing::{
     build_full_spatial_indexes, find_my_player, find_my_ship, find_my_ship_index, find_planet,
@@ -245,6 +246,7 @@ pub struct Ship {
     pub turrets: Vec<ShipTurret>,
     pub properties: Vec<ObjectProperty>,
     pub trading_with: Option<ObjectSpecifier>,
+    pub fof_overrides: Option<FofOverrides>,
     pub to_clean: bool,
 }
 
@@ -287,6 +289,7 @@ impl Ship {
             name: None,
             properties: Default::default(),
             trading_with: None,
+            fof_overrides: None,
             to_clean: false,
         }
     }

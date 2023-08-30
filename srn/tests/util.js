@@ -227,6 +227,37 @@ export const exposePerfStats = () => {
   wasm.flushSamplerStats();
 };
 
+export const mockNone = () => ({
+  tag: 'None',
+});
+export const mockHealth = (max) => ({
+  current: max,
+  max,
+  acc_periodic_dmg: 0,
+  acc_periodic_heal: 0,
+});
+
+export const mockAsteroid = () => ({
+  id: uuid.v4(),
+  spatial: {
+    position: {
+      x: 0,
+      y: 0,
+    },
+    angular_velocity: 0,
+    velocity: {
+      x: 0,
+      y: 0,
+    },
+    rotation_rad: 0,
+    radius: 1,
+  },
+  movement: mockNone(),
+  health: mockHealth(50),
+  rot_movement: mockNone(),
+  to_clean: false,
+});
+
 export const mockShip = (id) => ({
   id,
   spatial: {
@@ -305,6 +336,10 @@ export const objSpecShip = (id) => ({
   tag: 'Ship',
   id,
 });
+export const objIdxSpecAsteroid = (idx) => ({
+  tag: 'Asteroid',
+  idx,
+});
 export const objIdxSpecShip = (idx) => ({
   tag: 'Ship',
   idx,
@@ -325,6 +360,12 @@ export const fofActorShip = (idx) => ({
   tag: 'ObjectIdx',
   spec: objIdxSpecShip(idx),
 });
+
+export const fofActorAsteroid = (idx) => ({
+  tag: 'ObjectIdx',
+  spec: objIdxSpecAsteroid(idx),
+});
+
 export const fofActorPlanet = (id) => ({
   tag: 'ObjectIdx',
   spec: objIdxSpecPlanet(id),

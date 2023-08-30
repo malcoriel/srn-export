@@ -9,6 +9,8 @@ import {
   updatePirateDefenceUntilPiratesAppear,
   wasm,
   getShipIdxByPlayerId,
+  fofActorAsteroid,
+  mockAsteroid,
 } from '../util';
 
 describe('pirate defence friend-or-foe behavior', () => {
@@ -90,6 +92,26 @@ describe('pirate defence friend-or-foe behavior', () => {
         fofActorShip(pirateIdx),
         0
       )
+    ).toEqual('Foe');
+  });
+
+  it('considers asteroids hostile for a ship if an override is set', async () => {
+    const room = wasm.createRoom({
+      mode: 'PirateDefence',
+      seed: 'fof',
+    });
+    const { state } = room;
+    state.locations[0].asteroids.push(mockAsteroid());
+    const bot1 = room.bots[0].id;
+    const botShip1idx = getShipIdxByPlayerId(state, bot1);
+    const botShip1 = getShipByPlayerId(state, bot1);
+    botShip1.fof_overrides = {
+      obj_class: {
+        Asteroids: 'Foe',
+      },
+    };
+    expect(
+      wasm.friendOrFoe(state, fofActorShip(botShip1idx), fofActorAsteroid(0), 0)
     ).toEqual('Foe');
   });
 });
