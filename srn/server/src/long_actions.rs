@@ -6,7 +6,7 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::abilities::{Ability, SHOOT_ABILITY_DURATION, SHOOT_COOLDOWN_TICKS};
+use crate::abilities::{Ability, IdxOrName, SHOOT_ABILITY_DURATION, SHOOT_COOLDOWN_TICKS};
 use crate::indexing::{
     find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
     find_player_by_ship_id, find_player_idx_by_ship_id, GameStateIndexes, ObjectSpecifier,
@@ -44,8 +44,14 @@ pub enum LongActionStart {
     UndockInternal {
         from_planet: Uuid,
     },
+    // use an ability X in the abilities array
     UseAbility {
         ability_idx: usize,
+        params: serde_json::Value,
+    },
+    // mostly for testing, probably shouldn't be used in real game
+    UseAbilityName {
+        ability_name: String,
         params: serde_json::Value,
     },
 }
@@ -281,7 +287,18 @@ pub fn try_start_long_action_player_owned(
                 return false;
             }
             let ship_idx = ship_idx.unwrap();
-            return abilities::try_invoke(state, ship_idx, ability_idx, params);
+            return abilities::try_invoke(state, ship_idx, IdxOrName::Idx(ability_idx), params);
+        }
+        LongActionStart::UseAbilityName {
+            ability_name,
+            params,
+        } => {
+            let ship_idx = find_my_ship_index(state, player_id);
+            if ship_idx.is_none() {
+                return false;
+            }
+            let ship_idx = ship_idx.unwrap();
+            return abilities::try_invoke(state, ship_idx, IdxOrName::Name(ability_name), params);
         }
     }
     return true;

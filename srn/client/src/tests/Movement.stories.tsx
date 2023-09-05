@@ -4,12 +4,17 @@ import {
   FunctionalStoryTemplate,
   getStartGameParams,
 } from './functionalStoryTools';
-import { ActionBuilder } from '../../../world/pkg/world.extra';
+import {
+  ActionBuilder,
+  LongActionBuilder,
+  LongActionStartBuilder,
+  SandboxCommandBuilder,
+} from '../../../world/pkg/world.extra';
 import Vector from '../utils/Vector';
 import { GameState } from '../../../world/pkg/world';
 import { findMyShip } from '../ClientStateIndexing';
 
-const storyName = 'Functional/Movement/SquareMovement';
+const squareMovementName = 'Functional/Movement/SquareMovement';
 
 const positions1 = [
   { x: 125.0, y: 125.0 },
@@ -20,14 +25,15 @@ const positions1 = [
 
 export const SquareMovement = FunctionalStoryTemplate.bind({});
 SquareMovement.args = {
-  storyName,
+  storyName: squareMovementName,
+  accelerated: true,
 };
 const cyclicalMovementStory = (
   positions: any[],
   storyName: string,
   initialPos: { x: number; y: number },
   wait = 2000
-) => () => {
+) => ({ accelerated = false } = {}) => {
   const star_ref_id = {
     tag: 'Reference' as const,
     reference: 'star',
@@ -54,6 +60,22 @@ const cyclicalMovementStory = (
     initialPos,
     initialZoom: 1.1,
     actions: function* makeSequence() {
+      if (accelerated) {
+        yield {
+          wait: 0,
+          waitAfter: wait,
+          action: ActionBuilder.ActionLongActionStart({
+            player_id: '$my_player_id',
+            long_action_start: LongActionStartBuilder.LongActionStartUseAbilityName(
+              {
+                ability_name: 'ToggleMovement',
+                params: null,
+              }
+            ),
+            ship_id: '$my_ship_id',
+          }),
+        };
+      }
       while (true) {
         yield {
           wait,
@@ -186,10 +208,15 @@ const manualCyclicalMovementStory = (
     },
   };
 };
-getStartGameParams[storyName] = cyclicalMovementStory(positions1, storyName, {
-  x: 100,
-  y: 100,
-});
+getStartGameParams[squareMovementName] = cyclicalMovementStory(
+  positions1,
+  squareMovementName,
+  {
+    x: 100,
+    y: 100,
+  },
+  2000
+);
 
 const spaceTimeName = 'Functional/Movement/SpaceTime';
 export const SpaceTime = FunctionalStoryTemplate.bind({});
@@ -234,5 +261,4 @@ getStartGameParams[manualSpaceTime] = manualCyclicalMovementStory(
 // noinspection JSUnusedGlobalSymbols
 export default {
   title: 'Functional/Movement',
-  argTypes: {},
 } as Meta;

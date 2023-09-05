@@ -159,7 +159,10 @@ export const stopTestGame = async (): Promise<void> => {
     nsRef.disconnectAndDestroy();
   }
 };
-export const getStartGameParams: Record<string, () => BuildStoryParams> = {};
+export const getStartGameParams: Record<
+  string,
+  (args?: any) => BuildStoryParams
+> = {};
 
 export const FunctionalStoryTemplate: Story = (args) => {
   const [_revision, setRevision] = useState(uuid.v4());
@@ -183,7 +186,7 @@ export const FunctionalStoryTemplate: Story = (args) => {
     const newPlaying = !oldPlaying;
     if (newPlaying) {
       await startTestGame(
-        getStartGameParams[args.storyName](),
+        getStartGameParams[args.storyName](args),
         args.debugSpaceTime
       );
     } else {

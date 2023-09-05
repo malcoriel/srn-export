@@ -3,6 +3,8 @@ use crate::world::{GameState, Ship, ShipIdx};
 use core::mem;
 use serde_derive::{Deserialize, Serialize};
 use serde_json::Value;
+use strum::AsStaticRef;
+use strum::AsStaticStr;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
@@ -11,7 +13,16 @@ pub const SHOOT_COOLDOWN_TICKS: i32 = 500 * 1000;
 pub const SHOOT_ABILITY_DURATION: i32 = 25 * 1000;
 pub const SHOOT_DEFAULT_DISTANCE: f64 = 50.0;
 
-#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, PartialEq)]
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    TypescriptDefinition,
+    TypeScriptify,
+    PartialEq,
+    AsStaticStr,
+)]
 #[serde(tag = "tag")]
 pub enum Ability {
     Unknown,
@@ -172,12 +183,29 @@ pub fn update_ships_ability_cooldowns(ships: &mut Vec<Ship>, ticks_passed: i64) 
     }
 }
 
+pub enum IdxOrName {
+    Idx(usize),
+    Name(String),
+}
 pub fn try_invoke(
     state: &mut GameState,
     ship_idx: ShipIdx,
-    ability_idx: usize,
+    ability_idx: IdxOrName,
     ability_params: Value,
 ) -> bool {
+    let ability_idx = match ability_idx {
+        IdxOrName::Idx(idx) => idx,
+        IdxOrName::Name(name) => {
+            let idx = state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx]
+                .abilities
+                .iter()
+                .position(|a| a.as_static() == name);
+            match idx {
+                None => return false,
+                Some(idx) => idx,
+            }
+        }
+    };
     if state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx]
         .abilities
         .get(ability_idx)
