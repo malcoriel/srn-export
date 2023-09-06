@@ -139,12 +139,6 @@ pub fn world_update_handle_action(
                 let mut ship = &mut state.locations[idx.location_idx].ships[idx.ship_idx];
                 ship.dock_target = None;
                 ship.navigate_target = Some(target);
-                ship.trajectory = trajectory::build_trajectory_to_point(
-                    &ship.spatial,
-                    &target,
-                    &ship.movement_definition,
-                    state.update_every_ticks,
-                );
                 ship.movement_markers.gas = None;
                 ship.movement_markers.turn = None;
             }
@@ -182,12 +176,6 @@ pub fn world_update_handle_action(
                         ship.navigate_target = None;
                         ship.dock_target = None;
                         ship.dock_target = Some(target);
-                        ship.trajectory = trajectory::build_trajectory_to_point(
-                            &ship.spatial,
-                            &planet_pos,
-                            &ship.movement_definition,
-                            state.update_every_ticks,
-                        );
                         ship.movement_markers.gas = None;
                         ship.movement_markers.turn = None;
                     }

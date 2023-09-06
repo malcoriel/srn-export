@@ -932,7 +932,9 @@ export class StateSyncer extends EventEmitter {
       'locations.*.ships.*.turrets',
       'locations.*.ships.*.properties',
       'locations.*.ships.*.trading_with',
+      // TODO: it is possible that movement may be smoother if those 2 are merged instead of server-written, but it's not confirmed
       'locations.*.ships.*.trajectory',
+      'locations.*.ships.*.trajectory_v2',
       'locations.*.ships.*.dock_target',
       'locations.*.ships.*.to_clean',
 
