@@ -51,7 +51,7 @@ pub fn build_trajectory_to_point(
             }
             result
         }
-        _ => panic!(format!("unsupported movement type for trajectory building")),
+        _ => panic!("unsupported movement type for trajectory building"),
     }
 }
 
@@ -108,7 +108,7 @@ pub enum TrajectoryRequest {
 }
 
 #[derive(Debug, Clone, TypescriptDefinition, TypeScriptify, Serialize, Deserialize)]
-#[serde(tag = "tag")]
+#[serde(tag = "tag", content = "fields")]
 pub enum TrajectoryResult {
     Success(Trajectory),
     Inaccessible,
@@ -155,8 +155,8 @@ pub fn build_naive_trajectory(from: Vec2f64, to: Vec2f64, intervals: usize) -> V
         let mut result = vec![];
         let step = diff.euclidean_len() / intervals as f64;
         // point count = interval (step) count + 1, e.g.  O -> O -> O = 2 intervals but 3 points
-        for i in 0..(intervals + 1) {
-            result.push(from.add(&dir.scalar_mul((i as f64) * step)))
+        for i in 0..(intervals) {
+            result.push(from.add(&dir.scalar_mul((i as f64 + 1.0) * step)))
         }
         result
     } else {

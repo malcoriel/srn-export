@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, ShaderMaterial } from 'three';
-import Vector, { VectorF } from '../utils/Vector';
+import Vector, { VectorF, VectorFZero } from '../utils/Vector';
 import * as jellyfish from './shaders/jellyfish';
 import { shallowEqual } from '../utils/shallowCompare';
 import {
@@ -15,6 +15,7 @@ import { ShipShape } from './ShipShape';
 import { ThreeShipTurrets, TurretProps } from './ThreeShipTurrets';
 import { LongAction } from '../../../world/pkg';
 import Color from 'color';
+import { MovementMarkers } from './ThreeProjectilesLayer';
 
 export const BEAM_WIDTH = 0.3;
 
@@ -32,6 +33,7 @@ export type ThreeShipProps = {
   interactor?: ThreeInteractorProps;
   longActions?: LongAction[];
   turrets?: TurretProps[];
+  markers?: string;
   findObjectPositionByIdBound?: (id: string | number) => Vector | null;
 };
 
@@ -50,6 +52,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     tractorBeamWidth = BEAM_WIDTH,
     longActions = [],
     turrets = [],
+    markers,
     findObjectPositionByIdBound = () => null,
   }) => {
     const tractorRef = useRef<Mesh>();
@@ -146,6 +149,14 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           turrets={turrets}
           parentPosition={[-position.x, position.y, 0]}
         />
+        {markers && (
+          <MovementMarkers
+            markers={markers}
+            position={VectorFZero}
+            velocity={VectorFZero}
+            radius={radius}
+          />
+        )}
       </ShipShape>
     );
   },

@@ -215,7 +215,7 @@ getStartGameParams[squareMovementName] = cyclicalMovementStory(
     x: 100,
     y: 100,
   },
-  2000
+  5000
 );
 
 const spaceTimeName = 'Functional/Movement/SpaceTime';

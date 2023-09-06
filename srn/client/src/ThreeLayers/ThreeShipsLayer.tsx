@@ -80,6 +80,7 @@ export const ThreeShipsLayer: React.FC<{
             rotation={ship.spatial.rotation_rad}
             color={ship.color}
             opacity={opacity}
+            markers={ship.markers}
             interactor={
               ship.id === myShipId
                 ? InteractorMap.myShip(ship)

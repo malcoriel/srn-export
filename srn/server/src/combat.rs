@@ -425,7 +425,7 @@ pub fn guide_accelerated_object(
     (gas, turn, brake)
 }
 
-fn markers_to_string(gas: f64, turn: f64, brake: f64) -> Option<String> {
+pub fn markers_to_string(gas: f64, turn: f64, brake: f64) -> Option<String> {
     if gas != 0.0 || turn != 0.0 {
         let mut str: String = "".to_string();
         if gas > 0.0 {

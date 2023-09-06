@@ -249,6 +249,7 @@ pub struct Ship {
     pub properties: Vec<ObjectProperty>,
     pub trading_with: Option<ObjectSpecifier>,
     pub fof_overrides: Option<FofOverrides>,
+    pub markers: Option<String>,
     pub to_clean: bool,
 }
 
@@ -293,6 +294,7 @@ impl Ship {
             properties: Default::default(),
             trading_with: None,
             fof_overrides: None,
+            markers: None,
             to_clean: false,
         }
     }

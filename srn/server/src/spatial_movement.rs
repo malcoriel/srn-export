@@ -1,4 +1,4 @@
-use crate::combat::guide_accelerated_object;
+use crate::combat::{guide_accelerated_object, markers_to_string};
 use crate::indexing::{
     find_planet, index_planets_by_id, GameStateCaches, GameStateIndexes, IdKind, ObjectSpecifier,
 };
@@ -10,7 +10,7 @@ use crate::planet_movement::IBodyV2;
 use crate::trajectory::{
     build_trajectory_accelerated, TrajectoryItem, TrajectoryRequest, TrajectoryResult,
 };
-use crate::vec2::{deg_to_rad, Vec2f64};
+use crate::vec2::{deg_to_rad, Precision, Vec2f64};
 use crate::world::{GameState, Location, PlanetV2, Ship, ShipIdx, SpatialProps, UpdateOptions};
 use crate::world_actions::MoveAxisParam;
 use crate::world_events::GameEvent;
@@ -587,6 +587,14 @@ pub fn update_ships_navigation(
                         brake,
                         None,
                     );
+                    ship.markers = markers_to_string(gas, turn, brake);
+                    if let Some(first) = ship.trajectory_v2.get_next(&ship.spatial) {
+                        ship.markers = Some(format!(
+                            "{} {}",
+                            ship.markers.unwrap(),
+                            first.spatial.position.as_key(Precision::P2).as_str()
+                        ));
+                    }
                 }
                 _ => panic!("unsupported kind of movement for ship navigation"),
             }
