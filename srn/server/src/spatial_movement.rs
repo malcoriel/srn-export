@@ -1,3 +1,4 @@
+use crate::combat::guide_accelerated_object;
 use crate::indexing::{
     find_planet, index_planets_by_id, GameStateCaches, GameStateIndexes, IdKind, ObjectSpecifier,
 };
@@ -6,6 +7,9 @@ use crate::long_actions::{
     SHIP_DOCKING_RADIUS_COEFF,
 };
 use crate::planet_movement::IBodyV2;
+use crate::trajectory::{
+    build_trajectory_accelerated, TrajectoryItem, TrajectoryRequest, TrajectoryResult,
+};
 use crate::vec2::{deg_to_rad, Vec2f64};
 use crate::world::{GameState, Location, PlanetV2, Ship, ShipIdx, SpatialProps, UpdateOptions};
 use crate::world_actions::MoveAxisParam;
@@ -417,7 +421,7 @@ pub fn move_ship_towards(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -
 
 pub fn update_ships_navigation(
     ships: &Vec<Ship>,
-    elapsed_micro: i64,
+    elapsed: i64,
     _client: bool,
     update_options: &UpdateOptions,
     indexes: &GameStateIndexes,
@@ -461,68 +465,144 @@ pub fn update_ships_navigation(
             continue;
         }
         if !ship.docked_at.is_some() {
-            let max_shift = ship.movement_definition.get_max_speed() * elapsed_micro as f64;
+            match &ship.movement_definition {
+                Movement::None => panic!("ship has no movement, cannot update"),
+                Movement::ShipMonotonous { .. } => {
+                    let max_shift = ship.movement_definition.get_max_speed() * elapsed as f64;
 
-            if let Some(target) = ship.navigate_target {
-                let ship_pos = ship.spatial.position.clone();
-                let dist = target.euclidean_distance(&ship_pos);
-                let dir = target.subtract(&ship_pos);
-                ship.spatial.rotation_rad = dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
-                if dist > 0.0 {
-                    ship.trajectory = trajectory::build_trajectory_to_point(
-                        ship_pos,
-                        &target,
-                        &ship.movement_definition,
-                        update_every_ticks,
-                    );
-                    if dist > max_shift {
-                        let new_pos = move_ship_towards(&target, &ship_pos, max_shift);
-                        ship.set_from(&new_pos);
-                    } else {
-                        ship.set_from(&target);
-                        ship.navigate_target = None;
-                    }
-                } else {
-                    ship.navigate_target = None;
-                }
-            } else if let Some(target) = ship.dock_target {
-                if let Some(planet) = indexes
-                    .bodies_by_id
-                    .get(&ObjectSpecifier::Planet { id: target })
-                {
-                    let ship_pos = ship.spatial.position.clone();
-                    let planet_anchor = indexes
-                        .bodies_by_id
-                        .get(&planet.get_movement().get_anchor_spec())
-                        .unwrap();
-                    ship.trajectory = trajectory::build_trajectory_to_planet(
-                        ship_pos,
-                        planet,
-                        planet_anchor,
-                        &ship.movement_definition,
-                        update_every_ticks,
-                        current_ticks,
-                        indexes,
-                        caches,
-                    );
-                    if let Some(first) = ship.trajectory.clone().get(0) {
-                        let dir = first.subtract(&ship_pos);
+                    if let Some(target) = ship.navigate_target {
+                        let ship_pos = ship.spatial.position.clone();
+                        let dist = target.euclidean_distance(&ship_pos);
+                        let dir = target.subtract(&ship_pos);
                         ship.spatial.rotation_rad =
                             dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
-                        let new_pos = move_ship_towards(first, &ship_pos, max_shift);
-                        ship.set_from(&new_pos);
+                        if dist > 0.0 {
+                            ship.trajectory = trajectory::build_trajectory_to_point(
+                                &ship.spatial,
+                                &target,
+                                &ship.movement_definition,
+                                update_every_ticks,
+                            );
+                            if dist > max_shift {
+                                let new_pos = move_ship_towards(&target, &ship_pos, max_shift);
+                                ship.set_from(&new_pos);
+                            } else {
+                                ship.set_from(&target);
+                                ship.navigate_target = None;
+                            }
+                        } else {
+                            ship.navigate_target = None;
+                        }
+                    } else if let Some(target) = ship.dock_target {
+                        if let Some(planet) = indexes
+                            .bodies_by_id
+                            .get(&ObjectSpecifier::Planet { id: target })
+                        {
+                            let ship_pos = ship.spatial.position.clone();
+                            let planet_anchor = indexes
+                                .bodies_by_id
+                                .get(&planet.get_movement().get_anchor_spec())
+                                .unwrap();
+                            ship.trajectory = trajectory::build_trajectory_to_planet(
+                                ship_pos,
+                                planet,
+                                planet_anchor,
+                                &ship.movement_definition,
+                                update_every_ticks,
+                                current_ticks,
+                                indexes,
+                                caches,
+                            );
+                            if let Some(first) = ship.trajectory.clone().get(0) {
+                                let dir = first.subtract(&ship_pos);
+                                ship.spatial.rotation_rad =
+                                    dir.angle_rad_signed(&Vec2f64 { x: 1.0, y: 0.0 });
+                                let new_pos = move_ship_towards(first, &ship_pos, max_shift);
+                                ship.set_from(&new_pos);
+                            }
+                        } else {
+                            eprintln!("Attempt to navigate to non-existent planet {}", target);
+                            ship.dock_target = None;
+                        }
+                    } else {
+                        ship.navigate_target = None;
                     }
-                } else {
-                    eprintln!("Attempt to navigate to non-existent planet {}", target);
-                    ship.dock_target = None;
                 }
-            } else {
-                ship.navigate_target = None;
+                Movement::ShipAccelerated { .. } => {
+                    let target_point = if let Some(target) = ship.navigate_target {
+                        Some(target)
+                    } else if let Some(target) = ship.dock_target {
+                        if let Some(planet) = indexes
+                            .bodies_by_id
+                            .get(&ObjectSpecifier::Planet { id: target })
+                        {
+                            Some(planet.get_spatial().position)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    };
+
+                    let (mut gas, mut turn, mut brake) = (0.0, 0.0, 0.0);
+
+                    if let Some(target_point) = target_point {
+                        let tr_res = build_trajectory_accelerated(
+                            TrajectoryRequest::StartAndStopPoint { to: target_point },
+                            &ship.movement_definition,
+                            &ship.spatial,
+                        );
+
+                        match &tr_res {
+                            TrajectoryResult::Success(trajectory) => {
+                                ship.trajectory_v2 = TrajectoryResult::Success(trajectory.clone());
+                            }
+                            _ => {
+                                ship.trajectory_v2 = tr_res;
+                                ship.navigate_target = None;
+                                ship.dock_target = None;
+                                continue;
+                            }
+                        };
+
+                        if let Some(first) = ship.trajectory_v2.get_next(&ship.spatial) {
+                            // steer towards next point, normal flow
+                            (gas, turn, brake) = guide_accelerated_ship_to_point(
+                                &first.spatial,
+                                &ship.spatial,
+                                &ship.movement_definition,
+                                elapsed,
+                            );
+                        }
+                    }
+
+                    // no matter what, ship movement must continue physically
+                    let movement_clone = ship.movement_definition.clone();
+                    update_accelerated_movement(
+                        elapsed,
+                        &mut ship.spatial,
+                        &movement_clone,
+                        gas,
+                        turn,
+                        brake,
+                        None,
+                    );
+                }
+                _ => panic!("unsupported kind of movement for ship navigation"),
             }
         }
         res.push(ship);
     }
     res
+}
+
+pub fn guide_accelerated_ship_to_point(
+    target: &SpatialProps,
+    current: &SpatialProps,
+    mov: &Movement,
+    elapsed: i64,
+) -> (f64, f64, f64) {
+    guide_accelerated_object(target, elapsed, 1e-6, current, mov)
 }
 
 pub const MIN_OBJECT_SPEED_PER_TICK: f64 = 1e-13;

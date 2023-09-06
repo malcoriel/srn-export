@@ -137,11 +137,10 @@ pub fn world_update_handle_action(
                     prng,
                 );
                 let mut ship = &mut state.locations[idx.location_idx].ships[idx.ship_idx];
-                let ship_pos = ship.as_vec();
                 ship.dock_target = None;
                 ship.navigate_target = Some(target);
                 ship.trajectory = trajectory::build_trajectory_to_point(
-                    ship_pos,
+                    &ship.spatial,
                     &target,
                     &ship.movement_definition,
                     state.update_every_ticks,
@@ -175,7 +174,6 @@ pub fn world_update_handle_action(
                         let ship =
                             &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
 
-                        let ship_pos = ship.as_vec();
                         let planet_pos = Vec2f64 {
                             x: planet.spatial.position.x,
                             y: planet.spatial.position.y,
@@ -185,7 +183,7 @@ pub fn world_update_handle_action(
                         ship.dock_target = None;
                         ship.dock_target = Some(target);
                         ship.trajectory = trajectory::build_trajectory_to_point(
-                            ship_pos,
+                            &ship.spatial,
                             &planet_pos,
                             &ship.movement_definition,
                             state.update_every_ticks,

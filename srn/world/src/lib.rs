@@ -945,7 +945,7 @@ pub fn self_inspect() {
 
 #[wasm_bindgen]
 pub fn build_trajectory(req: JsValue, mov: JsValue, spat: JsValue) -> Result<JsValue, JsValue> {
-    let res = trajectory::build_trajectory(
+    let res = trajectory::build_trajectory_accelerated(
         custom_deserialize::<TrajectoryRequest>(req)?,
         &custom_deserialize::<Movement>(mov)?,
         &custom_deserialize::<SpatialProps>(spat)?,

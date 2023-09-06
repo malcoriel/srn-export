@@ -329,84 +329,100 @@ pub fn resolve_launch(
     }
 }
 
-// (signum_gas, signum_turn)
 pub fn guide_projectile(
     proj: &mut Projectile,
     target_spatial: &SpatialProps,
     elapsed_micro: i64,
 ) -> (f64, f64, f64) {
     let eps = 1e-6;
-    return match proj {
+    let (mut gas, mut turn, mut brake) = match proj {
         Projectile::Rocket(props) => {
-            let mut gas = 0.0;
-            let mut turn = 0.0;
-            let mut brake = 0.0;
-            let dir_to_target = target_spatial.position.subtract(&props.spatial.position);
+            let current_spatial = &props.spatial;
+            let current_movement = &props.movement;
 
-            // 'ideal' angle that our velocity should align to, 0..2PI
-            let rot_of_dir_to_target =
-                dir_to_target.angle_rad_circular_rotation(&Vec2f64 { x: 1.0, y: 0.0 });
-            // 'mistake' value of velocity, -PI..PI
-            let vel_angle_dir = props.spatial.velocity.angle_rad_signed(&dir_to_target);
-            // 'mistake' value of current rotation, 0..2PI
-            let mut rot_angle_with_target =
-                rot_of_dir_to_target - props.spatial.rotation_rad % (PI * 2.0);
-            if rot_angle_with_target > PI {
-                // transform rotation angle into absolute diff angle for 180+ deg
-                rot_angle_with_target = -2.0 * PI + rot_angle_with_target
-            }
-            // at this point, rot_of_dir_to_target is -PI..PI
-            // now, assume that if the direction of rotation is kindof correct, we are free to accelerate,
-            // or, if it's very incorrect, brake
-            if rot_angle_with_target.abs() <= PI / 8.0 + eps {
-                // if props.spatial.velocity.euclidean_len() < props.movement.get_max_speed() - eps {
-                gas = 1.0;
-                // }
-            } else if rot_angle_with_target.abs() >= PI / 2.0 - 1e6
-                // only try to stop if misaligned
-                && vel_angle_dir.abs() >= PI / 4.0 - 1e6
-                // don't stop, ever
-                && props.spatial.velocity.euclidean_len() >= props.movement.get_max_speed() * 0.5
-            {
-                brake = 1.0;
-            }
-
-            // now, correct the angle considering both angle of the velocity and current rotation
-            if rot_angle_with_target.abs() + vel_angle_dir.abs() >= eps {
-                let shift_till_next_approx =
-                    props.movement.get_angular_speed() * elapsed_micro as f64;
-                // dumb cases, full turn
-                if rot_angle_with_target > 0.0 && rot_angle_with_target > shift_till_next_approx {
-                    turn = 1.0;
-                } else if rot_angle_with_target < 0.0
-                    && rot_angle_with_target < shift_till_next_approx
-                {
-                    turn = -1.0;
-                } else {
-                    // complicated case where we need -1 < x < 1, but not 1, because otherwise we overshoot
-                    turn = ((rot_angle_with_target - shift_till_next_approx)
-                        / (elapsed_micro * elapsed_micro) as f64)
-                        .min(1.0)
-                        .max(-1.0);
-                }
-            }
-            // log2!(
-            //     " a:{:.2}, at:{:.2}",
-            //     rot_dir_to_target,
-            //     rot_angle_with_target
-            // );
-            *proj.get_markers_mut() = markers_to_string(gas, turn, brake);
-            // *proj.get_markers_mut() = proj.get_markers_mut().as_mut().map(|v| {
-            //     v.clone()
-            //         + format!(
-            //             " a:{:.2}, at:{:.2}",
-            //             rot_dir_to_target, rot_angle_with_target
-            //         )
-            //         .as_str()
-            // });
-            (gas, turn, brake)
+            guide_accelerated_object(
+                target_spatial,
+                elapsed_micro,
+                eps,
+                &current_spatial,
+                current_movement,
+            )
         }
     };
+    *proj.get_markers_mut() = markers_to_string(gas, turn, brake);
+    return (gas, turn, brake);
+}
+
+pub fn guide_accelerated_object(
+    target_spatial: &SpatialProps,
+    elapsed_micro: i64,
+    eps: f64,
+    current_spatial: &SpatialProps,
+    current_movement: &Movement,
+) -> (f64, f64, f64) {
+    let mut gas = 0.0;
+    let mut turn = 0.0;
+    let mut brake = 0.0;
+    let dir_to_target = target_spatial.position.subtract(&current_spatial.position);
+
+    // 'ideal' angle that our velocity should align to, 0..2PI
+    let rot_of_dir_to_target =
+        dir_to_target.angle_rad_circular_rotation(&Vec2f64 { x: 1.0, y: 0.0 });
+    // 'mistake' value of velocity, -PI..PI
+    let vel_angle_dir = current_spatial.velocity.angle_rad_signed(&dir_to_target);
+    // 'mistake' value of current rotation, 0..2PI
+    let mut rot_angle_with_target =
+        rot_of_dir_to_target - current_spatial.rotation_rad % (PI * 2.0);
+    if rot_angle_with_target > PI {
+        // transform rotation angle into absolute diff angle for 180+ deg
+        rot_angle_with_target = -2.0 * PI + rot_angle_with_target
+    }
+    // at this point, rot_of_dir_to_target is -PI..PI
+    // now, assume that if the direction of rotation is kindof correct, we are free to accelerate,
+    // or, if it's very incorrect, brake
+    if rot_angle_with_target.abs() <= PI / 8.0 + eps {
+        // if props.spatial.velocity.euclidean_len() < props.movement.get_max_speed() - eps {
+        gas = 1.0;
+        // }
+    } else if rot_angle_with_target.abs() >= PI / 2.0 - eps
+        // only try to stop if misaligned
+        && vel_angle_dir.abs() >= PI / 4.0 - eps
+        // don't stop, ever
+        && current_spatial.velocity.euclidean_len() >= current_movement.get_max_speed() * 0.5
+    {
+        brake = 1.0;
+    }
+
+    // now, correct the angle considering both angle of the velocity and current rotation
+    if rot_angle_with_target.abs() + vel_angle_dir.abs() >= eps {
+        let shift_till_next_approx = current_movement.get_angular_speed() * elapsed_micro as f64;
+        // dumb cases, full turn
+        if rot_angle_with_target > 0.0 && rot_angle_with_target > shift_till_next_approx {
+            turn = 1.0;
+        } else if rot_angle_with_target < 0.0 && rot_angle_with_target < shift_till_next_approx {
+            turn = -1.0;
+        } else {
+            // complicated case where we need -1 < x < 1, but not 1, because otherwise we overshoot
+            turn = ((rot_angle_with_target - shift_till_next_approx)
+                / (elapsed_micro * elapsed_micro) as f64)
+                .min(1.0)
+                .max(-1.0);
+        }
+    }
+    // log2!(
+    //     " a:{:.2}, at:{:.2}",
+    //     rot_dir_to_target,
+    //     rot_angle_with_target
+    // );
+    // *proj.get_markers_mut() = proj.get_markers_mut().as_mut().map(|v| {
+    //     v.clone()
+    //         + format!(
+    //             " a:{:.2}, at:{:.2}",
+    //             rot_dir_to_target, rot_angle_with_target
+    //         )
+    //         .as_str()
+    // });
+    (gas, turn, brake)
 }
 
 fn markers_to_string(gas: f64, turn: f64, brake: f64) -> Option<String> {
