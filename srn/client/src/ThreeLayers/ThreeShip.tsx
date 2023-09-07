@@ -16,6 +16,7 @@ import { ThreeShipTurrets, TurretProps } from './ThreeShipTurrets';
 import { LongAction } from '../../../world/pkg';
 import Color from 'color';
 import { MovementMarkers } from './ThreeProjectilesLayer';
+import { useStore } from '../store';
 
 export const BEAM_WIDTH = 0.3;
 
@@ -82,6 +83,10 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         }
       }
     });
+
+    const showGrid = useStore(
+      (srnState) => srnState.hotkeysPressed['show grid']
+    );
 
     const tractorBeam = (
       <>
@@ -151,7 +156,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
           turrets={turrets}
           parentPosition={[-position.x, position.y, 0]}
         />
-        {markers && (
+        {markers && showGrid && (
           <MovementMarkers
             markers={markers}
             position={VectorF(-6, 3)}
