@@ -26,7 +26,9 @@ use crate::world_events::{fire_saved_event, GameEvent};
 use crate::{fire_event, fof, indexing, prng_id, world, DialogueTable};
 
 pub fn on_pirate_spawn(state: &mut GameState, at: &Vec2f64, prng: &mut Pcg64Mcg) {
-    world::spawn_ship(state, None, ShipTemplate::pirate(Some(at.clone())), prng);
+    if !state.paused {
+        world::spawn_ship(state, None, ShipTemplate::pirate(Some(at.clone())), prng);
+    }
 }
 
 const SHIP_PLANET_HIT_NORMALIZED: f64 = 0.1;
