@@ -600,13 +600,12 @@ pub fn cleanup_orphaned_ships(
     existing_player_ships: &Vec<Uuid>,
     location_idx: usize,
 ) {
-    let new_ships = state.locations[location_idx]
-        .ships
-        .clone()
-        .into_iter()
-        .filter(|s| existing_player_ships.contains(&s.id) || s.npc.is_some())
-        .collect::<Vec<_>>();
-    state.locations[location_idx].ships = new_ships;
+    for ship in state.locations[location_idx].ships.iter_mut() {
+        if existing_player_ships.contains(&ship.id) || ship.npc.is_some() {
+            continue;
+        }
+        ship.to_clean = true;
+    }
 }
 
 pub fn cleanup_orphaned_players(state: &mut GameState, bot_ids: &HashSet<Uuid>) {

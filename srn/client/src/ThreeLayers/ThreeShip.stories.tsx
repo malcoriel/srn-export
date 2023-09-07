@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Meta, Story } from '@storybook/react';
 import * as uuid from 'uuid';
 import { ThreeShip } from './ThreeShip';
-import Vector, { VectorF } from '../utils/Vector';
+import Vector, { VectorF, VectorFzero } from '../utils/Vector';
 import { InteractorMap } from './InteractorMap';
 import { ThreeShipWreck } from './ThreeShipWreck';
 import {
@@ -84,6 +84,8 @@ const MainTemplate: Story = (args) => {
           longActions={args.shooting ? longActions : []}
           turrets={genTurrets(args.turretCount)}
           findObjectPositionByIdBound={() => target}
+          markers={null}
+          velocity={VectorFzero}
         />
       ) : (
         <ThreeShipWreck

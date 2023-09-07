@@ -1,5 +1,5 @@
 use crate::autofocus::{object_index_into_object_id, SpatialIndex};
-use crate::combat::{create_explosion, damage_objects, heal_objects, Health};
+use crate::combat::{create_explosion, damage_objects, heal_objects, ExplosionProps, Health};
 use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
 use crate::indexing::{
     index_players_by_ship_id, GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
@@ -131,20 +131,14 @@ pub fn update_hp_effects(
         }
     }
 
-    let mut ships_to_die = vec![];
-    state.locations[loc_idx].ships = state.locations[loc_idx]
-        .ships
-        .iter()
-        .filter_map(|ship| {
-            if ship.health.current > 0.0 {
-                Some(ship.clone())
-            } else {
-                ships_to_die.push((ship.clone(), players_by_ship_id.get(&ship.id).map(|p| p.id)));
-                None
-            }
-        })
-        .collect::<Vec<_>>();
-    for (ship_clone, pid) in ships_to_die.into_iter() {
+    let mut ship_death_effects = vec![];
+    for ship in state.locations[loc_idx].ships.iter_mut() {
+        if ship.health.current <= 0.0 {
+            ship.to_clean = true;
+            ship_death_effects.push((ship.clone(), players_by_ship_id.get(&ship.id).map(|p| p.id)));
+        }
+    }
+    for (ship_clone, pid) in ship_death_effects.into_iter() {
         state.locations[loc_idx].wrecks.push(Wreck {
             spatial: SpatialProps {
                 position: ship_clone.as_vec(),
@@ -160,6 +154,19 @@ pub fn update_hp_effects(
             ))],
             to_clean: false,
         });
+        create_explosion(
+            &ExplosionProps {
+                damage: 10.0,
+                radius: 10.0,
+                applied_force: 10.0,
+                spread_speed: 10.0,
+            },
+            &ship_clone.spatial.position,
+            &mut state.locations[loc_idx],
+            None,
+            indexes,
+            loc_idx,
+        );
         let event =
             if let Some(player) = pid.and_then(|pid| indexing::find_my_player_mut(state, pid)) {
                 player.ship_id = None;

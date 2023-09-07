@@ -114,19 +114,13 @@ pub fn find_and_extract_ship(state: &mut GameState, player_id: Uuid) -> Option<S
     if let Some(ship_id) = player.unwrap().ship_id {
         let mut should_break = false;
         for loc in state.locations.iter_mut() {
-            loc.ships = loc
-                .ships
-                .iter()
-                .filter_map(|s| {
-                    if s.id != ship_id {
-                        Some(s.clone())
-                    } else {
-                        found_ship = Some(s.clone());
-                        should_break = true;
-                        None
-                    }
-                })
-                .collect::<Vec<_>>();
+            for s in loc.ships.iter_mut() {
+                if s.id == ship_id {
+                    found_ship = Some(s.clone());
+                    should_break = true;
+                    s.to_clean = true;
+                }
+            }
             if should_break {
                 break;
             }
@@ -139,19 +133,13 @@ pub fn find_and_extract_ship_by_id(state: &mut GameState, ship_id: Uuid) -> Opti
     let mut found_ship = None;
     let mut should_break = false;
     for loc in state.locations.iter_mut() {
-        loc.ships = loc
-            .ships
-            .iter()
-            .filter_map(|s| {
-                if s.id != ship_id {
-                    Some(s.clone())
-                } else {
-                    found_ship = Some(s.clone());
-                    should_break = true;
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+        for s in loc.ships.iter_mut() {
+            if s.id == ship_id {
+                found_ship = Some(s.clone());
+                should_break = true;
+                s.to_clean = true;
+            }
+        }
         if should_break {
             break;
         }

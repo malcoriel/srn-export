@@ -36,6 +36,7 @@ pub fn cleanup_objects(state: &mut GameState, loc_idx: usize) {
     loc.wrecks.retain(|w| !w.to_clean);
     loc.asteroids.retain(|w| !w.to_clean);
     loc.explosions.retain(|w| !w.to_clean);
+    loc.ships.retain(|s| !s.to_clean);
 }
 
 pub fn update_decay(
