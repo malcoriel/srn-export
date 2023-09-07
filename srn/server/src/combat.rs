@@ -737,7 +737,7 @@ pub fn create_explosion(
             velocity: Default::default(),
             angular_velocity: 0.0,
             rotation_rad: 0.0,
-            radius: 0.0,
+            radius: props.radius,
         },
         base: props.clone(),
         parent_projectile_id: from_projectile_id,

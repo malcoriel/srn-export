@@ -157,9 +157,9 @@ pub fn update_hp_effects(
         create_explosion(
             &ExplosionProps {
                 damage: 10.0,
-                radius: 10.0,
-                applied_force: 10.0,
-                spread_speed: 10.0,
+                radius: 5.0,
+                applied_force: 6e-12,
+                spread_speed: 1e-5,
             },
             &ship_clone.spatial.position,
             &mut state.locations[loc_idx],
