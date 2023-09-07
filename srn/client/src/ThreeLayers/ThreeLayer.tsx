@@ -53,11 +53,13 @@ const initialCameraPosition = new Vector3(0, 0, CAMERA_HEIGHT);
 const RenderGridHelper = () => (
   <group>
     <gridHelper
+      position={[0, 0, 1]}
       args={[max_x - min_x, (max_x - min_x) / 10]}
       rotation={[Math.PI / 2, 0, 0]}
     />
     <gridHelper
-      args={[max_x - min_x, (max_x - min_x) / 50, 'red', 'blue']}
+      position={[0, 0, 2]}
+      args={[max_x - min_x, (max_x - min_x) / 50, 'red', 'rgb(127,80,236)']}
       rotation={[Math.PI / 2, 0, 0]}
     />
     <group position={[10, 10, 10]}>
