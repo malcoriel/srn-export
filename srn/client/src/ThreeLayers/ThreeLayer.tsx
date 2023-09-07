@@ -65,6 +65,7 @@ const RenderGridHelper = () => (
         position={[0, 2, 0]}
         visible
         color="white"
+        font="resources/fonts/DejaVuSans.ttf"
         fontSize={1.3}
         maxWidth={20}
         lineHeight={1}
@@ -86,6 +87,7 @@ const RenderGridHelper = () => (
         visible
         color="white"
         fontSize={1.3}
+        font="resources/fonts/DejaVuSans.ttf"
         maxWidth={20}
         lineHeight={1}
         letterSpacing={0.02}
@@ -106,6 +108,7 @@ const RenderGridHelper = () => (
         visible
         color="white"
         fontSize={1.3}
+        font="resources/fonts/DejaVuSans.ttf"
         maxWidth={20}
         lineHeight={1}
         letterSpacing={0.02}

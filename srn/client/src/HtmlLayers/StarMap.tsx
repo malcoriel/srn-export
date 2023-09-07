@@ -85,6 +85,7 @@ export const StarMap: React.FC<StarMapProps> = ({
               onClick={onClick}
               visible
               position={vecToThreePos(position.add(VectorF(0, -(radius + 10))))}
+              font="resources/fonts/DejaVuSans.ttf"
               color={yellow}
               fontSize={18}
               maxWidth={20}

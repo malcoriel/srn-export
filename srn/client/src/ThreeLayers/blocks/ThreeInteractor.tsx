@@ -223,6 +223,7 @@ const ThreeInteractorImpl = ({
               visible
               position={vecToThreePos(VectorF(0, -(radius + 6)))}
               color={teal}
+              font="resources/fonts/DejaVuSans.ttf"
               fontSize={1.5}
               maxWidth={20}
               lineHeight={1}
