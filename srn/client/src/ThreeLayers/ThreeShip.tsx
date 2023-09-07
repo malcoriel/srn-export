@@ -1,7 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, ShaderMaterial } from 'three';
-import Vector, { VectorF, VectorFZero } from '../utils/Vector';
+import Vector, { IVector, VectorF, VectorFZero } from '../utils/Vector';
 import * as jellyfish from './shaders/jellyfish';
 import { shallowEqual } from '../utils/shallowCompare';
 import {
@@ -33,7 +33,8 @@ export type ThreeShipProps = {
   interactor?: ThreeInteractorProps;
   longActions?: LongAction[];
   turrets?: TurretProps[];
-  markers?: string;
+  markers: string | null;
+  velocity: IVector;
   findObjectPositionByIdBound?: (id: string | number) => Vector | null;
 };
 
@@ -53,6 +54,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     longActions = [],
     turrets = [],
     markers,
+    velocity,
     findObjectPositionByIdBound = () => null,
   }) => {
     const tractorRef = useRef<Mesh>();
@@ -152,8 +154,8 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         {markers && (
           <MovementMarkers
             markers={markers}
-            position={VectorFZero}
-            velocity={VectorFZero}
+            position={VectorF(-6, 3)}
+            velocity={velocity}
             radius={radius}
           />
         )}

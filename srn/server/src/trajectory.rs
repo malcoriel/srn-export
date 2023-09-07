@@ -10,7 +10,8 @@ use optimization_engine::{constraints, Optimizer, Problem, SolverError};
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use std::borrow::BorrowMut;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
+use std::f64::consts::PI;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -116,15 +117,89 @@ pub enum TrajectoryResult {
     AlreadyClose,
 }
 
+pub fn spatial_distance(a: &SpatialProps, b: &SpatialProps) -> f64 {
+    // The main 'smart' part of the trajectory is this heuristic metric,
+    // which defines the full closeness - not only position, but also velocity and rotation.
+    // The main goal of any guidance is to minimize this function
+    let space_diff = a.position.euclidean_distance(&b.position);
+    // normalize rotation angles to have correct distance
+    let ar = if a.rotation_rad > PI {
+        a.rotation_rad - 2.0 * PI
+    } else {
+        a.rotation_rad
+    };
+    let br = if b.rotation_rad > PI {
+        b.rotation_rad - 2.0 * PI
+    } else {
+        b.rotation_rad
+    };
+    let rotation_diff = (ar - br).abs();
+    let velocity_diff = a.velocity.subtract(&b.velocity).euclidean_len();
+    return 5.0 * rotation_diff + 20.0 * velocity_diff + space_diff;
+}
+
+pub const TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE: f64 = 5.0;
 impl TrajectoryResult {
+    // result: (next_item, is_complete)
     pub fn get_next(&mut self, current_spatial: &SpatialProps) -> Option<&TrajectoryItem> {
-        // TODO prune the trajectory and if state is close enough to the current, get to the next one
-        match self {
-            TrajectoryResult::Success(tr) => tr.points.get(0),
+        // 0 - none, 1 - first, 2 - second, 3 - first and kill first
+        let target_result = match self {
+            TrajectoryResult::Success(tr) => {
+                let first = tr.points.get(0);
+                let second = tr.points.get(1);
+                if first.is_none() {
+                    // finish of the trajectory, no points left
+                    0
+                } else if second.is_none() {
+                    let first_dist = first.map_or(99999.0, |first| {
+                        spatial_distance(&first.spatial, current_spatial)
+                    });
+
+                    if first_dist < TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE {
+                        // only one remaining, and reached - trajectory is complete
+                        3
+                    } else {
+                        // only one remaining, can't prune anyway
+                        1
+                    }
+                } else {
+                    let first = first.unwrap();
+                    let second = second.unwrap();
+                    let first_dist = spatial_distance(&first.spatial, current_spatial);
+                    if first_dist < TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE {
+                        2
+                    } else {
+                        let second_dist = spatial_distance(&second.spatial, current_spatial);
+                        if second_dist < first_dist {
+                            2
+                        } else {
+                            1
+                        }
+                    }
+                }
+            }
+            TrajectoryResult::Inaccessible => 0,
+            TrajectoryResult::Unsupported => 0,
+            TrajectoryResult::AlreadyClose => 0,
+        };
+        return match self {
+            TrajectoryResult::Success(tr) => {
+                if target_result == 1 {
+                    tr.points.get(0)
+                } else if target_result == 2 {
+                    tr.points.pop_front();
+                    tr.points.get(0)
+                } else if target_result == 3 {
+                    tr.points.pop_front();
+                    None
+                } else {
+                    None
+                }
+            }
             TrajectoryResult::Inaccessible => None,
             TrajectoryResult::Unsupported => None,
             TrajectoryResult::AlreadyClose => None,
-        }
+        };
     }
 }
 
@@ -137,7 +212,7 @@ pub struct TrajectoryItem {
 
 #[derive(Debug, Clone, TypescriptDefinition, TypeScriptify, Serialize, Deserialize)]
 pub struct Trajectory {
-    pub points: Vec<TrajectoryItem>,
+    pub points: VecDeque<TrajectoryItem>,
     pub total_ticks: i32,
 }
 
@@ -172,23 +247,46 @@ pub fn build_trajectory_accelerated(
     match mov {
         Movement::ShipAccelerated { .. } => match tr {
             TrajectoryRequest::StartAndStopPoint { to } => {
+                if to.euclidean_distance(&spatial.position)
+                    < TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE
+                {
+                    return TrajectoryResult::AlreadyClose;
+                }
                 let naive =
                     build_naive_trajectory(spatial.position, to, TRAJECTORY_MAX_ITER as usize);
+                let mut points = naive
+                    .into_iter()
+                    .enumerate()
+                    .map(|(_i, p)| TrajectoryItem {
+                        ticks: 0,
+                        spatial: SpatialProps {
+                            position: p,
+                            velocity: spatial.velocity,
+                            angular_velocity: spatial.angular_velocity,
+                            rotation_rad: spatial.rotation_rad,
+                            radius: spatial.radius,
+                        },
+                    })
+                    .collect::<VecDeque<_>>();
+
+                // synchronize the speeds to make them continuous
+                for i in 0..(points.len() - 1) {
+                    let curr = &points[i];
+                    let next = &points[i + 1];
+                    let vel = next.spatial.position.subtract(&curr.spatial.position);
+                    if let Some(norm) = vel.normalize() {
+                        points[i].spatial.velocity = norm.scalar_mul(mov.get_max_speed());
+                    }
+                }
+
+                points
+                    .get_mut(points.len() - 2)
+                    .map(|p| p.spatial.velocity = p.spatial.velocity.scalar_mul(0.5));
+                points
+                    .get_mut(points.len() - 1)
+                    .map(|p| p.spatial.velocity = Vec2f64::zero());
                 return TrajectoryResult::Success(Trajectory {
-                    points: naive
-                        .into_iter()
-                        .enumerate()
-                        .map(|(i, p)| TrajectoryItem {
-                            ticks: 0,
-                            spatial: SpatialProps {
-                                position: p,
-                                velocity: spatial.velocity,
-                                angular_velocity: spatial.angular_velocity,
-                                rotation_rad: spatial.rotation_rad,
-                                radius: spatial.radius,
-                            },
-                        })
-                        .collect(),
+                    points,
                     total_ticks: 0,
                 });
             }

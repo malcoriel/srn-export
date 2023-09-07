@@ -330,18 +330,32 @@ pub fn resolve_launch(
 }
 
 pub fn guide_projectile(
-    proj: &mut Projectile,
+    proj: &Projectile,
     target_spatial: &SpatialProps,
     elapsed_micro: i64,
 ) -> (f64, f64, f64) {
     let eps = 1e-6;
-    let (mut gas, mut turn, mut brake) = match proj {
+    let (gas, turn, brake) = match proj {
         Projectile::Rocket(props) => {
             let current_spatial = &props.spatial;
             let current_movement = &props.movement;
 
             guide_accelerated_object(
-                target_spatial,
+                &SpatialProps {
+                    position: target_spatial.position,
+                    // maximize velocity for impact in attempt to minimize time
+                    velocity: proj
+                        .get_spatial()
+                        .velocity
+                        .normalize()
+                        .map_or(Vec2f64::zero(), |v| {
+                            v.scalar_mul(proj.get_movement().get_max_speed())
+                        }),
+                    angular_velocity: 0.0,
+                    // attempt to not change the current rotation
+                    rotation_rad: proj.get_spatial().rotation_rad,
+                    radius: target_spatial.radius,
+                },
                 elapsed_micro,
                 eps,
                 &current_spatial,
@@ -349,7 +363,6 @@ pub fn guide_projectile(
             )
         }
     };
-    *proj.get_markers_mut() = markers_to_string(gas, turn, brake);
     return (gas, turn, brake);
 }
 
@@ -381,9 +394,27 @@ pub fn guide_accelerated_object(
     // now, assume that if the direction of rotation is kindof correct, we are free to accelerate,
     // or, if it's very incorrect, brake
     if rot_angle_with_target.abs() <= PI / 8.0 + eps {
-        // if props.spatial.velocity.euclidean_len() < props.movement.get_max_speed() - eps {
+        // normally, accelerate fully till the end (impact approach)
         gas = 1.0;
-        // }
+        // somewhat special case when we want to stop, e.g. for ship movement instead of projectiles
+        let current_speed_len = current_spatial.velocity.euclidean_len();
+        let target_speed_len = target_spatial.velocity.euclidean_len();
+        let speed_diff = current_speed_len - target_speed_len;
+        if speed_diff > eps {
+            // this is an approximation ignoring current velocity direction, but it's a good one to decide if
+            // we should brake or not
+            let time_to_compensate =
+                speed_diff / current_movement.get_current_linear_acceleration();
+            let t = time_to_compensate;
+            let a = current_movement.get_current_linear_acceleration();
+            let brake_distance = t * t * a + target_speed_len * t;
+            if dir_to_target.euclidean_len() < brake_distance {
+                // time to slow down
+                brake = 1.0;
+            } else {
+                gas = 1.0;
+            }
+        }
     } else if rot_angle_with_target.abs() >= PI / 2.0 - eps
         // only try to stop if misaligned
         && vel_angle_dir.abs() >= PI / 4.0 - eps
@@ -433,11 +464,13 @@ pub fn markers_to_string(gas: f64, turn: f64, brake: f64) -> Option<String> {
         } else if gas < 0.0 {
             str += "↓"
         }
-        // visual rotation is inverted
+        // visual rotation is inverted compared to math rotation which is used
         if turn > 0.0 {
-            str += format!("↶{:.2}", turn).as_str();
+            str += "↶";
+            // str += format!("↶{:.2}", turn).as_str();
         } else if turn < 0.0 {
-            str += format!("↷{:.2}", turn).as_str();
+            str += "↷";
+            // str += format!("↷{:.2}", turn).as_str();
         }
         if brake > 0.0 {
             str += "⨯"

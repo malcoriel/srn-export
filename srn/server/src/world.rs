@@ -12,8 +12,8 @@ use crate::autofocus::{build_spatial_index, object_index_into_object_id, Spatial
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
 use crate::combat::{
-    guide_projectile, try_reacquire_target, update_explosions, Explosion, Health, Projectile,
-    ShipTurret,
+    guide_projectile, markers_to_string, try_reacquire_target, update_explosions, Explosion,
+    Health, Projectile, ShipTurret,
 };
 use crate::dialogue::Dialogue;
 use crate::effects::{cleanup_effects, LocalEffect};
@@ -1163,6 +1163,7 @@ pub fn update_location(
         let movement_clone = proj.get_movement().clone();
         if let Some(target_spatial) = &target_spatials[idx] {
             let (gas, turn, brake) = guide_projectile(proj, target_spatial, elapsed);
+            *proj.get_markers_mut() = markers_to_string(gas, turn, brake);
             update_accelerated_movement(
                 elapsed,
                 proj.get_spatial_mut(),

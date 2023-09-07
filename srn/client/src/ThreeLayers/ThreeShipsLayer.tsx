@@ -81,6 +81,7 @@ export const ThreeShipsLayer: React.FC<{
             color={ship.color}
             opacity={opacity}
             markers={ship.markers}
+            velocity={ship.spatial.velocity}
             interactor={
               ship.id === myShipId
                 ? InteractorMap.myShip(ship)

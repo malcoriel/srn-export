@@ -13,6 +13,7 @@ use crate::notifications::NotificationActionR;
 use crate::properties::{find_property, has_property, ObjectProperty, ObjectPropertyKey};
 use crate::sandbox::SandboxCommand;
 use crate::spatial_movement::{undock_ship, ManualMoveUpdate};
+use crate::trajectory::TrajectoryResult;
 use crate::world::{GameState, PlayerId, Ship, ShipWithTime};
 use crate::world_events::{fire_saved_event, GameEvent};
 use crate::{
@@ -141,6 +142,8 @@ pub fn world_update_handle_action(
                 ship.navigate_target = Some(target);
                 ship.movement_markers.gas = None;
                 ship.movement_markers.turn = None;
+                ship.trajectory = vec![];
+                ship.trajectory_v2 = TrajectoryResult::Inaccessible;
             }
         }
         Action::DockNavigate { ship_id, target } => {
@@ -168,16 +171,13 @@ pub fn world_update_handle_action(
                         let ship =
                             &mut state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx];
 
-                        let planet_pos = Vec2f64 {
-                            x: planet.spatial.position.x,
-                            y: planet.spatial.position.y,
-                        };
-
                         ship.navigate_target = None;
                         ship.dock_target = None;
                         ship.dock_target = Some(target);
                         ship.movement_markers.gas = None;
                         ship.movement_markers.turn = None;
+                        ship.trajectory = vec![];
+                        ship.trajectory_v2 = TrajectoryResult::Inaccessible;
                     }
                 }
             }

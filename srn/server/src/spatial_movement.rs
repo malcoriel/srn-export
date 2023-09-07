@@ -547,24 +547,6 @@ pub fn update_ships_navigation(
                     let (mut gas, mut turn, mut brake) = (0.0, 0.0, 0.0);
 
                     if let Some(target_point) = target_point {
-                        let tr_res = build_trajectory_accelerated(
-                            TrajectoryRequest::StartAndStopPoint { to: target_point },
-                            &ship.movement_definition,
-                            &ship.spatial,
-                        );
-
-                        match &tr_res {
-                            TrajectoryResult::Success(trajectory) => {
-                                ship.trajectory_v2 = TrajectoryResult::Success(trajectory.clone());
-                            }
-                            _ => {
-                                ship.trajectory_v2 = tr_res;
-                                ship.navigate_target = None;
-                                ship.dock_target = None;
-                                continue;
-                            }
-                        };
-
                         if let Some(first) = ship.trajectory_v2.get_next(&ship.spatial) {
                             // steer towards next point, normal flow
                             (gas, turn, brake) = guide_accelerated_ship_to_point(
@@ -573,6 +555,26 @@ pub fn update_ships_navigation(
                                 &ship.movement_definition,
                                 elapsed,
                             );
+                        } else {
+                            let tr_res = build_trajectory_accelerated(
+                                TrajectoryRequest::StartAndStopPoint { to: target_point },
+                                &ship.movement_definition,
+                                &ship.spatial,
+                            );
+
+                            match &tr_res {
+                                TrajectoryResult::Success(trajectory) => {
+                                    ship.trajectory_v2 =
+                                        TrajectoryResult::Success(trajectory.clone());
+                                }
+                                _ => {
+                                    ship.trajectory_v2 = tr_res;
+                                    ship.navigate_target = None;
+                                    ship.dock_target = None;
+                                    res.push(ship);
+                                    continue;
+                                }
+                            };
                         }
                     }
 
@@ -588,13 +590,6 @@ pub fn update_ships_navigation(
                         None,
                     );
                     ship.markers = markers_to_string(gas, turn, brake);
-                    if let Some(first) = ship.trajectory_v2.get_next(&ship.spatial) {
-                        ship.markers = Some(format!(
-                            "{} {}",
-                            ship.markers.unwrap(),
-                            first.spatial.position.as_key(Precision::P2).as_str()
-                        ));
-                    }
                 }
                 _ => panic!("unsupported kind of movement for ship navigation"),
             }

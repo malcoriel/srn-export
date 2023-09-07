@@ -171,8 +171,8 @@ impl Vec2f64 {
         self.x * b.x + self.y * b.y
     }
 
-    pub fn len(a: Vec2f64) -> f64 {
-        (a.x * a.x + a.y * a.y).sqrt()
+    pub fn len(&self) -> f64 {
+        return self.euclidean_len();
     }
 
     // Does not distinguish angle 'direction' - will always give from 0 to PI
