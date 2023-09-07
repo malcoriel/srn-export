@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 0.9.18 (2023-09-07)
+
+### New
+
+* Fancy rocket guidance system, not yet available to use anywhere.
+* Implemented very dumb trajectory-guided movement for new realistic movement mode.
+
+### Fixes
+
+* Fixed several server-crash issues.
+* Fixed font loading issues, especially in Firefox. Adjusted fonts for 3d objects to be the same.
+* Adjusted a bit buggy auto-targeting to never include the source of the target selection.
+* Numerous internal refactorings.
+
 ## Version 0.9.17 (2023-05-28)
 
 ### New
