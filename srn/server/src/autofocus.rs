@@ -248,6 +248,13 @@ pub fn extract_closest_into(
 ) {
     let around_unfiltered = index.rad_search(&actor_pos, radius);
     for sp in around_unfiltered.iter() {
+        if match &fof_actor {
+            FofActor::Player { .. } => false,
+            FofActor::ObjectIdx { spec } => *spec == *sp,
+        } {
+            // skip itself
+            continue;
+        }
         if fof::friend_or_foe_idx(state, fof_actor.clone(), sp, loc_idx) == FriendOrFoe::Foe {
             around_hostile.push(sp.clone());
         } else {

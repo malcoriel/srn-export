@@ -80,6 +80,7 @@ export const ThreeNames: React.FC<ThreeShipNamesParams> = ({
             )}
             key={nameWithPos.id}
             color={teal}
+            font="resources/fonts/DejaVuSans.ttf"
             fontSize={1.3}
             maxWidth={20}
             lineHeight={1}
