@@ -1,13 +1,13 @@
 {
-  "id": "65790125-9900-4cae-8b1e-57aabac018f2",
-  "name": "stress-test",
+  "id": "00000001-c0fa-4603-85b2-d895efe3bf16",
+  "name": "example cargo rush",
   "initial_state": {
     "id": "a1afa312-90fe-4fdf-86af-5fa3c8671071",
     "version": 4,
     "mode": "CargoRush",
     "seed": "1e4023aa04992b2d",
     "my_id": "00000000-0000-0000-0000-000000000000",
-    "start_time_ticks": 1694184814128,
+    "start_time_ticks": 1694186211678,
     "players": [
       {
         "id": "3a23a82d-4ba8-480d-bcaa-7c406b9a36b6",

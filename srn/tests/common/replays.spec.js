@@ -11,15 +11,22 @@ import _ from 'lodash';
 
 jest.setTimeout(100000);
 
-function simulate(overrideCount) {
+function simulate(overrideCount, mode = 'CargoRush') {
   const COUNT = overrideCount || 20;
   const STEP_MS = 1000;
 
   const states = [];
+  const extraPdOpts =
+    mode === 'PirateDefence'
+      ? {
+          max_planets_in_system: 1,
+          max_satellites_for_planet: 0,
+        }
+      : {};
   const room = wasm.createRoom({
-    mode: 'CargoRush',
+    mode,
     seed: 'simulate replay',
-    gen_state_opts: genStateOpts({ system_count: 1 }),
+    gen_state_opts: genStateOpts({ system_count: 1, ...extraPdOpts }),
   });
   let current = _.cloneDeep(room);
   states.push(_.cloneDeep(current.state));
@@ -59,6 +66,25 @@ describe('replay system', () => {
     await writeReplay(replayDiff);
     await writeTmpJson('replay-diff', replayDiff);
     await writeTmpJson('replay-norm', replayNorm);
+  });
+
+  it('can pack example replays', async () => {
+    const cargoRushStates = simulate(100);
+    const cargoRushExample = await wasm.packReplay(
+      cargoRushStates,
+      'example cargo rush',
+      true
+    );
+    cargoRushExample.id = '00000001-c0fa-4603-85b2-d895efe3bf16';
+    const pirateDefenceStates = simulate(100, 'PirateDefence');
+    const pirateDefenceExample = await wasm.packReplay(
+      pirateDefenceStates,
+      'example pirate defence',
+      true
+    );
+    pirateDefenceExample.id = '00000002-c0fa-4603-85b2-d895efe3bf16';
+    await writeReplay(cargoRushExample);
+    await writeReplay(pirateDefenceExample);
   });
 
   describe('can validate diff replay against raw replay', () => {
