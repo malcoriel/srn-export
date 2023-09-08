@@ -7,6 +7,7 @@ use std::time::Duration;
 
 use crate::world_events::GameEvent;
 use chrono::Local;
+use objekt_clonable::objekt::Clone;
 use rocket::http::Status;
 use rocket::response::Responder;
 use rocket::Request;
@@ -24,13 +25,16 @@ use crate::{cargo_rush, get_prng, new_id, system_gen, world};
 
 #[get("/")]
 pub fn get_rooms() -> Json<Vec<RoomHeader>> {
-    let rooms = crate::ROOMS_READ
-        .iter()
-        .map(|r| RoomHeader {
-            id: r.val().id,
-            name: r.val().name.clone(),
-        })
-        .collect();
+    let rooms = {
+        crate::ROOMS_READ
+            .iter()
+            .map(|r| RoomHeader {
+                id: r.val().id,
+                mode: r.val().mode.clone(),
+                name: r.val().name.clone(),
+            })
+            .collect()
+    };
     Json(rooms)
 }
 
@@ -43,14 +47,17 @@ pub fn get_rooms_for_mode(game_mode: String) -> Json<Vec<RoomHeader>> {
     }
 
     let mode = mode.unwrap();
-    let rooms: Vec<Room> = crate::ROOMS_READ.iter().map(|r| r.val().clone()).collect();
+    let rooms: Vec<RoomHeader> = crate::ROOMS_READ
+        .iter()
+        .map(|r| RoomHeader {
+            id: r.val().id,
+            mode: r.val().mode.clone(),
+            name: r.val().name.clone(),
+        })
+        .collect();
     let rooms = rooms
         .into_iter()
-        .filter(|r| r.state.mode == mode)
-        .map(|r| RoomHeader {
-            id: r.id,
-            name: r.name,
-        })
+        .filter(|r| r.mode == mode)
         .collect::<Vec<RoomHeader>>();
 
     Json(rooms)
@@ -192,7 +199,14 @@ pub fn reindex_rooms(state: &mut RoomsState) {
     }
     for i in 0..state.values.len() {
         let room = state.values.get(i).unwrap();
-        ROOMS_READ.insert(room.id, room.clone());
+        ROOMS_READ.insert(
+            room.id,
+            RoomHeader {
+                id: room.id,
+                mode: room.state.mode.clone(),
+                name: room.name.clone(),
+            },
+        );
         for player in room.state.players.iter() {
             state.state_id_by_player_id.insert(player.id, room.state.id);
             state.idx_by_player_id.insert(player.id, i);
