@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.9.18 (2023-09-08)
+
+### Fixes
+
+* Adjusted showing movement information in realistic movement mode only when helper grid is shown.
+* Adjusted position and colors of the helper grid.
+* Optimized room connection performance and fixed excessive server load coming from it.
+
 ## Version 0.9.18 (2023-09-07)
 
 ### New

@@ -1,6 +1,6 @@
 {
   "name": "client",
-  "version": "0.9.18",
+  "version": "0.9.19",
   "private": true,
   "dependencies": {
     "@alex_neo/jest-expect-message": "1.0.5",
