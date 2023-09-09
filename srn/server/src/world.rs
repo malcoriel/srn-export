@@ -1171,7 +1171,7 @@ pub fn update_location(
                 gas,
                 turn,
                 brake,
-                Some(EXTRA_PROJECTILE_TURN_DRAG),
+                EXTRA_PROJECTILE_TURN_DRAG,
             );
         } else {
             update_accelerated_movement(
@@ -1181,7 +1181,7 @@ pub fn update_location(
                 1.0,
                 0.0,
                 0.0,
-                Some(EXTRA_PROJECTILE_TURN_DRAG),
+                EXTRA_PROJECTILE_TURN_DRAG,
             );
         }
     }
@@ -1478,7 +1478,7 @@ impl ShipTemplate {
 
     pub fn player(at: Option<Vec2f64>) -> ShipTemplate {
         let max_linear_speed = 20.0 / 1000.0 / 1000.0;
-        let max_angular_speed = PI / 2.0 / 1000.0 / 1000.0;
+        let max_angular_speed = PI / 1000.0 / 1000.0;
         let default_movement = Movement::ShipMonotonous {
             move_speed: max_linear_speed,
             turn_speed: max_angular_speed,
@@ -1496,7 +1496,7 @@ impl ShipTemplate {
                         acc_linear: max_linear_speed * 0.25 / 1e6,   // 25% per second
                         brake_acc: max_linear_speed * 0.5 / 1e6,     // 50% per second
                         max_turn_speed: max_angular_speed,
-                        acc_angular: max_angular_speed * 0.0125,
+                        acc_angular: max_angular_speed / 6.0 / 1e5,
                     },
                 ],
                 current_idx: 0,

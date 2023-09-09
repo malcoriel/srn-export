@@ -483,7 +483,7 @@ pub fn markers_to_string(gas: f64, turn: f64, brake: f64) -> Option<String> {
 
 pub const DEFAULT_PROJECTILE_SPEED: f64 = 25.0 / 1e6;
 pub const DEFAULT_PROJECTILE_ACC: f64 = 75.0 / 1e6 / 1e6;
-pub const DEFAULT_PROJECTILE_ROT_SPEED: f64 = PI / 1.0 / 1e6;
+pub const DEFAULT_PROJECTILE_ROT_SPEED: f64 = PI * 2.0 / 1.0 / 1e6;
 pub const DEFAULT_PROJECTILE_ROT_ACC: f64 = PI / 1e6 / 1e6;
 pub const DEFAULT_PROJECTILE_EXPIRATION_TICKS: i32 = 15 * 1000 * 1000;
 

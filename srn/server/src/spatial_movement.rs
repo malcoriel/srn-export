@@ -97,7 +97,7 @@ pub fn update_ship_manual_movement(
                 gas_sign,
                 turn_sign,
                 brake_sign,
-                None,
+                1.0,
             );
         }
         Movement::RadialMonotonous { .. } => {}
@@ -196,37 +196,62 @@ fn project_ship_movement_by_speed(elapsed_micro: i64, ship: &Ship, sign: f64) ->
 
 // somewhat an artificial drag to prevent infinite movement. It is a = m/s^2
 pub const SPACE_DRAG_PER_TICK_PER_TICK: f64 = 1.0 / 1e6 / 1e6;
-pub const TURN_DRAG_RAD_PER_TICK: f64 = PI / 1e6 / 1e6; // really high drag to prevent too much drifting
-pub const GAS_TURN_STABILIZATION: f64 = 2.0 * PI / 1e6 / 1e6;
+
+// really low infinite rotation prevention drag. it's more or less fine to keep objects rotating
+pub const TURN_DRAG_RAD_PER_TICK: f64 = PI / 100.0 / 1e6 / 1e6;
+pub const GAS_TURN_STABILIZATION_ANGULAR_DRAG_FACTOR: f64 = 2000.0;
+
+// to counteract the low rotation drag above for anything that is controlled,
+// specifically ships and rockets - let's imagine that
+// every engine has a special stabilizer that increases drag (while still negating it when turning)
+pub const SHIP_TURN_STABILIZATION_ANGULAR_DRAG_FACTOR: f64 = 30.0;
 
 fn update_spatial_by_velocities(
     elapsed_micro: i64,
     spatial: &mut SpatialProps,
     _debug: bool,
-    rotation_drag_multiplier: Option<f64>,
+    rotation_drag_multiplier: f64,
+    negate_angular_drag: bool,
+    negate_linear_drag: bool,
 ) {
-    let linear_drag = &spatial
-        .velocity
-        .normalize()
-        .unwrap_or(Vec2f64::zero())
-        .scalar_mul(SPACE_DRAG_PER_TICK_PER_TICK * elapsed_micro as f64);
-    spatial.velocity = spatial.velocity.subtract(&linear_drag);
-    let shift = &spatial.velocity.scalar_mul(elapsed_micro as f64);
-    spatial.position = spatial.position.add(&shift);
+    let linear_drag = if negate_linear_drag {
+        Vec2f64::zero()
+    } else {
+        spatial
+            .velocity
+            .normalize()
+            .unwrap_or(Vec2f64::zero())
+            .scalar_mul(SPACE_DRAG_PER_TICK_PER_TICK * elapsed_micro as f64)
+    };
+    if spatial.velocity.euclidean_len() > linear_drag.euclidean_len() {
+        spatial.velocity = spatial.velocity.subtract(&linear_drag);
+    } else {
+        spatial.velocity = Vec2f64::zero();
+    }
     if spatial.velocity.euclidean_len() <= MIN_OBJECT_SPEED_PER_TICK {
         spatial.velocity = Vec2f64::zero();
     }
+    let shift = &spatial.velocity.scalar_mul(elapsed_micro as f64);
+    spatial.position = spatial.position.add(&shift);
 
-    let angular_drag = spatial.angular_velocity.signum()
-        * TURN_DRAG_RAD_PER_TICK
-        * rotation_drag_multiplier.unwrap_or(1.0)
-        * elapsed_micro as f64;
-    spatial.angular_velocity -= angular_drag;
-    spatial.rotation_rad += spatial.angular_velocity * elapsed_micro as f64;
-    spatial.rotation_rad = spatial.rotation_rad % (2.0 * PI);
+    let angular_drag = if negate_angular_drag {
+        0.0
+    } else {
+        spatial.angular_velocity.signum()
+            * TURN_DRAG_RAD_PER_TICK
+            * rotation_drag_multiplier
+            * elapsed_micro as f64
+    };
+    if spatial.angular_velocity.abs() > angular_drag.abs() {
+        spatial.angular_velocity -= angular_drag;
+    } else {
+        spatial.angular_velocity = 0.0;
+    }
     if spatial.angular_velocity.abs() <= MIN_OBJECT_TURN_SPEED_RAD_PER_TICK {
         spatial.angular_velocity = 0.0;
     }
+    spatial.rotation_rad += spatial.angular_velocity * elapsed_micro as f64;
+    spatial.rotation_rad = spatial.rotation_rad % (2.0 * PI);
 }
 
 pub const MIN_TURN_VALUE: f64 = 1e-6;
@@ -237,18 +262,8 @@ pub fn update_accelerated_movement(
     gas_sign: f64,
     turn_val: f64, // for the sake of projectile movement, it turned out to be necessary to allow fractional value
     brake_sign: f64,
-    rotation_drag_multiplier: Option<f64>,
+    rotation_drag_multiplier: f64,
 ) {
-    if gas_sign != 0.0 {
-        let linear_drag = spatial
-            .velocity
-            .normalize()
-            .unwrap_or(Vec2f64::zero())
-            .scalar_mul(SPACE_DRAG_PER_TICK_PER_TICK * elapsed_micro as f64);
-        // negate drag by adding it again, if ship is actively moving to prevent wrong expectations
-        spatial.velocity = spatial.velocity.add(&linear_drag);
-    }
-
     if brake_sign != 0.0 {
         let linear_brake = spatial
             .velocity
@@ -257,32 +272,6 @@ pub fn update_accelerated_movement(
             .scalar_mul(movement_definition.get_brake_acc() * elapsed_micro as f64);
         spatial.velocity = spatial.velocity.subtract(&linear_brake);
     }
-
-    if turn_val.abs() > MIN_TURN_VALUE {
-        let angular_drag = spatial.angular_velocity.signum()
-            * TURN_DRAG_RAD_PER_TICK
-            * rotation_drag_multiplier.unwrap_or(1.0)
-            * elapsed_micro as f64;
-        // negate drag if ship is actively turning to prevent wrong expectations
-        spatial.angular_velocity += angular_drag;
-
-        if spatial.angular_velocity.abs() <= MIN_OBJECT_TURN_SPEED_RAD_PER_TICK {
-            spatial.angular_velocity = 0.0;
-        }
-    }
-
-    // else if gas_sign != 0.0 {
-    //     // add extra stabilization in case of gas sign, to suppress 'residual' movement
-    //     // makes projectile guidance better
-    //     let stabilization_drag = -spatial.angular_velocity.signum()
-    //         * GAS_TURN_STABILIZATION
-    //         * rotation_drag_multiplier.unwrap_or(1.0)
-    //         * elapsed_micro as f64;
-    //     spatial.angular_velocity += stabilization_drag;
-    //     if spatial.angular_velocity.abs() <= MIN_OBJECT_TURN_SPEED_RAD_PER_TICK {
-    //         spatial.angular_velocity = 0.0;
-    //     }
-    // }
 
     let thrust_dir = Vec2f64 { x: 1.0, y: 0.0 }.rotate(-spatial.rotation_rad);
     let space_acceleration = thrust_dir.scalar_mul(
@@ -310,7 +299,21 @@ pub fn update_accelerated_movement(
         spatial.angular_velocity = spatial.angular_velocity.signum() * max_rotation_speed;
     }
 
-    update_spatial_by_velocities(elapsed_micro, spatial, false, rotation_drag_multiplier);
+    let negate_angular_drag = turn_val.abs() > MIN_TURN_VALUE;
+    let gassing = gas_sign != 0.0;
+    update_spatial_by_velocities(
+        elapsed_micro,
+        spatial,
+        false,
+        SHIP_TURN_STABILIZATION_ANGULAR_DRAG_FACTOR
+            * if gassing {
+                rotation_drag_multiplier * GAS_TURN_STABILIZATION_ANGULAR_DRAG_FACTOR
+            } else {
+                rotation_drag_multiplier
+            },
+        negate_angular_drag,
+        gassing,
+    );
 }
 
 pub const EXTRA_PROJECTILE_TURN_DRAG: f64 = 10.0;
@@ -329,10 +332,17 @@ pub fn update_objects_spatial_movement(
     }
     // every other object that cannot change its speed itself, will drift - basically, unguided physics
     for wreck in location.wrecks.iter_mut() {
-        update_spatial_by_velocities(elapsed_micro, &mut wreck.spatial, false, None)
+        update_spatial_by_velocities(elapsed_micro, &mut wreck.spatial, false, 1.0, false, false);
     }
     for asteroid in location.asteroids.iter_mut() {
-        update_spatial_by_velocities(elapsed_micro, &mut asteroid.spatial, false, None)
+        update_spatial_by_velocities(
+            elapsed_micro,
+            &mut asteroid.spatial,
+            false,
+            1.0,
+            false,
+            false,
+        );
     }
 }
 
@@ -587,7 +597,7 @@ pub fn update_ships_navigation(
                         gas,
                         turn,
                         brake,
-                        None,
+                        1.0,
                     );
                     ship.markers = markers_to_string(gas, turn, brake);
                 }
