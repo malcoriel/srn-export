@@ -116,12 +116,7 @@ pub fn validate_shoot(
     return true;
 }
 
-pub fn validate_launch(
-    _target: ObjectSpecifier,
-    _loc: &Location,
-    ship: &Ship,
-    active_turret_id: i32,
-) -> bool {
+pub fn validate_launch(_loc: &Location, ship: &Ship, active_turret_id: i32) -> bool {
     let shoot_ability = find_turret_ability(ship, active_turret_id);
     if shoot_ability.is_none() {
         return false;
@@ -131,7 +126,6 @@ pub fn validate_launch(
     if shoot_ability.get_current_cooldown() > 0 {
         return false;
     }
-    // no distance checking, because you can launch even if it's too far
     return true;
 }
 
@@ -252,20 +246,10 @@ pub fn resolve_shoot(
 pub fn resolve_launch(
     state: &mut GameState,
     player_shooting: Uuid,
-    target: ObjectSpecifier,
     active_turret_id: i32,
     _client: bool,
-    indexes: &GameStateIndexes,
     prng: &mut Pcg64Mcg,
 ) {
-    let spec = target;
-    let target_pos = find_spatial_ref_by_spec(indexes, spec.clone());
-    if target_pos.is_none() {
-        // warn!(format!("Invalid launch, no target pos: {:?}", spec));
-        return;
-    }
-    let _target_pos = target_pos.unwrap().clone();
-
     if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &mut state.locations[ship_loc.location_idx];
         let shooting_ship = &mut loc.ships[ship_loc.ship_idx];
@@ -301,7 +285,6 @@ pub fn resolve_launch(
         loc.short_counter = (loc.short_counter + 1) % i32::MAX;
         instance.set_id(loc.short_counter);
         instance.set_position_from(&shooting_ship.spatial.position);
-        instance.set_target(&spec);
 
         match &mut instance {
             Projectile::Rocket(rocket) => {
@@ -313,8 +296,9 @@ pub fn resolve_launch(
         let deviation = generate_normal_random(0.0, 0.15, prng);
         new_rot -= deviation;
         let new_velocity = Vec2f64 { x: 1.0, y: 0.0 }.rotate(new_rot);
-        let new_velocity =
-            new_velocity.scalar_mul(proj_template.get_spatial().velocity.euclidean_len() * 0.3);
+        let new_velocity = shooting_ship.spatial.velocity.add(
+            &new_velocity.scalar_mul(proj_template.get_spatial().velocity.euclidean_len() * 0.3),
+        );
         // ensure that new projectile is not launched inside the ship, as otherwise it can collide and blow immediately
         instance.get_spatial_mut().position = instance.get_spatial().position.add(
             &new_velocity

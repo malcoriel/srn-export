@@ -10,6 +10,7 @@ import { useFadingMaterial } from './UseFadingMaterial';
 import { ObjectPropertyKey } from '../../../world/pkg/world.extra';
 import { ObjectPropertyDecays } from '../../../world/pkg/world';
 import { ThreeExplosionNodeV2 } from './blocks/ThreeExplosionNodeV2';
+import { useStore } from '../store';
 
 export type ThreeProjectilesLayerParams = {
   visMap: Record<string, boolean>;
@@ -80,6 +81,9 @@ export const ThreeRocket: React.FC<ThreeRocketProps> = ({
 }) => {
   const materialRef1 = useFadingMaterial(fadeOver, 1.0);
   const materialRef2 = useFadingMaterial(fadeOver, 1.0);
+
+  const showGrid = useStore((srnState) => srnState.hotkeysPressed['show grid']);
+
   return (
     <group position={vecToThreePos(position, 0)}>
       <group
@@ -95,7 +99,7 @@ export const ThreeRocket: React.FC<ThreeRocketProps> = ({
           <meshBasicMaterial color="yellow" transparent ref={materialRef2} />
         </mesh>
       </group>
-      {markers && (
+      {markers && showGrid && (
         <MovementMarkers
           markers={markers}
           position={VectorFZero}

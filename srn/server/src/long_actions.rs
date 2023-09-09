@@ -33,7 +33,6 @@ pub enum LongActionStart {
         turret_id: i32,
     },
     Launch {
-        target: ObjectSpecifier,
         turret_id: i32,
     },
     // the process of docking itself after the ship is close enough via navigation
@@ -90,7 +89,6 @@ pub enum LongAction {
     },
     Launch {
         id: Uuid,
-        target: ObjectSpecifier,
         micro_left: i32,
         percentage: u32,
         turret_id: i32,
@@ -148,7 +146,6 @@ pub fn erase_details(la: LongAction) -> LongAction {
         },
         LongAction::Launch { .. } => LongAction::Launch {
             id: Default::default(),
-            target: Default::default(),
             micro_left: 0,
             percentage: 0,
             turret_id: Default::default(),
@@ -255,12 +252,12 @@ pub fn try_start_long_action_player_owned(
             }
             return try_start_shoot(state, target, ship_idx, turret_id, prng);
         }
-        LongActionStart::Launch { target, turret_id } => {
+        LongActionStart::Launch { turret_id } => {
             let ship_idx = find_my_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
             }
-            return try_start_launch(state, target, ship_idx, turret_id, prng);
+            return try_start_launch(state, ship_idx, turret_id, prng);
         }
         LongActionStart::DockInternal { to_planet, .. } => {
             let ship_idx = find_my_ship_index(state, player_id);
@@ -428,14 +425,12 @@ fn try_start_shoot(
 
 fn try_start_launch(
     state: &mut GameState,
-    target: ObjectSpecifier,
     ship_idx: Option<ShipIdx>,
     shooting_turret_id: i32,
     prng: &mut Pcg64Mcg,
 ) -> bool {
     let ship_idx = ship_idx.unwrap();
     if !combat::validate_launch(
-        target.clone(),
         &state.locations[ship_idx.location_idx],
         &state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx],
         shooting_turret_id,
@@ -449,7 +444,6 @@ fn try_start_launch(
         .unwrap(); // checked by validate
     ship.long_actions.push(LongAction::Launch {
         id: prng_id(prng),
-        target,
         micro_left: SHOOT_COOLDOWN_TICKS,
         percentage: 0,
         turret_id: shooting_turret_id,
@@ -600,19 +594,9 @@ pub fn finish_long_act(
             let player = find_player_idx_by_ship_id(state, ship_id).map(|p| p.clone());
             spatial_movement::undock_ship(state, ship_idx, client, player, prng);
         }
-        LongAction::Launch {
-            target, turret_id, ..
-        } => {
+        LongAction::Launch { turret_id, .. } => {
             if player_id.is_some() {
-                combat::resolve_launch(
-                    state,
-                    player_id.unwrap(),
-                    target,
-                    turret_id,
-                    client,
-                    indexes,
-                    prng,
-                );
+                combat::resolve_launch(state, player_id.unwrap(), turret_id, client, prng);
             }
         }
     }
@@ -677,7 +661,6 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
         LongAction::Launch {
             micro_left,
             id,
-            target,
             turret_id,
             projectile_template_id,
             ..
@@ -687,7 +670,6 @@ pub fn tick_long_act(act: LongAction, micro_passed: i64) -> (LongAction, bool) {
                 LongAction::Launch {
                     id,
                     micro_left: left,
-                    target,
                     percentage: calc_percentage(left, SHOOT_ABILITY_DURATION),
                     turret_id,
                     projectile_template_id,

@@ -67,16 +67,12 @@ const mapShipAbility = (interactorIds: InteractorIds) => (
     case 'Launch':
       return {
         action: () => {
-          const { hostileId } = interactorIds;
           const ns = NetState.get();
-          if (!ns || !hostileId) {
+          if (!ns) {
             return;
           }
           ns.startLongAction(
             LongActionStartBuilder.LongActionStartLaunch({
-              target: ObjectSpecifierBuilder.ObjectSpecifierShip({
-                id: hostileId,
-              }),
               turret_id: ability.turret_id,
             })
           );

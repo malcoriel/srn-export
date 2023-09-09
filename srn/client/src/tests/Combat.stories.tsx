@@ -132,9 +132,6 @@ const getStartGameParamsRocketShooting = () => {
             action: ActionBuilder.ActionLongActionStart({
               ship_id: '$my_ship_id',
               long_action_start: LongActionStartBuilder.LongActionStartLaunch({
-                target: ObjectSpecifierBuilder.ObjectSpecifierAsteroid({
-                  id: asteroidId,
-                }),
                 turret_id: launchAbility.turret_id,
               }),
               player_id: '$my_player_id',
