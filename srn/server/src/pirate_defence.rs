@@ -33,8 +33,8 @@ pub fn on_pirate_spawn(state: &mut GameState, at: &Vec2f64, prng: &mut Pcg64Mcg)
 
 const SHIP_PLANET_HIT_NORMALIZED: f64 = 0.1;
 const PIRATE_SPAWN_DIST: f64 = 100.0;
-const PIRATE_SPAWN_COUNT: usize = 3;
-const PIRATE_SPAWN_INTERVAL_TICKS: u32 = 10 * 1000 * 1000;
+const PIRATE_SPAWN_COUNT: usize = 1;
+const PIRATE_SPAWN_INTERVAL_TICKS: u32 = 3 * 1000 * 1000;
 
 pub fn on_ship_docked(state: &mut GameState, ship: Ship, planet: PlanetV2) {
     if ship
