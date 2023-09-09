@@ -5,6 +5,7 @@ import { ObjectSpecifier, Player, Ship } from '../world';
 // eslint-disable-next-line import/named
 import { Ability } from '../../../world/pkg/world';
 import { FaBullseye } from 'react-icons/fa';
+import { BiRocket } from 'react-icons/bi';
 import { UnreachableCaseError } from 'ts-essentials';
 import { useActiveInteractors } from '../store';
 import {
@@ -64,7 +65,25 @@ const mapShipAbility = (interactorIds: InteractorIds) => (
         icon: <BsGearFill />,
       };
     case 'Launch':
-      return null;
+      return {
+        action: () => {
+          const { hostileId } = interactorIds;
+          const ns = NetState.get();
+          if (!ns || !hostileId) {
+            return;
+          }
+          ns.startLongAction(
+            LongActionStartBuilder.LongActionStartLaunch({
+              target: ObjectSpecifierBuilder.ObjectSpecifierShip({
+                id: hostileId,
+              }),
+              turret_id: ability.turret_id,
+            })
+          );
+        },
+        cooldownNormalized: ability.cooldown_normalized,
+        icon: <BiRocket />,
+      };
     default:
       throw new UnreachableCaseError(ability);
   }

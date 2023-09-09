@@ -436,6 +436,22 @@ impl Display for IdKind {
     }
 }
 
+impl IdKind {
+    pub fn unwrap_uuid(self) -> Uuid {
+        match self {
+            IdKind::Uuid(v) => v,
+            IdKind::Int(_) => panic!("Attempt to unwrap non-uuid id kind"),
+        }
+    }
+
+    pub fn unwrap_int(self) -> i32 {
+        match self {
+            IdKind::Uuid(_) => panic!("Attempt to unwrap non-int id kind"),
+            IdKind::Int(v) => v,
+        }
+    }
+}
+
 impl Display for ObjectSpecifier {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(
@@ -752,7 +768,10 @@ pub fn find_spatial_ref_by_spec<'a>(
         ObjectSpecifier::Asteroid { .. } => indexes.non_body_spatials_by_id.get(&spec).map(|b| *b),
         ObjectSpecifier::Container { .. } => None,
         ObjectSpecifier::Planet { .. } => indexes.bodies_by_id.get(&spec).map(|b| b.get_spatial()),
-        ObjectSpecifier::Ship { .. } => indexes.bodies_by_id.get(&spec).map(|b| b.get_spatial()),
+        ObjectSpecifier::Ship { .. } => indexes
+            .ships_by_id
+            .get(&spec.get_id().unwrap().unwrap_uuid())
+            .map(|b| &b.spatial),
         ObjectSpecifier::Star { .. } => indexes.bodies_by_id.get(&spec).map(|b| b.get_spatial()),
         ObjectSpecifier::AsteroidBelt { .. } => None,
         ObjectSpecifier::Wreck { .. } => None,

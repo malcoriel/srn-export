@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::indexing::ObjectSpecifier;
 
-pub fn on_ship_docked(state: &mut GameState, player_id: Option<Uuid>, planet_id: Uuid) {
+pub fn on_ship_docked(_state: &mut GameState, _player_id: Option<Uuid>, _planet_id: Uuid) {
     // if let Some(player_id) = player_id {
     //     fire_saved_event(
     //         state,
