@@ -139,6 +139,9 @@ const CLIENT_AHEAD_DILATION_FACTOR = 0.5;
 const MAX_ALLOWED_VISUAL_DESYNC_UNITS = 0.3;
 const MAX_PENDING_ACTIONS_LIFETIME_TICKS = 1000 * 1000; // if we don't clean up, client will keep them indefinitely and if server truly lost them, we're in trouble
 
+// maybe I need to collect this value as (average full update world time + half RTT) statistically. For now, let's assume 32ms
+const MAGIC_OVERCOMPENSATE_CLIENT_LAG = 32 * 1000;
+
 // type TagConfirm = {
 //   atClientTicks: number;
 //   tag: string;
@@ -243,15 +246,15 @@ export class StateSyncer extends EventEmitter {
       return this.trueState;
     }
     let nonDeterministic = false;
+    const clientAheadTicks =
+      this.state.ticks + elapsedTicks - this.trueState.ticks;
     if (elapsedTicks > LONG_UPDATE_WARN) {
-      const clientAheadTicks =
-        this.state.ticks + elapsedTicks - this.trueState.ticks;
       this.log.push(
         `warn: non-deterministic update for ${Math.round(
           elapsedTicks / 1000
         )}ms (max ${Math.round(
           LONG_UPDATE_WARN / 1000
-        )}ms) in ${context}, client ahead by ${Math.round(
+        )}ms) in ${context}, client desynced by ${Math.round(
           clientAheadTicks / 1000
         )}ms`
       );
@@ -277,6 +280,9 @@ export class StateSyncer extends EventEmitter {
       );
     }
     this.useCachedStateForUpdateContext = true; // make sure that next updates use incremental update mechanism
+    // if we just update by lag, since update takes time we cannot get ahead of server again, and are doomed to lag behind
+    const lagOverCompensation =
+      clientAheadTicks < 0 ? MAGIC_OVERCOMPENSATE_CLIENT_LAG : 0;
     return this.wasmUpdateWorld(
       {
         // the wasm code guarantees to return a copy, so it's safe to modify in-place here
@@ -284,7 +290,7 @@ export class StateSyncer extends EventEmitter {
         state_tag: context,
         ...commonUpdateArgs,
       },
-      elapsedTicks
+      elapsedTicks + lagOverCompensation
     );
   }
 
