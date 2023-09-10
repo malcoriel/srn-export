@@ -430,7 +430,7 @@ pub fn move_ship_towards(target: &Vec2f64, ship_pos: &Vec2f64, max_shift: f64) -
 }
 
 pub fn update_ships_navigation(
-    ships: &Vec<Ship>,
+    ships: &mut Vec<Ship>,
     elapsed: i64,
     _client: bool,
     update_options: &UpdateOptions,
@@ -438,8 +438,7 @@ pub fn update_ships_navigation(
     update_every_ticks: u64,
     caches: &mut GameStateCaches,
     current_ticks: u64,
-) -> Vec<Ship> {
-    let mut res = vec![];
+) {
     let docking_ship_ids: HashSet<Uuid> = HashSet::from_iter(ships.iter().filter_map(|s| {
         let long_act = s
             .long_actions
@@ -463,7 +462,7 @@ pub fn update_ships_navigation(
         return None;
     }));
 
-    for mut ship in ships.clone() {
+    for mut ship in ships.iter_mut() {
         if docking_ship_ids.contains(&ship.id)
             || undocking_ship_ids.contains(&ship.id)
             || !update_options
@@ -471,7 +470,6 @@ pub fn update_ships_navigation(
                 .contains_vec(&ship.spatial.position)
         {
             ship.trajectory = vec![];
-            res.push(ship);
             continue;
         }
         if !ship.docked_at.is_some() {
@@ -581,7 +579,6 @@ pub fn update_ships_navigation(
                                     ship.trajectory_v2 = tr_res;
                                     ship.navigate_target = None;
                                     ship.dock_target = None;
-                                    res.push(ship);
                                     continue;
                                 }
                             };
@@ -604,9 +601,7 @@ pub fn update_ships_navigation(
                 _ => panic!("unsupported kind of movement for ship navigation"),
             }
         }
-        res.push(ship);
     }
-    res
 }
 
 pub fn guide_accelerated_ship_to_point(

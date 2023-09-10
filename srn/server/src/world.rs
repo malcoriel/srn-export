@@ -1048,8 +1048,8 @@ pub fn update_location(
     spatial_movement::update_docked_ships_position(&mut state.locations[loc_idx], indexes);
     sampler.end(update_docked_ships_id);
     let update_ships_navigation_id = sampler.start(SamplerMarks::UpdateShipsNavigation as u32);
-    state.locations[loc_idx].ships = spatial_movement::update_ships_navigation(
-        &state.locations[loc_idx].ships,
+    spatial_movement::update_ships_navigation(
+        &mut state.locations[loc_idx].ships,
         elapsed,
         client,
         update_options,
