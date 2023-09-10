@@ -303,11 +303,17 @@ export const updateWorldIncremental = (
     state_tag,
     limit_area,
     client,
-  }: { state_tag: string; limit_area: AABB; client: boolean },
+    force_non_determinism,
+  }: {
+    state_tag: string;
+    limit_area: AABB;
+    client: boolean;
+    force_non_determinism?: boolean;
+  },
   elapsedTicks: number
 ): GameState | undefined => {
   return wasmFunctions.update_world_incremental(
-    { state_tag, limit_area, client },
+    { state_tag, limit_area, client, force_non_determinism },
     elapsedTicks
   );
 };

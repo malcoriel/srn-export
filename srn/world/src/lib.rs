@@ -379,8 +379,8 @@ lazy_static! {
 
 #[derive(Clone, Debug, derive_deserialize, derive_serialize)]
 pub struct UpdateWorldArgs {
-    state: world::GameState,
-    limit_area: world::AABB,
+    state: GameState,
+    limit_area: AABB,
     client: Option<bool>,
     force_non_determinism: Option<bool>,
     state_tag: Option<String>,
@@ -389,7 +389,7 @@ pub struct UpdateWorldArgs {
 #[derive(Clone, Debug, derive_deserialize, derive_serialize)]
 pub struct UpdateWorldIncrementalArgs {
     state_tag: String,
-    limit_area: world::AABB,
+    limit_area: AABB,
     client: Option<bool>,
     force_non_determinism: Option<bool>,
 }

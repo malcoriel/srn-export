@@ -247,7 +247,7 @@ export class StateSyncer extends EventEmitter {
       const clientAheadTicks =
         this.state.ticks + elapsedTicks - this.trueState.ticks;
       this.log.push(
-        `warn: non deterministic update for ${Math.round(
+        `warn: non-deterministic update for ${Math.round(
           elapsedTicks / 1000
         )}ms (max ${Math.round(
           LONG_UPDATE_WARN / 1000
