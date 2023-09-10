@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.9.21 (2023-09-10)
+
+### Fixes
+
+* Redo of the previous release that failed due to a bug.
+
 ## Version 0.9.20 (2023-09-10)
 
 ### New
