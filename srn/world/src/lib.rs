@@ -884,10 +884,7 @@ pub fn interpolate_states(
 fn custom_deserialize<T: serde::de::DeserializeOwned + std::fmt::Debug>(
     val: JsValue,
 ) -> Result<T, JsValue> {
-    serde_path_to_error::deserialize::<serde_wasm_bindgen::Deserializer, T>(
-        serde_wasm_bindgen::Deserializer::from(val),
-    )
-    .map_err(|v| JsValue::from_str(v.to_string().as_str()))
+    Ok(serde_wasm_bindgen::from_value::<T>(val)?)
 }
 
 #[wasm_bindgen]
