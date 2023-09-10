@@ -137,3 +137,9 @@ impl FofObjectClass {
 pub struct FofOverrides {
     pub obj_class: HashMap<FofObjectClass, FriendOrFoe>,
 }
+
+// for future use, found an easier way to override
+trait Team {
+    fn get_team(&self) -> Option<usize>;
+    fn set_team(&mut self, team: Option<usize>);
+}

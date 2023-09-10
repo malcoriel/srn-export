@@ -17,7 +17,7 @@ use crate::indexing::{
     ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::long_actions::LongActionStart;
-use crate::properties::ObjectProperty;
+use crate::properties::{find_property, ObjectProperty, ObjectPropertyKey};
 use crate::vec2::Vec2f64;
 use crate::world::TimeMarks::BotAction;
 use crate::world::{GameOver, GameState, PlanetV2, Ship, ShipTemplate, SpatialIndexes, TimeMarks};
@@ -256,6 +256,34 @@ pub fn friend_or_foe(
 
     // all other stuff is neutral to each other
     if player_a.is_none() && player_b.is_none() {
+        match &actor_a {
+            FofActor::Player { .. } => {}
+            FofActor::ObjectIdx { spec } => match spec {
+                ObjectIndexSpecifier::Projectile { .. } => {
+                    match &actor_b {
+                        FofActor::Player { .. } => {}
+                        FofActor::ObjectIdx { spec } => {
+                            match spec {
+                                ObjectIndexSpecifier::Ship { idx } => {
+                                    if find_property(
+                                        &&state.locations[loc_idx].ships[*idx].properties,
+                                        ObjectPropertyKey::PirateShip,
+                                    )
+                                    .is_some()
+                                    {
+                                        // rockets, no matter from whom (assuming only players can shoot for now)
+                                        // are hostile to pirate ships
+                                        return FriendOrFoe::Foe;
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            },
+        };
         return FriendOrFoe::Neutral;
     }
     if player_b.is_some() {
