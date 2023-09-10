@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.9.22 (2023-09-11)
+
+### Fixes
+
+* Fixed some annoying warnings in browser console related to duplicate keys for effects.
+* Did a bunch of performance optimizations for client-side part, reducing currently existing lag spikes a bit.
+
 ## Version 0.9.21 (2023-09-10)
 
 ### Fixes
@@ -667,8 +674,8 @@
 ### Fixes
 
 * Fixes for objects visibility (camera culling optimization):
-  * No more star's "after-effects" when it leaves the camera view gradually.
-  * No more "dead" planet copies matching last visible planet position.
+    * No more star's "after-effects" when it leaves the camera view gradually.
+    * No more "dead" planet copies matching last visible planet position.
 
 ## Version 0.5.0
 
