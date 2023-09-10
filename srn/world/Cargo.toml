@@ -1,6 +1,6 @@
 [package]
 name = "world"
-version = "0.9.19"
+version = "0.9.20"
 authors = [ "Valeriy Kuzmin <malcoriel@gmail.com>" ]
 edition = "2018"
 rust-version = "1.67"

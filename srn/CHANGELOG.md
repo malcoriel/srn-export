@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 0.9.20 (2023-09-10)
+
+### New
+
+* Finally, enabled the rocket shooting in pirate defence game.
+* Adjusted pirate spawning rules to spawn fever pirates but with higher frequency.
+
+### Fixes
+
+* Significantly adjusted manoeuvrability and rotation precision issues for realistic movement.
+* Restored replays and added 1 more example replay.
+* Fixed a bug in tutorial when a default planet dialogue popped up, overriding the tutorial dialogue.
+
 ## Version 0.9.19 (2023-09-08)
 
 ### Fixes
