@@ -8,8 +8,8 @@ use wasm_bindgen::prelude::*;
 
 use crate::abilities::{Ability, IdxOrName, SHOOT_ABILITY_DURATION, SHOOT_COOLDOWN_TICKS};
 use crate::indexing::{
-    find_my_player, find_my_player_mut, find_my_ship_index, find_my_ship_mut,
-    find_player_by_ship_id, find_player_idx_by_ship_id, GameStateIndexes, ObjectSpecifier,
+    find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_player_idx_by_ship_id,
+    GameStateIndexes, ObjectSpecifier,
 };
 use crate::planet_movement::IBodyV2;
 use crate::vec2::Vec2f64;
@@ -577,7 +577,7 @@ pub fn finish_long_act(
             target, turret_id, ..
         } => {
             if player_id.is_some() {
-                combat::resolve_shoot(state, player_id.unwrap(), target, turret_id, indexes);
+                combat::resolve_shoot(state, player_id.unwrap(), target, turret_id, indexes, prng);
             }
         }
         LongAction::Dock { to_planet, .. } => {

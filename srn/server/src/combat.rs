@@ -1,12 +1,3 @@
-use rand_pcg::Pcg64Mcg;
-use serde_derive::{Deserialize, Serialize};
-use serde_with::skip_serializing_none;
-use std::collections::HashSet;
-use std::f64::consts::PI;
-use typescript_definitions::{TypeScriptify, TypescriptDefinition};
-use uuid::Uuid;
-use wasm_bindgen::prelude::*;
-
 use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::autofocus::{
     extract_closest_into, object_index_into_object_id, object_index_into_object_pos, SpatialIndex,
@@ -30,6 +21,14 @@ use crate::world::{
     UpdateOptions,
 };
 use crate::{indexing, new_id, world};
+use rand_pcg::Pcg64Mcg;
+use serde_derive::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
+use std::collections::HashSet;
+use std::f64::consts::PI;
+use typescript_definitions::{TypeScriptify, TypescriptDefinition};
+use uuid::Uuid;
+use wasm_bindgen::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify, Default)]
 pub struct Health {
@@ -153,6 +152,7 @@ pub fn resolve_shoot(
     target: ObjectSpecifier,
     active_turret_id: i32,
     indexes: &GameStateIndexes,
+    prng: &mut Pcg64Mcg,
 ) {
     if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
         let loc = &state.locations[ship_loc.location_idx];
@@ -192,6 +192,7 @@ pub fn resolve_shoot(
                         &mut state.locations[ship_loc.location_idx],
                         indexes,
                         state.ticks,
+                        prng,
                     )
                 }
             }
@@ -478,6 +479,7 @@ pub fn update_projectile_collisions(
     _loc_idx: usize,
     indexes: &mut GameStateIndexes,
     current_tick: u64,
+    prng: &mut Pcg64Mcg,
 ) -> Vec<(ObjectSpecifier, f64)> {
     let damages: Vec<(ObjectIndexSpecifier, f64)> = vec![];
     let mut current_idx = -1;
@@ -522,7 +524,15 @@ pub fn update_projectile_collisions(
     }
     for exp_id in exploded_ids.into_iter() {
         let source = &exp_id.clone();
-        damage_objects(loc, &vec![exp_id], INSTAKILL, source, indexes, current_tick);
+        damage_objects(
+            loc,
+            &vec![exp_id],
+            INSTAKILL,
+            source,
+            indexes,
+            current_tick,
+            prng,
+        );
     }
     // kind of 'kinetic' part of the damage, not the explosion
     damages
@@ -756,6 +766,7 @@ pub fn update_explosions(
     spatial_index: &SpatialIndex,
     indexes: &GameStateIndexes,
     current_tick: u64,
+    prng: &mut Pcg64Mcg,
 ) {
     for exp in loc.explosions.iter_mut() {
         if exp.decay_expand.apply(elapsed_ticks) {
@@ -804,6 +815,7 @@ pub fn update_explosions(
             &ObjectSpecifier::Explosion { id: exp_r.id },
             indexes,
             current_tick,
+            prng,
         );
 
         // apply constant push
@@ -892,6 +904,7 @@ pub fn damage_objects(
     source: &ObjectSpecifier,
     indexes: &GameStateIndexes,
     current_tick: u64,
+    prng: &mut Pcg64Mcg,
 ) {
     for os in targets {
         let damage = if let (Some(health), Some(ois)) = indexes
@@ -921,6 +934,7 @@ pub fn damage_objects(
                 loc,
                 indexes,
                 current_tick,
+                prng,
             )
         }
     }
@@ -933,6 +947,7 @@ pub fn heal_objects(
     source: &ObjectSpecifier,
     indexes: &GameStateIndexes,
     current_tick: u64,
+    prng: &mut Pcg64Mcg,
 ) {
     for os in targets {
         // log2!("damage {:?} from {:?}", ois.1, _source);
@@ -957,6 +972,7 @@ pub fn heal_objects(
                 loc,
                 indexes,
                 current_tick,
+                prng,
             )
         }
     }

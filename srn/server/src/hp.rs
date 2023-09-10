@@ -1,6 +1,5 @@
 use crate::autofocus::{object_index_into_object_id, SpatialIndex};
 use crate::combat::{create_explosion, damage_objects, heal_objects, ExplosionProps, Health};
-use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
 use crate::indexing::{
     index_players_by_ship_id, GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
 };
@@ -113,6 +112,7 @@ pub fn update_hp_effects(
                     &ObjectSpecifier::Star { id: star_id },
                     indexes,
                     state.ticks,
+                    prng,
                 );
             }
         } else {
@@ -126,6 +126,7 @@ pub fn update_hp_effects(
                     &id_clone,
                     indexes,
                     state.ticks,
+                    prng,
                 )
             }
         }

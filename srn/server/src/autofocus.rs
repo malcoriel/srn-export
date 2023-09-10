@@ -175,17 +175,6 @@ pub fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
 
 pub const AUTOFOCUS_RADIUS: f64 = 30.0;
 
-pub fn update_autofocus_full(state: &mut GameState, spatial_indexes: &mut SpatialIndexes) {
-    for i in 0..state.locations.len() {
-        let loc = &mut state.locations[i];
-        let spatial_index = spatial_indexes
-            .values
-            .entry(i)
-            .or_insert(build_spatial_index(loc, i));
-        update_location_autofocus(state, i, &spatial_index)
-    }
-}
-
 pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &SpatialIndex) {
     let loc = &state.locations[loc_idx];
     if loc.planets.len() + loc.ships.len() + loc.minerals.len() + loc.containers.len() == 0 {

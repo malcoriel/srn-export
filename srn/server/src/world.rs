@@ -1195,6 +1195,7 @@ pub fn update_location(
         loc_idx,
         indexes,
         current_tick,
+        prng,
     );
     sampler.end(collisions_id);
 
@@ -1277,6 +1278,7 @@ pub fn update_location(
         spatial_index,
         indexes,
         state.ticks,
+        prng,
     );
     sampler.end(exp_id);
 

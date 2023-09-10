@@ -2,6 +2,8 @@ use crate::autofocus::{object_index_into_object_pos, object_index_into_object_ra
 use crate::indexing::{GameStateIndexes, ObjectSpecifier};
 use crate::vec2::Vec2f64;
 use crate::world::{GameState, Location};
+use rand::RngCore;
+use rand_pcg::Pcg64Mcg;
 use serde_derive::{Deserialize, Serialize};
 use strum::AsStaticRef;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
@@ -17,8 +19,9 @@ pub fn add_effect(
     loc: &mut Location,
     indexes: &GameStateIndexes,
     current_tick: u64,
+    prng: &mut Pcg64Mcg,
 ) {
-    let key = form_effect_key(&from, &to, &eff, extra_from_id);
+    let key = form_effect_key(&from, &to, &eff, extra_from_id, prng);
     let effect_pos = calculate_effect_position(&from, &to, loc, indexes, false);
     if let Some(effect_pos) = effect_pos {
         // I've tried and it kind of looks cool, but it doesn't look good enough for now, and requires constant position update
@@ -113,6 +116,7 @@ fn form_effect_key(
     to: &ObjectSpecifier,
     eff: &LocalEffectCreate,
     extra_from_id: Option<i32>,
+    prng: &mut Pcg64Mcg,
 ) -> String {
     format!(
         "{}:{}:{}:{}",
@@ -123,7 +127,7 @@ fn form_effect_key(
         },
         from,
         to,
-        extra_from_id.map_or("".to_string(), |i| format!(":{}", i))
+        extra_from_id.map_or_else(|| prng.next_u64().to_string(), |i| format!(":{}", i))
     )
 }
 
