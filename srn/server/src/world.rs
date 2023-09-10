@@ -20,10 +20,10 @@ use crate::effects::{cleanup_effects, LocalEffect};
 use crate::fof::FofOverrides;
 use crate::hp::SHIP_REGEN_PER_SEC;
 use crate::indexing::{
-    build_full_spatial_indexes, find_my_player, find_my_ship, find_my_ship_index, find_planet,
-    find_player_and_ship_mut, find_spatial_ref_by_spec, index_planets_by_id,
-    index_players_by_ship_id, index_ships_by_id, index_state, GameStateCaches, GameStateIndexes,
-    ObjectIndexSpecifier, ObjectSpecifier,
+    build_full_spatial_indexes, find_my_player, find_my_ship, find_planet,
+    find_player_and_ship_mut, find_player_ship_index, find_spatial_ref_by_spec,
+    index_planets_by_id, index_players_by_ship_id, index_ships_by_id, index_state, GameStateCaches,
+    GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::inventory::{
     add_item, add_items, has_quest_item, shake_items, InventoryItem, InventoryItemType,
@@ -1235,7 +1235,7 @@ pub fn update_location(
     sampler.end(respawn_id);
 
     let autofocus_id = sampler.start(SamplerMarks::UpdateAutofocus as u32);
-    autofocus::update_location_autofocus(&mut state, loc_idx, &spatial_index);
+    autofocus::update_location_autofocus(&mut state, loc_idx, &spatial_index, client);
     sampler.end(autofocus_id);
 
     let long_act_ticks = sampler.start(SamplerMarks::UpdateTickLongActionsShips as u32);
@@ -1636,7 +1636,7 @@ pub fn remove_player_from_state(conn_id: Uuid, state: &mut GameState) {
 }
 
 pub fn try_replace_ship(state: &mut GameState, updated_ship: &Ship, player_id: Uuid) -> bool {
-    let old_ship_index = find_my_ship_index(&state, player_id);
+    let old_ship_index = find_player_ship_index(&state, player_id);
     return if let Some(old_ship_index) = old_ship_index {
         state.locations[old_ship_index.location_idx]
             .ships

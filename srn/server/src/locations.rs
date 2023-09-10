@@ -3,7 +3,7 @@ use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 
-use crate::indexing::{find_and_extract_ship, find_my_ship, find_my_ship_index};
+use crate::indexing::{find_and_extract_ship, find_my_ship, find_player_ship_index};
 use crate::new_id;
 use crate::world::{GameState, Ship};
 
@@ -27,7 +27,7 @@ pub fn try_move_player_ship(state: &mut GameState, player_id: Uuid, location_id:
 }
 
 pub fn can_be_moved_player(state: &mut GameState, player_id: Uuid, _location_id: Uuid) -> bool {
-    let ship_idx = find_my_ship_index(state, player_id);
+    let ship_idx = find_player_ship_index(state, player_id);
     return if let Some(ship_idx) = ship_idx {
         if state.locations[ship_idx.location_idx].ships[ship_idx.ship_idx]
             .docked_at

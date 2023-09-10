@@ -6,7 +6,7 @@ use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
 use crate::fof::{FofActor, FofOverrides};
 use crate::hp::{object_index_into_health_mut, object_index_into_to_clean_mut};
 use crate::indexing::{
-    find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_spatial_ref_by_spec,
+    find_my_player_mut, find_my_ship_mut, find_player_ship_index, find_spatial_ref_by_spec,
     GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::planet_movement::project_body_relative_position;
@@ -154,7 +154,7 @@ pub fn resolve_shoot(
     indexes: &GameStateIndexes,
     prng: &mut Pcg64Mcg,
 ) {
-    if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
+    if let Some(ship_loc) = find_player_ship_index(state, player_shooting) {
         let loc = &state.locations[ship_loc.location_idx];
         let shooting_ship_read = &loc.ships[ship_loc.ship_idx].clone();
         let shooting_ship_id = shooting_ship_read.id;
@@ -251,7 +251,7 @@ pub fn resolve_launch(
     _client: bool,
     prng: &mut Pcg64Mcg,
 ) {
-    if let Some(ship_loc) = find_my_ship_index(state, player_shooting) {
+    if let Some(ship_loc) = find_player_ship_index(state, player_shooting) {
         let loc = &mut state.locations[ship_loc.location_idx];
         let shooting_ship = &mut loc.ships[ship_loc.ship_idx];
         let launch_ability = find_turret_ability(shooting_ship, active_turret_id);

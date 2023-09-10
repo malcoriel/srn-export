@@ -311,7 +311,7 @@ pub fn parse_state(serialized_args: &str) -> String {
 
 use crate::api_struct::Room;
 use crate::dialogue::{parse_dialogue_script_from_file, Dialogue, DialogueTable};
-use crate::indexing::{find_my_ship_index, GameStateCaches, ObjectSpecifier};
+use crate::indexing::{find_player_ship_index, GameStateCaches, ObjectSpecifier};
 use crate::perf::{ConsumeOptions, Sampler, SamplerMarks};
 use crate::system_gen::{seed_state, GenStateOpts};
 use crate::world::{GameMode, GameState, SpatialProps, UpdateOptions, UpdateOptionsV2, AABB};

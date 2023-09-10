@@ -1,7 +1,10 @@
 use crate::combat::{Health, MAX_COLLIDER_RADIUS};
 use crate::fof;
 use crate::fof::{FofActor, FriendOrFoe};
-use crate::indexing::{GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier};
+use crate::indexing::{
+    find_my_ship, find_my_ship_mut, find_player_ship_index, find_ship_mut, GameStateIndexes,
+    ObjectIndexSpecifier, ObjectSpecifier,
+};
 use crate::vec2::Vec2f64;
 use crate::world::{GameState, Location, SpatialIndexes};
 use itertools::sorted;
@@ -175,22 +178,33 @@ pub fn build_spatial_index(loc: &Location, loc_idx: usize) -> SpatialIndex {
 
 pub const AUTOFOCUS_RADIUS: f64 = 30.0;
 
-pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &SpatialIndex) {
+pub fn update_location_autofocus(
+    state: &mut GameState,
+    loc_idx: usize,
+    index: &SpatialIndex,
+    client: bool,
+) {
+    if !client {
+        // this feature is client-only, and is only needed for the current player's ship
+        // also, it's pretty expensive to run
+        return;
+    }
+
     let loc = &state.locations[loc_idx];
     if loc.planets.len() + loc.ships.len() + loc.minerals.len() + loc.containers.len() == 0 {
         return;
     }
-    let mut ship_mods_neutral = vec![];
-    let mut ship_mods_hostile = vec![];
-    for i in 0..loc.ships.len() {
-        let current_ship = &loc.ships[i];
-        let current_ship_fof_actor = FofActor::ObjectIdx {
-            spec: ObjectIndexSpecifier::Ship { idx: i },
-        };
 
+    let mut around_neutral = vec![];
+    let mut around_hostile = vec![];
+
+    if let Some(idx) = find_player_ship_index(state, state.my_id) {
+        // the location on client is always idx=0, so no need to use loc_idx
+        let current_ship_fof_actor = FofActor::ObjectIdx {
+            spec: ObjectIndexSpecifier::Ship { idx: idx.ship_idx },
+        };
+        let current_ship = &loc.ships[idx.ship_idx];
         let ship_pos = current_ship.spatial.position.clone();
-        let mut around_neutral = vec![];
-        let mut around_hostile = vec![];
 
         extract_closest_into(
             state,
@@ -202,26 +216,16 @@ pub fn update_location_autofocus(state: &mut GameState, loc_idx: usize, index: &
             &mut around_hostile,
             AUTOFOCUS_RADIUS,
         );
-        ship_mods_neutral.push((
-            around_neutral
-                .get(0)
-                .and_then(|ois| object_index_into_object_id(ois, loc)),
-            i,
-        ));
-        ship_mods_hostile.push((
-            around_hostile
-                .get(0)
-                .and_then(|ois| object_index_into_object_id(ois, loc)),
-            i,
-        ));
-    }
-    for (new_val, i) in ship_mods_neutral.into_iter() {
-        let ship = &mut state.locations[loc_idx].ships[i];
-        ship.auto_focus = new_val;
-    }
-    for (new_val, i) in ship_mods_hostile.into_iter() {
-        let ship = &mut state.locations[loc_idx].ships[i];
-        ship.hostile_auto_focus = new_val;
+        let new_neutral_focus = around_neutral
+            .get(0)
+            .and_then(|ois| object_index_into_object_id(ois, loc));
+        let new_hostile_focus = around_hostile
+            .get(0)
+            .and_then(|ois| object_index_into_object_id(ois, loc));
+
+        let current_ship = &mut state.locations[loc_idx].ships[idx.ship_idx];
+        current_ship.auto_focus = new_neutral_focus;
+        current_ship.hostile_auto_focus = new_hostile_focus;
     }
 }
 

@@ -13,7 +13,7 @@ use crate::bots::{add_bot, BotAct};
 use crate::dialogue::DialogueStatesForPlayer;
 use crate::fof::{resolve_player_id, FofActor, FriendOrFoe};
 use crate::indexing::{
-    find_my_ship_index, index_players_by_ship_id, index_state, GameStateIndexes,
+    find_player_ship_index, index_players_by_ship_id, index_state, GameStateIndexes,
     ObjectIndexSpecifier, ObjectSpecifier,
 };
 use crate::long_actions::LongActionStart;
@@ -145,7 +145,7 @@ pub fn bot_planet_defender_act(
 ) -> (Bot, Vec<BotAct>) {
     let bot_id = bot.id;
     let nothing = (bot.clone(), vec![]);
-    let ship_loc = find_my_ship_index(state, bot.id);
+    let ship_loc = find_player_ship_index(state, bot.id);
     if let Some(ship_loc) = ship_loc {
         if let Some(loc_sp_idx) = spatial_indexes.values.get(&ship_loc.location_idx) {
             let my_ship = &state.locations[ship_loc.location_idx].ships[ship_loc.ship_idx];

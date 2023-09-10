@@ -8,8 +8,8 @@ use itertools::Itertools;
 
 use crate::cargo_rush::{generate_random_quest, CargoDeliveryQuestState};
 use crate::indexing::{
-    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_index, find_my_ship_mut,
-    find_planet, find_player_and_ship, find_player_and_ship_mut, find_player_idx,
+    find_my_player, find_my_player_mut, find_my_ship, find_my_ship_mut, find_planet,
+    find_player_and_ship, find_player_and_ship_mut, find_player_idx, find_player_ship_index,
     index_planets_by_id,
 };
 use crate::inventory::{
@@ -490,7 +490,7 @@ fn apply_side_effects(
         match side_effect {
             DialogueOptionSideEffect::Nothing => {}
             DialogueOptionSideEffect::Undock => {
-                let my_ship_idx = find_my_ship_index(state, player_id);
+                let my_ship_idx = find_player_ship_index(state, player_id);
                 if let Some(my_ship_idx) = my_ship_idx {
                     spatial_movement::undock_ship(state, my_ship_idx, false, player_idx, prng);
                     state_changed = true;

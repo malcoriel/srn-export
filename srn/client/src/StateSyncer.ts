@@ -878,6 +878,9 @@ export class StateSyncer extends EventEmitter {
       'locations.*.asteroid_belts',
       'locations.*.ships.*.local_effects', // forcefully updated only for client in update world
       'locations.*.ships.*.local_effects_counter',
+      // this is only being set for current ship, and only by client - server will erase it
+      'locations.*.ships.*.auto_focus',
+      'locations.*.ships.*.hostile_auto_focus',
     ]),
     // overwrite state with server => bad for movement, good for numbers like hp
     // overwrite will drop client and replace it with server fields
@@ -922,8 +925,6 @@ export class StateSyncer extends EventEmitter {
       'locations.*.ships.*.navigate_target',
       'locations.*.ships.*.inventory',
       'locations.*.ships.*.tractor_target',
-      'locations.*.ships.*.auto_focus',
-      'locations.*.ships.*.hostile_auto_focus',
       'locations.*.ships.*.movement_markers',
       'locations.*.ships.*.health',
       'locations.*.ships.*.npc',

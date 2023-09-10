@@ -8,7 +8,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::abilities::{Ability, IdxOrName, SHOOT_ABILITY_DURATION, SHOOT_COOLDOWN_TICKS};
 use crate::indexing::{
-    find_my_player_mut, find_my_ship_index, find_my_ship_mut, find_player_idx_by_ship_id,
+    find_my_player_mut, find_my_ship_mut, find_player_idx_by_ship_id, find_player_ship_index,
     GameStateIndexes, ObjectSpecifier,
 };
 use crate::planet_movement::IBodyV2;
@@ -229,7 +229,7 @@ pub fn try_start_long_action_player_owned(
             revalidate(&mut ship.long_actions);
         }
         LongActionStart::Respawn => {
-            let ship_idx = find_my_ship_index(state, player_id);
+            let ship_idx = find_player_ship_index(state, player_id);
             if ship_idx.is_some() {
                 return false;
             }
@@ -246,21 +246,21 @@ pub fn try_start_long_action_player_owned(
             revalidate_player(&mut player.long_actions);
         }
         LongActionStart::Shoot { target, turret_id } => {
-            let ship_idx = find_my_ship_index(state, player_id);
+            let ship_idx = find_player_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
             }
             return try_start_shoot(state, target, ship_idx, turret_id, prng);
         }
         LongActionStart::Launch { turret_id } => {
-            let ship_idx = find_my_ship_index(state, player_id);
+            let ship_idx = find_player_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
             }
             return try_start_launch(state, ship_idx, turret_id, prng);
         }
         LongActionStart::DockInternal { to_planet, .. } => {
-            let ship_idx = find_my_ship_index(state, player_id);
+            let ship_idx = find_player_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
             }
@@ -268,7 +268,7 @@ pub fn try_start_long_action_player_owned(
             return try_start_dock(state, to_planet, ship_idx, prng);
         }
         LongActionStart::UndockInternal { from_planet } => {
-            let ship_idx = find_my_ship_index(state, player_id);
+            let ship_idx = find_player_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
             }
@@ -279,7 +279,7 @@ pub fn try_start_long_action_player_owned(
             ability_idx,
             params,
         } => {
-            let ship_idx = find_my_ship_index(state, player_id);
+            let ship_idx = find_player_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
             }
@@ -290,7 +290,7 @@ pub fn try_start_long_action_player_owned(
             ability_name,
             params,
         } => {
-            let ship_idx = find_my_ship_index(state, player_id);
+            let ship_idx = find_player_ship_index(state, player_id);
             if ship_idx.is_none() {
                 return false;
             }

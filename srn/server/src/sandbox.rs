@@ -216,7 +216,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
             }
         }
         SandboxCommand::AddMineral => {
-            if let Some(loc) = indexing::find_my_ship_index(state, player_id) {
+            if let Some(loc) = indexing::find_player_ship_index(state, player_id) {
                 let ship = &state.locations[loc.location_idx].ships[loc.ship_idx];
                 let pos = ship.spatial.position.clone();
                 let location = &mut state.locations[loc.location_idx];
@@ -224,7 +224,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
             }
         }
         SandboxCommand::AddContainer => {
-            if let Some(loc) = indexing::find_my_ship_index(state, player_id) {
+            if let Some(loc) = indexing::find_player_ship_index(state, player_id) {
                 let ship = &state.locations[loc.location_idx].ships[loc.ship_idx];
                 let pos = ship.spatial.position.clone();
                 let location = &mut state.locations[loc.location_idx];
@@ -355,7 +355,7 @@ pub fn mutate_state(state: &mut GameState, player_id: Uuid, cmd: SandboxCommand)
             if cmd.id.is_some() {
                 panic!("Cannot spawn asteroid with provided id after state setup");
             }
-            if let Some(loc) = indexing::find_my_ship_index(state, player_id) {
+            if let Some(loc) = indexing::find_player_ship_index(state, player_id) {
                 world::spawn_asteroid(
                     &mut state.locations[loc.location_idx],
                     cmd.position,

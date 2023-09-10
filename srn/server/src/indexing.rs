@@ -187,7 +187,7 @@ pub fn find_my_ship_mut(state: &mut GameState, player_id: Uuid) -> Option<&mut S
     return None;
 }
 
-pub fn find_my_ship_index(state: &GameState, player_id: Uuid) -> Option<ShipIdx> {
+pub fn find_player_ship_index(state: &GameState, player_id: Uuid) -> Option<ShipIdx> {
     let player = find_my_player(state, player_id);
     let mut idx = ShipIdx {
         location_idx: 0,
