@@ -12,6 +12,7 @@ use serde_derive::Serialize;
 use std::borrow::BorrowMut;
 use std::collections::{HashMap, VecDeque};
 use std::f64::consts::PI;
+use std::mem;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -207,6 +208,7 @@ impl TrajectoryResult {
 pub struct TrajectoryItem {
     // in relation to '0' where 0 is the start of the request
     pub ticks: i32,
+    pub is_reference_point: bool,
     pub spatial: SpatialProps,
 }
 
@@ -264,6 +266,13 @@ pub fn build_trajectory_accelerated(
 
                 let mut points = vec![];
 
+                // the current point to have interpolation
+                points.push(TrajectoryItem {
+                    ticks: 0,
+                    is_reference_point: false,
+                    spatial: spatial.clone(),
+                });
+
                 // first, we need to find 2 crucial point - max speed reach and start decelerate
                 // Stages of process are obviously for trapezoidal speed value - accelerate, maintain, decelerate
                 let curr_speed = spatial.velocity.euclidean_len();
@@ -292,6 +301,7 @@ pub fn build_trajectory_accelerated(
                         spatial.position.add(&dir_norm.scalar_mul(overshoot_dist));
                     points.push(TrajectoryItem {
                         ticks: 0,
+                        is_reference_point: true,
                         spatial: SpatialProps {
                             position: turn_around_point,
                             velocity: spatial.velocity.scalar_mul(-1.0),
@@ -302,6 +312,7 @@ pub fn build_trajectory_accelerated(
                     });
                     points.push(TrajectoryItem {
                         ticks: 0,
+                        is_reference_point: true,
                         spatial: SpatialProps {
                             position: to,
                             velocity: Vec2f64::zero(),
@@ -323,6 +334,7 @@ pub fn build_trajectory_accelerated(
                         // decelerate point
                         points.push(TrajectoryItem {
                             ticks: 0,
+                            is_reference_point: true,
                             spatial: SpatialProps {
                                 position: decelerate_point,
                                 velocity: dir_to_target.scalar_mul(mov.get_max_speed()),
@@ -334,6 +346,7 @@ pub fn build_trajectory_accelerated(
                         // end point
                         points.push(TrajectoryItem {
                             ticks: 0,
+                            is_reference_point: true,
                             spatial: SpatialProps {
                                 position: to,
                                 velocity: Vec2f64::zero(),
@@ -362,6 +375,7 @@ pub fn build_trajectory_accelerated(
                                 // peak point
                                 points.push(TrajectoryItem {
                                     ticks: 0,
+                                    is_reference_point: true,
                                     spatial: SpatialProps {
                                         position: spatial.position.add(
                                             &dir_to_target.scalar_mul(extra_distance_till_peak),
@@ -375,6 +389,7 @@ pub fn build_trajectory_accelerated(
                                 // end point
                                 points.push(TrajectoryItem {
                                     ticks: 0,
+                                    is_reference_point: true,
                                     spatial: SpatialProps {
                                         position: to,
                                         velocity: Vec2f64::zero(),
@@ -390,6 +405,7 @@ pub fn build_trajectory_accelerated(
                                 // we are in decelerate, so only need to decelerate further
                                 points.push(TrajectoryItem {
                                     ticks: 0,
+                                    is_reference_point: true,
                                     spatial: SpatialProps {
                                         position: to,
                                         velocity: Vec2f64::zero(),
@@ -415,6 +431,7 @@ pub fn build_trajectory_accelerated(
                                 // peak point
                                 points.push(TrajectoryItem {
                                     ticks: 0,
+                                    is_reference_point: true,
                                     spatial: SpatialProps {
                                         position: spatial.position.add(
                                             &dir_to_target.scalar_mul(extra_distance_till_peak),
@@ -428,6 +445,7 @@ pub fn build_trajectory_accelerated(
                                 // end point
                                 points.push(TrajectoryItem {
                                     ticks: 0,
+                                    is_reference_point: true,
                                     spatial: SpatialProps {
                                         position: to,
                                         velocity: Vec2f64::zero(),
@@ -452,6 +470,7 @@ pub fn build_trajectory_accelerated(
                                 // maintain point
                                 points.push(TrajectoryItem {
                                     ticks: 0,
+                                    is_reference_point: true,
                                     spatial: SpatialProps {
                                         position: maintain_point,
                                         velocity: dir_to_target.scalar_mul(mov.get_max_speed()),
@@ -463,6 +482,7 @@ pub fn build_trajectory_accelerated(
                                 // decelerate point
                                 points.push(TrajectoryItem {
                                     ticks: 0,
+                                    is_reference_point: true,
                                     spatial: SpatialProps {
                                         position: decelerate_point,
                                         velocity: dir_to_target.scalar_mul(mov.get_max_speed()),
@@ -474,6 +494,7 @@ pub fn build_trajectory_accelerated(
                                 // end point
                                 points.push(TrajectoryItem {
                                     ticks: 0,
+                                    is_reference_point: true,
                                     spatial: SpatialProps {
                                         position: to,
                                         velocity: Vec2f64::zero(),
@@ -488,6 +509,8 @@ pub fn build_trajectory_accelerated(
                     }
                 }
 
+                interpolate_and_estimate_trajectory_points(&mut points);
+
                 return TrajectoryResult::Success(Trajectory {
                     points: VecDeque::from(points),
                     total_ticks: 0,
@@ -499,6 +522,49 @@ pub fn build_trajectory_accelerated(
         },
         _ => panic!("cannot build trajectory for such movement"),
     }
+}
+
+pub const INTERPOLATE_TRAJECTORY_COUNT: usize = 10;
+pub fn interpolate_and_estimate_trajectory_points(points: &mut Vec<TrajectoryItem>) {
+    let mut extras: Vec<Vec<TrajectoryItem>> = vec![];
+    let points_len = points.len();
+    for i in 0..points_len - 1 {
+        let curr = &points[i];
+        let next = &points[i + 1];
+        let dist = next.spatial.position.subtract(&curr.spatial.position);
+        let dir = dist.normalize().unwrap_or(Vec2f64::zero());
+        let step_len = dist.euclidean_len() / (INTERPOLATE_TRAJECTORY_COUNT as f64 + 1.0);
+        let step = dir.scalar_mul(step_len);
+        let mut interpolated = vec![];
+        let desired_rotation = dir.angle_rad_circular_rotation(&Vec2f64::new(1.0, 0.0));
+        for j in 0..INTERPOLATE_TRAJECTORY_COUNT {
+            interpolated.push(TrajectoryItem {
+                ticks: 0,
+                is_reference_point: false,
+                spatial: SpatialProps {
+                    position: curr.spatial.position.add(&step.scalar_mul(j as f64 + 1.0)),
+                    velocity: curr.spatial.velocity.lerp_to(
+                        &next.spatial.velocity,
+                        j as f64 / INTERPOLATE_TRAJECTORY_COUNT as f64,
+                    ),
+                    angular_velocity: 0.0,
+                    rotation_rad: desired_rotation,
+                    radius: 0.0,
+                },
+            });
+        }
+        points[i + 1].spatial.rotation_rad = desired_rotation;
+        extras.push(interpolated);
+    }
+    let mut tmp: Vec<TrajectoryItem> = vec![];
+    let mut orig_counter = 0;
+    // the amount of elements matches the amount of gaps between the points of original trajectory, which is n-1
+    for mut extra_points in extras {
+        tmp.push(points[orig_counter].clone());
+        orig_counter += 1;
+        tmp.append(&mut extra_points)
+    }
+    mem::swap(points, &mut tmp);
 }
 
 // S_f - distance to target

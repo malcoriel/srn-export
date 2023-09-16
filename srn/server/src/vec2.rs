@@ -1,3 +1,4 @@
+use crate::world::lerp;
 use serde_derive::{Deserialize, Serialize};
 use std::f64::consts::PI;
 use std::fmt::{Debug, Display, Formatter, Result};
@@ -85,6 +86,13 @@ impl Vec2f64 {
         }
     }
 
+    pub fn lerp_to(self, to: &Vec2f64, percentage: f64) -> Vec2f64 {
+        return Vec2f64 {
+            x: lerp(self.x, to.x, percentage),
+            y: lerp(self.y, to.y, percentage),
+        };
+    }
+
     pub fn zero() -> Vec2f64 {
         Vec2f64 { x: 0.0, y: 0.0 }
     }
@@ -115,6 +123,9 @@ impl PartialEq for Vec2f64 {
 }
 
 impl Vec2f64 {
+    pub fn new(x: f64, y: f64) -> Self {
+        Self { x, y }
+    }
     pub fn add(&self, other: &Vec2f64) -> Vec2f64 {
         Vec2f64 {
             x: self.x + other.x,
