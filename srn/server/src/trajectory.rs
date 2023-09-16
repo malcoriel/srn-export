@@ -244,6 +244,7 @@ pub fn build_trajectory_accelerated(
     mov: &Movement,
     spatial: &SpatialProps,
 ) -> TrajectoryResult {
+    let eps = 1e-6;
     match mov {
         Movement::ShipAccelerated { .. } => match tr {
             TrajectoryRequest::StartAndStopPoint { to } => {
@@ -252,41 +253,164 @@ pub fn build_trajectory_accelerated(
                 {
                     return TrajectoryResult::AlreadyClose;
                 }
-                let naive =
-                    build_naive_trajectory(spatial.position, to, TRAJECTORY_MAX_ITER as usize);
-                let mut points = naive
-                    .into_iter()
-                    .enumerate()
-                    .map(|(_i, p)| TrajectoryItem {
-                        ticks: 0,
-                        spatial: SpatialProps {
-                            position: p,
-                            velocity: spatial.velocity,
-                            angular_velocity: spatial.angular_velocity,
-                            rotation_rad: spatial.rotation_rad,
-                            radius: spatial.radius,
-                        },
-                    })
-                    .collect::<VecDeque<_>>();
+                // We will (wrongly, intentionally) assume that the request is always coming from
+                // "stabilized" point, meaning a point that has rotation pointing
+                // towards the goal, and speed direction pointing towards the goal.
+                // In reality, this will be the job of another TrajectoryRequest::Stabilize that we
+                // will try to chain together with this one in complex cases.
+                // Also, we will assume that velocity at end is always zero, regardless of actual request.
+                // In reality, we will probably need a separate TrajectoryRequest::Realign that
+                // will handle that job.
 
-                // synchronize the speeds to make them continuous
-                for i in 0..(points.len() - 1) {
-                    let curr = &points[i];
-                    let next = &points[i + 1];
-                    let vel = next.spatial.position.subtract(&curr.spatial.position);
-                    if let Some(norm) = vel.normalize() {
-                        points[i].spatial.velocity = norm.scalar_mul(mov.get_max_speed());
+                let mut points = vec![];
+
+                // first, we need to find 2 crucial point - max speed reach and start decelerate
+                // Stages of process are obviously for trapezoidal speed value - accelerate, maintain, decelerate
+                let curr_speed = spatial.velocity.euclidean_len();
+                let acc = mov.get_current_linear_acceleration();
+                let time_to_compensate = curr_speed / acc;
+                let brake_distance = time_to_compensate * time_to_compensate * acc;
+                let time_to_compensate_max = mov.get_max_speed() / acc;
+                let brake_distance_max = time_to_compensate_max * time_to_compensate_max * acc;
+
+                let dist_to_target = spatial.position.euclidean_distance(&to);
+                if dist_to_target < brake_distance {
+                    // well, this actually means that trajectory is impossible.
+                    // however, we will do our best assuming maximal deceleration
+                    log2!("panic");
+                } else {
+                    // solvable situation
+                    if (curr_speed - mov.get_max_speed()).abs() < eps {
+                        log2!("maintain");
+
+                        // we are in maintain, so we need to fly till decelerate point
+                        let dir_to_target = to.subtract(&spatial.position).normalize().expect("max speed but zero direction and not after brake point, how can it be?");
+                        let decelerate_point =
+                            to.subtract(&dir_to_target.scalar_mul(time_to_compensate_max));
+
+                        // decelerate point
+                        points.push(TrajectoryItem {
+                            ticks: 0,
+                            spatial: SpatialProps {
+                                position: decelerate_point,
+                                velocity: dir_to_target.scalar_mul(mov.get_max_speed()),
+                                angular_velocity: 0.0,
+                                rotation_rad: 0.0,
+                                radius: 0.0,
+                            },
+                        });
+                        // end point
+                        points.push(TrajectoryItem {
+                            ticks: 0,
+                            spatial: SpatialProps {
+                                position: to,
+                                velocity: Vec2f64::zero(),
+                                angular_velocity: 0.0,
+                                rotation_rad: 0.0,
+                                radius: 0.0,
+                            },
+                        })
+                    } else {
+                        if dist_to_target < brake_distance_max {
+                            // we can't use the max speed acceleration, but we probably can accelerate
+                            // a bit - depending on the current speed and distance to target
+
+                            let current_speed = spatial.velocity.euclidean_len();
+                            if let Some(time_to_peak) =
+                                solve_peak_speed(dist_to_target, current_speed, acc)
+                            {
+                                let max_achievable_speed = current_speed + acc * time_to_peak;
+                                let extra_distance_till_peak = current_speed * time_to_peak
+                                    + acc * time_to_peak * time_to_peak;
+                                let dir_to_target = to.subtract(&spatial.position).normalize().expect("max speed but zero direction and not after brake point, how can it be?");
+                                log2!("peak");
+                                // peak point
+                                points.push(TrajectoryItem {
+                                    ticks: 0,
+                                    spatial: SpatialProps {
+                                        position: spatial.position.add(
+                                            &dir_to_target.scalar_mul(extra_distance_till_peak),
+                                        ),
+                                        velocity: dir_to_target.scalar_mul(max_achievable_speed),
+                                        angular_velocity: 0.0,
+                                        rotation_rad: 0.0,
+                                        radius: 0.0,
+                                    },
+                                });
+                                // end point
+                                points.push(TrajectoryItem {
+                                    ticks: 0,
+                                    spatial: SpatialProps {
+                                        position: to,
+                                        velocity: Vec2f64::zero(),
+                                        angular_velocity: 0.0,
+                                        rotation_rad: 0.0,
+                                        radius: 0.0,
+                                    },
+                                })
+                            } else {
+                                log2!("dec");
+                                // we are in decelerate, so only need to decelerate further
+                                points.push(TrajectoryItem {
+                                    ticks: 0,
+                                    spatial: SpatialProps {
+                                        position: to,
+                                        velocity: Vec2f64::zero(),
+                                        angular_velocity: 0.0,
+                                        rotation_rad: 0.0,
+                                        radius: 0.0,
+                                    },
+                                })
+                            }
+                        } else {
+                            log2!("full");
+                            // we are in accelerate, so need all 3 stages
+                            let dir_to_target = to.subtract(&spatial.position).normalize().expect("max speed but zero direction and not after brake point, how can it be?");
+                            let decelerate_point =
+                                to.subtract(&dir_to_target.scalar_mul(time_to_compensate));
+                            let maintain_point = spatial
+                                .position
+                                .add(&dir_to_target.scalar_mul(time_to_compensate)); // time_to_compensate = time_to_accelerate
+
+                            // maintain point
+                            points.push(TrajectoryItem {
+                                ticks: 0,
+                                spatial: SpatialProps {
+                                    position: maintain_point,
+                                    velocity: dir_to_target.scalar_mul(mov.get_max_speed()),
+                                    angular_velocity: 0.0,
+                                    rotation_rad: 0.0,
+                                    radius: 0.0,
+                                },
+                            });
+                            // decelerate point
+                            points.push(TrajectoryItem {
+                                ticks: 0,
+                                spatial: SpatialProps {
+                                    position: decelerate_point,
+                                    velocity: dir_to_target.scalar_mul(mov.get_max_speed()),
+                                    angular_velocity: 0.0,
+                                    rotation_rad: 0.0,
+                                    radius: 0.0,
+                                },
+                            });
+                            // end point
+                            points.push(TrajectoryItem {
+                                ticks: 0,
+                                spatial: SpatialProps {
+                                    position: to,
+                                    velocity: Vec2f64::zero(),
+                                    angular_velocity: 0.0,
+                                    rotation_rad: 0.0,
+                                    radius: 0.0,
+                                },
+                            })
+                        }
                     }
                 }
 
-                points
-                    .get_mut(points.len() - 2)
-                    .map(|p| p.spatial.velocity = p.spatial.velocity.scalar_mul(0.5));
-                points
-                    .get_mut(points.len() - 1)
-                    .map(|p| p.spatial.velocity = Vec2f64::zero());
                 return TrajectoryResult::Success(Trajectory {
-                    points,
+                    points: VecDeque::from(points),
                     total_ticks: 0,
                 });
             }
@@ -296,4 +420,39 @@ pub fn build_trajectory_accelerated(
         },
         _ => panic!("cannot build trajectory for such movement"),
     }
+}
+
+// S_f - distance to target
+// V_0 - current speed
+// a - acceleration, assuming same for acc and decc
+// the answer is time required to get to the peak speed until we need to decelerate to stop at the target
+fn solve_peak_speed(s_f: f64, v_0: f64, a: f64) -> Option<f64> {
+    if s_f < 0.0 {
+        warn2!("Distance cannot be negative");
+        return None;
+    }
+    if v_0 < 0.0 {
+        warn2!("Speed cannot be negative");
+        return None;
+    }
+    if a < 0.0 {
+        warn2!("Acceleration cannot be negative");
+        return None;
+    }
+    // if we had no speed in the beginning, then S/2 = a * t_h * t_h, where t_h is time necessary to get to peak of the speed
+    // also, t_h = t_0 + t_a, where t_0 is the time required to get to the current v_0, and t_a is difference between that and t_h
+    // also, S = S_f + S_0, where S_0 is distance passed to get to the speed V_0 from 0 speed
+    // also, t_0 = V_0 / a by definition
+    // then, (S_f + S_0) / 2 = a * t_h * t_h
+    // then t_h = sqrt((S_f + S_0) / (2*a))
+    // then, t_a that we seek is...
+    let t_h = ((s_f + (v_0 * v_0) / a) / 2.0 / a).sqrt();
+    let t_0 = v_0 / a;
+    let t_a = t_h - t_0;
+    return if t_a > 0.0 {
+        Some(t_a)
+    } else {
+        warn2!("Negative arrive to peak time");
+        None
+    };
 }
