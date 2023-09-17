@@ -142,7 +142,6 @@ pub fn spatial_distance(a: &SpatialProps, b: &SpatialProps, precision_multiplier
 
 pub const TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE: f64 = 4.0;
 pub const FINAL_POINT_PRECISION_MULTIPLIER: f64 = 5.0;
-pub const TRAJECTORY_INVALIDATE_DISTANCE: f64 = 50.0;
 impl TrajectoryResult {
     pub fn get_next(
         &mut self,
