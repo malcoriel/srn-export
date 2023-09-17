@@ -16,6 +16,7 @@ export interface ThreeTrajectoryItemProps {
   mainColor?: string;
   accColor?: string;
   radius?: number;
+  isReference?: boolean;
 }
 
 export const ThreeTrajectoryItem: React.FC<ThreeTrajectoryItemProps> = ({
@@ -25,9 +26,10 @@ export const ThreeTrajectoryItem: React.FC<ThreeTrajectoryItemProps> = ({
   velocityNormalized,
   accNormalized,
   radius = 1.0,
+  isReference = true,
 }) => {
-  const showAcc = Math.abs(accNormalized.length()) > 1e-6;
-  const showVel = Math.abs(velocityNormalized.length()) > 1e-6;
+  const showAcc = isReference && Math.abs(accNormalized.length()) > 1e-6;
+  const showVel = isReference && Math.abs(velocityNormalized.length()) > 1e-6;
   const [angleVel, angleAcc] = useMemo(() => {
     const vel = showVel
       ? getCounterClockwiseAngleMath(VectorF(1, 0), velocityNormalized)
@@ -47,10 +49,11 @@ export const ThreeTrajectoryItem: React.FC<ThreeTrajectoryItemProps> = ({
     const lerped = lerp(minColorL, maxColorL, len);
     return _.cloneDeep(baseColor).lightness(lerped);
   }, [minColorL, maxColorL, baseColor, velocityNormalized]);
+  const radiusAdjusted = isReference ? radius : radius / 3.0;
   return (
     <group
       position={posToThreePos(position.x, position.y)}
-      scale={vec3repeat((1.25 / 10.0) * radius)}
+      scale={vec3repeat((1.25 / 10.0) * radiusAdjusted)}
     >
       <mesh rotation={[0, 0, angleVel]}>
         <mesh>

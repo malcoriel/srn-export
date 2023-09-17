@@ -59,12 +59,13 @@ export const ThreeTrajectoryLayer: React.FC<{
                 velocityNormalized: Vector.fromIVector(
                   item.spatial.velocity
                 ).normalize(),
+                isReference: item.is_reference_point,
               };
               return res;
             })}
           />
         )}
-        {pointTarget && (
+        {pointTarget && !trajectory_v2 && (
           <mesh
             position={posToThreePos(pointTarget.x, pointTarget.y, SHIP_FIXED_Z)}
           >

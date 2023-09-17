@@ -19,6 +19,7 @@ export const ThreeTrajectory: React.FC<ThreeTrajectoryProps> = ({ items }) => {
           accColor="red"
           position={item.position}
           velocityNormalized={item.velocityNormalized}
+          isReference={item.isReference}
         />
       ))}
     </>

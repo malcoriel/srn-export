@@ -8,7 +8,8 @@ use crate::long_actions::{
 };
 use crate::planet_movement::IBodyV2;
 use crate::trajectory::{
-    build_trajectory_accelerated, TrajectoryItem, TrajectoryRequest, TrajectoryResult,
+    build_trajectory_accelerated, spatial_distance, TrajectoryItem, TrajectoryRequest,
+    TrajectoryResult,
 };
 use crate::vec2::{deg_to_rad, Precision, Vec2f64};
 use crate::world::{GameState, Location, PlanetV2, Ship, ShipIdx, SpatialProps, UpdateOptions};
@@ -204,7 +205,7 @@ pub const GAS_TURN_STABILIZATION_ANGULAR_DRAG_FACTOR: f64 = 2000.0;
 // to counteract the low rotation drag above for anything that is controlled,
 // specifically ships and rockets - let's imagine that
 // every engine has a special stabilizer that increases drag (while still negating it when turning)
-pub const SHIP_TURN_STABILIZATION_ANGULAR_DRAG_FACTOR: f64 = 30.0;
+pub const SHIP_TURN_STABILIZATION_ANGULAR_DRAG_FACTOR: f64 = 60.0;
 
 fn update_spatial_by_velocities(
     elapsed_micro: i64,
@@ -555,10 +556,20 @@ pub fn update_ships_navigation(
                     let (mut gas, mut turn, mut brake) = (0.0, 0.0, 0.0);
 
                     if let Some(target_point) = target_point {
-                        if let Some(first) = ship.trajectory_v2.get_next(&ship.spatial) {
-                            // steer towards next point, normal flow
+                        if let Some((first, mut next)) =
+                            ship.trajectory_v2.get_next(&ship.spatial, 5)
+                        {
+                            // instead of actually going to the next point, go to the average of N next points
+                            // this will make trajectory more or less smooth in case of heavy desync
+                            // between the trajectory builder and this steering
+
+                            let mut all = vec![];
+                            all.push(first);
+                            all.append(&mut next);
                             (gas, turn, brake) = guide_accelerated_ship_to_point(
-                                &first.spatial,
+                                &SpatialProps::average_of(
+                                    all.into_iter().map(|v| &v.spatial).collect::<Vec<_>>(),
+                                ),
                                 &ship.spatial,
                                 &ship.movement_definition,
                                 elapsed,

@@ -63,7 +63,7 @@ const cyclicalMovementStory = (
       if (accelerated) {
         yield {
           wait: 0,
-          waitAfter: wait,
+          waitAfter: 1000,
           action: ActionBuilder.ActionLongActionStart({
             player_id: '$my_player_id',
             long_action_start: LongActionStartBuilder.LongActionStartUseAbilityName(
@@ -77,8 +77,9 @@ const cyclicalMovementStory = (
         };
       }
       while (true) {
+        console.log('navigating to ', positions[currentIdx]);
         yield {
-          wait,
+          waitAfter: wait,
           action: ActionBuilder.ActionNavigate({
             ship_id: '$my_ship_id',
             target: positions[currentIdx],

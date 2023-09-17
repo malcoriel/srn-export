@@ -56,7 +56,7 @@ use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPD
 use crate::tractoring::{
     ContainersContainer, IMovable, MineralsContainer, MovablesContainer, MovablesContainerBase,
 };
-use crate::trajectory::{Trajectory, TrajectoryResult};
+use crate::trajectory::{Trajectory, TrajectoryItem, TrajectoryResult};
 use crate::vec2::{deg_to_rad, AsVec2f64, Precision, Vec2f64};
 use crate::world_actions::*;
 use crate::world_actions::{Action, ControlMarkers};
@@ -124,6 +124,32 @@ pub struct SpatialProps {
     pub angular_velocity: f64,
     pub rotation_rad: f64,
     pub radius: f64,
+}
+
+impl SpatialProps {
+    pub fn average_of(all: Vec<&SpatialProps>) -> SpatialProps {
+        let mut pos = Vec2f64::zero();
+        let mut vel = Vec2f64::zero();
+        let mut rad = 0.0;
+        let mut a_vel = 0.0;
+        let mut rot = 0.0;
+        let len = all.len() as f64;
+
+        for prop in all {
+            pos = pos.add(&prop.position);
+            vel = vel.add(&prop.velocity);
+            a_vel = a_vel + prop.angular_velocity;
+            rad = rad + prop.radius;
+            rot = rot + prop.rotation_rad;
+        }
+        SpatialProps {
+            position: pos.scalar_mul(1.0 / len),
+            velocity: vel.scalar_mul(1.0 / len),
+            radius: rad / len,
+            rotation_rad: rot / len,
+            angular_velocity: a_vel / len,
+        }
+    }
 }
 
 pub trait WithSpatial {
