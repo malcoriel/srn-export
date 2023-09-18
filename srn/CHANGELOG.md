@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.9.23 (2023-09-11)
+
+### Fixes
+
+* Significantly improved trajectory following for realistic movement.
+
 ## Version 0.9.22 (2023-09-11)
 
 ### Fixes
@@ -674,8 +680,8 @@
 ### Fixes
 
 * Fixes for objects visibility (camera culling optimization):
-    * No more star's "after-effects" when it leaves the camera view gradually.
-    * No more "dead" planet copies matching last visible planet position.
+  * No more star's "after-effects" when it leaves the camera view gradually.
+  * No more "dead" planet copies matching last visible planet position.
 
 ## Version 0.5.0
 
