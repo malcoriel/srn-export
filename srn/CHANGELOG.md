@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 0.9.23 (2023-09-11)
+## Version 0.9.23 (2023-09-18)
 
 ### Fixes
 
