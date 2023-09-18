@@ -16,7 +16,7 @@ use std::mem;
 use typescript_definitions::{TypeScriptify, TypescriptDefinition};
 use wasm_bindgen::prelude::wasm_bindgen;
 
-const TRAJECTORY_STEP_ITERS: i64 = 20;
+const OLD_TRAJECTORY_STEP_ITERS: i64 = 20;
 const TRAJECTORY_MAX_ITER: i32 = 10;
 const TRAJECTORY_EPS: f64 = 0.1;
 
@@ -33,7 +33,7 @@ pub fn build_trajectory_to_point(
     match for_movement {
         Movement::None => panic!("cannot build trajectory for no movement"),
         Movement::ShipMonotonous { .. } => {
-            let max_shift = TRAJECTORY_STEP_ITERS as f64
+            let max_shift = OLD_TRAJECTORY_STEP_ITERS as f64
                 * update_every_ticks as f64
                 * for_movement.get_max_speed();
             loop {
@@ -70,7 +70,7 @@ pub fn build_trajectory_to_planet(
     let mut counter = 0;
     let mut current_from = current_pos;
     let mut result = vec![];
-    let step_ticks = TRAJECTORY_STEP_ITERS as f64 * update_every_ticks as f64;
+    let step_ticks = OLD_TRAJECTORY_STEP_ITERS as f64 * update_every_ticks as f64;
     let max_shift = step_ticks * ship_movement.get_max_speed();
     let mut current_ticks = initial_ticks;
     let planet_radius = planet.get_spatial().radius;
@@ -140,8 +140,12 @@ pub fn spatial_distance(a: &SpatialProps, b: &SpatialProps, precision_multiplier
     return base_dist * precision_multiplier;
 }
 
-pub const TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE: f64 = 4.0;
+pub const TRAJECTORY_PROXIMITY_POINT_ELIMINATE_DISTANCE: f64 = 4.0;
+
+// we want to have roughly ~50% of the points of interpolation as the sliding window of target movement
+pub const TRAJECTORY_PREFETCH_POINTS: usize = (INTERPOLATE_TRAJECTORY_COUNT as f64 * 0.5) as usize;
 pub const FINAL_POINT_PRECISION_MULTIPLIER: f64 = 5.0;
+pub const TRAJECTORY_INVALIDATE_RAW_DISTANCE: f64 = 10.0; // raw in the sense it's not the typical spatial metric, but literal distance
 impl TrajectoryResult {
     pub fn get_next(
         &mut self,
@@ -164,15 +168,18 @@ impl TrajectoryResult {
                             first.precision_multiplier,
                         )
                     });
+                    let first_dist_raw = first.map_or(99999.0, |first| {
+                        first
+                            .spatial
+                            .position
+                            .euclidean_distance(&current_spatial.position)
+                    });
 
-                    if first_dist < TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE {
-                        let first = first.unwrap();
-                        log2!(
-                            "{first_dist} < {TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE}, {:?}",
-                            first
-                        );
+                    if first_dist < TRAJECTORY_PROXIMITY_POINT_ELIMINATE_DISTANCE {
                         // only one remaining, and reached - trajectory is complete
                         3
+                    } else if first_dist_raw > TRAJECTORY_INVALIDATE_RAW_DISTANCE {
+                        0
                     } else {
                         // only one remaining, can't prune anyway
                         1
@@ -185,7 +192,17 @@ impl TrajectoryResult {
                         current_spatial,
                         first.precision_multiplier,
                     );
-                    if first_dist < TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE {
+                    let first_dist_raw = first
+                        .spatial
+                        .position
+                        .euclidean_distance(&current_spatial.position);
+
+                    let second_dist_raw = first
+                        .spatial
+                        .position
+                        .euclidean_distance(&current_spatial.position);
+
+                    if first_dist < TRAJECTORY_PROXIMITY_POINT_ELIMINATE_DISTANCE {
                         2
                     } else {
                         let second_dist = spatial_distance(
@@ -193,7 +210,12 @@ impl TrajectoryResult {
                             current_spatial,
                             second.precision_multiplier,
                         );
-                        if second_dist < first_dist {
+
+                        if first_dist_raw > TRAJECTORY_INVALIDATE_RAW_DISTANCE
+                            && second_dist_raw > TRAJECTORY_INVALIDATE_RAW_DISTANCE
+                        {
+                            0
+                        } else if second_dist < first_dist {
                             2
                         } else {
                             1
@@ -231,7 +253,7 @@ impl TrajectoryResult {
         // assuming that the head was already received, those are just extra next items to
         // make the trajectory guidance smooth
         let mut res = vec![];
-        for i in 1..n {
+        for i in 1..(n + 1) {
             if let Some(item) = points.get(i) {
                 res.push(item);
             }
@@ -300,7 +322,7 @@ pub fn build_trajectory_accelerated(
                         0.5,
                     );
                     // sometimes I overdo the trajectory for some reason and build it again when unit is already close
-                    if too_close_dist < TRAJECTORY_PROXIMITY_ELIMINATE_DISTANCE {
+                    if too_close_dist < TRAJECTORY_PROXIMITY_POINT_ELIMINATE_DISTANCE {
                         return TrajectoryResult::AlreadyClose;
                     }
                     // We will (wrongly, intentionally) assume that the request is always coming from
@@ -587,7 +609,7 @@ pub fn build_trajectory_accelerated(
     }
 }
 
-pub const INTERPOLATE_TRAJECTORY_COUNT: usize = 5;
+pub const INTERPOLATE_TRAJECTORY_COUNT: usize = 16;
 pub fn interpolate_and_estimate_trajectory_points(points: &mut Vec<TrajectoryItem>) {
     let mut extras: Vec<Vec<TrajectoryItem>> = vec![];
     let points_len = points.len();
@@ -596,21 +618,28 @@ pub fn interpolate_and_estimate_trajectory_points(points: &mut Vec<TrajectoryIte
         let next = &points[i + 1];
         let dist = next.spatial.position.subtract(&curr.spatial.position);
         let dir = dist.normalize().unwrap_or(Vec2f64::zero());
-        let step_len = dist.euclidean_len() / (INTERPOLATE_TRAJECTORY_COUNT as f64 + 1.0);
+        let dist_len = dist.euclidean_len();
+        let mut steps_count = INTERPOLATE_TRAJECTORY_COUNT as f64;
+        let mut step_len = dist_len / (steps_count + 1.0);
+        // if this is not done, concept of next may eliminate next points in normal flow, leading to constants invalidation of trajectory
+        while step_len > TRAJECTORY_INVALIDATE_RAW_DISTANCE / 2.0 {
+            steps_count += 1.0;
+            step_len = dist_len / (steps_count + 1.0);
+        }
         let step = dir.scalar_mul(step_len);
         let mut interpolated = vec![];
         let desired_rotation = dir.angle_rad_circular_rotation(&Vec2f64::new(1.0, 0.0));
-        for j in 0..INTERPOLATE_TRAJECTORY_COUNT {
+        for j in 0..(steps_count as usize) {
             interpolated.push(TrajectoryItem {
                 ticks: 0,
                 is_reference_point: false,
                 precision_multiplier: 1.0,
                 spatial: SpatialProps {
                     position: curr.spatial.position.add(&step.scalar_mul(j as f64 + 1.0)),
-                    velocity: curr.spatial.velocity.lerp_to(
-                        &next.spatial.velocity,
-                        j as f64 / INTERPOLATE_TRAJECTORY_COUNT as f64,
-                    ),
+                    velocity: curr
+                        .spatial
+                        .velocity
+                        .lerp_to(&next.spatial.velocity, j as f64 / steps_count),
                     angular_velocity: 0.0,
                     rotation_rad: desired_rotation,
                     radius: 0.0,

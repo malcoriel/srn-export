@@ -9,7 +9,7 @@ use crate::long_actions::{
 use crate::planet_movement::IBodyV2;
 use crate::trajectory::{
     build_trajectory_accelerated, spatial_distance, TrajectoryItem, TrajectoryRequest,
-    TrajectoryResult,
+    TrajectoryResult, TRAJECTORY_PREFETCH_POINTS,
 };
 use crate::vec2::{deg_to_rad, Precision, Vec2f64};
 use crate::world::{GameState, Location, PlanetV2, Ship, ShipIdx, SpatialProps, UpdateOptions};
@@ -556,8 +556,9 @@ pub fn update_ships_navigation(
                     let (mut gas, mut turn, mut brake) = (0.0, 0.0, 0.0);
 
                     if let Some(target_point) = target_point {
+                        let prefetch = TRAJECTORY_PREFETCH_POINTS;
                         if let Some((first, mut next)) =
-                            ship.trajectory_v2.get_next(&ship.spatial, 5)
+                            ship.trajectory_v2.get_next(&ship.spatial, prefetch)
                         {
                             // instead of actually going to the next point, go to the average of N next points
                             // this will make trajectory more or less smooth in case of heavy desync
@@ -565,7 +566,11 @@ pub fn update_ships_navigation(
 
                             let mut all = vec![];
                             all.push(first);
-                            all.append(&mut next);
+                            if next.len() >= prefetch / 2 {
+                                // prevent having too few points, especially of even number
+                                // since that can get ship stuck between 2
+                                all.append(&mut next);
+                            }
                             (gas, turn, brake) = guide_accelerated_ship_to_point(
                                 &SpatialProps::average_of(
                                     all.into_iter().map(|v| &v.spatial).collect::<Vec<_>>(),
