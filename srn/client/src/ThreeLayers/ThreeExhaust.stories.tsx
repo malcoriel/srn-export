@@ -4,6 +4,7 @@ import * as uuid from 'uuid';
 import { StoryCanvas } from '../TestUI/StoryCanvas';
 import { ThreeSpaceBackground } from './ThreeSpaceBackground';
 import { ThreeExhaust } from './ThreeExhaust';
+import { VectorFZero } from '../utils/Vector';
 
 export default {
   title: 'Three/ThreeExhaust',
@@ -19,9 +20,17 @@ export default {
     radius: {
       control: {
         type: 'range',
-        min: 1.0,
-        max: 10.0,
+        min: 10.0,
+        max: 30.0,
         step: 0.5,
+      },
+    },
+    intensity: {
+      control: {
+        type: 'range',
+        min: 0.0,
+        max: 1.0,
+        step: 0.1,
       },
     },
   },
@@ -37,10 +46,12 @@ const Template: Story = (args) => {
       <StoryCanvas zoom={15.0} scale={2.0}>
         <ThreeSpaceBackground size={256} shaderShift={0} />
         <ThreeExhaust
-          position={[0, 0, 10]}
+          color={args.color}
+          position={VectorFZero}
           rotation={args.rotation}
-          key={revision} // no json.stringify props because it causes remount
+          key={JSON.stringify(args) + revision}
           radius={args.radius}
+          intensity={args.intensity}
         />
       </StoryCanvas>
     </div>
@@ -51,4 +62,6 @@ export const Basic = Template.bind({});
 Basic.args = {
   rotation: 0.0,
   radius: 20.0,
+  color: '#ffcb00',
+  intensity: 1.0,
 };
