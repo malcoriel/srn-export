@@ -15,8 +15,8 @@ import { ShipShape } from './ShipShape';
 import { ThreeShipTurrets, TurretProps } from './ThreeShipTurrets';
 import { LongAction } from '../../../world/pkg';
 import Color from 'color';
-import { MovementMarkers } from './ThreeProjectilesLayer';
 import { useStore } from '../store';
+import { MovementMarkers } from './MovementMarkers';
 
 export const BEAM_WIDTH = 0.3;
 

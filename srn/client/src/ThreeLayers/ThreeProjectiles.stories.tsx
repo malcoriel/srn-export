@@ -33,7 +33,7 @@ const Template: Story = (args) => {
   }, []);
   return (
     <div>
-      <StoryCanvas withRuler zoom={8.0}>
+      <StoryCanvas withRuler zoom={16.0}>
         <ThreeSpaceBackground size={1024} shaderShift={0} />
         <ThreeRocket
           position={VectorFZero}

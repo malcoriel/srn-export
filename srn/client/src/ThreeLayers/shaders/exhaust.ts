@@ -1,12 +1,6 @@
 // forked from https://www.shadertoy.com/view/MtByRh (MIT)
 import { Vector3 } from 'three';
-import {
-  FloatUniformValue,
-  Vector2UniformValue,
-  Vector3UniformValue,
-} from './uniformTypes';
-import { Vector2 } from 'three';
-import { perlinNoise } from './shaderFunctions';
+import { FloatUniformValue, Vector3UniformValue } from './uniformTypes';
 
 export const fragmentShader = `#version 300 es
 precision highp float;
@@ -14,6 +8,7 @@ precision highp int;
 
 uniform float iTime;
 uniform float intensity;
+uniform float opacity;
 uniform vec3 mainColor;
 
 in vec2 coordNorm;
@@ -65,7 +60,7 @@ void mainImage( out vec4 fragColor )
   // main shape
   if (coordNorm.y > pow(border, 1.3) + main_level / pow(intensity, 0.3) + flicker / 40.0) {
     fragColor.rgb = color;
-    fragColor.a = 0.7;
+    fragColor.a = 0.7 * opacity;
   }
   else {
     fragColor.a = 0.0;
@@ -86,8 +81,7 @@ void mainImage( out vec4 fragColor )
           float sy = cx * sin(angle) + cy * cos(angle);
           float size = 5e-3 / cd * intensity;
           if (sy < particleCenter + size && sy > particleCenter - size && abs(sx) < size) {
-            fragColor.a = 1.2 - cd / radius * intensity;
-
+            fragColor.a = (1.2 - cd / radius * intensity) * opacity;
             fragColor.rgb = mainColor;
           }
         }
@@ -98,12 +92,12 @@ void mainImage( out vec4 fragColor )
   // extra inner
   if (coordNorm.y > pow(border, 1.5) + inner_level /  pow(intensity, 0.3) + flicker2 / 40.0) {
     fragColor.rgb += 0.1;
-    fragColor.a = 0.9;
+    fragColor.a = 0.9 * opacity;
   }
   // extra inner
   if (coordNorm.y > pow(border, 1.7) + deep_inner_level /  pow(intensity, 0.3) + flicker3 / 40.0) {
     fragColor.rgb += 0.2;
-    fragColor.a = 1.0;
+    fragColor.a = 1.0 * opacity;
   }
 }
 
@@ -137,9 +131,11 @@ void main() {
 export const uniforms: {
   iTime: FloatUniformValue;
   intensity: FloatUniformValue;
+  opacity: FloatUniformValue;
   mainColor: Vector3UniformValue;
 } = {
   mainColor: { value: new Vector3(0.5, 0.5, 1.0) },
   iTime: { value: 0 },
+  opacity: { value: 1.0 },
   intensity: { value: 1.0 },
 };

@@ -6,6 +6,7 @@ import { vecToThreePos } from './util';
 import { IVector, VectorF } from '../utils/Vector';
 import Color from 'color';
 import _ from 'lodash';
+import { useFadingMaterial } from './UseFadingMaterial';
 
 export type ThreeExhaustProps = {
   position: IVector;
@@ -13,6 +14,7 @@ export type ThreeExhaustProps = {
   rotation: number;
   intensity: number;
   color: string;
+  fadeOver?: number;
 };
 export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
   position,
@@ -20,7 +22,9 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
   rotation,
   intensity,
   color,
+  fadeOver,
 }) => {
+  const materialRef1 = useFadingMaterial(fadeOver);
   const meshRef = useRef<Mesh>();
   useFrame(() => {
     if (meshRef && meshRef.current) {
@@ -45,6 +49,7 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
       <mesh ref={meshRef} position={[0, -radius / 4, 0]}>
         <planeBufferGeometry args={[radius / 2, radius / 2]} />
         <rawShaderMaterial
+          ref={materialRef1}
           transparent
           fragmentShader={fragmentShader}
           vertexShader={vertexShader}
