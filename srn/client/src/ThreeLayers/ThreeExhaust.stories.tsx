@@ -51,7 +51,9 @@ const Template: Story = (args) => {
           rotation={args.rotation}
           key={JSON.stringify(args) + revision}
           radius={args.radius}
-          intensity={args.intensity}
+          intensity={args.useIntensity ? args.intensity : undefined}
+          useIntensity={args.useIntensity}
+          speedUp={args.speedUp}
         />
       </StoryCanvas>
     </div>
@@ -64,4 +66,6 @@ Basic.args = {
   radius: 20.0,
   color: '#ffcb00',
   intensity: 1.0,
+  useIntensity: true,
+  speedUp: false,
 };

@@ -8,12 +8,16 @@ import Color from 'color';
 import _ from 'lodash';
 import { useFadingMaterial } from './UseFadingMaterial';
 
+const INTENSITY_ANIMATION_PER_FRAME = 0.05;
+
 export type ThreeExhaustProps = {
   position: IVector;
   radius: number;
   rotation: number;
-  intensity: number;
+  intensity?: number;
+  useIntensity?: boolean;
   color: string;
+  speedUp?: boolean;
   fadeOver?: number;
 };
 export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
@@ -23,6 +27,8 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
   intensity,
   color,
   fadeOver,
+  speedUp,
+  useIntensity,
 }) => {
   const materialRef1 = useFadingMaterial(fadeOver);
   const meshRef = useRef<Mesh>();
@@ -31,12 +37,36 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
       const shaderMat = meshRef.current.material as RawShaderMaterial;
       if (shaderMat && shaderMat.uniforms && shaderMat.uniforms.iTime) {
         shaderMat.uniforms.iTime.value += 0.1;
+        if (!useIntensity) {
+          const defaultValue = speedUp ? 0.0 : 1.0;
+          meshRef.current.userData.speedUpCounter =
+            typeof meshRef.current.userData.speedUpCounter === 'undefined'
+              ? defaultValue
+              : meshRef.current.userData.speedUpCounter;
+          if (speedUp) {
+            meshRef.current.userData.speedUpCounter += INTENSITY_ANIMATION_PER_FRAME;
+          } else {
+            meshRef.current.userData.speedUpCounter -= INTENSITY_ANIMATION_PER_FRAME;
+          }
+          if (meshRef.current.userData.speedUpCounter > 1.0) {
+            meshRef.current.userData.speedUpCounter = 1.0;
+          } else if (meshRef.current.userData.speedUpCounter < 0.0) {
+            meshRef.current.userData.speedUpCounter = 0.0;
+          }
+          shaderMat.uniforms.intensity.value =
+            meshRef.current.userData.speedUpCounter;
+        }
       }
     }
   });
   const uniforms2 = useMemo(() => {
     const patchedUniforms = _.cloneDeep(uniforms);
-    patchedUniforms.intensity.value = intensity;
+    if (useIntensity) {
+      patchedUniforms.intensity.value =
+        typeof intensity === 'undefined' ? 1.0 : intensity;
+    } else {
+      patchedUniforms.intensity.value = 0.0;
+    }
     const numbers = new Color(color).unitArray();
     patchedUniforms.mainColor.value = new Vector3(...numbers);
     return patchedUniforms;

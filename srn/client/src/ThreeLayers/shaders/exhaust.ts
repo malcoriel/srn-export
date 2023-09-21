@@ -68,7 +68,7 @@ void mainImage( out vec4 fragColor )
 
     // make some sparks outside the main cones
 
-    if (intensity > 0.5) {
+    if (intensity > 0.2) {
       float radius = 0.8 * intensity;
       float angle_step = PI / 20.0;
       for (int i = 0; i < 21; ++i) {
