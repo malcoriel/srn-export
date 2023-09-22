@@ -17,6 +17,7 @@ import { LongAction } from '../../../world/pkg';
 import Color from 'color';
 import { useStore } from '../store';
 import { MovementMarkers } from './MovementMarkers';
+import { ThreeExhaust } from './ThreeExhaust';
 
 export const BEAM_WIDTH = 0.3;
 
@@ -36,6 +37,8 @@ export type ThreeShipProps = {
   turrets?: TurretProps[];
   markers: string | null;
   velocity: IVector;
+  gas: boolean;
+  brake: boolean;
   findObjectPositionByIdBound?: (id: string | number) => Vector | null;
 };
 
@@ -57,6 +60,8 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     markers,
     velocity,
     findObjectPositionByIdBound = () => null,
+    gas,
+    brake,
   }) => {
     const tractorRef = useRef<Mesh>();
     const tractorBeamParams = useMemo(() => {
@@ -164,6 +169,47 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
             radius={radius}
           />
         )}
+        <ThreeExhaust
+          color="#ff0"
+          speedUp={gas || brake}
+          inverse={brake}
+          position={VectorF(-0.4 * radius, 0.16 * radius).turnCounterClockwise(
+            rotation
+          )}
+          radius={radius * 1.0}
+          rotation={rotation}
+        />
+        <ThreeExhaust
+          color="#ff0"
+          speedUp={gas || brake}
+          inverse={brake}
+          position={VectorF(-0.4 * radius, -0.16 * radius).turnCounterClockwise(
+            rotation
+          )}
+          radius={radius * 1.0}
+          rotation={rotation}
+        />
+        <ThreeExhaust
+          color="#ff0"
+          speedUp={gas || brake}
+          inverse={brake}
+          position={VectorF(-0.35 * radius, 0.45 * radius).turnCounterClockwise(
+            rotation
+          )}
+          radius={radius * 0.75}
+          rotation={rotation - 0.8}
+        />
+        <ThreeExhaust
+          color="#ff0"
+          speedUp={gas || brake}
+          inverse={brake}
+          position={VectorF(
+            -0.35 * radius,
+            -0.45 * radius
+          ).turnCounterClockwise(rotation)}
+          radius={radius * 0.75}
+          rotation={rotation + 0.8}
+        />
       </ShipShape>
     );
   },

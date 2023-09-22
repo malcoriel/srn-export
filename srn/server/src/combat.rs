@@ -2,23 +2,19 @@ use crate::abilities::{Ability, SHOOT_COOLDOWN_TICKS};
 use crate::autofocus::{
     extract_closest_into, object_index_into_object_id, object_index_into_object_pos, SpatialIndex,
 };
-use crate::effects::{add_effect, LocalEffect, LocalEffectCreate};
+use crate::effects::{add_effect, LocalEffectCreate};
 use crate::fof::{FofActor, FofOverrides};
 use crate::hp::{object_index_into_health_mut, object_index_into_to_clean_mut};
 use crate::indexing::{
-    find_my_player_mut, find_my_ship_mut, find_player_ship_index, find_spatial_ref_by_spec,
-    GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
+    find_player_ship_index, GameStateIndexes, ObjectIndexSpecifier, ObjectSpecifier,
 };
-use crate::planet_movement::project_body_relative_position;
 use crate::properties::properties_main::ObjectProperty;
 use crate::properties::*;
 use crate::random_stuff::generate_normal_random;
-use crate::spatial_movement::{align_rotation_with_velocity, Movement};
-use crate::system_gen::DEFAULT_WORLD_UPDATE_EVERY_TICKS;
+use crate::spatial_movement::Movement;
 use crate::vec2::Vec2f64;
 use crate::world::{
-    remove_object, GameState, Location, Player, ProcessProps, Ship, SpatialProps, TemplateId,
-    UpdateOptions,
+    remove_object, GameState, Location, ProcessProps, Ship, SpatialProps, TemplateId, UpdateOptions,
 };
 use crate::{indexing, new_id, world};
 use rand_pcg::Pcg64Mcg;
@@ -445,20 +441,20 @@ pub fn markers_to_string(gas: f64, turn: f64, brake: f64) -> Option<String> {
     if gas != 0.0 || turn != 0.0 {
         let mut str: String = "".to_string();
         if gas > 0.0 {
-            str += "↑"
+            // str += "↑"
         } else if gas < 0.0 {
-            str += "↓"
+            // str += "↓"
         }
         // visual rotation is inverted compared to math rotation which is used
         if turn > 0.0 {
-            str += "↶";
+            // str += "↶";
             // str += format!("↶{:.2}", turn).as_str();
         } else if turn < 0.0 {
-            str += "↷";
+            // str += "↷";
             // str += format!("↷{:.2}", turn).as_str();
         }
         if brake > 0.0 {
-            str += "⨯"
+            // str += "⨯"
         }
         Some(str)
     } else {
@@ -659,6 +655,9 @@ pub struct RocketProps {
     pub health: Health,
     pub to_clean: bool,
     pub fof_overrides: Option<FofOverrides>,
+    pub gas: f64,
+    pub turn: f64,
+    pub brake: f64,
 }
 
 #[skip_serializing_none]

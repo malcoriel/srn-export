@@ -13,6 +13,7 @@ import {
   shootTargets,
 } from './TurretStoriesHelpers';
 import { cycle } from '../utils/cycle';
+import { keysActive, ShipControls } from '../utils/ShipControls';
 
 export default {
   title: 'Three/Ship',
@@ -28,8 +29,8 @@ export default {
     rotation: {
       control: {
         type: 'range',
-        min: -Math.PI,
-        max: Math.PI,
+        min: 0,
+        max: 2 * Math.PI,
         step: 0.01,
       },
     },
@@ -86,6 +87,8 @@ const MainTemplate: Story = (args) => {
           findObjectPositionByIdBound={() => target}
           markers={null}
           velocity={VectorFzero}
+          gas={keysActive.KeyW}
+          brake={keysActive.KeyX || keysActive.KeyS}
         />
       ) : (
         <ThreeShipWreck
@@ -99,6 +102,7 @@ const MainTemplate: Story = (args) => {
           position={VectorF(0, 0)}
         />
       )}
+      <ShipControls />
     </StoryCanvas>
   );
 };

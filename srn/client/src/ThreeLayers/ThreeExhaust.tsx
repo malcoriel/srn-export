@@ -18,6 +18,7 @@ export type ThreeExhaustProps = {
   useIntensity?: boolean;
   color: string;
   speedUp?: boolean;
+  inverse?: boolean;
   fadeOver?: number;
 };
 export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
@@ -29,6 +30,7 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
   fadeOver,
   speedUp,
   useIntensity,
+  inverse,
 }) => {
   const materialRef1 = useFadingMaterial(fadeOver);
   const meshRef = useRef<Mesh>();
@@ -67,6 +69,7 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
     } else {
       patchedUniforms.intensity.value = 0.0;
     }
+    patchedUniforms.inverse.value = inverse ? 1.0 : 0.0;
     const numbers = new Color(color).unitArray();
     patchedUniforms.mainColor.value = new Vector3(...numbers);
     return patchedUniforms;

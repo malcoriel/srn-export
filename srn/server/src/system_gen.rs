@@ -639,6 +639,9 @@ fn add_default_templates(state: &mut GameState) {
         },
         to_clean: false,
         fof_overrides: None,
+        gas: 0.0,
+        turn: 0.0,
+        brake: 0.0,
     });
     if let Some(templates) = &mut state.projectile_templates {
         templates.push(rocket_template);

@@ -1187,28 +1187,28 @@ pub fn update_location(
 
     for (idx, proj) in state.locations[loc_idx].projectiles.iter_mut().enumerate() {
         let movement_clone = proj.get_movement().clone();
-        if let Some(target_spatial) = &target_spatials[idx] {
+        let (gas, turn, brake) = if let Some(target_spatial) = &target_spatials[idx] {
             let (gas, turn, brake) = guide_projectile(proj, target_spatial, elapsed);
             *proj.get_markers_mut() = markers_to_string(gas, turn, brake);
-            update_accelerated_movement(
-                elapsed,
-                proj.get_spatial_mut(),
-                &movement_clone,
-                gas,
-                turn,
-                brake,
-                EXTRA_PROJECTILE_TURN_DRAG,
-            );
+            (gas, turn, brake)
         } else {
-            update_accelerated_movement(
-                elapsed,
-                proj.get_spatial_mut(),
-                &movement_clone,
-                1.0,
-                0.0,
-                0.0,
-                EXTRA_PROJECTILE_TURN_DRAG,
-            );
+            (1.0, 0.0, 0.0)
+        };
+        update_accelerated_movement(
+            elapsed,
+            proj.get_spatial_mut(),
+            &movement_clone,
+            gas,
+            turn,
+            brake,
+            EXTRA_PROJECTILE_TURN_DRAG,
+        );
+        match proj {
+            Projectile::Rocket(props) => {
+                props.gas = gas;
+                props.turn = turn;
+                props.brake = brake;
+            }
         }
     }
     sampler.end(guidance_id);

@@ -68,7 +68,9 @@ export const executeSyncAction = (act: Action) => {
   }
 };
 
-const keysActive: Record<string, boolean> = {};
+// Is primarily export for testing e.g. in storybook.
+// actionsActive should be used for the real game.
+export const keysActive: Record<string, boolean> = {};
 
 const refreshActiveActions = () => {
   const ns = NetState.get();

@@ -7,7 +7,7 @@ import { ThreeExhaust } from './ThreeExhaust';
 import { VectorFZero } from '../utils/Vector';
 
 export default {
-  title: 'Three/ThreeExhaust',
+  title: 'Three/Exhaust',
   argTypes: {
     rotation: {
       control: {
@@ -51,6 +51,7 @@ const Template: Story = (args) => {
           rotation={args.rotation}
           key={JSON.stringify(args) + revision}
           radius={args.radius}
+          inverse={args.inverse}
           intensity={args.useIntensity ? args.intensity : undefined}
           useIntensity={args.useIntensity}
           speedUp={args.speedUp}
@@ -68,4 +69,5 @@ Basic.args = {
   intensity: 1.0,
   useIntensity: true,
   speedUp: false,
+  inverse: false,
 };

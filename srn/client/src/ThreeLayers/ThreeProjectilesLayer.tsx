@@ -62,6 +62,12 @@ export const ThreeProjectilesLayer: React.FC<ThreeProjectilesLayerParams> = ({
               radius={projectile.fields.spatial.radius}
               markers={projectile.fields.markers}
               key={projectile.fields.id}
+              brake={
+                projectile.fields.brake > 0.0 ||
+                projectile.fields.gas < 0.0 ||
+                Math.abs(projectile.fields.turn) > 1e-3
+              }
+              gas={projectile.fields.gas > 0.0}
             />
           );
         })}
