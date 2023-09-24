@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 0.9.24 (2023-09-24)
+
+### New
+
+* Added new exhaust animation for ships and rockets.
+* Fully switched default ship movement to 'realistic' accelerated one.
+
+### Fixes
+
+* Fixed a bug where ship trajectory wasn't cleaned when manual movement happened.
+
 ## Version 0.9.23 (2023-09-18)
 
 ### Fixes
@@ -680,8 +691,8 @@
 ### Fixes
 
 * Fixes for objects visibility (camera culling optimization):
-  * No more star's "after-effects" when it leaves the camera view gradually.
-  * No more "dead" planet copies matching last visible planet position.
+    * No more star's "after-effects" when it leaves the camera view gradually.
+    * No more "dead" planet copies matching last visible planet position.
 
 ## Version 0.5.0
 
