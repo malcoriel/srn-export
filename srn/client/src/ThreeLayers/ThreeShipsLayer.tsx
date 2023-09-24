@@ -105,7 +105,7 @@ export const ThreeShipsLayer: React.FC<{
                 : false
             }
             turn={
-              ship.acceleration_markers ? ship.acceleration_markers.turn : false
+              ship.acceleration_markers ? ship.acceleration_markers.turn : 0.0
             }
           />
         );

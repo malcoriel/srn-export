@@ -91,6 +91,9 @@ pub fn update_ship_manual_movement(
                     .brake
                     .as_ref()
                     .map_or(0.0, |m| if m.forward { 1.0 } else { 0.0 });
+            if gas_sign != 0.0 || turn_sign != 0 || brake_sign != 0.0 {
+                ship.trajectory_v2 = TrajectoryResult::Inaccessible;
+            }
             update_accelerated_movement(
                 elapsed_micro,
                 &mut ship.spatial,
@@ -100,6 +103,14 @@ pub fn update_ship_manual_movement(
                 brake_sign,
                 1.0,
             );
+            if ship.acceleration_markers.is_none() {
+                // otherwise this will overwrite legit
+                ship.acceleration_markers = Some(AccelerationMarkers {
+                    gas: gas_sign,
+                    turn: turn_sign,
+                    brake: brake_sign,
+                });
+            }
         }
         Movement::RadialMonotonous { .. } => {}
         Movement::AnchoredStatic { .. } => {}
@@ -464,6 +475,9 @@ pub fn update_ships_navigation(
     }));
 
     for mut ship in ships.iter_mut() {
+        // due to a bit of a conflict for acceleration markers between manual and guided movement, we need to reset the value of
+        // markers every turn
+        ship.acceleration_markers = None;
         if docking_ship_ids.contains(&ship.id)
             || undocking_ship_ids.contains(&ship.id)
             || !update_options
@@ -579,6 +593,10 @@ pub fn update_ships_navigation(
                                 &ship.movement_definition,
                                 elapsed,
                             );
+                            if ship.acceleration_markers.is_none() {
+                                ship.acceleration_markers =
+                                    Some(AccelerationMarkers { gas, turn, brake });
+                            }
                         } else {
                             let tr_res = build_trajectory_accelerated(
                                 TrajectoryRequest::StartAndStopPoint { to: target_point },
@@ -613,7 +631,6 @@ pub fn update_ships_navigation(
                         1.0,
                     );
                     ship.markers = acceleration_markers_to_string(gas, turn, brake);
-                    ship.acceleration_markers = Some(AccelerationMarkers { gas, turn, brake });
                 }
                 _ => panic!("unsupported kind of movement for ship navigation"),
             }

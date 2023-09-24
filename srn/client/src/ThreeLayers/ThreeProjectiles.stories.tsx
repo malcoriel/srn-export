@@ -50,7 +50,6 @@ const Template: Story = (args) => {
           radius={1}
           gas={args.gas}
           brake={args.brake}
-          turn={args.turn}
           fadeOver={args.decay ? 3e6 : undefined}
           markers="abcdef"
           key={JSON.stringify(args) + revision}
