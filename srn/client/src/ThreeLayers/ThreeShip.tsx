@@ -39,6 +39,7 @@ export type ThreeShipProps = {
   velocity: IVector;
   gas: boolean;
   brake: boolean;
+  turn: number;
   findObjectPositionByIdBound?: (id: string | number) => Vector | null;
 };
 
@@ -62,6 +63,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
     findObjectPositionByIdBound = () => null,
     gas,
     brake,
+    turn,
   }) => {
     const tractorRef = useRef<Mesh>();
     const tractorBeamParams = useMemo(() => {
@@ -191,8 +193,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         />
         <ThreeExhaust
           color="#ff0"
-          speedUp={gas || brake}
-          inverse={brake}
+          speedUp={gas || turn < 0.0}
           position={VectorF(-0.35 * radius, 0.45 * radius).turnCounterClockwise(
             rotation
           )}
@@ -201,8 +202,7 @@ export const ThreeShip: React.FC<ThreeShipProps> = React.memo(
         />
         <ThreeExhaust
           color="#ff0"
-          speedUp={gas || brake}
-          inverse={brake}
+          speedUp={gas || turn > 0.0}
           position={VectorF(
             -0.35 * radius,
             -0.45 * radius

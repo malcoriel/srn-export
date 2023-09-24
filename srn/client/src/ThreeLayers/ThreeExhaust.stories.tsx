@@ -49,7 +49,7 @@ const Template: Story = (args) => {
           color={args.color}
           position={VectorFZero}
           rotation={args.rotation}
-          key={JSON.stringify(args) + revision}
+          key={JSON.stringify({ ...args, speedUp: undefined }) + revision}
           radius={args.radius}
           inverse={args.inverse}
           intensity={args.useIntensity ? args.intensity : undefined}

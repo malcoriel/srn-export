@@ -166,13 +166,23 @@ export const resetActiveSyncActions = () => {
   }
 };
 
-export const ShipControls: React.FC = () => {
+export const ShipControls: React.FC<{ onChange?: () => void }> = ({
+  onChange,
+}) => {
   useEffect(() => {
     document.addEventListener('keydown', keydownHandler);
     document.addEventListener('keyup', keyUpHandler);
+    if (onChange) {
+      document.addEventListener('keydown', onChange);
+      document.addEventListener('keyup', onChange);
+    }
     return () => {
       document.removeEventListener('keydown', keydownHandler);
       document.removeEventListener('keyup', keyUpHandler);
+      if (onChange) {
+        document.removeEventListener('keydown', onChange);
+        document.removeEventListener('keyup', onChange);
+      }
     };
   }, []);
   return null;

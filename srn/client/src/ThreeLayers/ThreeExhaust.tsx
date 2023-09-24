@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { fragmentShader, vertexShader, uniforms } from './shaders/exhaust';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, RawShaderMaterial, Vector3 } from 'three';
@@ -38,6 +38,13 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
     if (meshRef && meshRef.current) {
       const shaderMat = meshRef.current.material as RawShaderMaterial;
       if (shaderMat && shaderMat.uniforms && shaderMat.uniforms.iTime) {
+        // since inverse flag may suddenly disappear,
+        // and we need to animate, we need to remember its last value
+        meshRef.current.userData.inversing =
+          meshRef.current.userData.inversing || inverse;
+        shaderMat.uniforms.inverse.value = meshRef.current.userData.inversing
+          ? 1.0
+          : 0.0;
         shaderMat.uniforms.iTime.value += 0.1;
         if (!useIntensity) {
           const defaultValue = speedUp ? 0.0 : 1.0;
@@ -57,23 +64,23 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
           }
           shaderMat.uniforms.intensity.value =
             meshRef.current.userData.speedUpCounter;
+          // reset remembered value when it's guaranteed to be invisible
+          if (shaderMat.uniforms.intensity.value < 1e-6) {
+            meshRef.current.userData.inversing = false;
+          }
+        } else {
+          shaderMat.uniforms.intensity.value =
+            typeof intensity !== 'number' ? 0.0 : intensity;
         }
       }
     }
   });
-  const uniforms2 = useMemo(() => {
-    const patchedUniforms = _.cloneDeep(uniforms);
-    if (useIntensity) {
-      patchedUniforms.intensity.value =
-        typeof intensity === 'undefined' ? 1.0 : intensity;
-    } else {
-      patchedUniforms.intensity.value = 0.0;
-    }
-    patchedUniforms.inverse.value = inverse ? 1.0 : 0.0;
+  const usedUniforms = useMemo(() => {
+    const initialClone = _.cloneDeep(uniforms);
     const numbers = new Color(color).unitArray();
-    patchedUniforms.mainColor.value = new Vector3(...numbers);
-    return patchedUniforms;
-  }, [intensity, color]);
+    initialClone.mainColor.value = new Vector3(...numbers);
+    return initialClone;
+  }, [color]);
   return (
     <group
       position={vecToThreePos(VectorF(position.x, position.y))}
@@ -86,7 +93,7 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
           transparent
           fragmentShader={fragmentShader}
           vertexShader={vertexShader}
-          uniforms={uniforms2}
+          uniforms={usedUniforms}
         />
       </mesh>
     </group>

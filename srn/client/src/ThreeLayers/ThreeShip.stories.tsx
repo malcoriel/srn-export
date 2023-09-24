@@ -67,6 +67,8 @@ const MainTemplate: Story = (args) => {
     progressNormalized * 100
   );
 
+  const clockwise = keysActive.KeyD ? -1.0 : 0.0;
+  const turn = keysActive.KeyA ? 1.0 : clockwise;
   return (
     <StoryCanvas withBackground zoom={15.0}>
       {!args.blow ? (
@@ -89,6 +91,7 @@ const MainTemplate: Story = (args) => {
           velocity={VectorFzero}
           gas={keysActive.KeyW}
           brake={keysActive.KeyX || keysActive.KeyS}
+          turn={turn}
         />
       ) : (
         <ThreeShipWreck
