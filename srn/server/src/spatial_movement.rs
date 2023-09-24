@@ -91,7 +91,7 @@ pub fn update_ship_manual_movement(
                     .brake
                     .as_ref()
                     .map_or(0.0, |m| if m.forward { 1.0 } else { 0.0 });
-            if gas_sign != 0.0 || turn_sign != 0 || brake_sign != 0.0 {
+            if gas_sign != 0.0 || turn_sign != 0.0 || brake_sign != 0.0 {
                 ship.trajectory_v2 = TrajectoryResult::Inaccessible;
             }
             update_accelerated_movement(

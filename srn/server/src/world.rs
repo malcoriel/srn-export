@@ -1485,8 +1485,20 @@ pub struct ShipTemplate {
     movement: Option<Movement>,
     properties: Option<Vec<ObjectProperty>>,
 }
-
 impl ShipTemplate {
+    pub fn defaul_ship_movement() -> Movement {
+        let max_linear_speed = 20.0 / 1000.0 / 1000.0;
+        let max_angular_speed = PI / 1000.0 / 1000.0;
+        Movement::ShipAccelerated {
+            max_linear_speed,
+            max_rotation_speed: max_angular_speed,
+            linear_drag: max_linear_speed * 0.025 / 1e6, // 2.5% per second
+            acc_linear: max_linear_speed * 0.25 / 1e6,   // 25% per second
+            brake_acc: max_linear_speed * 0.5 / 1e6,     // 50% per second
+            max_turn_speed: max_angular_speed,
+            acc_angular: max_angular_speed / 6.0 / 1e5,
+        }
+    }
     pub fn pirate(at: Option<Vec2f64>) -> ShipTemplate {
         let max_linear_speed = 20.0 / 1000.0 / 1000.0;
         let max_angular_speed = PI / 2.0 / 1000.0 / 1000.0;
@@ -1496,10 +1508,7 @@ impl ShipTemplate {
             abilities: Some(vec![Ability::BlowUpOnLand]),
             name: Some("Pirate".to_string()),
             health: Some(Health::new(40.0)),
-            movement: Some(Movement::ShipMonotonous {
-                move_speed: max_linear_speed,
-                turn_speed: max_angular_speed,
-            }),
+            movement: Some(ShipTemplate::defaul_ship_movement()),
             properties: Some(vec![
                 ObjectProperty::MoneyOnKill(MoneyOnKillProps { amount: 100 }),
                 ObjectProperty::PirateShip,
@@ -1510,7 +1519,7 @@ impl ShipTemplate {
     pub fn player(at: Option<Vec2f64>) -> ShipTemplate {
         let max_linear_speed = 20.0 / 1000.0 / 1000.0;
         let max_angular_speed = PI / 1000.0 / 1000.0;
-        let default_movement = Movement::ShipMonotonous {
+        let legacy_movement = Movement::ShipMonotonous {
             move_speed: max_linear_speed,
             turn_speed: max_angular_speed,
         };
@@ -1519,16 +1528,8 @@ impl ShipTemplate {
             npc_traits: None,
             abilities: Some(vec![Ability::ToggleMovement {
                 movements: vec![
-                    default_movement.clone(),
-                    Movement::ShipAccelerated {
-                        max_linear_speed,
-                        max_rotation_speed: max_angular_speed,
-                        linear_drag: max_linear_speed * 0.025 / 1e6, // 2.5% per second
-                        acc_linear: max_linear_speed * 0.25 / 1e6,   // 25% per second
-                        brake_acc: max_linear_speed * 0.5 / 1e6,     // 50% per second
-                        max_turn_speed: max_angular_speed,
-                        acc_angular: max_angular_speed / 6.0 / 1e5,
-                    },
+                    ShipTemplate::defaul_ship_movement(),
+                    legacy_movement.clone(),
                 ],
                 current_idx: 0,
             }]),
@@ -1537,7 +1538,7 @@ impl ShipTemplate {
                 100.0,
                 SHIP_REGEN_PER_SEC / 1000.0 / 1000.0,
             )),
-            movement: Some(default_movement),
+            movement: Some(ShipTemplate::defaul_ship_movement()),
             properties: None,
         }
     }
