@@ -1,4 +1,4 @@
-use crate::combat::{guide_accelerated_object, markers_to_string};
+use crate::combat::{acceleration_markers_to_string, guide_accelerated_object};
 use crate::indexing::{
     find_planet, index_planets_by_id, GameStateCaches, GameStateIndexes, IdKind, ObjectSpecifier,
 };
@@ -612,7 +612,8 @@ pub fn update_ships_navigation(
                         brake,
                         1.0,
                     );
-                    ship.markers = markers_to_string(gas, turn, brake);
+                    ship.markers = acceleration_markers_to_string(gas, turn, brake);
+                    ship.acceleration_markers = Some(AccelerationMarkers { gas, turn, brake });
                 }
                 _ => panic!("unsupported kind of movement for ship navigation"),
             }
@@ -980,4 +981,12 @@ pub fn update_docked_ships_position(loc: &mut Location, indexes: &GameStateIndex
             }
         }
     }
+}
+
+#[skip_serializing_none]
+#[derive(Serialize, Deserialize, Debug, Clone, TypescriptDefinition, TypeScriptify)]
+pub struct AccelerationMarkers {
+    pub gas: f64,
+    pub turn: f64,
+    pub brake: f64,
 }

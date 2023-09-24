@@ -93,6 +93,20 @@ export const ThreeShipsLayer: React.FC<{
               return findObjectPositionById(state, id);
             }}
             turrets={ship.turrets}
+            brake={
+              ship.acceleration_markers
+                ? ship.acceleration_markers.brake > 0.0 ||
+                  ship.acceleration_markers.gas < 0.0
+                : false
+            }
+            gas={
+              ship.acceleration_markers
+                ? ship.acceleration_markers.gas > 0.0
+                : false
+            }
+            turn={
+              ship.acceleration_markers ? ship.acceleration_markers.turn : false
+            }
           />
         );
       })}

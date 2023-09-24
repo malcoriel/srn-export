@@ -3,7 +3,7 @@ import { fragmentShader, vertexShader, uniforms } from './shaders/exhaust';
 import { useFrame } from '@react-three/fiber';
 import { Mesh, RawShaderMaterial, Vector3 } from 'three';
 import { vecToThreePos } from './util';
-import { IVector, VectorF } from '../utils/Vector';
+import Vector, { IVector, VectorF } from '../utils/Vector';
 import Color from 'color';
 import _ from 'lodash';
 import { useFadingMaterial } from './UseFadingMaterial';
@@ -21,7 +21,7 @@ export type ThreeExhaustProps = {
   inverse?: boolean;
   fadeOver?: number;
 };
-export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
+export const ThreeExhaustImpl: React.FC<ThreeExhaustProps> = ({
   position,
   radius,
   rotation,
@@ -111,3 +111,14 @@ export const ThreeExhaust: React.FC<ThreeExhaustProps> = ({
   //   </mesh>
   // );
 };
+
+export const ThreeExhaust = React.memo(
+  ThreeExhaustImpl,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.speedUp === nextProps.speedUp &&
+      Vector.equals(prevProps.position, nextProps.position) &&
+      prevProps.rotation === nextProps.rotation
+    );
+  }
+);

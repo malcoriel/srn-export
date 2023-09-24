@@ -12,8 +12,8 @@ use crate::autofocus::{build_spatial_index, object_index_into_object_id, Spatial
 use crate::bots::{do_bot_npcs_actions, do_bot_players_actions, BOT_ACTION_TIME_TICKS};
 use crate::cargo_rush::{CargoDeliveryQuestState, Quest};
 use crate::combat::{
-    guide_projectile, markers_to_string, try_reacquire_target, update_explosions, Explosion,
-    Health, Projectile, ShipTurret,
+    acceleration_markers_to_string, guide_projectile, try_reacquire_target, update_explosions,
+    Explosion, Health, Projectile, ShipTurret,
 };
 use crate::dialogue::Dialogue;
 use crate::effects::{cleanup_effects, LocalEffect};
@@ -49,7 +49,8 @@ use crate::random_stuff::{
 };
 use crate::sandbox::ReferencableId;
 use crate::spatial_movement::{
-    update_accelerated_movement, Movement, RotationMovement, EXTRA_PROJECTILE_TURN_DRAG,
+    update_accelerated_movement, AccelerationMarkers, Movement, RotationMovement,
+    EXTRA_PROJECTILE_TURN_DRAG,
 };
 use crate::substitutions::substitute_notification_texts;
 use crate::system_gen::{seed_state, str_to_hash, GenStateOpts, DEFAULT_WORLD_UPDATE_EVERY_TICKS};
@@ -276,6 +277,7 @@ pub struct Ship {
     pub trading_with: Option<ObjectSpecifier>,
     pub fof_overrides: Option<FofOverrides>,
     pub markers: Option<String>,
+    pub acceleration_markers: Option<AccelerationMarkers>,
     pub to_clean: bool,
 }
 
@@ -321,6 +323,7 @@ impl Ship {
             trading_with: None,
             fof_overrides: None,
             markers: None,
+            acceleration_markers: None,
             to_clean: false,
         }
     }
@@ -1189,7 +1192,7 @@ pub fn update_location(
         let movement_clone = proj.get_movement().clone();
         let (gas, turn, brake) = if let Some(target_spatial) = &target_spatials[idx] {
             let (gas, turn, brake) = guide_projectile(proj, target_spatial, elapsed);
-            *proj.get_markers_mut() = markers_to_string(gas, turn, brake);
+            *proj.get_markers_mut() = acceleration_markers_to_string(gas, turn, brake);
             (gas, turn, brake)
         } else {
             (1.0, 0.0, 0.0)
