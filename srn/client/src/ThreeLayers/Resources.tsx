@@ -1,8 +1,11 @@
 import { Html, Preload, useProgress } from '@react-three/drei';
 import { Canvas, useLoader } from '@react-three/fiber';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import * as THREE from 'three';
-import { AudioLoader, DefaultLoadingManager, TextureLoader } from 'three';
+
+// noinspection ES6ConvertRequireIntoImport
+const { preloadFont } = require('troika-three-text').exports;
+import { AudioLoader, TextureLoader } from 'three';
 import { explosionSfxFull } from './blocks/ThreeExplosion';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
@@ -67,6 +70,11 @@ const allTextures = [
   }),
 ];
 
+const allFonts = [
+  'resources/fonts/DejaVuSans.ttf',
+  'https://fonts.gstatic.com/s/roboto/v18/KFOmCnqEu92Fr1Mu4mxM.woff',
+];
+
 const preloadPaths = [...allStlModels, ...allTextures, ...allSounds];
 
 const PreloaderImpl: React.FC = () => {
@@ -74,6 +82,10 @@ const PreloaderImpl: React.FC = () => {
   useLoader(STLLoader, allStlModels);
   useLoader(TextureLoader, allTextures);
   useLoader(GLTFLoader, allGltfModels);
+
+  useEffect(() => {
+    preloadFont({});
+  });
   // @ts-ignore
   window.threeCache = THREE.Cache;
   // use drei's eager in-memory loading
